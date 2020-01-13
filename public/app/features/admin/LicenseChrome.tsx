@@ -1,8 +1,38 @@
 import React from 'react';
-import { ThemeContext } from '@grafana/ui';
+import { stylesFactory, ThemeContext } from '@grafana/ui';
 import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 
 const title = { fontWeight: 600, fontSize: '26px', lineHeight: '123%' };
+
+const contentContainerStyle = stylesFactory((theme: GrafanaTheme) => {
+  const background = theme.isDark ? '#202226' : '#FFFFFF';
+
+  return css`
+    display: grid;
+    grid-template-columns: 100%;
+    column-gap: 20px;
+    row-gap: 40px;
+    padding: 34px 20px 0 77px;
+    background-color: ${background};
+    @media (min-width: 1050px) {
+      grid-template-columns: 50% 50%;
+    }
+  `;
+});
+
+const headerStyle = stylesFactory((theme: GrafanaTheme) => {
+  const backgroundUrl = theme.isDark
+    ? '/public/img/licensing/header_dark.svg'
+    : '/public/img/licensing/header_light.svg';
+
+  return css`
+    height: 137px;
+    padding: 40px 0 0 79px;
+    position: relative;
+    background: url('${backgroundUrl}') right;
+  `;
+});
 
 export function LicenseChrome({
   header,
@@ -14,23 +44,10 @@ export function LicenseChrome({
   children?: React.ReactNode;
 }) {
   const theme = React.useContext(ThemeContext);
-  const backgroundDark = '#202226';
-  const backgroundLight = '#FFFFFF';
 
   return (
     <React.Fragment>
-      <div
-        style={{
-          height: '137px',
-          backgroundColor: 'rgba(26, 86, 179, 0.2)',
-          padding: '40px 0 0 79px',
-          position: 'relative',
-          background: theme.isDark
-            ? "url('/public/img/licensing/header_dark.svg')"
-            : "url('/public/img/licensing/header_light.svg')",
-          backgroundPosition: 'right',
-        }}
-      >
+      <div className={headerStyle(theme)}>
         <h2 style={title}>{header}</h2>
         {subheader && subheader}
 
@@ -61,21 +78,7 @@ export function LicenseChrome({
         </Circle>
       </div>
 
-      <div
-        className={css`
-          display: grid;
-          grid-template-columns: 100%;
-          column-gap: 20px;
-          row-gap: 40px;
-          padding: 34px 20px 0 77px;
-          background-color: ${theme.isDark ? backgroundDark : backgroundLight};
-          @media (min-width: 1050px) {
-            grid-template-columns: 50% 50%;
-          }
-        `}
-      >
-        {children}
-      </div>
+      <div className={contentContainerStyle(theme)}>{children}</div>
     </React.Fragment>
   );
 }
