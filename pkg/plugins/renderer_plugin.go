@@ -14,11 +14,12 @@ import (
 type RendererPlugin struct {
 	PluginBase
 
-	Executable string `json:"executable,omitempty"`
-	GrpcPlugin pluginModel.RendererPlugin
+	Executable           string `json:"executable,omitempty"`
+	GrpcPlugin           pluginModel.RendererPlugin
+	backendPluginManager backendplugin.Manager
 }
 
-func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string) error {
+func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(r); err != nil {
 		return err
 	}
@@ -27,12 +28,14 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
+	r.backendPluginManager = backendPluginManager
+
 	cmd := ComposePluginStartCommmand("plugin_start")
 	fullpath := path.Join(r.PluginDir, cmd)
 	descriptor := backendplugin.NewRendererPluginDescriptor(r.Id, fullpath, backendplugin.PluginStartFuncs{
 		OnLegacyStart: r.onLegacyPluginStart,
 	})
-	if err := backendplugin.Register(descriptor); err != nil {
+	if err := backendPluginManager.Register(descriptor); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}
 
@@ -41,7 +44,7 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 }
 
 func (r *RendererPlugin) Start(ctx context.Context) error {
-	if err := backendplugin.StartPlugin(ctx, r.Id); err != nil {
+	if err := r.backendPluginManager.StartPlugin(ctx, r.Id); err != nil {
 		return errutil.Wrapf(err, "Failed to start renderer plugin")
 	}
 

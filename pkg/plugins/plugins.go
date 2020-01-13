@@ -38,12 +38,14 @@ var (
 )
 
 type PluginScanner struct {
-	pluginPath string
-	errors     []error
+	pluginPath           string
+	errors               []error
+	backendPluginManager backendplugin.Manager
 }
 
 type PluginManager struct {
-	log log.Logger
+	BackendPluginManager backendplugin.Manager `inject:""`
+	log                  log.Logger
 }
 
 func init() {
@@ -112,7 +114,7 @@ func (pm *PluginManager) Init() error {
 }
 
 func (pm *PluginManager) Run(ctx context.Context) error {
-	backendplugin.Start(ctx)
+	pm.BackendPluginManager.Start(ctx)
 	pm.updateAppDashboards()
 	pm.checkForUpdates()
 
@@ -128,7 +130,7 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 		}
 	}
 
-	backendplugin.Stop()
+	pm.BackendPluginManager.Stop()
 
 	return ctx.Err()
 }
@@ -156,7 +158,8 @@ func (pm *PluginManager) checkPluginPaths() error {
 // scan a directory for plugins.
 func (pm *PluginManager) scan(pluginDir string) error {
 	scanner := &PluginScanner{
-		pluginPath: pluginDir,
+		pluginPath:           pluginDir,
+		backendPluginManager: pm.BackendPluginManager,
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
@@ -247,7 +250,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	if _, err := reader.Seek(0, 0); err != nil {
 		return err
 	}
-	return loader.Load(jsonParser, currentDir)
+	return loader.Load(jsonParser, currentDir, scanner.backendPluginManager)
 }
 
 func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {

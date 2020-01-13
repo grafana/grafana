@@ -34,7 +34,7 @@ type DataSourcePlugin struct {
 	SDK        bool   `json:"sdk,omitempty"`
 }
 
-func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
+func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(p); err != nil {
 		return errutil.Wrapf(err, "Failed to decode datasource plugin")
 	}
@@ -50,7 +50,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 			OnLegacyStart: p.onLegacyPluginStart,
 			OnStart:       p.onPluginStart,
 		})
-		if err := backendplugin.Register(descriptor); err != nil {
+		if err := backendPluginManager.Register(descriptor); err != nil {
 			return errutil.Wrapf(err, "Failed to register backend plugin")
 		}
 	}

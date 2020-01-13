@@ -28,7 +28,7 @@ type TransformPlugin struct {
 	*TransformWrapper
 }
 
-func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
+func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(p); err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
 		OnStart: p.onPluginStart,
 	})
-	if err := backendplugin.Register(descriptor); err != nil {
+	if err := backendPluginManager.Register(descriptor); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}
 
