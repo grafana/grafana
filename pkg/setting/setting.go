@@ -32,6 +32,7 @@ const (
 	HTTP2             Scheme = "h2"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
+	REDACTED_PASSWORD string = "*********"
 )
 
 const (
@@ -327,15 +328,13 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
-			sectionName := strings.ToUpper(strings.Replace(section.Name(), ".", "_", -1))
-			keyName := strings.ToUpper(strings.Replace(key.Name(), ".", "_", -1))
-			envKey := fmt.Sprintf("GF_%s_%s", sectionName, keyName)
+			envKey := envKey(section.Name(), key.Name())
 			envValue := os.Getenv(envKey)
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
-					envValue = "*********"
+					envValue = REDACTED_PASSWORD
 				}
 				if shouldRedactURLKey(envKey) {
 					u, err := url.Parse(envValue)
@@ -359,6 +358,13 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	return nil
 }
 
+func envKey(sectionName string, keyName string) string {
+	sN := strings.ToUpper(strings.Replace(sectionName, ".", "_", -1))
+	kN := strings.ToUpper(strings.Replace(keyName, ".", "_", -1))
+	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
+	return envKey
+}
+
 func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
 	appliedCommandLineProperties = make([]string, 0)
 	for _, section := range file.Sections() {
@@ -368,7 +374,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 			if exists {
 				key.SetValue(value)
 				if shouldRedactKey(keyString) {
-					value = "*********"
+					value = REDACTED_PASSWORD
 				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 			}
@@ -1112,6 +1118,37 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + Env)
+}
+
+type DynamicSection struct {
+	section *ini.Section
+	Logger  log.Logger
+}
+
+// Key dynamically overrides keys with environment variables.
+// As a side effect, the value of the setting key will be updated if an environment variable is present.
+func (s *DynamicSection) Key(k string) *ini.Key {
+	envKey := envKey(s.section.Name(), k)
+	envValue := os.Getenv(envKey)
+	key := s.section.Key(k)
+
+	if len(envValue) == 0 {
+		return key
+	}
+
+	key.SetValue(envValue)
+	if shouldRedactKey(envKey) {
+		envValue = REDACTED_PASSWORD
+	}
+	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
+
+	return key
+}
+
+// SectionWithEnvOverrides dynamically overrides keys with environment variables.
+// As a side effect, the value of the setting key will be updated if an environment variable is present.
+func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
+	return &DynamicSection{cfg.Raw.Section(s), cfg.Logger}
 }
 
 func IsExpressionsEnabled() bool {

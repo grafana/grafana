@@ -1,34 +1,27 @@
-import { actionCreatorFactory } from 'app/core/redux';
 import config from 'app/core/config';
-import { ThunkResult, SyncInfo, LdapUser, LdapConnectionInfo, LdapError, UserSession, User } from 'app/types';
+import { ThunkResult } from 'app/types';
 import {
-  getUserInfo,
   getLdapState,
-  syncLdapUser,
-  getUser,
-  getUserSessions,
-  revokeUserSession,
-  revokeAllUserSessions,
   getLdapSyncStatus,
+  getUser,
+  getUserInfo,
+  getUserSessions,
+  revokeAllUserSessions,
+  revokeUserSession,
+  syncLdapUser,
 } from './apis';
-
-// Action types
-
-export const ldapConnectionInfoLoadedAction = actionCreatorFactory<LdapConnectionInfo>(
-  'ldap/CONNECTION_INFO_LOADED'
-).create();
-export const ldapSyncStatusLoadedAction = actionCreatorFactory<SyncInfo>('ldap/SYNC_STATUS_LOADED').create();
-export const userMappingInfoLoadedAction = actionCreatorFactory<LdapUser>('ldap/USER_INFO_LOADED').create();
-export const userMappingInfoFailedAction = actionCreatorFactory<LdapError>('ldap/USER_INFO_FAILED').create();
-export const clearUserMappingInfoAction = actionCreatorFactory('ldap/CLEAR_USER_MAPPING_INFO').create();
-export const clearUserErrorAction = actionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
-export const ldapFailedAction = actionCreatorFactory<LdapError>('ldap/LDAP_FAILED').create();
-
-export const userLoadedAction = actionCreatorFactory<User>('USER_LOADED').create();
-export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('USER_SESSIONS_LOADED').create();
-export const userSyncFailedAction = actionCreatorFactory('USER_SYNC_FAILED').create();
-export const revokeUserSessionAction = actionCreatorFactory('REVOKE_USER_SESSION').create();
-export const revokeAllUserSessionsAction = actionCreatorFactory('REVOKE_ALL_USER_SESSIONS').create();
+import {
+  clearUserErrorAction,
+  clearUserMappingInfoAction,
+  ldapConnectionInfoLoadedAction,
+  ldapFailedAction,
+  ldapSyncStatusLoadedAction,
+  userLoadedAction,
+  userMappingInfoFailedAction,
+  userMappingInfoLoadedAction,
+  userSessionsLoadedAction,
+  userSyncFailedAction,
+} from './reducers';
 
 // Actions
 
