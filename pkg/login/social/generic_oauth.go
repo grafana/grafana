@@ -210,46 +210,36 @@ type UserInfoJson struct {
 	Email       string              `json:"email"`
 	Upn         string              `json:"upn"`
 	Attributes  map[string][]string `json:"attributes"`
+	RawJson     []byte
 }
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data UserInfoJson
-	var rawUserInfoResponse HttpGetResponse
 	var err error
-	var tokenPayload []byte
-	var ok bool
 
-	if tokenPayload, ok = s.extractToken(&data, token); !ok {
-		rawUserInfoResponse, err = HttpGet(client, s.apiUrl)
-		if err != nil {
-			return nil, fmt.Errorf("Error getting user info: %s", err)
-		}
-		tokenPayload = rawUserInfoResponse.Body
+	userInfo := &BasicUserInfo{}
 
-		err = json.Unmarshal(rawUserInfoResponse.Body, &data)
-		if err != nil {
-			return nil, fmt.Errorf("Error decoding user info JSON: %s", err)
-		}
+	if s.extractToken(&data, token) {
+		s.fillUserInfo(userInfo, &data)
+	} else {
+		s.log.Error("Unable to extract from id_token")
 	}
 
-	email := s.extractEmail(&data, tokenPayload)
-	role := s.extractRole(&data, tokenPayload)
-	name := s.extractName(&data)
+	if s.extractApi(&data, client) {
+		s.fillUserInfo(userInfo, &data)
+	} else {
+		s.log.Error("Unable to extract from userinfo API")
+	}
 
-	if email == "" {
-		email, err = s.FetchPrivateEmail(client)
+	if userInfo.Email == "" {
+		userInfo.Email, err = s.FetchPrivateEmail(client)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	login := s.extractLogin(&data, email)
-
-	userInfo := &BasicUserInfo{
-		Name:  name,
-		Login: login,
-		Email: email,
-		Role:  role,
+	if userInfo.Login == "" {
+		userInfo.Login = userInfo.Email
 	}
 
 	if !s.IsTeamMember(client) {
@@ -263,53 +253,80 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) ([]byte, bool) {
+func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInfoJson) {
+	if userInfo.Email == "" {
+		userInfo.Email = s.extractEmail(data)
+	}
+	if userInfo.Role == "" {
+		userInfo.Role = s.extractRole(data)
+	}
+	if userInfo.Name == "" {
+		userInfo.Name = s.extractName(data)
+	}
+	if userInfo.Login == "" {
+		userInfo.Login = s.extractLogin(data)
+	}
+}
+
+func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
+	var err error
+
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)
-		return []byte{}, false
+		return false
 	}
 
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(idToken.(string))
 	if matched == nil {
 		s.log.Debug("id_token is not in JWT format", "id_token", idToken.(string))
-		return []byte{}, false
+		return false
 	}
 
-	payload, err := base64.RawURLEncoding.DecodeString(matched[2])
+	data.RawJson, err = base64.RawURLEncoding.DecodeString(matched[2])
 	if err != nil {
 		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "err", err)
-		return []byte{}, false
+		return false
 	}
 
-	err = json.Unmarshal(payload, data)
+	err = json.Unmarshal(data.RawJson, data)
 	if err != nil {
-		s.log.Error("Error decoding id_token JSON", "payload", string(payload), "err", err)
-		return []byte{}, false
+		s.log.Error("Error decoding id_token JSON", "raw_json", string(data.RawJson), "err", err)
+		data.RawJson = []byte{}
+		return false
 	}
 
-	if email := s.extractEmail(data, payload); email == "" {
-		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
-		return []byte{}, false
-	}
-
-	if role := s.extractRole(data, payload); s.roleAttributePath != "" && role == "" {
-		s.log.Debug("No role found in id_token when role_attribute_path was configured", "json", string(payload), "data", data)
-		return []byte{}, false
-	}
-
-	s.log.Debug("Received id_token", "json", string(payload), "data", data)
-	return payload, true
+	s.log.Debug("Received id_token", "raw_json", string(data.RawJson), "data", data)
+	return true
 }
 
-func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byte) string {
+func (s *SocialGenericOAuth) extractApi(data *UserInfoJson, client *http.Client) bool {
+	rawUserInfoResponse, err := HttpGet(client, s.apiUrl)
+	if err != nil {
+		s.log.Error("Error getting user info", "err", err)
+		return false
+	}
+	data.RawJson = rawUserInfoResponse.Body
+
+	err = json.Unmarshal(data.RawJson, data)
+	if err != nil {
+		s.log.Error("Error decoding user info JSON", "raw_json", data.RawJson, "err", err)
+		data.RawJson = []byte{}
+		return false
+	}
+
+	s.log.Debug("Received api response", "raw_json", string(data.RawJson), "data", data)
+	return true
+}
+
+func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	if data.Email != "" {
 		return data.Email
 	}
 
 	if s.emailAttributePath != "" {
-		email := s.searchJSONForAttr(s.emailAttributePath, userInfoResp)
+		email := s.searchJSONForAttr(s.emailAttributePath, data.RawJson)
 		if email != "" {
 			return email
 		}
@@ -331,9 +348,9 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byt
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractRole(data *UserInfoJson, userInfoResp []byte) string {
+func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) string {
 	if s.roleAttributePath != "" {
-		role := s.searchJSONForAttr(s.roleAttributePath, userInfoResp)
+		role := s.searchJSONForAttr(s.roleAttributePath, data.RawJson)
 		if role != "" {
 			return role
 		}
@@ -341,7 +358,7 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson, userInfoResp []byte
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson, email string) string {
+func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 	if data.Login != "" {
 		return data.Login
 	}
@@ -350,7 +367,7 @@ func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson, email string) stri
 		return data.Username
 	}
 
-	return email
+	return ""
 }
 
 func (s *SocialGenericOAuth) extractName(data *UserInfoJson) string {
