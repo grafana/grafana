@@ -24,7 +24,6 @@ export interface TooltipContentProps<T extends Dimensions = any> {
   // timeZone: TimeZone;
   pos: FlotPosition;
   mode: TooltipMode;
-  isContext?: boolean;
 }
 
 export interface TooltipProps {
@@ -44,10 +43,9 @@ export interface TooltipProps {
   // - single - display single series info
   // - multi - display all series info
   mode?: TooltipMode;
-  isContext?: boolean;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset, isContext }) => {
+export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) => {
   if (position) {
     return (
       <Portal
@@ -60,7 +58,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset, isC
           height: 100%;
         `}
       >
-        <TooltipContainer position={position} offset={offset || { x: 0, y: 0 }} isContext={isContext}>
+        <TooltipContainer position={position} offset={offset || { x: 0, y: 0 }}>
           {content}
         </TooltipContainer>
       </Portal>

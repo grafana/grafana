@@ -117,15 +117,12 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     );
   }
 
-  renderTooltip = (isContextTooltip?: boolean) => {
+  renderTooltip = () => {
     const { children, series } = this.props;
-    const { pos, contextPos, activeItem, contextItem, isTooltipVisible, isContextVisible } = this.state;
+    const { pos, activeItem, isTooltipVisible } = this.state;
     let tooltipElement: React.ReactElement<TooltipProps> | null = null;
-    const isVisible = isContextTooltip ? isContextVisible : isTooltipVisible;
-    const position = isContextTooltip ? contextPos : pos;
-    const item = isContextTooltip ? contextItem : activeItem;
 
-    if (!isVisible || !position || series.length === 0) {
+    if (!isTooltipVisible || !pos || series.length === 0) {
       return null;
     }
 
@@ -151,16 +148,16 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const tooltipMode = tooltipElementProps.mode || 'single';
 
     // If mode is single series and user is not hovering over item, skip rendering
-    if (!item && tooltipMode === 'single') {
+    if (!activeItem && tooltipMode === 'single') {
       return null;
     }
 
     // Check if tooltip needs to be rendered with custom tooltip component, otherwise default to GraphTooltip
     const tooltipContentRenderer = tooltipElementProps.tooltipComponent || GraphTooltip;
     // Indicates column(field) index in y-axis dimension
-    const seriesIndex = item ? item.series.seriesIndex : 0;
+    const seriesIndex = activeItem ? activeItem.series.seriesIndex : 0;
     // Indicates row index in active field values
-    const rowIndex = item ? item.dataIndex : undefined;
+    const rowIndex = activeItem ? activeItem.dataIndex : undefined;
 
     const activeDimensions: ActiveDimensions<GraphDimensions> = {
       // Described x-axis active item
@@ -168,7 +165,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       // Tooltip itself needs to figure out correct datapoint display information based on pos passed to it
       xAxis: [seriesIndex, rowIndex],
       // Describes y-axis active item
-      yAxis: item ? [item.series.seriesIndex, item.dataIndex] : null,
+      yAxis: activeItem ? [activeItem.series.seriesIndex, activeItem.dataIndex] : null,
     };
 
     const tooltipContentProps: TooltipContentProps<GraphDimensions> = {
@@ -184,18 +181,16 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         ),
       },
       activeDimensions,
-      pos: position,
+      pos,
       mode: tooltipElementProps.mode || 'single',
-      isContext: isContextTooltip,
     };
 
     const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
 
     return React.cloneElement<TooltipProps>(tooltipElement as React.ReactElement<TooltipProps>, {
       content: tooltipContent,
-      position: { x: position.pageX, y: position.pageY },
+      position: { x: pos.pageX, y: pos.pageY },
       offset: { x: 10, y: 10 },
-      isContext: isContextTooltip,
     });
   };
 
@@ -306,7 +301,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const { height, width, series } = this.props;
     const noDataToBeDisplayed = series.length === 0;
     const tooltip = this.renderTooltip();
-    const context = this.renderTooltip(true);
     return (
       <div className="graph-panel">
         <div
@@ -319,7 +313,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         />
         {noDataToBeDisplayed && <div className="datapoints-warning">No data</div>}
         {tooltip}
-        {context}
       </div>
     );
   }
