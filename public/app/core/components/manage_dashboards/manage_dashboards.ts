@@ -6,6 +6,7 @@ import { SearchSrv } from 'app/core/services/search_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { CoreEvents } from 'app/types';
+import { promiseToDigest } from '../../utils/promiseToDigest';
 
 export interface Section {
   id: number;
@@ -211,9 +212,11 @@ export class ManageDashboardsCtrl {
   }
 
   private deleteFoldersAndDashboards(folderUids: string[], dashboardUids: string[]) {
-    backendSrv.deleteFoldersAndDashboards(folderUids, dashboardUids).then(() => {
-      this.refreshList();
-    });
+    promiseToDigest(this.$scope)(
+      backendSrv.deleteFoldersAndDashboards(folderUids, dashboardUids).then(() => {
+        this.refreshList();
+      })
+    );
   }
 
   getDashboardsToMove() {
