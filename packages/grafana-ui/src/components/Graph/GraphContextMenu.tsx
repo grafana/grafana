@@ -27,37 +27,34 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
       }))
     : [];
 
-  const renderHeader = source
-    ? () => {
-        if (!source) {
-          return null;
-        }
+  const renderHeader = () => {
+    if (!source) {
+      return null;
+    }
 
-        const timeFormat = source.series.hasMsResolution ? 'YYYY-MM-DD HH:mm:ss.SSS' : 'YYYY-MM-DD HH:mm:ss';
-
-        return (
-          <div
+    const timeFormat = source.series.hasMsResolution ? 'YYYY-MM-DD HH:mm:ss.SSS' : 'YYYY-MM-DD HH:mm:ss';
+    return (
+      <div
+        className={css`
+          padding: ${theme.spacing.xs} ${theme.spacing.sm};
+          font-size: ${theme.typography.size.sm};
+        `}
+      >
+        <strong>{formatSourceDate(source.datapoint[0], timeFormat)}</strong>
+        <div>
+          <SeriesIcon color={source.series.color} />
+          <span
             className={css`
-              padding: ${theme.spacing.xs} ${theme.spacing.sm};
-              font-size: ${theme.typography.size.sm};
+              white-space: nowrap;
+              padding-left: ${theme.spacing.xs};
             `}
           >
-            <strong>{formatSourceDate(source.datapoint[0], timeFormat)}</strong>
-            <div>
-              <SeriesIcon color={source.series.color} />
-              <span
-                className={css`
-                  white-space: nowrap;
-                  padding-left: ${theme.spacing.xs};
-                `}
-              >
-                {source.series.alias || source.series.label}
-              </span>
-            </div>
-          </div>
-        );
-      }
-    : null;
+            {source.series.alias || source.series.label}
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   return <ContextMenu {...otherProps} items={itemsToRender} renderHeader={renderHeader} />;
 };

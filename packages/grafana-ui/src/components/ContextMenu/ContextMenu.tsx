@@ -25,7 +25,7 @@ export interface ContextMenuProps {
   y: number;
   onClose: () => void;
   items?: ContextMenuGroup[];
-  renderHeader?: () => JSX.Element;
+  renderHeader?: () => React.ReactNode;
 }
 
 const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
