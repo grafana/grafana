@@ -4,21 +4,15 @@ import { DisplayValue, GraphSeriesValue, DisplayValueAlignmentFactors } from '@g
 
 // Types
 import { Themeable } from '../../types';
-import {
-  calculateLayout,
-  getPanelStyles,
-  getValueAndTitleContainerStyles,
-  getValueStyles,
-  getTitleStyles,
-} from './styles';
-
-import { renderGraph } from './renderGraph';
+import { buildLayout } from './BigValueLayout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 export interface BigValueSparkline {
   data: GraphSeriesValue[][];
-  minX: number;
-  maxX: number;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
   highlightIndex?: number;
 }
 
@@ -57,13 +51,13 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { value, onClick, className, sparkline } = this.props;
+    const { value, onClick, className } = this.props;
 
-    const layout = calculateLayout(this.props);
-    const panelStyles = getPanelStyles(layout);
-    const valueAndTitleContainerStyles = getValueAndTitleContainerStyles(layout);
-    const valueStyles = getValueStyles(layout);
-    const titleStyles = getTitleStyles(layout);
+    const layout = buildLayout(this.props);
+    const panelStyles = layout.getPanelStyles();
+    const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
+    const valueStyles = layout.getValueStyles();
+    const titleStyles = layout.getTitleStyles();
 
     return (
       <div className={className} style={panelStyles} onClick={onClick}>
@@ -71,7 +65,7 @@ export class BigValue extends PureComponent<Props> {
           {value.title && <div style={titleStyles}>{value.title}</div>}
           <FormattedValueDisplay value={value} style={valueStyles} />
         </div>
-        {renderGraph(layout, sparkline)}
+        {layout.renderChart()}
       </div>
     );
   }
