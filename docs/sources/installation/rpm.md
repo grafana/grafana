@@ -21,7 +21,7 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 You can install Grafana from a YUM repository, manually using YUM, manually using RPM, or by downloading a binary `.tar.gz` file.
 
-### Install with YUM
+### Install manually with YUM
 
 If you install with YUM, then you will need to manually update Grafana for each new version.
 
