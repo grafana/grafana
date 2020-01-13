@@ -1,5 +1,5 @@
 import { Props, BigValueColorMode, BigValueGraphMode } from './BigValue';
-import { calculateLayout, LayoutType } from './styles';
+import { buildLayout, StackedWithChartLayout, WideWithChartLayout } from './BigValueLayout';
 import { getTheme } from '../../themes';
 
 function getProps(propOverrides?: Partial<Props>): Props {
@@ -17,8 +17,8 @@ function getProps(propOverrides?: Partial<Props>): Props {
         [10, 10],
         [10, 10],
       ],
-      minX: 0,
-      maxX: 100,
+      xMin: 0,
+      xMax: 100,
     },
     theme: getTheme(),
   };
@@ -27,26 +27,26 @@ function getProps(propOverrides?: Partial<Props>): Props {
   return props;
 }
 
-describe('BigValue styles', () => {
-  describe('calculateLayout', () => {
+describe('BigValueLayout', () => {
+  describe('buildLayout', () => {
     it('should auto select to stacked layout', () => {
-      const layout = calculateLayout(
+      const layout = buildLayout(
         getProps({
           width: 300,
           height: 300,
         })
       );
-      expect(layout.type).toBe(LayoutType.Stacked);
+      expect(layout).toBeInstanceOf(StackedWithChartLayout);
     });
 
     it('should auto select to wide layout', () => {
-      const layout = calculateLayout(
+      const layout = buildLayout(
         getProps({
           width: 300,
           height: 100,
         })
       );
-      expect(layout.type).toBe(LayoutType.Wide);
+      expect(layout).toBeInstanceOf(WideWithChartLayout);
     });
   });
 });
