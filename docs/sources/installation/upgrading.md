@@ -236,4 +236,4 @@ Due to this change in Chrome the `[security]` setting `cookie_samesite` configur
 *Note:* There is currently a bug affecting Mac OSX and iOS which causes `SameSite=None` cookies to be inadvertently treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181. Until this is fixed, `SameSite=None` may not work properly on Safari.
 
 This version of Chrome will also reject insecure `SameSite=None` cookies, see https://www.chromestatus.com/feature/5633521622188032 for more information. Make sure that you
-change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana wont work properly.
+change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana won't work properly.
