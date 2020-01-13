@@ -27,7 +27,7 @@ type BackendPlugin struct {
 	clientFactory   func() *plugin.Client
 	client          *plugin.Client
 	logger          log.Logger
-	callbacks       PluginCallbacks
+	startFns        PluginStartFuncs
 	supportsMetrics bool
 	supportsHealth  bool
 }
@@ -85,14 +85,14 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
-	if legacyClient != nil && p.callbacks.OnLegacyStart != nil {
-		if err := p.callbacks.OnLegacyStart(p.id, legacyClient, p.logger); err != nil {
+	if legacyClient != nil && p.startFns.OnLegacyStart != nil {
+		if err := p.startFns.OnLegacyStart(p.id, legacyClient, p.logger); err != nil {
 			return err
 		}
 	}
 
-	if client != nil && p.callbacks.OnStart != nil {
-		if err := p.callbacks.OnStart(p.id, client, p.logger); err != nil {
+	if client != nil && p.startFns.OnStart != nil {
+		if err := p.startFns.OnStart(p.id, client, p.logger); err != nil {
 			return err
 		}
 	}
@@ -137,8 +137,8 @@ func Register(descriptor PluginDescriptor) error {
 		clientFactory: func() *plugin.Client {
 			return plugin.NewClient(newClientConfig(descriptor.executablePath, pluginLogger, descriptor.versionedPlugins))
 		},
-		callbacks: descriptor.callbacks,
-		logger:    pluginLogger,
+		startFns: descriptor.startFns,
+		logger:   pluginLogger,
 	}
 
 	plugins[descriptor.pluginID] = plugin

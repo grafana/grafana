@@ -47,8 +47,8 @@ type LegacyStartFunc func(pluginID string, client *LegacyClient, logger log.Logg
 // StartFunc callback function called when a plugin with current plugin protocol version is started.
 type StartFunc func(pluginID string, client *Client, logger log.Logger) error
 
-// PluginCallbacks callback functions called for plugin throughout its lifetime.
-type PluginCallbacks struct {
+// PluginStartFuncs functions called for plugin when started.
+type PluginStartFuncs struct {
 	OnLegacyStart LegacyStartFunc
 	OnStart       StartFunc
 }
@@ -59,12 +59,12 @@ type PluginDescriptor struct {
 	executablePath   string
 	managed          bool
 	versionedPlugins map[int]plugin.PluginSet
-	callbacks        PluginCallbacks
+	startFns         PluginStartFuncs
 }
 
 // NewBackendPluginDescriptor creates a new backend plugin descriptor
 // used for registering a backend datasource plugin.
-func NewBackendPluginDescriptor(pluginID, executablePath string, callbacks PluginCallbacks) PluginDescriptor {
+func NewBackendPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -78,13 +78,13 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, callbacks Plugi
 				"transform": &backend.TransformGRPCPlugin{},
 			},
 		},
-		callbacks: callbacks,
+		startFns: startFns,
 	}
 }
 
 // NewRendererPluginDescriptor creates a new renderer plugin descriptor
 // used for registering a backend renderer plugin.
-func NewRendererPluginDescriptor(pluginID, executablePath string, callbacks PluginCallbacks) PluginDescriptor {
+func NewRendererPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -94,7 +94,7 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, callbacks Plug
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
 		},
-		callbacks: callbacks,
+		startFns: startFns,
 	}
 }
 

@@ -46,7 +46,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	if p.Backend {
 		cmd := ComposePluginStartCommmand(p.Executable)
 		fullpath := path.Join(p.PluginDir, cmd)
-		descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginCallbacks{
+		descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
 			OnLegacyStart: p.onLegacyPluginStart,
 			OnStart:       p.onPluginStart,
 		})
