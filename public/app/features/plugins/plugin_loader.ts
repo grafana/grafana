@@ -44,6 +44,7 @@ import * as emotion from 'emotion';
 import * as grafanaData from '@grafana/data';
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaUIEditors from '@grafana/ui/src/editors';
+import * as grafanaUIForms from '@grafana/ui/src/forms';
 import * as grafanaRuntime from '@grafana/runtime';
 
 // Help the 6.4 to 6.5 migration
@@ -105,6 +106,10 @@ function exposeToPlugin(name: string, component: any) {
 
 exposeToPlugin('@grafana/data', grafanaData);
 exposeToPlugin('@grafana/ui', grafanaUI);
+
+// Expose grafana/ui namespaces to plugins
+exposeToPlugin('@grafana/ui/forms', grafanaUIForms);
+
 exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
