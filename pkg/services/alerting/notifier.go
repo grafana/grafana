@@ -13,6 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
+	return imguploader.NewImageUploader()
+}
+
 // NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
 	Type            string          `json:"type"`
@@ -119,7 +123,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 }
 
 func (n *notificationService) uploadImage(context *EvalContext) (err error) {
-	uploader, err := imguploader.NewImageUploader()
+	uploader, err := newImageUploaderProvider()
 	if err != nil {
 		return err
 	}
