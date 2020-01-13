@@ -13,15 +13,13 @@ import (
 
 // BackendPlugin a registered backend plugin.
 type BackendPlugin struct {
-	id              string
-	executablePath  string
-	managed         bool
-	clientFactory   func() *plugin.Client
-	client          *plugin.Client
-	logger          log.Logger
-	startFns        PluginStartFuncs
-	supportsMetrics bool
-	supportsHealth  bool
+	id             string
+	executablePath string
+	managed        bool
+	clientFactory  func() *plugin.Client
+	client         *plugin.Client
+	logger         log.Logger
+	startFns       PluginStartFuncs
 }
 
 func (p *BackendPlugin) start(ctx context.Context) error {
@@ -97,16 +95,4 @@ func (p *BackendPlugin) stop() error {
 		p.client.Kill()
 	}
 	return nil
-}
-
-func (p *BackendPlugin) collectMetrics(ctx context.Context) {
-	if !p.supportsMetrics {
-		return
-	}
-}
-
-func (p *BackendPlugin) checkHealth(ctx context.Context) {
-	if !p.supportsHealth {
-		return
-	}
 }
