@@ -319,6 +319,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader())
+	m.Use(middleware.LicensingValidation())
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
