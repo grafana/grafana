@@ -34,15 +34,15 @@ If you install with YUM, then you will need to manually update Grafana for each 
 3. Depending on which system you are running, click **Linux** or **ARM**.
 4. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
-   ```bash
-   wget <rpm package url>
-   sudo yum localinstall <local rpm package>
-   ```
+```bash
+wget <rpm package url>
+sudo yum localinstall <local rpm package>
+```
    You can also install Grafana using YUM directly:
 
-   ```bash
-   sudo yum install <rpm package url>
-   ```
+```bash
+sudo yum install <rpm package url>
+```
 
 ### Install from YUM repository
 
@@ -50,11 +50,11 @@ If you install from the YUM repository, then Grafana is automatically updated ev
 
 The YUM repository installs the open source edition of Grafana.
 
-1. Add a new file to your YUM repo.
+1. Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
 ```bash
 sudo nano /etc/yum.repos.d/grafana.repo
 ```
-1. Enter the following information in grafana.repo and then save it.
+2. Enter the following information in grafana.repo and then save it.
    For stable releases:
 ```bash
 [grafana]
@@ -79,7 +79,7 @@ gpgkey=https://packages.grafana.com/gpg.key
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
-1. Install Grafana.
+3. Install Grafana.
 ```bash
 sudo yum install grafana
 ```
@@ -110,7 +110,6 @@ sudo rpm -Uvh <local rpm package>
 **On OpenSUSE or SUSE:**
 
 ```bash
-sudo yum install initscripts urw-fonts wget
 wget <rpm package url>
 sudo rpm -i --nodeps <local rpm package>
 ```
@@ -145,6 +144,9 @@ Configure the Grafana server to start at boot:
 ```bash
 sudo systemctl enable grafana-server.service
 ```
+
+> **SUSE or OpenSUSE users:** You might need to start the server with the systemd method, then then use the init.d method to configure Grafana to start at boot.
+
 ### Start the server with init.d
 
 To start the service and verify that the service has started:
@@ -154,7 +156,7 @@ sudo service grafana-server start
 sudo service grafana-server status
 ```
 
-Configure the Grafana server to start at boot
+Configure the Grafana server to start at boot:
 
 ```bash
 sudo /sbin/chkconfig --add grafana-server
