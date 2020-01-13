@@ -1137,7 +1137,6 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
-            - build-docs-website
           filters: *filter-only-master
       - grafana-docker-master:
           requires:
@@ -1356,6 +1355,8 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
+            filters: *filter-not-release-or-master
+        - build-docs-website:
             filters: *filter-not-release-or-master
   nightly:
     triggers:
