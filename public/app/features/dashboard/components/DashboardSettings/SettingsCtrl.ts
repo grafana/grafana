@@ -1,15 +1,17 @@
-import { appEvents, contextSrv, coreModule } from 'app/core/core';
-import { DashboardModel } from '../../state/DashboardModel';
 import $ from 'jquery';
 import _ from 'lodash';
-import angular, { ILocationService } from 'angular';
+import angular, { ILocationService, IScope } from 'angular';
+import { e2e } from '@grafana/e2e';
+
+import { appEvents, contextSrv, coreModule } from 'app/core/core';
+import { DashboardModel } from '../../state/DashboardModel';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AppEvents } from '@grafana/data';
-import { e2e } from '@grafana/e2e';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -26,7 +28,7 @@ export class SettingsCtrl {
 
   /** @ngInject */
   constructor(
-    private $scope: any,
+    private $scope: IScope & Record<string, any>,
     private $route: any,
     private $location: ILocationService,
     private $rootScope: GrafanaRootScope,
@@ -233,10 +235,12 @@ export class SettingsCtrl {
   }
 
   deleteDashboardConfirmed() {
-    backendSrv.deleteDashboard(this.dashboard.uid, false).then(() => {
-      appEvents.emit(AppEvents.alertSuccess, ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
-      this.$location.url('/');
-    });
+    promiseToDigest(this.$scope)(
+      backendSrv.deleteDashboard(this.dashboard.uid, false).then(() => {
+        appEvents.emit(AppEvents.alertSuccess, ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
+        this.$location.url('/');
+      })
+    );
   }
 
   onFolderChange(folder: { id: number; title: string }) {

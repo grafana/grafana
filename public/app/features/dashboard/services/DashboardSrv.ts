@@ -1,14 +1,15 @@
+import { ILocationService } from 'angular';
+import { AppEvents, PanelEvents } from '@grafana/data';
+
 import coreModule from 'app/core/core_module';
 import { appEvents } from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
-import { DashboardMeta, CoreEvents } from 'app/types';
+import { CoreEvents, DashboardMeta } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { ILocationService } from 'angular';
-import { AppEvents } from '@grafana/data';
-import { PanelEvents } from '@grafana/data';
+import { promiseToDigest } from '../../../core/utils/promiseToDigest';
 
 interface DashboardSaveOptions {
   folderId?: number;
@@ -163,10 +164,12 @@ export class DashboardSrv {
   save(clone: any, options?: DashboardSaveOptions) {
     options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
 
-    return backendSrv
-      .saveDashboard(clone, options)
-      .then((data: any) => this.postSave(data))
-      .catch(this.handleSaveDashboardError.bind(this, clone, { folderId: options.folderId }));
+    return promiseToDigest(this.$rootScope)(
+      backendSrv
+        .saveDashboard(clone, options)
+        .then((data: any) => this.postSave(data))
+        .catch(this.handleSaveDashboardError.bind(this, clone, { folderId: options.folderId }))
+    );
   }
 
   saveDashboard(
@@ -224,13 +227,17 @@ export class DashboardSrv {
     let promise;
 
     if (isStarred) {
-      promise = backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() => {
-        return false;
-      });
+      promise = promiseToDigest(this.$rootScope)(
+        backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() => {
+          return false;
+        })
+      );
     } else {
-      promise = backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
-        return true;
-      });
+      promise = promiseToDigest(this.$rootScope)(
+        backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
+          return true;
+        })
+      );
     }
 
     return promise.then((res: boolean) => {
