@@ -30,8 +30,6 @@ import {
   toUtc,
   LinkModelSupplier,
   getValueFormat,
-  FieldDisplay,
-  getDisplayProcessor,
   getFlotPairsConstant,
   PanelEvents,
   formattedValueToString,
@@ -43,6 +41,7 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { CoreEvents } from 'app/types';
 import { DataFrameView } from '@grafana/data/src/dataframe';
+import { FieldDisplay, getDisplayProcessor } from '@grafana/data/src/field';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 

@@ -9,17 +9,10 @@ import { StatPanelOptions } from './types';
 import { DataLinksContextMenu } from '@grafana/ui/src/editors';
 import { VizRepeater, BigValue, BigValueSparkline, BigValueGraphMode } from '@grafana/ui/src/visualizations';
 
-import {
-  PanelProps,
-  getFieldDisplayValues,
-  FieldDisplay,
-  ReducerID,
-  getDisplayValueAlignmentFactors,
-  DisplayValueAlignmentFactors,
-  VizOrientation,
-} from '@grafana/data';
+import { PanelProps, ReducerID, DisplayValueAlignmentFactors, VizOrientation } from '@grafana/data';
 
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { FieldDisplay, getFieldDisplayValues, getDisplayValueAlignmentFactors } from '@grafana/data/src/field';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   renderValue = (

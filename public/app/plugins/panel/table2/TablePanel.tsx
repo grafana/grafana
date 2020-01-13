@@ -3,9 +3,10 @@ import React, { Component } from 'react';
 
 // Types
 import { Table } from '@grafana/ui';
-import { PanelProps, applyFieldOverrides } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { config } from 'app/core/config';
+import { applyFieldOverrides } from '@grafana/data/src/field';
 
 interface Props extends PanelProps<Options> {}
 

@@ -44,6 +44,7 @@ import * as emotion from 'emotion';
 
 import * as grafanaDataRaw from '@grafana/data';
 import * as grafanaDataDataframe from '@grafana/data/src/dataframe';
+import * as grafanaDataField from '@grafana/data/src/field';
 
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaUIEditors from '@grafana/ui/src/editors';
@@ -73,6 +74,7 @@ let grafanaData = grafanaDataRaw as any;
 grafanaData = {
   ...grafanaData,
   ...grafanaDataDataframe,
+  ...grafanaDataField,
 };
 
 // rxjs

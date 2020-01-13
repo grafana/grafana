@@ -10,8 +10,9 @@ import { DataLinksContextMenu } from '@grafana/ui/src/editors';
 // Types
 import { GaugeOptions } from './types';
 import { Gauge, VizRepeater } from '@grafana/ui/src/visualizations';
-import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps } from '@grafana/data';
+import { VizOrientation, PanelProps } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { FieldDisplay, getFieldDisplayValues } from '@grafana/data/src/field';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {

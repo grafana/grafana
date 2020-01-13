@@ -5,7 +5,6 @@ import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
 import mdx from './Table.mdx';
 import {
-  applyFieldOverrides,
   ConfigOverrideRule,
   DataFrame,
   FieldMatcherID,
@@ -15,6 +14,7 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { MutableDataFrame } from '@grafana/data/src/dataframe';
+import { applyFieldOverrides } from '@grafana/data/src/field';
 
 export default {
   title: 'Visualizations/Table',

@@ -8,14 +8,7 @@ import {
   FieldDisplayEditor,
   FieldPropertiesEditor,
 } from '@grafana/ui/src/editors';
-import {
-  PanelEditorProps,
-  FieldDisplayOptions,
-  ThresholdsConfig,
-  ValueMapping,
-  FieldConfig,
-  DataLink,
-} from '@grafana/data';
+import { PanelEditorProps, ThresholdsConfig, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { GaugeOptions } from './types';
 import {
@@ -23,6 +16,7 @@ import {
   getDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
 import { config } from 'app/core/config';
+import { FieldDisplayOptions } from '@grafana/data/src/field';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;

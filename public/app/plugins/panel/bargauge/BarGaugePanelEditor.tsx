@@ -9,14 +9,7 @@ import {
   FieldDisplayEditor,
   FieldPropertiesEditor,
 } from '@grafana/ui/src/editors';
-import {
-  ThresholdsConfig,
-  ValueMapping,
-  FieldDisplayOptions,
-  FieldConfig,
-  DataLink,
-  PanelEditorProps,
-} from '@grafana/data';
+import { ThresholdsConfig, ValueMapping, FieldConfig, DataLink, PanelEditorProps } from '@grafana/data';
 import { BarGaugeOptions, displayModes } from './types';
 import { orientationOptions } from '../gauge/types';
 import {
@@ -24,6 +17,7 @@ import {
   getCalculationValueDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
 import { config } from 'app/core/config';
+import { FieldDisplayOptions } from '@grafana/data/src/field';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
   onThresholdsChanged = (thresholds: ThresholdsConfig) => {

@@ -10,14 +10,7 @@ import {
   FieldPropertiesEditor,
 } from '@grafana/ui/src/editors';
 
-import {
-  ThresholdsConfig,
-  ValueMapping,
-  FieldConfig,
-  DataLink,
-  PanelEditorProps,
-  FieldDisplayOptions,
-} from '@grafana/data';
+import { ThresholdsConfig, ValueMapping, FieldConfig, DataLink, PanelEditorProps } from '@grafana/data';
 
 import { StatPanelOptions, colorModes, graphModes, justifyModes } from './types';
 import { orientationOptions } from '../gauge/types';
@@ -27,6 +20,7 @@ import {
   getCalculationValueDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
 import { config } from 'app/core/config';
+import { FieldDisplayOptions } from '@grafana/data/src/field';
 
 export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOptions>> {
   onThresholdsChanged = (thresholds: ThresholdsConfig) => {

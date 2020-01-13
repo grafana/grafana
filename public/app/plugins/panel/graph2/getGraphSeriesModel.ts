@@ -1,14 +1,12 @@
 import { colors } from '@grafana/ui';
 import {
   getFlotPairs,
-  getDisplayProcessor,
   NullValueMode,
   reduceField,
   FieldType,
   DisplayValue,
   GraphSeriesXY,
   DataFrame,
-  FieldDisplayOptions,
   getSeriesTimeStep,
   TimeZone,
   hasMsResolution,
@@ -21,6 +19,7 @@ import {
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 import { getTimeField } from '@grafana/data/src/dataframe';
+import { FieldDisplayOptions, getDisplayProcessor } from '@grafana/data/src/field';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],

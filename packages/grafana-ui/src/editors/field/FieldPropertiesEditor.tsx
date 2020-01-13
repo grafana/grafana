@@ -7,16 +7,8 @@ import { FormLabel } from '../../components/FormLabel/FormLabel';
 import { UnitPicker } from '../../components/UnitPicker/UnitPicker';
 
 // Types
-import {
-  VAR_SERIES_NAME,
-  VAR_FIELD_NAME,
-  VAR_CALC,
-  VAR_CELL_PREFIX,
-  toIntegerOrUndefined,
-  FieldConfig,
-  toFloatOrUndefined,
-  toNumberString,
-} from '@grafana/data';
+import { toIntegerOrUndefined, FieldConfig, toFloatOrUndefined, toNumberString } from '@grafana/data';
+import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CELL_PREFIX, VAR_CALC } from '@grafana/data/src/field';
 
 const labelWidth = 6;
 

@@ -1,4 +1,4 @@
-import { LogsModel, GraphSeriesXY, DataFrame, FieldType, TimeZone, getDisplayProcessor } from '@grafana/data';
+import { LogsModel, GraphSeriesXY, DataFrame, FieldType, TimeZone } from '@grafana/data';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
@@ -6,6 +6,7 @@ import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 import { config } from 'app/core/config';
 import { toDataFrame } from '@grafana/data/src/dataframe';
+import { getDisplayProcessor } from '@grafana/data/src/field';
 
 export class ResultProcessor {
   constructor(

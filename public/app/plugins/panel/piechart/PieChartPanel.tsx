@@ -6,7 +6,7 @@ import { config } from 'app/core/config';
 
 // Components
 import { PieChart } from '@grafana/ui';
-import { getFieldDisplayValues } from '@grafana/data';
+import { getFieldDisplayValues } from '@grafana/data/src/field';
 
 // Types
 import { PieChartOptions } from './types';

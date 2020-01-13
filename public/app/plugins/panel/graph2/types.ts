@@ -1,10 +1,11 @@
 import { LegendOptions } from '@grafana/ui';
 import { GraphTooltipOptions } from '@grafana/ui/src/visualizations';
-import { YAxis, FieldDisplayOptions } from '@grafana/data';
+import { YAxis } from '@grafana/data';
 
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 // TODO move out from single stat
 import { standardFieldDisplayOptions } from '../stat/types';
+import { FieldDisplayOptions } from '@grafana/data/src/field';
 
 export interface SeriesOptions {
   color?: string;

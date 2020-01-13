@@ -1,6 +1,7 @@
-import { VizOrientation, FieldDisplayOptions, SelectableValue } from '@grafana/data';
+import { VizOrientation, SelectableValue } from '@grafana/data';
 import { SingleStatBaseOptions } from '@grafana/ui';
 import { standardFieldDisplayOptions } from '../stat/types';
+import { FieldDisplayOptions } from '@grafana/data/src/field';
 
 export interface GaugeOptions extends SingleStatBaseOptions {
   showThresholdLabels: boolean;

@@ -6,15 +6,10 @@ import { config } from 'app/core/config';
 
 import { DataLinksContextMenu } from '@grafana/ui/src/editors';
 import { BarGaugeOptions } from './types';
-import {
-  getFieldDisplayValues,
-  FieldDisplay,
-  PanelProps,
-  getDisplayValueAlignmentFactors,
-  DisplayValueAlignmentFactors,
-} from '@grafana/data';
+import { PanelProps, DisplayValueAlignmentFactors } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { BarGauge, VizRepeater } from '@grafana/ui/src/visualizations';
+import { FieldDisplay, getFieldDisplayValues, getDisplayValueAlignmentFactors } from '@grafana/data/src/field';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (

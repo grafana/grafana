@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { DisplayValue, VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { DisplayValue, VizOrientation, ThresholdsMode, Field, FieldType } from '@grafana/data';
 import {
   BarGauge,
   Props,
@@ -12,6 +12,7 @@ import {
   BarGaugeDisplayMode,
 } from './BarGauge';
 import { getTheme } from '../../themes';
+import { getDisplayProcessor } from '@grafana/data/src/field';
 
 const green = '#73BF69';
 const orange = '#FF9830';

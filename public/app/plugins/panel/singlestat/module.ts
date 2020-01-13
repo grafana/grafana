@@ -18,7 +18,6 @@ import {
   ReducerID,
   LegacyResponseData,
   getFlotPairs,
-  getDisplayProcessor,
   getColorFromHexRgbOrName,
   PanelEvents,
   formattedValueToString,
@@ -31,6 +30,7 @@ import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { getDisplayProcessor } from '@grafana/data/src/field';
 
 const BASE_FONT_SIZE = 38;
 

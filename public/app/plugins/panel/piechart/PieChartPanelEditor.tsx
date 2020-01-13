@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
 import { PanelOptionsGrid, PanelOptionsGroup } from '@grafana/ui';
 import { ValueMappingsEditor, FieldDisplayEditor, FieldPropertiesEditor } from '@grafana/ui/src/editors';
-import { ValueMapping, FieldConfig, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
+import { ValueMapping, FieldConfig, PanelEditorProps } from '@grafana/data';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';
+import { FieldDisplayOptions } from '@grafana/data/src/field';
 
 export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChartOptions>> {
   onValueMappingsChanged = (mappings: ValueMapping[]) => {

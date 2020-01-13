@@ -6,11 +6,11 @@ import {
   formattedValueToString,
   FieldConfig,
   ThresholdsMode,
-  getActiveThreshold,
   Threshold,
 } from '@grafana/data';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
+import { getActiveThreshold } from '@grafana/data/src/field';
 
 export interface Props extends Themeable {
   height: number;

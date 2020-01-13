@@ -1,4 +1,5 @@
-import { GraphSeriesValue, Field, formattedValueToString, getDisplayProcessor } from '@grafana/data';
+import { GraphSeriesValue, Field, formattedValueToString } from '@grafana/data';
+import { getDisplayProcessor } from '@grafana/data/src/field';
 
 /**
  * Returns index of the closest datapoint BEFORE hover position

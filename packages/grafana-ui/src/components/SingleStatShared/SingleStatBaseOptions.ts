@@ -4,20 +4,18 @@ import omit from 'lodash/omit';
 import {
   fieldReducers,
   Threshold,
-  sortThresholds,
   FieldConfig,
   ReducerID,
   ValueMapping,
   MappingType,
   VizOrientation,
   PanelModel,
-  FieldDisplayOptions,
   ConfigOverrideRule,
   ThresholdsMode,
   ThresholdsConfig,
-  validateFieldConfig,
   FieldColorMode,
 } from '@grafana/data';
+import { FieldDisplayOptions, validateFieldConfig, sortThresholds } from '@grafana/data/src/field';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;

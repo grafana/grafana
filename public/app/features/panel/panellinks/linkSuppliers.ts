@@ -1,7 +1,8 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { FieldDisplay, LinkModelSupplier, Labels, ScopedVars, ScopedVar, Field, LinkModel } from '@grafana/data';
+import { LinkModelSupplier, Labels, ScopedVars, ScopedVar, Field, LinkModel } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
 import { getTimeField } from '@grafana/data/src/dataframe';
+import { FieldDisplay } from '@grafana/data/src/field';
 
 interface SeriesVars {
   name?: string;
