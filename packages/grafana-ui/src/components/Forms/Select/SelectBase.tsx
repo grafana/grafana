@@ -31,6 +31,7 @@ export interface SelectCommonProps<T> {
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
   onChange: (value: SelectableValue<T>) => {} | void;
+  onKeyDown?: (event: React.KeyboardEvent) => void;
   placeholder?: string;
   disabled?: boolean;
   isSearchable?: boolean;
@@ -86,6 +87,7 @@ export interface CustomControlProps<T> {
   onBlur: () => void;
   disabled: boolean;
   invalid: boolean;
+  isFocused: boolean;
 }
 
 export type ControlComponent<T> = React.ComponentType<CustomControlProps<T>>;
@@ -111,6 +113,7 @@ const CustomControl = (props: any) => {
       onBlur: onMenuClose,
       disabled: !!selectProps.disabled,
       invalid: !!selectProps.invalid,
+      isFocused: isFocused,
     });
   }
 
@@ -134,6 +137,7 @@ export function SelectBase<T>({
   options = [],
   onChange,
   onBlur,
+  onKeyDown,
   onCloseMenu,
   onOpenMenu,
   placeholder = 'Choose',
@@ -214,6 +218,7 @@ export function SelectBase<T>({
     options,
     onChange,
     onBlur,
+    onKeyDown,
     menuShouldScrollIntoView: false,
     renderControl,
   };

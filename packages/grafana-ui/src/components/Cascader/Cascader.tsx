@@ -1,197 +1,143 @@
 import React from 'react';
-import { Input } from '../Forms/Input/Input';
+// import { Input } from '../Forms/Input/Input';
 import { Icon } from '../Icon/Icon';
 // @ts-ignore
-import RCCascader, { CascaderOption } from 'rc-cascader';
-// import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
-import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
-import { useTheme } from '../../themes';
-// import { getInputStyles } from '../Forms/Input/getInputStyles';
+import RCCascader from 'rc-cascader';
 
-const searchStyles = {
-  container: css`
-    position: absolute;
-    width: 100px;
-    margin-top: 5px;
-    padding: 3px 0;
-  `,
-  item: css`
-    &: hover {
-      cursor: pointer;
-    }
-  `,
-  selected: css`
-    text-decoration: underline;
-  `,
-};
+import { Select } from '../Forms/Select/Select';
+import { FormInputSize } from '../Forms/types';
+import { Input } from '../Forms/Input/Input';
+import { SelectableValue } from '@grafana/data';
 
-interface CascaderState {
-  inputValue: string;
-  search: boolean;
-  searchResults: Array<{
-    path: string;
-    value: any[];
-  }>;
-  popupVisible: boolean;
-  selected: number;
-}
+// import { CustomControlProps, SelectBaseProps } from '../Forms/Select/SelectBase';
+
 interface CascaderProps {
   separator?: string;
-  options: CascaderOption[];
-  onSelect(val: CascaderOption): void;
+  options: CascadeOption[];
+  onSelect(val: CascadeOption): void;
+  size?: FormInputSize;
+  defaultValue?: any[];
+}
+
+interface CascaderState {
+  isSearching: boolean;
+  hierachicalOptions: CascadeOption[];
+  searchableOptions: Array<SelectableValue<string[]>>;
+  focusCascade: boolean;
+  //Array for cascade navigation
+  rcValue?: SelectableValue<string[]>;
+  activeLabel?: string;
+}
+
+interface CascadeOption {
+  value: any;
+  label: string;
+  children?: CascadeOption[];
 }
 
 export class Cascader extends React.PureComponent<CascaderProps, CascaderState> {
-  private flatOptions: { [key: string]: any[] };
-
   constructor(props: CascaderProps) {
     super(props);
     this.state = {
-      inputValue: '',
-      search: false,
-      searchResults: [],
-      popupVisible: false,
-      selected: 0,
+      isSearching: false,
+      focusCascade: false,
+      hierachicalOptions: props.options,
+      searchableOptions: this.flattenOptions(props.options),
+      rcValue: [],
+      activeLabel: '',
     };
-    this.flatOptions = this.flattenOptions(props.options);
   }
 
-  search(searchStr: string) {
-    const results = [];
-    for (const key in this.flatOptions) {
-      if (key.match(searchStr) && searchStr !== '') {
-        results.push({ path: key, value: this.flatOptions[key] });
-      }
-    }
-    return results;
-  }
-
-  flattenOptions = (options: CascaderOption[], optionPath: CascaderOption[] = []) => {
-    const stringArrayMap: { [key: string]: any[] } = {};
+  flattenOptions = (options: CascadeOption[], optionPath: CascadeOption[] = []) => {
+    let selectOptions: Array<SelectableValue<string[]>> = [];
     for (const option of options) {
       const cpy = [...optionPath];
-      //   console.log(cpy);
       cpy.push(option);
       if (!option.children) {
-        const locationString = cpy.map(o => o.label).join(this.props.separator || ' / ');
-        stringArrayMap[locationString] = cpy.map(o => o.value);
-        // console.log('out of children: ', locationString);
+        selectOptions.push({
+          label: cpy.map(o => o.label).join(this.props.separator || ' / '),
+          value: cpy.map(o => o.value),
+        });
       } else {
-        // console.log('Next level');
-        Object.assign(stringArrayMap, this.flattenOptions(option.children, cpy));
+        selectOptions = [...selectOptions, ...this.flattenOptions(option.children, cpy)];
       }
     }
-
-    return stringArrayMap;
-    // console.log(stringArrayMap);
+    return selectOptions;
   };
-  onInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  //For rc-cascader
+  onChange = (value: string[], selectedOptions: CascadeOption[]) => {
     this.setState({
-      inputValue: e.target.value,
-      popupVisible: false,
-      search: true,
-      selected: 0,
-      searchResults: this.search(e.target.value),
+      rcValue: value,
+      activeLabel: selectedOptions.map(o => o.label).join(this.props.separator || ' / '),
     });
 
-    console.log(this.search(e.target.value));
+    this.props.onSelect(selectedOptions[selectedOptions.length - 1]);
   };
 
-  onChange = (value: CascaderOption, selectedOptions: CascaderOption[]) => {
+  onSelect = (obj: SelectableValue<string[]>) => {
     this.setState({
-      inputValue: selectedOptions.map(o => o.label).join(this.props.separator || ' / '),
-      search: false,
-      searchResults: [],
+      activeLabel: obj.label,
+      rcValue: obj.value,
     });
-    this.props.onSelect(value);
   };
 
-  onSearchSelect = (path: string, value: any[]) => {
-    this.setState({ inputValue: path, search: false, searchResults: [] });
-    this.props.onSelect(value);
+  onClick = () => {
+    this.setState({
+      focusCascade: true,
+    });
   };
 
-  onPopupVisibleChange = (popupVisible: boolean) => {
-    this.setState({ popupVisible, search: popupVisible ? false : this.state.search });
+  onBlur = () => {
+    this.setState({
+      isSearching: false,
+    });
   };
 
-  onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      this.setState({
-        selected: this.state.selected ? this.state.selected - 1 : 0,
-      });
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      this.setState({
-        selected:
-          this.state.selected === this.state.searchResults.length - 1
-            ? this.state.searchResults.length - 1
-            : this.state.selected + 1,
-      });
-    }
+  onKeyDown = (e: React.FormEvent<HTMLInputElement>) => {
+    console.log('Key down');
+    this.setState({
+      focusCascade: false,
+      isSearching: true,
+    });
   };
 
   render() {
-    const { inputValue, popupVisible, search } = this.state;
-
-    console.log(this.state.selected);
+    const { size } = this.props;
+    const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
     return (
-      <div style={{ position: 'relative' }}>
-        <RCCascader
-          options={this.props.options}
-          popupVisible={popupVisible}
-          onPopupVisibleChange={this.onPopupVisibleChange}
-          onChange={this.onChange}
-        >
-          <Input
-            value={inputValue}
-            suffix={<Icon name="caret-down" />}
-            onChange={this.onInput}
-            onKeyDown={this.onKeyDown}
-          />
-        </RCCascader>
-        {search && this.state.searchResults.length ? (
-          <SearchResults
-            selected={this.state.selected}
-            searchResults={this.state.searchResults}
-            onSelect={this.onSearchSelect}
+      <div>
+        {isSearching ? (
+          <Select
+            // isOpen={isSearching}
+            // renderControl={React.forwardRef<any, CustomControlProps<any>>((props, ref) => {
+            //   return <Input ref={ref} onClick={this.onClick} onBlur={this.onBlur} onKeyDown={this.onKeyDown} />;
+            // })}
+            defaultValue={activeLabel}
+            autoFocus={!focusCascade}
+            onChange={this.onSelect}
+            onBlur={this.onBlur}
+            options={searchableOptions}
+            size={size || 'md'}
+            // onKeyDown={this.onKeyDown}
           />
         ) : (
-          ''
+          <RCCascader
+            onChange={this.onChange}
+            onClick={this.onClick}
+            options={this.props.options}
+            isFocused={focusCascade}
+            value={rcValue}
+          >
+            <Input
+              value={activeLabel}
+              onChange={this.onKeyDown}
+              size={size || 'md'}
+              suffix={<Icon name="caret-down" />}
+            />
+          </RCCascader>
         )}
       </div>
     );
   }
 }
-
-interface SearchResultProps {
-  onSelect(path: string, val: any[]): void;
-  searchResults: Array<{
-    path: string;
-    value: any[];
-  }>;
-  selected: number;
-}
-
-const SearchResults = (props: SearchResultProps) => {
-  const theme = useTheme();
-  const styles = sharedInputStyle(theme);
-  const focusStyle = getFocusStyle(theme);
-  return (
-    <div className={cx(searchStyles.container, styles)}>
-      {props.searchResults.map((result, i) => (
-        <div
-          className={cx(searchStyles.item, focusStyle, props.selected === i ? searchStyles.selected : '')}
-          key={result.path}
-          onClick={() => {
-            props.onSelect(result.path, result.value);
-          }}
-        >
-          {result.path}
-        </div>
-      ))}
-    </div>
-  );
-};
