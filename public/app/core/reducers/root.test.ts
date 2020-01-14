@@ -15,6 +15,7 @@ jest.mock('@grafana/runtime', () => ({
       user: {},
     },
   },
+  DataSourceWithBackend: jest.fn(),
 }));
 
 describe('recursiveCleanState', () => {
