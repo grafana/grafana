@@ -1,14 +1,23 @@
 import React, { FC, ReactNode } from 'react';
-import { useTheme } from '../../themes';
-import { getTabsStyle } from './styles';
+import { stylesFactory, useTheme } from '../../themes';
+import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   children: ReactNode;
 }
 
+const getTabContentStyle = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    tabContent: css`
+      padding: ${theme.spacing.xs} 0;
+    `,
+  };
+});
+
 export const TabContent: FC<Props> = ({ children }) => {
   const theme = useTheme();
-  const styles = getTabsStyle(theme);
+  const styles = getTabContentStyle(theme);
 
   return <div className={styles.tabContent}>{children}</div>;
 };
