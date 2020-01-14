@@ -48,6 +48,7 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 
 		response.series = series
+		response.Period = queries[id].Period
 		response.Expression = queries[id].UsedExpression
 		response.RefId = queries[id].RefId
 		response.Id = queries[id].Id

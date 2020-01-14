@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -13,8 +14,9 @@ import (
 // has more than one statistic defined, one cloudwatchQuery will be created for each statistic.
 // If the query doesn't have an Id defined by the user, we'll give it an with format `query[RefId]`. In the case
 // the incoming query had more than one stat, it will ge an id like `query[RefId]_[StatName]`, eg queryC_Average
-func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQueries []*requestQuery) (map[string]*cloudWatchQuery, error) {
+func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(startTime time.Time, endTime time.Time, requestQueries []*requestQuery) (map[string]*cloudWatchQuery, error) {
 	cloudwatchQueries := make(map[string]*cloudWatchQuery)
+	batchContainsWildcard := false
 	for _, requestQuery := range requestQueries {
 		for _, stat := range requestQuery.Statistics {
 			id := requestQuery.Id
@@ -26,19 +28,21 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 			}
 
 			query := &cloudWatchQuery{
-				Id:         id,
-				RefId:      requestQuery.RefId,
-				Region:     requestQuery.Region,
-				Namespace:  requestQuery.Namespace,
-				MetricName: requestQuery.MetricName,
-				Dimensions: requestQuery.Dimensions,
-				Stats:      *stat,
-				Period:     requestQuery.Period,
-				Alias:      requestQuery.Alias,
-				Expression: requestQuery.Expression,
-				ReturnData: requestQuery.ReturnData,
-				MatchExact: requestQuery.MatchExact,
+				Id:              id,
+				RefId:           requestQuery.RefId,
+				Region:          requestQuery.Region,
+				Namespace:       requestQuery.Namespace,
+				MetricName:      requestQuery.MetricName,
+				Dimensions:      requestQuery.Dimensions,
+				Stats:           *stat,
+				RequestedPeriod: requestQuery.Period,
+				Alias:           requestQuery.Alias,
+				Expression:      requestQuery.Expression,
+				ReturnData:      requestQuery.ReturnData,
+				MatchExact:      requestQuery.MatchExact,
 			}
+
+			batchContainsWildcard = batchContainsWildcard || query.isSearchExpression()
 
 			if _, ok := cloudwatchQueries[id]; ok {
 				return nil, fmt.Errorf("Error in query %s. Query id %s is not unique", query.RefId, query.Id)
@@ -46,6 +50,11 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 
 			cloudwatchQueries[id] = query
 		}
+	}
+
+	noOfQueries := len(cloudwatchQueries)
+	for _, query := range cloudwatchQueries {
+		query.setPeriod(startTime, endTime, batchContainsWildcard, noOfQueries)
 	}
 
 	return cloudwatchQueries, nil
@@ -74,6 +83,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		partialData := false
 		queryMeta := []struct {
 			Expression, ID string
+			Period         int
 		}{}
 
 		for _, response := range responses {
@@ -82,9 +92,11 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 			partialData = partialData || response.PartialData
 			queryMeta = append(queryMeta, struct {
 				Expression, ID string
+				Period         int
 			}{
 				Expression: response.Expression,
 				ID:         response.Id,
+				Period:     response.Period,
 			})
 		}
 
