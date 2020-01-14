@@ -181,7 +181,7 @@ export class VariableSrv {
     return selected;
   }
 
-  validateVariableSelectionState(variable: any) {
+  validateVariableSelectionState(variable: any, defaultValue?: string) {
     if (!variable.current) {
       variable.current = {};
     }
@@ -205,17 +205,33 @@ export class VariableSrv {
 
       return variable.setValue(selected);
     } else {
-      const currentOption: any = _.find(variable.options, {
+      let option: any = undefined;
+
+      // 1. find the current value
+      option = _.find(variable.options, {
         text: variable.current.text,
       });
-      if (currentOption) {
-        return variable.setValue(currentOption);
-      } else {
-        if (!variable.options.length) {
-          return Promise.resolve();
+      if (option) {
+        return variable.setValue(option);
+      }
+
+      // 2. find the default value
+      if (defaultValue) {
+        option = _.find(variable.options, {
+          text: defaultValue,
+        });
+        if (option) {
+          return variable.setValue(option);
         }
+      }
+
+      // 3. use the first value
+      if (variable.options) {
         return variable.setValue(variable.options[0]);
       }
+
+      // 4... give up
+      return Promise.resolve();
     }
   }
 
