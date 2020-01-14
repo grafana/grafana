@@ -79,10 +79,9 @@ export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<vo
   };
 }
 
-export function deleteDataSource(): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const dataSource = getStore().dataSources.dataSource;
-    await getBackendSrv().delete(`/api/datasources/${dataSource.id}`);
+export function deleteDataSource(id: number): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().delete(`/api/datasources/${id}`);
     await updateFrontendSettings();
     dispatch(updateLocation({ path: '/datasources' }));
   };
