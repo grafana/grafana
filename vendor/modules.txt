@@ -131,6 +131,12 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/snappy
 # github.com/google/flatbuffers v1.11.0
 github.com/google/flatbuffers/go
+# github.com/google/go-cmp v0.3.1
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
 github.com/gopherjs/gopherjs/js
 # github.com/gorilla/websocket v1.4.1
@@ -166,8 +172,6 @@ github.com/json-iterator/go
 github.com/jtolds/gls
 # github.com/jung-kurt/gofpdf v1.10.1
 github.com/jung-kurt/gofpdf
-# github.com/kinbiko/jsonassert v1.0.1
-github.com/kinbiko/jsonassert
 # github.com/klauspost/compress v1.4.1
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip
