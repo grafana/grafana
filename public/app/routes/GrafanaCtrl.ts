@@ -27,6 +27,7 @@ import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { VariableSrv } from 'app/features/templating/variable_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 import { AppEvent, AppEvents } from '@grafana/data';
@@ -47,7 +48,8 @@ export class GrafanaCtrl {
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
     dashboardSrv: DashboardSrv,
-    angularLoader: AngularLoader
+    angularLoader: AngularLoader,
+    variableSrv: VariableSrv
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
@@ -62,6 +64,21 @@ export class GrafanaCtrl {
     setLocationSrv({
       update: (opt: LocationUpdate) => {
         store.dispatch(updateLocation(opt));
+
+        // Checked for changed template variables and notify the variableSrv
+        if (opt.query) {
+          if (Object.keys(opt.query).find(k => k.startsWith('var-'))) {
+            // Need to wait for the URL to actually update
+            setTimeout(() => {
+              const dash = dashboardSrv.getCurrent();
+              if (dash) {
+                console.log('TODO tell the dashboard to check vars', dash);
+                variableSrv.init(dash); // Update the dashboard
+                console.log('hymmm... that did not do anything either :(', variableSrv);
+              }
+            }, 10);
+          }
+        }
       },
     });
 

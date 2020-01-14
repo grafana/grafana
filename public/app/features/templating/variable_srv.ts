@@ -45,6 +45,7 @@ export class VariableSrv {
     }
 
     const queryParams = this.$location.search();
+    console.log('QUERY', queryParams);
     return this.$q
       .all(
         this.variables.map(variable => {
