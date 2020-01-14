@@ -167,6 +167,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onClick={this.onClick}
             options={this.props.options}
             isFocused={focusCascade}
+            onBlur={this.onBlur}
             value={rcValue}
           >
             <div>
