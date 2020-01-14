@@ -1,42 +1,81 @@
-import React, { FunctionComponent, ReactNode } from 'react';
+import React, { PureComponent, FunctionComponent, ReactNode } from 'react';
 
-export interface Props {
-  resourceName: string;
-  imageUrl?: string;
-  description?: string;
-  url?: string;
-  type?: string;
-  isDefault?: boolean;
-  actions?: ReactNode;
+export interface ResourceCardNameProps {
+  value: string;
 }
 
-const ResourceCardBase: FunctionComponent<Props> = props => {
-  const { resourceName, imageUrl, description, url, type, isDefault, actions } = props;
-
-  return (
-    <div className="resource-card">
-      {imageUrl && <img className="resource-card-logo" src={imageUrl} alt={resourceName} />}
-      <div className="resource-card-text-wrapper">
-        <span className="resource-card-text">
-          {resourceName}
-          {isDefault && (
-            <>
-              &nbsp;<span className="btn btn-secondary btn-mini">default</span>
-            </>
-          )}
-        </span>
-        {description && <span className="resource-card-desc">{description}</span>}
-        {(type || url) && (
-          <span className="resource-card-desc">
-            {type && <>Type:&nbsp;{type}</>}
-            {type && url && ' | '}
-            {url && <>URL:&nbsp;{url}</>}
-          </span>
-        )}
-      </div>
-      {actions && <div className="resource-card-actions">{actions}</div>}
-    </div>
-  );
+export const ResourceCardName: FunctionComponent<ResourceCardNameProps> = ({ value }) => {
+  return <span className="resource-card-text">{value}</span>;
 };
 
-export const ResourceCard = ResourceCardBase;
+export interface ResourceCardDescriptionProps {
+  value: string;
+}
+
+export const ResourceCardDescription: FunctionComponent<ResourceCardDescriptionProps> = ({ value }) => {
+  return <span className="resource-card-desc">{value}</span>;
+};
+
+export interface ResourceCardFigureProps {
+  src: string;
+  alt: string;
+}
+
+export const ResourceCardFigure: FunctionComponent<ResourceCardFigureProps> = ({ src, alt }) => {
+  return <img className="resource-card-logo" src={src} alt={alt} />;
+};
+
+export interface ResourceCardInfoItemProps {
+  keyName: string;
+  value: string;
+}
+
+export const ResourceCardInfoItem: FunctionComponent<ResourceCardInfoItemProps> = ({ keyName, value }) => {
+  return keyName && value ? (
+    <span className="resource-card-desc">
+      {keyName}: {value}
+    </span>
+  ) : null;
+};
+
+export interface ResourceCardActionsProps {
+  actions: JSX.Element[];
+}
+
+export const ResourceCardActions: FunctionComponent<ResourceCardActionsProps> = ({ actions }) => {
+  return <div className="resource-card-actions">{React.Children.map(actions, (action: JSX.Element) => action)}</div>;
+};
+
+export interface Props {
+  name: JSX.Element;
+  description?: JSX.Element;
+  figure?: JSX.Element;
+  infoItems?: JSX.Element[];
+  actions?: JSX.Element[];
+  children?: ReactNode;
+}
+
+export class ResourceCard extends PureComponent<Props> {
+  static Name = ResourceCardName;
+  static Description = ResourceCardDescription;
+  static Figure = ResourceCardFigure;
+  static InfoItem = ResourceCardInfoItem;
+  static Actions = ResourceCardActions;
+
+  render() {
+    const { name, description, figure, infoItems, actions, children } = this.props;
+
+    return (
+      <div className="resource-card">
+        {figure}
+        <div className="resource-card-text-wrapper">
+          {name}
+          {description}
+          {infoItems}
+          {children}
+        </div>
+        {actions && <ResourceCardActions actions={actions} />}
+      </div>
+    );
+  }
+}
