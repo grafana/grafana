@@ -101,7 +101,11 @@ describe('getLinksFromLogsField', () => {
                     url: 'http://go/${__cell.Power.text}',
                   },
                   {
-                    title: 'By Index (not yet supported)',
+                    title: 'By Index',
+                    url: 'http://go/${__cell.1}',
+                  },
+                  {
+                    title: 'By array index (not yet supported)',
                     url: 'http://go/${__cell[1]}',
                   },
                   {
@@ -158,8 +162,12 @@ describe('getLinksFromLogsField', () => {
           "title": "Text (no suffix)",
         },
         Object {
+          "href": "http://go/100.200 kW",
+          "title": "By Index",
+        },
+        Object {
           "href": "http://go/\${__cell[1]}",
-          "title": "By Index (not yet supported)",
+          "title": "By array index (not yet supported)",
         },
         Object {
           "href": "http://go/\${__cell.XYZ}",

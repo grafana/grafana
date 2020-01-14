@@ -6,7 +6,7 @@ import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
 import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
-import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
+import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars, FieldType } from '@grafana/data';
 
 const timeRangeVars = [
   {
@@ -110,15 +110,50 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
     })),
   ];
 };
+
+const getCellVars = (dataFrames: DataFrame[]) => {
+  const suggestions: VariableSuggestion[] = [];
+  const keys: KeyValue<true> = {};
+  for (const df of dataFrames) {
+    for (const f of df.fields) {
+      if (keys[f.name]) {
+        continue;
+      }
+      suggestions.push({
+        value: `__cell.${f.name}`,
+        label: `${f.name}`,
+        documentation: `Formatted value for ${f.name} on the same row`,
+        origin: VariableOrigin.Cell,
+      });
+      if (f.type === FieldType.number) {
+        suggestions.push({
+          value: `__cell.${f.name}.numeric`,
+          label: `${f.name} (Numeric)`,
+          documentation: `Numeric value for ${f.name} on the same row`,
+          origin: VariableOrigin.Cell,
+        });
+      }
+      keys[f.name] = true;
+    }
+  }
+  return suggestions;
+};
+
 export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const fieldVars = getFieldVars(dataFrames);
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
-  return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
+  return [
+    ...seriesVars,
+    ...getFieldVars(dataFrames),
+    ...valueVars,
+    valueTimeVar,
+    ...getCellVars(dataFrames),
+    ...getPanelLinksVariableSuggestions(),
+  ];
 };
 
 export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
