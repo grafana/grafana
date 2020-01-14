@@ -5,6 +5,7 @@ import { e2e } from '@grafana/e2e';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './runStreams';
 import { getBackendSrv } from '@grafana/runtime';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export const defaultPulse: any = {
   timeStep: 60,
@@ -29,6 +30,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   newPointValue: number;
   newPointTime: any;
   selectedPoint: any;
+  digest: (promise: Promise<any>) => Promise<any>;
 
   showLabels = false;
   selectors: typeof e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
@@ -37,6 +39,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
 
+    this.digest = promiseToDigest($scope);
     this.target.scenarioId = this.target.scenarioId || 'random_walk';
     this.scenarioList = [];
     this.newPointTime = dateTime();
@@ -73,12 +76,14 @@ export class TestDataQueryCtrl extends QueryCtrl {
   }
 
   $onInit() {
-    return getBackendSrv()
-      .get('/api/tsdb/testdata/scenarios')
-      .then((res: any) => {
-        this.scenarioList = res;
-        this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
-      });
+    return this.digest(
+      getBackendSrv()
+        .get('/api/tsdb/testdata/scenarios')
+        .then((res: any) => {
+          this.scenarioList = res;
+          this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
+        })
+    );
   }
 
   scenarioChanged() {

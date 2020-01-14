@@ -6,6 +6,7 @@ import { dateMath, dateTime } from '@grafana/data';
 import { PanelEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { getBackendSrv } from '@grafana/runtime';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -27,6 +28,7 @@ class AlertListPanel extends PanelCtrl {
   alertHistory: any = [];
   noAlertsMessage: string;
   templateSrv: string;
+  digest: (promise: Promise<any>) => Promise<any>;
 
   // Set and populate defaults
   panelDefaults: any = {
@@ -45,6 +47,7 @@ class AlertListPanel extends PanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
+    this.digest = promiseToDigest($scope);
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
     this.templateSrv = this.$injector.get('templateSrv');
@@ -120,20 +123,22 @@ class AlertListPanel extends PanelCtrl {
     params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
     params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
 
-    return getBackendSrv()
-      .get(`/api/annotations`, params)
-      .then(res => {
-        this.alertHistory = _.map(res, al => {
-          al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
-          al.stateModel = alertDef.getStateDisplayModel(al.newState);
-          al.info = alertDef.getAlertAnnotationInfo(al);
-          return al;
-        });
+    return this.digest(
+      getBackendSrv()
+        .get(`/api/annotations`, params)
+        .then(res => {
+          this.alertHistory = _.map(res, al => {
+            al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
+            al.stateModel = alertDef.getStateDisplayModel(al.newState);
+            al.info = alertDef.getAlertAnnotationInfo(al);
+            return al;
+          });
 
-        this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
+          this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
 
-        return this.alertHistory;
-      });
+          return this.alertHistory;
+        })
+    );
   }
 
   getCurrentAlertState() {
@@ -161,25 +166,27 @@ class AlertListPanel extends PanelCtrl {
       params.dashboardTag = this.panel.dashboardTags;
     }
 
-    return getBackendSrv()
-      .get(`/api/alerts`, params)
-      .then(res => {
-        this.currentAlerts = this.sortResult(
-          _.map(res, al => {
-            al.stateModel = alertDef.getStateDisplayModel(al.state);
-            al.newStateDateAgo = dateTime(al.newStateDate)
-              .locale('en')
-              .fromNow(true);
-            return al;
-          })
-        );
-        if (this.currentAlerts.length > this.panel.limit) {
-          this.currentAlerts = this.currentAlerts.slice(0, this.panel.limit);
-        }
-        this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
+    return this.digest(
+      getBackendSrv()
+        .get(`/api/alerts`, params)
+        .then(res => {
+          this.currentAlerts = this.sortResult(
+            _.map(res, al => {
+              al.stateModel = alertDef.getStateDisplayModel(al.state);
+              al.newStateDateAgo = dateTime(al.newStateDate)
+                .locale('en')
+                .fromNow(true);
+              return al;
+            })
+          );
+          if (this.currentAlerts.length > this.panel.limit) {
+            this.currentAlerts = this.currentAlerts.slice(0, this.panel.limit);
+          }
+          this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
 
-        return this.currentAlerts;
-      });
+          return this.currentAlerts;
+        })
+    );
   }
 
   onInitEditMode() {
