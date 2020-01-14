@@ -8,8 +8,10 @@ import {
   ScopedVar,
   Field,
   LinkModel,
+  formattedValueToString,
 } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
+import { getRowDisplayValuesProxy } from './rowDisplayValuesProxy';
 
 interface SeriesVars {
   name?: string;
@@ -71,24 +73,32 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
           };
         }
 
-        if (value.rowIndex) {
+        if (!isNaN(value.rowIndex)) {
           const { timeField } = getTimeField(dataFrame);
           scopedVars['__value'] = {
             value: {
               raw: field.values.get(value.rowIndex),
               numeric: value.display.numeric,
-              text: value.display.text,
+              text: formattedValueToString(value.display),
               time: timeField ? timeField.values.get(value.rowIndex) : undefined,
             },
             text: 'Value',
           };
+
+          // Expose other values on the row
+          if (value.view) {
+            scopedVars['__row'] = {
+              value: getRowDisplayValuesProxy(dataFrame, value.rowIndex!),
+              text: 'Row',
+            };
+          }
         } else {
           // calculation
           scopedVars['__value'] = {
             value: {
               raw: value.display.numeric,
               numeric: value.display.numeric,
-              text: value.display.text,
+              text: formattedValueToString(value.display),
               calc: value.name,
             },
             text: 'Value',
