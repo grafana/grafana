@@ -4,12 +4,22 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/kinbiko/jsonassert"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+func presenceComparer(a, b string) bool {
+	if a == "<<PRESENCE>>" {
+		return b != ""
+	}
+	if b == "<<PRESENCE>>" {
+		return a != ""
+	}
+	return a == b
+}
 
 func TestPagerdutyNotifier(t *testing.T) {
 	Convey("Pagerduty notifier tests", t, func() {
@@ -129,25 +139,32 @@ func TestPagerdutyNotifier(t *testing.T) {
 				})
 				evalContext.IsTestRun = true
 
-				str, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				payloadJson, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				So(err, ShouldBeNil)
+				payload, err := simplejson.NewJson(payloadJson)
 				So(err, ShouldBeNil)
 
-				ja := jsonassert.New(t)
-				ja.Assertf(string(str), `{
-					"client":"Grafana",
-					"client_url":"",
-					"dedup_key":"alertId-0",
-					"event_action":"trigger",
-					"links":[{"href":""}],
-					"payload":{
-						"component": "Grafana",
-						"source" : "<<PRESENCE>>",
-						"custom_details":{},
-						"severity":"critical",
-						"summary":"someRule - someMessage",
-						"timestamp":"<<PRESENCE>>"
+				diff := cmp.Diff(map[string]interface{}{
+					"client":       "Grafana",
+					"client_url":   "",
+					"dedup_key":    "alertId-0",
+					"event_action": "trigger",
+					"links": []interface{}{
+						map[string]interface{}{
+							"href": "",
+						},
 					},
-					"routing_key":"abcdefgh0123456789"}`)
+					"payload": map[string]interface{}{
+						"component":      "Grafana",
+						"source":         "<<PRESENCE>>",
+						"custom_details": map[string]interface{}{},
+						"severity":       "critical",
+						"summary":        "someRule - someMessage",
+						"timestamp":      "<<PRESENCE>>",
+					},
+					"routing_key": "abcdefgh0123456789",
+				}, payload.Interface(), cmp.Comparer(presenceComparer))
+				So(diff, ShouldBeEmpty)
 			})
 
 			Convey("should return properly formatted v2 event payload when using override tags", func() {
@@ -185,37 +202,44 @@ func TestPagerdutyNotifier(t *testing.T) {
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 				evalContext.IsTestRun = true
 
-				str, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				payloadJson, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				So(err, ShouldBeNil)
+				payload, err := simplejson.NewJson(payloadJson)
 				So(err, ShouldBeNil)
 
-				ja := jsonassert.New(t)
-				ja.Assertf(string(str), `{
-					"client":"Grafana",
-					"client_url":"",
-					"dedup_key":"alertId-0",
-					"event_action":"trigger",
-					"links":[
-						{
-							"href":""
-							}
-					],
-					"payload":{
-						"source" : "<<PRESENCE>>",
-						"component":"aComponent",
-						"custom_details":{
-							"group": "aGroup",
- 							"class": "aClass",
- 							"component": "aComponent",
-							"keyOnly":""
+				diff := cmp.Diff(map[string]interface{}{
+					"client":       "Grafana",
+					"client_url":   "",
+					"dedup_key":    "alertId-0",
+					"event_action": "trigger",
+					"links": []interface{}{
+						map[string]interface{}{
+							"href": "",
 						},
-						"severity":"critical",
-						"summary":"someRule - someMessage",
-						"timestamp":"<<PRESENCE>>",
-						"class" : "aClass",
-						"group" : "aGroup"
 					},
-					"images": [{"src":"http://somewhere.com/omg_dont_panic.png"}],
-					"routing_key":"abcdefgh0123456789"}`)
+					"payload": map[string]interface{}{
+						"source":    "<<PRESENCE>>",
+						"component": "aComponent",
+						"custom_details": map[string]interface{}{
+							"group":     "aGroup",
+							"class":     "aClass",
+							"component": "aComponent",
+							"keyOnly":   "",
+						},
+						"severity":  "critical",
+						"summary":   "someRule - someMessage",
+						"timestamp": "<<PRESENCE>>",
+						"class":     "aClass",
+						"group":     "aGroup",
+					},
+					"images": []interface{}{
+						map[string]interface{}{
+							"src": "http://somewhere.com/omg_dont_panic.png",
+						},
+					},
+					"routing_key": "abcdefgh0123456789",
+				}, payload.Interface(), cmp.Comparer(presenceComparer))
+				So(diff, ShouldBeEmpty)
 			})
 		})
 	})
