@@ -6,6 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/collector"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	plugin "github.com/hashicorp/go-plugin"
@@ -29,14 +33,17 @@ type Manager interface {
 }
 
 type manager struct {
-	pluginsMu sync.RWMutex
-	plugins   map[string]*BackendPlugin
-	logger    log.Logger
+	pluginsMu       sync.RWMutex
+	plugins         map[string]*BackendPlugin
+	pluginCollector collector.PluginCollector
+	logger          log.Logger
 }
 
 func (m *manager) Init() error {
 	m.plugins = make(map[string]*BackendPlugin)
 	m.logger = log.New("plugins.backend")
+	m.pluginCollector = collector.NewPluginCollector(m.logger)
+	prometheus.MustRegister(m.pluginCollector)
 	return nil
 }
 
@@ -85,6 +92,12 @@ func (m *manager) start(ctx context.Context) {
 
 		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 			p.logger.Error("Failed to start plugin", "error", err)
+			continue
+		}
+
+		if p.HasMetricsCollector() {
+			p.logger.Debug("Registering metrics collector")
+			m.pluginCollector.Register(p.id, p)
 		}
 	}
 }
