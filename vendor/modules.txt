@@ -144,6 +144,8 @@ github.com/grafana/grafana-plugin-model/go/renderer
 github.com/grafana/grafana-plugin-sdk-go/backend
 github.com/grafana/grafana-plugin-sdk-go/dataframe
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
+# github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+github.com/grpc-ecosystem/go-grpc-prometheus
 # github.com/hashicorp/go-hclog v0.8.0
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-plugin v1.0.1
