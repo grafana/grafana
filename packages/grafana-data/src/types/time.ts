@@ -3,8 +3,6 @@ import { DateTime } from '../datetime/moment_wrapper';
 export interface RawTimeRange {
   from: DateTime | string;
   to: DateTime | string;
-  // Prevents from false-positive passing of TimeRange value instead of RawTimeRange
-  raw?: never;
 }
 
 export interface TimeRange {
