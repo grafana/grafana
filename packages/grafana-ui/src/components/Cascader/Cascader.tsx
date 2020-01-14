@@ -148,6 +148,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   render() {
     const { size } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
+    console.log(isSearching);
     return (
       <div>
         {isSearching ? (

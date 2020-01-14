@@ -1,4 +1,4 @@
-// import { boolean, text, select, number } from '@storybook/addon-knobs';
+import { text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Cascader } from './Cascader';
 // import { Button } from '../Button';
@@ -41,7 +41,9 @@ const options = [
   },
 ];
 
-export const simple = () => <Cascader options={options} onSelect={val => console.log(val)} />;
+export const simple = () => (
+  <Cascader separator={text('Separator', '')} options={options} onSelect={val => console.log(val)} />
+);
 export const withInitialValue = () => (
   <Cascader options={options} initialValue="3" onSelect={val => console.log(val)} />
 );
