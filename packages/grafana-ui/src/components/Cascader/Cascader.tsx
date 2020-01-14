@@ -16,7 +16,7 @@ interface CascaderProps {
   options: CascadeOption[];
   onSelect(val: string): void;
   size?: FormInputSize;
-  defaultValue?: any[];
+  initialValue?: string;
 }
 
 interface CascaderState {
@@ -37,12 +37,14 @@ interface CascadeOption {
 export class Cascader extends React.PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
     super(props);
+    const searchableOptions = this.flattenOptions(props.options);
+    const { rcValue, activeLabel } = this.setInitialValue(searchableOptions, props.initialValue);
     this.state = {
       isSearching: false,
       focusCascade: false,
-      searchableOptions: this.flattenOptions(props.options),
-      rcValue: [],
-      activeLabel: '',
+      searchableOptions,
+      rcValue,
+      activeLabel,
     };
   }
 
@@ -62,6 +64,23 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     }
     return selectOptions;
   };
+
+  setInitialValue(searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) {
+    if (!initValue) {
+      return { rcValue: [], activeLabel: '' };
+    }
+    for (const option of searchableOptions) {
+      const optionPath = option.value || [];
+
+      if (optionPath.indexOf(initValue) === optionPath.length - 1) {
+        return {
+          rcValue: optionPath,
+          activeLabel: option.label || '',
+        };
+      }
+    }
+    return { rcValue: [], activeLabel: '' };
+  }
 
   //For rc-cascader
   onChange = (value: string[], selectedOptions: CascadeOption[]) => {
@@ -93,9 +112,9 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   onBlur = () => {
-    console.log('Is blurring');
     this.setState({
       isSearching: false,
+      focusCascade: false,
     });
   };
 
