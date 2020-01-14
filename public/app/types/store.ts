@@ -9,12 +9,12 @@ import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
 import { DataSourcesState } from './datasources';
 import { ExploreState } from './explore';
-import { UsersState, UserState } from './user';
+import { UsersState, UserState, UserAdminState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
 import { ApplicationState } from './application';
-import { LdapState, LdapUserState } from './ldap';
+import { LdapState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
 import { ApiKeysState } from './apiKeys';
 
@@ -36,8 +36,8 @@ export interface StoreState {
   plugins: PluginsState;
   application: ApplicationState;
   ldap: LdapState;
-  ldapUser: LdapUserState;
   apiKeys: ApiKeysState;
+  userAdmin: UserAdminState;
 }
 
 /*

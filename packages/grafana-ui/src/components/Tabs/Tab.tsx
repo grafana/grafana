@@ -1,14 +1,12 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon } from '..';
 import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
-import { IconType } from '../Icon/types';
 
 export interface TabProps {
   label: string;
   active?: boolean;
-  icon?: IconType;
+  icon?: string;
   onChangeTab: () => void;
 }
 
@@ -70,7 +68,7 @@ export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
 
   return (
     <li className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)} onClick={onChangeTab}>
-      {icon && <Icon name={icon} />}
+      {icon && <i className={icon} />}
       {label}
     </li>
   );

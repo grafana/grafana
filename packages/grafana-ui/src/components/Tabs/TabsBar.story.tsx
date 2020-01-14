@@ -26,7 +26,12 @@ const tabs = [
 export const Simple = () => {
   const VISUAL_GROUP = 'Visual options';
   // ---
-  const icon = select('Icon', { None: undefined, Heart: 'heart', Star: 'star', User: 'user' }, undefined, VISUAL_GROUP);
+  const icon = select(
+    'Icon',
+    { None: undefined, Heart: 'fa fa-heart', Star: 'fa fa-star', User: 'fa fa-user' },
+    undefined,
+    VISUAL_GROUP
+  );
   return (
     <UseState initialState={tabs}>
       {(state, updateState) => {

@@ -64,6 +64,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
               label={child.text}
               active={child.active}
               key={`${child.url}-${index}`}
+              icon={child.icon}
               onChangeTab={() => goToUrl(index)}
             />
           );
