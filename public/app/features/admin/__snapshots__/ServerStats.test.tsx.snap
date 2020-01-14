@@ -93,19 +93,23 @@ exports[`ServerStats Should render table with stats 1`] = `
                     </option>
                   </select>
                 </div>
-                <ul
-                  className="css-13jkosq"
+                <div
+                  className="css-yuafq3"
                 >
-                  <li
-                    className="css-b418eg"
-                    onClick={[Function]}
+                  <ul
+                    className="css-13jkosq"
                   >
-                    <i
-                      className="icon"
-                    />
-                    Admin
-                  </li>
-                </ul>
+                    <li
+                      className="css-b418eg"
+                      onClick={[Function]}
+                    >
+                      <i
+                        className="icon"
+                      />
+                      Admin
+                    </li>
+                  </ul>
+                </div>
               </nav>
             </div>
           </div>

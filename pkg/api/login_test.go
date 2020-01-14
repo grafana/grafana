@@ -113,7 +113,7 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
 		Secure:   hs.Cfg.CookieSecure,
-		SameSite: hs.Cfg.CookieSameSite,
+		SameSite: hs.Cfg.CookieSameSiteMode,
 	}
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
@@ -204,7 +204,7 @@ func TestLoginViewRedirect(t *testing.T) {
 				HttpOnly: true,
 				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
-				SameSite: hs.Cfg.CookieSameSite,
+				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
 			sc.m.Get(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
@@ -312,7 +312,7 @@ func TestLoginPostRedirect(t *testing.T) {
 				HttpOnly: true,
 				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
-				SameSite: hs.Cfg.CookieSameSite,
+				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("POST", sc.url, cookie).exec()

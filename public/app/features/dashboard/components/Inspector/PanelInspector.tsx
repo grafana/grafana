@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, Select, Table } from '@grafana/ui';
+import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides } from '@grafana/data';
 import { config } from 'app/core/config';
@@ -139,9 +139,8 @@ export class PanelInspector extends PureComponent<Props, State> {
             />
           </div>
         )}
-        <div style={{ border: '1px solid #666' }}>
-          <Table width={330} height={400} data={processed[selected]} />
-        </div>
+
+        <Table width={330} height={400} data={processed[selected]} />
       </div>
     );
   }
@@ -169,19 +168,24 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     return (
       <Drawer title={panel.title} onClose={this.onDismiss}>
-        <Select options={tabs} value={tabs.find(t => t.value === tab)} onChange={this.onSelectTab} />
+        <TabsBar>
+          {tabs.map(t => {
+            return <Tab label={t.label} active={t.value === tab} onChangeTab={() => this.onSelectTab(t)} />;
+          })}
+        </TabsBar>
+        <TabContent>
+          {tab === InspectTab.Data && this.renderDataTab()}
 
-        {tab === InspectTab.Data && this.renderDataTab()}
+          {tab === InspectTab.Meta && this.renderMetadataInspector()}
 
-        {tab === InspectTab.Meta && this.renderMetadataInspector()}
+          {tab === InspectTab.Issue && this.renderIssueTab()}
 
-        {tab === InspectTab.Issue && this.renderIssueTab()}
-
-        {tab === InspectTab.Raw && (
-          <div>
-            <JSONFormatter json={last} open={2} />
-          </div>
-        )}
+          {tab === InspectTab.Raw && (
+            <div>
+              <JSONFormatter json={last} open={2} />
+            </div>
+          )}
+        </TabContent>
       </Drawer>
     );
   }

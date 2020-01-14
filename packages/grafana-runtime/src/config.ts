@@ -34,6 +34,7 @@ export class GrafanaBootConfig {
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
+  alertingMinInterval = 1;
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;

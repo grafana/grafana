@@ -7,16 +7,18 @@ import (
 )
 
 type CookieOptions struct {
-	Path     string
-	Secure   bool
-	SameSite http.SameSite
+	Path             string
+	Secure           bool
+	SameSiteDisabled bool
+	SameSiteMode     http.SameSite
 }
 
 func newCookieOptions() CookieOptions {
 	return CookieOptions{
-		Path:     setting.AppSubUrl + "/",
-		Secure:   setting.CookieSecure,
-		SameSite: setting.CookieSameSite,
+		Path:             setting.AppSubUrl + "/",
+		Secure:           setting.CookieSecure,
+		SameSiteDisabled: setting.CookieSameSiteDisabled,
+		SameSiteMode:     setting.CookieSameSiteMode,
 	}
 }
 
@@ -36,8 +38,8 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 		Path:     options.Path,
 		Secure:   options.Secure,
 	}
-	if options.SameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = options.SameSite
+	if !options.SameSiteDisabled {
+		cookie.SameSite = options.SameSiteMode
 	}
 	http.SetCookie(w, &cookie)
 }
