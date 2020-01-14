@@ -9,9 +9,10 @@ import {
   Field,
   LinkModel,
   formattedValueToString,
+  DisplayValue,
 } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
-import { getRowDisplayValuesProxy } from './rowDisplayValuesProxy';
+import { getCellDisplayValuesProxy } from './cellDisplayValuesProxy';
 
 interface SeriesVars {
   name?: string;
@@ -35,6 +36,7 @@ interface DataLinkScopedVars extends ScopedVars {
   __series?: ScopedVar<SeriesVars>;
   __field?: ScopedVar<FieldVars>;
   __value?: ScopedVar<ValueVars>;
+  __cell?: ScopedVar<Record<string, DisplayValue>>;
 }
 
 /**
@@ -87,9 +89,9 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
 
           // Expose other values on the row
           if (value.view) {
-            scopedVars['__row'] = {
-              value: getRowDisplayValuesProxy(dataFrame, value.rowIndex!),
-              text: 'Row',
+            scopedVars['__cell'] = {
+              value: getCellDisplayValuesProxy(dataFrame, value.rowIndex!),
+              text: 'Cells',
             };
           }
         } else {

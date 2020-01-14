@@ -13,7 +13,6 @@ import {
 import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
-import { getRowDisplayValuesProxy } from './rowDisplayValuesProxy';
 
 describe('getLinksFromLogsField', () => {
   let originalLinkSrv: LinkService;
@@ -91,15 +90,23 @@ describe('getLinksFromLogsField', () => {
                 links: [
                   {
                     title: 'By Name (full display)',
-                    url: 'http://go/${__row.Power}',
+                    url: 'http://go/${__cell.Power}',
                   },
                   {
                     title: 'Numeric Value',
-                    url: 'http://go/${__row.Power.numeric}',
+                    url: 'http://go/${__cell.Power.numeric}',
                   },
                   {
                     title: 'Text (no suffix)',
-                    url: 'http://go/${__row.Power.text}',
+                    url: 'http://go/${__cell.Power.text}',
+                  },
+                  {
+                    title: 'By Index',
+                    url: 'http://go/${__cell[1]}',
+                  },
+                  {
+                    title: 'Unknown Field',
+                    url: 'http://go/${__cell.XYZ}',
                   },
                 ],
               },
@@ -117,14 +124,9 @@ describe('getLinksFromLogsField', () => {
       autoMinMax: true,
     })[0];
 
-    // Field display set after everything is applied
-    for (const field of data.fields) {
-      expect(field.display).toBeDefined();
-    }
     const rowIndex = 0;
     const colIndex = data.fields.length - 1;
     const field = data.fields[colIndex];
-
     const fieldDisp: FieldDisplay = {
       name: 'hello',
       field: field.config,
@@ -157,15 +159,5 @@ describe('getLinksFromLogsField', () => {
         },
       ]
     `);
-
-    // Test Proxies in general
-    const row = getRowDisplayValuesProxy(data, 0);
-    const time = row.Time;
-    expect(time.numeric).toEqual(1);
-    expect(time.text).toEqual('1970-01-01 00:00:00');
-
-    // Should get to the same values by name or index
-    const time2 = row[0];
-    expect(time2.toString()).toEqual(time.toString());
   });
 });

@@ -1,21 +1,26 @@
 import { DisplayValue, DataFrame, formattedValueToString, getDisplayProcessor } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import toNumber from 'lodash/toNumber';
 
-export function getRowDisplayValuesProxy(frame: DataFrame, rowIndex: number): Record<string, DisplayValue> {
+export function getCellDisplayValuesProxy(frame: DataFrame, rowIndex: number): Record<string, DisplayValue> {
   return new Proxy({} as Record<string, DisplayValue>, {
-    get: (obj: any, name: string | number) => {
-      let field = frame.fields.find(f => name === f.name);
+    get: (obj: any, key: string) => {
+      // 1. Match the name
+      let field = frame.fields.find(f => key === f.name);
       if (!field) {
-        field = frame.fields[name as number];
+        // 2. Match the array index
+        const k = toNumber(key);
+        field = frame.fields[k];
       }
       if (!field) {
-        const text = `Unknown Field: ${name}`;
-        return {
-          text,
-          toString: () => text,
-        };
+        // 3. Match the title
+        field = frame.fields.find(f => key === f.config.title);
+      }
+      if (!field) {
+        return undefined;
       }
       if (!field.display) {
+        // Lazy load the display processor
         field.display = getDisplayProcessor({
           field,
           theme: config.theme,
