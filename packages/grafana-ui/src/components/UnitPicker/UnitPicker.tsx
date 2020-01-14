@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { Select } from '../Select/Select';
 
 import { getValueFormats, SelectableValue } from '@grafana/data';
+import { Cascader } from '../Cascader/Cascader';
 
 interface Props {
   onChange: (item?: string) => void;
@@ -19,8 +20,8 @@ export class UnitPicker extends PureComponent<Props> {
     width: 12,
   };
 
-  onChange = (value: SelectableValue<string>) => {
-    this.props.onChange(value.value);
+  onChange = (value: string) => {
+    this.props.onChange(value);
   };
 
   render() {
@@ -39,25 +40,15 @@ export class UnitPicker extends PureComponent<Props> {
 
       return {
         label: group.text,
-        options,
+        value: group.text,
+        children: options,
       };
     });
 
-    const valueOption = groupOptions.map(group => {
-      return group.options.find(option => option.value === value);
-    });
+    // const valueOption = groupOptions.map(group => {
+    //   return group.options.find(option => option.value === value);
+    // });
 
-    return (
-      <Select
-        width={width}
-        defaultValue={valueOption}
-        isSearchable={true}
-        allowCustomValue={true}
-        formatCreateLabel={formatCreateLabel}
-        options={groupOptions}
-        placeholder="Choose"
-        onChange={this.onChange}
-      />
-    );
+    return <Cascader size="sm" options={groupOptions} initialValue={value} onSelect={this.onChange} />;
   }
 }
