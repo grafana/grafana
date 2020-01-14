@@ -1,0 +1,66 @@
+.resource-card {
+  padding: 17px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: $panel-editor-viz-item-bg;
+  border: $panel-editor-viz-item-border;
+  border-radius: 3px;
+  margin-bottom: $space-sm;
+
+  &:hover {
+    padding: $space-md;
+    background: $panel-editor-viz-item-bg-hover;
+    border: 2px solid $blue-light;
+    color: $text-color-strong;
+
+    .resource-card-actions {
+      opacity: 1;
+      transition: 0.15s opacity ease-in-out;
+    }
+  }
+}
+
+.resource-card-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.resource-card-desc {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+}
+
+.resource-card-text {
+  font-size: $font-size-h5;
+}
+
+.resource-card-logo {
+  margin-right: $space-lg;
+  margin-left: $space-sm;
+  width: 55px;
+  height: 55px;
+  max-height: 55px;
+}
+
+.resource-card-actions {
+  opacity: 0;
+  padding-left: $space-md;
+  display: flex;
+  align-items: center;
+
+  > button {
+    margin-left: $space-md;
+    cursor: pointer;
+  }
+}
+
+.add-datasource-item-actions__btn-icon {
+  margin-left: $space-sm;
+}
+
+.add-data-source-more {
+  text-align: center;
+  margin: $space-xl;
+}
