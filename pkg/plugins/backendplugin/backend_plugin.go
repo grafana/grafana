@@ -120,8 +120,8 @@ func (p *BackendPlugin) stop() error {
 	return nil
 }
 
-// HasMetricsCollector return whether backend plugin supports collecting metrics.
-func (p *BackendPlugin) HasMetricsCollector() bool {
+// supportsDiagnostics return whether backend plugin supports diagnostics like metrics and health check.
+func (p *BackendPlugin) supportsDiagnostics() bool {
 	return p.diagnostics != nil
 }
 
@@ -169,6 +169,29 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context, ch chan<- prometheus
 	}
 
 	return nil
+}
+
+func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_Response, error) {
+	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
+		return &pluginv2.CheckHealth_Response{
+			Status: pluginv2.CheckHealth_Response_UNKNOWN,
+		}, nil
+	}
+
+	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealth_Request{})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.Unimplemented {
+				return &pluginv2.CheckHealth_Response{
+					Status: pluginv2.CheckHealth_Response_UNKNOWN,
+					Info:   "Health check not implemented",
+				}, nil
+			}
+		}
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // convertMetricFamily converts metric family to prometheus.Metric.
