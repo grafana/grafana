@@ -50,6 +50,7 @@ export { Table } from './Table/Table';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
+export { TabContent } from './Tabs/TabContent';
 
 // Visualizations
 export {
