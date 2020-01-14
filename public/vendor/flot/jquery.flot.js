@@ -3054,7 +3054,7 @@ Licensed under the MIT license.
           triggerClickHoverEvent("plotclick", e, function (s) { return s["clickable"] != false; });
         }
 
-        /* Grafana Addon - added to support mobile devices click in plot */
+        // grafana addon - added to support mobile devices click in plot
         function onTouch(e) {
             if (!e.cancelable) {
                 return;
@@ -3069,7 +3069,7 @@ Licensed under the MIT license.
             e.preventDefault();
         }
 
-        /* Grafana Addon - added to support mobile devices and mapping touch event to click event structure */
+        // grafana addon - added to support mobile devices and mapping touch event to click event structure
         function mapFromTouchEvent(e) {
             if (!e || !e.originalEvent) {
                 return e;
