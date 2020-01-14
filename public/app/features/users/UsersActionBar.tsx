@@ -1,22 +1,10 @@
-import React, { FunctionComponent, useContext } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, ThemeContext } from '@grafana/ui';
+import React, { FunctionComponent } from 'react';
 import { connect } from 'react-redux';
+import { LinkButton } from '@grafana/ui';
 import classNames from 'classnames';
 import { setUsersSearchQuery } from './state/reducers';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  btn: css`
-    background: ${theme.colors.primary};
-
-    &:hover {
-      background: ${theme.colors.primaryHover};
-    }
-  `,
-}));
 
 export interface Props {
   searchQuery: string;
@@ -40,8 +28,6 @@ export const UsersActionBar: FunctionComponent<Props> = (props: Props) => {
     onShowInvites,
     showInvites,
   } = props;
-  const theme = useContext(ThemeContext);
-  const style = getStyles(theme);
 
   const pendingInvitesButtonStyle = classNames({
     btn: true,
@@ -77,19 +63,14 @@ export const UsersActionBar: FunctionComponent<Props> = (props: Props) => {
         )}
         <div className="page-action-bar__spacer" />
         {canInvite && (
-          <a className={cx('btn', 'btn-primary', style.btn)} href="org/users/invite">
+          <LinkButton variant={'secondary'} href="org/users/invite">
             <span>Invite</span>
-          </a>
+          </LinkButton>
         )}
         {externalUserMngLinkUrl && (
-          <a
-            className={cx('btn', 'btn-primary', style.btn)}
-            href={externalUserMngLinkUrl}
-            target="_blank"
-            rel="noopener"
-          >
+          <LinkButton variant={'secondary'} href={externalUserMngLinkUrl} target="_blank" rel="noopener">
             {externalUserMngLinkName}
-          </a>
+          </LinkButton>
         )}
       </div>
     </div>

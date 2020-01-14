@@ -83,11 +83,11 @@ exports[`Render should show external user management button 1`] = `
     <div
       className="page-action-bar__spacer"
     />
-    <a
-      className="btn btn-primary css-e54m17"
+    <LinkButton
       href="some/url"
       rel="noopener"
       target="_blank"
+      variant="secondary"
     />
   </div>
 </div>
@@ -110,14 +110,14 @@ exports[`Render should show invite button 1`] = `
     <div
       className="page-action-bar__spacer"
     />
-    <a
-      className="btn btn-primary css-e54m17"
+    <LinkButton
       href="org/users/invite"
+      variant="secondary"
     >
       <span>
         Invite
       </span>
-    </a>
+    </LinkButton>
   </div>
 </div>
 `;
