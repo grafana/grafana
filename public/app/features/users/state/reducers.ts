@@ -1,5 +1,6 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { Invitee, OrgUser, UsersState } from 'app/types';
-import { Action, ActionTypes } from './actions';
 import config from 'app/core/config';
 
 export const initialState: UsersState = {
@@ -13,20 +14,25 @@ export const initialState: UsersState = {
   hasFetched: false,
 };
 
-export const usersReducer = (state = initialState, action: Action): UsersState => {
-  switch (action.type) {
-    case ActionTypes.LoadUsers:
+const usersSlice = createSlice({
+  name: 'users',
+  initialState,
+  reducers: {
+    usersLoaded: (state, action: PayloadAction<OrgUser[]>): UsersState => {
       return { ...state, hasFetched: true, users: action.payload };
-
-    case ActionTypes.LoadInvitees:
+    },
+    inviteesLoaded: (state, action: PayloadAction<Invitee[]>): UsersState => {
       return { ...state, hasFetched: true, invitees: action.payload };
-
-    case ActionTypes.SetUsersSearchQuery:
+    },
+    setUsersSearchQuery: (state, action: PayloadAction<string>): UsersState => {
       return { ...state, searchQuery: action.payload };
-  }
+    },
+  },
+});
 
-  return state;
-};
+export const { inviteesLoaded, setUsersSearchQuery, usersLoaded } = usersSlice.actions;
+
+export const usersReducer = usersSlice.reducer;
 
 export default {
   users: usersReducer,

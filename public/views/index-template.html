@@ -29,9 +29,10 @@
       as="font"
       crossorigin
     />
-    <link rel="icon" type="image/png" href="public/img/fav32.png" />
+
+    <link rel="icon" type="image/png" href="[[.FavIcon]]" />
+    <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28" />
-    <link rel="apple-touch-icon" sizes="180x180" href="public/img/apple-touch-icon.png" />
 
     <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
 
