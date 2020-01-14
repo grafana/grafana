@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Button, ButtonVariant, ButtonProps } from '../Button';
 import { ButtonSize } from '../../Button/types';
-import { SelectCommonProps, SelectBase, ControlComponent, CustomControlProps } from './SelectBase';
+import { SelectCommonProps, SelectBase, CustomControlProps } from './SelectBase';
 import { css } from 'emotion';
 import { useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';

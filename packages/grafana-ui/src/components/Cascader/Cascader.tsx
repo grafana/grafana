@@ -14,19 +14,18 @@ import { SelectableValue } from '@grafana/data';
 interface CascaderProps {
   separator?: string;
   options: CascadeOption[];
-  onSelect(val: CascadeOption): void;
+  onSelect(val: string): void;
   size?: FormInputSize;
   defaultValue?: any[];
 }
 
 interface CascaderState {
   isSearching: boolean;
-  hierachicalOptions: CascadeOption[];
   searchableOptions: Array<SelectableValue<string[]>>;
   focusCascade: boolean;
   //Array for cascade navigation
-  rcValue?: SelectableValue<string[]>;
-  activeLabel?: string;
+  rcValue: SelectableValue<string[]>;
+  activeLabel: string;
 }
 
 interface CascadeOption {
@@ -41,7 +40,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     this.state = {
       isSearching: false,
       focusCascade: false,
-      hierachicalOptions: props.options,
       searchableOptions: this.flattenOptions(props.options),
       rcValue: [],
       activeLabel: '',
@@ -72,15 +70,21 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       activeLabel: selectedOptions.map(o => o.label).join(this.props.separator || ' / '),
     });
 
-    this.props.onSelect(selectedOptions[selectedOptions.length - 1]);
+    this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
   };
 
+  //For select
   onSelect = (obj: SelectableValue<string[]>) => {
+    console.log('Selected', obj.label);
     this.setState({
-      activeLabel: obj.label,
-      rcValue: obj.value,
+      activeLabel: obj.label || '',
+      rcValue: obj.value || [],
+      isSearching: false,
     });
+    this.props.onSelect(this.state.rcValue[this.state.rcValue.length - 1]);
   };
+
+  rcValueToValue = () => {};
 
   onClick = () => {
     this.setState({
@@ -89,6 +93,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   onBlur = () => {
+    console.log('Is blurring');
     this.setState({
       isSearching: false,
     });
@@ -100,23 +105,18 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       e.key !== 'ArrowUp' &&
       e.key !== 'Enter' &&
       e.key !== 'ArrowLeft' &&
-      e.key !== 'ArrowRight' &&
-      e.key !== 'Enter'
+      e.key !== 'ArrowRight'
     ) {
-      console.log('Key down');
       this.setState({
         focusCascade: false,
         isSearching: true,
       });
-    }
-  };
-
-  onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace') {
-      this.setState({
-        isSearching: true,
-        focusCascade: false,
-      });
+      if (e.key === 'Backspace') {
+        const label = this.state.activeLabel || '';
+        this.setState({
+          activeLabel: label.slice(0, -1),
+        });
+      }
     }
   };
 
@@ -126,14 +126,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     });
   };
 
-  cascadeToSearch(label?: string) {
-    this.setState({
-      focusCascade: false,
-      isSearching: true,
-      activeLabel: label || this.state.activeLabel,
-    });
-  }
-
   render() {
     const { size } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
@@ -141,18 +133,14 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       <div>
         {isSearching ? (
           <Select
-            // isOpen={isSearching}
-            // renderControl={React.forwardRef<any, CustomControlProps<any>>((props, ref) => {
-            //   return <Input ref={ref} onClick={this.onClick} onBlur={this.onBlur} onKeyDown={this.onKeyDown} />;
-            // })}
             inputValue={activeLabel}
+            placeholder="Search"
             autoFocus={!focusCascade}
             onChange={this.onSelect}
             onInputChange={this.onInputChange}
             onBlur={this.onBlur}
             options={searchableOptions}
             size={size || 'md'}
-            // onKeyDown={this.onKeyDown}
           />
         ) : (
           <RCCascader
@@ -161,14 +149,14 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             options={this.props.options}
             isFocused={focusCascade}
             value={rcValue}
-            onKeyDown={this.onKeyDown}
           >
             <div>
               <Input
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
+                onChange={() => {}}
                 size={size || 'md'}
-                suffix={<Icon name="caret-down" />}
+                suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
               />
             </div>
           </RCCascader>
