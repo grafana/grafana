@@ -111,19 +111,12 @@ const lightTheme: GrafanaTheme = {
     formCheckboxBgChecked: basicColors.blueShade,
     formCheckboxBgCheckedHover: basicColors.blueBase,
     formCheckboxCheckmark: basicColors.white,
-
-    primary: `linear-gradient(180deg, #3274D9 0%, #1F60C4 100%)`,
-    primaryHover: `linear-gradient(180deg, lighten(#3274D9, 10%) 0%, lighten(#1F60C4, 10%) 100%)`,
-    primaryBorder: `rgba(199, 208, 217, 0.7)`,
-    primaryBorderHover: `#3274D9`,
   },
   background: {
     dropdown: basicColors.white,
     scrollbar: basicColors.gray5,
     scrollbar2: basicColors.gray5,
     pageHeader: `linear-gradient(90deg, ${basicColors.white}, ${basicColors.gray7})`,
-    panelEditorVizItem: basicColors.white,
-    panelEditorVizItemHover: `lighten(${basicColors.blueBase}, 45%)`,
   },
   shadow: {
     pageHeader: `inset 0px -3px 10px ${basicColors.gray6}`,

@@ -21,8 +21,6 @@ $red-shade: ${theme.colors.redShade};
 $green-base: ${theme.colors.greenBase};
 $green-shade: ${theme.colors.greenShade};
 $orange-dark: ${theme.colors.orangeDark};
-$primary: ${theme.colors.primary};
-$primary-hover: ${theme.colors.primaryHover};
 
 // Grays
 // -------------------------
@@ -164,8 +162,8 @@ $table-bg-hover: $dark-6;
 $btn-secondary-bg: $blue-base;
 $btn-secondary-bg-hl: $blue-shade;
 
-$btn-primary-bg: $primary;
-$btn-primary-bg-hl: $primary-hover;
+$btn-primary-bg: $green-base;
+$btn-primary-bg-hl: $green-shade;
 
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
