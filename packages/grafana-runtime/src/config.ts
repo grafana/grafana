@@ -17,6 +17,13 @@ interface FeatureToggles {
   expressions: boolean;
   newEdit: boolean;
 }
+
+interface LicenseInfo {
+  hasLicense: boolean;
+  expiry: number;
+  isValid: boolean;
+}
+
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -48,6 +55,7 @@ export class GrafanaBootConfig {
   disableSanitizeHtml = false;
   theme: GrafanaTheme;
   pluginsToPreload: string[] = [];
+  license: LicenseInfo;
   featureToggles: FeatureToggles = {
     transformations: false,
     inspect: false,

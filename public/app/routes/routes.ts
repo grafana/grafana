@@ -2,6 +2,7 @@ import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 // Pages
+import { InvalidLicensePage } from 'app/features/admin/InvalidLicensePage';
 import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
@@ -18,9 +19,19 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
   $locationProvider.html5Mode(true);
 
+  // If license is invalid always show invalid license page
+  if (!config.license.isValid) {
+    $routeProvider.otherwise({
+      template: '<react-container />',
+      resolve: {
+        component: () => InvalidLicensePage,
+      },
+    });
+    return;
+  }
+
   // Routes here are guarded both here and server side for react-container routes or just on the server for angular
   // ones. That means angular ones could be navigated to in case there is a client side link some where.
-
   const importDashboardPage = () =>
     SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
 

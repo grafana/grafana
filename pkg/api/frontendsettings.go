@@ -198,9 +198,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"env":           setting.Env,
 			"isEnterprise":  hs.License.HasValidLicense(),
 		},
-		"licenseInfo": map[string]interface{}{
+		"license": map[string]interface{}{
 			"hasLicense": hs.License.HasLicense(),
 			"expiry":     hs.License.Expiry(),
+			"isValid":    hs.License.HasValidLicense(),
 		},
 		"featureToggles": hs.Cfg.FeatureToggles,
 	}
