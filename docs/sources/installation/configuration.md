@@ -1,6 +1,6 @@
 +++
 title = "Configuration"
-description = "Configuration Docs"
+description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
 type = "docs"
 [menu.docs]
@@ -18,7 +18,7 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 
 ## Config file locations
 
-Do not change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
+*Do not* change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
@@ -48,9 +48,9 @@ Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` 
 
 A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
 
-## Using environment variables
+## Docker environment variables
 
-All options in the configuration file (listed below) can be overridden using environment variables using the syntax:
+All options in the configuration file can be overridden using environment variables using the syntax:
 
 ```bash
 GF_<SectionName>_<KeyName>
@@ -70,15 +70,30 @@ admin_user = admin
 client_secret = 0ldS3cretKey
 ```
 
-Then you can override them using:
+You can override them using on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
+export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 ```
 
-<hr />
+On Windows or Mac, you can use [Kitematic](https://github.com/docker/kitematic) or similar tools.
+
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you need to restart the Docker container running Grafana.
+
+### Default paths
+
+The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
+
+Setting               | Default value
+----------------------|---------------------------
+GF_PATHS_CONFIG       | /etc/grafana/grafana.ini
+GF_PATHS_DATA         | /var/lib/grafana
+GF_PATHS_HOME         | /usr/share/grafana
+GF_PATHS_LOGS         | /var/log/grafana
+GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
+GF_PATHS_PROVISIONING | /etc/grafana/provisioning
 
 ## instance_name
 
