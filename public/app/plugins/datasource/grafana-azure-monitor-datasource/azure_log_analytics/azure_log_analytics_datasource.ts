@@ -2,7 +2,7 @@ import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
-import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -22,9 +22,7 @@ export default class AzureLogAnalyticsDatasource {
     private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
-    this.baseUrl = this.instanceSettings.jsonData.azureLogAnalyticsSameAs
-      ? '/sameasloganalyticsazure'
-      : `/loganalyticsazure`;
+    this.baseUrl = '/loganalyticsazure';
     this.url = instanceSettings.url;
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
 
@@ -89,7 +87,11 @@ export default class AzureLogAnalyticsDatasource {
       );
       const generated = querystringBuilder.generate();
 
-      const workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+      let workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+
+      if (!workspace && this.defaultOrFirstWorkspace) {
+        workspace = this.defaultOrFirstWorkspace;
+      }
 
       const url = `${this.baseUrl}/${workspace}/query?${generated.uriString}`;
 

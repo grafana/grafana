@@ -14,53 +14,37 @@ import { components } from '@torkelo/react-select';
 
 // Components
 import { SelectOption } from './SelectOption';
-import { SingleValue } from './SingleValue';
-import SelectOptionGroup from './SelectOptionGroup';
+import { SelectOptionGroup } from '../Forms/Select/SelectOptionGroup';
+import { SingleValue } from '../Forms/Select/SingleValue';
+import { SelectCommonProps, SelectAsyncProps } from '../Forms/Select/SelectBase';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from './resetSelectStyles';
+import resetSelectStyles from '../Forms/Select/resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
 
-export interface CommonProps<T> {
-  defaultValue?: any;
-  getOptionLabel?: (item: SelectableValue<T>) => string;
-  getOptionValue?: (item: SelectableValue<T>) => string;
-  onChange: (item: SelectableValue<T>) => {} | void;
-  placeholder?: string;
-  width?: number;
-  value?: SelectableValue<T>;
-  className?: string;
-  isDisabled?: boolean;
-  isSearchable?: boolean;
-  isClearable?: boolean;
-  autoFocus?: boolean;
-  openMenuOnFocus?: boolean;
-  onBlur?: () => void;
-  maxMenuHeight?: number;
-  isLoading?: boolean;
-  noOptionsMessage?: () => string;
-  isMulti?: boolean;
-  backspaceRemovesValue?: boolean;
-  isOpen?: boolean;
-  components?: any;
-  tooltipContent?: PopoverContent;
-  onOpenMenu?: () => void;
-  onCloseMenu?: () => void;
-  tabSelectsValue?: boolean;
-  allowCustomValue: boolean;
-}
+/**
+ * Changes in new selects:
+ * - noOptionsMessage & loadingMessage is of string type
+ * - isDisabled is renamed to disabled
+ */
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value'>;
 
-export interface SelectProps<T> extends CommonProps<T> {
-  options: Array<SelectableValue<T>>;
-}
-
-interface AsyncProps<T> extends CommonProps<T> {
-  defaultOptions: boolean;
-  loadOptions: (query: string) => Promise<Array<SelectableValue<T>>>;
+interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;
+  noOptionsMessage?: () => string;
+  tooltipContent?: PopoverContent;
+  isDisabled?: boolean;
+  value?: SelectableValue<T>;
+}
+
+interface LegacySelectProps<T> extends LegacyCommonProps<T> {
+  tooltipContent?: PopoverContent;
+  noOptionsMessage?: () => string;
+  isDisabled?: boolean;
+  value?: SelectableValue<T>;
 }
 
 export const MenuList = (props: any) => {
@@ -72,9 +56,8 @@ export const MenuList = (props: any) => {
     </components.MenuList>
   );
 };
-
-export class Select<T> extends PureComponent<SelectProps<T>> {
-  static defaultProps: Partial<SelectProps<any>> = {
+export class Select<T> extends PureComponent<LegacySelectProps<T>> {
+  static defaultProps: Partial<LegacySelectProps<any>> = {
     className: '',
     isDisabled: false,
     isSearchable: true,
@@ -125,6 +108,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       onCloseMenu,
       onOpenMenu,
       allowCustomValue,
+      formatCreateLabel,
     } = this.props;
 
     let widthClass = '';
@@ -137,12 +121,11 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
 
     if (allowCustomValue) {
       SelectComponent = Creatable;
-      creatableOptions.formatCreateLabel = (input: string) => input;
+      creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => input);
     }
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
     const selectComponents = { ...Select.defaultProps.components, ...components };
-
     return (
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
@@ -168,7 +151,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
               onBlur={onBlur}
               openMenuOnFocus={openMenuOnFocus}
               maxMenuHeight={maxMenuHeight}
-              noOptionsMessage={noOptionsMessage}
+              noOptionsMessage={() => noOptionsMessage}
               isMulti={isMulti}
               backspaceRemovesValue={backspaceRemovesValue}
               menuIsOpen={isOpen}
@@ -260,7 +243,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               defaultOptions={defaultOptions}
               placeholder={placeholder || 'Choose'}
               styles={resetSelectStyles()}
-              loadingMessage={loadingMessage}
+              loadingMessage={() => loadingMessage}
               noOptionsMessage={noOptionsMessage}
               isDisabled={isDisabled}
               isSearchable={isSearchable}

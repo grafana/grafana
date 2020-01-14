@@ -3,6 +3,8 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { sanitizeUrl } from 'app/core/utils/text';
+import { getConfig } from 'app/core/config';
 import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
 import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
 
@@ -27,12 +29,12 @@ const timeRangeVars = [
   },
 ];
 
-const fieldVars = [
+const seriesVars = [
   {
-    value: `${DataLinkBuiltInVars.fieldName}`,
+    value: `${DataLinkBuiltInVars.seriesName}`,
     label: 'Name',
-    documentation: 'Field name of the clicked datapoint (in ms epoch)',
-    origin: VariableOrigin.Field,
+    documentation: 'Name of the series',
+    origin: VariableOrigin.Series,
   },
 ];
 
@@ -76,41 +78,51 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...timeRangeVars,
 ];
 
-const getSeriesVars = (dataFrames: DataFrame[]) => {
-  const labels = _.chain(dataFrames.map(df => Object.keys(df.labels || {})))
+const getFieldVars = (dataFrames: DataFrame[]) => {
+  const all = [];
+  for (const df of dataFrames) {
+    for (const f of df.fields) {
+      if (f.labels) {
+        for (const k of Object.keys(f.labels)) {
+          all.push(k);
+        }
+      }
+    }
+  }
+
+  const labels = _.chain(all)
     .flatten()
     .uniq()
     .value();
 
   return [
     {
-      value: `${DataLinkBuiltInVars.seriesName}`,
+      value: `${DataLinkBuiltInVars.fieldName}`,
       label: 'Name',
-      documentation: 'Name of the series',
-      origin: VariableOrigin.Series,
+      documentation: 'Field name of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Field,
     },
     ...labels.map(label => ({
-      value: `__series.labels${buildLabelPath(label)}`,
+      value: `__field.labels${buildLabelPath(label)}`,
       label: `labels.${label}`,
       documentation: `${label} label value`,
-      origin: VariableOrigin.Series,
+      origin: VariableOrigin.Field,
     })),
   ];
 };
 export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const seriesVars = getSeriesVars(dataFrames);
+  const fieldVars = getFieldVars(dataFrames);
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
-
   return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
 };
 
 export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const seriesVars = getSeriesVars(dataFrames);
+  const fieldVars = getFieldVars(dataFrames);
   const valueCalcVar = {
     value: `${DataLinkBuiltInVars.valueCalc}`,
     label: 'Calculation name',
@@ -152,15 +164,38 @@ export class LinkSrv implements LinkService {
     return info;
   }
 
-  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => {
+  /**
+   * Returns LinkModel which is basically a DataLink with all values interpolated through the templateSrv.
+   */
+  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
+    let href = link.url;
+    if (link.onBuildUrl) {
+      href = link.onBuildUrl({
+        origin,
+        scopedVars,
+      });
+    }
+
+    let onClick: (e: any) => void = undefined;
+    if (link.onClick) {
+      onClick = (e: any) => {
+        link.onClick({
+          origin,
+          scopedVars,
+          e,
+        });
+      };
+    }
+
     const info: LinkModel<T> = {
-      href: link.url.replace(/\s|\n/g, ''),
+      href: href.replace(/\s|\n/g, ''),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,
+      onClick,
     };
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
@@ -176,7 +211,7 @@ export class LinkSrv implements LinkService {
         value: variablesQuery,
       },
     });
-
+    info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
     return info;
   };
 

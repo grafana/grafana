@@ -19,7 +19,7 @@ func init() {
 func GetApiKeys(query *models.GetApiKeysQuery) error {
 	sess := x.Limit(100, 0).Where("org_id=? and ( expires IS NULL or expires >= ?)",
 		query.OrgId, timeNow().Unix()).Asc("name")
-	if query.IncludeInvalid {
+	if query.IncludeExpired {
 		sess = x.Limit(100, 0).Where("org_id=?", query.OrgId).Asc("name")
 	}
 

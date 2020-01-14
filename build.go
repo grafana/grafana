@@ -33,6 +33,7 @@ var (
 	goos    string
 	gocc    string
 	cgo     bool
+	libc    string
 	pkgArch string
 	version string = "v1"
 	// deb & rpm does not support semver so have to handle their version a little differently
@@ -65,6 +66,7 @@ func main() {
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&gocc, "cc", "", "CC")
+	flag.StringVar(&libc, "libc", "", "LIBC")
 	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
@@ -106,17 +108,13 @@ func main() {
 		case "setup":
 			setup()
 
-		case "build-srv":
+		case "build-srv", "build-server":
 			clean()
 			build("grafana-server", "./pkg/cmd/grafana-server", []string{})
 
 		case "build-cli":
 			clean()
 			build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
-
-		case "build-server":
-			clean()
-			build("grafana-server", "./pkg/cmd/grafana-server", []string{})
 
 		case "build":
 			//clean()
@@ -176,12 +174,15 @@ func makeLatestDistCopies() {
 	}
 
 	latestMapping := map[string]string{
-		"_amd64.deb":          "dist/grafana_latest_amd64.deb",
-		".x86_64.rpm":         "dist/grafana-latest-1.x86_64.rpm",
-		".linux-amd64.tar.gz": "dist/grafana-latest.linux-x64.tar.gz",
-		".linux-armv7.tar.gz": "dist/grafana-latest.linux-armv7.tar.gz",
-		".linux-armv6.tar.gz": "dist/grafana-latest.linux-armv6.tar.gz",
-		".linux-arm64.tar.gz": "dist/grafana-latest.linux-arm64.tar.gz",
+		"_amd64.deb":               "dist/grafana_latest_amd64.deb",
+		".x86_64.rpm":              "dist/grafana-latest-1.x86_64.rpm",
+		".linux-amd64.tar.gz":      "dist/grafana-latest.linux-x64.tar.gz",
+		".linux-amd64-musl.tar.gz": "dist/grafana-latest.linux-x64-musl.tar.gz",
+		".linux-armv7.tar.gz":      "dist/grafana-latest.linux-armv7.tar.gz",
+		".linux-armv7-musl.tar.gz": "dist/grafana-latest.linux-armv7-musl.tar.gz",
+		".linux-armv6.tar.gz":      "dist/grafana-latest.linux-armv6.tar.gz",
+		".linux-arm64.tar.gz":      "dist/grafana-latest.linux-arm64.tar.gz",
+		".linux-arm64-musl.tar.gz": "dist/grafana-latest.linux-arm64-musl.tar.gz",
 	}
 
 	for _, file := range files {
@@ -455,6 +456,9 @@ func gruntBuildArg(task string) []string {
 	if pkgArch != "" {
 		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
 	}
+	if libc != "" {
+		args = append(args, fmt.Sprintf("--libc=%s", libc))
+	}
 	if phjsToRelease != "" {
 		args = append(args, fmt.Sprintf("--phjsToRelease=%v", phjsToRelease))
 	}
@@ -481,9 +485,13 @@ func test(pkg string) {
 }
 
 func build(binaryName, pkg string, tags []string) {
-	binary := fmt.Sprintf("./bin/%s-%s/%s", goos, goarch, binaryName)
+	libcPart := ""
+	if libc != "" {
+		libcPart = fmt.Sprintf("-%s", libc)
+	}
+	binary := fmt.Sprintf("./bin/%s-%s%s/%s", goos, goarch, libcPart, binaryName)
 	if isDev {
-		//don't include os and arch in output path in dev environment
+		//don't include os/arch/libc in output path in dev environment
 		binary = fmt.Sprintf("./bin/%s", binaryName)
 	}
 
@@ -511,7 +519,11 @@ func build(binaryName, pkg string, tags []string) {
 	if !isDev {
 		setBuildEnv()
 		runPrint("go", "version")
-		fmt.Printf("Targeting %s/%s\n", goos, goarch)
+		libcPart := ""
+		if libc != "" {
+			libcPart = fmt.Sprintf("/%s", libc)
+		}
+		fmt.Printf("Targeting %s/%s%s\n", goos, goarch, libcPart)
 	}
 
 	runPrint("go", args...)

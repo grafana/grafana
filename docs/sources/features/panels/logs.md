@@ -2,11 +2,11 @@
 title = "Logs Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "logs panel"]
 type = "docs"
-aliases = ["/reference/logs/"]
+aliases = ["/docs/grafana/latest/reference/logs/"]
 [menu.docs]
 name = "Logs"
 parent = "panels"
-weight = 2
+weight = 4
 +++
 
 # Logs Panel

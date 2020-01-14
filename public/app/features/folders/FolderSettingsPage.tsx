@@ -6,9 +6,10 @@ import { Input } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState, FolderState, CoreEvents } from 'app/types';
-import { getFolderByUid, setFolderTitle, saveFolder, deleteFolder } from './state/actions';
+import { CoreEvents, FolderState, StoreState } from 'app/types';
+import { deleteFolder, getFolderByUid, saveFolder } from './state/actions';
 import { getLoadingNav } from './state/navModel';
+import { setFolderTitle } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
@@ -115,9 +116,4 @@ const mapDispatchToProps = {
   deleteFolder,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(FolderSettingsPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(FolderSettingsPage));

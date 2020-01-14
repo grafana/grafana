@@ -3,7 +3,7 @@ title = "Using OpenTSDB in Grafana"
 description = "Guide for using OpenTSDB in Grafana"
 keywords = ["grafana", "opentsdb", "guide"]
 type = "docs"
-aliases = ["/datasources/opentsdb",	"docs/features/opentsdb"]
+aliases = ["/docs/grafana/latest/datasources/opentsdb",	"/docs/grafana/latest/features/opentsdb"]
 [menu.docs]
 name = "OpenTSDB"
 parent = "datasources"
@@ -53,7 +53,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -86,11 +86,11 @@ Query | Description
 *tag_values(cpu, hostname, env=$env)*  | Return tag values for cpu metric, selected env tag value and tag key hostname
 *tag_values(cpu, hostname, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
 
-For details on OpenTSDB metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
+For details on OpenTSDB metric queries, check out the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 
@@ -106,3 +106,8 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 ```
+
+## Lookup limits
+
+By default, at most 1000 records are looked up from OpenTSDB.
+You can change this by modifying the "Lookup Limit" in the OpenTSDB settings page.

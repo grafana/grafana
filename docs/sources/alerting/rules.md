@@ -28,7 +28,7 @@ and the conditions that need to be met for the alert to change state and trigger
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
 of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
-`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL` and `OpenTSDB`.
+`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle` and `Azure Data Explorer`.
 
 > Alerting support for Azure Monitor is only available in Grafana v6.0 and above.
 
@@ -40,10 +40,7 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 ## Rule Config
 
-
-
-Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
-panels as well in a future release.
+Currently only the graph panel supports alert rules.
 
 ### Name and Evaluation interval
 
@@ -107,7 +104,7 @@ we plan to track state **per series** in a future release.
 > Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
 > when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will
 > be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage
-> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here](/alerting/notifications/#send-reminders).
+> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here]({{< relref "notifications/#send-reminders" >}}).
 
 ### No Data / Null values
 

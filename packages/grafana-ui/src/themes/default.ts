@@ -1,4 +1,4 @@
-import { GrafanaThemeCommons } from '../types/theme';
+import { GrafanaThemeCommons } from '@grafana/data';
 
 export const commonColorsPalette = {
   // New greys palette used by next-gen form elements
@@ -31,8 +31,7 @@ const theme: GrafanaThemeCommons = {
       monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace",
     },
     size: {
-      root: '14px',
-      base: '13px',
+      base: '14px',
       xs: '10px',
       sm: '12px',
       md: '14px',
@@ -50,12 +49,13 @@ const theme: GrafanaThemeCommons = {
       light: 300,
       regular: 400,
       semibold: 500,
+      bold: 600,
     },
     lineHeight: {
       xs: 1,
       sm: 1.1,
-      md: 4 / 3,
-      lg: 1.5,
+      md: 1.5,
+      lg: 2,
     },
     link: {
       decoration: 'none',
@@ -87,6 +87,7 @@ const theme: GrafanaThemeCommons = {
     formFieldsetMargin: `${SPACING_BASE * 2}px`,
     formLegendMargin: `0 0 ${SPACING_BASE * 2}px 0`,
     formInputHeight: `${SPACING_BASE * 4}px`,
+    formButtonHeight: SPACING_BASE * 4,
     formInputPaddingHorizontal: `${SPACING_BASE}px`,
 
     // Used for icons do define spacing between icon and input field
@@ -95,8 +96,9 @@ const theme: GrafanaThemeCommons = {
 
     formInputMargin: `${SPACING_BASE * 2}px`,
     formLabelPadding: '0 0 0 2px',
-    formLabelMargin: '0 0 4px 0',
+    formLabelMargin: `0 0 ${SPACING_BASE / 2 + 'px'} 0`,
     formValidationMessagePadding: '4px 8px',
+    formValidationMessageMargin: '4px 0 0 0',
   },
   border: {
     radius: {

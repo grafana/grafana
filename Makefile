@@ -4,7 +4,7 @@
 
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run clean devenv devenv-down revive-alerting help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run run-frontend clean devenv devenv-down revive-alerting help
 
 GO = GO111MODULE=on go
 GO_FILES ?= ./pkg/...
@@ -51,6 +51,9 @@ scripts/go/bin/bra: scripts/go/go.mod
 
 run: scripts/go/bin/bra ## Build and run web server on filesystem changes.
 	@GO111MODULE=on scripts/go/bin/bra run
+
+run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
+	yarn start
 
 ##@ Testing
 

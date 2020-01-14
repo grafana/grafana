@@ -1,12 +1,16 @@
 import React from 'react';
 
+function formatLatency(value: number) {
+  return `${(value / 1000).toFixed(1)}s`;
+}
+
 export type Props = {
   canToggleEditorModes: boolean;
-  hideQuery: boolean;
-  canHide: boolean;
+  isDisabled?: boolean;
+  isNotStarted: boolean;
+  latency: number;
   onClickToggleEditorMode: () => void;
-  onClickToggleHiddenQuery: () => void;
-  onClickAddButton: () => void;
+  onClickToggleDisabled: () => void;
   onClickRemoveButton: () => void;
 };
 
@@ -14,11 +18,11 @@ export function QueryRowActions(props: Props) {
   const {
     canToggleEditorModes,
     onClickToggleEditorMode,
-    onClickToggleHiddenQuery,
-    onClickAddButton,
+    onClickToggleDisabled,
     onClickRemoveButton,
-    hideQuery,
-    canHide,
+    isDisabled,
+    isNotStarted,
+    latency,
   } = props;
 
   return (
@@ -35,17 +39,22 @@ export function QueryRowActions(props: Props) {
         </div>
       )}
       <div className="gf-form">
-        <button disabled={!canHide} className="gf-form-label gf-form-label--btn" onClick={onClickToggleHiddenQuery}>
-          <i className={hideQuery ? 'fa fa-eye-slash' : 'fa fa-eye'} />
+        <button disabled className="gf-form-label" title="Query row latency">
+          {formatLatency(latency)}
         </button>
       </div>
       <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" onClick={onClickAddButton}>
-          <i className="fa fa-plus" />
+        <button
+          disabled={isNotStarted}
+          className="gf-form-label gf-form-label--btn"
+          onClick={onClickToggleDisabled}
+          title="Disable/enable query"
+        >
+          <i className={isDisabled ? 'fa fa-eye-slash' : 'fa fa-eye'} />
         </button>
       </div>
       <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" onClick={onClickRemoveButton}>
+        <button className="gf-form-label gf-form-label--btn" onClick={onClickRemoveButton} title="Remove query">
           <i className="fa fa-minus" />
         </button>
       </div>

@@ -2,7 +2,7 @@
 title = "Datasource Permissions HTTP API "
 description = "Data Source Permissions API"
 keywords = ["grafana", "http", "documentation", "api", "datasource", "permission", "permissions", "acl", "enterprise"]
-aliases = ["/http_api/datasourcepermissions/"]
+aliases = ["/docs/grafana/latest/http_api/datasourcepermissions/"]
 type = "docs"
 [menu.docs]
 name = "Datasource Permissions"
@@ -11,7 +11,7 @@ parent = "http_api"
 
 # Data Source Permissions API
 
-> The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+> The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 This API can be used to enable, disable, list, add and remove permissions for a data source.
 

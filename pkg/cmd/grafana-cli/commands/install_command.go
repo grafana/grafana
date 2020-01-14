@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -107,12 +108,24 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	logger.Infof("into: %v\n", pluginFolder)
 	logger.Info("\n")
 
-	content, err := c.ApiClient().DownloadFile(pluginName, pluginFolder, downloadURL, checksum)
+	// Create temp file for downloading zip file
+	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
+		return errutil.Wrap("Failed to create temporary file", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	err = c.ApiClient().DownloadFile(pluginName, tmpFile, downloadURL, checksum)
+	if err != nil {
+		tmpFile.Close()
 		return errutil.Wrap("Failed to download plugin archive", err)
 	}
+	err = tmpFile.Close()
+	if err != nil {
+		return errutil.Wrap("Failed to close tmp file", err)
+	}
 
-	err = extractFiles(content, pluginName, pluginFolder, isInternal)
+	err = extractFiles(tmpFile.Name(), pluginName, pluginFolder, isInternal)
 	if err != nil {
 		return errutil.Wrap("Failed to extract plugin archive", err)
 	}
@@ -197,8 +210,10 @@ func RemoveGitBuildFromName(pluginName, filename string) string {
 
 var permissionsDeniedMessage = "Could not create %s. Permission denied. Make sure you have write access to plugindir"
 
-func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks bool) error {
-	r, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
+func extractFiles(archiveFile string, pluginName string, filePath string, allowSymlinks bool) error {
+	logger.Debugf("Extracting archive %v to %v...\n", archiveFile, filePath)
+
+	r, err := zip.OpenReader(archiveFile)
 	if err != nil {
 		return err
 	}
@@ -226,11 +241,9 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 					continue
 				}
 			} else {
-
 				err = extractFile(zf, newFile)
 				if err != nil {
-					logger.Errorf("Failed to extract file: %v \n", err)
-					continue
+					return errutil.Wrap("Failed to extract file", err)
 				}
 			}
 		}
@@ -273,6 +286,12 @@ func extractFile(file *zip.File, filePath string) (err error) {
 		if os.IsPermission(err) {
 			return xerrors.Errorf(permissionsDeniedMessage, filePath)
 		}
+
+		unwrappedError := xerrors.Unwrap(err)
+		if unwrappedError != nil && strings.EqualFold(unwrappedError.Error(), "text file busy") {
+			return fmt.Errorf("file %s is in use. Please stop Grafana, install the plugin and restart Grafana", filePath)
+		}
+
 		return errutil.Wrap("Failed to open file", err)
 	}
 	defer func() {

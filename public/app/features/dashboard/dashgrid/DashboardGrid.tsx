@@ -11,7 +11,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { CoreEvents } from 'app/types';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { panelAdded, panelRemoved } from '../state/PanelModel';
 
 let lastGridWidth = 1200;
@@ -58,11 +58,17 @@ function GridWrapper({
     }
   }
 
+  /*
+    Disable draggable if mobile device, solving an issue with unintentionally
+     moving panels. https://github.com/grafana/grafana/issues/18497
+  */
+  const draggable = width <= 420 ? false : isDraggable;
+
   return (
     <ReactGridLayout
       width={lastGridWidth}
       className={className}
-      isDraggable={isDraggable}
+      isDraggable={draggable}
       isResizable={isResizable}
       containerPadding={[0, 0]}
       useCSSTransforms={false}

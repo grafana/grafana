@@ -51,7 +51,7 @@ export class BridgeSrv {
     store.subscribe(() => {
       const state = store.getState();
       const angularUrl = this.$location.url();
-      const url = locationUtil.stripBaseFromUrl(state.location.url);
+      const url = state.location.url;
       if (angularUrl !== url) {
         this.$timeout(() => {
           this.$location.url(url);

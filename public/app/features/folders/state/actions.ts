@@ -1,60 +1,13 @@
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { StoreState } from 'app/types';
-import { ThunkAction } from 'redux-thunk';
-import { FolderDTO, FolderState } from 'app/types';
-import {
-  DashboardAcl,
-  DashboardAclDTO,
-  PermissionLevel,
-  DashboardAclUpdateDTO,
-  NewDashboardAclItem,
-} from 'app/types/acl';
-
-import { updateNavIndex, updateLocation } from 'app/core/actions';
-import { buildNavModel } from './navModel';
-import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
 
-export enum ActionTypes {
-  LoadFolder = 'LOAD_FOLDER',
-  SetFolderTitle = 'SET_FOLDER_TITLE',
-  SaveFolder = 'SAVE_FOLDER',
-  LoadFolderPermissions = 'LOAD_FOLDER_PERMISSONS',
-}
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { FolderState, ThunkResult } from 'app/types';
+import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
 
-export interface LoadFolderAction {
-  type: ActionTypes.LoadFolder;
-  payload: FolderDTO;
-}
-
-export interface SetFolderTitleAction {
-  type: ActionTypes.SetFolderTitle;
-  payload: string;
-}
-
-export interface LoadFolderPermissionsAction {
-  type: ActionTypes.LoadFolderPermissions;
-  payload: DashboardAcl[];
-}
-
-export type Action = LoadFolderAction | SetFolderTitleAction | LoadFolderPermissionsAction;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
-
-export const loadFolder = (folder: FolderDTO): LoadFolderAction => ({
-  type: ActionTypes.LoadFolder,
-  payload: folder,
-});
-
-export const setFolderTitle = (newTitle: string): SetFolderTitleAction => ({
-  type: ActionTypes.SetFolderTitle,
-  payload: newTitle,
-});
-
-export const loadFolderPermissions = (items: DashboardAclDTO[]): LoadFolderPermissionsAction => ({
-  type: ActionTypes.LoadFolderPermissions,
-  payload: items,
-});
+import { updateLocation, updateNavIndex } from 'app/core/actions';
+import { buildNavModel } from './navModel';
+import appEvents from 'app/core/app_events';
+import { loadFolder, loadFolderPermissions } from './reducers';
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async dispatch => {
