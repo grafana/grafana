@@ -41,7 +41,7 @@ const OrgActionBar: FunctionComponent<Props> = ({
         ) : null}
       </div>
       <div className="page-action-bar__spacer" />
-      <LinkButton variant={'secondary'} {...linkProps}>
+      <LinkButton variant={'primary'} {...linkProps}>
         {linkButton.title}
       </LinkButton>
     </div>
