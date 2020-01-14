@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "public",
+    "baseUrl": "public/",
     "declaration": false,
     "downlevelIteration": true,
     "emitDecoratorMetadata": false,
@@ -24,8 +24,8 @@
     "outDir": "public/dist",
     "paths": {
       "@grafana/slate-react": ["../node_modules/@types/slate-react"],
-      "app": ["app"],
-      "sass": ["sass"]
+      "app": ["app/"],
+      "sass": ["sass/"]
     },
     "pretty": true,
     "removeComments": false,
@@ -36,11 +36,5 @@
     "target": "es5",
     "typeRoots": ["node_modules/@types", "public/app/types"]
   },
-  "include": [
-    "public/app/**/*.ts",
-    "public/app/**/*.tsx",
-    "public/e2e-test/**/*.ts",
-    "public/test/**/*.ts",
-    "public/vendor/**/*.ts"
-  ]
+  "include": ["public/app/**/*.ts*", "public/e2e-test/**/*.ts", "public/test/**/*.ts", "public/vendor/**/*.ts"]
 }

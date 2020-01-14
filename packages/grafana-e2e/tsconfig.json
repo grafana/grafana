@@ -3,10 +3,10 @@
     "declarationDir": "dist",
     "outDir": "compiled",
     "rootDirs": ["."],
-    "typeRoots": ["./node_modules/@types", "types"],
+    "typeRoots": ["node_modules/@types"],
     "types": ["cypress"]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "../tsconfig.json",
-  "include": ["src/**/*.ts", "./cypress/support/index.d.ts"]
+  "include": ["src/**/*.ts", "cypress/support/index.d.ts"]
 }

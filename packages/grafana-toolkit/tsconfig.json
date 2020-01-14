@@ -6,7 +6,7 @@
     "module": "commonjs",
     "outDir": "dist/src",
     "rootDirs": ["."],
-    "typeRoots": ["./node_modules/@types"]
+    "typeRoots": ["node_modules/@types"]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "../tsconfig.json",

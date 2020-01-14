@@ -3,9 +3,9 @@
     "declarationDir": "dist",
     "outDir": "compiled",
     "rootDirs": ["."],
-    "typeRoots": ["./node_modules/@types", "types"]
+    "typeRoots": ["node_modules/@types"]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "../tsconfig.json",
-  "include": ["src/**/*.ts", "src/**/*.tsx", "../../public/app/types/jquery/*.ts"]
+  "include": ["src/**/*.ts*", "../../public/app/types/jquery/*.ts"]
 }
