@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
+import { css, cx } from 'emotion';
 
 export interface BrandComponentProps {
   className?: string;
+  children?: JSX.Element | JSX.Element[];
 }
 
 export const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
@@ -13,11 +15,21 @@ export const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
   );
 };
 
+export const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
+  const background = css`
+    background: url(public/img/heatmap_bg_test.svg);
+    background-size: cover;
+  `;
+
+  return <div className={cx(background, className)}>{children}</div>;
+};
+
 export const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
   return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
 };
 
 export class Branding {
   static LoginLogo = LoginLogo;
+  static LoginBackground = LoginBackground;
   static MenuLogo = MenuLogo;
 }

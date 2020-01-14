@@ -722,6 +722,12 @@ Default setting for alert notification timeout. Default value is `30`
 
 Default setting for max attempts to sending alert notifications. Default value is `3`
 
+### min_interval_seconds
+
+Default setting for minimum interval between rule evaluations. Default value is `1`
+
+> **Note.** This setting has precedence over each individual rule frequency. Therefore, if a rule frequency is lower than this value, this value will be enforced.
+
 ## [rendering]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.

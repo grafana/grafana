@@ -18,15 +18,20 @@ export default {
 };
 
 const tabs = [
-  { label: '1st child', key: 'first', hide: false, active: true },
-  { label: '2nd child', key: 'second', hide: false, active: false },
-  { label: '3rd child', key: 'third', hide: false, active: false },
+  { label: '1st child', key: 'first', active: true },
+  { label: '2nd child', key: 'second', active: false },
+  { label: '3rd child', key: 'third', active: false },
 ];
 
 export const Simple = () => {
   const VISUAL_GROUP = 'Visual options';
   // ---
-  const icon = select('Icon', { None: undefined, Heart: 'heart', Star: 'star', User: 'user' }, undefined, VISUAL_GROUP);
+  const icon = select(
+    'Icon',
+    { None: undefined, Heart: 'fa fa-heart', Star: 'fa fa-star', User: 'fa fa-user' },
+    undefined,
+    VISUAL_GROUP
+  );
   return (
     <UseState initialState={tabs}>
       {(state, updateState) => {
