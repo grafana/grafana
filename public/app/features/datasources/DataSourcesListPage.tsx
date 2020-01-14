@@ -16,13 +16,8 @@ import { CoreEvents, StoreState } from 'app/types/';
 import appEvents from 'app/core/app_events';
 
 // Actions
-import {
-  loadDataSources,
-  setDataSourcesLayoutMode,
-  setDataSourcesSearchQuery,
-  loadDataSource,
-  deleteDataSource,
-} from './state/actions';
+import { loadDataSources, loadDataSource, deleteDataSource } from './state/actions';
+import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 
 // Selectors
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -114,11 +109,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
                   linkButton={linkButton}
                   key="action-bar"
                 />,
-                <DataSourcesList
-                  dataSources={dataSources}
-                  key="list"
-                  deleteDataSource={this.deleteDataSource}
-                />,
+                <DataSourcesList dataSources={dataSources} key="list" deleteDataSource={this.deleteDataSource} />,
               ]}
           </>
         </Page.Contents>

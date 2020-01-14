@@ -13,12 +13,12 @@ exports[`Render should render component 1`] = `
         className="fa fa-trash css-1yazh86"
         onClick={[Function]}
       />
-      <LinkButton
+      <ForwardRef
         href="datasources/edit/13"
         variant="secondary"
       >
         Configure
-      </LinkButton>
+      </ForwardRef>
     </React.Fragment>
   }
   imageUrl="public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
