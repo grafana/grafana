@@ -419,6 +419,13 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 				Name:  aws.String(k),
 				Value: aws.String(vv),
 			})
+		} else if vv, ok := v.([]interface{}); ok {
+			for _, v := range vv {
+				dimensions = append(dimensions, &cloudwatch.DimensionFilter{
+					Name:  aws.String(k),
+					Value: aws.String(v.(string)),
+				})
+			}
 		}
 	}
 

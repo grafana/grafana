@@ -1,5 +1,3 @@
-import { User, UserSession } from 'app/types';
-
 interface LdapMapping {
   cfgAttrValue: string;
   ldapValue: string;
@@ -84,12 +82,4 @@ export interface LdapState {
   connectionError?: LdapError;
   userError?: LdapError;
   ldapError?: LdapError;
-}
-
-export interface LdapUserState {
-  user?: User;
-  ldapUser?: LdapUser;
-  ldapSyncInfo?: SyncInfo;
-  sessions?: UserSession[];
-  userError?: LdapError;
 }

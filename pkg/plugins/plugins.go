@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -37,12 +38,14 @@ var (
 )
 
 type PluginScanner struct {
-	pluginPath string
-	errors     []error
+	pluginPath           string
+	errors               []error
+	backendPluginManager backendplugin.Manager
 }
 
 type PluginManager struct {
-	log log.Logger
+	BackendPluginManager backendplugin.Manager `inject:""`
+	log                  log.Logger
 }
 
 func init() {
@@ -110,25 +113,7 @@ func (pm *PluginManager) Init() error {
 	return nil
 }
 
-func (pm *PluginManager) startBackendPlugins(ctx context.Context) {
-	for _, ds := range DataSources {
-		if !ds.Backend {
-			continue
-		}
-
-		if err := ds.startBackendPlugin(ctx, plog); err != nil {
-			pm.log.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
-		}
-	}
-	if Transform != nil {
-		if err := Transform.startBackendPlugin(ctx, plog); err != nil {
-			pm.log.Error("Failed to init plugin.", "error", err, "plugin", Transform.Id)
-		}
-	}
-}
-
 func (pm *PluginManager) Run(ctx context.Context) error {
-	pm.startBackendPlugins(ctx)
 	pm.updateAppDashboards()
 	pm.checkForUpdates()
 
@@ -142,15 +127,6 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			run = false
 		}
-	}
-
-	// kill backend plugins
-	for _, p := range DataSources {
-		p.Kill()
-	}
-
-	if Transform != nil {
-		Transform.Kill()
 	}
 
 	return ctx.Err()
@@ -179,7 +155,8 @@ func (pm *PluginManager) checkPluginPaths() error {
 // scan a directory for plugins.
 func (pm *PluginManager) scan(pluginDir string) error {
 	scanner := &PluginScanner{
-		pluginPath: pluginDir,
+		pluginPath:           pluginDir,
+		backendPluginManager: pm.BackendPluginManager,
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
@@ -270,7 +247,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	if _, err := reader.Seek(0, 0); err != nil {
 		return err
 	}
-	return loader.Load(jsonParser, currentDir)
+	return loader.Load(jsonParser, currentDir, scanner.backendPluginManager)
 }
 
 func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {

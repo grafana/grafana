@@ -33,7 +33,7 @@ export interface ColumnStyle {
   mappingType?: any;
   valueMaps?: any;
   rangeMaps?: any;
-
+  align?: 'auto' | 'left' | 'center' | 'right';
   link?: any;
   linkUrl?: any;
   linkTooltip?: any;
