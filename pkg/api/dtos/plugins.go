@@ -56,7 +56,7 @@ type ImportDashboardCommand struct {
 	PluginId  string                         `json:"pluginId"`
 	Path      string                         `json:"path"`
 	Overwrite bool                           `json:"overwrite"`
-	Dashboard *simplejson.Json               `json:"dashboard"`
+	Dashboard *simplejson.Json               `json:"dashboard" binding:"Required"`
 	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
 	FolderId  int64                          `json:"folderId"`
 }
