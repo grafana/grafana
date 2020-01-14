@@ -40,10 +40,10 @@ type PluginCollector struct {
 }
 
 // NewPluginCollector creates a new PluginCollector..
-func NewPluginCollector(logger log.Logger) PluginCollector {
+func NewPluginCollector() PluginCollector {
 	return PluginCollector{
 		collectors: make(map[string]Collector),
-		logger:     logger,
+		logger:     log.New("plugins.backend.collector"),
 	}
 }
 

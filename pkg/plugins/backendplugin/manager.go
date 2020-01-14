@@ -46,7 +46,7 @@ type manager struct {
 func (m *manager) Init() error {
 	m.plugins = make(map[string]*BackendPlugin)
 	m.logger = log.New("plugins.backend")
-	m.pluginCollector = collector.NewPluginCollector(m.logger)
+	m.pluginCollector = collector.NewPluginCollector()
 	prometheus.MustRegister(m.pluginCollector)
 
 	m.RouteRegister.Get("/api/plugins/:pluginId/health", m.checkHealth)
