@@ -1,19 +1,7 @@
-import React, { FunctionComponent, useContext } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, ThemeContext } from '@grafana/ui';
+import React, { FunctionComponent } from 'react';
 import LayoutSelector, { LayoutMode } from '../LayoutSelector/LayoutSelector';
 import { FilterInput } from '../FilterInput/FilterInput';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  btn: css`
-    background: ${theme.colors.primary};
-
-    &:hover {
-      background: ${theme.colors.primaryHover};
-    }
-  `,
-}));
+import { LinkButton } from '@grafana/ui';
 
 export interface Props {
   searchQuery: string;
@@ -33,8 +21,6 @@ const OrgActionBar: FunctionComponent<Props> = ({
   target,
 }) => {
   const linkProps = { href: linkButton.href };
-  const theme = useContext(ThemeContext);
-  const style = getStyles(theme);
 
   if (target) {
     (linkProps as any).target = target;
@@ -55,9 +41,9 @@ const OrgActionBar: FunctionComponent<Props> = ({
         ) : null}
       </div>
       <div className="page-action-bar__spacer" />
-      <a className={cx('btn', 'btn-primary', style.btn)} {...linkProps}>
+      <LinkButton variant={'secondary'} {...linkProps}>
         {linkButton.title}
-      </a>
+      </LinkButton>
     </div>
   );
 };
