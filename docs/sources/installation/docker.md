@@ -1,97 +1,63 @@
 +++
-title = "Installing using Docker"
-description = "Installing Grafana using Docker guide"
+title = "Install using Docker"
+description = "Guide for installing Grafana using Docker"
 keywords = ["grafana", "configuration", "documentation", "docker"]
 type = "docs"
 [menu.docs]
-name = "Installing using Docker"
+name = "Install with Docker"
 identifier = "docker"
 parent = "installation"
 weight = 600
 +++
 
-# Installing using Docker
+# Install with Docker
 
-Grafana is very easy to install and run using the official Docker container.
+You can install and run Grafana using the official Docker container. The official Grafana Docker image comes in two variants: Alpine and Ubuntu
 
-```bash
-$ docker run -d -p 3000:3000 grafana/grafana
-```
-
-## Configuration
-
-All options defined in `conf/grafana.ini` can be overridden using environment
-variables by using the syntax `GF_<SectionName>_<KeyName>`.
-For example:
-
-```bash
-$ docker run -d \
-  -p 3000:3000 \
-  --name=grafana \
-  -e "GF_SERVER_ROOT_URL=http://grafana.server.name" \
-  -e "GF_SECURITY_ADMIN_PASSWORD=secret" \
-  grafana/grafana
-```
-
-The back-end web server has a number of configuration options. Go to the
-[Configuration]({{< relref "configuration.md" >}}) page for details on all
-those options.
-
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect you need to restart Grafana by restarting the Docker container.
-
-### Default paths
-
-The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
-
-Setting               | Default value
-----------------------|---------------------------
-GF_PATHS_CONFIG       | /etc/grafana/grafana.ini
-GF_PATHS_DATA         | /var/lib/grafana
-GF_PATHS_HOME         | /usr/share/grafana
-GF_PATHS_LOGS         | /var/log/grafana
-GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
-GF_PATHS_PROVISIONING | /etc/grafana/provisioning
-
-## Image Variants
-
-The official Grafana Docker image comes in two variants.
-
-**`grafana/grafana:<version>`:**
-
-> **Note:** This image was based on [Ubuntu](https://ubuntu.com/) before version 6.4.0.
+## Alpine image (recommended)
+`grafana/grafana:<version>`
 
 This is the default image. This image is based on the popular [Alpine Linux project](http://alpinelinux.org), available in [the alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than most distribution base images, and thus leads to slimmer and more secure images.
 
 This variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it does use [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software doesn't have an issue with this, so this variant is usually a very safe choice.
 
-**`grafana/grafana:<version>-ubuntu`:**
+> **Note:** The `grafana/grafana:<version>` image was based on [Ubuntu](https://ubuntu.com/) before version 6.4.0.
 
-> **Note:** This image is available since version 6.5.0.
+## Ubuntu image
+`grafana/grafana:<version>-ubuntu`
 
-This image is based on [Ubuntu](https://ubuntu.com/), available in [the ubuntu official image](https://hub.docker.com/_/ubuntu).
+This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu).
 This is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or who are dependent on certain
 tooling not available for Alpine.
 
-## Running a specific version of Grafana
+> **Note:** The `grafana/grafana:<version>-ubuntu` image is available for Grafana version 6.5.0 and later.
+
+## Run Grafana
+You can run the latest Grafana version, run a specific version, or run an unstable version based on the master branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
+
+### Run the latest stable version of Grafana
 
 ```bash
-# specify right tag, e.g. 6.5.0 - see Docker Hub for available tags
-$ docker run -d -p 3000:3000 --name grafana grafana/grafana:6.5.0
-# ubuntu based images available since Grafana 6.5.0
-$ docker run -d -p 3000:3000 --name grafana grafana/grafana:6.5.0-ubuntu
+docker run -d -p 3000:3000 grafana/grafana
 ```
 
-## Running the master branch
+### Run a specific version of Grafana
 
-For every successful build of the master branch we update the `grafana/grafana:master` and `grafana/grafana:master-ubuntu`. Additionally, two new tags are created, `grafana/grafana-dev:master-<commit hash>` and `grafana/grafana-dev:master-<commit hash>-ubuntu`, which includes the hash of the git commit that was built. This means you can always get the latest version of Grafana.
+```bash
+docker run -d -p 3000:3000 --name grafana grafana/grafana:6.5.0
+```
 
-When running Grafana master in production we **strongly** recommend that you use the `grafana/grafana-dev:master-<commit hash>` tag as that will guarantee that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
+### Run the master branch
+
+For every successful build of the master branch we update the `grafana/grafana:master` and `grafana/grafana:master-ubuntu`. Additionally, two new tags are created, `grafana/grafana-dev:master-<commit hash>` and `grafana/grafana-dev:master-<commit hash>-ubuntu`, which includes the hash of the Git commit that was built. This means you can always get the latest version of Grafana.
+
+When running Grafana master in production, we *strongly* recommend that you use the `grafana/grafana-dev:master-<commit hash>` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
 
 For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/).
 
 ## Installing Grafana plugins
 
-Pass the plugins you want installed to docker with the `GF_INSTALL_PLUGINS` environment variable as a comma separated list. This will pass each plugin name to `grafana-cli plugins install ${plugin}` and install them when Grafana starts.
+Pass the plugins you want installed to Docker with the `GF_INSTALL_PLUGINS` environment variable as a comma separated list. This will pass each plugin name to `grafana-cli plugins install ${plugin}` and install them when Grafana starts.
 
 ```bash
 docker run -d \
@@ -127,12 +93,9 @@ Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom
 
 ### With Grafana Image Renderer plugin pre-installed
 
-> Only available in Grafana v6.5+ and experimental.
+> Only available in Grafana v6.5 and later. This is experimental.
 
-The [Grafana Image Renderer plugin]({{< relref "../administration/image_rendering/#grafana-image-renderer-plugin" >}}) does not
-currently work if it is installed in Grafana docker image.
-You can build a custom docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument.
-This will install additional dependencies needed for the Grafana Image Renderer plugin to run.
+The [Grafana Image Renderer plugin]({{< relref "../administration/image_rendering/#grafana-image-renderer-plugin" >}}) does not currently work if it is installed in Grafana docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
 
 Example of how to build and run:
 ```bash
@@ -145,13 +108,13 @@ docker build \
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 
-Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom Ubuntu based image.
+Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom Ubuntu-based image.
 
-## Installing plugins from other sources
+## Install plugins from other sources
 
-> Only available in Grafana v5.3.1+
+> Only available in Grafana v5.3.1 and later.
 
-It's possible to install plugins from custom url:s by specifying the url like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`
+You can install plugins from custom url:s by specifying the url like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`
 
 ```bash
 docker run -d \
@@ -161,7 +124,7 @@ docker run -d \
   grafana/grafana
 ```
 
-## Configuring AWS credentials for CloudWatch Support
+## Configure AWS credentials for CloudWatch Support
 
 ```bash
 $ docker run -d \
@@ -207,7 +170,7 @@ docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 graf
 
 ## Reading secrets from files (support for Docker Secrets)
 
-> Only available in Grafana v5.2+.
+> Only available in Grafana v5.2 and later.
 
 It's possible to supply Grafana with configuration through files. This works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/) as the secrets by default gets mapped into `/run/secrets/<name of secret>` of the container.
 
@@ -241,7 +204,7 @@ You should always be careful to define your own named volume for storage, but if
 
 ### User ID changes
 
-In 5.1 we switched the id of the grafana user. Unfortunately this means that files created prior to 5.1 won't have the correct permissions for later versions. We made this change so that it would be more likely that the grafana users id would be unique to Grafana. For example, on Ubuntu 16.04 `104` is already in use by the syslog user.
+In 5.1, we switched the id of the grafana user. Unfortunately this means that files created prior to 5.1 won't have the correct permissions for later versions. We made this change so that it would be more likely that the grafana users id would be unique to Grafana. For example, on Ubuntu 16.04 `104` is already in use by the syslog user.
 
 Version | User    | User ID
 --------|---------|---------
@@ -250,13 +213,13 @@ Version | User    | User ID
 
 There are two possible solutions to this problem. Either you start the new container as the root user and change ownership from `104` to `472` or you start the upgraded container as user `104`.
 
-#### Running docker as a different user
+#### Run Docker as a different user
 
 ```bash
 docker run --user 104 --volume "<your volume mapping here>" grafana/grafana:5.1.0
 ```
 
-##### Specifying a user in docker-compose.yml
+##### Specify a user in docker-compose.yml
 ```yaml
 version: "2"
 
@@ -268,7 +231,7 @@ services:
     user: "104"
 ```
 
-#### Modifying permissions
+#### Modify permissions
 
 The commands below will run bash inside the Grafana container with your volume mapped in. This makes it possible to modify the file ownership to match the new container. Always be careful when modifying permissions.
 
@@ -282,7 +245,7 @@ chown -R root:root /etc/grafana && \
   chown -R grafana:grafana /usr/share/grafana
 ```
 
-## Migration from a previous version of the docker container to 6.4 or later
+## Migration from a previous version of the Docker container to 6.4 or later
 
 Grafana’s docker image was changed to be based on [Alpine](http://alpinelinux.org) instead of [Ubuntu](https://ubuntu.com/).
 
@@ -290,7 +253,10 @@ Grafana’s docker image was changed to be based on [Alpine](http://alpinelinux.
 
 Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.org) based and one [Ubuntu](https://ubuntu.com/) based, see [Image Variants](#image-variants) for details.
 
-## Logging in for the first time
+## Next steps
 
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port]({{< relref "configuration/#http-port" >}}).
-Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).
+Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guide for information about logging in, setting up data sources, and so on.
+
+## Configure Grafana
+
+Refer the [Configuration]({{< relref "configuration.md#docker-environment-variables" >}}) page for details on options for customizing your environment, logging, database, and so on.
