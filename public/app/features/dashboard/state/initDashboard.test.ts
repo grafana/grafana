@@ -3,8 +3,9 @@ import thunk from 'redux-thunk';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { DashboardRouteInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dashboardInitFetching, dashboardInitCompleted, dashboardInitServices } from './actions';
+import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './actions';
 import { resetExploreAction } from 'app/features/explore/state/actionTypes';
+import { updateLocation } from '../../../core/actions';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -150,7 +151,7 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should update location with orgId query param', () => {
-    expect(ctx.actions[2].type).toBe('UPDATE_LOCATION');
+    expect(ctx.actions[2].type).toBe(updateLocation.type);
     expect(ctx.actions[2].payload.query.orgId).toBe(12);
   });
 
@@ -180,7 +181,7 @@ describeInitScenario('Initializing home dashboard', ctx => {
   });
 
   it('Should redirect to custom home dashboard', () => {
-    expect(ctx.actions[1].type).toBe('UPDATE_LOCATION');
+    expect(ctx.actions[1].type).toBe(updateLocation.type);
     expect(ctx.actions[1].payload.path).toBe('/u/123/my-home');
   });
 });
@@ -217,7 +218,7 @@ describeInitScenario('Initializing existing dashboard', ctx => {
   });
 
   it('Should update location with orgId query param', () => {
-    expect(ctx.actions[2].type).toBe('UPDATE_LOCATION');
+    expect(ctx.actions[2].type).toBe(updateLocation.type);
     expect(ctx.actions[2].payload.query.orgId).toBe(12);
   });
 

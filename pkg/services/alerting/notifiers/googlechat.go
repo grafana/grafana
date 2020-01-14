@@ -55,7 +55,8 @@ Structs used to build a custom Google Hangouts Chat message card.
 See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
 */
 type outerStruct struct {
-	Cards []card `json:"cards"`
+	FallbackText string `json:"fallbackText"`
+	Cards        []card `json:"cards"`
 }
 
 type card struct {
@@ -187,6 +188,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	// nest the required structs
 	res1D := &outerStruct{
+		FallbackText: evalContext.GetNotificationTitle(),
 		Cards: []card{
 			{
 				Header: header{
