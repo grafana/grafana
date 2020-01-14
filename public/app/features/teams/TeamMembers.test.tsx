@@ -1,9 +1,11 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { TeamMembers, Props, State } from './TeamMembers';
-import { TeamMember, OrgRole } from '../../types';
+import { Props, State, TeamMembers } from './TeamMembers';
+import { OrgRole, TeamMember } from '../../types';
 import { getMockTeamMembers } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { setSearchMemberQuery } from './state/reducers';
 
 const signedInUserId = 1;
 
@@ -11,7 +13,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     members: [] as TeamMember[],
     searchMemberQuery: '',
-    setSearchMemberQuery: jest.fn(),
+    setSearchMemberQuery: mockToolkitActionCreator(setSearchMemberQuery),
     addTeamMember: jest.fn(),
     syncEnabled: false,
     editorsCanAdmin: false,

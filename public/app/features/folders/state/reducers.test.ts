@@ -1,6 +1,6 @@
-import { Action, ActionTypes } from './actions';
-import { FolderDTO, OrgRole, PermissionLevel, FolderState } from 'app/types';
-import { inititalState, folderReducer } from './reducers';
+import { FolderDTO, FolderState, OrgRole, PermissionLevel } from 'app/types';
+import { folderReducer, initialState, loadFolder, loadFolderPermissions, setFolderTitle } from './reducers';
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 function getTestFolder(): FolderDTO {
   return {
@@ -14,84 +14,130 @@ function getTestFolder(): FolderDTO {
 }
 
 describe('folder reducer', () => {
-  describe('loadFolder', () => {
+  describe('when loadFolder is dispatched', () => {
     it('should load folder and set hasChanged to false', () => {
-      const folder = getTestFolder();
-
-      const action: Action = {
-        type: ActionTypes.LoadFolder,
-        payload: folder,
-      };
-
-      const state = folderReducer(inititalState, action);
-
-      expect(state.hasChanged).toEqual(false);
-      expect(state.title).toEqual('test folder');
+      reducerTester<FolderState>()
+        .givenReducer(folderReducer, { ...initialState, hasChanged: true })
+        .whenActionIsDispatched(loadFolder(getTestFolder()))
+        .thenStateShouldEqual({
+          ...initialState,
+          hasChanged: false,
+          ...getTestFolder(),
+        });
     });
   });
 
-  describe('detFolderTitle', () => {
-    it('should set title', () => {
-      const action: Action = {
-        type: ActionTypes.SetFolderTitle,
-        payload: 'new title',
-      };
+  describe('when setFolderTitle is dispatched', () => {
+    describe('and title has length', () => {
+      it('then state should be correct', () => {
+        reducerTester<FolderState>()
+          .givenReducer(folderReducer, { ...initialState })
+          .whenActionIsDispatched(setFolderTitle('ready'))
+          .thenStateShouldEqual({
+            ...initialState,
+            hasChanged: true,
+            title: 'ready',
+          });
+      });
+    });
 
-      const state = folderReducer(inititalState, action);
-
-      expect(state.hasChanged).toEqual(true);
-      expect(state.title).toEqual('new title');
+    describe('and title has no length', () => {
+      it('then state should be correct', () => {
+        reducerTester<FolderState>()
+          .givenReducer(folderReducer, { ...initialState })
+          .whenActionIsDispatched(setFolderTitle(''))
+          .thenStateShouldEqual({
+            ...initialState,
+            hasChanged: false,
+            title: '',
+          });
+      });
     });
   });
 
-  describe('loadFolderPermissions', () => {
-    let state: FolderState;
-
-    beforeEach(() => {
-      const action: Action = {
-        type: ActionTypes.LoadFolderPermissions,
-        payload: [
-          { id: 2, dashboardId: 1, role: OrgRole.Viewer, permission: PermissionLevel.View },
-          { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },
-          {
-            id: 4,
-            dashboardId: 10,
-            permission: PermissionLevel.View,
-            teamId: 1,
-            team: 'MyTestTeam',
-            inherited: true,
-          },
-          {
-            id: 5,
-            dashboardId: 1,
-            permission: PermissionLevel.View,
-            userId: 1,
-            userLogin: 'MyTestUser',
-          },
-          {
-            id: 6,
-            dashboardId: 1,
-            permission: PermissionLevel.Edit,
-            teamId: 2,
-            team: 'MyTestTeam2',
-          },
-        ],
-      };
-
-      state = folderReducer(inititalState, action);
-    });
-
-    it('should add permissions to state', async () => {
-      expect(state.permissions.length).toBe(5);
-    });
-
-    it('should be sorted by sort rank and alphabetically', async () => {
-      expect(state.permissions[0].name).toBe('MyTestTeam');
-      expect(state.permissions[0].dashboardId).toBe(10);
-      expect(state.permissions[1].name).toBe('Editor');
-      expect(state.permissions[2].name).toBe('Viewer');
-      expect(state.permissions[3].name).toBe('MyTestTeam2');
-      expect(state.permissions[4].name).toBe('MyTestUser');
+  describe('when loadFolderPermissions is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<FolderState>()
+        .givenReducer(folderReducer, { ...initialState })
+        .whenActionIsDispatched(
+          loadFolderPermissions([
+            { id: 2, dashboardId: 1, role: OrgRole.Viewer, permission: PermissionLevel.View },
+            { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },
+            {
+              id: 4,
+              dashboardId: 10,
+              permission: PermissionLevel.View,
+              teamId: 1,
+              team: 'MyTestTeam',
+              inherited: true,
+            },
+            {
+              id: 5,
+              dashboardId: 1,
+              permission: PermissionLevel.View,
+              userId: 1,
+              userLogin: 'MyTestUser',
+            },
+            {
+              id: 6,
+              dashboardId: 1,
+              permission: PermissionLevel.Edit,
+              teamId: 2,
+              team: 'MyTestTeam2',
+            },
+          ])
+        )
+        .thenStateShouldEqual({
+          ...initialState,
+          permissions: [
+            {
+              dashboardId: 10,
+              id: 4,
+              inherited: true,
+              name: 'MyTestTeam',
+              permission: 1,
+              sortRank: 120,
+              team: 'MyTestTeam',
+              teamId: 1,
+            },
+            {
+              dashboardId: 1,
+              icon: 'fa fa-fw fa-street-view',
+              id: 3,
+              name: 'Editor',
+              permission: 2,
+              role: OrgRole.Editor,
+              sortRank: 31,
+            },
+            {
+              dashboardId: 1,
+              icon: 'fa fa-fw fa-street-view',
+              id: 2,
+              name: 'Viewer',
+              permission: 1,
+              role: OrgRole.Viewer,
+              sortRank: 30,
+            },
+            {
+              dashboardId: 1,
+              id: 6,
+              name: 'MyTestTeam2',
+              permission: 2,
+              sortRank: 20,
+              team: 'MyTestTeam2',
+              teamId: 2,
+            },
+            {
+              dashboardId: 1,
+              id: 5,
+              name: 'MyTestUser',
+              permission: 1,
+              sortRank: 10,
+              userId: 1,
+              userLogin: 'MyTestUser',
+            },
+          ],
+        });
     });
   });
 });
