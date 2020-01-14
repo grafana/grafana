@@ -6,11 +6,11 @@ exports[`Render should render component 1`] = `
     <React.Fragment>
       <a
         aria-label="Data source list item gdev-cloudwatch"
-        className="css-a0myu7 gicon gicon-explore"
+        className="css-15bmzjg gicon gicon-explore"
         href="explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22gdev-cloudwatch%22,%7B%7D,%7B%22mode%22:%22Metrics%22%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D"
       />
       <a
-        className="fa fa-trash css-1kff5rh"
+        className="fa fa-trash css-1yazh86"
         onClick={[Function]}
       />
       <LinkButton
