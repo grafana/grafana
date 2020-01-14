@@ -10,7 +10,10 @@ import DataSourcesList from './DataSourcesList';
 // Types
 import { DataSourceSettings, NavModel } from '@grafana/data';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { StoreState } from 'app/types/';
+import { CoreEvents, StoreState } from 'app/types/';
+
+// Services & utils
+import appEvents from 'app/core/app_events';
 
 // Actions
 import {
@@ -64,9 +67,21 @@ export class DataSourcesListPage extends PureComponent<Props> {
     return await this.props.loadDataSources();
   }
 
-  deleteDataSource = async (id: number) => {
-    await this.props.deleteDataSource(id);
-    return await this.fetchDataSources();
+  deleteDataSource = (id: number) => {
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Delete',
+      text: 'Are you sure you want to delete this data source?',
+      yesText: 'Delete',
+      icon: 'fa-trash',
+      onConfirm: () => {
+        this.confirmDelete(id);
+      },
+    });
+  };
+
+  confirmDelete = (id: number) => {
+    this.props.deleteDataSource(id);
+    this.fetchDataSources();
   };
 
   render() {
