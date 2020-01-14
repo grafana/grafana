@@ -10,11 +10,12 @@ ResourceCardStories.addDecorator(withCenteredStory);
 ResourceCardStories.add('default', () => {
   return (
     <ResourceCard
-      resourceName={'Storybook'}
-      description={'This is a resource card description.'}
-      url={'http://localhost:9001'}
-      type={'Storybook'}
-      isDefault={true}
+      name={<ResourceCard.Name value={'Storybook'} />}
+      description={<ResourceCard.Description value={'This is a resource card description.'} />}
+      infoItems={[
+        <ResourceCard.InfoItem keyName={'url'} value={'http://localhost:9001'} />,
+        <ResourceCard.InfoItem keyName={'type'} value={'Storybook'} />,
+      ]}
     />
   );
 });
