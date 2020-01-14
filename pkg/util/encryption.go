@@ -14,7 +14,10 @@ const saltLength = 8
 // Decrypt decrypts a payload with a given secret.
 func Decrypt(payload []byte, secret string) ([]byte, error) {
 	salt := payload[:saltLength]
-	key := encryptionKeyToBytes(secret, string(salt))
+	key, err := encryptionKeyToBytes(secret, string(salt))
+	if err != nil {
+		return nil, err
+	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -39,9 +42,15 @@ func Decrypt(payload []byte, secret string) ([]byte, error) {
 
 // Encrypt encrypts a payload with a given secret.
 func Encrypt(payload []byte, secret string) ([]byte, error) {
-	salt := GetRandomString(saltLength)
+	salt, err := GetRandomString(saltLength)
+	if err != nil {
+		return nil, err
+	}
 
-	key := encryptionKeyToBytes(secret, salt)
+	key, err := encryptionKeyToBytes(secret, salt)
+	if err != nil {
+		return nil, err
+	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -63,6 +72,6 @@ func Encrypt(payload []byte, secret string) ([]byte, error) {
 }
 
 // Key needs to be 32bytes
-func encryptionKeyToBytes(secret, salt string) []byte {
+func encryptionKeyToBytes(secret, salt string) ([]byte, error) {
 	return PBKDF2([]byte(secret), []byte(salt), 10000, 32, sha256.New)
 }

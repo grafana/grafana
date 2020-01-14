@@ -82,9 +82,10 @@ const theme: GrafanaThemeCommons = {
 
     // Next-gen forms spacing variables
     // TODO: Move variables definition to respective components when implementing
+    formSpacingBase: SPACING_BASE,
     formMargin: `${SPACING_BASE * 4}px`,
     formFieldsetMargin: `${SPACING_BASE * 2}px`,
-    formLegendMargin: `${SPACING_BASE * 2}px`,
+    formLegendMargin: `0 0 ${SPACING_BASE * 2}px 0`,
     formInputHeight: `${SPACING_BASE * 4}px`,
     formInputPaddingHorizontal: `${SPACING_BASE}px`,
 
@@ -95,6 +96,7 @@ const theme: GrafanaThemeCommons = {
     formInputMargin: `${SPACING_BASE * 2}px`,
     formLabelPadding: '0 0 0 2px',
     formLabelMargin: '0 0 4px 0',
+    formValidationMessagePadding: '4px 8px',
   },
   border: {
     radius: {

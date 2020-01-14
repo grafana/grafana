@@ -69,7 +69,15 @@ func (rs *RenderingService) watchAndRestartPlugin(ctx context.Context) error {
 }
 
 func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*RenderResult, error) {
-	pngPath := rs.getFilePathForNewImage()
+	pngPath, err := rs.getFilePathForNewImage()
+	if err != nil {
+		return nil, err
+	}
+
+	renderKey, err := rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	if err != nil {
+		return nil, err
+	}
 
 	rsp, err := rs.grpcPlugin.Render(ctx, &pluginModel.RenderRequest{
 		Url:       rs.getURL(opts.Path),
@@ -77,16 +85,14 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		Height:    int32(opts.Height),
 		FilePath:  pngPath,
 		Timeout:   int32(opts.Timeout.Seconds()),
-		RenderKey: rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole),
+		RenderKey: renderKey,
 		Encoding:  opts.Encoding,
 		Timezone:  isoTimeOffsetToPosixTz(opts.Timezone),
 		Domain:    rs.domain,
 	})
-
 	if err != nil {
 		return nil, err
 	}
-
 	if rsp.Error != "" {
 		return nil, fmt.Errorf("Rendering failed: %v", rsp.Error)
 	}

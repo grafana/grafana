@@ -4,13 +4,19 @@ This style guide applies to all documentation created for Grafana products.
 
 ## Contributing
 
-This style guide is a living document. Add to it whenever a style decision is made or question is answered.
+The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
 
 ## Published guides
 
 For all items not covered in this guide, refer to the [Microsoft Style Guide](https://docs.microsoft.com/en-us/style-guide/welcome/) and the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/home.html).
 
+## Spelling
+
+The [codespell](https://github.com/codespell-project/codespell) tool is run for every change to catch common misspellings.
+
 ## Grafana-specific style
+
+The following sections provide general guidelines on topics specific to Grafana documentation. Note that for the most part, these are *guidelines*, not rigid rules. If you have questions, ask in the #docs channel of Grafana Slack.
 
 ### General
 
@@ -81,7 +87,36 @@ When possible, use the exact title of the page or section you are linking to as 
 
 Grafana products has some words, abbreviations, and slang particular to this discourse community.
 
+#### data source
+
+Two words, not one
+
+**Exceptions:**
+* "datasource" used as an identifier
+* "datasource" in a URL
 * "Open source" should be hyphenated when used as an adjective, e.g. *open-source software*. The open form should be preferred when used as a noun, e.g. *Grafana is open source*.
 * Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
 * Spell out "repository" and avoid the shorter "repo."
 * Use "Unix" as the preferred spelling (as opposed to "UNIX", or "unix") when referring to the family of operating systems.
+
+#### display (verb)
+
+*Display* is a transitive verb, which means it always needs a direct object.
+* Correct, active voice: Grafana displays your list of active alarms.
+* Correct, but passive voice: Your list of active alarms is displayed.
+* Incorrect: The list of active alarms displays.
+
+#### open source, open-source
+
+Hyphenate when used as an adjective. For example: _open-source software._ 
+
+Do not hyphenate when it is used as a noun. For example: _Open source is the best way to develop software._
+
+#### setup, set up
+
+Two words if used as a verb, one word if used as a noun.
+
+**Examples**
+
+* Set up the workspace.
+* Initial setup might take five minutes.

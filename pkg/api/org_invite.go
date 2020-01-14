@@ -51,7 +51,11 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	cmd.Name = inviteDto.Name
 	cmd.Status = m.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
-	cmd.Code = util.GetRandomString(30)
+	var err error
+	cmd.Code, err = util.GetRandomString(30)
+	if err != nil {
+		return Error(500, "Could not generate random string", err)
+	}
 	cmd.Role = inviteDto.Role
 	cmd.RemoteAddr = c.Req.RemoteAddr
 

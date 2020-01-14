@@ -9,6 +9,7 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
@@ -201,11 +202,14 @@ func TestDataSourceCache(t *testing.T) {
 				// Can't use So() here, see: https://github.com/smartystreets/goconvey/issues/561
 				if r.Header.Get("Authorization") == "Bearer xf5yhfkpsnmgo" {
 					w.WriteHeader(200)
-					w.Write([]byte("Ok"))
+					_, err := w.Write([]byte("Ok"))
+					require.Nil(t, err)
 					return
 				}
+
 				w.WriteHeader(403)
-				w.Write([]byte("Invalid bearer token provided"))
+				_, err := w.Write([]byte("Invalid bearer token provided"))
+				require.Nil(t, err)
 			}))
 			defer backend.Close()
 

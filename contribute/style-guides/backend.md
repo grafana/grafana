@@ -10,7 +10,7 @@ We enforce strict `gofmt` formatting and use some linters on our codebase. You c
 $ make lint-go
 ```
 
-We use [revive](https://github.com/mgechev/revive) as a go linter, and do enforce our [custom config](https://github.com/grafana/grafana/blob/master/conf/revive.toml) for it.
+We use [revive](https://github.com/mgechev/revive) as a go linter, and do enforce our [custom config](/conf/revive.toml) for it.
 
 The end goal is to follow the golint. And the approuch for reachin that goal is to lint all parts of the codebase that we are currently working on and enable stricter linting for more areas as we go. 
 

@@ -173,6 +173,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'Watt (W)', id: 'watt', fn: decimalSIPrefix('W') },
       { name: 'Kilowatt (kW)', id: 'kwatt', fn: decimalSIPrefix('W', 1) },
+      { name: 'Megawatt (MW)', id: 'megwatt', fn: decimalSIPrefix('W', 2) },
       { name: 'Milliwatt (mW)', id: 'mwatt', fn: decimalSIPrefix('W', -1) },
       { name: 'Watt per square meter (W/m²)', id: 'Wm2', fn: toFixedUnit('W/m²') },
       { name: 'Volt-ampere (VA)', id: 'voltamp', fn: decimalSIPrefix('VA') },
@@ -180,6 +181,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Volt-ampere reactive (var)', id: 'voltampreact', fn: decimalSIPrefix('var') },
       { name: 'Kilovolt-ampere reactive (kvar)', id: 'kvoltampreact', fn: decimalSIPrefix('var', 1) },
       { name: 'Watt-hour (Wh)', id: 'watth', fn: decimalSIPrefix('Wh') },
+      { name: 'Watt-hour per Kilogram (Wh/kg)', id: 'watthperkg', fn: decimalSIPrefix('Wh/kg') },
       { name: 'Kilowatt-hour (kWh)', id: 'kwatth', fn: decimalSIPrefix('Wh', 1) },
       { name: 'Kilowatt-min (kWm)', id: 'kwattm', fn: decimalSIPrefix('W-Min', 1) },
       { name: 'Ampere-hour (Ah)', id: 'amph', fn: decimalSIPrefix('Ah') },

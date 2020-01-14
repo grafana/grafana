@@ -72,7 +72,7 @@ export function sharedSingleStatPanelChangedHandler(
     }
 
     // Convert value mappings
-    const mappings = convertOldAngulrValueMapping(panel);
+    const mappings = convertOldAngularValueMapping(panel);
     if (mappings && mappings.length) {
       defaults.mappings = mappings;
     }
@@ -192,7 +192,7 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
 /**
  * Convert the angular single stat mapping to new react style
  */
-export function convertOldAngulrValueMapping(panel: any): ValueMapping[] {
+export function convertOldAngularValueMapping(panel: any): ValueMapping[] {
   const mappings: ValueMapping[] = [];
 
   // Guess the right type based on options

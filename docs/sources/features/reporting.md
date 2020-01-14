@@ -1,20 +1,20 @@
 +++
-title = "Reports"
+title = "Reporting"
 description = ""
-keywords = ["grafana", "reports"]
+keywords = ["grafana", "reporting"]
 type = "docs"
 [menu.docs]
-parent = "admin"
+parent = "features"
 weight = 8
 +++
 
-# Reports
+# Reporting
 
-> Reports are only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
 > Only available in Grafana v6.4+
 
-With Reports you can generate PDFs of any of your Dashboards and have them sent out to interested parties on a schedule.
+Reporting allows you to generate PDFs from any of your Dashboards and have them sent out to interested parties on a schedule.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -25,6 +25,10 @@ With Reports there are a few things to keep in mind, most importantly, any chang
 ## Setup
 
 > SMTP must be configured for reports to be sent
+
+We recommend using the new image rendering plugin with reporting as it supports a wider range of panels than the built-in image rendering. Read more about it [here]({{< relref "administration/image_rendering.md#grafana-image-renderer-plugin" >}})
+
+## Usage
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -38,3 +42,7 @@ Currently only Organisation Admins can create reports. To get to report click on
 | ReplyTo       | your email address, so that the recipient can respond             |
 | Message       | message body in the email with the report                         |
 | Schedule      | how often do you want the report generated and sent               |
+
+## Debugging errors
+
+If you have problems with the reporting feature you can enable debug logging by switching the logger to debug (`filters = report:debug`). Learn more about making configuration changes [here]({{< relref "installation/configuration.md#filters" >}}).
