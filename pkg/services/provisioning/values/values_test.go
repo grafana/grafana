@@ -143,26 +143,26 @@ func TestValues(t *testing.T) {
                `
 				unmarshalingTest(doc, d)
 
-				type anyMap = map[interface{}]interface{}
-				So(d.Val.Value(), ShouldResemble, map[string]interface{}{
+				type stringMap = map[string]interface{}
+				So(d.Val.Value(), ShouldResemble, stringMap{
 					"one": 1,
 					"two": "test",
 					"three": []interface{}{
 						1,
 						"two",
-						anyMap{
-							"three": anyMap{
+						stringMap{
+							"three": stringMap{
 								"inside": "test",
 							},
 						},
-						anyMap{
-							"six": anyMap{
+						stringMap{
+							"six": stringMap{
 								"empty": interface{}(nil),
 							},
 						},
 					},
-					"four": anyMap{
-						"nested": anyMap{
+					"four": stringMap{
+						"nested": stringMap{
 							"onemore": "1",
 						},
 					},
@@ -171,25 +171,25 @@ func TestValues(t *testing.T) {
 					"anchored":  "1",
 				})
 
-				So(d.Val.Raw, ShouldResemble, map[string]interface{}{
+				So(d.Val.Raw, ShouldResemble, stringMap{
 					"one": 1,
 					"two": "$STRING",
 					"three": []interface{}{
 						1,
 						"two",
-						anyMap{
-							"three": anyMap{
+						stringMap{
+							"three": stringMap{
 								"inside": "$STRING",
 							},
 						},
-						anyMap{
-							"six": anyMap{
+						stringMap{
+							"six": stringMap{
 								"empty": interface{}(nil),
 							},
 						},
 					},
-					"four": anyMap{
-						"nested": anyMap{
+					"four": stringMap{
+						"nested": stringMap{
 							"onemore": "$INT",
 						},
 					},

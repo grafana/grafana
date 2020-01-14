@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -128,7 +127,12 @@ func initContextWithApiKey(ctx *models.ReqContext) bool {
 	apikey := keyQuery.Result
 
 	// validate api key
-	if !apikeygen.IsValid(decoded, apikey.Key) {
+	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
+	if err != nil {
+		ctx.JsonApiErr(500, "Validating API key failed", err)
+		return true
+	}
+	if !isValid {
 		ctx.JsonApiErr(401, errStringInvalidAPIKey, err)
 		return true
 	}
@@ -248,20 +252,7 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 		maxAge = int(maxAgeHours.Seconds())
 	}
 
-	ctx.Resp.Header().Del("Set-Cookie")
-	cookie := http.Cookie{
-		Name:     setting.LoginCookieName,
-		Value:    url.QueryEscape(value),
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   setting.CookieSecure,
-		MaxAge:   maxAge,
-	}
-	if setting.CookieSameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = setting.CookieSameSite
-	}
-
-	http.SetCookie(ctx.Resp, &cookie)
+	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, newCookieOptions)
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {

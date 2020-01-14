@@ -27,7 +27,7 @@ func TestDashboardService(t *testing.T) {
 
 				for _, title := range titles {
 					dto.Dashboard = models.NewDashboard(title)
-					_, err := service.SaveDashboard(dto)
+					_, err := service.SaveDashboard(dto, false)
 					So(err, ShouldEqual, models.ErrDashboardTitleEmpty)
 				}
 			})
@@ -35,13 +35,13 @@ func TestDashboardService(t *testing.T) {
 			Convey("Should return validation error if it's a folder and have a folder id", func() {
 				dto.Dashboard = models.NewDashboardFolder("Folder")
 				dto.Dashboard.FolderId = 1
-				_, err := service.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto, false)
 				So(err, ShouldEqual, models.ErrDashboardFolderCannotHaveParent)
 			})
 
 			Convey("Should return validation error if folder is named General", func() {
 				dto.Dashboard = models.NewDashboardFolder("General")
-				_, err := service.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto, false)
 				So(err, ShouldEqual, models.ErrDashboardFolderNameExists)
 			})
 
@@ -103,9 +103,34 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto, false)
 				So(provisioningValidated, ShouldBeTrue)
 				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
+			})
+
+			Convey("Should not return validation error if dashboard is provisioned but UI updates allowed", func() {
+				provisioningValidated := false
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+					provisioningValidated = true
+					cmd.Result = &models.DashboardProvisioning{}
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+					return nil
+				})
+
+				dto.Dashboard = models.NewDashboard("Dash")
+				dto.Dashboard.SetId(3)
+				dto.User = &models.SignedInUser{UserId: 1}
+				_, err := service.SaveDashboard(dto, true)
+				So(provisioningValidated, ShouldBeFalse)
+				So(err, ShouldNotBeNil)
 			})
 
 			Convey("Should return validation error if alert data is invalid", func() {
@@ -119,7 +144,7 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				dto.Dashboard = models.NewDashboard("Dash")
-				_, err := service.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto, false)
 				So(err.Error(), ShouldEqual, "Alert validation error")
 			})
 		})

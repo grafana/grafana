@@ -2,14 +2,14 @@
 import React, { memo } from 'react';
 
 // Types
-import { DataSourceApi, DataSourceJsonData, DataSourceStatus } from '@grafana/ui';
 import { LokiQuery } from '../types';
 import { useLokiSyntax } from './useLokiSyntax';
 import { LokiQueryFieldForm } from './LokiQueryFieldForm';
+import LokiDatasource from '../datasource';
 
 interface Props {
   expr: string;
-  datasource: DataSourceApi<LokiQuery, DataSourceJsonData>;
+  datasource: LokiDatasource;
   onChange: (expr: string) => void;
 }
 
@@ -24,7 +24,6 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
 
   const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
     datasource.languageProvider,
-    DataSourceStatus.Connected,
     absolute
   );
 
@@ -37,7 +36,6 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
     <div className="gf-form-group">
       <LokiQueryFieldForm
         datasource={datasource}
-        datasourceStatus={DataSourceStatus.Connected}
         query={query}
         onChange={(query: LokiQuery) => onChange(query.expr)}
         onRunQuery={() => {}}

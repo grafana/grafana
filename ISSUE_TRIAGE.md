@@ -1,6 +1,8 @@
-# Triaging issues
+# Triage issues
 
 The main goal of issue triage is to categorize all incoming Grafana issues and make sure each issue has all basic information needed for anyone else to understand and be able to start working on it.
+
+**Note:** This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you will not be able to perform most of the tasks in this topic.
 
 The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project. 
 
@@ -10,7 +12,8 @@ Triage helps ensure issues resolve quickly by:
 * Giving a contributor the information they need before they commit to resolving an issue.
 * Lowering the issue count by preventing duplicate issues.
 * Streamlining the development process by preventing duplicate discussions.
-* If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
+
+If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
 ## Simplified flowchart diagram of the issue triage process
 

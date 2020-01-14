@@ -1,11 +1,11 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { DataSourceSettings, NavModel } from '@grafana/data';
+
 import { DataSourcesListPage, Props } from './DataSourcesListPage';
-import { DataSourceSettings } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
 import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 import { getMockDataSources } from './__mocks__/dataSourcesMocks';
-import { setDataSourcesSearchQuery, setDataSourcesLayoutMode } from './state/actions';
+import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

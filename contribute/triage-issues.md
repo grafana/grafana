@@ -25,7 +25,7 @@ Investigate issues that we haven't been able to reproduce yet. In some cases, th
 
 Use [GitHub reactions](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) to let us know what's important to you. Vote on bugs if you've experienced the same problem. **Don't vote, or react, by commenting on the issue.**
 
-Read more about [how we prioritize issues](https://github.com/grafana/grafana/blob/master/ISSUE_TRIAGE.md#4-prioritization-of-issues).
+Read more about [how we prioritize issues](/ISSUE_TRIAGE.md#4-prioritization-of-issues).
 
 ## Report duplicates
 

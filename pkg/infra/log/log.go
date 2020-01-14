@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-stack/stack"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/inconshreveable/log15"
 	isatty "github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
@@ -181,7 +182,7 @@ func getLogFormat(format string) log15.Format {
 	}
 }
 
-func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
+func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	Close()
 
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
@@ -194,6 +195,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 		sec, err := cfg.GetSection("log." + mode)
 		if err != nil {
 			Root.Error("Unknown log mode", "mode", mode)
+			return errutil.Wrapf(err, "failed to get config section log.%s", mode)
 		}
 
 		// Log level.
@@ -212,7 +214,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			dpath := filepath.Dir(fileName)
 			if err := os.MkdirAll(dpath, os.ModePerm); err != nil {
 				Root.Error("Failed to create directory", "dpath", dpath, "err", err)
-				break
+				return errutil.Wrapf(err, "failed to create log directory %q", dpath)
 			}
 			fileHandler := NewFileWriter()
 			fileHandler.Filename = fileName
@@ -223,8 +225,8 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			fileHandler.Daily = sec.Key("daily_rotate").MustBool(true)
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
 			if err := fileHandler.Init(); err != nil {
-				Root.Error("Failed to create directory", "dpath", dpath, "err", err)
-				break
+				Root.Error("Failed to initialize file handler", "dpath", dpath, "err", err)
+				return errutil.Wrapf(err, "failed to initialize file handler")
 			}
 
 			loggersToClose = append(loggersToClose, fileHandler)
@@ -235,6 +237,9 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 
 			loggersToClose = append(loggersToClose, sysLogHandler)
 			handler = sysLogHandler
+		}
+		if handler == nil {
+			panic(fmt.Sprintf("Handler is uninitialized for mode %q", mode))
 		}
 
 		for key, value := range defaultFilters {
@@ -254,6 +259,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 	}
 
 	Root.SetHandler(log15.MultiHandler(handlers...))
+	return nil
 }
 
 func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.Handler) log15.Handler {

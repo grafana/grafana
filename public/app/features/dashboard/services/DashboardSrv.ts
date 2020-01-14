@@ -8,7 +8,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
 import { AppEvents } from '@grafana/data';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 
 interface DashboardSaveOptions {
   folderId?: number;
@@ -29,9 +29,6 @@ export class DashboardSrv {
     appEvents.on(CoreEvents.saveDashboard, this.saveDashboard.bind(this), $rootScope);
     appEvents.on(PanelEvents.panelChangeView, this.onPanelChangeView);
     appEvents.on(CoreEvents.removePanel, this.onRemovePanel);
-
-    // Export to react
-    setDashboardSrv(this);
   }
 
   create(dashboard: any, meta: DashboardMeta) {

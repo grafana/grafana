@@ -51,7 +51,12 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	}
 	defer file.Close()
 
-	randomFileName := util.GetRandomString(30) + ".png"
+	randomFileName, err := util.GetRandomString(30)
+	if err != nil {
+		return "", err
+	}
+
+	randomFileName += pngExt
 	// upload image
 	az.log.Debug("Uploading image to azure_blob", "container_name", az.container_name, "blob_name", randomFileName)
 	resp, err := blob.FileUpload(az.container_name, randomFileName, file)

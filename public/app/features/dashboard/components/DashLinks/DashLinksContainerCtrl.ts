@@ -1,10 +1,10 @@
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 import { iconMap } from './DashLinksEditorCtrl';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
@@ -97,7 +97,6 @@ export class DashLinksContainerCtrl {
   constructor(
     $scope: any,
     $rootScope: GrafanaRootScope,
-    $q: IQService,
     backendSrv: BackendSrv,
     dashboardSrv: DashboardSrv,
     linkSrv: LinkSrv
@@ -108,11 +107,11 @@ export class DashLinksContainerCtrl {
       if (linkDef.type === 'dashboards') {
         if (!linkDef.tags) {
           console.log('Dashboard link missing tag');
-          return $q.when([]);
+          return Promise.resolve([]);
         }
 
         if (linkDef.asDropdown) {
-          return $q.when([
+          return Promise.resolve([
             {
               title: linkDef.title,
               tags: linkDef.tags,
@@ -129,7 +128,7 @@ export class DashLinksContainerCtrl {
       }
 
       if (linkDef.type === 'link') {
-        return $q.when([
+        return Promise.resolve([
           {
             url: linkDef.url,
             title: linkDef.title,
@@ -143,13 +142,13 @@ export class DashLinksContainerCtrl {
         ]);
       }
 
-      return $q.when([]);
+      return Promise.resolve([]);
     }
 
     function updateDashLinks() {
       const promises = _.map($scope.links, buildLinks);
 
-      $q.all(promises).then(results => {
+      Promise.all(promises).then(results => {
         $scope.generatedLinks = _.flatten(results);
       });
     }

@@ -1,9 +1,11 @@
 package services
 
 import (
+	"bufio"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -23,7 +25,7 @@ type GrafanaComClient struct {
 
 func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
 	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
-	body, err := sendRequest(HttpClient, repoUrl, "repo", pluginId)
+	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo", pluginId)
 
 	if err != nil {
 		if err == ErrNotFoundError {
@@ -42,14 +44,18 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 	return data, nil
 }
 
-func (client *GrafanaComClient) DownloadFile(pluginName, filePath, url string, checksum string) (content []byte, err error) {
+func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) (err error) {
 	// Try handling url like local file path first
 	if _, err := os.Stat(url); err == nil {
-		bytes, err := ioutil.ReadFile(url)
+		f, err := os.Open(url)
 		if err != nil {
-			return nil, errutil.Wrap("Failed to read file", err)
+			return errutil.Wrap("Failed to read plugin archive", err)
 		}
-		return bytes, nil
+		_, err = io.Copy(tmpFile, f)
+		if err != nil {
+			return errutil.Wrap("Failed to copy plugin archive", err)
+		}
+		return nil
 	}
 
 	client.retryCount = 0
@@ -59,7 +65,15 @@ func (client *GrafanaComClient) DownloadFile(pluginName, filePath, url string, c
 			client.retryCount++
 			if client.retryCount < 3 {
 				logger.Info("Failed downloading. Will retry once.")
-				content, err = client.DownloadFile(pluginName, filePath, url, checksum)
+				err = tmpFile.Truncate(0)
+				if err != nil {
+					return
+				}
+				_, err = tmpFile.Seek(0, 0)
+				if err != nil {
+					return
+				}
+				err = client.DownloadFile(pluginName, tmpFile, url, checksum)
 			} else {
 				client.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -72,23 +86,28 @@ func (client *GrafanaComClient) DownloadFile(pluginName, filePath, url string, c
 		}
 	}()
 
-	// TODO: this would be better if it was streamed file by file instead of buffered.
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	body, err := sendRequest(HttpClientNoTimeout, url)
-
+	bodyReader, err := sendRequest(HttpClientNoTimeout, url)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to send request", err)
+		return errutil.Wrap("Failed to send request", err)
 	}
+	defer bodyReader.Close()
 
-	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", md5.Sum(body)) {
-		return nil, xerrors.New("Expected MD5 checksum does not match the downloaded archive. Please contact security@grafana.com.")
+	w := bufio.NewWriter(tmpFile)
+	h := md5.New()
+	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
+		return errutil.Wrap("Failed to compute MD5 checksum", err)
 	}
-	return body, nil
+	w.Flush()
+	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
+		return xerrors.New("Expected MD5 checksum does not match the downloaded archive. Please contact security@grafana.com.")
+	}
+	return nil
 }
 
 func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRepo, error) {
-	body, err := sendRequest(HttpClient, repoUrl, "repo")
+	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo")
 
 	if err != nil {
 		logger.Info("Failed to send request", "error", err)
@@ -105,45 +124,61 @@ func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRep
 	return data, nil
 }
 
-func sendRequest(client http.Client, repoUrl string, subPaths ...string) ([]byte, error) {
+func sendRequestGetBytes(client http.Client, repoUrl string, subPaths ...string) ([]byte, error) {
+	bodyReader, err := sendRequest(client, repoUrl, subPaths...)
+	if err != nil {
+		return []byte{}, err
+	}
+	defer bodyReader.Close()
+	return ioutil.ReadAll(bodyReader)
+}
+
+func sendRequest(client http.Client, repoUrl string, subPaths ...string) (io.ReadCloser, error) {
+	req, err := createRequest(repoUrl, subPaths...)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return handleResponse(res)
+}
+
+func createRequest(repoUrl string, subPaths ...string) (*http.Request, error) {
 	u, _ := url.Parse(repoUrl)
 	for _, v := range subPaths {
 		u.Path = path.Join(u.Path, v)
 	}
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	req.Header.Set("grafana-version", grafanaVersion)
 	req.Header.Set("grafana-os", runtime.GOOS)
 	req.Header.Set("grafana-arch", runtime.GOARCH)
 	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
 
-	if err != nil {
-		return []byte{}, err
-	}
-
-	res, err := client.Do(req)
-	if err != nil {
-		return []byte{}, err
-	}
-	return handleResponse(res)
+	return req, err
 }
 
-func handleResponse(res *http.Response) ([]byte, error) {
+func handleResponse(res *http.Response) (io.ReadCloser, error) {
 	if res.StatusCode == 404 {
-		return []byte{}, ErrNotFoundError
+		return nil, ErrNotFoundError
 	}
 
 	if res.StatusCode/100 != 2 && res.StatusCode/100 != 4 {
-		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
+		return nil, fmt.Errorf("Api returned invalid status: %s", res.Status)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
-
 	if res.StatusCode/100 == 4 {
-		if len(body) == 0 {
-			return []byte{}, &BadRequestError{Status: res.Status}
+		body, err := ioutil.ReadAll(res.Body)
+		defer res.Body.Close()
+		if err != nil || len(body) == 0 {
+			return nil, &BadRequestError{Status: res.Status}
 		}
 		var message string
 		var jsonBody map[string]string
@@ -153,8 +188,8 @@ func handleResponse(res *http.Response) ([]byte, error) {
 		} else {
 			message = jsonBody["message"]
 		}
-		return []byte{}, &BadRequestError{Status: res.Status, Message: message}
+		return nil, &BadRequestError{Status: res.Status, Message: message}
 	}
 
-	return body, err
+	return res.Body, nil
 }

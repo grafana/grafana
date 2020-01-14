@@ -38,7 +38,6 @@ type Bus interface {
 	AddHandler(handler HandlerFunc)
 	AddHandlerCtx(handler HandlerFunc)
 	AddEventListener(handler HandlerFunc)
-	AddWildcardListener(handler HandlerFunc)
 
 	// SetTransactionManager allows the user to replace the internal
 	// noop TransactionManager that is responsible for manageing
@@ -53,11 +52,10 @@ func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Conte
 
 // InProcBus defines the bus structure
 type InProcBus struct {
-	handlers          map[string]HandlerFunc
-	handlersWithCtx   map[string]HandlerFunc
-	listeners         map[string][]HandlerFunc
-	wildcardListeners []HandlerFunc
-	txMng             TransactionManager
+	handlers        map[string]HandlerFunc
+	handlersWithCtx map[string]HandlerFunc
+	listeners       map[string][]HandlerFunc
+	txMng           TransactionManager
 }
 
 // temp stuff, not sure how to handle bus instance, and init yet
@@ -69,7 +67,6 @@ func New() Bus {
 	bus.handlers = make(map[string]HandlerFunc)
 	bus.handlersWithCtx = make(map[string]HandlerFunc)
 	bus.listeners = make(map[string][]HandlerFunc)
-	bus.wildcardListeners = make([]HandlerFunc, 0)
 	bus.txMng = &noopTransactionManager{}
 
 	return bus
@@ -152,19 +149,7 @@ func (b *InProcBus) Publish(msg Msg) error {
 		}
 	}
 
-	for _, listenerHandler := range b.wildcardListeners {
-		ret := reflect.ValueOf(listenerHandler).Call(params)
-		err := ret[0].Interface()
-		if err != nil {
-			return err.(error)
-		}
-	}
-
 	return nil
-}
-
-func (b *InProcBus) AddWildcardListener(handler HandlerFunc) {
-	b.wildcardListeners = append(b.wildcardListeners, handler)
 }
 
 func (b *InProcBus) AddHandler(handler HandlerFunc) {
@@ -205,11 +190,6 @@ func AddHandlerCtx(implName string, handler HandlerFunc) {
 // Package level functions
 func AddEventListener(handler HandlerFunc) {
 	globalBus.AddEventListener(handler)
-}
-
-// AddWildcardListener attach a handler function to the wildcard listener
-func AddWildcardListener(handler HandlerFunc) {
-	globalBus.AddWildcardListener(handler)
 }
 
 func Dispatch(msg Msg) error {

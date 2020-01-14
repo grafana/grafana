@@ -1,4 +1,6 @@
-import { reducerFactory, actionCreatorFactory } from 'app/core/redux';
+import { AnyAction } from 'redux';
+import { createAction } from '@reduxjs/toolkit';
+
 import { reducerTester } from './reducerTester';
 
 interface DummyState {
@@ -9,29 +11,27 @@ const initialState: DummyState = {
   data: [],
 };
 
-const dummyAction = actionCreatorFactory<string>('dummyAction').create();
+const dummyAction = createAction<string>('dummyAction');
 
-const mutatingReducer = reducerFactory(initialState)
-  .addMapper({
-    filter: dummyAction,
-    mapper: (state, action) => {
-      state.data.push(action.payload);
-      return state;
-    },
-  })
-  .create();
+const mutatingReducer = (state: DummyState = initialState, action: AnyAction): DummyState => {
+  if (dummyAction.match(action)) {
+    state.data.push(action.payload);
+    return state;
+  }
 
-const okReducer = reducerFactory(initialState)
-  .addMapper({
-    filter: dummyAction,
-    mapper: (state, action) => {
-      return {
-        ...state,
-        data: state.data.concat(action.payload),
-      };
-    },
-  })
-  .create();
+  return state;
+};
+
+const okReducer = (state: DummyState = initialState, action: AnyAction): DummyState => {
+  if (dummyAction.match(action)) {
+    return {
+      ...state,
+      data: state.data.concat(action.payload),
+    };
+  }
+
+  return state;
+};
 
 describe('reducerTester', () => {
   describe('when reducer mutates state', () => {

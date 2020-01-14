@@ -13,10 +13,9 @@ import {
   sortSeriesByLabel,
 } from './heatmap_data_converter';
 import { auto } from 'angular';
-import { LegacyResponseData, PanelEvents } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 import { DataProcessor } from '../graph/data_processor';
-import { DataFrame } from '@grafana/data';
+import { LegacyResponseData, PanelEvents, DataFrame } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
@@ -145,7 +144,6 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     // Bind grafana panel events
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
-    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 

@@ -61,7 +61,11 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 		return
 	}
 
-	passwordHashed := util.EncodePassword(form.Password, userQuery.Result.Salt)
+	passwordHashed, err := util.EncodePassword(form.Password, userQuery.Result.Salt)
+	if err != nil {
+		c.JsonApiErr(500, "Could not encode password", err)
+		return
+	}
 
 	cmd := models.ChangeUserPasswordCommand{
 		UserId:      userID,
@@ -104,6 +108,10 @@ func AdminDeleteUser(c *models.ReqContext) {
 	cmd := models.DeleteUserCommand{UserId: userID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrUserNotFound {
+			c.JsonApiErr(404, models.ErrUserNotFound.Error(), nil)
+			return
+		}
 		c.JsonApiErr(500, "Failed to delete user", err)
 		return
 	}
@@ -123,6 +131,9 @@ func (server *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 	if err := bus.Dispatch(&disableCmd); err != nil {
+		if err == models.ErrUserNotFound {
+			return Error(404, models.ErrUserNotFound.Error(), nil)
+		}
 		return Error(500, "Failed to disable user", err)
 	}
 
@@ -146,6 +157,9 @@ func AdminEnableUser(c *models.ReqContext) Response {
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
 	if err := bus.Dispatch(&disableCmd); err != nil {
+		if err == models.ErrUserNotFound {
+			return Error(404, models.ErrUserNotFound.Error(), nil)
+		}
 		return Error(500, "Failed to enable user", err)
 	}
 

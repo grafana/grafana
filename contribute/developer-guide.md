@@ -2,12 +2,15 @@
 
 This guide helps you get started developing Grafana.
 
+Before you begin, you might want to read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
+
+
 ## Dependencies
 
-Make sure you have the following dependencies installed before moving on to set up your developer environment:
+Make sure you have the following dependencies installed before setting up your developer environment:
 
 - [Git](https://git-scm.com/)
-- [Go](https://golang.org/dl/)
+- [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org)
 - [Yarn](https://yarnpkg.com)
 
@@ -49,13 +52,13 @@ After the command has finished, we can start building our source code:
 yarn start
 ```
 
-Once `yarn start` has built the assets it will continue to do so whenever any of the files change. This means you don't have to manually build the assets whenever you've made a change to the code.
+Once `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets whenever every time you change the code.
 
 Next, we'll build the web server that will serve the frontend assets we just built.
 
 ### Backend
 
-Build and run the backend, by running `make run` in the root directory of the repository. This command will compile the Go source code, and start a web server.
+Build and run the backend by running `make run` in the root directory of the repository. This command compiles the Go source code and starts a web server.
 
 > Are you having problems with [too many open files](#troubleshooting)?
 
@@ -67,7 +70,11 @@ Log in using the default credentials:
 | -------- | -------- |
 | `admin`  | `admin`  |
 
-When you log in for the first time, Grafana will ask you to change your password.
+When you log in for the first time, Grafana asks you to change your password.
+
+#### Building on Windows
+
+The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 
 ## Test Grafana
 
@@ -75,7 +82,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 
 ### Run frontend tests
 
-We use [jest](https://jestjs.io/) for our frontend tests. Run them using yarn:
+We use [jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
 
 ```
 yarn jest
@@ -91,7 +98,9 @@ go test -v ./pkg/...
 
 ### Run end-to-end tests
 
-The end-to-end tests in Grafana uses [puppeteer](https://github.com/GoogleChrome/puppeteer) to run automated scripts in a headless Chrome browser. To run the tests:
+The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md). 
+
+To run the tests:
 
 ```
 yarn e2e-tests
@@ -103,10 +112,10 @@ By default, the end-to-end tests assumes Grafana is available on `localhost:3000
 BASE_URL=http://localhost:3333 yarn e2e-tests
 ```
 
-To follow the tests in the browser while they're running, add the `BROWSER` and `SLOWMO` environment variables:
+To follow the tests in the browser while they're running, use the `yarn e2e-tests:debug` instead.
 
 ```
-BROWSER=1 SLOWMO=1 yarn e2e-tests
+yarn e2e-tests:debug
 ```
 
 ## Configure Grafana for development
@@ -126,13 +135,13 @@ app_mode = development
 
 By now, you should be able to build and test a change you've made to the Grafana source code. In most cases, you need to add at least one data source to verify the change.
 
-To set up data sources for your development environment, go to the [devenv](devenv) directory in the Grafana repository:
+To set up data sources for your development environment, go to the [devenv](/devenv) directory in the Grafana repository:
 
 ```
 cd devenv
 ```
 
-Run the `setup.sh` script to setup a set of data sources and dashboards in your local Grafana. The script creates a set of data sources called **gdev-\<type\>**, and a set of dashboards located in a folder called **gdev dashboards**.
+Run the `setup.sh` script to set up a set of data sources and dashboards in your local Grafana instance. The script creates a set of data sources called **gdev-\<type\>**, and a set of dashboards located in a folder called **gdev dashboards**.
 
 Some of the data sources require databases to run in the background.
 
@@ -146,7 +155,7 @@ make devenv sources=influxdb,loki
 
 The script generates a Docker Compose file with the databases you specify as `sources`, and runs them in the background.
 
-See the repository for all the [available data sources](https://github.com/grafana/grafana/tree/master/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `prometheus_mac`.
+See the repository for all the [available data sources](/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `prometheus_mac`.
 
 ## Build a Docker image
 
@@ -195,7 +204,7 @@ Another alternative is to limit the files being watched. The directories that ar
 
 ## Next steps
 
-- [Create a pull request](/contribute/pull-request.md)
-- [Style guides](/contribute/style-guides)
-- [Architecture](architecture)
-- [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502)
+- Read our [style guides](/contribute/style-guides).
+- Learn how to [Create a pull request](/contribute/create-pull-request.md).
+- Read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
+- Read about the [architecture](architecture).
