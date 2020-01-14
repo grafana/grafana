@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import { debounce } from 'lodash';
 import { renderMarkdown } from '@grafana/data';
 
@@ -10,11 +10,16 @@ import config from 'app/core/config';
 // Types
 import { TextOptions } from './types';
 import { PanelProps } from '@grafana/data';
+import { Button } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 
 interface Props extends PanelProps<TextOptions> {}
 interface State {
   html: string;
+  vars: string;
 }
+
+const NOW_KEY = '%NOW%';
 
 export class TextPanel extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -22,6 +27,14 @@ export class TextPanel extends PureComponent<Props, State> {
 
     this.state = {
       html: this.processContent(props.options),
+      vars: JSON.stringify(
+        {
+          'var-test': NOW_KEY,
+          'var-test2': 'something else',
+        },
+        null,
+        2
+      ),
     };
   }
 
@@ -77,9 +90,41 @@ export class TextPanel extends PureComponent<Props, State> {
     return this.prepareText(content);
   }
 
-  render() {
-    const { html } = this.state;
+  onVarsChanged = (evt: ChangeEvent<HTMLTextAreaElement>) => {
+    this.setState({ vars: (evt.target as any).value });
+  };
 
-    return <div className="markdown-html panel-text-content" dangerouslySetInnerHTML={{ __html: html }} />;
+  onSetVars = () => {
+    try {
+      const vars = JSON.parse(this.state.vars.replace(NOW_KEY, Date.now().toString()));
+      console.log('SET VARS!', vars);
+      getLocationSrv().update({
+        partial: true,
+        query: vars,
+      });
+    } catch (err) {
+      console.error('Error settign vars', err);
+    }
+  };
+
+  render() {
+    const { vars } = this.state;
+
+    return (
+      <div>
+        <div className="gf-form">
+          <textarea
+            style={{ width: '100%', height: 100 }}
+            className="form-field"
+            value={vars}
+            onChange={this.onVarsChanged}
+            rows={5}
+          />
+        </div>
+        <Button onClick={this.onSetVars} variant="inverse">
+          Update Query URL
+        </Button>
+      </div>
+    );
   }
 }
