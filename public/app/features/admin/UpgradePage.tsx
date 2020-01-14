@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React from 'react';
 import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
 import { LicenseChrome, Orbit } from './LicenseChrome';
@@ -12,27 +12,17 @@ interface Props {
   navModel: NavModel;
 }
 
-export class UpgradePage extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
-  async componentDidMount() {}
-
-  render() {
-    const { navModel } = this.props;
-
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents>
-          <div className="page-container page-body">
-            <UpgradeInfo />
-          </div>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
+export const UpgradePage: React.FC<Props> = ({ navModel }) => {
+  return (
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <div className="page-container page-body">
+          <UpgradeInfo />
+        </div>
+      </Page.Contents>
+    </Page>
+  );
+};
 
 const title = { fontWeight: 600, fontSize: '26px', lineHeight: '123%' };
 
@@ -43,7 +33,7 @@ export class Experiments {
 
 export const ExperimentsContext = React.createContext(new Experiments());
 
-export function UpgradeInfo() {
+const UpgradeInfo: React.FC = () => {
   const experiments = React.useContext(ExperimentsContext);
   const subheader = experiments.HeaderCTA ? (
     <CallToAction larger={experiments.LargerCTA} />
@@ -52,7 +42,7 @@ export function UpgradeInfo() {
   );
 
   return (
-    <React.Fragment>
+    <>
       <div className="grafana-info-box span8">
         You are running the open-source version of Grafana. With this version, you cannot run Grafana Enterprise so all
         enterprise features are disabled.
@@ -63,15 +53,15 @@ export function UpgradeInfo() {
         <FeatureInfo />
         <Footer />
       </LicenseChrome>
-    </React.Fragment>
+    </>
   );
-}
+};
 
-function Footer() {
+const Footer: React.FC = () => {
   const experiments = React.useContext(ExperimentsContext);
 
   return (
-    <React.Fragment>
+    <>
       <div style={{ marginTop: '40px' }}>
         <h2 style={title}>Get Grafana Enterprise</h2>
         {!experiments.HeaderCTA && <CallToAction larger={experiments.LargerCTA} />}
@@ -98,11 +88,15 @@ function Footer() {
           }}
         />
       </div>
-    </React.Fragment>
+    </>
   );
+};
+
+interface CTAProps {
+  larger?: boolean;
 }
 
-function CallToAction({ larger }: { larger?: boolean }) {
+const CallToAction: React.FC<CTAProps> = ({ larger }) => {
   const size = larger ? 'lg' : 'md';
   return (
     <Button
@@ -115,9 +109,9 @@ function CallToAction({ larger }: { larger?: boolean }) {
       Contact us and get a free trial
     </Button>
   );
-}
+};
 
-function ServiceInfo() {
+const ServiceInfo: React.FC = () => {
   return (
     <div>
       <h4>At your service</h4>
@@ -139,9 +133,9 @@ function ServiceInfo() {
       </List>
     </div>
   );
-}
+};
 
-function FeatureInfo() {
+const FeatureInfo: React.FC = () => {
   return (
     <div style={{ paddingRight: '11px' }}>
       <h4>Enhanced Functionality</h4>
@@ -155,9 +149,9 @@ function FeatureInfo() {
       </div>
     </div>
   );
-}
+};
 
-function FeatureListing() {
+const FeatureListing: React.FC = () => {
   return (
     <List>
       <Item title="Multiple Grafana instances" />
@@ -168,49 +162,31 @@ function FeatureListing() {
       <Item title="SAML Authentication Reporting" />
     </List>
   );
-}
+};
 
-interface ListProps {
-  children: React.ReactNode;
-}
-
-class List extends React.PureComponent<ListProps> {
-  constructor(props: ListProps) {
-    super(props);
-  }
-
-  render() {
-    return <ul style={{ paddingLeft: '1em' }}>{this.props.children}</ul>;
-  }
-}
+const List: React.FC = ({ children }) => {
+  return <ul style={{ paddingLeft: '1em' }}>{children}</ul>;
+};
 
 interface ItemProps {
   title: string;
   image?: string;
-  children?: React.ReactNode;
 }
 
-class Item extends React.PureComponent<ItemProps> {
-  constructor(props: ItemProps) {
-    super(props);
-  }
+const Item: React.FC<ItemProps> = ({ children, title, image }) => {
+  const imageUrl = image ? image : '/public/img/licensing/checkmark.svg';
 
-  render() {
-    const { title, image } = this.props;
-    const imageUrl = image ? image : '/public/img/licensing/checkmark.svg';
-
-    return (
-      <li
-        style={{
-          listStyleImage: "url('" + imageUrl + "')",
-        }}
-      >
-        <div style={{ fontWeight: 500 }}>{title}</div>
-        {this.props.children && <React.Fragment>{this.props.children}</React.Fragment>}
-      </li>
-    );
-  }
-}
+  return (
+    <li
+      style={{
+        listStyleImage: "url('" + imageUrl + "')",
+      }}
+    >
+      <div style={{ fontWeight: 500 }}>{title}</div>
+      {children && <>{children}</>}
+    </li>
+  );
+};
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'upgrading'),

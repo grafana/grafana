@@ -34,19 +34,16 @@ const headerStyle = stylesFactory((theme: GrafanaTheme) => {
   `;
 });
 
-export function LicenseChrome({
-  header,
-  subheader,
-  children,
-}: {
+interface Props {
   header: string;
   subheader?: React.ReactNode;
-  children?: React.ReactNode;
-}) {
+}
+
+export const LicenseChrome: React.FC<Props> = ({ header, subheader, children }) => {
   const theme = React.useContext(ThemeContext);
 
   return (
-    <React.Fragment>
+    <>
       <div className={headerStyle(theme)}>
         <h2 style={title}>{header}</h2>
         {subheader && subheader}
@@ -79,36 +76,31 @@ export function LicenseChrome({
       </div>
 
       <div className={contentContainerStyle(theme)}>{children}</div>
-    </React.Fragment>
+    </>
   );
+};
+
+interface CircleProps {
+  size: string;
+  style?: React.CSSProperties;
 }
 
-export class Circle extends React.PureComponent<any, any> {
-  props: {
-    size: string;
-    style?: any;
-    children?: React.ReactNode;
-  };
+export const Circle: React.FC<CircleProps> = ({ size, style, children }) => {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        ...style,
+      }}
+    >
+      {children && <>{children}</>}
+    </div>
+  );
+};
 
-  render() {
-    const { size, style, children } = this.props;
-
-    return (
-      <div
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          ...style,
-        }}
-      >
-        {children && <React.Fragment>{children}</React.Fragment>}
-      </div>
-    );
-  }
-}
-
-export function Orbit({ size, style, children }: { size: string; style?: any; children?: React.ReactNode }) {
+export const Orbit: React.FC<CircleProps> = ({ size, style, children }) => {
   const theme = React.useContext(ThemeContext);
   const borderColor = theme.isDark ? '#343B40' : '#E9EDF2';
 
@@ -119,4 +111,4 @@ export function Orbit({ size, style, children }: { size: string; style?: any; ch
       {children}
     </Circle>
   );
-}
+};
