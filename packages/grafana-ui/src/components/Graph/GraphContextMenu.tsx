@@ -48,7 +48,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
 
     // If dimensions supplied, we can calculate and display value
     let value;
-    if (dimensions && contextDimensions && contextDimensions.yAxis && contextDimensions.yAxis[1]) {
+    if (dimensions?.yAxis && contextDimensions?.yAxis?.[1]) {
       const valueFromDimensions = getValueFromDimension(
         dimensions.yAxis,
         contextDimensions.yAxis[0],

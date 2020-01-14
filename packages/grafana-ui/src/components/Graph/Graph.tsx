@@ -261,9 +261,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       contextDimensions,
     };
 
-    const contextContentRender = GraphContextMenu;
-    const contextContent = React.createElement(contextContentRender, { ...contextContentProps });
-    return contextContent;
+    return <GraphContextMenu {...contextContentProps} />;
   };
 
   getBarWidth = () => {
