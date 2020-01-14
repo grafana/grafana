@@ -3,6 +3,7 @@ import { DateTime } from '../datetime/moment_wrapper';
 export interface RawTimeRange {
   from: DateTime | string;
   to: DateTime | string;
+  raw: never;
 }
 
 export interface TimeRange {
