@@ -1,6 +1,7 @@
 import angular from 'angular';
 import config from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class SelectOrgCtrl {
   /** @ngInject */
@@ -20,11 +21,13 @@ export class SelectOrgCtrl {
     };
 
     $scope.getUserOrgs = () => {
-      getBackendSrv()
-        .get('/api/user/orgs')
-        .then((orgs: any) => {
-          $scope.orgs = orgs;
-        });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .get('/api/user/orgs')
+          .then((orgs: any) => {
+            $scope.orgs = orgs;
+          })
+      );
     };
 
     $scope.setUsingOrg = (org: any) => {
