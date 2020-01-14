@@ -20,7 +20,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
   $locationProvider.html5Mode(true);
 
   // If license is invalid always show invalid license page
-  if (!config.license.isValid) {
+  if (config.license.hasLicense && !config.license.isValid) {
     $routeProvider.otherwise({
       template: '<react-container />',
       resolve: {

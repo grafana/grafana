@@ -73,6 +73,11 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPermissionInFoldersQuery.Result,
 		},
+		License: &dtos.ActiveLicense{
+			RequireLicense: hs.License.HasLicense(),
+			Valid:          hs.License.HasValidLicense(),
+			Expiration:     hs.License.Expiry(),
+		},
 		Settings:                settings,
 		Theme:                   prefs.Theme,
 		AppUrl:                  appURL,

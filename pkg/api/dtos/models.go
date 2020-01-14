@@ -41,6 +41,12 @@ type CurrentUser struct {
 	HasEditPermissionInFolders bool         `json:"hasEditPermissionInFolders"`
 }
 
+type ActiveLicense struct {
+	RequireLicense bool  `json:"requireLicense"`
+	Valid          bool  `json:"valid"`
+	Expiration     int64 `json:"expiration"`
+}
+
 type MetricRequest struct {
 	From    string             `json:"from"`
 	To      string             `json:"to"`

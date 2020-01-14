@@ -19,6 +19,7 @@ func (hs *HTTPServer) registerRoutes() {
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota(hs.QuotaService)
+	licenseCheck := middleware.LicensingValidation(hs.License)
 	bind := binding.Bind
 
 	r := hs.RouteRegister
@@ -375,7 +376,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// error test
 		r.Get("/metrics/error", Wrap(GenerateError))
 
-	}, reqSignedIn)
+	}, reqSignedIn, licenseCheck)
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
@@ -402,7 +403,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/ldap/sync/:id", Wrap(hs.PostSyncUserWithLDAP))
 		adminRoute.Get("/ldap/:username", Wrap(hs.GetUserFromLDAP))
 		adminRoute.Get("/ldap/status", Wrap(hs.GetLDAPStatus))
-	}, reqGrafanaAdmin)
+	}, reqGrafanaAdmin, licenseCheck)
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)

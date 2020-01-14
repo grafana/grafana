@@ -35,15 +35,11 @@ var (
 	ReqOrgAdmin   = RoleAuth(models.ROLE_ADMIN)
 )
 
-func GetContextHandler(ats models.UserTokenService,
-	remoteCache *remotecache.RemoteCache,
-	license models.Licensing,
-) macaron.Handler {
+func GetContextHandler(ats models.UserTokenService, remoteCache *remotecache.RemoteCache) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &models.ReqContext{
 			Context:        c,
 			SignedInUser:   &models.SignedInUser{},
-			License:        license,
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,

@@ -2,25 +2,27 @@ package middleware
 
 import (
 	"fmt"
-
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"gopkg.in/macaron.v1"
+	"net/http"
 )
 
-const licensingTemplateName = "license-error"
-
-// LicensingValidation provides a middleware checking if Grafana is running with a license which is not valid.
-func LicensingValidation() macaron.Handler {
-	return func(c *m.ReqContext) {
-		// This filter only applies to api calls
-		if !c.IsApiRequest() {
-			return
+// LicensingValidation provides a middleware checking if Grafana is running
+// with a license which is not valid.
+func LicensingValidation(license models.Licensing) macaron.Handler {
+	return func(c *models.ReqContext) {
+		if c.License == nil {
+			c.License = license
 		}
 
-		// TODO needs better message, for expired: The Grafana Enterprise license has expired
-		// For invalid: The Grafana Enterprise license is not valid
 		if c.License.HasLicense() && !c.License.HasValidLicense() {
-			c.JsonApiErr(402, "Invalid License", fmt.Errorf("provided license file is invalid"))
+			invalidLicense(c)
 		}
 	}
+}
+
+func invalidLicense(c *models.ReqContext) {
+	// FIXME: Better error message
+	c.JsonApiErr(http.StatusForbidden, "Invalid License", fmt.Errorf("provided license file is invalid"))
+	return
 }
