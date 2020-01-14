@@ -5,7 +5,7 @@ import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types/';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, ThemeContext, ResourceCard, LinkButton } from '@grafana/ui';
+import { stylesFactory, ThemeContext, LinkButton, ResourceCard } from '@grafana/ui';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   actionsLink: css`
@@ -57,28 +57,23 @@ const DataSourcesListItem: FunctionComponent<Props> = ({ dataSource, deleteDataS
 
   return (
     <ResourceCard
-      resourceName={dataSource.name}
-      imageUrl={dataSource.typeLogoUrl}
-      url={dataSource.url}
-      type={dataSource.type}
-      isDefault={dataSource.isDefault}
-      actions={
-        <>
-          <a
-            className={cx(style.actionsLink, 'gicon', 'gicon-explore')}
-            aria-label={e2e.pages.DataSources.selectors.dataSources(dataSource.name)}
-            href={`explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22${dataSource.name}%22,%7B%7D,%7B%22mode%22:%22Metrics%22%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D`}
-          />
-          {/* <a
-            className={cx(style.actionsLink, 'gicon', 'gicon-dashboard')}
-            href={`/datasources/edit/${dataSource.id}/dashboards`}
-          /> */}
-          <a className={cx(style.actionsLink, 'fa', 'fa-trash', style.rightMargin)} onClick={onDelete} />
-          <LinkButton variant={'secondary'} href={`datasources/edit/${dataSource.id}`}>
-            Configure
-          </LinkButton>
-        </>
-      }
+      name={<ResourceCard.Name value={dataSource.name} />}
+      figure={<ResourceCard.Figure src={dataSource.typeLogoUrl} alt={dataSource.name} />}
+      infoItems={[
+        <ResourceCard.InfoItem keyName={'url'} value={dataSource.url} />,
+        <ResourceCard.InfoItem keyName={'type'} value={dataSource.type} />,
+      ]}
+      actions={[
+        <a
+          className={cx(style.actionsLink, 'gicon', 'gicon-explore')}
+          aria-label={e2e.pages.DataSources.selectors.dataSources(dataSource.name)}
+          href={`explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22${dataSource.name}%22,%7B%7D,%7B%22mode%22:%22Metrics%22%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D`}
+        />,
+        <a className={cx(style.actionsLink, 'fa', 'fa-trash', style.rightMargin)} onClick={onDelete} />,
+        <LinkButton variant={'secondary'} href={`datasources/edit/${dataSource.id}`}>
+          Configure
+        </LinkButton>,
+      ]}
     />
   );
 };
