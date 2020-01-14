@@ -429,7 +429,7 @@ func init() {
 		Name:      "plugin_build_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
 		Namespace: exporterName,
-	}, []string{"pluginId", "pluginType", "version"})
+	}, []string{"plugin_id", "plugin_type", "version"})
 }
 
 // SetBuildInformation sets the build information for this binary

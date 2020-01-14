@@ -199,7 +199,7 @@ func convertMetricFamily(pluginID string, metricFamily *dto.MetricFamily, ch cha
 			names = append(names, label.GetName())
 			values = append(values, label.GetValue())
 		}
-		names = append(names, "pluginId")
+		names = append(names, "plugin_id")
 		values = append(values, pluginID)
 
 		for k := range allLabelNames {

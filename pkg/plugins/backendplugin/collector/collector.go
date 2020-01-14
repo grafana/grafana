@@ -16,13 +16,13 @@ var (
 	scrapeDurationDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(Namespace, "scrape", "duration_seconds"),
 		"grafana_plugin: Duration of a plugin collector scrape.",
-		[]string{"pluginId"},
+		[]string{"plugin_id"},
 		nil,
 	)
 	scrapeSuccessDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(Namespace, "scrape", "success"),
 		"grafana_plugin: Whether a plugin collector succeeded.",
-		[]string{"pluginId"},
+		[]string{"plugin_id"},
 		nil,
 	)
 )
