@@ -94,13 +94,45 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     });
   };
 
-  onKeyDown = (e: React.FormEvent<HTMLInputElement>) => {
-    console.log('Key down');
+  onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.key !== 'ArrowDown' &&
+      e.key !== 'ArrowUp' &&
+      e.key !== 'Enter' &&
+      e.key !== 'ArrowLeft' &&
+      e.key !== 'ArrowRight' &&
+      e.key !== 'Enter'
+    ) {
+      console.log('Key down');
+      this.setState({
+        focusCascade: false,
+        isSearching: true,
+      });
+    }
+  };
+
+  onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace') {
+      this.setState({
+        isSearching: true,
+        focusCascade: false,
+      });
+    }
+  };
+
+  onInputChange = (value: string) => {
+    this.setState({
+      activeLabel: value,
+    });
+  };
+
+  cascadeToSearch(label?: string) {
     this.setState({
       focusCascade: false,
       isSearching: true,
+      activeLabel: label || this.state.activeLabel,
     });
-  };
+  }
 
   render() {
     const { size } = this.props;
@@ -113,9 +145,10 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             // renderControl={React.forwardRef<any, CustomControlProps<any>>((props, ref) => {
             //   return <Input ref={ref} onClick={this.onClick} onBlur={this.onBlur} onKeyDown={this.onKeyDown} />;
             // })}
-            defaultValue={activeLabel}
+            inputValue={activeLabel}
             autoFocus={!focusCascade}
             onChange={this.onSelect}
+            onInputChange={this.onInputChange}
             onBlur={this.onBlur}
             options={searchableOptions}
             size={size || 'md'}
@@ -128,13 +161,16 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             options={this.props.options}
             isFocused={focusCascade}
             value={rcValue}
+            onKeyDown={this.onKeyDown}
           >
-            <Input
-              value={activeLabel}
-              onChange={this.onKeyDown}
-              size={size || 'md'}
-              suffix={<Icon name="caret-down" />}
-            />
+            <div>
+              <Input
+                value={activeLabel}
+                onKeyDown={this.onInputKeyDown}
+                size={size || 'md'}
+                suffix={<Icon name="caret-down" />}
+              />
+            </div>
           </RCCascader>
         )}
       </div>
