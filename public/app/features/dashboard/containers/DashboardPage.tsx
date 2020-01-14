@@ -29,7 +29,7 @@ import {
 } from 'app/types';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { PanelInspector } from '../components/Inspector/PanelInspector';
+import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
 
 export interface Props {
   urlUid?: string;
@@ -53,6 +53,7 @@ export interface Props {
   cleanUpDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
+  inspectTab?: InspectTab;
 }
 
 export interface State {
@@ -252,7 +253,16 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId, urlEditPanel } = this.props;
+    const {
+      dashboard,
+      editview,
+      $injector,
+      isInitSlow,
+      initError,
+      inspectPanelId,
+      urlEditPanel,
+      inspectTab,
+    } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
@@ -314,7 +324,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={inspectTab} />}
         {editPanel && <PanelEditor dashboard={dashboard} panel={editPanel} />}
       </div>
     );
@@ -336,6 +346,7 @@ export const mapStateToProps = (state: StoreState) => ({
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.model as DashboardModel,
+  inspectTab: state.location.query.tab,
 });
 
 const mapDispatchToProps = {
