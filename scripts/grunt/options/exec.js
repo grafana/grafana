@@ -15,7 +15,6 @@ module.exports = function(config, grunt) {
       command: 'yarn typecheck',
     },
     jest: 'yarn jest-ci',
-    webpack:
-      'node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js',
+    webpack: 'node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js',
   };
 };
