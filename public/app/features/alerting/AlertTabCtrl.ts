@@ -13,6 +13,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
 import kbn from 'app/core/utils/kbn';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -35,6 +36,7 @@ export class AlertTabCtrl {
   alertingMinIntervalSecs: number;
   alertingMinInterval: string;
   frequencyWarning: any;
+  digest: (promise: Promise<any>) => Promise<any>;
 
   /** @ngInject */
   constructor(
@@ -56,6 +58,7 @@ export class AlertTabCtrl {
     this.panelCtrl._enableAlert = this.enable;
     this.alertingMinIntervalSecs = config.alertingMinInterval;
     this.alertingMinInterval = kbn.secondsToHms(config.alertingMinInterval);
+    this.digest = promiseToDigest($scope);
   }
 
   $onInit() {
@@ -77,27 +80,31 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return getBackendSrv()
-      .get('/api/alert-notifications/lookup')
-      .then((res: any) => {
-        this.notifications = res;
+    return this.digest(
+      getBackendSrv()
+        .get('/api/alert-notifications/lookup')
+        .then((res: any) => {
+          this.notifications = res;
 
-        this.initModel();
-        this.validateModel();
-      });
+          this.initModel();
+          this.validateModel();
+        })
+    );
   }
 
   getAlertHistory() {
-    getBackendSrv()
-      .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
-      .then((res: any) => {
-        this.alertHistory = _.map(res, ah => {
-          ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
-          ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
-          ah.info = alertDef.getAlertAnnotationInfo(ah);
-          return ah;
-        });
-      });
+    this.digest(
+      getBackendSrv()
+        .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
+        .then((res: any) => {
+          this.alertHistory = _.map(res, ah => {
+            ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
+            ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
+            ah.info = alertDef.getAlertAnnotationInfo(ah);
+            return ah;
+          });
+        })
+    );
   }
 
   getNotificationIcon(type: string): string {
@@ -456,15 +463,17 @@ export class AlertTabCtrl {
       icon: 'fa-trash',
       yesText: 'Yes',
       onConfirm: () => {
-        getBackendSrv()
-          .post('/api/annotations/mass-delete', {
-            dashboardId: this.panelCtrl.dashboard.id,
-            panelId: this.panel.id,
-          })
-          .then(() => {
-            this.alertHistory = [];
-            this.panelCtrl.refresh();
-          });
+        this.digest(
+          getBackendSrv()
+            .post('/api/annotations/mass-delete', {
+              dashboardId: this.panelCtrl.dashboard.id,
+              panelId: this.panel.id,
+            })
+            .then(() => {
+              this.alertHistory = [];
+              this.panelCtrl.refresh();
+            })
+        );
       },
     });
   }
