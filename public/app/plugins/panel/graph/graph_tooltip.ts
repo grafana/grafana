@@ -173,12 +173,14 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
   });
 
   elem.bind('plotleave', () => {
-    if (panel.tooltip.shared) {
-      const plot = elem.data().plot;
-      if (plot) {
-        $tooltip.detach();
-        plot.unhighlight();
-      }
+    if (!panel.tooltip.shared) {
+      return;
+    }
+
+    const plot = elem.data().plot;
+    if (plot) {
+      $tooltip.detach();
+      plot.unhighlight();
     }
   });
 
