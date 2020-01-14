@@ -1,30 +1,48 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<ResourceCardBase
+<ResourceCard
   actions={
-    <React.Fragment>
+    Array [
       <a
         aria-label="Data source list item gdev-cloudwatch"
         className="css-15bmzjg gicon gicon-explore"
         href="explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22gdev-cloudwatch%22,%7B%7D,%7B%22mode%22:%22Metrics%22%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D"
-      />
+      />,
       <a
         className="fa fa-trash css-1yazh86"
         onClick={[Function]}
-      />
+      />,
       <ForwardRef
         href="datasources/edit/13"
         variant="secondary"
       >
         Configure
-      </ForwardRef>
-    </React.Fragment>
+      </ForwardRef>,
+    ]
   }
-  imageUrl="public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
-  isDefault={false}
-  resourceName="gdev-cloudwatch"
-  type="cloudwatch"
-  url=""
+  figure={
+    <Unknown
+      alt="gdev-cloudwatch"
+      src="public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
+    />
+  }
+  infoItems={
+    Array [
+      <Unknown
+        keyName="url"
+        value=""
+      />,
+      <Unknown
+        keyName="type"
+        value="cloudwatch"
+      />,
+    ]
+  }
+  name={
+    <Unknown
+      value="gdev-cloudwatch"
+    />
+  }
 />
 `;
