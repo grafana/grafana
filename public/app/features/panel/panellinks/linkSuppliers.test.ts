@@ -157,6 +157,14 @@ describe('getLinksFromLogsField', () => {
           "href": "http://go/100.200",
           "title": "Text (no suffix)",
         },
+       Object {
+         "href": "http://go/${__cell[1]}",
+         "title": "By Index",
+       },
+       Object {
+         "href": "http://go/${__cell.XYZ}",
+         "title": "Unknown Field",
+       },
       ]
     `);
   });
