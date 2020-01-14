@@ -1,8 +1,13 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
-import { text, boolean, object } from '@storybook/addon-knobs';
+import { withKnobs, text, boolean, object } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonCascader } from './ButtonCascader';
+
+export default {
+  title: 'UI/ButtonCascader',
+  component: ButtonCascader,
+  decorators: [withKnobs, withCenteredStory],
+};
 
 const getKnobs = () => {
   return {
@@ -22,11 +27,7 @@ const getKnobs = () => {
   };
 };
 
-const ButtonCascaderStories = storiesOf('UI/ButtonCascader', module);
-
-ButtonCascaderStories.addDecorator(withCenteredStory);
-
-ButtonCascaderStories.add('default', () => {
+export const simple = () => {
   const { disabled, text, options } = getKnobs();
   return <ButtonCascader disabled={disabled} options={options} value={['A']} expandIcon={null} buttonText={text} />;
-});
+};

@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button } from '../Forms/Button';
+import { Icon } from '../Icon/Icon';
 
 // @ts-ignore
 import RCCascader from 'rc-cascader';
@@ -27,8 +29,8 @@ export interface ButtonCascaderProps {
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = props => (
   <RCCascader {...props}>
-    <button className="gf-form-label gf-form-label--btn" disabled={props.disabled}>
-      {props.buttonText} <i className="fa fa-caret-down" />
-    </button>
+    <Button variant="secondary" disabled={props.disabled}>
+      {props.buttonText} <Icon name="caret-down" />
+    </Button>
   </RCCascader>
 );

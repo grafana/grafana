@@ -89,7 +89,6 @@ export interface CustomControlProps<T> {
   onBlur: () => void;
   disabled: boolean;
   invalid: boolean;
-  isFocused: boolean;
 }
 
 export type ControlComponent<T> = React.ComponentType<CustomControlProps<T>>;
@@ -115,7 +114,6 @@ const CustomControl = (props: any) => {
       onBlur: onMenuClose,
       disabled: !!selectProps.disabled,
       invalid: !!selectProps.invalid,
-      isFocused: isFocused,
     });
   }
 
