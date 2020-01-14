@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// for stubbing in tests
 var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
 	return imguploader.NewImageUploader()
 }
