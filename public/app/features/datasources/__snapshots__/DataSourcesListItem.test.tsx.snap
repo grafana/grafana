@@ -1,58 +1,30 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<tr
-  className="css-etgui1"
-  onMouseEnter={[Function]}
-  onMouseLeave={[Function]}
->
-  <td
-    className="css-1ppld78"
-  >
-    <img
-      className="css-1xv6880"
-      src="public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
-    />
-  </td>
-  <td
-    className="css-ry4dgn"
-  >
-    <span
-      className="css-1h4uvz5"
-    >
-      gdev-cloudwatch
-    </span>
-    <span
-      className="css-3brfka"
-    >
-      cloudwatch
-    </span>
-  </td>
-  <td
-    className="css-mmv1zu"
-  >
-    <span
-      className="css-9oecbb"
-    />
-  </td>
-  <td
-    className="css-1hmbl8j"
-  >
-    <a
-      aria-label="Data source list item gdev-cloudwatch"
-      className="css-po87bd gicon gicon-explore"
-      href="explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22gdev-cloudwatch%22,%7B%7D,%7B%22mode%22:%22Metrics%22%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D"
-    />
-    <a
-      className="css-po87bd fa fa-trash"
-      onClick={[Function]}
-    />
-    <a
-      className="btn btn-primary css-1mw95r3"
-      href="datasources/edit/13"
-    >
-      Configure
-    </a>
-  </td>
-</tr>
+<ResourceCardBase
+  actions={
+    <React.Fragment>
+      <a
+        aria-label="Data source list item gdev-cloudwatch"
+        className="css-a0myu7 gicon gicon-explore"
+        href="explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22gdev-cloudwatch%22,%7B%7D,%7B%22mode%22:%22Metrics%22%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D"
+      />
+      <a
+        className="fa fa-trash css-1kff5rh"
+        onClick={[Function]}
+      />
+      <LinkButton
+        href="datasources/edit/13"
+        variant="secondary"
+      >
+        Configure
+      </LinkButton>
+    </React.Fragment>
+  }
+  imageUrl="public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
+  isDefault={false}
+  resourceName="gdev-cloudwatch"
+  type="cloudwatch"
+  url=""
+/>
 `;
