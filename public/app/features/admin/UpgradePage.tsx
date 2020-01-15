@@ -175,7 +175,7 @@ const Item: React.FC<ItemProps> = ({ children, title, image }) => {
       <img src={imageUrl} />
       <div>
         <div className={titleStyle}>{title}</div>
-        {children && children}
+        {children}
       </div>
     </div>
   );
