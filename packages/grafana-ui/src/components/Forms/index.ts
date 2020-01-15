@@ -4,7 +4,7 @@ import { Input } from './Input/Input';
 import { Select } from './Select/Select';
 import { Form } from './Form';
 import { Field } from './Field';
-import { Button } from './Button';
+import { Button, LinkButton } from './Button';
 
 const Forms = {
   getFormStyles,
@@ -13,6 +13,7 @@ const Forms = {
   Form,
   Field,
   Button,
+  LinkButton,
   Select,
 };
 
