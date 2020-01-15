@@ -6,6 +6,7 @@
 
 ## Breaking changes
 * **PagerDuty**: Change `payload.custom_details` field in PagerDuty notification to be a JSON object instead of a string.
+* **Security**: The `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`. Refer to [Upgrade Grafana](https://grafana.com/docs/grafana/latest/installation/upgrading/#upgrading-to-v6-6) for more information.
 
 # 6.5.2 (2019-12-11)
 
