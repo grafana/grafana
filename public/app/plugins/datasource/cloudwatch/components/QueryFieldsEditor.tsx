@@ -71,6 +71,20 @@ export function QueryFieldsEditor({
     onRunQuery();
   };
 
+  // Load dimension values based on current selected dimensions.
+  // Remove the new dimension key and all dimensions that has a wildcard as selected value
+  const loadDimensionValues = (newKey: string) => {
+    const { [newKey]: value, ...dim } = query.dimensions;
+    const newDimensions = Object.entries(dim).reduce(
+      (result, [key, value]) => (value === '*' ? result : { ...result, [key]: value }),
+      {}
+    );
+    return datasource
+      .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
+      .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
+      .then(appendTemplateVariables);
+  };
+
   const { regions, namespaces, variableOptionGroup } = state;
   return (
     <>
@@ -120,15 +134,7 @@ export function QueryFieldsEditor({
               dimensions={query.dimensions}
               onChange={dimensions => onQueryChange({ ...query, dimensions })}
               loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region).then(appendTemplateVariables)}
-              loadValues={newKey => {
-                const { [newKey]: value, ...newDimensions } = query.dimensions;
-                return datasource
-                  .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
-                  .then(values =>
-                    values.length && !hideWilcard ? [{ value: '*', text: '*', label: '*' }, ...values] : values
-                  )
-                  .then(appendTemplateVariables);
-              }}
+              loadValues={loadDimensionValues}
             />
           </QueryInlineField>
         </>
