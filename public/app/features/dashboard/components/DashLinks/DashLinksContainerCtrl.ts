@@ -8,7 +8,7 @@ import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
-export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };
+export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any; timezone: any };
 
 function dashLinksContainer() {
   return {
@@ -116,6 +116,7 @@ export class DashLinksContainerCtrl {
               title: linkDef.title,
               tags: linkDef.tags,
               keepTime: linkDef.keepTime,
+              timezone: linkDef.timezone,
               includeVars: linkDef.includeVars,
               target: linkDef.targetBlank ? '_blank' : '_self',
               icon: 'fa fa-bars',
@@ -137,6 +138,7 @@ export class DashLinksContainerCtrl {
             tooltip: linkDef.tooltip,
             target: linkDef.targetBlank ? '_blank' : '_self',
             keepTime: linkDef.keepTime,
+            timezone: linkDef.timezone,
             includeVars: linkDef.includeVars,
           },
         ]);
@@ -166,6 +168,7 @@ export class DashLinksContainerCtrl {
                 target: link.target === '_self' ? '' : link.target,
                 icon: 'fa fa-th-large',
                 keepTime: link.keepTime,
+                timezone: link.timezone,
                 includeVars: link.includeVars,
               });
             }

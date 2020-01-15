@@ -1,9 +1,9 @@
 import angular, { ILocationService } from 'angular';
-import { dateTime } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 
 import config from 'app/core/config';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { getLocalTimeZone } from 'app/core/utils/timezone';
 import { TimeSrv } from '../../services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
@@ -103,30 +103,7 @@ export function ShareModalCtrl(
       config.appSubUrl + '/render/dashboard-solo/'
     );
     $scope.imageUrl = $scope.imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
-    $scope.imageUrl += '&width=1000&height=500' + $scope.getLocalTimeZone();
-  };
-
-  // This function will try to return the proper full name of the local timezone
-  // Chrome does not handle the timezone offset (but phantomjs does)
-  $scope.getLocalTimeZone = () => {
-    const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
-
-    // Older browser does not the internationalization API
-    if (!(window as any).Intl) {
-      return utcOffset;
-    }
-
-    const dateFormat = (window as any).Intl.DateTimeFormat();
-    if (!dateFormat.resolvedOptions) {
-      return utcOffset;
-    }
-
-    const options = dateFormat.resolvedOptions();
-    if (!options.timeZone) {
-      return utcOffset;
-    }
-
-    return '&tz=' + encodeURIComponent(options.timeZone);
+    $scope.imageUrl += '&width=1000&height=500&tz=' + encodeURIComponent(getLocalTimeZone());
   };
 
   $scope.getShareUrl = () => {

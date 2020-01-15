@@ -5,6 +5,7 @@ import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
+import { getLocalTimeZone } from 'app/core/utils/timezone';
 import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
 import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
 
@@ -148,6 +149,10 @@ export class LinkSrv implements LinkService {
       const range = this.timeSrv.timeRangeForUrl();
       params['from'] = range.from;
       params['to'] = range.to;
+    }
+
+    if (link.timezone) {
+      params['tz'] = getLocalTimeZone();
     }
 
     if (link.includeVars) {
