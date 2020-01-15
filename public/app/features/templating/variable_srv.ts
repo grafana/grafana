@@ -299,10 +299,12 @@ export class VariableSrv {
         update.push(v.setValueFromUrl(vars[key]));
       }
     });
-    Promise.all(update).then(() => {
-      this.dashboard.templateVariableValueUpdated();
-      this.dashboard.startRefresh();
-    });
+    if (update.length) {
+      Promise.all(update).then(() => {
+        this.dashboard.templateVariableValueUpdated();
+        this.dashboard.startRefresh();
+      });
+    }
   }
 
   updateUrlParamsWithCurrentVariables() {

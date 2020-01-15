@@ -121,8 +121,13 @@ export const repeatsProcessed = eventFactory('repeats-processed');
 export const rowExpanded = eventFactory('row-expanded');
 export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
-export const templateVarsChangedInUrl = eventFactory<UrlQueryMap>('template-vars-changed-in-url');
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
+
+/**
+ *  Note, this will be removed when variables are handled by redux
+ */
+
+export const templateVarsChangedInUrl = eventFactory<UrlQueryMap>('template-vars-changed-in-url');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
 
