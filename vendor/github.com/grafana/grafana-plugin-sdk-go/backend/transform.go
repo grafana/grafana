@@ -7,11 +7,11 @@ import (
 )
 
 type TransformHandlers interface {
-	TransformDataQueryHandler
+	TransformDataHandler
 }
 
-type TransformDataQueryHandler interface {
-	DataQuery(ctx context.Context, req *DataQueryRequest, callBack TransformCallBackHandler) (*DataQueryResponse, error)
+type TransformDataHandler interface {
+	TransformData(ctx context.Context, req *DataQueryRequest, callBack TransformCallBackHandler) (*DataQueryResponse, error)
 }
 
 // Callback

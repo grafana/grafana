@@ -179,6 +179,10 @@ func GetPluginMarkdown(c *m.ReqContext) Response {
 }
 
 func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Response {
+	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
+		return Error(422, "Dashboard must be set", nil)
+	}
+
 	cmd := plugins.ImportDashboardCommand{
 		OrgId:     c.OrgId,
 		User:      c.SignedInUser,
