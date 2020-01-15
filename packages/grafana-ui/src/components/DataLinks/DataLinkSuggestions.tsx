@@ -11,6 +11,7 @@ import { stylesFactory } from '../../themes';
 export enum VariableOrigin {
   Series = 'series',
   Field = 'field',
+  Fields = 'fields',
   Value = 'value',
   BuiltIn = 'built-in',
   Template = 'template',
