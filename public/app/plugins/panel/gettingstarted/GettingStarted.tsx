@@ -43,7 +43,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         check: () => Promise.resolve(true),
       },
       {
-        title: 'Create your first data source',
+        title: 'Create a data source',
         cta: 'Add data source',
         icon: 'gicon gicon-datasources',
         href: 'datasources/new?gettingstarted',
@@ -60,7 +60,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         },
       },
       {
-        title: 'Create your first dashboard',
+        title: 'Build a dashboard',
         cta: 'New dashboard',
         icon: 'gicon gicon-dashboard',
         href: 'dashboard/new?gettingstarted',
