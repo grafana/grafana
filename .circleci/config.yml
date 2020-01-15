@@ -48,9 +48,11 @@ jobs:
           paths:
             - bin/grabpl
 
-  build-oss-backend:
-    description: "Build a certain variant of Grafana open-source back-end binaries"
+  build-backend:
+    description: "Build a certain variant of Grafana back-end binaries"
     parameters:
+      edition:
+        type: string
       variant:
         type: string
     executor: grafana-build
@@ -64,14 +66,14 @@ jobs:
       - run:
           name: Build Grafana backend
           # TODO: Don't use $CIRCLE_TAG for master
-          command: /tmp/workspace/bin/grabpl build-backend --variants << parameters.variant >> $CIRCLE_TAG
+          command: /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> --variants << parameters.variant >> $CIRCLE_TAG
       - run:
           name: Move artifacts
-          command: mkdir -p oss && mv bin oss/
+          command: mkdir -p << parameters.edition >> && mv bin << parameters.edition >>/
       - persist_to_workspace:
           root: .
           paths:
-            - oss/bin/*
+            - << parameters.edition >>/bin/*
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -100,39 +102,6 @@ jobs:
           root: .
           paths:
             - oss/public/*
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  build-enterprise-backend:
-    description: "Build a certain variant of Grafana enterprise back-end binaries"
-    parameters:
-      variant:
-        type: string
-    executor: grafana-build
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: Build Grafana backend
-          # TODO: Remove $CIRCLE_TAG for master
-          command: /tmp/workspace/bin/grabpl build-backend --enterprise --variants << parameters.variant >> $CIRCLE_TAG
-      - run:
-          name: Move artifacts
-          command: mkdir enterprise && mv bin enterprise/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - enterprise/bin/*
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -1692,56 +1661,65 @@ workflows:
     jobs:
       - install-grabpl:
           filters: *filter-only-master
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: armv6
           name: build-oss-backend-armv6
           requires:
             - install-grabpl
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: armv7
           name: build-oss-backend-armv7
           requires:
             - install-grabpl
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
             - install-grabpl
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: arm64
           name: build-oss-backend-arm64
           requires:
             - install-grabpl
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
             - install-grabpl
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
             - install-grabpl
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
             - install-grabpl
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
             - install-grabpl
-      - build-oss-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
@@ -1750,56 +1728,65 @@ workflows:
           filters: *filter-only-master
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: armv6
           name: build-enterprise-backend-armv6
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: armv7
           name: build-enterprise-backend-armv7
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: armv7-musl
           name: build-enterprise-backend-armv7-musl
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: arm64
           name: build-enterprise-backend-arm64
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: arm64-musl
           name: build-enterprise-backend-arm64-musl
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: osx64
           name: build-enterprise-backend-osx64
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: win64
           name: build-enterprise-backend-win64
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: linux-x64
           name: build-enterprise-backend-linux-x64
           requires:
             - install-grabpl
-      - build-enterprise-backend:
+      - build-backend:
           filters: *filter-only-master
+          edition: enterprise
           variant: linux-x64-musl
           name: build-enterprise-backend-linux-x64-musl
           requires:
