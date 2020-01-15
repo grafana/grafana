@@ -20,7 +20,6 @@ exports[`Render should render children 1`] = `
     >
       <a
         rel="noopener"
-        target="_blank"
       />
     </li>
     <li
@@ -28,7 +27,6 @@ exports[`Render should render children 1`] = `
     >
       <a
         rel="noopener"
-        target="_blank"
       />
     </li>
     <li
@@ -36,7 +34,6 @@ exports[`Render should render children 1`] = `
     >
       <a
         rel="noopener"
-        target="_blank"
       />
     </li>
     <li
@@ -44,7 +41,6 @@ exports[`Render should render children 1`] = `
     >
       <a
         rel="noopener"
-        target="_blank"
       />
     </li>
     <li
