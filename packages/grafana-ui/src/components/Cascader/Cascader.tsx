@@ -8,6 +8,7 @@ import { Select } from '../Forms/Select/Select';
 import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
+import { css } from 'emotion';
 
 // import { CustomControlProps, SelectBaseProps } from '../Forms/Select/SelectBase';
 
@@ -33,6 +34,12 @@ interface CascadeOption {
   label: string;
   children?: CascadeOption[];
 }
+
+const disableDivFocus = css(`
+&:focus{
+  outline: none;
+}
+`);
 
 export class Cascader extends React.PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
@@ -181,7 +188,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onBlur={this.onBlurCascade}
             value={rcValue}
           >
-            <div>
+            <div className={disableDivFocus}>
               <Input
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
