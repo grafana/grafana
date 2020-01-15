@@ -11,6 +11,7 @@ import {
   PanelEvents,
   TimeZone,
   toLegacyResponseData,
+  ExploreMode,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -25,7 +26,7 @@ import {
   sortLogsResult,
   stopQueryState,
 } from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUpdateState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
   addQueryRowAction,
   changeLoadingStateAction,

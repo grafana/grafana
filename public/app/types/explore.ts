@@ -14,6 +14,7 @@ import {
   AbsoluteTimeRange,
   GraphSeriesXY,
   DataFrame,
+  ExploreMode,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';

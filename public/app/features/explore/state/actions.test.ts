@@ -1,9 +1,9 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc, ExploreMode } from '@grafana/data';
 
 import * as Actions from './actions';
 import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
-import { ExploreId, ExploreMode, ExploreUpdateState, ExploreUrlState } from 'app/types';
+import { ExploreId, ExploreUpdateState, ExploreUrlState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   initializeExploreAction,

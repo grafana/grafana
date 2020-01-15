@@ -16,6 +16,7 @@ import {
   QueryFixAction,
   RawTimeRange,
   TimeRange,
+  ExploreMode,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -40,7 +41,7 @@ import {
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
 
-import { ExploreId, ExploreMode, ExploreUIState, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
   changeModeAction,
