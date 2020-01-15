@@ -56,8 +56,7 @@ All options in the configuration file can be overridden using environment variab
 GF_<SectionName>_<KeyName>
 ```
 
-Where the section name is the text within the brackets. Everything
-should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
+Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
 
 ```bash
 # default section
