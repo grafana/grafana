@@ -68,7 +68,7 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	var period int
 	if strings.ToLower(p) == "auto" || p == "" {
 		deltaInSeconds := endTime.Sub(startTime).Seconds()
-		periods := []int{60, 300, 900, 3600, 21600, 86400, 604800, 2592000}
+		periods := []int{60, 300, 900, 3600, 21600}
 		period = closest(periods, int(math.Ceil(deltaInSeconds/2000)))
 	} else {
 		if regexp.MustCompile(`^\d+$`).Match([]byte(p)) {
