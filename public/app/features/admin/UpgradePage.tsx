@@ -17,7 +17,10 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
     <Page navModel={navModel}>
       <Page.Contents>
         <div className="page-container page-body">
-          <UpgradeInfo />
+          <UpgradeInfo
+            message="You are running the open-source version of Grafana. With this version,
+          you cannot run Grafana Enterprise so all enterprise features are disabled."
+          />
         </div>
       </Page.Contents>
     </Page>
@@ -33,7 +36,11 @@ export class Experiments {
 
 export const ExperimentsContext = React.createContext(new Experiments());
 
-const UpgradeInfo: React.FC = () => {
+interface UpgradeInfoProps {
+  message: string;
+}
+
+export const UpgradeInfo: React.FC<UpgradeInfoProps> = ({ message }) => {
   const experiments = React.useContext(ExperimentsContext);
   const subheader = experiments.HeaderCTA ? (
     <CallToAction larger={experiments.LargerCTA} />
@@ -43,10 +50,7 @@ const UpgradeInfo: React.FC = () => {
 
   return (
     <>
-      <div className="grafana-info-box span8">
-        You are running the open-source version of Grafana. With this version, you cannot run Grafana Enterprise so all
-        enterprise features are disabled.
-      </div>
+      {message && <div className="grafana-info-box span8">{message}</div>}
 
       <LicenseChrome header="Grafana Enterprise" subheader={subheader}>
         <ServiceInfo />
