@@ -102,3 +102,171 @@ Array [
   },
 ]
 `;
+
+exports[`Read/Write arrow Table to DataFrame should parse output with dataframe 1`] = `
+Object {
+  "fields": Array [
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "string_values",
+      "type": "string",
+      "values": Array [
+        "Grafana",
+        "❤️",
+        "Transforms",
+      ],
+    },
+    Object {
+      "config": Object {
+        "decimals": 2,
+        "filterable": false,
+        "links": Array [
+          Object {
+            "targetBlank": true,
+            "title": "Donate - The Sloth Conservation Foundation",
+            "url": "https://slothconservation.com/how-to-help/donate/",
+          },
+        ],
+        "max": null,
+        "min": null,
+        "noValue": "😤",
+        "nullValueMode": "null",
+        "title": "Grafana ❤️ (Previous should be heart emoji) 🦥 (Previous should be sloth emoji)",
+      },
+      "labels": undefined,
+      "name": "nullable_string_values",
+      "type": "string",
+      "values": Array [
+        "🦥",
+        null,
+        "update your unicode/font if no sloth, is 2019.",
+      ],
+    },
+    Object {
+      "config": Object {
+        "max": 1,
+        "min": 0,
+      },
+      "labels": undefined,
+      "name": "int_values",
+      "type": "number",
+      "values": Array [
+        "\\"-9223372036854775808\\"",
+        "\\"1\\"",
+        "\\"9223372036854775807\\"",
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "nullable_int_values",
+      "type": "number",
+      "values": Array [
+        "\\"-9223372036854775808\\"",
+        null,
+        "\\"9223372036854775807\\"",
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "uint_values",
+      "type": "number",
+      "values": Array [
+        "\\"0\\"",
+        "\\"1\\"",
+        "\\"18446744073709551615\\"",
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "nullable_uint_values",
+      "type": "number",
+      "values": Array [
+        "\\"0\\"",
+        null,
+        "\\"18446744073709551615\\"",
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "float_values",
+      "type": "number",
+      "values": Array [
+        0,
+        1,
+        2,
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "nullable_float_values",
+      "type": "number",
+      "values": Array [
+        0,
+        null,
+        2,
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "bool_values",
+      "type": "boolean",
+      "values": Array [
+        true,
+        true,
+        false,
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "nullable_bool_values",
+      "type": "boolean",
+      "values": Array [
+        true,
+        null,
+        false,
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "timestamps",
+      "type": "time",
+      "values": Array [
+        1568039445000,
+        1568039450000,
+        1568039455000,
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
+      "name": "nullable_timestamps",
+      "type": "time",
+      "values": Array [
+        1568039445000,
+        null,
+        1568039455000,
+      ],
+    },
+  ],
+  "meta": Object {
+    "limit": 4242,
+    "searchWords": Array [
+      "Grafana",
+      "❤️",
+      " 🦥 ",
+      "test",
+    ],
+  },
+  "name": "many_types",
+  "refId": "A",
+}
+`;
