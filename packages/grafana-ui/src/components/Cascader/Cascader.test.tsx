@@ -6,7 +6,7 @@ const options = [
   {
     label: 'First',
     value: '1',
-    children: [
+    items: [
       {
         label: 'Second',
         value: '2',
