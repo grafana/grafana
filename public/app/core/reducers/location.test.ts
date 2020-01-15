@@ -1,6 +1,18 @@
 import { reducerTester } from '../../../test/core/redux/reducerTester';
 import { initialState, locationReducer, updateLocation } from './location';
 import { LocationState } from '../../types';
+import { DashboardModel } from 'app/features/dashboard/state';
+
+const dashboardModel = new DashboardModel({
+  panels: [{ id: 1, type: 'graph' }],
+});
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => {
+    return {
+      getCurrent: () => dashboardModel,
+    };
+  },
+}));
 
 describe('locationReducer', () => {
   describe('when updateLocation is dispatched', () => {
