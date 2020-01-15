@@ -4,11 +4,15 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestRequestParser(t *testing.T) {
 	Convey("TestRequestParser", t, func() {
+		timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+		from, _ := timeRange.ParseFrom()
+		to, _ := timeRange.ParseTo()
 		Convey("when parsing query editor row json", func() {
 			Convey("using new dimensions structure", func() {
 				query := simplejson.NewFromAny(map[string]interface{}{
@@ -27,7 +31,7 @@ func TestRequestParser(t *testing.T) {
 					"hide":       false,
 				})
 
-				res, err := parseRequestQuery(query, "ref1")
+				res, err := parseRequestQuery(query, "ref1", from, to)
 				So(err, ShouldBeNil)
 				So(res.Region, ShouldEqual, "us-east-1")
 				So(res.RefId, ShouldEqual, "ref1")
@@ -62,7 +66,7 @@ func TestRequestParser(t *testing.T) {
 					"hide":       false,
 				})
 
-				res, err := parseRequestQuery(query, "ref1")
+				res, err := parseRequestQuery(query, "ref1", from, to)
 				So(err, ShouldBeNil)
 				So(res.Region, ShouldEqual, "us-east-1")
 				So(res.RefId, ShouldEqual, "ref1")

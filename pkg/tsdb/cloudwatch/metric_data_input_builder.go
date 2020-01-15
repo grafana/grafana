@@ -8,7 +8,6 @@ import (
 )
 
 func (e *CloudWatchExecutor) buildMetricDataInput(startTime time.Time, endTime time.Time, queries map[string]*cloudWatchQuery) (*cloudwatch.GetMetricDataInput, error) {
-
 	metricDataInput := &cloudwatch.GetMetricDataInput{
 		StartTime: aws.Time(startTime),
 		EndTime:   aws.Time(endTime),
