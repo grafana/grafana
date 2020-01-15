@@ -248,18 +248,22 @@ def main(file_loader, env, grafana_version, zip_file, extracted_name, is_enterpr
     # MSI version cannot have anything other
     # than a x.x.x.x format, numbers only
     PRODUCT_VERSION = GRAFANA_VERSION.split('-')[0]
+    LICENSE = 'LICENSE.rtf'
+
 
     if is_enterprise:
       UPGRADE_VERSION = ENTERPRISE_UPGRADE_VERSION
       PRODUCT_TITLE = ENTERPRISE_PRODUCT_NAME
-      PRODUCT_NAME = 'GrafanaEE'
+      PRODUCT_NAME = 'GrafanaEnterprise'
+      LICENSE = 'EE_LICENSE.rtf'
 
 
     config = {
         'grafana_version': PRODUCT_VERSION,
         'upgrade_code': UPGRADE_VERSION,
         'product_name': PRODUCT_NAME,
-        'manufacturer': 'Grafana Labs'
+        'manufacturer': 'Grafana Labs',
+        'license': LICENSE
     }
     features = [
         {
