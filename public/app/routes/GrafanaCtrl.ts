@@ -62,20 +62,6 @@ export class GrafanaCtrl {
     setLocationSrv({
       update: (opt: LocationUpdate) => {
         store.dispatch(updateLocation(opt));
-
-        // Checked for changed template variables and notify the variableSrv
-        if (opt.query) {
-          if (Object.keys(opt.query).find(k => k.startsWith('var-'))) {
-            // Need to wait for the URL to actually update
-            setTimeout(() => {
-              const dash = dashboardSrv.getCurrent();
-              if (dash) {
-                console.log('TODO tell the dashboard to check vars', dash);
-                //dash.events.emit( CoreEvents.templateVariableValueUpdated );
-              }
-            }, 10);
-          }
-        }
       },
     });
 

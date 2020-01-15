@@ -1,9 +1,10 @@
 import _ from 'lodash';
 import { Action, createAction } from '@reduxjs/toolkit';
-import { LocationUpdate } from '@grafana/runtime';
+import { LocationUpdate, UrlQueryMap } from '@grafana/runtime';
 
-import { LocationState } from 'app/types';
+import { LocationState, CoreEvents } from 'app/types';
 import { renderUrl } from 'app/core/utils/url';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 export const initialState: LocationState = {
   url: '',
@@ -29,6 +30,24 @@ export const locationReducer = (state: LocationState = initialState, action: Act
 
     if (payload.partial) {
       query = _.defaults(query, state.query);
+    }
+
+    // Find all the vars that changed
+    const changed = Object.keys(query).filter(k => {
+      return k.startsWith('var-') && query[k] !== state.query[k];
+    });
+    if (changed) {
+      const dash = getDashboardSrv().getCurrent();
+      if (dash) {
+        const vars: UrlQueryMap = {};
+        for (const k of changed) {
+          vars[k] = query[k];
+        }
+        dash.events.emit(CoreEvents.templateVarsChangedInUrl, vars);
+      }
+    }
+
+    if (payload.partial) {
       query = _.omitBy(query, _.isNull);
     }
 

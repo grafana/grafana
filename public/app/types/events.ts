@@ -1,4 +1,5 @@
 import { DataFrame, eventFactory, TimeRange } from '@grafana/data';
+import { UrlQueryMap } from '@grafana/runtime';
 import { IHttpResponse } from 'angular';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -120,6 +121,7 @@ export const repeatsProcessed = eventFactory('repeats-processed');
 export const rowExpanded = eventFactory('row-expanded');
 export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
+export const templateVarsChangedInUrl = eventFactory<UrlQueryMap>('template-vars-changed-in-url');
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');

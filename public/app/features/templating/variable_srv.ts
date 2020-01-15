@@ -9,17 +9,15 @@ import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { store } from 'app/store/store';
 
 // Types
 import { TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
 
 export class VariableSrv {
   dashboard: DashboardModel;
   variables: any[];
-  private storeUnsub: () => void;
-  private originalUrl: string;
 
   /** @ngInject */
   constructor(
@@ -37,6 +35,10 @@ export class VariableSrv {
       CoreEvents.templateVariableValueUpdated,
       this.updateUrlParamsWithCurrentVariables.bind(this)
     );
+    this.dashboard.events.on(
+      CoreEvents.templateVarsChangedInUrl, // Changed in the URL
+      this.templateVarsChangedInUrl.bind(this)
+    );
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
@@ -46,10 +48,6 @@ export class VariableSrv {
     for (const variable of this.variables) {
       variable.initLock = this.$q.defer();
     }
-
-    // subscribe path change
-    this.originalUrl = this.$location.url();
-    this.storeUnsub = store.subscribe(() => this.storeUpdated());
 
     const queryParams = this.$location.search();
     return this.$q
@@ -95,16 +93,15 @@ export class VariableSrv {
       .all(dependencies)
       .then(() => {
         const urlValue = queryParams['var-' + variable.name];
-        const promise = variable.initLock || this.$q.defer();
         if (urlValue !== void 0) {
-          return variable.setValueFromUrl(urlValue).then(promise.resolve);
+          return variable.setValueFromUrl(urlValue).then(variable.initLock.resolve);
         }
 
         if (variable.refresh === 1 || variable.refresh === 2) {
-          return variable.updateOptions().then(promise.resolve);
+          return variable.updateOptions().then(variable.initLock.resolve);
         }
 
-        promise.resolve();
+        variable.initLock.resolve();
       })
       .finally(() => {
         this.templateSrv.variableInitialized(variable);
@@ -294,6 +291,20 @@ export class VariableSrv {
     return this.variableUpdated(variable);
   }
 
+  templateVarsChangedInUrl(vars: UrlQueryMap) {
+    const update: Array<Promise<any>> = [];
+    this.variables.forEach(v => {
+      const key = `var-${v.name}`;
+      if (vars.hasOwnProperty(key)) {
+        update.push(v.setValueFromUrl(vars[key]));
+      }
+    });
+    Promise.all(update).then(() => {
+      this.dashboard.templateVariableValueUpdated();
+      this.dashboard.startRefresh();
+    });
+  }
+
   updateUrlParamsWithCurrentVariables() {
     // update url
     const params = this.$location.search();
@@ -309,42 +320,6 @@ export class VariableSrv {
     this.templateSrv.fillVariableValuesForUrl(params);
     // update url
     this.$location.search(params);
-  }
-
-  storeUpdated() {
-    const state = store.getState();
-    let path = this.originalUrl;
-    if (path.indexOf('?') >= 0) {
-      path = path.slice(0, this.originalUrl.indexOf('?'));
-    }
-    if (state.location.path === path) {
-      if (state.location.url === this.originalUrl) {
-        return this.$q.when({});
-      }
-
-      this.originalUrl = this.$location.url();
-      const queryParams = state.location.query; //this.$location.search();
-      if (!Object.keys(queryParams).some(k => k.indexOf('var-') === 0)) {
-        return this.$q.when({});
-      }
-      console.log('VAR Changed', queryParams);
-      return this.$q
-        .all(
-          this.variables.map(variable => {
-            return this.processVariable(variable, queryParams);
-          })
-        )
-        .then(() => {
-          this.templateSrv.updateIndex();
-          this.dashboard.templateVariableValueUpdated();
-          this.dashboard.startRefresh();
-        });
-    } else {
-      if (this.storeUnsub) {
-        this.storeUnsub();
-      }
-      return this.$q.when({});
-    }
   }
 
   setAdhocFilter(options: any) {

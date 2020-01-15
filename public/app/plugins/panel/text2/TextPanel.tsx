@@ -109,6 +109,8 @@ export class TextPanel extends PureComponent<Props, State> {
 
   render() {
     const { vars } = this.state;
+    const url = window.location.href.split('?')[0];
+    const link = url + '?var-test=' + Date.now();
 
     return (
       <div>
@@ -124,6 +126,7 @@ export class TextPanel extends PureComponent<Props, State> {
         <Button onClick={this.onSetVars} variant="inverse">
           Update Query URL
         </Button>
+        <a href={link}>just a link</a>
       </div>
     );
   }
