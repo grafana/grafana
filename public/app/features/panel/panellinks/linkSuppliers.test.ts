@@ -83,7 +83,7 @@ describe('getLinksFromLogsField', () => {
               config: {
                 unit: 'kW',
                 decimals: 3,
-                title: 'The Title',
+                title: 'TheTitle',
               },
             },
             {
@@ -93,15 +93,15 @@ describe('getLinksFromLogsField', () => {
                 links: [
                   {
                     title: 'By Name',
-                    url: 'http://go/${__data.field.Power}',
+                    url: 'http://go/${__data.fields.Power}',
                   },
                   {
-                    title: 'By Array',
-                    url: 'http://go/${__data.field[1]}',
+                    title: 'By Index',
+                    url: 'http://go/${__data.fields[1]}',
                   },
                   {
                     title: 'By Title',
-                    url: 'http://go/${__data.fields[The Title]}',
+                    url: 'http://go/${__data.fields[TheTitle]}',
                   },
                   {
                     title: 'Numeric Value',
@@ -166,7 +166,7 @@ describe('getLinksFromLogsField', () => {
         },
         Object {
           "href": "http://go/100.200 kW",
-          "title": "By Array",
+          "title": "By Index",
         },
         Object {
           "href": "http://go/100.200 kW",
@@ -181,7 +181,7 @@ describe('getLinksFromLogsField', () => {
           "title": "Text (no suffix)",
         },
         Object {
-          "href": "http://go/\${__data.field.XYZ}",
+          "href": "http://go/\${__data.fields.XYZ}",
           "title": "Unknown Field",
         },
         Object {
