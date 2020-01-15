@@ -140,7 +140,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
       if (!numeric && f.type === FieldType.number) {
         numeric = f;
       }
-      if (!title && f.config.title && f.config.title != f.name) {
+      if (!title && f.config.title && f.config.title !== f.name) {
         title = f;
       }
     }
