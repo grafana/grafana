@@ -127,7 +127,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
   getPeriod(target: any, options: any) {
     let period = this.templateSrv.replace(target.period, options.scopedVars);
-    if (target.period && target.period.toLowerCase() !== 'auto') {
+    if (period && period.toLowerCase() !== 'auto') {
       if (/^\d+$/.test(period)) {
         period = parseInt(period, 10);
       } else {

@@ -28,7 +28,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
 	}
 
-	requestQueriesByRegion, err := e.parseQueries(queryContext)
+	requestQueriesByRegion, err := e.parseQueries(queryContext, startTime, endTime)
 	if err != nil {
 		return results, err
 	}
@@ -56,7 +56,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					return err
 				}
 
-				queries, err := e.transformRequestQueriesToCloudWatchQueries(startTime, endTime, requestQueries)
+				queries, err := e.transformRequestQueriesToCloudWatchQueries(requestQueries)
 				if err != nil {
 					for _, query := range requestQueries {
 						resultChan <- &tsdb.QueryResult{

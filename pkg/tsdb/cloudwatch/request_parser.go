@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"errors"
+	"math"
 	"regexp"
 	"sort"
 	"strconv"
@@ -14,7 +15,7 @@ import (
 )
 
 // Parses the json queries and returns a requestQuery. The requstQuery has a 1 to 1 mapping to a query editor row
-func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[string][]*requestQuery, error) {
+func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
 	requestQueries := make(map[string][]*requestQuery)
 
 	for i, model := range queryContext.Queries {
@@ -24,7 +25,7 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[str
 		}
 
 		RefID := queryContext.Queries[i].RefId
-		query, err := parseRequestQuery(queryContext.Queries[i].Model, RefID)
+		query, err := parseRequestQuery(queryContext.Queries[i].Model, RefID, startTime, endTime)
 		if err != nil {
 			return nil, &queryError{err, RefID}
 		}
@@ -37,7 +38,7 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[str
 	return requestQueries, nil
 }
 
-func parseRequestQuery(model *simplejson.Json, refId string) (*requestQuery, error) {
+func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time, endTime time.Time) (*requestQuery, error) {
 	region, err := model.Get("region").String()
 	if err != nil {
 		return nil, err
@@ -63,23 +64,25 @@ func parseRequestQuery(model *simplejson.Json, refId string) (*requestQuery, err
 		return nil, err
 	}
 
-	p := model.Get("period").MustString("0")
-	if strings.ToLower(p) == "auto" || p == "" {
-		p = "0"
-	}
-
+	p := model.Get("period").MustString("")
 	var period int
-	if regexp.MustCompile(`^\d+$`).Match([]byte(p)) {
-		period, err = strconv.Atoi(p)
-		if err != nil {
-			return nil, err
-		}
+	if strings.ToLower(p) == "auto" || p == "" {
+		deltaInSeconds := endTime.Sub(startTime).Seconds()
+		periods := []int{60, 300, 900, 3600, 21600, 86400, 604800, 2592000}
+		period = closest(periods, int(math.Ceil(deltaInSeconds/2000)))
 	} else {
-		d, err := time.ParseDuration(p)
-		if err != nil {
-			return nil, err
+		if regexp.MustCompile(`^\d+$`).Match([]byte(p)) {
+			period, err = strconv.Atoi(p)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			d, err := time.ParseDuration(p)
+			if err != nil {
+				return nil, err
+			}
+			period = int(d.Seconds())
 		}
-		period = int(d.Seconds())
 	}
 
 	id := model.Get("id").MustString("")
@@ -154,4 +157,26 @@ func sortDimensions(dimensions map[string][]string) map[string][]string {
 		sortedDimensions[k] = dimensions[k]
 	}
 	return sortedDimensions
+}
+
+func closest(array []int, num int) int {
+	minDiff := array[len(array)-1]
+	var closest int
+	if num <= array[0] {
+		return array[0]
+	}
+
+	if num >= array[len(array)-1] {
+		return array[len(array)-1]
+	}
+
+	for _, value := range array {
+		var m = int(math.Abs(float64(num - value)))
+		if m <= minDiff {
+			minDiff = m
+			closest = value
+		}
+	}
+
+	return closest
 }
