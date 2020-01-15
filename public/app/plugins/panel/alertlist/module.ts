@@ -4,7 +4,7 @@ import { PanelCtrl } from 'app/plugins/sdk';
 
 import { dateMath, dateTime } from '@grafana/data';
 import { PanelEvents } from '@grafana/data';
-import { auto } from 'angular';
+import { auto, IScope } from 'angular';
 import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
@@ -28,7 +28,6 @@ class AlertListPanel extends PanelCtrl {
   alertHistory: any = [];
   noAlertsMessage: string;
   templateSrv: string;
-  digest: (promise: Promise<any>) => Promise<any>;
 
   // Set and populate defaults
   panelDefaults: any = {
@@ -43,11 +42,10 @@ class AlertListPanel extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService) {
+  constructor($scope: IScope, $injector: auto.IInjectorService) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.digest = promiseToDigest($scope);
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
     this.templateSrv = this.$injector.get('templateSrv');
@@ -123,7 +121,7 @@ class AlertListPanel extends PanelCtrl {
     params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
     params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
 
-    return this.digest(
+    return promiseToDigest(this.$scope)(
       getBackendSrv()
         .get(`/api/annotations`, params)
         .then(res => {
@@ -166,7 +164,7 @@ class AlertListPanel extends PanelCtrl {
       params.dashboardTag = this.panel.dashboardTags;
     }
 
-    return this.digest(
+    return promiseToDigest(this.$scope)(
       getBackendSrv()
         .get(`/api/alerts`, params)
         .then(res => {

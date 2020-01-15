@@ -36,7 +36,6 @@ export class AlertTabCtrl {
   alertingMinIntervalSecs: number;
   alertingMinInterval: string;
   frequencyWarning: any;
-  digest: (promise: Promise<any>) => Promise<any>;
 
   /** @ngInject */
   constructor(
@@ -58,7 +57,6 @@ export class AlertTabCtrl {
     this.panelCtrl._enableAlert = this.enable;
     this.alertingMinIntervalSecs = config.alertingMinInterval;
     this.alertingMinInterval = kbn.secondsToHms(config.alertingMinInterval);
-    this.digest = promiseToDigest($scope);
   }
 
   $onInit() {
@@ -80,7 +78,7 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return this.digest(
+    return promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('/api/alert-notifications/lookup')
         .then((res: any) => {
@@ -93,7 +91,7 @@ export class AlertTabCtrl {
   }
 
   getAlertHistory() {
-    this.digest(
+    promiseToDigest(this.$scope)(
       getBackendSrv()
         .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
         .then((res: any) => {
@@ -463,7 +461,7 @@ export class AlertTabCtrl {
       icon: 'fa-trash',
       yesText: 'Yes',
       onConfirm: () => {
-        this.digest(
+        promiseToDigest(this.$scope)(
           getBackendSrv()
             .post('/api/annotations/mass-delete', {
               dashboardId: this.panelCtrl.dashboard.id,

@@ -3,21 +3,20 @@ import { dateTime } from '@grafana/data';
 import { UserSession } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { IScope } from 'angular';
 
 export class ProfileCtrl {
   sessions: object[] = [];
   navModel: any;
-  digest: (promise: Promise<any>) => Promise<any>;
 
   /** @ngInject */
-  constructor($scope: any, navModelSrv: NavModelSrv) {
+  constructor(private $scope: IScope, navModelSrv: NavModelSrv) {
     this.getUserSessions();
     this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);
-    this.digest = promiseToDigest($scope);
   }
 
   getUserSessions() {
-    this.digest(
+    promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('/api/user/auth-tokens')
         .then((sessions: UserSession[]) => {
@@ -52,7 +51,7 @@ export class ProfileCtrl {
   }
 
   revokeUserSession(tokenId: number) {
-    this.digest(
+    promiseToDigest(this.$scope)(
       getBackendSrv()
         .post('/api/user/revoke-auth-token', {
           authTokenId: tokenId,

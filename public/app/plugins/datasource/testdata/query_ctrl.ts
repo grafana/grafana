@@ -6,6 +6,7 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './runStreams';
 import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { IScope } from 'angular';
 
 export const defaultPulse: any = {
   timeStep: 60,
@@ -36,10 +37,9 @@ export class TestDataQueryCtrl extends QueryCtrl {
   selectors: typeof e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
 
   /** @ngInject */
-  constructor($scope: any, $injector: any) {
+  constructor($scope: IScope, $injector: any) {
     super($scope, $injector);
 
-    this.digest = promiseToDigest($scope);
     this.target.scenarioId = this.target.scenarioId || 'random_walk';
     this.scenarioList = [];
     this.newPointTime = dateTime();
@@ -76,7 +76,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   }
 
   $onInit() {
-    return this.digest(
+    return promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('/api/tsdb/testdata/scenarios')
         .then((res: any) => {

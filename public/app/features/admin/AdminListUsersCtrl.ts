@@ -13,18 +13,16 @@ export default class AdminListUsersCtrl {
   showPaging = false;
   query: any;
   navModel: any;
-  digest: (promise: Promise<any>) => Promise<any>;
 
   /** @ngInject */
-  constructor($scope: Scope, navModelSrv: NavModelSrv) {
+  constructor(private $scope: Scope, navModelSrv: NavModelSrv) {
     this.navModel = navModelSrv.getNav('admin', 'global-users', 0);
     this.query = '';
-    this.digest = promiseToDigest($scope);
     this.getUsers();
   }
 
   getUsers() {
-    this.digest(
+    promiseToDigest(this.$scope)(
       getBackendSrv()
         .get(`/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
         .then((result: any) => {

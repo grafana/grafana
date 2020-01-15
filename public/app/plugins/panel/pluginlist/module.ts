@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { PanelCtrl } from '../../../features/panel/panel_ctrl';
-import { auto } from 'angular';
+import { auto, IScope } from 'angular';
 import { PanelEvents } from '@grafana/data';
 import { ContextSrv } from '../../../core/services/context_srv';
 import { CoreEvents } from 'app/types';
@@ -14,18 +14,16 @@ class PluginListCtrl extends PanelCtrl {
   pluginList: any[];
   viewModel: any;
   isAdmin: boolean;
-  digest: (promise: Promise<any>) => Promise<any>;
 
   // Set and populate defaults
   panelDefaults = {};
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService, contextSrv: ContextSrv) {
+  constructor($scope: IScope, $injector: auto.IInjectorService, contextSrv: ContextSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
 
-    this.digest = promiseToDigest($scope);
     this.isAdmin = contextSrv.hasRole('Admin');
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.pluginList = [];
@@ -63,7 +61,7 @@ class PluginListCtrl extends PanelCtrl {
   }
 
   update() {
-    this.digest(
+    promiseToDigest(this.$scope)(
       getBackendSrv()
         .get('api/plugins', { embedded: 0, core: 0 })
         .then(plugins => {
