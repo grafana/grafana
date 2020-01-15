@@ -126,7 +126,6 @@ export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibilit
 /**
  *  Note, this will be removed when variables are handled by redux
  */
-
 export const templateVarsChangedInUrl = eventFactory<UrlQueryMap>('template-vars-changed-in-url');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
