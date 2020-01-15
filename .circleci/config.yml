@@ -26,18 +26,21 @@ executors:
   docker:
     machine:
       image: circleci/classic:201808-01
+  cloud-sdk:
+    docker:
+      - image: google/cloud-sdk
 
 jobs:
   install-grabpl:
     description: Install the Grafana Build Pipeline tool
-    executor: grafana-build
+    executor: cloud-sdk
     steps:
+      - run:
+          name: Sign in to GCP
+          command: |
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
       - run: |
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
-            tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-          apt-get update && apt-get install -f google-cloud-sdk
-          echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
           gsutil cp gs://grafana-build-pipeline/grabpl bin/grabpl
           chmod +x bin/grabpl
       - persist_to_workspace:
@@ -943,7 +946,7 @@ jobs:
           name: ci job started
           command: './scripts/ci-job-started.sh'
       - run:
-          name: install docker 
+          name: install docker
           command: |
             apt-get update
             apt-get install -y docker.io
