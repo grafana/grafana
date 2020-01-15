@@ -99,20 +99,7 @@ export const Circle: React.FC<CircleProps> = ({ size, style, children }) => {
         ...style,
       }}
     >
-      {children && <>{children}</>}
-    </div>
-  );
-};
-
-export const Orbit: React.FC<CircleProps> = ({ size, style, children }) => {
-  const theme = useTheme();
-  const borderColor = theme.isDark ? '#343B40' : '#E9EDF2';
-
-  style['border'] = '2px solid ' + borderColor;
-  style['position'] = 'absolute';
-  return (
-    <Circle size={size} style={style}>
       {children}
-    </Circle>
+    </div>
   );
 };

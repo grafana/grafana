@@ -47,7 +47,7 @@ const GetEnterprise: React.FC = () => {
       <h2 style={titleStyles}>Get Grafana Enterprise</h2>
       <CallToAction />
       <p style={{ paddingTop: '12px' }}>
-        You can use the trial version for free for <strong>30 days</strong>. We will remind you about it
+        You can use the trial version for free for <strong>30 days</strong>. We will remind you about it{' '}
         <strong>5 days before the trial period ends</strong>.
       </p>
     </div>
@@ -56,15 +56,13 @@ const GetEnterprise: React.FC = () => {
 
 const CallToAction: React.FC = () => {
   return (
-    <Forms.Button
+    <Forms.LinkButton
       variant="primary"
       size="lg"
-      onClick={() =>
-        (window.location.href = 'https://grafana.com/contact?about=grafana-enterprise&utm_source=grafana-upgrade-page')
-      }
+      href="https://grafana.com/contact?about=grafana-enterprise&utm_source=grafana-upgrade-page"
     >
       Contact us and get a free trial
-    </Forms.Button>
+    </Forms.LinkButton>
   );
 };
 
@@ -134,7 +132,6 @@ const FeatureListing: React.FC = () => {
 
 interface ListProps {
   nested?: boolean;
-  children: React.ReactNode;
 }
 
 const List: React.FC<ListProps> = ({ children, nested }) => {
@@ -154,7 +151,6 @@ const List: React.FC<ListProps> = ({ children, nested }) => {
 interface ItemProps {
   title: string;
   image?: string;
-  children?: React.ReactNode;
 }
 
 const Item: React.FC<ItemProps> = ({ children, title, image }) => {
@@ -169,12 +165,16 @@ const Item: React.FC<ItemProps> = ({ children, title, image }) => {
       padding-right: 12px;
     }
   `;
+  const titleStyle = css`
+    font-weight: 500;
+    line-height: 1.7;
+  `;
 
   return (
     <div className={itemStyle}>
       <img src={imageUrl} />
       <div>
-        <div style={{ fontWeight: 500, lineHeight: 1.7 }}>{title}</div>
+        <div className={titleStyle}>{title}</div>
         {children && children}
       </div>
     </div>
