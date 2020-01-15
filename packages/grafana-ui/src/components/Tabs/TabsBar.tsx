@@ -7,15 +7,19 @@ export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */
   children: ReactNode;
   className?: string;
+  /** For hiding the bottom border (on PageHeader for example) */
+  hideBorder?: boolean;
 }
 
-const getTabsBarStyles = stylesFactory((theme: GrafanaTheme) => {
+const getTabsBarStyles = stylesFactory((theme: GrafanaTheme, hideBorder = false) => {
   const colors = theme.colors;
 
   return {
-    tabsWrapper: css`
-      border-bottom: 1px solid ${colors.pageHeaderBorder};
-    `,
+    tabsWrapper:
+      !hideBorder &&
+      css`
+        border-bottom: 1px solid ${colors.pageHeaderBorder};
+      `,
     tabs: css`
       position: relative;
       top: 1px;
@@ -24,9 +28,9 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const TabsBar: FC<Props> = ({ children, className }) => {
+export const TabsBar: FC<Props> = ({ children, className, hideBorder }) => {
   const theme = useTheme();
-  const tabsStyles = getTabsBarStyles(theme);
+  const tabsStyles = getTabsBarStyles(theme, hideBorder);
 
   return (
     <div className={cx(tabsStyles.tabsWrapper, className)}>
