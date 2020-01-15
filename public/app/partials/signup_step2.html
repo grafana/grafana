@@ -6,7 +6,10 @@
     <div class="p-b-1">
       We just need a couple of more bits of<br> information to finish creating your account.
     </div>
-    <form name="signUpForm" class="login-form gf-form-group">
+
+    <signup-page model="formModel" verifyEmailEnabled="verifyEmailEnabled" autoAssignOrg="autoAssignOrg"></signup-page>
+
+    <form name="signUpForm" class="login-form gf-form-group"> 
       <div class="gf-form" ng-if="verifyEmailEnabled">
         <span class="gf-form-label width-9">
           Email code<tip>Email verification code (sent to your email)</tip>
