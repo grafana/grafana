@@ -1,8 +1,9 @@
 import React from 'react';
+import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
 import { LicenseChrome, Orbit } from './LicenseChrome';
-import { Button } from '@grafana/ui';
+import { Forms } from '@grafana/ui';
 import { hot } from 'react-hot-loader';
 import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -16,15 +17,13 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <div className="page-container page-body">
-          <UpgradeInfo />
-        </div>
+        <UpgradeInfo />
       </Page.Contents>
     </Page>
   );
 };
 
-const title = { fontWeight: 600, fontSize: '26px', lineHeight: '123%' };
+const titleStyles = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
 export class Experiments {
   LargerCTA?: boolean;
@@ -49,23 +48,22 @@ const UpgradeInfo: React.FC = () => {
       </div>
 
       <LicenseChrome header="Grafana Enterprise" subheader={subheader}>
-        <ServiceInfo />
         <FeatureInfo />
-        <Footer />
+        <ServiceInfo />
       </LicenseChrome>
     </>
   );
 };
 
-const Footer: React.FC = () => {
+const GetEnterprise: React.FC = () => {
   const experiments = React.useContext(ExperimentsContext);
 
   return (
     <>
       <div style={{ marginTop: '40px' }}>
-        <h2 style={title}>Get Grafana Enterprise</h2>
-        {!experiments.HeaderCTA && <CallToAction larger={experiments.LargerCTA} />}
-        <p>
+        <h2 style={titleStyles}>Get Grafana Enterprise</h2>
+        {!experiments.HeaderCTA && <CallToAction />}
+        <p style={{ paddingTop: '12px' }}>
           You can use the trial version for free for <strong>30 days</strong>. We will remind you about it
           <strong>5 days before the trial period ends</strong>.
         </p>
@@ -92,22 +90,17 @@ const Footer: React.FC = () => {
   );
 };
 
-interface CTAProps {
-  larger?: boolean;
-}
-
-const CallToAction: React.FC<CTAProps> = ({ larger }) => {
-  const size = larger ? 'lg' : 'md';
+const CallToAction: React.FC = () => {
   return (
-    <Button
-      variant="secondary"
-      size={size}
+    <Forms.Button
+      variant="primary"
+      size="lg"
       onClick={() =>
         (window.location.href = 'https://grafana.com/contact?about=grafana-enterprise&utm_source=grafana-upgrade-page')
       }
     >
       Contact us and get a free trial
-    </Button>
+    </Forms.Button>
   );
 };
 
@@ -121,7 +114,7 @@ const ServiceInfo: React.FC = () => {
         <Item title="Critical SLA: 2 hours" image="/public/img/licensing/sla.svg" />
         <Item title="Unlimited Expert Support" image="/public/img/licensing/customer_support.svg">
           24x7x365 support via
-          <List>
+          <List nested={true}>
             <Item title="Email" />
             <Item title="Private slack channel" />
             <Item title="Phone" />
@@ -131,6 +124,8 @@ const ServiceInfo: React.FC = () => {
           in the upgrade process
         </Item>
       </List>
+
+      <GetEnterprise />
     </div>
   );
 };
@@ -144,8 +139,7 @@ const FeatureInfo: React.FC = () => {
       <div style={{ marginTop: '20px' }}>
         <strong>Also included:</strong>
         <br />
-        private labelling, indemnification, working with Grafana Labs on future prioritization, and training from the
-        core Grafana team.
+        Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
       </div>
     </div>
   );
@@ -154,37 +148,72 @@ const FeatureInfo: React.FC = () => {
 const FeatureListing: React.FC = () => {
   return (
     <List>
-      <Item title="Multiple Grafana instances" />
-      <Item title="Premium Plugins">Oracle, Splunk, New Relic, Service Now, Dynatrace, DataDog, AppDynamics</Item>
-      <Item title="Team Sync">LDAP, GitHub OAuth, Auth Proxy</Item>
       <Item title="Data source permissions" />
+      <Item title="Reporting" />
+      <Item title="SAML Authentication" />
       <Item title="Enhanced LDAP Integration" />
-      <Item title="SAML Authentication Reporting" />
+      <Item title="Team Sync">LDAP, GitHub OAuth, Auth Proxy</Item>
+      <Item title="White labeling" />
+      <Item title="Premium Plugins">
+        <List nested={true}>
+          <Item title="Oracle" />
+          <Item title="Splunk" />
+          <Item title="Service Now" />
+          <Item title="Dynatrace" />
+          <Item title="DataDog" />
+          <Item title="AppDynamics" />
+        </List>
+      </Item>
     </List>
   );
 };
 
-const List: React.FC = ({ children }) => {
-  return <ul style={{ paddingLeft: '1em' }}>{children}</ul>;
+interface ListProps {
+  nested?: boolean;
+  children: React.ReactNode;
+}
+
+const List: React.FC<ListProps> = ({ children, nested }) => {
+  const listStyle = css`
+    display: flex;
+    flex-direction: column;
+    padding-top: 8px;
+
+    > div {
+      margin-bottom: ${nested ? 0 : 8}px;
+    }
+  `;
+
+  return <div className={listStyle}>{children}</div>;
 };
 
 interface ItemProps {
   title: string;
   image?: string;
+  children?: React.ReactNode;
 }
 
 const Item: React.FC<ItemProps> = ({ children, title, image }) => {
   const imageUrl = image ? image : '/public/img/licensing/checkmark.svg';
+  const itemStyle = css`
+    display: flex;
+
+    > img {
+      display: block;
+      height: 22px;
+      flex-grow: 0;
+      padding-right: 12px;
+    }
+  `;
 
   return (
-    <li
-      style={{
-        listStyleImage: "url('" + imageUrl + "')",
-      }}
-    >
-      <div style={{ fontWeight: 500 }}>{title}</div>
-      {children && <>{children}</>}
-    </li>
+    <div className={itemStyle}>
+      <img src={imageUrl} />
+      <div>
+        <div style={{ fontWeight: 500, lineHeight: 1.7 }}>{title}</div>
+        {children && children}
+      </div>
+    </div>
   );
 };
 

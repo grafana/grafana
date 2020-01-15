@@ -3,35 +3,33 @@ import { stylesFactory, ThemeContext } from '@grafana/ui';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
-const title = { fontWeight: 600, fontSize: '26px', lineHeight: '123%' };
+const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
-const contentContainerStyle = stylesFactory((theme: GrafanaTheme) => {
-  const background = theme.isDark ? '#202226' : '#FFFFFF';
-
-  return css`
-    display: grid;
-    grid-template-columns: 100%;
-    column-gap: 20px;
-    row-gap: 40px;
-    padding: 34px 20px 0 77px;
-    background-color: ${background};
-    @media (min-width: 1050px) {
-      grid-template-columns: 50% 50%;
-    }
-  `;
-});
-
-const headerStyle = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const background = theme.colors.panelBg;
   const backgroundUrl = theme.isDark
     ? '/public/img/licensing/header_dark.svg'
     : '/public/img/licensing/header_light.svg';
 
-  return css`
+  return {
+    container: css`
+      display: grid;
+      grid-template-columns: 100%;
+      column-gap: 20px;
+      row-gap: 40px;
+      padding: 34px 20px 0 77px;
+      background-color: ${background};
+      @media (min-width: 1050px) {
+        grid-template-columns: 50% 50%;
+      }
+    `,
+    header: css`
     height: 137px;
     padding: 40px 0 0 79px;
     position: relative;
     background: url('${backgroundUrl}') right;
-  `;
+  `,
+  };
 });
 
 interface Props {
@@ -41,10 +39,11 @@ interface Props {
 
 export const LicenseChrome: React.FC<Props> = ({ header, subheader, children }) => {
   const theme = React.useContext(ThemeContext);
+  const styles = getStyles(theme);
 
   return (
     <>
-      <div className={headerStyle(theme)}>
+      <div className={styles.header}>
         <h2 style={title}>{header}</h2>
         {subheader && subheader}
 
@@ -75,7 +74,7 @@ export const LicenseChrome: React.FC<Props> = ({ header, subheader, children }) 
         </Circle>
       </div>
 
-      <div className={contentContainerStyle(theme)}>{children}</div>
+      <div className={styles.container}>{children}</div>
     </>
   );
 };
