@@ -17,7 +17,10 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <UpgradeInfo />
+        <UpgradeInfo
+          editionNotice="You are running the open-source version of Grafana.
+        You have to install the Enterprise edition in order enable Enterprise features."
+        />
       </Page.Contents>
     </Page>
   );
@@ -25,9 +28,13 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
 
 const titleStyles = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
-const UpgradeInfo: React.FC = () => {
+interface UpgradeInfoProps {
+  editionNotice?: string;
+}
+
+export const UpgradeInfo: React.FC<UpgradeInfoProps> = ({ editionNotice }) => {
   return (
-    <LicenseChrome header="Grafana Enterprise">
+    <LicenseChrome header="Grafana Enterprise" subheader="Get your free trial" editionNotice={editionNotice}>
       <FeatureInfo />
       <ServiceInfo />
     </LicenseChrome>

@@ -40,9 +40,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface Props {
   header: string;
+  subheader?: string;
+  editionNotice?: string;
 }
 
-export const LicenseChrome: React.FC<Props> = ({ header, children }) => {
+export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheader, children }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -50,7 +52,7 @@ export const LicenseChrome: React.FC<Props> = ({ header, children }) => {
     <>
       <div className={styles.header}>
         <h2 style={title}>{header}</h2>
-        <h3>Get your free trial</h3>
+        {subheader && <h3>{subheader}</h3>}
 
         <Circle
           size="128px"
@@ -74,20 +76,8 @@ export const LicenseChrome: React.FC<Props> = ({ header, children }) => {
 
       <div className={styles.container}>{children}</div>
 
-      <EditionNotice />
+      {editionNotice && <div className={styles.footer}>{editionNotice}</div>}
     </>
-  );
-};
-
-const EditionNotice: React.FC = () => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
-
-  return (
-    <div className={styles.footer}>
-      You are running the open-source version of Grafana. You have to install the Enterprise edition in order enable
-      Enterprise features.
-    </div>
   );
 };
 
