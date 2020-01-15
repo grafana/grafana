@@ -296,8 +296,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controllerAs: 'ctrl',
     })
     .when('/admin/users/create', {
-      templateUrl: 'public/app/features/admin/partials/new_user.html',
-      controller: 'AdminEditUserCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')),
+      },
     })
     // .when('/admin/users/edit/:id', {
     //   templateUrl: 'public/app/features/admin/partials/edit_user.html',
