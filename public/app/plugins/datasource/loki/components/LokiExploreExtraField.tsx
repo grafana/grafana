@@ -9,17 +9,18 @@ interface LokiExploreExtraFieldProps {
   onChangeFunc: (e: React.SyntheticEvent<HTMLInputElement>) => void;
   onKeyDownFunc: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   value: string;
+  type: string;
 }
 
 export const LokiExploreExtraField = memo(function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
-  const { label, onChangeFunc, onKeyDownFunc, value } = props;
+  const { label, onChangeFunc, onKeyDownFunc, value, type } = props;
 
   return (
     <div className="gf-form-inline explore-input--ml">
       <div className="gf-form">
         <FormLabel width={6}>{label}</FormLabel>
         <input
-          type="text"
+          type={type}
           className="gf-form-input width-6"
           placeholder={'auto'}
           onChange={onChangeFunc}
