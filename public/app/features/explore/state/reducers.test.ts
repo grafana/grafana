@@ -1,4 +1,12 @@
-import { DataQuery, DataSourceApi, dateTime, LoadingState, LogsDedupStrategy, toDataFrame, ExploreMode } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceApi,
+  dateTime,
+  LoadingState,
+  LogsDedupStrategy,
+  toDataFrame,
+  ExploreMode,
+} from '@grafana/data';
 
 import {
   createEmptyQueryResponse,
