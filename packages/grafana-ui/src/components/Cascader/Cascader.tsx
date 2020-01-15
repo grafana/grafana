@@ -182,8 +182,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
                 size={size || 'md'}
-                suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
-                onBlur={this.onBlur}
+                suffix={<Icon name="caret-down" />}
               />
             </div>
           </RCCascader>
