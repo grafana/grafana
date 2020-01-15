@@ -6,7 +6,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/collector"
 	"github.com/grafana/grafana/pkg/registry"
 	plugin "github.com/hashicorp/go-plugin"
 	"golang.org/x/xerrors"
@@ -29,14 +36,21 @@ type Manager interface {
 }
 
 type manager struct {
-	pluginsMu sync.RWMutex
-	plugins   map[string]*BackendPlugin
-	logger    log.Logger
+	RouteRegister   routing.RouteRegister `inject:""`
+	pluginsMu       sync.RWMutex
+	plugins         map[string]*BackendPlugin
+	pluginCollector collector.PluginCollector
+	logger          log.Logger
 }
 
 func (m *manager) Init() error {
 	m.plugins = make(map[string]*BackendPlugin)
 	m.logger = log.New("plugins.backend")
+	m.pluginCollector = collector.NewPluginCollector()
+	prometheus.MustRegister(m.pluginCollector)
+
+	m.RouteRegister.Get("/api/plugins/:pluginId/health", m.checkHealth)
+
 	return nil
 }
 
@@ -85,6 +99,12 @@ func (m *manager) start(ctx context.Context) {
 
 		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 			p.logger.Error("Failed to start plugin", "error", err)
+			continue
+		}
+
+		if p.supportsDiagnostics() {
+			p.logger.Debug("Registering metrics collector")
+			m.pluginCollector.Register(p.id, p)
 		}
 	}
 }
@@ -118,6 +138,40 @@ func (m *manager) stop() {
 			p.logger.Debug("Plugin stopped")
 		}(p)
 	}
+}
+
+// checkHealth http handler for checking plugin health.
+func (m *manager) checkHealth(c *models.ReqContext) {
+	pluginID := c.Params("pluginId")
+	m.pluginsMu.RLock()
+	p, registered := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
+	if !registered || !p.supportsDiagnostics() {
+		c.JsonApiErr(404, "Plugin not found", nil)
+		return
+	}
+
+	res, err := p.checkHealth(c.Req.Context())
+	if err != nil {
+		p.logger.Error("Failed to check plugin health", "error", err)
+		c.JSON(503, map[string]interface{}{
+			"status": pluginv2.CheckHealth_Response_ERROR.String(),
+		})
+		return
+	}
+
+	payload := map[string]interface{}{
+		"status": res.Status.String(),
+		"info":   res.Info,
+	}
+
+	if res.Status != pluginv2.CheckHealth_Response_OK {
+		c.JSON(503, payload)
+		return
+	}
+
+	c.JSON(200, payload)
 }
 
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *BackendPlugin) error {
