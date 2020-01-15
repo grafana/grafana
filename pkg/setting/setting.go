@@ -101,7 +101,8 @@ var (
 	DataProxyWhiteList                map[string]bool
 	DisableBruteForceLoginProtection  bool
 	CookieSecure                      bool
-	CookieSameSite                    http.SameSite
+	CookieSameSiteDisabled            bool
+	CookieSameSiteMode                http.SameSite
 	AllowEmbedding                    bool
 	XSSProtectionHeader               bool
 	ContentTypeProtectionHeader       bool
@@ -201,6 +202,7 @@ var (
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
 	AlertingMaxAttempts         int
+	AlertingMinInterval         int64
 
 	// Explore UI
 	ExploreEnabled bool
@@ -247,7 +249,8 @@ type Cfg struct {
 	DisableInitAdminCreation         bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
-	CookieSameSite                   http.SameSite
+	CookieSameSiteDisabled           bool
+	CookieSameSiteMode               http.SameSite
 
 	TempDataLifetime                 time.Duration
 	MetricsEndpointEnabled           bool
@@ -718,18 +721,24 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
-	validSameSiteValues := map[string]http.SameSite{
-		"lax":    http.SameSiteLaxMode,
-		"strict": http.SameSiteStrictMode,
-		"none":   http.SameSiteDefaultMode,
-	}
 
-	if samesite, ok := validSameSiteValues[samesiteString]; ok {
-		CookieSameSite = samesite
-		cfg.CookieSameSite = CookieSameSite
+	if samesiteString == "disabled" {
+		CookieSameSiteDisabled = true
+		cfg.CookieSameSiteDisabled = CookieSameSiteDisabled
 	} else {
-		CookieSameSite = http.SameSiteLaxMode
-		cfg.CookieSameSite = CookieSameSite
+		validSameSiteValues := map[string]http.SameSite{
+			"lax":    http.SameSiteLaxMode,
+			"strict": http.SameSiteStrictMode,
+			"none":   http.SameSiteNoneMode,
+		}
+
+		if samesite, ok := validSameSiteValues[samesiteString]; ok {
+			CookieSameSiteMode = samesite
+			cfg.CookieSameSiteMode = CookieSameSiteMode
+		} else {
+			CookieSameSiteMode = http.SameSiteLaxMode
+			cfg.CookieSameSiteMode = CookieSameSiteMode
+		}
 	}
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
@@ -961,6 +970,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
+	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)

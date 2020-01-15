@@ -4,10 +4,12 @@ import {
   LdapError,
   LdapState,
   LdapUser,
-  LdapUserState,
   SyncInfo,
-  User,
+  UserAdminState,
+  UserDTO,
+  UserOrg,
   UserSession,
+  UserAdminError,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
@@ -16,13 +18,6 @@ const initialLdapState: LdapState = {
   user: null,
   connectionError: null,
   userError: null,
-};
-
-const initialLdapUserState: LdapUserState = {
-  user: null,
-  ldapUser: null,
-  ldapSyncInfo: null,
-  sessions: [],
 };
 
 const ldapSlice = createSlice({
@@ -75,59 +70,54 @@ export const {
 
 export const ldapReducer = ldapSlice.reducer;
 
-const ldapUserSlice = createSlice({
-  name: 'ldapUser',
-  initialState: initialLdapUserState,
+// UserAdminPage
+
+const initialUserAdminState: UserAdminState = {
+  user: null,
+  sessions: [],
+  orgs: [],
+  isLoading: true,
+};
+
+export const userAdminSlice = createSlice({
+  name: 'userAdmin',
+  initialState: initialUserAdminState,
   reducers: {
-    userLoadedAction: (state, action: PayloadAction<User>): LdapUserState => ({
+    userProfileLoadedAction: (state, action: PayloadAction<UserDTO>): UserAdminState => ({
       ...state,
       user: action.payload,
-      userError: null,
     }),
-    userSessionsLoadedAction: (state, action: PayloadAction<UserSession[]>): LdapUserState => ({
+    userOrgsLoadedAction: (state, action: PayloadAction<UserOrg[]>): UserAdminState => ({
+      ...state,
+      orgs: action.payload,
+    }),
+    userSessionsLoadedAction: (state, action: PayloadAction<UserSession[]>): UserAdminState => ({
       ...state,
       sessions: action.payload,
     }),
-    userSyncFailedAction: (state, action: PayloadAction<undefined>): LdapUserState => state,
+    userAdminPageLoadedAction: (state, action: PayloadAction<boolean>): UserAdminState => ({
+      ...state,
+      isLoading: !action.payload,
+    }),
+    userAdminPageFailedAction: (state, action: PayloadAction<UserAdminError>): UserAdminState => ({
+      ...state,
+      error: action.payload,
+      isLoading: false,
+    }),
   },
-  extraReducers: builder =>
-    builder
-      .addCase(
-        userMappingInfoLoadedAction,
-        (state, action): LdapUserState => ({
-          ...state,
-          ldapUser: action.payload,
-        })
-      )
-      .addCase(
-        userMappingInfoFailedAction,
-        (state, action): LdapUserState => ({
-          ...state,
-          ldapUser: null,
-          userError: action.payload,
-        })
-      )
-      .addCase(
-        clearUserErrorAction,
-        (state, action): LdapUserState => ({
-          ...state,
-          userError: null,
-        })
-      )
-      .addCase(
-        ldapSyncStatusLoadedAction,
-        (state, action): LdapUserState => ({
-          ...state,
-          ldapSyncInfo: action.payload,
-        })
-      ),
 });
 
-export const { userLoadedAction, userSessionsLoadedAction, userSyncFailedAction } = ldapUserSlice.actions;
+export const {
+  userProfileLoadedAction,
+  userOrgsLoadedAction,
+  userSessionsLoadedAction,
+  userAdminPageLoadedAction,
+  userAdminPageFailedAction,
+} = userAdminSlice.actions;
 
-export const ldapUserReducer = ldapUserSlice.reducer;
+export const userAdminReducer = userAdminSlice.reducer;
 
 export default {
   ldap: ldapReducer,
-  ldapUser: ldapUserReducer,
+  userAdmin: userAdminReducer,
 };

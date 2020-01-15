@@ -24,14 +24,14 @@ Do not change `defaults.ini`! Grafana defaults are stored in this file. Dependin
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-**Linux** 
+**Linux**
 
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
 **Windows**
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-**macOS** 
+**macOS**
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
 
 ## Comments in .ini Files
@@ -361,7 +361,7 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 ### cookie_samesite
 
-Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF),  [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
 ### allow_embedding
 
@@ -611,7 +611,7 @@ You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafa
 ## [external_image_storage.s3]
 
 ### endpoint
-Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to 
+Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to
 keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
 
 ## path_style_access
@@ -721,6 +721,12 @@ Default setting for alert notification timeout. Default value is `30`
 ### max_attempts
 
 Default setting for max attempts to sending alert notifications. Default value is `3`
+
+### min_interval_seconds
+
+Default setting for minimum interval between rule evaluations. Default value is `1`
+
+> **Note.** This setting has precedence over each individual rule frequency. Therefore, if a rule frequency is lower than this value, this value will be enforced.
 
 ## [rendering]
 
