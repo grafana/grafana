@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { assignModelProperties } from 'app/core/utils/model_utils';
 import { store } from '../../store/store';
-import { changeVariableType, createVariable, removeVariable, updateVariableProp } from './state/actions';
+import { changeVariableType, createVariable, removeVariable, updateVariableProp } from './state/reducers';
 import { ScopedVars } from '@grafana/data';
 
 /*
