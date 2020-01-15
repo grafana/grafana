@@ -202,7 +202,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     });
   };
 
-  renderContext = () => {
+  renderContextMenu = () => {
     const { series } = this.props;
     const { contextPos, contextItem, isContextVisible } = this.state;
 
@@ -371,7 +371,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const { height, width, series } = this.props;
     const noDataToBeDisplayed = series.length === 0;
     const tooltip = this.renderTooltip();
-    const context = this.renderContext();
+    const context = this.renderContextMenu();
     return (
       <div className="graph-panel">
         <div
