@@ -328,9 +328,6 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - run:
-          name: Trigger Windows build
-          command: ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master
-      - run:
           name: GCP credentials
           command: echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json
       - run:
