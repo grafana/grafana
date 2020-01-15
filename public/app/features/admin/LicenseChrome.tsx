@@ -1,5 +1,5 @@
 import React from 'react';
-import { stylesFactory, ThemeContext } from '@grafana/ui';
+import { stylesFactory, useTheme } from '@grafana/ui';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -10,6 +10,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const backgroundUrl = theme.isDark
     ? '/public/img/licensing/header_dark.svg'
     : '/public/img/licensing/header_light.svg';
+  const footerBg = theme.isDark ? theme.colors.dark9 : theme.colors.gray1;
 
   return {
     container: css`
@@ -17,35 +18,39 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       grid-template-columns: 100%;
       column-gap: 20px;
       row-gap: 40px;
-      padding: 34px 20px 0 77px;
+      padding: 42px 20px 0 77px;
       background-color: ${background};
       @media (min-width: 1050px) {
         grid-template-columns: 50% 50%;
       }
     `,
+    footer: css`
+      text-align: center;
+      padding: 16px;
+      background: ${footerBg};
+    `,
     header: css`
-    height: 137px;
-    padding: 40px 0 0 79px;
-    position: relative;
-    background: url('${backgroundUrl}') right;
+      height: 137px;
+      padding: 40px 0 0 79px;
+      position: relative;
+      background: url('${backgroundUrl}') right;
   `,
   };
 });
 
 interface Props {
   header: string;
-  subheader?: React.ReactNode;
 }
 
-export const LicenseChrome: React.FC<Props> = ({ header, subheader, children }) => {
-  const theme = React.useContext(ThemeContext);
+export const LicenseChrome: React.FC<Props> = ({ header, children }) => {
+  const theme = useTheme();
   const styles = getStyles(theme);
 
   return (
     <>
       <div className={styles.header}>
         <h2 style={title}>{header}</h2>
-        {subheader && subheader}
+        <h3>Get your free trial</h3>
 
         <Circle
           size="128px"
@@ -75,7 +80,21 @@ export const LicenseChrome: React.FC<Props> = ({ header, subheader, children }) 
       </div>
 
       <div className={styles.container}>{children}</div>
+
+      <EditionNotice />
     </>
+  );
+};
+
+const EditionNotice: React.FC = () => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
+  return (
+    <div className={styles.footer}>
+      You are running the open-source version of Grafana. You have to install the Enterprise edition in order enable
+      Enterprise features.
+    </div>
   );
 };
 
@@ -90,6 +109,9 @@ export const Circle: React.FC<CircleProps> = ({ size, style, children }) => {
       style={{
         width: size,
         height: size,
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
         borderRadius: '50%',
         ...style,
       }}
@@ -100,7 +122,7 @@ export const Circle: React.FC<CircleProps> = ({ size, style, children }) => {
 };
 
 export const Orbit: React.FC<CircleProps> = ({ size, style, children }) => {
-  const theme = React.useContext(ThemeContext);
+  const theme = useTheme();
   const borderColor = theme.isDark ? '#343B40' : '#E9EDF2';
 
   style['border'] = '2px solid ' + borderColor;

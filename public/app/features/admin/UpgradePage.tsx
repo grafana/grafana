@@ -25,44 +25,21 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
 
 const titleStyles = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
-export class Experiments {
-  LargerCTA?: boolean;
-  HeaderCTA?: boolean;
-}
-
-export const ExperimentsContext = React.createContext(new Experiments());
-
 const UpgradeInfo: React.FC = () => {
-  const experiments = React.useContext(ExperimentsContext);
-  const subheader = experiments.HeaderCTA ? (
-    <CallToAction larger={experiments.LargerCTA} />
-  ) : (
-    <h3>Get your free trial</h3>
-  );
-
   return (
-    <>
-      <div className="grafana-info-box span8">
-        You are running the open-source version of Grafana. With this version, you cannot run Grafana Enterprise so all
-        enterprise features are disabled.
-      </div>
-
-      <LicenseChrome header="Grafana Enterprise" subheader={subheader}>
-        <FeatureInfo />
-        <ServiceInfo />
-      </LicenseChrome>
-    </>
+    <LicenseChrome header="Grafana Enterprise">
+      <FeatureInfo />
+      <ServiceInfo />
+    </LicenseChrome>
   );
 };
 
 const GetEnterprise: React.FC = () => {
-  const experiments = React.useContext(ExperimentsContext);
-
   return (
     <>
-      <div style={{ marginTop: '40px' }}>
+      <div style={{ marginTop: '60px' }}>
         <h2 style={titleStyles}>Get Grafana Enterprise</h2>
-        {!experiments.HeaderCTA && <CallToAction />}
+        <CallToAction />
         <p style={{ paddingTop: '12px' }}>
           You can use the trial version for free for <strong>30 days</strong>. We will remind you about it
           <strong>5 days before the trial period ends</strong>.
