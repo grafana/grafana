@@ -6,10 +6,13 @@ import { updateLocation } from 'app/core/actions';
 import { ITimeoutService, ILocationService, IWindowService } from 'angular';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { UrlQueryMap } from '@grafana/runtime';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
   private fullPageReloadRoutes: string[];
+  private lastQuery?: UrlQueryMap;
 
   /** @ngInject */
   constructor(
@@ -62,6 +65,18 @@ export class BridgeSrv {
         });
         console.log('store updating angular $location.url', url);
       }
+
+      // Check for template variable changes
+      if (this.lastQuery) {
+        const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
+        if (changes) {
+          const dash = getDashboardSrv().getCurrent();
+          if (dash) {
+            dash.events.emit(CoreEvents.templateVarsChangedInUrl, changes);
+          }
+        }
+      }
+      this.lastQuery = state.location.query;
     });
 
     appEvents.on(CoreEvents.locationChange, payload => {
@@ -77,6 +92,30 @@ export class BridgeSrv {
       });
     });
   }
+}
+
+export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
+  let count = 0;
+  const changes: UrlQueryMap = {};
+  for (const key in query) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+    if (query[key] !== old[key]) {
+      changes[key] = query[key];
+      count++;
+    }
+  }
+  for (const key in old) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+    if (!query[key]) {
+      changes[key] = ''; // removed
+      count++;
+    }
+  }
+  return count ? changes : undefined;
 }
 
 coreModule.service('bridgeSrv', BridgeSrv);
