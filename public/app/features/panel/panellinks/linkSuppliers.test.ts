@@ -73,6 +73,8 @@ describe('getLinksFromLogsField', () => {
     const data = applyFieldOverrides({
       data: [
         toDataFrame({
+          name: 'Hello Templates',
+          refId: 'ZZZ',
           fields: [
             { name: 'Time', values: [1, 2, 3] },
             {
@@ -81,6 +83,7 @@ describe('getLinksFromLogsField', () => {
               config: {
                 unit: 'kW',
                 decimals: 3,
+                title: 'The Title',
               },
             },
             {
@@ -89,28 +92,36 @@ describe('getLinksFromLogsField', () => {
               config: {
                 links: [
                   {
-                    title: 'By Name (full display)',
-                    url: 'http://go/${__cell.Power}',
+                    title: 'By Name',
+                    url: 'http://go/${__data.field.Power}',
+                  },
+                  {
+                    title: 'By Array',
+                    url: 'http://go/${__data.field[1]}',
+                  },
+                  {
+                    title: 'By Title',
+                    url: 'http://go/${__data.fields[The Title]}',
                   },
                   {
                     title: 'Numeric Value',
-                    url: 'http://go/${__cell.Power.numeric}',
+                    url: 'http://go/${__data.fields.Power.numeric}',
                   },
                   {
                     title: 'Text (no suffix)',
-                    url: 'http://go/${__cell.Power.text}',
-                  },
-                  {
-                    title: 'By Index',
-                    url: 'http://go/${__cell.1}',
-                  },
-                  {
-                    title: 'By array index (not yet supported)',
-                    url: 'http://go/${__cell[1]}',
+                    url: 'http://go/${__data.fields.Power.text}',
                   },
                   {
                     title: 'Unknown Field',
-                    url: 'http://go/${__cell.XYZ}',
+                    url: 'http://go/${__data.fields.XYZ}',
+                  },
+                  {
+                    title: 'Data Frame name',
+                    url: 'http://go/${__data.name}',
+                  },
+                  {
+                    title: 'Data Frame refId',
+                    url: 'http://go/${__data.refId}',
                   },
                 ],
               },
@@ -151,7 +162,15 @@ describe('getLinksFromLogsField', () => {
       Array [
         Object {
           "href": "http://go/100.200 kW",
-          "title": "By Name (full display)",
+          "title": "By Name",
+        },
+        Object {
+          "href": "http://go/100.200 kW",
+          "title": "By Array",
+        },
+        Object {
+          "href": "http://go/100.200 kW",
+          "title": "By Title",
         },
         Object {
           "href": "http://go/100.2000001",
@@ -162,16 +181,16 @@ describe('getLinksFromLogsField', () => {
           "title": "Text (no suffix)",
         },
         Object {
-          "href": "http://go/100.200 kW",
-          "title": "By Index",
-        },
-        Object {
-          "href": "http://go/\${__cell[1]}",
-          "title": "By array index (not yet supported)",
-        },
-        Object {
-          "href": "http://go/\${__cell.XYZ}",
+          "href": "http://go/\${__data.field.XYZ}",
           "title": "Unknown Field",
+        },
+        Object {
+          "href": "http://go/Hello Templates",
+          "title": "Data Frame name",
+        },
+        Object {
+          "href": "http://go/ZZZ",
+          "title": "Data Frame refId",
         },
       ]
     `);

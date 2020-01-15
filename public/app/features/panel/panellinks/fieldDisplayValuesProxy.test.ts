@@ -1,5 +1,5 @@
 import { toDataFrame, applyFieldOverrides, GrafanaTheme } from '@grafana/data';
-import { getCellDisplayValuesProxy } from './cellDisplayValuesProxy';
+import { getFieldDisplayValuesProxy } from './fieldDisplayValuesProxy';
 
 describe('cellDiplayValuesProxy', () => {
   const data = applyFieldOverrides({
@@ -40,7 +40,7 @@ describe('cellDiplayValuesProxy', () => {
 
   it('should format the time values in UTC', () => {
     // Test Proxies in general
-    const cell = getCellDisplayValuesProxy(data, 0);
+    const cell = getFieldDisplayValuesProxy(data, 0);
     const time = cell.Time;
     expect(time.numeric).toEqual(1);
     expect(time.text).toEqual('1970-01-01 00:00:00');
@@ -51,7 +51,7 @@ describe('cellDiplayValuesProxy', () => {
   });
 
   it('Lookup by name, index, or title', () => {
-    const cell = getCellDisplayValuesProxy(data, 2);
+    const cell = getFieldDisplayValuesProxy(data, 2);
 
     // Unknown fields should be undefined
     expect(cell.power.numeric).toEqual(300);
@@ -61,7 +61,7 @@ describe('cellDiplayValuesProxy', () => {
   });
 
   it('should return undefined when missing', () => {
-    const cell = getCellDisplayValuesProxy(data, 0);
+    const cell = getFieldDisplayValuesProxy(data, 0);
 
     // Unknown fields should be undefined
     expect(cell.xyz).toBeUndefined();

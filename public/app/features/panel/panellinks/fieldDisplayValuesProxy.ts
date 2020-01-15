@@ -2,7 +2,7 @@ import { DisplayValue, DataFrame, formattedValueToString, getDisplayProcessor } 
 import { config } from '@grafana/runtime';
 import toNumber from 'lodash/toNumber';
 
-export function getCellDisplayValuesProxy(frame: DataFrame, rowIndex: number): Record<string, DisplayValue> {
+export function getFieldDisplayValuesProxy(frame: DataFrame, rowIndex: number): Record<string, DisplayValue> {
   return new Proxy({} as Record<string, DisplayValue>, {
     get: (obj: any, key: string) => {
       // 1. Match the name
