@@ -91,6 +91,11 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setMetadataInspector(MetadataInspector: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>) {
+    this.components.MetadataInspector = MetadataInspector;
+    return this;
+  }
+
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
@@ -137,6 +142,7 @@ export interface DataSourcePluginComponents<
   ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentType<ExploreStartPageProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
+  MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
 }
 
 // Only exported for tests
@@ -273,62 +279,15 @@ export abstract class DataSourceApi<
   interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
 }
 
-export function updateDatasourcePluginOption(props: DataSourcePluginOptionsEditorProps, key: string, val: any) {
-  let config = props.options;
+export interface MetadataInspectorProps<
+  DSType extends DataSourceApi<TQuery, TOptions>,
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> {
+  datasource: DSType;
 
-  config = {
-    ...config,
-    [key]: val,
-  };
-
-  props.onOptionsChange(config);
-}
-
-export function updateDatasourcePluginJsonDataOption(
-  props: DataSourcePluginOptionsEditorProps,
-  key: string,
-  val: any,
-  secure: boolean
-) {
-  let config = props.options;
-
-  if (secure) {
-    config = {
-      ...config,
-      secureJsonData: {
-        ...config.secureJsonData,
-        [key]: val,
-      },
-    };
-  } else {
-    config = {
-      ...config,
-      jsonData: {
-        ...config.jsonData,
-        [key]: val,
-      },
-    };
-  }
-
-  props.onOptionsChange(config);
-}
-
-export function updateDatasourcePluginResetKeyOption(props: DataSourcePluginOptionsEditorProps, key: string) {
-  let config = props.options;
-
-  config = {
-    ...config,
-    secureJsonData: {
-      ...config.secureJsonData,
-      [key]: '',
-    },
-    secureJsonFields: {
-      ...config.secureJsonFields,
-      [key]: false,
-    },
-  };
-
-  props.onOptionsChange(config);
+  // All Data from this DataSource
+  data: DataFrame[];
 }
 
 export interface QueryEditorProps<

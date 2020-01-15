@@ -33,8 +33,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -57,7 +55,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -124,8 +122,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -215,8 +211,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -239,7 +233,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -300,8 +294,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -324,7 +316,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -388,8 +380,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -412,7 +402,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -476,8 +466,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -500,7 +488,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false

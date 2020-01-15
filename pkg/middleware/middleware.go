@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -253,20 +252,7 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 		maxAge = int(maxAgeHours.Seconds())
 	}
 
-	ctx.Resp.Header().Del("Set-Cookie")
-	cookie := http.Cookie{
-		Name:     setting.LoginCookieName,
-		Value:    url.QueryEscape(value),
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   setting.CookieSecure,
-		MaxAge:   maxAge,
-	}
-	if setting.CookieSameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = setting.CookieSameSite
-	}
-
-	http.SetCookie(ctx.Resp, &cookie)
+	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, newCookieOptions)
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {
