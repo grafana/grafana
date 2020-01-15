@@ -35,6 +35,12 @@ Run load test for 10 virtual users:
 $ ./run.sh -v 10
 ```
 
+Run auth token slow test (random query latency between 1 and 30 seconds):
+
+```bash
+$ ./run.sh -c auth_token_slow_test -s 30
+```
+
 Run auth proxy test:
 
 ```bash
