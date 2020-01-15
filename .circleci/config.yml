@@ -344,7 +344,6 @@ jobs:
             cp -r /tmp/workspace/oss/dist .
             rm -f dist/*latest*
             cd dist
-            echo ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
             # ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   publish-enterprise-master:
@@ -373,7 +372,6 @@ jobs:
             cp -r /tmp/workspace/enterprise/dist .
             rm -f dist/*latest*
             cd dist
-            echo ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
             # ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   docker-oss-master:
