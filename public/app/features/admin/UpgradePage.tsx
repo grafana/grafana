@@ -36,34 +36,14 @@ const UpgradeInfo: React.FC = () => {
 
 const GetEnterprise: React.FC = () => {
   return (
-    <>
-      <div style={{ marginTop: '60px' }}>
-        <h2 style={titleStyles}>Get Grafana Enterprise</h2>
-        <CallToAction />
-        <p style={{ paddingTop: '12px' }}>
-          You can use the trial version for free for <strong>30 days</strong>. We will remind you about it
-          <strong>5 days before the trial period ends</strong>.
-        </p>
-      </div>
-
-      <div style={{ position: 'relative', height: '219px', overflow: 'hidden' }}>
-        <Orbit
-          size="315px"
-          style={{
-            top: '9px',
-            right: '-40px',
-          }}
-        />
-
-        <Orbit
-          size="138px"
-          style={{
-            top: '39px',
-            right: '238px',
-          }}
-        />
-      </div>
-    </>
+    <div style={{ marginTop: '60px', marginBottom: '120px' }}>
+      <h2 style={titleStyles}>Get Grafana Enterprise</h2>
+      <CallToAction />
+      <p style={{ paddingTop: '12px' }}>
+        You can use the trial version for free for <strong>30 days</strong>. We will remind you about it
+        <strong>5 days before the trial period ends</strong>.
+      </p>
+    </div>
   );
 };
 
