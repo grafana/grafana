@@ -72,7 +72,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
   }
 
   function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && parseInt(maxLines, 10) > 0) {
       onRunQuery();
     }
   }
