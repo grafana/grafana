@@ -97,6 +97,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
               onChangeFunc={onMaxLinesChange}
               onKeyDownFunc={onReturnKeyDown}
               value={maxLines}
+              type={'number'}
             />
           ) : null
         }
