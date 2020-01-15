@@ -103,7 +103,7 @@ def remove_long_paths():
             print('Skipped: {}'.format(file))
 
 
-def build_msi(zip_file, extracted_name, PRODUCT_VERSION, config, features):
+def build_msi(zip_file, extracted_name, PRODUCT_VERSION, config, features, is_enterprise):
     # keep reference to source directory, will need to switch back and
     # forth during the process
     src_dir = os.getcwd()
@@ -230,8 +230,13 @@ def build_msi(zip_file, extracted_name, PRODUCT_VERSION, config, features):
         os.system(cmd)
     except Exception as ex:
         print(ex)
+
     # copy to scratch with version included
-    msi_filename = '/tmp/scratch/{}.windows-amd64.msi'.format(extracted_name)
+    msi_filename = '/tmp/scratch/grafana-{}.windows-amd64.msi'.format(PRODUCT_VERSION)
+
+    if is_enterprise:
+      msi_filename = '/tmp/scratch/grafana-enterprise-{}.windows-amd64.msi'.format(PRODUCT_VERSION)
+
     shutil.copy2('grafana.msi', msi_filename)
     os.system('ls -al /tmp/scratch')
     print('LIGHT COMPLETE')
@@ -287,7 +292,7 @@ def main(file_loader, env, grafana_version, zip_file, extracted_name, is_enterpr
             ]
         }
     ]
-    build_msi(zip_file, extracted_name, PRODUCT_VERSION, config, features)
+    build_msi(zip_file, extracted_name, PRODUCT_VERSION, config, features, is_enterprise)
 
 
 if __name__ == '__main__':
