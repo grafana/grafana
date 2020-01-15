@@ -256,12 +256,12 @@ func TestMiddlewareContext(t *testing.T) {
 			maxAge := (maxAgeHours + time.Hour).Seconds()
 
 			sameSitePolicies := []http.SameSite{
-				http.SameSiteDefaultMode,
+				http.SameSiteNoneMode,
 				http.SameSiteLaxMode,
 				http.SameSiteStrictMode,
 			}
 			for _, sameSitePolicy := range sameSitePolicies {
-				setting.CookieSameSite = sameSitePolicy
+				setting.CookieSameSiteMode = sameSitePolicy
 				expectedCookie := &http.Cookie{
 					Name:     setting.LoginCookieName,
 					Value:    "rotated",
@@ -269,9 +269,7 @@ func TestMiddlewareContext(t *testing.T) {
 					HttpOnly: true,
 					MaxAge:   int(maxAge),
 					Secure:   setting.CookieSecure,
-				}
-				if sameSitePolicy != http.SameSiteDefaultMode {
-					expectedCookie.SameSite = sameSitePolicy
+					SameSite: sameSitePolicy,
 				}
 
 				sc.fakeReq("GET", "/").exec()
@@ -287,6 +285,22 @@ func TestMiddlewareContext(t *testing.T) {
 					So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
 				})
 			}
+
+			Convey("Should not set cookie with SameSite attribute when setting.CookieSameSiteDisabled is true", func() {
+				setting.CookieSameSiteDisabled = true
+				setting.CookieSameSiteMode = http.SameSiteLaxMode
+				expectedCookie := &http.Cookie{
+					Name:     setting.LoginCookieName,
+					Value:    "rotated",
+					Path:     setting.AppSubUrl + "/",
+					HttpOnly: true,
+					MaxAge:   int(maxAge),
+					Secure:   setting.CookieSecure,
+				}
+
+				sc.fakeReq("GET", "/").exec()
+				So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
+			})
 		})
 
 		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
@@ -547,6 +561,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
+			} else {
+				c.JsonOK("OK")
 			}
 		}
 

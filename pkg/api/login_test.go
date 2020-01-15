@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -83,7 +84,7 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
-		License: models.OSSLicensingService{},
+		License: &licensing.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
@@ -113,7 +114,7 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
 		Secure:   hs.Cfg.CookieSecure,
-		SameSite: hs.Cfg.CookieSameSite,
+		SameSite: hs.Cfg.CookieSameSiteMode,
 	}
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
@@ -133,7 +134,7 @@ func TestLoginViewRedirect(t *testing.T) {
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
-		License: models.OSSLicensingService{},
+		License: &licensing.OSSLicensingService{},
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -204,7 +205,7 @@ func TestLoginViewRedirect(t *testing.T) {
 				HttpOnly: true,
 				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
-				SameSite: hs.Cfg.CookieSameSite,
+				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
 			sc.m.Get(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
@@ -247,7 +248,7 @@ func TestLoginPostRedirect(t *testing.T) {
 	hs := &HTTPServer{
 		log:              &FakeLogger{},
 		Cfg:              setting.NewCfg(),
-		License:          models.OSSLicensingService{},
+		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 	}
 	hs.Cfg.CookieSecure = true
@@ -312,7 +313,7 @@ func TestLoginPostRedirect(t *testing.T) {
 				HttpOnly: true,
 				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
-				SameSite: hs.Cfg.CookieSameSite,
+				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("POST", sc.url, cookie).exec()
@@ -350,7 +351,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
-		License: models.OSSLicensingService{},
+		License: &licensing.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
@@ -408,7 +409,7 @@ func setupAuthProxyLoginTest(enableLoginToken bool) *scenarioContext {
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:              setting.NewCfg(),
-		License:          models.OSSLicensingService{},
+		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 	}

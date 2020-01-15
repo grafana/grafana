@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
@@ -108,6 +109,12 @@ func (pm *PluginManager) Init() error {
 
 	for _, app := range Apps {
 		app.initApp()
+	}
+
+	for _, p := range Plugins {
+		if !p.IsCorePlugin {
+			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
+		}
 	}
 
 	return nil

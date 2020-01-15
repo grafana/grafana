@@ -5,24 +5,28 @@ export interface FooterLink {
   text: string;
   icon?: string;
   url?: string;
+  target: string;
 }
 
 export let getFooterLinks = (): FooterLink[] => {
   return [
     {
-      text: 'Docs',
+      text: 'Documentation',
       icon: 'fa fa-file-code-o',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
+      target: '_blank',
     },
     {
       text: 'Support & Enterprise',
       icon: 'fa fa-support',
       url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
+      target: '_blank',
     },
     {
       text: 'Community',
       icon: 'fa fa-comments-o',
       url: 'https://community.grafana.com/?utm_source=grafana_footer',
+      target: '_blank',
     },
   ];
 };
@@ -34,6 +38,7 @@ export let getVersionLinks = (): FooterLink[] => {
     {
       text: `Grafana v${buildInfo.version} (commit: ${buildInfo.commit})`,
       url: 'https://grafana.com',
+      target: '_blank',
     },
   ];
 
@@ -42,6 +47,7 @@ export let getVersionLinks = (): FooterLink[] => {
       text: `New version available!`,
       icon: 'fa fa-download',
       url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
+      target: '_blank',
     });
   }
 

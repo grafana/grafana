@@ -1,4 +1,4 @@
-package common
+package backend
 
 import plugin "github.com/hashicorp/go-plugin"
 
