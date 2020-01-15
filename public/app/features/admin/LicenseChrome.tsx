@@ -10,7 +10,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const backgroundUrl = theme.isDark
     ? '/public/img/licensing/header_dark.svg'
     : '/public/img/licensing/header_light.svg';
-  const footerBg = theme.isDark ? theme.colors.dark9 : theme.colors.gray1;
+  const footerBg = theme.isDark ? theme.colors.dark9 : theme.colors.gray6;
 
   return {
     container: css`
@@ -67,14 +67,7 @@ export const LicenseChrome: React.FC<Props> = ({ header, children }) => {
             src="/public/img/grafana_icon.svg"
             alt="Grafana"
             width="80px"
-            style={{ position: 'absolute', left: '24px', top: '10px' }}
-          />
-          <img
-            className="logo-icon"
-            src="/public/img/grafana_enterprise_typelogo.svg"
-            alt="Grafana Enterprise"
-            width="70px"
-            style={{ position: 'absolute', left: '29px', top: '90px' }}
+            style={{ position: 'absolute', left: '23px', top: '20px' }}
           />
         </Circle>
       </div>
