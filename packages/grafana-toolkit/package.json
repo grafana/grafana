@@ -92,7 +92,9 @@
     "tslint-config-prettier": "^1.18.0",
     "typescript": "3.6.3",
     "url-loader": "^2.0.1",
-    "webpack": "4.35.0"
+    "webpack": "4.35.0",
+    "less": "^3.10.3",
+    "less-loader": "^5.0.0"
   },
   "devDependencies": {
     "@types/glob": "^7.1.1",
