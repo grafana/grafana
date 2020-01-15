@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AbsoluteTimeRange } from '@grafana/data';
-import { ButtonCascaderOption } from '@grafana/ui';
+import { CascaderOption } from '@grafana/ui';
 
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
@@ -16,7 +16,7 @@ import { useRefMounted } from 'app/core/hooks/useRefMounted';
 export const useLokiLabels = (
   languageProvider: LokiLanguageProvider,
   languageProviderInitialised: boolean,
-  activeOption: ButtonCascaderOption[],
+  activeOption: CascaderOption[],
   absoluteRange: AbsoluteTimeRange
 ) => {
   const mounted = useRefMounted();

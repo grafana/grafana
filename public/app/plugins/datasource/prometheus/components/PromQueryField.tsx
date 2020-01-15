@@ -4,7 +4,7 @@ import React from 'react';
 import { Plugin } from 'slate';
 import {
   ButtonCascader,
-  ButtonCascaderOption,
+  CascaderOption,
   SlatePrism,
   TypeaheadInput,
   TypeaheadOutput,
@@ -36,8 +36,8 @@ function getChooserText(hasSyntax: boolean, metrics: string[]) {
   return 'Metrics';
 }
 
-function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): ButtonCascaderOption {
-  const option: ButtonCascaderOption = { label: metric, value: metric };
+function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CascaderOption {
+  const option: CascaderOption = { label: metric, value: metric };
   if (metadata && metadata[metric]) {
     const { type = '', help } = metadata[metric][0];
     option.title = [metric, type.toUpperCase(), help].join('\n');
@@ -45,7 +45,7 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): But
   return option;
 }
 
-export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): ButtonCascaderOption[] {
+export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
   // Filter out recording rules and insert as first option
   const ruleRegex = /:\w+:/;
   const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
@@ -65,11 +65,11 @@ export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMe
     .filter((metric: string) => !ruleRegex.test(metric))
     .groupBy((metric: string) => metric.split(delimiter)[0])
     .map(
-      (metricsForPrefix: string[], prefix: string): ButtonCascaderOption => {
+      (metricsForPrefix: string[], prefix: string): CascaderOption => {
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
         const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
         return {
-          children,
+          items: children,
           label: prefix,
           value: prefix,
         };
@@ -195,10 +195,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       });
   };
 
-  onChangeMetrics = (values: string[], selectedOptions: ButtonCascaderOption[]) => {
+  onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
     if (selectedOptions.length === 1) {
-      if (selectedOptions[0].children.length === 0) {
+      if (selectedOptions[0].items.length === 0) {
         query = selectedOptions[0].value;
       } else {
         // Ignore click on group

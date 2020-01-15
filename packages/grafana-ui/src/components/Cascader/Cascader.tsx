@@ -1,5 +1,4 @@
 import React from 'react';
-// import { Input } from '../Forms/Input/Input';
 import { Icon } from '../Icon/Icon';
 // @ts-ignore
 import RCCascader from 'rc-cascader';
@@ -10,11 +9,9 @@ import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 
-// import { CustomControlProps, SelectBaseProps } from '../Forms/Select/SelectBase';
-
 interface CascaderProps {
   separator?: string;
-  options: CascadeOption[];
+  options: CascaderOption[];
   onSelect(val: string): void;
   size?: FormInputSize;
   initialValue?: string;
@@ -29,10 +26,12 @@ interface CascaderState {
   activeLabel: string;
 }
 
-interface CascadeOption {
+export interface CascaderOption {
   value: any;
   label: string;
-  children?: CascadeOption[];
+  items?: CascaderOption[];
+  disabled?: boolean;
+  title?: string;
 }
 
 const disableDivFocus = css(`
@@ -55,18 +54,18 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     };
   }
 
-  flattenOptions = (options: CascadeOption[], optionPath: CascadeOption[] = []) => {
+  flattenOptions = (options: CascaderOption[], optionPath: CascaderOption[] = []) => {
     let selectOptions: Array<SelectableValue<string[]>> = [];
     for (const option of options) {
       const cpy = [...optionPath];
       cpy.push(option);
-      if (!option.children) {
+      if (!option.items) {
         selectOptions.push({
           label: cpy.map(o => o.label).join(this.props.separator || ' / '),
           value: cpy.map(o => o.value),
         });
       } else {
-        selectOptions = [...selectOptions, ...this.flattenOptions(option.children, cpy)];
+        selectOptions = [...selectOptions, ...this.flattenOptions(option.items, cpy)];
       }
     }
     return selectOptions;
@@ -90,7 +89,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   }
 
   //For rc-cascader
-  onChange = (value: string[], selectedOptions: CascadeOption[]) => {
+  onChange = (value: string[], selectedOptions: CascaderOption[]) => {
     this.setState({
       rcValue: value,
       activeLabel: selectedOptions.map(o => o.label).join(this.props.separator || ' / '),
@@ -101,7 +100,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   //For select
   onSelect = (obj: SelectableValue<string[]>) => {
-    console.log('Selected', obj.label);
     this.setState({
       activeLabel: obj.label || '',
       rcValue: obj.value || [],
@@ -187,6 +185,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             isFocused={focusCascade}
             onBlur={this.onBlurCascade}
             value={rcValue}
+            fieldNames={{ label: 'label', value: 'value', children: 'items' }}
           >
             <div className={disableDivFocus}>
               <Input

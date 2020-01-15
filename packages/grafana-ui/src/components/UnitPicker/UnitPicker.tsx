@@ -35,7 +35,7 @@ export class UnitPicker extends PureComponent<Props> {
       return {
         label: group.text,
         value: group.text,
-        children: options,
+        items: options,
       };
     });
 

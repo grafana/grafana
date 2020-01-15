@@ -3,7 +3,7 @@ import React from 'react';
 
 import {
   ButtonCascader,
-  ButtonCascaderOption,
+  CascaderOption,
   SlatePrism,
   TypeaheadOutput,
   SuggestionsState,
@@ -64,10 +64,10 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
   syntax: Grammar;
-  logLabelOptions: ButtonCascaderOption[];
+  logLabelOptions: CascaderOption[];
   syntaxLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
-  onLoadOptions: (selectedOptions: ButtonCascaderOption[]) => void;
+  onLoadOptions: (selectedOptions: CascaderOption[]) => void;
   onLabelsRefresh?: () => void;
 }
 
@@ -88,11 +88,11 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     ];
   }
 
-  loadOptions = (selectedOptions: ButtonCascaderOption[]) => {
+  loadOptions = (selectedOptions: CascaderOption[]) => {
     this.props.onLoadOptions(selectedOptions);
   };
 
-  onChangeLogLabels = (values: string[], selectedOptions: ButtonCascaderOption[]) => {
+  onChangeLogLabels = (values: string[], selectedOptions: CascaderOption[]) => {
     if (selectedOptions.length === 2) {
       const key = selectedOptions[0].value;
       const value = selectedOptions[1].value;

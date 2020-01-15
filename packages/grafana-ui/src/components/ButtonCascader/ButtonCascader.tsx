@@ -4,26 +4,27 @@ import { Icon } from '../Icon/Icon';
 
 // @ts-ignore
 import RCCascader from 'rc-cascader';
+import { CascaderOption } from '../Cascader/Cascader';
 
-export interface ButtonCascaderOption {
+export interface CascaderOption {
   label: string;
   value: string;
 
-  children?: ButtonCascaderOption[];
+  children?: CascaderOption[];
   disabled?: boolean;
   // Undocumented tooltip API
   title?: string;
 }
 
 export interface ButtonCascaderProps {
-  options: ButtonCascaderOption[];
+  options: CascaderOption[];
   buttonText: string;
   disabled?: boolean;
   expandIcon?: React.ReactNode;
   value?: string[];
 
-  loadData?: (selectedOptions: ButtonCascaderOption[]) => void;
-  onChange?: (value: string[], selectedOptions: ButtonCascaderOption[]) => void;
+  loadData?: (selectedOptions: CascaderOption[]) => void;
+  onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
   onPopupVisibleChange?: (visible: boolean) => void;
 }
 
