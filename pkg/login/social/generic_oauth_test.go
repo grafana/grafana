@@ -146,12 +146,13 @@ func TestSearchJSONForRole(t *testing.T) {
 	})
 }
 
-func TestUserInfoSearches(t *testing.T) {
+func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	Convey("Given a generic OAuth provider", t, func() {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
 				log: log.New("generic_oauth_test"),
 			},
+			emailAttributePath: "email",
 		}
 
 		tests := []struct {
@@ -159,64 +160,126 @@ func TestUserInfoSearches(t *testing.T) {
 			APIURLReponse     interface{}
 			OAuth2Extra       interface{}
 			RoleAttributePath string
-			ExpectedRole      string
 			ExpectedEmail     string
+			ExpectedRole      string
 		}{
 			{
-				Name: "Given a valid id_token and valid role path",
+				Name: "Given a valid id_token, a valid role path, no api response, use id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 				},
 				RoleAttributePath: "role",
-				ExpectedRole:      "Admin",
 				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Admin",
 			},
 			{
-				Name: "Given no id_token and an API response with a role and an email",
+				Name: "Given a valid id_token, no role path, no api response, use id_token",
+				OAuth2Extra: map[string]interface{}{
+					// { "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+				},
+				RoleAttributePath: "",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "",
+			},
+			{
+				Name: "Given a valid id_token, an invalid role path, no api response, use id_token",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				RoleAttributePath: "invalid_path",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "",
+			},
+			{
+				Name: "Given no id_token, a valid role path, a valid api response, use api response",
+				APIURLReponse: map[string]interface{}{
+					"role":  "Admin",
+					"email": "john.doe@example.com",
+				},
+				RoleAttributePath: "role",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Admin",
+			},
+			{
+				Name: "Given no id_token, no role path, a valid api response, use api response",
 				APIURLReponse: map[string]interface{}{
 					"email": "john.doe@example.com",
-					"role":  "Admin",
 				},
-				RoleAttributePath: "role",
-				ExpectedRole:      "Admin",
+				RoleAttributePath: "",
 				ExpectedEmail:     "john.doe@example.com",
-			},
-			{
-				Name: "Given no id_token and an API response with an incorrect role key",
-				APIURLReponse: map[string]interface{}{
-					"email":         "john.doe@example.com",
-					"incorrect_key": "Admin",
-				},
-				RoleAttributePath: "role",
 				ExpectedRole:      "",
-				ExpectedEmail:     "john.doe@example.com",
 			},
 			{
-				Name: "Given a valid id_token with an email and no role and an API response with a role",
+				Name: "Given no id_token, a role path, a valid api response without a role, use api response",
+				APIURLReponse: map[string]interface{}{
+					"email": "john.doe@example.com",
+				},
+				RoleAttributePath: "role",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "",
+			},
+			{
+				Name:              "Given no id_token, a valid role path, no api response, no data",
+				RoleAttributePath: "role",
+				ExpectedEmail:     "",
+				ExpectedRole:      "",
+			},
+			{
+				Name: "Given a valid id_token, a valid role path, a valid api response, prefer id_token",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				APIURLReponse: map[string]interface{}{
+					"role":  "FromResponse",
+					"email": "from_response@example.com",
+				},
+				RoleAttributePath: "role",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Admin",
+			},
+			{
+				Name: "Given a valid id_token, an invalid role path, a valid api response, prefer id_token",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				APIURLReponse: map[string]interface{}{
+					"role":  "FromResponse",
+					"email": "from_response@example.com",
+				},
+				RoleAttributePath: "invalid_path",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "",
+			},
+			{
+				Name: "Given a valid id_token with no email, a valid role path, a valid api response with no role, merge",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+				},
+				APIURLReponse: map[string]interface{}{
+					"email": "from_response@example.com",
+				},
+				RoleAttributePath: "role",
+				ExpectedEmail:     "from_response@example.com",
+				ExpectedRole:      "Admin",
+			},
+			{
+				Name: "Given a valid id_token with no role, a valid role path, a valid api response with no email, merge",
 				OAuth2Extra: map[string]interface{}{
 					// { "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 				},
 				APIURLReponse: map[string]interface{}{
-					"role": "Admin",
+					"role": "FromResponse",
 				},
 				RoleAttributePath: "role",
-				ExpectedRole:      "Admin",
 				ExpectedEmail:     "john.doe@example.com",
-			},
-			{
-				Name: "Given a valid id_token with an email and a role and also an API response with a role",
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
-				},
-				APIURLReponse: map[string]interface{}{
-					"role": "Admin2",
-				},
-				RoleAttributePath: "role",
-				ExpectedRole:      "Admin",
-				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "FromResponse",
 			},
 		}
 
@@ -230,7 +293,6 @@ func TestUserInfoSearches(t *testing.T) {
 					_, _ = io.WriteString(w, string(response))
 				}))
 				provider.apiUrl = ts.URL
-
 				staticToken := oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
@@ -240,8 +302,8 @@ func TestUserInfoSearches(t *testing.T) {
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
 				actualResult, _ := provider.UserInfo(ts.Client(), token)
-				So(actualResult.Role, ShouldEqual, test.ExpectedRole)
 				So(actualResult.Email, ShouldEqual, test.ExpectedEmail)
+				So(actualResult.Role, ShouldEqual, test.ExpectedRole)
 			})
 		}
 	})
