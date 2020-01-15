@@ -6,16 +6,6 @@ import { Icon } from '../Icon/Icon';
 import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
 
-export interface CascaderOption {
-  label: string;
-  value: string;
-
-  children?: CascaderOption[];
-  disabled?: boolean;
-  // Undocumented tooltip API
-  title?: string;
-}
-
 export interface ButtonCascaderProps {
   options: CascaderOption[];
   buttonText: string;
