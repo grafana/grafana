@@ -226,15 +226,19 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 	ctx.IsSignedIn = true
 	ctx.UserToken = token
 
-	rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
-	if err != nil {
-		ctx.Logger.Error("Failed to rotate token", "error", err)
-		return true
-	}
+	// Rotate the token just before we write response headers to ensure there is no delay between
+	// the new token being generated and the client receiving it.
+	ctx.Resp.Before(func(w macaron.ResponseWriter) {
+		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
+		if err != nil {
+			ctx.Logger.Error("Failed to rotate token", "error", err)
+			return
+		}
 
-	if rotated {
-		WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
-	}
+		if rotated {
+			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
+		}
+	})
 
 	return true
 }
