@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
-import { LicenseChrome, Orbit } from './LicenseChrome';
+import { LicenseChrome } from './LicenseChrome';
 import { Forms } from '@grafana/ui';
 import { hot } from 'react-hot-loader';
 import { StoreState } from '../../types';
