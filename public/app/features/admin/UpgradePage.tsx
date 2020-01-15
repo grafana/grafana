@@ -43,7 +43,7 @@ export const UpgradeInfo: React.FC<UpgradeInfoProps> = ({ editionNotice }) => {
 
 const GetEnterprise: React.FC = () => {
   return (
-    <div style={{ marginTop: '60px', marginBottom: '120px' }}>
+    <div style={{ marginTop: '60px', marginBottom: '60px' }}>
       <h2 style={titleStyles}>Get Grafana Enterprise</h2>
       <CallToAction />
       <p style={{ paddingTop: '12px' }}>
@@ -87,7 +87,11 @@ const ServiceInfo: React.FC = () => {
         </Item>
       </List>
 
-      <GetEnterprise />
+      <div style={{ marginTop: '20px' }}>
+        <strong>Also included:</strong>
+        <br />
+        Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
+      </div>
     </div>
   );
 };
@@ -98,11 +102,7 @@ const FeatureInfo: React.FC = () => {
       <h4>Enhanced Functionality</h4>
       <FeatureListing />
 
-      <div style={{ marginTop: '20px' }}>
-        <strong>Also included:</strong>
-        <br />
-        Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
-      </div>
+      <GetEnterprise />
     </div>
   );
 };
