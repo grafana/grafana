@@ -1,18 +1,12 @@
 import React, { PureComponent } from 'react';
 
-import { Select } from '../Select/Select';
-
-import { getValueFormats, SelectableValue } from '@grafana/data';
+import { getValueFormats } from '@grafana/data';
 import { Cascader } from '../Cascader/Cascader';
 
 interface Props {
   onChange: (item?: string) => void;
   value?: string;
   width?: number;
-}
-
-function formatCreateLabel(input: string) {
-  return `Custom unit: ${input}`;
 }
 
 export class UnitPicker extends PureComponent<Props> {
@@ -25,7 +19,7 @@ export class UnitPicker extends PureComponent<Props> {
   };
 
   render() {
-    const { value, width } = this.props;
+    const { value } = this.props;
 
     const unitGroups = getValueFormats();
 
@@ -44,10 +38,6 @@ export class UnitPicker extends PureComponent<Props> {
         children: options,
       };
     });
-
-    // const valueOption = groupOptions.map(group => {
-    //   return group.options.find(option => option.value === value);
-    // });
 
     return <Cascader size="sm" options={groupOptions} initialValue={value} onSelect={this.onChange} />;
   }

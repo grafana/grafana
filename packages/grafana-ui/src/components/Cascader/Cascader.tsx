@@ -103,8 +103,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     this.props.onSelect(this.state.rcValue[this.state.rcValue.length - 1]);
   };
 
-  rcValueToValue = () => {};
-
   onClick = () => {
     this.setState({
       focusCascade: true,
@@ -122,6 +120,12 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
         rcValue: [],
       });
     }
+  };
+
+  onBlurCascade = () => {
+    this.setState({
+      focusCascade: false,
+    });
   };
 
   onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -154,7 +158,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   render() {
     const { size } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
-    console.log(isSearching);
+
     return (
       <div>
         {isSearching ? (
@@ -174,6 +178,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onClick={this.onClick}
             options={this.props.options}
             isFocused={focusCascade}
+            onBlur={this.onBlurCascade}
             value={rcValue}
           >
             <div>
@@ -182,7 +187,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
                 size={size || 'md'}
-                suffix={<Icon name="caret-down" />}
+                suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
               />
             </div>
           </RCCascader>
