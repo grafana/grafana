@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { AutoSizer } from 'react-virtualized';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent } from '@grafana/ui';

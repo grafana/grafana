@@ -1,5 +1,5 @@
 import React from 'react';
-import { AutoSizer } from 'react-virtualized';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 /** This will add full size with & height properties */
 export const withFullSizeStory = (component: React.ComponentType<any>, props: any) => (
