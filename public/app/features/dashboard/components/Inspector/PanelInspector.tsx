@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides } from '@grafana/data';
+import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides, DataQueryError } from '@grafana/data';
 import { config } from 'app/core/config';
 
 interface Props {
@@ -145,29 +145,52 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 
+  renderError() {
+    const error: DataQueryError = this.state.last?.error;
+    if (!error) {
+      return null;
+    }
+    if (error.data) {
+      return (
+        <div>
+          <h3>{error.data.message}</h3>
+          <div>{error.data.error}</div>
+        </div>
+      );
+    }
+    return <div>{error.message}</div>;
+  }
+
   renderIssueTab() {
     return <div>TODO: show issue form</div>;
   }
 
   render() {
     const { panel } = this.props;
-    const { last, tab } = this.state;
+    const { last } = this.state;
     if (!panel) {
       this.onDismiss(); // Try to close the component
       return null;
     }
 
-    const tabs = [
-      { label: 'Data', value: InspectTab.Data },
-      { label: 'Issue', value: InspectTab.Issue },
-      { label: 'Raw JSON', value: InspectTab.Raw },
-    ];
+    const tabs = [];
+    if (last && last?.data?.length) {
+      tabs.push({ label: 'Data', value: InspectTab.Data });
+    }
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
+    }
+    tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
+
+    let tab = this.state.tab;
+    if (!tabs.find(t => t.value === tab)) {
+      tab = tabs[0].value;
     }
 
     return (
       <Drawer title={panel.title} onClose={this.onDismiss}>
+        {last?.error && this.renderError()}
+
         <TabsBar>
           {tabs.map(t => {
             return <Tab label={t.label} active={t.value === tab} onChangeTab={() => this.onSelectTab(t)} />;
