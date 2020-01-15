@@ -83,7 +83,11 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
-  build-oss-frontend:
+  build-frontend:
+    description: "Build Grafana front-end artifacts"
+    parameters:
+      edition:
+        type: string
     executor: grafana-build
     steps:
       - attach_workspace:
@@ -94,42 +98,14 @@ jobs:
           command: ./scripts/ci-job-started.sh
       - run:
           name: Build Grafana frontend
-          command: /tmp/workspace/bin/grabpl build-frontend
+          command: /tmp/workspace/bin/grabpl build-frontend --edition << parameters.edition >>
       - run:
           name: Move artifacts
-          command: mkdir oss && cp -r public oss/
+          command: mkdir << parameters.edition >> && cp -r public << parameters.edition >>/
       - persist_to_workspace:
           root: .
           paths:
-            - oss/public/*
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  build-enterprise-frontend:
-    executor: grafana-build
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: Build Grafana frontend
-          command: /tmp/workspace/bin/grabpl build-frontend --enterprise
-      - run:
-          name: Move artifacts
-          command: mkdir enterprise && cp -r public enterprise/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - enterprise/public/*
+            - << parameters.edition >>/public/*
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -1724,8 +1700,10 @@ workflows:
           name: build-oss-backend-linux-x64-musl
           requires:
             - install-grabpl
-      - build-oss-frontend:
+      - build-frontend:
           filters: *filter-only-master
+          name: build-oss-frontend
+          edition: oss
           requires:
             - install-grabpl
       - build-backend:
@@ -1791,8 +1769,10 @@ workflows:
           name: build-enterprise-backend-linux-x64-musl
           requires:
             - install-grabpl
-      - build-enterprise-frontend:
+      - build-frontend:
           filters: *filter-only-master
+          name: build-enterprise-frontend
+          edition: enterprise
           requires:
             - install-grabpl
       - codespell:
