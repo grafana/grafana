@@ -67,7 +67,9 @@ export enum VariableSort {
 }
 
 export interface VariableTag {
+  selected: boolean;
   text: string | string[];
+  values?: any[];
 }
 
 export interface VariableOption {
@@ -75,6 +77,7 @@ export interface VariableOption {
   text: string | string[];
   value: string | string[];
   isNone?: boolean;
+  tags?: VariableTag[];
 }
 
 export type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom';
@@ -137,6 +140,8 @@ export interface VariableWithOptions extends VariableModel {
 }
 
 export interface VariableModel {
+  global?: boolean;
+  index?: number;
   type: VariableType;
   name: string;
   label: string;
