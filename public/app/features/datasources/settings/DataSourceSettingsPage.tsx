@@ -15,14 +15,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
-import {
-  dataSourceLoaded,
-  deleteDataSource,
-  loadDataSource,
-  setDataSourceName,
-  setIsDefault,
-  updateDataSource,
-} from '../state/actions';
+import { deleteDataSource, loadDataSource, updateDataSource } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
@@ -33,6 +26,7 @@ import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
+import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 
 export interface Props {
   navModel: NavModel;

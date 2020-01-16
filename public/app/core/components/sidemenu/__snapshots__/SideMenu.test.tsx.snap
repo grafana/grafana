@@ -7,10 +7,7 @@ Array [
     href="/"
     key="logo"
   >
-    <img
-      alt="Grafana"
-      src="public/img/grafana_icon.svg"
-    />
+    <Component />
   </a>,
   <div
     className="sidemenu__logo_small_breakpoint"

@@ -3,8 +3,9 @@ import {
   SelectableValue,
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginOption,
-  updateDatasourcePluginResetKeyOption,
+  updateDatasourcePluginResetOption,
   updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginSecureJsonDataOption,
 } from '@grafana/data';
 import { MonitorConfig } from './MonitorConfig';
 import { AnalyticsConfig } from './AnalyticsConfig';
@@ -69,12 +70,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
-  updateOption = (key: string, val: any, secure: boolean) => {
-    updateDatasourcePluginJsonDataOption(this.props, key, val, secure);
+  updateOption = (key: keyof AzureDataSourceJsonData, val: any) => {
+    updateDatasourcePluginJsonDataOption(this.props, key, val);
+  };
+
+  updateSecureOption = (key: keyof AzureDataSourceSecureJsonData, val: any) => {
+    updateDatasourcePluginSecureJsonDataOption(this.props, key, val);
   };
 
   resetKey = (key: string) => {
-    updateDatasourcePluginResetKeyOption(this.props, key);
+    updateDatasourcePluginResetOption(this.props, key);
   };
 
   makeSameAs = (updatedClientSecret?: string) => {
@@ -211,7 +216,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (subscriptions && subscriptions.length > 0) {
       this.setState({ subscriptions });
 
-      this.updateOption('subscriptionId', this.props.options.jsonData.subscriptionId || subscriptions[0].value, false);
+      this.updateOption('subscriptionId', this.props.options.jsonData.subscriptionId || subscriptions[0].value);
     }
 
     if (this.props.options.jsonData.subscriptionId && this.props.options.jsonData.azureLogAnalyticsSameAs) {
@@ -232,8 +237,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
       this.updateOption(
         'logAnalyticsSubscriptionId',
-        this.props.options.jsonData.logAnalyticsSubscriptionId || logAnalyticsSubscriptions[0].value,
-        false
+        this.props.options.jsonData.logAnalyticsSubscriptionId || logAnalyticsSubscriptions[0].value
       );
     }
 
@@ -257,8 +261,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
       this.updateOption(
         'logAnalyticsDefaultWorkspace',
-        this.props.options.jsonData.logAnalyticsDefaultWorkspace || logAnalyticsWorkspaces[0].value,
-        false
+        this.props.options.jsonData.logAnalyticsDefaultWorkspace || logAnalyticsWorkspaces[0].value
       );
     }
   };
@@ -278,6 +281,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           makeSameAs={this.makeSameAs}
           onLoadSubscriptions={this.onLoadSubscriptions}
           onUpdateOption={this.updateOption}
+          onUpdateSecureOption={this.updateSecureOption}
           onResetOptionKey={this.resetKey}
         />
 
@@ -288,6 +292,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           makeSameAs={this.makeSameAs}
           onUpdateOptions={this.updateOptions}
           onUpdateOption={this.updateOption}
+          onUpdateSecureOption={this.updateSecureOption}
           onResetOptionKey={this.resetKey}
           onLoadSubscriptions={this.onLoadSubscriptions}
           onLoadWorkspaces={this.getWorkspaces}

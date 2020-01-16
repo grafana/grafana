@@ -1,18 +1,13 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { SelectableValue, ExploreQueryFieldProps } from '@grafana/data';
-import { Input, Segment, SegmentAsync, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
+import { ExploreQueryFieldProps } from '@grafana/data';
+import { Input, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
-import { SelectableStrings } from '../types';
-import { Stats, Dimensions, QueryInlineField, QueryField, Alias } from './';
+import { QueryField, Alias, QueryFieldsEditor } from './';
 
 export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
 
 interface State {
-  regions: SelectableStrings;
-  namespaces: SelectableStrings;
-  metricNames: SelectableStrings;
-  variableOptionGroup: SelectableValue<string>;
   showMeta: boolean;
 }
 
@@ -26,7 +21,7 @@ const idValidationEvents: ValidationEvents = {
 };
 
 export class QueryEditor extends PureComponent<Props, State> {
-  state: State = { regions: [], namespaces: [], metricNames: [], variableOptionGroup: {}, showMeta: false };
+  state: State = { showMeta: false };
 
   static getDerivedStateFromProps(props: Props, state: State) {
     const { query } = props;
@@ -70,128 +65,32 @@ export class QueryEditor extends PureComponent<Props, State> {
     return state;
   }
 
-  componentDidMount() {
-    const { datasource } = this.props;
-    const variableOptionGroup = {
-      label: 'Template Variables',
-      options: this.props.datasource.variables.map(this.toOption),
-    };
-    Promise.all([datasource.metricFindQuery('regions()'), datasource.metricFindQuery('namespaces()')]).then(
-      ([regions, namespaces]) => {
-        this.setState({
-          ...this.state,
-          regions: [...regions, variableOptionGroup],
-          namespaces: [...namespaces, variableOptionGroup],
-          variableOptionGroup,
-        });
-      }
-    );
-  }
-
-  loadMetricNames = async () => {
-    const { namespace, region } = this.props.query;
-    return this.props.datasource.metricFindQuery(`metrics(${namespace},${region})`).then(this.appendTemplateVariables);
-  };
-
-  appendTemplateVariables = (values: SelectableValue[]) => [
-    ...values,
-    { label: 'Template Variables', options: this.props.datasource.variables.map(this.toOption) },
-  ];
-
-  toOption = (value: any) => ({ label: value, value });
-
   onChange(query: CloudWatchQuery) {
     const { onChange, onRunQuery } = this.props;
     onChange(query);
     onRunQuery();
   }
 
-  // Load dimension values based on current selected dimensions.
-  // Remove the new dimension key and all dimensions that has a wildcard as selected value
-  loadDimensionValues = (newKey: string) => {
-    const { datasource, query } = this.props;
-    const { [newKey]: value, ...dim } = query.dimensions;
-    const newDimensions = Object.entries(dim).reduce(
-      (result, [key, value]) => (value === '*' ? result : { ...result, [key]: value }),
-      {}
-    );
-    return datasource
-      .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
-      .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
-      .then(this.appendTemplateVariables);
-  };
-
   render() {
-    const { query, datasource, onChange, onRunQuery, data } = this.props;
-    const { regions, namespaces, variableOptionGroup: variableOptionGroup, showMeta } = this.state;
+    const { data, query, onRunQuery } = this.props;
+    const { showMeta } = this.state;
     const metaDataExist = data && Object.values(data).length && data.state === 'Done';
     return (
       <>
-        <QueryInlineField label="Region">
-          <Segment
-            value={query.region}
-            placeholder="Select region"
-            options={regions}
-            allowCustomValue
-            onChange={({ value: region }) => this.onChange({ ...query, region })}
-          />
-        </QueryInlineField>
-
-        {query.expression.length === 0 && (
-          <>
-            <QueryInlineField label="Namespace">
-              <Segment
-                value={query.namespace}
-                placeholder="Select namespace"
-                allowCustomValue
-                options={namespaces}
-                onChange={({ value: namespace }) => this.onChange({ ...query, namespace })}
-              />
-            </QueryInlineField>
-
-            <QueryInlineField label="Metric Name">
-              <SegmentAsync
-                value={query.metricName}
-                placeholder="Select metric name"
-                allowCustomValue
-                loadOptions={this.loadMetricNames}
-                onChange={({ value: metricName }) => this.onChange({ ...query, metricName })}
-              />
-            </QueryInlineField>
-
-            <QueryInlineField label="Stats">
-              <Stats
-                stats={datasource.standardStatistics.map(this.toOption)}
-                values={query.statistics}
-                onChange={statistics => this.onChange({ ...query, statistics })}
-                variableOptionGroup={variableOptionGroup}
-              />
-            </QueryInlineField>
-
-            <QueryInlineField label="Dimensions">
-              <Dimensions
-                dimensions={query.dimensions}
-                onChange={dimensions => this.onChange({ ...query, dimensions })}
-                loadKeys={() =>
-                  datasource.getDimensionKeys(query.namespace, query.region).then(this.appendTemplateVariables)
-                }
-                loadValues={this.loadDimensionValues}
-              />
-            </QueryInlineField>
-          </>
-        )}
+        <QueryFieldsEditor {...this.props}></QueryFieldsEditor>
         {query.statistics.length <= 1 && (
           <div className="gf-form-inline">
             <div className="gf-form">
               <QueryField
-                className="query-keyword"
                 label="Id"
                 tooltip="Id can include numbers, letters, and underscore, and must start with a lowercase letter."
               >
                 <Input
                   className="gf-form-input width-8"
                   onBlur={onRunQuery}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, id: event.target.value })}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                    this.onChange({ ...query, id: event.target.value })
+                  }
                   validationEvents={idValidationEvents}
                   value={query.id || ''}
                 />
@@ -208,7 +107,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                   onBlur={onRunQuery}
                   value={query.expression || ''}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    onChange({ ...query, expression: event.target.value })
+                    this.onChange({ ...query, expression: event.target.value })
                   }
                 />
               </QueryField>
@@ -217,19 +116,20 @@ export class QueryEditor extends PureComponent<Props, State> {
         )}
         <div className="gf-form-inline">
           <div className="gf-form">
-            <QueryField className="query-keyword" label="Period" tooltip="Minimum interval between points in seconds">
+            <QueryField label="Period" tooltip="Minimum interval between points in seconds">
               <Input
                 className="gf-form-input width-8"
                 value={query.period || ''}
                 placeholder="auto"
                 onBlur={onRunQuery}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, period: event.target.value })}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  this.onChange({ ...query, period: event.target.value })
+                }
               />
             </QueryField>
           </div>
           <div className="gf-form">
             <QueryField
-              className="query-keyword"
               label="Alias"
               tooltip="Alias replacement variables: {{metric}}, {{stat}}, {{namespace}}, {{region}}, {{period}}, {{label}}, {{YOUR_DIMENSION_NAME}}"
             >
@@ -247,7 +147,6 @@ export class QueryEditor extends PureComponent<Props, State> {
                 onClick={() =>
                   metaDataExist &&
                   this.setState({
-                    ...this.state,
                     showMeta: !showMeta,
                   })
                 }

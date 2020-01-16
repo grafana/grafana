@@ -1,5 +1,8 @@
-import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
+import { PayloadAction } from '@reduxjs/toolkit';
+import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+
 import * as Actions from './actions';
+import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
 import { ExploreId, ExploreMode, ExploreUpdateState, ExploreUrlState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
@@ -8,13 +11,11 @@ import {
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   setQueriesAction,
-  updateUIStateAction,
   updateDatasourceInstanceAction,
+  updateUIStateAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
-import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
@@ -117,7 +118,7 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        const initializeExplore = dispatchedActions[1] as ActionOf<InitializeExplorePayload>;
+        const initializeExplore = dispatchedActions[1] as PayloadAction<InitializeExplorePayload>;
         const { type, payload } = initializeExplore;
 
         expect(type).toEqual(initializeExploreAction.type);

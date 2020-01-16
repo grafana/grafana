@@ -13,12 +13,14 @@ type Frame struct {
 	Fields []*Field
 
 	RefID string
+	Meta  *QueryResultMeta
 }
 
 // Field represents a column of data with a specific type.
 type Field struct {
 	Name   string
-	Vector Vector
+	Config *FieldConfig
+	Vector Vector // TODO? in the frontend, the variable is called "Values"
 	Labels Labels
 }
 
@@ -29,6 +31,36 @@ type Fields []*Field
 func NewField(name string, labels Labels, values interface{}) *Field {
 	var vec Vector
 	switch v := values.(type) {
+	case []int8:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*int8:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []int16:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*int16:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []int32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*int32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
 	case []int64:
 		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
@@ -39,12 +71,52 @@ func NewField(name string, labels Labels, values interface{}) *Field {
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
+	case []uint8:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*uint8:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []uint16:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*uint16:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []uint32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*uint32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
 	case []uint64:
 		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
 	case []*uint64:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []float32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*float32:
 		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
@@ -103,6 +175,13 @@ func NewField(name string, labels Labels, values interface{}) *Field {
 // Len returns the number of elements in the field.
 func (f *Field) Len() int {
 	return f.Vector.Len()
+}
+
+// SetConfig modifies the Field's Config property to
+// be set to conf and returns the Field.
+func (f *Field) SetConfig(conf *FieldConfig) *Field {
+	f.Config = conf
+	return f
 }
 
 // Labels are used to add metadata to an object.
