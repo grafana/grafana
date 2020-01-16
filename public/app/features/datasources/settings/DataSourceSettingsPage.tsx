@@ -15,7 +15,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
-import { deleteDataSource, loadDataSource, updateDataSource } from '../state/actions';
+import { deleteDataSource, loadDataSource, updateDataSource, initDataSourceSettings } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
@@ -24,8 +24,6 @@ import { UrlQueryMap } from '@grafana/runtime';
 import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
-import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
-import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 
 export interface Props {
@@ -39,71 +37,78 @@ export interface Props {
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
   dataSourceLoaded: typeof dataSourceLoaded;
+  initDataSourceSettings: typeof initDataSourceSettings;
   plugin?: GenericDataSourcePlugin;
   query: UrlQueryMap;
   page?: string;
-}
-
-interface State {
-  plugin?: GenericDataSourcePlugin;
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
-  loadError?: any;
+  loadError?: Error | string;
 }
 
-export class DataSourceSettingsPage extends PureComponent<Props, State> {
-  importDataSourcePlugin: typeof importDataSourcePlugin;
-  importPluginPromise: CancelablePromise<any> = null;
+// interface State {
+//   plugin?: GenericDataSourcePlugin;
+//   isTesting?: boolean;
+//   testingMessage?: string;
+//   testingStatus?: string;
+//   loadError?: any;
+// }
 
-  constructor(props: Props) {
-    super(props);
+export class DataSourceSettingsPage extends PureComponent<Props> {
+  // importDataSourcePlugin: typeof importDataSourcePlugin;
+  // importPluginPromise: CancelablePromise<any> = null;
 
-    this.state = {
-      plugin: props.plugin,
-    };
+  // constructor(props: Props) {
+  // super(props);
 
-    this.importDataSourcePlugin = importDataSourcePlugin;
-  }
+  // this.state = {
+  //   plugin: props.plugin,
+  // };
 
-  async loadPlugin(pluginId?: string) {
-    const { dataSourceMeta } = this.props;
+  // this.importDataSourcePlugin = importDataSourcePlugin;
+  // }
 
-    try {
-      await this.importPlugin(makePromiseCancelable(this.importDataSourcePlugin(dataSourceMeta)));
-    } catch (e) {
-      console.log('Failed to import plugin module', e);
-    }
-  }
+  // async loadPlugin(pluginId?: string) {
+  // const { dataSourceMeta } = this.props;
+
+  // try {
+  //   await this.importPlugin(makePromiseCancelable(this.importDataSourcePlugin(dataSourceMeta)));
+  // } catch (e) {
+  //   console.log('Failed to import plugin module', e);
+  // }
+  // }
 
   async componentDidMount() {
-    const { loadDataSource, pageId } = this.props;
-    if (isNaN(pageId)) {
-      this.setState({ loadError: 'Invalid ID' });
-      return;
-    }
-    try {
-      await loadDataSource(pageId);
-      if (!this.state.plugin) {
-        await this.loadPlugin();
-      }
-    } catch (err) {
-      this.setState({ loadError: err });
-    }
+    const { initDataSourceSettings, pageId } = this.props;
+    initDataSourceSettings(pageId);
+    // const { loadDataSource, pageId } = this.props;
+    // if (isNaN(pageId)) {
+    //   this.setState({ loadError: 'Invalid ID' });
+    //   return;
+    // }
+    // try {
+    //   await loadDataSource(pageId);
+    //   if (!this.state.plugin) {
+    //     await this.loadPlugin();
+    //   }
+    // } catch (err) {
+    //   this.setState({ loadError: err });
+    // }
   }
 
-  importPlugin = (cancelablePromise: CancelablePromise<any>) => {
-    this.importPluginPromise = cancelablePromise;
-    this.importPluginPromise.promise
-      .then((importedPlugin: GenericDataSourcePlugin) => {
-        this.setState({ plugin: importedPlugin });
-      })
-      .catch(({ isCanceled }) => {
-        if (isCanceled) {
-          console.warn('DataSourceSettingsPage has unmounted, intialization was canceled');
-        }
-      });
-  };
+  // importPlugin = (cancelablePromise: CancelablePromise<any>) => {
+  //   this.importPluginPromise = cancelablePromise;
+  //   this.importPluginPromise.promise
+  //     .then((importedPlugin: GenericDataSourcePlugin) => {
+  //       this.setState({ plugin: importedPlugin });
+  //     })
+  //     .catch(({ isCanceled }) => {
+  //       if (isCanceled) {
+  //         console.warn('DataSourceSettingsPage has unmounted, intialization was canceled');
+  //       }
+  //     });
+  // };
 
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
@@ -234,7 +239,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   renderConfigPageBody(page: string) {
-    const { plugin } = this.state;
+    const { plugin } = this.props;
     if (!plugin || !plugin.configPages) {
       return null; // still loading
     }
@@ -249,8 +254,15 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   renderSettings() {
-    const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource } = this.props;
-    const { testingMessage, testingStatus, plugin } = this.state;
+    const {
+      dataSourceMeta,
+      setDataSourceName,
+      setIsDefault,
+      dataSource,
+      testingMessage,
+      testingStatus,
+      plugin,
+    } = this.props;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -310,8 +322,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { navModel, page } = this.props;
-    const { loadError } = this.state;
+    const { navModel, page, loadError } = this.props;
 
     if (loadError) {
       return this.renderLoadError(loadError);
@@ -331,6 +342,7 @@ function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
   const page = state.location.query.page as string;
+  const { plugin, loadError, testingMessage, testingStatus, isTesting } = state.dataSourceSettings;
 
   return {
     navModel: getNavModel(
@@ -343,6 +355,11 @@ function mapStateToProps(state: StoreState) {
     pageId: pageId,
     query: state.location.query,
     page,
+    plugin,
+    loadError,
+    testingMessage,
+    testingStatus,
+    isTesting,
   };
 }
 
@@ -353,6 +370,7 @@ const mapDispatchToProps = {
   updateDataSource,
   setIsDefault,
   dataSourceLoaded,
+  initDataSourceSettings,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettingsPage));

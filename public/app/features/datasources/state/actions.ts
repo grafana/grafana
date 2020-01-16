@@ -4,7 +4,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
-import { DataSourcePluginCategory, ThunkResult } from 'app/types';
+import { DataSourcePluginCategory, ThunkResult, ThunkDispatch } from 'app/types';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import {
@@ -13,13 +13,41 @@ import {
   dataSourcePluginsLoad,
   dataSourcePluginsLoaded,
   dataSourcesLoaded,
+  initDataSourceSettingsFailed,
+  initDataSourceSettingsSucceeded,
 } from './reducers';
 import { buildCategories } from './buildCategories';
+import { getDataSource, getDataSourceMeta } from './selectors';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
   categories: DataSourcePluginCategory[];
 }
+
+export const initDataSourceSettings = (pageId: number): ThunkResult<void> => {
+  return async (dispatch: ThunkDispatch, getState) => {
+    if (isNaN(pageId)) {
+      // this.setState({ loadError: 'Invalid ID' });
+      dispatch(initDataSourceSettingsFailed('Invalid ID'));
+      return;
+    }
+
+    try {
+      await dispatch(loadDataSource(pageId));
+      if (getState().dataSourceSettings.plugin) {
+        return;
+      }
+
+      const dataSource = getDataSource(getState().dataSources, pageId);
+      const dataSourceMeta = getDataSourceMeta(getState().dataSources, dataSource.type);
+      const importedPlugin = await importDataSourcePlugin(dataSourceMeta);
+
+      dispatch(initDataSourceSettingsSucceeded(importedPlugin));
+    } catch (err) {
+      dispatch(initDataSourceSettingsFailed(err));
+    }
+  };
+};
 
 export function loadDataSources(): ThunkResult<void> {
   return async dispatch => {

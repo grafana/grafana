@@ -1,9 +1,10 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 
-import { DataSourcesState } from 'app/types';
+import { DataSourcesState, DataSourceSettingsState } from 'app/types';
 import { LayoutMode, LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { DataSourceTypesLoadedPayload } from './actions';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 export const initialState: DataSourcesState = {
   dataSources: [],
@@ -94,6 +95,38 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
   return state;
 };
 
+export const initialDataSourceSettingsState: DataSourceSettingsState = {
+  isTesting: false,
+  testingStatus: null,
+  testingMessage: null,
+  loadError: null,
+  plugin: null,
+};
+
+export const initDataSourceSettingsSucceeded = createAction<GenericDataSourcePlugin>(
+  'dataSourceSettings/initDataSourceSettingsSucceeded'
+);
+
+export const initDataSourceSettingsFailed = createAction<Error | string>(
+  'dataSourceSettings/initDataSourceSettingsFailed'
+);
+
+export const dataSourceSettingsReducer = (
+  state: DataSourceSettingsState = initialDataSourceSettingsState,
+  action: AnyAction
+): DataSourceSettingsState => {
+  if (initDataSourceSettingsSucceeded.match(action)) {
+    return { ...state, plugin: action.payload, loadError: null };
+  }
+
+  if (initDataSourceSettingsFailed.match(action)) {
+    return { ...state, plugin: null, loadError: action.payload };
+  }
+
+  return state;
+};
+
 export default {
   dataSources: dataSourcesReducer,
+  dataSourceSettings: dataSourceSettingsReducer,
 };
