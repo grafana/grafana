@@ -55,7 +55,8 @@ The YUM repository installs the open source edition of Grafana.
 sudo nano /etc/yum.repos.d/grafana.repo
 ```
 2. Enter the following information in grafana.repo and then save it.
-   For stable releases:
+
+For stable releases:
 ```bash
 [grafana]
 name=grafana
@@ -67,7 +68,7 @@ gpgkey=https://packages.grafana.com/gpg.key
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
-   For beta releases:
+For beta releases:
 ```bash
 [grafana]
 name=grafana
