@@ -2,9 +2,6 @@
   "type": "panel",
   "name": "News Panel",
   "id": "news",
-
-  "skipDataQuery": true,
-
   "state": "alpha",
 
   "info": {

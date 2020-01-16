@@ -1,5 +1,5 @@
-import { feedToDataFrame } from './utils';
 import { RssFeed, NewsItem } from './types';
+import { feedToDataFrame } from './utils';
 import { DataFrameView } from '@grafana/data';
 
 describe('news', () => {
