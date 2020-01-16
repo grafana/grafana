@@ -82,6 +82,99 @@ func TestRequestParser(t *testing.T) {
 				So(res.Dimensions["InstanceType"][0], ShouldEqual, "test2")
 				So(*res.Statistics[0], ShouldEqual, "Average")
 			})
+
+			Convey("period defined in the editor by the user is being used", func() {
+				query := simplejson.NewFromAny(map[string]interface{}{
+					"refId":      "ref1",
+					"region":     "us-east-1",
+					"namespace":  "ec2",
+					"metricName": "CPUUtilization",
+					"id":         "",
+					"expression": "",
+					"dimensions": map[string]interface{}{
+						"InstanceId":   "test",
+						"InstanceType": "test2",
+					},
+					"statistics": []interface{}{"Average"},
+					"hide":       false,
+				})
+				Convey("when time range is short", func() {
+					query.Set("period", "900")
+					timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+					from, _ := timeRange.ParseFrom()
+					to, _ := timeRange.ParseTo()
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 900)
+				})
+			})
+
+			Convey("period is parsed correctly if not defined by user", func() {
+				query := simplejson.NewFromAny(map[string]interface{}{
+					"refId":      "ref1",
+					"region":     "us-east-1",
+					"namespace":  "ec2",
+					"metricName": "CPUUtilization",
+					"id":         "",
+					"expression": "",
+					"dimensions": map[string]interface{}{
+						"InstanceId":   "test",
+						"InstanceType": "test2",
+					},
+					"statistics": []interface{}{"Average"},
+					"hide":       false,
+					"period":     "auto",
+				})
+
+				Convey("when time range is short", func() {
+					query.Set("period", "auto")
+					timeRange := tsdb.NewTimeRange("now-2h", "now-1h")
+					from, _ := timeRange.ParseFrom()
+					to, _ := timeRange.ParseTo()
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 60)
+				})
+
+				Convey("when time range is 5y", func() {
+					timeRange := tsdb.NewTimeRange("now-5y", "now")
+					from, _ := timeRange.ParseFrom()
+					to, _ := timeRange.ParseTo()
+
+					res, err := parseRequestQuery(query, "ref1", from, to)
+					So(err, ShouldBeNil)
+					So(res.Period, ShouldEqual, 21600)
+				})
+			})
+
+			Convey("closest works as expected", func() {
+				periods := []int{60, 300, 900, 3600, 21600}
+				Convey("and input is lower than 60", func() {
+					So(closest(periods, 6), ShouldEqual, 60)
+				})
+
+				Convey("and input is exactly 60", func() {
+					So(closest(periods, 60), ShouldEqual, 60)
+				})
+
+				Convey("and input is exactly between two steps", func() {
+					So(closest(periods, 180), ShouldEqual, 300)
+				})
+
+				Convey("and input is exactly 2000", func() {
+					So(closest(periods, 2000), ShouldEqual, 900)
+				})
+
+				Convey("and input is exactly 5000", func() {
+					So(closest(periods, 5000), ShouldEqual, 3600)
+				})
+
+				Convey("and input is exactly 50000", func() {
+					So(closest(periods, 50000), ShouldEqual, 21600)
+				})
+			})
 		})
 	})
 }
