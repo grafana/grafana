@@ -33,6 +33,8 @@ const azureMonitorPlugin = async () =>
   await import(
     /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
   );
+const rssFeedPlugin = async () =>
+  await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/rss-feed/module');
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as text2Panel from 'app/plugins/panel/text2/module';
@@ -72,6 +74,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/input/module': inputDatasourcePlugin,
   'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
+  'app/plugins/datasource/rss-feed/module': rssFeedPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/text2/module': text2Panel,
