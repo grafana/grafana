@@ -58,9 +58,10 @@ func (n *notificationService) SendIfNeeded(evalCtx *EvalContext) error {
 		timeout := setting.AlertingNotificationTimeout / 2
 		var uploadCtxCancel func()
 		uploadEvalCtx.Ctx, uploadCtxCancel = context.WithTimeout(evalCtx.Ctx, timeout)
+
 		// Try to upload the image without consuming all the time allocated for EvalContext
 		if err = n.renderAndUploadImage(&uploadEvalCtx, timeout); err != nil {
-			n.log.Error("Failed to render and upload alert panel image.", "error", err)
+			n.log.Error("Failed to render and upload alert panel image.", "ruleId", uploadEvalCtx.Rule.ID, "error", err)
 		}
 		uploadCtxCancel()
 		evalCtx.ImageOnDiskPath = uploadEvalCtx.ImageOnDiskPath
