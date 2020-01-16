@@ -27,6 +27,12 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     border: 1px solid ${borderColor};
     padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
 
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus {
+      /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
+    }
     &:hover {
       border-color: ${borderColor};
     }
