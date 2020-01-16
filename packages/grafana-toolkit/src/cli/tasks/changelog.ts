@@ -70,11 +70,15 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
     const toolkitIssues = issues.filter((item: any) =>
       item.labels.find((label: any) => label.name === 'area/grafana/toolkit')
     );
+    const grafanaUiIssues = issues.filter((item: any) =>
+      item.labels.find((label: any) => label.name === 'area/grafana/ui')
+    );
 
     let markdown = '';
 
     markdown += getPackageChangelog('Grafana', issues);
     markdown += getPackageChangelog('grafana-toolkit', toolkitIssues);
+    markdown += getPackageChangelog('grafana-ui', grafanaUiIssues);
 
     console.log(markdown);
   }

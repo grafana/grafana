@@ -57,7 +57,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
   return (
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
-      <TabsBar>
+      <TabsBar className="page-header__tabs" hideBorder={true}>
         {main.children.map((child, index) => {
           return (
             <Tab
