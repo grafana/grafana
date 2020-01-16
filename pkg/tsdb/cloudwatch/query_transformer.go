@@ -97,7 +97,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		}
 
 		if partialData {
-			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search may have been limited. Please try to reduce the time range"
+			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search have been limited. Please try to reduce the time range"
 		}
 
 		queryResult.Series = append(queryResult.Series, timeSeries...)
