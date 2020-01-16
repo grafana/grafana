@@ -95,7 +95,9 @@
     "tslint-config-prettier": "^1.18.0",
     "typescript": "3.7.2",
     "url-loader": "^2.0.1",
-    "webpack": "4.35.0"
+    "webpack": "4.35.0",
+    "less": "^3.10.3",
+    "less-loader": "^5.0.0"
   },
   "_moduleAliases": {
     "puppeteer": "node_modules/puppeteer-core"
