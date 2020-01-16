@@ -54,8 +54,6 @@ import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
 
-const exampleApp = async () => await import(/* webpackChunkName: "exampleApp" */ 'app/plugins/app/example-app/module');
-
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
   'app/plugins/datasource/cloudwatch/module': cloudwatchPlugin,
@@ -94,8 +92,6 @@ const builtInPlugins: any = {
   'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/logs/module': logsPanel,
-
-  'app/plugins/app/example-app/module': exampleApp,
 };
 
 export default builtInPlugins;
