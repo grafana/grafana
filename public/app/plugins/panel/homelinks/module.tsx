@@ -60,12 +60,13 @@ export const getStyles = stylesFactory(() => {
     list: css`
       display: flex;
       flex-direction: column;
+      padding: ${theme.spacing.sm};
     `,
     icon: css`
       padding-right: ${theme.spacing.sm};
     `,
     item: css`
-      ${styleMixins.cardChrome(theme)}
+      ${styleMixins.listItem(theme)}
       padding: ${theme.spacing.sm};
       display: flex;
       margin-bottom: ${theme.spacing.xs};

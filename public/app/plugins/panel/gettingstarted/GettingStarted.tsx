@@ -81,7 +81,8 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
           return getBackendSrv()
             .get('/api/org/users/lookup')
             .then((res: any) => {
-              return res.length > 1;
+              /* return res.length > 1; */
+              return false;
             });
         },
       },

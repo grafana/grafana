@@ -367,3 +367,11 @@
     color: $list-item-link-color;
   }
 }
+
+@function lightOrDarkTheme($lightColor, $darkColor) {
+  @if (lightness($text-color) < 50) {
+    @return $lightColor;
+  } @else {
+    @return $darkColor;
+  }
+}
