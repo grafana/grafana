@@ -1,8 +1,9 @@
+import { css } from '@emotion/core';
 import React from 'react';
 import { Themeable } from '../../types/theme';
 import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { css, cx } from 'emotion';
+// import { css, cx } from 'emotion';
 import { stylesFactory } from '../../themes';
 
 export interface CallToActionCardProps extends Themeable {
@@ -39,13 +40,17 @@ export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = 
   theme,
   className,
 }) => {
-  const css = getCallToActionCardStyles(theme);
-
+  // const css = getCallToActionCardStyles(theme);
+  const titleStyle = css`
+    box-sizing: 'border-box';
+    width: 300px;
+    height: 200;
+  `;
   return (
-    <div className={cx([css.wrapper, className])}>
-      {message && <div className={css.message}>{message}</div>}
+    <div css={titleStyle}>
+      {message && <div>{message}</div>}
       {callToActionElement}
-      {footer && <div className={css.footer}>{footer}</div>}
+      {footer && <div>{footer}</div>}
     </div>
   );
 };
