@@ -7,7 +7,6 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const IgnoreNotFoundExportPlugin = require('./IgnoreNotFoundExportPlugin.js');
 
 module.exports = merge(common, {
   mode: 'development',
@@ -48,6 +47,7 @@ module.exports = merge(common, {
   },
 
   module: {
+    // Note: order is bottom-to-top and/or right-to-left
     rules: [
       {
         test: /\.tsx?$/,
@@ -58,6 +58,7 @@ module.exports = merge(common, {
             options: {
               cacheDirectory: true,
               babelrc: false,
+              // Note: order is top-to-bottom and/or left-to-right
               plugins: [
                 [
                   require('@rtsao/plugin-proposal-class-properties'),
@@ -65,10 +66,13 @@ module.exports = merge(common, {
                     loose: true,
                   },
                 ],
-                'angularjs-annotate',
+                '@babel/plugin-proposal-nullish-coalescing-operator',
+                '@babel/plugin-proposal-optional-chaining',
                 '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
+                'angularjs-annotate',
                 'react-hot-loader/babel',
               ],
+              // Note: order is bottom-to-top and/or right-to-left
               presets: [
                 [
                   '@babel/preset-env',
@@ -130,6 +134,5 @@ module.exports = merge(common, {
         NODE_ENV: JSON.stringify('development'),
       },
     }),
-    new IgnoreNotFoundExportPlugin(),
   ],
 });
