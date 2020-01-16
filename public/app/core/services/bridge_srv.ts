@@ -14,7 +14,7 @@ import { VariableSrv } from 'app/features/templating/all';
 export class BridgeSrv {
   private fullPageReloadRoutes: string[];
   private lastQuery: UrlQueryMap = {};
-  private lastPath: string = '';
+  private lastPath = '';
 
   /** @ngInject */
   constructor(
@@ -70,7 +70,7 @@ export class BridgeSrv {
       }
 
       // Check for template variable changes on a dashboard
-      if (state.location.path == this.lastPath) {
+      if (state.location.path === this.lastPath) {
         const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
         if (changes) {
           const dash = getDashboardSrv().getCurrent();
