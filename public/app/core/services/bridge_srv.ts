@@ -13,7 +13,8 @@ import { VariableSrv } from 'app/features/templating/all';
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
   private fullPageReloadRoutes: string[];
-  private lastQuery?: UrlQueryMap;
+  private lastQuery: UrlQueryMap = {};
+  private lastPath: string = '';
 
   /** @ngInject */
   constructor(
@@ -68,8 +69,8 @@ export class BridgeSrv {
         console.log('store updating angular $location.url', url);
       }
 
-      // Check for template variable changes
-      if (this.lastQuery) {
+      // Check for template variable changes on a dashboard
+      if (state.location.path == this.lastPath) {
         const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
         if (changes) {
           const dash = getDashboardSrv().getCurrent();
@@ -77,8 +78,11 @@ export class BridgeSrv {
             this.variableSrv.templateVarsChangedInUrl(changes);
           }
         }
+        this.lastQuery = state.location.query;
+      } else {
+        this.lastQuery = {};
       }
-      this.lastQuery = state.location.query;
+      this.lastPath = state.location.path;
     });
 
     appEvents.on(CoreEvents.locationChange, payload => {
