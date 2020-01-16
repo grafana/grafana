@@ -59,13 +59,13 @@ interface SetDashboardQueriesToUpdatePayload {
   queries: DataQuery[];
 }
 
-export const clearDashboardQueriesToUpdateAction = actionCreatorFactory('CLEAR_DASH_QUERIES_TO_UPDATE').create();
-export const setDashboardQueriesToUpdateAction = actionCreatorFactory<SetDashboardQueriesToUpdatePayload>(
-  'SET_DASH_QUERIES_TO_UPDATE'
-).create();
+export const clearDashboardQueriesToUpdate = createAction('dashboard/clearDashboardQueriesToUpdate');
+export const setDashboardQueriesToUpdate = createAction<SetDashboardQueriesToUpdatePayload>(
+  'dashboard/setDashboardQueriesToUpdate'
+);
 export const setDashboardQueriesToUpdateOnLoad = (panelId: number, queries: DataQuery[]): ThunkResult<void> => {
   return async dispatch => {
-    await dispatch(setDashboardQueriesToUpdateAction({ panelId, queries }));
+    await dispatch(setDashboardQueriesToUpdate({ panelId, queries }));
   };
 };
 

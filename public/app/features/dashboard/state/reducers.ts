@@ -8,8 +8,8 @@ import {
   dashboardInitServices,
   dashboardInitSlow,
   loadDashboardPermissions,
-  setDashboardQueriesToUpdateAction,
-  clearDashboardQueriesToUpdateAction,
+  setDashboardQueriesToUpdate,
+  clearDashboardQueriesToUpdate,
 } from './actions';
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
@@ -93,7 +93,7 @@ export const dashboardReducer = (state: DashboardState = initialState, action: A
     };
   }
 
-  if (setDashboardQueriesToUpdateAction.match(action)) {
+  if (setDashboardQueriesToUpdate.match(action)) {
     const { panelId, queries } = action.payload;
 
     return {
@@ -105,7 +105,7 @@ export const dashboardReducer = (state: DashboardState = initialState, action: A
     };
   }
 
-  if (clearDashboardQueriesToUpdateAction.match(action)) {
+  if (clearDashboardQueriesToUpdate.match(action)) {
     return {
       ...state,
       modifiedQueries: {

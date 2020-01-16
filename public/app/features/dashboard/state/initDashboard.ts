@@ -18,7 +18,7 @@ import {
   dashboardInitFailed,
   dashboardInitSlow,
   dashboardInitServices,
-  clearDashboardQueriesToUpdateAction,
+  clearDashboardQueriesToUpdate,
 } from './actions';
 
 // Types
@@ -242,7 +242,7 @@ function getNewDashboardModelData(urlFolderId?: string): any {
   return data;
 }
 
-async function updateQueriesWhenComingFromExplore(
+function updateQueriesWhenComingFromExplore(
   dispatch: ThunkDispatch,
   dashboard: DashboardModel,
   originPanelId: number,
@@ -255,5 +255,5 @@ async function updateQueriesWhenComingFromExplore(
   }
 
   // Clear update state now that we're done
-  await dispatch(clearDashboardQueriesToUpdateAction());
+  dispatch(clearDashboardQueriesToUpdate());
 }
