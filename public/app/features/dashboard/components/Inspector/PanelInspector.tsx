@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { saveAs } from 'file-saver';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent } from '@grafana/ui';
+import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent, Forms } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides } from '@grafana/data';
+import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides, toCSV } from '@grafana/data';
 import { config } from 'app/core/config';
 
 interface Props {
@@ -99,6 +100,16 @@ export class PanelInspector extends PureComponent<Props, State> {
     this.setState({ selected: item.value || 0 });
   };
 
+  exportCsv = (dataFrame: DataFrame) => {
+    const dataFrameCsv = toCSV([dataFrame]);
+
+    const blob = new Blob([dataFrameCsv], {
+      type: 'application/csv;charset=utf-8',
+    });
+
+    saveAs(blob, dataFrame.name + '-' + new Date().getUTCDate() + '.csv');
+  };
+
   renderMetadataInspector() {
     const { metaDS, data } = this.state;
     if (!metaDS || !metaDS.components?.MetadataInspector) {
@@ -140,7 +151,11 @@ export class PanelInspector extends PureComponent<Props, State> {
             />
           </div>
         )}
-
+        <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '8px 0' }}>
+          <Forms.Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
+            Download CSV
+          </Forms.Button>
+        </div>
         <Table width={width} height={400} data={processed[selected]} />
       </div>
     );
