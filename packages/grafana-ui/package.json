@@ -54,7 +54,6 @@
     "react-storybook-addon-props-combinations": "1.1.0",
     "react-table": "7.0.0-rc.15",
     "react-transition-group": "2.6.1",
-    "react-virtualized-auto-sizer": "1.0.2",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1"
   },
@@ -78,7 +77,6 @@
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.9.0",
     "@types/react-transition-group": "2.0.16",
-    "@types/react-virtualized-auto-sizer": "1.0.0",
     "@types/storybook__addon-info": "4.1.2",
     "@types/storybook__react": "4.0.2",
     "@types/tinycolor2": "1.4.1",
