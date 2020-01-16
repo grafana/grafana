@@ -35,10 +35,6 @@ export class VariableSrv {
       CoreEvents.templateVariableValueUpdated,
       this.updateUrlParamsWithCurrentVariables.bind(this)
     );
-    this.dashboard.events.on(
-      CoreEvents.templateVarsChangedInUrl, // Changed in the URL
-      this.templateVarsChangedInUrl.bind(this)
-    );
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
@@ -309,12 +305,12 @@ export class VariableSrv {
 
   templateVarsChangedInUrl(vars: UrlQueryMap) {
     const update: Array<Promise<any>> = [];
-    this.variables.forEach(v => {
+    for (const v of this.variables) {
       const key = `var-${v.name}`;
       if (vars.hasOwnProperty(key)) {
         update.push(v.setValueFromUrl(vars[key]));
       }
-    });
+    }
     if (update.length) {
       Promise.all(update).then(() => {
         this.dashboard.templateVariableValueUpdated();

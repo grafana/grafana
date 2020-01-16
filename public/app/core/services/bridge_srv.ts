@@ -8,6 +8,7 @@ import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { UrlQueryMap } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { VariableSrv } from 'app/features/templating/all';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
@@ -20,7 +21,8 @@ export class BridgeSrv {
     private $timeout: ITimeoutService,
     private $window: IWindowService,
     private $rootScope: GrafanaRootScope,
-    private $route: any
+    private $route: any,
+    private variableSrv: VariableSrv
   ) {
     this.fullPageReloadRoutes = ['/logout'];
   }
@@ -72,7 +74,7 @@ export class BridgeSrv {
         if (changes) {
           const dash = getDashboardSrv().getCurrent();
           if (dash) {
-            dash.events.emit(CoreEvents.templateVarsChangedInUrl, changes);
+            this.variableSrv.templateVarsChangedInUrl(changes);
           }
         }
       }

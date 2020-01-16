@@ -1,5 +1,4 @@
 import { DataFrame, eventFactory, TimeRange } from '@grafana/data';
-import { UrlQueryMap } from '@grafana/runtime';
 import { IHttpResponse } from 'angular';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -122,11 +121,6 @@ export const rowExpanded = eventFactory('row-expanded');
 export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
-
-/**
- *  Note, this will be removed when variables are handled by redux
- */
-export const templateVarsChangedInUrl = eventFactory<UrlQueryMap>('template-vars-changed-in-url');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
 
