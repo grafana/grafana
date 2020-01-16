@@ -15,10 +15,10 @@ interface Props {
   };
 }
 
-export const SignUp: FC<Props> = props => {
+export const Signup: FC<Props> = props => {
   const [email, setEmail] = useState(props.model.email);
   const [code, setCode] = useState(props.model.code);
-  const [username, setUsername] = useState(props.model.username);
+  // const [username, setUsername] = useState(props.model.username);
   const [orgName, setOrgName] = useState(props.model.orgName);
   const [name, setName] = useState(props.model.name);
   const [password, setPassword] = useState(props.model.password);
