@@ -51,8 +51,11 @@ func TestNotificationService(t *testing.T) {
 	notificationServiceScenario(t, "Given alert rule with upload image enabled and render times out should send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
 		setting.AlertingNotificationTimeout = 200 * time.Millisecond
 		scenarioCtx.renderProvider = func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
+			wait := make(chan bool)
+
 			go func() {
 				time.Sleep(1 * time.Second)
+				wait <- true
 			}()
 
 			select {
@@ -61,6 +64,7 @@ func TestNotificationService(t *testing.T) {
 					return nil, err
 				}
 				break
+			case <-wait:
 			}
 
 			return nil, nil
@@ -76,8 +80,11 @@ func TestNotificationService(t *testing.T) {
 	notificationServiceScenario(t, "Given alert rule with upload image enabled and upload times out should send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
 		setting.AlertingNotificationTimeout = 200 * time.Millisecond
 		scenarioCtx.uploadProvider = func(ctx context.Context, path string) (string, error) {
+			wait := make(chan bool)
+
 			go func() {
 				time.Sleep(1 * time.Second)
+				wait <- true
 			}()
 
 			select {
@@ -86,6 +93,7 @@ func TestNotificationService(t *testing.T) {
 					return "", err
 				}
 				break
+			case <-wait:
 			}
 
 			return "", nil
