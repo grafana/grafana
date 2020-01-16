@@ -1,4 +1,5 @@
 {
+  "plugins": ["emotion", "@babel/plugin-syntax-dynamic-import"],
   "presets": [
     [
       "@babel/preset-env",
