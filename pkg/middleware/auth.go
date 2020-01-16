@@ -47,7 +47,7 @@ func notAuthorized(c *m.ReqContext) {
 		return
 	}
 
-	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/", nil, false, true)
+	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, newCookieOptions)
 
 	c.Redirect(setting.AppSubUrl + "/login")
 }
@@ -100,6 +100,19 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 
 		if !enabled {
 			accessForbidden(c)
+		}
+	}
+}
+
+func SnapshotPublicModeOrSignedIn() macaron.Handler {
+	return func(c *m.ReqContext) {
+		if setting.SnapshotPublicMode {
+			return
+		}
+
+		_, err := c.Invoke(ReqSignedIn)
+		if err != nil {
+			c.JsonApiErr(500, "Failed to invoke required signed in middleware", err)
 		}
 	}
 }

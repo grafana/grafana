@@ -31,7 +31,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Unknwon/com"
+	"github.com/unknwon/com"
 	"github.com/go-macaron/inject"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -162,12 +162,12 @@ func (ctx *Context) renderHTML(status int, setName, tplName string, data ...inte
 	}
 }
 
-// HTML calls Render.HTML but allows less arguments.
+// HTML renders the HTML with default template set.
 func (ctx *Context) HTML(status int, name string, data ...interface{}) {
 	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
 }
 
-// HTML calls Render.HTMLSet but allows less arguments.
+// HTMLSet renders the HTML with given template set name.
 func (ctx *Context) HTMLSet(status int, setName, tplName string, data ...interface{}) {
 	ctx.renderHTML(status, setName, tplName, data...)
 }

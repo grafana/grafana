@@ -15,7 +15,7 @@ import { PanelResizer } from './PanelResizer';
 
 // Types
 import { PanelModel, DashboardModel } from '../state';
-import { PanelPluginMeta, PanelPlugin } from '@grafana/ui/src/types/panel';
+import { PanelPluginMeta, PanelPlugin } from '@grafana/data';
 import { AutoSizer } from 'react-virtualized';
 
 export interface Props {
@@ -34,7 +34,7 @@ export interface State {
 
 export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
-  specialPanels = {};
+  specialPanels: { [key: string]: Function } = {};
 
   constructor(props: Props) {
     super(props);
@@ -61,7 +61,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return <AddPanelWidget panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
-  onPluginTypeChanged = (plugin: PanelPluginMeta) => {
+  onPluginTypeChange = (plugin: PanelPluginMeta) => {
     this.loadPlugin(plugin.id);
   };
 
@@ -211,7 +211,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
             plugin={plugin}
             dashboard={dashboard}
             angularPanel={angularPanel}
-            onTypeChanged={this.onPluginTypeChanged}
+            onPluginTypeChange={this.onPluginTypeChange}
           />
         )}
       </div>

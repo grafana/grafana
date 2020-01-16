@@ -1357,6 +1357,7 @@ Licensed under the MIT license.
                 // .mouseleave when we drop support for 1.2.6.
 
                 eventHolder.bind("mouseleave", onMouseLeave);
+                $(document).bind("touchend", onTouch);
             }
 
             if (options.grid.clickable)
@@ -1372,6 +1373,7 @@ Licensed under the MIT license.
             eventHolder.unbind("mousemove", onMouseMove);
             eventHolder.unbind("mouseleave", onMouseLeave);
             eventHolder.unbind("click", onClick);
+            $(document).unbind("touchend", onTouch);
 
             executeHooks(hooks.shutdown, [eventHolder]);
         }
@@ -1715,6 +1717,23 @@ Licensed under the MIT license.
             axis.max = max;
         }
 
+        // grafana change
+        function getSignificantDigitCount(n) {
+          //remove decimal and make positive
+          n = Math.abs(String(n).replace(".", ""));
+          if (n == 0) {
+            return 0;
+          }
+
+          // kill the 0s at the end of n
+          while (n != 0 && n % 10 == 0) {
+            n /= 10;
+          }
+
+          // get number of digits
+          return Math.floor(Math.log(n) / Math.LN10) + 1;
+        }
+
         function setupTickGeneration(axis) {
             var opts = axis.options;
 
@@ -1763,9 +1782,10 @@ Licensed under the MIT license.
             axis.delta = delta;
             axis.tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
             axis.tickSize = opts.tickSize || size;
+
             // grafana addition
             if (opts.tickDecimals === null || opts.tickDecimals === undefined) {
-              axis.scaledDecimals = axis.tickDecimals - Math.floor(Math.log(axis.tickSize) / Math.LN10);
+              axis.scaledDecimals = axis.tickDecimals + dec;
             }
 
             // Time mode was moved to a plug-in in 0.8, and since so many people use it
@@ -3032,6 +3052,44 @@ Licensed under the MIT license.
           }
 
           triggerClickHoverEvent("plotclick", e, function (s) { return s["clickable"] != false; });
+        }
+
+        // grafana addon - added to support mobile devices click in plot
+        function onTouch(e) {
+            if (!e.cancelable) {
+                return;
+            }
+        
+            if (!eventHolder.is(e.target) && eventHolder.has(e.target).length === 0) {
+                triggerClickHoverEvent("plotleave", e, function (s) { false; });
+                return;
+            }
+
+            onMouseMove(mapFromTouchEvent(e));
+            e.preventDefault();
+        }
+
+        // grafana addon - added to support mobile devices and mapping touch event to click event structure
+        function mapFromTouchEvent(e) {
+            if (!e || !e.originalEvent) {
+                return e;
+            }
+
+            if (e.pageX && e.pageY) {
+                return e;
+            }
+
+            var original = e.originalEvent;
+            
+            if (original.changedTouches.length === 0) {
+                return e;
+            }
+
+            var touch = original.changedTouches[0];
+            e.pageX = touch.pageX;
+            e.pageY = touch.pageY;
+
+            return e;
         }
 
         // trigger click or hover event (they send the same parameters

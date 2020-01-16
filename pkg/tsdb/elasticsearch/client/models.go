@@ -2,9 +2,33 @@ package es
 
 import (
 	"encoding/json"
+	"net/http"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
+
+type response struct {
+	httpResponse *http.Response
+	reqInfo      *SearchRequestInfo
+}
+
+type SearchRequestInfo struct {
+	Method string `json:"method"`
+	Url    string `json:"url"`
+	Data   string `json:"data"`
+}
+
+type SearchResponseInfo struct {
+	Status int              `json:"status"`
+	Data   *simplejson.Json `json:"data"`
+}
+
+type SearchDebugInfo struct {
+	Request  *SearchRequestInfo  `json:"request"`
+	Response *SearchResponseInfo `json:"response"`
+}
 
 // SearchRequest represents a search request
 type SearchRequest struct {
@@ -60,6 +84,7 @@ type MultiSearchRequest struct {
 type MultiSearchResponse struct {
 	Status    int               `json:"status,omitempty"`
 	Responses []*SearchResponse `json:"responses"`
+	DebugInfo *SearchDebugInfo  `json:"-"`
 }
 
 // Query represents a query

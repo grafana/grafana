@@ -3,7 +3,7 @@ title = "Using Stackdriver in Grafana"
 description = "Guide for using Stackdriver in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide"]
 type = "docs"
-aliases = ["/datasources/stackdriver"]
+aliases = ["/docs/grafana/latest/datasources/stackdriver"]
 [menu.docs]
 name = "Google Stackdriver"
 parent = "datasources"
@@ -15,9 +15,9 @@ weight = 4
 > Available as a beta feature in Grafana v5.3.x and v5.4.x.
 > Officially released in Grafana v6.0.0
 
-Grafana ships with built-in support for Google Stackdriver. Just add it as a datasource and you are ready to build dashboards for your Stackdriver metrics.
+Grafana ships with built-in support for Google Stackdriver. Just add it as a data source and you are ready to build dashboards for your Stackdriver metrics.
 
-## Adding the data source to Grafana
+## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -29,8 +29,8 @@ Grafana ships with built-in support for Google Stackdriver. Just add it as a dat
 
 | Name                  | Description                                                                         |
 | --------------------- | ----------------------------------------------------------------------------------- |
-| _Name_                | The datasource name. This is how you refer to the datasource in panels & queries.   |
-| _Default_             | Default datasource means that it will be pre-selected for new panels.               |
+| _Name_                | The data source name. This is how you refer to the data source in panels and queries.   |
+| _Default_             | Default data source means that it will be pre-selected for new panels.               |
 | _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it. |
 
 ## Authentication
@@ -39,7 +39,7 @@ There are two ways to authenticate the Stackdriver plugin - either by uploading 
 
 ### Using a Google Service Account Key File
 
-To authenticate with the Stackdriver API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you need to create one datasource per GCP Project.
+To authenticate with the Stackdriver API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana data source integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you need to create one data source per GCP Project.
 
 #### Enable APIs
 
@@ -54,7 +54,7 @@ Click on the links above and click the `Enable` button:
 
 #### Create a GCP Service Account for a Project
 
-1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
+1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
     {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
@@ -68,7 +68,7 @@ Click on the links above and click the `Enable` button:
     {{< docs-imagebox img="/img/docs/v53/stackdriver_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
 
 5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
-6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
+6. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
 
     {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
@@ -172,7 +172,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query Variable
@@ -202,7 +202,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 {{< docs-imagebox img="/img/docs/v53/stackdriver_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Stackdriver annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Stackdriver.
 
 With the query editor for annotations, you can select a metric and filters. The `Title` and `Text` fields support templating and can use data returned from the query. For example, the Title field could have the following text:
@@ -222,9 +222,9 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 | `{{metric.label.xxx}}`   | returns the metric label value   | `{{metric.label.instance_name}}` | `grafana-1-prod`                                  |
 | `{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}`        | `us-east1-b`                                      |
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here is a provisioning example using the JWT (Service Account key file) authentication type.
 

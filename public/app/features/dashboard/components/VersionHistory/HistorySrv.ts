@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from '../../state/DashboardModel';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 export interface HistoryListOpts {
   limit: number;
@@ -32,7 +33,7 @@ export interface DiffTarget {
 
 export class HistorySrv {
   /** @ngInject */
-  constructor(private backendSrv) {}
+  constructor(private backendSrv: BackendSrv) {}
 
   getHistoryList(dashboard: DashboardModel, options: HistoryListOpts) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;

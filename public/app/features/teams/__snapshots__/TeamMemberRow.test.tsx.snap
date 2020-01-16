@@ -18,6 +18,9 @@ exports[`Render should render team members when sync enabled 1`] = `
   <td>
     test@test.com
   </td>
+  <td>
+    testName
+  </td>
   <Component
     featureToggle={false}
   >
@@ -45,9 +48,10 @@ exports[`Render should render team members when sync enabled 1`] = `
   <td
     className="text-right"
   >
-    <DeleteButton
+    <Component
       disabled={true}
       onConfirm={[Function]}
+      size="sm"
     />
   </td>
 </tr>
@@ -71,6 +75,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
   <td>
     test@test.com
   </td>
+  <td>
+    testName
+  </td>
   <Component
     featureToggle={false}
   >
@@ -81,6 +88,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
         className="gf-form"
       >
         <Select
+          allowCustomValue={false}
           autoFocus={false}
           backspaceRemovesValue={true}
           className="gf-form-select-box__control--menu-right"
@@ -115,6 +123,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
               },
             ]
           }
+          tabSelectsValue={true}
           value={
             Object {
               "description": "Is team member",
@@ -129,9 +138,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
   <td
     className="text-right"
   >
-    <DeleteButton
+    <Component
       disabled={false}
       onConfirm={[Function]}
+      size="sm"
     />
   </td>
 </tr>
@@ -155,6 +165,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
   <td>
     test@test.com
   </td>
+  <td>
+    testName
+  </td>
   <Component
     featureToggle={true}
   >
@@ -165,6 +178,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
         className="gf-form"
       >
         <Select
+          allowCustomValue={false}
           autoFocus={false}
           backspaceRemovesValue={true}
           className="gf-form-select-box__control--menu-right"
@@ -199,6 +213,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
               },
             ]
           }
+          tabSelectsValue={true}
           value={
             Object {
               "description": "Is team member",
@@ -213,9 +228,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
   <td
     className="text-right"
   >
-    <DeleteButton
+    <Component
       disabled={false}
       onConfirm={[Function]}
+      size="sm"
     />
   </td>
 </tr>
@@ -239,6 +255,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
   <td>
     test@test.com
   </td>
+  <td>
+    testName
+  </td>
   <Component
     featureToggle={true}
   >
@@ -257,9 +276,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
   <td
     className="text-right"
   >
-    <DeleteButton
+    <Component
       disabled={true}
       onConfirm={[Function]}
+      size="sm"
     />
   </td>
 </tr>

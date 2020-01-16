@@ -124,7 +124,7 @@ export class TeamPages extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   const teamId = getRouteParamsId(state.location);
   const pageName = getRouteParamsPage(state.location) || 'members';
   const teamLoadingNav = getTeamLoadingNav(pageName as string);
@@ -148,9 +148,4 @@ const mapDispatchToProps = {
   loadTeamMembers,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TeamPages)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamPages));

@@ -61,6 +61,6 @@ func Search(c *m.ReqContext) Response {
 		return Error(500, "Search failed", err)
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Search)
+	c.TimeRequest(metrics.MApiDashboardSearch)
 	return JSON(200, searchQuery.Result)
 }

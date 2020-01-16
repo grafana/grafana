@@ -53,10 +53,11 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 
 // pollChanges periodically runs startWalkingDisk based on interval specified in the config.
 func (fr *fileReader) pollChanges(ctx context.Context) {
-	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
+
+	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
 		select {
-		case <-ticker:
+		case <-ticker.C:
 			if err := fr.startWalkingDisk(); err != nil {
 				fr.log.Error("failed to search for dashboards", "error", err)
 			}

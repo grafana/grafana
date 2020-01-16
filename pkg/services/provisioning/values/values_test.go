@@ -1,16 +1,18 @@
 package values
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/yaml.v2"
 	"os"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/yaml.v2"
 )
 
 func TestValues(t *testing.T) {
 	Convey("Values", t, func() {
 		os.Setenv("INT", "1")
 		os.Setenv("STRING", "test")
+		os.Setenv("EMPTYSTRING", "")
 		os.Setenv("BOOL", "true")
 
 		Convey("IntValue", func() {
@@ -60,6 +62,24 @@ func TestValues(t *testing.T) {
 				unmarshalingTest(`val: `, d)
 				So(d.Val.Value(), ShouldEqual, "")
 				So(d.Val.Raw, ShouldEqual, "")
+			})
+
+			Convey("empty var should have empty value", func() {
+				unmarshalingTest(`val: $EMPTYSTRING`, d)
+				So(d.Val.Value(), ShouldEqual, "")
+				So(d.Val.Raw, ShouldEqual, "$EMPTYSTRING")
+			})
+
+			Convey("$$ should be a literal $", func() {
+				unmarshalingTest(`val: $$`, d)
+				So(d.Val.Value(), ShouldEqual, "$")
+				So(d.Val.Raw, ShouldEqual, "$$")
+			})
+
+			Convey("$$ should be a literal $ and not expanded within a string", func() {
+				unmarshalingTest(`val: mY,Passwo$$rd`, d)
+				So(d.Val.Value(), ShouldEqual, "mY,Passwo$rd")
+				So(d.Val.Raw, ShouldEqual, "mY,Passwo$$rd")
 			})
 		})
 
@@ -111,6 +131,8 @@ func TestValues(t *testing.T) {
                      - two
                      - three:
                          inside: $STRING
+                     - six:
+                         empty:
                    four:
                      nested:
                        onemore: $INT
@@ -121,19 +143,26 @@ func TestValues(t *testing.T) {
                `
 				unmarshalingTest(doc, d)
 
-				type anyMap = map[interface{}]interface{}
-				So(d.Val.Value(), ShouldResemble, map[string]interface{}{
+				type stringMap = map[string]interface{}
+				So(d.Val.Value(), ShouldResemble, stringMap{
 					"one": 1,
 					"two": "test",
 					"three": []interface{}{
-						1, "two", anyMap{
-							"three": anyMap{
+						1,
+						"two",
+						stringMap{
+							"three": stringMap{
 								"inside": "test",
 							},
 						},
+						stringMap{
+							"six": stringMap{
+								"empty": interface{}(nil),
+							},
+						},
 					},
-					"four": anyMap{
-						"nested": anyMap{
+					"four": stringMap{
+						"nested": stringMap{
 							"onemore": "1",
 						},
 					},
@@ -142,18 +171,25 @@ func TestValues(t *testing.T) {
 					"anchored":  "1",
 				})
 
-				So(d.Val.Raw, ShouldResemble, map[string]interface{}{
+				So(d.Val.Raw, ShouldResemble, stringMap{
 					"one": 1,
 					"two": "$STRING",
 					"three": []interface{}{
-						1, "two", anyMap{
-							"three": anyMap{
+						1,
+						"two",
+						stringMap{
+							"three": stringMap{
 								"inside": "$STRING",
 							},
 						},
+						stringMap{
+							"six": stringMap{
+								"empty": interface{}(nil),
+							},
+						},
 					},
-					"four": anyMap{
-						"nested": anyMap{
+					"four": stringMap{
+						"nested": stringMap{
 							"onemore": "$INT",
 						},
 					},
@@ -199,6 +235,7 @@ func TestValues(t *testing.T) {
 		Reset(func() {
 			os.Unsetenv("INT")
 			os.Unsetenv("STRING")
+			os.Unsetenv("EMPTYSTRING")
 			os.Unsetenv("BOOL")
 		})
 	})

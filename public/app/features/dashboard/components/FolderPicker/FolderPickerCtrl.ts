@@ -4,6 +4,7 @@ import appEvents from 'app/core/app_events';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { ValidationSrv } from 'app/features/manage-dashboards';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { AppEvents } from '@grafana/data';
 
 export class FolderPickerCtrl {
   initialTitle: string;
@@ -105,7 +106,7 @@ export class FolderPickerCtrl {
     }
 
     return this.backendSrv.createFolder({ title: this.newFolderName }).then((result: { title: string; id: number }) => {
-      appEvents.emit('alert-success', ['Folder Created', 'OK']);
+      appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
 
       this.closeCreateFolder();
       this.folder = { text: result.title, value: result.id };

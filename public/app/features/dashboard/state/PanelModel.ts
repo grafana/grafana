@@ -1,15 +1,26 @@
 // Libraries
 import _ from 'lodash';
-
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
-
 // Types
-import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
+import {
+  DataQuery,
+  DataQueryResponseData,
+  PanelPlugin,
+  PanelEvents,
+  DataLink,
+  DataTransformerConfig,
+  ScopedVars,
+} from '@grafana/data';
+
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
+import { eventFactory } from '@grafana/data';
+
+export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
+export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
 
 export interface GridPos {
   x: number;
@@ -24,6 +35,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   isInView: true,
+  isNewEdit: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -64,11 +76,11 @@ const mustKeepProps: { [str: string]: boolean } = {
   transparent: true,
   pluginVersion: true,
   queryRunner: true,
+  transformations: true,
 };
 
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
-  datasource: null,
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
@@ -91,6 +103,7 @@ export class PanelModel {
   panels?: any;
   soloMode?: boolean;
   targets: DataQuery[];
+  transformations?: DataTransformerConfig[];
   datasource: string;
   thresholds?: any;
   pluginVersion?: string;
@@ -106,13 +119,14 @@ export class PanelModel {
   maxDataPoints?: number;
   interval?: string;
   description?: string;
-  links?: [];
+  links?: DataLink[];
   transparent: boolean;
 
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isNewEdit: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -124,6 +138,10 @@ export class PanelModel {
   constructor(model: any) {
     this.events = new Emitter();
 
+    // should not be part of defaults as defaults are removed in save model and
+    // this should not be removed in save model as exporter needs to templatize it
+    this.datasource = null;
+
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
@@ -134,7 +152,6 @@ export class PanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
-    this.restoreInfintyForThresholds();
   }
 
   ensureQueryIds() {
@@ -142,16 +159,6 @@ export class PanelModel {
       for (const query of this.targets) {
         if (!query.refId) {
           query.refId = getNextRefIdChar(this.targets);
-        }
-      }
-    }
-  }
-
-  restoreInfintyForThresholds() {
-    if (this.options && this.options.fieldOptions) {
-      for (const threshold of this.options.fieldOptions.thresholds) {
-        if (threshold.value === null) {
-          threshold.value = -Infinity;
         }
       }
     }
@@ -185,7 +192,7 @@ export class PanelModel {
   setViewMode(fullscreen: boolean, isEditing: boolean) {
     this.fullscreen = fullscreen;
     this.isEditing = isEditing;
-    this.events.emit('view-mode-changed');
+    this.events.emit(PanelEvents.viewModeChanged);
   }
 
   updateGridPos(newPos: GridPos) {
@@ -201,29 +208,29 @@ export class PanelModel {
     this.gridPos.h = newPos.h;
 
     if (sizeChanged) {
-      this.events.emit('panel-size-changed');
+      this.events.emit(PanelEvents.panelSizeChanged);
     }
   }
 
   resizeDone() {
-    this.events.emit('panel-size-changed');
+    this.events.emit(PanelEvents.panelSizeChanged);
   }
 
   refresh() {
     this.hasRefreshed = true;
-    this.events.emit('refresh');
+    this.events.emit(PanelEvents.refresh);
   }
 
   render() {
     if (!this.hasRefreshed) {
       this.refresh();
     } else {
-      this.events.emit('render');
+      this.events.emit(PanelEvents.render);
     }
   }
 
   initialized() {
-    this.events.emit('panel-initialized');
+    this.events.emit(PanelEvents.panelInitialized);
   }
 
   private getOptionsToRemember() {
@@ -250,13 +257,15 @@ export class PanelModel {
     if (plugin.angularConfigCtrl) {
       return;
     }
-    this.options = _.defaultsDeep({}, this.options || {}, plugin.defaults);
+    this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
+      if (_.isArray(srcValue)) {
+        return srcValue;
+      }
+    });
   }
 
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
-
-    this.applyPluginOptionDefaults(plugin);
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
@@ -265,15 +274,18 @@ export class PanelModel {
         this.pluginVersion = version;
       }
     }
+
+    this.applyPluginOptionDefaults(plugin);
   }
 
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
+    const wasAngular = !!this.plugin.angularPanelCtrl;
 
     // for angular panels we must remove all events and let angular panels do some cleanup
-    if (this.plugin.angularPanelCtrl) {
+    if (wasAngular) {
       this.destroy();
     }
 
@@ -289,16 +301,23 @@ export class PanelModel {
     this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
 
+    // Let panel plugins inspect options from previous panel and keep any that it can use
+    if (newPlugin.onPanelTypeChanged) {
+      let old: any = {};
+
+      if (wasAngular) {
+        old = { angular: oldOptions };
+      } else if (oldOptions && oldOptions.options) {
+        old = oldOptions.options;
+      }
+      this.options = this.options || {};
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
+    }
+
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
     this.applyPluginOptionDefaults(newPlugin);
-    // Let panel plugins inspect options from previous panel and keep any that it can use
-    if (newPlugin.onPanelTypeChanged) {
-      this.options = this.options || {};
-      const old = oldOptions && oldOptions.options ? oldOptions.options : {};
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
-    }
 
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);
@@ -327,6 +346,7 @@ export class PanelModel {
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
       this.queryRunner = new PanelQueryRunner();
+      this.setTransformations(this.transformations);
     }
     return this.queryRunner;
   }
@@ -335,14 +355,23 @@ export class PanelModel {
     return this.title && this.title.length > 0;
   }
 
+  isAngularPlugin(): boolean {
+    return this.plugin && !!this.plugin.angularPanelCtrl;
+  }
+
   destroy() {
-    this.events.emit('panel-teardown');
+    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
       this.queryRunner.destroy();
       this.queryRunner = null;
     }
+  }
+
+  setTransformations(transformations: DataTransformerConfig[]) {
+    this.transformations = transformations;
+    this.getQueryRunner().setTransformations(transformations);
   }
 }
 

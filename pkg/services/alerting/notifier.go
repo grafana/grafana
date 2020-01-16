@@ -14,6 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// for stubbing in tests
+var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
+	return imguploader.NewImageUploader()
+}
+
 // NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
 	Type            string          `json:"type"`
@@ -38,6 +43,7 @@ type notificationService struct {
 func (n *notificationService) SendIfNeeded(ectx *EvalContext) error {
 	notifierStates, err := n.getNeededNotifiers(ectx.Rule.OrgID, ectx.Rule.Notifications, ectx)
 	if err != nil {
+		n.log.Error("Failed to get alert notifiers", "error", err)
 		return err
 	}
 
@@ -64,12 +70,14 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	notifier := notifierState.notifier
 
 	n.log.Debug("Sending notification", "type", notifier.GetType(), "uid", notifier.GetNotifierUID(), "isDefault", notifier.GetIsDefault())
-	metrics.M_Alerting_Notification_Sent.WithLabelValues(notifier.GetType()).Inc()
+	metrics.MAlertingNotificationSent.WithLabelValues(notifier.GetType()).Inc()
 
 	err := notifier.Notify(evalContext)
 
 	if err != nil {
 		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUID(), "error", err)
+		metrics.MAlertingNotificationFailed.WithLabelValues(notifier.GetType()).Inc()
+		return err
 	}
 
 	if evalContext.IsTestRun {
@@ -114,14 +122,16 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
 			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUID(), "error", err)
+			if evalContext.IsTestRun {
+				return err
+			}
 		}
 	}
-
 	return nil
 }
 
 func (n *notificationService) renderAndUploadImage(context *EvalContext) (err error) {
-	uploader, err := imguploader.NewImageUploader()
+	uploader, err := newImageUploaderProvider()
 	if err != nil {
 		return err
 	}

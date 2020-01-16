@@ -14,7 +14,7 @@ export function elasticPipelineVariables() {
   };
 }
 
-const newVariable = index => {
+const newVariable = (index: any) => {
   return {
     name: 'var' + index,
     pipelineAgg: 'select metric',
@@ -23,7 +23,7 @@ const newVariable = index => {
 
 export class ElasticPipelineVariablesCtrl {
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any) {
     $scope.variables = $scope.variables || [newVariable(1)];
 
     $scope.onChangeInternal = () => {
@@ -35,7 +35,7 @@ export class ElasticPipelineVariablesCtrl {
       $scope.onChange();
     };
 
-    $scope.remove = index => {
+    $scope.remove = (index: number) => {
       $scope.variables.splice(index, 1);
       $scope.onChange();
     };

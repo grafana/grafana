@@ -1,6 +1,6 @@
 ﻿// Slightly modified, but without dependancies:
 // https://raw.githubusercontent.com/malte-wessel/react-custom-scrollbars/master/src/utils/getScrollbarWidth.js
-let scrollbarWidth = null;
+let scrollbarWidth: number | null = null;
 
 export default function getScrollbarWidth() {
   if (scrollbarWidth !== null) {
@@ -19,6 +19,7 @@ export default function getScrollbarWidth() {
     };
 
     Object.keys(newStyles).map(style => {
+      // @ts-ignore
       div.style[style] = newStyles[style];
     });
 

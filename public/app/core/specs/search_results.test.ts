@@ -1,6 +1,7 @@
 import { SearchResultsCtrl } from '../components/search/search_results';
 import { beforeEach, afterEach } from 'test/lib/common';
 import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
 
 jest.mock('app/core/app_events', () => {
   return {
@@ -9,7 +10,7 @@ jest.mock('app/core/app_events', () => {
 });
 
 describe('SearchResultsCtrl', () => {
-  let ctrl;
+  let ctrl: any;
 
   describe('when checking an item that is not checked', () => {
     const item = { checked: false };
@@ -50,11 +51,11 @@ describe('SearchResultsCtrl', () => {
   });
 
   describe('when selecting a tag', () => {
-    let selectedTag = null;
+    let selectedTag: any = null;
 
     beforeEach(() => {
       ctrl = new SearchResultsCtrl({});
-      ctrl.onTagSelected = tag => (selectedTag = tag);
+      ctrl.onTagSelected = (tag: any) => (selectedTag = tag);
       ctrl.selectTag('tag-test');
     });
 
@@ -121,7 +122,7 @@ describe('SearchResultsCtrl', () => {
 
       it('should close the search', () => {
         expect(appEventsMock.emit.mock.calls.length).toBe(1);
-        expect(appEventsMock.emit.mock.calls[0][0]).toBe('hide-dash-search');
+        expect(appEventsMock.emit.mock.calls[0][0]).toBe(CoreEvents.hideDashSearch);
       });
     });
 

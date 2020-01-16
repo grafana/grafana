@@ -1,9 +1,10 @@
 import angular from 'angular';
 import config from 'app/core/config';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 export class SelectOrgCtrl {
   /** @ngInject */
-  constructor($scope, backendSrv, contextSrv) {
+  constructor($scope: any, backendSrv: BackendSrv, contextSrv: any) {
     contextSrv.sidemenu = false;
 
     $scope.navModel = {
@@ -19,12 +20,12 @@ export class SelectOrgCtrl {
     };
 
     $scope.getUserOrgs = () => {
-      backendSrv.get('/api/user/orgs').then(orgs => {
+      backendSrv.get('/api/user/orgs').then((orgs: any) => {
         $scope.orgs = orgs;
       });
     };
 
-    $scope.setUsingOrg = org => {
+    $scope.setUsingOrg = (org: any) => {
       backendSrv.post('/api/user/using/' + org.orgId).then(() => {
         window.location.href = config.appSubUrl + '/';
       });

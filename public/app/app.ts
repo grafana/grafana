@@ -11,15 +11,19 @@ import 'react';
 import 'react-dom';
 
 import 'vendor/bootstrap/bootstrap';
-import 'vendor/angular-ui/ui-bootstrap-tpls';
 import 'vendor/angular-other/angular-strap';
 
 import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
+// @ts-ignore
+import ttiPolyfill from 'tti-polyfill';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
+import { AppEvents, setMarkdownOptions, setLocale } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
+import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
 // add move to lodash for backward compatabiltiy
@@ -32,10 +36,13 @@ _.move = (array: [], fromIndex: number, toIndex: number) => {
 import { coreModule, angularModules } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
 import { setupAngularRoutes } from 'app/routes/routes';
+import { setEchoSrv, registerEchoBackend } from '@grafana/runtime';
+import { Echo } from './core/services/echo/Echo';
+import { reportPerformance } from './core/services/echo/EchoSrv';
+import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { setLocale } from '@grafana/ui/src/utils/moment_wrapper';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
@@ -46,7 +53,7 @@ extensionsIndex.keys().forEach((key: any) => {
 export class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];
-  preBootModules: any[];
+  preBootModules: any[] | null;
 
   constructor() {
     addClassIfNoOverlayScrollbar('no-overlay-scrollbar');
@@ -69,6 +76,8 @@ export class GrafanaApp {
     const app = angular.module('grafana', []);
 
     setLocale(config.bootData.user.locale);
+
+    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
     app.config(
       (
@@ -122,8 +131,6 @@ export class GrafanaApp {
       'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
-      'ui.bootstrap',
-      'ui.bootstrap.tpls',
       'react',
     ];
 
@@ -146,12 +153,41 @@ export class GrafanaApp {
       });
 
       this.preBootModules = null;
+
+      if (!checkBrowserCompatibility()) {
+        setTimeout(() => {
+          appEvents.emit(AppEvents.alertWarning, [
+            'Your browser is not fully supported',
+            'A newer browser version is recommended',
+          ]);
+        }, 1000);
+      }
     });
 
     // Preload selected app plugins
     for (const modulePath of config.pluginsToPreload) {
       importPluginModule(modulePath);
     }
+  }
+
+  initEchoSrv() {
+    setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
+
+    ttiPolyfill.getFirstConsistentlyInteractive().then((tti: any) => {
+      // Collecting paint metrics first
+      const paintMetrics = performance && performance.getEntriesByType ? performance.getEntriesByType('paint') : [];
+
+      for (const metric of paintMetrics) {
+        reportPerformance(metric.name, Math.round(metric.startTime + metric.duration));
+      }
+      reportPerformance('tti', tti);
+    });
+
+    registerEchoBackend(new PerformanceBackend({}));
+
+    window.addEventListener('DOMContentLoaded', () => {
+      reportPerformance('dcl', Math.round(performance.now()));
+    });
   }
 }
 

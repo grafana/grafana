@@ -2,7 +2,7 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { LegendList, LegendPlacement, LegendItem, LegendTable } from './Legend';
 import tinycolor from 'tinycolor2';
-import { DisplayValue } from '../../types/index';
+import { DisplayValue } from '@grafana/data';
 import { number, select, text } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { GraphLegendListItem, GraphLegendTableRow, GraphLegendItemProps } from '../Graph/GraphLegendItem';

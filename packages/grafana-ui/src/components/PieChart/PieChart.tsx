@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 import { select, pie, arc, event } from 'd3';
 import sum from 'lodash/sum';
-
-import { GrafanaThemeType, DisplayValue } from '../../types';
+import { DisplayValue, GrafanaThemeType, formattedValueToString } from '@grafana/data';
 import { Themeable } from '../../index';
 import { colors as grafana_colors } from '../../utils/index';
 
@@ -50,7 +49,7 @@ export class PieChart extends PureComponent<Props> {
     }
 
     const data = values.map(datapoint => datapoint.numeric);
-    const names = values.map(datapoint => datapoint.text);
+    const names = values.map(datapoint => formattedValueToString(datapoint));
     const colors = values.map((p, idx) => {
       if (p.color) {
         return p.color;

@@ -4,21 +4,22 @@ import { TimeSeries } from 'app/core/core';
 import { CustomScrollbar } from '@grafana/ui';
 import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
+type Sort = 'min' | 'max' | 'avg' | 'current' | 'total';
 interface LegendProps {
   seriesList: TimeSeries[];
   optionalClass?: string;
 }
 
 interface LegendEventHandlers {
-  onToggleSeries?: (hiddenSeries) => void;
-  onToggleSort?: (sortBy, sortDesc) => void;
+  onToggleSeries?: (hiddenSeries: any) => void;
+  onToggleSort?: (sortBy: any, sortDesc: any) => void;
   onToggleAxis?: (series: TimeSeries) => void;
   onColorChange?: (series: TimeSeries, color: string) => void;
 }
 
 interface LegendComponentEventHandlers {
-  onToggleSeries?: (series, event) => void;
-  onToggleSort?: (sortBy, sortDesc) => void;
+  onToggleSeries?: (series: TimeSeries, event: any) => void;
+  onToggleSort?: (sortBy: Sort, sortDesc: any) => void;
   onToggleAxis?: (series: TimeSeries) => void;
   onColorChange?: (series: TimeSeries, color: string) => void;
 }
@@ -42,7 +43,7 @@ interface LegendValuesProps {
 }
 
 interface LegendSortProps {
-  sort?: 'min' | 'max' | 'avg' | 'current' | 'total';
+  sort?: Sort;
   sortDesc?: boolean;
 }
 
@@ -80,7 +81,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     onColorChange: () => {},
   };
 
-  constructor(props) {
+  constructor(props: GraphLegendProps) {
     super(props);
     this.state = {
       hiddenSeries: this.props.hiddenSeries,
@@ -104,7 +105,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     return seriesList;
   }
 
-  onToggleSeries = (series, event) => {
+  onToggleSeries = (series: TimeSeries, event: any) => {
     let hiddenSeries = { ...this.state.hiddenSeries };
     if (event.ctrlKey || event.metaKey || event.shiftKey) {
       if (hiddenSeries[series.alias]) {
@@ -119,7 +120,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     this.props.onToggleSeries(hiddenSeries);
   };
 
-  toggleSeriesExclusiveMode(series) {
+  toggleSeriesExclusiveMode(series: TimeSeries) {
     const hiddenSeries = { ...this.state.hiddenSeries };
 
     if (hiddenSeries[series.alias]) {
@@ -226,7 +227,7 @@ class LegendSeriesList extends PureComponent<LegendComponentProps> {
 }
 
 class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
-  onToggleSort = stat => {
+  onToggleSort = (stat: Sort) => {
     let sortDesc = this.props.sortDesc;
     let sortBy = this.props.sort;
     if (stat !== sortBy) {
@@ -247,7 +248,7 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
   render() {
     const seriesList = this.props.seriesList;
     const { values, min, max, avg, current, total, sort, sortDesc, hiddenSeries } = this.props;
-    const seriesValuesProps = { values, min, max, avg, current, total };
+    const seriesValuesProps: any = { values, min, max, avg, current, total };
     return (
       <table>
         <colgroup>

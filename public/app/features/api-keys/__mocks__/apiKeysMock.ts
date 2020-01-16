@@ -7,6 +7,8 @@ export const getMultipleMockKeys = (numberOfKeys: number): ApiKey[] => {
       id: i,
       name: `test-${i}`,
       role: OrgRole.Viewer,
+      secondsToLive: null,
+      expiration: '2019-06-04',
     });
   }
 
@@ -18,5 +20,7 @@ export const getMockKey = (): ApiKey => {
     id: 1,
     name: 'test',
     role: OrgRole.Admin,
+    secondsToLive: null,
+    expiration: '2019-06-04',
   };
 };

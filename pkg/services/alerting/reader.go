@@ -43,6 +43,6 @@ func (arr *defaultRuleReader) fetch() []*Rule {
 		}
 	}
 
-	metrics.M_Alerting_Active_Alerts.Set(float64(len(res)))
+	metrics.MAlertingActiveAlerts.Set(float64(len(res)))
 	return res
 }

@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"fmt"
+	"io/ioutil"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -55,7 +56,7 @@ type AttributeMap struct {
 // config "group_mappings" setting
 type GroupToOrgRole struct {
 	GroupDN string `toml:"group_dn"`
-	OrgID   int64  `toml:"org_id"`
+	OrgId   int64  `toml:"org_id"`
 
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
@@ -118,7 +119,15 @@ func readConfig(configFile string) (*Config, error) {
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
-	_, err := toml.DecodeFile(configFile, result)
+	fileBytes, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, errutil.Wrap("Failed to load LDAP config file", err)
+	}
+
+	// interpolate full toml string (it can contain ENV variables)
+	stringContent := setting.EvalEnvVarExpression(string(fileBytes))
+
+	_, err = toml.Decode(stringContent, result)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to load LDAP config file", err)
 	}
@@ -139,8 +148,8 @@ func readConfig(configFile string) (*Config, error) {
 		}
 
 		for _, groupMap := range server.Groups {
-			if groupMap.OrgID == 0 {
-				groupMap.OrgID = 1
+			if groupMap.OrgId == 0 {
+				groupMap.OrgId = 1
 			}
 		}
 	}

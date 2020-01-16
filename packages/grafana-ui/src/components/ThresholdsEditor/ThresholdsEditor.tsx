@@ -1,127 +1,138 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { Threshold } from '../../types';
+import { Threshold, sortThresholds, ThresholdsConfig, ThresholdsMode, SelectableValue } from '@grafana/data';
 import { colors } from '../../utils';
-import { ThemeContext } from '../../themes';
-import { getColorFromHexRgbOrName } from '../../utils';
+import { getColorFromHexRgbOrName } from '@grafana/data';
 import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
+import { Themeable } from '../../types';
+import { css } from 'emotion';
+import Select from '../Select/Select';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
-export interface Props {
-  thresholds: Threshold[];
-  onChange: (thresholds: Threshold[]) => void;
+const modes: Array<SelectableValue<ThresholdsMode>> = [
+  { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
+  {
+    value: ThresholdsMode.Percentage,
+    label: 'Percentage',
+    description: 'Pick threshold based on the percent between min/max',
+  },
+];
+
+export interface Props extends Themeable {
+  showAlphaUI?: boolean;
+  thresholds: ThresholdsConfig;
+  onChange: (thresholds: ThresholdsConfig) => void;
 }
 
 interface State {
-  thresholds: Threshold[];
+  steps: ThresholdWithKey[];
+}
+
+interface ThresholdWithKey extends Threshold {
+  key: number;
+}
+
+let counter = 100;
+
+function toThresholdsWithKey(steps?: Threshold[]): ThresholdWithKey[] {
+  if (!steps || steps.length === 0) {
+    steps = [{ value: -Infinity, color: 'green' }];
+  }
+
+  return steps.map(t => {
+    return {
+      color: t.color,
+      value: t.value === null ? -Infinity : t.value,
+      key: counter++,
+    };
+  });
 }
 
 export class ThresholdsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const addDefaultThreshold = this.props.thresholds.length === 0;
-    const thresholds: Threshold[] = addDefaultThreshold
-      ? [{ index: 0, value: -Infinity, color: colors[0] }]
-      : props.thresholds;
-    this.state = { thresholds };
+    const steps = toThresholdsWithKey(props.thresholds!.steps);
+    steps[0].value = -Infinity;
 
-    if (addDefaultThreshold) {
-      this.onChange();
-    }
+    this.state = { steps };
   }
 
-  onAddThreshold = (index: number) => {
-    const { thresholds } = this.state;
+  onAddThresholdAfter = (threshold: ThresholdWithKey) => {
+    const { steps } = this.state;
+
     const maxValue = 100;
     const minValue = 0;
 
-    if (index === 0) {
-      return;
+    let prev: ThresholdWithKey | undefined = undefined;
+    let next: ThresholdWithKey | undefined = undefined;
+    for (const t of steps) {
+      if (prev && prev.key === threshold.key) {
+        next = t;
+        break;
+      }
+      prev = t;
     }
 
-    const newThresholds = thresholds.map(threshold => {
-      if (threshold.index >= index) {
-        const index = threshold.index + 1;
-        threshold = { ...threshold, index };
-      }
-      return threshold;
-    });
+    const prevValue = prev && isFinite(prev.value) ? prev.value : minValue;
+    const nextValue = next && isFinite(next.value) ? next.value : maxValue;
 
-    // Setting value to a value between the previous thresholds
-    const beforeThreshold = newThresholds.filter(t => t.index === index - 1 && t.index !== 0)[0];
-    const afterThreshold = newThresholds.filter(t => t.index === index + 1 && t.index !== 0)[0];
-    const beforeThresholdValue = beforeThreshold !== undefined ? beforeThreshold.value : minValue;
-    const afterThresholdValue = afterThreshold !== undefined ? afterThreshold.value : maxValue;
-    const value = afterThresholdValue - (afterThresholdValue - beforeThresholdValue) / 2;
-
-    // Set a color
-    const color = colors.filter(c => !newThresholds.some(t => t.color === c))[1];
+    const color = colors.filter(c => !steps.some(t => t.color === c))[1];
+    const add = {
+      value: prevValue + (nextValue - prevValue) / 2.0,
+      color: color,
+      key: counter++,
+    };
+    const newThresholds = [...steps, add];
+    sortThresholds(newThresholds);
 
     this.setState(
       {
-        thresholds: this.sortThresholds([
-          ...newThresholds,
-          {
-            color,
-            index,
-            value: value as number,
-          },
-        ]),
+        steps: newThresholds,
       },
       () => this.onChange()
     );
   };
 
-  onRemoveThreshold = (threshold: Threshold) => {
-    if (threshold.index === 0) {
+  onRemoveThreshold = (threshold: ThresholdWithKey) => {
+    const { steps } = this.state;
+    if (!steps.length) {
       return;
     }
-
+    // Don't remove index 0
+    if (threshold.key === steps[0].key) {
+      return;
+    }
     this.setState(
-      prevState => {
-        const newThresholds = prevState.thresholds.map(t => {
-          if (t.index > threshold.index) {
-            const index = t.index - 1;
-            t = { ...t, index };
-          }
-          return t;
-        });
-
-        return {
-          thresholds: newThresholds.filter(t => t !== threshold),
-        };
+      {
+        steps: steps.filter(t => t.key !== threshold.key),
       },
       () => this.onChange()
     );
   };
 
-  onChangeThresholdValue = (event: ChangeEvent<HTMLInputElement>, threshold: Threshold) => {
-    if (threshold.index === 0) {
-      return;
-    }
-
-    const { thresholds } = this.state;
+  onChangeThresholdValue = (event: ChangeEvent<HTMLInputElement>, threshold: ThresholdWithKey) => {
     const cleanValue = event.target.value.replace(/,/g, '.');
     const parsedValue = parseFloat(cleanValue);
     const value = isNaN(parsedValue) ? '' : parsedValue;
 
-    const newThresholds = thresholds.map(t => {
-      if (t === threshold && t.index !== 0) {
+    const steps = this.state.steps.map(t => {
+      if (t.key === threshold.key) {
         t = { ...t, value: value as number };
       }
-
       return t;
     });
-
-    this.setState({ thresholds: newThresholds });
+    if (steps.length) {
+      steps[0].value = -Infinity;
+    }
+    this.setState({ steps });
   };
 
-  onChangeThresholdColor = (threshold: Threshold, color: string) => {
-    const { thresholds } = this.state;
+  onChangeThresholdColor = (threshold: ThresholdWithKey, color: string) => {
+    const { steps } = this.state;
 
-    const newThresholds = thresholds.map(t => {
-      if (t === threshold) {
+    const newThresholds = steps.map(t => {
+      if (t.key === threshold.key) {
         t = { ...t, color: color };
       }
 
@@ -130,37 +141,38 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
     this.setState(
       {
-        thresholds: newThresholds,
+        steps: newThresholds,
       },
       () => this.onChange()
     );
   };
 
   onBlur = () => {
-    this.setState(prevState => {
-      const sortThresholds = this.sortThresholds([...prevState.thresholds]);
-      let index = 0;
-      sortThresholds.forEach(t => {
-        t.index = index++;
-      });
-
-      return { thresholds: sortThresholds };
-    });
-
-    this.onChange();
+    const steps = [...this.state.steps];
+    sortThresholds(steps);
+    this.setState(
+      {
+        steps,
+      },
+      () => this.onChange()
+    );
   };
 
   onChange = () => {
-    this.props.onChange(this.state.thresholds);
+    this.props.onChange(thresholdsWithoutKey(this.props.thresholds, this.state.steps));
   };
 
-  sortThresholds = (thresholds: Threshold[]) => {
-    return thresholds.sort((t1, t2) => {
-      return t1.value - t2.value;
-    });
+  onModeChanged = (item: SelectableValue<ThresholdsMode>) => {
+    if (item.value) {
+      this.props.onChange({
+        ...this.props.thresholds,
+        mode: item.value,
+      });
+    }
   };
 
-  renderInput = (threshold: Threshold) => {
+  renderInput = (threshold: ThresholdWithKey) => {
+    const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
     return (
       <div className="thresholds-row-input-inner">
         <span className="thresholds-row-input-inner-arrow" />
@@ -175,12 +187,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             </div>
           )}
         </div>
-        {threshold.index === 0 && (
+        {!isFinite(threshold.value) ? (
           <div className="thresholds-row-input-inner-value">
             <Input type="text" value="Base" readOnly />
           </div>
-        )}
-        {threshold.index > 0 && (
+        ) : (
           <>
             <div className="thresholds-row-input-inner-value">
               <Input
@@ -189,9 +200,13 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
                 value={threshold.value}
                 onBlur={this.onBlur}
-                readOnly={threshold.index === 0}
               />
             </div>
+            {isPercent && (
+              <div className={css(`margin-left:-20px; margin-top:5px;`)}>
+                <i className="fa fa-percent" />
+              </div>
+            )}
             <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
               <i className="fa fa-times" />
             </div>
@@ -202,38 +217,50 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { thresholds } = this.state;
+    const { steps } = this.state;
+    const { theme } = this.props;
+    const t = this.props.thresholds;
     return (
-      <ThemeContext.Consumer>
-        {theme => {
-          return (
-            <PanelOptionsGroup title="Thresholds">
-              <div className="thresholds">
-                {thresholds
-                  .slice(0)
-                  .reverse()
-                  .map((threshold, index) => {
-                    return (
-                      <div className="thresholds-row" key={`${threshold.index}-${index}`}>
-                        <div
-                          className="thresholds-row-add-button"
-                          onClick={() => this.onAddThreshold(threshold.index + 1)}
-                        >
-                          <i className="fa fa-plus" />
-                        </div>
-                        <div
-                          className="thresholds-row-color-indicator"
-                          style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
-                        />
-                        <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </PanelOptionsGroup>
-          );
-        }}
-      </ThemeContext.Consumer>
+      <PanelOptionsGroup title="Thresholds">
+        <>
+          <div className="thresholds">
+            {steps
+              .slice(0)
+              .reverse()
+              .map(threshold => {
+                return (
+                  <div className="thresholds-row" key={`${threshold.key}`}>
+                    <div className="thresholds-row-add-button" onClick={() => this.onAddThresholdAfter(threshold)}>
+                      <i className="fa fa-plus" />
+                    </div>
+                    <div
+                      className="thresholds-row-color-indicator"
+                      style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
+                    />
+                    <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
+                  </div>
+                );
+              })}
+          </div>
+
+          {this.props.showAlphaUI && (
+            <div>
+              <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
+            </div>
+          )}
+        </>
+      </PanelOptionsGroup>
     );
   }
+}
+
+export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: ThresholdWithKey[]): ThresholdsConfig {
+  const mode = thresholds.mode ?? ThresholdsMode.Absolute;
+  return {
+    mode,
+    steps: steps.map(t => {
+      const { key, ...rest } = t;
+      return rest; // everything except key
+    }),
+  };
 }

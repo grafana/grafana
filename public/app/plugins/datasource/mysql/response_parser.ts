@@ -1,10 +1,8 @@
 import _ from 'lodash';
 
 export default class ResponseParser {
-  constructor(private $q) {}
-
-  processQueryResult(res) {
-    const data = [];
+  processQueryResult(res: any) {
+    const data: any[] = [];
 
     if (!res.data.results) {
       return { data: data };
@@ -37,7 +35,7 @@ export default class ResponseParser {
     return { data: data };
   }
 
-  parseMetricFindQueryResult(refId, results) {
+  parseMetricFindQueryResult(refId: string, results: any) {
     if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
       return [];
     }
@@ -54,7 +52,7 @@ export default class ResponseParser {
     return this.transformToSimpleList(rows);
   }
 
-  transformToKeyValueList(rows, textColIndex, valueColIndex) {
+  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number) {
     const res = [];
 
     for (let i = 0; i < rows.length; i++) {
@@ -69,7 +67,7 @@ export default class ResponseParser {
     return res;
   }
 
-  transformToSimpleList(rows) {
+  transformToSimpleList(rows: any) {
     const res = [];
 
     for (let i = 0; i < rows.length; i++) {
@@ -86,7 +84,7 @@ export default class ResponseParser {
     });
   }
 
-  findColIndex(columns, colName) {
+  findColIndex(columns: any[], colName: string) {
     for (let i = 0; i < columns.length; i++) {
       if (columns[i].text === colName) {
         return i;
@@ -96,7 +94,7 @@ export default class ResponseParser {
     return -1;
   }
 
-  containsKey(res, key) {
+  containsKey(res: any[], key: any) {
     for (let i = 0; i < res.length; i++) {
       if (res[i].text === key) {
         return true;
@@ -105,18 +103,21 @@ export default class ResponseParser {
     return false;
   }
 
-  transformAnnotationResponse(options, data) {
+  transformAnnotationResponse(options: any, data: any) {
     const table = data.data.results[options.annotation.name].tables[0];
 
     let timeColumnIndex = -1;
+    let timeEndColumnIndex = -1;
     let textColumnIndex = -1;
     let tagsColumnIndex = -1;
 
     for (let i = 0; i < table.columns.length; i++) {
       if (table.columns[i].text === 'time_sec' || table.columns[i].text === 'time') {
         timeColumnIndex = i;
+      } else if (table.columns[i].text === 'timeend') {
+        timeEndColumnIndex = i;
       } else if (table.columns[i].text === 'title') {
-        return this.$q.reject({
+        return Promise.reject({
           message: 'The title column for annotations is deprecated, now only a column named text is returned',
         });
       } else if (table.columns[i].text === 'text') {
@@ -127,7 +128,7 @@ export default class ResponseParser {
     }
 
     if (timeColumnIndex === -1) {
-      return this.$q.reject({
+      return Promise.reject({
         message: 'Missing mandatory time column (with time_sec column alias) in annotation query.',
       });
     }
@@ -135,9 +136,12 @@ export default class ResponseParser {
     const list = [];
     for (let i = 0; i < table.rows.length; i++) {
       const row = table.rows[i];
+      const timeEnd =
+        timeEndColumnIndex !== -1 && row[timeEndColumnIndex] ? Math.floor(row[timeEndColumnIndex]) : undefined;
       list.push({
         annotation: options.annotation,
         time: Math.floor(row[timeColumnIndex]),
+        timeEnd,
         text: row[textColumnIndex] ? row[textColumnIndex].toString() : '',
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });

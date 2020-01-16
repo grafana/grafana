@@ -6,8 +6,10 @@ import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { isTableData } from '@grafana/ui';
+import { isTableData } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { PanelEvents } from '@grafana/data';
+import { CoreEvents } from 'app/types';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -17,7 +19,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   table: any;
   renderer: any;
 
-  panelDefaults = {
+  panelDefaults: any = {
     targets: [{}],
     transform: 'timeseries_to_columns',
     pageSize: null,
@@ -28,6 +30,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         pattern: 'Time',
         alias: 'Time',
         dateFormat: 'YYYY-MM-DD HH:mm:ss',
+        align: 'auto',
       },
       {
         unit: 'short',
@@ -38,10 +41,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         colorMode: null,
         pattern: '/.*/',
         thresholds: [],
+        align: 'right',
       },
     ],
     columns: [],
-    scroll: true,
+
     fontSize: '100%',
     sort: { col: 0, desc: true },
   };
@@ -68,11 +72,10 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('data-received', this.onDataReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+    this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
   }
 
   onInitEditMode() {
@@ -104,11 +107,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     return super.issueQueries(datasource);
-  }
-
-  onDataError(err: any) {
-    this.dataRaw = [];
-    this.render();
   }
 
   onDataReceived(dataList: any) {
@@ -172,7 +170,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     const scope = this.$scope.$new(true);
     scope.tableData = this.renderer.render_values();
     scope.panel = 'table';
-    this.publishAppEvent('show-modal', {
+    this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow',
@@ -180,7 +178,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   link(scope: any, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {
-    let data;
+    let data: any;
     const panel = ctrl.panel;
     let pageCount = 0;
 
@@ -194,19 +192,19 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       return panelHeight - 31 + 'px';
     }
 
-    function appendTableRows(tbodyElem) {
+    function appendTableRows(tbodyElem: JQuery) {
       ctrl.renderer.setTable(data);
       tbodyElem.empty();
       tbodyElem.html(ctrl.renderer.render(ctrl.pageIndex));
     }
 
-    function switchPage(e) {
+    function switchPage(e: any) {
       const el = $(e.currentTarget);
       ctrl.pageIndex = parseInt(el.text(), 10) - 1;
       renderPanel();
     }
 
-    function appendPaginationControls(footerElem) {
+    function appendPaginationControls(footerElem: JQuery) {
       footerElem.empty();
 
       const pageSize = panel.pageSize || 100;
@@ -243,7 +241,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       appendTableRows(tbodyElem);
       appendPaginationControls(footerElem);
 
-      rootElem.css({ 'max-height': panel.scroll ? getTableHeight() : '' });
+      rootElem.css({ 'max-height': getTableHeight() });
     }
 
     // hook up link tooltips
@@ -251,7 +249,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       selector: '[data-link-tooltip]',
     });
 
-    function addFilterClicked(e) {
+    function addFilterClicked(e: any) {
       const filterData = $(e.currentTarget).data();
       const options = {
         datasource: panel.datasource,
@@ -272,7 +270,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       unbindDestroy();
     });
 
-    ctrl.events.on('render', renderData => {
+    ctrl.events.on(PanelEvents.render, (renderData: any) => {
       data = renderData || data;
       if (data) {
         renderPanel();

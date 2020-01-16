@@ -21,7 +21,7 @@ ls -al /home/xclient/wix/light.exe.config
 cat /home/xclient/wix/light.exe.config
 cp /master/light.exe.config /home/xclient/wix/light.exe.config
 cat /home/xclient/wix/light.exe.config
-cd /master
+cd /master || exit 1
 echo "Building MSI"
 python3 generator/build.py "$@"
 #

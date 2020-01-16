@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { TeamMember, TeamPermissionLevel } from '../../types';
 import { getMockTeamMember } from './__mocks__/teamMocks';
 import { TeamMemberRow, Props } from './TeamMemberRow';
-import { SelectOptionItem } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -74,13 +74,14 @@ describe('Functions', () => {
       teamId: 2,
       avatarUrl: '',
       email: 'user@user.org',
-      labels: [],
       login: 'member',
+      name: 'member',
+      labels: [],
       permission: TeamPermissionLevel.Member,
     };
     const { instance } = setup({ member });
     const permission = TeamPermissionLevel.Admin;
-    const item: SelectOptionItem<TeamPermissionLevel> = { value: permission };
+    const item: SelectableValue<TeamPermissionLevel> = { value: permission };
     const expectedTeamMemeber = { ...member, permission };
 
     instance.onPermissionChange(item, member);

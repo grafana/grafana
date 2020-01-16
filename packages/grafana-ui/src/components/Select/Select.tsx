@@ -4,86 +4,48 @@ import React, { PureComponent } from 'react';
 
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
-import { default as ReactSelect } from '@torkelo/react-select';
+import { default as ReactSelect, Creatable } from '@torkelo/react-select';
+// @ts-ignore
+import { Creatable } from '@torkelo/react-select/lib/creatable';
 // @ts-ignore
 import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
 
 // Components
-import { SelectOption, SingleValue } from './SelectOption';
-import SelectOptionGroup from './SelectOptionGroup';
+import { SelectOption } from './SelectOption';
+import { SelectOptionGroup } from '../Forms/Select/SelectOptionGroup';
+import { SingleValue } from '../Forms/Select/SingleValue';
+import { SelectCommonProps, SelectAsyncProps } from '../Forms/Select/SelectBase';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from './resetSelectStyles';
+import resetSelectStyles from '../Forms/Select/resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { PopperContent } from '../Tooltip/PopperController';
+import { PopoverContent } from '../Tooltip/Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { SelectableValue } from '@grafana/data';
 
-export interface SelectOptionItem<T> {
-  label?: string;
-  value?: T;
-  imgUrl?: string;
-  description?: string;
-  [key: string]: any;
-}
+/**
+ * Changes in new selects:
+ * - noOptionsMessage & loadingMessage is of string type
+ * - isDisabled is renamed to disabled
+ */
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value'>;
 
-export interface CommonProps<T> {
-  defaultValue?: any;
-  getOptionLabel?: (item: SelectOptionItem<T>) => string;
-  getOptionValue?: (item: SelectOptionItem<T>) => string;
-  onChange: (item: SelectOptionItem<T>) => {} | void;
-  placeholder?: string;
-  width?: number;
-  value?: SelectOptionItem<T>;
-  className?: string;
-  isDisabled?: boolean;
-  isSearchable?: boolean;
-  isClearable?: boolean;
-  autoFocus?: boolean;
-  openMenuOnFocus?: boolean;
-  onBlur?: () => void;
-  maxMenuHeight?: number;
-  isLoading?: boolean;
-  noOptionsMessage?: () => string;
-  isMulti?: boolean;
-  backspaceRemovesValue?: boolean;
-  isOpen?: boolean;
-  components?: any;
-  tooltipContent?: PopperContent<any>;
-  onOpenMenu?: () => void;
-  onCloseMenu?: () => void;
-}
-
-export interface SelectProps<T> extends CommonProps<T> {
-  options: Array<SelectOptionItem<T>>;
-}
-
-interface AsyncProps<T> extends CommonProps<T> {
-  defaultOptions: boolean;
-  loadOptions: (query: string) => Promise<Array<SelectOptionItem<T>>>;
+interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;
+  noOptionsMessage?: () => string;
+  tooltipContent?: PopoverContent;
+  isDisabled?: boolean;
+  value?: SelectableValue<T>;
 }
 
-const wrapInTooltip = (
-  component: React.ReactElement,
-  tooltipContent: PopperContent<any> | undefined,
-  isMenuOpen: boolean | undefined
-) => {
-  const showTooltip = isMenuOpen ? false : undefined;
-  if (tooltipContent) {
-    return (
-      <Tooltip show={showTooltip} content={tooltipContent} placement="bottom">
-        <div>
-          {/* div needed for tooltip */}
-          {component}
-        </div>
-      </Tooltip>
-    );
-  } else {
-    return <div>{component}</div>;
-  }
-};
+interface LegacySelectProps<T> extends LegacyCommonProps<T> {
+  tooltipContent?: PopoverContent;
+  noOptionsMessage?: () => string;
+  isDisabled?: boolean;
+  value?: SelectableValue<T>;
+}
 
 export const MenuList = (props: any) => {
   return (
@@ -94,9 +56,8 @@ export const MenuList = (props: any) => {
     </components.MenuList>
   );
 };
-
-export class Select<T> extends PureComponent<SelectProps<T>> {
-  static defaultProps: Partial<SelectProps<any>> = {
+export class Select<T> extends PureComponent<LegacySelectProps<T>> {
+  static defaultProps: Partial<LegacySelectProps<any>> = {
     className: '',
     isDisabled: false,
     isSearchable: true,
@@ -107,6 +68,8 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
     isLoading: false,
     backspaceRemovesValue: true,
     maxMenuHeight: 300,
+    tabSelectsValue: true,
+    allowCustomValue: false,
     components: {
       Option: SelectOption,
       SingleValue,
@@ -114,20 +77,6 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       MenuList,
       Group: SelectOptionGroup,
     },
-  };
-
-  onOpenMenu = () => {
-    const { onOpenMenu } = this.props;
-    if (onOpenMenu) {
-      onOpenMenu();
-    }
-  };
-
-  onCloseMenu = () => {
-    const { onCloseMenu } = this.props;
-    if (onCloseMenu) {
-      onCloseMenu();
-    }
   };
 
   render() {
@@ -155,6 +104,11 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       isOpen,
       components,
       tooltipContent,
+      tabSelectsValue,
+      onCloseMenu,
+      onOpenMenu,
+      allowCustomValue,
+      formatCreateLabel,
     } = this.props;
 
     let widthClass = '';
@@ -162,39 +116,53 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       widthClass = 'width-' + width;
     }
 
+    let SelectComponent: ReactSelect | Creatable = ReactSelect;
+    const creatableOptions: any = {};
+
+    if (allowCustomValue) {
+      SelectComponent = Creatable;
+      creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => input);
+    }
+
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
     const selectComponents = { ...Select.defaultProps.components, ...components };
-    return wrapInTooltip(
-      <ReactSelect
-        classNamePrefix="gf-form-select-box"
-        className={selectClassNames}
-        components={selectComponents}
-        defaultValue={defaultValue}
-        value={value}
-        getOptionLabel={getOptionLabel}
-        getOptionValue={getOptionValue}
-        menuShouldScrollIntoView={false}
-        isSearchable={isSearchable}
-        onChange={onChange}
-        options={options}
-        placeholder={placeholder || 'Choose'}
-        styles={resetSelectStyles()}
-        isDisabled={isDisabled}
-        isLoading={isLoading}
-        isClearable={isClearable}
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        openMenuOnFocus={openMenuOnFocus}
-        maxMenuHeight={maxMenuHeight}
-        noOptionsMessage={noOptionsMessage}
-        isMulti={isMulti}
-        backspaceRemovesValue={backspaceRemovesValue}
-        menuIsOpen={isOpen}
-        onMenuOpen={this.onOpenMenu}
-        onMenuClose={this.onCloseMenu}
-      />,
-      tooltipContent,
-      isOpen
+    return (
+      <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
+        {(onOpenMenuInternal, onCloseMenuInternal) => {
+          return (
+            <SelectComponent
+              classNamePrefix="gf-form-select-box"
+              className={selectClassNames}
+              components={selectComponents}
+              defaultValue={defaultValue}
+              value={value}
+              getOptionLabel={getOptionLabel}
+              getOptionValue={getOptionValue}
+              menuShouldScrollIntoView={false}
+              isSearchable={isSearchable}
+              onChange={onChange}
+              options={options}
+              placeholder={placeholder || 'Choose'}
+              styles={resetSelectStyles()}
+              isDisabled={isDisabled}
+              isLoading={isLoading}
+              isClearable={isClearable}
+              autoFocus={autoFocus}
+              onBlur={onBlur}
+              openMenuOnFocus={openMenuOnFocus}
+              maxMenuHeight={maxMenuHeight}
+              noOptionsMessage={() => noOptionsMessage}
+              isMulti={isMulti}
+              backspaceRemovesValue={backspaceRemovesValue}
+              menuIsOpen={isOpen}
+              onMenuOpen={onOpenMenuInternal}
+              onMenuClose={onCloseMenuInternal}
+              tabSelectsValue={tabSelectsValue}
+              {...creatableOptions}
+            />
+          );
+        }}
+      </WrapInTooltip>
     );
   }
 }
@@ -239,6 +207,9 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       maxMenuHeight,
       isMulti,
       tooltipContent,
+      onCloseMenu,
+      onOpenMenu,
+      isOpen,
     } = this.props;
 
     let widthClass = '';
@@ -248,42 +219,104 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
 
-    return wrapInTooltip(
-      <ReactAsyncSelect
-        classNamePrefix="gf-form-select-box"
-        className={selectClassNames}
-        components={{
-          Option: SelectOption,
-          SingleValue,
-          IndicatorsContainer,
-          NoOptionsMessage,
+    return (
+      <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
+        {(onOpenMenuInternal, onCloseMenuInternal) => {
+          return (
+            <ReactAsyncSelect
+              classNamePrefix="gf-form-select-box"
+              className={selectClassNames}
+              components={{
+                Option: SelectOption,
+                SingleValue,
+                IndicatorsContainer,
+                NoOptionsMessage,
+              }}
+              defaultValue={defaultValue}
+              value={value}
+              getOptionLabel={getOptionLabel}
+              getOptionValue={getOptionValue}
+              menuShouldScrollIntoView={false}
+              onChange={onChange}
+              loadOptions={loadOptions}
+              isLoading={isLoading}
+              defaultOptions={defaultOptions}
+              placeholder={placeholder || 'Choose'}
+              styles={resetSelectStyles()}
+              loadingMessage={() => loadingMessage}
+              noOptionsMessage={noOptionsMessage}
+              isDisabled={isDisabled}
+              isSearchable={isSearchable}
+              isClearable={isClearable}
+              autoFocus={autoFocus}
+              onBlur={onBlur}
+              openMenuOnFocus={openMenuOnFocus}
+              maxMenuHeight={maxMenuHeight}
+              isMulti={isMulti}
+              backspaceRemovesValue={backspaceRemovesValue}
+            />
+          );
         }}
-        defaultValue={defaultValue}
-        value={value}
-        getOptionLabel={getOptionLabel}
-        getOptionValue={getOptionValue}
-        menuShouldScrollIntoView={false}
-        onChange={onChange}
-        loadOptions={loadOptions}
-        isLoading={isLoading}
-        defaultOptions={defaultOptions}
-        placeholder={placeholder || 'Choose'}
-        styles={resetSelectStyles()}
-        loadingMessage={loadingMessage}
-        noOptionsMessage={noOptionsMessage}
-        isDisabled={isDisabled}
-        isSearchable={isSearchable}
-        isClearable={isClearable}
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        openMenuOnFocus={openMenuOnFocus}
-        maxMenuHeight={maxMenuHeight}
-        isMulti={isMulti}
-        backspaceRemovesValue={backspaceRemovesValue}
-      />,
-      tooltipContent,
-      false
+      </WrapInTooltip>
     );
+  }
+}
+
+export interface TooltipWrapperProps {
+  children: (onOpenMenu: () => void, onCloseMenu: () => void) => React.ReactNode;
+  onOpenMenu?: () => void;
+  onCloseMenu?: () => void;
+  isOpen?: boolean;
+  tooltipContent?: PopoverContent;
+}
+
+export interface TooltipWrapperState {
+  isOpenInternal: boolean;
+}
+
+export class WrapInTooltip extends PureComponent<TooltipWrapperProps, TooltipWrapperState> {
+  state: TooltipWrapperState = {
+    isOpenInternal: false,
+  };
+
+  onOpenMenu = () => {
+    const { onOpenMenu } = this.props;
+    if (onOpenMenu) {
+      onOpenMenu();
+    }
+    this.setState({ isOpenInternal: true });
+  };
+
+  onCloseMenu = () => {
+    const { onCloseMenu } = this.props;
+    if (onCloseMenu) {
+      onCloseMenu();
+    }
+    this.setState({ isOpenInternal: false });
+  };
+
+  render() {
+    const { children, isOpen, tooltipContent } = this.props;
+    const { isOpenInternal } = this.state;
+
+    let showTooltip: boolean | undefined = undefined;
+
+    if (isOpenInternal || isOpen) {
+      showTooltip = false;
+    }
+
+    if (tooltipContent) {
+      return (
+        <Tooltip show={showTooltip} content={tooltipContent} placement="bottom">
+          <div>
+            {/* div needed for tooltip */}
+            {children(this.onOpenMenu, this.onCloseMenu)}
+          </div>
+        </Tooltip>
+      );
+    } else {
+      return <div>{children(this.onOpenMenu, this.onCloseMenu)}</div>;
+    }
   }
 }
 

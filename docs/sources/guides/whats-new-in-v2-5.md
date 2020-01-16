@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v2.5"
-description = "Feature & improvement highlights for Grafana v2.5"
+description = "Feature and improvement highlights for Grafana v2.5"
 keywords = ["grafana", "new", "documentation", "2.5"]
 type = "docs"
 +++
@@ -16,7 +16,7 @@ resize handles and improved InfluxDB and OpenTSDB support.
 <img src="/img/docs/whatsnew_2_5/timepicker.png" alt="New Time picker">
 
 A new timepicker with room for more quick ranges as well as new types of relative ranges, like `Today`,
-`The day so far` and `This day last week`. Also an improved time & calendar picker that now works
+`The day so far` and `This day last week`. Also an improved time and calendar picker that now works
 correctly in UTC mode.
 
 ### Elasticsearch
@@ -37,13 +37,13 @@ and complex queries for logs or metrics.
 - Query only relevant indices based on time pattern
 - Alias patterns for short readable series names
 
-Try the new Elasticsearch query editor on the [play.grafana.org](http://play.grafana.org/dashboard/db/elasticsearch-metrics) site.
+Try the new Elasticsearch query editor on the [play.grafana.org](https://play.grafana.org/dashboard/db/elasticsearch-metrics) site.
 
 ### CloudWatch
 
 <img src="/img/docs/whatsnew_2_5/cloudwatch.png" alt="Cloudwatch editor">
 
-Grafana 2.5 ships with a new CloudWatch datasource that will allow you to query and visualize CloudWatch
+Grafana 2.5 ships with a new CloudWatch data source that will allow you to query and visualize CloudWatch
 metrics directly from Grafana.
 
 - Rich editor with auto completion for metric names, namespaces and dimensions
@@ -54,7 +54,7 @@ metrics directly from Grafana.
 
 <img src="/img/docs/whatsnew_2_5/prometheus_editor.png" alt="Prometheus editor">
 
-Grafana 2.5 ships with a new Prometheus datasource that will allow you to query and visualize data
+Grafana 2.5 ships with a new Prometheus data source that will allow you to query and visualize data
 stored in Prometheus.
 
 

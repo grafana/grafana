@@ -2,6 +2,7 @@ package commands
 
 import (
 	"os"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
@@ -16,27 +17,40 @@ import (
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
 		cmd := &utils.ContextCommandLine{Context: context}
+		debug := cmd.GlobalBool("debug")
 
 		cfg := setting.NewCfg()
 
-		cfg.Load(&setting.CommandLineArgs{
-			Config:   cmd.String("config"),
-			HomePath: cmd.String("homepath"),
-			Args:     context.Args(),
-		})
+		configOptions := strings.Split(cmd.GlobalString("configOverrides"), " ")
+		if err := cfg.Load(&setting.CommandLineArgs{
+			Config:   cmd.ConfigFile(),
+			HomePath: cmd.HomePath(),
+			Args:     append(configOptions, cmd.Args()...), // tailing arguments have precedence over the options string
+		}); err != nil {
+			logger.Errorf("\n%s: Failed to load configuration", color.RedString("Error"))
+			os.Exit(1)
+		}
 
-		cfg.LogConfigSources()
+		if debug {
+			cfg.LogConfigSources()
+		}
 
 		engine := &sqlstore.SqlStore{}
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
-		engine.Init()
+		if err := engine.Init(); err != nil {
+			logger.Errorf("\n%s: Failed to initialize SQL engine", color.RedString("Error"))
+			os.Exit(1)
+		}
 
 		if err := command(cmd, engine); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s\n\n", err)
 
-			cmd.ShowHelp()
+			if err := cmd.ShowHelp(); err != nil {
+				logger.Errorf("\n%s: Failed to show help: %s %s\n\n", color.RedString("Error"),
+					color.RedString("✗"), err)
+			}
 			os.Exit(1)
 		}
 
@@ -52,7 +66,10 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
 
-			cmd.ShowHelp()
+			if err := cmd.ShowHelp(); err != nil {
+				logger.Errorf("\n%s: Failed to show help: %s %s\n\n", color.RedString("Error"),
+					color.RedString("✗"), err)
+			}
 			os.Exit(1)
 		}
 
@@ -68,7 +85,7 @@ var pluginCommands = []cli.Command{
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
-		Action: runPluginCommand(listremoteCommand),
+		Action: runPluginCommand(listRemoteCommand),
 	}, {
 		Name:   "list-versions",
 		Usage:  "list-versions <plugin id>",
@@ -95,23 +112,11 @@ var pluginCommands = []cli.Command{
 	},
 }
 
-var dbCommandFlags = []cli.Flag{
-	cli.StringFlag{
-		Name:  "homepath",
-		Usage: "path to grafana install/home path, defaults to working directory",
-	},
-	cli.StringFlag{
-		Name:  "config",
-		Usage: "path to config file",
-	},
-}
-
 var adminCommands = []cli.Command{
 	{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
 		Action: runDbCommand(resetPasswordCommand),
-		Flags:  dbCommandFlags,
 	},
 	{
 		Name:  "data-migration",
@@ -121,7 +126,6 @@ var adminCommands = []cli.Command{
 				Name:   "encrypt-datasource-passwords",
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
 				Action: runDbCommand(datamigrations.EncryptDatasourcePaswords),
-				Flags:  dbCommandFlags,
 			},
 		},
 	},

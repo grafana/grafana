@@ -1,20 +1,19 @@
 // Libraries
 import React from 'react';
 import _ from 'lodash';
-
+import { LocationUpdate } from '@grafana/runtime';
+import { e2e } from '@grafana/e2e';
 // Utils
 import config from 'app/core/config';
 import store from 'app/core/store';
-
 // Store
 import { store as reduxStore } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-
 // Types
-import { PanelModel } from '../../state';
-import { DashboardModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { LocationUpdate } from '@grafana/runtime';
+
+export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
 export interface Props {
   panel: PanelModel;
@@ -26,7 +25,7 @@ export interface State {
 }
 
 export class AddPanelWidget extends React.Component<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.handleCloseAddPanel = this.handleCloseAddPanel.bind(this);
 
@@ -58,7 +57,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
     return _.sortBy(copiedPanels, 'sort');
   }
 
-  handleCloseAddPanel(evt) {
+  handleCloseAddPanel(evt: any) {
     evt.preventDefault();
     this.props.dashboard.removePanel(this.props.panel);
   }
@@ -93,7 +92,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
     reduxStore.dispatch(updateLocation(location));
   };
 
-  onPasteCopiedPanel = panelPluginInfo => {
+  onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
     const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
@@ -132,14 +131,14 @@ export class AddPanelWidget extends React.Component<Props, State> {
     dashboard.removePanel(this.props.panel);
   };
 
-  renderOptionLink = (icon: string, text: string, onClick) => {
+  renderOptionLink = (icon: string, text: string, onClick: any) => {
     return (
       <div>
         <a
           href="#"
           onClick={onClick}
           className="add-panel-widget__link btn btn-inverse"
-          aria-label={`${text} CTA button`}
+          aria-label={e2e.pages.AddDashboard.selectors.ctaButtons(text)}
         >
           <div className="add-panel-widget__icon">
             <i className={`gicon gicon-${icon}`} />

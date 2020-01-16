@@ -16,7 +16,7 @@ describe('QueryVariable', () => {
 
     it('get model should copy changes back to model', () => {
       const variable = new QueryVariable({}, null, null, null, null);
-      variable.options = [{ text: 'test' }];
+      variable.options = [{ text: 'test', value: '', selected: false }];
       variable.datasource = 'google';
       variable.regex = 'asd';
       variable.sort = 50;
@@ -31,7 +31,7 @@ describe('QueryVariable', () => {
 
     it('if refresh != 0 then remove options in presisted mode', () => {
       const variable = new QueryVariable({}, null, null, null, null);
-      variable.options = [{ text: 'test' }];
+      variable.options = [{ text: 'test', value: '', selected: false }];
       variable.refresh = 1;
 
       const model = variable.getSaveModel();
@@ -41,7 +41,7 @@ describe('QueryVariable', () => {
 
   describe('can convert and sort metric names', () => {
     const variable = new QueryVariable({}, null, null, null, null);
-    let input;
+    let input: any;
 
     beforeEach(() => {
       input = [
@@ -61,7 +61,7 @@ describe('QueryVariable', () => {
     });
 
     describe('can sort a mixed array of metric variables in numeric order', () => {
-      let result;
+      let result: any;
 
       beforeEach(() => {
         variable.sort = 3; // Numerical (asc)
@@ -82,7 +82,7 @@ describe('QueryVariable', () => {
     });
 
     describe('can sort a mixed array of metric variables in alphabetical order', () => {
-      let result;
+      let result: any;
 
       beforeEach(() => {
         variable.sort = 5; // Alphabetical CI (asc)

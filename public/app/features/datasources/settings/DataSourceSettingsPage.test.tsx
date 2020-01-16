@@ -1,11 +1,10 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DataSourceSettingsPage, Props } from './DataSourceSettingsPage';
-import { DataSourceSettings, DataSourcePlugin, DataSourceConstructor } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { DataSourceConstructor, DataSourcePlugin, DataSourceSettings, NavModel } from '@grafana/data';
 import { getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { setDataSourceName, setIsDefault } from '../state/actions';
+import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 
 const pluginMock = new DataSourcePlugin({} as DataSourceConstructor<any>);
 
@@ -26,6 +25,7 @@ const setup = (propOverrides?: object) => {
     setDataSourceName,
     updateDataSource: jest.fn(),
     setIsDefault,
+    dataSourceLoaded,
     query: {},
     ...propOverrides,
   };

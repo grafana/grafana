@@ -1,13 +1,17 @@
 import React, { PureComponent } from 'react';
 
-import { Select } from '..';
+import { Select } from '../Select/Select';
 
-import { getValueFormats } from '../../utils';
+import { getValueFormats, SelectableValue } from '@grafana/data';
 
 interface Props {
-  onChange: (item: any) => void;
-  defaultValue?: string;
+  onChange: (item?: string) => void;
+  value?: string;
   width?: number;
+}
+
+function formatCreateLabel(input: string) {
+  return `Custom unit: ${input}`;
 }
 
 export class UnitPicker extends PureComponent<Props> {
@@ -15,18 +19,30 @@ export class UnitPicker extends PureComponent<Props> {
     width: 12,
   };
 
-  render() {
-    const { defaultValue, onChange, width } = this.props;
+  onChange = (value: SelectableValue<string>) => {
+    this.props.onChange(value.value);
+  };
 
+  render() {
+    const { value, width } = this.props;
+
+    // Set the current selection
+    let current: SelectableValue<string> | undefined = undefined;
+
+    // All units
     const unitGroups = getValueFormats();
 
     // Need to transform the data structure to work well with Select
     const groupOptions = unitGroups.map(group => {
       const options = group.submenu.map(unit => {
-        return {
+        const sel = {
           label: unit.text,
           value: unit.value,
         };
+        if (unit.value === value) {
+          current = sel;
+        }
+        return sel;
       });
 
       return {
@@ -35,18 +51,21 @@ export class UnitPicker extends PureComponent<Props> {
       };
     });
 
-    const value = groupOptions.map(group => {
-      return group.options.find(option => option.value === defaultValue);
-    });
+    // Show the custom unit
+    if (value && !current) {
+      current = { value, label: value };
+    }
 
     return (
       <Select
         width={width}
-        defaultValue={value}
+        defaultValue={current}
         isSearchable={true}
+        allowCustomValue={true}
+        formatCreateLabel={formatCreateLabel}
         options={groupOptions}
         placeholder="Choose"
-        onChange={onChange}
+        onChange={this.onChange}
       />
     );
   }

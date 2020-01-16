@@ -20,17 +20,28 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	datasources := []*models.DataSource{
 		{Type: "influxdb", Name: "influxdb", Password: "foobar"},
 		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar"},
-		{Type: "prometheus", Name: "prometheus", SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{})},
+		{Type: "prometheus", Name: "prometheus"},
+		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd"},
 	}
 
 	// set required default values
 	for _, ds := range datasources {
 		ds.Created = time.Now()
 		ds.Updated = time.Now()
-		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{})
+		if ds.Name == "elasticsearch" {
+			ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
+				"key": "value",
+			})
+		} else {
+			ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{})
+		}
 	}
 
 	_, err := session.Insert(&datasources)
+	assert.Nil(t, err)
+
+	// force secure_json_data to be null to verify that migration can handle that
+	_, err = session.Exec("update data_source set secure_json_data = null where name = 'influxdb'")
 	assert.Nil(t, err)
 
 	//run migration
@@ -41,7 +52,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	var dss []*models.DataSource
 	err = session.SQL("select * from data_source").Find(&dss)
 	assert.Nil(t, err)
-	assert.Equal(t, len(dss), 3)
+	assert.Equal(t, len(dss), 4)
 
 	for _, ds := range dss {
 		sj := ds.SecureJsonData.Decrypt()
@@ -62,6 +73,16 @@ func TestPasswordMigrationCommand(t *testing.T) {
 
 		if ds.Name == "prometheus" {
 			assert.Equal(t, len(sj), 0)
+		}
+
+		if ds.Name == "elasticsearch" {
+			assert.Equal(t, ds.Password, "")
+			key, exist := sj["key"]
+			assert.True(t, exist)
+			password, exist := sj["password"]
+			assert.True(t, exist)
+			assert.Equal(t, password, "pwd", "expected password to be moved to securejson")
+			assert.Equal(t, key, "value", "expected existing key to be kept intact in securejson")
 		}
 	}
 }

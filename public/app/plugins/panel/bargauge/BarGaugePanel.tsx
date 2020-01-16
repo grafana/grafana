@@ -4,32 +4,50 @@ import React, { PureComponent } from 'react';
 // Services & Utils
 import { config } from 'app/core/config';
 
-// Components
-import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay } from '@grafana/ui';
-
-// Types
+import { BarGauge, VizRepeater, DataLinksContextMenu } from '@grafana/ui';
 import { BarGaugeOptions } from './types';
-import { PanelProps } from '@grafana/ui/src/types';
+import {
+  getFieldDisplayValues,
+  FieldDisplay,
+  PanelProps,
+  getDisplayValueAlignmentFactors,
+  DisplayValueAlignmentFactors,
+} from '@grafana/data';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
-  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
+  renderValue = (
+    value: FieldDisplay,
+    width: number,
+    height: number,
+    alignmentFactors: DisplayValueAlignmentFactors
+  ): JSX.Element => {
     const { options } = this.props;
-    const { fieldOptions } = options;
-    const { field, display } = value;
+    const { field, display, view, colIndex } = value;
+    const f = view.dataFrame.fields[colIndex];
 
     return (
-      <BarGauge
-        value={display}
-        width={width}
-        height={height}
-        orientation={options.orientation}
-        thresholds={fieldOptions.thresholds}
-        theme={config.theme}
-        itemSpacing={this.getItemSpacing()}
-        displayMode={options.displayMode}
-        minValue={field.min}
-        maxValue={field.max}
-      />
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+        {({ openMenu, targetClassName }) => {
+          return (
+            <BarGauge
+              value={display}
+              width={width}
+              height={height}
+              orientation={options.orientation}
+              field={field}
+              display={f.display!}
+              theme={config.theme}
+              itemSpacing={this.getItemSpacing()}
+              displayMode={options.displayMode}
+              onClick={openMenu}
+              className={targetClassName}
+              alignmentFactors={alignmentFactors}
+              showUnfilled={options.showUnfilled}
+            />
+          );
+        }}
+      </DataLinksContextMenu>
     );
   };
 
@@ -40,6 +58,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
+      autoMinMax: true,
     });
   };
 
@@ -57,6 +76,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     return (
       <VizRepeater
         source={data}
+        getAlignmentFactors={getDisplayValueAlignmentFactors}
         getValues={this.getValues}
         renderValue={this.renderValue}
         renderCounter={renderCounter}

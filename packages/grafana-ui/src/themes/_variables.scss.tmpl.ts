@@ -1,6 +1,6 @@
 /* tslint:disable:max-line-length */
 
-import { GrafanaThemeCommons } from '../types';
+import { GrafanaThemeCommons } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const commonThemeVarsTemplate = (theme: GrafanaThemeCommons) =>
@@ -99,7 +99,6 @@ $height-lg: ${theme.height.lg};
 $font-family-sans-serif: ${theme.typography.fontFamily.sansSerif};
 $font-family-monospace: ${theme.typography.fontFamily.monospace};
 
-$font-size-root: ${theme.typography.size.root} !default;
 $font-size-base: ${theme.typography.size.base} !default;
 
 $font-size-lg: ${theme.typography.size.lg} !default;
@@ -107,7 +106,7 @@ $font-size-md: ${theme.typography.size.md} !default;
 $font-size-sm: ${theme.typography.size.sm} !default;
 $font-size-xs: ${theme.typography.size.xs} !default;
 
-$line-height-base: ${theme.typography.lineHeight.lg} !default;
+$line-height-base: ${theme.typography.lineHeight.md} !default;
 
 $font-weight-regular: ${theme.typography.weight.regular} !default;
 $font-weight-semi-bold: ${theme.typography.weight.semibold} !default;
@@ -171,13 +170,12 @@ $zindex-tooltip: ${theme.zIndex.tooltip};
 $zindex-modal-backdrop: ${theme.zIndex.modalBackdrop};
 $zindex-modal: ${theme.zIndex.modal};
 $zindex-typeahead: ${theme.zIndex.typeahead};
-$zindex-timepicker-popover: 1070;
 
 // Buttons
 //
 
 $btn-padding-x: 14px !default;
-$btn-padding-y: 10px !default;
+$btn-padding-y: 8px !default;
 $btn-line-height: 1 !default;
 $btn-font-weight: ${theme.typography.weight.semibold} !default;
 
@@ -194,6 +192,7 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 
 // sidemenu
 $side-menu-width: 60px;
+$navbar-padding: 20px;
 
 // dashboard
 $dashboard-padding: $space-md;

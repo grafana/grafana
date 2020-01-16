@@ -2,11 +2,11 @@ import React, { PureComponent } from 'react';
 
 import extend from 'lodash/extend';
 
-import { PluginMeta, DataSourceApi } from '@grafana/ui';
 import { PluginDashboard } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { appEvents } from 'app/core/core';
 import DashboardsTable from 'app/features/datasources/DashboardsTable';
+import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
 
 interface Props {
   plugin: PluginMeta;
@@ -60,7 +60,7 @@ export class PluginDashboards extends PureComponent<Props, State> {
   import = (dash: PluginDashboard, overwrite: boolean) => {
     const { plugin, datasource } = this.props;
 
-    const installCmd = {
+    const installCmd: any = {
       pluginId: plugin.id,
       path: dash.path,
       overwrite: overwrite,
@@ -79,7 +79,7 @@ export class PluginDashboards extends PureComponent<Props, State> {
     return getBackendSrv()
       .post(`/api/dashboards/import`, installCmd)
       .then((res: PluginDashboard) => {
-        appEvents.emit('alert-success', ['Dashboard Imported', dash.title]);
+        appEvents.emit(AppEvents.alertSuccess, ['Dashboard Imported', dash.title]);
         extend(dash, res);
         this.setState({ dashboards: [...this.state.dashboards] });
       });

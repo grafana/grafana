@@ -1,35 +1,42 @@
 import OpenTsDatasource from '../datasource';
-import $q from 'q';
 
 describe('opentsdb', () => {
   const ctx = {
     backendSrv: {},
     ds: {},
     templateSrv: {
-      replace: str => str,
+      replace: (str: string) => str,
     },
   } as any;
   const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
 
   beforeEach(() => {
-    ctx.ctrl = new OpenTsDatasource(instanceSettings, $q, ctx.backendSrv, ctx.templateSrv);
+    ctx.ctrl = new OpenTsDatasource(instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When performing metricFindQuery', () => {
-    let results;
-    let requestOptions;
+    let results: any;
+    let requestOptions: any;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = await (options => {
+      ctx.backendSrv.datasourceRequest = await ((options: any) => {
         requestOptions = options;
         return Promise.resolve({
-          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
+          data: [
+            {
+              target: 'prod1.count',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ],
         });
       });
     });
 
     it('metrics() should generate api suggest query', () => {
-      ctx.ctrl.metricFindQuery('metrics(pew)').then(data => {
+      ctx.ctrl.metricFindQuery('metrics(pew)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/suggest');
@@ -39,7 +46,7 @@ describe('opentsdb', () => {
     });
 
     it('tag_names(cpu) should generate lookup query', () => {
-      ctx.ctrl.metricFindQuery('tag_names(cpu)').then(data => {
+      ctx.ctrl.metricFindQuery('tag_names(cpu)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/search/lookup');
@@ -47,7 +54,7 @@ describe('opentsdb', () => {
     });
 
     it('tag_values(cpu, test) should generate lookup query', () => {
-      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname)').then(data => {
+      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/search/lookup');
@@ -55,7 +62,7 @@ describe('opentsdb', () => {
     });
 
     it('tag_values(cpu, test) should generate lookup query', () => {
-      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname, env=$env)').then(data => {
+      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname, env=$env)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/search/lookup');
@@ -63,7 +70,7 @@ describe('opentsdb', () => {
     });
 
     it('tag_values(cpu, test) should generate lookup query', () => {
-      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname, env=$env, region=$region)').then(data => {
+      ctx.ctrl.metricFindQuery('tag_values(cpu, hostname, env=$env, region=$region)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/search/lookup');
@@ -71,7 +78,7 @@ describe('opentsdb', () => {
     });
 
     it('suggest_tagk() should generate api suggest query', () => {
-      ctx.ctrl.metricFindQuery('suggest_tagk(foo)').then(data => {
+      ctx.ctrl.metricFindQuery('suggest_tagk(foo)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/suggest');
@@ -80,7 +87,7 @@ describe('opentsdb', () => {
     });
 
     it('suggest_tagv() should generate api suggest query', () => {
-      ctx.ctrl.metricFindQuery('suggest_tagv(bar)').then(data => {
+      ctx.ctrl.metricFindQuery('suggest_tagv(bar)').then((data: any) => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/suggest');

@@ -1,6 +1,8 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import { FilterSegments, DefaultFilterValue } from './filter_segments';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { Segment } from './types';
 
 export class StackdriverFilterCtrl {
   defaultRemoveGroupByValue = '-- remove group by --';
@@ -13,11 +15,11 @@ export class StackdriverFilterCtrl {
   hideGroupBys: boolean;
   labelData: any;
   loading: Promise<any>;
-  filtersChanged: (filters) => void;
-  groupBysChanged: (groupBys) => void;
+  filtersChanged: (filters: any) => void;
+  groupBysChanged: (groupBys: any) => void;
 
   /** @ngInject */
-  constructor(private $scope, private uiSegmentSrv, private templateSrv) {
+  constructor(private $scope: any, private uiSegmentSrv: any, private templateSrv: TemplateSrv) {
     this.$scope.ctrl = this;
     this.initSegments(this.hideGroupBys);
   }
@@ -74,7 +76,7 @@ export class StackdriverFilterCtrl {
     return elements;
   }
 
-  async getFilterKeys(segment, removeText: string) {
+  async getFilterKeys(segment: { type: string }, removeText: string) {
     let elements = await this.createLabelKeyElements();
 
     if (this.filters.indexOf(this.resourceTypeValue) !== -1) {
@@ -94,7 +96,7 @@ export class StackdriverFilterCtrl {
         ];
   }
 
-  async getGroupBys(segment) {
+  async getGroupBys(segment: { type: any }) {
     let elements = await this.createLabelKeyElements();
     elements = elements.filter(e => this.groupBys.indexOf(e.value) === -1);
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
@@ -106,14 +108,14 @@ export class StackdriverFilterCtrl {
     return segment.type === 'plus-button' ? elements : [...elements, this.removeSegment];
   }
 
-  groupByChanged(segment, index) {
+  groupByChanged(segment: any, index?: number) {
     if (segment.value === this.removeSegment.value) {
       this.groupBySegments.splice(index, 1);
     } else {
       segment.type = 'value';
     }
 
-    const reducer = (memo, seg) => {
+    const reducer = (memo: any[], seg: { fake: any; value: any }) => {
       if (!seg.fake) {
         memo.push(seg.value);
       }
@@ -125,13 +127,13 @@ export class StackdriverFilterCtrl {
     this.ensurePlusButton(this.groupBySegments);
   }
 
-  async getFilters(segment, index) {
+  async getFilters(segment: { type: string }, index: number) {
     await this.loading;
     const hasNoFilterKeys = this.labelData.metricLabels && Object.keys(this.labelData.metricLabels).length === 0;
     return this.filterSegments.getFilters(segment, index, hasNoFilterKeys);
   }
 
-  getFilterValues(index) {
+  getFilterValues(index: number) {
     const filterKey = this.templateSrv.replace(this.filterSegments.filterSegments[index - 2].value);
     if (!filterKey || !this.labelData.metricLabels || Object.keys(this.labelData.metricLabels).length === 0) {
       return [];
@@ -154,14 +156,14 @@ export class StackdriverFilterCtrl {
     return [];
   }
 
-  filterSegmentUpdated(segment, index) {
+  filterSegmentUpdated(segment: { value: string; type: string }, index: number) {
     const filters = this.filterSegments.filterSegmentUpdated(segment, index);
     if (!filters.some(f => f === DefaultFilterValue)) {
       this.filtersChanged({ filters });
     }
   }
 
-  ensurePlusButton(segments) {
+  ensurePlusButton(segments: Segment[]) {
     const count = segments.length;
     const lastSegment = segments[Math.max(count - 1, 0)];
 
