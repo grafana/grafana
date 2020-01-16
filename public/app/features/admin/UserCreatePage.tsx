@@ -24,10 +24,6 @@ interface UserDTO {
 const createUser = async (user: UserDTO) => getBackendSrv().post('/api/admin/users', user);
 
 const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocation }) => {
-  const { register, handleSubmit, errors } = Forms.useForm<UserDTO>({
-    mode: 'onBlur',
-  });
-
   const onSubmit = useCallback(async (data: UserDTO) => {
     await createUser(data);
     updateLocation({ path: '/admin/users' });
@@ -37,37 +33,43 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
     <Page navModel={navModel}>
       <Page.Contents>
         <h1>Add new user</h1>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Forms.Field label="Name" required invalid={!!errors.name} error={!!errors.name && 'Name is required'}>
-            <Forms.Input name="name" size="md" ref={register({ required: true })} />
-          </Forms.Field>
+        <Forms.Form onSubmit={onSubmit} validateOn="onBlur">
+          {({ register, errors }) => {
+            return (
+              <>
+                <Forms.Field label="Name" required invalid={!!errors.name} error={!!errors.name && 'Name is required'}>
+                  <Forms.Input name="name" size="md" ref={register({ required: true })} />
+                </Forms.Field>
 
-          <Forms.Field label="E-mail">
-            <Forms.Input name="email" size="md" ref={register} />
-          </Forms.Field>
+                <Forms.Field label="E-mail">
+                  <Forms.Input name="email" size="md" ref={register} />
+                </Forms.Field>
 
-          <Forms.Field label="Username">
-            <Forms.Input name="login" size="md" ref={register} />
-          </Forms.Field>
-          <Forms.Field
-            label="Password"
-            required
-            invalid={!!errors.password}
-            error={!!errors.password && 'Password is required and must contain at least 4 characters'}
-          >
-            <Forms.Input
-              size="md"
-              type="password"
-              name="password"
-              ref={register({
-                validate: value => {
-                  return value.trim() !== '' && value.length >= 4;
-                },
-              })}
-            />
-          </Forms.Field>
-          <Forms.Button type="submit">Create user</Forms.Button>
-        </form>
+                <Forms.Field label="Username">
+                  <Forms.Input name="login" size="md" ref={register} />
+                </Forms.Field>
+                <Forms.Field
+                  label="Password"
+                  required
+                  invalid={!!errors.password}
+                  error={!!errors.password && 'Password is required and must contain at least 4 characters'}
+                >
+                  <Forms.Input
+                    size="md"
+                    type="password"
+                    name="password"
+                    ref={register({
+                      validate: value => {
+                        return value.trim() !== '' && value.length >= 4;
+                      },
+                    })}
+                  />
+                </Forms.Field>
+                <Forms.Button type="submit">Create user</Forms.Button>
+              </>
+            );
+          }}
+        </Forms.Form>
       </Page.Contents>
     </Page>
   );

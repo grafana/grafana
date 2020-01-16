@@ -5,7 +5,6 @@ import { Select } from './Select/Select';
 import { Form } from './Form';
 import { Field } from './Field';
 import { Button, LinkButton } from './Button';
-import { useForm } from 'react-hook-form';
 
 const Forms = {
   getFormStyles,
@@ -16,7 +15,6 @@ const Forms = {
   Button,
   LinkButton,
   Select,
-  useForm,
 };
 
 export default Forms;
