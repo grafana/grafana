@@ -95,16 +95,6 @@ export default class AdminEditUserCtrl {
       backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload);
     };
 
-    $scope.create = () => {
-      if (!$scope.userForm.$valid) {
-        return;
-      }
-
-      backendSrv.post('/api/admin/users', $scope.user).then(() => {
-        $location.path('/admin/users');
-      });
-    };
-
     $scope.getUserOrgs = (id: number) => {
       backendSrv.get('/api/users/' + id + '/orgs').then((orgs: any) => {
         $scope.orgs = orgs;
