@@ -1,12 +1,14 @@
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { saveAs } from 'file-saver';
+import { css } from 'emotion';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent, Forms } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides, toCSV } from '@grafana/data';
 import { config } from 'app/core/config';
+import memoizeOne from 'memoize-one';
 
 interface Props {
   dashboard: DashboardModel;
@@ -36,6 +38,22 @@ interface State {
   // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
 }
+
+const getStyles = memoizeOne(() => {
+  return {
+    toolbar: css`
+      display: flex;
+      margin: 8px 0;
+    `,
+    dataFrameSelect: css`
+      flex-grow: 2;
+    `,
+    downloadCsv: css`
+      flex-grow: 1;
+      margin-left: 16px;
+    `,
+  };
+});
 
 export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -120,6 +138,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   renderDataTab(width: number) {
     const { data, selected } = this.state;
+    const styles = getStyles();
     if (!data || !data.length) {
       return <div>No Data</div>;
     }
@@ -142,19 +161,21 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     return (
       <div>
-        {choices.length > 1 && (
-          <div>
-            <Select
-              options={choices}
-              value={choices.find(t => t.value === selected)}
-              onChange={this.onSelectedFrameChanged}
-            />
+        <div className={styles.toolbar}>
+          {choices.length > 1 && (
+            <div className={styles.dataFrameSelect}>
+              <Select
+                options={choices}
+                value={choices.find(t => t.value === selected)}
+                onChange={this.onSelectedFrameChanged}
+              />
+            </div>
+          )}
+          <div className={styles.downloadCsv}>
+            <Forms.Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
+              Download CSV
+            </Forms.Button>
           </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '8px 0' }}>
-          <Forms.Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
-            Download CSV
-          </Forms.Button>
         </div>
         <Table width={width} height={400} data={processed[selected]} />
       </div>
