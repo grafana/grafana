@@ -1,0 +1,22 @@
+{
+  "type": "datasource",
+  "name": "RSS Feed",
+  "id": "rss-feed",
+
+  "metrics": true,
+  "alerting": false,
+  "annotations": false,
+  "logs": false,
+
+  "info": {
+    "description": "Data source that supports data from RSS feed",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/input.svg",
+      "large": "img/input.svg"
+    }
+  }
+}
