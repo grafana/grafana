@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -82,7 +84,7 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
-		License: models.OSSLicensingService{},
+		License: &licensing.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
@@ -112,7 +114,7 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
 		Secure:   hs.Cfg.CookieSecure,
-		SameSite: hs.Cfg.CookieSameSite,
+		SameSite: hs.Cfg.CookieSameSiteMode,
 	}
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
@@ -132,8 +134,9 @@ func TestLoginViewRedirect(t *testing.T) {
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
-		License: models.OSSLicensingService{},
+		License: &licensing.OSSLicensingService{},
 	}
+	hs.Cfg.CookieSecure = true
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		c.IsSignedIn = true
@@ -192,17 +195,17 @@ func TestLoginViewRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		setting.AppUrl = c.appURL
-		setting.AppSubUrl = c.appSubURL
+		hs.Cfg.AppUrl = c.appURL
+		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     setting.AppSubUrl + "/",
+				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
-				SameSite: hs.Cfg.CookieSameSite,
+				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
 			sc.m.Get(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
@@ -211,6 +214,19 @@ func TestLoginViewRedirect(t *testing.T) {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
 				assert.Equal(t, location[0], c.url)
+
+				setCookie, ok := sc.resp.Header()["Set-Cookie"]
+				assert.True(t, ok, "Set-Cookie exists")
+				assert.Greater(t, len(setCookie), 0)
+				var redirectToCookieFound bool
+				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, hs.Cfg.AppSubUrl+"/")
+				for _, cookieValue := range setCookie {
+					if cookieValue == expCookieValue {
+						redirectToCookieFound = true
+						break
+					}
+				}
+				assert.True(t, redirectToCookieFound)
 			}
 
 			responseString, err := getBody(sc.resp)
@@ -232,9 +248,10 @@ func TestLoginPostRedirect(t *testing.T) {
 	hs := &HTTPServer{
 		log:              &FakeLogger{},
 		Cfg:              setting.NewCfg(),
-		License:          models.OSSLicensingService{},
+		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 	}
+	hs.Cfg.CookieSecure = true
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
 		cmd := dtos.LoginCommand{
@@ -286,17 +303,17 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		setting.AppUrl = c.appURL
-		setting.AppSubUrl = c.appSubURL
+		hs.Cfg.AppUrl = c.appURL
+		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     setting.AppSubUrl + "/",
+				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
-				SameSite: hs.Cfg.CookieSameSite,
+				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("POST", sc.url, cookie).exec()
@@ -310,6 +327,19 @@ func TestLoginPostRedirect(t *testing.T) {
 			} else {
 				assert.Equal(t, c.url, redirectURL)
 			}
+			// assert redirect_to cookie is deleted
+			setCookie, ok := sc.resp.Header()["Set-Cookie"]
+			assert.True(t, ok, "Set-Cookie exists")
+			assert.Greater(t, len(setCookie), 0)
+			var redirectToCookieFound bool
+			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", hs.Cfg.AppSubUrl+"/")
+			for _, cookieValue := range setCookie {
+				if cookieValue == expCookieValue {
+					redirectToCookieFound = true
+					break
+				}
+			}
+			assert.True(t, redirectToCookieFound)
 		})
 	}
 }
@@ -321,7 +351,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
-		License: models.OSSLicensingService{},
+		License: &licensing.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
@@ -379,7 +409,7 @@ func setupAuthProxyLoginTest(enableLoginToken bool) *scenarioContext {
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:              setting.NewCfg(),
-		License:          models.OSSLicensingService{},
+		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 	}

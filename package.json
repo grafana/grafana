@@ -204,6 +204,7 @@
     "@babel/polyfill": "7.6.0",
     "@braintree/sanitize-url": "4.0.0",
     "@grafana/slate-react": "0.22.9-grafana",
+    "@reduxjs/toolkit": "1.2.1",
     "@torkelo/react-select": "2.4.1",
     "@types/react-loadable": "5.5.2",
     "angular": "1.6.9",

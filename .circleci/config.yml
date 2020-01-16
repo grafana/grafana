@@ -437,6 +437,40 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
+  build-docs-website:
+    docker:
+        - image: grafana/build-container:1.2.13
+    working_directory: /docs
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - run:
+          name: install docker 
+          command: |
+            apt-get update
+            apt-get install -y docker.io
+      - run:
+          name: build grafana docs website
+          command: |
+            # https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
+            # create a dummy container which will hold a volume with config
+            docker create -v /hugo/content/docs/grafana --name docs-website alpine:3.4 /bin/true
+            # copy a config file into this volume
+            docker cp ${PWD}/docs/sources docs-website:/hugo/content/docs/grafana/latest
+            # start an application container using this volume
+            docker run --volumes-from docs-website --rm -it grafana/docs-base:latest /bin/bash -c 'npm i && make prod'
+      - run:
+          name: ci job failed
+          command: 'docker stop docs-website && docker rm docs-website && ./scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: 'docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh'
+          when: on_success
+
   build-fast-package:
     docker:
       - image: grafana/build-container:1.2.13
@@ -1320,6 +1354,8 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
+            filters: *filter-not-release-or-master
+        - build-docs-website:
             filters: *filter-not-release-or-master
   nightly:
     triggers:
