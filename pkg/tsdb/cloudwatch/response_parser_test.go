@@ -12,6 +12,172 @@ import (
 
 func TestCloudWatchResponseParser(t *testing.T) {
 	Convey("TestCloudWatchResponseParser", t, func() {
+		Convey("can expand dimension value using exact match", func() {
+			timestamp := time.Unix(0, 0)
+			resp := map[string]*cloudwatch.MetricDataResult{
+				"lb1": {
+					Id:    aws.String("id1"),
+					Label: aws.String("lb1"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+				"lb2": {
+					Id:    aws.String("id2"),
+					Label: aws.String("lb2"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			}
+
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb2"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{LoadBalancer}} Expanded",
+			}
+			series, err := parseGetMetricDataTimeSeries(resp, query)
+			timeSeries := (*series)[0]
+
+			So(err, ShouldBeNil)
+			So(timeSeries.Name, ShouldEqual, "lb2 Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb2")
+		})
+
+		Convey("can expand dimension value using substring", func() {
+			timestamp := time.Unix(0, 0)
+			resp := map[string]*cloudwatch.MetricDataResult{
+				"lb1 Sum": {
+					Id:    aws.String("id1"),
+					Label: aws.String("lb1 Sum"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+				"lb2 Average": {
+					Id:    aws.String("id2"),
+					Label: aws.String("lb2 Average"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			}
+
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{LoadBalancer}} Expanded",
+			}
+			series, err := parseGetMetricDataTimeSeries(resp, query)
+			timeSeries := (*series)[0]
+
+			So(err, ShouldBeNil)
+			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+		})
+
+		Convey("can expand dimension value using wildcard", func() {
+			timestamp := time.Unix(0, 0)
+			resp := map[string]*cloudwatch.MetricDataResult{
+				"lb3": {
+					Id:    aws.String("lb3"),
+					Label: aws.String("lb3"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+				"lb4": {
+					Id:    aws.String("lb4"),
+					Label: aws.String("lb4"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			}
+
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"*"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{LoadBalancer}} Expanded",
+			}
+			series, err := parseGetMetricDataTimeSeries(resp, query)
+
+			So(err, ShouldBeNil)
+			So((*series)[0].Name, ShouldEqual, "lb3 Expanded")
+			So((*series)[1].Name, ShouldEqual, "lb4 Expanded")
+		})
 
 		Convey("can parse cloudwatch response", func() {
 			timestamp := time.Unix(0, 0)
