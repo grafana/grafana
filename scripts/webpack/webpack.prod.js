@@ -4,7 +4,6 @@ const merge = require('webpack-merge');
 const TerserPlugin = require('terser-webpack-plugin');
 const common = require('./webpack.common.js');
 const path = require('path');
-const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -20,28 +19,55 @@ module.exports = merge(common, {
   },
 
   module: {
+    // Note: order is bottom-to-top and/or right-to-left
     rules: [
       {
         test: /\.tsx?$/,
-        enforce: 'pre',
         exclude: /node_modules/,
-        use: {
-          loader: 'tslint-loader',
-          options: {
-            emitErrors: true,
-            typeCheck: false,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              cacheDirectory: true,
+              babelrc: false,
+              // Note: order is top-to-bottom and/or left-to-right
+              plugins: [
+                [
+                  require('@rtsao/plugin-proposal-class-properties'),
+                  {
+                    loose: true,
+                  },
+                ],
+                '@babel/plugin-proposal-nullish-coalescing-operator',
+                '@babel/plugin-proposal-optional-chaining',
+                '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
+                'angularjs-annotate',
+              ],
+              // Note: order is bottom-to-top and/or right-to-left
+              presets: [
+                [
+                  '@babel/preset-env',
+                  {
+                    targets: {
+                      browsers: 'last 3 versions',
+                    },
+                    useBuiltIns: 'entry',
+                    modules: false,
+                  },
+                ],
+                '@babel/preset-typescript',
+                '@babel/preset-react',
+              ],
+            },
           },
-        },
-      },
-      {
-        test: /\.tsx?$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'ts-loader',
-          options: {
-            transpileOnly: true,
+          {
+            loader: 'tslint-loader',
+            options: {
+              emitErrors: true,
+              typeCheck: false,
+            },
           },
-        },
+        ],
       },
       require('./sass.rule.js')({
         sourceMap: false,
@@ -67,7 +93,6 @@ module.exports = merge(common, {
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[hash].css',
     }),
-    new ngAnnotatePlugin(),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/error.html'),
       template: path.resolve(__dirname, '../../public/views/error-template.html'),
