@@ -134,7 +134,7 @@ $path-position: $marker-size-half - ($path-height / 2);
   height: $marker-size;
   padding-bottom: 2px; // To align text within the marker
   z-index: 1;
-  background-color: $body-bg;
+  background-color: $panel-bg;
   margin-left: auto;
   margin-right: auto;
   color: $text-color-weak;

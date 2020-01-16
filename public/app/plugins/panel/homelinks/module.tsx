@@ -17,20 +17,35 @@ export class GrafanaLinksPanel extends PureComponent<Props> {
     const styles = getStyles();
 
     return (
-      <div className={styles.list}>
-        <HomeLink title="Documentation" icon="fa fa-book" url="https://grafana.com/docs/grafana/latest" />
-        <HomeLink
-          title="Getting started"
-          icon="fa fa-bolt"
-          url="https://grafana.com/docs/grafana/latest/guides/getting_started/"
-        />
-        <HomeLink title="Community forum" icon="fa fa-comments" url="https://community.grafana.com" />
-        <HomeLink
-          title="Report a bug"
-          icon="fa fa-bug"
-          url="https://github.com/grafana/grafana/issues/new?template=1-bug_report.md"
-        />
-      </div>
+      <>
+        <div className={styles.list}>
+          <HomeLink
+            title="Documentation"
+            icon="fa fa-book"
+            url="https://grafana.com/docs/grafana/latest?utm_source=grafana_homelinks"
+            target="_blank"
+          />
+          <HomeLink
+            title="Getting started"
+            icon="fa fa-bolt"
+            url="https://grafana.com/docs/grafana/latest/guides/getting_started/?utm_source=grafana_homelinks"
+            target="_blank"
+          />
+          <HomeLink
+            title="Community forum"
+            icon="fa fa-comments"
+            url="https://community.grafana.com?utm_source=grafana_homelinks"
+            target="_blank"
+          />
+          <HomeLink
+            title="Report a bug"
+            icon="fa fa-bug"
+            url="https://github.com/grafana/grafana/issues/new?template=1-bug_report.md"
+            target="_blank"
+          />
+        </div>
+        <VersionFooter />
+      </>
     );
   }
 }
@@ -53,6 +68,17 @@ export const HomeLink: FC<HomeLinkProps> = ({ title, url, target, icon }) => {
   );
 };
 
+export const VersionFooter: FC = () => {
+  const styles = getStyles();
+  const { version, commit } = config.buildInfo;
+
+  return (
+    <div className={styles.footer}>
+      Version {version} ({commit})
+    </div>
+  );
+};
+
 export const getStyles = stylesFactory(() => {
   const { theme } = config;
 
@@ -60,10 +86,21 @@ export const getStyles = stylesFactory(() => {
     list: css`
       display: flex;
       flex-direction: column;
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing.md};
     `,
     icon: css`
       padding-right: ${theme.spacing.sm};
+    `,
+    footer: css`
+      ${styleMixins.listItem(theme)}
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      padding: ${theme.spacing.sm};
+      border-radius: 0;
+      box-shadow: none;
+      color: ${theme.colors.textWeak};
     `,
     item: css`
       ${styleMixins.listItem(theme)}
@@ -75,4 +112,4 @@ export const getStyles = stylesFactory(() => {
   };
 });
 
-export const plugin = new PanelPlugin(GrafanaLinksPanel).setDefaults({});
+export const plugin = new PanelPlugin(GrafanaLinksPanel).setDefaults({}).setNoPadding();

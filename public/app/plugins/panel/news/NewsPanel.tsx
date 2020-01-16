@@ -97,7 +97,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     padding: ${theme.spacing.sm};
     position: relative;
     margin-bottom: 4px;
-    border-radius: 3px;
     margin-right: ${theme.spacing.sm};
   `,
   title: css`
