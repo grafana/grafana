@@ -87,11 +87,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  deduplicateLogRows = (rows: LogRowModel[]) => {
-    // Deduplicate log rows with the same log uid
-    return rows.filter((row, idx, self) => idx === self.findIndex(r => r.uid === row.uid));
-  };
-
   render() {
     const {
       loading,
@@ -113,8 +108,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
     } = this.props;
 
-    const deduplicatedLogRows = this.deduplicateLogRows(logRows);
-
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
@@ -122,7 +115,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
             <LiveTailControls exploreId={exploreId}>
               {controls => (
                 <LiveLogsWithTheme
-                  logRows={deduplicatedLogRows}
+                  logRows={logRows}
                   timeZone={timeZone}
                   stopLive={controls.stop}
                   isPaused={this.props.isPaused}
@@ -137,7 +130,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           <Collapse label="Logs" loading={loading} isOpen>
             <Logs
               dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
-              logRows={deduplicatedLogRows}
+              logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}
               dedupedRows={dedupedRows}

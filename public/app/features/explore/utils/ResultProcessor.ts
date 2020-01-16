@@ -1,5 +1,6 @@
 import {
   LogsModel,
+  LogRowModel,
   GraphSeriesXY,
   DataFrame,
   FieldType,
@@ -13,6 +14,7 @@ import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explo
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 import { config } from 'app/core/config';
+import { uniqBy } from 'lodash';
 
 export class ResultProcessor {
   constructor(
@@ -97,6 +99,11 @@ export class ResultProcessor {
     return data;
   }
 
+  deduplicateLogRows = (rows: LogRowModel[]) => {
+    // Deduplicate log rows with the same log uid
+    return uniqBy(rows, 'uid');
+  };
+
   getLogsResult(): LogsModel | null {
     if (this.state.mode !== ExploreMode.Logs) {
       return null;
@@ -105,8 +112,7 @@ export class ResultProcessor {
     const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
-
-    const rows = sortedNewResults.rows;
+    const rows = this.deduplicateLogRows(sortedNewResults.rows);
     const series = sortedNewResults.series;
     return { ...sortedNewResults, rows, series };
   }
