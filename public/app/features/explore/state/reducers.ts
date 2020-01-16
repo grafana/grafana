@@ -34,7 +34,6 @@ import {
   changeRangeAction,
   changeRefreshIntervalAction,
   changeSizeAction,
-  clearOriginAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
   historyUpdatedAction,
@@ -231,13 +230,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
       queryResponse: createEmptyQueryResponse(),
       loading: false,
-    };
-  }
-
-  if (clearOriginAction.match(action)) {
-    return {
-      ...state,
-      originPanelId: undefined,
     };
   }
 
