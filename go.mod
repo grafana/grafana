@@ -31,7 +31,7 @@ require (
 	github.com/gorilla/websocket v1.4.1
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.5.0
+	github.com/grafana/grafana-plugin-sdk-go v0.6.0
 	github.com/hashicorp/go-hclog v0.8.0
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/hashicorp/go-version v1.1.0
@@ -74,6 +74,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/tools v0.0.0-20191213221258-04c2e8eff935 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
+	google.golang.org/grpc v1.23.1
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.46.0
