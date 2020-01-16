@@ -302,10 +302,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')),
       },
     })
-    // .when('/admin/users/edit/:id', {
-    //   templateUrl: 'public/app/features/admin/partials/edit_user.html',
-    //   controller: 'AdminEditUserCtrl',
-    // })
     .when('/admin/users/edit/:id', {
       template: '<react-container />',
       resolve: {
