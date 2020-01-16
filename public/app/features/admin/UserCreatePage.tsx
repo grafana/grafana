@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { Forms } from '@grafana/ui';
