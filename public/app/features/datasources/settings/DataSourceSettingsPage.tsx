@@ -47,68 +47,11 @@ export interface Props {
   loadError?: Error | string;
 }
 
-// interface State {
-//   plugin?: GenericDataSourcePlugin;
-//   isTesting?: boolean;
-//   testingMessage?: string;
-//   testingStatus?: string;
-//   loadError?: any;
-// }
-
 export class DataSourceSettingsPage extends PureComponent<Props> {
-  // importDataSourcePlugin: typeof importDataSourcePlugin;
-  // importPluginPromise: CancelablePromise<any> = null;
-
-  // constructor(props: Props) {
-  // super(props);
-
-  // this.state = {
-  //   plugin: props.plugin,
-  // };
-
-  // this.importDataSourcePlugin = importDataSourcePlugin;
-  // }
-
-  // async loadPlugin(pluginId?: string) {
-  // const { dataSourceMeta } = this.props;
-
-  // try {
-  //   await this.importPlugin(makePromiseCancelable(this.importDataSourcePlugin(dataSourceMeta)));
-  // } catch (e) {
-  //   console.log('Failed to import plugin module', e);
-  // }
-  // }
-
   async componentDidMount() {
     const { initDataSourceSettings, pageId } = this.props;
     initDataSourceSettings(pageId);
-    // const { loadDataSource, pageId } = this.props;
-    // if (isNaN(pageId)) {
-    //   this.setState({ loadError: 'Invalid ID' });
-    //   return;
-    // }
-    // try {
-    //   await loadDataSource(pageId);
-    //   if (!this.state.plugin) {
-    //     await this.loadPlugin();
-    //   }
-    // } catch (err) {
-    //   this.setState({ loadError: err });
-    // }
   }
-
-  // importPlugin = (cancelablePromise: CancelablePromise<any>) => {
-  //   this.importPluginPromise = cancelablePromise;
-  //   this.importPluginPromise.promise
-  //     .then((importedPlugin: GenericDataSourcePlugin) => {
-  //       this.setState({ plugin: importedPlugin });
-  //     })
-  //     .catch(({ isCanceled }) => {
-  //       if (isCanceled) {
-  //         console.warn('DataSourceSettingsPage has unmounted, intialization was canceled');
-  //       }
-  //     });
-  // };
 
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
