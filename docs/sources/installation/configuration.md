@@ -79,7 +79,7 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 On Windows or Mac, you can use [Kitematic](https://github.com/docker/kitematic) or similar tools.
 
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you need to restart the Docker container running Grafana.
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart the Docker container running Grafana.
 
 ### Default paths
 
@@ -93,6 +93,41 @@ GF_PATHS_HOME         | /usr/share/grafana
 GF_PATHS_LOGS         | /var/log/grafana
 GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
 GF_PATHS_PROVISIONING | /etc/grafana/provisioning
+
+### Configure Grafana with Docker Secrets
+
+> Only available in Grafana v5.2 and later.
+
+It's possible to supply Grafana with configuration through files. This works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/) as the secrets by default gets mapped into `/run/secrets/<name of secret>` of the container.
+
+You can do this with any of the configuration options in conf/grafana.ini by setting `GF_<SectionName>_<KeyName>__FILE` to the path of the file holding the secret.
+
+Let's say you want to set the admin password this way:
+
+- Admin password secret: `/run/secrets/admin_password`
+- Environment variable: `GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/admin_password`
+
+### Configure AWS credentials for CloudWatch Support
+
+```bash
+docker run -d \
+-p 3000:3000 \
+--name=grafana \
+-e "GF_AWS_PROFILES=default" \
+-e "GF_AWS_default_ACCESS_KEY_ID=YOUR_ACCESS_KEY" \
+-e "GF_AWS_default_SECRET_ACCESS_KEY=YOUR_SECRET_KEY" \
+-e "GF_AWS_default_REGION=us-east-1" \
+grafana/grafana
+```
+
+You may also specify multiple profiles to `GF_AWS_PROFILES` (e.g.
+`GF_AWS_PROFILES=default another`).
+
+Supported variables:
+
+- `GF_AWS_${profile}_ACCESS_KEY_ID`: AWS access key ID (required).
+- `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access  key (required).
+- `GF_AWS_${profile}_REGION`: AWS region (optional).
 
 ## instance_name
 
@@ -144,8 +179,7 @@ The IP address to bind to. If empty will bind to all interfaces
 
 ### http_port
 
-The port to bind to, defaults to `3000`. To use port 80 you need to
-either give the Grafana binary permission for example:
+The port to bind to, defaults to `3000`. To use port 80 you need to either give the Grafana binary permission for example:
 
 ```bash
 $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
@@ -170,13 +204,11 @@ Path where the socket should be created when `protocol=socket`. Please make sure
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you
-use GitHub or Google OAuth.
+This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
 
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain.
-Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -191,8 +223,7 @@ callback URL to be correct).
 ### serve_from_sub_path
 > Available in 6.3 and above
 
-Serve Grafana from subpath specified in `root_url` setting. By
-default it is set to `false` for compatibility reasons.
+Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
 By enabling this setting and using a subpath in `root_url` above, e.g.
 `root_url = http://localhost:3000/grafana`, Grafana will be accessible on
