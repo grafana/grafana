@@ -3,6 +3,7 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"time"
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 )
@@ -22,7 +23,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
+	ctx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
 	req := &pluginModel.RenderRequest{
