@@ -25,7 +25,7 @@
       "folderId": 0,
       "gridPos": {
         "h": 15,
-        "w": 10,
+        "w": 11,
         "x": 0,
         "y": 4
       },
@@ -47,7 +47,7 @@
       "gridPos": {
         "h": 15,
         "w": 8,
-        "x": 10,
+        "x": 11,
         "y": 4
       },
       "id": 4,
@@ -55,15 +55,15 @@
       "options": {
         "feedUrl": "https://grafana.com/blog/index.xml"
       },
-      "title": "From the Grafana blog",
+      "title": "Latest from the blog",
       "type": "news"
     },
     {
       "datasource": null,
       "gridPos": {
         "h": 15,
-        "w": 6,
-        "x": 18,
+        "w": 5,
+        "x": 19,
         "y": 4
       },
       "id": 123124,
