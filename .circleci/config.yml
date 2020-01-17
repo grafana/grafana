@@ -998,7 +998,7 @@ jobs:
     steps:
       - run:
           name: get zip for msi test build
-          command: 'mkdir -p enterprise-dist && cd enterprise-dist && wget https://dl.grafana.com/oss/master/grafana-6.6.0-6b61b989pre.windows-amd64.zip'
+          command: 'mkdir -p enterprise-dist && cd enterprise-dist && wget https://dl.grafana.com/enterprise/master/grafana-enterprise-6.6.0-6b61b989pre.windows-amd64.zip'
       - persist_to_workspace:
           root: .
           paths:
