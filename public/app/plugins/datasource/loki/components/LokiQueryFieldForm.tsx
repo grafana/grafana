@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {
-  Cascader,
+  ButtonCascader,
   CascaderOption,
   SlatePrism,
   TypeaheadOutput,
@@ -148,7 +148,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       <>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <Cascader
+            <ButtonCascader
               options={logLabelOptions || []}
               disabled={buttonDisabled}
               buttonText={chooserText}

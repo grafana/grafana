@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Home Links",
+  "id": "homelinks",
+
+  "hideFromList": true,
+  "skipDataQuery": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/news.svg",
+      "large": "img/news.svg"
+    }
+  }
+}

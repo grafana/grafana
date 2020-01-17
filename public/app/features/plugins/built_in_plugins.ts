@@ -53,6 +53,7 @@ import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
+import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -92,6 +93,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/logs/module': logsPanel,
+  'app/plugins/panel/homelinks/module': homeLinksPanel,
 };
 
 export default builtInPlugins;
