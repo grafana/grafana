@@ -11,6 +11,7 @@ export interface ButtonCascaderProps {
   children: string;
   disabled?: boolean;
   value?: string[];
+  fieldNames?: any;
 
   loadData?: (selectedOptions: CascaderOption[]) => void;
   onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
@@ -18,7 +19,7 @@ export interface ButtonCascaderProps {
 }
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = props => (
-  <RCCascader {...props} fieldNames={{ label: 'label', value: 'value', children: 'items' }} expandIcon={null}>
+  <RCCascader {...props} expandIcon={null}>
     <Button variant="secondary" disabled={props.disabled}>
       {props.children} <Icon name="caret-down" />
     </Button>
