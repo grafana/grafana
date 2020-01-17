@@ -65,7 +65,14 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
 	result := tsdb.TimeSeriesSlice{}
 	partialData := false
-	for label, metricDataResult := range metricDataResults {
+	metricDataResultLabels := make([]string, 0)
+	for k := range metricDataResults {
+		metricDataResultLabels = append(metricDataResultLabels, k)
+	}
+	sort.Strings(metricDataResultLabels)
+
+	for _, label := range metricDataResultLabels {
+		metricDataResult := metricDataResults[label]
 		if *metricDataResult.StatusCode != "Complete" {
 			partialData = true
 		}
