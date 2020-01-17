@@ -92,4 +92,12 @@ describe('getHighlighterExpressionsFromQuery', () => {
   it('returns null if filter term is not wrapped in double quotes', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= x')).toEqual(null);
   });
+
+  it('escapes filter term if regex filter operator is not used', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x[yz].w"')).toEqual(['x\\[yz\\]\\.w']);
+  });
+
+  it('does not escape filter term if regex filter operator is used', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |~ "x[yz].w" |~ "z.+"')).toEqual(['x[yz].w', 'z.+']);
+  });
 });

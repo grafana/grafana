@@ -1,28 +1,20 @@
 import config from '../../../core/config';
 import { getBackendSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
-import { ThunkResult, DataSourcePluginCategory } from 'app/types';
-import { actionCreatorFactory } from 'app/core/redux';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+import { DataSourcePluginCategory, ThunkResult } from 'app/types';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import {
+  dataSourceLoaded,
+  dataSourceMetaLoaded,
+  dataSourcePluginsLoad,
+  dataSourcePluginsLoaded,
+  dataSourcesLoaded,
+} from './reducers';
 import { buildCategories } from './buildCategories';
-
-export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
-export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
-export const dataSourceMetaLoaded = actionCreatorFactory<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META').create();
-export const dataSourcePluginsLoad = actionCreatorFactory('LOAD_DATA_SOURCE_PLUGINS').create();
-export const dataSourcePluginsLoaded = actionCreatorFactory<DataSourceTypesLoadedPayload>(
-  'LOADED_DATA_SOURCE_PLUGINS'
-).create();
-export const setDataSourcesSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCES_SEARCH_QUERY').create();
-export const setDataSourcesLayoutMode = actionCreatorFactory<LayoutMode>('SET_DATA_SOURCES_LAYOUT_MODE').create();
-export const setDataSourceTypeSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCE_TYPE_SEARCH_QUERY').create();
-export const setDataSourceName = actionCreatorFactory<string>('SET_DATA_SOURCE_NAME').create();
-export const setIsDefault = actionCreatorFactory<boolean>('SET_IS_DEFAULT').create();
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];

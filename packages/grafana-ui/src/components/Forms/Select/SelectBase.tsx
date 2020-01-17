@@ -27,10 +27,13 @@ export interface SelectCommonProps<T> {
   className?: string;
   options?: Array<SelectableValue<T>>;
   defaultValue?: any;
+  inputValue?: string;
   value?: SelectValue<T>;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
   onChange: (value: SelectableValue<T>) => {} | void;
+  onInputChange?: (label: string) => void;
+  onKeyDown?: (event: React.KeyboardEvent) => void;
   placeholder?: string;
   disabled?: boolean;
   isSearchable?: boolean;
@@ -131,9 +134,12 @@ const CustomControl = (props: any) => {
 export function SelectBase<T>({
   value,
   defaultValue,
+  inputValue,
+  onInputChange,
   options = [],
   onChange,
   onBlur,
+  onKeyDown,
   onCloseMenu,
   onOpenMenu,
   placeholder = 'Choose',
@@ -201,6 +207,8 @@ export function SelectBase<T>({
     isLoading,
     menuIsOpen: isOpen,
     defaultValue,
+    inputValue,
+    onInputChange,
     value: isMulti ? selectedValue : selectedValue[0],
     getOptionLabel,
     getOptionValue,
@@ -214,6 +222,7 @@ export function SelectBase<T>({
     options,
     onChange,
     onBlur,
+    onKeyDown,
     menuShouldScrollIntoView: false,
     renderControl,
   };

@@ -1,16 +1,18 @@
 import React from 'react';
 import _ from 'lodash';
 
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { SelectableValue } from '@grafana/data';
 import StackdriverDatasource from '../datasource';
 import appEvents from 'app/core/app_events';
+import { Segment } from '@grafana/ui';
 import { MetricDescriptor } from '../types';
-import { MetricSelect } from 'app/core/components/Select/MetricSelect';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
 
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
   templateSrv: TemplateSrv;
+  templateVariableOptions: Array<SelectableValue<string>>;
   datasource: StackdriverDatasource;
   defaultProject: string;
   metricType: string;
@@ -104,9 +106,9 @@ export class Metrics extends React.Component<Props, State> {
     return metricsByService;
   }
 
-  onServiceChange = (service: any) => {
+  onServiceChange = ({ value: service }: any) => {
     const { metricDescriptors } = this.state;
-    const { templateSrv, metricType } = this.props;
+    const { metricType, templateSrv } = this.props;
 
     const metrics = metricDescriptors
       .filter(m => m.service === templateSrv.replace(service))
@@ -120,11 +122,11 @@ export class Metrics extends React.Component<Props, State> {
     this.setState({ service, metrics });
 
     if (metrics.length > 0 && !metrics.some(m => m.value === templateSrv.replace(metricType))) {
-      this.onMetricTypeChange(metrics[0].value);
+      this.onMetricTypeChange(metrics[0]);
     }
   };
 
-  onMetricTypeChange = (value: any) => {
+  onMetricTypeChange = ({ value }: any) => {
     const metricDescriptor = this.getSelectedMetricDescriptor(value);
     this.setState({ metricDescriptor });
     this.props.onChange({ ...metricDescriptor, type: value });
@@ -139,55 +141,46 @@ export class Metrics extends React.Component<Props, State> {
     return services.length > 0 ? _.uniqBy(services, s => s.value) : [];
   }
 
-  getTemplateVariablesGroup() {
-    return {
-      label: 'Template Variables',
-      options: this.props.templateSrv.variables.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-      })),
-    };
-  }
-
   render() {
     const { services, service, metrics } = this.state;
-    const { metricType, templateSrv } = this.props;
+    const { metricType, templateVariableOptions } = this.props;
 
     return (
       <>
         <div className="gf-form-inline">
-          <div className="gf-form">
-            <span className="gf-form-label width-9 query-keyword">Service</span>
-            <MetricSelect
-              onChange={this.onServiceChange}
-              value={service}
-              options={services}
-              placeholder="Select Services"
-              className="width-15"
-            />
-          </div>
+          <span className="gf-form-label width-9 query-keyword">Service</span>
+          <Segment
+            onChange={this.onServiceChange}
+            value={[...services, ...templateVariableOptions].find(s => s.value === service)}
+            options={[
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...services,
+            ]}
+            placeholder="Select Services"
+          ></Segment>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
         <div className="gf-form-inline">
-          <div className="gf-form">
-            <span className="gf-form-label width-9 query-keyword">Metric</span>
-            <MetricSelect
-              onChange={this.onMetricTypeChange}
-              value={metricType}
-              variables={templateSrv.variables}
-              options={[
-                {
-                  label: 'Metrics',
-                  expanded: true,
-                  options: metrics,
-                },
-              ]}
-              placeholder="Select Metric"
-              className="width-26"
-            />
-          </div>
+          <span className="gf-form-label width-9 query-keyword">Metric</span>
+
+          <Segment
+            className="query-part"
+            onChange={this.onMetricTypeChange}
+            value={[...metrics, ...templateVariableOptions].find(s => s.value === metricType)}
+            options={[
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...metrics,
+            ]}
+            placeholder="Select Metric"
+          ></Segment>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>

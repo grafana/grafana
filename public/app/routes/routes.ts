@@ -6,6 +6,7 @@ import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
+import UserAdminPage from 'app/features/admin/UserAdminPage';
 import config from 'app/core/config';
 import { ILocationProvider, route } from 'angular';
 // Types
@@ -289,6 +290,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')),
       },
     })
+    .when('/admin/upgrading', {
+      template: '<react-container />',
+      resolve: {
+        component: () => SafeDynamicImport(import('app/features/admin/UpgradePage')),
+      },
+    })
     .when('/admin/users', {
       templateUrl: 'public/app/features/admin/partials/users.html',
       controller: 'AdminListUsersCtrl',
@@ -298,9 +305,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       templateUrl: 'public/app/features/admin/partials/new_user.html',
       controller: 'AdminEditUserCtrl',
     })
+    // .when('/admin/users/edit/:id', {
+    //   templateUrl: 'public/app/features/admin/partials/edit_user.html',
+    //   controller: 'AdminEditUserCtrl',
+    // })
     .when('/admin/users/edit/:id', {
-      templateUrl: 'public/app/features/admin/partials/edit_user.html',
-      controller: 'AdminEditUserCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => UserAdminPage,
+      },
     })
     .when('/admin/orgs', {
       templateUrl: 'public/app/features/admin/partials/orgs.html',

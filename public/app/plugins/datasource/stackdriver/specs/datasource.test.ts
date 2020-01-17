@@ -176,7 +176,7 @@ describe('StackdriverDataSource', () => {
       });
 
       it('should replace the variable with the value', () => {
-        expect(interpolated.length).toBe(3);
+        expect(interpolated.length).toBe(4);
         expect(interpolated[2]).toBe('filtervalue1');
       });
     });
