@@ -448,7 +448,7 @@ jobs:
           name: ci job started
           command: './scripts/ci-job-started.sh'
       - run:
-          name: install docker 
+          name: install docker
           command: |
             apt-get update
             apt-get install -y docker.io
@@ -992,6 +992,21 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
+  tmp-prep-msi:
+    docker:
+      - image: grafana/grafana-ci-deploy:1.2.3
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: get zip for msi test build
+          command: 'cd enterprise-dist && wget https://dl.grafana.com/oss/master/grafana-6.6.0-6b61b989pre.windows-amd64.zip'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - enterprise-dist/grafana*.zip
+
   build-ee-msi:
     docker:
       - image: grafana/wix-toolset-ci:v3
@@ -1341,6 +1356,12 @@ workflows:
 
   build-branches-and-prs:
       jobs:
+        - tmp-prep-msi:
+            filters: *filter-not-release-or-master
+        - build-ee-msi:
+            filters: *filter-not-release-or-master
+            requires:
+              - tmp-prep-msi
         - build-fast-backend:
             filters: *filter-not-release-or-master
         - build-fast-frontend:
