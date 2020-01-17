@@ -36,7 +36,7 @@ var (
 var (
 	matchAllCap       = regexp.MustCompile("(.)([A-Z][a-z]*)")
 	legendKeyFormat   = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	metricNameFormat  = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
+	metricNameFormat  = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
 	wildcardRegexRe   = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
 	alignmentPeriodRe = regexp.MustCompile("[0-9]+")
 )
@@ -554,8 +554,8 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	shortMatches := metricNameFormat.FindStringSubmatch(metricType)
 
 	if metaPartName == "metric.name" {
-		if len(shortMatches) > 0 {
-			return []byte(shortMatches[2])
+		if len(shortMatches) > 2 {
+			return []byte(shortMatches[3])
 		}
 	}
 
