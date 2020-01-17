@@ -28,9 +28,7 @@ This variant is highly recommended when security and final image size being as s
 ## Ubuntu image
 `grafana/grafana:<version>-ubuntu`
 
-This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu).
-This is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or who are dependent on certain
-tooling not available for Alpine.
+This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu). This is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or who are dependent on certain tooling not available for Alpine.
 
 > **Note:** The `grafana/grafana:<version>-ubuntu` image is available for Grafana version 6.5.0 and later.
 
