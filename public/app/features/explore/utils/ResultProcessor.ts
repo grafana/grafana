@@ -105,7 +105,6 @@ export class ResultProcessor {
     const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
-
     const rows = sortedNewResults.rows;
     const series = sortedNewResults.series;
     return { ...sortedNewResults, rows, series };
