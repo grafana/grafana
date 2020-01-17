@@ -6,7 +6,6 @@ import { GrafanaTheme } from '@grafana/data';
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const background = theme.colors.panelBg;
   const backgroundUrl = theme.isDark
     ? '/public/img/licensing/header_dark.svg'
     : '/public/img/licensing/header_light.svg';
@@ -14,15 +13,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
   return {
     container: css`
-      display: grid;
-      grid-template-columns: 100%;
-      column-gap: 20px;
-      row-gap: 40px;
-      padding: 42px 20px 0 77px;
-      background-color: ${background};
-      @media (min-width: 1050px) {
-        grid-template-columns: 50% 50%;
-      }
+      padding: 36px 79px;
+      background: ${theme.colors.panelBg};
     `,
     footer: css`
       text-align: center;
