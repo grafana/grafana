@@ -37,7 +37,9 @@ jobs:
     steps:
       - run:
           name: Install Grafana Build Pipeline
-          command: go get github.com/grafana/build-pipeline
+          command: |
+            git config --global url.git@github.com:.insteadOf https://github.com/
+            go get github.com/grafana/build-pipeline
       - persist_to_workspace:
           root: .
           paths:
