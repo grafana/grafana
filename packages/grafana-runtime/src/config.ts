@@ -5,6 +5,7 @@ import { GrafanaTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSett
 export interface BuildInfo {
   version: string;
   commit: string;
+  isEnterprise: boolean; // deprecated: use licenseInfo.hasLicense instead
   env: string;
   latestVersion: string;
   hasUpdate: boolean;
