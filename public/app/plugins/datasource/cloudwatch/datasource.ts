@@ -125,52 +125,29 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     return this.templateSrv.variables.map(v => `$${v.name}`);
   }
 
-  getPeriod(target: any, options: any, now?: number) {
-    const start = this.convertToCloudWatchTime(options.range.from, false);
-    now = Math.round((now || Date.now()) / 1000);
-
-    let period;
-    const hourSec = 60 * 60;
-    const daySec = hourSec * 24;
-    if (!target.period) {
-      if (now - start <= daySec * 15) {
-        // until 15 days ago
-        if (target.namespace === 'AWS/EC2') {
-          period = 300;
-        } else {
-          period = 60;
-        }
-      } else if (now - start <= daySec * 63) {
-        // until 63 days ago
-        period = 60 * 5;
-      } else if (now - start <= daySec * 455) {
-        // until 455 days ago
-        period = 60 * 60;
-      } else {
-        // over 455 days, should return error, but try to long period
-        period = 60 * 60;
-      }
-    } else {
-      period = this.templateSrv.replace(target.period, options.scopedVars);
+  getPeriod(target: any, options: any) {
+    let period = this.templateSrv.replace(target.period, options.scopedVars);
+    if (period && period.toLowerCase() !== 'auto') {
       if (/^\d+$/.test(period)) {
         period = parseInt(period, 10);
       } else {
         period = kbn.interval_to_seconds(period);
       }
-    }
-    if (period < 1) {
-      period = 1;
+
+      if (period < 1) {
+        period = 1;
+      }
     }
 
     return period;
   }
 
   buildCloudwatchConsoleUrl(
-    { region, namespace, metricName, dimensions, statistics, period, expression }: CloudWatchQuery,
+    { region, namespace, metricName, dimensions, statistics, expression }: CloudWatchQuery,
     start: string,
     end: string,
     title: string,
-    gmdMeta: Array<{ Expression: string }>
+    gmdMeta: Array<{ Expression: string; Period: string }>
   ) {
     region = this.getActualRegion(region);
     let conf = {
@@ -204,7 +181,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
             ...Object.entries(dimensions).reduce((acc, [key, value]) => [...acc, key, value[0]], []),
             {
               stat,
-              period,
+              period: gmdMeta.length ? gmdMeta[0].Period : 60,
             },
           ]),
         ],

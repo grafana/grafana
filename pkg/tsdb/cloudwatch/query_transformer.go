@@ -74,6 +74,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		partialData := false
 		queryMeta := []struct {
 			Expression, ID string
+			Period         int
 		}{}
 
 		for _, response := range responses {
@@ -82,9 +83,11 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 			partialData = partialData || response.PartialData
 			queryMeta = append(queryMeta, struct {
 				Expression, ID string
+				Period         int
 			}{
 				Expression: response.Expression,
 				ID:         response.Id,
+				Period:     response.Period,
 			})
 		}
 

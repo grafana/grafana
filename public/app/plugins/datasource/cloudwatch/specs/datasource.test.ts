@@ -67,7 +67,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
-          meta: {},
+          meta: { gmdMeta: [] },
           series: [
             {
               name: 'CPUUtilization_Average',
@@ -181,7 +181,7 @@ describe('CloudWatchDatasource', () => {
       });
 
       it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
-        response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))` }];
+        response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
@@ -208,7 +208,7 @@ describe('CloudWatchDatasource', () => {
       });
 
       it('should be built correctly if the query is a metric stat query', done => {
-        response.results['A'].meta.gmdMeta = [];
+        response.results['A'].meta.gmdMeta = [{ Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
@@ -415,7 +415,13 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
-          meta: {},
+          meta: {
+            gmdMeta: [
+              {
+                Period: 300,
+              },
+            ],
+          },
           series: [
             {
               name: 'TargetResponseTime_p90.00',
@@ -789,97 +795,4 @@ describe('CloudWatchDatasource', () => {
       });
     }
   );
-
-  it('should caclculate the correct period', () => {
-    const hourSec = 60 * 60;
-    const daySec = hourSec * 24;
-    const start = 1483196400 * 1000;
-    const testData: any[] = [
-      [
-        { period: '60s', namespace: 'AWS/EC2' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: null, namespace: 'AWS/EC2' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        300,
-      ],
-      [
-        { period: '60s', namespace: 'AWS/ELB' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: null, namespace: 'AWS/ELB' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: '1', namespace: 'CustomMetricsNamespace' },
-        {
-          range: {
-            from: new Date(start),
-            to: new Date(start + (1440 - 1) * 1000),
-          },
-        },
-        hourSec * 3 - 1,
-        1,
-      ],
-      [
-        { period: '1', namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3 - 1,
-        1,
-      ],
-      [
-        { period: '60s', namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3 - 1,
-        60,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        daySec * 15,
-        60,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        daySec * 63,
-        300,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        daySec * 455,
-        3600,
-      ],
-    ];
-    for (const t of testData) {
-      const target = t[0];
-      const options = t[1];
-      const now = new Date(options.range.from.valueOf() + t[2] * 1000);
-      const expected = t[3];
-      const actual = ctx.ds.getPeriod(target, options, now);
-      expect(actual).toBe(expected);
-    }
-  });
 });
