@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -80,7 +81,14 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 			Points: make([]tsdb.TimePoint, 0),
 		}
 
-		for key, values := range query.Dimensions {
+		keys := make([]string, 0)
+		for k := range query.Dimensions {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			values := query.Dimensions[key]
 			if len(values) == 1 && values[0] != "*" {
 				series.Tags[key] = values[0]
 			} else {
