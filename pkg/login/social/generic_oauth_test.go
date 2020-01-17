@@ -7,15 +7,16 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	. "github.com/smartystreets/goconvey/convey"
 	"golang.org/x/oauth2"
 )
 
 func TestSearchJSONForEmail(t *testing.T) {
-	Convey("Given a generic OAuth provider", t, func() {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
 				log: log.New("generic_oauth_test"),
@@ -85,16 +86,16 @@ func TestSearchJSONForEmail(t *testing.T) {
 
 		for _, test := range tests {
 			provider.emailAttributePath = test.EmailAttributePath
-			Convey(test.Name, func() {
+			t.Run(test.Name, func(t *testing.T) {
 				actualResult := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
-				So(actualResult, ShouldEqual, test.ExpectedResult)
+				require.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}
 	})
 }
 
 func TestSearchJSONForRole(t *testing.T) {
-	Convey("Given a generic OAuth provider", t, func() {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
 				log: log.New("generic_oauth_test"),
@@ -139,16 +140,16 @@ func TestSearchJSONForRole(t *testing.T) {
 
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
-			Convey(test.Name, func() {
+			t.Run(test.Name, func(t *testing.T) {
 				actualResult := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
-				So(actualResult, ShouldEqual, test.ExpectedResult)
+				require.Equal(t, test.ExpectedResult, actualResult)
 			})
 		}
 	})
 }
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
-	Convey("Given a generic OAuth provider", t, func() {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
 				log: log.New("generic_oauth_test"),
@@ -286,7 +287,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
-			Convey(test.Name, func() {
+			t.Run(test.Name, func(t *testing.T) {
 				response, _ := json.Marshal(test.APIURLReponse)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
@@ -303,9 +304,9 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
 				actualResult, _ := provider.UserInfo(ts.Client(), token)
-				So(actualResult.Email, ShouldEqual, test.ExpectedEmail)
-				So(actualResult.Login, ShouldEqual, test.ExpectedEmail)
-				So(actualResult.Role, ShouldEqual, test.ExpectedRole)
+				require.Equal(t, test.ExpectedEmail, actualResult.Email)
+				require.Equal(t, test.ExpectedEmail, actualResult.Login)
+				require.Equal(t, test.ExpectedRole, actualResult.Role)
 			})
 		}
 	})
