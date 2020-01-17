@@ -1,7 +1,9 @@
 import { UrlQueryValue } from '@grafana/runtime';
 import { Reducer } from 'redux';
 import { containsVariable, QueryVariableModel, VariableModel, VariableType } from '../variable';
-import { queryVariablesReducer } from '../state/queryVariable';
+import { queryVariablesReducer } from '../state/queryVariablesReducer';
+import { setOptionFromUrl, updateQueryVariableOptions } from '../state/actions';
+import { store } from '../../../store/store';
 
 export interface VariableAdapterProps<T extends VariableModel> {
   dependsOn: (variable: T, variableToTest: T) => boolean;
@@ -18,16 +20,14 @@ export const queryVariableAdapter = (): VariableAdapterProps<QueryVariableModel>
     return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
   },
   setOptionFromUrl: async (variable, urlValue) => {
-    return Promise.resolve();
-    // await store.dispatch(setOptionFromUrl(variable, urlValue));
+    return new Promise(async () => {
+      await store.dispatch(setOptionFromUrl(variable, urlValue) as any);
+    });
   },
-  updateOptions: async (variable, searchFilter) => {
-    return Promise.resolve();
-    // return getDatasourceSrv()
-    //   .get(this.datasource)
-    //   .then(ds => this.updateOptionsFromMetricFindQuery(ds, searchFilter))
-    //   .then(this.updateTags.bind(this))
-    //   .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
+  updateOptions: (variable, searchFilter) => {
+    return new Promise(async () => {
+      await store.dispatch(updateQueryVariableOptions(variable, searchFilter) as any);
+    });
   },
 });
 

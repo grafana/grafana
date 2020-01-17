@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 import { QueryVariableModel, VariableHide, VariableOption, VariableRefresh, VariableSort } from '../variable';
-import { addVariable } from './actions';
+import { addVariable, updateVariableOptions } from './actions';
 
 export interface QueryVariableState extends QueryVariableModel {}
 
@@ -87,6 +87,9 @@ const queryVariableSlice = createSlice({
           tagValuesQuery,
           definition,
         };
+      })
+      .addCase(updateVariableOptions, (state: QueryVariableState, action) => {
+        state.options = action.payload.options;
       }),
   // .addCase(updateVariable, (state: QueryVariableState, action) => {
   //   return { ...state, ...action.payload };
@@ -126,6 +129,14 @@ const queryVariablesSlice = createSlice({
         const variable = queryVariableReducer(undefined, action);
         const index = state.variables.push(variable) - 1;
         state.variables[index] = variable;
+      })
+      .addCase(updateVariableOptions, (state: QueryVariablesState, action) => {
+        if (action.payload.variable.type !== 'query') {
+          return;
+        }
+
+        const index = state.variables.findIndex(variable => variable.name === action.payload.variable.name);
+        state.variables[index] = queryVariableReducer(state.variables[index], action);
       }),
   // .addCase(updateVariable, (state: QueryVariablesState, action) => {
   //   if (action.payload.type !== 'query') {
