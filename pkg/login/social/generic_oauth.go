@@ -82,142 +82,6 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 	return false
 }
 
-// searchJSONForAttr searches the provided JSON response for the given attribute
-// using the configured  attribute path associated with the generic OAuth
-// provider.
-// Returns an empty string if an attribute is not found.
-func (s *SocialGenericOAuth) searchJSONForAttr(attributePath string, data []byte) string {
-	if attributePath == "" {
-		s.log.Error("No attribute path specified")
-		return ""
-	}
-	if len(data) == 0 {
-		s.log.Error("Empty user info JSON response provided")
-		return ""
-	}
-	var buf interface{}
-	if err := json.Unmarshal(data, &buf); err != nil {
-		s.log.Error("Failed to unmarshal user info JSON response", "err", err.Error())
-		return ""
-	}
-	val, err := jmespath.Search(attributePath, buf)
-	if err != nil {
-		s.log.Error("Failed to search user info JSON response with provided path", "attributePath", attributePath, "err", err.Error())
-		return ""
-	}
-	strVal, ok := val.(string)
-	if ok {
-		return strVal
-	}
-	s.log.Error("Attribute not found when searching JSON with provided path", "attributePath", attributePath)
-	return ""
-}
-
-func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
-	type Record struct {
-		Email       string `json:"email"`
-		Primary     bool   `json:"primary"`
-		IsPrimary   bool   `json:"is_primary"`
-		Verified    bool   `json:"verified"`
-		IsConfirmed bool   `json:"is_confirmed"`
-	}
-
-	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
-	if err != nil {
-		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
-		return "", errutil.Wrap("Error getting email address", err)
-	}
-
-	var records []Record
-
-	err = json.Unmarshal(response.Body, &records)
-	if err != nil {
-		var data struct {
-			Values []Record `json:"values"`
-		}
-
-		err = json.Unmarshal(response.Body, &data)
-		if err != nil {
-			s.log.Error("Error decoding email addresses response", "raw_json", string(response.Body), "error", err)
-			return "", errutil.Wrap("Erro decoding email addresses response", err)
-		}
-
-		records = data.Values
-	}
-
-	s.log.Debug("Received email addresses", "emails", records)
-
-	var email = ""
-	for _, record := range records {
-		if record.Primary || record.IsPrimary {
-			email = record.Email
-			break
-		}
-	}
-
-	s.log.Debug("Using email address", "email", email)
-
-	return email, nil
-}
-
-func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, bool) {
-	type Record struct {
-		Id int `json:"id"`
-	}
-
-	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
-	if err != nil {
-		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
-		return nil, false
-	}
-
-	var records []Record
-
-	err = json.Unmarshal(response.Body, &records)
-	if err != nil {
-		s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
-		return nil, false
-	}
-
-	var ids = make([]int, len(records))
-	for i, record := range records {
-		ids[i] = record.Id
-	}
-
-	s.log.Debug("Received team memberships", "ids", ids)
-
-	return ids, true
-}
-
-func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, bool) {
-	type Record struct {
-		Login string `json:"login"`
-	}
-
-	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
-	if err != nil {
-		s.log.Error("Error getting organizations", "url", s.apiUrl+"/orgs", "error", err)
-		return nil, false
-	}
-
-	var records []Record
-
-	err = json.Unmarshal(response.Body, &records)
-	if err != nil {
-		s.log.Error("Error decoding organization response", "response", string(response.Body), "error", err)
-		return nil, false
-	}
-
-	var logins = make([]string, len(records))
-	for i, record := range records {
-		logins[i] = record.Login
-	}
-
-	s.log.Debug("Received organizations", "logins", logins)
-
-	return logins, true
-}
-
 type UserInfoJson struct {
 	Name        string              `json:"name"`
 	DisplayName string              `json:"display_name"`
@@ -399,4 +263,140 @@ func (s *SocialGenericOAuth) extractName(data *UserInfoJson) string {
 	}
 
 	return ""
+}
+
+// searchJSONForAttr searches the provided JSON response for the given attribute
+// using the configured  attribute path associated with the generic OAuth
+// provider.
+// Returns an empty string if an attribute is not found.
+func (s *SocialGenericOAuth) searchJSONForAttr(attributePath string, data []byte) string {
+	if attributePath == "" {
+		s.log.Error("No attribute path specified")
+		return ""
+	}
+	if len(data) == 0 {
+		s.log.Error("Empty user info JSON response provided")
+		return ""
+	}
+	var buf interface{}
+	if err := json.Unmarshal(data, &buf); err != nil {
+		s.log.Error("Failed to unmarshal user info JSON response", "err", err.Error())
+		return ""
+	}
+	val, err := jmespath.Search(attributePath, buf)
+	if err != nil {
+		s.log.Error("Failed to search user info JSON response with provided path", "attributePath", attributePath, "err", err.Error())
+		return ""
+	}
+	strVal, ok := val.(string)
+	if ok {
+		return strVal
+	}
+	s.log.Error("Attribute not found when searching JSON with provided path", "attributePath", attributePath)
+	return ""
+}
+
+func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
+	type Record struct {
+		Email       string `json:"email"`
+		Primary     bool   `json:"primary"`
+		IsPrimary   bool   `json:"is_primary"`
+		Verified    bool   `json:"verified"`
+		IsConfirmed bool   `json:"is_confirmed"`
+	}
+
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
+	if err != nil {
+		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
+		return "", errutil.Wrap("Error getting email address", err)
+	}
+
+	var records []Record
+
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		var data struct {
+			Values []Record `json:"values"`
+		}
+
+		err = json.Unmarshal(response.Body, &data)
+		if err != nil {
+			s.log.Error("Error decoding email addresses response", "raw_json", string(response.Body), "error", err)
+			return "", errutil.Wrap("Erro decoding email addresses response", err)
+		}
+
+		records = data.Values
+	}
+
+	s.log.Debug("Received email addresses", "emails", records)
+
+	var email = ""
+	for _, record := range records {
+		if record.Primary || record.IsPrimary {
+			email = record.Email
+			break
+		}
+	}
+
+	s.log.Debug("Using email address", "email", email)
+
+	return email, nil
+}
+
+func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, bool) {
+	type Record struct {
+		Id int `json:"id"`
+	}
+
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
+	if err != nil {
+		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
+		return nil, false
+	}
+
+	var records []Record
+
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
+		return nil, false
+	}
+
+	var ids = make([]int, len(records))
+	for i, record := range records {
+		ids[i] = record.Id
+	}
+
+	s.log.Debug("Received team memberships", "ids", ids)
+
+	return ids, true
+}
+
+func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, bool) {
+	type Record struct {
+		Login string `json:"login"`
+	}
+
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
+	if err != nil {
+		s.log.Error("Error getting organizations", "url", s.apiUrl+"/orgs", "error", err)
+		return nil, false
+	}
+
+	var records []Record
+
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		s.log.Error("Error decoding organization response", "response", string(response.Body), "error", err)
+		return nil, false
+	}
+
+	var logins = make([]string, len(records))
+	for i, record := range records {
+		logins[i] = record.Login
+	}
+
+	s.log.Debug("Received organizations", "logins", logins)
+
+	return logins, true
 }
