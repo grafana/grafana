@@ -52,7 +52,7 @@ export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMe
   const rulesOption = {
     label: 'Recording rules',
     value: RECORDING_RULES_GROUP,
-    children: ruleNames
+    items: ruleNames
       .slice()
       .sort()
       .map(name => ({ label: name, value: name })),
@@ -254,10 +254,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
       histogramMetrics.length > 0
-        ? [
-            { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions, isLeaf: false },
-            ...metricsByPrefix,
-          ]
+        ? [{ label: 'Histograms', value: HISTOGRAM_GROUP, items: histogramOptions, isLeaf: false }, ...metricsByPrefix]
         : metricsByPrefix;
 
     // Hint for big disabled lookups
