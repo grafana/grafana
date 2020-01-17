@@ -18,6 +18,7 @@ import _ from 'lodash';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import templateSrv from '../template_srv';
+import { Deferred } from '../deferred';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -52,21 +53,20 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 };
 
 export const processVariables = (): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const variables = getVariables(getState());
+  return async (dispatch, getState) => {
+    const variables = getVariables(getState()).map(v => ({ ...v }));
     const queryParams = getState().location.query;
     const dependencies: Array<Promise<any>> = [];
 
     for (let index = 0; index < variables.length; index++) {
-      let variableResolve: any = null;
-      const promise = new Promise(resolve => {
-        variableResolve = resolve;
-      });
-      const variable = { ...variables[index] };
-      variable.initLock = promise;
+      variables[index].initLock = new Deferred();
+    }
+
+    for (let index = 0; index < variables.length; index++) {
+      const variable = variables[index];
       for (const otherVariable of variables) {
         if (variableAdapter[variable.type].dependsOn(variable, otherVariable)) {
-          dependencies.push(otherVariable.initLock);
+          dependencies.push(otherVariable.initLock.promise);
         }
       }
 
@@ -74,7 +74,7 @@ export const processVariables = (): ThunkResult<void> => {
         .then(() => {
           const urlValue = queryParams['var-' + variable.name];
           if (urlValue !== void 0) {
-            return variableAdapter[variable.type].setOptionFromUrl(variable, urlValue).then(variableResolve);
+            return variableAdapter[variable.type].setOptionFromUrl(variable, urlValue).then(variable.initLock.resolve);
           }
 
           if (variable.hasOwnProperty('refresh')) {
@@ -83,12 +83,11 @@ export const processVariables = (): ThunkResult<void> => {
               refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
               refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
             ) {
-              return variableAdapter[variable.type].updateOptions(refreshableVariable).then(variableResolve);
+              return variableAdapter[variable.type].updateOptions(refreshableVariable).then(variable.initLock.resolve);
             }
           }
 
-          variableResolve();
-          return Promise.resolve();
+          return variable.initLock.resolve();
         })
         .finally(() => {
           delete variable.initLock;

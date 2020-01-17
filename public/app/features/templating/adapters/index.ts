@@ -20,13 +20,15 @@ export const queryVariableAdapter = (): VariableAdapterProps<QueryVariableModel>
     return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
   },
   setOptionFromUrl: async (variable, urlValue) => {
-    return new Promise(async () => {
+    return new Promise(async resolve => {
       await store.dispatch(setOptionFromUrl(variable, urlValue) as any);
+      resolve();
     });
   },
   updateOptions: (variable, searchFilter) => {
-    return new Promise(async () => {
+    return new Promise(async resolve => {
       await store.dispatch(updateQueryVariableOptions(variable, searchFilter) as any);
+      resolve();
     });
   },
 });

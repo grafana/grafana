@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { ScopedVars } from '@grafana/data';
 
 import { assignModelProperties } from 'app/core/utils/model_utils';
+import { Deferred } from './deferred';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -148,7 +149,7 @@ export interface VariableModel {
   hide: VariableHide;
   skipUrlSync: boolean;
   index: number;
-  initLock?: Promise<any>;
+  initLock?: Deferred;
 }
 
 export interface VariableActions {
