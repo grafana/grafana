@@ -19,7 +19,7 @@ export interface ButtonCascaderProps {
 }
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = props => (
-  <RCCascader {...props}>
+  <RCCascader {...props} fieldNames={{ label: 'label', value: 'value', children: 'items' }}>
     <Button variant="secondary" disabled={props.disabled}>
       {props.buttonText} <Icon name="caret-down" />
     </Button>
