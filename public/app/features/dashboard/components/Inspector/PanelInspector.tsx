@@ -4,11 +4,10 @@ import { saveAs } from 'file-saver';
 import { css } from 'emotion';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent, Forms } from '@grafana/ui';
+import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent, Forms, stylesFactory } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides, toCSV } from '@grafana/data';
 import { config } from 'app/core/config';
-import memoizeOne from 'memoize-one';
 
 interface Props {
   dashboard: DashboardModel;
@@ -39,7 +38,7 @@ interface State {
   metaDS?: DataSourceApi;
 }
 
-const getStyles = memoizeOne(() => {
+const getStyles = stylesFactory(() => {
   return {
     toolbar: css`
       display: flex;
