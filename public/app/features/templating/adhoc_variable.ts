@@ -17,6 +17,7 @@ export class AdhocVariable implements AdHocVariableModel, VariableActions {
   skipUrlSync: boolean;
   filters: AdHocVariableFilter[];
   datasource: string;
+  index: number;
 
   defaults: AdHocVariableModel = {
     type: 'adhoc',
@@ -26,6 +27,7 @@ export class AdhocVariable implements AdHocVariableModel, VariableActions {
     skipUrlSync: false,
     datasource: null,
     filters: [],
+    index: -1,
   };
 
   /** @ngInject */

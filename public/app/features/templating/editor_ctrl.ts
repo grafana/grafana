@@ -175,7 +175,7 @@ export class VariableEditorCtrl {
 
     $scope.duplicate = (variable: { getSaveModel: () => void; name: string }) => {
       const clone = _.cloneDeep(variable.getSaveModel());
-      $scope.current = variableSrv.createVariableFromModel(clone);
+      $scope.current = variableSrv.createVariableFromModel(clone, $scope.variables.length);
       $scope.current.name = 'copy_of_' + variable.name;
       variableSrv.addVariable($scope.current);
     };
@@ -194,7 +194,7 @@ export class VariableEditorCtrl {
 
     $scope.reset = () => {
       $scope.currentIsNew = true;
-      $scope.current = variableSrv.createVariableFromModel({ type: 'query' });
+      $scope.current = variableSrv.createVariableFromModel({ type: 'query' }, $scope.variables.length);
 
       // this is done here in case a new data source type variable was added
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), ds => {
@@ -211,9 +211,12 @@ export class VariableEditorCtrl {
 
     $scope.typeChanged = function() {
       const old = $scope.current;
-      $scope.current = variableSrv.createVariableFromModel({
-        type: $scope.current.type,
-      });
+      $scope.current = variableSrv.createVariableFromModel(
+        {
+          type: $scope.current.type,
+        },
+        old.index
+      );
       $scope.current.name = old.name;
       $scope.current.label = old.label;
 

@@ -11,18 +11,18 @@ import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { notifyApp, updateLocation } from 'app/core/actions';
 import locationUtil from 'app/core/utils/location_util';
 import {
+  clearDashboardQueriesToUpdate,
   dashboardInitCompleted,
   dashboardInitFailed,
   dashboardInitFetching,
   dashboardInitServices,
   dashboardInitSlow,
-  clearDashboardQueriesToUpdate,
 } from './actions';
 // Types
-import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
+import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery } from '@grafana/data';
-import { addVariable } from '../../templating/state/actions';
+import { initDashboardTemplating, processVariables } from '../../templating/state/actions';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -177,9 +177,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
-      dashboard.templating.list.map((model, index) => {
-        dispatch(addVariable({ index, global: false, model }));
-      });
+      await dispatch(initDashboardTemplating(dashboard.templating.list));
+      await dispatch(processVariables());
       await variableSrv.init(dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed', err)));

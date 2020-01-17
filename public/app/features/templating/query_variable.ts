@@ -43,6 +43,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
   tags: VariableTag[];
   definition: string;
   allValue: string;
+  index: number;
 
   defaults: QueryVariableModel = {
     type: 'query',
@@ -65,6 +66,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     tagsQuery: '',
     tagValuesQuery: '',
     definition: '',
+    index: -1,
   };
 
   /** @ngInject */

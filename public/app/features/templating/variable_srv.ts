@@ -1,15 +1,13 @@
 // Libaries
-import angular, { IQService, ILocationService, auto, IPromise } from 'angular';
+import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
-
 // Utils & Services
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './variable';
+import { variableAdapter, VariableModel, variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-
 // Types
 import { TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
@@ -26,7 +24,9 @@ export class VariableSrv {
     private $injector: auto.IInjectorService,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
-  ) {}
+  ) {
+    this.createVariableFromModel = this.createVariableFromModel.bind(this);
+  }
 
   init(dashboard: DashboardModel) {
     this.dashboard = dashboard;
@@ -37,7 +37,10 @@ export class VariableSrv {
     );
 
     // create working class models representing variables
-    this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
+    dashboard.templating.list = dashboard.templating.list.map((model: VariableModel, index) =>
+      this.createVariableFromModel(model, index)
+    );
+    this.variables = dashboard.templating.list.filter((m: VariableModel) => !variableAdapter[m.type].useState);
     this.templateSrv.init(this.variables, this.timeSrv.timeRange());
 
     // init variables
@@ -105,7 +108,7 @@ export class VariableSrv {
       });
   }
 
-  createVariableFromModel(model: any) {
+  createVariableFromModel(model: any, index: number) {
     // @ts-ignore
     const ctor = variableTypes[model.type].ctor;
     if (!ctor) {
@@ -114,7 +117,7 @@ export class VariableSrv {
       };
     }
 
-    const variable = this.$injector.instantiate(ctor, { model: model });
+    const variable = this.$injector.instantiate(ctor, { model: { ...model, index } });
     return variable;
   }
 
@@ -342,11 +345,14 @@ export class VariableSrv {
       datasource: options.datasource,
     } as any);
     if (!variable) {
-      variable = this.createVariableFromModel({
-        name: 'Filters',
-        type: 'adhoc',
-        datasource: options.datasource,
-      });
+      variable = this.createVariableFromModel(
+        {
+          name: 'Filters',
+          type: 'adhoc',
+          datasource: options.datasource,
+        },
+        this.variables.length
+      );
       this.addVariable(variable);
     }
 

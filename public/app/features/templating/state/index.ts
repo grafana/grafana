@@ -1,6 +1,6 @@
-import { initialQueryVariablesState, queryVariablesReducer, QueryVariablesState } from './queryVariable';
+import { initialQueryVariablesState, QueryVariablesState } from './queryVariable';
 import { createSlice } from '@reduxjs/toolkit';
-import { VariableType } from '../variable';
+import { variableAdapter, VariableType } from '../variable';
 import { addVariable } from './actions';
 
 export interface TemplatingState extends Record<VariableType, any> {
@@ -11,14 +11,6 @@ export const initialState = {
   query: initialQueryVariablesState,
 };
 
-export const getReducerFromType = (type: VariableType) => {
-  if (type === 'query') {
-    return queryVariablesReducer;
-  }
-
-  return null;
-};
-
 const templatingSlice = createSlice({
   name: 'templating',
   initialState,
@@ -26,9 +18,9 @@ const templatingSlice = createSlice({
   extraReducers: builder =>
     builder.addCase(addVariable, (state: TemplatingState, action) => {
       const { type } = action.payload.model;
-      const reducer = getReducerFromType(type);
+      const reducer = variableAdapter[type].reducer;
       if (!reducer) {
-        return;
+        throw new Error(`Reducer for type ${type} could not be found.`);
       }
       state[type] = reducer(state[type], action);
     }),

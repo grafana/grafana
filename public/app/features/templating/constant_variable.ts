@@ -18,6 +18,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   query: string;
   options: VariableOption[];
   current: VariableOption;
+  index: number;
 
   defaults: ConstantVariableModel = {
     type: 'constant',
@@ -28,6 +29,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
     current: {} as VariableOption,
     options: [],
     skipUrlSync: false,
+    index: -1,
   };
 
   /** @ngInject */

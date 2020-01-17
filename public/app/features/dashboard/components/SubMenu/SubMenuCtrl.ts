@@ -1,12 +1,16 @@
 import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
 import { e2e } from '@grafana/e2e';
+
 import { VariableSrv } from 'app/features/templating/all';
 import { CoreEvents } from '../../../../types';
+import { variableAdapter, VariableModel } from '../../../templating/variable';
+import { store } from '../../../../store/store';
+import { getVariables } from '../../../templating/state/selectors';
 
 export class SubMenuCtrl {
   annotations: any;
-  variables: any;
+  variables: VariableModel[];
   dashboard: any;
   submenuEnabled: boolean;
   selectors: typeof e2e.pages.Dashboard.SubMenu.selectors;
@@ -14,7 +18,8 @@ export class SubMenuCtrl {
   /** @ngInject */
   constructor(private variableSrv: VariableSrv, private $location: ILocationService) {
     this.annotations = this.dashboard.templating.list;
-    this.variables = this.variableSrv.variables;
+    const variablesInState = getVariables(store.getState()).map(variable => ({ ...variable }));
+    this.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
     this.submenuEnabled = this.dashboard.meta.submenuEnabled;
     this.dashboard.events.on(CoreEvents.submenuVisibilityChanged, (enabled: boolean) => {
       this.submenuEnabled = enabled;
@@ -26,7 +31,10 @@ export class SubMenuCtrl {
     this.dashboard.startRefresh();
   }
 
-  variableUpdated(variable: any) {
+  variableUpdated(variable: VariableModel) {
+    if (variableAdapter[variable.type].useState) {
+      return;
+    }
     this.variableSrv.variableUpdated(variable, true);
   }
 
