@@ -260,22 +260,20 @@ func TestStackdriver(t *testing.T) {
 				})
 
 				Convey("Should add meta for labels to the response", func() {
-					metricLabels := res.Meta.Get("metricLabels").Interface().(map[string][]string)
-					So(metricLabels, ShouldNotBeNil)
-					So(len(metricLabels["instance_name"]), ShouldEqual, 3)
-					So(metricLabels["instance_name"][0], ShouldEqual, "collector-asia-east-1")
-					So(metricLabels["instance_name"][1], ShouldEqual, "collector-europe-west-1")
-					So(metricLabels["instance_name"][2], ShouldEqual, "collector-us-east-1")
+					labels := res.Meta.Get("labels").Interface().(map[string][]string)
+					So(labels, ShouldNotBeNil)
+					So(len(labels["metric.label.instance_name"]), ShouldEqual, 3)
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-asia-east-1")
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-europe-west-1")
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-us-east-1")
 
-					resourceLabels := res.Meta.Get("resourceLabels").Interface().(map[string][]string)
-					So(resourceLabels, ShouldNotBeNil)
-					So(len(resourceLabels["zone"]), ShouldEqual, 3)
-					So(resourceLabels["zone"][0], ShouldEqual, "asia-east1-a")
-					So(resourceLabels["zone"][1], ShouldEqual, "europe-west1-b")
-					So(resourceLabels["zone"][2], ShouldEqual, "us-east1-b")
+					So(len(labels["resource.label.zone"]), ShouldEqual, 3)
+					So(labels["resource.label.zone"], ShouldContain, "asia-east1-a")
+					So(labels["resource.label.zone"], ShouldContain, "europe-west1-b")
+					So(labels["resource.label.zone"], ShouldContain, "us-east1-b")
 
-					So(len(resourceLabels["project_id"]), ShouldEqual, 1)
-					So(resourceLabels["project_id"][0], ShouldEqual, "grafana-prod")
+					So(len(labels["resource.label.project_id"]), ShouldEqual, 1)
+					So(labels["resource.label.project_id"][0], ShouldEqual, "grafana-prod")
 				})
 			})
 
@@ -417,6 +415,72 @@ func TestStackdriver(t *testing.T) {
 					So(res.Series[8].Points[1][0].Float64, ShouldEqual, 375)
 					So(res.Series[9].Points[1][0].Float64, ShouldEqual, 213)
 					So(res.Series[10].Points[1][0].Float64, ShouldEqual, 56)
+				})
+			})
+
+			Convey("when data from query returns metadata system labels", func() {
+				data, err := loadTestFile("./test-data/5-series-response-meta-data.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 3)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				err = executor.parseResponse(res, data, query)
+				labels := res.Meta.Get("labels").Interface().(map[string][]string)
+				So(err, ShouldBeNil)
+
+				So(len(res.Series), ShouldEqual, 3)
+
+				Convey("and systemlabel contains key with array of string", func() {
+					So(len(labels["metadata.system_labels.test"]), ShouldEqual, 5)
+					So(labels["metadata.system_labels.test"], ShouldContain, "value1")
+					So(labels["metadata.system_labels.test"], ShouldContain, "value2")
+					So(labels["metadata.system_labels.test"], ShouldContain, "value3")
+					So(labels["metadata.system_labels.test"], ShouldContain, "value4")
+					So(labels["metadata.system_labels.test"], ShouldContain, "value5")
+				})
+
+				Convey("and systemlabel contains key with primitive strings", func() {
+					So(len(labels["metadata.system_labels.region"]), ShouldEqual, 2)
+					So(labels["metadata.system_labels.region"], ShouldContain, "us-central1")
+					So(labels["metadata.system_labels.region"], ShouldContain, "us-west1")
+				})
+
+				Convey("and userLabel contains key with primitive strings", func() {
+					So(len(labels["metadata.user_labels.region"]), ShouldEqual, 2)
+					So(labels["metadata.user_labels.region"], ShouldContain, "region1")
+					So(labels["metadata.user_labels.region"], ShouldContain, "region3")
+
+					So(len(labels["metadata.user_labels.name"]), ShouldEqual, 2)
+					So(labels["metadata.user_labels.name"], ShouldContain, "name1")
+					So(labels["metadata.user_labels.name"], ShouldContain, "name3")
+				})
+			})
+			Convey("when data from query returns metadata system labels and alias by is defined", func() {
+				data, err := loadTestFile("./test-data/5-series-response-meta-data.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 3)
+
+				Convey("and systemlabel contains key with array of string", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &StackdriverQuery{AliasBy: "{{metadata.system_labels.test}}"}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(len(res.Series), ShouldEqual, 3)
+					fmt.Println(res.Series[0].Name)
+					So(res.Series[0].Name, ShouldEqual, "value1, value2")
+					So(res.Series[1].Name, ShouldEqual, "value1, value2, value3")
+					So(res.Series[2].Name, ShouldEqual, "value1, value2, value4, value5")
+				})
+
+				Convey("and systemlabel contains key with array of string2", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &StackdriverQuery{AliasBy: "{{metadata.system_labels.test2}}"}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(len(res.Series), ShouldEqual, 3)
+					fmt.Println(res.Series[0].Name)
+					So(res.Series[2].Name, ShouldEqual, "testvalue")
 				})
 			})
 		})
