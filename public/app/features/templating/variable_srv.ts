@@ -13,6 +13,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 // Types
 import { TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -300,6 +301,22 @@ export class VariableSrv {
 
     this.selectOptionsForCurrentValue(variable);
     return this.variableUpdated(variable);
+  }
+
+  templateVarsChangedInUrl(vars: UrlQueryMap) {
+    const update: Array<Promise<any>> = [];
+    for (const v of this.variables) {
+      const key = `var-${v.name}`;
+      if (vars.hasOwnProperty(key)) {
+        update.push(v.setValueFromUrl(vars[key]));
+      }
+    }
+    if (update.length) {
+      Promise.all(update).then(() => {
+        this.dashboard.templateVariableValueUpdated();
+        this.dashboard.startRefresh();
+      });
+    }
   }
 
   updateUrlParamsWithCurrentVariables() {
