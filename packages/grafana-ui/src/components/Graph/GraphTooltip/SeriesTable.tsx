@@ -22,6 +22,7 @@ const getSeriesTableRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     seriesTableRow: css`
       display: table-row;
+      font-size: ${theme.typography.size.sm};
     `,
     seriesTableCell: css`
       display: table-cell;
@@ -34,6 +35,10 @@ const getSeriesTableRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     activeSeries: css`
       font-weight: ${theme.typography.weight.bold};
+    `,
+    timestamp: css`
+      font-weight: ${theme.typography.weight.bold};
+      font-size: ${theme.typography.size.sm};
     `,
   };
 });
@@ -60,9 +65,15 @@ interface SeriesTableProps {
 }
 
 export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) => {
+  const theme = useTheme();
+  const styles = getSeriesTableRowStyles(theme);
   return (
     <>
-      {timestamp && <div aria-label="Timestamp">{timestamp}</div>}
+      {timestamp && (
+        <div className={styles.timestamp} aria-label="Timestamp">
+          {timestamp}
+        </div>
+      )}
       {series.map(s => {
         return <SeriesTableRow isActive={s.isActive} label={s.label} color={s.color} value={s.value} key={s.label} />;
       })}
