@@ -139,7 +139,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       }
     }
 
-    return period;
+    return period || '';
   }
 
   buildCloudwatchConsoleUrl(
