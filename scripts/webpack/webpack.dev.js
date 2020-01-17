@@ -30,54 +30,51 @@ module.exports = (env = {}) =>
       rules: [
         {
           test: /\.tsx?$/,
-          enforce: 'pre',
           exclude: /node_modules/,
-          use: {
-            loader: 'tslint-loader',
-            options: {
-              emitErrors: true,
-              typeCheck: false,
-            },
-          },
-        },
-        {
-          test: /\.tsx?$/,
-          exclude: /node_modules/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true,
-              babelrc: false,
-              // Note: order is top-to-bottom and/or left-to-right
-              plugins: [
-                [
-                  require('@rtsao/plugin-proposal-class-properties'),
-                  {
-                    loose: true,
-                  },
-                ],
-                '@babel/plugin-proposal-nullish-coalescing-operator',
-                '@babel/plugin-proposal-optional-chaining',
-                '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
-                'angularjs-annotate',
-              ],
-              // Note: order is bottom-to-top and/or right-to-left
-              presets: [
-                [
-                  '@babel/preset-env',
-                  {
-                    targets: {
-                      browsers: 'last 3 versions',
+          use: [
+            {
+              loader: 'babel-loader',
+              options: {
+                cacheDirectory: true,
+                babelrc: false,
+                // Note: order is top-to-bottom and/or left-to-right
+                plugins: [
+                  [
+                    require('@rtsao/plugin-proposal-class-properties'),
+                    {
+                      loose: true,
                     },
-                    useBuiltIns: 'entry',
-                    modules: false,
-                  },
+                  ],
+                  '@babel/plugin-proposal-nullish-coalescing-operator',
+                  '@babel/plugin-proposal-optional-chaining',
+                  '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
+                  'angularjs-annotate',
                 ],
-                '@babel/preset-typescript',
-                '@babel/preset-react',
-              ],
+                // Note: order is bottom-to-top and/or right-to-left
+                presets: [
+                  [
+                    '@babel/preset-env',
+                    {
+                      targets: {
+                        browsers: 'last 3 versions',
+                      },
+                      useBuiltIns: 'entry',
+                      modules: false,
+                    },
+                  ],
+                  '@babel/preset-typescript',
+                  '@babel/preset-react',
+                ],
+              },
             },
-          },
+            {
+              loader: 'tslint-loader',
+              options: {
+                emitErrors: true,
+                typeCheck: false,
+              },
+            },
+          ],
         },
         require('./sass.rule.js')({
           sourceMap: false,
