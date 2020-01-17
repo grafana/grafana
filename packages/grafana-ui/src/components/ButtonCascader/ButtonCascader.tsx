@@ -10,7 +10,7 @@ export interface ButtonCascaderProps {
   children: string;
   disabled?: boolean;
   value?: string[];
-  fieldNames?: any;
+  fieldNames?: { label: string; value: string; children: string };
 
   loadData?: (selectedOptions: CascaderOption[]) => void;
   onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;

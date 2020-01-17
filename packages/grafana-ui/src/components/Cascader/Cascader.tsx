@@ -32,7 +32,7 @@ export interface CascaderOption {
   items?: CascaderOption[];
   disabled?: boolean;
   title?: string;
-  [key: string]: any;
+  children?: CascaderOption[];
 }
 
 const disableDivFocus = css(`
