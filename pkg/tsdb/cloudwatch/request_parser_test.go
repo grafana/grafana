@@ -174,6 +174,18 @@ func TestRequestParser(t *testing.T) {
 				Convey("and input is exactly 50000", func() {
 					So(closest(periods, 50000), ShouldEqual, 21600)
 				})
+
+				Convey("and period isn't shorter than min retension for 15 days", func() {
+					So(closest(periods, (60*60*24*15)+1/2000), ShouldBeGreaterThanOrEqualTo, 300)
+				})
+
+				Convey("and period isn't shorter than min retension for 63 days", func() {
+					So(closest(periods, (60*60*24*63)+1/2000), ShouldBeGreaterThanOrEqualTo, 3600)
+				})
+
+				Convey("and period isn't shorter than min retension for 455 days", func() {
+					So(closest(periods, (60*60*24*455)+1/2000), ShouldBeGreaterThanOrEqualTo, 21600)
+				})
 			})
 		})
 	})
