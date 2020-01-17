@@ -84,7 +84,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       wrapLogMessage,
       onToggleContext,
     } = this.props;
-    const {} = this.state;
+
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
 
