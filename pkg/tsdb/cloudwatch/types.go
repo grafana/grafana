@@ -37,6 +37,7 @@ type cloudwatchResponse struct {
 	Expression              string
 	RequestExceededMaxLimit bool
 	PartialData             bool
+	Period                  int
 }
 
 type queryError struct {

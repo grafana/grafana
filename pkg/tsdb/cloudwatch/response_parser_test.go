@@ -60,7 +60,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, err := parseGetMetricDataTimeSeries(resp, query)
+			series, _, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
@@ -116,7 +116,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, err := parseGetMetricDataTimeSeries(resp, query)
+			series, _, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
@@ -172,7 +172,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, err := parseGetMetricDataTimeSeries(resp, query)
+			series, _, err := parseGetMetricDataTimeSeries(resp, query)
 
 			So(err, ShouldBeNil)
 			So((*series)[0].Name, ShouldEqual, "lb3 Expanded")
