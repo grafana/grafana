@@ -992,18 +992,6 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
-  tmp-prep-msi:
-    docker:
-      - image: grafana/grafana-ci-deploy:1.2.3
-    steps:
-      - run:
-          name: get zip for msi test build
-          command: 'mkdir -p enterprise-dist && cd enterprise-dist && wget https://dl.grafana.com/enterprise/master/grafana-enterprise-6.6.0-6b61b989pre.windows-amd64.zip'
-      - persist_to_workspace:
-          root: .
-          paths:
-            - enterprise-dist/grafana*.zip
-
   build-ee-msi:
     docker:
       - image: grafana/wix-toolset-ci:v3
@@ -1030,8 +1018,6 @@ jobs:
           name: ci job succeeded
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
-      - store_artifacts:
-          path: ./enterprise-dist
 
   store-build-artifacts:
     docker:
@@ -1355,12 +1341,6 @@ workflows:
 
   build-branches-and-prs:
       jobs:
-        - tmp-prep-msi:
-            filters: *filter-not-release-or-master
-        - build-ee-msi:
-            filters: *filter-not-release-or-master
-            requires:
-              - tmp-prep-msi
         - build-fast-backend:
             filters: *filter-not-release-or-master
         - build-fast-frontend:
