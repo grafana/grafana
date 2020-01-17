@@ -66,7 +66,6 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	partialData := false
 	for label, metricDataResult := range metricDataResults {
 		if *metricDataResult.StatusCode != "Complete" {
-			// return nil, fmt.Errorf("too many datapoints requested in query %s. Please try to reduce the time range", query.RefId)
 			partialData = true
 		}
 
