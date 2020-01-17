@@ -5,7 +5,6 @@ import { GrafanaTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSett
 export interface BuildInfo {
   version: string;
   commit: string;
-  isEnterprise: boolean;
   env: string;
   latestVersion: string;
   hasUpdate: boolean;
