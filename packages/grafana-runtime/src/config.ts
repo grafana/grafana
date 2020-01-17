@@ -17,6 +17,12 @@ interface FeatureToggles {
   expressions: boolean;
   newEdit: boolean;
 }
+
+interface LicenseInfo {
+  hasLicense: boolean;
+  expiry: number;
+}
+
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -55,6 +61,7 @@ export class GrafanaBootConfig {
     expressions: false,
     newEdit: false,
   };
+  licenseInfo: LicenseInfo = {} as LicenseInfo;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
