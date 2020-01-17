@@ -33,16 +33,11 @@ executors:
 jobs:
   install-grabpl:
     description: Install the Grafana Build Pipeline tool
-    executor: cloud-sdk
+    executor: grafana-build
     steps:
       - run:
-          name: Sign in to GCP
-          command: |
-            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-      - run: |
-          gsutil cp gs://grafana-build-pipeline/grabpl bin/grabpl
-          chmod +x bin/grabpl
+          name: Install Grafana Build Pipeline
+          command: go get github.com/grafana/build-pipeline
       - persist_to_workspace:
           root: .
           paths:
