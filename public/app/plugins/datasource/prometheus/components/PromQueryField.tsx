@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Plugin } from 'slate';
 import {
-  Cascader,
+  ButtonCascader,
   CascaderOption,
   SlatePrism,
   TypeaheadInput,
@@ -52,7 +52,7 @@ export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMe
   const rulesOption = {
     label: 'Recording rules',
     value: RECORDING_RULES_GROUP,
-    children: ruleNames
+    items: ruleNames
       .slice()
       .sort()
       .map(name => ({ label: name, value: name })),
@@ -69,7 +69,7 @@ export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMe
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
         const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
         return {
-          children,
+          items: children,
           label: prefix,
           value: prefix,
         };
@@ -198,7 +198,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
     if (selectedOptions.length === 1) {
-      if (selectedOptions[0].children.length === 0) {
+      if (selectedOptions[0].items.length === 0) {
         query = selectedOptions[0].value;
       } else {
         // Ignore click on group
@@ -254,10 +254,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
       histogramMetrics.length > 0
-        ? [
-            { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions, isLeaf: false },
-            ...metricsByPrefix,
-          ]
+        ? [{ label: 'Histograms', value: HISTOGRAM_GROUP, items: histogramOptions, isLeaf: false }, ...metricsByPrefix]
         : metricsByPrefix;
 
     // Hint for big disabled lookups
@@ -302,7 +299,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       <>
         <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form flex-shrink-0">
-            <Cascader
+            <ButtonCascader
               options={metricsOptions}
               buttonText={chooserText}
               disabled={buttonDisabled}
