@@ -55,10 +55,10 @@ describe('loki result transformer', () => {
       expect(data[0].fields[1].labels['foo']).toEqual('bar');
       expect(data[0].fields[0].values.get(0)).toEqual(legacyStreamResult[0].entries[0].ts);
       expect(data[0].fields[1].values.get(0)).toEqual(legacyStreamResult[0].entries[0].line);
-      expect(data[0].fields[2].values.get(0)).toEqual('1970-01-01T00:00:00Z_{foo="bar"}');
+      expect(data[0].fields[2].values.get(0)).toEqual('2764544e18dbc3fcbeee21a573e8cd1b');
       expect(data[1].fields[0].values.get(0)).toEqual(legacyStreamResult[1].entries[0].ts);
       expect(data[1].fields[1].values.get(0)).toEqual(legacyStreamResult[1].entries[0].line);
-      expect(data[1].fields[2].values.get(0)).toEqual('1970-01-01T00:00:00Z_{bar="foo"}');
+      expect(data[1].fields[2].values.get(0)).toEqual('55b7a68547c4c1c88827f13f3cb680ed');
     });
   });
 
@@ -97,10 +97,10 @@ describe('loki result transformer', () => {
       expect(data[0].fields[1].labels['foo']).toEqual('bar');
       expect(data[0].fields[0].values.get(0)).toEqual(legacyStreamResult[0].entries[0].ts);
       expect(data[0].fields[1].values.get(0)).toEqual(legacyStreamResult[0].entries[0].line);
-      expect(data[0].fields[2].values.get(0)).toEqual('1970-01-01T00:00:00Z_{foo="bar"}');
+      expect(data[0].fields[2].values.get(0)).toEqual('dc1e83aa5cd718b42a3cff50fa7e3a6a');
       expect(data[1].fields[0].values.get(0)).toEqual(legacyStreamResult[1].entries[0].ts);
       expect(data[1].fields[1].values.get(0)).toEqual(legacyStreamResult[1].entries[0].line);
-      expect(data[1].fields[2].values.get(0)).toEqual('1970-01-01T00:00:00Z_{bar="foo"}');
+      expect(data[1].fields[2].values.get(0)).toEqual('952fa23552daebbb5747c4e52fb9497d');
     });
   });
 
@@ -139,7 +139,7 @@ describe('loki result transformer', () => {
         ts: '1970-01-01T00:00:00Z',
         line: "foo: [32m'bar'[39m",
         labels: { foo: 'bar' },
-        id: '1970-01-01T00:00:00Z_{foo="bar"}',
+        id: '2764544e18dbc3fcbeee21a573e8cd1b',
       });
     });
   });
