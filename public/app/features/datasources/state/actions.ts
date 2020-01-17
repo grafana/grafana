@@ -1,5 +1,5 @@
 import config from '../../../core/config';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
@@ -15,6 +15,9 @@ import {
   dataSourcesLoaded,
   initDataSourceSettingsFailed,
   initDataSourceSettingsSucceeded,
+  testDataSourceStarting,
+  testDataSourceSucceeded,
+  testDataSourceFailed,
 } from './reducers';
 import { buildCategories } from './buildCategories';
 import { getDataSource, getDataSourceMeta } from './selectors';
@@ -46,6 +49,45 @@ export const initDataSourceSettings = (pageId: number): ThunkResult<void> => {
     } catch (err) {
       dispatch(initDataSourceSettingsFailed(err));
     }
+  };
+};
+
+export const testDataSource = (dataSourceName: string): ThunkResult<void> => {
+  return async (dispatch: ThunkDispatch, getState) => {
+    const dsApi = await getDatasourceSrv().get(dataSourceName);
+
+    if (!dsApi.testDatasource) {
+      return;
+    }
+
+    dispatch(testDataSourceStarting());
+
+    getBackendSrv().withNoBackendCache(async () => {
+      try {
+        const result = await dsApi.testDatasource();
+
+        dispatch(
+          testDataSourceSucceeded({
+            testingStatus: result.status,
+            testingMessage: result.message,
+          })
+        );
+      } catch (err) {
+        let message = '';
+
+        if (err.statusText) {
+          message = 'HTTP Error ' + err.statusText;
+        } else {
+          message = err.message;
+        }
+
+        dispatch(
+          testDataSourceFailed({
+            testingMessage: message,
+          })
+        );
+      }
+    });
   };
 };
 
@@ -151,7 +193,7 @@ export function findNewName(dataSources: ItemWithName[], name: string) {
 function updateFrontendSettings() {
   return getBackendSrv()
     .get('/api/frontend/settings')
-    .then(settings => {
+    .then((settings: any) => {
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;
       getDatasourceSrv().init();

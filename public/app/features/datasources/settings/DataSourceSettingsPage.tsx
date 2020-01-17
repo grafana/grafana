@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
 import isString from 'lodash/isString';
 import { e2e } from '@grafana/e2e';
 // Components
@@ -11,11 +10,15 @@ import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 // Services & Utils
 import appEvents from 'app/core/app_events';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
-import { deleteDataSource, loadDataSource, updateDataSource, initDataSourceSettings } from '../state/actions';
+import {
+  deleteDataSource,
+  loadDataSource,
+  updateDataSource,
+  initDataSourceSettings,
+  testDataSource,
+} from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
@@ -25,6 +28,7 @@ import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/dat
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
+import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 
 export interface Props {
   navModel: NavModel;
@@ -38,6 +42,7 @@ export interface Props {
   setIsDefault: typeof setIsDefault;
   dataSourceLoaded: typeof dataSourceLoaded;
   initDataSourceSettings: typeof initDataSourceSettings;
+  testDataSource: typeof testDataSource;
   plugin?: GenericDataSourcePlugin;
   query: UrlQueryMap;
   page?: string;
@@ -48,7 +53,7 @@ export interface Props {
 }
 
 export class DataSourceSettingsPage extends PureComponent<Props> {
-  async componentDidMount() {
+  componentDidMount() {
     const { initDataSourceSettings, pageId } = this.props;
     initDataSourceSettings(pageId);
   }
@@ -100,40 +105,9 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     );
   }
 
-  async testDataSource() {
-    const dsApi = await getDatasourceSrv().get(this.props.dataSource.name);
-
-    if (!dsApi.testDatasource) {
-      return;
-    }
-
-    this.setState({ isTesting: true, testingMessage: 'Testing...', testingStatus: 'info' });
-
-    getBackendSrv().withNoBackendCache(async () => {
-      try {
-        const result = await dsApi.testDatasource();
-
-        this.setState({
-          isTesting: false,
-          testingStatus: result.status,
-          testingMessage: result.message,
-        });
-      } catch (err) {
-        let message = '';
-
-        if (err.statusText) {
-          message = 'HTTP Error ' + err.statusText;
-        } else {
-          message = err.message;
-        }
-
-        this.setState({
-          isTesting: false,
-          testingStatus: 'error',
-          testingMessage: message,
-        });
-      }
-    });
+  testDataSource() {
+    const { dataSource, testDataSource } = this.props;
+    testDataSource(dataSource.name);
   }
 
   get hasDataSource() {
@@ -314,6 +288,9 @@ const mapDispatchToProps = {
   setIsDefault,
   dataSourceLoaded,
   initDataSourceSettings,
+  testDataSource,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettingsPage));
+export default hot(module)(
+  connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.dataSourceSettings)(DataSourceSettingsPage)
+);

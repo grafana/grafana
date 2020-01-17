@@ -111,6 +111,15 @@ export const initDataSourceSettingsFailed = createAction<Error | string>(
   'dataSourceSettings/initDataSourceSettingsFailed'
 );
 
+export const testDataSourceStarting = createAction<undefined>('dataSourceSettings/testDataSourceStarting');
+
+export const testDataSourceSucceeded = createAction<{
+  testingStatus: string;
+  testingMessage: string;
+}>('dataSourceSettings/testDataSourceSucceeded');
+
+export const testDataSourceFailed = createAction<{ testingMessage: string }>('dataSourceSettings/testDataSourceFailed');
+
 export const dataSourceSettingsReducer = (
   state: DataSourceSettingsState = initialDataSourceSettingsState,
   action: AnyAction
@@ -121,6 +130,23 @@ export const dataSourceSettingsReducer = (
 
   if (initDataSourceSettingsFailed.match(action)) {
     return { ...state, plugin: null, loadError: action.payload };
+  }
+
+  if (testDataSourceStarting.match(action)) {
+    return { ...state, isTesting: true, testingMessage: 'Testing...', testingStatus: 'info' };
+  }
+
+  if (testDataSourceSucceeded.match(action)) {
+    return {
+      ...state,
+      isTesting: false,
+      testingStatus: action.payload.testingStatus,
+      testingMessage: action.payload.testingMessage,
+    };
+  }
+
+  if (testDataSourceFailed.match(action)) {
+    return { ...state, isTesting: false, testingStatus: 'error', testingMessage: action.payload.testingMessage };
   }
 
   return state;
