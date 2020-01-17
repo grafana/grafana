@@ -46,7 +46,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{namespace}}_{{metric}}_{{stat}}",
 			}
-			series, err := parseGetMetricDataTimeSeries(resp, query)
+			series, _, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
