@@ -45,6 +45,7 @@ const getStyles = memoizeOne(() => {
       display: flex;
       margin: 8px 0;
       justify-content: flex-end;
+      align-items: center;
     `,
     dataFrameSelect: css`
       flex-grow: 2;
