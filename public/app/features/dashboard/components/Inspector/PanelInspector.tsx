@@ -44,12 +44,12 @@ const getStyles = memoizeOne(() => {
     toolbar: css`
       display: flex;
       margin: 8px 0;
+      justify-content: flex-end;
     `,
     dataFrameSelect: css`
       flex-grow: 2;
     `,
     downloadCsv: css`
-      flex-grow: 1;
       margin-left: 16px;
     `,
   };
