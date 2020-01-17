@@ -96,7 +96,6 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
 };
 
 export const initialDataSourceSettingsState: DataSourceSettingsState = {
-  isTesting: false,
   testingStatus: null,
   testingMessage: null,
   loadError: null,
@@ -133,20 +132,19 @@ export const dataSourceSettingsReducer = (
   }
 
   if (testDataSourceStarting.match(action)) {
-    return { ...state, isTesting: true, testingMessage: 'Testing...', testingStatus: 'info' };
+    return { ...state, testingMessage: 'Testing...', testingStatus: 'info' };
   }
 
   if (testDataSourceSucceeded.match(action)) {
     return {
       ...state,
-      isTesting: false,
       testingStatus: action.payload.testingStatus,
       testingMessage: action.payload.testingMessage,
     };
   }
 
   if (testDataSourceFailed.match(action)) {
-    return { ...state, isTesting: false, testingStatus: 'error', testingMessage: action.payload.testingMessage };
+    return { ...state, testingStatus: 'error', testingMessage: action.payload.testingMessage };
   }
 
   return state;

@@ -46,7 +46,6 @@ export interface Props {
   plugin?: GenericDataSourcePlugin;
   query: UrlQueryMap;
   page?: string;
-  isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
   loadError?: Error | string;
@@ -259,7 +258,7 @@ function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
   const page = state.location.query.page as string;
-  const { plugin, loadError, testingMessage, testingStatus, isTesting } = state.dataSourceSettings;
+  const { plugin, loadError, testingMessage, testingStatus } = state.dataSourceSettings;
 
   return {
     navModel: getNavModel(
@@ -276,7 +275,6 @@ function mapStateToProps(state: StoreState) {
     loadError,
     testingMessage,
     testingStatus,
-    isTesting,
   };
 }
 
