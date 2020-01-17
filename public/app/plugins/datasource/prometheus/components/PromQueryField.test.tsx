@@ -9,7 +9,7 @@ describe('groupMetricsByPrefix()', () => {
     expect(groupMetricsByPrefix(['foo_metric'])).toMatchObject([
       {
         value: 'foo',
-        items: [
+        children: [
           {
             value: 'foo_metric',
           },
@@ -22,7 +22,7 @@ describe('groupMetricsByPrefix()', () => {
     expect(groupMetricsByPrefix(['foo_metric'], { foo_metric: [{ type: 'TYPE', help: 'my help' }] })).toMatchObject([
       {
         value: 'foo',
-        items: [
+        children: [
           {
             value: 'foo_metric',
             title: 'foo_metric\nTYPE\nmy help',
@@ -44,7 +44,7 @@ describe('groupMetricsByPrefix()', () => {
     expect(groupMetricsByPrefix([':foo_metric:'])).toMatchObject([
       {
         value: RECORDING_RULES_GROUP,
-        items: [
+        children: [
           {
             value: ':foo_metric:',
           },
