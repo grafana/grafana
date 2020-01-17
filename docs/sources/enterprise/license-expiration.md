@@ -29,10 +29,10 @@ Although you'll be able to access most of Grafana as usual, some functionality w
 
 - SAML is not affected by an expired license.
 
-## Enterprise Datasources
+## Enterprise Plugins 
 
-- Enterprise datasources may stop working.
+- Enterprise plugins may stop working.
 
-## Whitelabeling
+## White labeling
 
-- The whitelabeling feature will be disabled.
+- The white labeling feature will be disabled, meaning that any white labeling options will not have any effect.
