@@ -8,6 +8,8 @@ import {
   dashboardInitServices,
   dashboardInitSlow,
   loadDashboardPermissions,
+  setDashboardQueriesToUpdate,
+  clearDashboardQueriesToUpdate,
 } from './actions';
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
@@ -18,6 +20,10 @@ export const initialState: DashboardState = {
   isInitSlow: false,
   model: null,
   permissions: [],
+  modifiedQueries: {
+    panelId: undefined,
+    queries: undefined,
+  },
 };
 
 // Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
@@ -84,6 +90,28 @@ export const dashboardReducer = (state: DashboardState = initialState, action: A
       model: null,
       isInitSlow: false,
       initError: null,
+    };
+  }
+
+  if (setDashboardQueriesToUpdate.match(action)) {
+    const { panelId, queries } = action.payload;
+
+    return {
+      ...state,
+      modifiedQueries: {
+        panelId,
+        queries,
+      },
+    };
+  }
+
+  if (clearDashboardQueriesToUpdate.match(action)) {
+    return {
+      ...state,
+      modifiedQueries: {
+        panelId: undefined,
+        queries: undefined,
+      },
     };
   }
 

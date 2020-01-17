@@ -16,11 +16,11 @@ import {
   dashboardInitFetching,
   dashboardInitServices,
   dashboardInitSlow,
+  clearDashboardQueriesToUpdate,
 } from './actions';
 // Types
-import { DashboardDTO, DashboardRouteInfo, ExploreItemState, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { resetExploreAction } from 'app/features/explore/state/actionTypes';
 import { DataQuery } from '@grafana/data';
 import { addVariable } from '../../templating/state/actions';
 
@@ -171,8 +171,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
-    const left = storeState.explore && storeState.explore.left;
-    dashboard.meta.fromExplore = !!(left && left.originPanelId);
+    const { panelId, queries } = storeState.dashboard.modifiedQueries;
+    dashboard.meta.fromExplore = !!(panelId && queries);
 
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
@@ -205,7 +205,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     if (dashboard.meta.fromExplore) {
-      updateQueriesWhenComingFromExplore(dispatch, dashboard, left);
+      updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
     }
 
     // legacy srv state
@@ -246,24 +246,15 @@ function getNewDashboardModelData(urlFolderId?: string): any {
 function updateQueriesWhenComingFromExplore(
   dispatch: ThunkDispatch,
   dashboard: DashboardModel,
-  left: ExploreItemState
+  originPanelId: number,
+  queries: DataQuery[]
 ) {
-  // When returning to the origin panel from explore, if we're doing
-  // so with changes all the explore state is reset _except_ the queries
-  // and the origin panel ID.
-  const panelArrId = dashboard.panels.findIndex(panel => panel.id === left.originPanelId);
+  const panelArrId = dashboard.panels.findIndex(panel => panel.id === originPanelId);
 
   if (panelArrId > -1) {
-    dashboard.panels[panelArrId].targets = left.queries.map((query: DataQuery & { context?: string }) => {
-      delete query.context;
-      delete query.key;
-      return query;
-    });
+    dashboard.panels[panelArrId].targets = queries;
   }
 
-  dashboard.startRefresh();
-
-  // Force-reset explore so that on subsequent dashboard loads we aren't
-  // taking the modified queries from explore again.
-  dispatch(resetExploreAction({ force: true }));
+  // Clear update state now that we're done
+  dispatch(clearDashboardQueriesToUpdate());
 }
