@@ -44,7 +44,8 @@ jobs:
       - run:
           name: Install Grafana Build Pipeline
           command: |
-            go build -o bin/grabpl ./build-pipeline/cmd/grabpl
+            cd build-pipeline
+            go build -o ../bin/grabpl ./cmd/grabpl
       - persist_to_workspace:
           root: .
           paths:
