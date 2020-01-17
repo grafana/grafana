@@ -15,7 +15,7 @@ cp ./scripts/build/ci-msi-build/msigenerator/cache/nssm-2.24.zip /tmp/cache
 
 cd ./scripts/build/ci-msi-build/msigenerator
 echo "Building MSI"
-python3 generator/build.py -e "$@"
+python3 generator/build.py "$@"
 chmod a+x /tmp/scratch/*.msi
 echo "MSI: Copy to $DIST_DIRECTORY"
 cp /tmp/scratch/*.msi "$DIST_DIRECTORY"
