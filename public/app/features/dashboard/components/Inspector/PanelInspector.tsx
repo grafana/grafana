@@ -104,12 +104,13 @@ export class PanelInspector extends PureComponent<Props, State> {
     }
 
     // Set last result, but no metadata inspector
-    this.setState({
+    this.setState(prevState => ({
       last: lastResult,
       data,
       metaDS,
       error,
-    });
+      tab: error ? InspectTab.Error : prevState.tab,
+    }));
   }
 
   onDismiss = () => {
@@ -197,10 +198,17 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   renderErrorTab(error?: DataQueryError) {
     if (!error) {
-      return <div>No error </div>;
+      return null;
     }
-
-    return <span>{error.message}</span>;
+    if (error.data) {
+      return (
+        <div>
+          <h3>{error.data.message}</h3>
+          <div>{error.data.error}</div>
+        </div>
+      );
+    }
+    return <div>{error.message}</div>;
   }
 
   render() {
@@ -211,15 +219,17 @@ export class PanelInspector extends PureComponent<Props, State> {
       return null;
     }
 
-    const tabs = [
-      { label: 'Data', value: InspectTab.Data },
-      { label: 'Issue', value: InspectTab.Issue },
-      { label: 'Raw JSON', value: InspectTab.Raw },
-      { label: 'Error', value: InspectTab.Error },
-    ];
+    const tabs = [];
+    if (last && last?.series?.length > 0) {
+      tabs.push({ label: 'Data', value: InspectTab.Data });
+    }
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
     }
+    if (error && error.message) {
+      tabs.push({ label: 'Error', value: InspectTab.Error });
+    }
+    tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
 
     return (
       <Drawer title={panel.title} onClose={this.onDismiss}>
