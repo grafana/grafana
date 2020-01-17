@@ -1030,6 +1030,8 @@ jobs:
           name: ci job succeeded
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
+      - store_artifacts:
+          path: ./enterprise-dist
 
   store-build-artifacts:
     docker:
