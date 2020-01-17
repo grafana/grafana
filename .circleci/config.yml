@@ -214,7 +214,7 @@ jobs:
           command: cp -r /tmp/workspace/oss/* .
       - run:
           name: Package Grafana
-          command: /tmp/workspace/bin/grabpl package
+          command: /tmp/workspace/bin/grabpl package --edition oss
       - run:
           name: Move artifacts
           command: |
@@ -247,7 +247,7 @@ jobs:
           command: cp -r /tmp/workspace/enterprise/* .
       - run:
           name: Package Grafana
-          command: /tmp/workspace/bin/grabpl package --enterprise
+          command: /tmp/workspace/bin/grabpl package --edition enterprise
       - run:
           name: Move artifacts
           command: |
