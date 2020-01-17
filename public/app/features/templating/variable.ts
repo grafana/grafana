@@ -1,10 +1,7 @@
 import _ from 'lodash';
-import { assignModelProperties } from 'app/core/utils/model_utils';
 import { ScopedVars } from '@grafana/data';
-import { Reducer } from 'redux';
-import { Deferred } from './state/actions';
-import { queryVariablesReducer } from './state/queryVariable';
-import { UrlQueryValue } from '@grafana/runtime';
+
+import { assignModelProperties } from 'app/core/utils/model_utils';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -151,7 +148,7 @@ export interface VariableModel {
   hide: VariableHide;
   skipUrlSync: boolean;
   index: number;
-  initLock?: Deferred;
+  initLock?: Promise<any>;
 }
 
 export interface VariableActions {
@@ -173,54 +170,6 @@ export interface VariableTypes {
     supportsMulti?: boolean;
   };
 }
-
-export interface VariableAdapterProps<T extends VariableModel> {
-  dependsOn: (variable: T, variableToTest: T) => boolean;
-  setOptionFromUrl: (variable: T, urlValue: UrlQueryValue) => Promise<any>;
-  updateOptions: (variable: T, searchFilter?: string) => Promise<any>;
-  useState: boolean;
-  reducer: Reducer;
-}
-
-export const queryVariableAdapter: VariableAdapterProps<QueryVariableModel> = {
-  useState: true,
-  reducer: queryVariablesReducer,
-  dependsOn: (variable, variableToTest) => {
-    return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
-  },
-  setOptionFromUrl: async (variable, urlValue) => {
-    return Promise.resolve();
-    // await store.dispatch(setOptionFromUrl(variable, urlValue));
-  },
-  updateOptions: async (variable, searchFilter) => {
-    return Promise.resolve();
-    // return getDatasourceSrv()
-    //   .get(this.datasource)
-    //   .then(ds => this.updateOptionsFromMetricFindQuery(ds, searchFilter))
-    //   .then(this.updateTags.bind(this))
-    //   .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
-  },
-};
-
-export const notMigratedVariableAdapter: VariableAdapterProps<any> = {
-  useState: false,
-  reducer: state => state,
-  dependsOn: (variable, variableToTest) => {
-    return false;
-  },
-  setOptionFromUrl: (variable, urlValue) => Promise.resolve(),
-  updateOptions: (variable, searchFilter) => Promise.resolve(),
-};
-
-export const variableAdapter: Record<VariableType, VariableAdapterProps<any>> = {
-  query: queryVariableAdapter,
-  adhoc: notMigratedVariableAdapter,
-  constant: notMigratedVariableAdapter,
-  datasource: notMigratedVariableAdapter,
-  interval: notMigratedVariableAdapter,
-  textbox: notMigratedVariableAdapter,
-  custom: notMigratedVariableAdapter,
-};
 
 export let variableTypes: VariableTypes = {};
 export { assignModelProperties };

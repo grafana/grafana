@@ -4,9 +4,10 @@ import { e2e } from '@grafana/e2e';
 
 import { VariableSrv } from 'app/features/templating/all';
 import { CoreEvents } from '../../../../types';
-import { variableAdapter, VariableModel } from '../../../templating/variable';
+import { VariableModel } from '../../../templating/variable';
 import { store } from '../../../../store/store';
 import { getVariables } from '../../../templating/state/selectors';
+import { variableAdapter } from '../../../templating/adapters';
 
 export class SubMenuCtrl {
   annotations: any;

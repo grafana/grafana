@@ -1,8 +1,10 @@
 import { createAction } from '@reduxjs/toolkit';
-import { QueryVariableModel, variableAdapter, VariableModel, VariableRefresh, VariableType } from '../variable';
+import { UrlQueryValue } from '@grafana/runtime';
+
+import { QueryVariableModel, VariableModel, VariableRefresh, VariableType } from '../variable';
 import { ThunkResult } from '../../../types';
 import { getVariables } from './selectors';
-import { UrlQueryValue } from '@grafana/runtime';
+import { variableAdapter } from '../adapters';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -18,7 +20,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   return (dispatch, getState) => {
     for (let index = 0; index < list.length; index++) {
       const model = list[index];
-      if (!variableAdapter[model.type].useState) {
+      if (model.type !== 'query') {
         continue;
       }
 
@@ -27,32 +29,22 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
-export class Deferred {
-  resolve: any;
-  reject: any;
-  promise: Promise<any>;
-  constructor() {
-    this.resolve = null;
-    this.reject = null;
-    this.promise = new Promise((resolve, reject) => {
-      this.resolve = resolve;
-      this.reject = reject;
-    });
-    Object.freeze(this);
-  }
-}
-
 export const processVariables = (): ThunkResult<void> => {
   return (dispatch, getState) => {
     const variables = getVariables(getState());
     const queryParams = getState().location.query;
     const dependencies: Array<Promise<any>> = [];
 
-    for (const variable of variables) {
-      variable.initLock = new Deferred();
+    for (let index = 0; index < variables.length; index++) {
+      let variableResolve: any = null;
+      const promise = new Promise(resolve => {
+        variableResolve = resolve;
+      });
+      const variable = { ...variables[index] };
+      variable.initLock = promise;
       for (const otherVariable of variables) {
         if (variableAdapter[variable.type].dependsOn(variable, otherVariable)) {
-          dependencies.push(otherVariable.initLock.promise);
+          dependencies.push(otherVariable.initLock);
         }
       }
 
@@ -60,7 +52,7 @@ export const processVariables = (): ThunkResult<void> => {
         .then(() => {
           const urlValue = queryParams['var-' + variable.name];
           if (urlValue !== void 0) {
-            return variableAdapter[variable.type].setOptionFromUrl(variable, urlValue).then(variable.initLock.resolve);
+            return variableAdapter[variable.type].setOptionFromUrl(variable, urlValue).then(variableResolve);
           }
 
           if (variable.hasOwnProperty('refresh')) {
@@ -69,13 +61,11 @@ export const processVariables = (): ThunkResult<void> => {
               refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
               refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
             ) {
-              return variableAdapter[refreshableVariable.type]
-                .updateOptions(refreshableVariable)
-                .then(variable.initLock.resolve);
+              return variableAdapter[variable.type].updateOptions(refreshableVariable).then(variableResolve);
             }
           }
 
-          variable.initLock.resolve();
+          variableResolve();
           return Promise.resolve();
         })
         .finally(() => {
