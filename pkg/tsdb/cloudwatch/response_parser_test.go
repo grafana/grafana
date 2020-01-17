@@ -60,10 +60,11 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, _, err := parseGetMetricDataTimeSeries(resp, query)
+			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
 			So(timeSeries.Name, ShouldEqual, "lb2 Expanded")
 			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb2")
 		})
@@ -116,10 +117,11 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, _, err := parseGetMetricDataTimeSeries(resp, query)
+			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
 			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
 			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
 		})
@@ -172,9 +174,10 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, _, err := parseGetMetricDataTimeSeries(resp, query)
+			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
 
 			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
 			So((*series)[0].Name, ShouldEqual, "lb3 Expanded")
 			So((*series)[1].Name, ShouldEqual, "lb4 Expanded")
 		})
@@ -212,10 +215,11 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{namespace}}_{{metric}}_{{stat}}",
 			}
-			series, _, err := parseGetMetricDataTimeSeries(resp, query)
+			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
 			So(timeSeries.Name, ShouldEqual, "AWS/ApplicationELB_TargetResponseTime_Average")
 			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb")
 			So(timeSeries.Points[0][0].String(), ShouldEqual, null.FloatFrom(10.0).String())
