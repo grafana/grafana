@@ -1,10 +1,12 @@
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { saveAs } from 'file-saver';
+import { css } from 'emotion';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent } from '@grafana/ui';
+import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent, Forms, stylesFactory } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides } from '@grafana/data';
+import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides, toCSV } from '@grafana/data';
 import { config } from 'app/core/config';
 
 interface Props {
@@ -35,6 +37,23 @@ interface State {
   // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
 }
+
+const getStyles = stylesFactory(() => {
+  return {
+    toolbar: css`
+      display: flex;
+      margin: 8px 0;
+      justify-content: flex-end;
+      align-items: center;
+    `,
+    dataFrameSelect: css`
+      flex-grow: 2;
+    `,
+    downloadCsv: css`
+      margin-left: 16px;
+    `,
+  };
+});
 
 export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -99,6 +118,16 @@ export class PanelInspector extends PureComponent<Props, State> {
     this.setState({ selected: item.value || 0 });
   };
 
+  exportCsv = (dataFrame: DataFrame) => {
+    const dataFrameCsv = toCSV([dataFrame]);
+
+    const blob = new Blob([dataFrameCsv], {
+      type: 'application/csv;charset=utf-8',
+    });
+
+    saveAs(blob, dataFrame.name + '-' + new Date().getUTCDate() + '.csv');
+  };
+
   renderMetadataInspector() {
     const { metaDS, data } = this.state;
     if (!metaDS || !metaDS.components?.MetadataInspector) {
@@ -109,6 +138,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   renderDataTab(width: number) {
     const { data, selected } = this.state;
+    const styles = getStyles();
     if (!data || !data.length) {
       return <div>No Data</div>;
     }
@@ -131,16 +161,22 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     return (
       <div>
-        {choices.length > 1 && (
-          <div>
-            <Select
-              options={choices}
-              value={choices.find(t => t.value === selected)}
-              onChange={this.onSelectedFrameChanged}
-            />
+        <div className={styles.toolbar}>
+          {choices.length > 1 && (
+            <div className={styles.dataFrameSelect}>
+              <Select
+                options={choices}
+                value={choices.find(t => t.value === selected)}
+                onChange={this.onSelectedFrameChanged}
+              />
+            </div>
+          )}
+          <div className={styles.downloadCsv}>
+            <Forms.Button variant="primary" onClick={() => this.exportCsv(processed[selected])}>
+              Download CSV
+            </Forms.Button>
           </div>
-        )}
-
+        </div>
         <Table width={width} height={400} data={processed[selected]} />
       </div>
     );
