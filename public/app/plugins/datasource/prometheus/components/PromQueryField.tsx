@@ -299,13 +299,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       <>
         <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form flex-shrink-0">
-            <ButtonCascader
-              options={metricsOptions}
-              buttonText={chooserText}
-              disabled={buttonDisabled}
-              onChange={this.onChangeMetrics}
-              expandIcon={null}
-            />
+            <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
+              {chooserText}
+            </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField

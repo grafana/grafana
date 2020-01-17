@@ -8,9 +8,8 @@ import { CascaderOption } from '../Cascader/Cascader';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
-  buttonText: string;
+  children: string;
   disabled?: boolean;
-  expandIcon?: React.ReactNode;
   value?: string[];
 
   loadData?: (selectedOptions: CascaderOption[]) => void;
@@ -19,9 +18,9 @@ export interface ButtonCascaderProps {
 }
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = props => (
-  <RCCascader {...props} fieldNames={{ label: 'label', value: 'value', children: 'items' }}>
+  <RCCascader {...props} fieldNames={{ label: 'label', value: 'value', children: 'items' }} expandIcon={null}>
     <Button variant="secondary" disabled={props.disabled}>
-      {props.buttonText} <Icon name="caret-down" />
+      {props.children} <Icon name="caret-down" />
     </Button>
   </RCCascader>
 );

@@ -186,6 +186,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onBlur={this.onBlurCascade}
             value={rcValue}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
+            expandIcon={null}
           >
             <div className={disableDivFocus}>
               <Input
