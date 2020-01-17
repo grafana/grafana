@@ -42,16 +42,18 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
 	for id, lr := range mdr {
 		response := &cloudwatchResponse{}
-		series, err := parseGetMetricDataTimeSeries(lr, queries[id])
+		series, partialData, err := parseGetMetricDataTimeSeries(lr, queries[id])
 		if err != nil {
 			return cloudWatchResponses, err
 		}
 
 		response.series = series
+		response.Period = queries[id].Period
 		response.Expression = queries[id].UsedExpression
 		response.RefId = queries[id].RefId
 		response.Id = queries[id].Id
 		response.RequestExceededMaxLimit = queries[id].RequestExceededMaxLimit
+		response.PartialData = partialData
 
 		cloudWatchResponses = append(cloudWatchResponses, response)
 	}
@@ -59,16 +61,17 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	return cloudWatchResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, error) {
+func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
 	result := tsdb.TimeSeriesSlice{}
+	partialData := false
 	for label, metricDataResult := range metricDataResults {
 		if *metricDataResult.StatusCode != "Complete" {
-			return nil, fmt.Errorf("too many datapoints requested in query %s. Please try to reduce the time range", query.RefId)
+			partialData = true
 		}
 
 		for _, message := range metricDataResult.Messages {
 			if *message.Code == "ArithmeticError" {
-				return nil, fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value)
+				return nil, false, fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value)
 			}
 		}
 
@@ -82,7 +85,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 				series.Tags[key] = values[0]
 			} else {
 				for _, value := range values {
-					if value == label || value == "*" {
+					if value == label || value == "*" || strings.Contains(label, value) {
 						series.Tags[key] = label
 					}
 				}
@@ -102,7 +105,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 		}
 		result = append(result, &series)
 	}
-	return &result, nil
+	return &result, partialData, nil
 }
 
 func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {

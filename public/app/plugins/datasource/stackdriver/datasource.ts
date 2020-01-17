@@ -2,7 +2,7 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
-import { StackdriverQuery, MetricDescriptor, StackdriverOptions } from './types';
+import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -21,7 +21,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   constructor(
     instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
     private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
+    public templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
     super(instanceSettings);
@@ -30,6 +30,10 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     this.projectName = instanceSettings.jsonData.defaultProject || '';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.metricTypes = [];
+  }
+
+  get variables() {
+    return this.templateSrv.variables.map(v => `$${v.name}`);
   }
 
   async getTimeSeries(options: any) {
@@ -71,26 +75,40 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
-    return (filters || []).map(f => {
+    const completeFilter = _.chunk(filters, 4)
+      .map(([key, operator, value, condition = 'AND']) => ({
+        key,
+        operator,
+        value,
+        condition,
+      }))
+      .reduce((res, filter) => (filter.value ? [...res, filter] : res), []);
+
+    const filterArray = _.flatten(
+      completeFilter.map(({ key, operator, value, condition }: Filter) => [key, operator, value, condition])
+    );
+
+    return (filterArray || []).map(f => {
       return this.templateSrv.replace(f, scopedVars || {}, 'regex');
     });
   }
 
-  async getLabels(metricType: string, refId: string) {
+  async getLabels(metricType: string, refId: string, groupBys?: string[]) {
     const response = await this.getTimeSeries({
       targets: [
         {
           refId: refId,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(metricType),
+          groupBys: this.interpolateGroupBys(groupBys || [], {}),
           crossSeriesReducer: 'REDUCE_NONE',
           view: 'HEADERS',
         },
       ],
       range: this.timeSrv.timeRange(),
     });
-
-    return response.results[refId];
+    const result = response.results[refId];
+    return result && result.meta ? result.meta.labels : {};
   }
 
   interpolateGroupBys(groupBys: string[], scopedVars: {}): string[] {
@@ -158,9 +176,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
         tags: this.templateSrv.replace(annotation.target.tags, options.scopedVars || {}),
         view: 'FULL',
-        filters: (annotation.target.filters || []).map((f: any) => {
-          return this.templateSrv.replace(f, options.scopedVars || {});
-        }),
+        filters: this.interpolateFilters(annotation.target.filters || [], options.scopedVars),
         type: 'annotationQuery',
       },
     ];

@@ -128,21 +128,18 @@ Currently we support following Jest configuration properties:
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
 ### How can I customize Webpack rules or plugins?
-You can provide your own webpack configuration.
-Provide a function implementing `CustomWebpackConfigurationGetter` in a file named `webpack.config.js`.
-
-You can import the correct interface and Options from `@grafana/toolkit/src/config`.
-
-Example
+You can provide your own `webpack.config.js` file that exports a `getWebpackConfig` function. We recommend that you extend the standard configuration, but you are free to create your own:
 
 ```js
-import CustomPlugin from 'custom-plugin';
+const CustomPlugin = require('custom-plugin');
 
-export const getWebpackConfig = (defaultConfig, options) => {
-    console.log('Custom config');
-    defaultConfig.plugins.push(new CustomPlugin())
-    return defaultConfig;
-};
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  plugins: [
+    ...config.plugins,
+    new CustomPlugin()
+  ]
+});
 ```
 
 ### How can I style my plugin?
