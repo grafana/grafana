@@ -10,6 +10,8 @@ import {
   getDisplayProcessor,
   formattedValueToString,
   Dimensions,
+  MS_DATE_TIME_FORMAT,
+  DEFAULT_DATE_TIME_FORMAT,
 } from '@grafana/data';
 import { css } from 'emotion';
 
@@ -58,7 +60,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
       value = display(valueFromDimensions);
     }
 
-    const timeFormat = source.series.hasMsResolution ? 'YYYY-MM-DD HH:mm:ss.SSS' : 'YYYY-MM-DD HH:mm:ss';
+    const timeFormat = source.series.hasMsResolution ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT;
     return (
       <div
         className={css`
