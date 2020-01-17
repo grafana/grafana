@@ -1,6 +1,6 @@
 import React from 'react';
 import { ExploreQueryFieldProps } from '@grafana/data';
-import { Cascader, CascaderOption } from '@grafana/ui';
+import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import InfluxQueryModel from '../influx_query_model';
 import { AdHocFilterField, KeyValuePair } from 'app/features/explore/AdHocFilterField';
@@ -75,7 +75,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
         measurements.push({
           label: measurementObj.text,
           value: measurementObj.text,
-          children: fields,
+          items: fields,
         });
       }
       this.setState({ measurements });
@@ -134,7 +134,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
-          <Cascader
+          <ButtonCascader
             buttonText={cascadeText}
             options={measurements}
             disabled={!hasMeasurement}
