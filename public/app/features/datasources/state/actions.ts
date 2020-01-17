@@ -47,6 +47,7 @@ export const initDataSourceSettings = (pageId: number): ThunkResult<void> => {
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
+      console.log('Failed to import plugin module', err);
       dispatch(initDataSourceSettingsFailed(err));
     }
   };
