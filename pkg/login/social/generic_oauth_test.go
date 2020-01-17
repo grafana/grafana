@@ -7,10 +7,11 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"testing"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"golang.org/x/oauth2"
-	"testing"
 )
 
 func TestSearchJSONForEmail(t *testing.T) {
@@ -303,6 +304,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				token := staticToken.WithExtra(test.OAuth2Extra)
 				actualResult, _ := provider.UserInfo(ts.Client(), token)
 				So(actualResult.Email, ShouldEqual, test.ExpectedEmail)
+				So(actualResult.Login, ShouldEqual, test.ExpectedEmail)
 				So(actualResult.Role, ShouldEqual, test.ExpectedRole)
 			})
 		}

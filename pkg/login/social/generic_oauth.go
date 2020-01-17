@@ -9,6 +9,8 @@ import (
 	"net/mail"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/util/errutil"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/jmespath/go-jmespath"
 	"golang.org/x/oauth2"
@@ -43,8 +45,8 @@ func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
 		return true
 	}
 
-	teamMemberships, err := s.FetchTeamMemberships(client)
-	if err != nil {
+	teamMemberships, ok := s.FetchTeamMemberships(client)
+	if !ok {
 		return false
 	}
 
@@ -64,8 +66,8 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 		return true
 	}
 
-	organizations, err := s.FetchOrganizations(client)
-	if err != nil {
+	organizations, ok := s.FetchOrganizations(client)
+	if !ok {
 		return false
 	}
 
@@ -122,7 +124,8 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 
 	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
-		return "", fmt.Errorf("Error getting email address: %s", err)
+		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
+		return "", errutil.Wrap("Error getting email address", err)
 	}
 
 	var records []Record
@@ -135,11 +138,14 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 
 		err = json.Unmarshal(response.Body, &data)
 		if err != nil {
-			return "", fmt.Errorf("Error getting email address: %s", err)
+			s.log.Error("Error decoding email addresses response", "raw_json", string(response.Body), "error", err)
+			return "", errutil.Wrap("Erro decoding email addresses response", err)
 		}
 
 		records = data.Values
 	}
+
+	s.log.Debug("Received email addresses", "emails", records)
 
 	var email = ""
 	for _, record := range records {
@@ -149,24 +155,28 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 		}
 	}
 
+	s.log.Debug("Using email address", "email", email)
+
 	return email, nil
 }
 
-func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, error) {
+func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, bool) {
 	type Record struct {
 		Id int `json:"id"`
 	}
 
 	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
-		return nil, fmt.Errorf("Error getting team memberships: %s", err)
+		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
+		return nil, false
 	}
 
 	var records []Record
 
 	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting team memberships: %s", err)
+		s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
+		return nil, false
 	}
 
 	var ids = make([]int, len(records))
@@ -174,24 +184,28 @@ func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, e
 		ids[i] = record.Id
 	}
 
-	return ids, nil
+	s.log.Debug("Received team memberships", "ids", ids)
+
+	return ids, true
 }
 
-func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, error) {
+func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, bool) {
 	type Record struct {
 		Login string `json:"login"`
 	}
 
 	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
 	if err != nil {
-		return nil, fmt.Errorf("Error getting organizations: %s", err)
+		s.log.Error("Error getting organizations", "url", s.apiUrl+"/orgs", "error", err)
+		return nil, false
 	}
 
 	var records []Record
 
 	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting organizations: %s", err)
+		s.log.Error("Error decoding organization response", "response", string(response.Body), "error", err)
+		return nil, false
 	}
 
 	var logins = make([]string, len(records))
@@ -199,7 +213,9 @@ func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, 
 		logins[i] = record.Login
 	}
 
-	return logins, nil
+	s.log.Debug("Received organizations", "logins", logins)
+
+	return logins, true
 }
 
 type UserInfoJson struct {
@@ -210,7 +226,13 @@ type UserInfoJson struct {
 	Email       string              `json:"email"`
 	Upn         string              `json:"upn"`
 	Attributes  map[string][]string `json:"attributes"`
-	RawJson     []byte
+	rawJSON     []byte
+}
+
+func (info *UserInfoJson) String() string {
+	return fmt.Sprintf(
+		"Name: %s, Displayname: %s, Login: %s, Username: %s, Email: %s, Upn: %s, Attributes: %v",
+		info.Name, info.DisplayName, info.Login, info.Username, info.Email, info.Upn, info.Attributes)
 }
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -221,14 +243,10 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	if s.extractToken(&data, token) {
 		s.fillUserInfo(userInfo, &data)
-	} else {
-		s.log.Error("Unable to extract from id_token")
 	}
 
-	if s.extractApi(&data, client) {
+	if s.extractAPI(&data, client) {
 		s.fillUserInfo(userInfo, &data)
-	} else {
-		s.log.Error("Unable to extract from userinfo API")
 	}
 
 	if userInfo.Email == "" {
@@ -250,6 +268,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		return nil, errors.New("User not a member of one of the required organizations")
 	}
 
+	s.log.Debug("User info result", "result", userInfo)
 	return userInfo, nil
 }
 
@@ -284,39 +303,39 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 		return false
 	}
 
-	data.RawJson, err = base64.RawURLEncoding.DecodeString(matched[2])
+	data.rawJSON, err = base64.RawURLEncoding.DecodeString(matched[2])
 	if err != nil {
-		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "err", err)
+		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "error", err)
 		return false
 	}
 
-	err = json.Unmarshal(data.RawJson, data)
+	err = json.Unmarshal(data.rawJSON, data)
 	if err != nil {
-		s.log.Error("Error decoding id_token JSON", "raw_json", string(data.RawJson), "err", err)
-		data.RawJson = []byte{}
+		s.log.Error("Error decoding id_token JSON", "raw_json", string(data.rawJSON), "error", err)
+		data.rawJSON = []byte{}
 		return false
 	}
 
-	s.log.Debug("Received id_token", "raw_json", string(data.RawJson), "data", data)
+	s.log.Debug("Received id_token", "raw_json", string(data.rawJSON), "data", data)
 	return true
 }
 
-func (s *SocialGenericOAuth) extractApi(data *UserInfoJson, client *http.Client) bool {
+func (s *SocialGenericOAuth) extractAPI(data *UserInfoJson, client *http.Client) bool {
 	rawUserInfoResponse, err := HttpGet(client, s.apiUrl)
 	if err != nil {
-		s.log.Error("Error getting user info", "err", err)
+		s.log.Debug("Error getting user info response", "url", s.apiUrl, "error", err)
 		return false
 	}
-	data.RawJson = rawUserInfoResponse.Body
+	data.rawJSON = rawUserInfoResponse.Body
 
-	err = json.Unmarshal(data.RawJson, data)
+	err = json.Unmarshal(data.rawJSON, data)
 	if err != nil {
-		s.log.Error("Error decoding user info JSON", "raw_json", data.RawJson, "err", err)
-		data.RawJson = []byte{}
+		s.log.Error("Error decoding user info response", "raw_json", data.rawJSON, "error", err)
+		data.rawJSON = []byte{}
 		return false
 	}
 
-	s.log.Debug("Received api response", "raw_json", string(data.RawJson), "data", data)
+	s.log.Debug("Received user info response", "raw_json", string(data.rawJSON), "data", data)
 	return true
 }
 
@@ -326,7 +345,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	}
 
 	if s.emailAttributePath != "" {
-		email := s.searchJSONForAttr(s.emailAttributePath, data.RawJson)
+		email := s.searchJSONForAttr(s.emailAttributePath, data.rawJSON)
 		if email != "" {
 			return email
 		}
@@ -342,7 +361,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		if emailErr == nil {
 			return emailAddr.Address
 		}
-		s.log.Debug("Failed to parse e-mail address", "err", emailErr.Error())
+		s.log.Debug("Failed to parse e-mail address", "error", emailErr.Error())
 	}
 
 	return ""
@@ -350,7 +369,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 
 func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) string {
 	if s.roleAttributePath != "" {
-		role := s.searchJSONForAttr(s.roleAttributePath, data.RawJson)
+		role := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
 		if role != "" {
 			return role
 		}
