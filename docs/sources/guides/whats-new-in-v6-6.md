@@ -24,7 +24,6 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 - **New time picker**
 - **User-configurable units**
 - [**Alerting enhancements**]({{< relref "#alerting-enhancements" >}})
-- **CloudWatch:** ECS/ContainerInsights metrics support
 - **Explore:** Added log message line wrapping options for logs
 - **Graphite:** Added Metrictank dashboard to Graphite datasource
 - **Loki:** Support for template variable queries
