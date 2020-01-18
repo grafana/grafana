@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -105,6 +106,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			}},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 			remoteCredProvider(sess),
+			webidentityProvider(sess),
 		})
 
 	credentialCacheLock.Lock()
@@ -115,6 +117,15 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	credentialCacheLock.Unlock()
 
 	return creds, nil
+}
+
+func webidentityProvider(sess *session.Session) credentials.Provider {
+	svc := sts.New(sess)
+
+	roleARN := os.Getenv("AWS_ROLE_ARN")
+	tokenFilepath := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
+	roleSessionName := os.Getenv("AWS_ROLE_SESSION_NAME")
+	return stscreds.NewWebIdentityRoleProvider(svc, roleARN, roleSessionName, tokenFilepath)
 }
 
 func remoteCredProvider(sess *session.Session) credentials.Provider {
