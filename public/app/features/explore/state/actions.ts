@@ -50,7 +50,6 @@ import {
   ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
-  clearOriginAction,
   clearQueriesAction,
   historyUpdatedAction,
   initializeExploreAction,
@@ -232,12 +231,6 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
-export function clearOrigin(): ThunkResult<void> {
-  return dispatch => {
-    dispatch(clearOriginAction({ exploreId: ExploreId.left }));
-  };
-}
-
 /**
  * Loads all explore data sources and sets the chosen datasource.
  * If there are no datasources a missing datasource action is dispatched.
@@ -265,7 +258,7 @@ export function initializeExplore(
   exploreId: ExploreId,
   datasourceName: string,
   queries: DataQuery[],
-  rawRange: RawTimeRange,
+  range: TimeRange,
   mode: ExploreMode,
   containerWidth: number,
   eventBridge: Emitter,
@@ -273,8 +266,6 @@ export function initializeExplore(
   originPanelId: number
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const timeZone = getTimeZone(getState().user);
-    const range = getTimeRange(timeZone, rawRange);
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
     dispatch(
       initializeExploreAction({

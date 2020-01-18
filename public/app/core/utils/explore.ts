@@ -534,3 +534,7 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 
   return kbn.calculateInterval(range, resolution, lowLimit);
 }
+
+export function deduplicateLogRowsById(rows: LogRowModel[]) {
+  return _.uniqBy(rows, 'uid');
+}

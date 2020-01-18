@@ -63,6 +63,7 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 		cmdArgs = append([]string{fmt.Sprintf("--output-encoding=%s", opts.Encoding)}, cmdArgs...)
 	}
 
+	// gives phantomjs some additional time to timeout and return possible errors.
 	commandCtx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
