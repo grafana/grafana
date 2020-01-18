@@ -136,7 +136,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     return <metaDS.components.MetadataInspector datasource={metaDS} data={data} />;
   }
 
-  renderDataTab(width: number) {
+  renderDataTab(width: number, height: number) {
     const { data, selected } = this.state;
     const styles = getStyles();
     if (!data || !data.length) {
@@ -177,7 +177,7 @@ export class PanelInspector extends PureComponent<Props, State> {
             </Forms.Button>
           </div>
         </div>
-        <Table width={width} height={400} data={processed[selected]} />
+        <Table width={width} height={height} data={processed[selected]} />
       </div>
     );
   }
@@ -211,14 +211,15 @@ export class PanelInspector extends PureComponent<Props, State> {
           })}
         </TabsBar>
         <TabContent>
-          <AutoSizer disableHeight>
-            {({ width }) => {
+          <AutoSizer>
+            {({ width, height }) => {
               if (width === 0) {
                 return null;
               }
+
               return (
                 <div style={{ width }}>
-                  {tab === InspectTab.Data && this.renderDataTab(width)}
+                  {tab === InspectTab.Data && this.renderDataTab(width, height)}
 
                   {tab === InspectTab.Meta && this.renderMetadataInspector()}
 
