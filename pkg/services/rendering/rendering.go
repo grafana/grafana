@@ -140,10 +140,8 @@ func (rs *RenderingService) getURL(path string) string {
 	switch setting.Protocol {
 	case setting.HTTP:
 		protocol = "http"
-		break
 	case setting.HTTP2, setting.HTTPS:
 		protocol = "https"
-		break
 	}
 
 	// &render=1 signals to the legacy redirect layer to
