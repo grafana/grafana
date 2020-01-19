@@ -4,7 +4,7 @@ import React, { memo } from 'react';
 // Types
 import { FormLabel } from '@grafana/ui';
 
-interface LokiExploreExtraFieldProps {
+export interface LokiExploreExtraFieldProps {
   label: string;
   onChangeFunc: (e: React.SyntheticEvent<HTMLInputElement>) => void;
   onKeyDownFunc: (e: React.KeyboardEvent<HTMLInputElement>) => void;
