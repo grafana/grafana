@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LokiExploreExtraField should render component 1`] = `
+<Fragment>
+  <Component
+    ExtraFieldElement={
+      <Memo(LokiExploreExtraField)
+        label="Line limit"
+        min={0}
+        onChangeFunc={[Function]}
+        onKeyDownFunc={[Function]}
+        type="number"
+        value="0"
+      />
+    }
+    absoluteRange={
+      Object {
+        "from": 1577833200000,
+        "to": 1577919600000,
+      }
+    }
+    data={
+      Object {
+        "request": Object {
+          "app": "Grafana",
+          "dashboardId": 1,
+          "interval": "1s",
+          "panelId": 1,
+          "range": Object {
+            "from": "2019-12-31T23:00:00.000Z",
+            "raw": Object {
+              "from": "2019-12-31T23:00:00.000Z",
+              "to": "2020-01-01T23:00:00.000Z",
+            },
+            "to": "2020-01-01T23:00:00.000Z",
+          },
+          "requestId": "1",
+          "scopedVars": Object {},
+          "startTime": 0,
+          "targets": Array [],
+          "timezone": "GMT",
+        },
+        "series": Array [],
+        "state": "NotStarted",
+        "timeRange": Object {
+          "from": "2019-12-31T23:00:00.000Z",
+          "raw": Object {
+            "from": "2019-12-31T23:00:00.000Z",
+            "to": "2020-01-01T23:00:00.000Z",
+          },
+          "to": "2020-01-01T23:00:00.000Z",
+        },
+      }
+    }
+    datasource={Object {}}
+    history={Array []}
+    logLabelOptions={Array []}
+    onChange={[MockFunction]}
+    onLabelsRefresh={[Function]}
+    onLoadOptions={[Function]}
+    onRunQuery={[MockFunction]}
+    query={
+      Object {
+        "expr": "",
+        "maxLines": 0,
+        "refId": "A",
+      }
+    }
+    syntax={null}
+    syntaxLoaded={false}
+  />
+</Fragment>
+`;
