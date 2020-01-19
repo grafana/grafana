@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`LokiExploreExtraField should render component 1`] = `
+exports[`LokiExploreQueryEditor should render component 1`] = `
 <Fragment>
   <Component
     ExtraFieldElement={
