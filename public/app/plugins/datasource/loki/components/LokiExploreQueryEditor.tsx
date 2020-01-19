@@ -41,10 +41,12 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
     const { query, onChange, onRunQuery } = props;
     if (onChange) {
       const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
-      onChange(nextQuery);
 
-      if (override && onRunQuery) {
-        onRunQuery();
+      if (query?.expr?.length > 0) {
+        onChange(nextQuery);
+        if (override && onRunQuery) {
+          onRunQuery();
+        }
       }
     }
   }
