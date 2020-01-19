@@ -87,7 +87,10 @@ export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async (
         }
       })
       .then(newContents => {
-        if (fix && newContents && newContents.length > 10) {
+        if (newContents === undefined) {
+          return true; // Nothing to fix
+        }
+        if (fix && newContents.length > 10) {
           return writeFile(path, newContents)
             .then(() => {
               console.log(`Fixed: ${path}`);
@@ -99,10 +102,8 @@ export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async (
             });
         } else if (fix) {
           console.log(`No automatic fix for: ${path}`);
-          return false;
-        } else {
-          return false;
         }
+        return false;
       })
       .then(success => ({ path, success }))
   );
