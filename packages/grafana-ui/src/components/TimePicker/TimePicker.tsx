@@ -157,11 +157,12 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
     const { isOpen } = this.state;
     const styles = getStyles(theme);
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
+    const syncedTimePicker = timeSyncButton && isSynced;
+    const timePickerIconClass = classNames('fa fa-clock-o fa-fw', { ['icon-brand-gradient']: syncedTimePicker });
     const timePickerButtonClass = classNames('btn navbar-button navbar-button--zoom', {
       [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
-      [styles.syncedTimePicker]: timeSyncButton ? isSynced : null,
+      [`explore-active-button-glow ${styles.syncedTimePicker}`]: syncedTimePicker,
     });
-    const timePickerIconClass = classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient');
 
     return (
       <div className={styles.container}>
