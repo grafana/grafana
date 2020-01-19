@@ -60,7 +60,7 @@ const setup = (propOverrides?: object) => {
   return shallow(<LokiExploreQueryEditor {...props} />);
 };
 
-describe('LokiExploreExtraField', () => {
+describe('LokiExploreQueryEditor', () => {
   it('should render component', () => {
     const wrapper = setup();
     expect(wrapper).toMatchSnapshot();
