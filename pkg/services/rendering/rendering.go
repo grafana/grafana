@@ -135,8 +135,19 @@ func (rs *RenderingService) getURL(path string) string {
 		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
 
 	}
+
+	protocol := setting.Protocol
+	switch setting.Protocol {
+	case setting.HTTP:
+		protocol = "http"
+		break
+	case setting.HTTP2, setting.HTTPS:
+		protocol = "https"
+		break
+	}
+
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, rs.domain, setting.HttpPort, path)
+	return fmt.Sprintf("%s://%s:%s/%s&render=1", protocol, rs.domain, setting.HttpPort, path)
 }
 
 func (rs *RenderingService) getRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
