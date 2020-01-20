@@ -198,7 +198,7 @@ export class TemplateSrv {
         return `"${value}"`;
       }
       case 'sqlstring': {
-        // escape single quotes in sql string 
+        // escape single quotes in sql string
         if (_.isArray(value)) {
           return _.map(value, v => `'${_.replace(v, "/'/g", "''")}'`);
         }
