@@ -531,16 +531,20 @@ func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getVal
 func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.TimeSeries {
 	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
 	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
-
 	series := newSeriesForQuery(query)
 
+	startValue := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
+	spread := query.Model.Get("spread").MustFloat64(1)
+	noise := query.Model.Get("noise").MustFloat64(0)
+
 	points := make(tsdb.TimeSeriesPoints, 0)
-	walker := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
+	walker := startValue
 
 	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
-		points = append(points, tsdb.NewTimePoint(null.FloatFrom(walker), float64(timeWalkerMs)))
+		nextValue := walker + (rand.Float64() * noise)
+		points = append(points, tsdb.NewTimePoint(null.FloatFrom(nextValue), float64(timeWalkerMs)))
 
-		walker += rand.Float64() - 0.5
+		walker += (rand.Float64() - 0.5) * spread
 		timeWalkerMs += query.IntervalMs
 	}
 

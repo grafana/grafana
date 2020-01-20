@@ -52,9 +52,19 @@
     <div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Series count</label>
 			<input type="number"
-				class="gf-form-input width-5"
+				class="gf-form-input width-7"
 				placeholder="value"
 				ng-model="ctrl.target.seriesCount"
+				min="1"
+				step="1"
+				ng-change="ctrl.refresh()" />
+		</div>
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Start value</label>
+			<input type="number"
+				class="gf-form-input width-6"
+				placeholder="value"
+				ng-model="ctrl.target.startValue"
 				min="1"
 				step="1"
 				ng-change="ctrl.refresh()" />
@@ -62,7 +72,7 @@
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Spread</label>
 			<input type="number"
-				class="gf-form-input width-5"
+				class="gf-form-input width-6"
 				placeholder="value"
 				ng-model="ctrl.target.spread"
 				min="0.5"
@@ -72,7 +82,7 @@
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Noise</label>
 			<input type="number"
-				class="gf-form-input width-5"
+				class="gf-form-input width-6"
 				placeholder="value"
 				ng-model="ctrl.target.noise"
 				min="0"
