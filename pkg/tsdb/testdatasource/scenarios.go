@@ -102,7 +102,13 @@ func init() {
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
-			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context))
+
+			seriesCount := query.Model.Get("seriesCount").MustInt(1)
+
+			for i := 0; i < seriesCount; i++ {
+				queryRes.Series = append(queryRes.Series, getRandomWalk(query, context, i))
+			}
+
 			return queryRes
 		},
 	})
@@ -143,7 +149,7 @@ func init() {
 			time.Sleep(parsedInterval)
 
 			queryRes := tsdb.NewQueryResult()
-			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context))
+			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context, 0))
 			return queryRes
 		},
 	})
@@ -162,7 +168,7 @@ func init() {
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
 
-			series := newSeriesForQuery(query)
+			series := newSeriesForQuery(query, 0)
 			outsideTime := context.TimeRange.MustGetFrom().Add(-1*time.Hour).Unix() * 1000
 
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(10), float64(outsideTime)))
@@ -180,7 +186,7 @@ func init() {
 
 			points := query.Model.Get("points").MustArray()
 
-			series := newSeriesForQuery(query)
+			series := newSeriesForQuery(query, 0)
 			startTime := context.TimeRange.GetFromAsMsEpoch()
 			endTime := context.TimeRange.GetToAsMsEpoch()
 
@@ -235,7 +241,7 @@ func init() {
 				return queryRes
 			}
 
-			series := newSeriesForQuery(query)
+			series := newSeriesForQuery(query, 0)
 			startTime := context.TimeRange.GetFromAsMsEpoch()
 			endTime := context.TimeRange.GetToAsMsEpoch()
 			step := (endTime - startTime) / int64(len(values)-1)
@@ -294,7 +300,7 @@ func init() {
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
-			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context))
+			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context, 0))
 			queryRes.ErrorString = "This is an error.  It can include URLs http://grafana.com/"
 			return queryRes
 		},
@@ -447,7 +453,7 @@ func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Query
 		return queryRes
 	}
 
-	series := newSeriesForQuery(query)
+	series := newSeriesForQuery(query, 0)
 	series.Points = *points
 	series.Tags = parseLabels(query)
 
@@ -498,7 +504,7 @@ func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Que
 		return queryRes
 	}
 
-	series := newSeriesForQuery(query)
+	series := newSeriesForQuery(query, 0)
 	series.Points = *points
 	series.Tags = parseLabels(query)
 
@@ -528,20 +534,33 @@ func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getVal
 	return &points, nil
 }
 
-func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.TimeSeries {
+func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsdb.TimeSeries {
 	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
 	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
-	series := newSeriesForQuery(query)
+	series := newSeriesForQuery(query, index)
 
 	startValue := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := query.Model.Get("spread").MustFloat64(1)
 	noise := query.Model.Get("noise").MustFloat64(0)
+	min, hasMin := query.Model.Get("min").Float64()
+	max, hasMax := query.Model.Get("max").Float64()
 
 	points := make(tsdb.TimeSeriesPoints, 0)
 	walker := startValue
 
 	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
 		nextValue := walker + (rand.Float64() * noise)
+
+		if hasMin == nil && nextValue < min {
+			nextValue = min
+			walker = min
+		}
+
+		if hasMax == nil && nextValue > max {
+			nextValue = max
+			walker = max
+		}
+
 		points = append(points, tsdb.NewTimePoint(null.FloatFrom(nextValue), float64(timeWalkerMs)))
 
 		walker += (rand.Float64() - 0.5) * spread
@@ -646,10 +665,24 @@ func registerScenario(scenario *Scenario) {
 	ScenarioRegistry[scenario.Id] = scenario
 }
 
-func newSeriesForQuery(query *tsdb.Query) *tsdb.TimeSeries {
+func newSeriesForQuery(query *tsdb.Query, index int) *tsdb.TimeSeries {
 	alias := query.Model.Get("alias").MustString("")
+	suffix := ""
+
+	if index > 0 {
+		suffix = strconv.Itoa(index)
+	}
+
 	if alias == "" {
-		alias = query.RefId + "-series"
+		alias = fmt.Sprintf("%s-series%s", query.RefId, suffix)
+	}
+
+	if alias == "__server_names" && len(serverNames) > index {
+		alias = serverNames[index]
+	}
+
+	if alias == "__house_locations" && len(houseLocations) > index {
+		alias = houseLocations[index]
 	}
 
 	return &tsdb.TimeSeries{Name: alias}
@@ -668,4 +701,50 @@ func fromStringOrNumber(val *simplejson.Json) (null.Float, error) {
 	default:
 		return null.Float{}, fmt.Errorf("failed to extract value")
 	}
+}
+
+var serverNames = []string{
+	"Backend-ops-01",
+	"Backend-ops-02",
+	"Backend-ops-03",
+	"Backend-ops-04",
+	"Frontend-web-01",
+	"Frontend-web-02",
+	"Frontend-web-03",
+	"Frontend-web-04",
+	"MySQL-01",
+	"MySQL-02",
+	"MySQL-03",
+	"MySQL-04",
+	"Postgres-01",
+	"Postgres-02",
+	"Postgres-03",
+	"Postgres-04",
+	"DB-01",
+	"DB-02",
+	"SAN-01",
+	"SAN-02",
+	"SAN-02",
+	"SAN-04",
+	"Kaftka-01",
+	"Kaftka-02",
+	"Kaftka-03",
+	"Zookeeper-01",
+	"Zookeeper-02",
+	"Zookeeper-03",
+	"Zookeeper-04",
+}
+
+var houseLocations = []string{
+	"Cellar",
+	"Living room",
+	"Porch",
+	"Bedroom",
+	"Guest room",
+	"Kitchen",
+	"Playroom",
+	"Bathroom",
+	"Outside",
+	"Roof",
+	"Terrace",
 }
