@@ -101,7 +101,9 @@ func init() {
 		Name: "Random Walk",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return getRandomWalk(query, context)
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context))
+			return queryRes
 		},
 	})
 
@@ -139,7 +141,10 @@ func init() {
 			stringInput := query.Model.Get("stringInput").MustString()
 			parsedInterval, _ := time.ParseDuration(stringInput)
 			time.Sleep(parsedInterval)
-			return getRandomWalk(query, context)
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context))
+			return queryRes
 		},
 	})
 
@@ -288,7 +293,8 @@ func init() {
 		Name: "Random Walk (with error)",
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			queryRes := getRandomWalk(query, context)
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Series = append(queryRes.Series, getRandomWalk(query, context))
 			queryRes.ErrorString = "This is an error.  It can include URLs http://grafana.com/"
 			return queryRes
 		},
@@ -443,8 +449,9 @@ func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Query
 
 	series := newSeriesForQuery(query)
 	series.Points = *points
+	series.Tags = parseLabels(query)
+
 	queryRes.Series = append(queryRes.Series, series)
-	attachLabels(query, queryRes)
 	return queryRes
 }
 
@@ -493,8 +500,9 @@ func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Que
 
 	series := newSeriesForQuery(query)
 	series.Points = *points
+	series.Tags = parseLabels(query)
+
 	queryRes.Series = append(queryRes.Series, series)
-	attachLabels(query, queryRes)
 	return queryRes
 }
 
@@ -520,7 +528,7 @@ func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getVal
 	return &points, nil
 }
 
-func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
+func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.TimeSeries {
 	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
 	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
 
@@ -537,11 +545,8 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
 	}
 
 	series.Points = points
-
-	queryRes := tsdb.NewQueryResult()
-	queryRes.Series = append(queryRes.Series, series)
-	attachLabels(query, queryRes)
-	return queryRes
+	series.Tags = parseLabels(query)
+	return series
 }
 
 /**
@@ -549,30 +554,19 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
  *
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
-func attachLabels(query *tsdb.Query, queryRes *tsdb.QueryResult) {
+func parseLabels(query *tsdb.Query) map[string]string {
+	tags := map[string]string{}
+
 	labelText := query.Model.Get("labels").MustString("")
 	if labelText == "" {
-		return
+		return map[string]string{}
 	}
 
-	tags := parseLabels(labelText)
-	for _, series := range queryRes.Series {
-		series.Tags = tags
-	}
-}
-
-// generous parser:
-// {job="foo", instance="bar"}
-// job="foo", instance="bar"
-// job=foo, instance=bar
-// should all equal {job=foo, instance=bar}
-
-func parseLabels(text string) map[string]string {
-	var tags map[string]string
-	text = strings.Trim(text, `{}`)
+	text := strings.Trim(labelText, `{}`)
 	if len(text) < 2 {
 		return tags
 	}
+
 	tags = make(map[string]string)
 
 	for _, keyval := range strings.Split(text, ",") {
