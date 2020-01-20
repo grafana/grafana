@@ -1211,6 +1211,7 @@ workflows:
             - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-master
       - build-ee-msi:
           requires:
             - build-all-enterprise
@@ -1323,6 +1324,7 @@ workflows:
             - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-release
       - build-ee-msi:
           requires:
             - build-all-enterprise
