@@ -1,6 +1,8 @@
 package dashboards
 
 import (
+	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana/pkg/setting"
 	"strings"
 	"time"
 
@@ -103,6 +105,10 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		return nil, models.ErrDashboardUidToLong
 	}
 
+	if err := validateDashboardRefreshRateDuration(dash); err != nil {
+		return nil, err
+	}
+
 	if validateAlerts {
 		validateAlertsCmd := models.ValidateDashboardAlertsCommand{
 			OrgId:     dto.OrgId,
@@ -172,6 +178,33 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	return cmd, nil
 }
 
+func validateDashboardRefreshRateDuration(dash *models.Dashboard) error {
+	if setting.MinRefreshRateDuration == "" {
+		return nil
+	}
+
+	refresh := dash.Data.Get("refresh").MustString("")
+	if refresh == "" {
+		// since no refresh is set it is a valid refresh rate
+		return nil
+	}
+
+	minRefreshRate, err := gtime.ParseInterval(setting.MinRefreshRateDuration)
+	if err != nil {
+		return err
+	}
+	d, err := gtime.ParseInterval(refresh)
+	if err != nil {
+		return err
+	}
+
+	if d < minRefreshRate {
+		return models.ErrDashboardRefreshRateTooShort
+	}
+
+	return nil
+}
+
 func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
 	alertCmd := models.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
@@ -183,6 +216,11 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	if err := validateDashboardRefreshRateDuration(dto.Dashboard); err != nil {
+		dr.log.Warn("resetting refresh rate duration for provisioned dashboard to minimum refresh rate duration", "title", dto.Dashboard.Title, "min_refresh_rate_duration", setting.MinRefreshRateDuration)
+		dto.Dashboard.Data.Set("refresh", setting.MinRefreshRateDuration)
+	}
+
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,

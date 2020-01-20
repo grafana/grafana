@@ -1,10 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -621,66 +617,10 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *models.ValidateD
 	return nil
 }
 
-var unitstoHoursRatio = map[byte]int{
-	'd': 24,
-	'w': 24 * 7,
-	'y': 24 * 7 * 52,
-}
-
-func parseRefreshDuration(refresh string) (time.Duration, error) {
-	rg, err := regexp.Compile(`^[0-9]+(d|w|y)$`)
-	if err != nil {
-		return time.Duration(0), err
-	}
-
-	if rg.MatchString(refresh) {
-		unit := refresh[len(refresh)-1]
-		value, err := strconv.Atoi(refresh[:len(refresh)-1])
-		if err != nil {
-			return time.Duration(0), err
-		}
-		unitstoHours := unitstoHoursRatio[unit]
-		refresh = fmt.Sprintf("%dh", value*unitstoHours)
-	}
-
-	return time.ParseDuration(refresh)
-}
-
-func validateDashboardRefreshRates(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-	if setting.DashboardMinRefreshRate != "" {
-		return nil
-	}
-
-	refresh := cmd.Dashboard.Data.Get("refresh").MustString("")
-	if refresh == "" {
-		// since no refresh is set it is a valid refresh rate
-		return nil
-	}
-
-	minRefreshRate, err := parseRefreshDuration(setting.DashboardMinRefreshRate)
-	if err != nil {
-		return err
-	}
-	d, err := parseRefreshDuration(refresh)
-	if err != nil {
-		return err
-	}
-
-	if d < minRefreshRate {
-		return models.ErrDashboardRefreshRateTooShort
-	}
-
-	return nil
-}
-
 func ValidateDashboardBeforeSave(cmd *models.ValidateDashboardBeforeSaveCommand) (err error) {
 	cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 
 	return inTransaction(func(sess *DBSession) error {
-		if err = validateDashboardRefreshRates(cmd); err != nil {
-			return err
-		}
-
 		if err = getExistingDashboardByIdOrUidForUpdate(sess, cmd); err != nil {
 			return err
 		}
