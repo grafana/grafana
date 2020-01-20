@@ -100,8 +100,10 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 				series.Tags[key] = values[0]
 			} else {
 				for _, value := range values {
-					if value == label || value == "*" || strings.Contains(label, value) {
+					if value == label || value == "*" {
 						series.Tags[key] = label
+					} else if strings.Contains(label, value) {
+						series.Tags[key] = value
 					}
 				}
 			}
