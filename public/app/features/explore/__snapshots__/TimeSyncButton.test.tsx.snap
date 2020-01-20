@@ -21,7 +21,7 @@ exports[`TimeSyncButton should render component 1`] = `
         onMouseLeave={[Function]}
       >
         <i
-          className="fa fa-link icon-brand-gradient"
+          className="fa fa-link css-xmj56l-topPadding icon-brand-gradient"
         />
       </button>
     </PopoverController>
