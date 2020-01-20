@@ -103,7 +103,7 @@ def remove_long_paths():
             print('Skipped: {}'.format(file))
 
 
-def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
+def build_msi(zip_file, extracted_name, PRODUCT_VERSION, grafana_hash, config, features, is_enterprise):
     # keep reference to source directory, will need to switch back and
     # forth during the process
     src_dir = os.getcwd()
@@ -112,6 +112,7 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
         os.mkdir('/tmp/a')
     target_dir_name = '/tmp/a'
     extract_zip(zip_file, target_dir_name)
+    os.system('ls -al /tmp/a')
     # the zip file contains a version, which will not work when upgrading,
     # and ends up with paths longer
     # than light.exe can parse (windows issue)
@@ -229,8 +230,17 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
         os.system(cmd)
     except Exception as ex:
         print(ex)
+
+    hash = ''
+    if grafana_hash:
+      hash = '-{}'.format(grafana_hash)
+
     # copy to scratch with version included
-    msi_filename = '/tmp/scratch/{}.windows-amd64.msi'.format(extracted_name)
+    msi_filename = '/tmp/scratch/grafana-{}{}.windows-amd64.msi'.format(PRODUCT_VERSION, hash)
+
+    if is_enterprise:
+      msi_filename = '/tmp/scratch/grafana-enterprise-{}{}.windows-amd64.msi'.format(PRODUCT_VERSION, hash)
+
     shutil.copy2('grafana.msi', msi_filename)
     os.system('ls -al /tmp/scratch')
     print('LIGHT COMPLETE')
@@ -238,25 +248,36 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
     # extract_dir.cleanup()
 
 
-def main(file_loader, env, grafana_version, zip_file, extracted_name):
+def main(file_loader, env, grafana_version, grafana_hash, zip_file, extracted_name, is_enterprise):
     UPGRADE_VERSION = OSS_UPGRADE_VERSION
     GRAFANA_VERSION = grafana_version
-    PRODUCT_NAME = OSS_PRODUCT_NAME
+    PRODUCT_TITLE = OSS_PRODUCT_NAME
+    PRODUCT_NAME = 'GrafanaOSS'
     # PRODUCT_VERSION=GRAFANA_VERSION
     # MSI version cannot have anything other
     # than a x.x.x.x format, numbers only
     PRODUCT_VERSION = GRAFANA_VERSION.split('-')[0]
+    LICENSE = 'LICENSE.rtf'
+
+
+    if is_enterprise:
+      UPGRADE_VERSION = ENTERPRISE_UPGRADE_VERSION
+      PRODUCT_TITLE = ENTERPRISE_PRODUCT_NAME
+      PRODUCT_NAME = 'GrafanaEnterprise'
+      LICENSE = 'EE_LICENSE.rtf'
+
 
     config = {
         'grafana_version': PRODUCT_VERSION,
         'upgrade_code': UPGRADE_VERSION,
         'product_name': PRODUCT_NAME,
-        'manufacturer': 'Grafana Labs'
+        'manufacturer': 'Grafana Labs',
+        'license': LICENSE
     }
     features = [
         {
-            'name': 'GrafanaOSS',
-            'title': PRODUCT_NAME,
+            'name': PRODUCT_NAME,
+            'title': PRODUCT_TITLE,
             'component_groups': [
                 {
                     'ref_id': 'GrafanaX64',
@@ -275,7 +296,7 @@ def main(file_loader, env, grafana_version, zip_file, extracted_name):
             ]
         }
     ]
-    build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features)
+    build_msi(zip_file, extracted_name, PRODUCT_VERSION, grafana_hash, config, features, is_enterprise)
 
 
 if __name__ == '__main__':
@@ -289,13 +310,6 @@ if __name__ == '__main__':
         '--premium',
         help='Include premium plugins',
         dest='premium', action='store_true')
-    parser.add_argument(
-        '-e',
-        '--enterprise',
-        help='Use Enterprise build',
-        dest='enterprise',
-        action='store_true')
-    parser.set_defaults(enterprise=False, premium=False)
     parser.add_argument('-b', '--build', help='build to download')
     args = parser.parse_args()
     file_loader = FileSystemLoader('templates')
@@ -312,17 +326,17 @@ if __name__ == '__main__':
     else:
         grafana_version, grafana_hash, is_enterprise = detect_version(DIST_LOCATION)
 
-    # check for enterprise flag
-    if args.enterprise:
-        grafana_version = 'enterprise-{}'.format(args.build)
-    #
     print('Detected Version: {}'.format(grafana_version))
     if grafana_hash:
         print('Detected Hash: {}'.format(grafana_hash))
     print('Enterprise: {}'.format(is_enterprise))
     if is_enterprise:
-        zip_file = '{}/grafana-enterprise-{}.windows-amd64.zip'.format(DIST_LOCATION, grafana_version)
-        extracted_name = 'grafana-enterprise-{}'.format(grafana_version)
+        if grafana_hash:
+            zip_file = '{}/grafana-enterprise-{}-{}.windows-amd64.zip'.format(DIST_LOCATION, grafana_version, grafana_hash)
+            extracted_name = 'grafana-{}-{}'.format(grafana_version, grafana_hash)
+        else:
+            zip_file = '{}/grafana-enterprise-{}.windows-amd64.zip'.format(DIST_LOCATION, grafana_version)
+            extracted_name = 'grafana-{}'.format(grafana_version)
     else:
         # the file can have a build hash
         if grafana_hash:
@@ -336,4 +350,4 @@ if __name__ == '__main__':
 
     if not os.path.isfile(zip_file):
         zip_file = get_zip(grafana_version, zip_file)
-    main(file_loader, env, grafana_version, zip_file, extracted_name)
+    main(file_loader, env, grafana_version, grafana_hash, zip_file, extracted_name, is_enterprise)

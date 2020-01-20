@@ -9,12 +9,20 @@ export async function loadRSSFeed(url: string): Promise<RssFeed> {
     items: [],
   };
 
+  const getProperty = (node: Element, property: string) => {
+    const propNode = node.querySelector(property);
+    if (propNode) {
+      return propNode.textContent ?? '';
+    }
+    return '';
+  };
+
   doc.querySelectorAll('item').forEach(node => {
     const item: RssItem = {
-      title: node.querySelector('title').textContent,
-      link: node.querySelector('link').textContent,
-      content: node.querySelector('description').textContent,
-      pubDate: node.querySelector('pubDate').textContent,
+      title: getProperty(node, 'title'),
+      link: getProperty(node, 'link'),
+      content: getProperty(node, 'description'),
+      pubDate: getProperty(node, 'pubDate'),
     };
 
     feed.items.push(item);

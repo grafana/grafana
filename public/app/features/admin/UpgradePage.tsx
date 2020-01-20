@@ -33,17 +33,30 @@ interface UpgradeInfoProps {
 }
 
 export const UpgradeInfo: React.FC<UpgradeInfoProps> = ({ editionNotice }) => {
+  const columnStyles = css`
+    display: grid;
+    grid-template-columns: 100%;
+    column-gap: 20px;
+    row-gap: 40px;
+
+    @media (min-width: 1050px) {
+      grid-template-columns: 50% 50%;
+    }
+  `;
+
   return (
     <LicenseChrome header="Grafana Enterprise" subheader="Get your free trial" editionNotice={editionNotice}>
-      <FeatureInfo />
-      <ServiceInfo />
+      <div className={columnStyles}>
+        <FeatureInfo />
+        <ServiceInfo />
+      </div>
     </LicenseChrome>
   );
 };
 
 const GetEnterprise: React.FC = () => {
   return (
-    <div style={{ marginTop: '60px', marginBottom: '60px' }}>
+    <div style={{ marginTop: '40px', marginBottom: '30px' }}>
       <h2 style={titleStyles}>Get Grafana Enterprise</h2>
       <CallToAction />
       <p style={{ paddingTop: '12px' }}>
@@ -72,7 +85,7 @@ const ServiceInfo: React.FC = () => {
       <h4>At your service</h4>
 
       <List>
-        <Item title="Premium Plugins" image="/public/img/licensing/plugin_enterprise.svg" />
+        <Item title="Enterprise Plugins" image="/public/img/licensing/plugin_enterprise.svg" />
         <Item title="Critical SLA: 2 hours" image="/public/img/licensing/sla.svg" />
         <Item title="Unlimited Expert Support" image="/public/img/licensing/customer_support.svg">
           24x7x365 support via
@@ -116,7 +129,7 @@ const FeatureListing: React.FC = () => {
       <Item title="Enhanced LDAP Integration" />
       <Item title="Team Sync">LDAP, GitHub OAuth, Auth Proxy</Item>
       <Item title="White labeling" />
-      <Item title="Premium Plugins">
+      <Item title="Enterprise Plugins">
         <List nested={true}>
           <Item title="Oracle" />
           <Item title="Splunk" />
