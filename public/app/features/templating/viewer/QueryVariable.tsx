@@ -16,6 +16,7 @@ import { store } from '../../../store/store';
 import { StoreState } from 'app/types/store';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { getVariables } from '../state/selectors';
+import { ClickOutsideWrapper } from '@grafana/ui';
 
 export interface Props {
   name: string;
@@ -116,6 +117,7 @@ export class QueryVariable extends createVariableComponent<Props, State, QueryVa
   }
 
   onShowDropDown = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
     event.preventDefault();
     const { tags, current, options } = this.state.variable;
     // this.oldVariableText = this.variable.current.text;
@@ -211,6 +213,10 @@ export class QueryVariable extends createVariableComponent<Props, State, QueryVa
     });
   };
 
+  onCloseDropDown = () => {
+    this.setState({ showDropDown: false });
+  };
+
   render() {
     const {
       linkText,
@@ -265,96 +271,100 @@ export class QueryVariable extends createVariableComponent<Props, State, QueryVa
             )}
 
             {showDropDown && (
-              <input
-                ref={instance => {
-                  if (instance) {
-                    instance.focus();
-                    instance.setAttribute('style', `width:${Math.max(instance.width, 80)}px`);
-                  }
-                }}
-                type="text"
-                className="gf-form-input"
-                value={searchQuery}
-                onChange={event => this.debouncedOnQueryChanged(event.target.value)}
-                // style={{ width: '80px' }}
-                // inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
-                // ng-keydown="vm.keyDown($event)"
-                // ng-model="vm.search.query"
-                // ng-change="vm.debouncedQueryChanged()"
-              />
+              <ClickOutsideWrapper onClick={this.onCloseDropDown}>
+                <input
+                  ref={instance => {
+                    if (instance) {
+                      instance.focus();
+                      instance.setAttribute('style', `width:${Math.max(instance.width, 80)}px`);
+                    }
+                  }}
+                  type="text"
+                  className="gf-form-input"
+                  value={searchQuery}
+                  onChange={event => this.debouncedOnQueryChanged(event.target.value)}
+                  // style={{ width: '80px' }}
+                  // inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
+                  // ng-keydown="vm.keyDown($event)"
+                  // ng-model="vm.search.query"
+                  // ng-change="vm.debouncedQueryChanged()"
+                />
+              </ClickOutsideWrapper>
             )}
 
             {showDropDown && (
-              <div
-                className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}
-                aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownDropDown}
-              >
-                <div className="variable-options-wrapper">
-                  <div className="variable-options-column">
-                    {multi && (
-                      <a
-                        className={`${
-                          selectedValues.length > 1
-                            ? 'variable-options-column-header many-selected'
-                            : 'variable-options-column-header'
-                        }`}
-                        // bs-tooltip="'Clear selections'"
-                        data-placement="top"
-                        // ng-click="vm.clearSelections()"
-                      >
-                        <span className="variable-option-icon"></span>
-                        Selected ({selectedValues.length})
-                      </a>
-                    )}
-                    {searchOptions.map((option, index) => {
-                      const selectClass = option.selected
-                        ? 'variable-option pointer selected'
-                        : 'variable-option pointer';
-                      const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
-                      return (
+              <ClickOutsideWrapper onClick={this.onCloseDropDown}>
+                <div
+                  className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}
+                  aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownDropDown}
+                >
+                  <div className="variable-options-wrapper">
+                    <div className="variable-options-column">
+                      {multi && (
                         <a
-                          key={`${option.value}`}
-                          className={highlightClass}
-                          // ng-click="vm.selectValue(option, $event)"
+                          className={`${
+                            selectedValues.length > 1
+                              ? 'variable-options-column-header many-selected'
+                              : 'variable-options-column-header'
+                          }`}
+                          // bs-tooltip="'Clear selections'"
+                          data-placement="top"
+                          // ng-click="vm.clearSelections()"
                         >
                           <span className="variable-option-icon"></span>
-                          <span
-                            aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownOptionTexts(
-                              `${option.text}`
-                            )}
-                          >
-                            {option.text}
-                          </span>
+                          Selected ({selectedValues.length})
                         </a>
-                      );
-                    })}
-                  </div>
-                  {tags.length > 0 && (
-                    <div className="variable-options-column">
-                      <div className="variable-options-column-header text-center">Tags</div>
-                      {tags.map((tag, index) => {
+                      )}
+                      {searchOptions.map((option, index) => {
+                        const selectClass = option.selected
+                          ? 'variable-option pointer selected'
+                          : 'variable-option pointer';
+                        const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
                         return (
                           <a
-                            key={`${tag.text}`}
-                            className={`${
-                              tag.selected ? 'variable-option-tag pointer selected' : 'variable-option-tag pointer'
-                            }`}
-                            // ng-click="vm.selectTag(tag, $event)"
+                            key={`${option.value}`}
+                            className={highlightClass}
+                            // ng-click="vm.selectValue(option, $event)"
                           >
-                            <span className="fa fa-fw variable-option-icon"></span>
+                            <span className="variable-option-icon"></span>
                             <span
-                              className="label-tag"
-                              // tag-color-from-name="tag.text"
+                              aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownOptionTexts(
+                                `${option.text}`
+                              )}
                             >
-                              {tag.text}&nbsp;&nbsp;<i className="fa fa-tag"></i>&nbsp;
+                              {option.text}
                             </span>
                           </a>
                         );
                       })}
                     </div>
-                  )}
+                    {tags.length > 0 && (
+                      <div className="variable-options-column">
+                        <div className="variable-options-column-header text-center">Tags</div>
+                        {tags.map((tag, index) => {
+                          return (
+                            <a
+                              key={`${tag.text}`}
+                              className={`${
+                                tag.selected ? 'variable-option-tag pointer selected' : 'variable-option-tag pointer'
+                              }`}
+                              // ng-click="vm.selectTag(tag, $event)"
+                            >
+                              <span className="fa fa-fw variable-option-icon"></span>
+                              <span
+                                className="label-tag"
+                                // tag-color-from-name="tag.text"
+                              >
+                                {tag.text}&nbsp;&nbsp;<i className="fa fa-tag"></i>&nbsp;
+                              </span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </ClickOutsideWrapper>
             )}
           </div>
         )}
