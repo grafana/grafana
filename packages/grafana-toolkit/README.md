@@ -179,7 +179,7 @@ Starting from Grafana 6.2 *our suggested way* for styling plugins is by using [E
 To start using Emotion, you first must add it to your plugin dependencies:
 
 ```
-  yarn add "@emotion/core"@10.0.14
+  yarn add "@emotion/core"@10.0.27
 ```
 
 Then, import `css` function from Emotion:
