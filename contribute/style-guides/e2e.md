@@ -150,7 +150,7 @@ describe('List test', () => {
 
 ## Debugging PhantomJS image rendering
 
-There is no easy or comprehensive way to debug PhantomJS smoke test (image rendering) failures. However, PhantomJS exposes remote debugging interface which can give you a sense what is going wrong in the smoke test. Before performing the steps described below make sure your local Grafana instance is running:
+There is no easy or comprehensive way to debug PhantomJS smoke test (image rendering) failures. However, PhantomJS exposes remote debugging interface which can give you a sense of what is going wrong in the smoke test. Before performing the steps described below make sure your local Grafana instance is running:
 
 1. Go to `tools/phantomjs` directory
 2. Execute `phantomjs` binary against `render.js` file: `./phantomjs --remote-debugger-port=9009 --remote-debugger-autorun=yes ./render.js url="http://localhost:3000"`
