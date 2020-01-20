@@ -53,7 +53,7 @@
       "id": 4,
       "links": [],
       "options": {
-        "feedUrl": "https://grafana.com/blog/index.xml"
+        "feedUrl": "https://grafana.com/blog/news.xml"
       },
       "title": "Latest from the blog",
       "type": "news"

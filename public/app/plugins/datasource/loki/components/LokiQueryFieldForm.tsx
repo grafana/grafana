@@ -151,12 +151,12 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
             <ButtonCascader
               options={logLabelOptions || []}
               disabled={buttonDisabled}
-              buttonText={chooserText}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
-              expandIcon={null}
               onPopupVisibleChange={isVisible => isVisible && onLabelsRefresh && onLabelsRefresh()}
-            />
+            >
+              {chooserText}
+            </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow">
             <QueryField

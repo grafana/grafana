@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -64,7 +65,14 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
 	result := tsdb.TimeSeriesSlice{}
 	partialData := false
-	for label, metricDataResult := range metricDataResults {
+	metricDataResultLabels := make([]string, 0)
+	for k := range metricDataResults {
+		metricDataResultLabels = append(metricDataResultLabels, k)
+	}
+	sort.Strings(metricDataResultLabels)
+
+	for _, label := range metricDataResultLabels {
+		metricDataResult := metricDataResults[label]
 		if *metricDataResult.StatusCode != "Complete" {
 			partialData = true
 		}
@@ -80,7 +88,14 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 			Points: make([]tsdb.TimePoint, 0),
 		}
 
-		for key, values := range query.Dimensions {
+		keys := make([]string, 0)
+		for k := range query.Dimensions {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			values := query.Dimensions[key]
 			if len(values) == 1 && values[0] != "*" {
 				series.Tags[key] = values[0]
 			} else {
