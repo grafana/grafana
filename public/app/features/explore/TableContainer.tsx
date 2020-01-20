@@ -8,6 +8,7 @@ import { StoreState } from 'app/types';
 import { toggleTable } from './state/actions';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
+import { MetaInfoText } from './MetaInfoText';
 
 interface TableContainerProps {
   exploreId: ExploreId;
@@ -47,11 +48,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
         {hasTableResult ? (
           <Table data={tableResult} width={tableWidth} height={height} onCellClick={onClickCell} />
         ) : (
-          <div className="logs-panel-meta">
-            <div className="logs-panel-meta__item">
-              <span className="logs-panel-meta__value">0 series returned</span>
-            </div>
-          </div>
+          <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
         )}
       </Collapse>
     );
