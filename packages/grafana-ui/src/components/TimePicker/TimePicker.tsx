@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent, memo, FormEvent } from 'react';
-import { css } from 'emotion';
-import classNames from 'classnames';
+import { css, cx } from 'emotion';
 
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -158,9 +157,9 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
     const syncedTimePicker = timeSyncButton && isSynced;
-    const timePickerIconClass = classNames('fa fa-clock-o fa-fw', { ['icon-brand-gradient']: syncedTimePicker });
-    const timePickerButtonClass = classNames('btn navbar-button navbar-button--zoom', {
-      [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
+    const timePickerIconClass = cx('fa fa-clock-o fa-fw', { ['icon-brand-gradient']: syncedTimePicker });
+    const timePickerButtonClass = cx('btn navbar-button navbar-button--zoom', {
+      [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: !!timeSyncButton,
       [`explore-active-button-glow ${styles.syncedTimePicker}`]: syncedTimePicker,
     });
 
