@@ -1,13 +1,11 @@
 import _ from 'lodash';
-import { migrateTargetSchema } from './migrations';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
-import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { IQService } from 'angular';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -18,17 +16,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
-    private $q: IQService
+    private templateSrv: TemplateSrv
   ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.backendSrv, this.templateSrv);
-    this.appInsightsDatasource = new AppInsightsDatasource(
-      instanceSettings,
-      this.backendSrv,
-      this.templateSrv,
-      this.$q
-    );
+    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.backendSrv, this.templateSrv);
 
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
       instanceSettings,
@@ -43,9 +35,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     const appInsightsOptions = _.cloneDeep(options);
     const azureLogAnalyticsOptions = _.cloneDeep(options);
 
-    azureMonitorOptions.targets = azureMonitorOptions.targets
-      .filter((t: any) => t.queryType === 'Azure Monitor')
-      .map((t: any) => migrateTargetSchema(t));
+    azureMonitorOptions.targets = _.filter(azureMonitorOptions.targets, ['queryType', 'Azure Monitor']);
     appInsightsOptions.targets = _.filter(appInsightsOptions.targets, ['queryType', 'Application Insights']);
     azureLogAnalyticsOptions.targets = _.filter(azureLogAnalyticsOptions.targets, ['queryType', 'Azure Log Analytics']);
 
@@ -71,7 +61,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     if (promises.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
     return Promise.all(promises).then(results => {
@@ -166,7 +156,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     resourceGroup: string,
     metricDefinition: string,
     resourceName: string,
-    metricNamespace?: string
+    metricNamespace: string
   ) {
     return this.azureMonitorDatasource.getMetricNames(
       subscriptionId,
@@ -191,21 +181,17 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     resourceGroup: string,
     metricDefinition: string,
     resourceName: string,
-    metricName: string,
-    metricNamespace?: string
+    metricNamespace: string,
+    metricName: string
   ) {
     return this.azureMonitorDatasource.getMetricMetadata(
       subscriptionId,
       resourceGroup,
       metricDefinition,
       resourceName,
-      metricName,
-      metricNamespace
+      metricNamespace,
+      metricName
     );
-  }
-
-  getResources(subscriptions: string[]) {
-    return this.azureMonitorDatasource.getResources(subscriptions);
   }
 
   /* Application Insights API method */

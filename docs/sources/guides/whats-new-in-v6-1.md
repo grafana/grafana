@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v6.1"
-description = "Feature & improvement highlights for Grafana v6.1"
+description = "Feature and improvement highlights for Grafana v6.1"
 keywords = ["grafana", "new", "documentation", "6.1"]
 type = "docs"
 [menu.docs]
@@ -54,6 +54,6 @@ This release contains a lot of small features and fixes:
   - it is now possible to add user details to requests sent to the dataproxy.
 - Heatmap and Explore fixes.
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
 
 A huge thanks to our community for all the reported issues, bug fixes and feedback.

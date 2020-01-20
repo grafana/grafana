@@ -26,7 +26,11 @@ function createField<T>(name: string, values?: T[], type?: FieldType): Field<T> 
 
 describe('Stats Calculators', () => {
   const basicTable = new MutableDataFrame({
-    fields: [{ name: 'a', values: [10, 20] }, { name: 'b', values: [20, 30] }, { name: 'c', values: [30, 40] }],
+    fields: [
+      { name: 'a', values: [10, 20] },
+      { name: 'b', values: [20, 30] },
+      { name: 'c', values: [30, 40] },
+    ],
   });
 
   it('should load all standard stats', () => {
@@ -116,11 +120,11 @@ describe('Stats Calculators', () => {
       },
       {
         data: [null, null, null], // All null
-        result: undefined,
+        result: null,
       },
       {
         data: [undefined, undefined, undefined], // Empty row
-        result: undefined,
+        result: null,
       },
     ];
 

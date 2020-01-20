@@ -2,25 +2,24 @@ import React, { PureComponent } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { ApiKey, NewApiKey, OrgRole } from 'app/types';
+// Utils
+import { ApiKey, CoreEvents, NewApiKey, OrgRole } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
-import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
+import { addApiKey, deleteApiKey, loadApiKeys } from './state/actions';
 import Page from 'app/core/components/Page/Page';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, FormLabel, Input, ValidationEvents } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { DeleteButton, EventsWithValidation, FormLabel, Input, Switch, ValidationEvents } from '@grafana/ui';
+import { dateTime, isDateTime, NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
-
-// Utils
-import { dateTime, isDateTime } from '@grafana/data';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { setSearchQuery } from './state/reducers';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -51,6 +50,7 @@ export interface Props {
   setSearchQuery: typeof setSearchQuery;
   addApiKey: typeof addApiKey;
   apiKeysCount: number;
+  includeExpired: boolean;
 }
 
 export interface State {
@@ -76,7 +76,7 @@ const tooltipText =
 export class ApiKeysPage extends PureComponent<Props, any> {
   constructor(props: Props) {
     super(props);
-    this.state = { isAdding: false, newApiKey: initialApiKeyState };
+    this.state = { isAdding: false, newApiKey: initialApiKeyState, includeExpired: false };
   }
 
   componentDidMount() {
@@ -84,15 +84,19 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   }
 
   async fetchApiKeys() {
-    await this.props.loadApiKeys();
+    await this.props.loadApiKeys(this.state.includeExpired);
   }
 
   onDeleteApiKey(key: ApiKey) {
-    this.props.deleteApiKey(key.id);
+    this.props.deleteApiKey(key.id, this.props.includeExpired);
   }
 
   onSearchQueryChange = (value: string) => {
     this.props.setSearchQuery(value);
+  };
+
+  onIncludeExpiredChange = (value: boolean) => {
+    this.setState({ hasFetched: false, includeExpired: value }, this.fetchApiKeys);
   };
 
   onToggleAdding = () => {
@@ -106,7 +110,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       const rootPath = window.location.origin + config.appSubUrl;
       const modalTemplate = ReactDOMServer.renderToString(<ApiKeysAddedModal apiKey={apiKey} rootPath={rootPath} />);
 
-      appEvents.emit('show-modal', {
+      appEvents.emit(CoreEvents.showModal, {
         templateHtml: modalTemplate,
       });
     };
@@ -114,7 +118,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     // make sure that secondsToLive is number or null
     const secondsToLive = this.state.newApiKey['secondsToLive'];
     this.state.newApiKey['secondsToLive'] = secondsToLive ? kbn.interval_to_seconds(secondsToLive) : null;
-    this.props.addApiKey(this.state.newApiKey, openModal);
+    this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeExpired);
     this.setState((prevState: State) => {
       return {
         ...prevState,
@@ -232,7 +236,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
   renderApiKeyList() {
     const { isAdding } = this.state;
-    const { apiKeys, searchQuery } = this.props;
+    const { apiKeys, searchQuery, includeExpired } = this.props;
 
     return (
       <>
@@ -256,6 +260,14 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         {this.renderAddApiKeyForm()}
 
         <h3 className="page-heading">Existing Keys</h3>
+        <Switch
+          label="Show expired"
+          checked={includeExpired}
+          onChange={event => {
+            // @ts-ignore
+            this.onIncludeExpiredChange(event.target.checked);
+          }}
+        />
         <table className="filter-table">
           <thead>
             <tr>
@@ -274,7 +286,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                     <td>{key.role}</td>
                     <td>{this.formatDate(key.expiration)}</td>
                     <td>
-                      <DeleteButton onConfirm={() => this.onDeleteApiKey(key)} />
+                      <DeleteButton size="sm" onConfirm={() => this.onDeleteApiKey(key)} />
                     </td>
                   </tr>
                 );
@@ -304,6 +316,7 @@ function mapStateToProps(state: any) {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
+    includeExpired: state.includeExpired,
     apiKeysCount: getApiKeysCount(state.apiKeys),
     hasFetched: state.apiKeys.hasFetched,
   };
@@ -316,9 +329,4 @@ const mapDispatchToProps = {
   addApiKey,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(ApiKeysPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ApiKeysPage));

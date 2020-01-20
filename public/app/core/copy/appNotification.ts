@@ -25,23 +25,24 @@ const defaultErrorNotification = {
   timeout: AppNotificationTimeout.Error,
 };
 
-export const createSuccessNotification = (title: string, text?: string): AppNotification => ({
+export const createSuccessNotification = (title: string, text = ''): AppNotification => ({
   ...defaultSuccessNotification,
   title: title,
   text: text,
   id: Date.now(),
 });
 
-export const createErrorNotification = (title: string, text?: any): AppNotification => {
+export const createErrorNotification = (title: string, text = '', component?: React.ReactElement): AppNotification => {
   return {
     ...defaultErrorNotification,
-    title: title,
     text: getMessageFromError(text),
+    title,
     id: Date.now(),
+    component,
   };
 };
 
-export const createWarningNotification = (title: string, text?: string): AppNotification => ({
+export const createWarningNotification = (title: string, text = ''): AppNotification => ({
   ...defaultWarningNotification,
   title: title,
   text: text,

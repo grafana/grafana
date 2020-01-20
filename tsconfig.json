@@ -3,7 +3,7 @@
     "moduleResolution": "node",
     "outDir": "public/dist",
     "target": "es5",
-    "lib": ["es6", "dom"],
+    "lib": ["es2019", "dom"],
     "rootDirs": ["public/"],
     "jsx": "react",
     "module": "esnext",
@@ -34,8 +34,7 @@
       "sass": ["sass"],
       "@grafana/slate-react": ["../node_modules/@types/slate-react"]
     },
-    "skipLibCheck": true,
-    "preserveSymlinks": true
+    "skipLibCheck": true
   },
   "include": [
     "public/app/**/*.ts",

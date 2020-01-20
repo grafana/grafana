@@ -9,8 +9,8 @@ describe('AzureMonitorUrlBuilder', () => {
         'rg',
         'Microsoft.Sql/servers/databases',
         'rn1/rn2',
-        '2017-05-01-preview',
-        'default'
+        'default',
+        '2017-05-01-preview'
       );
       expect(url).toBe(
         '/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
@@ -27,8 +27,8 @@ describe('AzureMonitorUrlBuilder', () => {
         'rg',
         'Microsoft.Sql/servers',
         'rn',
-        '2017-05-01-preview',
-        'default'
+        'default',
+        '2017-05-01-preview'
       );
       expect(url).toBe(
         '/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
@@ -45,8 +45,8 @@ describe('AzureMonitorUrlBuilder', () => {
         'rg',
         'Microsoft.Storage/storageAccounts/blobServices',
         'rn1/default',
-        '2017-05-01-preview',
-        'default'
+        'default',
+        '2017-05-01-preview'
       );
       expect(url).toBe(
         '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/' +
@@ -63,8 +63,8 @@ describe('AzureMonitorUrlBuilder', () => {
         'rg',
         'Microsoft.Storage/storageAccounts/fileServices',
         'rn1/default',
-        '2017-05-01-preview',
-        'default'
+        'default',
+        '2017-05-01-preview'
       );
       expect(url).toBe(
         '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/' +
@@ -81,8 +81,8 @@ describe('AzureMonitorUrlBuilder', () => {
         'rg',
         'Microsoft.Storage/storageAccounts/tableServices',
         'rn1/default',
-        '2017-05-01-preview',
-        'default'
+        'default',
+        '2017-05-01-preview'
       );
       expect(url).toBe(
         '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/tableServices/default/' +
@@ -99,30 +99,12 @@ describe('AzureMonitorUrlBuilder', () => {
         'rg',
         'Microsoft.Storage/storageAccounts/queueServices',
         'rn1/default',
-        '2017-05-01-preview',
-        'default'
+        'default',
+        '2017-05-01-preview'
       );
       expect(url).toBe(
         '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/queueServices/default/' +
           'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
-      );
-    });
-  });
-
-  describe('when metric namespace is missing', () => {
-    it('should be excluded from the query', () => {
-      const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
-        '',
-        'sub1',
-        'rg',
-        'Microsoft.Storage/storageAccounts/queueServices',
-        'rn1/default',
-        '2017-05-01-preview'
-      );
-
-      expect(url).toBe(
-        '/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/queueServices/default/' +
-          'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
       );
     });
   });

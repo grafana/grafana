@@ -1,8 +1,12 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface InfluxOptions extends DataSourceJsonData {
   timeInterval: string;
   httpMode: string;
+}
+
+export interface InfluxSecureJsonData {
+  password?: string;
 }
 
 export interface InfluxQueryPart {

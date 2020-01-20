@@ -20,7 +20,7 @@ var isLDAPEnabled = multildap.IsEnabled
 var newLDAP = multildap.New
 
 // logger for the LDAP auth
-var logger = log.New("login.ldap")
+var ldapLogger = log.New("login.ldap")
 
 // loginUsingLDAP logs in user using LDAP. It returns whether LDAP is enabled and optional error and query arg will be
 // populated with the logged in user if successful.
@@ -40,7 +40,9 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 	if err != nil {
 		if err == ldap.ErrCouldNotFindUser {
 			// Ignore the error since user might not be present anyway
-			DisableExternalUser(query.Username)
+			if err := DisableExternalUser(query.Username); err != nil {
+				ldapLogger.Debug("Failed to disable external user", "err", err)
+			}
 
 			return true, ldap.ErrInvalidCredentials
 		}
@@ -75,7 +77,7 @@ func DisableExternalUser(username string) error {
 	userInfo := userQuery.Result
 	if !userInfo.IsDisabled {
 
-		logger.Debug(
+		ldapLogger.Debug(
 			"Disabling external user",
 			"user",
 			userQuery.Result.Login,
@@ -88,7 +90,7 @@ func DisableExternalUser(username string) error {
 		}
 
 		if err := bus.Dispatch(disableUserCmd); err != nil {
-			logger.Debug(
+			ldapLogger.Debug(
 				"Error disabling external user",
 				"user",
 				userQuery.Result.Login,

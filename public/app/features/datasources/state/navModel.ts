@@ -1,5 +1,4 @@
-import { DataSourceSettings, PluginType, PluginInclude } from '@grafana/ui';
-import { NavModel, NavModelItem } from '@grafana/data';
+import { DataSourceSettings, PluginType, PluginInclude, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
@@ -46,7 +45,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  if (config.buildInfo.isEnterprise) {
+  if (config.licenseInfo.hasLicense) {
     navModel.children.push({
       active: false,
       icon: 'fa fa-fw fa-lock',

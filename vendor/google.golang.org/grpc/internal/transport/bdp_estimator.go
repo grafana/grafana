@@ -24,9 +24,10 @@ import (
 )
 
 const (
-	// bdpLimit is the maximum value the flow control windows
-	// will be increased to.
-	bdpLimit = (1 << 20) * 4
+	// bdpLimit is the maximum value the flow control windows will be increased
+	// to.  TCP typically limits this to 4MB, but some systems go up to 16MB.
+	// Since this is only a limit, it is safe to make it optimistic.
+	bdpLimit = (1 << 20) * 16
 	// alpha is a constant factor used to keep a moving average
 	// of RTTs.
 	alpha = 0.9

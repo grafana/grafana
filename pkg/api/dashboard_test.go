@@ -958,6 +958,32 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				So(dash.Meta.ProvisionedExternalId, ShouldEqual, "test/dashboard1.json")
 			})
 		})
+
+		loggedInUserScenarioWithRole("When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			mock := provisioning.NewProvisioningServiceMock()
+			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
+				return "/tmp/grafana/dashboards"
+			}
+			mock.GetAllowUiUpdatesFromConfigFunc = func(name string) bool {
+				return true
+			}
+
+			hs := &HTTPServer{
+				Cfg:                 setting.NewCfg(),
+				ProvisioningService: mock,
+			}
+			CallGetDashboard(sc, hs)
+
+			So(sc.resp.Code, ShouldEqual, 200)
+
+			dash := dtos.DashboardFullWithMeta{}
+			err := json.NewDecoder(sc.resp.Body).Decode(&dash)
+			So(err, ShouldBeNil)
+
+			Convey("Should have metadata that says Provisioned is false", func() {
+				So(dash.Meta.Provisioned, ShouldEqual, false)
+			})
+		})
 	})
 }
 
@@ -1043,13 +1069,18 @@ func CallPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 	So(sc.resp.Code, ShouldEqual, 200)
 }
 
+func (m mockDashboardProvisioningService) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
+	panic("implement me")
+}
+
 func postDashboardScenario(desc string, url string, routePattern string, mock *dashboards.FakeDashboardService, cmd m.SaveDashboardCommand, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
-			Bus: bus.GetBus(),
-			Cfg: setting.NewCfg(),
+			Bus:                 bus.GetBus(),
+			Cfg:                 setting.NewCfg(),
+			ProvisioningService: provisioning.NewProvisioningServiceMock(),
 		}
 
 		sc := setupScenarioContext(url)
@@ -1063,10 +1094,16 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 		origNewDashboardService := dashboards.NewService
 		dashboards.MockDashboardService(mock)
 
+		origProvisioningService := dashboards.NewProvisioningService
+		dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
+			return mockDashboardProvisioningService{}
+		}
+
 		sc.m.Post(routePattern, sc.defaultHandler)
 
 		defer func() {
 			dashboards.NewService = origNewDashboardService
+			dashboards.NewProvisioningService = origProvisioningService
 		}()
 
 		fn(sc)
@@ -1100,8 +1137,9 @@ func restoreDashboardVersionScenario(desc string, url string, routePattern strin
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
-			Cfg: setting.NewCfg(),
-			Bus: bus.GetBus(),
+			Cfg:                 setting.NewCfg(),
+			Bus:                 bus.GetBus(),
+			ProvisioningService: provisioning.NewProvisioningServiceMock(),
 		}
 
 		sc := setupScenarioContext(url)
@@ -1116,6 +1154,11 @@ func restoreDashboardVersionScenario(desc string, url string, routePattern strin
 			return hs.RestoreDashboardVersion(c, cmd)
 		})
 
+		origProvisioningService := dashboards.NewProvisioningService
+		dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
+			return mockDashboardProvisioningService{}
+		}
+
 		origNewDashboardService := dashboards.NewService
 		dashboards.MockDashboardService(mock)
 
@@ -1123,6 +1166,7 @@ func restoreDashboardVersionScenario(desc string, url string, routePattern strin
 
 		defer func() {
 			dashboards.NewService = origNewDashboardService
+			dashboards.NewProvisioningService = origProvisioningService
 		}()
 
 		fn(sc)
@@ -1134,4 +1178,27 @@ func (sc *scenarioContext) ToJSON() *simplejson.Json {
 	err := json.NewDecoder(sc.resp.Body).Decode(&result)
 	So(err, ShouldBeNil)
 	return result
+}
+
+type mockDashboardProvisioningService struct {
+}
+
+func (m mockDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *m.DashboardProvisioning) (*m.Dashboard, error) {
+	panic("implement me")
+}
+
+func (m mockDashboardProvisioningService) SaveFolderForProvisionedDashboards(*dashboards.SaveDashboardDTO) (*m.Dashboard, error) {
+	panic("implement me")
+}
+
+func (m mockDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*m.DashboardProvisioning, error) {
+	panic("implement me")
+}
+
+func (mock mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*m.DashboardProvisioning, error) {
+	return &m.DashboardProvisioning{}, nil
+}
+
+func (m mockDashboardProvisioningService) UnprovisionDashboard(dashboardId int64) error {
+	panic("implement me")
 }

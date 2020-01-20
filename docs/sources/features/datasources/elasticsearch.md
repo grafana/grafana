@@ -3,7 +3,7 @@ title = "Using Elasticsearch in Grafana"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
 type = "docs"
-aliases = ["/datasources/elasticsearch"]
+aliases = ["/docs/grafana/latest/datasources/elasticsearch"]
 [menu.docs]
 name = "Elasticsearch"
 parent = "datasources"
@@ -26,7 +26,7 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, IP, and port of your Elasticsearch server.
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
@@ -84,7 +84,7 @@ Identifier | Description
 > Only available in Grafana v6.3+.
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
-which fields will be used for log messages and log levels when visualizing logs in [Explore](/features/explore).
+which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore" >}}).
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
 
@@ -98,7 +98,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
 metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
 
-## Series naming & alias patterns
+## Series naming and alias patterns
 
 You can control the name for time series via the `Alias` input field.
 
@@ -120,7 +120,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -131,7 +131,7 @@ Query | Description
 ------------ | -------------
 *{"find": "fields", "type": "keyword"}* | Returns a list of field names with the index type `keyword`.
 *{"find": "terms", "field": "@hostname", "size": 1000}* |  Returns a list of values for a field using term aggregation. Query will use current dashboard time range as time range for query.
-*{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation & and a specified lucene query filter. Query will use current dashboard time range as time range for query.
+*{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query.
 
 There is a default size limit of 500 on terms queries. Set the size property in your query to set a custom limit.
 You can use other variables inside the query. Example query definition for a variable named `$host`.
@@ -168,11 +168,11 @@ In the above example, we have a lucene query that filters documents based on the
 a variable in the *Terms* group by field input box. This allows you to use a variable to quickly change how the data is grouped.
 
 Example dashboard:
-[Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
+[Elasticsearch Templated Dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 
@@ -180,6 +180,7 @@ Name | Description
 ------------ | -------------
 Query | You can leave the search query blank or specify a lucene query
 Time | The name of the time field, needs to be date field.
+Time End | Optional name of the time end field, needs to be date field. If set, then annotations will be marked as a regions between time and time-end.
 Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
 
@@ -187,7 +188,7 @@ Tags | Optional field name to use for event tags (can be an array or a CSV strin
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from Elasticsearch is available via [Explore](/features/explore).
+Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../explore" >}}).
 
 ![](/img/docs/v63/elasticsearch_explore_logs.png)
 
@@ -207,7 +208,7 @@ Optionally enter a lucene query into the query field to filter the log messages.
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 

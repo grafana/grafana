@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -107,12 +108,24 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	logger.Infof("into: %v\n", pluginFolder)
 	logger.Info("\n")
 
-	content, err := c.ApiClient().DownloadFile(pluginName, pluginFolder, downloadURL, checksum)
+	// Create temp file for downloading zip file
+	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
+		return errutil.Wrap("Failed to create temporary file", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	err = c.ApiClient().DownloadFile(pluginName, tmpFile, downloadURL, checksum)
+	if err != nil {
+		tmpFile.Close()
 		return errutil.Wrap("Failed to download plugin archive", err)
 	}
+	err = tmpFile.Close()
+	if err != nil {
+		return errutil.Wrap("Failed to close tmp file", err)
+	}
 
-	err = extractFiles(content, pluginName, pluginFolder, isInternal)
+	err = extractFiles(tmpFile.Name(), pluginName, pluginFolder, isInternal)
 	if err != nil {
 		return errutil.Wrap("Failed to extract plugin archive", err)
 	}
@@ -121,7 +134,10 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
-		InstallPlugin(v.Id, "", c)
+		if err := InstallPlugin(v.Id, "", c); err != nil {
+			return errutil.Wrapf(err, "Failed to install plugin '%s'", v.Id)
+		}
+
 		logger.Infof("Installed dependency: %v ✔\n", v.Id)
 	}
 
@@ -157,32 +173,34 @@ func latestSupportedVersion(plugin *m.Plugin) *m.Version {
 
 // SelectVersion returns latest version if none is specified or the specified version. If the version string is not
 // matched to existing version it errors out. It also errors out if version that is matched is not available for current
-// os and platform.
+// os and platform. It expects plugin.Versions to be sorted so the newest version is first.
 func SelectVersion(plugin *m.Plugin, version string) (*m.Version, error) {
-	var ver *m.Version
-	if version == "" {
-		ver = &plugin.Versions[0]
-	}
-
-	for _, v := range plugin.Versions {
-		if v.Version == version {
-			ver = &v
-		}
-	}
-
-	if ver == nil {
-		return nil, xerrors.New("Could not find the version you're looking for")
-	}
+	var ver m.Version
 
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
 		return nil, xerrors.New("Plugin is not supported on your architecture and os.")
 	}
 
-	if latestForArch.Version == ver.Version {
-		return ver, nil
+	if version == "" {
+		return latestForArch, nil
 	}
-	return nil, xerrors.Errorf("Version you want is not supported on your architecture and os. Latest suitable version is %v", latestForArch.Version)
+	for _, v := range plugin.Versions {
+		if v.Version == version {
+			ver = v
+			break
+		}
+	}
+
+	if len(ver.Version) == 0 {
+		return nil, xerrors.New("Could not find the version you're looking for")
+	}
+
+	if !supportsCurrentArch(&ver) {
+		return nil, xerrors.Errorf("Version you want is not supported on your architecture and os. Latest suitable version is %v", latestForArch.Version)
+	}
+
+	return &ver, nil
 }
 
 func RemoveGitBuildFromName(pluginName, filename string) string {
@@ -192,8 +210,10 @@ func RemoveGitBuildFromName(pluginName, filename string) string {
 
 var permissionsDeniedMessage = "Could not create %s. Permission denied. Make sure you have write access to plugindir"
 
-func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks bool) error {
-	r, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
+func extractFiles(archiveFile string, pluginName string, filePath string, allowSymlinks bool) error {
+	logger.Debugf("Extracting archive %v to %v...\n", archiveFile, filePath)
+
+	r, err := zip.OpenReader(archiveFile)
 	if err != nil {
 		return err
 	}
@@ -221,11 +241,9 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 					continue
 				}
 			} else {
-
 				err = extractFile(zf, newFile)
 				if err != nil {
-					logger.Errorf("Failed to extract file: %v \n", err)
-					continue
+					return errutil.Wrap("Failed to extract file", err)
 				}
 			}
 		}
@@ -268,6 +286,12 @@ func extractFile(file *zip.File, filePath string) (err error) {
 		if os.IsPermission(err) {
 			return xerrors.Errorf(permissionsDeniedMessage, filePath)
 		}
+
+		unwrappedError := xerrors.Unwrap(err)
+		if unwrappedError != nil && strings.EqualFold(unwrappedError.Error(), "text file busy") {
+			return fmt.Errorf("file %s is in use. Please stop Grafana, install the plugin and restart Grafana", filePath)
+		}
+
 		return errutil.Wrap("Failed to open file", err)
 	}
 	defer func() {

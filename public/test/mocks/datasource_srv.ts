@@ -4,7 +4,7 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
-} from '@grafana/ui';
+} from '@grafana/data';
 
 export class DatasourceSrvMock {
   constructor(private defaultDS: DataSourceApi, private datasources: { [name: string]: DataSourceApi }) {
@@ -40,7 +40,11 @@ export class MockDataSourceApi extends DataSourceApi {
     if (this.queryResolver) {
       return this.queryResolver;
     }
-    return Promise.resolve(this.result);
+    return new Promise(resolver => {
+      setTimeout(() => {
+        resolver(this.result);
+      });
+    });
   }
 
   testDatasource() {

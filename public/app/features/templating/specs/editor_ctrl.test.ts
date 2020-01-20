@@ -1,5 +1,6 @@
 import { VariableEditorCtrl } from '../editor_ctrl';
 import { TemplateSrv } from '../template_srv';
+import { AppEvents } from '@grafana/data';
 
 let mockEmit: any;
 jest.mock('app/core/app_events', () => {
@@ -32,7 +33,7 @@ describe('VariableEditorCtrl', () => {
     it('should emit an error', () => {
       return scope.runQuery().then(res => {
         expect(mockEmit).toBeCalled();
-        expect(mockEmit.mock.calls[0][0]).toBe('alert-error');
+        expect(mockEmit.mock.calls[0][0]).toBe(AppEvents.alertError);
         expect(mockEmit.mock.calls[0][1][0]).toBe('Templating');
         expect(mockEmit.mock.calls[0][1][1]).toBe('Template variables could not be initialized: error');
       });

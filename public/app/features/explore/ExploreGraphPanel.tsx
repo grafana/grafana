@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
+import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
 
 import {
-  GrafanaTheme,
   selectThemeVariant,
   Themeable,
   GraphWithLegend,
@@ -12,6 +11,7 @@ import {
   Collapse,
   GraphSeriesToggler,
   GraphSeriesTogglerAPI,
+  Chart,
 } from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -39,17 +39,17 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 interface Props extends Themeable {
-  series: GraphSeriesXY[];
+  series?: GraphSeriesXY[];
   width: number;
   absoluteRange: AbsoluteTimeRange;
-  loading: boolean;
+  loading?: boolean;
   showPanel: boolean;
   showBars: boolean;
   showLines: boolean;
   isStacked: boolean;
-  showingGraph: boolean;
-  showingTable: boolean;
-  timeZone: TimeZone;
+  showingGraph?: boolean;
+  showingTable?: boolean;
+  timeZone?: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
   onToggleGraph?: (showingGraph: boolean) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
@@ -75,7 +75,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
   onClickGraphButton = () => {
     const { onToggleGraph, showingGraph } = this.props;
     if (onToggleGraph) {
-      onToggleGraph(showingGraph);
+      onToggleGraph(showingGraph ?? false);
     }
   };
 
@@ -137,7 +137,10 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               lineWidth={lineWidth}
               onSeriesToggle={onSeriesToggle}
               onHorizontalRegionSelected={this.onChangeTime}
-            />
+            >
+              {/* For logs we are using mulit mode until we refactor logs histogram to use barWidth instead of lineWidth to render bars */}
+              <Chart.Tooltip mode={showBars ? 'multi' : 'single'} />
+            </GraphWithLegend>
           );
         }}
       </GraphSeriesToggler>
@@ -155,9 +158,10 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
           <div className={cx([style.timeSeriesDisclaimer])}>
             <i className={cx(['fa fa-fw fa-warning', style.disclaimerIcon])} />
             {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-            <span className={cx([style.showAllTimeSeries])} onClick={this.onShowAllTimeSeries}>{`Show all ${
-              series.length
-            }`}</span>
+            <span
+              className={cx([style.showAllTimeSeries])}
+              onClick={this.onShowAllTimeSeries}
+            >{`Show all ${series.length}`}</span>
           </div>
         )}
 

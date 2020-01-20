@@ -51,10 +51,15 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	}
 	defer file.Close()
 
-	randomFileName := util.GetRandomString(30) + ".png"
+	randomFileName, err := util.GetRandomString(30)
+	if err != nil {
+		return "", err
+	}
+
+	randomFileName += pngExt
 	// upload image
 	az.log.Debug("Uploading image to azure_blob", "container_name", az.container_name, "blob_name", randomFileName)
-	resp, err := blob.FileUpload(az.container_name, randomFileName, file)
+	resp, err := blob.FileUpload(ctx, az.container_name, randomFileName, file)
 	if err != nil {
 		return "", err
 	}
@@ -157,12 +162,14 @@ func copyHeadersToRequest(req *http.Request, headers map[string]string) {
 	}
 }
 
-func (c *StorageClient) FileUpload(container, blobName string, body io.Reader) (*http.Response, error) {
+func (c *StorageClient) FileUpload(ctx context.Context, container, blobName string, body io.Reader) (*http.Response, error) {
 	blobName = escape(blobName)
 	extension := strings.ToLower(path.Ext(blobName))
 	contentType := mime.TypeByExtension(extension)
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(body)
+	if _, err := buf.ReadFrom(body); err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequest(
 		"PUT",
 		c.absUrl("%s/%s", container, blobName),
@@ -170,6 +177,9 @@ func (c *StorageClient) FileUpload(container, blobName string, body io.Reader) (
 	)
 	if err != nil {
 		return nil, err
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
 	}
 
 	copyHeadersToRequest(req, map[string]string{
@@ -181,7 +191,9 @@ func (c *StorageClient) FileUpload(container, blobName string, body io.Reader) (
 		"Content-Length": strconv.Itoa(buf.Len()),
 	})
 
-	c.Auth.SignRequest(req)
+	if err := c.Auth.SignRequest(req); err != nil {
+		return nil, err
+	}
 
 	return c.transport().RoundTrip(req)
 }
@@ -201,7 +213,7 @@ type Auth struct {
 	Key     string
 }
 
-func (a *Auth) SignRequest(req *http.Request) {
+func (a *Auth) SignRequest(req *http.Request) error {
 	strToSign := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s",
 		strings.ToUpper(req.Method),
 		tryget(req.Header, "Content-Encoding"),
@@ -221,13 +233,17 @@ func (a *Auth) SignRequest(req *http.Request) {
 	decodedKey, _ := base64.StdEncoding.DecodeString(a.Key)
 
 	sha256 := hmac.New(sha256.New, decodedKey)
-	sha256.Write([]byte(strToSign))
+	if _, err := sha256.Write([]byte(strToSign)); err != nil {
+		return err
+	}
 
 	signature := base64.StdEncoding.EncodeToString(sha256.Sum(nil))
 
 	copyHeadersToRequest(req, map[string]string{
 		"Authorization": fmt.Sprintf("SharedKey %s:%s", a.Account, signature),
 	})
+
+	return nil
 }
 
 func tryget(headers map[string][]string, key string) string {

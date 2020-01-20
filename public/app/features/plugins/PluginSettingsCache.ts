@@ -1,5 +1,5 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 
 type PluginCache = {
   [key: string]: PluginMeta;

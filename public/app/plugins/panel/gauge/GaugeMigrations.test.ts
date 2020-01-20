@@ -1,4 +1,4 @@
-import { PanelModel } from '@grafana/ui';
+import { PanelModel } from '@grafana/data';
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 
 describe('Gauge Panel Migrations', () => {

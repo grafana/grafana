@@ -3,21 +3,25 @@ import React, { Component } from 'react';
 
 // Types
 import { ExploreId } from 'app/types';
-import { TimeRange, TimeOption, TimeZone, RawTimeRange, dateTimeForTimeZone } from '@grafana/data';
+import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone } from '@grafana/data';
 
 // State
 
 // Components
-import { TimePicker } from '@grafana/ui';
+import { TimeSyncButton } from './TimeSyncButton';
+import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 // Utils & Services
-import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 
 export interface Props {
   exploreId: ExploreId;
+  hideText?: boolean;
   range: TimeRange;
   timeZone: TimeZone;
+  splitted: boolean;
+  syncedTimes: boolean;
+  onChangeTimeSync: () => void;
   onChangeTime: (range: RawTimeRange) => void;
 }
 
@@ -51,33 +55,24 @@ export class ExploreTimeControls extends Component<Props> {
     onChangeTime(nextTimeRange);
   };
 
-  setActiveTimeOption = (timeOptions: TimeOption[], rawTimeRange: RawTimeRange): TimeOption[] => {
-    return timeOptions.map(option => {
-      if (option.to === rawTimeRange.to && option.from === rawTimeRange.from) {
-        return {
-          ...option,
-          active: true,
-        };
-      }
-      return {
-        ...option,
-        active: false,
-      };
-    });
-  };
-
   render() {
-    const { range, timeZone } = this.props;
+    const { range, timeZone, splitted, syncedTimes, onChangeTimeSync, hideText } = this.props;
+    const timeSyncButton = splitted ? <TimeSyncButton onClick={onChangeTimeSync} isSynced={syncedTimes} /> : undefined;
+    const timePickerCommonProps = {
+      value: range,
+      timeZone,
+      onMoveBackward: this.onMoveBack,
+      onMoveForward: this.onMoveForward,
+      onZoom: this.onZoom,
+      hideText,
+    };
 
     return (
-      <TimePicker
-        value={range}
+      <TimePickerWithHistory
+        {...timePickerCommonProps}
+        timeSyncButton={timeSyncButton}
+        isSynced={syncedTimes}
         onChange={this.onChangeTimePicker}
-        timeZone={timeZone}
-        onMoveBackward={this.onMoveBack}
-        onMoveForward={this.onMoveForward}
-        onZoom={this.onZoom}
-        selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
       />
     );
   }

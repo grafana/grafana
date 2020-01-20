@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-import { PanelProps } from '@grafana/ui';
+import { PanelProps } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
@@ -43,7 +43,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         check: () => Promise.resolve(true),
       },
       {
-        title: 'Create your first data source',
+        title: 'Create a data source',
         cta: 'Add data source',
         icon: 'gicon gicon-datasources',
         href: 'datasources/new?gettingstarted',
@@ -60,7 +60,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         },
       },
       {
-        title: 'Create your first dashboard',
+        title: 'Build a dashboard',
         cta: 'New dashboard',
         icon: 'gicon gicon-dashboard',
         href: 'dashboard/new?gettingstarted',
@@ -81,7 +81,8 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
           return getBackendSrv()
             .get('/api/org/users/lookup')
             .then((res: any) => {
-              return res.length > 1;
+              /* return res.length > 1; */
+              return false;
             });
         },
       },

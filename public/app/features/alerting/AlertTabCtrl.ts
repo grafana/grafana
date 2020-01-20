@@ -8,9 +8,11 @@ import appEvents from 'app/core/app_events';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
-import { DataQuery } from '@grafana/ui/src/types/datasource';
+import { DataQuery, DataSourceApi } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
+import { CoreEvents } from 'app/types';
+import kbn from 'app/core/utils/kbn';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -30,6 +32,9 @@ export class AlertTabCtrl {
   appSubUrl: string;
   alertHistory: any;
   newAlertRuleTag: any;
+  alertingMinIntervalSecs: number;
+  alertingMinInterval: string;
+  frequencyWarning: any;
 
   /** @ngInject */
   constructor(
@@ -37,7 +42,6 @@ export class AlertTabCtrl {
     private backendSrv: BackendSrv,
     private dashboardSrv: DashboardSrv,
     private uiSegmentSrv: any,
-    private $q: any,
     private datasourceSrv: DatasourceSrv
   ) {
     this.panelCtrl = $scope.ctrl;
@@ -51,6 +55,8 @@ export class AlertTabCtrl {
     this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
     this.panelCtrl._enableAlert = this.enable;
+    this.alertingMinIntervalSecs = config.alertingMinInterval;
+    this.alertingMinInterval = kbn.secondsToHms(config.alertingMinInterval);
   }
 
   $onInit() {
@@ -58,11 +64,11 @@ export class AlertTabCtrl {
 
     // subscribe to graph threshold handle changes
     const thresholdChangedEventHandler = this.graphThresholdChanged.bind(this);
-    this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
+    this.panelCtrl.events.on(CoreEvents.thresholdChanged, thresholdChangedEventHandler);
 
     // set panel alert edit mode
     this.$scope.$on('$destroy', () => {
-      this.panelCtrl.events.off('threshold-changed', thresholdChangedEventHandler);
+      this.panelCtrl.events.off(CoreEvents.thresholdChanged, thresholdChangedEventHandler);
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
     });
@@ -120,7 +126,7 @@ export class AlertTabCtrl {
   }
 
   getNotifications() {
-    return this.$q.when(
+    return Promise.resolve(
       this.notifications.map((item: any) => {
         return this.uiSegmentSrv.newSegment(item.name);
       })
@@ -178,6 +184,8 @@ export class AlertTabCtrl {
       return;
     }
 
+    this.checkFrequency();
+
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
       alert.conditions.push(getDefaultCondition());
@@ -232,6 +240,27 @@ export class AlertTabCtrl {
     this.panelCtrl.render();
   }
 
+  checkFrequency() {
+    if (!this.alert.frequency) {
+      return;
+    }
+
+    this.frequencyWarning = '';
+
+    try {
+      const frequencySecs = kbn.interval_to_seconds(this.alert.frequency);
+      if (frequencySecs < this.alertingMinIntervalSecs) {
+        this.frequencyWarning =
+          'A minimum evaluation interval of ' +
+          this.alertingMinInterval +
+          ' have been configured in Grafana and will be used for this alert rule. ' +
+          'Please contact the administrator to configure a lower interval.';
+      }
+    } catch (err) {
+      this.frequencyWarning = err;
+    }
+  }
+
   graphThresholdChanged(evt: any) {
     for (const condition of this.alert.conditions) {
       if (condition.type === 'query') {
@@ -250,6 +279,7 @@ export class AlertTabCtrl {
     let firstTarget;
     let foundTarget: DataQuery = null;
 
+    const promises: Array<Promise<any>> = [];
     for (const condition of this.alert.conditions) {
       if (condition.type !== 'query') {
         continue;
@@ -271,20 +301,34 @@ export class AlertTabCtrl {
           foundTarget = firstTarget;
         } else {
           this.error = 'Could not find any metric queries';
+          return;
         }
       }
 
       const datasourceName = foundTarget.datasource || this.panel.datasource;
-      this.datasourceSrv.get(datasourceName).then(ds => {
-        if (!ds.meta.alerting) {
-          this.error = 'The datasource does not support alerting queries';
-        } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(foundTarget)) {
-          this.error = 'Template variables are not supported in alert queries';
-        } else {
-          this.error = '';
-        }
-      });
+      promises.push(
+        this.datasourceSrv.get(datasourceName).then(
+          (foundTarget => (ds: DataSourceApi) => {
+            if (!ds.meta.alerting) {
+              return Promise.reject('The datasource does not support alerting queries');
+            } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(foundTarget)) {
+              return Promise.reject('Template variables are not supported in alert queries');
+            }
+            return Promise.resolve();
+          })(foundTarget)
+        )
+      );
     }
+    Promise.all(promises).then(
+      () => {
+        this.error = '';
+        this.$scope.$apply();
+      },
+      e => {
+        this.error = e;
+        this.$scope.$apply();
+      }
+    );
   }
 
   buildConditionModel(source: any) {
@@ -304,7 +348,7 @@ export class AlertTabCtrl {
         break;
       }
       case 'get-part-actions': {
-        return this.$q.when([]);
+        return Promise.resolve([]);
       }
       case 'part-param-changed': {
         this.validateModel();
@@ -314,9 +358,14 @@ export class AlertTabCtrl {
           return this.uiSegmentSrv.newSegment({ value: target.refId });
         });
 
-        return this.$q.when(result);
+        return Promise.resolve(result);
+      }
+      default: {
+        return Promise.resolve();
       }
     }
+
+    return Promise.resolve();
   }
 
   handleReducerPartEvent(conditionModel: any, evt: any) {
@@ -333,9 +382,11 @@ export class AlertTabCtrl {
             result.push(type);
           }
         }
-        return this.$q.when(result);
+        return Promise.resolve(result);
       }
     }
+
+    return Promise.resolve();
   }
 
   addCondition(type: string) {
@@ -352,7 +403,7 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Alert',
       text: 'Are you sure you want to delete this alert rule?',
       text2: 'You need to save dashboard for the delete to take effect',
@@ -402,7 +453,7 @@ export class AlertTabCtrl {
   }
 
   clearHistory() {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Alert History',
       text: 'Are you sure you want to remove all history & annotations for this alert?',
       icon: 'fa-trash',

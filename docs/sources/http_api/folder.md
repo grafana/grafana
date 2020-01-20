@@ -2,7 +2,7 @@
 title = "Folder HTTP API "
 description = "Grafana Folder HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "folder"]
-aliases = ["/http_api/folder/"]
+aliases = ["/docs/grafana/latest/http_api/folder/"]
 type = "docs"
 [menu.docs]
 name = "Folder"
@@ -49,7 +49,7 @@ Content-Type: application/json
   {
     "id":1,
     "uid": "nErXDvCkzz",
-    "title": "Departmenet ABC",
+    "title": "Department ABC",
     "url": "/dashboards/f/nErXDvCkzz/department-abc",
     "hasAcl": false,
     "canSave": true,
@@ -88,7 +88,7 @@ Content-Type: application/json
 {
   "id":1,
   "uid": "nErXDvCkzz",
-  "title": "Departmenet ABC",
+  "title": "Department ABC",
   "url": "/dashboards/f/nErXDvCkzz/department-abc",
   "hasAcl": false,
   "canSave": true,
@@ -143,7 +143,7 @@ Content-Type: application/json
 {
   "id":1,
   "uid": "nErXDvCkzz",
-  "title": "Departmenet ABC",
+  "title": "Department ABC",
   "url": "/dashboards/f/nErXDvCkzz/department-abc",
   "hasAcl": false,
   "canSave": true,
@@ -200,7 +200,7 @@ Content-Type: application/json
 {
   "id":1,
   "uid": "nErXDvCkzz",
-  "title": "Departmenet DEF",
+  "title": "Department DEF",
   "url": "/dashboards/f/nErXDvCkzz/department-def",
   "hasAcl": false,
   "canSave": true,
@@ -299,7 +299,7 @@ Content-Type: application/json
 {
   "id":1,
   "uid": "nErXDvCkzz",
-  "title": "Departmenet ABC",
+  "title": "Department ABC",
   "url": "/dashboards/f/nErXDvCkzz/department-abc",
   "hasAcl": false,
   "canSave": true,

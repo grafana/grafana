@@ -5,7 +5,7 @@ export class ElasticQueryBuilder {
   timeField: string;
   esVersion: number;
 
-  constructor(options: any) {
+  constructor(options: { timeField: string; esVersion: number }) {
     this.timeField = options.timeField;
     this.esVersion = options.esVersion;
   }
@@ -129,11 +129,6 @@ export class ElasticQueryBuilder {
     }
 
     query.script_fields = {};
-    if (this.esVersion < 5) {
-      query.fielddata_fields = [this.timeField];
-    } else {
-      query.docvalue_fields = [this.timeField];
-    }
     return query;
   }
 
@@ -224,7 +219,7 @@ export class ElasticQueryBuilder {
     nestedAggs = query;
 
     for (i = 0; i < target.bucketAggs.length; i++) {
-      const aggDef = target.bucketAggs[i];
+      const aggDef: any = target.bucketAggs[i];
       const esAgg: any = {};
 
       switch (aggDef.type) {
@@ -398,7 +393,7 @@ export class ElasticQueryBuilder {
       query.query.bool.filter.push({
         query_string: {
           analyze_wildcard: true,
-          query: target.query,
+          query: querystring,
         },
       });
     }

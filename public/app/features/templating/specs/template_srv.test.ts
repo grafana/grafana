@@ -268,6 +268,14 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('html format', () => {
+    it('should encode values html escape sequences', () => {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: '<script>alert(asd)</script>' } }]);
+      const target = _templateSrv.replace('$test', {}, 'html');
+      expect(target).toBe('&lt;script&gt;alert(asd)&lt;/script&gt;');
+    });
+  });
+
   describe('format variable to string values', () => {
     it('single value should return value', () => {
       const result = _templateSrv.formatValue('test');

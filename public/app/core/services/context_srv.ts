@@ -10,6 +10,7 @@ export class User {
   orgRole: any;
   orgId: number;
   orgName: string;
+  login: string;
   orgCount: number;
   timezone: string;
   helpFlags1: number;

@@ -1,0 +1,94 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package arrow // import "github.com/apache/arrow/go/arrow"
+
+import (
+	"encoding/binary"
+	"math"
+	"reflect"
+	"unsafe"
+)
+
+var (
+{{range .In}}
+	{{.Name}}Traits {{.name}}Traits
+{{- end}}
+)
+
+{{range .In}}
+// {{.Name}} traits
+
+const (
+	// {{.Name}}SizeBytes specifies the number of bytes required to store a single {{.Type}} in memory
+	{{.Name}}SizeBytes = int(unsafe.Sizeof({{.Type}}({{.Default}})))
+)
+
+type {{.name}}Traits struct{}
+
+// BytesRequired returns the number of bytes required to store n elements in memory.
+func ({{.name}}Traits) BytesRequired(n int) int { return {{.Name}}SizeBytes * n }
+
+// PutValue
+func ({{.name}}Traits) PutValue(b []byte, v {{.Type}}) {
+{{- if eq .Type "float32" -}}
+	binary.LittleEndian.PutUint32(b, math.Float32bits(v))
+{{- else if eq .Type "float64" -}}
+	binary.LittleEndian.PutUint64(b, math.Float64bits(v))
+{{- else if eq .Size "1" -}}
+	b[0] = byte(v)
+{{- else if eq .Size "2" -}}
+	binary.LittleEndian.PutUint16(b, uint16(v))
+{{- else if eq .Size "4" -}}
+	binary.LittleEndian.PutUint32(b, uint32(v))
+{{- else if eq .Size "8" -}}
+	binary.LittleEndian.PutUint64(b, uint64(v))
+{{- else -}}
+	panic("invalid type {{.Type}}")
+{{end}}
+}
+
+// CastFromBytes reinterprets the slice b to a slice of type {{.Type}}.
+//
+// NOTE: len(b) must be a multiple of {{.Name}}SizeBytes.
+func ({{.name}}Traits) CastFromBytes(b []byte) []{{.Type}} {
+	h := (*reflect.SliceHeader)(unsafe.Pointer(&b))
+
+	var res []{{.Type}}
+	s := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	s.Data = h.Data
+	s.Len = h.Len/{{.Name}}SizeBytes
+	s.Cap = h.Cap/{{.Name}}SizeBytes
+
+	return res
+}
+
+// CastToBytes reinterprets the slice b to a slice of bytes.
+func ({{.name}}Traits) CastToBytes(b []{{.Type}}) []byte {
+	h := (*reflect.SliceHeader)(unsafe.Pointer(&b))
+
+	var res []byte
+	s := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+	s.Data = h.Data
+	s.Len = h.Len*{{.Name}}SizeBytes
+	s.Cap = h.Cap*{{.Name}}SizeBytes
+
+	return res
+}
+
+// Copy copies src to dst.
+func ({{.name}}Traits) Copy(dst, src []{{.Type}}) { copy(dst, src) }
+{{end}}

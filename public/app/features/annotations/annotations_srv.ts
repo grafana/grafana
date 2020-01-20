@@ -1,5 +1,5 @@
 // Libaries
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 
 // Components
@@ -11,11 +11,11 @@ import { dedupAnnotations } from './events_processing';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { AnnotationEvent } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
-import { DataSourceApi } from '@grafana/ui';
+import { DataSourceApi, PanelEvents, AnnotationEvent, AppEvents, PanelModel, TimeRange } from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -24,8 +24,7 @@ export class AnnotationsSrv {
 
   /** @ngInject */
   constructor(
-    private $rootScope: any,
-    private $q: IQService,
+    private $rootScope: GrafanaRootScope,
     private datasourceSrv: DatasourceSrv,
     private backendSrv: BackendSrv,
     private timeSrv: TimeSrv
@@ -35,7 +34,7 @@ export class AnnotationsSrv {
     // always clearPromiseCaches when loading new dashboard
     this.clearPromiseCaches();
     // clear promises on refresh events
-    dashboard.on('refresh', this.clearPromiseCaches.bind(this));
+    dashboard.on(PanelEvents.refresh, this.clearPromiseCaches.bind(this));
   }
 
   clearPromiseCaches() {
@@ -44,9 +43,8 @@ export class AnnotationsSrv {
     this.datasourcePromises = null;
   }
 
-  getAnnotations(options: any) {
-    return this.$q
-      .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
+  getAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
+    return Promise.all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = _.flattenDeep(results[0]);
@@ -75,23 +73,23 @@ export class AnnotationsSrv {
           err.message = err.data.message;
         }
         console.log('AnnotationSrv.query error', err);
-        this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', err.message || err]);
+        this.$rootScope.appEvent(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
       });
   }
 
   getAlertStates(options: any) {
     if (!options.dashboard.id) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     // ignore if no alerts
     if (options.panel && !options.panel.alert) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     if (options.range.raw.to !== 'now') {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     if (this.alertStatesPromise) {
@@ -104,7 +102,7 @@ export class AnnotationsSrv {
     return this.alertStatesPromise;
   }
 
-  getGlobalAnnotations(options: any) {
+  getGlobalAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
     const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
@@ -130,7 +128,7 @@ export class AnnotationsSrv {
           .then((datasource: DataSourceApi) => {
             // issue query against data source
             return datasource.annotationQuery({
-              range: range,
+              range,
               rangeRaw: range.raw,
               annotation: annotation,
               dashboard: dashboard,
@@ -146,8 +144,8 @@ export class AnnotationsSrv {
           })
       );
     }
-    this.datasourcePromises = this.$q.all(dsPromises);
-    this.globalAnnotationsPromise = this.$q.all(promises);
+    this.datasourcePromises = Promise.all(dsPromises);
+    this.globalAnnotationsPromise = Promise.all(promises);
     return this.globalAnnotationsPromise;
   }
 

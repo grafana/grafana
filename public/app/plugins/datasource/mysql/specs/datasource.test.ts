@@ -1,14 +1,13 @@
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { toUtc, dateTime } from '@grafana/data';
+import { dateTime, toUtc } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('MySQLDatasource', () => {
   const instanceSettings = { name: 'mysql' };
   const backendSrv = {};
-  const templateSrv: any = {
-    replace: jest.fn(text => text),
-  };
+  const templateSrv: TemplateSrv = new TemplateSrv();
 
   const raw = {
     from: toUtc('2018-04-25 10:00'),
@@ -26,7 +25,7 @@ describe('MySQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new MysqlDatasource(instanceSettings, backendSrv as BackendSrv, {} as any, templateSrv, ctx.timeSrvMock);
+    ctx.ds = new MysqlDatasource(instanceSettings, backendSrv as BackendSrv, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', () => {
@@ -99,7 +98,11 @@ describe('MySQLDatasource', () => {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
             },
           ],
         },
@@ -122,6 +125,90 @@ describe('MySQLDatasource', () => {
     });
   });
 
+  describe('When performing metricFindQuery with $__searchFilter and a searchFilter is given', () => {
+    let results: any;
+    let calledWith: any = {};
+    const query = "select title from atable where title LIKE '$__searchFilter'";
+    const response = {
+      results: {
+        tempvar: {
+          meta: {
+            rowCount: 3,
+          },
+          refId: 'tempvar',
+          tables: [
+            {
+              columns: [{ text: 'title' }, { text: 'text' }],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+        calledWith = options;
+        return Promise.resolve({ data: response, status: 200 });
+      });
+      ctx.ds.metricFindQuery(query, { searchFilter: 'aTit' }).then((data: any) => {
+        results = data;
+      });
+    });
+
+    it('should return list of all column values', () => {
+      expect(ctx.backendSrv.datasourceRequest).toBeCalledTimes(1);
+      expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE 'aTit%'");
+      expect(results.length).toBe(6);
+    });
+  });
+
+  describe('When performing metricFindQuery with $__searchFilter but no searchFilter is given', () => {
+    let results: any;
+    let calledWith: any = {};
+    const query = "select title from atable where title LIKE '$__searchFilter'";
+    const response = {
+      results: {
+        tempvar: {
+          meta: {
+            rowCount: 3,
+          },
+          refId: 'tempvar',
+          tables: [
+            {
+              columns: [{ text: 'title' }, { text: 'text' }],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+        calledWith = options;
+        return Promise.resolve({ data: response, status: 200 });
+      });
+      ctx.ds.metricFindQuery(query, {}).then((data: any) => {
+        results = data;
+      });
+    });
+
+    it('should return list of all column values', () => {
+      expect(ctx.backendSrv.datasourceRequest).toBeCalledTimes(1);
+      expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
+      expect(results.length).toBe(6);
+    });
+  });
+
   describe('When performing metricFindQuery with key, value columns', () => {
     let results: any;
     const query = 'select * from atable';
@@ -135,7 +222,11 @@ describe('MySQLDatasource', () => {
           tables: [
             {
               columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [['value1', 'aTitle'], ['value2', 'aTitle2'], ['value3', 'aTitle3']],
+              rows: [
+                ['value1', 'aTitle'],
+                ['value2', 'aTitle2'],
+                ['value3', 'aTitle3'],
+              ],
             },
           ],
         },
@@ -173,7 +264,11 @@ describe('MySQLDatasource', () => {
           tables: [
             {
               columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [['aTitle', 'same'], ['aTitle', 'same'], ['aTitle', 'diff']],
+              rows: [
+                ['aTitle', 'same'],
+                ['aTitle', 'same'],
+                ['aTitle', 'diff'],
+              ],
             },
           ],
         },
@@ -238,6 +333,55 @@ describe('MySQLDatasource', () => {
         ctx.variable.includeAll = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
+    });
+  });
+
+  describe('targetContainsTemplate', () => {
+    it('given query that contains template variable it should return true', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$summarize') as time_sec,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count' AND
+      hostname IN($host)
+    GROUP BY 1, 3
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+        rawQuery: true,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+    });
+
+    it('given query that only contains global template variable it should return false', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$__interval') as time_sec,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count'
+    GROUP BY 1, 3
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+        rawQuery: true,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
 });
