@@ -185,6 +185,25 @@ export class TemplateSrv {
         }
         return this.encodeURIComponentStrict(value);
       }
+      case 'singlequote': {
+        if (_.isArray(value)) {
+          return _.map(value, v => `'${v}'`);
+        }
+        return `'${value}'`;
+      }
+      case 'doublequote': {
+        if (_.isArray(value)) {
+          return _.map(value, v => `"${v}"`);
+        }
+        return `"${value}"`;
+      }
+      case 'sqlstring': {
+        // escape single quotes in sql string 
+        if (_.isArray(value)) {
+          return _.map(value, v => `'${_.replace(v, "/'/g", "''")}'`);
+        }
+        return `'${_.replace(value, "/'/g", "''")}'`;
+      }
       default: {
         if (_.isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';

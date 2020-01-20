@@ -114,6 +114,33 @@ String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
+### Singlequote
+Formats single and multi valued variables for use in URL parameters.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:singlequote}'
+Interpolation result: "'test1','test2'"
+```
+
+### Doublequote
+Formats single and multi valued variables for use in URL parameters.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:doublequote}'
+Interpolation result: '"test1","test2"'
+```
+
+### Sqlstring
+Formats single and multi valued variables for use in URL parameters.
+
+```bash
+servers = ["test'1", "test2"]
+String to interpolate: '${servers:sqlstring}'
+Interpolation result: "'test''1','test2'"
+```
+
 Test the formatting options on the [Grafana Play site](https://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
 If any invalid formatting option is specified, then `glob` is the default/fallback option.
