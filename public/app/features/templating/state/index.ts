@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 import { initialQueryVariablesState, QueryVariablesState } from './queryVariablesReducer';
 import { VariableType } from '../variable';
-import { addVariable, updateVariableOptions } from './actions';
+import { addVariable, updateVariableOptions, updateVariableTags } from './actions';
 import { variableAdapter } from '../adapters';
 
 export interface TemplatingState extends Record<VariableType, any> {
@@ -28,6 +28,14 @@ const templatingSlice = createSlice({
         state[type] = reducer(state[type], action);
       })
       .addCase(updateVariableOptions, (state: TemplatingState, action) => {
+        const { type } = action.payload.variable;
+        const reducer = variableAdapter[type].getReducer();
+        if (!reducer) {
+          throw new Error(`Reducer for type ${type} could not be found.`);
+        }
+        state[type] = reducer(state[type], action);
+      })
+      .addCase(updateVariableTags, (state: TemplatingState, action) => {
         const { type } = action.payload.variable;
         const reducer = variableAdapter[type].getReducer();
         if (!reducer) {

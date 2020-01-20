@@ -1,13 +1,11 @@
 import { createAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
-import { stringToJsRegex } from '@grafana/data';
 
 import {
   QueryVariableModel,
   VariableModel,
   VariableOption,
   VariableRefresh,
-  VariableTag,
   VariableType,
   VariableWithOptions,
 } from '../variable';
@@ -32,10 +30,10 @@ export const updateVariable = createAction<VariableModel>('templating/updateVari
 export const setVariableValue = createAction<{ variable: VariableModel; option: VariableOption }>(
   'templating/setVariableValue'
 );
-export const updateVariableOptions = createAction<{ variable: VariableModel; options: VariableOption[] }>(
+export const updateVariableOptions = createAction<{ variable: VariableModel; results: any[] }>(
   'templating/updateVariableOptions'
 );
-export const updateVariableTags = createAction<{ variable: VariableModel; tags: VariableTag[] }>(
+export const updateVariableTags = createAction<{ variable: VariableModel; results: any[] }>(
   'templating/updateVariableTags'
 );
 
@@ -90,6 +88,7 @@ export const processVariables = (): ThunkResult<void> => {
           return variable.initLock.resolve();
         })
         .finally(() => {
+          templateSrv.variableInitialized(variable);
           delete variable.initLock;
         });
     }
@@ -97,76 +96,6 @@ export const processVariables = (): ThunkResult<void> => {
 };
 
 export const updateQueryVariableOptions = (variable: QueryVariableModel, searchFilter?: string): ThunkResult<void> => {
-  const sortVariableValues = (options: any[], sortOrder: number) => {
-    if (sortOrder === 0) {
-      return options;
-    }
-
-    const sortType = Math.ceil(sortOrder / 2);
-    const reverseSort = sortOrder % 2 === 0;
-
-    if (sortType === 1) {
-      options = _.sortBy(options, 'text');
-    } else if (sortType === 2) {
-      options = _.sortBy(options, opt => {
-        const matches = opt.text.match(/.*?(\d+).*/);
-        if (!matches || matches.length < 2) {
-          return -1;
-        } else {
-          return parseInt(matches[1], 10);
-        }
-      });
-    } else if (sortType === 3) {
-      options = _.sortBy(options, opt => {
-        return _.toLower(opt.text);
-      });
-    }
-
-    if (reverseSort) {
-      options = options.reverse();
-    }
-
-    return options;
-  };
-  const metricNamesToVariableValues = (metricNames: any[]) => {
-    let regex, options, i, matches;
-    options = [];
-
-    if (variable.regex) {
-      regex = stringToJsRegex(templateSrv.replace(variable.regex, {}, 'regex'));
-    }
-    for (i = 0; i < metricNames.length; i++) {
-      const item = metricNames[i];
-      let text = item.text === undefined || item.text === null ? item.value : item.text;
-
-      let value = item.value === undefined || item.value === null ? item.text : item.value;
-
-      if (_.isNumber(value)) {
-        value = value.toString();
-      }
-
-      if (_.isNumber(text)) {
-        text = text.toString();
-      }
-
-      if (regex) {
-        matches = regex.exec(value);
-        if (!matches) {
-          continue;
-        }
-        if (matches.length > 1) {
-          value = matches[1];
-          text = matches[1];
-        }
-      }
-
-      options.push({ text: text, value: value });
-    }
-
-    options = _.uniqBy(options, 'value');
-    return sortVariableValues(options, variable.sort);
-  };
-
   return async (dispatch, getState) => {
     const dataSource = await getDatasourceSrv().get(variable.datasource);
     const queryOptions: any = { range: undefined, variable, searchFilter };
@@ -174,27 +103,14 @@ export const updateQueryVariableOptions = (variable: QueryVariableModel, searchF
       queryOptions.range = getTimeSrv().timeRange();
     }
     const results = await dataSource.metricFindQuery(variable.query, queryOptions);
-    const options = metricNamesToVariableValues(results);
-    if (variable.includeAll) {
-      options.unshift({ text: 'All', value: '$__all', selected: false });
-    }
-    if (!options.length) {
-      options.push({ text: 'None', value: '', isNone: true, selected: false });
-    }
-
-    await dispatch(updateVariableOptions({ variable, options }));
+    await dispatch(updateVariableOptions({ variable, results }));
 
     if (!variable.useTags) {
       return;
     }
 
     const tagResults = await dataSource.metricFindQuery(variable.tagsQuery, queryOptions);
-    const tags: VariableTag[] = [];
-    for (let i = 0; i < tagResults.length; i++) {
-      tags.push({ text: tagResults[i].text, selected: false });
-    }
-
-    await dispatch(updateVariableTags({ variable, tags }));
+    await dispatch(updateVariableTags({ variable, results: tagResults }));
   };
 };
 

@@ -6,7 +6,7 @@
     aria-label="{{::ctrl.selectors.submenuItem}}"
   >
     <div class="gf-form" ng-if="variable.type === 'query'">
-      <query-variable variable="variable"></query-variable>
+      <query-variable name="variable.name"></query-variable>
     </div>
     <div class="gf-form" ng-if="variable.type !== 'query'">
       <label

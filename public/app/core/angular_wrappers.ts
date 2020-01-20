@@ -138,5 +138,5 @@ export function registerAngularDirectives() {
     'dataSourceConfig',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('queryVariable', QueryVariable, [['variable', { watchDepth: 'reference' }]]);
+  react2AngularDirective('queryVariable', QueryVariable, ['name']);
 }

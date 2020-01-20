@@ -3,11 +3,69 @@ import map from 'lodash/map';
 import debounce from 'lodash/debounce';
 import { e2e } from '@grafana/e2e';
 
-import { containsSearchFilter, QueryVariableModel, VariableHide, VariableOption, VariableTag } from '../variable';
+import {
+  containsSearchFilter,
+  QueryVariableModel,
+  VariableHide,
+  VariableModel,
+  VariableOption,
+  VariableTag,
+} from '../variable';
+import { Observable, Subscriber, Subscription } from 'rxjs';
+import { store } from '../../../store/store';
+import { StoreState } from 'app/types/store';
+import { distinctUntilChanged } from 'rxjs/operators';
+import { getVariables } from '../state/selectors';
 
 export interface Props {
-  variable: QueryVariableModel;
+  name: string;
 }
+
+export const createVariableComponent = <
+  P extends Props = Props,
+  State extends { variable?: ReduxState } = { variable: any },
+  ReduxState extends VariableModel = VariableModel
+>() => {
+  return class VariableComponent extends PureComponent<P, State> {
+    private readonly subscription: Subscription = null;
+    constructor(props: P) {
+      super(props);
+
+      this.subscription = new Observable((observer: Subscriber<ReduxState>) => {
+        const unsubscribeFromStore = store.subscribe(() => observer.next(this.stateSelector(store.getState())));
+        observer.next(this.stateSelector(store.getState()));
+        return function unsubscribe() {
+          unsubscribeFromStore();
+        };
+      })
+        .pipe(
+          distinctUntilChanged<ReduxState>((previous, current) => {
+            return previous === current;
+          })
+        )
+        .subscribe({
+          next: state => {
+            if (this.state) {
+              this.setState({ variable: state });
+              return;
+            }
+
+            this.state = { variable: {} } as State;
+          },
+        });
+    }
+
+    stateSelector = (state: StoreState): ReduxState => {
+      const variables = getVariables(state);
+      const variable = variables.find(variable => variable.name === this.props.name);
+      return variable as ReduxState;
+    };
+
+    componentWillUnmount(): void {
+      this.subscription.unsubscribe();
+    }
+  };
+};
 
 export interface State {
   showDropDown: boolean;
@@ -19,15 +77,13 @@ export interface State {
   highlightIndex: number;
   tags: VariableTag[];
   queryHasSearchFilter: boolean;
+  variable?: QueryVariableModel;
 }
 
-export class QueryVariable extends PureComponent<Props, State> {
+export class QueryVariable extends createVariableComponent<Props, State, QueryVariableModel>() {
   private readonly debouncedOnQueryChanged: Function;
   constructor(props: Props) {
     super(props);
-    const queryHasSearchFilter = props.variable ? containsSearchFilter(props.variable.query) : false;
-    const selectedTags = props.variable?.current.tags || [];
-
     this.state = {
       showDropDown: false,
       linkText: '',
@@ -36,8 +92,8 @@ export class QueryVariable extends PureComponent<Props, State> {
       searchOptions: [],
       highlightIndex: -1,
       tags: [],
-      queryHasSearchFilter,
-      selectedTags,
+      queryHasSearchFilter: false,
+      selectedTags: [],
     };
     this.debouncedOnQueryChanged = debounce((searchQuery: string) => {
       this.onQueryChanged(searchQuery);
@@ -45,12 +101,23 @@ export class QueryVariable extends PureComponent<Props, State> {
   }
 
   componentDidMount(): void {
-    this.updateLinkText();
+    const queryHasSearchFilter = this.state.variable ? containsSearchFilter(this.state.variable.query) : false;
+    const selectedTags = this.state.variable ? this.state.variable.current?.tags : [];
+    this.setState({
+      queryHasSearchFilter,
+      selectedTags,
+    });
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
+    if (this.state.variable !== prevState.variable) {
+      this.updateLinkText();
+    }
   }
 
   onShowDropDown = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    const { variable } = this.props;
+    const { tags, current, options } = this.state.variable;
     // this.oldVariableText = this.variable.current.text;
     // this.highlightIndex = -1;
 
@@ -66,9 +133,9 @@ export class QueryVariable extends PureComponent<Props, State> {
     //   });
     //   return tag;
     // });
-    const tags = variable.tags
-      ? variable.tags.map(tag => {
-          const currentTag = variable.current.tags.filter(t => t.text === tag.text)[0];
+    const newTags = tags
+      ? tags.map(tag => {
+          const currentTag = current?.tags.filter(t => t.text === tag.text)[0];
           return currentTag || { text: tag.text, selected: false };
         })
       : [];
@@ -86,24 +153,23 @@ export class QueryVariable extends PureComponent<Props, State> {
     this.setState({
       showDropDown: true,
       highlightIndex: -1,
-      selectedValues: variable.options.filter(option => option.selected),
-      tags,
+      selectedValues: options.filter(option => option.selected),
+      tags: newTags,
       searchQuery,
-      searchOptions: variable.options.slice(0, Math.min(variable.options.length, 1000)),
+      searchOptions: options.slice(0, Math.min(options.length, 1000)),
     });
   };
 
   updateLinkText = () => {
-    const { variable } = this.props;
-    const current = variable.current;
+    const { current, options } = this.state.variable;
 
     if (!current.tags || current.tags.length === 0) {
-      this.setState({ linkText: variable.current.text });
+      this.setState({ linkText: current.text });
       return;
     }
 
     // filer out values that are in selected tags
-    const selectedAndNotInTag = variable.options.filter(option => {
+    const selectedAndNotInTag = options.filter(option => {
       if (!option.selected) {
         return false;
       }
@@ -128,8 +194,8 @@ export class QueryVariable extends PureComponent<Props, State> {
   };
 
   onQueryChanged = (searchQuery: string) => {
-    const { variable } = this.props;
     const { queryHasSearchFilter } = this.state;
+    const { options } = this.state.variable;
     if (queryHasSearchFilter) {
       // dispatch call to thunk instead
       // await this.updateLazyLoadedOptions();
@@ -138,7 +204,7 @@ export class QueryVariable extends PureComponent<Props, State> {
 
     this.setState({
       searchQuery,
-      searchOptions: variable.options.filter(option => {
+      searchOptions: options.filter(option => {
         const text = Array.isArray(option.text) ? option.text[0] : option.text;
         return text.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1;
       }),
@@ -146,7 +212,6 @@ export class QueryVariable extends PureComponent<Props, State> {
   };
 
   render() {
-    const { variable } = this.props;
     const {
       linkText,
       selectedTags,
@@ -158,14 +223,17 @@ export class QueryVariable extends PureComponent<Props, State> {
       tags,
     } = this.state;
 
-    if (!variable) {
-      return <div>Could not load variable</div>;
+    if (!this.state.variable) {
+      return <div>Couldn't load variable</div>;
     }
 
-    const label = variable.label || variable.name;
+    const { name, hide, multi } = this.state.variable;
+    let { label } = this.state.variable;
+
+    label = label || name;
     return (
       <div className="gf-form">
-        {variable.hide !== VariableHide.hideLabel && (
+        {hide !== VariableHide.hideLabel && (
           <label
             className="gf-form-label template-variable"
             aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemLabels(label)}
@@ -173,7 +241,7 @@ export class QueryVariable extends PureComponent<Props, State> {
             {label}
           </label>
         )}
-        {variable.hide !== VariableHide.hideVariable && (
+        {hide !== VariableHide.hideVariable && (
           <div className="variable-link-wrapper">
             {!showDropDown && (
               <a
@@ -198,11 +266,18 @@ export class QueryVariable extends PureComponent<Props, State> {
 
             {showDropDown && (
               <input
+                ref={instance => {
+                  if (instance) {
+                    instance.focus();
+                    instance.setAttribute('style', `width:${Math.max(instance.width, 80)}px`);
+                  }
+                }}
                 type="text"
                 className="gf-form-input"
                 value={searchQuery}
                 onChange={event => this.debouncedOnQueryChanged(event.target.value)}
-                autoFocus={true}
+                // style={{ width: '80px' }}
+                // inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
                 // ng-keydown="vm.keyDown($event)"
                 // ng-model="vm.search.query"
                 // ng-change="vm.debouncedQueryChanged()"
@@ -211,12 +286,12 @@ export class QueryVariable extends PureComponent<Props, State> {
 
             {showDropDown && (
               <div
-                className={`${variable.multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}
+                className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}
                 aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownDropDown}
               >
                 <div className="variable-options-wrapper">
                   <div className="variable-options-column">
-                    {variable.multi && (
+                    {multi && (
                       <a
                         className={`${
                           selectedValues.length > 1
@@ -254,7 +329,7 @@ export class QueryVariable extends PureComponent<Props, State> {
                       );
                     })}
                   </div>
-                  {tags.length && (
+                  {tags.length > 0 && (
                     <div className="variable-options-column">
                       <div className="variable-options-column-header text-center">Tags</div>
                       {tags.map((tag, index) => {
