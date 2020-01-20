@@ -12,7 +12,7 @@ import { LokiExploreExtraField } from './LokiExploreExtraField';
 
 type Props = ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions>;
 
-export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
+export const LokiExploreQueryEditor = memo(function LokiExploreQueryEditor(props: Props) {
   const { query, data, datasource, exploreMode, history, onChange, onRunQuery } = props;
 
   let absolute: AbsoluteTimeRange;
@@ -110,4 +110,4 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
   );
 });
 
-export default LokiQueryEditor;
+export default LokiExploreQueryEditor;
