@@ -114,6 +114,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controller: DashboardImportCtrl,
       controllerAs: 'ctrl',
     })
+    .when('/dashboard/import2', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/components/DashboardImport')
+          ),
+      },
+    })
     .when('/datasources', {
       template: '<react-container />',
       resolve: {
