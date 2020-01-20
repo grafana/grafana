@@ -40,17 +40,19 @@ export class TableContainer extends PureComponent<TableContainerProps> {
 
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
+    const hasTableResult = tableResult?.length;
 
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
-        {!tableResult?.length && (
+        {hasTableResult ? (
+          <Table data={tableResult} width={tableWidth} height={height} onCellClick={onClickCell} />
+        ) : (
           <div className="logs-panel-meta">
             <div className="logs-panel-meta__item">
               <span className="logs-panel-meta__value">0 series returned</span>
             </div>
           </div>
         )}
-        {tableResult && <Table data={tableResult} width={tableWidth} height={height} onCellClick={onClickCell} />}
       </Collapse>
     );
   }
