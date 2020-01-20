@@ -6,7 +6,15 @@ import { css } from 'emotion';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent, Forms, stylesFactory } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides, toCSV, DataQueryError } from '@grafana/data';
+import {
+  DataFrame,
+  DataSourceApi,
+  SelectableValue,
+  applyFieldOverrides,
+  toCSV,
+  DataQueryError,
+  PanelData,
+} from '@grafana/data';
 import { config } from 'app/core/config';
 
 interface Props {
@@ -25,13 +33,10 @@ export enum InspectTab {
 
 interface State {
   // The last raw response
-  last?: any;
+  last?: PanelData;
 
   // Data frem the last response
   data: DataFrame[];
-
-  // Error from query
-  error: DataQueryError;
 
   // The selected data frame
   selected: number;
@@ -67,7 +72,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       data: [],
       selected: 0,
       tab: props.selectedTab || InspectTab.Data,
-      error: {},
     };
   }
 
@@ -79,7 +83,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     }
 
     // TODO? should we get the result with an observable once?
-    const lastResult = (panel.getQueryRunner() as any).lastResult;
+    const lastResult: PanelData = (panel.getQueryRunner() as any).lastResult;
     if (!lastResult) {
       this.onDismiss(); // Usually opened from refresh?
       return;
@@ -87,8 +91,8 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     // Find the first DataSource wanting to show custom metadata
     let metaDS: DataSourceApi;
-    const data = lastResult?.series as DataFrame[];
-    const error = lastResult?.error as DataQueryError;
+    const data = lastResult?.series;
+    const error = lastResult?.error;
 
     if (data) {
       for (const frame of data) {
@@ -108,7 +112,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       last: lastResult,
       data,
       metaDS,
-      error,
       tab: error ? InspectTab.Error : prevState.tab,
     }));
   }
@@ -213,7 +216,9 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   render() {
     const { panel } = this.props;
-    const { last, tab, error } = this.state;
+    const { last, tab } = this.state;
+
+    const error = last?.error;
     if (!panel) {
       this.onDismiss(); // Try to close the component
       return null;
