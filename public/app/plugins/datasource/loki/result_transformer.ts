@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import md5 from 'md5';
 
 import {
   parseLabels,
@@ -45,6 +46,7 @@ export function legacyLogStreamToDataFrame(
   if (!labels && stream.labels) {
     labels = parseLabels(stream.labels);
   }
+
   const times = new ArrayVector<string>([]);
   const lines = new ArrayVector<string>([]);
   const uids = new ArrayVector<string>([]);
@@ -53,7 +55,7 @@ export function legacyLogStreamToDataFrame(
     const ts = entry.ts || entry.timestamp;
     times.add(ts);
     lines.add(entry.line);
-    uids.add(`${ts}_${stream.labels}`);
+    uids.add(createUid(ts, stream.labels, entry.line));
   }
 
   if (reverse) {
@@ -80,17 +82,17 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
   const uids = new ArrayVector<string>([]);
 
   for (const [ts, line] of stream.values) {
+    const labelsString = Object.entries(labels)
+      .map(([key, val]) => `${key}="${val}"`)
+      .join('');
+
     times.add(
       dateTime(Number.parseFloat(ts) / 1e6)
         .utc()
         .format()
     );
     lines.add(line);
-    uids.add(
-      `${ts}_{${Object.entries(labels)
-        .map(([key, val]) => `${key}="${val}"`)
-        .join('')}}`
-    );
+    uids.add(createUid(ts, labelsString, line));
   }
 
   if (reverse) {
@@ -145,7 +147,7 @@ export function appendLegacyResponseToBufferedData(response: LokiLegacyStreamRes
       data.values.ts.add(ts);
       data.values.line.add(entry.line);
       data.values.labels.add(unique);
-      data.values.id.add(`${ts}_${stream.labels}`);
+      data.values.id.add(createUid(ts, stream.labels, entry.line));
     }
   }
 }
@@ -174,16 +176,20 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
+      const uniqueLabelsString = Object.entries(unique)
+        .map(([key, val]) => `${key}="${val}"`)
+        .join('');
+
       data.values.ts.add(parseInt(ts, 10) / 1e6);
       data.values.line.add(line);
       data.values.labels.add(unique);
-      data.values.id.add(
-        `${ts}_${Object.entries(unique)
-          .map(([key, val]) => `${key}=${val}`)
-          .join('')}`
-      );
+      data.values.id.add(createUid(ts, uniqueLabelsString, line));
     }
   }
+}
+
+function createUid(ts: string, labelsString: string, line: string): string {
+  return md5(`${ts}_${labelsString}_${line}`);
 }
 
 function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {

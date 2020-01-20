@@ -50,10 +50,6 @@ export interface ClearQueriesPayload {
   exploreId: ExploreId;
 }
 
-export interface ClearOriginPayload {
-  exploreId: ExploreId;
-}
-
 export interface HighlightLogsExpressionPayload {
   exploreId: ExploreId;
   expressions: string[];
@@ -220,11 +216,6 @@ export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPay
  * Clear all queries and results.
  */
 export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
-
-/**
- * Clear origin panel id.
- */
-export const clearOriginAction = createAction<ClearOriginPayload>('explore/clearOrigin');
 
 /**
  * Highlight expressions in the log results

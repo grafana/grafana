@@ -50,7 +50,7 @@ describe('Live Stream Tests', () => {
         const last = { ...view.get(view.length - 1) };
         expect(last).toEqual({
           ts: '2019-08-28T20:50:40.118944705Z',
-          id: '2019-08-28T20:50:40.118944705Z_{filename="/var/log/sntpc.log", job="varlogs"}',
+          id: '81d963f31c276ad2ea1af38b38436237',
           line: 'Kittens',
           labels: { filename: '/var/log/sntpc.log' },
         });

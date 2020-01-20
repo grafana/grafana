@@ -34,7 +34,7 @@ export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
-> extends GrafanaPlugin<DataSourcePluginMeta> {
+> extends GrafanaPlugin<DataSourcePluginMeta<TOptions>> {
   components: DataSourcePluginComponents<DSType, TQuery, TOptions> = {};
 
   constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
@@ -108,7 +108,7 @@ export class DataSourcePlugin<
   }
 }
 
-export interface DataSourcePluginMeta extends PluginMeta {
+export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMeta<T> {
   builtIn?: boolean; // Is this for all
   metrics?: boolean;
   logs?: boolean;

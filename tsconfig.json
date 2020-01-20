@@ -3,7 +3,7 @@
     "moduleResolution": "node",
     "outDir": "public/dist",
     "target": "es5",
-    "lib": ["es6", "dom"],
+    "lib": ["es2019", "dom"],
     "rootDirs": ["public/"],
     "jsx": "react",
     "module": "esnext",

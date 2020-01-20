@@ -20,7 +20,6 @@ import {
   syncTimes,
   changeRefreshInterval,
   changeMode,
-  clearOrigin,
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
@@ -32,6 +31,7 @@ import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
+import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/actions';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -78,8 +78,8 @@ interface DispatchProps {
   syncTimes: typeof syncTimes;
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
-  clearOrigin: typeof clearOrigin;
   updateLocation: typeof updateLocation;
+  setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -113,14 +113,14 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   returnToPanel = async ({ withChanges = false } = {}) => {
-    const { originPanelId } = this.props;
+    const { originPanelId, queries } = this.props;
 
     const dashboardSrv = getDashboardSrv();
     const dash = dashboardSrv.getCurrent();
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
-    if (!withChanges) {
-      this.props.clearOrigin();
+    if (withChanges) {
+      this.props.setDashboardQueriesToUpdateOnLoad(originPanelId, this.cleanQueries(queries));
     }
 
     const dashViewOptions = {
@@ -136,6 +136,15 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       },
     });
   };
+
+  // Remove explore specific parameters from queries
+  private cleanQueries(queries: DataQuery[]) {
+    return queries.map((query: DataQuery & { context?: string }) => {
+      delete query.context;
+      delete query.key;
+      return query;
+    });
+  }
 
   getSelectedDatasource = () => {
     const { datasourceName } = this.props;
@@ -381,7 +390,7 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
   syncTimes,
   changeMode: changeMode,
-  clearOrigin,
+  setDashboardQueriesToUpdateOnLoad,
 };
 
 export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));

@@ -561,6 +561,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
+			} else {
+				c.JsonOK("OK")
 			}
 		}
 

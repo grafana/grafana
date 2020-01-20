@@ -2,7 +2,7 @@
 import React, { ReactNode } from 'react';
 
 import {
-  Cascader,
+  ButtonCascader,
   CascaderOption,
   SlatePrism,
   TypeaheadOutput,
@@ -158,15 +158,15 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       <>
         <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form flex-shrink-0">
-            <Cascader
+            <ButtonCascader
               options={logLabelOptions || []}
               disabled={buttonDisabled}
-              buttonText={chooserText}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
-              expandIcon={null}
               onPopupVisibleChange={isVisible => isVisible && onLabelsRefresh && onLabelsRefresh()}
-            />
+            >
+              {chooserText}
+            </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
