@@ -43,6 +43,13 @@ export class TableContainer extends PureComponent<TableContainerProps> {
 
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
+        {!tableResult?.length && (
+          <div className="logs-panel-meta">
+            <div className="logs-panel-meta__item">
+              <span className="logs-panel-meta__value">0 series returned</span>
+            </div>
+          </div>
+        )}
         {tableResult && <Table data={tableResult} width={tableWidth} height={height} onCellClick={onClickCell} />}
       </Collapse>
     );
