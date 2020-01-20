@@ -10,13 +10,13 @@ weight = 8
 
 # License expiration 
 
-If your license has expired most of Grafana will keep on working with some limited or disabled enterprise functionality and a banner informing all users that the Grafana instance is unlicensed. Your Grafana admin needs to upload a new license file to ensure that all functionality of Grafana Enterprise keeps working properly.
+If your license has expired most of Grafana keeps working as normal. Some enterprise functionality stops or runs with reduced functionality and Grafana displays a banner informing the users that Grafana is running on an expired license. Your Grafana admin needs to upload a new license file to restore full functionality.
 
 > Replace your license as soon as possible. Running Grafana Enterprise with an expired license is unsupported and can lead to unexpected consequences.
 
 ## Replacing your license
 
-1. Identify the location of your current `license.jwt` file. In a standard installation it is stored inside Grafana's data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration](https://grafana.com/docs/grafana/latest/installation/configuration/)
+1. Locate your current `license.jwt` file. In a standard installation it is stored inside Grafana's data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration](https://grafana.com/docs/grafana/latest/installation/configuration/)
 ```
 [enterprise]
 license_path = /path/to/your/license.jwt
@@ -34,7 +34,7 @@ Your current data source permissions will keep working as expected, but you'll b
 ## Reporting
 
 You won't be able to configure new reports or generate previews.
-Scheduled reports will not be generated or sent.
+Scheduled reports are not generated or sent.
 
 ## SAML authentication
 
