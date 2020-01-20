@@ -169,7 +169,7 @@ loadPluginCss({
 });
 ```
 
-You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm instal @grafana/runtime`.
+You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm install @grafana/runtime`.
 
 > Note that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
 
