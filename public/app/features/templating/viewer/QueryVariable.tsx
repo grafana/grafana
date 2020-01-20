@@ -17,55 +17,30 @@ import { StoreState } from 'app/types/store';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { getVariables } from '../state/selectors';
 import { ClickOutsideWrapper } from '@grafana/ui';
+import { variableAdapter } from '../adapters';
 
 export interface Props {
   name: string;
 }
 
-export const createVariableComponent = <
-  P extends Props = Props,
-  State extends { variable?: ReduxState } = { variable: any },
-  ReduxState extends VariableModel = VariableModel
->() => {
-  return class VariableComponent extends PureComponent<P, State> {
-    private readonly subscription: Subscription = null;
-    constructor(props: P) {
-      super(props);
-
-      this.subscription = new Observable((observer: Subscriber<ReduxState>) => {
-        const unsubscribeFromStore = store.subscribe(() => observer.next(this.stateSelector(store.getState())));
-        observer.next(this.stateSelector(store.getState()));
-        return function unsubscribe() {
-          unsubscribeFromStore();
-        };
-      })
-        .pipe(
-          distinctUntilChanged<ReduxState>((previous, current) => {
-            return previous === current;
-          })
-        )
-        .subscribe({
-          next: state => {
-            if (this.state) {
-              this.setState({ variable: state });
-              return;
-            }
-
-            this.state = { variable: {} } as State;
-          },
-        });
-    }
-
-    stateSelector = (state: StoreState): ReduxState => {
-      const variables = getVariables(state);
-      const variable = variables.find(variable => variable.name === this.props.name);
-      return variable as ReduxState;
-    };
-
-    componentWillUnmount(): void {
-      this.subscription.unsubscribe();
-    }
+export const subscribeToVariableChanges = <T extends VariableModel = VariableModel>(name: string) => {
+  const stateSelector = (state: StoreState): T => {
+    const variables = getVariables(state);
+    const variable = variables.find(v => v.name === name);
+    return variable as T;
   };
+
+  return new Observable((observer: Subscriber<T>) => {
+    const unsubscribeFromStore = store.subscribe(() => observer.next(stateSelector(store.getState())));
+    observer.next(stateSelector(store.getState()));
+    return function unsubscribe() {
+      unsubscribeFromStore();
+    };
+  }).pipe(
+    distinctUntilChanged<T>((previous, current) => {
+      return previous === current;
+    })
+  );
 };
 
 export interface State {
@@ -81,39 +56,53 @@ export interface State {
   variable?: QueryVariableModel;
 }
 
-export class QueryVariable extends createVariableComponent<Props, State, QueryVariableModel>() {
+export class QueryVariable extends PureComponent<Props, State> {
   private readonly debouncedOnQueryChanged: Function;
+  private readonly subscription: Subscription = null;
   constructor(props: Props) {
     super(props);
-    this.state = {
-      showDropDown: false,
-      linkText: '',
-      selectedValues: [],
-      searchQuery: '',
-      searchOptions: [],
-      highlightIndex: -1,
-      tags: [],
-      queryHasSearchFilter: false,
-      selectedTags: [],
-    };
     this.debouncedOnQueryChanged = debounce((searchQuery: string) => {
       this.onQueryChanged(searchQuery);
     }, 200);
+    this.subscription = subscribeToVariableChanges<QueryVariableModel>(props.name).subscribe({
+      next: variable => {
+        if (this.state) {
+          this.setState({ variable });
+          return;
+        }
+
+        this.state = {
+          showDropDown: false,
+          linkText: '',
+          selectedValues: [],
+          searchQuery: '',
+          searchOptions: [],
+          highlightIndex: -1,
+          tags: [],
+          queryHasSearchFilter: false,
+          selectedTags: [],
+          variable,
+        };
+      },
+    });
   }
 
   componentDidMount(): void {
     const queryHasSearchFilter = this.state.variable ? containsSearchFilter(this.state.variable.query) : false;
-    const selectedTags = this.state.variable ? this.state.variable.current?.tags : [];
+    const selectedTags = this.state.variable?.current?.tags ?? [];
     this.setState({
       queryHasSearchFilter,
       selectedTags,
     });
+    this.updateLinkText();
   }
 
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-    if (this.state.variable !== prevState.variable) {
-      this.updateLinkText();
-    }
+    this.updateLinkText();
+  }
+
+  componentWillUnmount(): void {
+    this.subscription.unsubscribe();
   }
 
   onShowDropDown = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -195,6 +184,124 @@ export class QueryVariable extends createVariableComponent<Props, State, QueryVa
     this.setState({ linkText });
   };
 
+  selectValue = (option: VariableOption, event: MouseEvent<HTMLAnchorElement>, commitChange = false) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!option) {
+      return;
+    }
+
+    const { multi, options, tags } = this.state.variable;
+    const { searchQuery } = this.state;
+    const newOptions = options.map(o => {
+      if (o !== option) {
+        return o;
+      }
+
+      return {
+        ...o,
+        // commit action (enter key), should not deselect it
+        selected: commitChange ? true : multi ? !o.selected : true,
+      };
+    });
+    let newSearchQuery = searchQuery;
+
+    const setAllExceptCurrentTo = (options: VariableOption[], newValue: boolean) => {
+      options.forEach(other => {
+        if (option !== other) {
+          other.selected = newValue;
+        }
+      });
+    };
+
+    if (option.text === 'All') {
+      // always clear search query if all is marked
+      newSearchQuery = '';
+      setAllExceptCurrentTo(newOptions, false);
+      commitChange = true;
+    } else if (!multi) {
+      setAllExceptCurrentTo(newOptions, false);
+      commitChange = true;
+    } else if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      commitChange = true;
+      setAllExceptCurrentTo(newOptions, false);
+    }
+
+    let newSelectedValues = newOptions.filter(o => o.selected === true);
+
+    if (newSelectedValues.length > 1) {
+      if (newSelectedValues[0].text === 'All') {
+        newSelectedValues[0].selected = false;
+        newSelectedValues = newSelectedValues.slice(1, newSelectedValues.length);
+      }
+    }
+
+    // validate selected tags
+    const newTags = [...tags];
+    newTags.forEach(tag => {
+      if (tag.selected) {
+        tag.values.forEach(value => {
+          if (!newSelectedValues.find(v => v.value === value)) {
+            tag.selected = false;
+          }
+        });
+      }
+    });
+
+    const newSelectedTags = newTags.filter(t => t.selected === true);
+
+    this.setState({
+      selectedValues: newSelectedValues,
+      selectedTags: newSelectedTags,
+      searchQuery: newSearchQuery,
+    });
+
+    if (commitChange) {
+      this.commitChanges();
+      // this.dropdownVisible = false;
+      // this.updateLinkText();
+      // if (this.queryHasSearchFilter) {
+      //   this.updateLazyLoadedOptions();
+      // }
+      //
+      // if (this.variable.current.text !== this.oldVariableText) {
+      //   this.onUpdated();
+      // }
+    }
+  };
+
+  commitChanges = () => {
+    const { searchOptions, searchQuery, selectedValues, selectedTags } = this.state;
+    const { options, type, multi } = this.state.variable;
+    const current: VariableOption = {
+      value: selectedValues.map(v => v.value) as string[],
+      text: selectedValues.map(v => v.text).join(' + '),
+      tags: selectedTags,
+      selected: true,
+    };
+
+    if (!multi) {
+      current.value = selectedValues[0].value;
+    }
+
+    // if we have a search query and no options use that
+    if (searchOptions.length === 0 && searchQuery.length > 0) {
+      current.text = searchQuery;
+      current.value = searchQuery;
+    } else if (selectedValues.length === 0) {
+      // make sure one option is selected
+      current.text = options[0].text;
+      current.value = options[0].value;
+      // this.selectionsChanged(false);
+    }
+
+    variableAdapter[type].setValue(this.state.variable, current);
+    // store.dispatch(setOptionAsCurrent(this.state.variable, current) as any);
+    this.setState({
+      showDropDown: false,
+    });
+  };
+
   onQueryChanged = (searchQuery: string) => {
     const { queryHasSearchFilter } = this.state;
     const { options } = this.state.variable;
@@ -214,7 +321,7 @@ export class QueryVariable extends createVariableComponent<Props, State, QueryVa
   };
 
   onCloseDropDown = () => {
-    this.setState({ showDropDown: false });
+    this.commitChanges();
   };
 
   render() {
@@ -283,7 +390,6 @@ export class QueryVariable extends createVariableComponent<Props, State, QueryVa
                   className="gf-form-input"
                   value={searchQuery}
                   onChange={event => this.debouncedOnQueryChanged(event.target.value)}
-                  // style={{ width: '80px' }}
                   // inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
                   // ng-keydown="vm.keyDown($event)"
                   // ng-model="vm.search.query"
@@ -324,6 +430,7 @@ export class QueryVariable extends createVariableComponent<Props, State, QueryVa
                           <a
                             key={`${option.value}`}
                             className={highlightClass}
+                            onClick={event => this.selectValue(option, event)}
                             // ng-click="vm.selectValue(option, $event)"
                           >
                             <span className="variable-option-icon"></span>

@@ -8,10 +8,19 @@ import {
   VariableSort,
   VariableTag,
 } from '../variable';
-import { addVariable, updateVariableOptions, updateVariableTags } from './actions';
+import {
+  addVariable,
+  removeInitLock,
+  resolveInitLock,
+  setCurrentVariableValue,
+  setInitLock,
+  updateVariableOptions,
+  updateVariableTags,
+} from './actions';
 import _ from 'lodash';
 import { stringToJsRegex } from '@grafana/data';
 import templateSrv from '../template_srv';
+import { Deferred } from '../deferred';
 
 export interface QueryVariableState extends QueryVariableModel {}
 
@@ -72,8 +81,8 @@ const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   return options;
 };
 const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
-  let regex, options, i, matches;
-  options = [];
+  let regex, i, matches;
+  let options: VariableOption[] = [];
 
   if (variableRegEx) {
     regex = stringToJsRegex(templateSrv.replace(variableRegEx, {}, 'regex'));
@@ -103,7 +112,7 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
       }
     }
 
-    options.push({ text: text, value: value });
+    options.push({ text: text, value: value, selected: false });
   }
 
   options = _.uniqBy(options, 'value');
@@ -189,6 +198,18 @@ const queryVariableSlice = createSlice({
         }
 
         state.tags = tags;
+      })
+      .addCase(setCurrentVariableValue, (state: QueryVariableState, action) => {
+        state.current = action.payload.current;
+      })
+      .addCase(setInitLock, (state: QueryVariableState, action) => {
+        state.initLock = new Deferred();
+      })
+      .addCase(resolveInitLock, (state: QueryVariableState, action) => {
+        state.initLock.resolve();
+      })
+      .addCase(removeInitLock, (state: QueryVariableState, action) => {
+        state.initLock = null;
       }),
   // .addCase(updateVariable, (state: QueryVariableState, action) => {
   //   return { ...state, ...action.payload };
@@ -243,6 +264,38 @@ const queryVariablesSlice = createSlice({
         }
 
         const index = state.variables.findIndex(variable => variable.name === action.payload.variable.name);
+        state.variables[index] = queryVariableReducer(state.variables[index], action);
+      })
+      .addCase(setCurrentVariableValue, (state: QueryVariablesState, action) => {
+        if (action.payload.variable.type !== 'query') {
+          return;
+        }
+
+        const index = state.variables.findIndex(variable => variable.name === action.payload.variable.name);
+        state.variables[index] = queryVariableReducer(state.variables[index], action);
+      })
+      .addCase(setInitLock, (state: QueryVariablesState, action) => {
+        if (action.payload.type !== 'query') {
+          return;
+        }
+
+        const index = state.variables.findIndex(variable => variable.name === action.payload.name);
+        state.variables[index] = queryVariableReducer(state.variables[index], action);
+      })
+      .addCase(resolveInitLock, (state: QueryVariablesState, action) => {
+        if (action.payload.type !== 'query') {
+          return;
+        }
+
+        const index = state.variables.findIndex(variable => variable.name === action.payload.name);
+        state.variables[index] = queryVariableReducer(state.variables[index], action);
+      })
+      .addCase(removeInitLock, (state: QueryVariablesState, action) => {
+        if (action.payload.type !== 'query') {
+          return;
+        }
+
+        const index = state.variables.findIndex(variable => variable.name === action.payload.name);
         state.variables[index] = queryVariableReducer(state.variables[index], action);
       }),
   // .addCase(updateVariable, (state: QueryVariablesState, action) => {

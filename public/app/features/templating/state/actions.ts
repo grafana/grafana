@@ -10,13 +10,13 @@ import {
   VariableWithOptions,
 } from '../variable';
 import { ThunkResult } from '../../../types';
-import { getVariables } from './selectors';
+import { getVariable, getVariables } from './selectors';
 import { variableAdapter } from '../adapters';
 import _ from 'lodash';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import templateSrv from '../template_srv';
-import { Deferred } from '../deferred';
+import { Graph } from '../../../core/utils/dag';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -24,10 +24,42 @@ export interface AddVariable<T extends VariableModel = VariableModel> {
   model: T;
 }
 
+// process flow queryVariable
+// thunk => processVariables
+//    adapter => setValueFromUrl
+//      thunk => setOptionFromUrl
+//        adapter => updateOptions
+//          thunk => updateQueryVariableOptions
+//            action => updateVariableOptions
+//            action => updateVariableTags
+//            thunk => validateVariableSelectionState
+//              adapter => setValue
+//                thunk => setOptionAsCurrent
+//                  action => setCurrentVariableValue
+//                  thunk => variableUpdated
+//                    adapter => updateOptions for dependent nodes
+//        adapter => setValue
+//          thunk => setOptionAsCurrent
+//            action => setCurrentVariableValue
+//            thunk => variableUpdated
+//              adapter => updateOptions for dependent nodes
+//    adapter => updateOptions
+//      thunk => updateQueryVariableOptions
+//        action => updateVariableOptions
+//        action => updateVariableTags
+//        thunk => validateVariableSelectionState
+//          adapter => setValue
+//            thunk => setOptionAsCurrent
+//              action => setCurrentVariableValue
+//              thunk => variableUpdated
+//                adapter => updateOptions for dependent nodes
 export const newVariable = createAction<VariableType>('templating/newVariable');
 export const addVariable = createAction<AddVariable>('templating/addVariable');
 export const updateVariable = createAction<VariableModel>('templating/updateVariable');
-export const setVariableValue = createAction<{ variable: VariableModel; option: VariableOption }>(
+export const setInitLock = createAction<VariableModel>('templating/setInitLock');
+export const resolveInitLock = createAction<VariableModel>('templating/resolveInitLock');
+export const removeInitLock = createAction<VariableModel>('templating/removeInitLock');
+export const setCurrentVariableValue = createAction<{ variable: VariableModel; current: VariableOption }>(
   'templating/setVariableValue'
 );
 export const updateVariableOptions = createAction<{ variable: VariableModel; results: any[] }>(
@@ -52,45 +84,44 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 
 export const processVariables = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variables = getVariables(getState()).map(v => ({ ...v }));
     const queryParams = getState().location.query;
     const dependencies: Array<Promise<any>> = [];
 
-    for (let index = 0; index < variables.length; index++) {
-      variables[index].initLock = new Deferred();
+    for (let index = 0; index < getVariables(getState()).length; index++) {
+      await dispatch(setInitLock(getVariables(getState())[index]));
     }
 
-    for (let index = 0; index < variables.length; index++) {
-      const variable = variables[index];
-      for (const otherVariable of variables) {
+    for (let index = 0; index < getVariables(getState()).length; index++) {
+      const variable = getVariables(getState())[index];
+      for (const otherVariable of getVariables(getState())) {
         if (variableAdapter[variable.type].dependsOn(variable, otherVariable)) {
           dependencies.push(otherVariable.initLock.promise);
         }
       }
 
-      Promise.all(dependencies)
-        .then(() => {
-          const urlValue = queryParams['var-' + variable.name];
-          if (urlValue !== void 0) {
-            return variableAdapter[variable.type].setOptionFromUrl(variable, urlValue).then(variable.initLock.resolve);
-          }
+      await Promise.all(dependencies);
 
-          if (variable.hasOwnProperty('refresh')) {
-            const refreshableVariable = variable as QueryVariableModel;
-            if (
-              refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
-              refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
-            ) {
-              return variableAdapter[variable.type].updateOptions(refreshableVariable).then(variable.initLock.resolve);
-            }
-          }
+      const urlValue = queryParams['var-' + variable.name];
+      if (urlValue !== void 0) {
+        await variableAdapter[variable.type].setValueFromUrl(variable, urlValue);
+      }
 
-          return variable.initLock.resolve();
-        })
-        .finally(() => {
-          templateSrv.variableInitialized(variable);
-          delete variable.initLock;
-        });
+      if (variable.hasOwnProperty('refresh')) {
+        const refreshableVariable = variable as QueryVariableModel;
+        if (
+          refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
+          refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
+        ) {
+          await variableAdapter[variable.type].updateOptions(refreshableVariable);
+        }
+      }
+
+      await dispatch(resolveInitLock(variable));
+      templateSrv.variableInitialized(getVariables(getState())[index]);
+    }
+
+    for (let index = 0; index < getVariables(getState()).length; index++) {
+      await dispatch(removeInitLock(getVariables(getState())[index]));
     }
   };
 };
@@ -105,12 +136,12 @@ export const updateQueryVariableOptions = (variable: QueryVariableModel, searchF
     const results = await dataSource.metricFindQuery(variable.query, queryOptions);
     await dispatch(updateVariableOptions({ variable, results }));
 
-    if (!variable.useTags) {
-      return;
+    if (variable.useTags) {
+      const tagResults = await dataSource.metricFindQuery(variable.tagsQuery, queryOptions);
+      await dispatch(updateVariableTags({ variable, results: tagResults }));
     }
 
-    const tagResults = await dataSource.metricFindQuery(variable.tagsQuery, queryOptions);
-    await dispatch(updateVariableTags({ variable, results: tagResults }));
+    await dispatch(validateVariableSelectionState(variable));
   };
 };
 
@@ -168,6 +199,152 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
       option = { text: _.castArray(option.text), value: _.castArray(option.value), selected: false };
     }
 
-    dispatch(setVariableValue({ variable, option }));
+    await variableAdapter[variable.type].setValue(variableFromState, option);
+  };
+};
+
+export const selectOptionsForCurrentValue = (variable: VariableWithOptions): VariableOption[] => {
+  let i, y, value, option;
+  const selected: VariableOption[] = [];
+
+  for (i = 0; i < variable.options.length; i++) {
+    option = variable.options[i];
+    option.selected = false;
+    if (Array.isArray(variable.current.value)) {
+      for (y = 0; y < variable.current.value.length; y++) {
+        value = variable.current.value[y];
+        if (option.value === value) {
+          option.selected = true;
+          selected.push(option);
+        }
+      }
+    } else if (option.value === variable.current.value) {
+      option.selected = true;
+      selected.push(option);
+    }
+  }
+
+  return selected;
+};
+
+export const validateVariableSelectionState = (
+  variable: VariableWithOptions,
+  defaultValue?: string
+): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const variableInState: VariableWithOptions = getVariable(variable.name, getState());
+    const setValue = variableAdapter[variableInState.type].setValue;
+    if (!variableInState.current) {
+      return setValue(variableInState, {} as VariableOption);
+    }
+
+    if (Array.isArray(variableInState.current.value)) {
+      const selected = selectOptionsForCurrentValue(variableInState);
+
+      // if none pick first
+      if (selected.length === 0) {
+        const option = variableInState.options[0];
+        return setValue(variableInState, option);
+      }
+
+      const option: VariableOption = {
+        value: selected.map(v => v.value) as string[],
+        text: selected.map(v => v.text) as string[],
+        selected: true,
+      };
+      return setValue(variableInState, option);
+    }
+
+    let option: VariableOption = null;
+
+    // 1. find the current value
+    option = variableInState.options.find(v => v.text === variableInState.current.text);
+    if (option) {
+      return setValue(variableInState, option);
+    }
+
+    // 2. find the default value
+    if (defaultValue) {
+      option = variableInState.options.find(v => v.text === defaultValue);
+      if (option) {
+        return setValue(variableInState, option);
+      }
+    }
+
+    // 3. use the first value
+    if (variableInState.options) {
+      const option = variableInState.options[0];
+      return setValue(variableInState, option);
+    }
+
+    // 4... give up
+    return Promise.resolve();
+  };
+};
+
+export const setOptionAsCurrent = (variable: VariableWithOptions, option: VariableOption): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const current = _.cloneDeep(option);
+
+    if (Array.isArray(current.text) && current.text.length > 0) {
+      current.text = current.text.join(' + ');
+    } else if (Array.isArray(current.value) && current.value[0] !== '$__all') {
+      current.text = current.value.join(' + ');
+    }
+
+    dispatch(setCurrentVariableValue({ variable, current }));
+    //const selected = selectOptionsForCurrentValue(variableInState);
+    return dispatch(variableUpdated(variable));
+  };
+};
+
+const createGraph = (variables: VariableModel[]) => {
+  const g = new Graph();
+
+  variables.forEach(v => {
+    g.createNode(v.name);
+  });
+
+  variables.forEach(v1 => {
+    variables.forEach(v2 => {
+      if (v1 === v2) {
+        return;
+      }
+
+      if (variableAdapter[v1.type].dependsOn(v1, v2)) {
+        g.link(v1.name, v2.name);
+      }
+    });
+  });
+
+  return g;
+};
+
+export const variableUpdated = (variable: VariableModel, emitChangeEvents?: any): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    // if there is a variable lock ignore cascading update because we are in a boot up scenario
+    if (variable.initLock) {
+      return Promise.resolve();
+    }
+
+    const variables = getVariables(getState());
+    const g = createGraph(variables);
+
+    const node = g.getNode(variable.name);
+    let promises: Array<Promise<any>> = [];
+    if (node) {
+      promises = node.getOptimizedInputEdges().map(e => {
+        const variable = variables.find(v => v.name === e.inputNode.name);
+        return variableAdapter[variable.type].updateOptions(variable);
+        // return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
+      });
+    }
+
+    return Promise.all(promises).then(() => {
+      if (emitChangeEvents) {
+        //     this.dashboard.templateVariableValueUpdated();
+        //     this.dashboard.startRefresh();
+      }
+    });
   };
 };

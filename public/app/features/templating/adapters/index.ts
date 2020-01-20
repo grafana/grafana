@@ -1,13 +1,14 @@
 import { UrlQueryValue } from '@grafana/runtime';
 import { Reducer } from 'redux';
-import { containsVariable, QueryVariableModel, VariableModel, VariableType } from '../variable';
+import { containsVariable, QueryVariableModel, VariableModel, VariableOption, VariableType } from '../variable';
 import { queryVariablesReducer } from '../state/queryVariablesReducer';
-import { setOptionFromUrl, updateQueryVariableOptions } from '../state/actions';
+import { setOptionAsCurrent, setOptionFromUrl, updateQueryVariableOptions } from '../state/actions';
 import { store } from '../../../store/store';
 
 export interface VariableAdapterProps<T extends VariableModel> {
   dependsOn: (variable: T, variableToTest: T) => boolean;
-  setOptionFromUrl: (variable: T, urlValue: UrlQueryValue) => Promise<any>;
+  setValue: (variable: T, option: VariableOption) => Promise<any>;
+  setValueFromUrl: (variable: T, urlValue: UrlQueryValue) => Promise<any>;
   updateOptions: (variable: T, searchFilter?: string) => Promise<any>;
   useState: boolean;
   getReducer: () => Reducer;
@@ -19,7 +20,13 @@ export const queryVariableAdapter = (): VariableAdapterProps<QueryVariableModel>
   dependsOn: (variable, variableToTest) => {
     return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
   },
-  setOptionFromUrl: async (variable, urlValue) => {
+  setValue: async (variable, option) => {
+    return new Promise(async resolve => {
+      await store.dispatch(setOptionAsCurrent(variable, option) as any);
+      resolve();
+    });
+  },
+  setValueFromUrl: async (variable, urlValue) => {
     return new Promise(async resolve => {
       await store.dispatch(setOptionFromUrl(variable, urlValue) as any);
       resolve();
@@ -39,7 +46,8 @@ export const notMigratedVariableAdapter = (): VariableAdapterProps<any> => ({
   dependsOn: (variable, variableToTest) => {
     return false;
   },
-  setOptionFromUrl: (variable, urlValue) => Promise.resolve(),
+  setValue: (variable, urlValue) => Promise.resolve(),
+  setValueFromUrl: (variable, urlValue) => Promise.resolve(),
   updateOptions: (variable, searchFilter) => Promise.resolve(),
 });
 
