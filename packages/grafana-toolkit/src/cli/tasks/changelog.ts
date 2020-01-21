@@ -66,7 +66,29 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
       },
     });
 
-    const issues = res.data;
+    const filterOutNotMerged = async (item: any) => {
+      return await client
+        .get('/pulls/' + item.number)
+        .then(response => {
+          return response.data.merged_at !== null;
+        })
+        .catch(error => {
+          if (error.response && error.response.status === 404) {
+            return true; // it's actually an issue
+          } else {
+            console.log('Error fetching information for item: ', item.number, error);
+            return true;
+          }
+        });
+    };
+    const mergedIssues = [];
+    for (const item of res.data) {
+      if (await filterOutNotMerged(item)) {
+        mergedIssues.push(item);
+      }
+    }
+    const issues = _.sortBy(mergedIssues, 'title');
+
     const toolkitIssues = issues.filter((item: any) =>
       item.labels.find((label: any) => label.name === 'area/grafana/toolkit')
     );
