@@ -58,8 +58,8 @@ export const horizontalLayout = () => {
       <Field horizontal label="Show labels" description="Display thresholds's labels" {...otherProps}>
         <Switch
           checked={checked}
-          onChange={(e, checked) => {
-            setChecked(checked);
+          onChange={e => {
+            setChecked(e.currentTarget.checked);
           }}
         />
       </Field>

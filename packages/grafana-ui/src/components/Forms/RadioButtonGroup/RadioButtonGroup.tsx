@@ -14,11 +14,11 @@ const getRadioButtonGroupStyles = () => {
   };
 };
 interface RadioButtonGroupProps<T> {
-  value: T;
+  value?: T;
   disabled?: boolean;
   disabledOptions?: T[];
   options: Array<SelectableValue<T>>;
-  onChange: (value?: T) => void;
+  onChange?: (value?: T) => void;
   size?: RadioButtonSize;
 }
 
@@ -43,7 +43,9 @@ export function RadioButtonGroup<T>({
             active={value === o.value}
             key={o.label}
             onClick={() => {
-              onChange(o.value);
+              if (onChange) {
+                onChange(o.value);
+              }
             }}
           >
             {o.label}

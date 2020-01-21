@@ -15,7 +15,7 @@ export default {
   },
 };
 
-export const simple = () => {
+export const controlled = () => {
   const [checked, setChecked] = useState(false);
   const BEHAVIOUR_GROUP = 'Behaviour props';
   const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
@@ -23,9 +23,15 @@ export const simple = () => {
     <Switch
       checked={checked}
       disabled={disabled}
-      onChange={(e, checked) => {
-        setChecked(checked);
+      onChange={e => {
+        setChecked(e.currentTarget.checked);
       }}
     />
   );
+};
+
+export const uncontrolled = () => {
+  const BEHAVIOUR_GROUP = 'Behaviour props';
+  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
+  return <Switch disabled={disabled} />;
 };

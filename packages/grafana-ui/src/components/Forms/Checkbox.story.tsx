@@ -12,12 +12,22 @@ export default {
   },
 };
 
-export const simple = () => {
+export const controlled = () => {
   const [checked, setChecked] = useState(false);
   return (
     <Checkbox
       value={checked}
-      onChange={setChecked}
+      onChange={e => setChecked(e.currentTarget.checked)}
+      label="Skip SLL cert validation"
+      description="Set to true if you want to skip sll cert validation"
+    />
+  );
+};
+
+export const uncontrolled = () => {
+  return (
+    <Checkbox
+      defaultChecked={true}
       label="Skip SLL cert validation"
       description="Set to true if you want to skip sll cert validation"
     />
