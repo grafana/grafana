@@ -342,7 +342,7 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-            cd packaging/docker && ./build.sh "master-${CIRCLE_SHA1}"
+            pushd packaging/docker && ./build.sh "master-${CIRCLE_SHA1}" && popd
             mkdir docker
             docker save -o docker/grafana-oss-amd64.tar "grafana/grafana:master-${CIRCLE_SHA1}"
             docker save -o docker/grafana-oss-arm32v7.tar "grafana/grafana-arm32v7-linux:master-${CIRCLE_SHA1}"
