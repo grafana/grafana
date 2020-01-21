@@ -12,5 +12,5 @@ export const getVariable = <T extends VariableModel = VariableModel>(name: strin
 };
 
 export const getVariables = (state: StoreState): VariableModel[] => {
-  return [].concat(state.templating.query.variables);
+  return [].concat(state.templating.query);
 };

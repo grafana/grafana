@@ -166,7 +166,7 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
     // Simple case. Value in url matches existing options text or value.
-    let option: VariableOption = _.find(variableFromState.options, op => {
+    let option: VariableOption = variableFromState.options.find(op => {
       return op.text === urlValue || op.value === urlValue;
     });
 
@@ -282,16 +282,8 @@ export const validateVariableSelectionState = (
   };
 };
 
-export const setOptionAsCurrent = (variable: VariableWithOptions, option: VariableOption): ThunkResult<void> => {
+export const setOptionAsCurrent = (variable: VariableWithOptions, current: VariableOption): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const current = _.cloneDeep(option);
-
-    if (Array.isArray(current.text) && current.text.length > 0) {
-      current.text = current.text.join(' + ');
-    } else if (Array.isArray(current.value) && current.value[0] !== '$__all') {
-      current.text = current.value.join(' + ');
-    }
-
     dispatch(setCurrentVariableValue({ variable, current }));
     //const selected = selectOptionsForCurrentValue(variableInState);
     return dispatch(variableUpdated(variable));

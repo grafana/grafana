@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { AnyAction } from '@reduxjs/toolkit';
 
 import {
   QueryVariableModel,
@@ -119,240 +119,203 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
   return sortVariableValues(options, sort);
 };
 
-const queryVariableSlice = createSlice({
-  name: 'queryVariable',
-  initialState: initialQueryVariableState,
-  reducers: {},
-  extraReducers: builder =>
-    builder
-      // .addCase(newVariable, (state: QueryVariableState, action) => {
-      //   return initialQueryVariableState;
-      // })
-      .addCase(addVariable, (state: QueryVariableState, action) => {
-        const {
-          type,
-          name,
-          label,
-          hide,
-          skipUrlSync,
-          datasource,
-          query,
-          regex,
-          sort,
-          refresh,
-          multi,
-          includeAll,
-          allValue,
-          options,
-          current,
-          tags,
-          useTags,
-          tagsQuery,
-          tagValuesQuery,
-          definition,
-        } = action.payload.model as QueryVariableModel;
+// I stumbled upon the error described here https://github.com/immerjs/immer/issues/430
+// So reverting to a "normal" reducer
+export const queryVariableReducer = (
+  state: QueryVariableState = initialQueryVariableState,
+  action: AnyAction
+): QueryVariableState => {
+  if (addVariable.match(action)) {
+    const {
+      type,
+      name,
+      label,
+      hide,
+      skipUrlSync,
+      datasource,
+      query,
+      regex,
+      sort,
+      refresh,
+      multi,
+      includeAll,
+      allValue,
+      options,
+      current,
+      tags,
+      useTags,
+      tagsQuery,
+      tagValuesQuery,
+      definition,
+    } = action.payload.model as QueryVariableModel;
+    return {
+      ...state,
+      global: action.payload.global,
+      index: action.payload.index,
+      type,
+      name,
+      label,
+      hide,
+      skipUrlSync,
+      datasource,
+      query,
+      regex,
+      sort,
+      refresh,
+      multi,
+      includeAll,
+      allValue,
+      options,
+      current,
+      tags,
+      useTags,
+      tagsQuery,
+      tagValuesQuery,
+      definition,
+    };
+  }
+
+  if (updateVariableOptions.match(action)) {
+    const results = action.payload.results;
+    const { regex, includeAll, sort } = state;
+    const options = metricNamesToVariableValues(regex, sort, results);
+    if (includeAll) {
+      options.unshift({ text: 'All', value: '$__all', selected: false });
+    }
+    if (!options.length) {
+      options.push({ text: 'None', value: '', isNone: true, selected: false });
+    }
+
+    return { ...state, options };
+  }
+
+  if (updateVariableTags.match(action)) {
+    const results = action.payload.results;
+    const tags: VariableTag[] = [];
+    for (let i = 0; i < results.length; i++) {
+      tags.push({ text: results[i].text, selected: false });
+    }
+
+    return { ...state, tags };
+  }
+
+  if (setCurrentVariableValue.match(action)) {
+    const current = action.payload.current;
+
+    if (Array.isArray(current.text) && current.text.length > 0) {
+      current.text = current.text.join(' + ');
+    } else if (Array.isArray(current.value) && current.value[0] !== '$__all') {
+      current.text = current.value.join(' + ');
+    }
+
+    return {
+      ...state,
+      current,
+      options: state.options.map(option => {
+        let selected = false;
+        if (Array.isArray(current.value)) {
+          for (let index = 0; index < current.value.length; index++) {
+            const value = current.value[index];
+            if (option.value === value) {
+              selected = true;
+              break;
+            }
+          }
+        } else if (option.value === current.value) {
+          selected = true;
+        }
         return {
-          ...state,
-          global: action.payload.global,
-          index: action.payload.index,
-          type,
-          name,
-          label,
-          hide,
-          skipUrlSync,
-          datasource,
-          query,
-          regex,
-          sort,
-          refresh,
-          multi,
-          includeAll,
-          allValue,
-          options,
-          current,
-          tags,
-          useTags,
-          tagsQuery,
-          tagValuesQuery,
-          definition,
+          ...option,
+          selected,
         };
-      })
-      .addCase(updateVariableOptions, (state: QueryVariableState, action) => {
-        const results = action.payload.results;
-        const { regex, includeAll, sort } = state;
-        const options = metricNamesToVariableValues(regex, sort, results);
-        if (includeAll) {
-          options.unshift({ text: 'All', value: '$__all', selected: false });
-        }
-        if (!options.length) {
-          options.push({ text: 'None', value: '', isNone: true, selected: false });
-        }
-
-        state.options = options;
-      })
-      .addCase(updateVariableTags, (state: QueryVariableState, action) => {
-        const results = action.payload.results;
-        const tags: VariableTag[] = [];
-        for (let i = 0; i < results.length; i++) {
-          tags.push({ text: results[i].text, selected: false });
-        }
-
-        state.tags = tags;
-      })
-      .addCase(setCurrentVariableValue, (state: QueryVariableState, action) => {
-        state.current = action.payload.current;
-      })
-      .addCase(setInitLock, (state: QueryVariableState, action) => {
-        state.initLock = new Deferred();
-      })
-      .addCase(resolveInitLock, (state: QueryVariableState, action) => {
-        state.initLock.resolve();
-      })
-      .addCase(removeInitLock, (state: QueryVariableState, action) => {
-        state.initLock = null;
       }),
-  // .addCase(updateVariable, (state: QueryVariableState, action) => {
-  //   return { ...state, ...action.payload };
-  // }),
-});
+    };
+  }
 
-export const queryVariableReducer = queryVariableSlice.reducer;
+  if (setInitLock.match(action)) {
+    return { ...state, initLock: new Deferred() };
+  }
 
-export interface QueryVariablesState {
-  variables: QueryVariableState[];
-}
+  if (resolveInitLock.match(action)) {
+    state.initLock.resolve();
+    return { ...state };
+  }
 
-export const initialQueryVariablesState: QueryVariablesState = {
-  variables: [],
+  if (removeInitLock.match(action)) {
+    return { ...state, initLock: null };
+  }
+
+  return state;
 };
 
-const queryVariablesSlice = createSlice({
-  name: 'queryVariables',
-  initialState: initialQueryVariablesState,
-  reducers: {},
-  extraReducers: builder =>
-    builder
-      // .addCase(newVariable, (state: QueryVariablesState, action) => {
-      //   if (action.payload !== 'query') {
-      //     return;
-      //   }
-      //
-      //   const variable = queryVariableReducer(undefined, action);
-      //   const index = state.variables.push(variable) - 1;
-      //   state.variables[index] = queryVariableReducer(state.variables[index], { ...variable, id: index });
-      // })
-      .addCase(addVariable, (state: QueryVariablesState, action) => {
-        if (action.payload.model.type !== 'query') {
-          return;
-        }
+export const initialQueryVariablesState: QueryVariableState[] = [];
 
-        const variable = queryVariableReducer(undefined, action);
-        const index = state.variables.push(variable) - 1;
-        state.variables[index] = variable;
-      })
-      .addCase(updateVariableOptions, (state: QueryVariablesState, action) => {
-        if (action.payload.variable.type !== 'query') {
-          return;
-        }
+export const updateChildState = (
+  state: QueryVariableState[],
+  type: string,
+  name: string,
+  action: AnyAction
+): QueryVariableState[] => {
+  if (type !== 'query') {
+    return state;
+  }
 
-        const index = state.variables.findIndex(variable => variable.name === action.payload.variable.name);
-        state.variables[index] = queryVariableReducer(state.variables[index], action);
-      })
-      .addCase(updateVariableTags, (state: QueryVariablesState, action) => {
-        if (action.payload.variable.type !== 'query') {
-          return;
-        }
+  const instanceIndex = state.findIndex(variable => variable.name === name);
+  const instanceState = state[instanceIndex];
+  return state.map((v, index) => {
+    if (index !== instanceIndex) {
+      return v;
+    }
 
-        const index = state.variables.findIndex(variable => variable.name === action.payload.variable.name);
-        state.variables[index] = queryVariableReducer(state.variables[index], action);
-      })
-      .addCase(setCurrentVariableValue, (state: QueryVariablesState, action) => {
-        if (action.payload.variable.type !== 'query') {
-          return;
-        }
+    return {
+      ...v,
+      ...queryVariableReducer(instanceState, action),
+    };
+  });
+};
 
-        const index = state.variables.findIndex(variable => variable.name === action.payload.variable.name);
-        state.variables[index] = queryVariableReducer(state.variables[index], action);
-      })
-      .addCase(setInitLock, (state: QueryVariablesState, action) => {
-        if (action.payload.type !== 'query') {
-          return;
-        }
+export const queryVariablesReducer = (
+  state: QueryVariableState[] = initialQueryVariablesState,
+  action: AnyAction
+): QueryVariableState[] => {
+  if (addVariable.match(action)) {
+    if (action.payload.model.type !== 'query') {
+      return state;
+    }
 
-        const index = state.variables.findIndex(variable => variable.name === action.payload.name);
-        state.variables[index] = queryVariableReducer(state.variables[index], action);
-      })
-      .addCase(resolveInitLock, (state: QueryVariablesState, action) => {
-        if (action.payload.type !== 'query') {
-          return;
-        }
+    const variable = queryVariableReducer(undefined, action);
+    return [...state, variable];
+  }
 
-        const index = state.variables.findIndex(variable => variable.name === action.payload.name);
-        state.variables[index] = queryVariableReducer(state.variables[index], action);
-      })
-      .addCase(removeInitLock, (state: QueryVariablesState, action) => {
-        if (action.payload.type !== 'query') {
-          return;
-        }
+  if (updateVariableOptions.match(action)) {
+    const { type, name } = action.payload.variable;
+    return updateChildState(state, type, name, action);
+  }
 
-        const index = state.variables.findIndex(variable => variable.name === action.payload.name);
-        state.variables[index] = queryVariableReducer(state.variables[index], action);
-      }),
-  // .addCase(updateVariable, (state: QueryVariablesState, action) => {
-  //   if (action.payload.type !== 'query') {
-  //     return;
-  //   }
-  //
-  //   const index = state.variables.findIndex(variable => variable.id === action.payload.id);
-  //   state.variables[index] = queryVariableReducer(state.variables[index], action);
-  // }),
-});
+  if (updateVariableTags.match(action)) {
+    const { type, name } = action.payload.variable;
+    return updateChildState(state, type, name, action);
+  }
 
-export const queryVariablesReducer = queryVariablesSlice.reducer;
-// export const queryVariablesReducer = (
-//   state: QueryVariablesState = initialQueryVariablesState,
-//   action: AnyAction
-// ): QueryVariablesState => {
-//   if (createVariable.match(action)) {
-//     if (action.payload !== 'query') {
-//       return state;
-//     }
-//
-//     const variable = queryVariableReducer(undefined, action);
-//     return {
-//       ...state,
-//       variables: [...state.variables, { ...variable, id: state.variables.length }],
-//     };
-//   }
-//   if (addVariable.match(action)) {
-//     if (action.payload.type !== 'query') {
-//       return state;
-//     }
-//
-//     const variable = queryVariableReducer(undefined, action);
-//     return {
-//       ...state,
-//       variables: [...state.variables, { ...variable, id: state.variables.length }],
-//     };
-//   }
-//   if (updateVariable.match(action)) {
-//     if (action.payload.type !== 'query') {
-//       return state;
-//     }
-//
-//     return {
-//       ...state,
-//       variables: state.variables.map(variable => {
-//         if (variable.id !== action.payload.id) {
-//           return variable;
-//         }
-//
-//         return {
-//           ...variable,
-//           ...action.payload,
-//         };
-//       }),
-//     };
-//   }
-//   return state;
-// };
+  if (setCurrentVariableValue.match(action)) {
+    const { type, name } = action.payload.variable;
+    return updateChildState(state, type, name, action);
+  }
+
+  if (setInitLock.match(action)) {
+    const { type, name } = action.payload;
+    return updateChildState(state, type, name, action);
+  }
+
+  if (resolveInitLock.match(action)) {
+    const { type, name } = action.payload;
+    return updateChildState(state, type, name, action);
+  }
+
+  if (removeInitLock.match(action)) {
+    const { type, name } = action.payload;
+    return updateChildState(state, type, name, action);
+  }
+
+  return state;
+};
