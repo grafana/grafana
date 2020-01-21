@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { AsyncSelect } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { debounce } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit, DashboardDTO } from 'app/types';
 
 export interface Props {
@@ -33,20 +33,16 @@ export class DashboardPicker extends PureComponent<Props, State> {
 
   getDashboards = (query = '') => {
     this.setState({ isLoading: true });
-    return getBackendSrv()
-      .search({ type: 'dash-db', query })
-      .then((result: DashboardSearchHit[]) => {
-        const dashboards = result.map((item: DashboardSearchHit) => {
-          return {
-            id: item.id,
-            value: item.id,
-            label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
-          };
-        });
+    return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
+      const dashboards = result.map((item: DashboardSearchHit) => ({
+        id: item.id,
+        value: item.id,
+        label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
+      }));
 
-        this.setState({ isLoading: false });
-        return dashboards;
-      });
+      this.setState({ isLoading: false });
+      return dashboards;
+    });
   };
 
   render() {
