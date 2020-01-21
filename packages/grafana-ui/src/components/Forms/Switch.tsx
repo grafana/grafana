@@ -2,7 +2,7 @@ import React, { HTMLProps } from 'react';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusStyle, getFocusCss } from './commonStyles';
+import { getFocusCss } from './commonStyles';
 
 export interface SwitchProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
