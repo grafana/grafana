@@ -334,8 +334,19 @@ jobs:
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp /tmp/workspace/oss/dist/grafana-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
-      - run: cd packaging/docker && echo ./build-deploy.sh "master-${CIRCLE_SHA1}"
+      - run:
+          name: Build Docker image
+          command: |
+            cd packaging/docker && ./build.sh "master-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-amd64.tar "grafana/grafana:master-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-arm32v7.tar "grafana/grafana-arm32v7-linux:master-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-arm64v8.tar "grafana/grafana-arm64v8-linux:master-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-dev.tar "grafana/grafana-dev:master-${CIRCLE_SHA1}"
       #- run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docker/grafana-oss*.tar
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -436,6 +447,11 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
+      - run:
+          name: Load Docker image
+          command: |
+            docker load -i /tmp/workspace/docker/grafana-oss-amd64.tar
+            docker tag "grafana/grafana:master-${CIRCLE_SHA1}" "grafana/grafana-dev:master-${CIRCLE_SHA1}"
       - run:
           name: Run end-to-end tests
           command: env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests:ci
