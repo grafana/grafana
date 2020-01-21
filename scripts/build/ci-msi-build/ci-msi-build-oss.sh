@@ -10,7 +10,7 @@ ls -al /tmp/dist
 # nssm download has been unreliable, use a cached copy of it
 echo "Caching NSSM"
 mkdir -p /tmp/cache
-cp ./scripts/build/ci-msi-build/oss/cache/nssm-2.24.zip /tmp/cache
+cp ./scripts/build/ci-msi-build/msigenerator/cache/nssm-2.24.zip /tmp/cache
 # a build can be specified, which will be pulled down
 #python3 generator/build.py --build 5.4.3
 #echo "LIGHT config"
@@ -18,7 +18,7 @@ cp ./scripts/build/ci-msi-build/oss/cache/nssm-2.24.zip /tmp/cache
 #cat /home/xclient/wix/light.exe.config
 #cp ./scripts/build/ci-msi-build/oss/light.exe.config /home/xclient/wix/light.exe.config
 #cat /home/xclient/wix/light.exe.config
-cd ./scripts/build/ci-msi-build/oss
+cd ./scripts/build/ci-msi-build/msigenerator
 echo "Building MSI"
 python3 generator/build.py "$@"
 chmod a+x /tmp/scratch/*.msi

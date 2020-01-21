@@ -99,9 +99,28 @@ func TestToLabels(t *testing.T) {
 		tags["job"] = "foo"
 		tags["instance"] = "bar"
 
-		So(parseLabels(`{job="foo", instance="bar"}`), ShouldResemble, tags)
-		So(parseLabels(`job="foo", instance="bar"`), ShouldResemble, tags)
-		So(parseLabels(`job=foo, instance=bar`), ShouldResemble, tags)
-		So(parseLabels(`job = foo,instance = bar`), ShouldResemble, tags)
+		query1 := tsdb.Query{
+			Model: simplejson.NewFromAny(map[string]interface{}{
+				"labels": `{job="foo", instance="bar"}`,
+			}),
+		}
+
+		So(parseLabels(&query1), ShouldResemble, tags)
+
+		query2 := tsdb.Query{
+			Model: simplejson.NewFromAny(map[string]interface{}{
+				"labels": `job=foo, instance=bar`,
+			}),
+		}
+
+		So(parseLabels(&query2), ShouldResemble, tags)
+
+		query3 := tsdb.Query{
+			Model: simplejson.NewFromAny(map[string]interface{}{
+				"labels": `job = foo,instance = bar`,
+			}),
+		}
+
+		So(parseLabels(&query3), ShouldResemble, tags)
 	})
 }

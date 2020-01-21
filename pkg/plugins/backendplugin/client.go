@@ -8,7 +8,6 @@ import (
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdk "github.com/grafana/grafana-plugin-sdk-go/common"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -27,8 +26,8 @@ var handshake = plugin.HandshakeConfig{
 	ProtocolVersion: DefaultProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
-	MagicCookieKey:   sdk.MagicCookieKey,
-	MagicCookieValue: sdk.MagicCookieValue,
+	MagicCookieKey:   backend.MagicCookieKey,
+	MagicCookieValue: backend.MagicCookieValue,
 }
 
 func newClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]plugin.PluginSet) *plugin.ClientConfig {
@@ -73,9 +72,10 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, startFns Plugin
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			sdk.ProtocolVersion: {
-				"backend":   &backend.CoreGRPCPlugin{},
-				"transform": &backend.TransformGRPCPlugin{},
+			backend.ProtocolVersion: {
+				"diagnostics": &backend.DiagnosticsGRPCPlugin{},
+				"backend":     &backend.CoreGRPCPlugin{},
+				"transform":   &backend.TransformGRPCPlugin{},
 			},
 		},
 		startFns: startFns,
@@ -106,6 +106,7 @@ type LegacyClient struct {
 
 // Client client for communicating with a plugin using the current plugin protocol.
 type Client struct {
-	BackendPlugin   backend.BackendPlugin
-	TransformPlugin backend.TransformPlugin
+	DiagnosticsPlugin backend.DiagnosticsPlugin
+	BackendPlugin     backend.BackendPlugin
+	TransformPlugin   backend.TransformPlugin
 }

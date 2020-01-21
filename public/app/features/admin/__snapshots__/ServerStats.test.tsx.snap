@@ -94,7 +94,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                   </select>
                 </div>
                 <div
-                  className="css-yuafq3"
+                  className="page-header__tabs"
                 >
                   <ul
                     className="css-13jkosq"
@@ -167,7 +167,7 @@ exports[`ServerStats Should render table with stats 1`] = `
                     className="fa fa-file-code-o"
                   />
                    
-                  Docs
+                  Documentation
                 </a>
               </li>
               <li>

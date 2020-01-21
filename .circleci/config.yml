@@ -437,6 +437,40 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
+  build-docs-website:
+    docker:
+        - image: grafana/build-container:1.2.13
+    working_directory: /docs
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - run:
+          name: install docker
+          command: |
+            apt-get update
+            apt-get install -y docker.io
+      - run:
+          name: build grafana docs website
+          command: |
+            # https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
+            # create a dummy container which will hold a volume with config
+            docker create -v /hugo/content/docs/grafana --name docs-website alpine:3.4 /bin/true
+            # copy a config file into this volume
+            docker cp ${PWD}/docs/sources docs-website:/hugo/content/docs/grafana/latest
+            # start an application container using this volume
+            docker run --volumes-from docs-website --rm -it grafana/docs-base:latest /bin/bash -c 'npm i && make prod'
+      - run:
+          name: ci job failed
+          command: 'docker stop docs-website && docker rm docs-website && ./scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: 'docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh'
+          when: on_success
+
   build-fast-package:
     docker:
       - image: grafana/build-container:1.2.13
@@ -958,6 +992,33 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
+  build-ee-msi:
+    docker:
+      - image: grafana/wix-toolset-ci:v3
+    steps:
+      - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build EE MSI
+          command: './scripts/build/ci-msi-build/ci-msi-build-ee.sh'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - enterprise-dist/grafana-*.msi
+            - enterprise-dist/grafana-*.msi.sha256
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
   store-build-artifacts:
     docker:
       - image: circleci/node:12
@@ -1138,10 +1199,22 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
+            - build-ee-msi
           filters: *filter-only-master
       - build-oss-msi:
           requires:
             - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
+      - build-ee-msi:
+          requires:
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell
@@ -1203,6 +1276,7 @@ workflows:
             - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+            - build-ee-msi
           filters: *filter-only-release
       - grafana-docker-release:
           requires:
@@ -1243,6 +1317,17 @@ workflows:
       - build-oss-msi:
           requires:
             - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
+      - build-ee-msi:
+          requires:
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell
@@ -1320,6 +1405,8 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
+            filters: *filter-not-release-or-master
+        - build-docs-website:
             filters: *filter-not-release-or-master
   nightly:
     triggers:
