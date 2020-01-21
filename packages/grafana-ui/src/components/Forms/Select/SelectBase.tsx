@@ -1,9 +1,11 @@
 import React from 'react';
 import { SelectableValue, deprecationWarning } from '@grafana/data';
 // @ts-ignore
-import { default as ReactSelect, Creatable } from '@torkelo/react-select';
+import { default as ReactSelect } from '@torkelo/react-select';
 // @ts-ignore
-import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
+import Creatable from '@torkelo/react-select/creatable';
+// @ts-ignore
+import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
 
 import { Icon } from '../../Icon/Icon';
 import { css } from 'emotion';
