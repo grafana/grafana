@@ -14,7 +14,6 @@ import (
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/collector"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -31,7 +30,7 @@ type BackendPlugin struct {
 	client         *plugin.Client
 	logger         log.Logger
 	startFns       PluginStartFuncs
-	diagnostics    backend.DiagnosticsPlugin
+	diagnostics    DiagnosticsPlugin
 }
 
 func (p *BackendPlugin) start(ctx context.Context) error {
@@ -61,20 +60,20 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		}
 
 		if rawDiagnostics != nil {
-			if plugin, ok := rawDiagnostics.(backend.DiagnosticsPlugin); ok {
+			if plugin, ok := rawDiagnostics.(DiagnosticsPlugin); ok {
 				p.diagnostics = plugin
 			}
 		}
 
 		client = &Client{}
 		if rawBackend != nil {
-			if plugin, ok := rawBackend.(backend.BackendPlugin); ok {
+			if plugin, ok := rawBackend.(CorePlugin); ok {
 				client.BackendPlugin = plugin
 			}
 		}
 
 		if rawTransform != nil {
-			if plugin, ok := rawTransform.(backend.TransformPlugin); ok {
+			if plugin, ok := rawTransform.(TransformPlugin); ok {
 				client.TransformPlugin = plugin
 			}
 		}

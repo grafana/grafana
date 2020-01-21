@@ -12,12 +12,12 @@ import (
 type DiagnosticsGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	plugin.GRPCPlugin
-	server pluginv2.DiagnosticsServer
+	DiagnosticsServer pluginv2.DiagnosticsServer
 }
 
 func (p *DiagnosticsGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	pluginv2.RegisterDiagnosticsServer(s, &diagnosticsGRPCServer{
-		server: p.server,
+		server: p.DiagnosticsServer,
 	})
 	return nil
 }

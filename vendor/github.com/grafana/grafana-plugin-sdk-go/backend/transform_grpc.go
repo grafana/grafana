@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/models"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	plugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
@@ -15,13 +16,13 @@ import (
 type TransformGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	plugin.GRPCPlugin
-	adapter *sdkAdapter
+	TransformServer models.TransformServer
 }
 
 func (p *TransformGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	pluginv2.RegisterTransformServer(s, &transformGRPCServer{
-		adapter: p.adapter,
-		broker:  broker,
+		server: p.TransformServer,
+		broker: broker,
 	})
 	return nil
 }
@@ -31,8 +32,8 @@ func (p *TransformGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRP
 }
 
 type transformGRPCServer struct {
-	broker  *plugin.GRPCBroker
-	adapter *sdkAdapter
+	broker *plugin.GRPCBroker
+	server models.TransformServer
 }
 
 func (t *transformGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
@@ -54,7 +55,7 @@ func (t *transformGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQ
 	}
 	defer conn.Close()
 	api := &TransformCallBackGrpcClient{pluginv2.NewTransformCallBackClient(conn)}
-	return t.adapter.TransformData(ctx, req, api)
+	return t.server.TransformData(ctx, req, api)
 }
 
 type transformGRPCClient struct {
@@ -62,7 +63,7 @@ type transformGRPCClient struct {
 	client pluginv2.TransformClient
 }
 
-func (t *transformGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callBack TransformCallBack) (*pluginv2.DataQueryResponse, error) {
+func (t *transformGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callBack models.TransformCallBack) (*pluginv2.DataQueryResponse, error) {
 	callBackServer := &TransformCallBackGrpcServer{Impl: callBack}
 
 	var s *grpc.Server
@@ -92,7 +93,7 @@ func (t *TransformCallBackGrpcClient) DataQuery(ctx context.Context, req *plugin
 }
 
 type TransformCallBackGrpcServer struct {
-	Impl TransformCallBack
+	Impl models.TransformCallBack
 }
 
 func (g *TransformCallBackGrpcServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {

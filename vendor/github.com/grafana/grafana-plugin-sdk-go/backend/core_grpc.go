@@ -12,12 +12,12 @@ import (
 type CoreGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	plugin.GRPCPlugin
-	server pluginv2.CoreServer
+	CoreServer pluginv2.CoreServer
 }
 
 func (p *CoreGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	pluginv2.RegisterCoreServer(s, &coreGRPCServer{
-		server: p.server,
+		server: p.CoreServer,
 	})
 	return nil
 }
@@ -30,22 +30,30 @@ type coreGRPCServer struct {
 	server pluginv2.CoreServer
 }
 
+func (s *coreGRPCServer) GetSchema(ctx context.Context, req *pluginv2.GetSchema_Request) (*pluginv2.GetSchema_Response, error) {
+	return s.server.GetSchema(ctx, req)
+}
+
 func (s *coreGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
 	return s.server.DataQuery(ctx, req)
 }
 
-func (s *coreGRPCServer) Resource(ctx context.Context, req *pluginv2.ResourceRequest) (*pluginv2.ResourceResponse, error) {
-	return s.server.Resource(ctx, req)
+func (s *coreGRPCServer) CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
+	return s.server.CallResource(ctx, req)
 }
 
 type coreGRPCClient struct {
 	client pluginv2.CoreClient
 }
 
+func (s *coreGRPCClient) GetSchema(ctx context.Context, req *pluginv2.GetSchema_Request) (*pluginv2.GetSchema_Response, error) {
+	return s.client.GetSchema(ctx, req)
+}
+
 func (m *coreGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
 	return m.client.DataQuery(ctx, req)
 }
 
-func (m *coreGRPCClient) Resource(ctx context.Context, req *pluginv2.ResourceRequest) (*pluginv2.ResourceResponse, error) {
-	return m.client.Resource(ctx, req)
+func (m *coreGRPCClient) Resource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
+	return m.client.CallResource(ctx, req)
 }

@@ -1,5 +1,3 @@
-// -build !test
-
 package dataframe
 
 //go:generate genny -in=$GOFILE -out=nullable_vector.gen.go gen "gen=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -28,7 +26,5 @@ func (v *nullablegenVector) Len() int {
 }
 
 func (v *nullablegenVector) PrimitiveType() VectorPType {
-	// following generates the right code but makes this invalid
-	//return VectorPTypeNullablegen
 	return vectorPType(v)
 }

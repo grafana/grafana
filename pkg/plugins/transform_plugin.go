@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
@@ -67,12 +66,12 @@ func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.C
 // Wrapper Code
 // ...
 
-func NewTransformWrapper(log log.Logger, plugin backend.TransformPlugin) *TransformWrapper {
+func NewTransformWrapper(log log.Logger, plugin backendplugin.TransformPlugin) *TransformWrapper {
 	return &TransformWrapper{plugin, log, &transformCallback{log}}
 }
 
 type TransformWrapper struct {
-	backend.TransformPlugin
+	backendplugin.TransformPlugin
 	logger   log.Logger
 	callback *transformCallback
 }

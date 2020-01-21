@@ -1,4 +1,4 @@
-package backend
+package models
 
 import (
 	"context"
@@ -21,26 +21,10 @@ type TransformCallBackHandler interface {
 	DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error)
 }
 
-type transformCallBackWrapper struct {
-	callBack TransformCallBack
-}
-
-func (tw *transformCallBackWrapper) DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error) {
-	protoRes, err := tw.callBack.DataQuery(ctx, req.toProtobuf())
-	if err != nil {
-		return nil, err
-	}
-
-	return dataQueryResponseFromProtobuf(protoRes)
-}
-
-// TransformPlugin is the Grafana transform plugin interface.
-type TransformPlugin interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callback TransformCallBack) (*pluginv2.DataQueryResponse, error)
-}
-
-// Callback
-
 type TransformCallBack interface {
 	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
+}
+
+type TransformServer interface {
+	TransformData(ctx context.Context, req *pluginv2.DataQueryRequest, callback TransformCallBack) (*pluginv2.DataQueryResponse, error)
 }

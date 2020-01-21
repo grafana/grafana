@@ -1,16 +1,18 @@
 package backend
 
 import (
+	"github.com/grafana/grafana-plugin-sdk-go/backend/internal/adapter"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/models"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	plugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 )
 
 type ServeOpts struct {
-	CheckHealthHandler   CheckHealthHandler
-	DataQueryHandler     DataQueryHandler
-	ResourceHandler      ResourceHandler
-	TransformDataHandler TransformDataHandler
+	SchemaProvider       models.SchemaProviderFunc
+	CheckHealthHandler   models.CheckHealthHandler
+	DataQueryHandler     models.DataQueryHandler
+	TransformDataHandler models.TransformDataHandler
 
 	// GRPCServer factory method for creating GRPC server.
 	// If nil, the default one will be used.
@@ -22,26 +24,25 @@ func Serve(opts ServeOpts) error {
 	versionedPlugins := make(map[int]plugin.PluginSet)
 	pSet := make(plugin.PluginSet)
 
-	sdkAdapter := &sdkAdapter{
-		checkHealthHandler:   opts.CheckHealthHandler,
-		dataQueryHandler:     opts.DataQueryHandler,
-		resourceHandler:      opts.ResourceHandler,
-		transformDataHandler: opts.TransformDataHandler,
+	sdkAdapter := &adapter.SDKAdapter{
+		CheckHealthHandler:   opts.CheckHealthHandler,
+		DataQueryHandler:     opts.DataQueryHandler,
+		TransformDataHandler: opts.TransformDataHandler,
 	}
 
 	pSet["diagnostics"] = &DiagnosticsGRPCPlugin{
-		server: sdkAdapter,
+		DiagnosticsServer: sdkAdapter,
 	}
 
-	if opts.DataQueryHandler != nil || opts.ResourceHandler != nil {
+	if opts.DataQueryHandler != nil {
 		pSet["backend"] = &CoreGRPCPlugin{
-			server: sdkAdapter,
+			CoreServer: sdkAdapter,
 		}
 	}
 
 	if opts.TransformDataHandler != nil {
 		pSet["transform"] = &TransformGRPCPlugin{
-			adapter: sdkAdapter,
+			TransformServer: sdkAdapter,
 		}
 	}
 
