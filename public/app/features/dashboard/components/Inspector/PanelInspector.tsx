@@ -150,6 +150,10 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   renderDataTab(width: number, height: number) {
     const { data, selected } = this.state;
+
+    // We need to subtract the height of the export csv and table header row
+    height -= 55;
+
     const styles = getStyles();
     if (!data || !data.length) {
       return <div>No Data</div>;
@@ -204,9 +208,11 @@ export class PanelInspector extends PureComponent<Props, State> {
     }
     if (error.data) {
       return (
-        <div>
+        <div style={{ overflowY: 'auto', height: '100%' }}>
           <h3>{error.data.message}</h3>
-          <div>{error.data.error}</div>
+          <pre>
+            <code>{error.data.error}</code>
+          </pre>
         </div>
       );
     }
@@ -255,9 +261,8 @@ export class PanelInspector extends PureComponent<Props, State> {
               if (width === 0) {
                 return null;
               }
-
               return (
-                <div style={{ width }}>
+                <div style={{ width, height }}>
                   {tab === InspectTab.Data && this.renderDataTab(width, height)}
 
                   {tab === InspectTab.Meta && this.renderMetadataInspector()}

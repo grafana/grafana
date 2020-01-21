@@ -43,6 +43,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background-color: ${theme.colors.bodyBg};
       position: sticky;
       top: 0;
+      z-index: 1;
     `,
     close: css`
       cursor: pointer;
@@ -53,8 +54,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: center;
     `,
     content: css`
-      padding: ${theme.spacing.md};
-      height: 100%;
+      padding: ${theme.spacing.sm} ${theme.spacing.xs};
+      height: 95%;
+      overflow: hidden;
+      z-index: 0;
     `,
   };
 });

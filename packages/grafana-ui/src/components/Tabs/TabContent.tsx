@@ -10,9 +10,8 @@ interface Props {
 const getTabContentStyle = stylesFactory((theme: GrafanaTheme) => {
   return {
     tabContent: css`
-      padding: ${theme.spacing.xs};
-      height: 90%;
-      overflow: hidden;
+      padding: ${theme.spacing.sm};
+      height: 95%;
     `,
   };
 });
