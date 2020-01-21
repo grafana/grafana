@@ -1,7 +1,7 @@
 import React from 'react';
-import { RenderFunction } from '@storybook/react';
 import { boolean, number } from '@storybook/addon-knobs';
 import { css, cx } from 'emotion';
+import { RenderFunction } from '../../types';
 
 const StoryContainer: React.FC<{ width?: number; showBoundaries: boolean }> = ({ children, width, showBoundaries }) => {
   const checkColor = '#f0f0f0';
