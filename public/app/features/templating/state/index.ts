@@ -6,6 +6,7 @@ import {
   addVariable,
   removeInitLock,
   resolveInitLock,
+  selectVariableOption,
   setCurrentVariableValue,
   setInitLock,
   updateVariableOptions,
@@ -64,6 +65,10 @@ export const templatingReducer = (state: TemplatingState = initialState, action:
 
   if (removeInitLock.match(action)) {
     return updateChildState(action.payload.type, state, action);
+  }
+
+  if (selectVariableOption.match(action)) {
+    return updateChildState(action.payload.variable.type, state, action);
   }
 
   return state;

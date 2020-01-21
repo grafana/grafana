@@ -18,6 +18,7 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { getVariables } from '../state/selectors';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { variableAdapter } from '../adapters';
+import { selectVariableOption } from '../state/actions';
 
 export interface Props {
   name: string;
@@ -98,6 +99,11 @@ export class QueryVariable extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
+    if (prevState.variable.options !== this.state.variable.options) {
+      this.setState({
+        searchOptions: this.state.variable.options.slice(0, Math.min(this.state.variable.options.length, 1000)),
+      });
+    }
     this.updateLinkText();
   }
 
@@ -126,7 +132,7 @@ export class QueryVariable extends PureComponent<Props, State> {
     // });
     const newTags = tags
       ? tags.map(tag => {
-          const currentTag = current?.tags.filter(t => t.text === tag.text)[0];
+          const currentTag = current?.tags?.filter(t => t.text === tag.text)[0];
           return currentTag || { text: tag.text, selected: false };
         })
       : [];
@@ -191,83 +197,7 @@ export class QueryVariable extends PureComponent<Props, State> {
       return;
     }
 
-    const { multi, options, tags } = this.state.variable;
-    const { searchQuery } = this.state;
-    const newOptions = options.map(o => {
-      if (o !== option) {
-        return o;
-      }
-
-      return {
-        ...o,
-        // commit action (enter key), should not deselect it
-        selected: commitChange ? true : multi ? !o.selected : true,
-      };
-    });
-    let newSearchQuery = searchQuery;
-
-    const setAllExceptCurrentTo = (options: VariableOption[], newValue: boolean) => {
-      options.forEach(other => {
-        if (option !== other) {
-          other.selected = newValue;
-        }
-      });
-    };
-
-    if (option.text === 'All') {
-      // always clear search query if all is marked
-      newSearchQuery = '';
-      setAllExceptCurrentTo(newOptions, false);
-      commitChange = true;
-    } else if (!multi) {
-      setAllExceptCurrentTo(newOptions, false);
-      commitChange = true;
-    } else if (event.ctrlKey || event.metaKey || event.shiftKey) {
-      commitChange = true;
-      setAllExceptCurrentTo(newOptions, false);
-    }
-
-    let newSelectedValues = newOptions.filter(o => o.selected === true);
-
-    if (newSelectedValues.length > 1) {
-      if (newSelectedValues[0].text === 'All') {
-        newSelectedValues[0].selected = false;
-        newSelectedValues = newSelectedValues.slice(1, newSelectedValues.length);
-      }
-    }
-
-    // validate selected tags
-    const newTags = [...tags];
-    newTags.forEach(tag => {
-      if (tag.selected) {
-        tag.values.forEach(value => {
-          if (!newSelectedValues.find(v => v.value === value)) {
-            tag.selected = false;
-          }
-        });
-      }
-    });
-
-    const newSelectedTags = newTags.filter(t => t.selected === true);
-
-    this.setState({
-      selectedValues: newSelectedValues,
-      selectedTags: newSelectedTags,
-      searchQuery: newSearchQuery,
-    });
-
-    if (commitChange) {
-      this.commitChanges();
-      // this.dropdownVisible = false;
-      // this.updateLinkText();
-      // if (this.queryHasSearchFilter) {
-      //   this.updateLazyLoadedOptions();
-      // }
-      //
-      // if (this.variable.current.text !== this.oldVariableText) {
-      //   this.onUpdated();
-      // }
-    }
+    store.dispatch(selectVariableOption({ variable: this.state.variable, option, forceSelect: commitChange, event }));
   };
 
   commitChanges = () => {

@@ -12,6 +12,7 @@ import {
   addVariable,
   removeInitLock,
   resolveInitLock,
+  selectVariableOption,
   setCurrentVariableValue,
   setInitLock,
   updateVariableOptions,
@@ -245,6 +246,35 @@ export const queryVariableReducer = (
     return { ...state, initLock: null };
   }
 
+  if (selectVariableOption.match(action)) {
+    const { option, forceSelect, event } = action.payload;
+    const { multi } = state;
+    return {
+      ...state,
+      options: state.options.map(o => {
+        if (o.value !== option.value) {
+          let selected = o.selected;
+          if (o.text === 'All' || option.text === 'All') {
+            selected = false;
+          } else if (!multi) {
+            selected = false;
+          } else if (event.ctrlKey || event.metaKey || event.shiftKey) {
+            selected = false;
+          }
+          return {
+            ...o,
+            selected,
+          };
+        }
+        const selected = forceSelect ? true : multi ? !option.selected : true;
+        return {
+          ...o,
+          selected,
+        };
+      }),
+    };
+  }
+
   return state;
 };
 
@@ -314,6 +344,11 @@ export const queryVariablesReducer = (
 
   if (removeInitLock.match(action)) {
     const { type, name } = action.payload;
+    return updateChildState(state, type, name, action);
+  }
+
+  if (selectVariableOption.match(action)) {
+    const { type, name } = action.payload.variable;
     return updateChildState(state, type, name, action);
   }
 

@@ -1,3 +1,4 @@
+import { MouseEvent } from 'react';
 import { createAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
 
@@ -68,6 +69,12 @@ export const updateVariableOptions = createAction<{ variable: VariableModel; res
 export const updateVariableTags = createAction<{ variable: VariableModel; results: any[] }>(
   'templating/updateVariableTags'
 );
+export const selectVariableOption = createAction<{
+  variable: VariableModel;
+  option: VariableOption;
+  forceSelect: boolean;
+  event: MouseEvent<HTMLAnchorElement>;
+}>('templating/selectVariableOption');
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
   return (dispatch, getState) => {
