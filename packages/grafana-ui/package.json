@@ -36,6 +36,7 @@
     "bizcharts": "^3.5.5",
     "classnames": "2.2.6",
     "d3": "5.15.0",
+    "emotion": "10.0.27",
     "immutable": "3.8.2",
     "jquery": "3.4.1",
     "lodash": "4.17.15",
