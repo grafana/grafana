@@ -139,9 +139,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				})
 				evalContext.IsTestRun = true
 
-				payloadJson, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
 				So(err, ShouldBeNil)
-				payload, err := simplejson.NewJson(payloadJson)
+				payload, err := simplejson.NewJson(payloadJSON)
 				So(err, ShouldBeNil)
 
 				diff := cmp.Diff(map[string]interface{}{
@@ -202,9 +202,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 				evalContext.IsTestRun = true
 
-				payloadJson, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
 				So(err, ShouldBeNil)
-				payload, err := simplejson.NewJson(payloadJson)
+				payload, err := simplejson.NewJson(payloadJSON)
 				So(err, ShouldBeNil)
 
 				diff := cmp.Diff(map[string]interface{}{
