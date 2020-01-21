@@ -66,24 +66,15 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
       },
     });
 
-    const filterOutNotMerged = async (item: any) => {
-      return await client
-        .get('/pulls/' + item.number)
-        .then(response => {
-          return response.data.merged_at !== null;
-        })
-        .catch(error => {
-          if (error.response && error.response.status === 404) {
-            return true; // it's actually an issue
-          } else {
-            console.log('Error fetching information for item: ', item.number, error);
-            return true;
-          }
-        });
-    };
     const mergedIssues = [];
     for (const item of res.data) {
-      if (await filterOutNotMerged(item)) {
+      if (!item.pull_request) {
+        // it's an issue, not pull request
+        mergedIssues.push(item);
+        continue;
+      }
+      const isMerged = await client.get(item.pull_request.url + '/merge');
+      if (isMerged.status === 204) {
         mergedIssues.push(item);
       }
     }
