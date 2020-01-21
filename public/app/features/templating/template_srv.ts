@@ -195,6 +195,15 @@ export class TemplateSrv {
     this.grafanaVariables[name] = value;
   }
 
+  setGlobalVariable(name: string, variable: any) {
+    this.index = {
+      ...this.index,
+      [name]: {
+        current: variable,
+      },
+    };
+  }
+
   getVariableName(expression: string) {
     this.regex.lastIndex = 0;
     const match = this.regex.exec(expression);
@@ -292,6 +301,15 @@ export class TemplateSrv {
         // skip formatting of custom all values
         if (variable.allValue) {
           return this.replace(value);
+        }
+      }
+
+      if (fieldPath) {
+        const fieldValue = this.getVariableValue(variableName, fieldPath, {
+          [variableName]: { value: value, text: '' },
+        });
+        if (fieldValue !== null && fieldValue !== undefined) {
+          return this.formatValue(fieldValue, fmt, variable);
         }
       }
 
