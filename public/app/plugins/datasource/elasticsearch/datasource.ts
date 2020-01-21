@@ -343,7 +343,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         target.metrics = [queryDef.defaultMetricAgg()];
         // Setting this for metrics queries that are typed as logs
         target.isLogsQuery = true;
-        queryObj = this.queryBuilder.getLogsQuery(target, queryString);
+        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
       } else {
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
