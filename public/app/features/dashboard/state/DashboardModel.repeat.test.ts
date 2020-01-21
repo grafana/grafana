@@ -246,7 +246,10 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
               text: 'reg1, reg2',
               value: ['reg1', 'reg2'],
             },
-            options: [{ text: 'reg1', value: 'reg1', selected: true }, { text: 'reg2', value: 'reg2', selected: true }],
+            options: [
+              { text: 'reg1', value: 'reg1', selected: true },
+              { text: 'reg2', value: 'reg2', selected: true },
+            ],
           },
           {
             name: 'app',
