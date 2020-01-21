@@ -82,7 +82,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       return;
     }
 
-    // TODO? should we get the result with an observable once?
     const lastResult = panel.getQueryRunner().getLastResult();
     if (!lastResult) {
       this.onDismiss(); // Usually opened from refresh?
@@ -237,7 +236,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
 
     return (
-      <Drawer title={panel.title} onClose={this.onDismiss}>g
+      <Drawer title={panel.title} onClose={this.onDismiss}>
         <TabsBar>
           {tabs.map((t, index) => {
             return (
