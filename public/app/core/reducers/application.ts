@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { ApplicationState } from 'app/types/application';
 
 export const initialState: ApplicationState = {
-  logActions: true,
+  logActions: false,
 };
 
 const applicationSlice = createSlice({

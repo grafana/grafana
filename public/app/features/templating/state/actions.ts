@@ -75,6 +75,8 @@ export const selectVariableOption = createAction<{
   forceSelect: boolean;
   event: MouseEvent<HTMLAnchorElement>;
 }>('templating/selectVariableOption');
+export const showQueryVariableDropDown = createAction<VariableModel>('templating/showQueryVariableDropDown');
+export const hideQueryVariableDropDown = createAction<VariableModel>('templating/hideQueryVariableDropDown');
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
   return (dispatch, getState) => {

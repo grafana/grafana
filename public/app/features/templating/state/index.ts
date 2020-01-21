@@ -1,20 +1,22 @@
 import { AnyAction } from '@reduxjs/toolkit';
 
-import { QueryVariableState } from './queryVariablesReducer';
+import { QueryVariableState, VariableState } from './queryVariablesReducer';
 import { VariableType } from '../variable';
 import {
   addVariable,
+  hideQueryVariableDropDown,
   removeInitLock,
   resolveInitLock,
   selectVariableOption,
   setCurrentVariableValue,
   setInitLock,
+  showQueryVariableDropDown,
   updateVariableOptions,
   updateVariableTags,
 } from './actions';
 import { variableAdapter } from '../adapters';
 
-export interface TemplatingState extends Record<VariableType, any> {
+export interface TemplatingState extends Record<VariableType, Array<VariableState<any, any>>> {
   query: QueryVariableState[];
 }
 
@@ -69,6 +71,14 @@ export const templatingReducer = (state: TemplatingState = initialState, action:
 
   if (selectVariableOption.match(action)) {
     return updateChildState(action.payload.variable.type, state, action);
+  }
+
+  if (showQueryVariableDropDown.match(action)) {
+    return updateChildState(action.payload.type, state, action);
+  }
+
+  if (hideQueryVariableDropDown.match(action)) {
+    return updateChildState(action.payload.type, state, action);
   }
 
   return state;
