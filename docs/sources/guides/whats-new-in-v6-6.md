@@ -70,7 +70,7 @@ The time picker has gotten a major design update. Key changes:
 - A single calendar view can be used to select and show the from & to date.
 - Select recent absolute ranges
 
-{{< docs-imagebox img="/img/docs/v66/time_picker_update.png" max-width="700px" caption="New time picer" >}}
+{{< docs-imagebox img="/img/docs/v66/time_picker_update.png" max-width="700px" caption="New time picker" >}}
 
 ## News panel
 
