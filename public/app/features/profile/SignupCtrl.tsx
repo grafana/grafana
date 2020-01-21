@@ -1,22 +1,32 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
+import { updateLocation } from 'app/core/actions';
+import { connect } from 'react-redux';
+import { StoreState } from 'app/types';
+import { hot } from 'react-hot-loader';
 
 interface SignupProps {
   children(arg0: ChildProps): JSX.Element;
 }
 
 interface ChildProps {
-  onSubmit(e: React.FocusEvent): void;
+  register(e: React.FocusEvent): Promise<any>;
 }
 
 export class SignupCtrl extends PureComponent<SignupProps> {
   constructor(props: SignupProps) {
     super(props);
   }
-  onSubmit = async () => {
+  register = async ({ email, code, orgName, password, name, username }: any) => {
     const backendSrv = getBackendSrv();
 
-    const response = await backendSrv.post('/api/user/signup/step2');
+    const response = await backendSrv.post('/api/user/signup/step2', {
+      email,
+      code,
+      username: email,
+      orgName,
+      password,
+    });
     if (response.code === 'redirect-to-select-org') {
       //select location
       console.log('Redirecting...');
@@ -30,9 +40,17 @@ export class SignupCtrl extends PureComponent<SignupProps> {
     return (
       <>
         {children({
-          onSubmit: this.onSubmit,
+          register: this.register,
         })}
       </>
     );
   }
 }
+
+export const mapStateToProps = (state: StoreState) => ({
+  routeParams: state.location.routeParams,
+});
+
+const mapDispatchToProps = { updateLocation };
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps));
