@@ -3,7 +3,7 @@ title = "Auth Proxy"
 description = "Grafana Auth Proxy Guide "
 keywords = ["grafana", "configuration", "documentation", "proxy"]
 type = "docs"
-aliases = ["/tutorials/authproxy/"]
+aliases = ["/docs/grafana/latest/tutorials/authproxy/"]
 [menu.docs]
 name = "Auth Proxy"
 identifier = "auth-proxy"
@@ -27,8 +27,9 @@ header_name = X-WEBAUTH-USER
 header_property = username
 # Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
 auto_sign_up = true
-# If combined with Grafana LDAP integration define sync interval in minutes
-ldap_sync_ttl = 60
+# Define cache time to live in minutes
+# If combined with Grafana LDAP integration it is also the sync interval
+sync_ttl = 60
 # Limit where auth proxy requests come from by configuring a list of IP addresses.
 # This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 # Example `whitelist = 192.168.1.1, 192.168.1.0/24, 2001::23, 2001::0/120`
@@ -36,6 +37,8 @@ whitelist =
 # Optionally define more headers to sync other user attributes
 # Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
+# Check out docs on this for more details on the below setting
+enable_login_token = false
 ```
 
 ## Interacting with Grafana’s AuthProxy via curl
@@ -154,6 +157,7 @@ For this example we use the official Apache docker image available at [Docker Hu
 ```bash
 ServerRoot "/usr/local/apache2"
 Listen 80
+LoadModule mpm_event_module modules/mod_mpm_event.so
 LoadModule authn_file_module modules/mod_authn_file.so
 LoadModule authn_core_module modules/mod_authn_core.so
 LoadModule authz_host_module modules/mod_authz_host.so
@@ -234,7 +238,7 @@ headers = "Groups:X-WEBAUTH-GROUPS"
 
 You use the `X-WEBAUTH-GROUPS` header to send the team information for each user. Specifically, the set of Grafana's group IDs that the user belongs to.
 
-First, we need to set up the mapping between your authentication provider and Grafana. Follow [these instructions]({{< relref "auth/team-sync.md#enable-synchronization-for-a-team" >}}) to add groups to a team within Grafana.
+First, we need to set up the mapping between your authentication provider and Grafana. Follow [these instructions]({{< relref "team-sync.md#enable-synchronization-for-a-team" >}}) to add groups to a team within Grafana.
 
 Once that's done. You can verify your mappings by querying the API.
 
@@ -292,4 +296,14 @@ curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem
 
 With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
 
-[Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
+[Learn more about Team Sync]({{< relref "team-sync.md" >}})
+
+
+## Login token and session cookie
+
+With `enable_login_token` set to `true` Grafana will, after successful auth proxy header validation, assign the user
+a login token and cookie. You only have to configure your auth proxy to provide headers for the /login route.
+Requests via other routes will be authenticated using the cookie.
+
+Use settings `login_maximum_inactive_lifetime_days` and `login_maximum_lifetime_days` under `[auth]` to control session
+lifetime. [Read more about login tokens]({{< relref "overview/#login-and-short-lived-tokens" >}})

@@ -4,10 +4,8 @@ import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
-import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { IQService } from 'angular';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -16,21 +14,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
 
   /** @ngInject */
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
-    private $q: IQService
-  ) {
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
     super(instanceSettings);
-    this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.backendSrv, this.templateSrv);
-    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.backendSrv, this.templateSrv);
-
-    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
-      instanceSettings,
-      this.backendSrv,
-      this.templateSrv
-    );
+    this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.templateSrv);
+    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.templateSrv);
+    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings, this.templateSrv);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(
       instanceSettings,
       this.backendSrv,
@@ -83,7 +71,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     if (promises.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
     return Promise.all(promises).then(results => {

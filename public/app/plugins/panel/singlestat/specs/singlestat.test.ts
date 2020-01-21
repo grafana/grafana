@@ -1,7 +1,8 @@
 import { SingleStatCtrl, ShowData } from '../module';
 import { dateTime, ReducerID } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { LegacyResponseData } from '@grafana/ui';
+import { LegacyResponseData } from '@grafana/data';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 interface TestContext {
   ctrl: SingleStatCtrl;
@@ -31,9 +32,9 @@ describe('SingleStatCtrl', () => {
       emit: () => {},
     },
   };
-  SingleStatCtrl.prototype.dashboard = {
-    isTimezoneUtc: jest.fn(() => true),
-  };
+  SingleStatCtrl.prototype.dashboard = ({
+    getTimezone: jest.fn(() => 'utc'),
+  } as any) as DashboardModel;
   SingleStatCtrl.prototype.events = {
     on: () => {},
   };
@@ -56,7 +57,15 @@ describe('SingleStatCtrl', () => {
 
   singleStatScenario('with defaults', (ctx: TestContext) => {
     ctx.setup(() => {
-      ctx.input = [{ target: 'test.cpu1', datapoints: [[10, 1], [20, 2]] }];
+      ctx.input = [
+        {
+          target: 'test.cpu1',
+          datapoints: [
+            [10, 1],
+            [20, 2],
+          ],
+        },
+      ];
     });
 
     it('Should use series avg as default main value', () => {
@@ -64,13 +73,21 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted falue', () => {
-      expect(ctx.data.display.text).toBe('15');
+      expect(ctx.data.display!.text).toBe('15');
     });
   });
 
   singleStatScenario('showing serie name instead of value', (ctx: TestContext) => {
     ctx.setup(() => {
-      ctx.input = [{ target: 'test.cpu1', datapoints: [[10, 1], [20, 2]] }];
+      ctx.input = [
+        {
+          target: 'test.cpu1',
+          datapoints: [
+            [10, 1],
+            [20, 2],
+          ],
+        },
+      ];
       ctx.ctrl.panel.valueName = 'name';
     });
 
@@ -79,16 +96,24 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe('test.cpu1');
+      expect(ctx.data.display!.text).toBe('test.cpu1');
     });
   });
 
   singleStatScenario('showing last iso time instead of value', (ctx: TestContext) => {
     ctx.setup(() => {
-      ctx.input = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
+      ctx.input = [
+        {
+          target: 'test.cpu1',
+          datapoints: [
+            [10, 12],
+            [20, 1505634997920],
+          ],
+        },
+      ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
+      ctx.ctrl.dashboard.getTimezone = () => 'browser';
     });
 
     it('Should use time instead of value', () => {
@@ -96,29 +121,45 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(dateTime(ctx.data.display.text).valueOf()).toBe(1505634997000);
+      expect(dateTime(ctx.data.display!.text).valueOf()).toBe(1505634997000);
     });
   });
 
   singleStatScenario('showing last iso time instead of value (in UTC)', (ctx: TestContext) => {
     ctx.setup(() => {
-      ctx.input = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 5000]] }];
+      ctx.input = [
+        {
+          target: 'test.cpu1',
+          datapoints: [
+            [10, 12],
+            [20, 5000],
+          ],
+        },
+      ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
+      ctx.ctrl.dashboard.getTimezone = () => 'utc';
     });
 
     it('should set value', () => {
-      expect(ctx.data.display.text).toBe('1970-01-01 00:00:05');
+      expect(ctx.data.display!.text).toBe('1970-01-01 00:00:05');
     });
   });
 
   singleStatScenario('showing last us time instead of value', (ctx: TestContext) => {
     ctx.setup(() => {
-      ctx.input = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
+      ctx.input = [
+        {
+          target: 'test.cpu1',
+          datapoints: [
+            [10, 12],
+            [20, 1505634997920],
+          ],
+        },
+      ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
+      ctx.ctrl.dashboard.getTimezone = () => 'browser';
     });
 
     it('Should use time instead of value', () => {
@@ -126,26 +167,42 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe(dateTime(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
+      expect(ctx.data.display!.text).toBe(dateTime(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
     });
   });
 
   singleStatScenario('showing last us time instead of value (in UTC)', (ctx: TestContext) => {
     ctx.setup(() => {
-      ctx.input = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 5000]] }];
+      ctx.input = [
+        {
+          target: 'test.cpu1',
+          datapoints: [
+            [10, 12],
+            [20, 5000],
+          ],
+        },
+      ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
+      ctx.ctrl.dashboard.getTimezone = () => 'utc';
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe('01/01/1970 12:00:05 am');
+      expect(ctx.data.display!.text).toBe('01/01/1970 12:00:05 am');
     });
   });
 
   singleStatScenario('showing last time from now instead of value', (ctx: TestContext) => {
     ctx.setup(() => {
-      ctx.input = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
+      ctx.input = [
+        {
+          target: 'test.cpu1',
+          datapoints: [
+            [10, 12],
+            [20, 1505634997920],
+          ],
+        },
+      ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeFromNow';
     });
@@ -155,19 +212,27 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe('2 days ago');
+      expect(ctx.data.display!.text).toBe('2 days ago');
     });
   });
 
   singleStatScenario('showing last time from now instead of value (in UTC)', (ctx: TestContext) => {
     ctx.setup(() => {
-      ctx.input = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
+      ctx.input = [
+        {
+          target: 'test.cpu1',
+          datapoints: [
+            [10, 12],
+            [20, 1505634997920],
+          ],
+        },
+      ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeFromNow';
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe('2 days ago');
+      expect(ctx.data.display!.text).toBe('2 days ago');
     });
   });
 
@@ -175,7 +240,15 @@ describe('SingleStatCtrl', () => {
     'MainValue should use same number for decimals as displayed when checking thresholds',
     (ctx: TestContext) => {
       ctx.setup(() => {
-        ctx.input = [{ target: 'test.cpu1', datapoints: [[99.999, 1], [99.99999, 2]] }];
+        ctx.input = [
+          {
+            target: 'test.cpu1',
+            datapoints: [
+              [99.999, 1],
+              [99.99999, 2],
+            ],
+          },
+        ];
         ctx.ctrl.panel.valueName = 'avg';
         ctx.ctrl.panel.format = 'none';
       });
@@ -185,7 +258,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('should set formatted value', () => {
-        expect(ctx.data.display.text).toBe('100');
+        expect(ctx.data.display!.text).toBe('100');
       });
     }
   );
@@ -201,7 +274,22 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should replace value with text', () => {
-      expect(ctx.data.display.text).toBe('OK');
+      expect(ctx.data.display!.text).toBe('OK');
+    });
+  });
+
+  singleStatScenario('When mapping null values and no data', (ctx: TestContext) => {
+    ctx.setup(() => {
+      ctx.input = []; // No data
+      ctx.ctrl.panel.valueMaps = [{ value: 'null', text: 'XYZ' }];
+    });
+
+    it('value should be null', () => {
+      expect(ctx.data.value).toBe(null);
+    });
+
+    it('Should replace value with text', () => {
+      expect(ctx.data.display!.text).toBe('XYZ');
     });
   });
 
@@ -209,11 +297,14 @@ describe('SingleStatCtrl', () => {
     ctx.setup(() => {
       ctx.input = [{ target: 'test.cpu1', datapoints: [[41, 50]] }];
       ctx.ctrl.panel.mappingType = 2;
-      ctx.ctrl.panel.rangeMaps = [{ from: '10', to: '50', text: 'OK' }, { from: '51', to: '100', text: 'NOT OK' }];
+      ctx.ctrl.panel.rangeMaps = [
+        { from: '10', to: '50', text: 'OK' },
+        { from: '51', to: '100', text: 'NOT OK' },
+      ];
     });
 
     it('Should replace value with text OK', () => {
-      expect(ctx.data.display.text).toBe('OK');
+      expect(ctx.data.display!.text).toBe('OK');
     });
   });
 
@@ -221,11 +312,14 @@ describe('SingleStatCtrl', () => {
     ctx.setup(() => {
       ctx.input = [{ target: 'test.cpu1', datapoints: [[65, 75]] }];
       ctx.ctrl.panel.mappingType = 2;
-      ctx.ctrl.panel.rangeMaps = [{ from: '10', to: '50', text: 'OK' }, { from: '51', to: '100', text: 'NOT OK' }];
+      ctx.ctrl.panel.rangeMaps = [
+        { from: '10', to: '50', text: 'OK' },
+        { from: '51', to: '100', text: 'NOT OK' },
+      ];
     });
 
     it('Should replace value with text NOT OK', () => {
-      expect(ctx.data.display.text).toBe('NOT OK');
+      expect(ctx.data.display!.text).toBe('NOT OK');
     });
   });
 
@@ -253,7 +347,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('should set formatted value', () => {
-        expect(ctx.data.display.text).toBe('15');
+        expect(ctx.data.display!.text).toBe('15');
       });
     });
 
@@ -283,7 +377,7 @@ describe('SingleStatCtrl', () => {
         });
 
         it('should set formatted falue', () => {
-          expect(ctx.data.display.text).toBe('100');
+          expect(ctx.data.display!.text).toBe('100');
         });
       }
     );
@@ -302,7 +396,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('Should replace value with text', () => {
-        expect(ctx.data.display.text).toBe('OK');
+        expect(ctx.data.display!.text).toBe('OK');
       });
     });
 
@@ -312,11 +406,14 @@ describe('SingleStatCtrl', () => {
         ctx.input[0].rows[0] = [1492759673649, 'ignore1', 41, 'ignore2'];
         ctx.ctrl.panel.tableColumn = 'mean';
         ctx.ctrl.panel.mappingType = 2;
-        ctx.ctrl.panel.rangeMaps = [{ from: '10', to: '50', text: 'OK' }, { from: '51', to: '100', text: 'NOT OK' }];
+        ctx.ctrl.panel.rangeMaps = [
+          { from: '10', to: '50', text: 'OK' },
+          { from: '51', to: '100', text: 'NOT OK' },
+        ];
       });
 
       it('Should replace value with text OK', () => {
-        expect(ctx.data.display.text).toBe('OK');
+        expect(ctx.data.display!.text).toBe('OK');
       });
     });
 
@@ -326,11 +423,14 @@ describe('SingleStatCtrl', () => {
         ctx.input[0].rows[0] = [1492759673649, 'ignore1', 65, 'ignore2'];
         ctx.ctrl.panel.tableColumn = 'mean';
         ctx.ctrl.panel.mappingType = 2;
-        ctx.ctrl.panel.rangeMaps = [{ from: '10', to: '50', text: 'OK' }, { from: '51', to: '100', text: 'NOT OK' }];
+        ctx.ctrl.panel.rangeMaps = [
+          { from: '10', to: '50', text: 'OK' },
+          { from: '51', to: '100', text: 'NOT OK' },
+        ];
       });
 
       it('Should replace value with text NOT OK', () => {
-        expect(ctx.data.display.text).toBe('NOT OK');
+        expect(ctx.data.display!.text).toBe('NOT OK');
       });
     });
 
@@ -343,7 +443,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('Should replace value with text NOT OK', () => {
-        expect(ctx.data.display.text).toBe('ignore1');
+        expect(ctx.data.display!.text).toBe('ignore1');
       });
     });
 

@@ -5,14 +5,16 @@ import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import locationUtil from 'app/core/utils/location_util';
 import { store } from 'app/store/store';
-import { CoreEvents, AppEventEmitter } from 'app/types';
+import { AppEventEmitter, CoreEvents } from 'app/types';
 
 import Mousetrap from 'mousetrap';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
-import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
+import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { getLocationSrv } from '@grafana/runtime';
+import { DashboardModel } from '../../features/dashboard/state';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -122,6 +124,12 @@ export class KeybindingSrv {
       return;
     }
 
+    if (search.editPanel) {
+      delete search.editPanel;
+      this.$location.search(search);
+      return;
+    }
+
     if (search.fullscreen) {
       appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
       return;
@@ -167,7 +175,7 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
-  setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: any) {
+  setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit(CoreEvents.graphHoverClear);
@@ -196,7 +204,7 @@ export class KeybindingSrv {
 
     // edit panel
     this.bind('e', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         appEvents.emit(PanelEvents.panelChangeView, {
           fullscreen: true,
           edit: true,
@@ -223,7 +231,13 @@ export class KeybindingSrv {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
           const datasource = await this.datasourceSrv.get(panel.datasource);
-          const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
+          const url = await getExploreUrl({
+            panel,
+            panelTargets: panel.targets,
+            panelDatasource: datasource,
+            datasourceSrv: this.datasourceSrv,
+            timeSrv: this.timeSrv,
+          });
           const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
 
           if (urlWithoutBase) {
@@ -235,7 +249,7 @@ export class KeybindingSrv {
 
     // delete panel
     this.bind('p r', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         appEvents.emit(CoreEvents.removePanel, dashboard.meta.focusPanelId);
         dashboard.meta.focusPanelId = 0;
       }
@@ -243,7 +257,7 @@ export class KeybindingSrv {
 
     // duplicate panel
     this.bind('p d', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         const panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
         dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }
@@ -261,6 +275,13 @@ export class KeybindingSrv {
           src: 'public/app/features/dashboard/components/ShareModal/template.html',
           scope: shareScope,
         });
+      }
+    });
+
+    // inspect panel
+    this.bind('p i', () => {
+      if (dashboard.meta.focusPanelId) {
+        getLocationSrv().update({ partial: true, query: { inspect: dashboard.meta.focusPanelId } });
       }
     });
 

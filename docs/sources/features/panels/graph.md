@@ -2,11 +2,11 @@
 title = "Graph Panel"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
 type = "docs"
-aliases = ["/reference/graph/"]
+aliases = ["/docs/grafana/latest/reference/graph/"]
 [menu.docs]
 name = "Graph"
 parent = "panels"
-weight = 1
+weight = 4
 +++
 
 # Graph Panel
@@ -137,6 +137,7 @@ Display styles control visual properties of the graph.
 - **Line Width** - The width of the line for a series (default 1).
 - **Staircase** - Draws adjacent points as staircase
 - **Points Radius** - Adjust the size of points when *Points* are selected as *Draw Mode*.
+- **Hidden Series** - Hide series by default in graph.
 
 #### Hover tooltip
 
@@ -186,7 +187,7 @@ Time regions allow you to highlight certain time regions of the graph to make it
 
 The time range tab allows you to override the dashboard time range and specify a panel specific time.
 Either through a relative from now time option or through a timeshift.
-Panel time overrides and timeshift are described in more detail [here]({{< relref "reference/timerange.md#panel-time-overrides-timeshift" >}}).
+Panel time overrides and timeshift are described in more detail [here]({{< relref "../../reference/timerange.md#panel-time-overrides-timeshift" >}}).
 
 ### Data link
 

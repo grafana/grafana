@@ -1,16 +1,11 @@
 import { Unsubscribable } from 'rxjs';
-import { ComponentClass } from 'react';
 import {
+  HistoryItem,
   DataQuery,
-  DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
-  ExploreStartPageProps,
   PanelData,
   DataQueryRequest,
-} from '@grafana/ui';
-
-import {
   RawTimeRange,
   LogLevel,
   TimeRange,
@@ -18,103 +13,14 @@ import {
   LogsDedupStrategy,
   AbsoluteTimeRange,
   GraphSeriesXY,
+  DataFrame,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
-import TableModel from 'app/core/table_model';
 
-import { Value } from 'slate';
-
-import { Editor } from '@grafana/slate-react';
 export enum ExploreMode {
   Metrics = 'Metrics',
   Logs = 'Logs',
-}
-
-export enum CompletionItemKind {
-  GroupTitle = 'GroupTitle',
-}
-
-export interface CompletionItem {
-  /**
-   * The label of this completion item. By default
-   * this is also the text that is inserted when selecting
-   * this completion.
-   */
-  label: string;
-
-  /**
-   * The kind of this completion item. An icon is chosen
-   * by the editor based on the kind.
-   */
-  kind?: CompletionItemKind | string;
-
-  /**
-   * A human-readable string with additional information
-   * about this item, like type or symbol information.
-   */
-  detail?: string;
-
-  /**
-   * A human-readable string, can be Markdown, that represents a doc-comment.
-   */
-  documentation?: string;
-
-  /**
-   * A string that should be used when comparing this item
-   * with other items. When `falsy` the `label` is used.
-   */
-  sortText?: string;
-
-  /**
-   * A string that should be used when filtering a set of
-   * completion items. When `falsy` the `label` is used.
-   */
-  filterText?: string;
-
-  /**
-   * A string or snippet that should be inserted in a document when selecting
-   * this completion. When `falsy` the `label` is used.
-   */
-  insertText?: string;
-
-  /**
-   * Delete number of characters before the caret position,
-   * by default the letters from the beginning of the word.
-   */
-  deleteBackwards?: number;
-
-  /**
-   * Number of steps to move after the insertion, can be negative.
-   */
-  move?: number;
-}
-
-export interface CompletionItemGroup {
-  /**
-   * Label that will be displayed for all entries of this group.
-   */
-  label: string;
-
-  /**
-   * List of suggestions of this group.
-   */
-  items: CompletionItem[];
-
-  /**
-   * If true, match only by prefix (and not mid-word).
-   */
-  prefixMatch?: boolean;
-
-  /**
-   * If true, do not filter items in this group based on the search.
-   */
-  skipFilter?: boolean;
-
-  /**
-   * If true, do not sort items.
-   */
-  skipSort?: boolean;
 }
 
 export enum ExploreId {
@@ -146,29 +52,21 @@ export interface ExploreState {
 
 export interface ExploreItemState {
   /**
-   * React component to be shown when no queries have been run yet, e.g., for a query language cheat sheet.
-   */
-  StartPage?: ComponentClass<ExploreStartPageProps>;
-  /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
    */
   containerWidth: number;
   /**
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
-  datasourceInstance: DataSourceApi | null;
+  datasourceInstance?: DataSourceApi;
   /**
    * Current data source name or null if default
    */
   requestedDatasourceName: string | null;
   /**
-   * Error to be shown when datasource loading or testing failed.
-   */
-  datasourceError: string;
-  /**
    * True if the datasource is loading. `null` if the loading has not started yet.
    */
-  datasourceLoading: boolean | null;
+  datasourceLoading?: boolean;
   /**
    * True if there is no datasource to be selected.
    */
@@ -177,10 +75,6 @@ export interface ExploreItemState {
    * Emitter to send events to the rest of Grafana.
    */
   eventBridge?: Emitter;
-  /**
-   * List of datasources to be shown in the datasource selector.
-   */
-  exploreDatasources: DataSourceSelectItem[];
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
@@ -228,10 +122,6 @@ export interface ExploreItemState {
    */
   showingGraph: boolean;
   /**
-   * True StartPage needs to be shown. Typically set to `false` once queries have been run.
-   */
-  showingStartPage?: boolean;
-  /**
    * True if table result viewer is expanded. Query runs will contain table queries.
    */
   showingTable: boolean;
@@ -240,7 +130,7 @@ export interface ExploreItemState {
   /**
    * Table model that combines all query table results into a single table.
    */
-  tableResult?: TableModel;
+  tableResult?: DataFrame;
 
   /**
    * React keys for rendering of QueryRows
@@ -262,8 +152,15 @@ export interface ExploreItemState {
    */
   refreshInterval?: string;
 
+  /**
+   * Copy of the state of the URL which is in store.location.query. This is duplicated here so we can diff the two
+   * after a change to see if we need to sync url state back to redux store (like on clicking Back in browser).
+   */
   urlState: ExploreUrlState;
 
+  /**
+   * Map of what changed between real url and local urlState so we can partially update just the things that are needed.
+   */
   update: ExploreUpdateState;
 
   latency: number;
@@ -284,6 +181,11 @@ export interface ExploreItemState {
   querySubscription?: Unsubscribable;
 
   queryResponse: PanelData;
+
+  /**
+   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
+   * query of that panel.
+   */
   originPanelId?: number;
 }
 
@@ -312,47 +214,13 @@ export interface ExploreUrlState {
   context?: string;
 }
 
-export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
-  ts: number;
-  query: TQuery;
-}
-
-export abstract class LanguageProvider {
-  datasource: DataSourceApi;
-  request: (url: string, params?: any) => Promise<any>;
-  /**
-   * Returns startTask that resolves with a task list when main syntax is loaded.
-   * Task list consists of secondary promises that load more detailed language features.
-   */
-  start: () => Promise<any[]>;
-  startTask?: Promise<any[]>;
-}
-
-export interface TypeaheadInput {
-  text: string;
-  prefix: string;
-  wrapperClasses: string[];
-  labelKey?: string;
-  value?: Value;
-  editor?: Editor;
-}
-
-export interface TypeaheadOutput {
-  context?: string;
-  suggestions: CompletionItemGroup[];
-}
-
-export interface QueryIntervals {
-  interval: string;
-  intervalMs: number;
-}
-
 export interface QueryOptions {
   minInterval: string;
   maxDataPoints?: number;
   liveStreaming?: boolean;
   showingGraph?: boolean;
   showingTable?: boolean;
+  mode?: ExploreMode;
 }
 
 export interface QueryTransaction {

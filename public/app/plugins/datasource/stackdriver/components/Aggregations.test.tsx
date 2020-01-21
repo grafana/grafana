@@ -16,6 +16,7 @@ const props: Props = {
   crossSeriesReducer: '',
   groupBys: [],
   children: renderProps => <div />,
+  templateVariableOptions: [],
 };
 
 describe('Aggregations', () => {
@@ -32,7 +33,7 @@ describe('Aggregations', () => {
         wrapper = shallow(<Aggregations {...newProps} />);
       });
       it('', () => {
-        const options = wrapper.state().aggOptions[0].options;
+        const options = wrapper.state().aggOptions;
         expect(options.length).toEqual(11);
         expect(options.map((o: any) => o.value)).toEqual(
           expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
@@ -49,8 +50,7 @@ describe('Aggregations', () => {
         wrapper = shallow(<Aggregations {...newProps} />);
       });
       it('', () => {
-        const options = wrapper.state().aggOptions[0].options;
-
+        const options = wrapper.state().aggOptions;
         expect(options.length).toEqual(10);
         expect(options.map((o: any) => o.value)).toEqual(expect.arrayContaining(['REDUCE_NONE']));
       });

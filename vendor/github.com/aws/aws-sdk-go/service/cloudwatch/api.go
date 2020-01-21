@@ -270,6 +270,92 @@ func (c *CloudWatch) DeleteDashboardsWithContext(ctx aws.Context, input *DeleteD
 	return out, req.Send()
 }
 
+const opDeleteInsightRules = "DeleteInsightRules"
+
+// DeleteInsightRulesRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteInsightRules operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteInsightRules for more information on using the DeleteInsightRules
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteInsightRulesRequest method.
+//    req, resp := client.DeleteInsightRulesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteInsightRules
+func (c *CloudWatch) DeleteInsightRulesRequest(input *DeleteInsightRulesInput) (req *request.Request, output *DeleteInsightRulesOutput) {
+	op := &request.Operation{
+		Name:       opDeleteInsightRules,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteInsightRulesInput{}
+	}
+
+	output = &DeleteInsightRulesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteInsightRules API operation for Amazon CloudWatch.
+//
+// Permanently deletes the specified Contributor Insights rules.
+//
+// If you create a rule, delete it, and then re-create it with the same name,
+// historical data from the first time the rule was created may or may not be
+// available.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation DeleteInsightRules for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidParameterValueException "InvalidParameterValue"
+//   The value of an input parameter is bad or out-of-range.
+//
+//   * ErrCodeMissingRequiredParameterException "MissingParameter"
+//   An input parameter that is required is missing.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteInsightRules
+func (c *CloudWatch) DeleteInsightRules(input *DeleteInsightRulesInput) (*DeleteInsightRulesOutput, error) {
+	req, out := c.DeleteInsightRulesRequest(input)
+	return out, req.Send()
+}
+
+// DeleteInsightRulesWithContext is the same as DeleteInsightRules with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteInsightRules for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatch) DeleteInsightRulesWithContext(ctx aws.Context, input *DeleteInsightRulesInput, opts ...request.Option) (*DeleteInsightRulesOutput, error) {
+	req, out := c.DeleteInsightRulesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeAlarmHistory = "DescribeAlarmHistory"
 
 // DescribeAlarmHistoryRequest generates a "aws/request.Request" representing the
@@ -402,10 +488,12 @@ func (c *CloudWatch) DescribeAlarmHistoryPagesWithContext(ctx aws.Context, input
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*DescribeAlarmHistoryOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*DescribeAlarmHistoryOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -539,10 +627,12 @@ func (c *CloudWatch) DescribeAlarmsPagesWithContext(ctx aws.Context, input *Desc
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*DescribeAlarmsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*DescribeAlarmsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -708,6 +798,147 @@ func (c *CloudWatch) DescribeAnomalyDetectorsWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+const opDescribeInsightRules = "DescribeInsightRules"
+
+// DescribeInsightRulesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeInsightRules operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeInsightRules for more information on using the DescribeInsightRules
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeInsightRulesRequest method.
+//    req, resp := client.DescribeInsightRulesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeInsightRules
+func (c *CloudWatch) DescribeInsightRulesRequest(input *DescribeInsightRulesInput) (req *request.Request, output *DescribeInsightRulesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeInsightRules,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &DescribeInsightRulesInput{}
+	}
+
+	output = &DescribeInsightRulesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeInsightRules API operation for Amazon CloudWatch.
+//
+// Returns a list of all the Contributor Insights rules in your account. All
+// rules in your account are returned with a single operation.
+//
+// For more information about Contributor Insights, see Using Contributor Insights
+// to Analyze High-Cardinality Data (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation DescribeInsightRules for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidNextToken "InvalidNextToken"
+//   The next token specified is invalid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeInsightRules
+func (c *CloudWatch) DescribeInsightRules(input *DescribeInsightRulesInput) (*DescribeInsightRulesOutput, error) {
+	req, out := c.DescribeInsightRulesRequest(input)
+	return out, req.Send()
+}
+
+// DescribeInsightRulesWithContext is the same as DescribeInsightRules with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeInsightRules for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatch) DescribeInsightRulesWithContext(ctx aws.Context, input *DescribeInsightRulesInput, opts ...request.Option) (*DescribeInsightRulesOutput, error) {
+	req, out := c.DescribeInsightRulesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// DescribeInsightRulesPages iterates over the pages of a DescribeInsightRules operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeInsightRules method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeInsightRules operation.
+//    pageNum := 0
+//    err := client.DescribeInsightRulesPages(params,
+//        func(page *cloudwatch.DescribeInsightRulesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *CloudWatch) DescribeInsightRulesPages(input *DescribeInsightRulesInput, fn func(*DescribeInsightRulesOutput, bool) bool) error {
+	return c.DescribeInsightRulesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeInsightRulesPagesWithContext same as DescribeInsightRulesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatch) DescribeInsightRulesPagesWithContext(ctx aws.Context, input *DescribeInsightRulesInput, fn func(*DescribeInsightRulesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeInsightRulesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeInsightRulesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeInsightRulesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opDisableAlarmActions = "DisableAlarmActions"
 
 // DisableAlarmActionsRequest generates a "aws/request.Request" representing the
@@ -784,6 +1015,89 @@ func (c *CloudWatch) DisableAlarmActionsWithContext(ctx aws.Context, input *Disa
 	return out, req.Send()
 }
 
+const opDisableInsightRules = "DisableInsightRules"
+
+// DisableInsightRulesRequest generates a "aws/request.Request" representing the
+// client's request for the DisableInsightRules operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DisableInsightRules for more information on using the DisableInsightRules
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DisableInsightRulesRequest method.
+//    req, resp := client.DisableInsightRulesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableInsightRules
+func (c *CloudWatch) DisableInsightRulesRequest(input *DisableInsightRulesInput) (req *request.Request, output *DisableInsightRulesOutput) {
+	op := &request.Operation{
+		Name:       opDisableInsightRules,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DisableInsightRulesInput{}
+	}
+
+	output = &DisableInsightRulesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DisableInsightRules API operation for Amazon CloudWatch.
+//
+// Disables the specified Contributor Insights rules. When rules are disabled,
+// they do not analyze log groups and do not incur costs.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation DisableInsightRules for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidParameterValueException "InvalidParameterValue"
+//   The value of an input parameter is bad or out-of-range.
+//
+//   * ErrCodeMissingRequiredParameterException "MissingParameter"
+//   An input parameter that is required is missing.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableInsightRules
+func (c *CloudWatch) DisableInsightRules(input *DisableInsightRulesInput) (*DisableInsightRulesOutput, error) {
+	req, out := c.DisableInsightRulesRequest(input)
+	return out, req.Send()
+}
+
+// DisableInsightRulesWithContext is the same as DisableInsightRules with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DisableInsightRules for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatch) DisableInsightRulesWithContext(ctx aws.Context, input *DisableInsightRulesInput, opts ...request.Option) (*DisableInsightRulesOutput, error) {
+	req, out := c.DisableInsightRulesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opEnableAlarmActions = "EnableAlarmActions"
 
 // EnableAlarmActionsRequest generates a "aws/request.Request" representing the
@@ -854,6 +1168,92 @@ func (c *CloudWatch) EnableAlarmActions(input *EnableAlarmActionsInput) (*Enable
 // for more information on using Contexts.
 func (c *CloudWatch) EnableAlarmActionsWithContext(ctx aws.Context, input *EnableAlarmActionsInput, opts ...request.Option) (*EnableAlarmActionsOutput, error) {
 	req, out := c.EnableAlarmActionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opEnableInsightRules = "EnableInsightRules"
+
+// EnableInsightRulesRequest generates a "aws/request.Request" representing the
+// client's request for the EnableInsightRules operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See EnableInsightRules for more information on using the EnableInsightRules
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the EnableInsightRulesRequest method.
+//    req, resp := client.EnableInsightRulesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableInsightRules
+func (c *CloudWatch) EnableInsightRulesRequest(input *EnableInsightRulesInput) (req *request.Request, output *EnableInsightRulesOutput) {
+	op := &request.Operation{
+		Name:       opEnableInsightRules,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &EnableInsightRulesInput{}
+	}
+
+	output = &EnableInsightRulesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// EnableInsightRules API operation for Amazon CloudWatch.
+//
+// Enables the specified Contributor Insights rules. When rules are enabled,
+// they immediately begin analyzing log data.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation EnableInsightRules for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidParameterValueException "InvalidParameterValue"
+//   The value of an input parameter is bad or out-of-range.
+//
+//   * ErrCodeMissingRequiredParameterException "MissingParameter"
+//   An input parameter that is required is missing.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   The operation exceeded one or more limits.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableInsightRules
+func (c *CloudWatch) EnableInsightRules(input *EnableInsightRulesInput) (*EnableInsightRulesOutput, error) {
+	req, out := c.EnableInsightRulesRequest(input)
+	return out, req.Send()
+}
+
+// EnableInsightRulesWithContext is the same as EnableInsightRules with the addition of
+// the ability to pass a context and additional request options.
+//
+// See EnableInsightRules for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatch) EnableInsightRulesWithContext(ctx aws.Context, input *EnableInsightRulesInput, opts ...request.Option) (*EnableInsightRulesOutput, error) {
+	req, out := c.EnableInsightRulesRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -948,6 +1348,121 @@ func (c *CloudWatch) GetDashboardWithContext(ctx aws.Context, input *GetDashboar
 	return out, req.Send()
 }
 
+const opGetInsightRuleReport = "GetInsightRuleReport"
+
+// GetInsightRuleReportRequest generates a "aws/request.Request" representing the
+// client's request for the GetInsightRuleReport operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetInsightRuleReport for more information on using the GetInsightRuleReport
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetInsightRuleReportRequest method.
+//    req, resp := client.GetInsightRuleReportRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetInsightRuleReport
+func (c *CloudWatch) GetInsightRuleReportRequest(input *GetInsightRuleReportInput) (req *request.Request, output *GetInsightRuleReportOutput) {
+	op := &request.Operation{
+		Name:       opGetInsightRuleReport,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetInsightRuleReportInput{}
+	}
+
+	output = &GetInsightRuleReportOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetInsightRuleReport API operation for Amazon CloudWatch.
+//
+// This operation returns the time series data collected by a Contributor Insights
+// rule. The data includes the identity and number of contributors to the log
+// group.
+//
+// You can also optionally return one or more statistics about each data point
+// in the time series. These statistics can include the following:
+//
+//    * UniqueContributors -- the number of unique contributors for each data
+//    point.
+//
+//    * MaxContributorValue -- the value of the top contributor for each data
+//    point. The identity of the contributor may change for each data point
+//    in the graph. If this rule aggregates by COUNT, the top contributor for
+//    each data point is the contributor with the most occurrences in that period.
+//    If the rule aggregates by SUM, the top contributor is the contributor
+//    with the highest sum in the log field specified by the rule's Value, during
+//    that period.
+//
+//    * SampleCount -- the number of data points matched by the rule.
+//
+//    * Sum -- the sum of the values from all contributors during the time period
+//    represented by that data point.
+//
+//    * Minimum -- the minimum value from a single observation during the time
+//    period represented by that data point.
+//
+//    * Maximum -- the maximum value from a single observation during the time
+//    period represented by that data point.
+//
+//    * Average -- the average value from all contributors during the time period
+//    represented by that data point.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation GetInsightRuleReport for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidParameterValueException "InvalidParameterValue"
+//   The value of an input parameter is bad or out-of-range.
+//
+//   * ErrCodeMissingRequiredParameterException "MissingParameter"
+//   An input parameter that is required is missing.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The named resource does not exist.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetInsightRuleReport
+func (c *CloudWatch) GetInsightRuleReport(input *GetInsightRuleReportInput) (*GetInsightRuleReportOutput, error) {
+	req, out := c.GetInsightRuleReportRequest(input)
+	return out, req.Send()
+}
+
+// GetInsightRuleReportWithContext is the same as GetInsightRuleReport with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetInsightRuleReport for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatch) GetInsightRuleReportWithContext(ctx aws.Context, input *GetInsightRuleReportInput, opts ...request.Option) (*GetInsightRuleReportOutput, error) {
+	req, out := c.GetInsightRuleReportRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetMetricData = "GetMetricData"
 
 // GetMetricDataRequest generates a "aws/request.Request" representing the
@@ -999,11 +1514,11 @@ func (c *CloudWatch) GetMetricDataRequest(input *GetMetricDataInput) (req *reque
 // GetMetricData API operation for Amazon CloudWatch.
 //
 // You can use the GetMetricData API to retrieve as many as 100 different metrics
-// in a single request, with a total of as many as 100,800 datapoints. You can
-// also optionally perform math expressions on the values of the returned statistics,
-// to create new time series that represent new insights into your data. For
-// example, using Lambda metrics, you could divide the Errors metric by the
-// Invocations metric to get an error rate time series. For more information
+// in a single request, with a total of as many as 100,800 data points. You
+// can also optionally perform math expressions on the values of the returned
+// statistics, to create new time series that represent new insights into your
+// data. For example, using Lambda metrics, you could divide the Errors metric
+// by the Invocations metric to get an error rate time series. For more information
 // about metric math expressions, see Metric Math Syntax and Functions (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html#metric-math-syntax)
 // in the Amazon CloudWatch User Guide.
 //
@@ -1117,10 +1632,12 @@ func (c *CloudWatch) GetMetricDataPagesWithContext(ctx aws.Context, input *GetMe
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetMetricDataOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetMetricDataOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1490,10 +2007,12 @@ func (c *CloudWatch) ListDashboardsPagesWithContext(ctx aws.Context, input *List
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListDashboardsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListDashboardsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1636,10 +2155,12 @@ func (c *CloudWatch) ListMetricsPagesWithContext(ctx aws.Context, input *ListMet
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListMetricsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListMetricsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1919,6 +2440,99 @@ func (c *CloudWatch) PutDashboardWithContext(ctx aws.Context, input *PutDashboar
 	return out, req.Send()
 }
 
+const opPutInsightRule = "PutInsightRule"
+
+// PutInsightRuleRequest generates a "aws/request.Request" representing the
+// client's request for the PutInsightRule operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See PutInsightRule for more information on using the PutInsightRule
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the PutInsightRuleRequest method.
+//    req, resp := client.PutInsightRuleRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutInsightRule
+func (c *CloudWatch) PutInsightRuleRequest(input *PutInsightRuleInput) (req *request.Request, output *PutInsightRuleOutput) {
+	op := &request.Operation{
+		Name:       opPutInsightRule,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &PutInsightRuleInput{}
+	}
+
+	output = &PutInsightRuleOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(query.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// PutInsightRule API operation for Amazon CloudWatch.
+//
+// Creates a Contributor Insights rule. Rules evaluate log events in a CloudWatch
+// Logs log group, enabling you to find contributor data for the log events
+// in that log group. For more information, see Using Contributor Insights to
+// Analyze High-Cardinality Data (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights.html).
+//
+// If you create a rule, delete it, and then re-create it with the same name,
+// historical data from the first time the rule was created may or may not be
+// available.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation PutInsightRule for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidParameterValueException "InvalidParameterValue"
+//   The value of an input parameter is bad or out-of-range.
+//
+//   * ErrCodeMissingRequiredParameterException "MissingParameter"
+//   An input parameter that is required is missing.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   The operation exceeded one or more limits.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutInsightRule
+func (c *CloudWatch) PutInsightRule(input *PutInsightRuleInput) (*PutInsightRuleOutput, error) {
+	req, out := c.PutInsightRuleRequest(input)
+	return out, req.Send()
+}
+
+// PutInsightRuleWithContext is the same as PutInsightRule with the addition of
+// the ability to pass a context and additional request options.
+//
+// See PutInsightRule for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatch) PutInsightRuleWithContext(ctx aws.Context, input *PutInsightRuleInput, opts ...request.Option) (*PutInsightRuleOutput, error) {
+	req, out := c.PutInsightRuleRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opPutMetricAlarm = "PutMetricAlarm"
 
 // PutMetricAlarmRequest generates a "aws/request.Request" representing the
@@ -2104,9 +2718,8 @@ func (c *CloudWatch) PutMetricDataRequest(input *PutMetricDataInput) (req *reque
 //
 // Although the Value parameter accepts numbers of type Double, CloudWatch rejects
 // values that are either too small or too large. Values must be in the range
-// of 8.515920e-109 to 1.174271e+108 (Base 10) or 2e-360 to 2e360 (Base 2).
-// In addition, special values (for example, NaN, +Infinity, -Infinity) are
-// not supported.
+// of -2^360 to 2^360. In addition, special values (for example, NaN, +Infinity,
+// -Infinity) are not supported.
 //
 // You can use up to 10 dimensions per metric to further clarify what data the
 // metric collects. Each dimension consists of a Name and Value pair. For more
@@ -2304,19 +2917,20 @@ func (c *CloudWatch) TagResourceRequest(input *TagResourceInput) (req *request.R
 // TagResource API operation for Amazon CloudWatch.
 //
 // Assigns one or more tags (key-value pairs) to the specified CloudWatch resource.
+// Currently, the only CloudWatch resources that can be tagged are alarms.
+//
 // Tags can help you organize and categorize your resources. You can also use
 // them to scope user permissions, by granting a user permission to access or
-// change only resources with certain tag values. In CloudWatch, alarms can
-// be tagged.
+// change only resources with certain tag values.
 //
 // Tags don't have any semantic meaning to AWS and are interpreted strictly
 // as strings of characters.
 //
-// You can use the TagResource action with a resource that already has tags.
-// If you specify a new tag key for the resource, this tag is appended to the
-// list of tags associated with the resource. If you specify a tag key that
-// is already associated with the resource, the new tag value that you specify
-// replaces the previous value for that tag.
+// You can use the TagResource action with an alarm that already has tags. If
+// you specify a new tag key for the alarm, this tag is appended to the list
+// of tags associated with the alarm. If you specify a tag key that is already
+// associated with the alarm, the new tag value that you specify replaces the
+// previous value for that tag.
 //
 // You can associate as many as 50 tags with a resource.
 //
@@ -2512,7 +3126,7 @@ func (s *AlarmHistoryItem) SetTimestamp(v time.Time) *AlarmHistoryItem {
 }
 
 // An anomaly detection model associated with a particular CloudWatch metric
-// athresnd statistic. You can use the model to display a band of expected normal
+// and statistic. You can use the model to display a band of expected normal
 // values when the metric is graphed.
 type AnomalyDetector struct {
 	_ struct{} `type:"structure"`
@@ -3019,6 +3633,69 @@ func (s DeleteDashboardsOutput) String() string {
 // GoString returns the string representation
 func (s DeleteDashboardsOutput) GoString() string {
 	return s.String()
+}
+
+type DeleteInsightRulesInput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of the rule names to delete. If you need to find out the names of
+	// your rules, use DescribeInsightRules.
+	//
+	// RuleNames is a required field
+	RuleNames []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteInsightRulesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteInsightRulesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteInsightRulesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteInsightRulesInput"}
+	if s.RuleNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleNames"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRuleNames sets the RuleNames field's value.
+func (s *DeleteInsightRulesInput) SetRuleNames(v []*string) *DeleteInsightRulesInput {
+	s.RuleNames = v
+	return s
+}
+
+type DeleteInsightRulesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An array listing the rules that could not be deleted. You cannot delete built-in
+	// rules.
+	Failures []*PartialFailure `type:"list"`
+}
+
+// String returns the string representation
+func (s DeleteInsightRulesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteInsightRulesOutput) GoString() string {
+	return s.String()
+}
+
+// SetFailures sets the Failures field's value.
+func (s *DeleteInsightRulesOutput) SetFailures(v []*PartialFailure) *DeleteInsightRulesOutput {
+	s.Failures = v
+	return s
 }
 
 type DescribeAlarmHistoryInput struct {
@@ -3533,6 +4210,84 @@ func (s *DescribeAnomalyDetectorsOutput) SetNextToken(v string) *DescribeAnomaly
 	return s
 }
 
+type DescribeInsightRulesInput struct {
+	_ struct{} `type:"structure"`
+
+	// This parameter is not currently used. Reserved for future use. If it is used
+	// in the future, the maximum value may be different.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// Reserved for future use.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeInsightRulesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeInsightRulesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeInsightRulesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeInsightRulesInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeInsightRulesInput) SetMaxResults(v int64) *DescribeInsightRulesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeInsightRulesInput) SetNextToken(v string) *DescribeInsightRulesInput {
+	s.NextToken = &v
+	return s
+}
+
+type DescribeInsightRulesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The rules returned by the operation.
+	InsightRules []*InsightRule `type:"list"`
+
+	// Reserved for future use.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeInsightRulesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeInsightRulesOutput) GoString() string {
+	return s.String()
+}
+
+// SetInsightRules sets the InsightRules field's value.
+func (s *DescribeInsightRulesOutput) SetInsightRules(v []*InsightRule) *DescribeInsightRulesOutput {
+	s.InsightRules = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeInsightRulesOutput) SetNextToken(v string) *DescribeInsightRulesOutput {
+	s.NextToken = &v
+	return s
+}
+
 // Expands the identity of a metric.
 type Dimension struct {
 	_ struct{} `type:"structure"`
@@ -3698,6 +4453,69 @@ func (s DisableAlarmActionsOutput) GoString() string {
 	return s.String()
 }
 
+type DisableInsightRulesInput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of the rule names to disable. If you need to find out the names
+	// of your rules, use DescribeInsightRules.
+	//
+	// RuleNames is a required field
+	RuleNames []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s DisableInsightRulesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisableInsightRulesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DisableInsightRulesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DisableInsightRulesInput"}
+	if s.RuleNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleNames"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRuleNames sets the RuleNames field's value.
+func (s *DisableInsightRulesInput) SetRuleNames(v []*string) *DisableInsightRulesInput {
+	s.RuleNames = v
+	return s
+}
+
+type DisableInsightRulesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An array listing the rules that could not be disabled. You cannot disable
+	// built-in rules.
+	Failures []*PartialFailure `type:"list"`
+}
+
+// String returns the string representation
+func (s DisableInsightRulesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisableInsightRulesOutput) GoString() string {
+	return s.String()
+}
+
+// SetFailures sets the Failures field's value.
+func (s *DisableInsightRulesOutput) SetFailures(v []*PartialFailure) *DisableInsightRulesOutput {
+	s.Failures = v
+	return s
+}
+
 type EnableAlarmActionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3748,6 +4566,69 @@ func (s EnableAlarmActionsOutput) String() string {
 // GoString returns the string representation
 func (s EnableAlarmActionsOutput) GoString() string {
 	return s.String()
+}
+
+type EnableInsightRulesInput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of the rule names to enable. If you need to find out the names of
+	// your rules, use DescribeInsightRules.
+	//
+	// RuleNames is a required field
+	RuleNames []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s EnableInsightRulesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EnableInsightRulesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EnableInsightRulesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EnableInsightRulesInput"}
+	if s.RuleNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleNames"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRuleNames sets the RuleNames field's value.
+func (s *EnableInsightRulesInput) SetRuleNames(v []*string) *EnableInsightRulesInput {
+	s.RuleNames = v
+	return s
+}
+
+type EnableInsightRulesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An array listing the rules that could not be enabled. You cannot disable
+	// or enable built-in rules.
+	Failures []*PartialFailure `type:"list"`
+}
+
+// String returns the string representation
+func (s EnableInsightRulesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EnableInsightRulesOutput) GoString() string {
+	return s.String()
+}
+
+// SetFailures sets the Failures field's value.
+func (s *EnableInsightRulesOutput) SetFailures(v []*PartialFailure) *EnableInsightRulesOutput {
+	s.Failures = v
+	return s
 }
 
 type GetDashboardInput struct {
@@ -3828,6 +4709,228 @@ func (s *GetDashboardOutput) SetDashboardBody(v string) *GetDashboardOutput {
 // SetDashboardName sets the DashboardName field's value.
 func (s *GetDashboardOutput) SetDashboardName(v string) *GetDashboardOutput {
 	s.DashboardName = &v
+	return s
+}
+
+type GetInsightRuleReportInput struct {
+	_ struct{} `type:"structure"`
+
+	// The end time of the data to use in the report. When used in a raw HTTP Query
+	// API, it is formatted as yyyy-MM-dd'T'HH:mm:ss. For example, 2019-07-01T23:59:59.
+	//
+	// EndTime is a required field
+	EndTime *time.Time `type:"timestamp" required:"true"`
+
+	// The maximum number of contributors to include in the report. The range is
+	// 1 to 100. If you omit this, the default of 10 is used.
+	MaxContributorCount *int64 `type:"integer"`
+
+	// Specifies which metrics to use for aggregation of contributor values for
+	// the report. You can specify one or more of the following metrics:
+	//
+	//    * UniqueContributors -- the number of unique contributors for each data
+	//    point.
+	//
+	//    * MaxContributorValue -- the value of the top contributor for each data
+	//    point. The identity of the contributor may change for each data point
+	//    in the graph. If this rule aggregates by COUNT, the top contributor for
+	//    each data point is the contributor with the most occurrences in that period.
+	//    If the rule aggregates by SUM, the top contributor is the contributor
+	//    with the highest sum in the log field specified by the rule's Value, during
+	//    that period.
+	//
+	//    * SampleCount -- the number of data points matched by the rule.
+	//
+	//    * Sum -- the sum of the values from all contributors during the time period
+	//    represented by that data point.
+	//
+	//    * Minimum -- the minimum value from a single observation during the time
+	//    period represented by that data point.
+	//
+	//    * Maximum -- the maximum value from a single observation during the time
+	//    period represented by that data point.
+	//
+	//    * Average -- the average value from all contributors during the time period
+	//    represented by that data point.
+	Metrics []*string `type:"list"`
+
+	// Determines what statistic to use to rank the contributors. Valid values are
+	// SUM and MAXIMUM.
+	OrderBy *string `min:"1" type:"string"`
+
+	// The period, in seconds, to use for the statistics in the InsightRuleMetricDatapoint
+	// results.
+	//
+	// Period is a required field
+	Period *int64 `min:"1" type:"integer" required:"true"`
+
+	// The name of the rule that you want to see data from.
+	//
+	// RuleName is a required field
+	RuleName *string `min:"1" type:"string" required:"true"`
+
+	// The start time of the data to use in the report. When used in a raw HTTP
+	// Query API, it is formatted as yyyy-MM-dd'T'HH:mm:ss. For example, 2019-07-01T23:59:59.
+	//
+	// StartTime is a required field
+	StartTime *time.Time `type:"timestamp" required:"true"`
+}
+
+// String returns the string representation
+func (s GetInsightRuleReportInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetInsightRuleReportInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetInsightRuleReportInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetInsightRuleReportInput"}
+	if s.EndTime == nil {
+		invalidParams.Add(request.NewErrParamRequired("EndTime"))
+	}
+	if s.OrderBy != nil && len(*s.OrderBy) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("OrderBy", 1))
+	}
+	if s.Period == nil {
+		invalidParams.Add(request.NewErrParamRequired("Period"))
+	}
+	if s.Period != nil && *s.Period < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Period", 1))
+	}
+	if s.RuleName == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleName"))
+	}
+	if s.RuleName != nil && len(*s.RuleName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RuleName", 1))
+	}
+	if s.StartTime == nil {
+		invalidParams.Add(request.NewErrParamRequired("StartTime"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *GetInsightRuleReportInput) SetEndTime(v time.Time) *GetInsightRuleReportInput {
+	s.EndTime = &v
+	return s
+}
+
+// SetMaxContributorCount sets the MaxContributorCount field's value.
+func (s *GetInsightRuleReportInput) SetMaxContributorCount(v int64) *GetInsightRuleReportInput {
+	s.MaxContributorCount = &v
+	return s
+}
+
+// SetMetrics sets the Metrics field's value.
+func (s *GetInsightRuleReportInput) SetMetrics(v []*string) *GetInsightRuleReportInput {
+	s.Metrics = v
+	return s
+}
+
+// SetOrderBy sets the OrderBy field's value.
+func (s *GetInsightRuleReportInput) SetOrderBy(v string) *GetInsightRuleReportInput {
+	s.OrderBy = &v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *GetInsightRuleReportInput) SetPeriod(v int64) *GetInsightRuleReportInput {
+	s.Period = &v
+	return s
+}
+
+// SetRuleName sets the RuleName field's value.
+func (s *GetInsightRuleReportInput) SetRuleName(v string) *GetInsightRuleReportInput {
+	s.RuleName = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *GetInsightRuleReportInput) SetStartTime(v time.Time) *GetInsightRuleReportInput {
+	s.StartTime = &v
+	return s
+}
+
+type GetInsightRuleReportOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The sum of the values from all individual contributors that match the rule.
+	AggregateValue *float64 `type:"double"`
+
+	// Specifies whether this rule aggregates contributor data by COUNT or SUM.
+	AggregationStatistic *string `type:"string"`
+
+	// An approximate count of the unique contributors found by this rule in this
+	// time period.
+	ApproximateUniqueCount *int64 `type:"long"`
+
+	// An array of the unique contributors found by this rule in this time period.
+	// If the rule contains multiple keys, each combination of values for the keys
+	// counts as a unique contributor.
+	Contributors []*InsightRuleContributor `type:"list"`
+
+	// An array of the strings used as the keys for this rule. The keys are the
+	// dimensions used to classify contributors. If the rule contains more than
+	// one key, then each unique combination of values for the keys is counted as
+	// a unique contributor.
+	KeyLabels []*string `type:"list"`
+
+	// A time series of metric data points that matches the time period in the rule
+	// request.
+	MetricDatapoints []*InsightRuleMetricDatapoint `type:"list"`
+}
+
+// String returns the string representation
+func (s GetInsightRuleReportOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetInsightRuleReportOutput) GoString() string {
+	return s.String()
+}
+
+// SetAggregateValue sets the AggregateValue field's value.
+func (s *GetInsightRuleReportOutput) SetAggregateValue(v float64) *GetInsightRuleReportOutput {
+	s.AggregateValue = &v
+	return s
+}
+
+// SetAggregationStatistic sets the AggregationStatistic field's value.
+func (s *GetInsightRuleReportOutput) SetAggregationStatistic(v string) *GetInsightRuleReportOutput {
+	s.AggregationStatistic = &v
+	return s
+}
+
+// SetApproximateUniqueCount sets the ApproximateUniqueCount field's value.
+func (s *GetInsightRuleReportOutput) SetApproximateUniqueCount(v int64) *GetInsightRuleReportOutput {
+	s.ApproximateUniqueCount = &v
+	return s
+}
+
+// SetContributors sets the Contributors field's value.
+func (s *GetInsightRuleReportOutput) SetContributors(v []*InsightRuleContributor) *GetInsightRuleReportOutput {
+	s.Contributors = v
+	return s
+}
+
+// SetKeyLabels sets the KeyLabels field's value.
+func (s *GetInsightRuleReportOutput) SetKeyLabels(v []*string) *GetInsightRuleReportOutput {
+	s.KeyLabels = v
+	return s
+}
+
+// SetMetricDatapoints sets the MetricDatapoints field's value.
+func (s *GetInsightRuleReportOutput) SetMetricDatapoints(v []*InsightRuleMetricDatapoint) *GetInsightRuleReportOutput {
+	s.MetricDatapoints = v
 	return s
 }
 
@@ -4045,7 +5148,8 @@ type GetMetricStatisticsInput struct {
 	// The time stamp that determines the last data point to return.
 	//
 	// The value specified is exclusive; results include data points up to the specified
-	// time stamp. The time stamp must be in ISO 8601 UTC format (for example, 2016-10-10T23:00:00Z).
+	// time stamp. In a raw HTTP query, the time stamp must be in ISO 8601 UTC format
+	// (for example, 2016-10-10T23:00:00Z).
 	//
 	// EndTime is a required field
 	EndTime *time.Time `type:"timestamp" required:"true"`
@@ -4093,7 +5197,8 @@ type GetMetricStatisticsInput struct {
 	// are evaluated relative to the time that CloudWatch receives the request.
 	//
 	// The value specified is inclusive; results include data points with the specified
-	// time stamp. The time stamp must be in ISO 8601 UTC format (for example, 2016-10-03T23:00:00Z).
+	// time stamp. In a raw HTTP query, the time stamp must be in ISO 8601 UTC format
+	// (for example, 2016-10-03T23:00:00Z).
 	//
 	// CloudWatch rounds the specified time stamp as follows:
 	//
@@ -4383,6 +5488,284 @@ func (s GetMetricWidgetImageOutput) GoString() string {
 // SetMetricWidgetImage sets the MetricWidgetImage field's value.
 func (s *GetMetricWidgetImageOutput) SetMetricWidgetImage(v []byte) *GetMetricWidgetImageOutput {
 	s.MetricWidgetImage = v
+	return s
+}
+
+// This structure contains the definition for a Contributor Insights rule.
+type InsightRule struct {
+	_ struct{} `type:"structure"`
+
+	// The definition of the rule, as a JSON object. The definition contains the
+	// keywords used to define contributors, the value to aggregate on if this rule
+	// returns a sum instead of a count, and the filters. For details on the valid
+	// syntax, see Contributor Insights Rule Syntax (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights-RuleSyntax.html).
+	//
+	// Definition is a required field
+	Definition *string `min:"1" type:"string" required:"true"`
+
+	// The name of the rule.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+
+	// For rules that you create, this is always {"Name": "CloudWatchLogRule", "Version":
+	// 1}. For built-in rules, this is {"Name": "ServiceLogRule", "Version": 1}
+	//
+	// Schema is a required field
+	Schema *string `type:"string" required:"true"`
+
+	// Indicates whether the rule is enabled or disabled.
+	//
+	// State is a required field
+	State *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s InsightRule) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InsightRule) GoString() string {
+	return s.String()
+}
+
+// SetDefinition sets the Definition field's value.
+func (s *InsightRule) SetDefinition(v string) *InsightRule {
+	s.Definition = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *InsightRule) SetName(v string) *InsightRule {
+	s.Name = &v
+	return s
+}
+
+// SetSchema sets the Schema field's value.
+func (s *InsightRule) SetSchema(v string) *InsightRule {
+	s.Schema = &v
+	return s
+}
+
+// SetState sets the State field's value.
+func (s *InsightRule) SetState(v string) *InsightRule {
+	s.State = &v
+	return s
+}
+
+// One of the unique contributors found by a Contributor Insights rule. If the
+// rule contains multiple keys, then a unique contributor is a unique combination
+// of values from all the keys in the rule.
+//
+// If the rule contains a single key, then each unique contributor is each unique
+// value for this key.
+//
+// For more information, see GetInsightRuleReport.
+type InsightRuleContributor struct {
+	_ struct{} `type:"structure"`
+
+	// An approximation of the aggregate value that comes from this contributor.
+	//
+	// ApproximateAggregateValue is a required field
+	ApproximateAggregateValue *float64 `type:"double" required:"true"`
+
+	// An array of the data points where this contributor is present. Only the data
+	// points when this contributor appeared are included in the array.
+	//
+	// Datapoints is a required field
+	Datapoints []*InsightRuleContributorDatapoint `type:"list" required:"true"`
+
+	// One of the log entry field keywords that is used to define contributors for
+	// this rule.
+	//
+	// Keys is a required field
+	Keys []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s InsightRuleContributor) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InsightRuleContributor) GoString() string {
+	return s.String()
+}
+
+// SetApproximateAggregateValue sets the ApproximateAggregateValue field's value.
+func (s *InsightRuleContributor) SetApproximateAggregateValue(v float64) *InsightRuleContributor {
+	s.ApproximateAggregateValue = &v
+	return s
+}
+
+// SetDatapoints sets the Datapoints field's value.
+func (s *InsightRuleContributor) SetDatapoints(v []*InsightRuleContributorDatapoint) *InsightRuleContributor {
+	s.Datapoints = v
+	return s
+}
+
+// SetKeys sets the Keys field's value.
+func (s *InsightRuleContributor) SetKeys(v []*string) *InsightRuleContributor {
+	s.Keys = v
+	return s
+}
+
+// One data point related to one contributor.
+//
+// For more information, see GetInsightRuleReport and InsightRuleContributor.
+type InsightRuleContributorDatapoint struct {
+	_ struct{} `type:"structure"`
+
+	// The approximate value that this contributor added during this timestamp.
+	//
+	// ApproximateValue is a required field
+	ApproximateValue *float64 `type:"double" required:"true"`
+
+	// The timestamp of the data point.
+	//
+	// Timestamp is a required field
+	Timestamp *time.Time `type:"timestamp" required:"true"`
+}
+
+// String returns the string representation
+func (s InsightRuleContributorDatapoint) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InsightRuleContributorDatapoint) GoString() string {
+	return s.String()
+}
+
+// SetApproximateValue sets the ApproximateValue field's value.
+func (s *InsightRuleContributorDatapoint) SetApproximateValue(v float64) *InsightRuleContributorDatapoint {
+	s.ApproximateValue = &v
+	return s
+}
+
+// SetTimestamp sets the Timestamp field's value.
+func (s *InsightRuleContributorDatapoint) SetTimestamp(v time.Time) *InsightRuleContributorDatapoint {
+	s.Timestamp = &v
+	return s
+}
+
+// One data point from the metric time series returned in a Contributor Insights
+// rule report.
+//
+// For more information, see GetInsightRuleReport.
+type InsightRuleMetricDatapoint struct {
+	_ struct{} `type:"structure"`
+
+	// The average value from all contributors during the time period represented
+	// by that data point.
+	//
+	// This statistic is returned only if you included it in the Metrics array in
+	// your request.
+	Average *float64 `type:"double"`
+
+	// The maximum value provided by one contributor during this timestamp. Each
+	// timestamp is evaluated separately, so the identity of the max contributor
+	// could be different for each timestamp.
+	//
+	// This statistic is returned only if you included it in the Metrics array in
+	// your request.
+	MaxContributorValue *float64 `type:"double"`
+
+	// The maximum value from a single occurence from a single contributor during
+	// the time period represented by that data point.
+	//
+	// This statistic is returned only if you included it in the Metrics array in
+	// your request.
+	Maximum *float64 `type:"double"`
+
+	// The minimum value from a single contributor during the time period represented
+	// by that data point.
+	//
+	// This statistic is returned only if you included it in the Metrics array in
+	// your request.
+	Minimum *float64 `type:"double"`
+
+	// The number of occurrences that matched the rule during this data point.
+	//
+	// This statistic is returned only if you included it in the Metrics array in
+	// your request.
+	SampleCount *float64 `type:"double"`
+
+	// The sum of the values from all contributors during the time period represented
+	// by that data point.
+	//
+	// This statistic is returned only if you included it in the Metrics array in
+	// your request.
+	Sum *float64 `type:"double"`
+
+	// The timestamp of the data point.
+	//
+	// Timestamp is a required field
+	Timestamp *time.Time `type:"timestamp" required:"true"`
+
+	// The number of unique contributors who published data during this timestamp.
+	//
+	// This statistic is returned only if you included it in the Metrics array in
+	// your request.
+	UniqueContributors *float64 `type:"double"`
+}
+
+// String returns the string representation
+func (s InsightRuleMetricDatapoint) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InsightRuleMetricDatapoint) GoString() string {
+	return s.String()
+}
+
+// SetAverage sets the Average field's value.
+func (s *InsightRuleMetricDatapoint) SetAverage(v float64) *InsightRuleMetricDatapoint {
+	s.Average = &v
+	return s
+}
+
+// SetMaxContributorValue sets the MaxContributorValue field's value.
+func (s *InsightRuleMetricDatapoint) SetMaxContributorValue(v float64) *InsightRuleMetricDatapoint {
+	s.MaxContributorValue = &v
+	return s
+}
+
+// SetMaximum sets the Maximum field's value.
+func (s *InsightRuleMetricDatapoint) SetMaximum(v float64) *InsightRuleMetricDatapoint {
+	s.Maximum = &v
+	return s
+}
+
+// SetMinimum sets the Minimum field's value.
+func (s *InsightRuleMetricDatapoint) SetMinimum(v float64) *InsightRuleMetricDatapoint {
+	s.Minimum = &v
+	return s
+}
+
+// SetSampleCount sets the SampleCount field's value.
+func (s *InsightRuleMetricDatapoint) SetSampleCount(v float64) *InsightRuleMetricDatapoint {
+	s.SampleCount = &v
+	return s
+}
+
+// SetSum sets the Sum field's value.
+func (s *InsightRuleMetricDatapoint) SetSum(v float64) *InsightRuleMetricDatapoint {
+	s.Sum = &v
+	return s
+}
+
+// SetTimestamp sets the Timestamp field's value.
+func (s *InsightRuleMetricDatapoint) SetTimestamp(v time.Time) *InsightRuleMetricDatapoint {
+	s.Timestamp = &v
+	return s
+}
+
+// SetUniqueContributors sets the UniqueContributors field's value.
+func (s *InsightRuleMetricDatapoint) SetUniqueContributors(v float64) *InsightRuleMetricDatapoint {
+	s.UniqueContributors = &v
 	return s
 }
 
@@ -4757,7 +6140,7 @@ type MetricAlarm struct {
 	// threshold. The specified statistic value is used as the first operand.
 	ComparisonOperator *string `type:"string" enum:"ComparisonOperator"`
 
-	// The number of datapoints that must be breaching to trigger the alarm.
+	// The number of data points that must be breaching to trigger the alarm.
 	DatapointsToAlarm *int64 `min:"1" type:"integer"`
 
 	// The dimensions for the metric associated with the alarm.
@@ -5068,6 +6451,18 @@ type MetricDataQuery struct {
 	// MetricStat but not both.
 	MetricStat *MetricStat `type:"structure"`
 
+	// The granularity, in seconds, of the returned data points. For metrics with
+	// regular resolution, a period can be as short as one minute (60 seconds) and
+	// must be a multiple of 60. For high-resolution metrics that are collected
+	// at intervals of less than one minute, the period can be 1, 5, 10, 30, 60,
+	// or any multiple of 60. High-resolution metrics are those metrics stored by
+	// a PutMetricData operation that includes a StorageResolution of 1 second.
+	//
+	// If you are performing a GetMetricData operation, use this field only if you
+	// are specifying an Expression. Do not use this field when you are specifying
+	// a MetricStat in a GetMetricData operation.
+	Period *int64 `min:"1" type:"integer"`
+
 	// When used in GetMetricData, this option indicates whether to return the timestamps
 	// and raw data values of this metric. If you are performing this call just
 	// to do math expressions and do not also need the raw data returned, you can
@@ -5100,6 +6495,9 @@ func (s *MetricDataQuery) Validate() error {
 	}
 	if s.Id != nil && len(*s.Id) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
+	if s.Period != nil && *s.Period < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Period", 1))
 	}
 	if s.MetricStat != nil {
 		if err := s.MetricStat.Validate(); err != nil {
@@ -5134,6 +6532,12 @@ func (s *MetricDataQuery) SetLabel(v string) *MetricDataQuery {
 // SetMetricStat sets the MetricStat field's value.
 func (s *MetricDataQuery) SetMetricStat(v *MetricStat) *MetricDataQuery {
 	s.MetricStat = v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *MetricDataQuery) SetPeriod(v int64) *MetricDataQuery {
+	s.Period = &v
 	return s
 }
 
@@ -5273,9 +6677,8 @@ type MetricDatum struct {
 	//
 	// Although the parameter accepts numbers of type Double, CloudWatch rejects
 	// values that are either too small or too large. Values must be in the range
-	// of 8.515920e-109 to 1.174271e+108 (Base 10) or 2e-360 to 2e360 (Base 2).
-	// In addition, special values (for example, NaN, +Infinity, -Infinity) are
-	// not supported.
+	// of -2^360 to 2^360. In addition, special values (for example, NaN, +Infinity,
+	// -Infinity) are not supported.
 	Value *float64 `type:"double"`
 
 	// Array of numbers representing the values for the metric during the period.
@@ -5286,9 +6689,8 @@ type MetricDatum struct {
 	//
 	// Although the Values array accepts numbers of type Double, CloudWatch rejects
 	// values that are either too small or too large. Values must be in the range
-	// of 8.515920e-109 to 1.174271e+108 (Base 10) or 2e-360 to 2e360 (Base 2).
-	// In addition, special values (for example, NaN, +Infinity, -Infinity) are
-	// not supported.
+	// of -2^360 to 2^360. In addition, special values (for example, NaN, +Infinity,
+	// -Infinity) are not supported.
 	Values []*float64 `type:"list"`
 }
 
@@ -5400,7 +6802,25 @@ type MetricStat struct {
 	// Metric is a required field
 	Metric *Metric `type:"structure" required:"true"`
 
-	// The period, in seconds, to use when retrieving the metric.
+	// The granularity, in seconds, of the returned data points. For metrics with
+	// regular resolution, a period can be as short as one minute (60 seconds) and
+	// must be a multiple of 60. For high-resolution metrics that are collected
+	// at intervals of less than one minute, the period can be 1, 5, 10, 30, 60,
+	// or any multiple of 60. High-resolution metrics are those metrics stored by
+	// a PutMetricData call that includes a StorageResolution of 1 second.
+	//
+	// If the StartTime parameter specifies a time stamp that is greater than 3
+	// hours ago, you must specify the period as follows or no data points in that
+	// time range is returned:
+	//
+	//    * Start time between 3 hours and 15 days ago - Use a multiple of 60 seconds
+	//    (1 minute).
+	//
+	//    * Start time between 15 and 63 days ago - Use a multiple of 300 seconds
+	//    (5 minutes).
+	//
+	//    * Start time greater than 63 days ago - Use a multiple of 3600 seconds
+	//    (1 hour).
 	//
 	// Period is a required field
 	Period *int64 `min:"1" type:"integer" required:"true"`
@@ -5481,6 +6901,59 @@ func (s *MetricStat) SetStat(v string) *MetricStat {
 // SetUnit sets the Unit field's value.
 func (s *MetricStat) SetUnit(v string) *MetricStat {
 	s.Unit = &v
+	return s
+}
+
+// This array is empty if the API operation was successful for all the rules
+// specified in the request. If the operation could not process one of the rules,
+// the following data is returned for each of those rules.
+type PartialFailure struct {
+	_ struct{} `type:"structure"`
+
+	// The type of error.
+	ExceptionType *string `type:"string"`
+
+	// The code of the error.
+	FailureCode *string `type:"string"`
+
+	// A description of the error.
+	FailureDescription *string `type:"string"`
+
+	// The specified rule that could not be deleted.
+	FailureResource *string `type:"string"`
+}
+
+// String returns the string representation
+func (s PartialFailure) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PartialFailure) GoString() string {
+	return s.String()
+}
+
+// SetExceptionType sets the ExceptionType field's value.
+func (s *PartialFailure) SetExceptionType(v string) *PartialFailure {
+	s.ExceptionType = &v
+	return s
+}
+
+// SetFailureCode sets the FailureCode field's value.
+func (s *PartialFailure) SetFailureCode(v string) *PartialFailure {
+	s.FailureCode = &v
+	return s
+}
+
+// SetFailureDescription sets the FailureDescription field's value.
+func (s *PartialFailure) SetFailureDescription(v string) *PartialFailure {
+	s.FailureDescription = &v
+	return s
+}
+
+// SetFailureResource sets the FailureResource field's value.
+func (s *PartialFailure) SetFailureResource(v string) *PartialFailure {
+	s.FailureResource = &v
 	return s
 }
 
@@ -5699,6 +7172,91 @@ func (s *PutDashboardOutput) SetDashboardValidationMessages(v []*DashboardValida
 	return s
 }
 
+type PutInsightRuleInput struct {
+	_ struct{} `type:"structure"`
+
+	// The definition of the rule, as a JSON object. For details on the valid syntax,
+	// see Contributor Insights Rule Syntax (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContributorInsights-RuleSyntax.html).
+	//
+	// RuleDefinition is a required field
+	RuleDefinition *string `min:"1" type:"string" required:"true"`
+
+	// A unique name for the rule.
+	//
+	// RuleName is a required field
+	RuleName *string `min:"1" type:"string" required:"true"`
+
+	// The state of the rule. Valid values are ENABLED and DISABLED.
+	RuleState *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s PutInsightRuleInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutInsightRuleInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutInsightRuleInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutInsightRuleInput"}
+	if s.RuleDefinition == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleDefinition"))
+	}
+	if s.RuleDefinition != nil && len(*s.RuleDefinition) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RuleDefinition", 1))
+	}
+	if s.RuleName == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleName"))
+	}
+	if s.RuleName != nil && len(*s.RuleName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RuleName", 1))
+	}
+	if s.RuleState != nil && len(*s.RuleState) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RuleState", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRuleDefinition sets the RuleDefinition field's value.
+func (s *PutInsightRuleInput) SetRuleDefinition(v string) *PutInsightRuleInput {
+	s.RuleDefinition = &v
+	return s
+}
+
+// SetRuleName sets the RuleName field's value.
+func (s *PutInsightRuleInput) SetRuleName(v string) *PutInsightRuleInput {
+	s.RuleName = &v
+	return s
+}
+
+// SetRuleState sets the RuleState field's value.
+func (s *PutInsightRuleInput) SetRuleState(v string) *PutInsightRuleInput {
+	s.RuleState = &v
+	return s
+}
+
+type PutInsightRuleOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s PutInsightRuleOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutInsightRuleOutput) GoString() string {
+	return s.String()
+}
+
 type PutMetricAlarmInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5736,7 +7294,7 @@ type PutMetricAlarmInput struct {
 	// ComparisonOperator is a required field
 	ComparisonOperator *string `type:"string" required:"true" enum:"ComparisonOperator"`
 
-	// The number of datapoints that must be breaching to trigger the alarm. This
+	// The number of data points that must be breaching to trigger the alarm. This
 	// is used only if you are setting an "M out of N" alarm. In that case, this
 	// value is the M. For more information, see Evaluating an Alarm (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarm-evaluation)
 	// in the Amazon CloudWatch User Guide.
@@ -6509,14 +8067,13 @@ func (s *Tag) SetValue(v string) *Tag {
 type TagResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the CloudWatch resource that you're adding tags to. For more information
-	// on ARN format, see Example ARNs (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-cloudwatch)
-	// in the Amazon Web Services General Reference.
+	// The ARN of the CloudWatch alarm that you're adding tags to. The ARN format
+	// is arn:aws:cloudwatch:Region:account-id:alarm:alarm-name
 	//
 	// ResourceARN is a required field
 	ResourceARN *string `min:"1" type:"string" required:"true"`
 
-	// The list of key-value pairs to associate with the resource.
+	// The list of key-value pairs to associate with the alarm.
 	//
 	// Tags is a required field
 	Tags []*Tag `type:"list" required:"true"`

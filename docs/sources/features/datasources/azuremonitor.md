@@ -3,7 +3,7 @@ title = "Using Azure Monitor in Grafana"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
 type = "docs"
-aliases = ["/datasources/azuremonitor"]
+aliases = ["/docs/grafana/latest/datasources/azuremonitor"]
 [menu.docs]
 name = "Azure Monitor"
 parent = "datasources"
@@ -24,7 +24,7 @@ The Azure Monitor data source supports multiple services in the Azure cloud:
 - **[Application Insights Analytics]({{< relref "#writing-analytics-queries-for-the-application-insights-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
 - **[Azure Resource Graph]({{< relref "#querying-resource-graph" >}})** allows you to query [Azure Resource Graph](https://azure.microsoft.com/en-gb/features/resource-graph/)
 
-## Adding the data source to Grafana
+## Adding the data source
 
 The data source can access metrics from four different services. You can configure access to the services that you use. It is also possible to use the same credentials for multiple services if that is how you have set it up in Azure AD.
 
@@ -150,7 +150,7 @@ Examples:
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Azure Monitor Metrics Whitelist
@@ -159,7 +159,7 @@ Not all metrics returned by the Azure Monitor API have values. The Grafana data 
 
 ### Azure Monitor Alerting
 
-Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. Read more about how alerting in Grafana works [here]({{< relref "alerting/rules.md" >}}).
+Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. Read more about how alerting in Grafana works [here]({{< relref "../../alerting/rules.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
@@ -202,7 +202,7 @@ Examples:
 
 Use the one of the following queries in the `Query` field in the Variable edit view.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 | Name                               | Description                                                |
@@ -220,7 +220,7 @@ Examples:
 
 ### Application Insights Alerting
 
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works [here]({{< relref "alerting/rules.md" >}}).
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works [here]({{< relref "../../alerting/rules.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 

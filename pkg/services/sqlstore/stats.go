@@ -95,12 +95,12 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 func roleCounterSQL(role, alias string) string {
 	return `
 		(
-			SELECT COUNT(*)
+			SELECT COUNT(DISTINCT u.id)
 			FROM ` + dialect.Quote("user") + ` as u, org_user
 			WHERE ( org_user.user_id=u.id AND org_user.role='` + role + `' )
 		) as ` + alias + `,
 		(
-			SELECT COUNT(*)
+			SELECT COUNT(DISTINCT u.id)
 			FROM ` + dialect.Quote("user") + ` as u, org_user
 			WHERE u.last_seen_at>? AND ( org_user.user_id=u.id AND org_user.role='` + role + `' )
 		) as active_` + alias

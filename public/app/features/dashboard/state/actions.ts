@@ -1,41 +1,42 @@
 // Services & Utils
+import { createAction } from '@reduxjs/toolkit';
 import { getBackendSrv } from '@grafana/runtime';
-import { actionCreatorFactory } from 'app/core/redux';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
 import { notifyApp } from 'app/core/actions';
 // Types
 import {
-  ThunkResult,
   DashboardAcl,
   DashboardAclDTO,
-  PermissionLevel,
   DashboardAclUpdateDTO,
-  NewDashboardAclItem,
-  MutableDashboard,
   DashboardInitError,
+  MutableDashboard,
+  NewDashboardAclItem,
+  PermissionLevel,
+  ThunkResult,
 } from 'app/types';
+import { DataQuery } from '@grafana/data';
 
-export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
+export const loadDashboardPermissions = createAction<DashboardAclDTO[]>('dashboard/loadDashboardPermissions');
 
-export const dashboardInitFetching = actionCreatorFactory('DASHBOARD_INIT_FETCHING').create();
+export const dashboardInitFetching = createAction('dashboard/dashboardInitFetching');
 
-export const dashboardInitServices = actionCreatorFactory('DASHBOARD_INIT_SERVICES').create();
+export const dashboardInitServices = createAction('dashboard/dashboardInitServices');
 
-export const dashboardInitSlow = actionCreatorFactory('SET_DASHBOARD_INIT_SLOW').create();
+export const dashboardInitSlow = createAction('dashboard/dashboardInitSlow');
 
-export const dashboardInitCompleted = actionCreatorFactory<MutableDashboard>('DASHBOARD_INIT_COMLETED').create();
+export const dashboardInitCompleted = createAction<MutableDashboard>('dashboard/dashboardInitCompleted');
 
 /*
  * Unrecoverable init failure (fetch or model creation failed)
  */
-export const dashboardInitFailed = actionCreatorFactory<DashboardInitError>('DASHBOARD_INIT_FAILED').create();
+export const dashboardInitFailed = createAction<DashboardInitError>('dashboard/dashboardInitFailed');
 
 /*
  * When leaving dashboard, resets state
  * */
-export const cleanUpDashboard = actionCreatorFactory('DASHBOARD_CLEAN_UP').create();
+export const cleanUpDashboard = createAction('dashboard/cleanUpDashboard');
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {
@@ -52,6 +53,21 @@ function toUpdateItem(item: DashboardAcl): DashboardAclUpdateDTO {
     permission: item.permission,
   };
 }
+
+interface SetDashboardQueriesToUpdatePayload {
+  panelId: number;
+  queries: DataQuery[];
+}
+
+export const clearDashboardQueriesToUpdate = createAction('dashboard/clearDashboardQueriesToUpdate');
+export const setDashboardQueriesToUpdate = createAction<SetDashboardQueriesToUpdatePayload>(
+  'dashboard/setDashboardQueriesToUpdate'
+);
+export const setDashboardQueriesToUpdateOnLoad = (panelId: number, queries: DataQuery[]): ThunkResult<void> => {
+  return async dispatch => {
+    await dispatch(setDashboardQueriesToUpdate({ panelId, queries }));
+  };
+};
 
 export function updateDashboardPermission(
   dashboardId: number,

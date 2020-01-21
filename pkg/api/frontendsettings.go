@@ -176,6 +176,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"alertingEnabled":            setting.AlertingEnabled,
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":        setting.AlertingMinInterval,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
@@ -196,7 +197,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
-			"isEnterprise":  setting.IsEnterprise,
+			"isEnterprise":  hs.License.HasValidLicense(),
+		},
+		"licenseInfo": map[string]interface{}{
+			"hasLicense": hs.License.HasLicense(),
+			"expiry":     hs.License.Expiry(),
 		},
 		"featureToggles": hs.Cfg.FeatureToggles,
 	}
@@ -209,7 +214,7 @@ func getPanelSort(id string) int {
 	switch id {
 	case "graph":
 		sort = 1
-	case "singlestat":
+	case "stat":
 		sort = 2
 	case "gauge":
 		sort = 3
@@ -217,14 +222,18 @@ func getPanelSort(id string) int {
 		sort = 4
 	case "table":
 		sort = 5
-	case "text":
+	case "singlestat":
 		sort = 6
-	case "heatmap":
+	case "text":
 		sort = 7
-	case "alertlist":
+	case "heatmap":
 		sort = 8
-	case "dashlist":
+	case "alertlist":
 		sort = 9
+	case "dashlist":
+		sort = 10
+	case "news":
+		sort = 10
 	}
 	return sort
 }

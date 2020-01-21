@@ -1,14 +1,17 @@
-import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DashboardModel } from '../../state/DashboardModel';
 import $ from 'jquery';
 import _ from 'lodash';
-import angular, { ILocationService } from 'angular';
+import angular, { ILocationService, IScope } from 'angular';
+import { e2e } from '@grafana/e2e';
+
+import { appEvents, contextSrv, coreModule } from 'app/core/core';
+import { DashboardModel } from '../../state/DashboardModel';
 import config from 'app/core/config';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AppEvents } from '@grafana/data';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -21,14 +24,14 @@ export class SettingsCtrl {
   canDelete: boolean;
   sections: any[];
   hasUnsavedFolderChange: boolean;
+  selectors: typeof e2e.pages.Dashboard.Settings.General.selectors;
 
   /** @ngInject */
   constructor(
-    private $scope: any,
+    private $scope: IScope & Record<string, any>,
     private $route: any,
     private $location: ILocationService,
     private $rootScope: GrafanaRootScope,
-    private backendSrv: BackendSrv,
     private dashboardSrv: DashboardSrv
   ) {
     // temp hack for annotations and variables editors
@@ -53,6 +56,7 @@ export class SettingsCtrl {
     this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
     this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
     this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
+    this.selectors = e2e.pages.Dashboard.Settings.General.selectors;
   }
 
   buildSectionList() {
@@ -231,10 +235,12 @@ export class SettingsCtrl {
   }
 
   deleteDashboardConfirmed() {
-    this.backendSrv.deleteDashboard(this.dashboard.uid, false).then(() => {
-      appEvents.emit(AppEvents.alertSuccess, ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
-      this.$location.url('/');
-    });
+    promiseToDigest(this.$scope)(
+      backendSrv.deleteDashboard(this.dashboard.uid, false).then(() => {
+        appEvents.emit(AppEvents.alertSuccess, ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
+        this.$location.url('/');
+      })
+    );
   }
 
   onFolderChange(folder: { id: number; title: string }) {

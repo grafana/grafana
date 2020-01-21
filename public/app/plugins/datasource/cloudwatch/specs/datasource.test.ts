@@ -1,20 +1,31 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
+import * as redux from 'app/store/store';
 import { dateMath } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
 import { CloudWatchQuery } from '../types';
-import { DataSourceInstanceSettings } from '@grafana/ui';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
+
 describe('CloudWatchDatasource', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
+    name: 'TestDatasource',
   } as DataSourceInstanceSettings;
 
   const templateSrv = new TemplateSrv();
+  const start = 1483196400 * 1000;
+  const defaultTimeRange = { from: new Date(start), to: new Date(start + 3600 * 1000) };
 
   const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
@@ -25,24 +36,25 @@ describe('CloudWatchDatasource', () => {
       };
     },
   } as TimeSrv;
-  const backendSrv = {} as BackendSrv;
+
   const ctx = {
-    backendSrv,
     templateSrv,
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new CloudWatchDatasource(instanceSettings, {} as any, backendSrv, templateSrv, timeSrv);
+    ctx.ds = new CloudWatchDatasource(instanceSettings, templateSrv, timeSrv);
+    jest.clearAllMocks();
   });
 
   describe('When performing CloudWatch query', () => {
     let requestParams: { queries: CloudWatchQuery[] };
 
     const query = {
-      range: { from: 'now-1h', to: 'now' },
+      range: defaultTimeRange,
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          expression: '',
           refId: 'A',
           region: 'us-east-1',
           namespace: 'AWS/EC2',
@@ -62,11 +74,15 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
-          meta: {},
+          meta: { gmdMeta: [] },
           series: [
             {
               name: 'CPUUtilization_Average',
-              points: [[1, 1483228800000], [2, 1483229100000], [5, 1483229700000]],
+              points: [
+                [1, 1483228800000],
+                [2, 1483229100000],
+                [5, 1483229700000],
+              ],
               tags: {
                 InstanceId: 'i-12345678',
               },
@@ -77,7 +93,7 @@ describe('CloudWatchDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+      datasourceRequestMock.mockImplementation(params => {
         requestParams = params.data;
         return Promise.resolve({ data: response });
       });
@@ -88,7 +104,7 @@ describe('CloudWatchDatasource', () => {
         const params = requestParams.queries[0];
         expect(params.namespace).toBe(query.targets[0].namespace);
         expect(params.metricName).toBe(query.targets[0].metricName);
-        expect(params.dimensions['InstanceId']).toBe('i-12345678');
+        expect(params.dimensions['InstanceId']).toStrictEqual(['i-12345678']);
         expect(params.statistics).toEqual(query.targets[0].statistics);
         expect(params.period).toBe(query.targets[0].period);
         done();
@@ -110,7 +126,7 @@ describe('CloudWatchDatasource', () => {
       ]);
 
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -136,7 +152,7 @@ describe('CloudWatchDatasource', () => {
 
     it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', stat => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -157,9 +173,178 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(result.data[0].target).toBe(response.results.A.series[0].name);
-        expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].name).toBe(response.results.A.series[0].name);
+        expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
+      });
+    });
+
+    describe('a correct cloudwatch url should be built for each time series in the response', () => {
+      beforeEach(() => {
+        datasourceRequestMock.mockImplementation(params => {
+          requestParams = params.data;
+          return Promise.resolve({ data: response });
+        });
+      });
+
+      it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
+        response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
+        ctx.ds.query(query).then((result: any) => {
+          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
+          );
+          done();
+        });
+      });
+
+      it('should be built correctly if theres two search expressions returned in meta for a given query row', done => {
+        response.results['A'].meta.gmdMeta = [
+          { Expression: `REMOVE_EMPTY(SEARCH('first expression'))` },
+          { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
+        ];
+        ctx.ds.query(query).then((result: any) => {
+          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
+          );
+          done();
+        });
+      });
+
+      it('should be built correctly if the query is a metric stat query', done => {
+        response.results['A'].meta.gmdMeta = [{ Period: '300' }];
+        ctx.ds.query(query).then((result: any) => {
+          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
+          );
+          done();
+        });
+      });
+
+      it('should not be added at all if query is a math expression', done => {
+        query.targets[0].expression = 'a * 2';
+        response.results['A'].meta.searchExpressions = [];
+        ctx.ds.query(query).then((result: any) => {
+          expect(result.data[0].fields[0].config.links).toBeUndefined();
+          done();
+        });
+      });
+    });
+
+    describe('and throttling exception is thrown', () => {
+      const partialQuery = {
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {
+          InstanceId: 'i-12345678',
+        },
+        statistics: ['Average'],
+        period: '300',
+        expression: '',
+      };
+
+      const query = {
+        range: defaultTimeRange,
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          { ...partialQuery, refId: 'A', region: 'us-east-1' },
+          { ...partialQuery, refId: 'B', region: 'us-east-2' },
+          { ...partialQuery, refId: 'C', region: 'us-east-1' },
+          { ...partialQuery, refId: 'D', region: 'us-east-2' },
+          { ...partialQuery, refId: 'E', region: 'eu-north-1' },
+        ],
+      };
+
+      const backendErrorResponse = {
+        data: {
+          message: 'Throttling: exception',
+          results: {
+            A: {
+              error: 'Throttling: exception',
+              refId: 'A',
+              meta: {},
+            },
+            B: {
+              error: 'Throttling: exception',
+              refId: 'B',
+              meta: {},
+            },
+            C: {
+              error: 'Throttling: exception',
+              refId: 'C',
+              meta: {},
+            },
+            D: {
+              error: 'Throttling: exception',
+              refId: 'D',
+              meta: {},
+            },
+            E: {
+              error: 'Throttling: exception',
+              refId: 'E',
+              meta: {},
+            },
+          },
+        },
+      };
+
+      beforeEach(() => {
+        redux.setStore({
+          dispatch: jest.fn(),
+        } as any);
+
+        datasourceRequestMock.mockImplementation(() => {
+          return Promise.reject(backendErrorResponse);
+        });
+      });
+
+      it('should display one alert error message per region+datasource combination', done => {
+        const memoizedDebounceSpy = jest.spyOn(ctx.ds, 'debouncedAlert');
+        ctx.ds.query(query).catch(() => {
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-1');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
+          expect(memoizedDebounceSpy).toBeCalledTimes(3);
+          done();
+        });
+      });
+    });
+
+    describe('when regions query is used', () => {
+      beforeEach(() => {
+        datasourceRequestMock.mockImplementation(() => {
+          return Promise.resolve({});
+        });
+        ctx.ds = new CloudWatchDatasource(instanceSettings, templateSrv, timeSrv);
+        ctx.ds.doMetricQueryRequest = jest.fn(() => []);
+      });
+      describe('and region param is left out', () => {
+        it('should use the default region', done => {
+          ctx.ds.metricFindQuery('metrics(testNamespace)').then(() => {
+            expect(ctx.ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+              namespace: 'testNamespace',
+              region: instanceSettings.jsonData.defaultRegion,
+            });
+            done();
+          });
+        });
+      });
+
+      describe('and region param is defined by user', () => {
+        it('should use the user defined region', done => {
+          ctx.ds.metricFindQuery('metrics(testNamespace2, custom-region)').then(() => {
+            expect(ctx.ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+              namespace: 'testNamespace2',
+              region: 'custom-region',
+            });
+            done();
+          });
+        });
       });
     });
   });
@@ -187,7 +372,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should query for the datasource region if empty or "default"', done => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -199,7 +384,7 @@ describe('CloudWatchDatasource', () => {
               InstanceId: 'i-12345678',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300s',
           },
         ],
       };
@@ -213,7 +398,7 @@ describe('CloudWatchDatasource', () => {
 
   describe('When performing CloudWatch query for extended statistics', () => {
     const query = {
-      range: { from: 'now-1h', to: 'now' },
+      range: defaultTimeRange,
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
@@ -226,7 +411,7 @@ describe('CloudWatchDatasource', () => {
             TargetGroup: 'tg',
           },
           statistics: ['p90.00'],
-          period: 300,
+          period: '300s',
         },
       ],
     };
@@ -237,11 +422,21 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
-          meta: {},
+          meta: {
+            gmdMeta: [
+              {
+                Period: 300,
+              },
+            ],
+          },
           series: [
             {
               name: 'TargetResponseTime_p90.00',
-              points: [[1, 1483228800000], [2, 1483229100000], [5, 1483229700000]],
+              points: [
+                [1, 1483228800000],
+                [2, 1483229100000],
+                [5, 1483229700000],
+              ],
               tags: {
                 LoadBalancer: 'lb',
                 TargetGroup: 'tg',
@@ -253,15 +448,15 @@ describe('CloudWatchDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+      datasourceRequestMock.mockImplementation(params => {
         return Promise.resolve({ data: response });
       });
     });
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(result.data[0].target).toBe(response.results.A.series[0].name);
-        expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].name).toBe(response.results.A.series[0].name);
+        expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
     });
@@ -306,9 +501,24 @@ describe('CloudWatchDatasource', () => {
           },
           {} as any
         ),
+        new CustomVariable(
+          {
+            name: 'var4',
+            options: [
+              { selected: true, value: 'var4-foo' },
+              { selected: false, value: 'var4-bar' },
+              { selected: true, value: 'var4-baz' },
+            ],
+            current: {
+              value: ['var4-foo', 'var4-baz'],
+            },
+            multi: true,
+          },
+          {} as any
+        ),
       ]);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+      datasourceRequestMock.mockImplementation(params => {
         requestParams = params.data;
         return Promise.resolve({ data: {} });
       });
@@ -316,7 +526,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query for single template variable', done => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -328,20 +538,20 @@ describe('CloudWatchDatasource', () => {
               dim2: '[[var2]]',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300s',
           },
         ],
       };
 
       ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
         done();
       });
     });
 
-    it('should generate the correct query for multilple template variables', done => {
+    it('should generate the correct query in the case of one multilple template variables', done => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -355,7 +565,7 @@ describe('CloudWatchDatasource', () => {
               dim3: '[[var3]]',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300s',
           },
         ],
         scopedVars: {
@@ -365,19 +575,45 @@ describe('CloudWatchDatasource', () => {
       };
 
       ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
-        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
+        done();
+      });
+    });
+
+    it('should generate the correct query in the case of multilple multi template variables', done => {
+      const query = {
+        range: defaultTimeRange,
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim3: '[[var3]]',
+              dim4: '[[var4]]',
+            },
+            statistics: ['Average'],
+            period: '300s',
+          },
+        ],
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
+        expect(requestParams.queries[0].dimensions['dim4']).toStrictEqual(['var4-foo', 'var4-baz']);
         done();
       });
     });
 
     it('should generate the correct query for multilple template variables, lack scopedVars', done => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -391,7 +627,7 @@ describe('CloudWatchDatasource', () => {
               dim3: '[[var3]]',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300',
           },
         ],
         scopedVars: {
@@ -400,67 +636,9 @@ describe('CloudWatchDatasource', () => {
       };
 
       ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
-        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
-        done();
-      });
-    });
-
-    it('should generate the correct query for multilple template variables with expression', done => {
-      const query: any = {
-        range: { from: 'now-1h', to: 'now' },
-        rangeRaw: { from: 1483228800, to: 1483232400 },
-        targets: [
-          {
-            refId: 'A',
-            id: 'id1',
-            region: 'us-east-1',
-            namespace: 'TestNamespace',
-            metricName: 'TestMetricName',
-            dimensions: {
-              dim1: '[[var1]]',
-              dim2: '[[var2]]',
-              dim3: '[[var3]]',
-            },
-            statistics: ['Average'],
-            period: 300,
-            expression: '',
-          },
-          {
-            refId: 'B',
-            id: 'id2',
-            expression: 'METRICS("id1") * 2',
-            dimensions: {
-              // garbage data for fail test
-              dim1: '[[var1]]',
-              dim2: '[[var2]]',
-              dim3: '[[var3]]',
-            },
-            statistics: [], // dummy
-          },
-        ],
-        scopedVars: {
-          var1: { selected: true, value: 'var1-foo' },
-          var2: { selected: true, value: 'var2-foo' },
-        },
-      };
-
-      ctx.ds.query(query).then(() => {
-        expect(requestParams.queries.length).toBe(3);
-        expect(requestParams.queries[0].id).toMatch(/^id1.*/);
-        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
-        expect(requestParams.queries[1].id).toMatch(/^id1.*/);
-        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
-        expect(requestParams.queries[2].id).toMatch(/^id2.*/);
-        expect(requestParams.queries[2].expression).toBe('METRICS("id1") * 2');
+        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
         done();
       });
     });
@@ -469,10 +647,10 @@ describe('CloudWatchDatasource', () => {
   function describeMetricFindQuery(query: any, func: any) {
     describe('metricFindQuery ' + query, () => {
       const scenario: any = {};
-      scenario.setup = (setupCallback: any) => {
-        beforeEach(() => {
-          setupCallback();
-          ctx.backendSrv.datasourceRequest = jest.fn(args => {
+      scenario.setup = async (setupCallback: any) => {
+        beforeEach(async () => {
+          await setupCallback();
+          datasourceRequestMock.mockImplementation(args => {
             scenario.request = args.data;
             return Promise.resolve({ data: scenario.requestResponse });
           });
@@ -486,8 +664,8 @@ describe('CloudWatchDatasource', () => {
     });
   }
 
-  describeMetricFindQuery('regions()', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('regions()', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -504,8 +682,8 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('namespaces()', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('namespaces()', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -522,8 +700,8 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('metrics(AWS/EC2)', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('metrics(AWS/EC2, us-east-2)', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -540,8 +718,8 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('dimension_keys(AWS/EC2)', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('dimension_keys(AWS/EC2)', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -552,14 +730,15 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should call __GetDimensions and return result', () => {
+      console.log({ a: scenario.requestResponse.results });
       expect(scenario.result[0].text).toBe('InstanceId');
       expect(scenario.request.queries[0].type).toBe('metricFindQuery');
       expect(scenario.request.queries[0].subtype).toBe('dimension_keys');
     });
   });
 
-  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -576,8 +755,8 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -594,123 +773,33 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('resource_arns(default,ec2:instance,{"environment":["production"]})', (scenario: any) => {
-    scenario.setup(() => {
-      scenario.requestResponse = {
-        results: {
-          metricFindQuery: {
-            tables: [
-              {
-                rows: [
-                  [
-                    'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
-                    'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321',
+  describeMetricFindQuery(
+    'resource_arns(default,ec2:instance,{"environment":["production"]})',
+    async (scenario: any) => {
+      await scenario.setup(() => {
+        scenario.requestResponse = {
+          results: {
+            metricFindQuery: {
+              tables: [
+                {
+                  rows: [
+                    [
+                      'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
+                      'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321',
+                    ],
                   ],
-                ],
-              },
-            ],
+                },
+              ],
+            },
           },
-        },
-      };
-    });
+        };
+      });
 
-    it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).toContain('arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567');
-      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).toBe('resource_arns');
-    });
-  });
-
-  it('should caclculate the correct period', () => {
-    const hourSec = 60 * 60;
-    const daySec = hourSec * 24;
-    const start = 1483196400 * 1000;
-    const testData: any[] = [
-      [
-        { period: 60, namespace: 'AWS/EC2' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: null, namespace: 'AWS/EC2' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        300,
-      ],
-      [
-        { period: 60, namespace: 'AWS/ELB' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: null, namespace: 'AWS/ELB' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: 1, namespace: 'CustomMetricsNamespace' },
-        {
-          range: {
-            from: new Date(start),
-            to: new Date(start + (1440 - 1) * 1000),
-          },
-        },
-        hourSec * 3 - 1,
-        1,
-      ],
-      [
-        { period: 1, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3 - 1,
-        60,
-      ],
-      [
-        { period: 60, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3 - 1,
-        60,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        hourSec * 3,
-        60,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        daySec * 15,
-        60,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        daySec * 63,
-        300,
-      ],
-      [
-        { period: null, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        daySec * 455,
-        3600,
-      ],
-    ];
-    for (const t of testData) {
-      const target = t[0];
-      const options = t[1];
-      const now = new Date(options.range.from.valueOf() + t[2] * 1000);
-      const expected = t[3];
-      const actual = ctx.ds.getPeriod(target, options, now);
-      expect(actual).toBe(expected);
+      it('should call __ListMetrics and return result', () => {
+        expect(scenario.result[0].text).toContain('arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567');
+        expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+        expect(scenario.request.queries[0].subtype).toBe('resource_arns');
+      });
     }
-  });
+  );
 });

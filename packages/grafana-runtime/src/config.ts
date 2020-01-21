@@ -1,10 +1,11 @@
 import extend from 'lodash/extend';
-import { GrafanaTheme, getTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/ui';
+import { getTheme } from '@grafana/ui';
+import { GrafanaTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/data';
 
 export interface BuildInfo {
   version: string;
   commit: string;
-  isEnterprise: boolean;
+  isEnterprise: boolean; // deprecated: use licenseInfo.hasLicense instead
   env: string;
   latestVersion: string;
   hasUpdate: boolean;
@@ -12,7 +13,16 @@ export interface BuildInfo {
 
 interface FeatureToggles {
   transformations: boolean;
+  inspect: boolean;
+  expressions: boolean;
+  newEdit: boolean;
 }
+
+interface LicenseInfo {
+  hasLicense: boolean;
+  expiry: number;
+}
+
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -30,6 +40,7 @@ export class GrafanaBootConfig {
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
+  alertingMinInterval = 1;
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;
@@ -46,7 +57,11 @@ export class GrafanaBootConfig {
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
     transformations: false,
+    inspect: false,
+    expressions: false,
+    newEdit: false,
   };
+  licenseInfo: LicenseInfo = {} as LicenseInfo;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);

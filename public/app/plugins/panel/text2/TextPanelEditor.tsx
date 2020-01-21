@@ -2,8 +2,8 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
-import { PanelEditorProps, PanelOptionsGroup, Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { PanelOptionsGroup, Select } from '@grafana/ui';
+import { PanelEditorProps, SelectableValue } from '@grafana/data';
 
 // Types
 import { TextOptions, TextMode } from './types';

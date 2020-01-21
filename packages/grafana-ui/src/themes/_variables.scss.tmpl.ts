@@ -1,6 +1,6 @@
 /* tslint:disable:max-line-length */
 
-import { GrafanaThemeCommons } from '../types';
+import { GrafanaThemeCommons } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const commonThemeVarsTemplate = (theme: GrafanaThemeCommons) =>
@@ -99,7 +99,6 @@ $height-lg: ${theme.height.lg};
 $font-family-sans-serif: ${theme.typography.fontFamily.sansSerif};
 $font-family-monospace: ${theme.typography.fontFamily.monospace};
 
-$font-size-root: ${theme.typography.size.root} !default;
 $font-size-base: ${theme.typography.size.base} !default;
 
 $font-size-lg: ${theme.typography.size.lg} !default;
@@ -107,7 +106,7 @@ $font-size-md: ${theme.typography.size.md} !default;
 $font-size-sm: ${theme.typography.size.sm} !default;
 $font-size-xs: ${theme.typography.size.xs} !default;
 
-$line-height-base: ${theme.typography.lineHeight.lg} !default;
+$line-height-base: ${theme.typography.lineHeight.md} !default;
 
 $font-weight-regular: ${theme.typography.weight.regular} !default;
 $font-weight-semi-bold: ${theme.typography.weight.semibold} !default;

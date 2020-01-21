@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"io/ioutil"
 	"runtime"
 	"sync"
@@ -25,6 +26,7 @@ func TestMetrics(t *testing.T) {
 		uss := &UsageStatsService{
 			Bus:      bus.New(),
 			SQLStore: sqlstore.InitTestDB(t),
+			License:  &licensing.OSSLicensingService{},
 		}
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery

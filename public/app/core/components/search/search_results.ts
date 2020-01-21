@@ -1,7 +1,11 @@
 import _ from 'lodash';
+import { ILocationService, IScope } from 'angular';
+import { e2e } from '@grafana/e2e';
+
 import coreModule from '../../core_module';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
+import { promiseToDigest } from '../../utils/promiseToDigest';
 
 export class SearchResultsCtrl {
   results: any;
@@ -9,9 +13,12 @@ export class SearchResultsCtrl {
   onTagSelected: any;
   onFolderExpanding: any;
   editable: boolean;
+  selectors: typeof e2e.pages.Dashboards.selectors;
 
   /** @ngInject */
-  constructor(private $location: any) {}
+  constructor(private $location: ILocationService, private $scope: IScope) {
+    this.selectors = e2e.pages.Dashboards.selectors;
+  }
 
   toggleFolderExpand(section: any) {
     if (section.toggle) {
@@ -19,19 +26,21 @@ export class SearchResultsCtrl {
         this.onFolderExpanding();
       }
 
-      section.toggle(section).then((f: any) => {
-        if (this.editable && f.expanded) {
-          if (f.items) {
-            _.each(f.items, i => {
-              i.checked = f.checked;
-            });
+      promiseToDigest(this.$scope)(
+        section.toggle(section).then((f: any) => {
+          if (this.editable && f.expanded) {
+            if (f.items) {
+              _.each(f.items, i => {
+                i.checked = f.checked;
+              });
 
-            if (this.onSelectionChanged) {
-              this.onSelectionChanged();
+              if (this.onSelectionChanged) {
+                this.onSelectionChanged();
+              }
             }
           }
-        }
-      });
+        })
+      );
     }
   }
 

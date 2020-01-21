@@ -1,5 +1,4 @@
-import { PluginMeta, PluginBuildInfo } from '@grafana/ui';
-import { DataFrame, KeyValue } from '@grafana/data';
+import { PluginMeta, KeyValue } from '@grafana/data';
 
 export interface PluginPackageDetails {
   plugin: ZipFileInfo;
@@ -12,6 +11,7 @@ export interface PluginBuildReport {
   workflow: WorkflowInfo;
   coverage: CoverageInfo[];
   tests: TestResultsInfo[];
+  git?: GitLogInfo;
   pullRequest?: number;
   artifactsBaseURL?: string;
   grafanaVersion?: KeyValue<string>;
@@ -55,44 +55,6 @@ export interface TestResultsInfo {
   screenshots: string[];
 }
 
-// Saved at the folder level
-export interface PluginHistory {
-  last: {
-    info: PluginDevInfo;
-    report: PluginBuildReport;
-  };
-  size: DataFrame[]; // New frame for each package
-  coverage: DataFrame[]; // New frame for each job
-  timing: DataFrame[]; // New frame for each job/workflow
-}
-
-export interface PluginDevInfo {
-  pluginId: string;
-  name: string;
-  logo?: string; // usually logo.svg or logo.png
-  build: PluginBuildInfo;
-  version: string;
-}
-
-export interface DevSummary {
-  [key: string]: PluginDevInfo;
-}
-
-export interface PluginDevSummary {
-  branch: DevSummary;
-  pr: DevSummary;
-}
-
-export const defaultPluginHistory: PluginHistory = {
-  last: {
-    info: {} as PluginDevInfo,
-    report: {} as PluginBuildReport,
-  },
-  size: [],
-  coverage: [],
-  timing: [],
-};
-
 export interface CountAndSize {
   count: number;
   bytes: number;
@@ -108,4 +70,20 @@ export interface ZipFileInfo {
   contents: ExtensionSize;
   sha1?: string;
   md5?: string;
+}
+
+interface UserInfo {
+  name: string;
+  email: string;
+  time?: number;
+}
+
+export interface GitLogInfo {
+  commit: string;
+  tree: string;
+  subject: string;
+  body?: string;
+  notes?: string;
+  author: UserInfo;
+  commiter: UserInfo;
 }

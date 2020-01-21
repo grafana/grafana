@@ -16,18 +16,18 @@ permissions and org memberships.
 
 ## OAuth Integrations
 
-- [Google OAuth]({{< relref "auth/google.md" >}})
-- [GitHub OAuth]({{< relref "auth/github.md" >}})
-- [Gitlab OAuth]({{< relref "auth/gitlab.md" >}})
-- [Generic OAuth]({{< relref "auth/generic-oauth.md" >}}) (Okta2, BitBucket, Azure, OneLogin, Auth0)
+- [Google OAuth]({{< relref "google.md" >}})
+- [GitHub OAuth]({{< relref "github.md" >}})
+- [Gitlab OAuth]({{< relref "gitlab.md" >}})
+- [Generic OAuth]({{< relref "generic-oauth.md" >}}) (Okta2, BitBucket, Azure, OneLogin, Auth0)
 
 ## LDAP integrations
 
-- [LDAP Authentication]({{< relref "auth/ldap.md" >}}) (OpenLDAP, ActiveDirectory, etc)
+- [LDAP Authentication]({{< relref "ldap.md" >}}) (OpenLDAP, ActiveDirectory, etc)
 
 ## Auth proxy
 
-- [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) If you want to handle authentication outside Grafana using a reverse
+- [Auth Proxy]({{< relref "auth-proxy.md" >}}) If you want to handle authentication outside Grafana using a reverse
     proxy.
 
 ## Grafana Auth

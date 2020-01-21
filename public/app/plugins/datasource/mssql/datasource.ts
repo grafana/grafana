@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
-import { BackendSrv } from 'app/core/services/backend_srv';
-import { IQService } from 'angular';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
@@ -14,16 +13,10 @@ export class MssqlDatasource {
   interval: string;
 
   /** @ngInject */
-  constructor(
-    instanceSettings: any,
-    private backendSrv: BackendSrv,
-    private $q: IQService,
-    private templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
-  ) {
+  constructor(instanceSettings: any, private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
-    this.responseParser = new ResponseParser(this.$q);
+    this.responseParser = new ResponseParser();
     this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
@@ -80,10 +73,10 @@ export class MssqlDatasource {
     });
 
     if (queries.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -98,7 +91,7 @@ export class MssqlDatasource {
 
   annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
-      return this.$q.reject({ message: 'Query missing in annotation definition' });
+      return Promise.reject({ message: 'Query missing in annotation definition' });
     }
 
     const query = {
@@ -108,7 +101,7 @@ export class MssqlDatasource {
       format: 'table',
     };
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -141,7 +134,7 @@ export class MssqlDatasource {
       to: range.to.valueOf().toString(),
     };
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -151,7 +144,7 @@ export class MssqlDatasource {
   }
 
   testDatasource() {
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',

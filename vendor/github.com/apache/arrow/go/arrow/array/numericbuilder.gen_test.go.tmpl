@@ -1,0 +1,216 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package array_test
+
+import (
+	"testing"
+
+	"github.com/apache/arrow/go/arrow"
+	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
+	"github.com/stretchr/testify/assert"
+)
+
+{{range .In}}
+func TestNew{{.Name}}Builder(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	ab := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	ab := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer ab.Release()
+
+	ab.Retain()
+	ab.Release()
+
+	ab.Append(1)
+	ab.Append(2)
+	ab.Append(3)
+	ab.AppendNull()
+	ab.Append(5)
+	ab.Append(6)
+	ab.AppendNull()
+	ab.Append(8)
+	ab.Append(9)
+	ab.Append(10)
+
+	// check state of builder before New{{.Name}}Array
+	assert.Equal(t, 10, ab.Len(), "unexpected Len()")
+	assert.Equal(t, 2, ab.NullN(), "unexpected NullN()")
+
+	a := ab.New{{.Name}}Array()
+
+	// check state of builder after New{{.Name}}Array
+	assert.Zero(t, ab.Len(), "unexpected ArrayBuilder.Len(), New{{.Name}}Array did not reset state")
+	assert.Zero(t, ab.Cap(), "unexpected ArrayBuilder.Cap(), New{{.Name}}Array did not reset state")
+	assert.Zero(t, ab.NullN(), "unexpected ArrayBuilder.NullN(), New{{.Name}}Array did not reset state")
+
+	// check state of array
+	assert.Equal(t, 2, a.NullN(), "unexpected null count")
+	assert.Equal(t, []{{or .QualifiedType .Type}}{1, 2, 3, 0, 5, 6, 0, 8, 9, 10}, a.{{.Name}}Values(), "unexpected {{.Name}}Values")
+	assert.Equal(t, []byte{0xb7}, a.NullBitmapBytes()[:1]) // 4 bytes due to minBuilderCapacity
+	assert.Len(t, a.{{.Name}}Values(), 10, "unexpected length of {{.Name}}Values")
+
+	a.Release()
+
+	ab.Append(7)
+	ab.Append(8)
+
+	a = ab.New{{.Name}}Array()
+
+	assert.Equal(t, 0, a.NullN())
+	assert.Equal(t, []{{or .QualifiedType .Type}}{7, 8}, a.{{.Name}}Values())
+	assert.Len(t, a.{{.Name}}Values(), 2)
+
+	a.Release()
+
+	var (
+		want   = []{{or .QualifiedType .Type}}{1, 2, 3, 4}
+		valids = []bool{true, true, false, true}
+	)
+
+	ab.AppendValues(want, valids)
+	a = ab.New{{.Name}}Array()
+
+	sub := array.MakeFromData(a.Data())
+	defer sub.Release()
+
+	if got, want := sub.DataType().ID(), a.DataType().ID(); got != want {
+		t.Fatalf("invalid type: got=%q, want=%q", got, want)
+	}
+
+	if _, ok := sub.(*array.{{.Name}}); !ok {
+		t.Fatalf("could not type-assert to array.{{.Name}}")
+	}
+
+	if got, want := a.String(), `[1 2 (null) 4]`; got != want {
+		t.Fatalf("got=%q, want=%q", got, want)
+	}
+
+	slice := array.NewSliceData(a.Data(), 2, 4)
+	defer slice.Release()
+
+	sub1 := array.MakeFromData(slice)
+	defer sub1.Release()
+
+	v, ok := sub1.(*array.{{.Name}})
+	if !ok {
+		t.Fatalf("could not type-assert to array.{{.Name}}")
+	}
+
+	if got, want := v.String(), `[(null) 4]`; got != want {
+		t.Fatalf("got=%q, want=%q", got, want)
+	}
+
+	a.Release()
+}
+
+func Test{{.Name}}Builder_AppendValues(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	ab := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	ab := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer ab.Release()
+
+	exp := []{{or .QualifiedType .Type}}{0, 1, 2, 3}
+	ab.AppendValues(exp, nil)
+	a := ab.New{{.Name}}Array()
+	assert.Equal(t, exp, a.{{.Name}}Values())
+
+	a.Release()
+}
+
+func Test{{.Name}}Builder_Empty(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	ab := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	ab := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer ab.Release()
+
+	exp := []{{or .QualifiedType .Type}}{0, 1, 2, 3}
+
+	ab.AppendValues([]{{or .QualifiedType .Type}}{}, nil)
+	a := ab.New{{.Name}}Array()
+	assert.Zero(t, a.Len())
+	a.Release()
+
+	ab.AppendValues(nil, nil)
+	a = ab.New{{.Name}}Array()
+	assert.Zero(t, a.Len())
+	a.Release()
+
+	ab.AppendValues([]{{or .QualifiedType .Type}}{}, nil)
+	ab.AppendValues(exp, nil)
+	a = ab.New{{.Name}}Array()
+	assert.Equal(t, exp, a.{{.Name}}Values())
+	a.Release()
+
+	ab.AppendValues(exp, nil)
+	ab.AppendValues([]{{or .QualifiedType .Type}}{}, nil)
+	a = ab.New{{.Name}}Array()
+	assert.Equal(t, exp, a.{{.Name}}Values())
+	a.Release()
+}
+
+func Test{{.Name}}Builder_Resize(t *testing.T) {
+	mem := memory.NewCheckedAllocator(memory.NewGoAllocator())
+	defer mem.AssertSize(t, 0)
+
+{{if .Opt.Parametric -}}
+	dtype := &arrow.{{.Name}}Type{Unit: arrow.Second}
+	ab := array.New{{.Name}}Builder(mem, dtype)
+{{else}}
+	ab := array.New{{.Name}}Builder(mem)
+{{end -}}
+	defer ab.Release()
+
+	assert.Equal(t, 0, ab.Cap())
+	assert.Equal(t, 0, ab.Len())
+
+	ab.Reserve(63)
+	assert.Equal(t, 64, ab.Cap())
+	assert.Equal(t, 0, ab.Len())
+
+	for i := 0; i < 63; i++ {
+		ab.Append(0)
+	}
+	assert.Equal(t, 64, ab.Cap())
+	assert.Equal(t, 63, ab.Len())
+
+	ab.Resize(5)
+	assert.Equal(t, 5, ab.Len())
+
+	ab.Resize(32)
+	assert.Equal(t, 5, ab.Len())
+}
+{{end}}
+
+
