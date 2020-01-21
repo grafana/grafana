@@ -340,7 +340,7 @@ jobs:
             cp /tmp/workspace/oss/dist/grafana-*.linux-armv7-musl.tar.gz packaging/docker/grafana-latest.linux-armv7-musl.tar.gz
             cp /tmp/workspace/oss/dist/grafana-*.linux-arm64-musl.tar.gz packaging/docker/grafana-latest.linux-arm64-musl.tar.gz
       - run:
-          name: Build Docker image
+          name: Build Docker images
           command: |
             pushd packaging/docker && ./build.sh "master-${CIRCLE_SHA1}" && popd
             mkdir docker
@@ -348,6 +348,12 @@ jobs:
             docker save -o docker/grafana-oss-arm32v7.tar "grafana/grafana-arm32v7-linux:master-${CIRCLE_SHA1}"
             docker save -o docker/grafana-oss-arm64v8.tar "grafana/grafana-arm64v8-linux:master-${CIRCLE_SHA1}"
             docker save -o docker/grafana-oss-dev.tar "grafana/grafana-dev:master-${CIRCLE_SHA1}"
+      # Publish dev image, since e2e tests need it
+      - run:
+          name: Publish development Docker image
+          command: |
+            docker tag "grafana/grafana:master-${CIRCLE_SHA1}" "grafana/grafana-dev:master-${CIRCLE_SHA1}"
+            docker push "grafana/grafana-dev:master-${CIRCLE_SHA1}"
       #- run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
       - persist_to_workspace:
           root: .
@@ -453,11 +459,6 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
-      - run:
-          name: Load Docker image
-          command: |
-            docker load -i /tmp/workspace/docker/grafana-oss-amd64.tar
-            docker tag "grafana/grafana:master-${CIRCLE_SHA1}" "grafana/grafana-dev:master-${CIRCLE_SHA1}"
       - run:
           name: Run end-to-end tests
           command: env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests:ci
