@@ -11,9 +11,7 @@ import { ConstantVariable } from './constant_variable';
 import { AdhocVariable } from './adhoc_variable';
 import { TextBoxVariable } from './TextBoxVariable';
 
-coreModule.factory('templateSrv', () => {
-  return templateSrv;
-});
+coreModule.factory('templateSrv', () => templateSrv);
 
 export {
   VariableSrv,

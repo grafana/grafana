@@ -5,9 +5,8 @@ import extend from 'lodash/extend';
 
 import { Button } from '@grafana/ui';
 import { PluginMeta, AppPlugin, deprecationWarning } from '@grafana/data';
+import { AngularComponent, getAngularLoader, getBackendSrv } from '@grafana/runtime';
 
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import { css } from 'emotion';
 
 interface Props {
