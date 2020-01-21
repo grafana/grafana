@@ -186,6 +186,10 @@ export class PanelQueryRunner {
       this.subscription.unsubscribe();
     }
   }
+
+  getLastResult(): PanelData {
+    return this.lastResult;
+  }
 }
 
 async function getDataSource(
