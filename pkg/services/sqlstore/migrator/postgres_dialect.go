@@ -155,3 +155,15 @@ func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
 func (db *Postgres) IsDeadlock(err error) bool {
 	return db.isThisError(err, "40P01")
 }
+
+func (db *Postgres) PostInsertId(table string, sess *xorm.Session) error {
+	if table != "org" {
+		return nil
+	}
+
+	// sync primary key sequence of org table
+	if _, err := sess.Exec("SELECT setval('org_id_seq', (SELECT max(id)+1 FROM org));"); err != nil {
+		return fmt.Errorf("Failed to sync primary key for org table")
+	}
+	return nil
+}
