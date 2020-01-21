@@ -165,14 +165,16 @@ export class QueryEditor extends PureComponent<Props, State> {
                 <tr>
                   <th>Metric Data Query ID</th>
                   <th>Metric Data Query Expression</th>
+                  <th>Period</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
-                {data.series[0].meta.gmdMeta.map(({ ID, Expression }: any) => (
+                {data.series[0].meta.gmdMeta.map(({ ID, Expression, Period }: any) => (
                   <tr key={ID}>
                     <td>{ID}</td>
                     <td>{Expression}</td>
+                    <td>{Period}</td>
                   </tr>
                 ))}
               </tbody>

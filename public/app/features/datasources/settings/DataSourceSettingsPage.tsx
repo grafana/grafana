@@ -11,7 +11,7 @@ import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 // Services & Utils
 import appEvents from 'app/core/app_events';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
@@ -145,7 +145,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
     this.setState({ isTesting: true, testingMessage: 'Testing...', testingStatus: 'info' });
 
-    getBackendSrv().withNoBackendCache(async () => {
+    backendSrv.withNoBackendCache(async () => {
       try {
         const result = await dsApi.testDatasource();
 

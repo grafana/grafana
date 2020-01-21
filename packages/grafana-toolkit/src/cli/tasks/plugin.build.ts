@@ -87,22 +87,23 @@ export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async (
         }
       })
       .then(newContents => {
-        if (fix && newContents && newContents.length > 10) {
-          return writeFile(path, newContents)
-            .then(() => {
-              console.log(`Fixed: ${path}`);
-              return true;
-            })
-            .catch(error => {
-              console.log(`Error fixing ${path}`, error);
-              return false;
-            });
+        if (newContents === undefined) {
+          return true; // Nothing to fix
         } else if (fix) {
+          if (newContents.length > 10) {
+            return writeFile(path, newContents)
+              .then(() => {
+                console.log(`Fixed: ${path}`);
+                return true;
+              })
+              .catch(error => {
+                console.log(`Error fixing ${path}`, error);
+                return false;
+              });
+          }
           console.log(`No automatic fix for: ${path}`);
-          return false;
-        } else {
-          return false;
         }
+        return false;
       })
       .then(success => ({ path, success }))
   );

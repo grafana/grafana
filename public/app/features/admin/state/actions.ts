@@ -28,7 +28,7 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
       await dispatch(loadUserProfile(userId));
       await dispatch(loadUserOrgs(userId));
       await dispatch(loadUserSessions(userId));
-      if (config.ldapEnabled && config.buildInfo.isEnterprise) {
+      if (config.ldapEnabled && config.licenseInfo.hasLicense) {
         await dispatch(loadLdapSyncStatus());
       }
       dispatch(userAdminPageLoadedAction(true));
@@ -171,7 +171,7 @@ export function revokeAllSessions(userId: number): ThunkResult<void> {
 export function loadLdapSyncStatus(): ThunkResult<void> {
   return async dispatch => {
     // Available only in enterprise
-    if (config.buildInfo.isEnterprise) {
+    if (config.licenseInfo.hasLicense) {
       const syncStatus = await getBackendSrv().get(`/api/admin/ldap-sync-status`);
       dispatch(ldapSyncStatusLoadedAction(syncStatus));
     }
