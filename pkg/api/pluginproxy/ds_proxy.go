@@ -40,6 +40,19 @@ type DataSourceProxy struct {
 	cfg       *setting.Cfg
 }
 
+type handleResponseTransport struct {
+	transport http.RoundTripper
+}
+
+func (t *handleResponseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	res, err := t.transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	res.Header.Del("Set-Cookie")
+	return res, nil
+}
+
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -75,11 +88,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		FlushInterval: time.Millisecond * 200,
 	}
 
-	var err error
-	reverseProxy.Transport, err = proxy.ds.GetHttpTransport()
+	transport, err := proxy.ds.GetHttpTransport()
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
+	}
+
+	reverseProxy.Transport = &handleResponseTransport{
+		transport: transport,
 	}
 
 	proxy.logRequest()
@@ -103,14 +119,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		logger.Error("Failed to inject span context instance", "err", err)
 	}
 
-	originalSetCookie := proxy.ctx.Resp.Header().Get("Set-Cookie")
-
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
-	proxy.ctx.Resp.Header().Del("Set-Cookie")
-
-	if originalSetCookie != "" {
-		proxy.ctx.Resp.Header().Set("Set-Cookie", originalSetCookie)
-	}
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {

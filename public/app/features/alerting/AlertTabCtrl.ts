@@ -247,6 +247,10 @@ export class AlertTabCtrl {
   }
 
   checkFrequency() {
+    if (!this.alert.frequency) {
+      return;
+    }
+
     this.frequencyWarning = '';
 
     try {
