@@ -333,7 +333,12 @@ jobs:
           command: ./scripts/ci-job-started.sh
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run: cp /tmp/workspace/oss/dist/grafana-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
+      - run:
+          name: Copy Grafana archives
+          command: |
+            cp /tmp/workspace/oss/dist/grafana-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
+            cp /tmp/workspace/oss/dist/grafana-*.linux-armv7-musl.tar.gz packaging/docker/grafana-latest.linux-armv7-musl.tar.gz
+            cp /tmp/workspace/oss/dist/grafana-*.linux-arm64-musl.tar.gz packaging/docker/grafana-latest.linux-arm64-musl.tar.gz
       - run:
           name: Build Docker image
           command: |
