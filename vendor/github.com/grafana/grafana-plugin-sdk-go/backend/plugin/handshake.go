@@ -1,6 +1,8 @@
-package backend
+package plugin
 
-import plugin "github.com/hashicorp/go-plugin"
+import (
+	plugin "github.com/hashicorp/go-plugin"
+)
 
 const (
 	MagicCookieKey   = "grafana_plugin_type"

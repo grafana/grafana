@@ -1,4 +1,4 @@
-package backend
+package plugin
 
 import (
 	"context"
@@ -8,11 +8,15 @@ import (
 	"google.golang.org/grpc"
 )
 
+type DiagnosticsServer interface {
+	pluginv2.DiagnosticsServer
+}
+
 // DiagnosticsGRPCPlugin implements the GRPCPlugin interface from github.com/hashicorp/go-plugin.
 type DiagnosticsGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	plugin.GRPCPlugin
-	DiagnosticsServer pluginv2.DiagnosticsServer
+	DiagnosticsServer DiagnosticsServer
 }
 
 func (p *DiagnosticsGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
@@ -27,7 +31,7 @@ func (p *DiagnosticsGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.G
 }
 
 type diagnosticsGRPCServer struct {
-	server pluginv2.DiagnosticsServer
+	server DiagnosticsServer
 }
 
 func (s *diagnosticsGRPCServer) CollectMetrics(ctx context.Context, req *pluginv2.CollectMetrics_Request) (*pluginv2.CollectMetrics_Response, error) {

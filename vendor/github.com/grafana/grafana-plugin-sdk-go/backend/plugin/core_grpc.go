@@ -1,4 +1,4 @@
-package backend
+package plugin
 
 import (
 	"context"
@@ -8,11 +8,15 @@ import (
 	"google.golang.org/grpc"
 )
 
+type CoreServer interface {
+	pluginv2.CoreServer
+}
+
 // CoreGRPCPlugin implements the GRPCPlugin interface from github.com/hashicorp/go-plugin.
 type CoreGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	plugin.GRPCPlugin
-	CoreServer pluginv2.CoreServer
+	CoreServer CoreServer
 }
 
 func (p *CoreGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
@@ -27,7 +31,7 @@ func (p *CoreGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBrok
 }
 
 type coreGRPCServer struct {
-	server pluginv2.CoreServer
+	server CoreServer
 }
 
 func (s *coreGRPCServer) GetSchema(ctx context.Context, req *pluginv2.GetSchema_Request) (*pluginv2.GetSchema_Response, error) {

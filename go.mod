@@ -2,7 +2,7 @@ module github.com/grafana/grafana
 
 go 1.13
 
-replace github.com/grafana/grafana-plugin-sdk-go v0.11.0 => github.com/grafana/grafana-plugin-sdk-go v0.12.1-0.20200121132941-768a924ad011
+replace github.com/grafana/grafana-plugin-sdk-go v0.11.0 => github.com/grafana/grafana-plugin-sdk-go v0.12.1-0.20200121221816-7caebe90ebb9
 
 require (
 	github.com/BurntSushi/toml v0.3.1
