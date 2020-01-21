@@ -13,9 +13,7 @@ interface Props {
 
 const importStyles = stylesFactory(() => {
   return {
-    header: css`
-      display: flex;
-      justify-content: flex-end;
+    option: css`
       margin-bottom: 32px;
     `,
   };
@@ -29,21 +27,26 @@ class DashboardImport extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          <div className={styles.header}>
+          <div className={styles.option}>
+            <h3>Import via .json file</h3>
             <Forms.Button>Upload .json file</Forms.Button>
           </div>
-          <div>
-            <Forms.Field label="Grafana.com Dashboard">
-              <Forms.Input size="md" placeholder="Grafana.com dashboard url or id" />
+          <div className={styles.option}>
+            <h3>Import via grafana.com</h3>
+            <Forms.Field>
+              <Forms.Input
+                size="md"
+                placeholder="Grafana.com dashboard url or id"
+                addonAfter={<Forms.Button>Load</Forms.Button>}
+              />
             </Forms.Field>
           </div>
-          <div>
-            <Forms.Field label="Panel JSON">
+          <div className={styles.option}>
+            <h3>Import via panel json</h3>
+            <Forms.Field>
               <Forms.TextArea rows={10} />
             </Forms.Field>
-          </div>
-          <div>
-            <Forms.Button icon="fa fa-paste">Load</Forms.Button>
+            <Forms.Button>Load</Forms.Button>
           </div>
         </Page.Contents>
       </Page>
