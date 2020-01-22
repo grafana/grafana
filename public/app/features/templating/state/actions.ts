@@ -16,7 +16,6 @@ import { variableAdapter } from '../adapters';
 import _ from 'lodash';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import templateSrv from '../template_srv';
 import { Graph } from '../../../core/utils/dag';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
@@ -126,7 +125,6 @@ export const processVariables = (): ThunkResult<void> => {
       }
 
       await dispatch(resolveInitLock(variable));
-      templateSrv.variableInitialized(getVariables(getState())[index]);
     }
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
@@ -241,7 +239,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState: VariableWithOptions = getVariable(variable.name, getState());
+    const variableInState = getVariable<VariableWithOptions>(variable.name, getState());
     const setValue = variableAdapter[variableInState.type].setValue;
     if (!variableInState.current) {
       return setValue(variableInState, {} as VariableOption);

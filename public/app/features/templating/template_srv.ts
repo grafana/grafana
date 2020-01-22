@@ -1,8 +1,10 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { variableRegex } from 'app/features/templating/variable';
+import { variableRegex, VariableWithOptions } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
+import { getVariable } from './state/selectors';
+import { getState } from '../../store/store';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -37,6 +39,19 @@ export class TemplateSrv {
   getBuiltInIntervalValue() {
     return this.builtIns.__interval.value;
   }
+
+  // TODO: check the any return type here
+  getVariableAtIndex = (name: string): any => {
+    if (!name) {
+      return;
+    }
+
+    if (!this.index[name]) {
+      return getVariable<VariableWithOptions>(name, getState(), false);
+    }
+
+    return this.index[name];
+  };
 
   updateIndex() {
     const existsOrEmpty = (value: any) => value || value === '';
@@ -216,7 +231,7 @@ export class TemplateSrv {
 
   variableExists(expression: string) {
     const name = this.getVariableName(expression);
-    return name && this.index[name] !== void 0;
+    return name && this.getVariableAtIndex(name) !== void 0;
   }
 
   highlightVariablesAsHtml(str: string) {
@@ -227,7 +242,7 @@ export class TemplateSrv {
     str = _.escape(str);
     this.regex.lastIndex = 0;
     return str.replace(this.regex, (match, var1, var2, fmt2, var3) => {
-      if (this.index[var1 || var2 || var3] || this.builtIns[var1 || var2 || var3]) {
+      if (this.getVariableAtIndex(var1 || var2 || var3) || this.builtIns[var1 || var2 || var3]) {
         return '<span class="template-variable">' + match + '</span>';
       }
       return match;
@@ -276,7 +291,7 @@ export class TemplateSrv {
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
-      const variable = this.index[variableName];
+      const variable = this.getVariableAtIndex(variableName);
       const fmt = fmt2 || fmt3 || format;
 
       if (scopedVars) {
@@ -338,7 +353,7 @@ export class TemplateSrv {
         }
       }
 
-      variable = this.index[var1 || var2 || var3];
+      variable = this.getVariableAtIndex(var1 || var2 || var3);
       if (!variable) {
         return match;
       }

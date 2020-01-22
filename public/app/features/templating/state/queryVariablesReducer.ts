@@ -246,6 +246,36 @@ const updateOptions = (state: QueryVariableState): QueryVariableState => {
   };
 };
 
+const updateCurrent = (state: QueryVariableState): QueryVariableState => {
+  const { searchOptions, searchQuery, selectedValues, selectedTags } = state.picker;
+  let current = { ...state.variable.current };
+
+  current.value = selectedValues.map(v => v.value) as string[];
+  current.text = selectedValues.map(v => v.text).join(' + ');
+  current.tags = selectedTags;
+
+  if (!state.variable.multi) {
+    current.value = selectedValues[0].value;
+  }
+
+  // if we have a search query and no options use that
+  if (searchOptions.length === 0 && searchQuery.length > 0) {
+    current = { text: searchQuery, value: searchQuery, selected: false };
+  }
+
+  return { ...state, variable: { ...state.variable, current } };
+};
+
+const updateOldVariableText = (state: QueryVariableState): QueryVariableState => {
+  return {
+    ...state,
+    picker: {
+      ...state.picker,
+      oldVariableText: state.variable.current.text,
+    },
+  };
+};
+
 // I stumbled upon the error described here https://github.com/immerjs/immer/issues/430
 // So reverting to a "normal" reducer
 export const queryVariableReducer = (
@@ -364,7 +394,14 @@ export const queryVariableReducer = (
       },
     };
 
-    return appyStateChanges(newState, updateLinkText, updateOptions, updateSelectedValues, updateSelectedTags);
+    return appyStateChanges(
+      newState,
+      updateOptions,
+      updateSelectedValues,
+      updateSelectedTags,
+      updateLinkText,
+      updateOldVariableText
+    );
   }
 
   if (setInitLock.match(action)) {
@@ -405,9 +442,11 @@ export const queryVariableReducer = (
         selected,
       };
     });
+
     if (newOptions.length > 0 && newOptions.filter(o => o.selected).length === 0) {
       newOptions[0].selected = true;
     }
+
     const newState = {
       ...state,
       variable: {
@@ -416,12 +455,18 @@ export const queryVariableReducer = (
       },
     };
 
-    return appyStateChanges(newState, updateLinkText, updateOptions, updateSelectedValues, updateSelectedTags);
+    return appyStateChanges(
+      newState,
+      updateOptions,
+      updateSelectedValues,
+      updateSelectedTags,
+      updateCurrent,
+      updateLinkText
+    );
   }
 
   if (showQueryVariableDropDown.match(action)) {
-    const { current } = state.variable;
-    const oldVariableText = current.text;
+    const oldVariableText = state.picker.oldVariableText || state.variable.current.text;
     const highlightIndex = -1;
     const showDropDown = true;
     // new behaviour, if this is a query that uses searchfilter it might be a nicer
@@ -439,13 +484,13 @@ export const queryVariableReducer = (
       },
     };
 
-    return appyStateChanges(newState, updateLinkText, updateOptions, updateSelectedValues, updateSelectedTags);
+    return appyStateChanges(newState, updateOptions, updateSelectedValues, updateSelectedTags, updateLinkText);
   }
 
   if (hideQueryVariableDropDown.match(action)) {
     const newState = { ...state, picker: { ...state.picker, showDropDown: false } };
 
-    return appyStateChanges(newState, updateLinkText, updateOptions, updateSelectedValues, updateSelectedTags);
+    return appyStateChanges(newState, updateOptions, updateSelectedValues, updateSelectedTags, updateLinkText);
   }
 
   return state;

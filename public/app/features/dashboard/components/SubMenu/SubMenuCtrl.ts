@@ -5,7 +5,6 @@ import { e2e } from '@grafana/e2e';
 import { VariableSrv } from 'app/features/templating/all';
 import { CoreEvents } from '../../../../types';
 import { VariableModel } from '../../../templating/variable';
-import { store } from '../../../../store/store';
 import { getVariables } from '../../../templating/state/selectors';
 import { variableAdapter } from '../../../templating/adapters';
 
@@ -19,7 +18,7 @@ export class SubMenuCtrl {
   /** @ngInject */
   constructor(private variableSrv: VariableSrv, private $location: ILocationService) {
     this.annotations = this.dashboard.templating.list;
-    const variablesInState = getVariables(store.getState()).map(variable => ({ ...variable }));
+    const variablesInState = getVariables().map(variable => ({ ...variable }));
     this.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
     this.submenuEnabled = this.dashboard.meta.submenuEnabled;
     this.dashboard.events.on(CoreEvents.submenuVisibilityChanged, (enabled: boolean) => {

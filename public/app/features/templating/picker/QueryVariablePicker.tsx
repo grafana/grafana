@@ -161,20 +161,14 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
   };
 
   commitChanges = () => {
-    const { searchOptions, searchQuery, queryHasSearchFilter, oldVariableText } = this.state.picker;
-    let current = { ...this.state.variable.current };
-
-    // if we have a search query and no options use that
-    if (searchOptions.length === 0 && searchQuery.length > 0) {
-      current = { text: searchQuery, value: searchQuery, selected: false };
-    }
+    const { queryHasSearchFilter, oldVariableText } = this.state.picker;
 
     if (queryHasSearchFilter) {
       // this.updateLazyLoadedOptions();
     }
 
     if (this.state.variable.current.text !== oldVariableText) {
-      variableAdapter[this.state.variable.type].setValue(this.state.variable, current);
+      variableAdapter[this.state.variable.type].setValue(this.state.variable, this.state.variable.current);
     }
     store.dispatch(hideQueryVariableDropDown(this.state.variable));
   };
