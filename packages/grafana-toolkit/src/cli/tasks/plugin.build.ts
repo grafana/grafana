@@ -40,13 +40,13 @@ export const prepare = useSpinner<void>('Preparing', async () => {
   await Promise.all([
     // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
     copyIfNonExistent(
-      resolvePath(process.cwd(), 'tsconfig.json'),
-      resolvePath(__dirname, '../../config/tsconfig.plugin.local.json')
+      resolvePath(__dirname, '../../config/tsconfig.plugin.local.json'),
+      resolvePath(process.cwd(), 'tsconfig.json')
     ),
     // Copy only if local prettierrc does not exist.  Otherwise this will work, but have odd behavior
     copyIfNonExistent(
-      resolvePath(process.cwd(), '.prettierrc.js'),
-      resolvePath(__dirname, '../../config/prettier.plugin.rc.js')
+      resolvePath(__dirname, '../../config/prettier.plugin.rc.js'),
+      resolvePath(process.cwd(), '.prettierrc.js')
     ),
   ]);
 

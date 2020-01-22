@@ -172,6 +172,8 @@
       name: Notifications
   - name: Keyboard Shortcuts
     link: /features/shortcuts/
+  - name: Reporting
+    link: /features/reporting/
 - name: What's New In Grafana
   link: /whatsnew/
   children:

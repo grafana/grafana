@@ -15,7 +15,7 @@ export const LoginPage: FC = () => {
     <Branding.LoginBackground className="login container">
       <div className="login-content">
         <div className="login-branding">
-          <Branding.LoginLogo className="logo-icon" />
+          <Branding.LoginLogo className="login-logo" />
         </div>
         <LoginCtrl>
           {({
