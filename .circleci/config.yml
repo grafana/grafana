@@ -172,7 +172,7 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
-  build-enterprise-windows-installerf:
+  build-enterprise-windows-installer:
     docker:
       - image: grafana/wix-toolset-ci:v3
     steps:
