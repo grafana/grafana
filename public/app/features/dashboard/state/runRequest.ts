@@ -3,7 +3,7 @@ import { Observable, of, timer, merge, from } from 'rxjs';
 import { flatten, map as lodashMap, isArray, isString } from 'lodash';
 import { map, catchError, takeUntil, mapTo, share, finalize, tap } from 'rxjs/operators';
 // Utils & Services
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 // Types
 import {
   DataSourceApi,
@@ -136,7 +136,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
 
 function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
   return () => {
-    getBackendSrv().resolveCancelerIfExists(req.requestId);
+    backendSrv.resolveCancelerIfExists(req.requestId);
   };
 }
 

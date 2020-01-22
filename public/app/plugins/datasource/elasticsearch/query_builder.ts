@@ -379,7 +379,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: any, querystring: string) {
+  getLogsQuery(target: any, adhocFilters?: any, querystring?: string) {
     let query: any = {
       size: 0,
       query: {
@@ -388,6 +388,8 @@ export class ElasticQueryBuilder {
         },
       },
     };
+
+    this.addAdhocFilters(query, adhocFilters);
 
     if (target.query) {
       query.query.bool.filter.push({

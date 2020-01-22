@@ -27,99 +27,73 @@ module.exports = (env = {}) =>
     },
 
     module: {
-      rules: [
+      rules: [{
+          test: /\.tsx?$/,
+          enforce: 'pre',
+          exclude: /node_modules/,
+          use: {
+            loader: 'tslint-loader',
+            options: {
+              emitErrors: true,
+              typeCheck: false,
+            }
+          }
+        },
         {
           test: /\.tsx?$/,
           exclude: /node_modules/,
-          use: [
-            {
-              loader: 'babel-loader',
-              options: {
-                cacheDirectory: true,
-                babelrc: false,
-                // Note: order is top-to-bottom and/or left-to-right
-                plugins: [
-                  [
-                    require('@rtsao/plugin-proposal-class-properties'),
-                    {
-                      loose: true,
-                    },
-                  ],
-                  '@babel/plugin-proposal-nullish-coalescing-operator',
-                  '@babel/plugin-proposal-optional-chaining',
-                  '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
-                  'angularjs-annotate',
-                ],
-                // Note: order is bottom-to-top and/or right-to-left
-                presets: [
-                  [
-                    '@babel/preset-env',
-                    {
-                      targets: {
-                        browsers: 'last 3 versions',
-                      },
-                      useBuiltIns: 'entry',
-                      modules: false,
-                    },
-                  ],
-                  '@babel/preset-typescript',
-                  '@babel/preset-react',
-                ],
-              },
+          use: {
+            loader: 'ts-loader',
+            options: {
+              transpileOnly: true
             },
-            {
-              loader: 'tslint-loader',
-              options: {
-                emitErrors: true,
-                typeCheck: false,
-              },
-            },
-          ],
+          },
         },
         require('./sass.rule.js')({
           sourceMap: false,
-          preserveUrl: false,
+          preserveUrl: false
         }),
         {
           test: /\.(png|jpg|gif|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
-          loader: 'file-loader',
+          loader: 'file-loader'
         },
-      ],
+      ]
     },
 
     plugins: [
       new CleanWebpackPlugin(),
-      env.noTsCheck
-        ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
-        : new ForkTsCheckerWebpackPlugin({
-            checkSyntacticErrors: true,
-          }),
+      env.noTsCheck ?
+      new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
+      :
+      new ForkTsCheckerWebpackPlugin({
+        checkSyntacticErrors: true,
+      }),
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[hash].css',
+        filename: 'grafana.[name].[hash].css'
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
         template: path.resolve(__dirname, '../../public/views/error-template.html'),
         inject: false,
         chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
+        excludeChunks: ['dark', 'light']
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
         inject: false,
         chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
+        excludeChunks: ['dark', 'light']
       }),
       new webpack.NamedModulesPlugin(),
       new webpack.HotModuleReplacementPlugin(),
       new webpack.DefinePlugin({
         'process.env': {
-          NODE_ENV: JSON.stringify('development'),
-        },
+          NODE_ENV: JSON.stringify('development')
+        }
       }),
       // new BundleAnalyzerPlugin({
       //   analyzerPort: 8889
       // })
-    ],
+    ]
   });

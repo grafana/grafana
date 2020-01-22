@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -65,11 +65,9 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         icon: 'gicon gicon-dashboard',
         href: 'dashboard/new?gettingstarted',
         check: () => {
-          return getBackendSrv()
-            .search({ limit: 1 })
-            .then(result => {
-              return result.length > 0;
-            });
+          return backendSrv.search({ limit: 1 }).then(result => {
+            return result.length > 0;
+          });
         },
       },
       {
@@ -78,12 +76,10 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         icon: 'gicon gicon-team',
         href: 'org/users?gettingstarted',
         check: () => {
-          return getBackendSrv()
-            .get('/api/org/users/lookup')
-            .then((res: any) => {
-              /* return res.length > 1; */
-              return false;
-            });
+          return backendSrv.get('/api/org/users/lookup').then((res: any) => {
+            /* return res.length > 1; */
+            return false;
+          });
         },
       },
       {
@@ -92,11 +88,9 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         icon: 'gicon gicon-plugins',
         href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
         check: () => {
-          return getBackendSrv()
-            .get('/api/plugins', { embedded: 0, core: 0 })
-            .then((plugins: any[]) => {
-              return plugins.length > 0;
-            });
+          return backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then((plugins: any[]) => {
+            return plugins.length > 0;
+          });
         },
       },
     ];
@@ -130,7 +124,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const dashboard = getDashboardSrv().getCurrent();
     const panel = dashboard.getPanelById(id);
     dashboard.removePanel(panel);
-    getBackendSrv()
+    backendSrv
       .request({
         method: 'PUT',
         url: '/api/user/helpflags/1',

@@ -29,5 +29,9 @@ const getKnobs = () => {
 
 export const simple = () => {
   const { disabled, text, options } = getKnobs();
-  return <ButtonCascader disabled={disabled} options={options} value={['A']} expandIcon={null} buttonText={text} />;
+  return (
+    <ButtonCascader disabled={disabled} options={options} value={['A']}>
+      {text}
+    </ButtonCascader>
+  );
 };

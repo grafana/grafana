@@ -54,6 +54,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     content: css`
       padding: ${theme.spacing.md};
+      height: 100%;
     `,
   };
 });

@@ -91,7 +91,7 @@ export class LdapPage extends PureComponent<Props, State> {
 
             <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
 
-            {config.buildInfo.isEnterprise && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
+            {config.licenseInfo.hasLicense && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
 
             <h3 className="page-heading">Test user mapping</h3>
             <div className="gf-form-group">
