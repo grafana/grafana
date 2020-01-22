@@ -201,24 +201,42 @@
     link: /guides/whats-new-in-v5-1/
   - name: Version 5.0
     link: /guides/whats-new-in-v5/
-  - name: Version 4.6
-    link: /guides/whats-new-in-v4-6/
-  - name: Version 4.5
-    link: /guides/whats-new-in-v4-5/
-  - name: Version 4.4
-    link: /guides/whats-new-in-v4-4/
-  - name: Version 4.3
-    link: /guides/whats-new-in-v4-3/
-  - name: Version 4.2
-    link: /guides/whats-new-in-v4-2/
-  - name: Version 4.1
-    link: /guides/whats-new-in-v4-1/
-  - name: Version 4.0
-    link: /guides/whats-new-in-v4/
-  - name: Version 3.1
-    link: /guides/whats-new-in-v3-1/
-  - name: Version 3.0
-    link: /guides/whats-new-in-v3/
+  - name: Old versions
+    link: /whatsnew/
+    children:
+    - name: Version 4.6
+      link: /guides/whats-new-in-v4-6/
+    - name: Version 4.5
+      link: /guides/whats-new-in-v4-5/
+    - name: Version 4.4
+      link: /guides/whats-new-in-v4-4/
+    - name: Version 4.3
+      link: /guides/whats-new-in-v4-3/
+    - name: Version 4.2
+      link: /guides/whats-new-in-v4-2/
+    - name: Version 4.1
+      link: /guides/whats-new-in-v4-1/
+    - name: Version 4.0
+      link: /guides/whats-new-in-v4/
+    - name: Version 3.1
+      link: /guides/whats-new-in-v3-1/
+    - name: Version 3.0
+      link: /guides/whats-new-in-v3/
+- name: Grafana Enterprise
+  link: /enterprise/
+  children:
+  - name: Overview
+    link: /enterprise/
+  - name: Reporting
+    link: /features/reporting/
+  - name: Data source permissions
+    link: /permissions/datasource_permissions/
+  - link: /auth/enhanced_ldap/
+    name: Enhanced LDAP
+  - link: /auth/saml/
+    name: SAML
+  - link: /auth/team-sync/
+    name: Team Sync
 - name: Tutorials
   link: /tutorials/
   children:
@@ -312,7 +330,5 @@
   children:
   - name: Contributor License Agreement (CLA)
     link: /contribute/cla/
-- name: Grafana Enterprise
-  link: /enterprise/
 - name: Docs Archive
   link: /archive/
