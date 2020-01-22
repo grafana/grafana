@@ -13,6 +13,7 @@ import usersReducers from 'app/features/users/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
+import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 
 const rootReducers = {
   ...sharedReducers,
@@ -28,6 +29,7 @@ const rootReducers = {
   ...userReducers,
   ...organizationReducers,
   ...ldapReducers,
+  ...importDashboardReducers,
 };
 
 const addedReducers = {};
