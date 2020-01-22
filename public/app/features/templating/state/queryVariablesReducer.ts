@@ -26,7 +26,14 @@ import { stringToJsRegex } from '@grafana/data';
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
 
-export interface VariableState<P, M extends VariableModel = VariableModel> {
+export type MutateStateFunc<S extends VariableState> = (state: S) => S;
+export const appyStateChanges = <S extends VariableState>(state: S, ...args: Array<MutateStateFunc<S>>): S => {
+  return args.reduce((all, cur) => {
+    return cur(all);
+  }, state);
+};
+
+export interface VariableState<P extends {} = {}, M extends VariableModel = VariableModel> {
   picker: P;
   variable: M;
 }
@@ -40,6 +47,7 @@ export interface QueryVariablePickerState {
   searchOptions: VariableOption[];
   highlightIndex: number;
   tags: VariableTag[];
+  options: VariableOption[];
   queryHasSearchFilter: boolean;
   oldVariableText: string | string[];
 }
@@ -56,6 +64,7 @@ export const initialQueryVariablePickerState: QueryVariablePickerState = {
   selectedValues: [],
   showDropDown: false,
   tags: [],
+  options: [],
   oldVariableText: null,
 };
 
@@ -227,12 +236,12 @@ const updateSelectedTags = (state: QueryVariableState): QueryVariableState => {
   };
 };
 
-const updateSearchOptions = (state: QueryVariableState): QueryVariableState => {
+const updateOptions = (state: QueryVariableState): QueryVariableState => {
   return {
     ...state,
     picker: {
       ...state.picker,
-      searchOptions: state.variable.options.slice(0, Math.min(state.variable.options.length, 1000)),
+      options: state.variable.options.slice(0, Math.min(state.variable.options.length, 1000)),
     },
   };
 };
@@ -355,7 +364,7 @@ export const queryVariableReducer = (
       },
     };
 
-    return updateSelectedValues(updateSelectedTags(updateSearchOptions(updateLinkText(newState))));
+    return appyStateChanges(newState, updateLinkText, updateOptions, updateSelectedValues, updateSelectedTags);
   }
 
   if (setInitLock.match(action)) {
@@ -375,35 +384,39 @@ export const queryVariableReducer = (
   if (selectVariableOption.match(action)) {
     const { option, forceSelect, event } = action.payload;
     const { multi } = state.variable;
+    const newOptions: VariableOption[] = state.variable.options.map(o => {
+      if (o.value !== option.value) {
+        let selected = o.selected;
+        if (o.text === ALL_VARIABLE_TEXT || option.text === ALL_VARIABLE_TEXT) {
+          selected = false;
+        } else if (!multi) {
+          selected = false;
+        } else if (event.ctrlKey || event.metaKey || event.shiftKey) {
+          selected = false;
+        }
+        return {
+          ...o,
+          selected,
+        };
+      }
+      const selected = forceSelect ? true : multi ? !option.selected : true;
+      return {
+        ...o,
+        selected,
+      };
+    });
+    if (newOptions.length > 0 && newOptions.filter(o => o.selected).length === 0) {
+      newOptions[0].selected = true;
+    }
     const newState = {
       ...state,
       variable: {
         ...state.variable,
-        options: state.variable.options.map(o => {
-          if (o.value !== option.value) {
-            let selected = o.selected;
-            if (o.text === ALL_VARIABLE_TEXT || option.text === ALL_VARIABLE_TEXT) {
-              selected = false;
-            } else if (!multi) {
-              selected = false;
-            } else if (event.ctrlKey || event.metaKey || event.shiftKey) {
-              selected = false;
-            }
-            return {
-              ...o,
-              selected,
-            };
-          }
-          const selected = forceSelect ? true : multi ? !option.selected : true;
-          return {
-            ...o,
-            selected,
-          };
-        }),
+        options: newOptions,
       },
     };
 
-    return updateSelectedValues(updateSelectedTags(updateSearchOptions(updateLinkText(newState))));
+    return appyStateChanges(newState, updateLinkText, updateOptions, updateSelectedValues, updateSelectedTags);
   }
 
   if (showQueryVariableDropDown.match(action)) {
@@ -426,13 +439,13 @@ export const queryVariableReducer = (
       },
     };
 
-    return updateSelectedValues(updateSelectedTags(updateSearchOptions(newState)));
+    return appyStateChanges(newState, updateLinkText, updateOptions, updateSelectedValues, updateSelectedTags);
   }
 
   if (hideQueryVariableDropDown.match(action)) {
     const newState = { ...state, picker: { ...state.picker, showDropDown: false } };
 
-    return updateSelectedValues(updateSelectedTags(updateSearchOptions(updateLinkText(newState))));
+    return appyStateChanges(newState, updateLinkText, updateOptions, updateSelectedValues, updateSelectedTags);
   }
 
   return state;

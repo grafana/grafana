@@ -10,6 +10,7 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { hideQueryVariableDropDown, selectVariableOption, showQueryVariableDropDown } from '../state/actions';
 import { QueryVariablePickerState, QueryVariableState, VariableState } from '../state/queryVariablesReducer';
+import { variableAdapter } from '../adapters';
 
 export interface Props {
   name: string;
@@ -160,35 +161,21 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
   };
 
   commitChanges = () => {
-    // const { searchOptions, searchQuery, selectedValues, selectedTags } = this.state;
-    // const { options, type, multi } = this.state.variable;
-    // const current: VariableOption = {
-    //   value: selectedValues.map(v => v.value) as string[],
-    //   text: selectedValues.map(v => v.text).join(' + '),
-    //   tags: selectedTags,
-    //   selected: true,
-    // };
-    //
-    // if (!multi) {
-    //   current.value = selectedValues[0].value;
-    // }
-    //
-    // // if we have a search query and no options use that
-    // if (searchOptions.length === 0 && searchQuery.length > 0) {
-    //   current.text = searchQuery;
-    //   current.value = searchQuery;
-    // } else if (selectedValues.length === 0) {
-    //   // make sure one option is selected
-    //   current.text = options[0].text;
-    //   current.value = options[0].value;
-    //   // this.selectionsChanged(false);
-    // }
-    //
-    // variableAdapter[type].setValue(this.state.variable, current);
-    // // store.dispatch(setOptionAsCurrent(this.state.variable, current) as any);
-    // this.setState({
-    //   showDropDown: false,
-    // });
+    const { searchOptions, searchQuery, queryHasSearchFilter, oldVariableText } = this.state.picker;
+    let current = { ...this.state.variable.current };
+
+    // if we have a search query and no options use that
+    if (searchOptions.length === 0 && searchQuery.length > 0) {
+      current = { text: searchQuery, value: searchQuery, selected: false };
+    }
+
+    if (queryHasSearchFilter) {
+      // this.updateLazyLoadedOptions();
+    }
+
+    if (this.state.variable.current.text !== oldVariableText) {
+      variableAdapter[this.state.variable.type].setValue(this.state.variable, current);
+    }
     store.dispatch(hideQueryVariableDropDown(this.state.variable));
   };
 
@@ -221,9 +208,9 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
       searchQuery,
       showDropDown,
       selectedValues,
-      searchOptions,
       highlightIndex,
       tags,
+      options,
     } = this.state.picker;
 
     if (!this.state.variable) {
@@ -311,7 +298,7 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
                           Selected ({selectedValues.length})
                         </a>
                       )}
-                      {searchOptions.map((option, index) => {
+                      {options.map((option, index) => {
                         const selectClass = option.selected
                           ? 'variable-option pointer selected'
                           : 'variable-option pointer';
