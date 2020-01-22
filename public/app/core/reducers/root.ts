@@ -34,8 +34,8 @@ const rootReducers = {
 
 const addedReducers = {};
 
-export const addReducer = (addedReducer: any) => {
-  Object.assign(addedReducers, ...addedReducer);
+export const addReducer = (newReducers: any) => {
+  Object.assign(addedReducers, newReducers);
 };
 
 export const createRootReducer = () => {

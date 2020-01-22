@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "6.6.0-pre",
+  "version": "6.7.0-pre",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -39,7 +39,7 @@
     "rollup-plugin-terser": "4.0.4",
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
-    "rxjs": "6.4.0",
+    "rxjs": "6.5.4",
     "sinon": "1.17.6",
     "typescript": "3.7.2"
   }

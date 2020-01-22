@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -13,7 +14,21 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	requestQueriesByRegion, err := e.parseQueries(queryContext)
+	startTime, err := queryContext.TimeRange.ParseFrom()
+	if err != nil {
+		return nil, err
+	}
+
+	endTime, err := queryContext.TimeRange.ParseTo()
+	if err != nil {
+		return nil, err
+	}
+
+	if !startTime.Before(endTime) {
+		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
+	}
+
+	requestQueriesByRegion, err := e.parseQueries(queryContext, startTime, endTime)
 	if err != nil {
 		return results, err
 	}
@@ -52,7 +67,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					return nil
 				}
 
-				metricDataInput, err := e.buildMetricDataInput(queryContext, queries)
+				metricDataInput, err := e.buildMetricDataInput(startTime, endTime, queries)
 				if err != nil {
 					return err
 				}
