@@ -48,12 +48,20 @@ sudo yum install <rpm package url>
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
-The YUM repository installs the open source edition of Grafana.
+| Grafana Version | Package | Repository |
+|-----------------|---------|------------|
+| Grafana OSS     | grafana | `https://packages.grafana.com/oss/rpm` |
+| Grafana OSS (Beta)     | grafana | `https://packages.grafana.com/oss/rpm-beta` |
+| Grafana Enterprise     | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm` |
+| Grafana Enterprise (Beta)     | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
+
 
 1. Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
+
 ```bash
 sudo nano /etc/yum.repos.d/grafana.repo
 ```
+
 2. Enter the following information in grafana.repo and then save it.
 
 For stable releases:
@@ -68,11 +76,12 @@ gpgkey=https://packages.grafana.com/gpg.key
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
-For beta releases:
+
+For enterprise releases:
 ```bash
 [grafana]
 name=grafana
-baseurl=https://packages.grafana.com/oss/rpm-beta
+baseurl=https://packages.grafana.com/enterprise/rpm
 repo_gpgcheck=1
 enabled=1
 gpgcheck=1
@@ -80,9 +89,14 @@ gpgkey=https://packages.grafana.com/gpg.key
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
+
 3. Install Grafana.
+
 ```bash
 sudo yum install grafana
+
+# or
+sudo yum install grafana-enterprise
 ```
 
 ### Install with RPM

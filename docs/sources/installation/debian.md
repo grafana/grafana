@@ -26,26 +26,40 @@ If you install from the APT repository, then Grafana is automatically updated ev
 
 The APT repository installs the open source edition of Grafana.
 
+| Grafana Version | Package | Repository |
+|-----------------|---------|------------|
+| Grafana OSS     | grafana | `https://packages.grafana.com/oss/deb stable main` |
+| Grafana OSS (Beta)     | grafana | `https://packages.grafana.com/oss/deb beta main` |
+| Grafana Enterprise     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb stable main` |
+| Grafana Enterprise (Beta)     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb beta main` |
+
 #### To install the latest stable release:
 
 ```bash
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+
+# Alternatively you can add the beta repository, see in the table above
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+
 sudo apt-get update
 sudo apt-get install grafana
 ```
 
-#### To install the latest beta release:
+#### To install the latest stable enterprise release:
 
 ```bash
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
+
+
+# Alternatively you can add the beta repository, see in the table above
+sudo add-apt-repository "deb https://packages.grafana.com/enterprise/deb stable main"
+
 sudo apt-get update
-sudo apt-get install grafana
+sudo apt-get install grafana-enterprise
 ```
 
 ### Set up repository for ARM
