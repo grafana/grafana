@@ -115,7 +115,7 @@ Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
 ### Singlequote
-Formats single and multi valued variables for use in URL parameters.
+Formats single- and multi-valued variables for use in URL parameters.
 
 ```bash
 servers = ['test1', 'test2']
