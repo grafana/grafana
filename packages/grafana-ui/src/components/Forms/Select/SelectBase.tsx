@@ -173,7 +173,7 @@ export function SelectBase<T>({
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
-  let Component: ReactSelect | Creatable = ReactSelect;
+  let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
 
@@ -239,13 +239,13 @@ export function SelectBase<T>({
   console.log(inputSizes()[size]);
 
   if (allowCustomValue) {
-    Component = Creatable;
+    ReactSelectComponent = Creatable;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
   if (loadOptions) {
-    Component = ReactAsyncSelect;
+    ReactSelectComponent = ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
       defaultOptions,
@@ -253,7 +253,7 @@ export function SelectBase<T>({
   }
   console.log(ValueContainer);
   return (
-    <Component
+    <ReactSelectComponent
       components={{
         MenuList: SelectMenu,
         Group: SelectOptionGroup,
