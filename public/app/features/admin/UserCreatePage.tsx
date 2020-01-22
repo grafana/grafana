@@ -13,7 +13,6 @@ interface UserCreatePageProps {
   navModel: NavModel;
   updateLocation: typeof updateLocation;
 }
-
 interface UserDTO {
   name: string;
   password: string;
@@ -59,9 +58,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                     type="password"
                     name="password"
                     ref={register({
-                      validate: value => {
-                        return value.trim() !== '' && value.length >= 4;
-                      },
+                      validate: value => value.trim() !== '' && value.length >= 4,
                     })}
                   />
                 </Forms.Field>
