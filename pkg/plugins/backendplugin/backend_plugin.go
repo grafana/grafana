@@ -103,11 +103,12 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
-	if res, err := p.getSchema(ctx); err != nil {
+	res, err := p.getSchema(ctx)
+	if err != nil {
 		return errutil.Wrap("Failed to get schema for plugin", err)
-	} else {
-		p.resources = res.Resources
 	}
+
+	p.resources = res.Resources
 
 	if legacyClient != nil && p.startFns.OnLegacyStart != nil {
 		if err := p.startFns.OnLegacyStart(p.id, legacyClient, p.logger); err != nil {
