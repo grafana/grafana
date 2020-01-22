@@ -4,14 +4,15 @@ import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import { Forms, stylesFactory } from '@grafana/ui';
 import Page from '../../../core/components/Page/Page';
-import { getGcomDashboard } from '../state/actions';
+import { fetchGcomDashboard } from '../state/actions';
 import { getNavModel } from '../../../core/selectors/navModel';
 import { StoreState } from '../../../types';
 
 interface Props {
   navModel: NavModel;
+  dashboard: any;
 
-  getGcomDashboard: typeof getGcomDashboard;
+  fetchGcomDashboard: typeof fetchGcomDashboard;
 }
 
 interface State {
@@ -57,39 +58,104 @@ class DashboardImport extends PureComponent<Props, State> {
       });
     }
 
-    this.props.getGcomDashboard(dashboardId);
+    this.props.fetchGcomDashboard(dashboardId);
   };
 
-  render() {
-    const { navModel } = this.props;
+  renderImportForm() {
     const styles = importStyles();
 
     return (
-      <Page navModel={navModel}>
-        <Page.Contents>
-          <div className={styles.option}>
-            <h3>Import via .json file</h3>
-            <Forms.Button>Upload .json file</Forms.Button>
+      <>
+        <div className={styles.option}>
+          <h3>Import via .json file</h3>
+          <Forms.Button>Upload .json file</Forms.Button>
+        </div>
+        <div className={styles.option}>
+          <h3>Import via grafana.com</h3>
+          <Forms.Field>
+            <Forms.Input
+              size="md"
+              placeholder="Grafana.com dashboard url or id"
+              onChange={this.onGcomDashboardChange}
+              addonAfter={<Forms.Button onClick={this.getGcomDashboard}>Load</Forms.Button>}
+            />
+          </Forms.Field>
+        </div>
+        <div className={styles.option}>
+          <h3>Import via panel json</h3>
+          <Forms.Field>
+            <Forms.TextArea rows={10} />
+          </Forms.Field>
+          <Forms.Button>Load</Forms.Button>
+        </div>
+      </>
+    );
+  }
+
+  renderSaveForm() {
+    const { dashboard } = this.props;
+    return (
+      <>
+        {dashboard.json.gnetId && (
+          <div className="gf-form-group">
+            <h3 className="section-heading">
+              Importing Dashboard from{' '}
+              <a
+                href={`https://grafana.com/dashboards/${dashboard.json.gnetId}`}
+                className="external-link"
+                target="_blank"
+              >
+                Grafana.com
+              </a>
+            </h3>
+
+            <div className="gf-form">
+              <Forms.Label>Published by</Forms.Label>
+              <label className="gf-form-label width-15">{dashboard.orgName}</label>
+            </div>
+            <div className="gf-form">
+              <label className="gf-form-label width-15">Updated on</label>
+              <label className="gf-form-label width-15">{dashboard.updatedAt}</label>
+            </div>
           </div>
-          <div className={styles.option}>
-            <h3>Import via grafana.com</h3>
-            <Forms.Field>
-              <Forms.Input
-                size="md"
-                placeholder="Grafana.com dashboard url or id"
-                onChange={this.onGcomDashboardChange}
-                addonAfter={<Forms.Button onClick={this.getGcomDashboard}>Load</Forms.Button>}
+        )}
+        <h3 className="section-heading">Options</h3>
+
+        <div className="gf-form-group">
+          <div className="gf-form-inline">
+            <div className="gf-form gf-form--grow">
+              <label className="gf-form-label width-15">Name</label>
+              <input
+                type="text"
+                className="gf-form-input"
+                ng-model="ctrl.dash.title"
+                give-focus="true"
+                ng-change="ctrl.titleChanged()"
+                ng-class="{'validation-error': ctrl.nameExists || !ctrl.dash.title}"
               />
-            </Forms.Field>
+              <label className="gf-form-label text-success" ng-if="ctrl.titleTouched && !ctrl.hasNameValidationError">
+                <i className="fa fa-check" />
+              </label>
+            </div>
           </div>
-          <div className={styles.option}>
-            <h3>Import via panel json</h3>
-            <Forms.Field>
-              <Forms.TextArea rows={10} />
-            </Forms.Field>
-            <Forms.Button>Load</Forms.Button>
+
+          <div className="gf-form-inline" ng-if="ctrl.hasNameValidationError">
+            <div className="gf-form offset-width-15 gf-form--grow">
+              <label className="gf-form-label text-warning gf-form-label--grow">
+                <i className="fa fa-warning" />
+              </label>
+            </div>
           </div>
-        </Page.Contents>
+        </div>
+      </>
+    );
+  }
+
+  render() {
+    const { dashboard, navModel } = this.props;
+    return (
+      <Page navModel={navModel}>
+        <Page.Contents>{dashboard.json ? this.renderSaveForm() : this.renderImportForm()}</Page.Contents>
       </Page>
     );
   }
@@ -98,11 +164,12 @@ class DashboardImport extends PureComponent<Props, State> {
 const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, 'import', null, true),
+    dashboard: state.importDashboard.dashboard,
   };
 };
 
-const mapDispatchToProps = () => ({
-  getGcomDashboard,
-});
+const mapDispatchToProps = {
+  fetchGcomDashboard,
+};
 
 export default connect(mapStateToProps, mapDispatchToProps)(DashboardImport);

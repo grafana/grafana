@@ -6,7 +6,7 @@ import { LocationState } from './location';
 import { AlertRulesState } from './alerting';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
-import { DashboardState } from './dashboard';
+import { DashboardState, ImportDashboardState } from './dashboard';
 import { DataSourcesState, DataSourceSettingsState } from './datasources';
 import { ExploreState } from './explore';
 import { UsersState, UserState, UserAdminState } from './user';
@@ -41,6 +41,7 @@ export interface StoreState {
   ldap: LdapState;
   apiKeys: ApiKeysState;
   userAdmin: UserAdminState;
+  importDashboard: ImportDashboardState;
 }
 
 /*
