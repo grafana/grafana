@@ -72,6 +72,7 @@ all the data.
 
 This panel supports showing RSS feeds as news items. It is used in the updated default home dashboard. Add it to
 your custom home dashboards to keep up to date with Grafana news or switch the default RSS feed to one of your choice.
+It currently only supports RSS (not Atom).
 
 {{< docs-imagebox img="/img/docs/v66/news_panel.png" max-width="600px" caption="News panel" >}}
 
@@ -82,7 +83,7 @@ unit picker and select the `Custom: <your unit>` option. By default it will be u
 custom prefix just type `prefix: <your unit>` to make the custom unit appear before the value. If you want a custom
 SI unit (with auto SI suffixes) specify `si:Ups`. A value like 1000 will be rendered as `1 kUps`.
 
-jkj{{< docs-imagebox img="/img/docs/v66/custom_unit_burger1.png" max-width="600px" caption="Custom unit" >}}
+{{< docs-imagebox img="/img/docs/v66/custom_unit_burger1.png" max-width="600px" caption="Custom unit" >}}
 
 Paste a native emoji in the unit picker and pick it as a custom unit:
 
@@ -139,14 +140,24 @@ Isolating a series from a big set of lines in a graph is important for drill-dow
 
 This release adds new white labeling options to the grafana.ini file (can also be set via ENV variables).
 
-```ini
+```bash
 [white_labeling]
-login_logo =
-login_background =
-menu_logo =
-fav_icon =
-apple_touch_icon =
+# Set to complete url to override login logo
+login_logo = https://my.logo.url/images/logo.png
 
+# Set to complete css background expression to override login background
+login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg)
+
+# Set to complete url to override menu logo
+menu_logo = https://my.logo.url/images/logo_icon.png
+
+# Set to complete url to override fav icon (icon shown in browser tab)
+fav_icon = https://my.logo.url/images/logo_icon_32px.png
+
+# Set to complete url to override apple/ios icon
+apple_touch_icon = https://my.logo.url/images/logo_icon_32px.png
+
+# Below is an example for how to replace the default footer & help links with 2 custom links
 footer_links = support guides
 footer_links_support_text = Support
 footer_links_support_url = http://your.support.site
