@@ -81,3 +81,8 @@ export interface DashboardState {
   modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
   panels: { [id: string]: PanelState };
 }
+
+export interface ImportDashboardState {
+  dashboard: any;
+  gcomError: string;
+}
