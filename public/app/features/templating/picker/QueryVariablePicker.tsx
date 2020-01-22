@@ -1,43 +1,24 @@
 import React, { MouseEvent, PureComponent } from 'react';
 import debounce from 'lodash/debounce';
+import { Subscription } from 'rxjs';
+import { ClickOutsideWrapper } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
-import { QueryVariableModel, VariableHide, VariableModel, VariableOption, VariableType } from '../variable';
-import { Observable, Subscriber, Subscription } from 'rxjs';
-import { store } from '../../../store/store';
-import { StoreState } from 'app/types/store';
-import { distinctUntilChanged } from 'rxjs/operators';
-import { ClickOutsideWrapper } from '@grafana/ui';
-import { hideQueryVariableDropDown, selectVariableOption, showQueryVariableDropDown } from '../state/actions';
-import { QueryVariablePickerState, QueryVariableState, VariableState } from '../state/queryVariablesReducer';
+import { VariableHide, VariableOption } from '../variable';
+import { dispatch } from '../../../store/store';
+import {
+  hideQueryVariableDropDown,
+  selectVariableOption,
+  showQueryVariableDropDown,
+  toVariablePayload,
+} from '../state/actions';
+import { QueryVariableState } from '../state/queryVariableReducer';
 import { variableAdapter } from '../adapters';
+import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
 
 export interface Props {
   name: string;
 }
-
-export const subscribeToVariableChanges = <P extends {} = {}, M extends VariableModel = VariableModel>(
-  name: string,
-  type: VariableType
-) => {
-  const stateSelector = (state: StoreState): VariableState<P, M> => {
-    const typeState = state.templating[type];
-    const variableState = typeState.find(s => s.variable.name === name);
-    return variableState;
-  };
-
-  return new Observable((observer: Subscriber<VariableState<P, M>>) => {
-    const unsubscribeFromStore = store.subscribe(() => observer.next(stateSelector(store.getState())));
-    observer.next(stateSelector(store.getState()));
-    return function unsubscribe() {
-      unsubscribeFromStore();
-    };
-  }).pipe(
-    distinctUntilChanged<VariableState<P, M>>((previous, current) => {
-      return previous === current;
-    })
-  );
-};
 
 export class QueryVariablePicker extends PureComponent<Props, QueryVariableState> {
   private readonly debouncedOnQueryChanged: Function;
@@ -47,10 +28,7 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
     this.debouncedOnQueryChanged = debounce((searchQuery: string) => {
       this.onQueryChanged(searchQuery);
     }, 200);
-    this.subscription = subscribeToVariableChanges<QueryVariablePickerState, QueryVariableModel>(
-      props.name,
-      'query'
-    ).subscribe({
+    this.subscription = subscribeToVariableChanges<QueryVariableState>(props.name, 'query').subscribe({
       next: state => {
         if (this.state) {
           this.setState({ ...state });
@@ -62,24 +40,9 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
     });
   }
 
-  componentDidMount(): void {
-    // const queryHasSearchFilter = this.state.variable ? containsSearchFilter(this.state.variable.query) : false;
-    // const selectedTags = this.state.variable?.current?.tags ?? [];
-    // this.setState({
-    //   queryHasSearchFilter,
-    //   selectedTags,
-    // });
-    // this.updateLinkText();
-  }
+  componentDidMount(): void {}
 
-  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<QueryVariableState>): void {
-    //   if (prevState.variable.options !== this.state.variable.options) {
-    //     this.setState({
-    //       searchOptions: this.state.variable.options.slice(0, Math.min(this.state.variable.options.length, 1000)),
-    //     });
-    //   }
-    //   this.updateLinkText();
-  }
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<QueryVariableState>): void {}
 
   componentWillUnmount(): void {
     this.subscription.unsubscribe();
@@ -88,67 +51,8 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
   onShowDropDown = (event: MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
     event.preventDefault();
-    store.dispatch(showQueryVariableDropDown(this.state.variable));
-    // const { tags, current, options } = this.state.variable;
-    // const newTags = tags
-    //   ? tags.map(tag => {
-    //       const currentTag = current?.tags?.filter(t => t.text === tag.text)[0];
-    //       return currentTag || { text: tag.text, selected: false };
-    //     })
-    //   : [];
-    //
-    // // new behaviour, if this is a query that uses searchfilter it might be a nicer
-    // // user experience to show the last typed search query in the input field
-    // const searchQuery = this.state.queryHasSearchFilter && this.state.searchQuery ? this.state.searchQuery : '';
-    //
-    // // this.search = {
-    // //   query,
-    // //   options: this.options.slice(0, Math.min(this.options.length, 1000)),
-    // // };
-    //
-    // // this.dropdownVisible = true;
-    // this.setState({
-    //   showDropDown: true,
-    //   highlightIndex: -1,
-    //   selectedValues: options.filter(option => option.selected),
-    //   tags: newTags,
-    //   searchQuery,
-    //   searchOptions: options.slice(0, Math.min(options.length, 1000)),
-    // });
+    dispatch(showQueryVariableDropDown(toVariablePayload(this.state.variable)));
   };
-
-  // updateLinkText = () => {
-  //   const { current, options } = this.state.variable;
-  //
-  //   if (!current.tags || current.tags.length === 0) {
-  //     this.setState({ linkText: current.text });
-  //     return;
-  //   }
-  //
-  //   // filer out values that are in selected tags
-  //   const selectedAndNotInTag = options.filter(option => {
-  //     if (!option.selected) {
-  //       return false;
-  //     }
-  //     for (let i = 0; i < current.tags.length; i++) {
-  //       const tag = current.tags[i];
-  //       if (tag.values.findIndex(value => value === option.value) !== -1) {
-  //         return false;
-  //       }
-  //     }
-  //     return true;
-  //   });
-  //
-  //   // convert values to text
-  //   const currentTexts = map(selectedAndNotInTag, 'text');
-  //
-  //   // join texts
-  //   let linkText = currentTexts.join(' + ');
-  //   if (linkText.length > 0) {
-  //     linkText += ' + ';
-  //   }
-  //   this.setState({ linkText });
-  // };
 
   selectValue = (option: VariableOption, event: MouseEvent<HTMLAnchorElement>, commitChange = false) => {
     event.stopPropagation();
@@ -157,7 +61,9 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
       return;
     }
 
-    store.dispatch(selectVariableOption({ variable: this.state.variable, option, forceSelect: commitChange, event }));
+    dispatch(
+      selectVariableOption(toVariablePayload(this.state.variable, { option, forceSelect: commitChange, event }))
+    );
   };
 
   commitChanges = () => {
@@ -170,26 +76,10 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
     if (this.state.variable.current.text !== oldVariableText) {
       variableAdapter[this.state.variable.type].setValue(this.state.variable, this.state.variable.current);
     }
-    store.dispatch(hideQueryVariableDropDown(this.state.variable));
+    dispatch(hideQueryVariableDropDown(toVariablePayload(this.state.variable)));
   };
 
-  onQueryChanged = (searchQuery: string) => {
-    // const { queryHasSearchFilter } = this.state;
-    // const { options } = this.state.variable;
-    // if (queryHasSearchFilter) {
-    //   // dispatch call to thunk instead
-    //   // await this.updateLazyLoadedOptions();
-    //   return;
-    // }
-    //
-    // this.setState({
-    //   searchQuery,
-    //   searchOptions: options.filter(option => {
-    //     const text = Array.isArray(option.text) ? option.text[0] : option.text;
-    //     return text.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1;
-    //   }),
-    // });
-  };
+  onQueryChanged = (searchQuery: string) => {};
 
   onCloseDropDown = () => {
     this.commitChanges();

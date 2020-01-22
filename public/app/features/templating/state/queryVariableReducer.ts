@@ -33,9 +33,9 @@ export const appyStateChanges = <S extends VariableState>(state: S, ...args: Arr
   }, state);
 };
 
-export interface VariableState<P extends {} = {}, M extends VariableModel = VariableModel> {
-  picker: P;
-  variable: M;
+export interface VariableState<PickerState extends {} = {}, ModelState extends VariableModel = VariableModel> {
+  picker: PickerState;
+  variable: ModelState;
 }
 
 export interface QueryVariablePickerState {
@@ -304,13 +304,13 @@ export const queryVariableReducer = (
       tagsQuery,
       tagValuesQuery,
       definition,
-    } = action.payload.model as QueryVariableModel;
+    } = action.payload.data.model as QueryVariableModel;
     return {
       ...state,
       variable: {
         ...state.variable,
-        global: action.payload.global,
-        index: action.payload.index,
+        global: action.payload.data.global,
+        index: action.payload.data.index,
         type,
         name,
         label,
@@ -336,7 +336,7 @@ export const queryVariableReducer = (
   }
 
   if (updateVariableOptions.match(action)) {
-    const results = action.payload.results;
+    const results = action.payload.data;
     const { regex, includeAll, sort } = state.variable;
     const options = metricNamesToVariableValues(regex, sort, results);
     if (includeAll) {
@@ -350,7 +350,7 @@ export const queryVariableReducer = (
   }
 
   if (updateVariableTags.match(action)) {
-    const results = action.payload.results;
+    const results = action.payload.data;
     const tags: VariableTag[] = [];
     for (let i = 0; i < results.length; i++) {
       tags.push({ text: results[i].text, selected: false });
@@ -360,7 +360,7 @@ export const queryVariableReducer = (
   }
 
   if (setCurrentVariableValue.match(action)) {
-    const current = action.payload.current;
+    const current = action.payload.data;
 
     if (Array.isArray(current.text) && current.text.length > 0) {
       current.text = current.text.join(' + ');
@@ -419,7 +419,7 @@ export const queryVariableReducer = (
   }
 
   if (selectVariableOption.match(action)) {
-    const { option, forceSelect, event } = action.payload;
+    const { option, forceSelect, event } = action.payload.data;
     const { multi } = state.variable;
     const newOptions: VariableOption[] = state.variable.options.map(o => {
       if (o.value !== option.value) {
@@ -491,93 +491,6 @@ export const queryVariableReducer = (
     const newState = { ...state, picker: { ...state.picker, showDropDown: false } };
 
     return appyStateChanges(newState, updateOptions, updateSelectedValues, updateSelectedTags, updateLinkText);
-  }
-
-  return state;
-};
-
-export const initialQueryVariablesState: QueryVariableState[] = [];
-
-export const updateChildState = (
-  state: QueryVariableState[],
-  type: string,
-  name: string,
-  action: AnyAction
-): QueryVariableState[] => {
-  if (type !== 'query') {
-    return state;
-  }
-
-  const instanceIndex = state.findIndex(child => child.variable.name === name);
-  const instanceState = state[instanceIndex];
-  return state.map((v, index) => {
-    if (index !== instanceIndex) {
-      return v;
-    }
-
-    return {
-      ...v,
-      ...queryVariableReducer(instanceState, action),
-    };
-  });
-};
-
-export const queryVariablesReducer = (
-  state: QueryVariableState[] = initialQueryVariablesState,
-  action: AnyAction
-): QueryVariableState[] => {
-  if (addVariable.match(action)) {
-    if (action.payload.model.type !== 'query') {
-      return state;
-    }
-
-    const variable = queryVariableReducer(undefined, action);
-    return [...state, variable];
-  }
-
-  if (updateVariableOptions.match(action)) {
-    const { type, name } = action.payload.variable;
-    return updateChildState(state, type, name, action);
-  }
-
-  if (updateVariableTags.match(action)) {
-    const { type, name } = action.payload.variable;
-    return updateChildState(state, type, name, action);
-  }
-
-  if (setCurrentVariableValue.match(action)) {
-    const { type, name } = action.payload.variable;
-    return updateChildState(state, type, name, action);
-  }
-
-  if (setInitLock.match(action)) {
-    const { type, name } = action.payload;
-    return updateChildState(state, type, name, action);
-  }
-
-  if (resolveInitLock.match(action)) {
-    const { type, name } = action.payload;
-    return updateChildState(state, type, name, action);
-  }
-
-  if (removeInitLock.match(action)) {
-    const { type, name } = action.payload;
-    return updateChildState(state, type, name, action);
-  }
-
-  if (selectVariableOption.match(action)) {
-    const { type, name } = action.payload.variable;
-    return updateChildState(state, type, name, action);
-  }
-
-  if (showQueryVariableDropDown.match(action)) {
-    const { type, name } = action.payload;
-    return updateChildState(state, type, name, action);
-  }
-
-  if (hideQueryVariableDropDown.match(action)) {
-    const { type, name } = action.payload;
-    return updateChildState(state, type, name, action);
   }
 
   return state;

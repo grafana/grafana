@@ -1,19 +1,8 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { AnyAction, PayloadAction } from '@reduxjs/toolkit';
 
-import { QueryVariableState, VariableState } from './queryVariablesReducer';
+import { QueryVariableState, VariableState } from './queryVariableReducer';
 import { VariableType } from '../variable';
-import {
-  addVariable,
-  hideQueryVariableDropDown,
-  removeInitLock,
-  resolveInitLock,
-  selectVariableOption,
-  setCurrentVariableValue,
-  setInitLock,
-  showQueryVariableDropDown,
-  updateVariableOptions,
-  updateVariableTags,
-} from './actions';
+import { variableActions, VariablePayload } from './actions';
 import { variableAdapter } from '../adapters';
 
 export interface TemplatingState extends Record<VariableType, Array<VariableState<any, any>>> {
@@ -30,8 +19,12 @@ export const initialState: TemplatingState = {
   textbox: [],
 };
 
-export const updateChildState = (type: VariableType, state: TemplatingState, action: AnyAction) => {
-  const reducer = variableAdapter[type].getReducer();
+export const updateTemplatingState = (
+  type: VariableType,
+  state: TemplatingState,
+  action: PayloadAction<VariablePayload<any>>
+) => {
+  const reducer = variableAdapter[type].reducer;
   if (!reducer) {
     throw new Error(`Reducer for type ${type} could not be found.`);
   }
@@ -41,47 +34,16 @@ export const updateChildState = (type: VariableType, state: TemplatingState, act
 // I stumbled upon the error described here https://github.com/immerjs/immer/issues/430
 // So reverting to a "normal" reducer
 export const templatingReducer = (state: TemplatingState = initialState, action: AnyAction): TemplatingState => {
-  if (addVariable.match(action)) {
-    return updateChildState(action.payload.model.type, state, action);
+  // filter out all action creators that are not registered as variable action creator
+  const actionCreators = variableActions.filter(actionCreator => actionCreator.match(action));
+  if (actionCreators.length === 0) {
+    return state;
   }
 
-  if (updateVariableOptions.match(action)) {
-    return updateChildState(action.payload.variable.type, state, action);
-  }
-
-  if (updateVariableTags.match(action)) {
-    return updateChildState(action.payload.variable.type, state, action);
-  }
-
-  if (setCurrentVariableValue.match(action)) {
-    return updateChildState(action.payload.variable.type, state, action);
-  }
-
-  if (setInitLock.match(action)) {
-    return updateChildState(action.payload.type, state, action);
-  }
-
-  if (resolveInitLock.match(action)) {
-    return updateChildState(action.payload.type, state, action);
-  }
-
-  if (removeInitLock.match(action)) {
-    return updateChildState(action.payload.type, state, action);
-  }
-
-  if (selectVariableOption.match(action)) {
-    return updateChildState(action.payload.variable.type, state, action);
-  }
-
-  if (showQueryVariableDropDown.match(action)) {
-    return updateChildState(action.payload.type, state, action);
-  }
-
-  if (hideQueryVariableDropDown.match(action)) {
-    return updateChildState(action.payload.type, state, action);
-  }
-
-  return state;
+  // now we're sure that this action is meant for variables so pass it to correct reducer
+  const variableAction: PayloadAction<VariablePayload<any>> = action as PayloadAction<VariablePayload<any>>;
+  const { type } = variableAction.payload.id;
+  return updateTemplatingState(type, state, variableAction);
 };
 
 export default {

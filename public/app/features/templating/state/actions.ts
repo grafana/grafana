@@ -1,5 +1,5 @@
 import { MouseEvent } from 'react';
-import { createAction } from '@reduxjs/toolkit';
+import { ActionCreatorWithPayload, createAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
 
 import {
@@ -53,29 +53,55 @@ export interface AddVariable<T extends VariableModel = VariableModel> {
 //              action => setCurrentVariableValue
 //              thunk => variableUpdated
 //                adapter => updateOptions for dependent nodes
-export const newVariable = createAction<VariableType>('templating/newVariable');
-export const addVariable = createAction<AddVariable>('templating/addVariable');
-export const updateVariable = createAction<VariableModel>('templating/updateVariable');
-export const setInitLock = createAction<VariableModel>('templating/setInitLock');
-export const resolveInitLock = createAction<VariableModel>('templating/resolveInitLock');
-export const removeInitLock = createAction<VariableModel>('templating/removeInitLock');
-export const setCurrentVariableValue = createAction<{ variable: VariableModel; current: VariableOption }>(
-  'templating/setVariableValue'
-);
-export const updateVariableOptions = createAction<{ variable: VariableModel; results: any[] }>(
-  'templating/updateVariableOptions'
-);
-export const updateVariableTags = createAction<{ variable: VariableModel; results: any[] }>(
-  'templating/updateVariableTags'
-);
-export const selectVariableOption = createAction<{
-  variable: VariableModel;
+export interface VariableIdentifier {
+  type: VariableType;
+  name: string;
+}
+
+export interface VariablePayload<T> {
+  id: VariableIdentifier;
+  data: T;
+}
+
+export interface SelectVariableOption {
   option: VariableOption;
   forceSelect: boolean;
   event: MouseEvent<HTMLAnchorElement>;
-}>('templating/selectVariableOption');
-export const showQueryVariableDropDown = createAction<VariableModel>('templating/showQueryVariableDropDown');
-export const hideQueryVariableDropDown = createAction<VariableModel>('templating/hideQueryVariableDropDown');
+}
+
+export const addVariable = createAction<VariablePayload<AddVariable>>('templating/addVariable');
+export const setInitLock = createAction<VariablePayload<undefined>>('templating/setInitLock');
+export const resolveInitLock = createAction<VariablePayload<undefined>>('templating/resolveInitLock');
+export const removeInitLock = createAction<VariablePayload<undefined>>('templating/removeInitLock');
+export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>('templating/setVariableValue');
+export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
+export const updateVariableTags = createAction<VariablePayload<any[]>>('templating/updateVariableTags');
+export const selectVariableOption = createAction<VariablePayload<SelectVariableOption>>(
+  'templating/selectVariableOption'
+);
+export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(
+  'templating/showQueryVariableDropDown'
+);
+export const hideQueryVariableDropDown = createAction<VariablePayload<undefined>>(
+  'templating/hideQueryVariableDropDown'
+);
+
+export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any>>> = [
+  addVariable,
+  setInitLock,
+  resolveInitLock,
+  removeInitLock,
+  setCurrentVariableValue,
+  updateVariableOptions,
+  updateVariableTags,
+  selectVariableOption,
+  showQueryVariableDropDown,
+  hideQueryVariableDropDown,
+];
+
+export const toVariablePayload = <T extends {} = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
+  return { id: { type: variable.type, name: variable.name }, data };
+};
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
   return (dispatch, getState) => {
@@ -85,7 +111,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
         continue;
       }
 
-      dispatch(addVariable({ global: false, index, model }));
+      dispatch(addVariable(toVariablePayload(model, { global: false, index, model })));
     }
   };
 };
@@ -96,7 +122,7 @@ export const processVariables = (): ThunkResult<void> => {
     const dependencies: Array<Promise<any>> = [];
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
-      await dispatch(setInitLock(getVariables(getState())[index]));
+      await dispatch(setInitLock(toVariablePayload(getVariables(getState())[index])));
     }
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
@@ -124,11 +150,11 @@ export const processVariables = (): ThunkResult<void> => {
         }
       }
 
-      await dispatch(resolveInitLock(variable));
+      await dispatch(resolveInitLock(toVariablePayload(variable)));
     }
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
-      await dispatch(removeInitLock(getVariables(getState())[index]));
+      await dispatch(removeInitLock(toVariablePayload(getVariables(getState())[index])));
     }
   };
 };
@@ -141,11 +167,11 @@ export const updateQueryVariableOptions = (variable: QueryVariableModel, searchF
       queryOptions.range = getTimeSrv().timeRange();
     }
     const results = await dataSource.metricFindQuery(variable.query, queryOptions);
-    await dispatch(updateVariableOptions({ variable, results }));
+    await dispatch(updateVariableOptions(toVariablePayload(variable, results)));
 
     if (variable.useTags) {
       const tagResults = await dataSource.metricFindQuery(variable.tagsQuery, queryOptions);
-      await dispatch(updateVariableTags({ variable, results: tagResults }));
+      await dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
     }
 
     await dispatch(validateVariableSelectionState(variable));
@@ -291,7 +317,7 @@ export const validateVariableSelectionState = (
 
 export const setOptionAsCurrent = (variable: VariableWithOptions, current: VariableOption): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    dispatch(setCurrentVariableValue({ variable, current }));
+    dispatch(setCurrentVariableValue(toVariablePayload(variable, current)));
     //const selected = selectOptionsForCurrentValue(variableInState);
     return dispatch(variableUpdated(variable));
   };

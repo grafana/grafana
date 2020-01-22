@@ -17,3 +17,11 @@ export function getState(): StoreState {
 
   return store.getState();
 }
+
+export function dispatch(action: any) {
+  if (!store) {
+    return;
+  }
+
+  store.dispatch(action);
+}
