@@ -15,6 +15,7 @@ import (
 // DashboardService service for operating on dashboards
 type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
+	VisitDashboard(dto *VisitDashboardDTO) error
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(dashboardId int64, orgId int64) error
 }
@@ -49,6 +50,10 @@ type SaveDashboardDTO struct {
 	User      *models.SignedInUser
 	Message   string
 	Overwrite bool
+	Dashboard *models.Dashboard
+}
+
+type VisitDashboardDTO struct {
 	Dashboard *models.Dashboard
 }
 
@@ -257,6 +262,17 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpda
 	return cmd.Result, nil
 }
 
+func (dr *dashboardServiceImpl) VisitDashboard(dto *VisitDashboardDTO) error {
+	dto.Dashboard.Visited = time.Now()
+	cmd := models.VisitDashboardCommand{
+		Id:          dto.Dashboard.Id,
+		OrgId:       dto.Dashboard.OrgId,
+		VisitedTime: dto.Dashboard.Visited,
+	}
+
+	return bus.Dispatch(&cmd)
+}
+
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *dashboardServiceImpl) DeleteDashboard(dashboardId int64, orgId int64) error {
@@ -308,6 +324,11 @@ type FakeDashboardService struct {
 	SaveDashboardResult *models.Dashboard
 	SaveDashboardError  error
 	SavedDashboards     []*SaveDashboardDTO
+}
+
+func (s *FakeDashboardService) VisitDashboard(dto *VisitDashboardDTO) error {
+	dto.Dashboard.Visited = time.Now()
+	return nil
 }
 
 func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {

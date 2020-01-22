@@ -49,6 +49,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *m.VisitDashboardCommand) error {
+			return nil
+		})
+
 		viewerRole := m.ROLE_VIEWER
 		editorRole := m.ROLE_EDITOR
 
@@ -207,6 +211,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
 			dashboards := []*m.Dashboard{fakeDash}
 			query.Result = dashboards
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *m.VisitDashboardCommand) error {
 			return nil
 		})
 
@@ -652,6 +660,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *m.VisitDashboardCommand) error {
+			return nil
+		})
+
 		role := m.ROLE_EDITOR
 
 		loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
@@ -776,6 +788,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *m.VisitDashboardCommand) error {
+			return nil
+		})
+
 		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
 			query.Result = &m.DashboardVersion{
 				Data: simplejson.NewFromAny(map[string]interface{}{
@@ -836,6 +852,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *m.VisitDashboardCommand) error {
+			return nil
+		})
+
 		mock := &dashboards.FakeDashboardService{
 			SaveDashboardResult: &m.Dashboard{
 				Id:      2,
@@ -879,6 +899,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *m.VisitDashboardCommand) error {
+			return nil
+		})
+
 		mock := &dashboards.FakeDashboardService{
 			SaveDashboardResult: &m.Dashboard{
 				Id:      2,
@@ -909,6 +933,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			query.Result = []*m.Dashboard{{}}
 			return nil
 		})
+
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = &m.Dashboard{Id: 1, Data: &simplejson.Json{}}
 			return nil
@@ -916,6 +941,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
 			query.Result = &m.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *m.VisitDashboardCommand) error {
 			return nil
 		})
 

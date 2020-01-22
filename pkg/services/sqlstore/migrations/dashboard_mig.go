@@ -151,6 +151,10 @@ func addDashboardMigration(mg *Migrator) {
 		Name: "has_acl", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
 
+	mg.AddMigration("Add visited column", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "visited", Type: DB_DateTime, Nullable: false, Default: "0",
+	}))
+
 	mg.AddMigration("Add column uid in dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
 	}))

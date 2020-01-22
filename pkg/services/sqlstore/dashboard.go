@@ -679,3 +679,24 @@ func HasAdminPermissionInFolders(query *models.HasAdminPermissionInFoldersQuery)
 
 	return nil
 }
+
+func VisitDashboard(cmd *models.VisitDashboardCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		if cmd.Id > 0 {
+			var existing models.Dashboard
+			dashWithIdExists, err := sess.Where("id=? AND org_id=?", cmd.Id, cmd.OrgId).Get(&existing)
+			if err != nil {
+				return err
+			}
+			if !dashWithIdExists {
+				return models.ErrDashboardNotFound
+			}
+
+			if _, err = sess.Exec("UPDATE dashboard SET visited=? WHERE id=? AND org_id=?", cmd.VisitedTime.Unix(), cmd.Id, cmd.OrgId); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}

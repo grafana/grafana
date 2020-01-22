@@ -20,6 +20,7 @@ type DashboardMeta struct {
 	Expires               time.Time `json:"expires"`
 	Created               time.Time `json:"created"`
 	Updated               time.Time `json:"updated"`
+	Visited               time.Time `json:"visited"`
 	UpdatedBy             string    `json:"updatedBy"`
 	CreatedBy             string    `json:"createdBy"`
 	Version               int       `json:"version"`

@@ -62,6 +62,7 @@ type Dashboard struct {
 
 	Created time.Time
 	Updated time.Time
+	Visited time.Time
 
 	UpdatedBy int64
 	CreatedBy int64
@@ -105,6 +106,7 @@ func NewDashboard(title string) *Dashboard {
 	dash.Title = title
 	dash.Created = time.Now()
 	dash.Updated = time.Now()
+	dash.Visited = time.Now()
 	dash.UpdateSlug()
 	return dash
 }
@@ -144,10 +146,12 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	if version, err := dash.Data.Get("version").Float64(); err == nil && update {
 		dash.Version = int(version)
 		dash.Updated = time.Now()
+		dash.Visited = time.Now()
 	} else {
 		dash.Data.Set("version", 0)
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
+		dash.Visited = time.Now()
 	}
 
 	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
@@ -246,6 +250,12 @@ type SaveDashboardCommand struct {
 	UpdatedAt time.Time
 
 	Result *Dashboard
+}
+
+type VisitDashboardCommand struct {
+	Id          int64
+	OrgId       int64
+	VisitedTime time.Time
 }
 
 type DashboardProvisioning struct {

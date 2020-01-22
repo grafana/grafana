@@ -48,10 +48,25 @@ func dashboardGuardianResponse(err error) Response {
 	return Error(403, "Access denied to this dashboard", nil)
 }
 
+func updateVisited(dash *m.Dashboard) error {
+	visitDashboardDTO := dashboards.VisitDashboardDTO{
+		Dashboard: dash,
+	}
+
+	return dashboards.NewService().VisitDashboard(&visitDashboardDTO)
+}
+
 func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
+	}
+
+	err := updateVisited(dash)
+	if err != nil {
+		// If we failed to update the visited timestamp, it's probably just read-only or something
+		// It's not a good reason to block dashboard fetching
+		hs.log.Warn("Failed to update visited timestamp for dashboard", "err", err)
 	}
 
 	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
@@ -87,6 +102,7 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 		CanAdmin:    canAdmin,
 		Created:     dash.Created,
 		Updated:     dash.Updated,
+		Visited:     dash.Visited,
 		UpdatedBy:   updater,
 		CreatedBy:   creator,
 		Version:     dash.Version,
