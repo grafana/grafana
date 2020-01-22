@@ -172,6 +172,39 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
+  build-enterprise-windows-installerf:
+    docker:
+      - image: grafana/wix-toolset-ci:v3
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: './scripts/ci-job-started.sh'
+      - run:
+          name: Copy artifacts from workspace
+          command: cp -r /tmp/workspace/enterprise/dist .
+      - run:
+          name: Build Windows installer
+          command: ./scripts/build/ci-msi-build/ci-msi-build-ee.sh
+      - run:
+          name: Move artifacts
+          command: mkdir enterprise && mv dist enterprise/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - enterprise/dist/grafana-*.msi
+            - enterprise/dist/grafana-*.msi.sha256
+      - run:
+          name: CI job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
   release-next-packages-grabpl:
     executor: grafana-build
     steps:
@@ -1914,6 +1947,10 @@ workflows:
           filters: *filter-not-release-or-master
           requires:
             - package-oss
+      - build-enterprise-windows-installer:
+          filters: *filter-not-release-or-master
+          requires:
+            - package-enterprise
       - release-next-packages-grabpl:
           filters: *filter-not-release-or-master
           requires:
@@ -1937,6 +1974,7 @@ workflows:
           filters: *filter-not-release-or-master
           requires:
             - package-enterprise
+            - build-enterprise-windows-installer
       - docker-enterprise-master:
           filters: *filter-not-release-or-master
           requires:
