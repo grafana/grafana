@@ -154,7 +154,7 @@ describe('List test', () => {
 The most common error with PhantomJs image rendering is when a PR introduces an import that has functionality that's not supported by PhantomJs. To quickly identify which new import causes this you can use a tool like `es-check`.
    
 1. Install es-check
-2. Run > es-check es5 '/public/build/*.js'
+2. Run > es-check es5 './public/build/*.js'
 3. Check the output for files that break es5 compatibility.
 4. Lazy load the failing imports if possible. 
 
