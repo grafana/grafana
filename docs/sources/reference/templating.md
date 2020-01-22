@@ -124,7 +124,7 @@ Interpolation result: "'test1','test2'"
 ```
 
 ### Doublequote
-Formats single and multi valued variables for use in URL parameters.
+Formats single- and multi-valued variables for use in URL parameters.
 
 ```bash
 servers = ['test1', 'test2']
