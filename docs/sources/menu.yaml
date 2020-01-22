@@ -219,6 +219,15 @@
     link: /guides/whats-new-in-v3-1/
   - name: Version 3.0
     link: /guides/whats-new-in-v3/
+- name: Grafana Enterprise
+  link: /enterprise/
+  children:
+  - name: Overview
+    link: /enterprise/
+  - name: Reporting
+    link: /features/reporting/
+  - name: Data source permissions
+    link: /permissions/datasource_permissions/
 - name: Tutorials
   link: /tutorials/
   children:
@@ -312,7 +321,5 @@
   children:
   - name: Contributor License Agreement (CLA)
     link: /contribute/cla/
-- name: Grafana Enterprise
-  link: /enterprise/
 - name: Docs Archive
   link: /archive/

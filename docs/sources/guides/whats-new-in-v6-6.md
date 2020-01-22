@@ -21,22 +21,26 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 - [**Panels:** New stat panel]({{< relref "#new-stat-panel" >}})
 - [**Panels:** Auto min/max for Bar Gauge/Gauge/Stat]({{< relref "#auto-min-max" >}})
 - [**Panels:** News panel]({{< relref "#news-panel" >}})
-- [**TimePicker:** New design & features]({{< relref "#new-time-picker" >}})
 - [**Panels:** Custom data units]({{< relref "#custom-data-units" >}})
+- [**Panels:** Bar Gauge unfilled option]({{< relref "#bar-gauge-unfilled-option" >}})
+- [**TimePicker:** New design & features]({{< relref "#new-time-picker" >}})
 - [**Alerting enhancements**]({{< relref "#alerting-enhancements" >}})
-- **Explore:** Added log message line wrapping options for logs
+- [**Explore:** Added log message line wrapping options for logs]({{< relref "#explore-logs- panel-log-message-line-wrapping-options" >}})
+- [**Explore:** Column with unique log labels ]({{< relref "#explore-context-logs-panel-column-with-unique-log-labels" >}})
+- [**Explore:** Context tooltip]({{< relref "#explore-context-tooltip" >}})
+- **Explore:** Added ability to specify step with Prometheus queries
 - **Graphite:** Added Metrictank dashboard to Graphite datasource
 - **Loki:** Support for template variable queries
 - **Postgres/MySQL/MSSQL:** Added support for region annotations
-- **Explore:** Added ability to specify step with Prometheus queries
 - [**Security:** Added disabled option for cookie samesite attribute]({{< relref "#cookie-management-modifications" >}})
 - **TablePanel, GraphPanel:** Exclude hidden columns from CSV
+- [**Enterprise:** White labeling]({{< relref "#enterprise-white-labeling" >}})
 
 More details will be added as we're getting closer to the stable release.
 
 ## New stat panel
 
-{{< docs-imagebox img="/img/docs/v66/stat_panel_dark.png" max-width="1024px" caption="Stat panel" >}}
+{{< docs-imagebox img="/img/docs/v66/stat_panel_dark2.png" max-width="1024px" caption="Stat panel" >}}
 
 This release adds a new panel named `Stat`. This panel is designed to replace the current `Singlestat` as the primary way
 to show big single number panels along with a sparkline. This panel is of course building on our new panel
@@ -61,17 +65,6 @@ Here is how it looks in light theme:
 For the panels Gauge, Bar Gauge & Stat you can now leave the min and max settings empty. Grafana will, in that case, calculate the min & max based on
 all the data.
 
-## New time picker
-
-The time picker has gotten a major design update. Key changes:
-
-- Quickly access the absolute from & to input fields without an extra click.
-- Calendar automatically shows when from or to inputs has focus
-- A single calendar view can be used to select and show the from & to date.
-- Select recent absolute ranges
-
-{{< docs-imagebox img="/img/docs/v66/time_picker_update.png" max-width="700px" caption="New time picker" >}}
-
 ## News panel
 
 This panel supports showing RSS feeds as news items. It is used in the updated default home dashboard. Add it to
@@ -86,12 +79,30 @@ unit picker and select the `Custom: <your unit>` option. By default it will be u
 custom prefix just type `prefix: <your unit> ` to make the custom unit appear before the value. If you want a custom
 SI unit (with auto SI suffixes) specify `si:Ups`. A value like 1000 will be rendered as `1 kUps`.
 
-{{< docs-imagebox img="/img/docs/v66/custom_unit_burger1.png" max-width="600px" caption="Custom unit" >}}
+jkj{{< docs-imagebox img="/img/docs/v66/custom_unit_burger1.png" max-width="600px" caption="Custom unit" >}}
 
 Paste a native emoji in the unit picker and pick it as a custom unit:
 
 {{< docs-imagebox img="/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
 
+## Bar Gauge unfilled option
+
+This visualization has gotten a new display option: `Unfilled`. This new option is enabled by default so it will
+change how this visualization is displayed on old dashboards. If you prefer the old behavior where unfilled area
+was not shown and the value is followed directly after you have to update the visualization settings.
+
+{{< docs-imagebox img="/img/docs/v66/bar_gauge_unfilled.png" max-width="900px" caption="Bar gauge unfilled" >}}
+
+## New time picker
+
+The time picker has gotten a major design update. Key changes:
+
+- Quickly access the absolute from & to input fields without an extra click.
+- Calendar automatically shows when from or to inputs has focus
+- A single calendar view can be used to select and show the from & to date.
+- Select recent absolute ranges
+
+{{< docs-imagebox img="/img/docs/v66/time_picker_update.png" max-width="700px" caption="New time picker" >}}
 
 ## Alerting enhancements
 
@@ -101,4 +112,46 @@ Paste a native emoji in the unit picker and pick it as a custom unit:
 
 ## Cookie management modifications
 
-In order to align with a [change in Chrome 80](https://www.chromestatus.com/feature/5088147346030592), a breaking change has been introduced. The `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute contrary to the previous behavior where no `SameSite` attribute was added to cookies. To get back the old behavior, you must set `cookie_samesite` to `disabled`.
+In order to align with a [change in Chrome 80](https://www.chromestatus.com/feature/5088147346030592), a breaking change has been introduced to Grafana's [`cookie_samesite` setting]({{< relref "../installation/configuration.md#cookie-samesite" >}}). Grafana now properly renders cookies with the `SameSite=None` attribute when this setting is `none`. The previous behavior of `none` was to omit the `SameSite` attribute from cookies. Grafana will use the previous behavior when `cookie_samesite` is set to `disabled`.
+
+## Explore/Logs Panel: Log message line wrapping options
+
+We are introducing wrap-lines option for logs, as for some of our users it's more efficient to see one line per log message.The wrapped-line option is set as a default, unwrapped setting results in horizontal scrolling.
+
+{{< docs-imagebox img="/img/docs/v66/explore_wrap_lines.gif" max-width="800px" caption="Log message line wrapping" >}}
+
+## Explore/Logs Panel: Column with unique log labels
+
+After feedback from our community, we have decided to reintroduce a labels column. However, for better readability and usefulness, we have transformed it into Unique labels column and include only non-common labels, as all common labels are displayed above.
+
+{{< docs-imagebox img="/img/docs/v66/explore_labels_column.png" max-width="800px" caption="Unique log labels column" >}}
+
+## Explore: Context tooltip
+
+Isolating a series from a big set of lines in a graph is important for drill-downs. That's why we have implemented context tooltip in Explore that allows interaction to copy data and labels from it to further refine the query.
+
+{{< docs-imagebox img="/img/docs/v66/explore_context_tooltip.png" max-width="800px" caption="Explore context tooltip" >}}
+
+## Enterprise: White labeling
+
+This release adds new white labeling options to the grafana.ini file (can also be set via ENV variables).
+
+```ini
+[white_labeling]
+login_logo =
+login_background =
+menu_logo =
+fav_icon =
+apple_touch_icon =
+
+footer_links = support guides
+footer_links_support_text = Support
+footer_links_support_url = http://your.support.site
+footer_links_guides_text = Guides
+footer_links_guides_url = http://your.guides.site
+```
+
+Customize the login page, side menu bar & footer links.
+
+{{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
+
