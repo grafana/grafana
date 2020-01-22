@@ -162,6 +162,8 @@ Customize the login page, side menu bar & footer links.
 
 From now on it will be possible to utilize meta data label in group bys, filters and in the alias field. Unfortunaltey there's no API to retrieve all the labels, but the group by field dropdown comes with a pre-defined list of common system labels. User labels cannot be pre-defined, but it's possible to enter them manually in the group by field. If a meta data label, user label or system label, is included in the group by segment, it will be possible to create filters based on it and to expand its value on the alias field.
 
+{{< docs-imagebox img="/img/docs/v66/metadatalabels.gif" max-width="800px" caption="Stackdriver meta labels" >}}
+
 ## CloudWatch: Calculate period based on time range
 
 When the period field was left blank in Grafana 6.5, it would default to 60 seconds. In case users issued queries with a large time span, there was a high risk that they would reach the 100,800 data points per request limit in the Get Metric Data (GMD) api. When the period field is left blank in Grafana 6.6, the period will be calculated automatically based on the time range. The formula that is used is `time range in seconds / 2000`, and then we snap to next higher value in an array of pre-defined periods `[60, 300, 900, 3600, 21600, 86400]`. This will reduce the risk for receiving a `Too many datapoints requested` error in the panel.
