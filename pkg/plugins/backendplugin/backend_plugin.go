@@ -5,10 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
-	macaron "gopkg.in/macaron.v1"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -140,8 +137,6 @@ func (p *BackendPlugin) supportsDiagnostics() bool {
 }
 
 func (p *BackendPlugin) getSchema(ctx context.Context) (*pluginv2.GetSchema_Response, error) {
-	p.logger.Info("Get schema")
-
 	if p.core == nil {
 		return &pluginv2.GetSchema_Response{
 			Resources: map[string]*pluginv2.Resource{},
@@ -160,8 +155,6 @@ func (p *BackendPlugin) getSchema(ctx context.Context) (*pluginv2.GetSchema_Resp
 
 		return nil, err
 	}
-
-	p.logger.Info("Got schema", "schema", res)
 
 	return res, nil
 }
@@ -235,51 +228,14 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 	return res, nil
 }
 
-func (p *BackendPlugin) registerRoutes(r routing.RouteRegister) {
+func (p *BackendPlugin) callResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
 	if p.resources == nil {
-		return
+		return &pluginv2.CallResource_Response{
+			Code: int32(http.StatusNotFound),
+		}, nil
 	}
 
-	type methodHandleFunc func(string, ...macaron.Handler)
-
-	for resourceName, resource := range p.resources {
-		for _, route := range resource.Routes {
-			var methodHandle methodHandleFunc
-			switch route.Method {
-			case pluginv2.Resource_Route_ANY:
-				methodHandle = r.Any
-			case pluginv2.Resource_Route_GET:
-				methodHandle = r.Get
-			case pluginv2.Resource_Route_PUT:
-				methodHandle = r.Put
-			case pluginv2.Resource_Route_POST:
-				methodHandle = r.Post
-			case pluginv2.Resource_Route_DELETE:
-				methodHandle = r.Delete
-			case pluginv2.Resource_Route_PATCH:
-				methodHandle = r.Patch
-			}
-
-			methodHandle("/", func(c *models.ReqContext) {
-				p.logger.Info("Route handler called")
-				req := &pluginv2.CallResource_Request{
-					Config:       &pluginv2.PluginConfig{},
-					ResourceName: resourceName,
-					ResourcePath: resource.Path + route.Path,
-					Method:       c.Req.Method,
-					Url:          c.Req.URL.String(),
-				}
-				res, err := p.core.CallResource(c.Context.Req.Context(), req)
-				if err != nil {
-					c.JsonApiErr(500, "Failed to call resource", err)
-					return
-				}
-
-				c.Write(res.Body)
-				c.WriteHeader(int(res.Code))
-			})
-		}
-	}
+	return p.core.CallResource(ctx, req)
 }
 
 // convertMetricFamily converts metric family to prometheus.Metric.

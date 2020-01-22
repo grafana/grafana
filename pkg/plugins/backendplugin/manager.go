@@ -50,13 +50,13 @@ func (m *manager) Init() error {
 	prometheus.MustRegister(m.pluginCollector)
 
 	m.RouteRegister.Get("/api/plugins/:pluginId/health", m.checkHealth)
+	m.RouteRegister.Any("/api/plugins/:pluginId/resources/*", m.callResource)
 
 	return nil
 }
 
 func (m *manager) Run(ctx context.Context) error {
 	m.start(ctx)
-	m.registerRoutes(ctx)
 	<-ctx.Done()
 	m.stop()
 	return ctx.Err()
@@ -126,18 +126,6 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 	return startPluginAndRestartKilledProcesses(ctx, p)
 }
 
-func (m *manager) registerRoutes(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	for _, p := range m.plugins {
-		m.registerPluginRoutees(ctx, p)
-	}
-}
-
-func (m *manager) registerPluginRoutees(ctx context.Context, p *BackendPlugin) {
-	m.RouteRegister.Group("/api/plugins/"+p.id+"/resources", p.registerRoutes)
-}
-
 // stop stops all managed backend plugins
 func (m *manager) stop() {
 	m.pluginsMu.RLock()
@@ -185,6 +173,39 @@ func (m *manager) checkHealth(c *models.ReqContext) {
 	}
 
 	c.JSON(200, payload)
+}
+
+// callResource http handler for calling plugin resource.
+func (m *manager) callResource(c *models.ReqContext) {
+	pluginID := c.Params("pluginId")
+	m.pluginsMu.RLock()
+	p, registered := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
+	if !registered || !p.supportsDiagnostics() {
+		c.JsonApiErr(404, "Plugin not found", nil)
+		return
+	}
+
+	req := &pluginv2.CallResource_Request{
+		Config:       &pluginv2.PluginConfig{},
+		ResourceName: "test",
+		ResourcePath: c.Params("*"),
+		Method:       c.Req.Method,
+		Url:          c.Req.URL.String(),
+	}
+	res, err := p.callResource(c.Req.Context(), req)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to call resource", err)
+		return
+	}
+
+	c.Header().Add("Content-Type", "text/plain")
+	c.WriteHeader(int(res.Code))
+	_, err = c.Write(res.Body)
+	if err != nil {
+		m.logger.Error("Failed to write resource response", "error", err)
+	}
 }
 
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *BackendPlugin) error {
