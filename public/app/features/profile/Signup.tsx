@@ -17,6 +17,5 @@ interface Props {
 }
 
 export const Signup: FC<Props> = props => {
-  console.log(props);
   return <SignupCtrl>{({ register }) => <SignupForm onSubmit={register} />}</SignupCtrl>;
 };

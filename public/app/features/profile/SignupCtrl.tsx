@@ -9,15 +9,24 @@ interface SignupProps {
   children(arg0: ChildProps): JSX.Element;
 }
 
+export interface SignupFormModel {
+  email: string;
+  username?: string;
+  password: string;
+  orgName: string;
+  code?: string;
+  name?: string;
+}
+
 interface ChildProps {
-  register(e: React.FocusEvent): Promise<any>;
+  register(obj: SignupFormModel): void;
 }
 
 export class SignupCtrl extends PureComponent<SignupProps> {
   constructor(props: SignupProps) {
     super(props);
   }
-  register = async ({ email, code, orgName, password, name, username }: any) => {
+  register = async ({ email, code, orgName, password, name }: any) => {
     const backendSrv = getBackendSrv();
 
     const response = await backendSrv.post('/api/user/signup/step2', {

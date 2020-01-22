@@ -1,27 +1,25 @@
 import React, { FC, useState } from 'react';
 import { Forms } from '@grafana/ui';
+import { SignupFormModel } from './SignupCtrl';
+import { css } from 'emotion';
 
 interface Props {
   verifyEmailEnabled: boolean;
   autoAssignOrg: boolean;
-  onSubmit(obj: {
-    name: string;
-    username: string;
-    orgName: string;
-    email: string;
-    code: string;
-    password: string;
-  }): void;
+  onSubmit(obj: SignupFormModel): void;
 }
 
-export const Signup: FC<Props> = props => {
+const buttonSpacing = css`
+  margin-left: 15px;
+`;
+
+export const SignupForm: FC<Props> = props => {
   const [email, setEmail] = useState();
   const [code, setCode] = useState();
   // const [username, setUsername] = useState(props.model.username);
   const [orgName, setOrgName] = useState();
   const [name, setName] = useState();
   const [password, setPassword] = useState();
-  console.log(props);
   return (
     <div>
       {props.verifyEmailEnabled ? (
@@ -82,13 +80,14 @@ export const Signup: FC<Props> = props => {
             orgName,
             password,
             name,
-            username,
           });
         }}
       >
         Submit
       </Forms.Button>
-      <Forms.Button variant="secondary">Back</Forms.Button>
+      <Forms.Button className={buttonSpacing} variant="secondary">
+        Back
+      </Forms.Button>
     </div>
   );
 };
