@@ -106,9 +106,7 @@ export const initDataSourceSettingsSucceeded = createAction<GenericDataSourcePlu
   'dataSourceSettings/initDataSourceSettingsSucceeded'
 );
 
-export const initDataSourceSettingsFailed = createAction<Error | string>(
-  'dataSourceSettings/initDataSourceSettingsFailed'
-);
+export const initDataSourceSettingsFailed = createAction<Error>('dataSourceSettings/initDataSourceSettingsFailed');
 
 export const testDataSourceStarting = createAction<undefined>('dataSourceSettings/testDataSourceStarting');
 
@@ -128,7 +126,7 @@ export const dataSourceSettingsReducer = (
   }
 
   if (initDataSourceSettingsFailed.match(action)) {
-    return { ...state, plugin: null, loadError: action.payload };
+    return { ...state, plugin: null, loadError: action.payload.message };
   }
 
   if (testDataSourceStarting.match(action)) {

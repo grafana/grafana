@@ -20,7 +20,7 @@ export interface DataSourceSettingsState {
   plugin?: GenericDataSourcePlugin;
   testingMessage?: string;
   testingStatus?: string;
-  loadError?: Error | string;
+  loadError?: string;
 }
 
 export interface DataSourcePluginCategory {

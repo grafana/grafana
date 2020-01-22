@@ -27,23 +27,37 @@ export interface DataSourceTypesLoadedPayload {
   categories: DataSourcePluginCategory[];
 }
 
-export const initDataSourceSettings = (pageId: number): ThunkResult<void> => {
+export interface InitDataSourceSettingDependencies {
+  loadDataSource: typeof loadDataSource;
+  getDataSource: typeof getDataSource;
+  getDataSourceMeta: typeof getDataSourceMeta;
+  importDataSourcePlugin: typeof importDataSourcePlugin;
+}
+
+export const initDataSourceSettings = (
+  pageId: number,
+  dependencies: InitDataSourceSettingDependencies = {
+    loadDataSource,
+    getDataSource,
+    getDataSourceMeta,
+    importDataSourcePlugin,
+  }
+): ThunkResult<void> => {
   return async (dispatch: ThunkDispatch, getState) => {
     if (isNaN(pageId)) {
-      // this.setState({ loadError: 'Invalid ID' });
-      dispatch(initDataSourceSettingsFailed('Invalid ID'));
+      dispatch(initDataSourceSettingsFailed(new Error('Invalid ID')));
       return;
     }
 
     try {
-      await dispatch(loadDataSource(pageId));
+      await dispatch(dependencies.loadDataSource(pageId));
       if (getState().dataSourceSettings.plugin) {
         return;
       }
 
-      const dataSource = getDataSource(getState().dataSources, pageId);
-      const dataSourceMeta = getDataSourceMeta(getState().dataSources, dataSource.type);
-      const importedPlugin = await importDataSourcePlugin(dataSourceMeta);
+      const dataSource = dependencies.getDataSource(getState().dataSources, pageId);
+      const dataSourceMeta = dependencies.getDataSourceMeta(getState().dataSources, dataSource.type);
+      const importedPlugin = await dependencies.importDataSourcePlugin(dataSourceMeta);
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
