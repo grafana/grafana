@@ -35,7 +35,7 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 - [**Security:** Added disabled option for cookie samesite attribute]({{< relref "#cookie-management-modifications" >}})
 - **TablePanel, GraphPanel:** Exclude hidden columns from CSV
 - [**Enterprise:** White labeling]({{< relref "#enterprise-white-labeling" >}})
-- [**Stackdriver:** Calculate period based on time range]({{< relref "#stackdriver-meta-labels" >}})
+- [**Stackdriver:** Meta labels]({{< relref "#stackdriver-meta-labels" >}})
 - [**CloudWatch:** Calculate period based on time range]({{< relref "#cloudwatch-calculate-period-based-on-time-range" >}})
 - [**CloudWatch:** Display partial result in graph when max DP/call limit is reached]({{< relref "#cloudwatch-display-partial-result-in–graph–when–max–data–points–per–call-limit-is-reached" >}})
 
@@ -160,12 +160,12 @@ Customize the login page, side menu bar & footer links.
 
 ## Stackdriver: Meta labels
 
-From now on it will be possible to utilize meta data label in group bys, filters and in the alias field. Unfortunaltey there's no API to retrieve all the labels, but the group by field dropdown comes with a pre-defined list of common system labels. User labels cannot be pre-defined, but it's possible to enter them manually in the group by field. If a meta data label, user label or system label, is included in the group by segment, it will also be possible to create filters based on it and to expand its value on the alias field.
+From now on it will be possible to utilize meta data label in group bys, filters and in the alias field. Unfortunaltey there's no API to retrieve all the labels, but the group by field dropdown comes with a pre-defined list of common system labels. User labels cannot be pre-defined, but it's possible to enter them manually in the group by field. If a meta data label, user label or system label, is included in the group by segment, it will be possible to create filters based on it and to expand its value on the alias field.
 
 ## CloudWatch: Calculate period based on time range
 
-In Grafana 6.5, when the period field was left blank in the query editor, it would default to 60 seconds. In case users issued queries with a large time span, there was a high risk that they would reach the 100,800 data points per request limit in the Get Metric Data (GMD) api. When the period field is left blank in Grafana 6.6, the period will be calculated automatically based on the time range. The formula that is used is `time range in seconds / 2000`, and then we snap to next higher value in an array of pre-defined periods `[60, 300, 900, 3600, 21600, 86400]`. This will reduce the risk for receiving a `Too many datapoints requested` error in the panel.
+When the period field was left blank in Grafana 6.5, it would default to 60 seconds. In case users issued queries with a large time span, there was a high risk that they would reach the 100,800 data points per request limit in the Get Metric Data (GMD) api. When the period field is left blank in Grafana 6.6, the period will be calculated automatically based on the time range. The formula that is used is `time range in seconds / 2000`, and then we snap to next higher value in an array of pre-defined periods `[60, 300, 900, 3600, 21600, 86400]`. This will reduce the risk for receiving a `Too many datapoints requested` error in the panel.
 
 ## CloudWatch: Display partial result in graph when max data points per call limit is reached
 
-In case all queries in a GMD call are metric stat (not using math expressions), grafana will paginate the response until all data points are received. But in case a math expression is being used, GMD doesn't support pagination, so in that case it's not possible to receive more than 100,800 data points. Previously when that limit was reached, we only displayed an error message. In Grafana 6.6, we also display the 100,800 data point that were received in the graph.
+In case all queries in a GMD call are metric stat (not using math expressions), grafana will paginate the response until all data points are received. But pagination is not supported in case a math expression is being used, so in that case it's not possible to receive more than 100,800 data points. Previously when that limit was reached, we only displayed an error message. In Grafana 6.6, we also display the 100,800 data point that were received in the graph.
