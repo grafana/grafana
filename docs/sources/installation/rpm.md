@@ -48,12 +48,12 @@ sudo yum install <rpm package url>
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
-| Grafana Version | Package | Repository |
-|-----------------|---------|------------|
-| Grafana OSS     | grafana | `https://packages.grafana.com/oss/rpm` |
-| Grafana OSS (Beta)     | grafana | `https://packages.grafana.com/oss/rpm-beta` |
-| Grafana Enterprise     | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm` |
-| Grafana Enterprise (Beta)     | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
+| Grafana Version            | Package            | Repository                                         |
+|----------------------------|--------------------|----------------------------------------------------|
+| Grafana OSS                | grafana            | `https://packages.grafana.com/oss/rpm`             |
+| Grafana OSS (Beta)         | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
+| Grafana Enterprise         | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
+| Grafana Enterprise (Beta)  | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
 
 
 1. Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
@@ -64,7 +64,9 @@ sudo nano /etc/yum.repos.d/grafana.repo
 
 2. Enter the following information in grafana.repo and then save it.
 
-For stable releases:
+> For beta, use the url in the table above
+
+For oss releases:
 ```bash
 [grafana]
 name=grafana
@@ -96,6 +98,7 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 sudo yum install grafana
 
 # or
+
 sudo yum install grafana-enterprise
 ```
 
