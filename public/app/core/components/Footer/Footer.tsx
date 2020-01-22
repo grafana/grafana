@@ -36,7 +36,7 @@ export let getVersionLinks = (): FooterLink[] => {
 
   const links: FooterLink[] = [
     {
-      text: `Grafana v${buildInfo.version} (commit: ${buildInfo.commit})`,
+      text: `Grafana ${buildInfo.edition} v${buildInfo.version} (commit: ${buildInfo.commit})`,
       url: 'https://grafana.com',
       target: '_blank',
     },

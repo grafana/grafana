@@ -165,6 +165,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		}
 	}
 
+	edition := ""
+	if provider, ok := hs.License.(m.Edition); ok {
+		edition = provider.Edition()
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":          defaultDatasource,
 		"datasources":                datasources,
@@ -194,6 +199,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
 			"buildstamp":    setting.BuildStamp,
+			"edition":       edition,
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,

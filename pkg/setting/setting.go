@@ -36,11 +36,10 @@ const (
 )
 
 const (
-	DEV                 = "development"
-	PROD                = "production"
-	TEST                = "test"
-	APP_NAME            = "Grafana"
-	APP_NAME_ENTERPRISE = "Grafana Enterprise"
+	DEV      = "development"
+	PROD     = "production"
+	TEST     = "test"
+	APP_NAME = "Grafana"
 )
 
 var (
@@ -68,6 +67,7 @@ var (
 	BuildStamp      int64
 	IsEnterprise    bool
 	ApplicationName string
+	Edition         string
 
 	// packaging
 	Packaging = "unknown"
@@ -620,7 +620,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	ApplicationName = APP_NAME
 	if IsEnterprise {
-		ApplicationName = APP_NAME_ENTERPRISE
+		ApplicationName = fmt.Sprintf("%s %s", APP_NAME, Edition)
 	}
 
 	Env, err = valueAsString(iniFile.Section(""), "app_mode", "development")

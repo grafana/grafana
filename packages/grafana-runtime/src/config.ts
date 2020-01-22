@@ -7,6 +7,7 @@ export interface BuildInfo {
   commit: string;
   isEnterprise: boolean; // deprecated: use licenseInfo.hasLicense instead
   env: string;
+  edition: string;
   latestVersion: string;
   hasUpdate: boolean;
 }

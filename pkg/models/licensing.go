@@ -10,3 +10,7 @@ type Licensing interface {
 	// Expiry returns the unix epoch timestamp when the license expires, or 0 if no valid license is provided
 	Expiry() int64
 }
+
+type Edition interface {
+	Edition() string
+}
