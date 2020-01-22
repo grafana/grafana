@@ -231,6 +231,12 @@
     link: /features/reporting/
   - name: Data source permissions
     link: /permissions/datasource_permissions/
+  - link: /auth/enhanced_ldap/
+    name: Enhanced LDAP
+  - link: /auth/saml/
+    name: SAML
+  - link: /auth/team-sync/
+    name: Team Sync
 - name: Tutorials
   link: /tutorials/
   children:
