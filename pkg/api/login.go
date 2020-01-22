@@ -35,8 +35,10 @@ func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
 	if to.IsAbs() {
 		return login.ErrAbsoluteRedirectTo
 	}
-	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl) {
-		return login.ErrInvalidRedirectTo
+	if hs.Cfg.AppSubUrl != "" {
+		if !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl) && !strings.HasPrefix(to.Path, "/"+hs.Cfg.AppSubUrl) {
+			return login.ErrInvalidRedirectTo
+		}
 	}
 	return nil
 }
@@ -94,6 +96,8 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				return
 			}
 			middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
+			// remove subpath if it exists
+			redirectTo = strings.Replace(redirectTo, setting.AppSubUrl, "", 1)
 			c.Redirect(redirectTo)
 			return
 		}
