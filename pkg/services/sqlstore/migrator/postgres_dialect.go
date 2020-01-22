@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/lib/pq"
 )
 
