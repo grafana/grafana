@@ -40,6 +40,11 @@ Supported auth providers:
 * [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 * [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
 
+### White labeling
+
+White labeling makes it possible to customize the logos and footer links of Grafana. [Learn More]({{< relref "white-labeling.md" >}}).
+
+
 ### Data source permissions
 
 Data source permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "../permissions/datasource_permissions.md" >}}).
