@@ -44,4 +44,5 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 * [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 * [GitHub OAuth]({{< relref "github.md#team-sync-enterprise-only" >}})
+* [GitLab OAuth]({{< relref "gitlab.md#team-sync-enterprise-only" >}})
 * [Auth Proxy]({{< relref "auth-proxy.md#team-sync-enterprise-only">}})

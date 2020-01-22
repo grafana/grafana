@@ -37,6 +37,7 @@ Supported auth providers:
 
 * [LDAP]({{< relref "../auth/enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 * [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
+* [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 * [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
 
 ### Data source permissions
