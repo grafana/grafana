@@ -53,3 +53,6 @@ func (s *diagnosticsGRPCClient) CollectMetrics(ctx context.Context, req *pluginv
 func (s *diagnosticsGRPCClient) CheckHealth(ctx context.Context, req *pluginv2.CheckHealth_Request) (*pluginv2.CheckHealth_Response, error) {
 	return s.client.CheckHealth(ctx, req)
 }
+
+var _ DiagnosticsServer = &diagnosticsGRPCServer{}
+var _ DiagnosticsServer = &diagnosticsGRPCClient{}

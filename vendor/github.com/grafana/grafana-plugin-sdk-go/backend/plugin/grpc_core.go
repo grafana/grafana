@@ -58,6 +58,9 @@ func (m *coreGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryR
 	return m.client.DataQuery(ctx, req)
 }
 
-func (m *coreGRPCClient) Resource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
+func (m *coreGRPCClient) CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
 	return m.client.CallResource(ctx, req)
 }
+
+var _ CoreServer = &coreGRPCServer{}
+var _ CoreServer = &coreGRPCClient{}

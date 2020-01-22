@@ -106,9 +106,14 @@ type DiagnosticsPlugin interface {
 	CheckHealth(ctx context.Context, req *pluginv2.CheckHealth_Request) (*pluginv2.CheckHealth_Response, error)
 }
 
-type CorePlugin interface {
+type DatasourcePlugin interface {
 	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
-	Resource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error)
+}
+
+type CorePlugin interface {
+	GetSchema(ctx context.Context, req *pluginv2.GetSchema_Request) (*pluginv2.GetSchema_Response, error)
+	CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error)
+	DatasourcePlugin
 }
 
 type TransformCallBack interface {
@@ -127,7 +132,6 @@ type LegacyClient struct {
 
 // Client client for communicating with a plugin using the current plugin protocol.
 type Client struct {
-	DiagnosticsPlugin DiagnosticsPlugin
-	BackendPlugin     CorePlugin
-	TransformPlugin   TransformPlugin
+	DatasourcePlugin DatasourcePlugin
+	TransformPlugin  TransformPlugin
 }

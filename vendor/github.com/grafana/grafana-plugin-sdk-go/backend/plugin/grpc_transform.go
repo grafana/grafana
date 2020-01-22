@@ -11,12 +11,16 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type TransformCallBack interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
-}
-
 type TransformServer interface {
 	TransformData(ctx context.Context, req *pluginv2.DataQueryRequest, callback TransformCallBack) (*pluginv2.DataQueryResponse, error)
+}
+
+type transformClient interface {
+	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callback TransformCallBack) (*pluginv2.DataQueryResponse, error)
+}
+
+type TransformCallBack interface {
+	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
 }
 
 // TransformGRPCPlugin implements the GRPCPlugin interface from github.com/hashicorp/go-plugin.
@@ -61,7 +65,7 @@ func (t *transformGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQ
 		return nil, err
 	}
 	defer conn.Close()
-	api := &TransformCallBackGrpcClient{pluginv2.NewTransformCallBackClient(conn)}
+	api := &transformCallBackGrpcClient{pluginv2.NewTransformCallBackClient(conn)}
 	return t.server.TransformData(ctx, req, api)
 }
 
@@ -71,7 +75,7 @@ type transformGRPCClient struct {
 }
 
 func (t *transformGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callBack TransformCallBack) (*pluginv2.DataQueryResponse, error) {
-	callBackServer := &TransformCallBackGrpcServer{Impl: callBack}
+	callBackServer := &transformCallBackGrpcServer{Impl: callBack}
 
 	var s *grpc.Server
 	serverFunc := func(opts []grpc.ServerOption) *grpc.Server {
@@ -91,18 +95,23 @@ func (t *transformGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQ
 
 // Callback
 
-type TransformCallBackGrpcClient struct {
-	client pluginv2.TransformCallBackClient
-}
-
-func (t *TransformCallBackGrpcClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
-	return t.client.DataQuery(ctx, req)
-}
-
-type TransformCallBackGrpcServer struct {
+type transformCallBackGrpcServer struct {
 	Impl TransformCallBack
 }
 
-func (g *TransformCallBackGrpcServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
+func (g *transformCallBackGrpcServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
 	return g.Impl.DataQuery(ctx, req)
 }
+
+type transformCallBackGrpcClient struct {
+	client pluginv2.TransformCallBackClient
+}
+
+func (t *transformCallBackGrpcClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
+	return t.client.DataQuery(ctx, req)
+}
+
+var _ pluginv2.TransformServer = &transformGRPCServer{}
+var _ transformClient = &transformGRPCClient{}
+var _ pluginv2.TransformServer = &transformCallBackGrpcServer{}
+var _ pluginv2.TransformServer = &transformCallBackGrpcClient{}

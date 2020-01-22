@@ -56,6 +56,7 @@ func (m *manager) Init() error {
 
 func (m *manager) Run(ctx context.Context) error {
 	m.start(ctx)
+	m.registerRoutes(ctx)
 	<-ctx.Done()
 	m.stop()
 	return ctx.Err()
@@ -123,6 +124,18 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 	}
 
 	return startPluginAndRestartKilledProcesses(ctx, p)
+}
+
+func (m *manager) registerRoutes(ctx context.Context) {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	for _, p := range m.plugins {
+		m.registerPluginRoutees(ctx, p)
+	}
+}
+
+func (m *manager) registerPluginRoutees(ctx context.Context, p *BackendPlugin) {
+	m.RouteRegister.Group("/api/plugins/"+p.id+"/resources", p.registerRoutes)
 }
 
 // stop stops all managed backend plugins
