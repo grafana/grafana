@@ -1,5 +1,13 @@
 const path = require('path');
 
+// https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
+function shouldExclude(filename) {
+  if (filename.indexOf('node_modules/debug') > 0) {
+    return false;
+  }
+  return true;
+}
+
 module.exports = {
   target: 'web',
   entry: {
@@ -19,15 +27,38 @@ module.exports = {
   stats: {
     children: false,
     warningsFilter: /export .* was not found in/,
-    source: false
+    source: false,
   },
   node: {
     fs: 'empty',
   },
   module: {
-    rules: [{
+    rules: [
+      /**
+       * Some npm packages are bundled with es2015 syntax, ie. debug
+       * To make them work with PhantomJS we need to transpile them
+       * to get rid of unsupported syntax.
+       */
+      {
+        test: /\.js$/,
+        exclude: shouldExclude,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: [
+                [
+                  '@babel/preset-env'
+                ],
+              ],
+            },
+          },
+        ],
+      },
+      {
         test: require.resolve('jquery'),
-        use: [{
+        use: [
+          {
             loader: 'expose-loader',
             query: 'jQuery',
           },
@@ -40,7 +71,8 @@ module.exports = {
       {
         test: /\.html$/,
         exclude: /(index|error)\-template\.html/,
-        use: [{
+        use: [
+          {
             loader: 'ngtemplate-loader?relativeTo=' + path.resolve(__dirname, '../../public') + '&prefix=public',
           },
           {
@@ -68,26 +100,26 @@ module.exports = {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: 20,
-          enforce: true
+          enforce: true,
         },
         angular: {
           test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: 50,
-          enforce: true
+          enforce: true,
         },
         vendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: -10,
           reuseExistingChunk: true,
-          enforce: true
+          enforce: true,
         },
         default: {
           priority: -20,
           chunks: 'all',
           test: /.*[jt]sx?$/,
-          reuseExistingChunk: true
+          reuseExistingChunk: true,
         },
       },
     },
