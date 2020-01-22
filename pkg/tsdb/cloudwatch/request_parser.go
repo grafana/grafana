@@ -72,7 +72,7 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		datapoints := int(math.Ceil(deltaInSeconds / 2000))
 		period = periods[len(periods)-1]
 		for _, value := range periods {
-			if datapoints < value {
+			if datapoints <= value {
 				period = value
 				break
 			}
