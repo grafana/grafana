@@ -5,7 +5,7 @@ cloud.google.com/go/compute/metadata
 github.com/BurntSushi/toml
 # github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 github.com/VividCortex/mysqlerr
-# github.com/apache/arrow/go/arrow v0.0.0-20190716210558-5f564424c71c
+# github.com/apache/arrow/go/arrow v0.0.0-20191025121910-b789226ccb21
 github.com/apache/arrow/go/arrow
 github.com/apache/arrow/go/arrow/array
 github.com/apache/arrow/go/arrow/arrio
@@ -76,6 +76,8 @@ github.com/beorn7/perks/quantile
 github.com/bradfitz/gomemcache/memcache
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
+# github.com/cheekybits/genny v1.0.0
+github.com/cheekybits/genny/generic
 # github.com/codegangsta/cli v1.20.0
 github.com/codegangsta/cli
 # github.com/crewjam/saml v0.0.0-20191031171751-c42136edf9b1
@@ -140,7 +142,7 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.6.0
+# github.com/grafana/grafana-plugin-sdk-go v0.11.0
 github.com/grafana/grafana-plugin-sdk-go/backend
 github.com/grafana/grafana-plugin-sdk-go/dataframe
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2

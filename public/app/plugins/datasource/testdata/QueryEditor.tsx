@@ -33,7 +33,7 @@ export class QueryEditor extends PureComponent<Props> {
 
     query.scenarioId = query.scenarioId || 'random_walk';
 
-    // const scenarioList = await this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    // const scenarioList = await backendSrv.get('/api/tsdb/testdata/scenarios');
     const scenarioList = await datasource.getScenarios();
     const current: any = _.find(scenarioList, { id: query.scenarioId });
 

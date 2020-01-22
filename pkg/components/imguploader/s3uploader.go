@@ -83,7 +83,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 		return "", err
 	}
 	uploader := s3manager.NewUploader(sess)
-	result, err := uploader.Upload(&s3manager.UploadInput{
+	result, err := uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 		Bucket:      aws.String(u.bucket),
 		Key:         aws.String(key),
 		ACL:         aws.String(u.acl),

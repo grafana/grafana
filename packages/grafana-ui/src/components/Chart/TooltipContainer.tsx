@@ -22,6 +22,7 @@ const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
       max-width: 800px;
       padding: ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
+      z-index: ${theme.zIndex.tooltip};
     `,
   };
 });
