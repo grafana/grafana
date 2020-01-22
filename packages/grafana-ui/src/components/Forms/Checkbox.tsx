@@ -1,4 +1,4 @@
-import React, { HTMLProps } from 'react';
+import React, { HTMLProps, useCallback } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { getLabelStyles } from './Label';
 import { useTheme, stylesFactory } from '../../themes';
@@ -90,6 +90,14 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ label, description, value, onChange, disabled, ...inputProps }, ref) => {
     const theme = useTheme();
+    const handleOnChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (onChange) {
+          onChange(e);
+        }
+      },
+      [onChange]
+    );
     const styles = getCheckboxStyles(theme);
 
     return (
@@ -99,11 +107,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           className={styles.input}
           checked={value}
           disabled={disabled}
-          onChange={event => {
-            if (onChange) {
-              onChange(event);
-            }
-          }}
+          onChange={handleOnChange}
           {...inputProps}
           ref={ref}
         />

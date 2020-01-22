@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import mdx from './Checkbox.mdx';
 import { Checkbox } from './Checkbox';
 
@@ -14,10 +14,11 @@ export default {
 
 export const controlled = () => {
   const [checked, setChecked] = useState(false);
+  const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
   return (
     <Checkbox
       value={checked}
-      onChange={e => setChecked(e.currentTarget.checked)}
+      onChange={onChange}
       label="Skip SLL cert validation"
       description="Set to true if you want to skip sll cert validation"
     />

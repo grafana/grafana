@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { css } from 'emotion';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
@@ -30,6 +30,16 @@ export function RadioButtonGroup<T>({
   disabledOptions,
   size = 'md',
 }: RadioButtonGroupProps<T>) {
+  const handleOnClick = useCallback(
+    (option: SelectableValue<T>) => {
+      return () => {
+        if (onChange) {
+          onChange(option.value);
+        }
+      };
+    },
+    [onChange]
+  );
   const styles = getRadioButtonGroupStyles();
 
   return (
@@ -42,11 +52,7 @@ export function RadioButtonGroup<T>({
             disabled={isItemDisabled || disabled}
             active={value === o.value}
             key={o.label}
-            onClick={() => {
-              if (onChange) {
-                onChange(o.value);
-              }
-            }}
+            onClick={handleOnClick(o)}
           >
             {o.label}
           </RadioButton>
