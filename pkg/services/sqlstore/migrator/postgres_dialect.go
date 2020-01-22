@@ -163,7 +163,7 @@ func (db *Postgres) PostInsertId(table string, sess *xorm.Session) error {
 
 	// sync primary key sequence of org table
 	if _, err := sess.Exec("SELECT setval('org_id_seq', (SELECT max(id)+1 FROM org));"); err != nil {
-		return fmt.Errorf("Failed to sync primary key for org table")
+		return fmt.Errorf("Failed to sync primary key for org table: %v", err)
 	}
 	return nil
 }
