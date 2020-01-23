@@ -37,12 +37,21 @@ You can run the latest Grafana version, run a specific version, or run an unstab
 
 ### Run the latest stable version of Grafana
 
+> **Note:** If you are on a Linux system, you might need to add `sudo` before the command.
+
 ```bash
 docker run -d -p 3000:3000 grafana/grafana
 ```
 
 ### Run a specific version of Grafana
 
+> **Note:** If you are on a Linux system, you might need to add `sudo` before the command.
+
+```bash
+docker run -d -p 3000:3000 --name grafana grafana/grafana:<version number>
+```
+
+**Example:**
 ```bash
 docker run -d -p 3000:3000 --name grafana grafana/grafana:6.5.0
 ```
