@@ -171,3 +171,12 @@ When the period field was left blank in Grafana 6.5, it would default to 60 seco
 ## CloudWatch: Display partial result in graph when max data points per call limit is reached
 
 In case all queries in a GMD call are metric stat (not using math expressions), grafana will paginate the response until all data points are received. But pagination is not supported in case a math expression is being used, so in that case it's not possible to receive more than 100,800 data points. Previously when that limit was reached, we only displayed an error message. In Grafana 6.6, we also display the 100,800 data point that were received in the graph.
+
+
+## Upgrading
+
+See [upgrade notes]({{< relref "../installation/upgrading/#upgrading-to-v6-6" >}}).
+
+## Changelog
+
+Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
