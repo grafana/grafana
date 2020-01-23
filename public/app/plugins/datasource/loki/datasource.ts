@@ -128,7 +128,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       .filter(target => target.expr && !target.hide)
       .map(target => ({
         ...target,
-        expr: this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr),
+        expr: this.templateSrv.replace(target.expr, options.scopedVars, this.interpolateQueryExpr),
       }));
 
     if (options.exploreMode === ExploreMode.Metrics) {
@@ -266,6 +266,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     options: RangeQueryOptions,
     responseListLength = 1
   ): Observable<DataQueryResponse> => {
+    console.log('options:', options);
     if (target.liveStreaming) {
       return this.runLiveQuery(target, options);
     }
