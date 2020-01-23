@@ -24,15 +24,17 @@ Do not change `defaults.ini`! Grafana defaults are stored in this file. Dependin
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-**Linux** 
+**Linux**
 
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
 **Windows**
+
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-**macOS** 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
+**macOS**
+
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
 
@@ -361,7 +363,7 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 ### cookie_samesite
 
-Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF),  [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
 ### allow_embedding
 
@@ -610,14 +612,24 @@ You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafa
 
 ## [external_image_storage.s3]
 
+### endpoint
+Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to
+keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
+
+## path_style_access
+Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
+of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
+
+Note: This option is specific to the Amazon S3 service.
+
 ### bucket
-Bucket name for S3. e.g. grafana.snapshot
+Bucket name for S3. e.g. grafana.snapshot.
 
 ### region
-Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc.
 
 ### path
-Optional extra path inside bucket, useful to apply expiration policies
+Optional extra path inside bucket, useful to apply expiration policies.
 
 ### bucket_url
 (for backward compatibility, only works when no bucket or region are configured)
@@ -626,12 +638,12 @@ Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-eas
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
 
 ### access_key
-Access key. e.g. AAAAAAAAAAAAAAAAAAAA
+Access key, e.g. AAAAAAAAAAAAAAAAAAAA.
 
 Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
 
 ### secret_key
-Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 
 ## [external_image_storage.webdav]
 
@@ -712,6 +724,12 @@ Default setting for alert notification timeout. Default value is `30`
 
 Default setting for max attempts to sending alert notifications. Default value is `3`
 
+### min_interval_seconds
+
+Default setting for minimum interval between rule evaluations. Default value is `1`
+
+> **Note.** This setting has precedence over each individual rule frequency. Therefore, if a rule frequency is lower than this value, this value will be enforced.
+
 ## [rendering]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
@@ -741,6 +759,65 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 ### enable
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+
+## [tracing.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+You can also use the standard `JAEGER_*` environment variables to configure
+Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
+for the full list. Environment variables will override any settings provided here.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:6381`)
+
+Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+
+### always_included_tag
+
+Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
+
+Can be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different tracing types.
+
+Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
+
+### sampler_param
+
+Default value is `1`.
+
+This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+
+- For `const` sampler, `0` or `1` for always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
+  and indicates the initial sampling rate before the actual one
+  is received from the mothership
+
+May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### zipkin_propagation
+
+Default value is `false`.
+
+Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
+
+Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
+
+### disable_shared_zipkin_spans
+
+Default value is `false`.
+
+Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
 
 <hr />
 

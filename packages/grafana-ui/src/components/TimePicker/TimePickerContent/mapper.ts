@@ -26,8 +26,8 @@ export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): T
 export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): TimeOption => {
   const formattedFrom = stringToDateTime(range.from, false, timeZone).format(TIME_FORMAT);
   const formattedTo = stringToDateTime(range.to, true, timeZone).format(TIME_FORMAT);
-  const from = dateTimeToString(range.from, timeZone === 'utc');
-  const to = dateTimeToString(range.to, timeZone === 'utc');
+  const from = dateTimeToString(range.from, timeZone);
+  const to = dateTimeToString(range.to, timeZone);
 
   return {
     from,
@@ -82,11 +82,12 @@ const stringToDateTime = (value: string | DateTime, roundUp?: boolean, timeZone?
   return dateTimeForTimeZone(timeZone, value, TIME_FORMAT);
 };
 
-const dateTimeToString = (value: DateTime, isUtc: boolean): string => {
+const dateTimeToString = (value: DateTime, timeZone?: TimeZone): string => {
   if (!isDateTime(value)) {
     return value;
   }
 
+  const isUtc = timeZone === 'utc';
   if (isUtc) {
     return value.utc().format(TIME_FORMAT);
   }

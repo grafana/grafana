@@ -6,7 +6,7 @@ import { withHorizontallyCenteredStory } from '../../utils/storybook/withCentere
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 
 import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
-import { GraphSeriesXY, FieldType, ArrayVector, dateTime } from '@grafana/data';
+import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorMode } from '@grafana/data';
 const GraphWithLegendStories = storiesOf('Visualizations/Graph/GraphWithLegend', module);
 GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);
 
@@ -31,7 +31,12 @@ const series: GraphSeriesXY[] = [
       type: FieldType.number,
       name: 'a-series',
       values: new ArrayVector([10, 20, 10]),
-      config: { color: 'red' },
+      config: {
+        color: {
+          mode: FieldColorMode.Fixed,
+          fixedColor: 'red',
+        },
+      },
     },
     timeStep: 3600000,
     yAxis: {
@@ -58,7 +63,12 @@ const series: GraphSeriesXY[] = [
       type: FieldType.number,
       name: 'b-series',
       values: new ArrayVector([20, 30, 40]),
-      config: { color: 'blue' },
+      config: {
+        color: {
+          mode: FieldColorMode.Fixed,
+          fixedColor: 'blue',
+        },
+      },
     },
     timeStep: 3600000,
     yAxis: {

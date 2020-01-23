@@ -2,6 +2,7 @@ import { SingleStatCtrl, ShowData } from '../module';
 import { dateTime, ReducerID } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { LegacyResponseData } from '@grafana/data';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 interface TestContext {
   ctrl: SingleStatCtrl;
@@ -31,9 +32,9 @@ describe('SingleStatCtrl', () => {
       emit: () => {},
     },
   };
-  SingleStatCtrl.prototype.dashboard = {
-    isTimezoneUtc: jest.fn(() => true),
-  };
+  SingleStatCtrl.prototype.dashboard = ({
+    getTimezone: jest.fn(() => 'utc'),
+  } as any) as DashboardModel;
   SingleStatCtrl.prototype.events = {
     on: () => {},
   };
@@ -72,7 +73,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted falue', () => {
-      expect(ctx.data.display.text).toBe('15');
+      expect(ctx.data.display!.text).toBe('15');
     });
   });
 
@@ -95,7 +96,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe('test.cpu1');
+      expect(ctx.data.display!.text).toBe('test.cpu1');
     });
   });
 
@@ -112,7 +113,7 @@ describe('SingleStatCtrl', () => {
       ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
+      ctx.ctrl.dashboard.getTimezone = () => 'browser';
     });
 
     it('Should use time instead of value', () => {
@@ -120,7 +121,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(dateTime(ctx.data.display.text).valueOf()).toBe(1505634997000);
+      expect(dateTime(ctx.data.display!.text).valueOf()).toBe(1505634997000);
     });
   });
 
@@ -137,11 +138,11 @@ describe('SingleStatCtrl', () => {
       ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
+      ctx.ctrl.dashboard.getTimezone = () => 'utc';
     });
 
     it('should set value', () => {
-      expect(ctx.data.display.text).toBe('1970-01-01 00:00:05');
+      expect(ctx.data.display!.text).toBe('1970-01-01 00:00:05');
     });
   });
 
@@ -158,7 +159,7 @@ describe('SingleStatCtrl', () => {
       ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
+      ctx.ctrl.dashboard.getTimezone = () => 'browser';
     });
 
     it('Should use time instead of value', () => {
@@ -166,7 +167,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe(dateTime(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
+      expect(ctx.data.display!.text).toBe(dateTime(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
     });
   });
 
@@ -183,11 +184,11 @@ describe('SingleStatCtrl', () => {
       ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
+      ctx.ctrl.dashboard.getTimezone = () => 'utc';
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe('01/01/1970 12:00:05 am');
+      expect(ctx.data.display!.text).toBe('01/01/1970 12:00:05 am');
     });
   });
 
@@ -211,7 +212,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe('2 days ago');
+      expect(ctx.data.display!.text).toBe('2 days ago');
     });
   });
 
@@ -231,7 +232,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.display.text).toBe('2 days ago');
+      expect(ctx.data.display!.text).toBe('2 days ago');
     });
   });
 
@@ -257,7 +258,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('should set formatted value', () => {
-        expect(ctx.data.display.text).toBe('100');
+        expect(ctx.data.display!.text).toBe('100');
       });
     }
   );
@@ -273,7 +274,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should replace value with text', () => {
-      expect(ctx.data.display.text).toBe('OK');
+      expect(ctx.data.display!.text).toBe('OK');
     });
   });
 
@@ -288,7 +289,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should replace value with text', () => {
-      expect(ctx.data.display.text).toBe('XYZ');
+      expect(ctx.data.display!.text).toBe('XYZ');
     });
   });
 
@@ -303,7 +304,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should replace value with text OK', () => {
-      expect(ctx.data.display.text).toBe('OK');
+      expect(ctx.data.display!.text).toBe('OK');
     });
   });
 
@@ -318,7 +319,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should replace value with text NOT OK', () => {
-      expect(ctx.data.display.text).toBe('NOT OK');
+      expect(ctx.data.display!.text).toBe('NOT OK');
     });
   });
 
@@ -346,7 +347,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('should set formatted value', () => {
-        expect(ctx.data.display.text).toBe('15');
+        expect(ctx.data.display!.text).toBe('15');
       });
     });
 
@@ -376,7 +377,7 @@ describe('SingleStatCtrl', () => {
         });
 
         it('should set formatted falue', () => {
-          expect(ctx.data.display.text).toBe('100');
+          expect(ctx.data.display!.text).toBe('100');
         });
       }
     );
@@ -395,7 +396,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('Should replace value with text', () => {
-        expect(ctx.data.display.text).toBe('OK');
+        expect(ctx.data.display!.text).toBe('OK');
       });
     });
 
@@ -412,7 +413,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('Should replace value with text OK', () => {
-        expect(ctx.data.display.text).toBe('OK');
+        expect(ctx.data.display!.text).toBe('OK');
       });
     });
 
@@ -429,7 +430,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('Should replace value with text NOT OK', () => {
-        expect(ctx.data.display.text).toBe('NOT OK');
+        expect(ctx.data.display!.text).toBe('NOT OK');
       });
     });
 
@@ -442,7 +443,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('Should replace value with text NOT OK', () => {
-        expect(ctx.data.display.text).toBe('ignore1');
+        expect(ctx.data.display!.text).toBe('ignore1');
       });
     });
 

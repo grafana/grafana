@@ -13,6 +13,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 // Types
 import { TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -181,7 +182,7 @@ export class VariableSrv {
     return selected;
   }
 
-  validateVariableSelectionState(variable: any) {
+  validateVariableSelectionState(variable: any, defaultValue?: string) {
     if (!variable.current) {
       variable.current = {};
     }
@@ -205,17 +206,33 @@ export class VariableSrv {
 
       return variable.setValue(selected);
     } else {
-      const currentOption: any = _.find(variable.options, {
+      let option: any = undefined;
+
+      // 1. find the current value
+      option = _.find(variable.options, {
         text: variable.current.text,
       });
-      if (currentOption) {
-        return variable.setValue(currentOption);
-      } else {
-        if (!variable.options.length) {
-          return Promise.resolve();
+      if (option) {
+        return variable.setValue(option);
+      }
+
+      // 2. find the default value
+      if (defaultValue) {
+        option = _.find(variable.options, {
+          text: defaultValue,
+        });
+        if (option) {
+          return variable.setValue(option);
         }
+      }
+
+      // 3. use the first value
+      if (variable.options) {
         return variable.setValue(variable.options[0]);
       }
+
+      // 4... give up
+      return Promise.resolve();
     }
   }
 
@@ -284,6 +301,22 @@ export class VariableSrv {
 
     this.selectOptionsForCurrentValue(variable);
     return this.variableUpdated(variable);
+  }
+
+  templateVarsChangedInUrl(vars: UrlQueryMap) {
+    const update: Array<Promise<any>> = [];
+    for (const v of this.variables) {
+      const key = `var-${v.name}`;
+      if (vars.hasOwnProperty(key)) {
+        update.push(v.setValueFromUrl(vars[key]));
+      }
+    }
+    if (update.length) {
+      Promise.all(update).then(() => {
+        this.dashboard.templateVariableValueUpdated();
+        this.dashboard.startRefresh();
+      });
+    }
   }
 
   updateUrlParamsWithCurrentVariables() {

@@ -1,29 +1,41 @@
-import { GrafanaDatasource } from '../datasource';
-import { TemplateSrv } from '../../../../features/templating/template_srv';
-// @ts-ignore
-import q from 'q';
 import { dateTime } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TemplateSrv } from '../../../../features/templating/template_srv';
+import { GrafanaDatasource } from '../datasource';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('grafana data source', () => {
+  const getMock = jest.spyOn(backendSrv, 'get');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('when executing an annotations query', () => {
     let calledBackendSrvParams: any;
-    const backendSrvStub = {
-      get: (url: string, options: any) => {
+    let templateSrvStub: any;
+    let ds: GrafanaDatasource;
+    beforeEach(() => {
+      getMock.mockImplementation((url: string, options: any) => {
         calledBackendSrvParams = options;
-        return q.resolve([]);
-      },
-    };
+        return Promise.resolve([]);
+      });
 
-    const templateSrvStub = new TemplateSrv();
-    templateSrvStub.init([
-      { type: 'query', name: 'var', current: { value: 'replaced' } },
-      { type: 'query', name: 'var2', current: { value: ['replaced', 'replaced2'] } },
-      { type: 'query', name: 'var3', current: { value: ['replaced3', 'replaced4'] } },
-      { type: 'query', name: 'var4', current: { value: ['replaced?', 'replaced?2'] } },
-      { type: 'query', name: 'var5', current: { value: ['replaced?3', 'replaced?4'] } },
-    ]);
+      const templateSrvStub = new TemplateSrv();
+      templateSrvStub.init([
+        { type: 'query', name: 'var', current: { value: 'replaced' } },
+        { type: 'query', name: 'var2', current: { value: ['replaced', 'replaced2'] } },
+        { type: 'query', name: 'var3', current: { value: ['replaced3', 'replaced4'] } },
+        { type: 'query', name: 'var4', current: { value: ['replaced?', 'replaced?2'] } },
+        { type: 'query', name: 'var5', current: { value: ['replaced?3', 'replaced?4'] } },
+      ]);
 
-    const ds = new GrafanaDatasource(backendSrvStub as any, templateSrvStub as any);
+      ds = new GrafanaDatasource(templateSrvStub as any);
+    });
 
     describe('with tags that have template variables', () => {
       const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] });

@@ -11,18 +11,11 @@ import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 // Services & Utils
 import appEvents from 'app/core/app_events';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
-import {
-  dataSourceLoaded,
-  deleteDataSource,
-  loadDataSource,
-  setDataSourceName,
-  setIsDefault,
-  updateDataSource,
-} from '../state/actions';
+import { deleteDataSource, loadDataSource, updateDataSource } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
@@ -32,6 +25,7 @@ import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/dat
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 
 export interface Props {
   navModel: NavModel;
@@ -151,7 +145,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
     this.setState({ isTesting: true, testingMessage: 'Testing...', testingStatus: 'info' });
 
-    getBackendSrv().withNoBackendCache(async () => {
+    backendSrv.withNoBackendCache(async () => {
       try {
         const result = await dsApi.testDatasource();
 

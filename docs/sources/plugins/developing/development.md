@@ -1,7 +1,7 @@
 +++
 title = "Developer Guide"
 type = "docs"
-aliases = ["/plugins/development/", "/plugins/datasources/", "/plugins/apps/", "/plugins/panels/"]
+aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/plugins/datasources/", "/docs/grafana/latest/plugins/apps/", "/docs/grafana/latest/plugins/panels/"]
 [menu.docs]
 name = "Developer Guide"
 parent = "developing"
@@ -11,6 +11,8 @@ weight = 1
 # Developer Guide
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
+
+Grafana already has a strong community of contributors and plugin developers. By making it easier to develop and install plugins with resources such as this guide, we hope that the community can grow even stronger and develop new plugins that we would never think about.
 
 ## Short version
 

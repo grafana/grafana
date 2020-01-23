@@ -1,11 +1,24 @@
 import set from 'lodash/set';
-import { DynamicConfigValue, FieldConfig, InterpolateFunction, DataFrame, Field, FieldType } from '../types';
+import {
+  GrafanaTheme,
+  DynamicConfigValue,
+  FieldConfig,
+  InterpolateFunction,
+  DataFrame,
+  Field,
+  FieldType,
+  FieldConfigSource,
+  ThresholdsMode,
+  FieldColorMode,
+  ColorScheme,
+  TimeZone,
+} from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
-import { GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { guessFieldTypeForField } from '../dataframe';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -15,6 +28,15 @@ interface OverrideProps {
 interface GlobalMinMax {
   min: number;
   max: number;
+}
+
+export interface ApplyFieldOverrideOptions {
+  data?: DataFrame[];
+  fieldOptions: FieldConfigSource;
+  replaceVariables: InterpolateFunction;
+  theme: GrafanaTheme;
+  timeZone?: TimeZone;
+  autoMinMax?: boolean;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
@@ -42,14 +64,16 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
 /**
  * Return a copy of the DataFrame with all rules applied
  */
-export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): DataFrame[] {
+export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFrame[] {
   if (!options.data) {
     return [];
   }
+
   const source = options.fieldOptions;
   if (!source) {
     return options.data;
   }
+
   let range: GlobalMinMax | undefined = undefined;
 
   // Prepare the Matchers
@@ -59,7 +83,7 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
         override.push({
-          match: info.get(rule.matcher),
+          match: info.get(rule.matcher.options),
           properties: rule.properties,
         });
       }
@@ -72,7 +96,7 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
       name = `Series[${index}]`;
     }
 
-    const fields = frame.fields.map(field => {
+    const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
       const config: FieldConfig = { ...field.config } || {};
       if (field.type === FieldType.number) {
@@ -94,6 +118,32 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
         }
       }
 
+      // Try harder to set a real value that is not 'other'
+      let type = field.type;
+      if (!type || type === FieldType.other) {
+        const t = guessFieldTypeForField(field);
+        if (t) {
+          type = t;
+        }
+      }
+
+      // Some units have an implied range
+      if (config.unit === 'percent') {
+        if (!isNumber(config.min)) {
+          config.min = 0;
+        }
+        if (!isNumber(config.max)) {
+          config.max = 100;
+        }
+      } else if (config.unit === 'percentunit') {
+        if (!isNumber(config.min)) {
+          config.min = 0;
+        }
+        if (!isNumber(config.max)) {
+          config.max = 1;
+        }
+      }
+
       // Set the Min/Max value automatically
       if (options.autoMinMax && field.type === FieldType.number) {
         if (!isNumber(config.min) || !isNumber(config.max)) {
@@ -109,19 +159,19 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
         }
       }
 
-      return {
+      // Overwrite the configs
+      const f: Field = {
         ...field,
-
-        // Overwrite the configs
         config,
-
-        // Set the display processor
-        processor: getDisplayProcessor({
-          type: field.type,
-          config: config,
-          theme: options.theme,
-        }),
+        type,
       };
+      // and set the display processor using it
+      f.display = getDisplayProcessor({
+        field: f,
+        theme: options.theme,
+        timeZone: options.timeZone,
+      });
+      return f;
     });
 
     return {
@@ -188,9 +238,47 @@ export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig)
     }
   }
 
-  // First value is always -Infinity
-  if (config.thresholds && config.thresholds.length) {
-    config.thresholds[0].value = -Infinity;
+  validateFieldConfig(config);
+}
+
+/**
+ * This checks that all options on FieldConfig make sense.  It mutates any value that needs
+ * fixed.  In particular this makes sure that the first threshold value is -Infinity (not valid in JSON)
+ */
+export function validateFieldConfig(config: FieldConfig) {
+  const { thresholds } = config;
+  if (thresholds) {
+    if (!thresholds.mode) {
+      thresholds.mode = ThresholdsMode.Absolute;
+    }
+    if (!thresholds.steps) {
+      thresholds.steps = [];
+    } else if (thresholds.steps.length) {
+      // First value is always -Infinity
+      // JSON saves it as null
+      thresholds.steps[0].value = -Infinity;
+    }
+  }
+
+  if (!config.color) {
+    if (thresholds) {
+      config.color = {
+        mode: FieldColorMode.Thresholds,
+      };
+    }
+    // No Color settings
+  } else if (!config.color.mode) {
+    // Without a mode, skip color altogether
+    delete config.color;
+  } else {
+    const { color } = config;
+    if (color.mode === FieldColorMode.Scheme) {
+      if (!color.schemeName) {
+        color.schemeName = ColorScheme.BrBG;
+      }
+    } else {
+      delete color.schemeName;
+    }
   }
 
   // Verify that max > min (swap if necessary)
