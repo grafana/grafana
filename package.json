@@ -199,7 +199,6 @@
     "printWidth": 120
   },
   "dependencies": {
-    "@babel/polyfill": "7.8.3",
     "@braintree/sanitize-url": "4.0.0",
     "@grafana/slate-react": "0.22.9-grafana",
     "@reduxjs/toolkit": "1.2.1",
@@ -268,7 +267,6 @@
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
-    "url-search-params-polyfill": "7.0.1",
     "whatwg-fetch": "3.0.0",
     "xss": "1.0.3"
   },

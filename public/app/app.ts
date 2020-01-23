@@ -1,10 +1,11 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 
-// / import '@babel/polyfill';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
-import 'url-search-params-polyfill'; // fetch polyfill needed for PhantomJs rendering
+// @ts-ignore
+import ttiPolyfill from 'tti-polyfill';
+
 import 'file-saver';
 import 'lodash';
 import 'jquery';
@@ -22,8 +23,6 @@ import 'vendor/angular-other/angular-strap';
 import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
-// @ts-ignore
-import ttiPolyfill from 'tti-polyfill';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
 import { AppEvents, setLocale, setMarkdownOptions } from '@grafana/data';
