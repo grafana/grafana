@@ -29,6 +29,9 @@ executors:
   cloud-sdk:
     docker:
       - image: google/cloud-sdk
+  windows-installer:
+    docker:
+      - image: grafana/wix-toolset-ci:v3
 
 jobs:
   install-grabpl:
@@ -140,8 +143,7 @@ jobs:
           when: on_success
 
   build-oss-windows-installer:
-    docker:
-      - image: grafana/wix-toolset-ci:v3
+    executor: windows-installer
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -173,8 +175,7 @@ jobs:
           when: on_success
 
   build-enterprise-windows-installer:
-    docker:
-      - image: grafana/wix-toolset-ci:v3
+    executor: windows-installer
     steps:
       - attach_workspace:
           at: /tmp/workspace
