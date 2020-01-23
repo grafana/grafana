@@ -17,34 +17,7 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
-## 1. Download and install
-
-You can install Grafana from a YUM repository, manually using YUM, manually using RPM, or by downloading a binary `.tar.gz` file.
-
-### Install manually with YUM
-
-If you install manually with YUM, then you will need to manually update Grafana for each new version.  To enable automatic updates for your Grafana installation please use the instructions below to install via our YUM repository.
-
-1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
-   * The most recent Grafana version is selected by default.
-   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
-2. Select an **Edition**.
-   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
-3. Depending on which system you are running, click **Linux** or **ARM**.
-4. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
-
-```bash
-wget <rpm package url>
-sudo yum localinstall <local rpm package>
-```
-   You can also install Grafana using YUM directly:
-
-```bash
-sudo yum install <rpm package url>
-```
-
-### Install from YUM repository
+## Install from YUM repository
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
@@ -56,15 +29,13 @@ If you install from the YUM repository, then Grafana is automatically updated ev
 | Grafana Enterprise (Beta)  | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
 
 
-1. Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
+Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
 
 ```bash
 sudo nano /etc/yum.repos.d/grafana.repo
 ```
 
-2. Enter the following information in grafana.repo and then save it.
-
-> For beta, use the url in the table above
+Choose if you want to install the Open Source or Enterprise edition of Grafana and enter the information from the edition you've chosen into `grafana.repo`. If you want to install the beta version of Grafana you need to replace the url with a beta url from the table above.
 
 For oss releases:
 ```bash
@@ -92,7 +63,7 @@ sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
 
-3. Install Grafana.
+Install Grafana:
 
 ```bash
 sudo yum install grafana
@@ -100,6 +71,33 @@ sudo yum install grafana
 # or
 
 sudo yum install grafana-enterprise
+```
+
+## Download and install
+
+You can install Grafana from a YUM repository, manually using YUM, manually using RPM, or by downloading a binary `.tar.gz` file.
+
+### Install manually with YUM
+
+If you install manually with YUM, then you will need to manually update Grafana for each new version.  To enable automatic updates for your Grafana installation please use the instructions below to install via our YUM repository.
+
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+   * The most recent Grafana version is selected by default.
+   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+2. Select an **Edition**.
+   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+3. Depending on which system you are running, click **Linux** or **ARM**.
+4. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
+
+```bash
+wget <rpm package url>
+sudo yum localinstall <local rpm package>
+```
+   You can also install Grafana using YUM directly:
+
+```bash
+sudo yum install <rpm package url>
 ```
 
 ### Install with RPM
