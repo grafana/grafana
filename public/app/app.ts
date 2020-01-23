@@ -1,4 +1,5 @@
 import '@babel/polyfill';
+import 'url-search-params-polyfill'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'lodash';
 import 'jquery';
