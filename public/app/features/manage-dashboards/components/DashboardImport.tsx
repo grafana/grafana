@@ -1,18 +1,21 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
-import { NavModel } from '@grafana/data';
+import { dateTime, NavModel } from '@grafana/data';
 import { Forms, stylesFactory } from '@grafana/ui';
-import Page from '../../../core/components/Page/Page';
-import { fetchGcomDashboard } from '../state/actions';
-import { getNavModel } from '../../../core/selectors/navModel';
-import { StoreState } from '../../../types';
+import Page from 'app/core/components/Page/Page';
+import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
+import { resetDashboard, fetchGcomDashboard } from '../state/actions';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState } from 'app/types';
 
 interface Props {
   navModel: NavModel;
   dashboard: any;
+  inputs: any[];
 
   fetchGcomDashboard: typeof fetchGcomDashboard;
+  resetDashboard: typeof resetDashboard;
 }
 
 interface State {
@@ -61,17 +64,23 @@ class DashboardImport extends PureComponent<Props, State> {
     this.props.fetchGcomDashboard(dashboardId);
   };
 
+  onSubmit = () => {};
+
+  onCancel = () => {
+    this.props.resetDashboard();
+  };
+
   renderImportForm() {
     const styles = importStyles();
 
     return (
       <>
         <div className={styles.option}>
-          <h3>Import via .json file</h3>
+          <Forms.Legend>Import via .json file</Forms.Legend>
           <Forms.Button>Upload .json file</Forms.Button>
         </div>
         <div className={styles.option}>
-          <h3>Import via grafana.com</h3>
+          <Forms.Legend>Import via grafana.com</Forms.Legend>
           <Forms.Field>
             <Forms.Input
               size="md"
@@ -82,7 +91,7 @@ class DashboardImport extends PureComponent<Props, State> {
           </Forms.Field>
         </div>
         <div className={styles.option}>
-          <h3>Import via panel json</h3>
+          <Forms.Legend>Import via panel json</Forms.Legend>
           <Forms.Field>
             <Forms.TextArea rows={10} />
           </Forms.Field>
@@ -93,60 +102,73 @@ class DashboardImport extends PureComponent<Props, State> {
   }
 
   renderSaveForm() {
-    const { dashboard } = this.props;
+    const { dashboard, inputs } = this.props;
     return (
       <>
         {dashboard.json.gnetId && (
-          <div className="gf-form-group">
-            <h3 className="section-heading">
-              Importing Dashboard from{' '}
-              <a
-                href={`https://grafana.com/dashboards/${dashboard.json.gnetId}`}
-                className="external-link"
-                target="_blank"
-              >
-                Grafana.com
-              </a>
-            </h3>
-
-            <div className="gf-form">
-              <Forms.Label>Published by</Forms.Label>
-              <label className="gf-form-label width-15">{dashboard.orgName}</label>
+          <>
+            <div>
+              <Forms.Legend>
+                Importing Dashboard from{' '}
+                <a
+                  href={`https://grafana.com/dashboards/${dashboard.json.gnetId}`}
+                  className="external-link"
+                  target="_blank"
+                >
+                  Grafana.com
+                </a>
+              </Forms.Legend>
             </div>
-            <div className="gf-form">
-              <label className="gf-form-label width-15">Updated on</label>
-              <label className="gf-form-label width-15">{dashboard.updatedAt}</label>
-            </div>
-          </div>
+            <Forms.Form>
+              <table className="filter-table form-inline">
+                <tbody>
+                  <tr>
+                    <td>Published by</td>
+                    <td>{dashboard.orgName}</td>
+                  </tr>
+                  <tr>
+                    <td>Updated on</td>
+                    <td>{dateTime(dashboard.updatedAt).format()}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </Forms.Form>
+          </>
         )}
-        <h3 className="section-heading">Options</h3>
-
-        <div className="gf-form-group">
-          <div className="gf-form-inline">
-            <div className="gf-form gf-form--grow">
-              <label className="gf-form-label width-15">Name</label>
-              <input
-                type="text"
-                className="gf-form-input"
-                ng-model="ctrl.dash.title"
-                give-focus="true"
-                ng-change="ctrl.titleChanged()"
-                ng-class="{'validation-error': ctrl.nameExists || !ctrl.dash.title}"
-              />
-              <label className="gf-form-label text-success" ng-if="ctrl.titleTouched && !ctrl.hasNameValidationError">
-                <i className="fa fa-check" />
-              </label>
-            </div>
+        <Forms.Form>
+          <Forms.Legend className="section-heading">Options</Forms.Legend>
+          <Forms.Field label="Name">
+            <Forms.Input
+              size="md"
+              type="text"
+              className="gf-form-input"
+              value={dashboard.json.title}
+              onChange={() => console.log('change')}
+            />
+          </Forms.Field>
+          {inputs.map((input: any, index: number) => {
+            if (input.type === 'datasource') {
+              return (
+                <Forms.Field label={input.label} key={`${input.label}-${index}`}>
+                  <DataSourcePicker
+                    datasources={input.options}
+                    onChange={() => console.log('something changed')}
+                    current={input.options[0]}
+                  />
+                </Forms.Field>
+              );
+            }
+            return null;
+          })}
+          <div>
+            <Forms.Button type="submit" variant="primary" onClick={this.onSubmit}>
+              Import
+            </Forms.Button>
+            <Forms.Button type="reset" variant="secondary" onClick={this.onCancel}>
+              Cancel
+            </Forms.Button>
           </div>
-
-          <div className="gf-form-inline" ng-if="ctrl.hasNameValidationError">
-            <div className="gf-form offset-width-15 gf-form--grow">
-              <label className="gf-form-label text-warning gf-form-label--grow">
-                <i className="fa fa-warning" />
-              </label>
-            </div>
-          </div>
-        </div>
+        </Forms.Form>
       </>
     );
   }
@@ -165,11 +187,13 @@ const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, 'import', null, true),
     dashboard: state.importDashboard.dashboard,
+    inputs: state.importDashboard.inputs,
   };
 };
 
 const mapDispatchToProps = {
   fetchGcomDashboard,
+  resetDashboard,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(DashboardImport);
