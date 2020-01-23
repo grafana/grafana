@@ -266,7 +266,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     options: RangeQueryOptions,
     responseListLength = 1
   ): Observable<DataQueryResponse> => {
-    console.log('options:', options);
     if (target.liveStreaming) {
       return this.runLiveQuery(target, options);
     }
