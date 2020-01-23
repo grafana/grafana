@@ -16,6 +16,7 @@ export interface VariableAdapterBase<Model extends VariableModel, State extends 
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
   picker: ComponentType<VariableProps>;
+  editor: ComponentType<VariableProps>;
 }
 
 export interface CreateVariableAdapterProps<Model extends VariableModel, State extends VariableState>

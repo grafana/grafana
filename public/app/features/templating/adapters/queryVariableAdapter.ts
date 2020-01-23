@@ -4,11 +4,13 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl, updateQueryVariableOptions } from '../state/actions';
 import { createVariableAdapter } from './index';
 import { QueryVariablePicker } from '../picker/QueryVariablePicker';
+import { QueryVariableEditor } from '../editor/QueryVariableEditor';
 
 export const createQueryVariableAdapter = () =>
   createVariableAdapter<QueryVariableModel, QueryVariableState>('query', {
     instanceReducer: queryVariableReducer,
     picker: QueryVariablePicker,
+    editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
     },

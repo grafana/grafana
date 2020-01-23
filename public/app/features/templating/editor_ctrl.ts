@@ -264,6 +264,10 @@ export class VariableEditorCtrl {
         })
       );
     };
+
+    $scope.usesAdapter = () => {
+      return variableAdapters.contains($scope.current.type);
+    };
   }
 }
 

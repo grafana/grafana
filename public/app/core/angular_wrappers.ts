@@ -24,6 +24,7 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { VariablePicker } from '../features/templating/picker/VariablePicker';
+import { VariableEditor } from '../features/templating/editor/VariableEditor';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -138,4 +139,5 @@ export function registerAngularDirectives() {
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('variablePicker', VariablePicker, ['type', 'name']);
+  react2AngularDirective('variableEditor', VariableEditor, ['type', 'name']);
 }
