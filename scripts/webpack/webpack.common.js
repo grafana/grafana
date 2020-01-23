@@ -2,7 +2,7 @@ const path = require('path');
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
-  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'apache-arrow'/*, 'react-hook-form'*/];
+  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'apache-arrow', 'react-hook-form'];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
       return false;
