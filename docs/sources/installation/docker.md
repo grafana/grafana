@@ -218,6 +218,10 @@ Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.
 
 Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guide for information about logging in, setting up data sources, and so on.
 
+## Configure Docker image
+
+Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+
 ## Configure Grafana
 
-Refer the [Configuration]({{< relref "configuration.md#docker-environment-variables" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
