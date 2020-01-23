@@ -35,9 +35,9 @@ Add a new file to your YUM repo using the method of your choice. The command bel
 sudo nano /etc/yum.repos.d/grafana.repo
 ```
 
-Choose if you want to install the Open Source or Enterprise edition of Grafana and enter the information from the edition you've chosen into `grafana.repo`. If you want to install the beta version of Grafana you need to replace the url with a beta url from the table above.
+Choose if you want to install the Open Source or Enterprise edition of Grafana and enter the information from the edition you've chosen into `grafana.repo`. If you want to install the beta version of Grafana you need to replace the URL with a beta URL from the table above.
 
-For oss releases:
+For OSS releases:
 ```bash
 [grafana]
 name=grafana
@@ -50,7 +50,7 @@ sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
 
-For enterprise releases:
+For Enterprise releases:
 ```bash
 [grafana]
 name=grafana
@@ -86,7 +86,7 @@ If you install manually with YUM, then you will need to manually update Grafana 
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 2. Select an **Edition**.
    * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want enterprise features.
 3. Depending on which system you are running, click **Linux** or **ARM**.
 4. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
@@ -111,7 +111,7 @@ If you install with RPM, then you will need to manually update Grafana for each 
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 2. Select an **Edition**.
    * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 3. Depending on which system you are running, click **Linux** or **ARM**.
 4. Copy and paste the .rpm package URL and the local .rpm package information from the installation page into the pattern shown below, then run the commands.
 

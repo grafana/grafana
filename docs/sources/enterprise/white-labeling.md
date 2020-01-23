@@ -21,8 +21,10 @@ This release adds new white labeling options to the `grafana.ini` file (can also
 You can change the following elements:
 
 - Login Background
-- Logos and Favorite icon
-- Footer and sidebar links
+- Login Logo
+- Side menu top logo
+- Footer & Help menu links
+- Fav icon (shown in browser tab)
 
 > You will have to host your logo and other images used by the white labeling feature separately
 

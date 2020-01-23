@@ -24,8 +24,6 @@ You can install Grafana using our official APT repository, by downloading a `.de
 
 If you install from the APT repository, then Grafana is automatically updated every time you run `apt-get update`. 
 
-The APT repository installs the open source edition of Grafana.
-
 | Grafana Version | Package | Repository |
 |-----------------|---------|------------|
 | Grafana OSS     | grafana | `https://packages.grafana.com/oss/deb stable main` |
@@ -47,7 +45,7 @@ sudo apt-get update
 sudo apt-get install grafana
 ```
 
-#### To install the latest stable enterprise release:
+#### To install the latest stable Enterprise release:
 
 ```bash
 sudo apt-get install -y apt-transport-https
@@ -86,7 +84,7 @@ If you install the `.deb` package, then you will need to manually update Grafana
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
    * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click **Linux** or **ARM**.
 1. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
