@@ -56,10 +56,23 @@ export class VariableSrv {
       )
       .then(() => {
         this.templateSrv.updateIndex();
-        this.templateSrv.setGlobalVariable('__dashboardName', { value: dashboard.title, text: dashboard.title });
-        this.templateSrv.setGlobalVariable('__orgName', {
-          value: this.contextSrv.user.orgName,
-          text: this.contextSrv.user.orgName,
+        this.templateSrv.setGlobalVariable('__dashboard', {
+          value: {
+            name: dashboard.title,
+            uid: dashboard.uid,
+            toString: function() {
+              return this.uid;
+            },
+          },
+        });
+        this.templateSrv.setGlobalVariable('__org', {
+          value: {
+            name: this.contextSrv.user.orgName,
+            id: this.contextSrv.user.id,
+            toString: function() {
+              return this.id;
+            },
+          },
         });
       });
   }

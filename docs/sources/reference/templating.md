@@ -313,7 +313,7 @@ as epoch milliseconds. These variables are only available in Grafana v6.0 and ab
 
 > Only available in Grafana v6.6+
 
-Grafana 6.6 and above allow to format time in string `${__from:datetime}` and `${__to:datetime}`, with default text format (`YYYY-MM-DD HH:mm:ss`)
+Grafana 6.6 and above allow to format time in string `${__from.text}` and `${__to.text}`, with default text format (`YYYY-MM-DD HH:mm:ss`)
 
 ### The $__interval Variable
 
@@ -351,15 +351,17 @@ This variable is only available in the Singlestat panel and can be used in the p
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
-### The $__dashboardName Variable
+### The $__dashboard Variable
 > Only available in Grafana v6.6+
 
-This variable is the name of the current dashboard.
+This variable is the uid of the current dashboard.
+`${__dashboard.name}` is the name of the current dashboard.
 
-### The $__orgName Variable
+### The $__org Variable
 > Only available in Grafana v6.6+
 
-This variable is the name of the current organization.
+This variable is the id of the current organization.
+`${__org.name}` is the name of the current organization.
 
 ## Repeating Panels
 
