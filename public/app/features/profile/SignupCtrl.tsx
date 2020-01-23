@@ -19,16 +19,24 @@ export interface SignupFormModel {
 }
 
 interface ChildProps {
-  register(obj: SignupFormModel): void;
+  onSubmit(obj: SignupFormModel): void;
+  verifyEmailEnabled: boolean;
+  autoAssignOrg: boolean;
 }
 
-export class SignupCtrl extends PureComponent<SignupProps> {
+interface SignupCtrlState {
+  autoAssignOrg: boolean;
+  verifyEmailEnabled: boolean;
+}
+
+export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
   constructor(props: SignupProps) {
     super(props);
+    //Set initial values from url via props.routeParams
   }
-  register = async ({ email, code, orgName, password, name }: any) => {
+  onSubmit = async ({ email, code, orgName, password, name }: any) => {
     const backendSrv = getBackendSrv();
-
+    console.log(email);
     const response = await backendSrv.post('/api/user/signup/step2', {
       email,
       code,
@@ -49,7 +57,9 @@ export class SignupCtrl extends PureComponent<SignupProps> {
     return (
       <>
         {children({
-          register: this.register,
+          onSubmit: this.onSubmit,
+          autoAssignOrg: false,
+          verifyEmailEnabled: true,
         })}
       </>
     );
