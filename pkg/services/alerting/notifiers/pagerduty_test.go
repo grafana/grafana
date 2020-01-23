@@ -114,7 +114,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 			Convey("should return properly formatted default v2 event payload", func() {
 				json := `{
-		  		"integrationKey": "abcdefgh0123456789",
+					"integrationKey": "abcdefgh0123456789",
 					"autoResolve": false
 				}`
 
@@ -169,7 +169,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 			Convey("should return properly formatted v2 event payload when using override tags", func() {
 				json := `{
-		  		"integrationKey": "abcdefgh0123456789",
+					"integrationKey": "abcdefgh0123456789",
 					"autoResolve": false
 				}`
 
