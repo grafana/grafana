@@ -87,8 +87,8 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
   if (exploreDatasource) {
     const range = timeSrv.timeRangeForUrl();
     let state: Partial<ExploreUrlState> = { range };
-    const scopedVars = panel.scopedVars || {};
     if (exploreDatasource.interpolateVariablesInQueries) {
+      const scopedVars = panel.scopedVars || {};
       state = {
         ...state,
         datasource: exploreDatasource.name,
