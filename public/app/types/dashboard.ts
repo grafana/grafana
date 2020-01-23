@@ -84,5 +84,6 @@ export interface DashboardState {
 
 export interface ImportDashboardState {
   dashboard: any;
+  inputs: any[];
   gcomError: string;
 }
