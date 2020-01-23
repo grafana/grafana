@@ -146,6 +146,12 @@ As an example, if you want to apply arithmetic operations on a metric, you can d
 
 Please note that in the case you use the expression field to reference another query, like `queryA * 2`, it will not be possible to create an alert rule based on that query.
 
+### Period
+
+A period is the length of time associated with a specific Amazon CloudWatch statistic. Periods are defined in numbers of seconds, and valid values for period are 1, 5, 10, 30, or any multiple of 60.
+
+If the period field is left blank or set to `auto`, it will be calculated automatically based on the time range. The formula that is used is `time range in seconds / 2000`, and then we snap to next higher value in an array of pre-defined periods `[60, 300, 900, 3600, 21600, 86400]`. By clicking `Show Query Preview` in the query editor, you should be able to see what period was used by Grafana.
+
 ### Deep linking from Grafana panels to the CloudWatch console
 
 > Only available in Grafana v6.5+.
