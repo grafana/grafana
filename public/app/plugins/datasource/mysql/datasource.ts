@@ -26,12 +26,9 @@ export class MysqlDatasource {
   }
 
   interpolateVariable = (value: string, variable: any) => {
-    console.log('value', value);
-    console.log('variable', variable);
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         const result = this.queryModel.quoteLiteral(value);
-        console.log('result', result);
         return result;
       } else {
         return value;
