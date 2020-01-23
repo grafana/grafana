@@ -13,7 +13,7 @@ import {
   toVariablePayload,
 } from '../state/actions';
 import { QueryVariableState } from '../state/queryVariableReducer';
-import { variableAdapter } from '../adapters';
+import { variableAdapters } from '../adapters';
 import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
 import { VariableProps } from './VariablePicker';
 
@@ -73,7 +73,7 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
     }
 
     if (this.state.variable.current.text !== oldVariableText) {
-      variableAdapter[this.state.variable.type].setValue(this.state.variable, this.state.variable.current);
+      variableAdapters.get(this.state.variable.type).setValue(this.state.variable, this.state.variable.current);
     }
     dispatch(hideQueryVariableDropDown(toVariablePayload(this.state.variable)));
   };

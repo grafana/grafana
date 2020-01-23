@@ -12,7 +12,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
-import { variableAdapter } from './adapters';
+import { variableAdapters } from './adapters';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -41,7 +41,7 @@ export class VariableSrv {
     dashboard.templating.list = dashboard.templating.list.map((model: VariableModel, index) =>
       this.createVariableFromModel(model, index)
     );
-    this.variables = dashboard.templating.list.filter((m: VariableModel) => !variableAdapter[m.type].useState);
+    this.variables = dashboard.templating.list.filter((m: VariableModel) => !variableAdapters.contains(m.type));
     this.templateSrv.init(this.variables, this.timeSrv.timeRange());
 
     // init variables

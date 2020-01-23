@@ -1,6 +1,6 @@
 import React from 'react';
 import { VariableType } from '../variable';
-import { variableAdapter } from '../adapters';
+import { variableAdapters } from '../adapters';
 
 export interface VariableProps {
   name: string;
@@ -8,11 +8,11 @@ export interface VariableProps {
 }
 
 export const VariablePicker: React.FunctionComponent<VariableProps> = ({ name, type }) => {
-  if (!variableAdapter[type].useState) {
+  if (!variableAdapters.contains(type)) {
     return null;
   }
 
-  const PickerToRender = variableAdapter[type].picker;
+  const PickerToRender = variableAdapters.get(type).picker;
   if (!PickerToRender) {
     return null;
   }

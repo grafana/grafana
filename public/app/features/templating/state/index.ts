@@ -3,7 +3,7 @@ import { AnyAction, PayloadAction } from '@reduxjs/toolkit';
 import { QueryVariableState, VariableState } from './queryVariableReducer';
 import { VariableType } from '../variable';
 import { variableActions, VariablePayload } from './actions';
-import { variableAdapter } from '../adapters';
+import { variableAdapters } from '../adapters';
 
 export interface TemplatingState extends Record<VariableType, Array<VariableState<any, any>>> {
   query: QueryVariableState[];
@@ -24,7 +24,7 @@ export const updateTemplatingState = (
   state: TemplatingState,
   action: PayloadAction<VariablePayload<any>>
 ) => {
-  const reducer = variableAdapter[type].reducer;
+  const reducer = variableAdapters.get(type).reducer;
   if (!reducer) {
     throw new Error(`Reducer for type ${type} could not be found.`);
   }

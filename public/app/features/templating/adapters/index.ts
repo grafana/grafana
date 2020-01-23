@@ -6,16 +6,15 @@ import { UrlQueryValue } from '@grafana/runtime';
 import { VariableModel, VariableOption, VariableType } from '../variable';
 import { VariableState } from '../state/queryVariableReducer';
 import { VariablePayload } from '../state/actions';
-import { queryVariableAdapter } from './queryVariableAdapter';
 import { variableStateReducerFactory } from '../state/variableStateReducerFactory';
 import { VariableProps } from '../picker/VariablePicker';
+import { createQueryVariableAdapter } from './queryVariableAdapter';
 
 export interface VariableAdapterBase<Model extends VariableModel, State extends VariableState> {
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
   setValue: (variable: Model, option: VariableOption) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
-  useState: boolean;
   picker: ComponentType<VariableProps>;
 }
 
@@ -44,24 +43,27 @@ export const createVariableAdapter = <
   };
 };
 
-const notMigratedVariableAdapter = (): VariableAdapter<any, any> => ({
-  useState: false,
-  reducer: state => state,
-  dependsOn: (variable, variableToTest) => {
-    return false;
-  },
-  setValue: (variable, urlValue) => Promise.resolve(),
-  setValueFromUrl: (variable, urlValue) => Promise.resolve(),
-  updateOptions: (variable, searchFilter) => Promise.resolve(),
-  picker: null,
-});
-
-export const variableAdapter: Record<VariableType, VariableAdapter<any, any>> = {
-  query: queryVariableAdapter(),
-  adhoc: notMigratedVariableAdapter(),
-  constant: notMigratedVariableAdapter(),
-  datasource: notMigratedVariableAdapter(),
-  custom: notMigratedVariableAdapter(),
-  interval: notMigratedVariableAdapter(),
-  textbox: notMigratedVariableAdapter(),
+const allVariableAdapters: Record<VariableType, VariableAdapter<any, any>> = {
+  query: null,
+  textbox: null,
+  constant: null,
+  datasource: null,
+  custom: null,
+  interval: null,
+  adhoc: null,
 };
+
+export const variableAdapters = {
+  contains: (type: VariableType) => !!allVariableAdapters[type],
+  get: (type: VariableType) => {
+    if (!variableAdapters.contains(type)) {
+      throw new Error(`There is no adapter for type:${type}`);
+    }
+    return allVariableAdapters[type];
+  },
+  set: (type: VariableType, adapter: VariableAdapter<any, any>) => {
+    allVariableAdapters[type] = adapter;
+  },
+};
+
+variableAdapters.set('query', createQueryVariableAdapter());

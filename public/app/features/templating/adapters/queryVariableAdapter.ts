@@ -5,9 +5,8 @@ import { setOptionAsCurrent, setOptionFromUrl, updateQueryVariableOptions } from
 import { createVariableAdapter } from './index';
 import { QueryVariablePicker } from '../picker/QueryVariablePicker';
 
-export const queryVariableAdapter = () =>
+export const createQueryVariableAdapter = () =>
   createVariableAdapter<QueryVariableModel, QueryVariableState>('query', {
-    useState: true,
     instanceReducer: queryVariableReducer,
     picker: QueryVariablePicker,
     dependsOn: (variable, variableToTest) => {

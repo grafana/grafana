@@ -5,10 +5,10 @@
     class="submenu-item gf-form-inline"
     aria-label="{{::ctrl.selectors.submenuItem}}"
   >
-    <div class="gf-form" ng-if="ctrl.usesState(variable)">
+    <div class="gf-form" ng-if="ctrl.hasAdapter(variable)">
       <variable-picker name="variable.name" type="variable.type"></variable-picker>
     </div>
-    <div class="gf-form" ng-if="!ctrl.usesState(variable)">
+    <div class="gf-form" ng-if="!ctrl.hasAdapter(variable)">
       <label
         class="gf-form-label template-variable"
         ng-hide="variable.hide === 1"

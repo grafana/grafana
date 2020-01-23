@@ -3,12 +3,14 @@ import { AppEvents } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './variable';
+import { VariableType, variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
+import { getVariables } from './state/selectors';
+import { variableAdapters } from './adapters';
 
 export class VariableEditorCtrl {
   /** @ngInject */
@@ -68,8 +70,8 @@ export class VariableEditorCtrl {
 
     $scope.init = () => {
       $scope.mode = 'list';
-
-      $scope.variables = variableSrv.variables;
+      const variablesInState = getVariables().map(variable => ({ ...variable }));
+      $scope.variables = variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
       $scope.reset();
 
       $scope.$watch('mode', (val: string) => {
@@ -89,6 +91,9 @@ export class VariableEditorCtrl {
 
     $scope.add = () => {
       if ($scope.isValid()) {
+        if (variableAdapters.contains($scope.current.type as VariableType)) {
+          return;
+        }
         variableSrv.addVariable($scope.current);
         $scope.update();
       }
@@ -144,6 +149,9 @@ export class VariableEditorCtrl {
 
     $scope.runQuery = () => {
       $scope.optionsLimit = 20;
+      if (variableAdapters.contains($scope.current.type as VariableType)) {
+        return;
+      }
       return variableSrv.updateOptions($scope.current).catch((err: { data: { message: any }; message: string }) => {
         if (err.data && err.data.message) {
           err.message = err.data.message;
@@ -173,7 +181,10 @@ export class VariableEditorCtrl {
       );
     };
 
-    $scope.duplicate = (variable: { getSaveModel: () => void; name: string }) => {
+    $scope.duplicate = (variable: { getSaveModel: () => void; name: string; type: VariableType }) => {
+      if (variableAdapters.contains(variable.type)) {
+        return;
+      }
       const clone = _.cloneDeep(variable.getSaveModel());
       $scope.current = variableSrv.createVariableFromModel(clone, $scope.variables.length);
       $scope.current.name = 'copy_of_' + variable.name;
@@ -193,6 +204,9 @@ export class VariableEditorCtrl {
     };
 
     $scope.reset = () => {
+      if (variableAdapters.contains('query')) {
+        return;
+      }
       $scope.currentIsNew = true;
       $scope.current = variableSrv.createVariableFromModel({ type: 'query' }, $scope.variables.length);
 
@@ -210,6 +224,9 @@ export class VariableEditorCtrl {
     };
 
     $scope.typeChanged = function() {
+      if (variableAdapters.contains($scope.current.type as VariableType)) {
+        return;
+      }
       const old = $scope.current;
       $scope.current = variableSrv.createVariableFromModel(
         {
@@ -229,6 +246,9 @@ export class VariableEditorCtrl {
     };
 
     $scope.removeVariable = (variable: any) => {
+      if (variableAdapters.contains($scope.current.type as VariableType)) {
+        return;
+      }
       variableSrv.removeVariable(variable);
     };
 

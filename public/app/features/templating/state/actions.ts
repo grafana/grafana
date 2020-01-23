@@ -12,7 +12,7 @@ import {
 } from '../variable';
 import { ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
-import { variableAdapter } from '../adapters';
+import { variableAdapters } from '../adapters';
 import _ from 'lodash';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
@@ -128,7 +128,7 @@ export const processVariables = (): ThunkResult<void> => {
     for (let index = 0; index < getVariables(getState()).length; index++) {
       const variable = getVariables(getState())[index];
       for (const otherVariable of getVariables(getState())) {
-        if (variableAdapter[variable.type].dependsOn(variable, otherVariable)) {
+        if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
           dependencies.push(otherVariable.initLock.promise);
         }
       }
@@ -137,7 +137,7 @@ export const processVariables = (): ThunkResult<void> => {
 
       const urlValue = queryParams['var-' + variable.name];
       if (urlValue !== void 0) {
-        await variableAdapter[variable.type].setValueFromUrl(variable, urlValue);
+        await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue);
       }
 
       if (variable.hasOwnProperty('refresh')) {
@@ -146,7 +146,7 @@ export const processVariables = (): ThunkResult<void> => {
           refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
           refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
         ) {
-          await variableAdapter[variable.type].updateOptions(refreshableVariable);
+          await variableAdapters.get(variable.type).updateOptions(refreshableVariable);
         }
       }
 
@@ -189,7 +189,7 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
     }
 
     // updates options
-    await variableAdapter[variable.type].updateOptions(variable);
+    await variableAdapters.get(variable.type).updateOptions(variable);
 
     // get variable from state
     const variableFromState: VariableWithOptions = getVariables(getState()).find(
@@ -232,7 +232,7 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
       option = { text: _.castArray(option.text), value: _.castArray(option.value), selected: false };
     }
 
-    await variableAdapter[variable.type].setValue(variableFromState, option);
+    await variableAdapters.get(variable.type).setValue(variableFromState, option);
   };
 };
 
@@ -266,7 +266,7 @@ export const validateVariableSelectionState = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variableInState = getVariable<VariableWithOptions>(variable.name, getState());
-    const setValue = variableAdapter[variableInState.type].setValue;
+    const setValue = variableAdapters.get(variableInState.type).setValue;
     if (!variableInState.current) {
       return setValue(variableInState, {} as VariableOption);
     }
@@ -336,7 +336,7 @@ const createGraph = (variables: VariableModel[]) => {
         return;
       }
 
-      if (variableAdapter[v1.type].dependsOn(v1, v2)) {
+      if (variableAdapters.get(v1.type).dependsOn(v1, v2)) {
         g.link(v1.name, v2.name);
       }
     });
@@ -360,7 +360,7 @@ export const variableUpdated = (variable: VariableModel, emitChangeEvents?: any)
     if (node) {
       promises = node.getOptimizedInputEdges().map(e => {
         const variable = variables.find(v => v.name === e.inputNode.name);
-        return variableAdapter[variable.type].updateOptions(variable);
+        return variableAdapters.get(variable.type).updateOptions(variable);
         // return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
       });
     }

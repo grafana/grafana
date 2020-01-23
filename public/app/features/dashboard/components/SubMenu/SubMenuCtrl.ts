@@ -6,7 +6,7 @@ import { VariableSrv } from 'app/features/templating/all';
 import { CoreEvents } from '../../../../types';
 import { VariableModel } from '../../../templating/variable';
 import { getVariables } from '../../../templating/state/selectors';
-import { variableAdapter } from '../../../templating/adapters';
+import { variableAdapters } from '../../../templating/adapters';
 
 export class SubMenuCtrl {
   annotations: any;
@@ -32,14 +32,14 @@ export class SubMenuCtrl {
   }
 
   variableUpdated(variable: VariableModel) {
-    if (variableAdapter[variable.type].useState) {
+    if (variableAdapters.contains(variable.type)) {
       return;
     }
     this.variableSrv.variableUpdated(variable, true);
   }
 
-  usesState(variable: VariableModel): boolean {
-    return variableAdapter[variable.type].useState;
+  hasAdapter(variable: VariableModel): boolean {
+    return variableAdapters.contains(variable.type);
   }
 
   openEditView(editview: any) {
