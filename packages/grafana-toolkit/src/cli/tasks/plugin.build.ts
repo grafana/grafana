@@ -40,13 +40,13 @@ export const prepare = useSpinner<void>('Preparing', async () => {
   await Promise.all([
     // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
     copyIfNonExistent(
-      resolvePath(process.cwd(), 'tsconfig.json'),
-      resolvePath(__dirname, '../../config/tsconfig.plugin.local.json')
+      resolvePath(__dirname, '../../config/tsconfig.plugin.local.json'),
+      resolvePath(process.cwd(), 'tsconfig.json')
     ),
     // Copy only if local prettierrc does not exist.  Otherwise this will work, but have odd behavior
     copyIfNonExistent(
-      resolvePath(process.cwd(), '.prettierrc.js'),
-      resolvePath(__dirname, '../../config/prettier.plugin.rc.js')
+      resolvePath(__dirname, '../../config/prettier.plugin.rc.js'),
+      resolvePath(process.cwd(), '.prettierrc.js')
     ),
   ]);
 
@@ -87,22 +87,23 @@ export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async (
         }
       })
       .then(newContents => {
-        if (fix && newContents && newContents.length > 10) {
-          return writeFile(path, newContents)
-            .then(() => {
-              console.log(`Fixed: ${path}`);
-              return true;
-            })
-            .catch(error => {
-              console.log(`Error fixing ${path}`, error);
-              return false;
-            });
+        if (newContents === undefined) {
+          return true; // Nothing to fix
         } else if (fix) {
+          if (newContents.length > 10) {
+            return writeFile(path, newContents)
+              .then(() => {
+                console.log(`Fixed: ${path}`);
+                return true;
+              })
+              .catch(error => {
+                console.log(`Error fixing ${path}`, error);
+                return false;
+              });
+          }
           console.log(`No automatic fix for: ${path}`);
-          return false;
-        } else {
-          return false;
         }
+        return false;
       })
       .then(success => ({ path, success }))
   );

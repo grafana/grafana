@@ -110,22 +110,22 @@ RUN apt-get update && \
       | tar -xz -C /usr/local && \
     git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1
 
-ARG CHKSUM_ARMV7_MUSL=76c5539aed3d46d61c66d60757dd4083ab05420e4252aca04eaeb791e3342dac
-ARG CHKSUM_ARMV8_MUSL=6d4f7249e067ef6d054bcebe9eaf0c581972767f86ad78d2b53d832d1126c52e
-ARG CHKSUM_AMD64_MUSL=8c487b0f56bf600008e8f37041cbce37f6fe1e001acd3eca8bb16e30e16e8ae7
+ARG CHKSUM_ARMV7_MUSL=1b52816ac68d85de19c5248636034105440ea46708062a92cf8f8438fcce70269d44e30b7b39b67e4816db5178e5df9c32000aadd19a43e0ac42cfeac36f72c0
+ARG CHKSUM_ARMV8_MUSL=54f49ee7ee828a31687d915a0b94cf2e70d79f6b942e2ebfca973beaabdfb035f441921b4c16d5bdce66f3acc902d17b54bb9ebefa12d06c1c6c448435276ae8
+ARG CHKSUM_AMD64_MUSL=f7bcb35b4db01c8e1bd65c9e6dc9bc9681dae1e32d00ca094f91f95cad9799ea3251e01c69148f1547fdbf476d7ae1ba5ebf8da8c87cd073e04e0d3c127743e5
 
 # Install musl cross compilers
 RUN cd /tmp && \
     curl -fO https://musl.cc/arm-linux-musleabihf-cross.tgz && \
-    ([ "$(sha256sum arm-linux-musleabihf-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV7_MUSL" ] || (echo "Mismatching checksums armv7"; exit 1)) && \
+    ([ "$(sha512sum arm-linux-musleabihf-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV7_MUSL" ] || (echo "Mismatching checksums armv7"; exit 1)) && \
     tar xf arm-linux-musleabihf-cross.tgz && \
     rm arm-linux-musleabihf-cross.tgz && \
     curl -fO https://musl.cc/aarch64-linux-musl-cross.tgz && \
-    ([ "$(sha256sum aarch64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV8_MUSL" ] || (echo "Mismatching checksums armv8"; exit 1)) && \
+    ([ "$(sha512sum aarch64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV8_MUSL" ] || (echo "Mismatching checksums armv8"; exit 1)) && \
     tar xf aarch64-linux-musl-cross.tgz && \
     rm aarch64-linux-musl-cross.tgz && \
     curl -fO https://musl.cc/x86_64-linux-musl-cross.tgz && \
-    ([ "$(sha256sum x86_64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_AMD64_MUSL" ] || (echo "Mismatching checksums amd64"; exit 1)) && \
+    ([ "$(sha512sum x86_64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_AMD64_MUSL" ] || (echo "Mismatching checksums amd64"; exit 1)) && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 

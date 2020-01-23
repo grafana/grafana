@@ -2,8 +2,11 @@ const path = require('path');
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
-  if (filename.indexOf('node_modules/debug') > 0) {
-    return false;
+  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'apache-arrow', 'react-hook-form'];
+  for (const package of packagesToProcessbyBabel) {
+    if (filename.indexOf(`node_modules/${package}`) > 0) {
+      return false;
+    }
   }
   return true;
 }
@@ -46,11 +49,7 @@ module.exports = {
           {
             loader: 'babel-loader',
             options: {
-              presets: [
-                [
-                  '@babel/preset-env'
-                ],
-              ],
+              presets: [['@babel/preset-env']],
             },
           },
         ],

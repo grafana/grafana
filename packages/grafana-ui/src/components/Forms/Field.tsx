@@ -18,6 +18,8 @@ export interface FieldProps {
   loading?: boolean;
   /** Indicates if field is disabled */
   disabled?: boolean;
+  /** Indicates if field is required */
+  required?: boolean;
   /** Error message to display */
   error?: string;
   /** Indicates horizontal layout of the field */
@@ -53,6 +55,7 @@ export const Field: React.FC<FieldProps> = ({
   invalid,
   loading,
   disabled,
+  required,
   error,
   children,
   className,
@@ -73,7 +76,7 @@ export const Field: React.FC<FieldProps> = ({
     <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)}>
       {label && (
         <Label htmlFor={inputId} description={description}>
-          {label}
+          {`${label}${required ? ' *' : ''}`}
         </Label>
       )}
       <div>

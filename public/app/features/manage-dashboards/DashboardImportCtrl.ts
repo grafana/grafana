@@ -1,10 +1,10 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 import locationUtil from 'app/core/utils/location_util';
-import { BackendSrv } from '@grafana/runtime';
 import { ValidationSrv } from './services/ValidationSrv';
 import { NavModelSrv } from 'app/core/core';
 import { ILocationService } from 'angular';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export class DashboardImportCtrl {
   navModel: any;
@@ -32,7 +32,6 @@ export class DashboardImportCtrl {
 
   /** @ngInject */
   constructor(
-    private backendSrv: BackendSrv,
     private validationSrv: ValidationSrv,
     navModelSrv: NavModelSrv,
     private $location: ILocationService,
@@ -145,7 +144,7 @@ export class DashboardImportCtrl {
       return;
     }
 
-    this.backendSrv
+    backendSrv
       // @ts-ignore
       .getDashboardByUid(this.dash.uid)
       .then((res: any) => {
@@ -185,7 +184,7 @@ export class DashboardImportCtrl {
       };
     });
 
-    return this.backendSrv
+    return backendSrv
       .post('api/dashboards/import', {
         dashboard: this.dash,
         overwrite: true,
@@ -224,7 +223,7 @@ export class DashboardImportCtrl {
       this.gnetError = 'Could not find dashboard';
     }
 
-    return this.backendSrv
+    return backendSrv
       .get('api/gnet/dashboards/' + dashboardId)
       .then(res => {
         this.gnetInfo = res;
