@@ -3,9 +3,10 @@
  */
 
 import React from 'react';
-import { stylesFactory, useTheme } from '../../themes';
+import { useForm, Mode, OnSubmit, DeepPartial, FormContextValues } from 'react-hook-form';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
+import { stylesFactory, useTheme } from '../../themes';
 
 const getFormStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -15,8 +16,26 @@ const getFormStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const Form: React.FC = ({ children }) => {
+type FormAPI<T> = Pick<FormContextValues<T>, 'register' | 'errors' | 'control'>;
+
+interface FormProps<T> {
+  validateOn?: Mode;
+  defaultValues?: DeepPartial<T>;
+  onSubmit: OnSubmit<T>;
+  children: (api: FormAPI<T>) => React.ReactNode;
+}
+
+export function Form<T>({ validateOn, defaultValues, onSubmit, children }: FormProps<T>) {
   const theme = useTheme();
+  const { handleSubmit, register, errors, control } = useForm<T>({
+    mode: validateOn || 'onSubmit',
+    defaultValues,
+  });
   const styles = getFormStyles(theme);
-  return <div className={styles.form}>{children}</div>;
-};
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      {children({ register, errors, control })}
+    </form>
+  );
+}
