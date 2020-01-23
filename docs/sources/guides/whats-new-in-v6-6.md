@@ -80,7 +80,7 @@ Paste a native emoji in the unit picker and pick it as a custom unit:
 
 ## Bar Gauge unfilled option
 
-The Bar Gauge visualization has a new display option: `Unfilled`. This new option is enabled by default, so it will change how this visualization is displayed on old dashboards. If you prefer the old behavior where unfilled area was not shown and the value followed directly after, you have to update the visualization settings
+The Bar Gauge visualization has a new display option: `Unfilled`. This new option is enabled by default, so it will change how this visualization is displayed on old dashboards. If you prefer the old behavior where unfilled area was not shown and the value followed directly after, you have to update the visualization settings.
 
 {{< docs-imagebox img="/img/docs/v66/bar_gauge_unfilled.png" max-width="900px" caption="Bar gauge unfilled" >}}
 
