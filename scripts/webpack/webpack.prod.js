@@ -52,6 +52,7 @@ module.exports = merge(common, {
                       browsers: 'last 3 versions',
                     },
                     useBuiltIns: 'entry',
+                    corejs: 3,
                     modules: false,
                   },
                 ],
