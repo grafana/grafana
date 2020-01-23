@@ -38,6 +38,10 @@ export class SubMenuCtrl {
     this.variableSrv.variableUpdated(variable, true);
   }
 
+  usesState(variable: VariableModel): boolean {
+    return variableAdapter[variable.type].useState;
+  }
+
   openEditView(editview: any) {
     const search = _.extend(this.$location.search(), { editview: editview });
     this.$location.search(search);

@@ -12,10 +12,10 @@ import {
   ColorPicker,
   DataLinksEditor,
   DataSourceHttpSettings,
+  GraphContextMenu,
   SecretFormField,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
-  GraphContextMenu,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
@@ -23,7 +23,7 @@ import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
-import { QueryVariablePicker } from '../features/templating/picker/QueryVariablePicker';
+import { VariablePicker } from '../features/templating/picker/VariablePicker';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -137,5 +137,5 @@ export function registerAngularDirectives() {
     'dataSourceConfig',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('queryVariable', QueryVariablePicker, ['name']);
+  react2AngularDirective('variablePicker', VariablePicker, ['type', 'name']);
 }

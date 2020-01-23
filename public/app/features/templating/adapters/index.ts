@@ -1,3 +1,4 @@
+import { ComponentType } from 'react';
 import { Reducer } from 'redux';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
@@ -7,6 +8,7 @@ import { VariableState } from '../state/queryVariableReducer';
 import { VariablePayload } from '../state/actions';
 import { queryVariableAdapter } from './queryVariableAdapter';
 import { variableStateReducerFactory } from '../state/variableStateReducerFactory';
+import { VariableProps } from '../picker/VariablePicker';
 
 export interface VariableAdapterBase<Model extends VariableModel, State extends VariableState> {
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
@@ -14,6 +16,7 @@ export interface VariableAdapterBase<Model extends VariableModel, State extends 
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
   useState: boolean;
+  picker: ComponentType<VariableProps>;
 }
 
 export interface CreateVariableAdapterProps<Model extends VariableModel, State extends VariableState>
@@ -50,6 +53,7 @@ const notMigratedVariableAdapter = (): VariableAdapter<any, any> => ({
   setValue: (variable, urlValue) => Promise.resolve(),
   setValueFromUrl: (variable, urlValue) => Promise.resolve(),
   updateOptions: (variable, searchFilter) => Promise.resolve(),
+  picker: null,
 });
 
 export const variableAdapter: Record<VariableType, VariableAdapter<any, any>> = {

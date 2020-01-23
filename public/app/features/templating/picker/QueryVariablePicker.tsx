@@ -15,10 +15,9 @@ import {
 import { QueryVariableState } from '../state/queryVariableReducer';
 import { variableAdapter } from '../adapters';
 import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
+import { VariableProps } from './VariablePicker';
 
-export interface Props {
-  name: string;
-}
+export interface Props extends VariableProps {}
 
 export class QueryVariablePicker extends PureComponent<Props, QueryVariableState> {
   private readonly debouncedOnQueryChanged: Function;
