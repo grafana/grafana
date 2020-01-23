@@ -160,7 +160,8 @@ describe('backendSrv', () => {
       ${'GET'}     | ${undefined}             | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
       ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
       ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${{ data: { test: 'Some data' } }} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
-      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '"some data"' }}
+      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
+      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
     `(
       "when called with method: '$method', headers: '$headers' and data: '$data' then result should be '$expected'",
       ({ method, headers, data, expected }) => {
