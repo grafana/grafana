@@ -419,6 +419,9 @@ jobs:
       - run:
           name: build grafana frontend
           command: './scripts/build/build.sh --fast --frontend-only'
+      - run:
+          name: es-check
+          command: 'npx es-check es5 ./public/build/*.js'
       - save_cache:
           key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
           paths:
