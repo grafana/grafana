@@ -87,12 +87,13 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
   if (exploreDatasource) {
     const range = timeSrv.timeRangeForUrl();
     let state: Partial<ExploreUrlState> = { range };
+    const scopedVars = panel.scopedVars || {};
     if (exploreDatasource.interpolateVariablesInQueries) {
       state = {
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets),
+        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars),
       };
     } else {
       state = {
