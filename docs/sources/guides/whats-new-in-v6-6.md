@@ -105,6 +105,8 @@ The time picker has gotten a major design update. Key changes:
 
 In order to align with a [change in Chrome 80](https://www.chromestatus.com/feature/5088147346030592), a breaking change has been introduced to Grafana's [`cookie_samesite` setting]({{< relref "../installation/configuration.md#cookie-samesite" >}}). Grafana now properly renders cookies with the `SameSite=None` attribute when this setting is `none`. The previous behavior of `none` was to omit the `SameSite` attribute from cookies. Grafana will use the previous behavior when `cookie_samesite` is set to `disabled`.
 
+Read more about this in the [upgrade notes]({{< relref "../installation/upgrading/#important-changes-regarding-samesite-cookie-attribute" >}}).
+
 ## Explore/Logs Panel: Log message line wrapping options
 
 We introduced wrap-lines option for logs, as for some of our users it's more efficient to see one line per log message.The wrapped-line option is set as a default, unwrapped setting results in horizontal scrolling.
