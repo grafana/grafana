@@ -4,7 +4,7 @@ import { CascaderOption } from '@grafana/ui';
 
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 
-import { useLokiSyntax } from './useLokiSyntax';
+import { useLokiSyntaxAndLabels } from './useLokiSyntaxAndLabels';
 import { makeMockLokiDatasource } from '../mocks';
 
 describe('useLokiSyntax hook', () => {
@@ -35,7 +35,7 @@ describe('useLokiSyntax hook', () => {
   };
 
   it('should provide Loki syntax when used', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider, rangeMock));
+    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntaxAndLabels(languageProvider, rangeMock));
     expect(result.current.syntax).toEqual(null);
 
     await waitForNextUpdate();
@@ -44,7 +44,7 @@ describe('useLokiSyntax hook', () => {
   });
 
   it('should fetch labels on first call', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider, rangeMock));
+    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntaxAndLabels(languageProvider, rangeMock));
     expect(result.current.isSyntaxReady).toBeFalsy();
     expect(result.current.logLabelOptions).toEqual([]);
 
@@ -55,7 +55,7 @@ describe('useLokiSyntax hook', () => {
   });
 
   it('should try to fetch missing options when active option changes', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider, rangeMock));
+    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntaxAndLabels(languageProvider, rangeMock));
     await waitForNextUpdate();
     expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock2);
 
