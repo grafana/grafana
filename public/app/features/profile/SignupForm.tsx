@@ -15,7 +15,7 @@ const buttonSpacing = css`
 
 export const SignupForm: FC<Props> = props => {
   return (
-    <Forms.Form onSubmit={user => console.log(user)}>
+    <Forms.Form onSubmit={(user: any) => console.log(user)}>
       {({ register, errors }) => {
         return (
           <>
@@ -36,7 +36,13 @@ export const SignupForm: FC<Props> = props => {
               <Forms.Input size="md" name="email" type="email" placeholder="Email" ref={register({ required: true })} />
             </Forms.Field>
             <Forms.Field label="Password">
-              <Forms.Input size="md" type="password" placeholder="Password" ref={register({ required: true })} />
+              <Forms.Input
+                size="md"
+                name="password"
+                type="password"
+                placeholder="Password"
+                ref={register({ required: true })}
+              />
             </Forms.Field>
 
             <Forms.Button type="submit">Submit</Forms.Button>

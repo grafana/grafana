@@ -7,6 +7,8 @@ import { hot } from 'react-hot-loader';
 
 interface SignupProps {
   children(arg0: ChildProps): JSX.Element;
+  routeParams?: any;
+  updateLocation: typeof updateLocation;
 }
 
 export interface SignupFormModel {
@@ -27,29 +29,44 @@ interface ChildProps {
 interface SignupCtrlState {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
+  orgName: string;
+  email: string;
+  username: string;
+  code: string;
+  password?: string;
 }
 
 export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
   constructor(props: SignupProps) {
     super(props);
     //Set initial values from url via props.routeParams
+
+    this.state = {
+      verifyEmailEnabled: false,
+      autoAssignOrg: false,
+      orgName: props.routeParams.email,
+      email: props.routeParams.email,
+      username: props.routeParams.email,
+      code: props.routeParams.code,
+    };
   }
-  onSubmit = async ({ email, code, orgName, password, name }: any) => {
+  onSubmit = async (formData: SignupFormModel) => {
+    this.setState(Object.assign({}, formData));
     const backendSrv = getBackendSrv();
     console.log(email);
     const response = await backendSrv.post('/api/user/signup/step2', {
-      email,
-      code,
-      username: email,
-      orgName,
-      password,
+      email: this.state.email,
+      code: this.state.code,
+      username: this.state.username,
+      orgName: this.state.orgName,
+      password: this.state.password,
     });
     if (response.code === 'redirect-to-select-org') {
       //select location
+      this.props.updateLocation('/profile/select-org?signup=1');
       console.log('Redirecting...');
     }
-
-    // redirect to /
+    this.props.updateLocation('/');
   };
 
   render() {
