@@ -137,6 +137,10 @@ Two words, not one
 * Correct, but passive voice: Your list of active alarms is displayed.
 * Incorrect: The list of active alarms displays.
 
+#### metadata
+
+One word, not two.
+
 #### open source, open-source
 
 Do not hyphenate when used as an adjective unless the lack of hyphen would cause confusion. For example: _Open source software design is the most open open-source system I can imagine._ 
