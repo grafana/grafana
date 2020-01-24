@@ -46,8 +46,10 @@ export interface Props {
   plugin?: GenericDataSourcePlugin;
   query: UrlQueryMap;
   page?: string;
-  testingMessage?: string;
-  testingStatus?: string;
+  testingStatus?: {
+    message?: string;
+    status?: string;
+  };
   loadError?: Error | string;
 }
 
@@ -170,15 +172,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   }
 
   renderSettings() {
-    const {
-      dataSourceMeta,
-      setDataSourceName,
-      setIsDefault,
-      dataSource,
-      testingMessage,
-      testingStatus,
-      plugin,
-    } = this.props;
+    const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource, testingStatus, plugin } = this.props;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -209,10 +203,10 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
         )}
 
         <div className="gf-form-group">
-          {testingMessage && (
-            <div className={`alert-${testingStatus} alert`} aria-label={e2e.pages.DataSource.selectors.alert}>
+          {testingStatus && testingStatus.message && (
+            <div className={`alert-${testingStatus.status} alert`} aria-label={e2e.pages.DataSource.selectors.alert}>
               <div className="alert-icon">
-                {testingStatus === 'error' ? (
+                {testingStatus.status === 'error' ? (
                   <i className="fa fa-exclamation-triangle" />
                 ) : (
                   <i className="fa fa-check" />
@@ -220,7 +214,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
               </div>
               <div className="alert-body">
                 <div className="alert-title" aria-label={e2e.pages.DataSource.selectors.alertMessage}>
-                  {testingMessage}
+                  {testingStatus.message}
                 </div>
               </div>
             </div>
@@ -258,7 +252,7 @@ function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
   const page = state.location.query.page as string;
-  const { plugin, loadError, testingMessage, testingStatus } = state.dataSourceSettings;
+  const { plugin, loadError, testingStatus } = state.dataSourceSettings;
 
   return {
     navModel: getNavModel(
@@ -273,7 +267,6 @@ function mapStateToProps(state: StoreState) {
     page,
     plugin,
     loadError,
-    testingMessage,
     testingStatus,
   };
 }

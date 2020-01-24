@@ -81,12 +81,7 @@ export const testDataSource = (dataSourceName: string): ThunkResult<void> => {
       try {
         const result = await dsApi.testDatasource();
 
-        dispatch(
-          testDataSourceSucceeded({
-            testingStatus: result.status,
-            testingMessage: result.message,
-          })
-        );
+        dispatch(testDataSourceSucceeded(result));
       } catch (err) {
         let message = '';
 
@@ -96,11 +91,7 @@ export const testDataSource = (dataSourceName: string): ThunkResult<void> => {
           message = err.message;
         }
 
-        dispatch(
-          testDataSourceFailed({
-            testingMessage: message,
-          })
-        );
+        dispatch(testDataSourceFailed({ message }));
       }
     });
   };

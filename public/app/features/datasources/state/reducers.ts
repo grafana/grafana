@@ -96,8 +96,10 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
 };
 
 export const initialDataSourceSettingsState: DataSourceSettingsState = {
-  testingStatus: null,
-  testingMessage: null,
+  testingStatus: {
+    status: null,
+    message: null,
+  },
   loadError: null,
   plugin: null,
 };
@@ -111,11 +113,11 @@ export const initDataSourceSettingsFailed = createAction<Error>('dataSourceSetti
 export const testDataSourceStarting = createAction<undefined>('dataSourceSettings/testDataSourceStarting');
 
 export const testDataSourceSucceeded = createAction<{
-  testingStatus: string;
-  testingMessage: string;
+  status: string;
+  message: string;
 }>('dataSourceSettings/testDataSourceSucceeded');
 
-export const testDataSourceFailed = createAction<{ testingMessage: string }>('dataSourceSettings/testDataSourceFailed');
+export const testDataSourceFailed = createAction<{ message: string }>('dataSourceSettings/testDataSourceFailed');
 
 export const dataSourceSettingsReducer = (
   state: DataSourceSettingsState = initialDataSourceSettingsState,
@@ -130,19 +132,33 @@ export const dataSourceSettingsReducer = (
   }
 
   if (testDataSourceStarting.match(action)) {
-    return { ...state, testingMessage: 'Testing...', testingStatus: 'info' };
+    return {
+      ...state,
+      testingStatus: {
+        message: 'Testing...',
+        status: 'info',
+      },
+    };
   }
 
   if (testDataSourceSucceeded.match(action)) {
     return {
       ...state,
-      testingStatus: action.payload.testingStatus,
-      testingMessage: action.payload.testingMessage,
+      testingStatus: {
+        status: action.payload.status,
+        message: action.payload.message,
+      },
     };
   }
 
   if (testDataSourceFailed.match(action)) {
-    return { ...state, testingStatus: 'error', testingMessage: action.payload.testingMessage };
+    return {
+      ...state,
+      testingStatus: {
+        status: 'error',
+        message: action.payload.message,
+      },
+    };
   }
 
   return state;

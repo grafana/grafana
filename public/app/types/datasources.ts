@@ -18,8 +18,10 @@ export interface DataSourcesState {
 
 export interface DataSourceSettingsState {
   plugin?: GenericDataSourcePlugin;
-  testingMessage?: string;
-  testingStatus?: string;
+  testingStatus?: {
+    message?: string;
+    status?: string;
+  };
   loadError?: string;
 }
 
