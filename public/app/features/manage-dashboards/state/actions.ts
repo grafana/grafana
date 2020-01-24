@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
-import { clearDashboard, setInputs, setGcomDashboard, setGcomError } from './reducers';
+import { dashboardTitleChange, clearDashboard, setInputs, setGcomDashboard, setGcomError } from './reducers';
 import { ThunkResult } from 'app/types';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
@@ -37,6 +37,12 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
     } catch (error) {
       dispatch(setGcomError(error.data.message || error));
     }
+  };
+}
+
+export function changeDashboardTitle(title: string): ThunkResult<void> {
+  return dispatch => {
+    dispatch(dashboardTitleChange(title));
   };
 }
 
