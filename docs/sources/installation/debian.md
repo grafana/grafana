@@ -33,7 +33,7 @@ If you install from the APT repository, then Grafana is automatically updated ev
 
 > We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
 
-#### To install the latest Enterprise release:
+#### To install the latest Enterprise edition:
 
 ```bash
 sudo apt-get install -y apt-transport-https
