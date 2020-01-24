@@ -48,6 +48,37 @@ Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` 
 
 A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
 
+## Configure with environment variables
+
+All options in the configuration file can be overridden using environment variables using the syntax:
+
+```bash
+GF_<SectionName>_<KeyName>
+```
+
+Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
+
+```bash
+# default section
+instance_name = ${HOSTNAME}
+
+[security]
+admin_user = admin
+
+[auth.google]
+client_secret = 0ldS3cretKey
+```
+
+You can override them on Linux machines with:
+
+```bash
+export GF_DEFAULT_INSTANCE_NAME=my-instance
+export GF_SECURITY_ADMIN_USER=owner
+export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
+```
+
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart the Docker container running Grafana.
+
 ## instance_name
 
 Set the name of the grafana-server instance. Used in logging and internal metrics and in

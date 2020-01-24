@@ -12,7 +12,7 @@ weight = 650
 
 # Configure a Grafana Docker image
 
-If you are running Grafana in a Docker image, then you configure Grafana using environmental variables rather than directly editing the configuration file. If you want to save your data, then you also need to designate persistent storage or bind mounts for the Grafana container.
+If you are running Grafana in a Docker image, then you configure Grafana using [environment variables]({{< configuration.md#configure-with-environment-variables >}}) rather than directly editing the configuration file. If you want to save your data, then you also need to designate persistent storage or bind mounts for the Grafana container.
 
 ## Save your Grafana data
 
@@ -39,39 +39,6 @@ ID=$(id -u) # saves your user id in the ID variable
 # starts grafana with your user id and using the data folder
 docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 grafana/grafana:5.1.0
 ```
-
-## Docker environment variables
-
-All options in the [Configuration](configuration.md) file can be overridden using environment variables using the syntax:
-
-```bash
-GF_<SectionName>_<KeyName>
-```
-
-Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
-
-```bash
-# default section
-instance_name = ${HOSTNAME}
-
-[security]
-admin_user = admin
-
-[auth.google]
-client_secret = 0ldS3cretKey
-```
-
-You can override them using on Linux machines with:
-
-```bash
-export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=owner
-export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
-```
-
-On Windows or Mac, you can use [Kitematic](https://github.com/docker/kitematic) or similar tools.
-
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart the Docker container running Grafana.
 
 ## Default paths
 
