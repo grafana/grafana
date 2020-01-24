@@ -7,7 +7,7 @@ import { AlertRulesState } from './alerting';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
-import { DataSourcesState } from './datasources';
+import { DataSourcesState, DataSourceSettingsState } from './datasources';
 import { ExploreState } from './explore';
 import { UsersState, UserState, UserAdminState } from './user';
 import { OrganizationState } from './organization';
@@ -28,6 +28,7 @@ export interface StoreState {
   dashboard: DashboardState;
   panelEditor: PanelEditorState;
   dataSources: DataSourcesState;
+  dataSourceSettings: DataSourceSettingsState;
   explore: ExploreState;
   users: UsersState;
   organization: OrganizationState;
