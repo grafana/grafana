@@ -165,9 +165,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		}
 	}
 
-	edition := ""
-	if provider, ok := hs.License.(m.Edition); ok {
-		edition = provider.Edition()
+	edition := "Open Source Edition"
+	licenseDetailsLink := hs.Cfg.AppSubUrl + "/admin/upgrading"
+	if l, ok := hs.License.(m.Edition); ok {
+		edition = l.Edition()
+		licenseDetailsLink = l.DetailsLink()
 	}
 
 	jsonObj := map[string]interface{}{
@@ -206,8 +208,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"isEnterprise":  hs.License.HasValidLicense(),
 		},
 		"licenseInfo": map[string]interface{}{
-			"hasLicense": hs.License.HasLicense(),
-			"expiry":     hs.License.Expiry(),
+			"hasLicense":  hs.License.HasLicense(),
+			"expiry":      hs.License.Expiry(),
+			"detailsLink": licenseDetailsLink,
 		},
 		"featureToggles": hs.Cfg.FeatureToggles,
 	}

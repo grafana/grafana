@@ -13,4 +13,5 @@ type Licensing interface {
 
 type Edition interface {
 	Edition() string
+	DetailsLink() string
 }

@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import config from 'app/core/config';
+import { contextSrv } from 'app/core/core';
 
 export interface FooterLink {
   text: string;
@@ -17,7 +18,7 @@ export let getFooterLinks = (): FooterLink[] => {
       target: '_blank',
     },
     {
-      text: 'Support & Enterprise',
+      text: 'Support',
       icon: 'fa fa-support',
       url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
       target: '_blank',
@@ -31,13 +32,21 @@ export let getFooterLinks = (): FooterLink[] => {
   ];
 };
 
-export let getVersionLinks = (): FooterLink[] => {
-  const { buildInfo } = config;
+export let getVersionLinks = (isGrafanaAdmin: boolean): FooterLink[] => {
+  const { buildInfo, licenseInfo } = config;
+  const enterpriseLink = isGrafanaAdmin
+    ? licenseInfo.detailsLink
+    : 'https://grafana.com/products/enterprise?utm_source=grafana_footer';
 
   const links: FooterLink[] = [
     {
-      text: `Grafana ${buildInfo.edition} v${buildInfo.version} (commit: ${buildInfo.commit})`,
+      text: `Grafana v${buildInfo.version} (commit: ${buildInfo.commit})`,
       url: 'https://grafana.com',
+      target: '_blank',
+    },
+    {
+      text: buildInfo.edition,
+      url: enterpriseLink,
       target: '_blank',
     },
   ];
@@ -63,7 +72,8 @@ export function setVersionLinkFn(fn: typeof getFooterLinks) {
 }
 
 export const Footer: FC = React.memo(() => {
-  const links = getFooterLinks().concat(getVersionLinks());
+  const isGrafanaAdmin = contextSrv.isGrafanaAdmin;
+  const links = getFooterLinks().concat(getVersionLinks(isGrafanaAdmin));
 
   return (
     <footer className="footer">

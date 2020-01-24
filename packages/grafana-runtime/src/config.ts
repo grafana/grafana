@@ -22,6 +22,7 @@ interface FeatureToggles {
 interface LicenseInfo {
   hasLicense: boolean;
   expiry: number;
+  detailsLink: string;
 }
 
 export class GrafanaBootConfig {
