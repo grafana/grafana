@@ -23,6 +23,18 @@ const importDashboardSlice = createSlice({
         dashboard: {},
       };
     },
+    dashboardTitleChange: (state, action: PayloadAction<string>): ImportDashboardState => {
+      return {
+        ...state,
+        dashboard: {
+          ...state.dashboard,
+          json: {
+            ...state.dashboard.json,
+            title: action.payload,
+          },
+        },
+      };
+    },
     setGcomError: (state, action: PayloadAction<string>): ImportDashboardState => ({
       ...state,
       gcomError: action.payload,
@@ -34,7 +46,13 @@ const importDashboardSlice = createSlice({
   },
 });
 
-export const { clearDashboard, setInputs, setGcomDashboard, setGcomError } = importDashboardSlice.actions;
+export const {
+  clearDashboard,
+  setInputs,
+  setGcomDashboard,
+  setGcomError,
+  dashboardTitleChange,
+} = importDashboardSlice.actions;
 
 export const importDashboardReducer = importDashboardSlice.reducer;
 

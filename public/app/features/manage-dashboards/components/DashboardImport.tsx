@@ -5,7 +5,7 @@ import { dateTime, NavModel } from '@grafana/data';
 import { Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { resetDashboard, fetchGcomDashboard } from '../state/actions';
+import { resetDashboard, fetchGcomDashboard, changeDashboardTitle } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
@@ -16,6 +16,7 @@ interface Props {
 
   fetchGcomDashboard: typeof fetchGcomDashboard;
   resetDashboard: typeof resetDashboard;
+  changeDashboardTitle: typeof changeDashboardTitle;
 }
 
 interface State {
@@ -68,6 +69,10 @@ class DashboardImport extends PureComponent<Props, State> {
 
   onCancel = () => {
     this.props.resetDashboard();
+  };
+
+  onTitleChange = (event: FormEvent<HTMLInputElement>) => {
+    this.props.changeDashboardTitle(event.currentTarget.value);
   };
 
   renderImportForm() {
@@ -143,8 +148,16 @@ class DashboardImport extends PureComponent<Props, State> {
               type="text"
               className="gf-form-input"
               value={dashboard.json.title}
-              onChange={() => console.log('change')}
+              onChange={this.onTitleChange}
             />
+          </Forms.Field>
+          <Forms.Field
+            label="Unique identifier (uid)"
+            description="The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
+                The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will not break any
+                bookmarked links to that dashboard."
+          >
+            <Forms.Input size="md" value="Value set" disabled addonAfter={<Forms.Button>Clear</Forms.Button>} />
           </Forms.Field>
           {inputs.map((input: any, index: number) => {
             if (input.type === 'datasource') {
@@ -194,6 +207,7 @@ const mapStateToProps = (state: StoreState) => {
 const mapDispatchToProps = {
   fetchGcomDashboard,
   resetDashboard,
+  changeDashboardTitle,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(DashboardImport);
