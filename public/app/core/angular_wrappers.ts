@@ -23,7 +23,7 @@ import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
-import { FolderPicker } from 'app/features/dashboard/components/FolderPicker';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
