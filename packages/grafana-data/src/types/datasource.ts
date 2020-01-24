@@ -276,7 +276,7 @@ export abstract class DataSourceApi<
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
 
-  interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }
 
 export interface MetadataInspectorProps<
