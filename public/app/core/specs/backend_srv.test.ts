@@ -14,16 +14,25 @@ const getTestContext = (overides?: object) => {
     statusText: 'Ok',
     isSignedIn: true,
     orgId: 1337,
+    redirected: false,
+    type: 'basic',
+    url: 'http://localhost:3000/api/some-mock',
+    headers: { 'Content-Type': 'application/json' },
   };
   const props = { ...defaults, ...overides };
   const textMock = jest.fn().mockResolvedValue(JSON.stringify(props.data));
   const fromFetchMock = jest.fn().mockImplementation(() => {
-    return of({
+    const mockedResponse = {
       ok: props.ok,
       status: props.status,
       statusText: props.statusText,
       text: textMock,
-    });
+      redirected: false,
+      type: 'basic',
+      url: 'http://localhost:3000/api/some-mock',
+      headers: { 'Content-Type': 'application/json' },
+    };
+    return of(mockedResponse);
   });
   const appEventsMock: Emitter = ({
     emit: jest.fn(),
@@ -324,7 +333,18 @@ describe('backendSrv', () => {
         const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext();
         const url = 'http://www.some.url.com/';
         const result = await backendSrv.datasourceRequest({ url, silent: true });
-        expect(result).toEqual({ data: { test: 'hello world' } });
+        expect(result).toEqual({
+          data: { test: 'hello world' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url: 'http://localhost:3000/api/some-mock',
+        });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
         expectDataSourceRequestCallChain({ url, silent: true });
       });
@@ -335,10 +355,30 @@ describe('backendSrv', () => {
         const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext();
         const url = 'http://www.some.url.com/';
         const result = await backendSrv.datasourceRequest({ url });
-        expect(result).toEqual({ data: { test: 'hello world' } });
+        expect(result).toEqual({
+          data: { test: 'hello world' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url: 'http://localhost:3000/api/some-mock',
+        });
         expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
         expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.dsRequestResponse, {
           data: { test: 'hello world' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url: 'http://localhost:3000/api/some-mock',
         });
         expectDataSourceRequestCallChain({ url });
       });
@@ -364,6 +404,12 @@ describe('backendSrv', () => {
           status: 200,
           statusText: 'Ok',
           text: () => Promise.resolve(JSON.stringify(fastData)),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          redirected: false,
+          type: 'basic',
+          url: 'http://localhost:3000/api/some-mock',
         });
         fromFetchMock.mockImplementationOnce(() => slowFetch);
         fromFetchMock.mockImplementation(() => fastFetch);
@@ -373,7 +419,18 @@ describe('backendSrv', () => {
         };
         const slowRequest = backendSrv.datasourceRequest(options);
         const fastResponse = await backendSrv.datasourceRequest(options);
-        expect(fastResponse).toEqual({ data: { message: 'Fast Request' } });
+        expect(fastResponse).toEqual({
+          data: { message: 'Fast Request' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url: 'http://localhost:3000/api/some-mock',
+        });
 
         const slowResponse = await slowRequest;
         expect(slowResponse).toEqual(undefined);
