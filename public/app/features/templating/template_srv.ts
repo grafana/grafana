@@ -186,23 +186,28 @@ export class TemplateSrv {
         return this.encodeURIComponentStrict(value);
       }
       case 'singlequote': {
+        // escape single quotes with slash
+        const regExp = new RegExp("'", 'g');
         if (_.isArray(value)) {
-          return _.map(value, v => `'${v}'`);
+          return _.map(value, v => `'${_.replace(v, regExp, "\\'")}'`).join(',');
         }
-        return `'${value}'`;
+        return `'${_.replace(value, regExp, "\\'")}'`;
       }
       case 'doublequote': {
+        // escape double quotes with slash
+        const regExp = new RegExp('"', 'g');
         if (_.isArray(value)) {
-          return _.map(value, v => `"${v}"`);
+          return _.map(value, v => `"${_.replace(v, regExp, '\\"')}"`).join(',');
         }
-        return `"${value}"`;
+        return `"${_.replace(value, regExp, '\\"')}"`;
       }
       case 'sqlstring': {
         // escape single quotes in sql string
+        const regExp = new RegExp("'", 'g');
         if (_.isArray(value)) {
-          return _.map(value, v => `'${_.replace(v, "/'/g", "''")}'`);
+          return _.map(value, v => `'${_.replace(v, regExp, "''")}'`).join(',');
         }
-        return `'${_.replace(value, "/'/g", "''")}'`;
+        return `'${_.replace(value, regExp, "''")}'`;
       }
       default: {
         if (_.isArray(value) && value.length > 1) {

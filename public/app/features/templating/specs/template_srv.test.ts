@@ -338,6 +338,36 @@ describe('templateSrv', () => {
       const result = _templateSrv.formatValue('Gi3/14', 'regex');
       expect(result).toBe('Gi3\\/14');
     });
+
+    it('single value and singlequote should render quoted string, value is quoted by single quote', () => {
+      const result = _templateSrv.formatValue('test', 'singlequote');
+      expect(result).toBe("'test'");
+    });
+
+    it('multi value and singlequote should render quoted string, each value is quoted by single quote', () => {
+      const result = _templateSrv.formatValue(['test', "test'2"], 'singlequote');
+      expect(result).toBe("'test','test\\'2'");
+    });
+
+    it('single value and doublequote should render quoted string, value is quoted by double quote', () => {
+      const result = _templateSrv.formatValue('test', 'doublequote');
+      expect(result).toBe('"test"');
+    });
+
+    it('multi value and doublequote should render quoted string, each value is quoted by double quote', () => {
+      const result = _templateSrv.formatValue(['test', 'test"2'], 'doublequote');
+      expect(result).toBe('"test","test\\"2"');
+    });
+
+    it('single value and sqlstring should render sql string, value is escaped and quoted by single quote', () => {
+      const result = _templateSrv.formatValue("test'value", 'sqlstring');
+      expect(result).toBe("'test''value'");
+    });
+
+    it('multi value and sqlstring should render sql string, each value is escaped and quoted by single quote', () => {
+      const result = _templateSrv.formatValue(['test', "test'value2"], 'sqlstring');
+      expect(result).toBe("'test','test''value2'");
+    });
   });
 
   describe('can check if variable exists', () => {

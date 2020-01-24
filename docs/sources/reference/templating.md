@@ -115,7 +115,7 @@ Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
 ### Singlequote
-Formats single- and multi-valued variables into a comma-separated string, quotes each value with `'`.
+Formats single- and multi-valued variables into a comma-separated string, escapes single quote in value and quotes each value with `'`.
 
 ```bash
 servers = ['test1', 'test2']
@@ -124,7 +124,7 @@ Interpolation result: "'test1','test2'"
 ```
 
 ### Doublequote
-Formats single- and multi-valued variables into a comma-separated string, quotes each value with `"`.
+Formats single- and multi-valued variables into a comma-separated string, escapes double quote in value and quotes each value with `"`.
 
 ```bash
 servers = ['test1', 'test2']
