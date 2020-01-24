@@ -35,6 +35,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   AnnotationQueryRequest,
+  ScopedVars,
 } from '@grafana/data';
 
 import {
@@ -128,7 +129,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       .filter(target => target.expr && !target.hide)
       .map(target => ({
         ...target,
-        expr: this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr),
+        expr: this.templateSrv.replace(target.expr, options.scopedVars, this.interpolateQueryExpr),
       }));
 
     if (options.exploreMode === ExploreMode.Metrics) {
@@ -350,13 +351,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     );
   };
 
-  interpolateVariablesInQueries(queries: LokiQuery[]): LokiQuery[] {
+  interpolateVariablesInQueries(queries: LokiQuery[], scopedVars: ScopedVars): LokiQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map(query => ({
         ...query,
         datasource: this.name,
-        expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+        expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
       }));
     }
 
