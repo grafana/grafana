@@ -3,10 +3,12 @@ package notifiers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -91,7 +93,7 @@ func init() {
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify #channel-name or @username in Recipient for this to work 
+          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify #channel-name or @username in Recipient for this to work
         </info-popover>
       </div>
     `,
@@ -174,9 +176,17 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	message := sn.Mention
+	message := ""
+	mention := strings.TrimSpace(sn.Mention)
+	if mention != "" {
+		// TODO: Convert user handle into Slack user ID
+		message = fmt.Sprintf("<@%s>", mention)
+	}
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
-		message += " " + evalContext.Rule.Message
+		if message != "" {
+			message += " "
+		}
+		message += evalContext.Rule.Message
 	}
 	imageURL := ""
 	// default to file.upload API method if a token is provided
@@ -185,13 +195,21 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	body := map[string]interface{}{
+		"blocks": []map[string]interface{}{
+			{
+				"type": "section",
+				"text": map[string]interface{}{
+					"type": "mrkdwn",
+					"text": message,
+				},
+			},
+		},
 		"attachments": []map[string]interface{}{
 			{
 				"fallback":    evalContext.GetNotificationTitle(),
 				"color":       evalContext.GetStateModel().Color,
 				"title":       evalContext.GetNotificationTitle(),
 				"title_link":  ruleURL,
-				"text":        message,
 				"fields":      fields,
 				"image_url":   imageURL,
 				"footer":      "Grafana v" + setting.BuildVersion,
