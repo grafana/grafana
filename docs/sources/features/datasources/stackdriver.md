@@ -131,9 +131,11 @@ It is also possible to choose fixed time intervals to group by, like `1h` or `1d
 
 Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
 
-#### Meta data labels
+#### Metadata labels
 
-Meta data labels are only returned in the time series response if they're part of the group by segment in the time series request. There's no API for retrieving meta data labels, and therefore it's not possible to populate the group by dropdown with the meta data labels that are avaiable for the selected service and metric. However, the group by field dropdown comes with a pre-defined list of common system labels. User labels cannot be pre-defined, but it's possible to enter them manually in the group by field. If a meta data label, user label or system label, is included in the group by segment, it will be possible to create filters based on it and to expand its value on the alias field.
+Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels. 
+
+User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
 
 ### Alias Patterns
 
