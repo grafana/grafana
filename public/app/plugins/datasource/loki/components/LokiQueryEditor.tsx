@@ -6,7 +6,6 @@ import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { LokiQueryField } from './LokiQueryField';
-import { useLokiSyntax } from './useLokiSyntax';
 
 type Props = QueryEditorProps<LokiDatasource, LokiQuery>;
 
@@ -27,11 +26,6 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
     };
   }
 
-  const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
-    datasource.languageProvider,
-    absolute
-  );
-
   return (
     <div>
       <LokiQueryField
@@ -41,11 +35,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
         onRunQuery={onRunQuery}
         history={[]}
         data={data}
-        onLoadOptions={setActiveOption}
-        onLabelsRefresh={refreshLabels}
-        syntaxLoaded={isSyntaxReady}
         absoluteRange={absolute}
-        {...syntaxProps}
       />
     </div>
   );
