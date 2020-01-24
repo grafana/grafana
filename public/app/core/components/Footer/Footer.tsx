@@ -32,7 +32,8 @@ export let getFooterLinks = (): FooterLink[] => {
   ];
 };
 
-export let getVersionLinks = (isGrafanaAdmin: boolean): FooterLink[] => {
+export let getVersionLinks = (): FooterLink[] => {
+  const isGrafanaAdmin = contextSrv.isGrafanaAdmin;
   const { buildInfo, licenseInfo } = config;
   const enterpriseLink = isGrafanaAdmin
     ? licenseInfo.detailsLink
@@ -72,8 +73,7 @@ export function setVersionLinkFn(fn: typeof getFooterLinks) {
 }
 
 export const Footer: FC = React.memo(() => {
-  const isGrafanaAdmin = contextSrv.isGrafanaAdmin;
-  const links = getFooterLinks().concat(getVersionLinks(isGrafanaAdmin));
+  const links = getFooterLinks().concat(getVersionLinks());
 
   return (
     <footer className="footer">
