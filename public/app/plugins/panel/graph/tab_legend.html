@@ -2,19 +2,23 @@
 	<div class="section gf-form-group">
 		<h5 class="section-heading">Options</h5>
 		<gf-form-switch class="gf-form"
-			label="Show" label-class="width-7"
+			label="Show" label-class="width-8"
 			checked="ctrl.panel.legend.show" on-change="ctrl.render()">
 		</gf-form-switch>
 		<gf-form-switch class="gf-form"
-			label="As Table" label-class="width-7"
+			label="As Table" label-class="width-8"
 			checked="ctrl.panel.legend.alignAsTable" on-change="ctrl.render()">
 		</gf-form-switch>
 		<gf-form-switch class="gf-form"
-			label="To the right" label-class="width-7"
+			label="Single Click Sel." label-class="width-8"
+			checked="ctrl.panel.legend.singleClickSelection" on-change="ctrl.render()">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form"
+			label="To the right" label-class="width-8"
 			checked="ctrl.panel.legend.rightSide" on-change="ctrl.render()">
 		</gf-form-switch>
 		<div ng-if="ctrl.panel.legend.rightSide" class="gf-form">
-			<label class="gf-form-label width-7">Width</label>
+			<label class="gf-form-label width-8">Width</label>
 			<input type="number" class="gf-form-input max-width-5" placeholder="250" bs-tooltip="'Set a min-width for the legend side table/block'" data-placement="right" ng-model="ctrl.panel.legend.sideWidth" ng-change="ctrl.render()" ng-model-onblur>
 		</div>
 	</div>
