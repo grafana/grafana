@@ -275,7 +275,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
-	if c.OrgRole == m.ROLE_ADMIN || hs.Cfg.EditorsCanAdmin {
+	if c.OrgRole == m.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == m.ROLE_EDITOR) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
