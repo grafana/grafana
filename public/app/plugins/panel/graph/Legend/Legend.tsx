@@ -29,6 +29,7 @@ interface LegendDisplayProps {
   hideEmpty?: boolean;
   hideZero?: boolean;
   alignAsTable?: boolean;
+  singleClickSelection?: boolean;
   rightSide?: boolean;
   sideWidth?: number;
 }
@@ -71,6 +72,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     current: false,
     total: false,
     alignAsTable: false,
+    singleClickSelection: false,
     rightSide: false,
     sort: undefined,
     sortDesc: false,
@@ -107,7 +109,8 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
 
   onToggleSeries = (series: TimeSeries, event: any) => {
     let hiddenSeries = { ...this.state.hiddenSeries };
-    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    const keypressed: boolean = event.ctrlKey || event.metaKey || event.shiftKey;
+    if (this.props.singleClickSelection && !keypressed || !this.props.singleClickSelection && keypressed) {
       if (hiddenSeries[series.alias]) {
         delete hiddenSeries[series.alias];
       } else {

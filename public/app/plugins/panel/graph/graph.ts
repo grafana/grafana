@@ -114,8 +114,8 @@ class GraphElement {
     }
 
     const { values, min, max, avg, current, total } = this.panel.legend;
-    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
-    const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
+    const { alignAsTable, singleClickSelection, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
+    const legendOptions = { alignAsTable, singleClickSelection, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
     const valueOptions = { values, min, max, avg, current, total };
     const legendProps: GraphLegendProps = {
       seriesList: this.data,
