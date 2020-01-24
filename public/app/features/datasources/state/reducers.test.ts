@@ -12,11 +12,16 @@ import {
   setDataSourcesSearchQuery,
   setDataSourceTypeSearchQuery,
   setIsDefault,
+  dataSourceSettingsReducer,
+  initialDataSourceSettingsState,
+  initDataSourceSettingsSucceeded,
+  initDataSourceSettingsFailed,
 } from './reducers';
 import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { DataSourcesState } from 'app/types';
+import { DataSourcesState, DataSourceSettingsState } from 'app/types';
 import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const mockPlugin = () =>
   ({
@@ -133,6 +138,37 @@ describe('dataSourcesReducer', () => {
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setIsDefault(true))
         .thenStateShouldEqual({ ...initialState, dataSource: { isDefault: true } });
+    });
+  });
+});
+
+describe('dataSourceSettingsReducer', () => {
+  describe('when initDataSourceSettingsSucceeded is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<DataSourceSettingsState>()
+        .givenReducer(dataSourceSettingsReducer, { ...initialDataSourceSettingsState })
+        .whenActionIsDispatched(initDataSourceSettingsSucceeded({} as GenericDataSourcePlugin))
+        .thenStateShouldEqual({
+          ...initialDataSourceSettingsState,
+          plugin: {} as GenericDataSourcePlugin,
+          loadError: null,
+        });
+    });
+  });
+
+  describe('when initDataSourceSettingsFailed is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<DataSourceSettingsState>()
+        .givenReducer(dataSourceSettingsReducer, {
+          ...initialDataSourceSettingsState,
+          plugin: {} as GenericDataSourcePlugin,
+        })
+        .whenActionIsDispatched(initDataSourceSettingsFailed(new Error('Some error')))
+        .thenStatePredicateShouldEqual(resultingState => {
+          expect(resultingState.plugin).toEqual(null);
+          expect(resultingState.loadError).toEqual('Some error');
+          return true;
+        });
     });
   });
 });
