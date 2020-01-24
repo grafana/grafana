@@ -313,7 +313,7 @@ as epoch milliseconds. These variables are only available in Grafana v6.0 and ab
 
 > Only available in Grafana v6.6+
 
-Grafana 6.6 and above allow to format time in string `${__from.text}` and `${__to.text}`, with default text format (`YYYY-MM-DD HH:mm:ss`)
+In Grafana 6.6 and above, you can format time in a string `${__from.text}` and `${__to.text}`, with default text format (`YYYY-MM-DD HH:mm:ss`).
 
 ### The $__interval Variable
 
