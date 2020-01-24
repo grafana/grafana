@@ -166,10 +166,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 	}
 
 	edition := "Open Source Edition"
-	licenseDetailsLink := hs.Cfg.AppSubUrl + "/admin/upgrading"
+	licenseURL := hs.Cfg.AppSubUrl + "/admin/upgrading"
 	if l, ok := hs.License.(m.Edition); ok {
 		edition = l.Edition()
-		licenseDetailsLink = l.DetailsLink()
+		licenseURL = l.DetailsLink()
 	}
 
 	jsonObj := map[string]interface{}{
@@ -210,7 +210,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"licenseInfo": map[string]interface{}{
 			"hasLicense":  hs.License.HasLicense(),
 			"expiry":      hs.License.Expiry(),
-			"detailsLink": licenseDetailsLink,
+			"detailsLink": licenseURL,
 		},
 		"featureToggles": hs.Cfg.FeatureToggles,
 	}

@@ -37,7 +37,7 @@ export let getVersionLinks = (): FooterLink[] => {
   const { buildInfo, licenseInfo } = config;
   const enterpriseLink = isGrafanaAdmin
     ? licenseInfo.detailsLink
-    : 'https://grafana.com/products/enterprise?utm_source=grafana_footer';
+    : 'https://grafana.com/enterprise?utm_source=grafana_footer';
 
   const links: FooterLink[] = [
     {
