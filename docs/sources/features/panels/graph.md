@@ -90,6 +90,7 @@ For **Mode** there are three options:
 
 - **Show** - Uncheck to hide the legend (default checked/true)
 - **Table** - Check to display legend in table (default unchecked/false)
+- **Single Click Sel.** - Check to allow toggling a series on/off with a normal single click (default unchecked/false)
 - **To the right** - Check to display legend to the right (default unchecked/false)
 - **Width** - Available when *To the right* is checked. Value to control the minimum width for the legend (default 0)
 
