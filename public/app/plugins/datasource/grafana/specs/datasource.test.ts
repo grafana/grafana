@@ -25,7 +25,7 @@ describe('grafana data source', () => {
         return Promise.resolve([]);
       });
 
-      const templateSrvStub = new TemplateSrv();
+      templateSrvStub = new TemplateSrv();
       templateSrvStub.init([
         { type: 'query', name: 'var', current: { value: 'replaced' } },
         { type: 'query', name: 'var2', current: { value: ['replaced', 'replaced2'] } },
