@@ -1,12 +1,11 @@
 import React, { FC } from 'react';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/core';
 
 export interface FooterLink {
   text: string;
   icon?: string;
   url?: string;
-  target: string;
+  target?: string;
 }
 
 export let getFooterLinks = (): FooterLink[] => {
@@ -33,24 +32,12 @@ export let getFooterLinks = (): FooterLink[] => {
 };
 
 export let getVersionLinks = (): FooterLink[] => {
-  const isGrafanaAdmin = contextSrv.isGrafanaAdmin;
   const { buildInfo, licenseInfo } = config;
-  const enterpriseLink = isGrafanaAdmin
-    ? licenseInfo.detailsLink
-    : 'https://grafana.com/enterprise?utm_source=grafana_footer';
+  const links: FooterLink[] = [];
+  const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
 
-  const links: FooterLink[] = [
-    {
-      text: `Grafana v${buildInfo.version} (commit: ${buildInfo.commit})`,
-      url: 'https://grafana.com',
-      target: '_blank',
-    },
-    {
-      text: buildInfo.edition,
-      url: enterpriseLink,
-      target: '_blank',
-    },
-  ];
+  links.push({ text: `${buildInfo.edition}${stateInfo}`, url: licenseInfo.licenseUrl });
+  links.push({ text: `v${buildInfo.version} (${buildInfo.commit})` });
 
   if (buildInfo.hasUpdate) {
     links.push({
