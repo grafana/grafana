@@ -474,7 +474,7 @@ export class BackendSrv implements BackendService {
       Accept: 'application/json, text/plain, */*',
       ...options.headers,
     },
-    body: typeof options.data === 'string' ? options.data : JSON.stringify(options.data),
+    body: options.data ? (typeof options.data === 'string' ? options.data : JSON.stringify(options.data)) : undefined,
   });
 
   private getFromFetchStream = (options: BackendSrvRequest) => {
