@@ -35,6 +35,7 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 - [**Security:** Added disabled option for cookie samesite attribute]({{< relref "#cookie-management-modifications" >}})
 - **TablePanel, GraphPanel:** Exclude hidden columns from CSV
 - [**Enterprise:** White labeling]({{< relref "#enterprise-white-labeling" >}})
+- [**Enterprise:** APT and YUM repositories]({{< relref "#enterprise-apt-and-yum-repositories" >}})
 - [**Stackdriver:** Meta labels]({{< relref "#stackdriver-meta-labels" >}})
 - [**CloudWatch:** Calculate period based on time range]({{< relref "#cloudwatch-calculate-period-based-on-time-range" >}})
 - [**CloudWatch:** Display partial result in graph when max DP/call limit is reached]({{< relref "#cloudwatch-display-partial-result-in–graph–when–max–data–points–per–call-limit-is-reached" >}})
@@ -157,6 +158,28 @@ footer_links_guides_url = http://your.guides.site
 Customize the login page, side menu bar, and footer links.
 
 {{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="700px" caption="White labeling example" >}}
+
+## Enterprise APT and YUM repositories
+
+Now you can install the enterprise edition from the APT and YUM repository. The following table shows the APT repository for each Grafana version.
+
+| Grafana Version | Package | Repository |
+|-----------------|---------|------------|
+| Grafana OSS     | grafana | `https://packages.grafana.com/oss/deb stable main` |
+| Grafana OSS (Beta)     | grafana | `https://packages.grafana.com/oss/deb beta main` |
+| Grafana Enterprise     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb stable main` |
+| Grafana Enterprise (Beta)     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb beta main` |
+
+The following table shows the YUM repositories for each Grafana version:
+
+| Grafana Version            | Package            | Repository                                         |
+|----------------------------|--------------------|----------------------------------------------------|
+| Grafana OSS                | grafana            | `https://packages.grafana.com/oss/rpm`             |
+| Grafana OSS (Beta)         | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
+| Grafana Enterprise         | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
+| Grafana Enterprise (Beta)  | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
+
+We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
 
 ## Stackdriver: Meta labels
 
