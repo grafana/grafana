@@ -461,25 +461,9 @@ export class BackendSrv implements BackendService {
     return options;
   };
 
-  private parseUrlFromOptions = (options: BackendSrvRequest): string => {
-    const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
-    const serializedParams = serializeParams(cleanParams);
-    return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
-  };
-
-  private parseInitFromOptions = (options: BackendSrvRequest): RequestInit => ({
-    method: options.method,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json, text/plain, */*',
-      ...options.headers,
-    },
-    body: options.data ? (typeof options.data === 'string' ? options.data : JSON.stringify(options.data)) : undefined,
-  });
-
   private getFromFetchStream = (options: BackendSrvRequest) => {
-    const url = this.parseUrlFromOptions(options);
-    const init = this.parseInitFromOptions(options);
+    const url = parseUrlFromOptions(options);
+    const init = parseInitFromOptions(options);
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async response => {
         const { status, statusText, ok } = response;
@@ -525,3 +509,19 @@ coreModule.factory('backendSrv', () => backendSrv);
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
+
+export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
+  const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
+  const serializedParams = serializeParams(cleanParams);
+  return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
+};
+
+export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => ({
+  method: options.method,
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json, text/plain, */*',
+    ...options.headers,
+  },
+  body: options.data ? (typeof options.data === 'string' ? options.data : JSON.stringify(options.data)) : undefined,
+});

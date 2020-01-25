@@ -204,7 +204,9 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   metricFindQuery(query: string, options?: any) {
     const interpolated = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(interpolated, options).then(resp => this.responseParser.parse(query, resp));
+    return this._seriesQuery(interpolated, options).then(resp => {
+      return this.responseParser.parse(query, resp);
+    });
   }
 
   getTagKeys(options: any = {}) {

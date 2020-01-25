@@ -1,4 +1,4 @@
-import { BackendSrv, getBackendSrv } from '../services/backend_srv';
+import { BackendSrv, getBackendSrv, parseInitFromOptions, parseUrlFromOptions } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { Observable, of } from 'rxjs';
@@ -38,8 +38,6 @@ const getTestContext = (overides?: object) => {
   const logoutMock = jest.fn();
   const parseRequestOptionsMock = jest.fn().mockImplementation(options => options);
   const parseDataSourceRequestOptionsMock = jest.fn().mockImplementation(options => options);
-  const parseUrlFromOptionsMock = jest.fn().mockImplementation(() => 'parseUrlFromOptionsMock');
-  const parseInitFromOptionsMock = jest.fn().mockImplementation(() => 'parseInitFromOptionsMock');
 
   const backendSrv = new BackendSrv({
     fromFetch: fromFetchMock,
@@ -50,16 +48,9 @@ const getTestContext = (overides?: object) => {
 
   backendSrv['parseRequestOptions'] = parseRequestOptionsMock;
   backendSrv['parseDataSourceRequestOptions'] = parseDataSourceRequestOptionsMock;
-  backendSrv['parseUrlFromOptions'] = parseUrlFromOptionsMock;
-  backendSrv['parseInitFromOptions'] = parseInitFromOptionsMock;
 
   const expectCallChain = (options: any) => {
-    expect(parseUrlFromOptionsMock).toHaveBeenCalledTimes(1);
-    expect(parseUrlFromOptionsMock).toHaveBeenCalledWith(options);
-    expect(parseInitFromOptionsMock).toHaveBeenCalledTimes(1);
-    expect(parseInitFromOptionsMock).toHaveBeenCalledWith(options);
     expect(fromFetchMock).toHaveBeenCalledTimes(1);
-    expect(fromFetchMock).toHaveBeenCalledWith('parseUrlFromOptionsMock', 'parseInitFromOptionsMock');
   };
 
   const expectRequestCallChain = (options: any) => {
@@ -83,8 +74,6 @@ const getTestContext = (overides?: object) => {
     logoutMock,
     parseRequestOptionsMock,
     parseDataSourceRequestOptionsMock,
-    parseUrlFromOptionsMock,
-    parseInitFromOptionsMock,
     expectRequestCallChain,
     expectDataSourceRequestCallChain,
   };
@@ -131,41 +120,6 @@ describe('backendSrv', () => {
         expect(
           getBackendSrv()['parseDataSourceRequestOptions']({ retry, url, headers }, orgId, noBackendCache)
         ).toEqual(expected);
-      }
-    );
-  });
-
-  describe('parseUrlFromOptions', () => {
-    it.each`
-      params                                                      | url                | expected
-      ${undefined}                                                | ${'api/dashboard'} | ${'api/dashboard'}
-      ${{ key: 'value' }}                                         | ${'api/dashboard'} | ${'api/dashboard?key=value'}
-      ${{ key: undefined }}                                       | ${'api/dashboard'} | ${'api/dashboard'}
-      ${{ firstKey: 'first value', secondValue: 'second value' }} | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value&secondValue=second%20value'}
-      ${{ firstKey: 'first value', secondValue: undefined }}      | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value'}
-      ${{ id: [1, 2, 3] }}                                        | ${'api/dashboard'} | ${'api/dashboard?id=1&id=2&id=3'}
-      ${{ id: [] }}                                               | ${'api/dashboard'} | ${'api/dashboard'}
-    `(
-      "when called with params: '$params' and url: '$url' then result should be '$expected'",
-      ({ params, url, expected }) => {
-        expect(getBackendSrv()['parseUrlFromOptions']({ params, url })).toEqual(expected);
-      }
-    );
-  });
-
-  describe('parseInitFromOptions', () => {
-    it.each`
-      method       | headers                  | data                               | expected
-      ${undefined} | ${undefined}             | ${undefined}                       | ${{ method: undefined, headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-      ${'GET'}     | ${undefined}             | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
-      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${{ data: { test: 'Some data' } }} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
-      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
-      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
-    `(
-      "when called with method: '$method', headers: '$headers' and data: '$data' then result should be '$expected'",
-      ({ method, headers, data, expected }) => {
-        expect(getBackendSrv()['parseInitFromOptions']({ method, headers, data, url: '' })).toEqual(expected);
       }
     );
   });
@@ -530,4 +484,40 @@ describe('backendSrv', () => {
       });
     });
   });
+});
+
+describe('parseUrlFromOptions', () => {
+  it.each`
+    params                                                      | url                | expected
+    ${undefined}                                                | ${'api/dashboard'} | ${'api/dashboard'}
+    ${{ key: 'value' }}                                         | ${'api/dashboard'} | ${'api/dashboard?key=value'}
+    ${{ key: undefined }}                                       | ${'api/dashboard'} | ${'api/dashboard'}
+    ${{ firstKey: 'first value', secondValue: 'second value' }} | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value&secondValue=second%20value'}
+    ${{ firstKey: 'first value', secondValue: undefined }}      | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value'}
+    ${{ id: [1, 2, 3] }}                                        | ${'api/dashboard'} | ${'api/dashboard?id=1&id=2&id=3'}
+    ${{ id: [] }}                                               | ${'api/dashboard'} | ${'api/dashboard'}
+  `(
+    "when called with params: '$params' and url: '$url' then result should be '$expected'",
+    ({ params, url, expected }) => {
+      expect(parseUrlFromOptions({ params, url })).toEqual(expected);
+    }
+  );
+});
+
+describe('parseInitFromOptions', () => {
+  it.each`
+    method       | headers                  | data                               | expected
+    ${undefined} | ${undefined}             | ${undefined}                       | ${{ method: undefined, headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
+    ${'GET'}     | ${undefined}             | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
+    ${'GET'}     | ${undefined}             | ${null}                            | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${{ data: { test: 'Some data' } }} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+  `(
+    "when called with method: '$method', headers: '$headers' and data: '$data' then result should be '$expected'",
+    ({ method, headers, data, expected }) => {
+      expect(parseInitFromOptions({ method, headers, data, url: '' })).toEqual(expected);
+    }
+  );
 });

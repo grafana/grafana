@@ -81,6 +81,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
       this.setState({ measurements });
     } catch (error) {
       const message = error && error.message ? error.message : error;
+      console.error(error);
       this.setState({ error: message });
     }
   }
