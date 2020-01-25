@@ -75,14 +75,13 @@ A top feature request for years is now finally here. All panels now support cust
 
 {{< docs-imagebox img="/img/docs/v66/custom_unit_burger1.png" max-width="600px" caption="Custom unit" >}}
 
-Paste a native emoji in the unit picker and pick it as a custom unit:
+You can also paste a native emoji in the unit picker and pick it as a custom unit:
 
 {{< docs-imagebox img="/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
 
 ## Bar Gauge unfilled option
 
-The Bar Gauge visualization has a new display option: `Unfilled`. This new option is enabled by default, so it will change how this visualization is displayed on old dashboards. If you prefer the old behavior where unfilled area was not shown and the value followed directly after, you have to update the visualization settings.
-
+The Bar Gauge visualization has a new display option: `Unfilled`. This new option is enabled by default, so it will change how this visualization is displayed on old dashboards. If you prefer the old default -- in which an unfilled area is not shown and the value follows directly after -- you have to update the visualization settings.
 {{< docs-imagebox img="/img/docs/v66/bar_gauge_unfilled.png" max-width="900px" caption="Bar gauge unfilled" >}}
 
 ## New time picker
@@ -90,7 +89,7 @@ The Bar Gauge visualization has a new display option: `Unfilled`. This new optio
 The time picker has gotten a major design update. Key changes:
 
 - Quickly access the absolute from and to input fields without an extra click.
-- Calendar automatically shows when from or to inputs has focus.
+- Calendar automatically shows when from or to inputs have focus.
 - A single calendar view can be used to select and show the from and to date.
 - You can now select recent absolute ranges.
 
@@ -110,19 +109,19 @@ Read more about this in the [upgrade notes]({{< relref "../installation/upgradin
 
 ## Explore/Logs Panel: Log message line wrapping options
 
-We introduced wrap-lines option for logs, as for some of our users it's more efficient to see one line per log message.The wrapped-line option is set as a default, unwrapped setting results in horizontal scrolling.
+We introduced the wrap-lines option for logs because as for some of our users feel it's more efficient to see one line per log message. The wrapped-line option is set as a default; the unwrapped setting results in horizontal scrolling.
 
 {{< docs-imagebox img="/img/docs/v66/explore_wrap_lines.gif" max-width="600px" caption="Log message line wrapping" >}}
 
 ## Explore/Logs Panel: Column with unique log labels
 
-After feedback from our community, we have decided to reintroduce a labels column. However, for better readability and usefulness, we have transformed it into Unique labels column and include only non-common labels, as all common labels are displayed above.
+After feedback from our community, we have decided to reintroduce a labels column. However, for better readability and usefulness, we have transformed it into a Unique labels column which includes only non-common labels. All common labels are displayed above.
 
 {{< docs-imagebox img="/img/docs/v66/explore_labels_column.png" max-width="600px" caption="Unique log labels column" >}}
 
 ## Explore: Context tooltip
 
-Isolating a series from a big set of lines in a graph is important for drill-downs. That's why we have implemented context tooltip in Explore that allows interaction to copy data and labels from it to further refine the query.
+Isolating a series from a big set of lines in a graph is important for drill-downs. That's why we have implemented the context tooltip in Explore, which allows you to copy data and labels from it to further refine the query.
 
 {{< docs-imagebox img="/img/docs/v66/explore_context_tooltip.png" max-width="600px" caption="Explore context tooltip" >}}
 
@@ -193,7 +192,7 @@ When the period field was left blank in Grafana 6.5, it would default to 60 seco
 
 ## CloudWatch: Display partial result in graph when max data points per call limit is reached
 
-In case all queries in a GMD call are metric stat (not using math expressions), grafana will paginate the response until all data points are received. But pagination is not supported in case a math expression is being used, so in that case it's not possible to receive more than 100,800 data points. Previously when that limit was reached, we only displayed an error message. In Grafana 6.6, we also display the 100,800 data point that were received in the graph.
+In case all queries in a GMD call are metric stat (not using math expressions), Grafana will paginate the response until all data points are received. But pagination is not supported in case a math expression is being used, so in that case it's not possible to receive more than 100,800 data points. Previously when that limit was reached, we only displayed an error message. In Grafana 6.6, we also display the 100,800 data points that were received in the graph.
 
 ## Upgrading
 
