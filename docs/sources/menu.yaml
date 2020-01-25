@@ -131,34 +131,34 @@
   - name: Data Sources
     link: /features/datasources/
     children:
-    - link: /features/datasources/graphite/
-      name: Graphite
-    - link: /features/datasources/prometheus/
-      name: Prometheus
-    - link: /features/datasources/influxdb/
-      name: InfluxDB
-    - link: /features/datasources/elasticsearch/
-      name: Elasticsearch
-    - link: /features/datasources/stackdriver/
-      name: Google Stackdriver
     - link: /features/datasources/cloudwatch/
       name: AWS Cloudwatch
     - link: /features/datasources/azuremonitor/
       name: Azure Monitor
+    - link: /features/datasources/elasticsearch/
+      name: Elasticsearch
+    - link: /features/datasources/stackdriver/
+      name: Google Stackdriver
+    - link: /features/datasources/graphite/
+      name: Graphite
+    - link: /features/datasources/influxdb/
+      name: InfluxDB
     - link: /features/datasources/loki/
       name: Loki
-    - link: /features/datasources/mysql/
-      name: MySQL
-    - link: /features/datasources/postgres/
-      name: PostgreSQL
     - link: /features/datasources/mssql/
       name: Microsoft SQL Server
-    - link: /features/datasources/opentsdb/
-      name: OpenTSDB
     - link: /features/datasources/mixed/
       name: MixedData
+    - link: /features/datasources/mysql/
+      name: MySQL
+    - link: /features/datasources/opentsdb/
+      name: OpenTSDB
+    - link: /features/datasources/postgres/
+      name: PostgreSQL
+    - link: /features/datasources/prometheus/
+      name: Prometheus
     - link: /features/datasources/testdata/
-      name: TestData
+      name: Testdata
   - name: Explore
     link: /features/explore/
   - name: Alerting
