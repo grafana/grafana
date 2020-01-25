@@ -25,8 +25,8 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 - [**Panels:** Bar Gauge unfilled option]({{< relref "#bar-gauge-unfilled-option" >}})
 - [**TimePicker:** New design & features]({{< relref "#new-time-picker" >}})
 - [**Alerting enhancements**]({{< relref "#alerting-enhancements" >}})
-- [**Explore:** Added log message line wrapping options for logs]({{< relref "#explore-logs- panel-log-message-line-wrapping-options" >}})
-- [**Explore:** Column with unique log labels ]({{< relref "#explore-context-logs-panel-column-with-unique-log-labels" >}})
+- [**Explore:** Added log message line wrapping options for logs]({{< relref "#explore-logs-panel-log-message-line-wrapping-options" >}})
+- [**Explore:** Column with unique log labels ]({{< relref "#explore-logs-panel-column-with-unique-log-labels" >}})
 - [**Explore:** Context tooltip]({{< relref "#explore-context-tooltip" >}})
 - **Explore:** Added ability to specify step with Prometheus queries
 - **Graphite:** Added Metrictank dashboard to Graphite datasource
@@ -38,7 +38,7 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 - [**Enterprise:** APT and YUM repositories]({{< relref "#enterprise-apt-and-yum-repositories" >}})
 - [**Stackdriver:** Meta labels]({{< relref "#stackdriver-meta-labels" >}})
 - [**CloudWatch:** Calculate period based on time range]({{< relref "#cloudwatch-calculate-period-based-on-time-range" >}})
-- [**CloudWatch:** Display partial result in graph when max DP/call limit is reached]({{< relref "#cloudwatch-display-partial-result-in–graph–when–max–data–points–per–call-limit-is-reached" >}})
+- [**CloudWatch:** Display partial result in graph when max DP/call limit is reached]({{< relref "#cloudwatch-display-partial-result-in-graph-when-max-data-points-per-call-limit-is-reached" >}})
 
 ## New stat panel
 
