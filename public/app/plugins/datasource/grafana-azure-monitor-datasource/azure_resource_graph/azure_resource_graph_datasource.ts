@@ -5,7 +5,7 @@ import {
   AzureResourceGraphQuery as IAzureResourceGraphQuery,
 } from '../types';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class AzureSubscription {
@@ -110,11 +110,7 @@ export default class AzureResourceGraphDatasource {
   allSubscriptions: IAzureSubscription[];
 
   /** @ngInject */
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv
-  ) {
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
     this.id = instanceSettings.id;
     this.url = instanceSettings.url;
     this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
@@ -132,7 +128,7 @@ export default class AzureResourceGraphDatasource {
   }
 
   doSubscriptionsRequest(url: string, maxRetries = 1): any {
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',
@@ -158,7 +154,7 @@ export default class AzureResourceGraphDatasource {
         subscriptions = filteredSubscriptions;
       }
     }
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + this.baseUrl + '?api-version=2019-04-01',
         method: 'POST',
