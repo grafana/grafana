@@ -474,11 +474,11 @@ export const getRefIds = (value: any): string[] => {
 };
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timestamp < b.timestamp) {
+  if (a.timeEpochMs < b.timeEpochMs) {
     return -1;
   }
 
-  if (a.timestamp > b.timestamp) {
+  if (a.timeEpochMs > b.timeEpochMs) {
     return 1;
   }
 
@@ -486,11 +486,11 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timestamp > b.timestamp) {
+  if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
   }
 
-  if (a.timestamp < b.timestamp) {
+  if (a.timeEpochMs < b.timeEpochMs) {
     return 1;
   }
 

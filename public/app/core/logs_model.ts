@@ -328,14 +328,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeFromNow: time.fromNow(),
         timeEpochMs: time.valueOf(),
         timeLocal: time.format(logTimeFormat),
-        timeUtc: toUtc(ts).format(logTimeFormat),
+        timeUtc: toUtc(time.valueOf()).format(logTimeFormat),
         uniqueLabels,
         hasAnsi,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
         labels: stringField.labels,
-        timestamp: ts,
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
