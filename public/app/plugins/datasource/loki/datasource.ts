@@ -4,7 +4,7 @@ import { Observable, from, merge, of, iif, defer } from 'rxjs';
 import { map, filter, catchError, switchMap, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
-import { dateMath } from '@grafana/data';
+import { DataFrame, dateMath, FieldCache } from '@grafana/data';
 import { addLabelToSelector, keepSelectorFilters } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { getBackendSrv } from '@grafana/runtime';
@@ -466,7 +466,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return Math.ceil(date.valueOf() * 1e6);
   }
 
-  getLogRowContext = (row: LogRowModel, options?: LokiContextQueryOptions) => {
+  getLogRowContext = (row: LogRowModel, options?: LokiContextQueryOptions): Promise<{ data: DataFrame[] }> => {
     const target = this.prepareLogRowContextQueryTarget(
       row,
       (options && options.limit) || 10,
@@ -518,8 +518,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       .map(label => `${label}="${row.labels[label]}"`)
       .join(',');
 
-    const contextTimeBuffer = 2 * 60 * 60 * 1000 * 1e6; // 2h buffer
-    const timeEpochNs = row.timeEpochMs * 1e6;
+    const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
     const commonTargetOptions = {
       limit,
       query: `{${query}}`,
@@ -527,18 +526,27 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       direction,
     };
 
+    const fieldCache = new FieldCache(row.dataFrame);
+    const nsField = fieldCache.getFieldByName('tsNs')!;
+    const nsTimestamp = nsField.values.get(row.rowIndex);
+
     if (direction === 'BACKWARD') {
       return {
         ...commonTargetOptions,
-        start: timeEpochNs - contextTimeBuffer,
-        end: timeEpochNs, // using RFC3339Nano format to avoid precision loss
+        // convert to ns, we loose some precision here but it is not that important at the far points of the context
+        start: row.timeEpochMs - contextTimeBuffer + '000000',
+        end: nsTimestamp,
         direction,
       };
     } else {
       return {
         ...commonTargetOptions,
-        start: timeEpochNs, // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
-        end: timeEpochNs + contextTimeBuffer,
+        // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
+        // and any other that were logged in the same ns but before the row. Right now these rows will be lost
+        // because the are before but came it he response that should return only rows after.
+        start: nsTimestamp,
+        // convert to ns, we loose some precision here but it is not that important at the far points of the context
+        end: row.timeEpochMs + contextTimeBuffer + '000000',
       };
     }
   };
