@@ -6,6 +6,7 @@ import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -14,7 +15,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
 
   /** @ngInject */
-  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>, private templateSrv: TemplateSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private templateSrv: TemplateSrv,
+    private backendSrv: BackendSrv
+  ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.templateSrv);
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.templateSrv);
@@ -22,8 +27,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(
       instanceSettings,
       this.backendSrv,
-      this.templateSrv,
-      this.$q
+      this.templateSrv
     );
   }
 

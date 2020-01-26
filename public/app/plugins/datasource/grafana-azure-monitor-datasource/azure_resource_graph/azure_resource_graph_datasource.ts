@@ -4,10 +4,9 @@ import {
   AzureSubscription as IAzureSubscription,
   AzureResourceGraphQuery as IAzureResourceGraphQuery,
 } from '../types';
-import { DataSourceInstanceSettings } from '@grafana/ui';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { IQService } from 'angular';
 
 export class AzureSubscription {
   id: string;
@@ -114,8 +113,7 @@ export default class AzureResourceGraphDatasource {
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
-    private $q: IQService
+    private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
     this.url = instanceSettings.url;
@@ -133,7 +131,7 @@ export default class AzureResourceGraphDatasource {
     });
   }
 
-  doSubscriptionsRequest(url: string, maxRetries = 1) {
+  doSubscriptionsRequest(url: string, maxRetries = 1): any {
     return this.backendSrv
       .datasourceRequest({
         url: this.url + url,
@@ -147,7 +145,7 @@ export default class AzureResourceGraphDatasource {
       });
   }
 
-  async doResourceGraphRequest(query: AzureResourceGraphQuery, maxRetries = 1) {
+  async doResourceGraphRequest(query: AzureResourceGraphQuery, maxRetries = 1): Promise<any> {
     let subscriptions = [];
     if (this.allSubscriptions.length === 0) {
       subscriptions = await this.getSubscriptionIds();
@@ -212,7 +210,7 @@ export default class AzureResourceGraphDatasource {
       return;
     }
     const promises = this.doQueries(queries);
-    return this.$q.all(promises).then(results => {
+    return Promise.all(promises).then(results => {
       const responseParser = new AzureResourceGraphResponseParser(results);
       return responseParser.output;
     });
@@ -223,7 +221,7 @@ export default class AzureResourceGraphDatasource {
       const resourceGraphQuery = query.replace(`ResourceGraph(`, ``).slice(0, -1);
       const queryOption = new AzureResourceGraphQuery(this.templateSrv.replace(resourceGraphQuery), 1000, 0, ['all']);
       const promises = this.doQueries([queryOption]);
-      return this.$q.all(promises).then(results => {
+      return Promise.all(promises).then(results => {
         const responseParser = new AzureResourceGraphResponseParser(results);
         return responseParser.getResultsAsVariablesList();
       });

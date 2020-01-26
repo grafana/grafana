@@ -16,10 +16,8 @@ export interface AzureMonitorQuery extends DataQuery {
   subscription: string;
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
-  azureResourceGraph: AzureResourceGraphQuery;
   appInsights: ApplicationInsightsQuery;
   azureResourceGraph: AzureResourceGraphQuery;
-  //   appInsights: any;
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {

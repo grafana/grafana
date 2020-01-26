@@ -121,7 +121,7 @@ describe('AzureResourceGraphDatasource', () => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
-          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         });
         it('Output should be table format', () => {
           return ctx.ds.query(options).then((results: any) => {
@@ -152,7 +152,10 @@ describe('AzureResourceGraphDatasource', () => {
           totalRecords: 3,
           count: 3,
           data: {
-            columns: [{ name: 'type', type: 'string' }, { name: 'count', type: 'integer' }],
+            columns: [
+              { name: 'type', type: 'string' },
+              { name: 'count', type: 'integer' },
+            ],
             rows: [
               ['microsoft.network/publicipaddresses', 1155],
               ['microsoft.compute/virtualmachines', 2200],
@@ -166,7 +169,7 @@ describe('AzureResourceGraphDatasource', () => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
-          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         });
         it('Output should be table format', () => {
           return ctx.ds.query(options).then((results: any) => {
@@ -226,8 +229,14 @@ describe('AzureResourceGraphDatasource', () => {
           totalRecords: 2,
           count: 2,
           data: {
-            columns: [{ name: 'type', type: 'string' }, { name: 'count', type: 'integer' }],
-            rows: [['northeurope', 1155], ['northeurope', 5511]],
+            columns: [
+              { name: 'type', type: 'string' },
+              { name: 'count', type: 'integer' },
+            ],
+            rows: [
+              ['northeurope', 1155],
+              ['northeurope', 5511],
+            ],
           },
           facets: [],
           resultTruncated: 'true',
@@ -236,7 +245,7 @@ describe('AzureResourceGraphDatasource', () => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
-          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         });
         it('Output should be table format', () => {
           return ctx.ds.query(options).then((results: any) => {
@@ -288,8 +297,14 @@ describe('AzureResourceGraphDatasource', () => {
           totalRecords: 2,
           count: 2,
           data: {
-            columns: [{ name: 'subscriptionId', type: 'string' }, { name: 'resources_count', type: 'integer' }],
-            rows: [[SUBSCRIPTION_ID_DUMMY_01, 300], [SUBSCRIPTION_ID_DUMMY_03, 200]],
+            columns: [
+              { name: 'subscriptionId', type: 'string' },
+              { name: 'resources_count', type: 'integer' },
+            ],
+            rows: [
+              [SUBSCRIPTION_ID_DUMMY_01, 300],
+              [SUBSCRIPTION_ID_DUMMY_03, 200],
+            ],
           },
           facets: [],
           resultTruncated: 'true',
@@ -298,7 +313,7 @@ describe('AzureResourceGraphDatasource', () => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
-          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         });
         it('Output should be table format', () => {
           return ctx.ds.query(options).then((results: any) => {
@@ -359,7 +374,7 @@ describe('AzureResourceGraphDatasource', () => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
-          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         });
         it('No results returned', () => {
           return ctx.ds.query(options).then((results: any) => {
@@ -390,7 +405,7 @@ describe('AzureResourceGraphDatasource', () => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
-          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         });
         it('No results returned', () => {
           return ctx.ds.query(options).then((results: any) => {
@@ -415,7 +430,7 @@ describe('AzureResourceGraphDatasource', () => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
-          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         });
         it('Expect valid result', () => {
           return ctx.ds.metricFindQuery(query).then((results: any) => {
@@ -454,7 +469,7 @@ describe('AzureResourceGraphDatasource', () => {
               return ctx.$q.when({ data: undefined, status: 200 });
             }
           };
-          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         });
         it('Should return undefined', () => {
           return ctx.ds.metricFindQuery('ResourceGraphs(distinct type)').then((results: any) => {
@@ -474,7 +489,7 @@ describe('AzureResourceGraphDatasource', () => {
       ctx.backendSrv.datasourceRequest = () => {
         return ctx.$q.when(RESPONSE_SUBSCRIPTIONS_01);
       };
-      ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+      ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
     });
     it('getSubscriptionIds', () => {
       return ctx.ds.getSubscriptionIds().then((r: any) => {
