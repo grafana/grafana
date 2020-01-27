@@ -6,7 +6,7 @@ In our mission to migrate away from AngularJS to React we have removed all Angul
 
 Removing the AngularJS dependencies in `backendSrv` has the unfortunate side effect of AngularJS digest no longer being triggered for any request made with `backendSrv`. Because of this, external plugins using `backendSrv` directly may suffer from strange behaviour in the UI.
 
-To remedy this issue as a plugin author you need to trigger the digest after a direct call to `backendSrv`. 
+To remedy this issue, as a plugin author you need to trigger the digest after a direct call to `backendSrv`. 
 
 Example: 
 
