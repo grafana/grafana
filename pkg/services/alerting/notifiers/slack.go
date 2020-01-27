@@ -97,6 +97,20 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
+        <span class="gf-form-label width-8">Mention Channel</span>
+        <select
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.mentionChannel"
+          data-placement="right">
+		  <option value=""></option>
+		  <option value="here">@here</option>
+		  <option value="channel">@channel</option>
+        </select>
+        <info-popover mode="right-absolute">
+          Mention whole channel (<em>@channel</em>) or just active members (<em>@here</em>) when notifying
+        </info-popover>
+      </div>
+      <div class="gf-form max-width-30">
         <span class="gf-form-label width-8">Token</span>
         <input type="text"
           class="gf-form-input max-width-30"
@@ -125,21 +139,23 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	iconURL := model.Settings.Get("icon_url").MustString()
 	mentionUser := model.Settings.Get("mentionUser").MustString()
 	mentionGroup := model.Settings.Get("mentionGroup").MustString()
+	mentionChannel := model.Settings.Get("mentionChannel").MustString()
 	token := model.Settings.Get("token").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	return &SlackNotifier{
-		NotifierBase: NewNotifierBase(model),
-		URL:          url,
-		Recipient:    recipient,
-		Username:     username,
-		IconEmoji:    iconEmoji,
-		IconURL:      iconURL,
-		MentionUser:  mentionUser,
-		MentionGroup: mentionGroup,
-		Token:        token,
-		Upload:       uploadImage,
-		log:          log.New("alerting.notifier.slack"),
+		NotifierBase:   NewNotifierBase(model),
+		URL:            url,
+		Recipient:      recipient,
+		Username:       username,
+		IconEmoji:      iconEmoji,
+		IconURL:        iconURL,
+		MentionUser:    mentionUser,
+		MentionGroup:   mentionGroup,
+		MentionChannel: mentionChannel,
+		Token:          token,
+		Upload:         uploadImage,
+		log:            log.New("alerting.notifier.slack"),
 	}, nil
 }
 
@@ -147,16 +163,17 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 // alert notification to Slack.
 type SlackNotifier struct {
 	NotifierBase
-	URL          string
-	Recipient    string
-	Username     string
-	IconEmoji    string
-	IconURL      string
-	MentionUser  string
-	MentionGroup string
-	Token        string
-	Upload       bool
-	log          log.Logger
+	URL            string
+	Recipient      string
+	Username       string
+	IconEmoji      string
+	IconURL        string
+	MentionUser    string
+	MentionGroup   string
+	MentionChannel string
+	Token          string
+	Upload         bool
+	log            log.Logger
 }
 
 // Notify send alert notification to Slack.
@@ -191,12 +208,22 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
+	mentionChannel := strings.TrimSpace(sn.MentionChannel)
+	if mentionChannel != "" {
+		message = fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel)
+	}
 	mentionGroup := strings.TrimSpace(sn.MentionGroup)
 	if mentionGroup != "" {
+		if message != "" {
+			message += " "
+		}
 		message += fmt.Sprintf("<!subteam^%s>", mentionGroup)
 	}
 	mentionUser := strings.TrimSpace(sn.MentionUser)
 	if mentionUser != "" {
+		if message != "" {
+			message += " "
+		}
 		message += fmt.Sprintf("<@%s>", mentionUser)
 	}
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
