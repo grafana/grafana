@@ -75,25 +75,25 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Mention User</span>
+        <span class="gf-form-label width-8">Mention Users</span>
         <input type="text"
           class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.mentionUser"
+          ng-model="ctrl.model.settings.mentionUsers"
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Mention a user when notifying in a channel
+          Mention one or more users (comma separated) when notifying in a channel, by ID (you can copy this from the user's Slack profile)
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Mention Group</span>
+        <span class="gf-form-label width-8">Mention Groups</span>
         <input type="text"
           class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.mentionGroup"
+          ng-model="ctrl.model.settings.mentionGroups"
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Mention a group when notifying in a channel
+          Mention one or more groups (comma separated) when notifying in a channel (you can copy this from the group's Slack profile URL)
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
@@ -137,8 +137,8 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	username := model.Settings.Get("username").MustString()
 	iconEmoji := model.Settings.Get("icon_emoji").MustString()
 	iconURL := model.Settings.Get("icon_url").MustString()
-	mentionUser := model.Settings.Get("mentionUser").MustString()
-	mentionGroup := model.Settings.Get("mentionGroup").MustString()
+	mentionUsers := model.Settings.Get("mentionUsers").MustString()
+	mentionGroups := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
 	token := model.Settings.Get("token").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
@@ -150,8 +150,8 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 		Username:       username,
 		IconEmoji:      iconEmoji,
 		IconURL:        iconURL,
-		MentionUser:    mentionUser,
-		MentionGroup:   mentionGroup,
+		MentionUsers:   mentionUsers,
+		MentionGroups:  mentionGroups,
 		MentionChannel: mentionChannel,
 		Token:          token,
 		Upload:         uploadImage,
@@ -168,8 +168,8 @@ type SlackNotifier struct {
 	Username       string
 	IconEmoji      string
 	IconURL        string
-	MentionUser    string
-	MentionGroup   string
+	MentionUsers   string
+	MentionGroups  string
 	MentionChannel string
 	Token          string
 	Upload         bool
@@ -212,19 +212,23 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if mentionChannel != "" {
 		message = fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel)
 	}
-	mentionGroup := strings.TrimSpace(sn.MentionGroup)
-	if mentionGroup != "" {
+	mentionGroups := strings.TrimSpace(sn.MentionGroups)
+	if mentionGroups != "" {
 		if message != "" {
 			message += " "
 		}
-		message += fmt.Sprintf("<!subteam^%s>", mentionGroup)
+		for _, g := range strings.Split(mentionGroups, ",") {
+			message += fmt.Sprintf("<!subteam^%s>", strings.TrimSpace(g))
+		}
 	}
-	mentionUser := strings.TrimSpace(sn.MentionUser)
-	if mentionUser != "" {
+	mentionUsers := strings.TrimSpace(sn.MentionUsers)
+	if mentionUsers != "" {
 		if message != "" {
 			message += " "
 		}
-		message += fmt.Sprintf("<@%s>", mentionUser)
+		for _, u := range strings.Split(mentionUsers, ",") {
+			message += fmt.Sprintf("<@%s>", strings.TrimSpace(u))
+		}
 	}
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		if message != "" {
