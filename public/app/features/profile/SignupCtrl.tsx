@@ -32,7 +32,7 @@ interface SignupCtrlState {
   orgName: string;
   email: string;
   username: string;
-  code: string;
+  code?: string;
   password?: string;
 }
 
@@ -51,10 +51,14 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
     };
   }
   onSubmit = async (formData: SignupFormModel) => {
-    this.setState(Object.assign({}, formData));
-    const backendSrv = getBackendSrv();
-    console.log(email);
-    const response = await backendSrv.post('/api/user/signup/step2', {
+    this.setState({
+      autoAssignOrg: this.state.autoAssignOrg,
+      verifyEmailEnabled: this.state.verifyEmailEnabled,
+      username: formData.email,
+      ...formData,
+    });
+
+    const response = await getBackendSrv().post('/api/user/signup/step2', {
       email: this.state.email,
       code: this.state.code,
       username: this.state.username,
@@ -89,4 +93,4 @@ export const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = { updateLocation };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps));
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SignupCtrl));
