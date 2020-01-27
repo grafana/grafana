@@ -75,7 +75,7 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 
 func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig, error) {
 	var r []*DashboardsAsConfig
-	seen = make(map[string]bool)
+	seen := make(map[string]bool)
 
 	for _, v := range v0 {
 		if _, ok := seen[v.Name]; ok {
@@ -102,7 +102,7 @@ func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig
 
 func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() ([]*DashboardsAsConfig, error) {
 	var r []*DashboardsAsConfig
-	seen = make(map[string]bool)
+	seen := make(map[string]bool)
 
 	for _, v := range dc.Providers {
 		if _, ok := seen[v.Name.Value()]; ok {
