@@ -79,7 +79,7 @@ func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig
 
 	for _, v := range v0 {
 		if _, ok := seen[v.Name]; ok {
-			return nil, fmt.Errorf("Name %s is not unique!", v.Name)
+			return nil, fmt.Errorf("name %s is not unique", v.Name)
 		}
 		seen[v.Name] = true
 
@@ -106,7 +106,7 @@ func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() ([]*DashboardsAsConfig, 
 
 	for _, v := range dc.Providers {
 		if _, ok := seen[v.Name.Value()]; ok {
-			return nil, fmt.Errorf("Name %s is not unique!", v.Name.Value())
+			return nil, fmt.Errorf("name %s is not unique", v.Name.Value())
 		}
 		seen[v.Name.Value()] = true
 
