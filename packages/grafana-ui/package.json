@@ -59,12 +59,12 @@
     "tinycolor2": "1.4.1"
   },
   "devDependencies": {
-    "@storybook/addon-actions": "5.3.7",
-    "@storybook/addon-docs": "5.3.7",
-    "@storybook/addon-info": "5.3.7",
-    "@storybook/addon-knobs": "5.3.7",
-    "@storybook/react": "5.3.7",
-    "@storybook/theming": "5.3.7",
+    "@storybook/addon-actions": "5.3.9",
+    "@storybook/addon-docs": "5.3.9",
+    "@storybook/addon-info": "5.3.9",
+    "@storybook/addon-knobs": "5.3.9",
+    "@storybook/react": "5.3.9",
+    "@storybook/theming": "5.3.9",
     "@types/classnames": "2.2.7",
     "@types/common-tags": "^1.8.0",
     "@types/d3": "5.7.2",
