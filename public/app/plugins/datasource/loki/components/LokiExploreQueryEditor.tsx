@@ -80,33 +80,31 @@ export function LokiExploreQueryEditor(props: Props) {
   }
 
   return (
-    <>
-      <LokiQueryField
-        datasource={datasource}
-        query={query}
-        onChange={onChange}
-        onRunQuery={onRunQuery}
-        history={history}
-        data={data}
-        onLoadOptions={setActiveOption}
-        onLabelsRefresh={refreshLabels}
-        syntaxLoaded={isSyntaxReady}
-        absoluteRange={absolute}
-        ExtraFieldElement={
-          exploreMode === ExploreMode.Logs ? (
-            <LokiExploreExtraField
-              label={'Line limit'}
-              onChangeFunc={onMaxLinesChange}
-              onKeyDownFunc={onReturnKeyDown}
-              value={maxLines}
-              type={'number'}
-              min={0}
-            />
-          ) : null
-        }
-        {...syntaxProps}
-      />
-    </>
+    <LokiQueryField
+      datasource={datasource}
+      query={query}
+      onChange={onChange}
+      onRunQuery={onRunQuery}
+      history={history}
+      data={data}
+      onLoadOptions={setActiveOption}
+      onLabelsRefresh={refreshLabels}
+      syntaxLoaded={isSyntaxReady}
+      absoluteRange={absolute}
+      ExtraFieldElement={
+        exploreMode === ExploreMode.Logs ? (
+          <LokiExploreExtraField
+            label={'Line limit'}
+            onChangeFunc={onMaxLinesChange}
+            onKeyDownFunc={onReturnKeyDown}
+            value={maxLines}
+            type={'number'}
+            min={0}
+          />
+        ) : null
+      }
+      {...syntaxProps}
+    />
   );
 }
 
