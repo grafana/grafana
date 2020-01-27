@@ -4,7 +4,18 @@ import { saveAs } from 'file-saver';
 import { css } from 'emotion';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, Select, Table, TabsBar, Tab, TabContent, Forms, stylesFactory } from '@grafana/ui';
+import {
+  JSONFormatter,
+  Drawer,
+  Select,
+  Table,
+  TabsBar,
+  Tab,
+  TabContent,
+  Forms,
+  stylesFactory,
+  CustomScrollbar,
+} from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,
@@ -145,7 +156,11 @@ export class PanelInspector extends PureComponent<Props, State> {
     if (!metaDS || !metaDS.components?.MetadataInspector) {
       return <div>No Metadata Inspector</div>;
     }
-    return <metaDS.components.MetadataInspector datasource={metaDS} data={data} />;
+    return (
+      <CustomScrollbar>
+        <metaDS.components.MetadataInspector datasource={metaDS} data={data} />
+      </CustomScrollbar>
+    );
   }
 
   renderDataTab(width: number, height: number) {
@@ -199,7 +214,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   renderIssueTab() {
-    return <div>TODO: show issue form</div>;
+    return <CustomScrollbar>TODO: show issue form</CustomScrollbar>;
   }
 
   renderErrorTab(error?: DataQueryError) {
@@ -208,15 +223,23 @@ export class PanelInspector extends PureComponent<Props, State> {
     }
     if (error.data) {
       return (
-        <div style={{ overflowY: 'auto', height: '100%' }}>
+        <CustomScrollbar>
           <h3>{error.data.message}</h3>
           <pre>
             <code>{error.data.error}</code>
           </pre>
-        </div>
+        </CustomScrollbar>
       );
     }
     return <div>{error.message}</div>;
+  }
+
+  renderRawJsonTab(last: PanelData) {
+    return (
+      <CustomScrollbar>
+        <JSONFormatter json={last} open={2} />
+      </CustomScrollbar>
+    );
   }
 
   render() {
@@ -255,7 +278,7 @@ export class PanelInspector extends PureComponent<Props, State> {
             );
           })}
         </TabsBar>
-        <TabContent>
+        <TabContent style={{ height: 'calc(100% - 32px)' }}>
           <AutoSizer>
             {({ width, height }) => {
               if (width === 0) {
@@ -269,11 +292,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
                   {tab === InspectTab.Issue && this.renderIssueTab()}
 
-                  {tab === InspectTab.Raw && (
-                    <div>
-                      <JSONFormatter json={last} open={2} />
-                    </div>
-                  )}
+                  {tab === InspectTab.Raw && this.renderRawJsonTab(last)}
                   {tab === InspectTab.Error && this.renderErrorTab(error)}
                 </div>
               );

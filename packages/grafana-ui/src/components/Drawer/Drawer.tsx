@@ -31,6 +31,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     drawer: css`
       .drawer-content {
         background-color: ${theme.colors.bodyBg};
+        display: flex;
+        flex-direction: column;
       }
     `,
     titleWrapper: css`
@@ -41,9 +43,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border-bottom: 1px solid ${borderColor};
       padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
       background-color: ${theme.colors.bodyBg};
-      position: sticky;
       top: 0;
       z-index: 1;
+      flex-grow: 0;
     `,
     close: css`
       cursor: pointer;
@@ -55,7 +57,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     content: css`
       padding: ${theme.spacing.sm} ${theme.spacing.xs};
-      height: 95%;
+      flex-grow: 1;
       overflow: hidden;
       z-index: 0;
     `,
