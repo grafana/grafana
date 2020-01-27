@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
 import isString from 'lodash/isString';
 import { e2e } from '@grafana/e2e';
 // Components
@@ -11,17 +10,14 @@ import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 // Services & Utils
 import appEvents from 'app/core/app_events';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
 import {
-  dataSourceLoaded,
   deleteDataSource,
   loadDataSource,
-  setDataSourceName,
-  setIsDefault,
   updateDataSource,
+  initDataSourceSettings,
+  testDataSource,
 } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
@@ -31,7 +27,8 @@ import { UrlQueryMap } from '@grafana/runtime';
 import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
-import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
+import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 
 export interface Props {
   navModel: NavModel;
@@ -44,55 +41,22 @@ export interface Props {
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
   dataSourceLoaded: typeof dataSourceLoaded;
+  initDataSourceSettings: typeof initDataSourceSettings;
+  testDataSource: typeof testDataSource;
   plugin?: GenericDataSourcePlugin;
   query: UrlQueryMap;
   page?: string;
+  testingStatus?: {
+    message?: string;
+    status?: string;
+  };
+  loadError?: Error | string;
 }
 
-interface State {
-  plugin?: GenericDataSourcePlugin;
-  isTesting?: boolean;
-  testingMessage?: string;
-  testingStatus?: string;
-  loadError?: any;
-}
-
-export class DataSourceSettingsPage extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      plugin: props.plugin,
-    };
-  }
-
-  async loadPlugin(pluginId?: string) {
-    const { dataSourceMeta } = this.props;
-    let importedPlugin: GenericDataSourcePlugin;
-
-    try {
-      importedPlugin = await importDataSourcePlugin(dataSourceMeta);
-    } catch (e) {
-      console.log('Failed to import plugin module', e);
-    }
-
-    this.setState({ plugin: importedPlugin });
-  }
-
-  async componentDidMount() {
-    const { loadDataSource, pageId } = this.props;
-    if (isNaN(pageId)) {
-      this.setState({ loadError: 'Invalid ID' });
-      return;
-    }
-    try {
-      await loadDataSource(pageId);
-      if (!this.state.plugin) {
-        await this.loadPlugin();
-      }
-    } catch (err) {
-      this.setState({ loadError: err });
-    }
+export class DataSourceSettingsPage extends PureComponent<Props> {
+  componentDidMount() {
+    const { initDataSourceSettings, pageId } = this.props;
+    initDataSourceSettings(pageId);
   }
 
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
@@ -142,40 +106,9 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     );
   }
 
-  async testDataSource() {
-    const dsApi = await getDatasourceSrv().get(this.props.dataSource.name);
-
-    if (!dsApi.testDatasource) {
-      return;
-    }
-
-    this.setState({ isTesting: true, testingMessage: 'Testing...', testingStatus: 'info' });
-
-    getBackendSrv().withNoBackendCache(async () => {
-      try {
-        const result = await dsApi.testDatasource();
-
-        this.setState({
-          isTesting: false,
-          testingStatus: result.status,
-          testingMessage: result.message,
-        });
-      } catch (err) {
-        let message = '';
-
-        if (err.statusText) {
-          message = 'HTTP Error ' + err.statusText;
-        } else {
-          message = err.message;
-        }
-
-        this.setState({
-          isTesting: false,
-          testingStatus: 'error',
-          testingMessage: message,
-        });
-      }
-    });
+  testDataSource() {
+    const { dataSource, testDataSource } = this.props;
+    testDataSource(dataSource.name);
   }
 
   get hasDataSource() {
@@ -224,7 +157,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   renderConfigPageBody(page: string) {
-    const { plugin } = this.state;
+    const { plugin } = this.props;
     if (!plugin || !plugin.configPages) {
       return null; // still loading
     }
@@ -239,8 +172,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   renderSettings() {
-    const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource } = this.props;
-    const { testingMessage, testingStatus, plugin } = this.state;
+    const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource, testingStatus, plugin } = this.props;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -271,10 +203,10 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
         )}
 
         <div className="gf-form-group">
-          {testingMessage && (
-            <div className={`alert-${testingStatus} alert`} aria-label={e2e.pages.DataSource.selectors.alert}>
+          {testingStatus && testingStatus.message && (
+            <div className={`alert-${testingStatus.status} alert`} aria-label={e2e.pages.DataSource.selectors.alert}>
               <div className="alert-icon">
-                {testingStatus === 'error' ? (
+                {testingStatus.status === 'error' ? (
                   <i className="fa fa-exclamation-triangle" />
                 ) : (
                   <i className="fa fa-check" />
@@ -282,7 +214,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
               </div>
               <div className="alert-body">
                 <div className="alert-title" aria-label={e2e.pages.DataSource.selectors.alertMessage}>
-                  {testingMessage}
+                  {testingStatus.message}
                 </div>
               </div>
             </div>
@@ -300,8 +232,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { navModel, page } = this.props;
-    const { loadError } = this.state;
+    const { navModel, page, loadError } = this.props;
 
     if (loadError) {
       return this.renderLoadError(loadError);
@@ -321,6 +252,7 @@ function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
   const page = state.location.query.page as string;
+  const { plugin, loadError, testingStatus } = state.dataSourceSettings;
 
   return {
     navModel: getNavModel(
@@ -333,6 +265,9 @@ function mapStateToProps(state: StoreState) {
     pageId: pageId,
     query: state.location.query,
     page,
+    plugin,
+    loadError,
+    testingStatus,
   };
 }
 
@@ -343,6 +278,10 @@ const mapDispatchToProps = {
   updateDataSource,
   setIsDefault,
   dataSourceLoaded,
+  initDataSourceSettings,
+  testDataSource,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettingsPage));
+export default hot(module)(
+  connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.dataSourceSettings)(DataSourceSettingsPage)
+);

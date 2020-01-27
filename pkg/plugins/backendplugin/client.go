@@ -8,7 +8,6 @@ import (
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdk "github.com/grafana/grafana-plugin-sdk-go/common"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -27,8 +26,8 @@ var handshake = plugin.HandshakeConfig{
 	ProtocolVersion: DefaultProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
-	MagicCookieKey:   sdk.MagicCookieKey,
-	MagicCookieValue: sdk.MagicCookieValue,
+	MagicCookieKey:   backend.MagicCookieKey,
+	MagicCookieValue: backend.MagicCookieValue,
 }
 
 func newClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]plugin.PluginSet) *plugin.ClientConfig {
@@ -41,17 +40,30 @@ func newClientConfig(executablePath string, logger log.Logger, versionedPlugins 
 	}
 }
 
+// LegacyStartFunc callback function called when a plugin with old plugin protocol is started.
+type LegacyStartFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
+
+// StartFunc callback function called when a plugin with current plugin protocol version is started.
+type StartFunc func(pluginID string, client *Client, logger log.Logger) error
+
+// PluginStartFuncs functions called for plugin when started.
+type PluginStartFuncs struct {
+	OnLegacyStart LegacyStartFunc
+	OnStart       StartFunc
+}
+
 // PluginDescriptor descriptor used for registering backend plugins.
 type PluginDescriptor struct {
 	pluginID         string
 	executablePath   string
 	managed          bool
 	versionedPlugins map[int]plugin.PluginSet
+	startFns         PluginStartFuncs
 }
 
 // NewBackendPluginDescriptor creates a new backend plugin descriptor
 // used for registering a backend datasource plugin.
-func NewBackendPluginDescriptor(pluginID, executablePath string) PluginDescriptor {
+func NewBackendPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -60,17 +72,19 @@ func NewBackendPluginDescriptor(pluginID, executablePath string) PluginDescripto
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			sdk.ProtocolVersion: {
-				"backend":   &backend.CoreGRPCPlugin{},
-				"transform": &backend.TransformGRPCPlugin{},
+			backend.ProtocolVersion: {
+				"diagnostics": &backend.DiagnosticsGRPCPlugin{},
+				"backend":     &backend.CoreGRPCPlugin{},
+				"transform":   &backend.TransformGRPCPlugin{},
 			},
 		},
+		startFns: startFns,
 	}
 }
 
 // NewRendererPluginDescriptor creates a new renderer plugin descriptor
 // used for registering a backend renderer plugin.
-func NewRendererPluginDescriptor(pluginID, executablePath string) PluginDescriptor {
+func NewRendererPluginDescriptor(pluginID, executablePath string, startFns PluginStartFuncs) PluginDescriptor {
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -80,5 +94,19 @@ func NewRendererPluginDescriptor(pluginID, executablePath string) PluginDescript
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
 		},
+		startFns: startFns,
 	}
+}
+
+// LegacyClient client for communicating with a plugin using the old plugin protocol.
+type LegacyClient struct {
+	DatasourcePlugin datasourceV1.DatasourcePlugin
+	RendererPlugin   rendererV1.RendererPlugin
+}
+
+// Client client for communicating with a plugin using the current plugin protocol.
+type Client struct {
+	DiagnosticsPlugin backend.DiagnosticsPlugin
+	BackendPlugin     backend.BackendPlugin
+	TransformPlugin   backend.TransformPlugin
 }

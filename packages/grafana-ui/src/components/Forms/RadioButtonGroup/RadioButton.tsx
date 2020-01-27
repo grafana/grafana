@@ -114,7 +114,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
     buttonActive: css`
       background: ${bgActive};
       border: ${borderActive};
-      border-left: none;
+      border-left: 0;
       color: ${textColorActive};
       text-shadow: ${fakeBold};
 

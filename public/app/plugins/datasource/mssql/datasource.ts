@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
+import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
@@ -13,12 +14,7 @@ export class MssqlDatasource {
   interval: string;
 
   /** @ngInject */
-  constructor(
-    instanceSettings: any,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
-  ) {
+  constructor(instanceSettings: any, private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();
@@ -48,14 +44,17 @@ export class MssqlDatasource {
     return quotedValues.join(',');
   }
 
-  interpolateVariablesInQueries(queries: MssqlQueryForInterpolation[]): MssqlQueryForInterpolation[] {
+  interpolateVariablesInQueries(
+    queries: MssqlQueryForInterpolation[],
+    scopedVars: ScopedVars
+  ): MssqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+          rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
         };
         return expandedQuery;
       });
@@ -81,7 +80,7 @@ export class MssqlDatasource {
       return Promise.resolve({ data: [] });
     }
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -106,7 +105,7 @@ export class MssqlDatasource {
       format: 'table',
     };
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -139,7 +138,7 @@ export class MssqlDatasource {
       to: range.to.valueOf().toString(),
     };
 
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -149,7 +148,7 @@ export class MssqlDatasource {
   }
 
   testDatasource() {
-    return this.backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',

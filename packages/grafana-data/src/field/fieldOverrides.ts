@@ -11,6 +11,7 @@ import {
   ThresholdsMode,
   FieldColorMode,
   ColorScheme,
+  TimeZone,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -34,6 +35,7 @@ export interface ApplyFieldOverrideOptions {
   fieldOptions: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme;
+  timeZone?: TimeZone;
   autoMinMax?: boolean;
 }
 
@@ -164,7 +166,11 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         type,
       };
       // and set the display processor using it
-      f.display = getDisplayProcessor({ field: f, theme: options.theme });
+      f.display = getDisplayProcessor({
+        field: f,
+        theme: options.theme,
+        timeZone: options.timeZone,
+      });
       return f;
     });
 

@@ -28,7 +28,7 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { sortInAscendingOrder } from 'app/core/utils/explore';
+import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
@@ -328,18 +328,19 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeFromNow: time.fromNow(),
         timeEpochMs: time.valueOf(),
         timeLocal: time.format(logTimeFormat),
-        timeUtc: toUtc(ts).format(logTimeFormat),
+        timeUtc: toUtc(time.valueOf()).format(logTimeFormat),
         uniqueLabels,
         hasAnsi,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
         labels: stringField.labels,
-        timestamp: ts,
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
   }
+
+  const deduplicatedLogRows = deduplicateLogRowsById(rows);
 
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
@@ -356,7 +357,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${rows.length} returned)`,
+      value: `${limits[0].meta.limit} (${deduplicatedLogRows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -364,7 +365,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   return {
     hasUniqueLabels,
     meta,
-    rows,
+    rows: deduplicatedLogRows,
   };
 }
 

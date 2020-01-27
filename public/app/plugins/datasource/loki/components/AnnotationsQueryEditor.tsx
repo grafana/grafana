@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 
 // Types
 import { LokiQuery } from '../types';
-import { useLokiSyntax } from './useLokiSyntax';
+import { useLokiSyntaxAndLabels } from './useLokiSyntaxAndLabels';
 import { LokiQueryFieldForm } from './LokiQueryFieldForm';
 import LokiDatasource from '../datasource';
 
@@ -22,7 +22,7 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
     to: Date.now(),
   };
 
-  const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
+  const { isSyntaxReady, setActiveOption, refreshLabels, syntax, logLabelOptions } = useLokiSyntaxAndLabels(
     datasource.languageProvider,
     absolute
   );
@@ -43,9 +43,10 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
         data={null}
         onLoadOptions={setActiveOption}
         onLabelsRefresh={refreshLabels}
-        syntaxLoaded={isSyntaxReady}
         absoluteRange={absolute}
-        {...syntaxProps}
+        syntax={syntax}
+        syntaxLoaded={isSyntaxReady}
+        logLabelOptions={logLabelOptions}
       />
     </div>
   );

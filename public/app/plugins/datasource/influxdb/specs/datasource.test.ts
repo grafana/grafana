@@ -1,18 +1,26 @@
 import InfluxDatasource from '../datasource';
 
 import { TemplateSrvStub } from 'test/specs/helpers';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('InfluxDataSource', () => {
   const ctx: any = {
-    backendSrv: {},
     //@ts-ignore
     templateSrv: new TemplateSrvStub(),
     instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'GET' } },
   };
 
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
   beforeEach(() => {
+    jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
+    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.templateSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -26,7 +34,7 @@ describe('InfluxDataSource', () => {
     let requestQuery: any, requestMethod: any, requestData: any;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = (req: any) => {
+      datasourceRequestMock.mockImplementation((req: any) => {
         requestMethod = req.method;
         requestQuery = req.params.q;
         requestData = req.data;
@@ -43,7 +51,7 @@ describe('InfluxDataSource', () => {
             },
           ],
         });
-      };
+      });
 
       await ctx.ds.metricFindQuery(query, queryOptions).then(() => {});
     });
@@ -60,60 +68,59 @@ describe('InfluxDataSource', () => {
       expect(requestData).toBeNull();
     });
   });
-});
 
-describe('InfluxDataSource in POST query mode', () => {
-  const ctx: any = {
-    backendSrv: {},
-    //@ts-ignore
-    templateSrv: new TemplateSrvStub(),
-    instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'POST' } },
-  };
+  describe('InfluxDataSource in POST query mode', () => {
+    const ctx: any = {
+      //@ts-ignore
+      templateSrv: new TemplateSrvStub(),
+      instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'POST' } },
+    };
 
-  beforeEach(() => {
-    ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
-  });
+    beforeEach(() => {
+      ctx.instanceSettings.url = '/api/datasources/proxy/1';
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.templateSrv);
+    });
 
-  describe('When issuing metricFindQuery', () => {
-    const query = 'SELECT max(value) FROM measurement';
-    const queryOptions: any = {};
-    let requestMethod: any, requestQueryParameter: any, queryEncoded: any, requestQuery: any;
+    describe('When issuing metricFindQuery', () => {
+      const query = 'SELECT max(value) FROM measurement';
+      const queryOptions: any = {};
+      let requestMethod: any, requestQueryParameter: any, queryEncoded: any, requestQuery: any;
 
-    beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = (req: any) => {
-        requestMethod = req.method;
-        requestQueryParameter = req.params;
-        requestQuery = req.data;
-        return Promise.resolve({
-          results: [
-            {
-              series: [
-                {
-                  name: 'measurement',
-                  columns: ['max'],
-                  values: [[1]],
-                },
-              ],
-            },
-          ],
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((req: any) => {
+          requestMethod = req.method;
+          requestQueryParameter = req.params;
+          requestQuery = req.data;
+          return Promise.resolve({
+            results: [
+              {
+                series: [
+                  {
+                    name: 'measurement',
+                    columns: ['max'],
+                    values: [[1]],
+                  },
+                ],
+              },
+            ],
+          });
         });
-      };
 
-      queryEncoded = await ctx.ds.serializeParams({ q: query });
-      await ctx.ds.metricFindQuery(query, queryOptions).then(() => {});
-    });
+        queryEncoded = await ctx.ds.serializeParams({ q: query });
+        await ctx.ds.metricFindQuery(query, queryOptions).then(() => {});
+      });
 
-    it('should have the query form urlencoded', () => {
-      expect(requestQuery).toBe(queryEncoded);
-    });
+      it('should have the query form urlencoded', () => {
+        expect(requestQuery).toBe(queryEncoded);
+      });
 
-    it('should use the HTTP POST method', () => {
-      expect(requestMethod).toBe('POST');
-    });
+      it('should use the HTTP POST method', () => {
+        expect(requestMethod).toBe('POST');
+      });
 
-    it('should not have q as a query parameter', () => {
-      expect(requestQueryParameter).not.toHaveProperty('q');
+      it('should not have q as a query parameter', () => {
+        expect(requestQueryParameter).not.toHaveProperty('q');
+      });
     });
   });
 });
