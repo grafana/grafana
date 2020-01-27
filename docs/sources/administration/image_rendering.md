@@ -195,7 +195,7 @@ it's available for the Grafana process, e.g.
 export GF_RENDERER_PLUGIN_CHROME_BIN="/usr/bin/chromium-browser"
 ```
 
-### Grafana image renderer plugin and certificate signed by internal CAs
+### Grafana image renderer plugin and certificate signed by internal certificate authorities
 
 In many cases Grafana will run on internal servers and use certificates that have not been signed by a CA ([Certificate Authority](https://en.wikipedia.org/wiki/Certificate_authority)) that is known to Chrome and therefore cannot be validated. Chrome internally uses NSS ([Network Security Services](https://en.wikipedia.org/wiki/Network_Security_Services)) for cryptogtraphic operations such as the validation of certificates.
 
