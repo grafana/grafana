@@ -483,7 +483,17 @@ export class BackendSrv implements BackendService {
         } catch {
           data = textData;
         }
-        const fetchResponse: FetchResponse = { status, statusText, ok, data, headers, url, type, redirected };
+        const fetchResponse: FetchResponse = {
+          status,
+          statusText,
+          ok,
+          data,
+          headers,
+          url,
+          type,
+          redirected,
+          request: { url, ...init },
+        };
         return fetchResponse;
       }),
       share() // sharing this so we can split into success and failure and then merge back
