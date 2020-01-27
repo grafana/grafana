@@ -137,11 +137,29 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	username := model.Settings.Get("username").MustString()
 	iconEmoji := model.Settings.Get("icon_emoji").MustString()
 	iconURL := model.Settings.Get("icon_url").MustString()
-	mentionUsers := model.Settings.Get("mentionUsers").MustString()
-	mentionGroups := model.Settings.Get("mentionGroups").MustString()
+	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
+	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
 	token := model.Settings.Get("token").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
+
+	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
+		return nil, fmt.Errorf(fmt.Sprintf("invalid value for mentionChannel: %q", mentionChannel))
+	}
+	mentionUsers := []string{}
+	for _, u := range strings.Split(mentionUsersStr, ",") {
+		u = strings.TrimSpace(u)
+		if u != "" {
+			mentionUsers = append(mentionUsers, u)
+		}
+	}
+	mentionGroups := []string{}
+	for _, g := range strings.Split(mentionGroupsStr, ",") {
+		g = strings.TrimSpace(g)
+		if g != "" {
+			mentionGroups = append(mentionGroups, g)
+		}
+	}
 
 	return &SlackNotifier{
 		NotifierBase:   NewNotifierBase(model),
@@ -168,8 +186,8 @@ type SlackNotifier struct {
 	Username       string
 	IconEmoji      string
 	IconURL        string
-	MentionUsers   string
-	MentionGroups  string
+	MentionUsers   []string
+	MentionGroups  []string
 	MentionChannel string
 	Token          string
 	Upload         bool
@@ -212,22 +230,20 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if mentionChannel != "" {
 		message = fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel)
 	}
-	mentionGroups := strings.TrimSpace(sn.MentionGroups)
-	if mentionGroups != "" {
+	if len(sn.MentionGroups) > 0 {
 		if message != "" {
 			message += " "
 		}
-		for _, g := range strings.Split(mentionGroups, ",") {
-			message += fmt.Sprintf("<!subteam^%s>", strings.TrimSpace(g))
+		for _, g := range sn.MentionGroups {
+			message += fmt.Sprintf("<!subteam^%s>", g)
 		}
 	}
-	mentionUsers := strings.TrimSpace(sn.MentionUsers)
-	if mentionUsers != "" {
+	if len(sn.MentionUsers) > 0 {
 		if message != "" {
 			message += " "
 		}
-		for _, u := range strings.Split(mentionUsers, ",") {
-			message += fmt.Sprintf("<@%s>", strings.TrimSpace(u))
+		for _, u := range sn.MentionUsers {
+			message += fmt.Sprintf("<@%s>", u)
 		}
 	}
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
