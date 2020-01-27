@@ -13,7 +13,7 @@ export interface LokiExploreExtraFieldProps {
   min?: number;
 }
 
-export const LokiExploreExtraField = memo(function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
+export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
   const { label, onChangeFunc, onKeyDownFunc, value, type, min } = props;
 
   return (
@@ -32,6 +32,6 @@ export const LokiExploreExtraField = memo(function LokiExploreExtraField(props: 
       </div>
     </div>
   );
-});
+}
 
-export default LokiExploreExtraField;
+export default memo(LokiExploreExtraField);
