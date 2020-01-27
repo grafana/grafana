@@ -102,12 +102,12 @@ func init() {
           class="gf-form-input max-width-30"
           ng-model="ctrl.model.settings.mentionChannel"
           data-placement="right">
-		  <option value=""></option>
-		  <option value="here">@here</option>
-		  <option value="channel">@channel</option>
+		  <option value="">Disabled</option>
+		  <option value="here">Every active channel member</option>
+		  <option value="channel">Every channel member</option>
         </select>
         <info-popover mode="right-absolute">
-          Mention whole channel (<em>@channel</em>) or just active members (<em>@here</em>) when notifying
+          Mention whole channel or just active members when notifying
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
