@@ -26,12 +26,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-interface MetaItemProps {
+export interface MetaItemProps {
   label?: string;
   value: string;
 }
 
-const MetaInfoItem = memo(function MetaInfoItem(props: MetaItemProps) {
+export const MetaInfoItem = memo(function MetaInfoItem(props: MetaItemProps) {
   const theme = useContext(ThemeContext);
   const style = getStyles(theme);
   const { label, value } = props;
