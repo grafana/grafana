@@ -237,6 +237,8 @@
     name: SAML
   - link: /auth/team-sync/
     name: Team Sync
+  - link: /enterprise/white-labeling/
+    name: White labeling
 - name: Tutorials
   link: /tutorials/
   children:

@@ -32,7 +32,7 @@ You can either use the Windows installer or you can install a standalone Windows
 1. Click **Download the installer**.
 1. Open and run the installer. 
 
-To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started](/guides/getting_started/).
+To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../guides/getting_started/" >}}).
 
 ## Install standalone Windows binary
 
@@ -44,7 +44,7 @@ To run Grafana, open your browser and go to the Grafana port (http://localhost:3
 3. Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the command line. If you want to run Grafana as a Windows service, then download
 [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows service using that tool.
 
-To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started](/guides/getting_started/).
+To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../guides/getting_started/" >}}).
 
 > **Note:** The default Grafana port is `3000`. This port might require extra permissions on Windows. If it does not appear in the default port, you can try changing to a different port.
 > 1. Go into the `conf` directory and copy `sample.ini` to `custom.ini`. **Note:** You should edit `custom.ini`, never `defaults.ini`.
