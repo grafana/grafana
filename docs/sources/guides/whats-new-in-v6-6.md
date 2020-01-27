@@ -204,7 +204,7 @@ Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELO
 
 ## Notice about upcoming changes in backendSrv for plugin authors
 
-In our mission to migrate away from AngularJS to React we have removed all AngularJS dependencies in the core data retrieval service `backendSrv`. This change is already in master and will be introduced in the next Grafana release.
+In our mission to migrate away from AngularJS to React we have removed all AngularJS dependencies in the core data retrieval service `backendSrv`. This change is already in master and will be introduced in the next `major` Grafana release.
 
 Removing the AngularJS dependencies in `backendSrv` has the unfortunate side effect of AngularJS digest no longer being triggered for any request made with `backendSrv`. Because of this, external plugins using `backendSrv` directly may suffer from strange behaviour in the UI.
 
@@ -218,5 +218,4 @@ backendSrv.get(‘http://your.url/api’).then(result => {
     this.$scope.$digest();
 });
 ```
-
 
