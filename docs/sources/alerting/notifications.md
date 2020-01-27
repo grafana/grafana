@@ -75,7 +75,7 @@ able to access the image.
 
 {{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
-To set up slack you need to configure an incoming webhook url at slack. You can follow their guide on how
+To set up Slack, you need to configure an incoming Slack webhook URL. You can follow their guide on how
 to do that [here](https://api.slack.com/incoming-webhooks). If you want to include screenshots of the firing alerts
 in the Slack messages you have to configure either the [external image destination](#external-image-store) in Grafana,
 or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token provided
@@ -83,12 +83,14 @@ or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integr
 
 Setting | Description
 ---------- | -----------
-Url | Slack incoming webhook url.
+Url | Slack incoming webhook URL.
 Username | Set the username for the bot's message.
 Recipient | Allows you to override the Slack recipient.
 Icon emoji | Provide an emoji to use as the icon for the bot's message. Ex :smile:
 Icon URL | Provide a url to an image to use as the icon for the bot's message.
-Mention | make it possible to include a mention in the Slack notification sent by Grafana. Ex @here or @channel
+Mention Users | Mention one or more comma separated users in the Slack notification sent by Grafana. You have to refer to users via their Slack IDs (you can get a user's ID from their Slack profile).
+Mention Groups | Mention one or more comma separated groups in the Slack notification sent by Grafana. You have to refer to groups via their Slack IDs (you can get a group's ID from its Slack profile URL).
+Mention Channel | Mention either all channel members (_@channel_) or just active ones (_@here_).
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
