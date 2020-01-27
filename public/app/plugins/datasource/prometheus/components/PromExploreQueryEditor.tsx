@@ -18,7 +18,7 @@ export const PromExploreQueryEditor = memo(function PromExploreQueryEditor(props
   function onChangeQueryStep(value: string, override?: boolean) {
     const { query, onChange, onRunQuery } = props;
     if (onChange) {
-      const nextQuery = { ...query, interval: step };
+      const nextQuery = { ...query, interval: value };
       onChange(nextQuery);
       if (override && onRunQuery) {
         onRunQuery();
