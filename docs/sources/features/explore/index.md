@@ -84,7 +84,9 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
 
-### Deduping
+### Visualization Options
+
+#### Deduping
 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
 
@@ -92,16 +94,21 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 * `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
 * `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
-### Timestamp and Local time
+#### Time
 
-There are some other check boxes under the logging graph apart from the Deduping options.
+Shows or hides the time column. This is the timestamp associated with the log line as reported from the datasource.
 
-* Timestamp: shows/hides the Timestamp column
-* Local time: shows/hides the Local time column
+#### Unique labels
+
+Shows or hides the unique labels column that includes only non-common labels. All common labels are displayed above.
+
+#### Wrap lines
+
+Wrap-lines option for logs, as for some of our users it’s more efficient to see one line per log message. The wrapped-line option is set as a default, unwrapped setting results in horizontal scrolling.
 
 ### Labels and Parsed fields
 
-Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs. 
+Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
 ### Loki-specific Features
 
