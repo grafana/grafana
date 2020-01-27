@@ -13,6 +13,7 @@ import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
 import { ContextSrv, contextSrv } from './context_srv';
 import { coreModule } from 'app/core/core_module';
 import { Emitter } from '../utils/emitter';
+import { DataSourceResponse } from '../../types/events';
 
 export interface DatasourceRequestOptions {
   retry?: number;
@@ -34,18 +35,11 @@ interface ErrorResponseProps extends FetchResponseProps {
   error?: string | any;
 }
 
-export interface FetchResponse<T extends FetchResponseProps = any> {
-  status: number;
-  statusText: string;
-  ok: boolean;
-  data: T;
-}
+export interface FetchResponse<T extends FetchResponseProps = any> extends DataSourceResponse<T> {}
 
 interface SuccessResponse extends FetchResponseProps, Record<any, any> {}
 
-interface DataSourceSuccessResponse<T extends {} = any> {
-  data: T;
-}
+interface DataSourceSuccessResponse<T extends {} = any> extends FetchResponse<T> {}
 
 interface ErrorResponse<T extends ErrorResponseProps = any> {
   status: number;
@@ -212,8 +206,7 @@ export class BackendSrv implements BackendService {
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
-        const { data } = response;
-        const fetchSuccessResponse: DataSourceSuccessResponse = { data };
+        const fetchSuccessResponse: DataSourceSuccessResponse = { ...response };
         return fetchSuccessResponse;
       }),
       tap(res => {
@@ -466,7 +459,7 @@ export class BackendSrv implements BackendService {
     const init = parseInitFromOptions(options);
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async response => {
-        const { status, statusText, ok } = response;
+        const { status, statusText, ok, headers, url, type, redirected } = response;
         const textData = await response.text(); // this could be just a string, prometheus requests for instance
         let data;
         try {
@@ -474,7 +467,17 @@ export class BackendSrv implements BackendService {
         } catch {
           data = textData;
         }
-        const fetchResponse: FetchResponse = { status, statusText, ok, data };
+        const fetchResponse: FetchResponse = {
+          status,
+          statusText,
+          ok,
+          data,
+          headers,
+          url,
+          type,
+          redirected,
+          request: { url, ...init },
+        };
         return fetchResponse;
       }),
       share() // sharing this so we can split into success and failure and then merge back
@@ -516,12 +519,29 @@ export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
   return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
 };
 
-export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => ({
-  method: options.method,
-  headers: {
+export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
+  const method = options.method;
+  const headers = {
     'Content-Type': 'application/json',
     Accept: 'application/json, text/plain, */*',
     ...options.headers,
-  },
-  body: options.data ? (typeof options.data === 'string' ? options.data : JSON.stringify(options.data)) : undefined,
-});
+  };
+  const body = parseBody({ ...options, headers });
+  return {
+    method,
+    headers,
+    body,
+  };
+};
+
+const parseBody = (options: BackendSrvRequest) => {
+  if (!options.data || typeof options.data === 'string') {
+    return options.data;
+  }
+
+  if (options.headers['Content-Type'] === 'application/json') {
+    return JSON.stringify(options.data);
+  }
+
+  return new URLSearchParams(options.data);
+};

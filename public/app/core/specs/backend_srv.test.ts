@@ -14,16 +14,25 @@ const getTestContext = (overides?: object) => {
     statusText: 'Ok',
     isSignedIn: true,
     orgId: 1337,
+    redirected: false,
+    type: 'basic',
+    url: 'http://localhost:3000/api/some-mock',
+    headers: { 'Content-Type': 'application/json' },
   };
   const props = { ...defaults, ...overides };
   const textMock = jest.fn().mockResolvedValue(JSON.stringify(props.data));
   const fromFetchMock = jest.fn().mockImplementation(() => {
-    return of({
+    const mockedResponse = {
       ok: props.ok,
       status: props.status,
       statusText: props.statusText,
       text: textMock,
-    });
+      redirected: false,
+      type: 'basic',
+      url: 'http://localhost:3000/api/some-mock',
+      headers: { 'Content-Type': 'application/json' },
+    };
+    return of(mockedResponse);
   });
   const appEventsMock: Emitter = ({
     emit: jest.fn(),
@@ -275,32 +284,73 @@ describe('backendSrv', () => {
   describe('datasourceRequest', () => {
     describe('when making a successful call and silent is true', () => {
       it('then it should not emit message', async () => {
-        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext();
-        const url = 'http://www.some.url.com/';
-        const result = await backendSrv.datasourceRequest({ url, silent: true });
-        expect(result).toEqual({ data: { test: 'hello world' } });
+        const url = 'http://localhost:3000/api/some-mock';
+        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
+        const result = await backendSrv.datasourceRequest({ url, method: 'GET', silent: true });
+        expect(result).toEqual({
+          data: { test: 'hello world' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: {
+            url,
+            method: 'GET',
+            body: undefined,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json, text/plain, */*',
+            },
+          },
+        });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
-        expectDataSourceRequestCallChain({ url, silent: true });
+        expectDataSourceRequestCallChain({ url, method: 'GET', silent: true });
       });
     });
 
     describe('when making a successful call and silent is not defined', () => {
       it('then it should not emit message', async () => {
-        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext();
-        const url = 'http://www.some.url.com/';
-        const result = await backendSrv.datasourceRequest({ url });
-        expect(result).toEqual({ data: { test: 'hello world' } });
-        expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
-        expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.dsRequestResponse, {
+        const url = 'http://localhost:3000/api/some-mock';
+        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
+        const result = await backendSrv.datasourceRequest({ url, method: 'GET' });
+        const expectedResult = {
           data: { test: 'hello world' },
-        });
-        expectDataSourceRequestCallChain({ url });
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: {
+            url,
+            method: 'GET',
+            body: undefined as any,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json, text/plain, */*',
+            },
+          },
+        };
+
+        expect(result).toEqual(expectedResult);
+        expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+        expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.dsRequestResponse, expectedResult);
+        expectDataSourceRequestCallChain({ url, method: 'GET' });
       });
     });
 
     describe('when called with the same requestId twice', () => {
       it('then it should cancel the first call and the first call should be unsubscribed', async () => {
-        const { backendSrv, fromFetchMock } = getTestContext();
+        const url = '/api/dashboard/';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
         const unsubscribe = jest.fn();
         const slowData = { message: 'Slow Request' };
         const slowFetch = new Observable(subscriber => {
@@ -309,6 +359,12 @@ describe('backendSrv', () => {
             status: 200,
             statusText: 'Ok',
             text: () => Promise.resolve(JSON.stringify(slowData)),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            redirected: false,
+            type: 'basic',
+            url,
           });
           return unsubscribe;
         }).pipe(delay(10000));
@@ -318,16 +374,43 @@ describe('backendSrv', () => {
           status: 200,
           statusText: 'Ok',
           text: () => Promise.resolve(JSON.stringify(fastData)),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          redirected: false,
+          type: 'basic',
+          url,
         });
         fromFetchMock.mockImplementationOnce(() => slowFetch);
         fromFetchMock.mockImplementation(() => fastFetch);
         const options = {
-          url: '/api/dashboard/',
+          url,
+          method: 'GET',
           requestId: 'A',
         };
         const slowRequest = backendSrv.datasourceRequest(options);
         const fastResponse = await backendSrv.datasourceRequest(options);
-        expect(fastResponse).toEqual({ data: { message: 'Fast Request' } });
+        expect(fastResponse).toEqual({
+          data: { message: 'Fast Request' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: {
+            url,
+            method: 'GET',
+            body: undefined,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json, text/plain, */*',
+            },
+          },
+        });
 
         const slowResponse = await slowRequest;
         expect(slowResponse).toEqual(undefined);
@@ -506,14 +589,18 @@ describe('parseUrlFromOptions', () => {
 
 describe('parseInitFromOptions', () => {
   it.each`
-    method       | headers                  | data                               | expected
-    ${undefined} | ${undefined}             | ${undefined}                       | ${{ method: undefined, headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-    ${'GET'}     | ${undefined}             | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-    ${'GET'}     | ${undefined}             | ${null}                            | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-    ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
-    ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${{ data: { test: 'Some data' } }} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
-    ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
-    ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+    method       | headers                                                                       | data                               | expected
+    ${undefined} | ${undefined}                                                                  | ${undefined}                       | ${{ method: undefined, headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
+    ${'GET'}     | ${undefined}                                                                  | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
+    ${'GET'}     | ${undefined}                                                                  | ${null}                            | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: null }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${{ data: { test: 'Some data' } }} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${undefined}                       | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
+    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${{ data: 'Some data' }}           | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: new URLSearchParams({ data: 'Some data' }) }}
+    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${'some data'}                     | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
+    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
   `(
     "when called with method: '$method', headers: '$headers' and data: '$data' then result should be '$expected'",
     ({ method, headers, data, expected }) => {
