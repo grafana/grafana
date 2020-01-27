@@ -51,11 +51,12 @@ func TestSlackNotifier(t *testing.T) {
 				So(slackNotifier.Username, ShouldEqual, "")
 				So(slackNotifier.IconEmoji, ShouldEqual, "")
 				So(slackNotifier.IconURL, ShouldEqual, "")
-				So(slackNotifier.Mention, ShouldEqual, "")
+				So(slackNotifier.MentionUser, ShouldEqual, "")
+				So(slackNotifier.MentionGroup, ShouldEqual, "")
 				So(slackNotifier.Token, ShouldEqual, "")
 			})
 
-			Convey("from settings with Recipient, Username, IconEmoji, IconUrl, Mention, and Token", func() {
+			Convey("from settings with Recipient, Username, IconEmoji, IconUrl, MentionUser, MentionGroup, and Token", func() {
 				json := `
 				{
           "url": "http://google.com",
@@ -63,7 +64,8 @@ func TestSlackNotifier(t *testing.T) {
           "username": "Grafana Alerts",
           "icon_emoji": ":smile:",
           "icon_url": "https://grafana.com/img/fav32.png",
-          "mention": "@carl",
+          "mentionUser": "user",
+          "mentionGroup": "group",
           "token": "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX"
 				}`
 
@@ -85,7 +87,8 @@ func TestSlackNotifier(t *testing.T) {
 				So(slackNotifier.Username, ShouldEqual, "Grafana Alerts")
 				So(slackNotifier.IconEmoji, ShouldEqual, ":smile:")
 				So(slackNotifier.IconURL, ShouldEqual, "https://grafana.com/img/fav32.png")
-				So(slackNotifier.Mention, ShouldEqual, "@carl")
+				So(slackNotifier.MentionUser, ShouldEqual, "user")
+				So(slackNotifier.MentionGroup, ShouldEqual, "group")
 				So(slackNotifier.Token, ShouldEqual, "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
 			})
 		})

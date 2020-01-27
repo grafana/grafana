@@ -27,11 +27,11 @@ func init() {
 		OptionsTemplate: `
       <h3 class="page-heading">Slack settings</h3>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Url</span>
+        <span class="gf-form-label width-8">Url</span>
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Slack incoming webhook url"></input>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Recipient</span>
+        <span class="gf-form-label width-8">Recipient</span>
         <input type="text"
           class="gf-form-input max-width-30"
           ng-model="ctrl.model.settings.recipient"
@@ -42,7 +42,7 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Username</span>
+        <span class="gf-form-label width-8">Username</span>
         <input type="text"
           class="gf-form-input max-width-30"
           ng-model="ctrl.model.settings.username"
@@ -53,7 +53,7 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Icon emoji</span>
+        <span class="gf-form-label width-8">Icon emoji</span>
         <input type="text"
           class="gf-form-input max-width-30"
           ng-model="ctrl.model.settings.icon_emoji"
@@ -64,7 +64,7 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Icon URL</span>
+        <span class="gf-form-label width-8">Icon URL</span>
         <input type="text"
           class="gf-form-input max-width-30"
           ng-model="ctrl.model.settings.icon_url"
@@ -75,18 +75,29 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Mention</span>
+        <span class="gf-form-label width-8">Mention User</span>
         <input type="text"
           class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.mention"
+          ng-model="ctrl.model.settings.mentionUser"
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Mention a user or a group using @ when notifying in a channel
+          Mention a user when notifying in a channel
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Token</span>
+        <span class="gf-form-label width-8">Mention Group</span>
+        <input type="text"
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.mentionGroup"
+          data-placement="right">
+        </input>
+        <info-popover mode="right-absolute">
+          Mention a group when notifying in a channel
+        </info-popover>
+      </div>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-8">Token</span>
         <input type="text"
           class="gf-form-input max-width-30"
           ng-model="ctrl.model.settings.token"
@@ -112,7 +123,8 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	username := model.Settings.Get("username").MustString()
 	iconEmoji := model.Settings.Get("icon_emoji").MustString()
 	iconURL := model.Settings.Get("icon_url").MustString()
-	mention := model.Settings.Get("mention").MustString()
+	mentionUser := model.Settings.Get("mentionUser").MustString()
+	mentionGroup := model.Settings.Get("mentionGroup").MustString()
 	token := model.Settings.Get("token").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
@@ -123,7 +135,8 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 		Username:     username,
 		IconEmoji:    iconEmoji,
 		IconURL:      iconURL,
-		Mention:      mention,
+		MentionUser:  mentionUser,
+		MentionGroup: mentionGroup,
 		Token:        token,
 		Upload:       uploadImage,
 		log:          log.New("alerting.notifier.slack"),
@@ -134,15 +147,16 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 // alert notification to Slack.
 type SlackNotifier struct {
 	NotifierBase
-	URL       string
-	Recipient string
-	Username  string
-	IconEmoji string
-	IconURL   string
-	Mention   string
-	Token     string
-	Upload    bool
-	log       log.Logger
+	URL          string
+	Recipient    string
+	Username     string
+	IconEmoji    string
+	IconURL      string
+	MentionUser  string
+	MentionGroup string
+	Token        string
+	Upload       bool
+	log          log.Logger
 }
 
 // Notify send alert notification to Slack.
@@ -177,10 +191,13 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
-	mention := strings.TrimSpace(sn.Mention)
-	if mention != "" {
-		// TODO: Convert user handle into Slack user ID
-		message = fmt.Sprintf("<@%s>", mention)
+	mentionGroup := strings.TrimSpace(sn.MentionGroup)
+	if mentionGroup != "" {
+		message += fmt.Sprintf("<!subteam^%s>", mentionGroup)
+	}
+	mentionUser := strings.TrimSpace(sn.MentionUser)
+	if mentionUser != "" {
+		message += fmt.Sprintf("<@%s>", mentionUser)
 	}
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		if message != "" {
