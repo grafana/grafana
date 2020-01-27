@@ -494,22 +494,26 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         switchMap((res: { data: LokiStreamResponse; status: number }) =>
           iif(
             () => res.status === 404,
-            this._request(LEGACY_QUERY_ENDPOINT, target).pipe(
-              catchError((err: any) => {
-                const error: DataQueryError = {
-                  message: 'Error during context query. Please check JS console logs.',
-                  status: err.status,
-                  statusText: err.statusText,
-                };
-                throw error;
-              }),
-              map((res: { data: LokiLegacyStreamResponse }) => ({
-                data: res.data ? res.data.streams.map(stream => legacyLogStreamToDataFrame(stream, reverse)) : [],
-              }))
+            defer(() =>
+              this._request(LEGACY_QUERY_ENDPOINT, target).pipe(
+                catchError((err: any) => {
+                  const error: DataQueryError = {
+                    message: 'Error during context query. Please check JS console logs.',
+                    status: err.status,
+                    statusText: err.statusText,
+                  };
+                  throw error;
+                }),
+                map((res: { data: LokiLegacyStreamResponse }) => ({
+                  data: res.data ? res.data.streams.map(stream => legacyLogStreamToDataFrame(stream, reverse)) : [],
+                }))
+              )
             ),
-            of({
-              data: res.data ? res.data.data.result.map(stream => lokiStreamResultToDataFrame(stream, reverse)) : [],
-            })
+            defer(() =>
+              of({
+                data: res.data ? res.data.data.result.map(stream => lokiStreamResultToDataFrame(stream, reverse)) : [],
+              })
+            )
           )
         )
       )
