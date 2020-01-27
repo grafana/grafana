@@ -41,24 +41,22 @@ export const PromExploreQueryEditor = memo(function PromExploreQueryEditor(props
   }, [step]);
 
   return (
-    <div className="gf-form-inline">
-      <PromQueryField
-        datasource={datasource}
-        query={query}
-        onRunQuery={onRunQuery}
-        onChange={onChange}
-        history={history}
-        data={data}
-        ExtraFieldElement={
-          <PromExploreExtraField
-            label={'Step'}
-            onChangeFunc={onStepChange}
-            onKeyDownFunc={onReturnKeyDown}
-            value={step}
-          />
-        }
-      />
-    </div>
+    <PromQueryField
+      datasource={datasource}
+      query={query}
+      onRunQuery={onRunQuery}
+      onChange={onChange}
+      history={history}
+      data={data}
+      ExtraFieldElement={
+        <PromExploreExtraField
+          label={'Step'}
+          onChangeFunc={onStepChange}
+          onKeyDownFunc={onReturnKeyDown}
+          value={step}
+        />
+      }
+    />
   );
 });
 
