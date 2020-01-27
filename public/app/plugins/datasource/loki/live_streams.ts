@@ -67,6 +67,7 @@ export class LiveStreams {
 
     const data = new CircularDataFrame({ capacity: target.size });
     data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
+    data.addField({ name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' } });
     data.addField({ name: 'line', type: FieldType.string }).labels = parseLabels(target.query);
     data.addField({ name: 'labels', type: FieldType.other }); // The labels for each line
     data.addField({ name: 'id', type: FieldType.string });

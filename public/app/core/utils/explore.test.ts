@@ -23,6 +23,7 @@ import {
   dateTime,
   MutableDataFrame,
   ExploreMode,
+  LogRowModel,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 
@@ -380,11 +381,10 @@ describe('refreshIntervalToSortOrder', () => {
 });
 
 describe('sortLogsResult', () => {
-  const firstRow = {
+  const firstRow: LogRowModel = {
     rowIndex: 0,
     entryFieldIndex: 0,
     dataFrame: new MutableDataFrame(),
-    timestamp: '2019-01-01T21:00:0.0000000Z',
     entry: '',
     hasAnsi: false,
     labels: {},
@@ -397,17 +397,16 @@ describe('sortLogsResult', () => {
     uid: '1',
   };
   const sameAsFirstRow = firstRow;
-  const secondRow = {
+  const secondRow: LogRowModel = {
     rowIndex: 1,
     entryFieldIndex: 0,
     dataFrame: new MutableDataFrame(),
-    timestamp: '2019-01-01T22:00:0.0000000Z',
     entry: '',
     hasAnsi: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
-    timeEpochMs: 0,
+    timeEpochMs: 10,
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',

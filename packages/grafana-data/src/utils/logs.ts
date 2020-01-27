@@ -33,7 +33,7 @@ export function getLogLevel(line: string): LogLevel {
 }
 
 export function getLogLevelFromKey(key: string): LogLevel {
-  const level = (LogLevel as any)[key];
+  const level = (LogLevel as any)[key.toLowerCase()];
   if (level) {
     return level;
   }

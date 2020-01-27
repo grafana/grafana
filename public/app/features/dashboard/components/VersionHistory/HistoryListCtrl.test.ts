@@ -1,6 +1,8 @@
 import _ from 'lodash';
+import { IScope } from 'angular';
+
 import { HistoryListCtrl } from './HistoryListCtrl';
-import { versions, compare, restore } from './__mocks__/history';
+import { compare, restore, versions } from './__mocks__/history';
 import { CoreEvents } from 'app/types';
 
 describe('HistoryListCtrl', () => {
@@ -12,6 +14,7 @@ describe('HistoryListCtrl', () => {
 
   let historySrv: any;
   let $rootScope: any;
+  const $scope: IScope = ({ $evalAsync: jest.fn() } as any) as IScope;
   let historyListCtrl: any;
   beforeEach(() => {
     historySrv = {
@@ -28,7 +31,7 @@ describe('HistoryListCtrl', () => {
     beforeEach(() => {
       historySrv.getHistoryList = jest.fn(() => Promise.resolve({}));
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
 
       historyListCtrl.dashboard = {
         id: 2,
@@ -84,7 +87,7 @@ describe('HistoryListCtrl', () => {
       beforeEach(async () => {
         historySrv.getHistoryList = jest.fn(() => Promise.reject(new Error('HistoryListError')));
 
-        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
 
         await historyListCtrl.getLog();
       });
@@ -127,7 +130,7 @@ describe('HistoryListCtrl', () => {
       historySrv.getHistoryList = jest.fn(() => Promise.resolve(versionsResponse));
       historySrv.calculateDiff = jest.fn(() => Promise.resolve({}));
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
 
       historyListCtrl.dashboard = {
         id: 2,
@@ -260,7 +263,7 @@ describe('HistoryListCtrl', () => {
       historySrv.getHistoryList = jest.fn(() => Promise.resolve(versionsResponse));
       historySrv.restoreDashboard = jest.fn(() => Promise.resolve());
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
 
       historyListCtrl.dashboard = {
         id: 1,
@@ -279,7 +282,7 @@ describe('HistoryListCtrl', () => {
       beforeEach(async () => {
         historySrv.getHistoryList = jest.fn(() => Promise.resolve(versionsResponse));
         historySrv.restoreDashboard = jest.fn(() => Promise.resolve());
-        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, {});
+        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, historySrv, $scope);
         historySrv.restoreDashboard = jest.fn(() => Promise.reject(new Error('RestoreError')));
         historyListCtrl.restoreConfirm(RESTORE_ID);
         await historyListCtrl.getLog();

@@ -25,7 +25,7 @@ export function loadApiKeys(includeExpired: boolean): ThunkResult<void> {
 export function deleteApiKey(id: number, includeExpired: boolean): ThunkResult<void> {
   return async dispatch => {
     getBackendSrv()
-      .delete('/api/auth/keys/' + id)
-      .then(dispatch(loadApiKeys(includeExpired)));
+      .delete(`/api/auth/keys/${id}`)
+      .then(() => dispatch(loadApiKeys(includeExpired)));
   };
 }

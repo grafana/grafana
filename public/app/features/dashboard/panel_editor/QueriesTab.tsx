@@ -11,7 +11,7 @@ import { PanelOptionsGroup, TransformationsEditor, AlphaNotice } from '@grafana/
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
@@ -48,7 +48,7 @@ interface State {
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
-  backendSrv = getBackendSrv();
+  backendSrv = backendSrv;
   querySubscription: Unsubscribable;
 
   state: State = {

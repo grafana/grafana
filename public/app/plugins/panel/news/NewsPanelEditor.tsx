@@ -44,11 +44,12 @@ export class NewsPanelEditor extends PureComponent<PanelEditorProps<NewsOptions>
           <div className="gf-form">
             <FormField
               label="URL"
-              labelWidth={4}
+              labelWidth={7}
               inputWidth={30}
               value={feedUrl || ''}
               placeholder={DEFAULT_FEED_URL}
               onChange={this.onFeedUrlChange}
+              tooltip="Only RSS feed formats are supported (not Atom)."
               onBlur={this.onUpdatePanel}
             />
           </div>

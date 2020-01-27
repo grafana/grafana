@@ -9,13 +9,14 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 import { Branding } from 'app/core/components/Branding/Branding';
+import { Footer } from 'app/core/components/Footer/Footer';
 
 export const LoginPage: FC = () => {
   return (
     <Branding.LoginBackground className="login container">
       <div className="login-content">
         <div className="login-branding">
-          <Branding.LoginLogo className="logo-icon" />
+          <Branding.LoginLogo className="login-logo" />
         </div>
         <LoginCtrl>
           {({
@@ -62,6 +63,7 @@ export const LoginPage: FC = () => {
 
         <div className="clearfix" />
       </div>
+      <Footer />
     </Branding.LoginBackground>
   );
 };
