@@ -7,10 +7,17 @@ import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
 import { CloudWatchQuery } from '../types';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
+
 describe('CloudWatchDatasource', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
     name: 'TestDatasource',
@@ -29,14 +36,14 @@ describe('CloudWatchDatasource', () => {
       };
     },
   } as TimeSrv;
-  const backendSrv = {} as BackendSrv;
+
   const ctx = {
-    backendSrv,
     templateSrv,
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new CloudWatchDatasource(instanceSettings, backendSrv, templateSrv, timeSrv);
+    ctx.ds = new CloudWatchDatasource(instanceSettings, templateSrv, timeSrv);
+    jest.clearAllMocks();
   });
 
   describe('When performing CloudWatch query', () => {
@@ -86,7 +93,7 @@ describe('CloudWatchDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+      datasourceRequestMock.mockImplementation(params => {
         requestParams = params.data;
         return Promise.resolve({ data: response });
       });
@@ -174,7 +181,7 @@ describe('CloudWatchDatasource', () => {
 
     describe('a correct cloudwatch url should be built for each time series in the response', () => {
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = jest.fn(params => {
+        datasourceRequestMock.mockImplementation(params => {
           requestParams = params.data;
           return Promise.resolve({ data: response });
         });
@@ -291,7 +298,7 @@ describe('CloudWatchDatasource', () => {
           dispatch: jest.fn(),
         } as any);
 
-        ctx.backendSrv.datasourceRequest = jest.fn(() => {
+        datasourceRequestMock.mockImplementation(() => {
           return Promise.reject(backendErrorResponse);
         });
       });
@@ -310,10 +317,10 @@ describe('CloudWatchDatasource', () => {
 
     describe('when regions query is used', () => {
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = jest.fn(() => {
+        datasourceRequestMock.mockImplementation(() => {
           return Promise.resolve({});
         });
-        ctx.ds = new CloudWatchDatasource(instanceSettings, backendSrv, templateSrv, timeSrv);
+        ctx.ds = new CloudWatchDatasource(instanceSettings, templateSrv, timeSrv);
         ctx.ds.doMetricQueryRequest = jest.fn(() => []);
       });
       describe('and region param is left out', () => {
@@ -441,7 +448,7 @@ describe('CloudWatchDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+      datasourceRequestMock.mockImplementation(params => {
         return Promise.resolve({ data: response });
       });
     });
@@ -511,7 +518,7 @@ describe('CloudWatchDatasource', () => {
         ),
       ]);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+      datasourceRequestMock.mockImplementation(params => {
         requestParams = params.data;
         return Promise.resolve({ data: {} });
       });
@@ -643,7 +650,7 @@ describe('CloudWatchDatasource', () => {
       scenario.setup = async (setupCallback: any) => {
         beforeEach(async () => {
           await setupCallback();
-          ctx.backendSrv.datasourceRequest = jest.fn(args => {
+          datasourceRequestMock.mockImplementation(args => {
             scenario.request = args.data;
             return Promise.resolve({ data: scenario.requestResponse });
           });

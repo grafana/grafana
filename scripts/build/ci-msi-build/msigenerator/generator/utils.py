@@ -50,13 +50,18 @@ def detect_version(dist_path):
         print('Skipping detection, no matches')
         return
     firstFile = fileList[0]
-    p1 = re.search(r'grafana-(\d\.\d\.\d)\.windows-amd64.zip$', firstFile)
-    p2 = re.search(r'grafana-(\d\.\d\.\d)-(.*)\.windows-amd64.zip$', firstFile)
+    p1 = re.search(r'grafana-(enterprise-)?(\d\.\d\.\d)-(.+)\.windows-amd64\.zip$', firstFile)
+    p2 = re.search(r'grafana-(enterprise-)?(\d\.\d\.\d)\.windows-amd64\.zip$', firstFile)
     if p1:
-        detectedVersion = p1.group(1)
+        detectedVersion = p1.group(2)
+        detectedHash = p1.group(3)
+        if p1.group(1) == 'enterprise-':
+          isEnterprise = True
     if p2:
-        detectedVersion = p2.group(1)
-        detectedHash = p2.group(2)
+        detectedVersion = p2.group(2)
+        if p2.group(1) == 'enterprise-':
+          isEnterprise = True
+
     return detectedVersion, detectedHash, isEnterprise
 
     #if os.path.isdir(dist_path + 'enterprise-dist'):

@@ -20,7 +20,6 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
       hasAnsi: false,
       entry: '',
       raw: '',
-      timestamp: '',
       uid: '0',
       labels: {},
       ...(rowOverrides || {}),
