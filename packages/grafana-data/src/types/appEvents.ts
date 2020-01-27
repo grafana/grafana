@@ -5,8 +5,10 @@ export interface AppEvent<T> {
   payload?: T;
 }
 
-export type AlertPayload = [string, string?];
+export namespace AppEvents {
+  export type AlertPayload = [string, string?];
 
-export const alertSuccess = eventFactory<AlertPayload>('alert-success');
-export const alertWarning = eventFactory<AlertPayload>('alert-warning');
-export const alertError = eventFactory<AlertPayload>('alert-error');
+  export const alertSuccess = eventFactory<AlertPayload>('alert-success');
+  export const alertWarning = eventFactory<AlertPayload>('alert-warning');
+  export const alertError = eventFactory<AlertPayload>('alert-error');
+}

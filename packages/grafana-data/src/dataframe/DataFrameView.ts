@@ -5,20 +5,26 @@ import { DataFrame } from '../types/dataFrame';
  * This abstraction will present the contents of a DataFrame as if
  * it were a well typed javascript object Vector.
  *
- * NOTE: The contents of the object returned from `view.get(index)`
+ * @remarks
+ * The contents of the object returned from `view.get(index)`
  * are optimized for use in a loop.  All calls return the same object
  * but the index has changed.
  *
- * For example, the three objects:
+ * @category dataframe
+ * @example
+ * ```typescript
+ *   // For example, the three objects:
  *   const first = view.get(0);
  *   const second = view.get(1);
  *   const third = view.get(2);
- * will point to the contents at index 2
+ *   // will point to the contents at index 2
  *
- * If you need three different objects, consider something like:
- *   const first = { ... view.get(0) };
- *   const second = { ... view.get(1) };
- *   const third = { ... view.get(2) };
+ *   // If you need three different objects, consider something like:
+ *   const first = { ...view.get(0) };
+ *   const second = { ...view.get(1) };
+ *   const third = { ...view.get(2) };
+ *```
+ *  @public
  */
 export class DataFrameView<T = any> implements Vector<T> {
   private index = 0;
@@ -47,6 +53,9 @@ export class DataFrameView<T = any> implements Vector<T> {
     this.obj = obj;
   }
 
+  /**
+   * Gets the data frame from this object
+   */
   get dataFrame() {
     return this.data;
   }
@@ -55,6 +64,12 @@ export class DataFrameView<T = any> implements Vector<T> {
     return this.data.length;
   }
 
+  /**
+   * Some short description about this class function
+   *
+   * @param idx - Not super clear what this id does but it should be passed
+   * @returns DataFrameView and some text about what it returns
+   */
   get(idx: number) {
     this.index = idx;
     return this.obj;
