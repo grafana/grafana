@@ -1,15 +1,13 @@
 package dashboards
 
 import (
-	"errors"
+	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/provisioning/values"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
 type DashboardsAsConfig struct {
@@ -59,10 +57,6 @@ type DashboardProviderConfigs struct {
 	AllowUiUpdates        values.BoolValue   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
-var (
-	NameNotUnique = errors.New("Dashboard name is not unique!")
-)
-
 func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig, folderId int64) (*dashboards.SaveDashboardDTO, error) {
 	dash := &dashboards.SaveDashboardDTO{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
@@ -81,12 +75,14 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 
 func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig, error) {
 	var r []*DashboardsAsConfig
+	seen = make(map[string]bool)
 
 	for _, v := range v0 {
-		ok := Contains(r, v.Name)
-		if !ok {
-			return r, NameNotUnique
+		if _, ok := seen[v.Name]; ok {
+			return nil, fmt.Errorf("Name %s is not unique!", v.Name)
 		}
+		seen[v.Name] = true
+
 		r = append(r, &DashboardsAsConfig{
 			Name:                  v.Name,
 			Type:                  v.Type,
@@ -106,12 +102,14 @@ func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig
 
 func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() ([]*DashboardsAsConfig, error) {
 	var r []*DashboardsAsConfig
+	seen = make(map[string]bool)
 
 	for _, v := range dc.Providers {
-		ok := Contains(r, v.Name.Value())
-		if !ok {
-			return r, NameNotUnique
+		if _, ok := seen[v.Name.Value()]; ok {
+			return nil, fmt.Errorf("Name %s is not unique!", v.Name.Value())
 		}
+		seen[v.Name.Value()] = true
+
 		r = append(r, &DashboardsAsConfig{
 			Name:                  v.Name.Value(),
 			Type:                  v.Type.Value(),
@@ -127,13 +125,4 @@ func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() ([]*DashboardsAsConfig, 
 	}
 
 	return r, nil
-}
-
-func Contains(a []*DashboardAsConfig, x string) bool {
-	for _, n := range a {
-		if x == n.Name {
-			return true
-		}
-	}
-	return false
 }
