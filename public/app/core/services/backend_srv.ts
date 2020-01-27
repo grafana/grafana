@@ -460,15 +460,32 @@ export class BackendSrv implements BackendService {
     return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
   };
 
-  private parseInitFromOptions = (options: BackendSrvRequest): RequestInit => ({
-    method: options.method,
-    headers: {
+  private parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
+    const method = options.method;
+    const headers = {
       'Content-Type': 'application/json',
       Accept: 'application/json, text/plain, */*',
       ...options.headers,
-    },
-    body: typeof options.data === 'string' ? options.data : JSON.stringify(options.data),
-  });
+    };
+    const body = this.parseBody({ ...options, headers });
+    return {
+      method,
+      headers,
+      body,
+    };
+  };
+
+  private parseBody = (options: BackendSrvRequest) => {
+    if (!options.data || typeof options.data === 'string') {
+      return options.data;
+    }
+
+    if (options.headers['Content-Type'] === 'application/json') {
+      return JSON.stringify(options.data);
+    }
+
+    return new URLSearchParams(options.data);
+  };
 
   private getFromFetchStream = (options: BackendSrvRequest) => {
     const url = this.parseUrlFromOptions(options);
