@@ -11,7 +11,7 @@ export interface PromExploreExtraFieldProps {
   value: string;
 }
 
-export const PromExploreExtraField = memo(function PromExploreExtraField(props: PromExploreExtraFieldProps) {
+export function PromExploreExtraField(props: PromExploreExtraFieldProps) {
   const { label, onChangeFunc, onKeyDownFunc, value } = props;
 
   return (
@@ -29,6 +29,6 @@ export const PromExploreExtraField = memo(function PromExploreExtraField(props: 
       </div>
     </div>
   );
-});
+}
 
-export default PromExploreExtraField;
+export default memo(PromExploreExtraField);
