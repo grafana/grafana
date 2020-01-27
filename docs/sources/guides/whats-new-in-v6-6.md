@@ -160,7 +160,7 @@ Customize the login page, side menu bar, and footer links.
 
 ## Enterprise APT and YUM repositories
 
-Now you can install the enterprise edition from the APT and YUM repository. The following table shows the APT repository for each Grafana version.
+Now you can install the enterprise edition from the APT and YUM repository. The following table shows the APT repository for each Grafana version (for instructions read the [installation notes]({{< relref "../installation/debian/#install-from-apt-repository" >}})) :
 
 | Grafana Version | Package | Repository |
 |-----------------|---------|------------|
@@ -169,7 +169,7 @@ Now you can install the enterprise edition from the APT and YUM repository. The 
 | Grafana Enterprise     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb stable main` |
 | Grafana Enterprise (Beta)     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb beta main` |
 
-The following table shows the YUM repositories for each Grafana version:
+The following table shows the YUM repositories for each Grafana version (for instructions read the [installation notes]({{< relref "../installation/rpm/#install-from-yum-repository" >}})) :
 
 | Grafana Version            | Package            | Repository                                         |
 |----------------------------|--------------------|----------------------------------------------------|
