@@ -23,7 +23,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```bash
+```http
 GET /api/admin/settings
 Accept: application/json
 Content-Type: application/json
@@ -31,7 +31,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```bash
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -181,7 +181,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```bash
+```http
 GET /api/admin/stats
 Accept: application/json
 Content-Type: application/json
@@ -189,7 +189,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -214,8 +214,8 @@ Content-Type: application/json
 Create new user. Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
-```json
 
+```http
 POST /api/admin/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -230,7 +230,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -246,7 +246,7 @@ Change password for a specific user.
 
 **Example Request**:
 
-```json
+```http
 PUT /api/admin/users/2/password HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -256,7 +256,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -271,7 +271,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```json
+```http
 PUT /api/admin/users/2/permissions HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -281,7 +281,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -296,7 +296,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```json
+```http
 DELETE /api/admin/users/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -304,7 +304,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
