@@ -17,14 +17,14 @@ export function addRootReducer(reducers: any) {
 
 export function configureStore() {
   const logger = createLogger({
-    predicate: (getState: () => StoreState) => {
+    predicate: getState => {
       return getState().application.logActions;
     },
   });
 
   const middleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, thunk, logger] : [thunk];
 
-  const store = reduxConfigureStore({
+  const store = reduxConfigureStore<StoreState>({
     reducer: createRootReducer(),
     middleware,
     devTools: process.env.NODE_ENV !== 'production',
