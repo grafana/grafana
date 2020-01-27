@@ -633,7 +633,7 @@ Syslog facility. Valid options are user, daemon or local0 through local7. Defaul
 
 ### tag
 
-Syslog tag. By default, the process' `argv[0]` is used.
+Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
 
