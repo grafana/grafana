@@ -14,16 +14,25 @@ const getTestContext = (overides?: object) => {
     statusText: 'Ok',
     isSignedIn: true,
     orgId: 1337,
+    redirected: false,
+    type: 'basic',
+    url: 'http://localhost:3000/api/some-mock',
+    headers: { 'Content-Type': 'application/json' },
   };
   const props = { ...defaults, ...overides };
   const textMock = jest.fn().mockResolvedValue(JSON.stringify(props.data));
   const fromFetchMock = jest.fn().mockImplementation(() => {
-    return of({
+    const mockedResponse = {
       ok: props.ok,
       status: props.status,
       statusText: props.statusText,
       text: textMock,
-    });
+      redirected: false,
+      type: 'basic',
+      url: 'http://localhost:3000/api/some-mock',
+      headers: { 'Content-Type': 'application/json' },
+    };
+    return of(mockedResponse);
   });
   const appEventsMock: Emitter = ({
     emit: jest.fn(),
@@ -38,8 +47,11 @@ const getTestContext = (overides?: object) => {
   const logoutMock = jest.fn();
   const parseRequestOptionsMock = jest.fn().mockImplementation(options => options);
   const parseDataSourceRequestOptionsMock = jest.fn().mockImplementation(options => options);
-  const parseUrlFromOptionsMock = jest.fn().mockImplementation(() => 'parseUrlFromOptionsMock');
-  const parseInitFromOptionsMock = jest.fn().mockImplementation(() => 'parseInitFromOptionsMock');
+  const parseUrlFromOptionsMock = jest.fn().mockImplementation(options => options.url);
+  const parseInitFromOptionsMock = jest.fn().mockImplementation(options => ({
+    method: options.method,
+    url: options.url,
+  }));
 
   const backendSrv = new BackendSrv({
     fromFetch: fromFetchMock,
@@ -59,7 +71,10 @@ const getTestContext = (overides?: object) => {
     expect(parseInitFromOptionsMock).toHaveBeenCalledTimes(1);
     expect(parseInitFromOptionsMock).toHaveBeenCalledWith(options);
     expect(fromFetchMock).toHaveBeenCalledTimes(1);
-    expect(fromFetchMock).toHaveBeenCalledWith('parseUrlFromOptionsMock', 'parseInitFromOptionsMock');
+    expect(fromFetchMock).toHaveBeenCalledWith(options.url, {
+      method: options.method,
+      url: options.url,
+    });
   };
 
   const expectRequestCallChain = (options: any) => {
@@ -321,32 +336,67 @@ describe('backendSrv', () => {
   describe('datasourceRequest', () => {
     describe('when making a successful call and silent is true', () => {
       it('then it should not emit message', async () => {
-        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext();
-        const url = 'http://www.some.url.com/';
-        const result = await backendSrv.datasourceRequest({ url, silent: true });
-        expect(result).toEqual({ data: { test: 'hello world' } });
+        const url = 'http://localhost:3000/api/some-mock';
+        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
+        const result = await backendSrv.datasourceRequest({ url, method: 'GET', silent: true });
+        expect(result).toEqual({
+          data: { test: 'hello world' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: { url, method: 'GET' },
+        });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
-        expectDataSourceRequestCallChain({ url, silent: true });
+        expectDataSourceRequestCallChain({ url, method: 'GET', silent: true });
       });
     });
 
     describe('when making a successful call and silent is not defined', () => {
       it('then it should not emit message', async () => {
-        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext();
-        const url = 'http://www.some.url.com/';
-        const result = await backendSrv.datasourceRequest({ url });
-        expect(result).toEqual({ data: { test: 'hello world' } });
+        const url = 'http://localhost:3000/api/some-mock';
+        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
+        const result = await backendSrv.datasourceRequest({ url, method: 'GET' });
+        expect(result).toEqual({
+          data: { test: 'hello world' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: { url, method: 'GET' },
+        });
         expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
         expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.dsRequestResponse, {
           data: { test: 'hello world' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: { url, method: 'GET' },
         });
-        expectDataSourceRequestCallChain({ url });
+        expectDataSourceRequestCallChain({ url, method: 'GET' });
       });
     });
 
     describe('when called with the same requestId twice', () => {
       it('then it should cancel the first call and the first call should be unsubscribed', async () => {
-        const { backendSrv, fromFetchMock } = getTestContext();
+        const url = '/api/dashboard/';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
         const unsubscribe = jest.fn();
         const slowData = { message: 'Slow Request' };
         const slowFetch = new Observable(subscriber => {
@@ -355,6 +405,12 @@ describe('backendSrv', () => {
             status: 200,
             statusText: 'Ok',
             text: () => Promise.resolve(JSON.stringify(slowData)),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            redirected: false,
+            type: 'basic',
+            url,
           });
           return unsubscribe;
         }).pipe(delay(10000));
@@ -364,16 +420,35 @@ describe('backendSrv', () => {
           status: 200,
           statusText: 'Ok',
           text: () => Promise.resolve(JSON.stringify(fastData)),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          redirected: false,
+          type: 'basic',
+          url,
         });
         fromFetchMock.mockImplementationOnce(() => slowFetch);
         fromFetchMock.mockImplementation(() => fastFetch);
         const options = {
-          url: '/api/dashboard/',
+          url,
+          method: 'GET',
           requestId: 'A',
         };
         const slowRequest = backendSrv.datasourceRequest(options);
         const fastResponse = await backendSrv.datasourceRequest(options);
-        expect(fastResponse).toEqual({ data: { message: 'Fast Request' } });
+        expect(fastResponse).toEqual({
+          data: { message: 'Fast Request' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: { url, method: 'GET' },
+        });
 
         const slowResponse = await slowRequest;
         expect(slowResponse).toEqual(undefined);
