@@ -32,6 +32,7 @@ import {
 } from './actionTypes';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from '../../../core/actions';
+import { UrlQueryMap } from '@grafana/runtime';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -71,7 +72,7 @@ describe('Explore item reducer', () => {
     describe('when changeMode is dispatched', () => {
       it('then it should set correct state', () => {
         reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, {} as ExploreItemState)
+          .givenReducer(itemReducer, ({} as unknown) as ExploreItemState)
           .whenActionIsDispatched(changeModeAction({ exploreId: ExploreId.left, mode: ExploreMode.Logs }))
           .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
             expect(resultingState.mode).toEqual(ExploreMode.Logs);
@@ -98,11 +99,11 @@ describe('Explore item reducer', () => {
           } as DataSourceApi;
           const queries: DataQuery[] = [];
           const queryKeys: string[] = [];
-          const initialState: ExploreItemState = {
+          const initialState: ExploreItemState = ({
             datasourceInstance: null,
             queries,
             queryKeys,
-          } as ExploreItemState;
+          } as unknown) as ExploreItemState;
           const expectedState: any = {
             datasourceInstance,
             queries,
@@ -174,11 +175,11 @@ describe('Explore item reducer', () => {
     describe('when toggleGraphAction is dispatched', () => {
       it('then it should set correct state', () => {
         reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, { graphResult: [] } as ExploreItemState)
+          .givenReducer(itemReducer, ({ graphResult: [] } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ showingGraph: true, graphResult: [] } as ExploreItemState)
+          .thenStateShouldEqual(({ showingGraph: true, graphResult: [] } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ showingGraph: false, graphResult: null } as ExploreItemState);
+          .thenStateShouldEqual(({ showingGraph: false, graphResult: null } as unknown) as ExploreItemState);
       });
     });
 
@@ -196,11 +197,11 @@ describe('Explore item reducer', () => {
         });
 
         reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, { tableResult: table } as ExploreItemState)
+          .givenReducer(itemReducer, ({ tableResult: table } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ showingTable: true, tableResult: table } as ExploreItemState)
+          .thenStateShouldEqual(({ showingTable: true, tableResult: table } as unknown) as ExploreItemState)
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ showingTable: false, tableResult: null } as ExploreItemState);
+          .thenStateShouldEqual(({ showingTable: false, tableResult: null } as unknown) as ExploreItemState);
       });
     });
   });
@@ -209,11 +210,11 @@ describe('Explore item reducer', () => {
     describe('when changeRangeAction is dispatched', () => {
       it('then it should set correct state', () => {
         reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, {
+          .givenReducer(itemReducer, ({
             update: { ...makeInitialUpdateState(), range: true },
             range: null,
             absoluteRange: null,
-          } as ExploreItemState)
+          } as unknown) as ExploreItemState)
           .whenActionIsDispatched(
             changeRangeAction({
               exploreId: ExploreId.left,
@@ -221,11 +222,11 @@ describe('Explore item reducer', () => {
               range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
             })
           )
-          .thenStateShouldEqual({
+          .thenStateShouldEqual(({
             update: { ...makeInitialUpdateState(), range: false },
             absoluteRange: { from: 1546297200000, to: 1546383600000 },
             range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
-          } as ExploreItemState);
+          } as unknown) as ExploreItemState);
       });
     });
   });
@@ -250,7 +251,11 @@ export const setup = (urlStateOverrides?: any) => {
   };
   const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
   const serializedUrlState = serializeStateToUrlParam(urlState);
-  const initialState = { split: false, left: { urlState, update }, right: { urlState, update } } as ExploreState;
+  const initialState = ({
+    split: false,
+    left: { urlState, update },
+    right: { urlState, update },
+  } as unknown) as ExploreState;
 
   return {
     initialState,
@@ -261,76 +266,76 @@ export const setup = (urlStateOverrides?: any) => {
 describe('Explore reducer', () => {
   describe('split view', () => {
     it("should make right pane a duplicate of the given item's state on split open", () => {
-      const leftItemMock = {
+      const leftItemMock = ({
         containerWidth: 100,
-      } as ExploreItemState;
+      } as unknown) as ExploreItemState;
 
-      const initialState = {
+      const initialState = ({
         split: null,
         left: leftItemMock as ExploreItemState,
         right: makeExploreItemState(),
-      } as ExploreState;
+      } as unknown) as ExploreState;
 
       reducerTester<ExploreState>()
         .givenReducer(exploreReducer, initialState)
         .whenActionIsDispatched(splitOpenAction({ itemState: leftItemMock }))
-        .thenStateShouldEqual({
+        .thenStateShouldEqual(({
           split: true,
           left: leftItemMock,
           right: leftItemMock,
-        } as ExploreState);
+        } as unknown) as ExploreState);
     });
 
     describe('split close', () => {
       it('should keep right pane as left when left is closed', () => {
-        const leftItemMock = {
+        const leftItemMock = ({
           containerWidth: 100,
-        } as ExploreItemState;
+        } as unknown) as ExploreItemState;
 
-        const rightItemMock = {
+        const rightItemMock = ({
           containerWidth: 200,
-        } as ExploreItemState;
+        } as unknown) as ExploreItemState;
 
-        const initialState = {
+        const initialState = ({
           split: null,
           left: leftItemMock,
           right: rightItemMock,
-        } as ExploreState;
+        } as unknown) as ExploreState;
 
         // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.left }))
-          .thenStateShouldEqual({
+          .thenStateShouldEqual(({
             split: false,
             left: rightItemMock,
             right: initialExploreState.right,
-          } as ExploreState);
+          } as unknown) as ExploreState);
       });
       it('should reset right pane when it is closed ', () => {
-        const leftItemMock = {
+        const leftItemMock = ({
           containerWidth: 100,
-        } as ExploreItemState;
+        } as unknown) as ExploreItemState;
 
-        const rightItemMock = {
+        const rightItemMock = ({
           containerWidth: 200,
-        } as ExploreItemState;
+        } as unknown) as ExploreItemState;
 
-        const initialState = {
+        const initialState = ({
           split: null,
           left: leftItemMock,
           right: rightItemMock,
-        } as ExploreState;
+        } as unknown) as ExploreState;
 
         // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
-          .thenStateShouldEqual({
+          .thenStateShouldEqual(({
             split: false,
             left: leftItemMock,
             right: initialExploreState.right,
-          } as ExploreState);
+          } as unknown) as ExploreState);
       });
     });
   });
@@ -339,9 +344,9 @@ describe('Explore reducer', () => {
     describe('and payload does not contain a query', () => {
       it('then it should just return state', () => {
         reducerTester<ExploreState>()
-          .givenReducer(exploreReducer, {} as ExploreState)
-          .whenActionIsDispatched(updateLocation({ query: null }))
-          .thenStateShouldEqual({} as ExploreState);
+          .givenReducer(exploreReducer, ({} as unknown) as ExploreState)
+          .whenActionIsDispatched(updateLocation({ query: (null as unknown) as UrlQueryMap }))
+          .thenStateShouldEqual(({} as unknown) as ExploreState);
       });
     });
 
@@ -349,9 +354,9 @@ describe('Explore reducer', () => {
       describe("but does not contain 'left'", () => {
         it('then it should just return state', () => {
           reducerTester<ExploreState>()
-            .givenReducer(exploreReducer, {} as ExploreState)
+            .givenReducer(exploreReducer, ({} as unknown) as ExploreState)
             .whenActionIsDispatched(updateLocation({ query: {} }))
-            .thenStateShouldEqual({} as ExploreState);
+            .thenStateShouldEqual(({} as unknown) as ExploreState);
         });
       });
 
@@ -378,8 +383,8 @@ describe('Explore reducer', () => {
         describe('but urlState is not set in state', () => {
           it('then it should just add urlState and update in state', () => {
             const { initialState, serializedUrlState } = setup();
-            const urlState: ExploreUrlState = null;
-            const stateWithoutUrlState = { ...initialState, left: { urlState } } as ExploreState;
+            const urlState: ExploreUrlState = (null as unknown) as ExploreUrlState;
+            const stateWithoutUrlState = ({ ...initialState, left: { urlState } } as unknown) as ExploreState;
             const expectedState = { ...initialState };
 
             reducerTester<ExploreState>()
