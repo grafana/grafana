@@ -13,8 +13,6 @@
     link: /installation/mac/
   - name: Installing using Docker
     link: /installation/docker/
-  - name: Building from source
-    link: /project/building_from_source/
   - name: Upgrading
     link: /installation/upgrading/
 - name: Administration
@@ -330,6 +328,8 @@
 - name: Contribute
   link: /contribute/
   children:
+  - name: Developer resources
+    link: /contribute/developer-resources/
   - name: Contributor License Agreement (CLA)
     link: /contribute/cla/
 - name: Docs Archive
