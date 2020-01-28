@@ -105,7 +105,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		return nil, models.ErrDashboardUidToLong
 	}
 
-	if err := validateDashboardRefreshRateDuration(dash); err != nil {
+	if err := validateDashboardRefreshInterval(dash); err != nil {
 		return nil, err
 	}
 
@@ -178,8 +178,8 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	return cmd, nil
 }
 
-func validateDashboardRefreshRateDuration(dash *models.Dashboard) error {
-	if setting.MinRefreshRateDuration == "" {
+func validateDashboardRefreshInterval(dash *models.Dashboard) error {
+	if setting.MinRefreshInterval == "" {
 		return nil
 	}
 
@@ -189,7 +189,7 @@ func validateDashboardRefreshRateDuration(dash *models.Dashboard) error {
 		return nil
 	}
 
-	minRefreshRate, err := gtime.ParseInterval(setting.MinRefreshRateDuration)
+	minRefreshInterval, err := gtime.ParseInterval(setting.MinRefreshInterval)
 	if err != nil {
 		return err
 	}
@@ -198,8 +198,8 @@ func validateDashboardRefreshRateDuration(dash *models.Dashboard) error {
 		return err
 	}
 
-	if d < minRefreshRate {
-		return models.ErrDashboardRefreshRateTooShort
+	if d < minRefreshInterval {
+		return models.ErrDashboardRefreshIntervalTooShort
 	}
 
 	return nil
@@ -216,9 +216,9 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
-	if err := validateDashboardRefreshRateDuration(dto.Dashboard); err != nil {
-		dr.log.Warn("resetting refresh rate duration for provisioned dashboard to minimum refresh rate duration", "title", dto.Dashboard.Title, "min_refresh_rate_duration", setting.MinRefreshRateDuration)
-		dto.Dashboard.Data.Set("refresh", setting.MinRefreshRateDuration)
+	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
+		dr.log.Warn("resetting refresh rate duration for provisioned dashboard to minimum refresh rate duration", "title", dto.Dashboard.Title, "min_refresh_rate_duration", setting.MinRefreshInterval)
+		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
 	dto.User = &models.SignedInUser{

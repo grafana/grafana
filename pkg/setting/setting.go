@@ -120,7 +120,7 @@ var (
 
 	// Dashboard history
 	DashboardVersionsToKeep int
-	MinRefreshRateDuration  string
+	MinRefreshInterval      string
 
 	// User settings
 	AllowUserSignUp         bool
@@ -768,7 +768,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
-	MinRefreshRateDuration, err = valueAsString(dashboards, "min_refresh_rate_duration", "")
+	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "")
 	if err != nil {
 		return err
 	}

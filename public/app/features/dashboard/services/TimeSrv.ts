@@ -73,14 +73,14 @@ export class TimeSrv {
   }
 
   getValidIntervals(intervals: string[]): string[] {
-    if (!this.contextSrv.minRefreshRate) {
+    if (!this.contextSrv.minRefreshInterval) {
       return intervals;
     }
 
     const validIntervals = intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
 
-    if (validIntervals.indexOf(this.contextSrv.minRefreshRate) === -1) {
-      validIntervals.unshift(this.contextSrv.minRefreshRate);
+    if (validIntervals.indexOf(this.contextSrv.minRefreshInterval) === -1) {
+      validIntervals.unshift(this.contextSrv.minRefreshInterval);
     }
     return validIntervals;
   }
@@ -152,7 +152,7 @@ export class TimeSrv {
     // but if refresh explicitly set then use that
     if (params.refresh) {
       if (!this.contextSrv.isAllowedInterval(params.refresh)) {
-        this.refresh = config.minRefreshRate;
+        this.refresh = config.minRefreshInterval;
       } else {
         this.refresh = params.refresh || this.refresh;
       }

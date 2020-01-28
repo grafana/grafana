@@ -189,10 +189,10 @@ func TestDashboardService(t *testing.T) {
 				So(provisioningValidated, ShouldBeFalse)
 			})
 
-			Convey("Should override invalid refresh rate duration if dashboard is provisioned", func() {
-				oldRefreshRateDuration := setting.MinRefreshRateDuration
-				setting.MinRefreshRateDuration = "5m"
-				defer func() { setting.MinRefreshRateDuration = oldRefreshRateDuration }()
+			Convey("Should override invalid refresh interval if dashboard is provisioned", func() {
+				oldRefreshInterval := setting.MinRefreshInterval
+				setting.MinRefreshInterval = "5m"
+				defer func() { setting.MinRefreshInterval = oldRefreshInterval }()
 
 				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					cmd.Result = &models.DashboardProvisioning{}

@@ -21,14 +21,14 @@ export class TimePickerCtrl {
       '2h',
       '1d',
     ];
-    if (config.minRefreshRate) {
+    if (config.minRefreshInterval) {
       this.panel.refresh_intervals = this.filterRefreshRates(this.panel.refresh_intervals);
     }
   }
 
   filterRefreshRates(refreshRates: string[]) {
     return refreshRates.filter(rate => {
-      return kbn.interval_to_ms(rate) > kbn.interval_to_ms(config.minRefreshRate);
+      return kbn.interval_to_ms(rate) > kbn.interval_to_ms(config.minRefreshInterval);
     });
   }
 }
