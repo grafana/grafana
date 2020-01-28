@@ -19,6 +19,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   aggregatorsPromise: any;
   filterTypesPromise: any;
 
+  /** @ngInject */
   constructor(instanceSettings: any, private templateSrv: TemplateSrv) {
     super(instanceSettings);
     this.type = 'opentsdb';
