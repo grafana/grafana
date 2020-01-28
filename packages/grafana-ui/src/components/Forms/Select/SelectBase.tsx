@@ -1,12 +1,14 @@
 import React from 'react';
 import { SelectableValue, deprecationWarning } from '@grafana/data';
 // @ts-ignore
-import { default as ReactSelect, Creatable } from '@torkelo/react-select';
+import { default as ReactSelect } from '@torkelo/react-select';
 // @ts-ignore
-import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
+import Creatable from '@torkelo/react-select/creatable';
+// @ts-ignore
+import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
 
 import { Icon } from '../../Icon/Icon';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { inputSizes } from '../commonStyles';
 import { FormInputSize } from '../types';
 import resetSelectStyles from './resetSelectStyles';
@@ -171,7 +173,7 @@ export function SelectBase<T>({
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
-  let Component: ReactSelect | Creatable = ReactSelect;
+  let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
 
@@ -235,13 +237,13 @@ export function SelectBase<T>({
   }
 
   if (allowCustomValue) {
-    Component = Creatable;
+    ReactSelectComponent = Creatable;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
   if (loadOptions) {
-    Component = ReactAsyncSelect;
+    ReactSelectComponent = ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
       defaultOptions,
@@ -249,11 +251,44 @@ export function SelectBase<T>({
   }
 
   return (
-    <Component
+    <ReactSelectComponent
       components={{
         MenuList: SelectMenu,
         Group: SelectOptionGroup,
         ValueContainer: ValueContainer,
+        Placeholder: (props: any) => (
+          <div
+            {...props.innerProps}
+            className={cx(
+              css(props.getStyles('placeholder', props)),
+              css`
+                display: inline-block;
+                color: hsl(0, 0%, 50%);
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                box-sizing: border-box;
+                line-height: 1;
+              `
+            )}
+          >
+            {props.children}
+          </div>
+        ),
+        SelectContainer: (props: any) => (
+          <div
+            {...props.innerProps}
+            className={cx(
+              css(props.getStyles('container', props)),
+              css`
+                position: relative;
+              `,
+              inputSizes()[size]
+            )}
+          >
+            {props.children}
+          </div>
+        ),
         IndicatorsContainer: IndicatorsContainer,
         IndicatorSeparator: () => <></>,
         Control: CustomControl,
@@ -292,28 +327,6 @@ export function SelectBase<T>({
       }}
       styles={{
         ...resetSelectStyles(),
-        singleValue: () => {
-          return css`
-            overflow: hidden;
-          `;
-        },
-        container: () => {
-          return css`
-            position: relative;
-            ${inputSizes()[size]}
-          `;
-        },
-        placeholder: () => {
-          return css`
-            display: inline-block;
-            color: hsl(0, 0%, 50%);
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            box-sizing: border-box;
-            line-height: 1;
-          `;
-        },
       }}
       className={widthClass}
       {...commonSelectProps}
