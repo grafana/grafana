@@ -1,25 +1,47 @@
-import React from 'react';
+import React, { HTMLProps } from 'react';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusStyle } from './commonStyles';
+import { getFocusCss } from './commonStyles';
 
-export interface SwitchProps {
-  checked?: boolean;
-  disabled?: boolean;
-  onChange?: (e: React.SyntheticEvent<HTMLButtonElement>, checked: boolean) => void;
+export interface SwitchProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
+  value?: boolean;
 }
 
 export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    slider: cx(
-      css`
-        width: 32px;
-        height: 16px;
-        background: ${theme.colors.formSwitchBg};
-        transition: all 0.30s ease;
-        border-radius: 50px;
+    switch: css`
+      width: 32px;
+      height: 16px;
+      position: relative;
+
+      input {
+        opacity: 0;
+        width: 100% !important;
+        height: 100%;
         position: relative;
+        z-index: 1;
+        cursor: pointer;
+
+        &:focus ~ div {
+          ${getFocusCss(theme)};
+        }
+        &[disabled] {
+          background: ${theme.colors.formSwitchBgDisabled};
+        }
+      }
+
+      input ~ div {
+        width: 100%;
+        height: 100%;
+        background: red;
+        z-index: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: ${theme.colors.formSwitchBg};
+        transition: all 0.3s ease;
+        border-radius: 50px;
         border: none;
         display: block;
         padding: 0;
@@ -30,6 +52,7 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
           content: '';
           transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
           position: absolute;
+          z-index: 0;
           top: 50%;
           display: block;
           width: 12px;
@@ -38,42 +61,41 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
           border-radius: 6px;
           transform: translate3d(2px, -50%, 0);
         }
-        &:focus {
-          /* border: 1px solid ${theme.colors.formSwitchDot}; */
-        }
-        &[disabled] {
-          background: ${theme.colors.formSwitchBgDisabled};
-        }
-      `,
-      getFocusStyle(theme)
-    ),
-    sliderActive: css`
-      background: ${theme.colors.formSwitchBgActive};
-      &:hover {
-        background: ${theme.colors.formSwitchBgActiveHover};
       }
-      &:after {
-        transform: translate3d(16px, -50%, 0);
+      input:checked ~ div {
+        background: ${theme.colors.formSwitchBgActive};
+        &:hover {
+          background: ${theme.colors.formSwitchBgActiveHover};
+        }
+
+        &:after {
+          transform: translate3d(16px, -50%, 0);
+        }
       }
     `,
   };
 });
-export const Switch: React.FC<SwitchProps> = ({ checked = false, disabled = false, onChange }) => {
-  const theme = useTheme();
-  const styles = getSwitchStyles(theme);
+export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
+  ({ value, checked, disabled = false, onChange, ...inputProps }, ref) => {
+    const theme = useTheme();
+    const styles = getSwitchStyles(theme);
 
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={!!checked}
-      disabled={disabled}
-      className={cx(styles.slider, checked && styles.sliderActive)}
-      onClick={e => {
-        if (onChange) {
-          onChange(e, !!!checked);
-        }
-      }}
-    />
-  );
-};
+    return (
+      <div className={cx(styles.switch)}>
+        <input
+          type="checkbox"
+          disabled={disabled}
+          checked={value}
+          onChange={event => {
+            if (onChange) {
+              onChange(event);
+            }
+          }}
+          {...inputProps}
+          ref={ref}
+        />
+        <div></div>
+      </div>
+    );
+  }
+);

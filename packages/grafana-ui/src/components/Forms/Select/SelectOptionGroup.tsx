@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { GroupProps } from 'react-select/lib/components/Group';
+import { GroupProps } from 'react-select';
 import { stylesFactory, withTheme, selectThemeVariant } from '../../../themes';
 import { Themeable } from '../../../types';
 

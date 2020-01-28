@@ -3,9 +3,10 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { CoreEvents } from 'app/types';
+import { promiseToDigest } from '../../utils/promiseToDigest';
 
 export interface Section {
   id: number;
@@ -69,12 +70,7 @@ export class ManageDashboardsCtrl {
   hasEditPermissionInFolders: boolean;
 
   /** @ngInject */
-  constructor(
-    private $scope: IScope,
-    private backendSrv: BackendSrv,
-    private searchSrv: SearchSrv,
-    private contextSrv: ContextSrv
-  ) {
+  constructor(private $scope: IScope, private searchSrv: SearchSrv, private contextSrv: ContextSrv) {
     this.isEditor = this.contextSrv.isEditor;
     this.hasEditPermissionInFolders = this.contextSrv.hasEditPermissionInFolders;
 
@@ -108,10 +104,10 @@ export class ManageDashboardsCtrl {
       .then(() => {
         if (!this.folderUid) {
           this.$scope.$digest();
-          return;
+          return undefined;
         }
 
-        return this.backendSrv.getFolderByUid(this.folderUid).then((folder: any) => {
+        return backendSrv.getFolderByUid(this.folderUid).then((folder: any) => {
           this.canSave = folder.canSave;
           if (!this.canSave) {
             this.hasEditPermissionInFolders = false;
@@ -216,9 +212,11 @@ export class ManageDashboardsCtrl {
   }
 
   private deleteFoldersAndDashboards(folderUids: string[], dashboardUids: string[]) {
-    this.backendSrv.deleteFoldersAndDashboards(folderUids, dashboardUids).then(() => {
-      this.refreshList();
-    });
+    promiseToDigest(this.$scope)(
+      backendSrv.deleteFoldersAndDashboards(folderUids, dashboardUids).then(() => {
+        this.refreshList();
+      })
+    );
   }
 
   getDashboardsToMove() {
