@@ -16,7 +16,7 @@ export class InfluxDatasourceMock {
     if (isMeasurementsQuery(query)) {
       return this.getMeasurements();
     } else {
-      return this.getMeasurementFiels(query);
+      return this.getMeasurementFields(query);
     }
   }
 
@@ -24,7 +24,7 @@ export class InfluxDatasourceMock {
     return Object.keys(this.measurements).map(key => ({ text: key }));
   }
 
-  private getMeasurementFiels(query: string): FieldReturnValue[] {
+  private getMeasurementFields(query: string): FieldReturnValue[] {
     const match = query.match(/SHOW FIELD KEYS FROM \"(.+)\"/);
     if (!match) {
       throw new Error(`Failed to match query="${query}"`);
