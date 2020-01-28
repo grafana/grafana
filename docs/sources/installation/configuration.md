@@ -557,11 +557,83 @@ Either "console", "file", "syslog". Default is "console" and "file".
 Use spaces to separate multiple modes, e.g. `console file`
 
 ### level
-Either "debug", "info", "warn", "error", "critical", default is `info`
+
+Either "debug", "info", "warn", "error", "critical", default is `info`.
 
 ### filters
+
 optional settings to set different levels for specific loggers.
-For example `filters = sqlstore:debug`
+For example `filters = sqlstore:debug`.
+
+## [log.console]
+
+Only applicable when "console" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+## [log.file]
+
+Only applicable when "file" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+### log_rotate
+
+Enable automated log rotation, valid options are false or true. Default is `true`.
+When enabled use the `max_lines`, `max_size_shift`, `daily_rotate` and `max_days` below
+to configure the behavior of the log rotation.
+
+### max_lines
+
+Maximum lines per file before rotating it. Default is 1000000.
+
+### max_size_shift
+
+Maximum size of file before rotating it. Default is `28` which means `1 << 28`, `256MB`.
+
+### daily_rotate
+
+Enable daily rotation of files, valid options are false or true. Default is `true`.
+
+### max_days
+
+Maximum number of days to keep log files. Default is `7`.
+
+## [log.syslog]
+
+Only applicable when "syslog" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+### network and address
+
+Syslog network type and address. This can be udp, tcp, or unix. If left blank, the default unix endpoints will be used.
+
+### facility
+
+Syslog facility. Valid options are user, daemon or local0 through local7. Default is empty.
+
+### tag
+
+Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
 
