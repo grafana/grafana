@@ -6,6 +6,10 @@ type FieldsDefinition = {
 type Measurements = { [measurement: string]: FieldsDefinition[] };
 type FieldReturnValue = { text: string };
 
+/**
+ * Datasource mock for influx. At the moment this only works for queries that should return measurements or their
+ * fields and no other functionality is implemented.
+ */
 export class InfluxDatasourceMock {
   constructor(private measurements: Measurements) {}
   metricFindQuery(query: string) {
