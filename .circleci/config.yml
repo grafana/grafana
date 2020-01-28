@@ -496,7 +496,7 @@ jobs:
             - node_modules
       - run:
           name: Run end-to-end tests
-          command: env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests:ci
+          command: env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests
           no_output_timeout: 5m
       - store_artifacts:
           path: public/e2e-tests/screenShots/theTruth
@@ -624,7 +624,7 @@ jobs:
                 - node_modules
           - run:
               name: run end-to-end tests
-              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests:ci'
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
           - store_artifacts:
                 path: public/e2e-tests/screenShots/theTruth
@@ -666,7 +666,7 @@ jobs:
                 - node_modules
           - run:
               name: run end-to-end tests
-              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests:ci'
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
           - store_artifacts:
                 path: public/e2e-tests/screenShots/theTruth
