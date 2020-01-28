@@ -48,7 +48,7 @@ export class LogsPanelEditor extends PureComponent<PanelEditorProps<Options>> {
         <PanelOptionsGrid>
           <PanelOptionsGroup title="Columns">
             <Switch label="Time" labelClass="width-10" checked={showTime} onChange={this.onToggleTime} />
-            <Switch label="Labels" labelClass="width-10" checked={showLabels} onChange={this.onToggleLabels} />
+            <Switch label="Unique labels" labelClass="width-10" checked={showLabels} onChange={this.onToggleLabels} />
             <Switch
               label="Wrap lines"
               labelClass="width-10"
