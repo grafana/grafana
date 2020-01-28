@@ -136,22 +136,23 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (
-      e.key !== 'ArrowDown' &&
-      e.key !== 'ArrowUp' &&
-      e.key !== 'Enter' &&
-      e.key !== 'ArrowLeft' &&
-      e.key !== 'ArrowRight'
+      e.key === 'ArrowDown' ||
+      e.key === 'ArrowUp' ||
+      e.key === 'Enter' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight'
     ) {
+      return;
+    }
+    this.setState({
+      focusCascade: false,
+      isSearching: true,
+    });
+    if (e.key === 'Backspace') {
+      const label = this.state.activeLabel || '';
       this.setState({
-        focusCascade: false,
-        isSearching: true,
+        activeLabel: label.slice(0, -1),
       });
-      if (e.key === 'Backspace') {
-        const label = this.state.activeLabel || '';
-        this.setState({
-          activeLabel: label.slice(0, -1),
-        });
-      }
     }
   };
 
