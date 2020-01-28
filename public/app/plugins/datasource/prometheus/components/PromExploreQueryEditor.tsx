@@ -11,19 +11,14 @@ import { PromExploreExtraField } from './PromExploreExtraField';
 
 export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
 
-export const PromExploreQueryEditor = memo(function PromExploreQueryEditor(props: Props) {
+export function PromExploreQueryEditor(props: Props) {
   const { query, data, datasource, history, onChange, onRunQuery } = props;
-  const [step, setStep] = useState(query.interval);
+  const [step, setStep] = useState(query.interval || '');
 
-  function onChangeQueryStep(value: string, override?: boolean) {
-    const { query, onChange, onRunQuery } = props;
-    if (onChange) {
-      const nextQuery = { ...query, interval: value };
-      onChange(nextQuery);
-      if (override && onRunQuery) {
-        onRunQuery();
-      }
-    }
+  function onChangeQueryStep(value: string) {
+    const { query, onChange } = props;
+    const nextQuery = { ...query, interval: value };
+    onChange(nextQuery);
   }
 
   function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
@@ -58,6 +53,6 @@ export const PromExploreQueryEditor = memo(function PromExploreQueryEditor(props
       }
     />
   );
-});
+}
 
-export default PromExploreQueryEditor;
+export default memo(PromExploreQueryEditor);
