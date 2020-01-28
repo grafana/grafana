@@ -6,6 +6,8 @@ import { default as ReactSelect } from '@torkelo/react-select';
 import Creatable from '@torkelo/react-select/creatable';
 // @ts-ignore
 import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
+// @ts-ignore
+import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable';
 
 import { Icon } from '../../Icon/Icon';
 import { css, cx } from 'emotion';
@@ -243,7 +245,7 @@ export function SelectBase<T>({
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
   if (loadOptions) {
-    ReactSelectComponent = ReactAsyncSelect;
+    ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
       defaultOptions,
