@@ -1,29 +1,20 @@
 import React, { PureComponent } from 'react';
-import { Button, Input, AsyncSelect } from '@grafana/ui';
-import { AppEvents, SelectableValue } from '@grafana/data';
+import { Forms } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { appEvents, contextSrv } from 'app/core/core';
-import validationSrv from 'app/features/manage-dashboards/services/ValidationSrv';
+import { contextSrv } from 'app/core/core';
 
 export interface Props {
   onChange: ($folder: { id: number; title: string }) => void;
-
-  labelClass?: string;
   rootName?: string;
-  enableCreateNew?: boolean;
   enableReset?: boolean;
   dashboardId?: any;
   initialTitle?: string;
   initialFolderId?: number;
-
-  enterFolderCreation?: () => void;
-  exitFolderCreation?: () => void;
 }
 
 interface State {
   folder: SelectableValue<number>;
-  newFolderName: string;
-  createNewFolder: boolean;
   validationError: string;
   hasValidationError: boolean;
   newFolderNameTouched: boolean;
@@ -40,8 +31,6 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   state: State = {
     folder: {},
-    newFolderName: '',
-    createNewFolder: false,
     validationError: '',
     hasValidationError: false,
     newFolderNameTouched: false,
@@ -57,7 +46,7 @@ export class FolderPicker extends PureComponent<Props, State> {
       isLoading: true,
     });
 
-    const { rootName, enableCreateNew, enableReset, initialTitle } = this.props;
+    const { rootName, enableReset, initialTitle } = this.props;
     const params = {
       query,
       type: 'dash-folder',
@@ -68,10 +57,6 @@ export class FolderPicker extends PureComponent<Props, State> {
     const options: Array<SelectableValue<number>> = searchHits.map(hit => ({ label: hit.title, value: hit.id }));
     if (contextSrv.isEditor && rootName.toLowerCase().startsWith(query.toLowerCase())) {
       options.unshift({ label: rootName, value: 0 });
-    }
-
-    if (contextSrv.isEditor && enableCreateNew && query === '') {
-      options.unshift({ label: '-- New Folder --', value: -1 });
     }
 
     if (enableReset && query === '' && initialTitle !== '') {
@@ -87,12 +72,6 @@ export class FolderPicker extends PureComponent<Props, State> {
   onFolderChange = (newFolder: SelectableValue<number>) => {
     if (!newFolder) {
       newFolder = { value: 0, label: this.props.rootName };
-    } else if (newFolder.value === -1) {
-      this.setState({
-        createNewFolder: true,
-      });
-      this.props.enterFolderCreation?.();
-      return;
     }
 
     this.setState(
@@ -101,61 +80,6 @@ export class FolderPicker extends PureComponent<Props, State> {
       },
       () => this.props.onChange({ id: newFolder.value, title: newFolder.text })
     );
-  };
-
-  onNewFolderNameChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      newFolderNameTouched: true,
-      newFolderName: event.target.value,
-    });
-
-    try {
-      await validationSrv.validateNewFolderName(event.target.value);
-      this.setState({
-        hasValidationError: false,
-      });
-    } catch (err) {
-      this.setState({
-        hasValidationError: true,
-        validationError: err.message,
-      });
-    }
-  };
-
-  createFolder = async (evt: React.MouseEvent) => {
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
-    }
-
-    const result: { title: string; id: number } = await getBackendSrv().createFolder({
-      title: this.state.newFolderName,
-    });
-    appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
-
-    this.onFolderChange({ label: result.title, value: result.id });
-    this.closeCreateFolder();
-  };
-
-  cancelCreateFolder = (evt: React.MouseEvent) => {
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
-    }
-
-    this.closeCreateFolder();
-    this.loadInitialValue();
-  };
-
-  private closeCreateFolder = () => {
-    this.props.exitFolderCreation?.();
-    this.setState({
-      createNewFolder: false,
-      hasValidationError: false,
-      validationError: undefined,
-      newFolderName: '',
-      newFolderNameTouched: false,
-    });
   };
 
   private loadInitialValue = async () => {
@@ -176,7 +100,7 @@ export class FolderPicker extends PureComponent<Props, State> {
         folder = rootFolder;
       } else {
         // We shouldn't assign a random folder without the user actively choosing it on a persisted dashboard
-        const isPersistedDashBoard = dashboardId ? true : false;
+        const isPersistedDashBoard = !!dashboardId;
         if (isPersistedDashBoard) {
           folder = resetFolder;
         } else {
@@ -196,65 +120,25 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { labelClass } = this.props;
-    const {
-      folder,
-      newFolderName,
-      createNewFolder,
-      validationError,
-      hasValidationError,
-      newFolderNameTouched,
-      isLoading,
-    } = this.state;
+    const { folder, validationError, hasValidationError, newFolderNameTouched } = this.state;
 
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <label className={`gf-form-label ${labelClass ?? 'width-7'}`}>Folder</label>
-            {!createNewFolder && (
-              <AsyncSelect
-                isLoading={isLoading}
-                value={folder}
-                defaultOptions={true}
-                loadOptions={this.getOptions}
-                onChange={this.onFolderChange}
-              />
-            )}
-            {createNewFolder && (
-              <Input
-                autoFocus
-                type="text"
-                className="gf-form-input max-width-10"
-                value={newFolderName}
-                onChange={this.onNewFolderNameChange}
-              />
-            )}
-          </div>
-          {createNewFolder && (
-            <>
-              <div className="gf-form">
-                <Button
-                  variant="inverse"
-                  onClick={this.createFolder}
-                  disabled={!newFolderNameTouched || hasValidationError}
-                >
-                  Create
-                </Button>
-              </div>
-              <div className="gf-form">
-                <Button variant="inverse" onClick={this.cancelCreateFolder}>
-                  Cancel
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
+        <Forms.Field label="Folder">
+          <Forms.AsyncSelect
+            loadingMessage="Loading folders..."
+            value={folder}
+            defaultOptions
+            loadOptions={this.getOptions}
+            onChange={this.onFolderChange}
+            size="sm"
+          />
+        </Forms.Field>
         {newFolderNameTouched && hasValidationError && (
           <div className="gf-form-inline">
             <div className="gf-form gf-form--grow">
               <label className="gf-form-label text-warning gf-form-label--grow">
-                <i className="fa fa-warning"></i>
+                <i className="fa fa-warning" />
                 {validationError}
               </label>
             </div>
