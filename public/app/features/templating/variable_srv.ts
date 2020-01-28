@@ -15,6 +15,7 @@ import { TimeRange, AppEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
+import { ContextSrv } from 'app/core/services/context_srv';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -26,7 +27,8 @@ export class VariableSrv {
     private $location: ILocationService,
     private $injector: auto.IInjectorService,
     private templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
+    private timeSrv: TimeSrv,
+    private contextSrv: ContextSrv
   ) {}
 
   init(dashboard: DashboardModel) {
@@ -55,6 +57,24 @@ export class VariableSrv {
       )
       .then(() => {
         this.templateSrv.updateIndex();
+        this.templateSrv.setGlobalVariable('__dashboard', {
+          value: {
+            name: dashboard.title,
+            uid: dashboard.uid,
+            toString: function() {
+              return this.uid;
+            },
+          },
+        });
+        this.templateSrv.setGlobalVariable('__org', {
+          value: {
+            name: this.contextSrv.user.orgName,
+            id: this.contextSrv.user.id,
+            toString: function() {
+              return this.id;
+            },
+          },
+        });
       });
   }
 

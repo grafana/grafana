@@ -13,6 +13,7 @@ describe('VariableSrv init', function(this: any) {
     },
     variableInitialized: () => {},
     updateIndex: () => {},
+    setGlobalVariable: (name: string, variable: any) => {},
     replace: (str: string) =>
       str.replace(this.regex, match => {
         return match;
@@ -23,6 +24,10 @@ describe('VariableSrv init', function(this: any) {
     timeRange: () => {
       return { from: '2018-01-29', to: '2019-01-29' };
     },
+  };
+
+  const contextSrv = {
+    user: { id: 1, orgId: 1, orgName: 'testOrg' },
   };
 
   const $injector = {} as any;
@@ -51,7 +56,7 @@ describe('VariableSrv init', function(this: any) {
         };
 
         // @ts-ignore
-        ctx.variableSrv = new VariableSrv($q, {}, $injector, templateSrv, timeSrv);
+        ctx.variableSrv = new VariableSrv($q, {}, $injector, templateSrv, timeSrv, contextSrv);
 
         $injector.instantiate = (variable: any, model: any) => {
           return getVarMockConstructor(variable, model, ctx);

@@ -311,6 +311,10 @@ Grafana has global built-in variables that can be used in expressions in the que
 Grafana has two built in time range variables in `$__from` and `$__to`. They are currently always interpolated
 as epoch milliseconds. These variables are only available in Grafana v6.0 and above.
 
+> Only available in Grafana v6.6+
+
+In Grafana 6.6 and above, you can format time in a string `${__from.text}` and `${__to.text}`, with default text format (`YYYY-MM-DD HH:mm:ss`).
+
 ### The $__interval Variable
 
 This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
@@ -346,6 +350,18 @@ This variable is only available in the Singlestat panel and can be used in the p
 > Only available in Grafana v5.3+
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
+
+### The $__dashboard Variable
+> Only available in Grafana v6.6+
+
+This variable is the UID of the current dashboard.
+`${__dashboard.name}` is the name of the current dashboard.
+
+### The $__org Variable
+> Only available in Grafana v6.6+
+
+This variable is the ID of the current organization.
+`${__org.name}` is the name of the current organization.
 
 ## Repeating Panels
 
