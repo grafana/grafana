@@ -163,7 +163,6 @@
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit --maxWorkers 2",
     "e2e": "cd packages/grafana-e2e && yarn start --env BASE_URL=$BASE_URL,CIRCLE_SHA1=$CIRCLE_SHA1,SLOWMO=$SLOWMO --config integrationFolder=../../public/e2e-tests/integration,screenshotsFolder=../../public/e2e-tests/screenShots,videosFolder=../../public/e2e-tests/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false",
     "e2e-tests": "yarn e2e",
-    "e2e-tests:ci": "yarn e2e --record",
     "e2e-tests:debug": "SLOWMO=1 yarn e2e --headed --no-exit",
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
     "storybook": "cd packages/grafana-ui && yarn storybook --ci",
