@@ -5,11 +5,11 @@ import {
   LdapState,
   LdapUser,
   SyncInfo,
+  UserAdminError,
   UserAdminState,
   UserDTO,
   UserOrg,
   UserSession,
-  UserAdminError,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
@@ -77,6 +77,7 @@ const initialUserAdminState: UserAdminState = {
   sessions: [],
   orgs: [],
   isLoading: true,
+  error: null,
 };
 
 export const userAdminSlice = createSlice({
