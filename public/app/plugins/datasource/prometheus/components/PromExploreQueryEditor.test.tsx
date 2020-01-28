@@ -1,12 +1,11 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { shallow, render } from 'enzyme';
 import PromExploreQueryEditor from './PromExploreQueryEditor';
-import { PromExploreExtraField } from './PromExploreExtraField';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 import { PanelData, LoadingState, dateTime } from '@grafana/data';
 
-const setup = (propOverrides?: object) => {
+const setup = (renderMethod: any, propOverrides?: object) => {
   const datasourceMock: unknown = {};
   const datasource: PrometheusDatasource = datasourceMock as PrometheusDatasource;
   const onRunQuery = jest.fn();
@@ -58,30 +57,17 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<PromExploreQueryEditor {...props} />);
+  return renderMethod(<PromExploreQueryEditor {...props} />);
 };
 
 describe('PromExploreQueryEditor', () => {
   it('should render component', () => {
-    const wrapper = setup();
+    const wrapper = setup(shallow);
     expect(wrapper).toMatchSnapshot();
   });
 
   it('should render PromQueryField with ExtraFieldElement', () => {
-    const wrapper = setup();
-    const onStepChange = (e: React.SyntheticEvent<HTMLInputElement>) => jest.fn();
-    const onReturnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => jest.fn();
-
-    // workaround to "Received: serializes to the same string"
-    expect(JSON.stringify(wrapper.prop('ExtraFieldElement'))).toEqual(
-      JSON.stringify(
-        <PromExploreExtraField
-          label={'Step'}
-          onChangeFunc={onStepChange}
-          onKeyDownFunc={onReturnKeyDown}
-          value={'1s'}
-        />
-      )
-    );
+    const wrapper = setup(render);
+    expect(wrapper.find('.explore-input--ml')).toHaveLength(1);
   });
 });
