@@ -96,7 +96,7 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 
 #### Time
 
-Shows or hides the time column. This is the timestamp associated with the log line as reported from the datasource.
+Shows or hides the time column. This is the timestamp associated with the log line as reported from the data source.
 
 #### Unique labels
 
