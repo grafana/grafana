@@ -13,6 +13,7 @@ import { ILocationProvider, route } from 'angular';
 import { DashboardRouteInfo } from 'app/types';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
+import SignupPage from 'app/features/profile/SignupPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
@@ -351,9 +352,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'sidemenu-hidden',
     })
     .when('/signup', {
-      templateUrl: 'public/app/partials/signup_step2.html',
-      controller: 'SignUpCtrl',
-      pageClass: 'sidemenu-hidden',
+      // templateUrl: 'public/app/partials/signup_step2.html',
+      // controller: 'SignUpCtrl',
+      template: '<react-container/>',
+      resolve: {
+        component: () => SignupPage,
+      },
+      // pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {
       templateUrl: 'public/app/partials/reset_password.html',
