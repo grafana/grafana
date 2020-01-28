@@ -34,10 +34,6 @@ type coreGRPCServer struct {
 	server CoreServer
 }
 
-func (s *coreGRPCServer) GetSchema(ctx context.Context, req *pluginv2.GetSchema_Request) (*pluginv2.GetSchema_Response, error) {
-	return s.server.GetSchema(ctx, req)
-}
-
 func (s *coreGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
 	return s.server.DataQuery(ctx, req)
 }
@@ -48,10 +44,6 @@ func (s *coreGRPCServer) CallResource(ctx context.Context, req *pluginv2.CallRes
 
 type coreGRPCClient struct {
 	client pluginv2.CoreClient
-}
-
-func (s *coreGRPCClient) GetSchema(ctx context.Context, req *pluginv2.GetSchema_Request) (*pluginv2.GetSchema_Response, error) {
-	return s.client.GetSchema(ctx, req)
 }
 
 func (m *coreGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {

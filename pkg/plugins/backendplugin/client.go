@@ -111,7 +111,6 @@ type DatasourcePlugin interface {
 }
 
 type CorePlugin interface {
-	GetSchema(ctx context.Context, req *pluginv2.GetSchema_Request) (*pluginv2.GetSchema_Response, error)
 	CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error)
 	DatasourcePlugin
 }

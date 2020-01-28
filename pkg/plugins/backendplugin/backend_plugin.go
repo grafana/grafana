@@ -5,12 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/resource"
-
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,8 +33,6 @@ type BackendPlugin struct {
 	startFns       PluginStartFuncs
 	diagnostics    DiagnosticsPlugin
 	core           CorePlugin
-	resources      map[string]*pluginv2.Resource
-	routerTree     *macaron.Tree
 }
 
 func (p *BackendPlugin) start(ctx context.Context) error {
@@ -107,23 +100,6 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
-	res, err := p.getSchema(ctx)
-	if err != nil {
-		return errutil.Wrap("Failed to get schema for plugin", err)
-	}
-
-	p.resources = res.Resources
-	p.routerTree = macaron.NewTree()
-
-	for resourceName, resource := range p.resources {
-		p.logger.Info("got resource", "name", resourceName)
-		for _, r := range resource.Routes {
-			resourcePath := resource.Path + r.Path
-			p.logger.Info("adding route to tree", "resourcePath", resourcePath)
-			p.routerTree.Add(resourcePath, createResourceHandler(p, resourceName, resourcePath))
-		}
-	}
-
 	if legacyClient != nil && p.startFns.OnLegacyStart != nil {
 		if err := p.startFns.OnLegacyStart(p.id, legacyClient, p.logger); err != nil {
 			return err
@@ -149,29 +125,6 @@ func (p *BackendPlugin) stop() error {
 // supportsDiagnostics return whether backend plugin supports diagnostics like metrics and health check.
 func (p *BackendPlugin) supportsDiagnostics() bool {
 	return p.diagnostics != nil
-}
-
-func (p *BackendPlugin) getSchema(ctx context.Context) (*pluginv2.GetSchema_Response, error) {
-	if p.core == nil {
-		return &pluginv2.GetSchema_Response{
-			Resources: map[string]*pluginv2.Resource{},
-		}, nil
-	}
-
-	res, err := p.core.GetSchema(ctx, &pluginv2.GetSchema_Request{})
-	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() == codes.Unimplemented {
-				return &pluginv2.GetSchema_Response{
-					Resources: map[string]*pluginv2.Resource{},
-				}, nil
-			}
-		}
-
-		return nil, err
-	}
-
-	return res, nil
 }
 
 // CollectMetrics implements the collector.Collector interface.
@@ -244,84 +197,44 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 }
 
 func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (*CallResourceResult, error) {
-	if p.resources == nil {
-		return &CallResourceResult{
-			Status:  http.StatusNotFound,
-			Headers: map[string][]string{"Content-Type": {"application/json"}},
-		}, nil
-	}
-
 	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
 
-	handle, params, matched := p.routerTree.Match(req.Path)
-	if !matched {
-		return &CallResourceResult{
-			Status:  http.StatusNotFound,
-			Headers: map[string][]string{"Content-Type": {"application/json"}},
-		}, nil
+	reqHeaders := map[string]*pluginv2.CallResource_StringList{}
+	for k, v := range req.Headers {
+		reqHeaders[k] = &pluginv2.CallResource_StringList{Values: v}
 	}
 
-	rw := resource.NewResourceResponseWriter()
-	r := bytes.NewReader(req.Body)
-	httpReq, err := http.NewRequest(req.Method, req.URL, r)
+	protoReq := &pluginv2.CallResource_Request{
+		Config:  &pluginv2.PluginConfig{},
+		Path:    req.Path,
+		Method:  req.Method,
+		Url:     req.URL,
+		Headers: reqHeaders,
+		Body:    req.Body,
+	}
+	protoResp, err := p.core.CallResource(ctx, protoReq)
 	if err != nil {
-		return nil, err
-	}
-	handle(rw, httpReq, params)
-	result := rw.Result()
-	p.logger.Debug("Call resource response", "res", result)
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.Unimplemented {
+				return &CallResourceResult{
+					Status: http.StatusNotImplemented,
+				}, nil
+			}
+		}
 
-	headers := map[string][]string{}
-	for key, values := range result.Headers {
-		headers[key] = values.Values
+		return nil, errutil.Wrap("Failed to call resource", err)
+	}
+
+	respHeaders := map[string][]string{}
+	for key, values := range protoResp.Headers {
+		respHeaders[key] = values.Values
 	}
 
 	return &CallResourceResult{
-		Headers: headers,
-		Body:    result.Body,
-		Status:  int(result.Code),
+		Headers: respHeaders,
+		Body:    protoResp.Body,
+		Status:  int(protoResp.Code),
 	}, nil
-}
-
-func createResourceHandler(p *BackendPlugin, resourceName, resourcePath string) macaron.Handle {
-	return macaron.Handle(func(rw http.ResponseWriter, req *http.Request, params macaron.Params) {
-		var body []byte
-		var err error
-		if req.Body != nil {
-			defer req.Body.Close()
-			body, err = ioutil.ReadAll(req.Body)
-			if err != nil {
-				p.logger.Error("Failed to read request body", "error", err)
-				return
-			}
-		}
-		protoReq := &pluginv2.CallResource_Request{
-			Config:       &pluginv2.PluginConfig{},
-			ResourceName: resourceName,
-			ResourcePath: resourcePath,
-			Method:       req.Method,
-			Url:          req.URL.String(),
-			Params:       params,
-			Body:         body,
-		}
-		protoRes, err := p.core.CallResource(req.Context(), protoReq)
-		if err != nil {
-			p.logger.Error("Failed to call resource", "error", err)
-			return
-		}
-
-		for key, values := range protoRes.Headers {
-			for _, v := range values.Values {
-				rw.Header().Add(key, v)
-			}
-		}
-
-		rw.WriteHeader(int(protoRes.Code))
-		_, err = rw.Write(protoRes.Body)
-		if err != nil {
-			p.logger.Error("Failed to write resource response", "error", err)
-		}
-	})
 }
 
 // convertMetricFamily converts metric family to prometheus.Metric.
