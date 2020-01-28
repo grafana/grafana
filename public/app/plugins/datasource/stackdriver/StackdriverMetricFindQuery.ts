@@ -77,16 +77,9 @@ export default class StackdriverMetricFindQuery {
       return [];
     }
     const refId = 'handleLabelValuesQuery';
-    const response = await this.datasource.getLabels(selectedMetricType, refId);
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, [labelKey]);
     const interpolatedKey = this.datasource.templateSrv.replace(labelKey);
-    const [name] = interpolatedKey.split('.').reverse();
-    let values = [];
-    if (response.meta && response.meta.metricLabels && response.meta.metricLabels.hasOwnProperty(name)) {
-      values = response.meta.metricLabels[name];
-    } else if (response.meta && response.meta.resourceLabels && response.meta.resourceLabels.hasOwnProperty(name)) {
-      values = response.meta.resourceLabels[name];
-    }
-
+    const values = labels.hasOwnProperty(interpolatedKey) ? labels[interpolatedKey] : [];
     return values.map(this.toFindQueryResult);
   }
 
@@ -95,8 +88,8 @@ export default class StackdriverMetricFindQuery {
       return [];
     }
     const refId = 'handleResourceTypeQueryQueryType';
-    const response = await this.datasource.getLabels(selectedMetricType, refId);
-    return response.meta.resourceTypes ? response.meta.resourceTypes.map(this.toFindQueryResult) : [];
+    const labels = await this.datasource.getLabels(selectedMetricType, refId);
+    return labels['resource.type'].map(this.toFindQueryResult);
   }
 
   async handleAlignersQuery({ selectedMetricType }: any) {

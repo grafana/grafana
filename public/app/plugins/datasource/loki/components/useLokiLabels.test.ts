@@ -1,4 +1,4 @@
-import { renderHook, act } from 'react-hooks-testing-library';
+import { renderHook, act } from '@testing-library/react-hooks';
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from './useLokiLabels';
 import { AbsoluteTimeRange } from '@grafana/data';
@@ -14,14 +14,16 @@ describe('useLokiLabels hook', () => {
       to: 1560153109000,
     };
 
+    languageProvider.logLabelOptions = ['initial'];
+
     languageProvider.refreshLogLabels = () => {
       languageProvider.logLabelOptions = logLabelOptionsMock;
       return Promise.resolve();
     };
 
-    const { result, waitForNextUpdate } = renderHook(() => useLokiLabels(languageProvider, true, [], rangeMock));
+    const { result, waitForNextUpdate } = renderHook(() => useLokiLabels(languageProvider, true, rangeMock));
+    expect(result.current.logLabelOptions).toEqual(['initial']);
     act(() => result.current.refreshLabels());
-    expect(result.current.logLabelOptions).toEqual([]);
     await waitForNextUpdate();
     expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock);
   });

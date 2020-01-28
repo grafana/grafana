@@ -3,7 +3,7 @@ import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
 import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class AzureLogAnalyticsDatasource {
@@ -18,13 +18,10 @@ export default class AzureLogAnalyticsDatasource {
   /** @ngInject */
   constructor(
     private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
-    this.baseUrl = this.instanceSettings.jsonData.azureLogAnalyticsSameAs
-      ? '/sameasloganalyticsazure'
-      : `/loganalyticsazure`;
+    this.baseUrl = '/loganalyticsazure';
     this.url = instanceSettings.url;
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
 
@@ -89,7 +86,11 @@ export default class AzureLogAnalyticsDatasource {
       );
       const generated = querystringBuilder.generate();
 
-      const workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+      let workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+
+      if (!workspace && this.defaultOrFirstWorkspace) {
+        workspace = this.defaultOrFirstWorkspace;
+      }
 
       const url = `${this.baseUrl}/${workspace}/query?${generated.uriString}`;
 
@@ -228,8 +229,8 @@ export default class AzureLogAnalyticsDatasource {
     });
   }
 
-  doRequest(url: string, maxRetries = 1) {
-    return this.backendSrv
+  doRequest(url: string, maxRetries = 1): Promise<any> {
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',

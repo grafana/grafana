@@ -5,8 +5,9 @@ import { GrafanaTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSett
 export interface BuildInfo {
   version: string;
   commit: string;
-  isEnterprise: boolean;
+  isEnterprise: boolean; // deprecated: use licenseInfo.hasLicense instead
   env: string;
+  edition: string;
   latestVersion: string;
   hasUpdate: boolean;
 }
@@ -15,7 +16,17 @@ interface FeatureToggles {
   transformations: boolean;
   inspect: boolean;
   expressions: boolean;
+  newEdit: boolean;
+  meta: boolean;
 }
+
+interface LicenseInfo {
+  hasLicense: boolean;
+  expiry: number;
+  licenseUrl: string;
+  stateInfo: string;
+}
+
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -33,6 +44,7 @@ export class GrafanaBootConfig {
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
+  alertingMinInterval = 1;
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;
@@ -51,7 +63,10 @@ export class GrafanaBootConfig {
     transformations: false,
     inspect: false,
     expressions: false,
+    newEdit: false,
+    meta: false,
   };
+  licenseInfo: LicenseInfo = {} as LicenseInfo;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);

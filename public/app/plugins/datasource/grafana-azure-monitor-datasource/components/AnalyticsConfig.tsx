@@ -8,35 +8,61 @@ export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
   workspaces: SelectableValue[];
-  onUpdateOption: (key: string, val: any, secure: boolean) => void;
+  makeSameAs: () => void;
+  onUpdateOptions: (options: AzureDataSourceSettings) => void;
+  onUpdateOption: (key: string, val: any) => void;
+  onUpdateSecureOption: (key: string, val: any) => void;
   onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: (type?: string) => void;
   onLoadWorkspaces: (type?: string) => void;
 }
 export class AnalyticsConfig extends PureComponent<Props> {
   onLogAnalyticsTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('logAnalyticsTenantId', event.target.value, false);
+    this.props.onUpdateOption('logAnalyticsTenantId', event.target.value);
   };
 
   onLogAnalyticsClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('logAnalyticsClientId', event.target.value, false);
+    this.props.onUpdateOption('logAnalyticsClientId', event.target.value);
   };
 
   onLogAnalyticsClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('logAnalyticsClientSecret', event.target.value, true);
+    this.props.onUpdateSecureOption('logAnalyticsClientSecret', event.target.value);
   };
 
   onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
-    this.props.onUpdateOption('logAnalyticsSubscriptionId', logAnalyticsSubscription.value, false);
+    this.props.onUpdateOption('logAnalyticsSubscriptionId', logAnalyticsSubscription.value);
   };
 
   onWorkspaceSelectChange = (logAnalyticsDefaultWorkspace: SelectableValue<string>) => {
-    this.props.onUpdateOption('logAnalyticsDefaultWorkspace', logAnalyticsDefaultWorkspace.value, false);
+    this.props.onUpdateOption('logAnalyticsDefaultWorkspace', logAnalyticsDefaultWorkspace.value);
   };
 
   onAzureLogAnalyticsSameAsChange = () => {
-    const { options } = this.props;
-    this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs, false);
+    const { options, onUpdateOptions, makeSameAs } = this.props;
+
+    if (!options.jsonData.azureLogAnalyticsSameAs && options.secureJsonData.clientSecret) {
+      makeSameAs();
+    } else if (!options.jsonData.azureLogAnalyticsSameAs) {
+      // if currently off, clear monitor secret
+      onUpdateOptions({
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
+        },
+        secureJsonData: {
+          ...options.secureJsonData,
+          clientSecret: '',
+        },
+        secureJsonFields: {
+          clientSecret: false,
+        },
+      });
+    } else {
+      this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs);
+    }
+
+    // init popover to warn secret needs to be re-entered
   };
 
   onLogAnalyticsResetClientSecret = () => {
@@ -83,6 +109,13 @@ export class AnalyticsConfig extends PureComponent<Props> {
         tooltip: 'Workspaces are pulled from default subscription selected above.',
       }),
     };
+
+    const showSameAsHelpMsg =
+      jsonData.azureLogAnalyticsSameAs &&
+      secureJsonFields &&
+      !secureJsonFields.clientSecret &&
+      !secureJsonData.clientSecret;
+
     return (
       <>
         <h3 className="page-heading">Azure Log Analytics API Details</h3>
@@ -92,6 +125,13 @@ export class AnalyticsConfig extends PureComponent<Props> {
           onChange={this.onAzureLogAnalyticsSameAsChange}
           {...addtlAttrs}
         />
+        {showSameAsHelpMsg && (
+          <div className="grafana-info-box m-t-2">
+            <div className="alert-body">
+              <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
+            </div>
+          </div>
+        )}
         {!jsonData.azureLogAnalyticsSameAs && (
           <AzureCredentialsForm
             subscriptionOptions={subscriptions}

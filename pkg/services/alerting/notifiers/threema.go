@@ -132,11 +132,11 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	stateEmoji := ""
 	switch evalContext.Rule.State {
 	case models.AlertStateOK:
-		stateEmoji = "\u2705 " // White Heavy Check Mark
+		stateEmoji = "\u2705 " // Check Mark Button
 	case models.AlertStateNoData:
-		stateEmoji = "\u2753 " // Black Question Mark Ornament
+		stateEmoji = "\u2753\uFE0F " // Question Mark
 	case models.AlertStateAlerting:
-		stateEmoji = "\u26A0 " // Warning sign
+		stateEmoji = "\u26A0\uFE0F " // Warning sign
 	}
 
 	// Build message

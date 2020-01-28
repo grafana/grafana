@@ -1,22 +1,66 @@
 import { AnnotationsSrv } from '../annotations_srv';
-import { AnnotationEvent } from '@grafana/data';
+import {
+  AnnotationEvent,
+  dateTime,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  AnnotationQueryRequest,
+} from '@grafana/data';
+import { TemplateSrv } from '../../templating/template_srv';
+import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
+import { promises } from 'fs';
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  __esModule: true,
+  getTimeSrv: jest.fn().mockReturnValue({
+    timeRange(): any {
+      return {
+        from: dateTime('2018-01-29'),
+        to: dateTime('2019-01-29'),
+      };
+    },
+  }),
+}));
+
+let annotations: AnnotationEvent[] = [];
+
+class AnnotationMockDataSourceApi extends MockDataSourceApi {
+  constructor(name?: string, result?: DataQueryResponse) {
+    super(name, result);
+  }
+
+  annotationQuery(options: AnnotationQueryRequest): Promise<AnnotationEvent[]> {
+    return Promise.resolve(annotations);
+  }
+}
+
+const defaultDS = new MockDataSourceApi('DefaultDS', { data: ['DDD'] });
+const datasourceSrv = new DatasourceSrvMock(defaultDS, {
+  '-- Grafana --': new AnnotationMockDataSourceApi('DSA', { data: ['AAAA'] }),
+});
+
+jest.mock('@grafana/runtime', () => ({
+  getDataSourceSrv: () => {
+    return datasourceSrv;
+  },
+}));
+
+jest.mock('app/core/core', () => ({
+  coreModule: {
+    directive: () => {},
+  },
+  appEvents: {
+    emit: (event: any, payload?: any) => {},
+  },
+}));
 
 describe('AnnotationsSrv', function(this: any) {
-  const ctx = {
-    $rootScope: {
-      onAppEvent: jest.fn(),
-    },
-    datasourceSrv: {},
-    timeSrv: {
-      timeRange: () => {
-        return { from: '2018-01-29', to: '2019-01-29' };
-      },
-    },
+  const ctx: { templateSrv: any } = {
     templateSrv: {
       updateIndex: () => {},
       replace: (val: string) => val.replace('$var', '(3|4)'),
     },
-  } as any;
+  };
 
   describe('When translating the query result', () => {
     const time = 1507039543000;
@@ -34,13 +78,7 @@ describe('AnnotationsSrv', function(this: any) {
     let translatedAnnotations: any;
 
     beforeEach(() => {
-      const annotationsSrv = new AnnotationsSrv(
-        ctx.$rootScope,
-        ctx.datasourceSrv,
-        ctx.backendSrv,
-        ctx.timeSrv,
-        ctx.templateSrv
-      );
+      const annotationsSrv = new AnnotationsSrv(ctx.templateSrv);
       translatedAnnotations = annotationsSrv.translateQueryResult(annotationSource, annotations);
     });
 
@@ -54,7 +92,7 @@ describe('AnnotationsSrv', function(this: any) {
     const annotation1 = { id: '1', panelId: 1, text: 'text', time: time };
     const annotation2 = { id: '2', panelId: 2, text: 'text2', time: time, tags: ['foo', 'bar:2'] };
     const annotation3 = { id: '3', panelId: 2, text: 'text3', time: time, tags: ['foo', 'bar:3'] };
-    const annotations: AnnotationEvent[] = [annotation1, annotation2, annotation3];
+    annotations = [annotation1, annotation2, annotation3];
     let options: any;
     let annotationsSrv: any;
     beforeEach(() => {
@@ -72,19 +110,7 @@ describe('AnnotationsSrv', function(this: any) {
         panel: { id: 1, options: {} },
         dashboard: { annotations: { list: [annotationSource] } },
       };
-      const ds: any = {};
-      ds.annotationQuery = () => Promise.resolve(annotations);
-
-      ctx.datasourceSrv = {
-        get: () => Promise.resolve(ds),
-      };
-      annotationsSrv = new AnnotationsSrv(
-        ctx.$rootScope,
-        ctx.datasourceSrv,
-        ctx.backendSrv,
-        ctx.timeSrv,
-        ctx.templateSrv
-      );
+      annotationsSrv = new AnnotationsSrv(ctx.templateSrv);
     });
     it('should get annotations with panelId filter', async () => {
       options.dashboard.annotations.list[0].type = 'dashboard';

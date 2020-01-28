@@ -3,7 +3,7 @@ title = "Grafana documentation"
 description = "Guides, Installation and Feature Documentation"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
-aliases = ["/v1.1", "/guides/reference/admin", "/v3.1"]
+aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", "/docs/grafana/v3.1"]
 +++
 
 # Grafana Documentation
@@ -60,11 +60,11 @@ aliases = ["/v1.1", "/guides/reference/admin", "/v3.1"]
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
-    <a href="{{< relref "guides/whats-new-in-v6-5.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v6.5</h4>
+    <a href="{{< relref "guides/whats-new-in-v6-6.md" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v6.6</h4>
         <p>Explore the features and enhancements in the latest release.</p>
     </a>
-  
+
 </div>
 
 <h2>Data Source Guides</h2>

@@ -4,7 +4,7 @@ import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
 import { stylesFactory, useTheme, selectThemeVariant } from '../../themes';
 
-interface Props {
+export interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
   title?: string;
@@ -54,6 +54,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     content: css`
       padding: ${theme.spacing.md};
+      height: 100%;
     `,
   };
 });

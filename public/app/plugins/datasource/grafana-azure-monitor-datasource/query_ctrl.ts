@@ -537,9 +537,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .getWorkspaces(this.target.subscription)
       .then((list: any[]) => {
         this.workspaces = list;
+
         if (list.length > 0 && !this.target.azureLogAnalytics.workspace) {
-          this.target.azureLogAnalytics.workspace = list[0].value;
+          if (this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace) {
+            this.target.azureLogAnalytics.workspace = this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace;
+          }
+
+          if (!this.target.azureLogAnalytics.workspace) {
+            this.target.azureLogAnalytics.workspace = list[0].value;
+          }
         }
+
+        return this.workspaces;
       })
       .catch(this.handleQueryCtrlError.bind(this));
   };

@@ -10,13 +10,12 @@ awsconfig
 /public/views/index.html
 /public/views/error.html
 /emails/dist
+/reports
 
 # Enterprise emails
 /emails/templates/enterprise_*
 /public/emails/enterprise_*
 
-/public_gen
-/public/vendor/npm
 /tmp
 tools/phantomjs/phantomjs
 tools/phantomjs/phantomjs.exe
@@ -61,7 +60,8 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
-/pkg/extensions
+/pkg/extensions/*
+!/pkg/extensions/main.go
 /public/app/extensions
 debug.test
 /examples/*/dist
@@ -102,4 +102,4 @@ compilation-stats.json
 /packages/grafana-e2e/cypress/logs
 /public/e2e-test/screenShots/theOutput
 /public/e2e-tests/screenShots/theOutput/*.png
-
+/public/e2e-tests/videos

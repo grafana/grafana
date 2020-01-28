@@ -127,6 +127,21 @@ Currently we support following Jest configuration properties:
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
+### How can I customize Webpack rules or plugins?
+You can provide your own `webpack.config.js` file that exports a `getWebpackConfig` function. We recommend that you extend the standard configuration, but you are free to create your own:
+
+```js
+const CustomPlugin = require('custom-plugin');
+
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  plugins: [
+    ...config.plugins,
+    new CustomPlugin()
+  ]
+});
+```
+
 ### How can I style my plugin?
 We support pure CSS, SASS, and CSS-in-JS approach (via [Emotion](https://emotion.sh/)).
 
@@ -154,7 +169,7 @@ loadPluginCss({
 });
 ```
 
-You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm instal @grafana/runtime`.
+You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm install @grafana/runtime`.
 
 > Note that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
 
@@ -164,7 +179,7 @@ Starting from Grafana 6.2 *our suggested way* for styling plugins is by using [E
 To start using Emotion, you first must add it to your plugin dependencies:
 
 ```
-  yarn add "@emotion/core"@10.0.14
+  yarn add "emotion"@10.0.27
 ```
 
 Then, import `css` function from Emotion:
@@ -245,3 +260,7 @@ To debug grafana-toolkit you can use standard [NodeJS debugging methods](https:/
 To run grafana-toolkit in a debugging session use the following command in the toolkit's directory:
 
 `node --inspect-brk ./bin/grafana-toolkit.js [task]`
+
+To run [linked](#develop-grafana-toolkit) grafana-toolkit in a debugging session use the following command in the plugin's directory:
+
+`node --inspect-brk ./node_modules/@grafana/toolkit/bin/grafana-toolkit.js [task]`

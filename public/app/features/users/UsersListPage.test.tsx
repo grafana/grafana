@@ -1,10 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { UsersListPage, Props } from './UsersListPage';
+import { Props, UsersListPage } from './UsersListPage';
 import { Invitee, OrgUser } from 'app/types';
 import { getMockUser } from './__mocks__/userMocks';
 import appEvents from '../../core/app_events';
 import { NavModel } from '@grafana/data';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { setUsersSearchQuery } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -28,7 +30,7 @@ const setup = (propOverrides?: object) => {
     loadUsers: jest.fn(),
     updateUser: jest.fn(),
     removeUser: jest.fn(),
-    setUsersSearchQuery: jest.fn(),
+    setUsersSearchQuery: mockToolkitActionCreator(setUsersSearchQuery),
     hasFetched: false,
   };
 

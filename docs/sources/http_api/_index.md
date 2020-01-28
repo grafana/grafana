@@ -2,7 +2,7 @@
 title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
-aliases = ["/overview"]
+aliases = ["/docs/grafana/latest/overview"]
 type = "docs"
 [menu.docs]
 name = "HTTP API"
@@ -30,6 +30,7 @@ dashboards, creating users and updating data sources.
 * [Organization API]({{< relref "org.md" >}})
 * [Snapshot API]({{< relref "snapshot.md" >}})
 * [Annotations API]({{< relref "annotations.md" >}})
+* [Playlists API]({{< relref "playlist.md" >}})
 * [Alerting API]({{< relref "alerting.md" >}})
 * [Alert Notification Channels API]({{< relref "alerting_notification_channels.md" >}})
 * [User API]({{< relref "user.md" >}})
@@ -37,3 +38,8 @@ dashboards, creating users and updating data sources.
 * [Admin API]({{< relref "admin.md" >}})
 * [Preferences API]({{< relref "preferences.md" >}})
 * [Other API]({{< relref "other.md" >}})
+
+### Grafana Enterprise HTTP APIs
+
+* [Data Source Permissions API]({{< relref "datasource_permissions.md" >}})
+* [External Group Sync API]({{< relref "external_group_sync.md" >}})

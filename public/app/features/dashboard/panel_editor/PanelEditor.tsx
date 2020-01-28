@@ -14,8 +14,8 @@ import { AlertTab } from '../../alerting/AlertTab';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { StoreState } from '../../../types';
-import { PanelEditorTab, PanelEditorTabIds } from './state/reducers';
-import { changePanelEditorTab, panelEditorCleanUp, refreshPanelEditor } from './state/actions';
+import { panelEditorCleanUp, PanelEditorTab, PanelEditorTabIds } from './state/reducers';
+import { changePanelEditorTab, refreshPanelEditor } from './state/actions';
 import { getActiveTabAndTabs } from './state/selectors';
 
 interface PanelEditorProps {
@@ -131,7 +131,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
 
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
-      <a className={tabClasses} aria-label={e2e.pages.Panels.EditPanel.selectors.tabItems(tab.text)}>
+      <a className={tabClasses} aria-label={e2e.pages.Dashboard.Panels.EditPanel.selectors.tabItems(tab.text)}>
         <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>

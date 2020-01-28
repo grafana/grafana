@@ -1,4 +1,5 @@
-export { DeleteButton } from './DeleteButton/DeleteButton';
+export { ConfirmButton } from './ConfirmButton/ConfirmButton';
+export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
@@ -11,8 +12,9 @@ export * from './Button/Button';
 export { Select, AsyncSelect } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
-export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
 export { ButtonSelect } from './Select/ButtonSelect';
+export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 
 // Forms
@@ -46,7 +48,10 @@ export { QueryField } from './QueryField/QueryField';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
-export { TableInputCSV } from './Table/TableInputCSV';
+export { TableInputCSV } from './TableInputCSV/TableInputCSV';
+export { TabsBar } from './Tabs/TabsBar';
+export { Tab } from './Tabs/Tab';
+export { TabContent } from './Tabs/TabContent';
 
 // Visualizations
 export {
@@ -61,7 +66,8 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { BarGauge } from './BarGauge/BarGauge';
+export { GraphContextMenu } from './Graph/GraphContextMenu';
+export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 
@@ -109,6 +115,7 @@ export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
+export { Drawer } from './Drawer/Drawer';
 
 // Next-gen forms
 export { default as Forms } from './Forms';

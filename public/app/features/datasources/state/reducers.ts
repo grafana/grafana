@@ -1,88 +1,170 @@
-import { DataSourcesState } from 'app/types';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
-import {
-  dataSourceLoaded,
-  dataSourcesLoaded,
-  setDataSourcesSearchQuery,
-  setDataSourcesLayoutMode,
-  dataSourceTypesLoad,
-  dataSourceTypesLoaded,
-  setDataSourceTypeSearchQuery,
-  dataSourceMetaLoaded,
-  setDataSourceName,
-  setIsDefault,
-} from './actions';
-import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { reducerFactory } from 'app/core/redux';
+import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+
+import { DataSourcesState, DataSourceSettingsState } from 'app/types';
+import { LayoutMode, LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { DataSourceTypesLoadedPayload } from './actions';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 export const initialState: DataSourcesState = {
   dataSources: [],
+  plugins: [],
+  categories: [],
   dataSource: {} as DataSourceSettings,
   layoutMode: LayoutModes.List,
   searchQuery: '',
   dataSourcesCount: 0,
-  dataSourceTypes: [],
   dataSourceTypeSearchQuery: '',
   hasFetched: false,
   isLoadingDataSources: false,
   dataSourceMeta: {} as DataSourcePluginMeta,
 };
 
-export const dataSourcesReducer = reducerFactory(initialState)
-  .addMapper({
-    filter: dataSourcesLoaded,
-    mapper: (state, action) => ({
+export const dataSourceLoaded = createAction<DataSourceSettings>('dataSources/dataSourceLoaded');
+export const dataSourcesLoaded = createAction<DataSourceSettings[]>('dataSources/dataSourcesLoaded');
+export const dataSourceMetaLoaded = createAction<DataSourcePluginMeta>('dataSources/dataSourceMetaLoaded');
+export const dataSourcePluginsLoad = createAction('dataSources/dataSourcePluginsLoad');
+export const dataSourcePluginsLoaded = createAction<DataSourceTypesLoadedPayload>(
+  'dataSources/dataSourcePluginsLoaded'
+);
+export const setDataSourcesSearchQuery = createAction<string>('dataSources/setDataSourcesSearchQuery');
+export const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
+export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/setDataSourceTypeSearchQuery');
+export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
+export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
+
+// Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
+// ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
+// because the state would become frozen and during run time we would get errors because Angular would try to mutate
+// the frozen state.
+// https://github.com/reduxjs/redux-toolkit/issues/242
+export const dataSourcesReducer = (state: DataSourcesState = initialState, action: AnyAction): DataSourcesState => {
+  if (dataSourcesLoaded.match(action)) {
+    return {
       ...state,
       hasFetched: true,
       dataSources: action.payload,
       dataSourcesCount: action.payload.length,
-    }),
-  })
-  .addMapper({
-    filter: dataSourceLoaded,
-    mapper: (state, action) => ({ ...state, dataSource: action.payload }),
-  })
-  .addMapper({
-    filter: setDataSourcesSearchQuery,
-    mapper: (state, action) => ({ ...state, searchQuery: action.payload }),
-  })
-  .addMapper({
-    filter: setDataSourcesLayoutMode,
-    mapper: (state, action) => ({ ...state, layoutMode: action.payload }),
-  })
-  .addMapper({
-    filter: dataSourceTypesLoad,
-    mapper: state => ({ ...state, dataSourceTypes: [], isLoadingDataSources: true }),
-  })
-  .addMapper({
-    filter: dataSourceTypesLoaded,
-    mapper: (state, action) => ({
+    };
+  }
+
+  if (dataSourceLoaded.match(action)) {
+    return { ...state, dataSource: action.payload };
+  }
+
+  if (setDataSourcesSearchQuery.match(action)) {
+    return { ...state, searchQuery: action.payload };
+  }
+
+  if (setDataSourcesLayoutMode.match(action)) {
+    return { ...state, layoutMode: action.payload };
+  }
+
+  if (dataSourcePluginsLoad.match(action)) {
+    return { ...state, plugins: [], isLoadingDataSources: true };
+  }
+
+  if (dataSourcePluginsLoaded.match(action)) {
+    return {
       ...state,
-      dataSourceTypes: action.payload,
+      plugins: action.payload.plugins,
+      categories: action.payload.categories,
       isLoadingDataSources: false,
-    }),
-  })
-  .addMapper({
-    filter: setDataSourceTypeSearchQuery,
-    mapper: (state, action) => ({ ...state, dataSourceTypeSearchQuery: action.payload }),
-  })
-  .addMapper({
-    filter: dataSourceMetaLoaded,
-    mapper: (state, action) => ({ ...state, dataSourceMeta: action.payload }),
-  })
-  .addMapper({
-    filter: setDataSourceName,
-    mapper: (state, action) => ({ ...state, dataSource: { ...state.dataSource, name: action.payload } }),
-  })
-  .addMapper({
-    filter: setIsDefault,
-    mapper: (state, action) => ({
+    };
+  }
+
+  if (setDataSourceTypeSearchQuery.match(action)) {
+    return { ...state, dataSourceTypeSearchQuery: action.payload };
+  }
+
+  if (dataSourceMetaLoaded.match(action)) {
+    return { ...state, dataSourceMeta: action.payload };
+  }
+
+  if (setDataSourceName.match(action)) {
+    return { ...state, dataSource: { ...state.dataSource, name: action.payload } };
+  }
+
+  if (setIsDefault.match(action)) {
+    return {
       ...state,
       dataSource: { ...state.dataSource, isDefault: action.payload },
-    }),
-  })
-  .create();
+    };
+  }
+
+  return state;
+};
+
+export const initialDataSourceSettingsState: DataSourceSettingsState = {
+  testingStatus: {
+    status: null,
+    message: null,
+  },
+  loadError: null,
+  plugin: null,
+};
+
+export const initDataSourceSettingsSucceeded = createAction<GenericDataSourcePlugin>(
+  'dataSourceSettings/initDataSourceSettingsSucceeded'
+);
+
+export const initDataSourceSettingsFailed = createAction<Error>('dataSourceSettings/initDataSourceSettingsFailed');
+
+export const testDataSourceStarting = createAction<undefined>('dataSourceSettings/testDataSourceStarting');
+
+export const testDataSourceSucceeded = createAction<{
+  status: string;
+  message: string;
+}>('dataSourceSettings/testDataSourceSucceeded');
+
+export const testDataSourceFailed = createAction<{ message: string }>('dataSourceSettings/testDataSourceFailed');
+
+export const dataSourceSettingsReducer = (
+  state: DataSourceSettingsState = initialDataSourceSettingsState,
+  action: AnyAction
+): DataSourceSettingsState => {
+  if (initDataSourceSettingsSucceeded.match(action)) {
+    return { ...state, plugin: action.payload, loadError: null };
+  }
+
+  if (initDataSourceSettingsFailed.match(action)) {
+    return { ...state, plugin: null, loadError: action.payload.message };
+  }
+
+  if (testDataSourceStarting.match(action)) {
+    return {
+      ...state,
+      testingStatus: {
+        message: 'Testing...',
+        status: 'info',
+      },
+    };
+  }
+
+  if (testDataSourceSucceeded.match(action)) {
+    return {
+      ...state,
+      testingStatus: {
+        status: action.payload.status,
+        message: action.payload.message,
+      },
+    };
+  }
+
+  if (testDataSourceFailed.match(action)) {
+    return {
+      ...state,
+      testingStatus: {
+        status: 'error',
+        message: action.payload.message,
+      },
+    };
+  }
+
+  return state;
+};
 
 export default {
   dataSources: dataSourcesReducer,
+  dataSourceSettings: dataSourceSettingsReducer,
 };

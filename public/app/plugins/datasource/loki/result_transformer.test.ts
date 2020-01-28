@@ -28,13 +28,13 @@ const streamResult: LokiStreamResult[] = [
     stream: {
       foo: 'bar',
     },
-    values: [['1970-01-01T00:00:00Z', "foo: [32m'bar'[39m"]],
+    values: [['1579857562021616000', "foo: [32m'bar'[39m"]],
   },
   {
     stream: {
       bar: 'foo',
     },
-    values: [['1970-01-01T00:00:00Z', "bar: 'foo'"]],
+    values: [['1579857562031616000', "bar: 'foo'"]],
   },
 ];
 
@@ -55,10 +55,10 @@ describe('loki result transformer', () => {
       expect(data[0].fields[1].labels['foo']).toEqual('bar');
       expect(data[0].fields[0].values.get(0)).toEqual(legacyStreamResult[0].entries[0].ts);
       expect(data[0].fields[1].values.get(0)).toEqual(legacyStreamResult[0].entries[0].line);
-      expect(data[0].fields[2].values.get(0)).toEqual('1970-01-01T00:00:00Z_{foo="bar"}');
+      expect(data[0].fields[2].values.get(0)).toEqual('2764544e18dbc3fcbeee21a573e8cd1b');
       expect(data[1].fields[0].values.get(0)).toEqual(legacyStreamResult[1].entries[0].ts);
       expect(data[1].fields[1].values.get(0)).toEqual(legacyStreamResult[1].entries[0].line);
-      expect(data[1].fields[2].values.get(0)).toEqual('1970-01-01T00:00:00Z_{bar="foo"}');
+      expect(data[1].fields[2].values.get(0)).toEqual('55b7a68547c4c1c88827f13f3cb680ed');
     });
   });
 
@@ -95,12 +95,12 @@ describe('loki result transformer', () => {
 
       expect(data.length).toBe(2);
       expect(data[0].fields[1].labels['foo']).toEqual('bar');
-      expect(data[0].fields[0].values.get(0)).toEqual(legacyStreamResult[0].entries[0].ts);
-      expect(data[0].fields[1].values.get(0)).toEqual(legacyStreamResult[0].entries[0].line);
-      expect(data[0].fields[2].values.get(0)).toEqual('1970-01-01T00:00:00Z_{foo="bar"}');
-      expect(data[1].fields[0].values.get(0)).toEqual(legacyStreamResult[1].entries[0].ts);
-      expect(data[1].fields[1].values.get(0)).toEqual(legacyStreamResult[1].entries[0].line);
-      expect(data[1].fields[2].values.get(0)).toEqual('1970-01-01T00:00:00Z_{bar="foo"}');
+      expect(data[0].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.021Z');
+      expect(data[0].fields[1].values.get(0)).toEqual(streamResult[0].values[0][1]);
+      expect(data[0].fields[2].values.get(0)).toEqual('2b431b8a98b80b3b2c2f4cd2444ae6cb');
+      expect(data[1].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.031Z');
+      expect(data[1].fields[1].values.get(0)).toEqual(streamResult[1].values[0][1]);
+      expect(data[1].fields[2].values.get(0)).toEqual('75d73d66cff40f9d1a1f2d5a0bf295d0');
     });
   });
 
@@ -139,7 +139,7 @@ describe('loki result transformer', () => {
         ts: '1970-01-01T00:00:00Z',
         line: "foo: [32m'bar'[39m",
         labels: { foo: 'bar' },
-        id: '1970-01-01T00:00:00Z_{foo="bar"}',
+        id: '2764544e18dbc3fcbeee21a573e8cd1b',
       });
     });
   });

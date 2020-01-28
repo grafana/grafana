@@ -1,6 +1,6 @@
 import { thunkTester } from '../../../../../test/core/thunk/thunkTester';
-import { initialState, getPanelEditorTab, PanelEditorTabIds } from './reducers';
-import { refreshPanelEditor, panelEditorInitCompleted, changePanelEditorTab } from './actions';
+import { getPanelEditorTab, initialState, panelEditorInitCompleted, PanelEditorTabIds } from './reducers';
+import { changePanelEditorTab, refreshPanelEditor } from './actions';
 import { updateLocation } from '../../../../core/actions';
 
 describe('refreshPanelEditor', () => {

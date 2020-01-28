@@ -35,7 +35,7 @@ func BuildJaegerThrift(span *Span) *j.Span {
 		SpanId:        int64(span.context.spanID),
 		ParentSpanId:  int64(span.context.parentID),
 		OperationName: span.operationName,
-		Flags:         int32(span.context.flags),
+		Flags:         int32(span.context.samplingState.flags()),
 		StartTime:     startTime,
 		Duration:      duration,
 		Tags:          buildTags(span.tags, span.tracer.options.maxTagValueLength),

@@ -15,6 +15,14 @@ export class ColumnOptionsCtrl {
   activeStyleIndex: number;
   mappingTypes: any;
 
+  alignTypes: any;
+  static readonly alignTypesEnum = [
+    { text: 'auto', value: '' },
+    { text: 'left', value: 'left' },
+    { text: 'center', value: 'center' },
+    { text: 'right', value: 'right' },
+  ];
+
   /** @ngInject */
   constructor($scope: any) {
     $scope.editor = this;
@@ -47,6 +55,7 @@ export class ColumnOptionsCtrl {
       { text: 'Value to text', value: 1 },
       { text: 'Range to text', value: 2 },
     ];
+    this.alignTypes = ColumnOptionsCtrl.alignTypesEnum;
 
     this.getColumnNames = () => {
       if (!this.panelCtrl.table) {
@@ -81,6 +90,7 @@ export class ColumnOptionsCtrl {
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       thresholds: [],
       mappingType: 1,
+      align: 'auto',
     };
 
     const styles = this.panel.styles;

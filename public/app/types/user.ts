@@ -22,6 +22,21 @@ export interface User {
   orgId?: number;
 }
 
+export interface UserDTO {
+  id: number;
+  login: string;
+  email: string;
+  name: string;
+  isGrafanaAdmin: boolean;
+  isDisabled: boolean;
+  isExternal?: boolean;
+  updatedAt?: string;
+  authLabels?: string[];
+  theme?: string;
+  avatarUrl?: string;
+  orgId?: number;
+}
+
 export interface Invitee {
   code: string;
   createdOn: string;
@@ -66,4 +81,23 @@ export interface UserSession {
   os: string;
   osVersion: string;
   device: string;
+}
+
+export interface UserOrg {
+  name: string;
+  orgId: number;
+  role: string;
+}
+
+export interface UserAdminState {
+  user: UserDTO | null;
+  sessions: UserSession[];
+  orgs: UserOrg[];
+  isLoading: boolean;
+  error?: UserAdminError | null;
+}
+
+export interface UserAdminError {
+  title: string;
+  body: string;
 }
