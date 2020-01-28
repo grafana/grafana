@@ -239,6 +239,8 @@
     name: Team Sync
   - link: /enterprise/white-labeling/
     name: White labeling
+  - link: /enterprise/license-expiration/
+    name: License expiration
 - name: Tutorials
   link: /tutorials/
   children:

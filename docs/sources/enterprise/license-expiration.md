@@ -33,12 +33,17 @@ Your current data source permissions will keep working as expected, but you'll b
 
 ## Reporting
 
-You won't be able to configure new reports or generate previews.
-Scheduled reports are not generated or sent.
+- You're unable to configure new reports or generate previews.
+- Scheduled reports are not generated or sent.
 
 ## SAML authentication
 
 SAML is not affected by an expired license.
+
+## LDAP authentication
+
+- LDAP synchronization is not affected by an expired license.
+- Enhanced LDAP debugging is unavailable.
 
 ## Enterprise plugins
 
