@@ -254,6 +254,7 @@ export function SelectBase<T>({
 
   return (
     <ReactSelectComponent
+      captureMenuScroll={false}
       components={{
         MenuList: SelectMenu,
         Group: SelectOptionGroup,
