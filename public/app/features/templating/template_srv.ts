@@ -2,7 +2,7 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { variableRegex } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
-import { ScopedVars, TIME_FORMAT, TimeRange } from '@grafana/data';
+import { ScopedVars, TimeRange } from '@grafana/data';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -51,32 +51,14 @@ export class TemplateSrv {
     if (this.timeRange) {
       const from = this.timeRange.from.valueOf().toString();
       const to = this.timeRange.to.valueOf().toString();
-      const fromTxt = this.timeRange.from.format(TIME_FORMAT);
-      const toTxt = this.timeRange.to.format(TIME_FORMAT);
 
       this.index = {
         ...this.index,
         ['__from']: {
-          current: {
-            value: {
-              value: from,
-              text: fromTxt,
-              toString: function() {
-                return this.value;
-              },
-            },
-          },
+          current: { value: from, text: from },
         },
         ['__to']: {
-          current: {
-            value: {
-              value: to,
-              text: toTxt,
-              toString: function() {
-                return this.value;
-              },
-            },
-          },
+          current: { value: to, text: to },
         },
       };
     }
