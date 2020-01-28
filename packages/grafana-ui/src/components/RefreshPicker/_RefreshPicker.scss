@@ -32,7 +32,7 @@
     }
   }
 
-  @include media-breakpoint-up(sm) {
+  @include media-breakpoint-up(xs) {
     display: block;
   }
 }

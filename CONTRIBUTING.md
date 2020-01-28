@@ -31,7 +31,7 @@ If you believe you've found a security vulnerability, please read our [security 
 
 If you have an idea of how to improve Grafana, submit an [enhancement request](https://github.com/grafana/grafana/issues/new?labels=type%3A+feature+request&template=2-feature_request.md).
 
-We want to make Grafana accessible to even more people. [Submit an accessibility issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+accessibility&template=3-accessibility.md) to help us understand what we can improve.
+We want to make Grafana accessible to even more people. Submit an [accessibility issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+accessibility&template=3-accessibility.md) to help us understand what we can improve.
 
 ### Triage issues
 
@@ -54,18 +54,11 @@ Unsure where to begin contributing to Grafana? Start by browsing issues labeled 
 
 If you're looking to make a code change, see how to set up your environment for [local development](contribute/developer-guide.md).
 
-When you're ready to contribute, it's time to [Create a pull request](/contribute/pull-request.md).
+When you're ready to contribute, it's time to [Create a pull request](/contribute/create-pull-request.md).
 
 #### Contributor License Agreement (CLA)
 
 Before we can accept your pull request, you need to [sign our CLA](https://grafana.com/docs/contribute/cla/). If you haven't, our CLA assistant prompts you to when you create your pull request.
-
-## Community
-
-- Follow [@grafana on Twitter](https://twitter.com/grafana/)
-- Read and subscribe to the [Grafana blog](https://grafana.com/blog/)
-- If you have a specific question, check out our [discussion forums](https://community.grafana.com).
-- For general discussions, join us on the [official Slack](http://slack.raintank.io/).
 
 ## Where do I go from here?
 

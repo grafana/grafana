@@ -7,10 +7,9 @@ import { getBackendSrv } from '@grafana/runtime';
 
 // Components
 import { FormLabel, Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
 
 // Types
-import { QueryEditorProps } from '@grafana/ui';
 import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 
@@ -34,7 +33,7 @@ export class QueryEditor extends PureComponent<Props> {
 
     query.scenarioId = query.scenarioId || 'random_walk';
 
-    // const scenarioList = await this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    // const scenarioList = await backendSrv.get('/api/tsdb/testdata/scenarios');
     const scenarioList = await datasource.getScenarios();
     const current: any = _.find(scenarioList, { id: query.scenarioId });
 

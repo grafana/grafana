@@ -3,7 +3,7 @@ title = "Using Stackdriver in Grafana"
 description = "Guide for using Stackdriver in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide"]
 type = "docs"
-aliases = ["/datasources/stackdriver"]
+aliases = ["/docs/grafana/latest/datasources/stackdriver"]
 [menu.docs]
 name = "Google Stackdriver"
 parent = "datasources"
@@ -17,7 +17,7 @@ weight = 4
 
 Grafana ships with built-in support for Google Stackdriver. Just add it as a data source and you are ready to build dashboards for your Stackdriver metrics.
 
-## Adding the data source to Grafana
+## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -131,6 +131,12 @@ It is also possible to choose fixed time intervals to group by, like `1h` or `1d
 
 Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
 
+#### Metadata labels
+
+Resource metadata labels contains information to uniquely identify a resource in Google cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels. 
+
+User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
+
 ### Alias Patterns
 
 The Alias By field allows you to control the format of the legend keys. The default is to show the metric name and labels. This can be long and hard to read. Using the following patterns in the alias field, you can format the legend key the way you want it.
@@ -151,6 +157,8 @@ In the Group By dropdown, you can see a list of metric and resource labels for a
 | ------------------------ | -------------------------------- | -------------------------------- | ---------------- |
 | `{{metric.label.xxx}}`   | returns the metric label value   | `{{metric.label.instance_name}}` | `grafana-1-prod` |
 | `{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}`        | `us-east1-b`     |
+| `{{metadata.system_labels.xxx}}` | returns the meta data system label value | `{{metadata.system_labels.name}}` | `grafana`        |
+| `{{metadata.user_labels.xxx}}`   | returns the meta data user label value   | `{{metadata.user_labels.tag}}`    | `production`     |
 
 Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
 
@@ -172,7 +180,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query Variable
@@ -202,7 +210,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 {{< docs-imagebox img="/img/docs/v53/stackdriver_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Stackdriver annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Stackdriver.
 
 With the query editor for annotations, you can select a metric and filters. The `Title` and `Text` fields support templating and can use data returned from the query. For example, the Title field could have the following text:
@@ -224,7 +232,7 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here is a provisioning example using the JWT (Service Account key file) authentication type.
 

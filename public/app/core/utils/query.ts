@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DataQuery } from '@grafana/ui/';
+import { DataQuery } from '@grafana/data';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -10,3 +10,9 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
     });
   });
 };
+
+export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>): DataQuery[] {
+  const q = query || {};
+  q.refId = getNextRefIdChar(queries);
+  return [...queries, q as DataQuery];
+}

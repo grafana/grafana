@@ -30,7 +30,7 @@ export class AliasBy extends Component<Props, State> {
     }
   }
 
-  onChange = (e: any) => {
+  onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ value: e.target.value });
     this.propagateOnChange(e.target.value);
   };

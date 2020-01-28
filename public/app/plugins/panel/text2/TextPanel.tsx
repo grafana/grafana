@@ -9,7 +9,7 @@ import config from 'app/core/config';
 
 // Types
 import { TextOptions } from './types';
-import { PanelProps } from '@grafana/ui';
+import { PanelProps } from '@grafana/data';
 
 interface Props extends PanelProps<TextOptions> {}
 interface State {
@@ -41,9 +41,9 @@ export class TextPanel extends PureComponent<Props, State> {
   prepareHTML(html: string): string {
     const { replaceVariables } = this.props;
 
-    html = config.disableSanitizeHtml ? html : sanitize(html);
+    html = replaceVariables(html, {}, 'html');
 
-    return replaceVariables(html);
+    return config.disableSanitizeHtml ? html : sanitize(html);
   }
 
   prepareText(content: string): string {

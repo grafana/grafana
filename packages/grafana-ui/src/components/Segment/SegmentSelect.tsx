@@ -5,19 +5,23 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
 
 export interface Props<T> {
+  value?: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
-  onChange: (value: T) => void;
+  onChange: (item: SelectableValue<T>) => void;
   onClickOutside: () => void;
   width: number;
   noOptionsMessage?: string;
+  allowCustomValue?: boolean;
 }
 
 export function SegmentSelect<T>({
+  value,
   options = [],
   onChange,
   onClickOutside,
   width,
   noOptionsMessage = '',
+  allowCustomValue = false,
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef(null);
 
@@ -37,8 +41,10 @@ export function SegmentSelect<T>({
         placeholder=""
         autoFocus={true}
         isOpen={true}
-        onChange={({ value }) => onChange(value!)}
+        onChange={onChange}
         options={options}
+        value={value}
+        allowCustomValue={allowCustomValue}
       />
     </div>
   );

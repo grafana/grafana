@@ -19,6 +19,7 @@ type DashboardProvisioner interface {
 	Provision() error
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
+	GetAllowUiUpdatesFromConfig(name string) bool
 }
 
 type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
@@ -68,15 +69,15 @@ func (ps *provisioningServiceImpl) Init() error {
 		return err
 	}
 
-	err = ps.ProvisionDashboards()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
+	err := ps.ProvisionDashboards()
+	if err != nil {
+		ps.log.Error("Failed to provision dashboard", "error", err)
+	}
+
 	for {
 
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
@@ -135,6 +136,10 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 
 func (ps *provisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
 	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
+}
+
+func (ps *provisioningServiceImpl) GetAllowUiUpdatesFromConfig(name string) bool {
+	return ps.dashboardProvisioner.GetAllowUiUpdatesFromConfig(name)
 }
 
 func (ps *provisioningServiceImpl) cancelPolling() {

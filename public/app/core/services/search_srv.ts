@@ -1,12 +1,10 @@
 import _ from 'lodash';
-// @ts-ignore
-import { IQService } from 'angular';
 
 import coreModule from 'app/core/core_module';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
-import { BackendSrv } from './backend_srv';
+import { backendSrv } from './backend_srv';
 import { Section } from '../components/manage_dashboards/manage_dashboards';
 import { DashboardSearchHit } from 'app/types/search';
 
@@ -18,8 +16,7 @@ export class SearchSrv {
   recentIsOpen: boolean;
   starredIsOpen: boolean;
 
-  /** @ngInject */
-  constructor(private backendSrv: BackendSrv, private $q: IQService) {
+  constructor() {
     this.recentIsOpen = store.getBool('search.sections.recent', true);
     this.starredIsOpen = store.getBool('search.sections.starred', true);
   }
@@ -46,7 +43,7 @@ export class SearchSrv {
       return Promise.resolve([]);
     }
 
-    return this.backendSrv.search({ dashboardIds: dashIds }).then(result => {
+    return backendSrv.search({ dashboardIds: dashIds }).then(result => {
       return dashIds
         .map(orderId => {
           return _.find(result, { id: orderId });
@@ -80,7 +77,7 @@ export class SearchSrv {
       return Promise.resolve();
     }
 
-    return this.backendSrv.search({ starred: true, limit: 30 }).then(result => {
+    return backendSrv.search({ starred: true, limit: 30 }).then(result => {
       if (result.length > 0) {
         sections['starred'] = {
           title: 'Starred',
@@ -118,12 +115,12 @@ export class SearchSrv {
     }
 
     promises.push(
-      this.backendSrv.search(query).then(results => {
+      backendSrv.search(query).then(results => {
         return this.handleSearchResult(sections, results);
       })
     );
 
-    return this.$q.all(promises).then(() => {
+    return Promise.all(promises).then(() => {
       return _.sortBy(_.values(sections), 'score');
     });
   }
@@ -199,14 +196,14 @@ export class SearchSrv {
       folderIds: [section.id],
     };
 
-    return this.backendSrv.search(query).then(results => {
+    return backendSrv.search(query).then(results => {
       section.items = results;
       return Promise.resolve(section);
     });
   }
 
   getDashboardTags() {
-    return this.backendSrv.get('/api/dashboards/tags');
+    return backendSrv.get('/api/dashboards/tags');
   }
 }
 

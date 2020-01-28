@@ -14,10 +14,9 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
-import { PanelPlugin, PanelPluginMeta, PanelData } from '@grafana/ui';
 import { PanelCtrl } from 'app/plugins/sdk';
 import { Unsubscribable } from 'rxjs';
-import { LoadingState, DefaultTimeRange } from '@grafana/data';
+import { PanelPlugin, PanelPluginMeta, PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
@@ -151,6 +150,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+    }
     this.cleanUpAngularOptions();
   }
 
@@ -165,9 +167,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
     this.setState({ searchQuery: '' });
   };
 
-  onPanelOptionsChanged = (options: any) => {
+  onPanelOptionsChanged = (options: any, callback?: () => void) => {
     this.props.panel.updateOptions(options);
-    this.forceUpdate();
+    this.forceUpdate(callback);
   };
 
   onOpenVizPicker = () => {

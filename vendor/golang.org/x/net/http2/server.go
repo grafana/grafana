@@ -52,10 +52,11 @@ import (
 )
 
 const (
-	prefaceTimeout        = 10 * time.Second
-	firstSettingsTimeout  = 2 * time.Second // should be in-flight with preface anyway
-	handlerChunkWriteSize = 4 << 10
-	defaultMaxStreams     = 250 // TODO: make this 100 as the GFE seems to?
+	prefaceTimeout         = 10 * time.Second
+	firstSettingsTimeout   = 2 * time.Second // should be in-flight with preface anyway
+	handlerChunkWriteSize  = 4 << 10
+	defaultMaxStreams      = 250 // TODO: make this 100 as the GFE seems to?
+	maxQueuedControlFrames = 10000
 )
 
 var (
@@ -161,6 +162,15 @@ func (s *Server) maxConcurrentStreams() uint32 {
 		return v
 	}
 	return defaultMaxStreams
+}
+
+// maxQueuedControlFrames is the maximum number of control frames like
+// SETTINGS, PING and RST_STREAM that will be queued for writing before
+// the connection is closed to prevent memory exhaustion attacks.
+func (s *Server) maxQueuedControlFrames() int {
+	// TODO: if anybody asks, add a Server field, and remember to define the
+	// behavior of negative values.
+	return maxQueuedControlFrames
 }
 
 type serverInternalState struct {
@@ -312,7 +322,7 @@ type ServeConnOpts struct {
 }
 
 func (o *ServeConnOpts) context() context.Context {
-	if o.Context != nil {
+	if o != nil && o.Context != nil {
 		return o.Context
 	}
 	return context.Background()
@@ -506,6 +516,7 @@ type serverConn struct {
 	sawFirstSettings            bool // got the initial SETTINGS frame after the preface
 	needToSendSettingsAck       bool
 	unackedSettings             int    // how many SETTINGS have we sent without ACKs?
+	queuedControlFrames         int    // control frames in the writeSched queue
 	clientMaxStreams            uint32 // SETTINGS_MAX_CONCURRENT_STREAMS from client (our PUSH_PROMISE limit)
 	advMaxStreams               uint32 // our SETTINGS_MAX_CONCURRENT_STREAMS advertised the client
 	curClientStreams            uint32 // number of open streams initiated by the client
@@ -894,6 +905,14 @@ func (sc *serverConn) serve() {
 			}
 		}
 
+		// If the peer is causing us to generate a lot of control frames,
+		// but not reading them from us, assume they are trying to make us
+		// run out of memory.
+		if sc.queuedControlFrames > sc.srv.maxQueuedControlFrames() {
+			sc.vlogf("http2: too many control frames in send queue, closing connection")
+			return
+		}
+
 		// Start the shutdown timer after sending a GOAWAY. When sending GOAWAY
 		// with no error code (graceful shutdown), don't start the timer until
 		// all open streams have been completed.
@@ -1093,6 +1112,14 @@ func (sc *serverConn) writeFrame(wr FrameWriteRequest) {
 	}
 
 	if !ignoreWrite {
+		if wr.isControl() {
+			sc.queuedControlFrames++
+			// For extra safety, detect wraparounds, which should not happen,
+			// and pull the plug.
+			if sc.queuedControlFrames < 0 {
+				sc.conn.Close()
+			}
+		}
 		sc.writeSched.Push(wr)
 	}
 	sc.scheduleFrameWrite()
@@ -1210,10 +1237,8 @@ func (sc *serverConn) wroteFrame(res frameWriteResult) {
 // If a frame is already being written, nothing happens. This will be called again
 // when the frame is done being written.
 //
-// If a frame isn't being written we need to send one, the best frame
-// to send is selected, preferring first things that aren't
-// stream-specific (e.g. ACKing settings), and then finding the
-// highest priority stream.
+// If a frame isn't being written and we need to send one, the best frame
+// to send is selected by writeSched.
 //
 // If a frame isn't being written and there's nothing else to send, we
 // flush the write buffer.
@@ -1241,6 +1266,9 @@ func (sc *serverConn) scheduleFrameWrite() {
 		}
 		if !sc.inGoAway || sc.goAwayCode == ErrCodeNo {
 			if wr, ok := sc.writeSched.Pop(); ok {
+				if wr.isControl() {
+					sc.queuedControlFrames--
+				}
 				sc.startFrameWrite(wr)
 				continue
 			}
@@ -1533,6 +1561,8 @@ func (sc *serverConn) processSettings(f *SettingsFrame) error {
 	if err := f.ForeachSetting(sc.processSetting); err != nil {
 		return err
 	}
+	// TODO: judging by RFC 7540, Section 6.5.3 each SETTINGS frame should be
+	// acknowledged individually, even if multiple are received before the ACK.
 	sc.needToSendSettingsAck = true
 	sc.scheduleFrameWrite()
 	return nil
@@ -2494,7 +2524,7 @@ const TrailerPrefix = "Trailer:"
 // trailers. That worked for a while, until we found the first major
 // user of Trailers in the wild: gRPC (using them only over http2),
 // and gRPC libraries permit setting trailers mid-stream without
-// predeclarnig them. So: change of plans. We still permit the old
+// predeclaring them. So: change of plans. We still permit the old
 // way, but we also permit this hack: if a Header() key begins with
 // "Trailer:", the suffix of that key is a Trailer. Because ':' is an
 // invalid token byte anyway, there is no ambiguity. (And it's already
@@ -2794,7 +2824,7 @@ func (sc *serverConn) startPush(msg *startPushRequest) {
 	// PUSH_PROMISE frames MUST only be sent on a peer-initiated stream that
 	// is in either the "open" or "half-closed (remote)" state.
 	if msg.parent.state != stateOpen && msg.parent.state != stateHalfClosedRemote {
-		// responseWriter.Push checks that the stream is peer-initiaed.
+		// responseWriter.Push checks that the stream is peer-initiated.
 		msg.done <- errStreamClosed
 		return
 	}

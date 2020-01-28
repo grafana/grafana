@@ -9,6 +9,7 @@ import { store } from 'app/store/store';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { ErrorBoundaryAlert } from '@grafana/ui';
+import { GrafanaRootScope } from './GrafanaCtrl';
 
 function WrapInProvider(store: any, Component: any, props: any) {
   return (
@@ -21,7 +22,13 @@ function WrapInProvider(store: any, Component: any, props: any) {
 }
 
 /** @ngInject */
-export function reactContainer($route: any, $location: any, $injector: any, $rootScope: any, contextSrv: ContextSrv) {
+export function reactContainer(
+  $route: any,
+  $location: any,
+  $injector: any,
+  $rootScope: GrafanaRootScope,
+  contextSrv: ContextSrv
+) {
   return {
     restrict: 'E',
     template: '',

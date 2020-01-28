@@ -25,13 +25,15 @@ const ComponentA = () => {
 
 #### Styling complex components
 
-In more complex cases, especially when you need to style multiple DOM elements in one component or when your styles that depend on properties and/or state, you should create a helper function that returns an object with desired stylesheet. Let's say you need to style a component that has different background depending on the theme:
+In more complex cases, especially when you need to style multiple DOM elements in one component or when your styles that depend on properties and/or state, you should create a helper function that returns an object with desired stylesheet. This function should also be wrapped in `stylesFactory` helper function that will provide basic memoization.
+
+Let's say you need to style a component that has different background depending on the theme:
 
 ```tsx
 import { css, cx }  from 'emotion';
-import { GrafanaTheme, useTheme, selectThemeVariant } from '@grafana/ui';
+import { GrafanaTheme, useTheme, selectThemeVariant, stylesFactory } from '@grafana/ui';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const backgroundColor = selectThemeVariant({ light: theme.colors.red, dark: theme.colors.blue }, theme.type);
 
   return {
@@ -48,11 +50,11 @@ const ComponentA = () => {
 
   return (
     <div className={styles.wrapper}>
-      As red as you can ge
-      <i className={styles.icon} /\>
+      As red as you can get
+      <i className={styles.icon} />
     </div>
   );
-}
+});
 ```
 
 For more information about themes at Grafana please see [themes guide](./themes.md)

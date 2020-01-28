@@ -68,13 +68,18 @@ func withDbSession(ctx context.Context, callback dbTransactionFunc) error {
 func (sess *DBSession) InsertId(bean interface{}) (int64, error) {
 	table := sess.DB().Mapper.Obj2Table(getTypeName(bean))
 
-	dialect.PreInsertId(table, sess.Session)
-
+	if err := dialect.PreInsertId(table, sess.Session); err != nil {
+		return 0, err
+	}
 	id, err := sess.Session.InsertOne(bean)
+	if err != nil {
+		return 0, err
+	}
+	if err := dialect.PostInsertId(table, sess.Session); err != nil {
+		return 0, err
+	}
 
-	dialect.PostInsertId(table, sess.Session)
-
-	return id, err
+	return id, nil
 }
 
 func getTypeName(bean interface{}) (res string) {

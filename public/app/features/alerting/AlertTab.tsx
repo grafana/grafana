@@ -19,6 +19,7 @@ import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
 import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
+import { CoreEvents } from 'app/types';
 
 interface Props {
   angularPanel?: AngularComponent;
@@ -116,7 +117,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
       title: 'Delete',
       btnType: 'danger',
       onClick: () => {
-        appEvents.emit('confirm-modal', {
+        appEvents.emit(CoreEvents.showConfirmModal, {
           title: 'Delete Alert',
           text: 'Are you sure you want to delete this alert rule?',
           text2: 'You need to save dashboard for the delete to take effect',
@@ -216,9 +217,4 @@ export const mapStateToProps = (state: StoreState) => ({});
 
 const mapDispatchToProps = { changePanelEditorTab };
 
-export const AlertTab = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedAlertTab)
-);
+export const AlertTab = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab));

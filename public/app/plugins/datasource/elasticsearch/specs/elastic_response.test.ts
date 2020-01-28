@@ -55,7 +55,10 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: 'value', id: '2' }],
+          metrics: [
+            { type: 'count', id: '1' },
+            { type: 'avg', field: 'value', id: '2' },
+          ],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
         },
       ];
@@ -119,14 +122,20 @@ describe('ElasticResponse', () => {
                 buckets: [
                   {
                     '3': {
-                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
+                      buckets: [
+                        { doc_count: 1, key: 1000 },
+                        { doc_count: 3, key: 2000 },
+                      ],
                     },
                     doc_count: 4,
                     key: 'server1',
                   },
                   {
                     '3': {
-                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
+                      buckets: [
+                        { doc_count: 2, key: 1000 },
+                        { doc_count: 8, key: 2000 },
+                      ],
                     },
                     doc_count: 10,
                     key: 'server2',
@@ -156,7 +165,10 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '4' }],
+          metrics: [
+            { type: 'count', id: '1' },
+            { type: 'avg', field: '@value', id: '4' },
+          ],
           bucketAggs: [
             { type: 'terms', field: 'host', id: '2' },
             { type: 'date_histogram', field: '@timestamp', id: '3' },
@@ -271,7 +283,10 @@ describe('ElasticResponse', () => {
               id: '1',
             },
           ],
-          bucketAggs: [{ type: 'terms', field: 'host', id: '3' }, { type: 'date_histogram', id: '4' }],
+          bucketAggs: [
+            { type: 'terms', field: 'host', id: '3' },
+            { type: 'date_histogram', id: '4' },
+          ],
         },
       ];
       response = {
@@ -356,21 +371,30 @@ describe('ElasticResponse', () => {
                 buckets: [
                   {
                     '3': {
-                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
+                      buckets: [
+                        { doc_count: 1, key: 1000 },
+                        { doc_count: 3, key: 2000 },
+                      ],
                     },
                     doc_count: 4,
                     key: 'server1',
                   },
                   {
                     '3': {
-                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
+                      buckets: [
+                        { doc_count: 2, key: 1000 },
+                        { doc_count: 8, key: 2000 },
+                      ],
                     },
                     doc_count: 10,
                     key: 'server2',
                   },
                   {
                     '3': {
-                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
+                      buckets: [
+                        { doc_count: 2, key: 1000 },
+                        { doc_count: 8, key: 2000 },
+                      ],
                     },
                     doc_count: 10,
                     key: 0,
@@ -410,7 +434,11 @@ describe('ElasticResponse', () => {
           {
             aggregations: {
               '3': {
-                buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }, { doc_count: 2, key: 1000 }],
+                buckets: [
+                  { doc_count: 1, key: 1000 },
+                  { doc_count: 3, key: 2000 },
+                  { doc_count: 2, key: 1000 },
+                ],
               },
             },
           },
@@ -454,12 +482,18 @@ describe('ElasticResponse', () => {
                 buckets: {
                   '@metric:cpu': {
                     '3': {
-                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
+                      buckets: [
+                        { doc_count: 1, key: 1000 },
+                        { doc_count: 3, key: 2000 },
+                      ],
                     },
                   },
                   '@metric:logins.count': {
                     '3': {
-                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
+                      buckets: [
+                        { doc_count: 2, key: 1000 },
+                        { doc_count: 8, key: 2000 },
+                      ],
                     },
                   },
                 },
@@ -641,7 +675,10 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'avg', id: '1', field: 'test' }, { type: 'avg', id: '2', field: 'test2' }],
+          metrics: [
+            { type: 'avg', id: '1', field: 'test' },
+            { type: 'avg', id: '2', field: 'test2' },
+          ],
           bucketAggs: [{ id: '2', type: 'terms', field: 'host' }],
         },
       ];
@@ -733,7 +770,10 @@ describe('ElasticResponse', () => {
             {
               id: '4',
               field: 'select field',
-              pipelineVariables: [{ name: 'var1', pipelineAgg: '1' }, { name: 'var2', pipelineAgg: '3' }],
+              pipelineVariables: [
+                { name: 'var1', pipelineAgg: '1' },
+                { name: 'var2', pipelineAgg: '3' },
+              ],
               settings: { script: 'params.var1 * params.var2' },
               type: 'bucket_script',
             },
@@ -831,9 +871,6 @@ describe('ElasticResponse', () => {
                     host: 'djisaodjsoad',
                     message: 'hello, i am a message',
                   },
-                  fields: {
-                    '@timestamp': ['2019-06-24T09:51:19.765Z'],
-                  },
                 },
                 {
                   _id: 'kdospaidopa',
@@ -843,9 +880,6 @@ describe('ElasticResponse', () => {
                     '@timestamp': '2019-06-24T09:52:19.765Z',
                     host: 'dsalkdakdop',
                     message: 'hello, i am also message',
-                  },
-                  fields: {
-                    '@timestamp': ['2019-06-24T09:52:19.765Z'],
                   },
                 },
               ],

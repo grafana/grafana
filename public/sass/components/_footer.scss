@@ -15,6 +15,11 @@
     &:hover {
       color: $footer-link-hover;
     }
+
+    i {
+      display: inline-block;
+      padding-right: $space-xxs;
+    }
   }
 
   ul {
@@ -23,10 +28,10 @@
 
   li {
     display: inline-block;
-    padding-right: 2px;
+
     &::after {
       content: ' | ';
-      padding-left: 2px;
+      padding: 0 $space-sm;
     }
   }
 
@@ -38,15 +43,6 @@
   }
 }
 
-.is-react .footer {
-  display: none;
-}
-
-.is-react .custom-scrollbar .footer {
-  display: block;
-}
-
-// Keeping footer inside the graphic on Login screen
 .login-page {
   .footer {
     display: block;

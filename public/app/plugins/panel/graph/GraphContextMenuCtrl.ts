@@ -1,13 +1,5 @@
 import { ContextMenuItem } from '@grafana/ui';
-
-export interface FlotDataPoint {
-  dataIndex: number;
-  datapoint: number[];
-  pageX: number;
-  pageY: number;
-  series: any;
-  seriesIndex: number;
-}
+import { FlotDataPoint } from '@grafana/data';
 
 export class GraphContextMenuCtrl {
   private source?: FlotDataPoint | null;

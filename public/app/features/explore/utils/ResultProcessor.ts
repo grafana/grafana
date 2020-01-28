@@ -1,15 +1,28 @@
-import { LogsModel, GraphSeriesXY, DataFrame, FieldType } from '@grafana/data';
-
+import {
+  LogsModel,
+  GraphSeriesXY,
+  DataFrame,
+  FieldType,
+  TimeZone,
+  toDataFrame,
+  getDisplayProcessor,
+} from '@grafana/data';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
+import { config } from 'app/core/config';
 
 export class ResultProcessor {
-  constructor(private state: ExploreItemState, private dataFrames: DataFrame[], private intervalMs: number) {}
+  constructor(
+    private state: ExploreItemState,
+    private dataFrames: DataFrame[],
+    private intervalMs: number,
+    private timeZone: TimeZone
+  ) {}
 
-  getGraphResult(): GraphSeriesXY[] {
+  getGraphResult(): GraphSeriesXY[] | null {
     if (this.state.mode !== ExploreMode.Metrics) {
       return null;
     }
@@ -22,13 +35,14 @@ export class ResultProcessor {
 
     return getGraphSeriesModel(
       onlyTimeSeries,
+      this.timeZone,
       {},
       { showBars: false, showLines: true, showPoints: false },
       { asTable: false, isVisible: true, placement: 'under' }
     );
   }
 
-  getTableResult(): TableModel {
+  getTableResult(): DataFrame | null {
     if (this.state.mode !== ExploreMode.Metrics) {
       return null;
     }
@@ -69,18 +83,28 @@ export class ResultProcessor {
       });
     });
 
-    return mergeTablesIntoModel(new TableModel(), ...tables);
+    const mergedTable = mergeTablesIntoModel(new TableModel(), ...tables);
+    const data = toDataFrame(mergedTable);
+
+    // set display processor
+    for (const field of data.fields) {
+      field.display = getDisplayProcessor({
+        field,
+        theme: config.theme,
+      });
+    }
+
+    return data;
   }
 
-  getLogsResult(): LogsModel {
+  getLogsResult(): LogsModel | null {
     if (this.state.mode !== ExploreMode.Logs) {
       return null;
     }
 
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs);
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
-
     const rows = sortedNewResults.rows;
     const series = sortedNewResults.series;
     return { ...sortedNewResults, rows, series };

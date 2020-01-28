@@ -1,30 +1,29 @@
 import _ from 'lodash';
-import { sanitize, escapeHtml } from 'app/core/utils/text';
-import { renderMarkdown } from '@grafana/data';
+import { escapeHtml, sanitize } from 'app/core/utils/text';
 
 import config from 'app/core/config';
-import { profiler } from 'app/core/core';
-import { Emitter } from 'app/core/core';
+import { Emitter, profiler } from 'app/core/core';
 import getFactors from 'app/core/utils/factors';
 import {
-  duplicatePanel,
-  removePanel,
-  copyPanel as copyPanelUtil,
-  editPanelJson as editPanelJsonUtil,
-  sharePanel as sharePanelUtil,
   calculateInnerPanelHeight,
+  copyPanel as copyPanelUtil,
+  duplicatePanel,
+  editPanelJson as editPanelJsonUtil,
+  removePanel,
+  sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
-
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
-import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
+import { AppEvent, PanelEvents, PanelPluginMeta, renderMarkdown } from '@grafana/data';
+import { getLocationSrv } from '@grafana/runtime';
+import { DashboardModel } from '../dashboard/state';
 
 export class PanelCtrl {
   panel: any;
   error: any;
-  dashboard: any;
+  dashboard: DashboardModel;
   pluginName: string;
   pluginId: string;
   editorTabs: any;
@@ -32,7 +31,6 @@ export class PanelCtrl {
   $injector: auto.IInjectorService;
   $location: any;
   $timeout: any;
-  inspector: any;
   editModeInitiated: boolean;
   height: any;
   containerHeight: any;
@@ -56,11 +54,11 @@ export class PanelCtrl {
       this.pluginName = plugin.name;
     }
 
-    $scope.$on('component-did-mount', () => this.panelDidMount());
+    $scope.$on(PanelEvents.componentDidMount.name, () => this.panelDidMount());
   }
 
   panelDidMount() {
-    this.events.emit('component-did-mount');
+    this.events.emit(PanelEvents.componentDidMount);
     this.dashboard.panelInitialized(this.panel);
   }
 
@@ -72,12 +70,12 @@ export class PanelCtrl {
     this.panel.refresh();
   }
 
-  publishAppEvent(evtName: string, evt: any) {
-    this.$scope.$root.appEvent(evtName, evt);
+  publishAppEvent<T>(event: AppEvent<T>, payload?: T) {
+    this.$scope.$root.appEvent(event, payload);
   }
 
   changeView(fullscreen: boolean, edit: boolean) {
-    this.publishAppEvent('panel-change-view', {
+    this.publishAppEvent(PanelEvents.panelChangeView, {
       fullscreen,
       edit,
       panelId: this.panel.id,
@@ -99,7 +97,7 @@ export class PanelCtrl {
   initEditMode() {
     if (!this.editModeInitiated) {
       this.editModeInitiated = true;
-      this.events.emit('init-edit-mode', null);
+      this.events.emit(PanelEvents.editModeInitialized);
       this.maxPanelsPerRowOptions = getFactors(GRID_COLUMN_COUNT);
     }
   }
@@ -129,7 +127,7 @@ export class PanelCtrl {
       shortcut: 'v',
     });
 
-    if (this.dashboard.meta.canEdit) {
+    if (this.dashboard.canEditPanel(this.panel)) {
       menu.push({
         text: 'Edit',
         click: 'ctrl.editPanel();',
@@ -146,6 +144,15 @@ export class PanelCtrl {
       shortcut: 'p s',
     });
 
+    if (config.featureToggles.inspect) {
+      menu.push({
+        text: 'Inspect',
+        icon: 'fa fa-fw fa-info-circle',
+        click: 'ctrl.inspectPanel();',
+        shortcut: 'p i',
+      });
+    }
+
     // Additional items from sub-class
     menu.push(...(await this.getAdditionalMenuItems()));
 
@@ -157,7 +164,7 @@ export class PanelCtrl {
       submenu: extendedMenu,
     });
 
-    if (this.dashboard.meta.canEdit) {
+    if (this.dashboard.canEditPanel(this.panel)) {
       menu.push({ divider: true, role: 'Editor' });
       menu.push({
         text: 'Remove',
@@ -173,7 +180,7 @@ export class PanelCtrl {
 
   getExtendedMenu() {
     const menu = [];
-    if (!this.panel.fullscreen && this.dashboard.meta.canEdit) {
+    if (!this.panel.fullscreen && this.dashboard.canEditPanel(this.panel)) {
       menu.push({
         text: 'Duplicate',
         click: 'ctrl.duplicate()',
@@ -193,7 +200,7 @@ export class PanelCtrl {
       click: 'ctrl.editPanelJson(); dismiss();',
     });
 
-    this.events.emit('init-panel-actions', menu);
+    this.events.emit(PanelEvents.initPanelActions, menu);
     return menu;
   }
 
@@ -212,7 +219,7 @@ export class PanelCtrl {
   }
 
   render(payload?: any) {
-    this.events.emit('render', payload);
+    this.events.emit(PanelEvents.render, payload);
   }
 
   duplicate() {
@@ -233,6 +240,15 @@ export class PanelCtrl {
 
   sharePanel() {
     sharePanelUtil(this.dashboard, this.panel);
+  }
+
+  inspectPanel() {
+    getLocationSrv().update({
+      query: {
+        inspect: this.panel.id,
+      },
+      partial: true,
+    });
   }
 
   getInfoMode() {
@@ -261,11 +277,10 @@ export class PanelCtrl {
     let html = '<div class="markdown-html panel-info-content">';
 
     const md = renderMarkdown(interpolatedMarkdown);
-    html += config.disableSanitizeHtml ? md : sanitize(md);
+    html += md;
 
     if (panel.links && panel.links.length > 0) {
       const interpolatedLinks = getPanelLinksSupplier(panel).getLinks();
-
       html += '<ul class="panel-info-corner-links">';
       for (const link of interpolatedLinks) {
         html +=
@@ -282,7 +297,7 @@ export class PanelCtrl {
 
     html += '</div>';
 
-    return html;
+    return config.disableSanitizeHtml ? html : sanitize(html);
   }
 
   // overriden from react
