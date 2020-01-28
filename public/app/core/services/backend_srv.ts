@@ -454,42 +454,9 @@ export class BackendSrv implements BackendService {
     return options;
   };
 
-  private parseUrlFromOptions = (options: BackendSrvRequest): string => {
-    const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
-    const serializedParams = serializeParams(cleanParams);
-    return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
-  };
-
-  private parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
-    const method = options.method;
-    const headers = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json, text/plain, */*',
-      ...options.headers,
-    };
-    const body = this.parseBody({ ...options, headers });
-    return {
-      method,
-      headers,
-      body,
-    };
-  };
-
-  private parseBody = (options: BackendSrvRequest) => {
-    if (!options.data || typeof options.data === 'string') {
-      return options.data;
-    }
-
-    if (options.headers['Content-Type'] === 'application/json') {
-      return JSON.stringify(options.data);
-    }
-
-    return new URLSearchParams(options.data);
-  };
-
   private getFromFetchStream = (options: BackendSrvRequest) => {
-    const url = this.parseUrlFromOptions(options);
-    const init = this.parseInitFromOptions(options);
+    const url = parseUrlFromOptions(options);
+    const init = parseInitFromOptions(options);
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async response => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
@@ -545,3 +512,36 @@ coreModule.factory('backendSrv', () => backendSrv);
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
+
+export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
+  const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
+  const serializedParams = serializeParams(cleanParams);
+  return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
+};
+
+export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
+  const method = options.method;
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json, text/plain, */*',
+    ...options.headers,
+  };
+  const body = parseBody({ ...options, headers });
+  return {
+    method,
+    headers,
+    body,
+  };
+};
+
+const parseBody = (options: BackendSrvRequest) => {
+  if (!options.data || typeof options.data === 'string') {
+    return options.data;
+  }
+
+  if (options.headers['Content-Type'] === 'application/json') {
+    return JSON.stringify(options.data);
+  }
+
+  return new URLSearchParams(options.data);
+};

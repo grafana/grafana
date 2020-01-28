@@ -7,6 +7,7 @@ export interface BuildInfo {
   commit: string;
   isEnterprise: boolean; // deprecated: use licenseInfo.hasLicense instead
   env: string;
+  edition: string;
   latestVersion: string;
   hasUpdate: boolean;
 }
@@ -21,6 +22,8 @@ interface FeatureToggles {
 interface LicenseInfo {
   hasLicense: boolean;
   expiry: number;
+  licenseUrl: string;
+  stateInfo: string;
 }
 
 export class GrafanaBootConfig {

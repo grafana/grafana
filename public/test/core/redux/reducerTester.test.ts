@@ -37,7 +37,7 @@ describe('reducerTester', () => {
   describe('when reducer mutates state', () => {
     it('then it should throw', () => {
       expect(() => {
-        reducerTester()
+        reducerTester<DummyState>()
           .givenReducer(mutatingReducer, initialState)
           .whenActionIsDispatched(dummyAction('some string'));
       }).toThrow();
@@ -47,7 +47,7 @@ describe('reducerTester', () => {
   describe('when reducer does not mutate state', () => {
     it('then it should not throw', () => {
       expect(() => {
-        reducerTester()
+        reducerTester<DummyState>()
           .givenReducer(okReducer, initialState)
           .whenActionIsDispatched(dummyAction('some string'));
       }).not.toThrow();
