@@ -6,17 +6,22 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/collector"
 	"github.com/grafana/grafana/pkg/registry"
 	plugin "github.com/hashicorp/go-plugin"
 	"golang.org/x/xerrors"
+)
+
+var (
+	// ErrPluginNotRegistered error returned when plugin not registered.
+	ErrPluginNotRegistered = errors.New("Plugin not registered")
+	// ErrDiagnosticsNotSupported error returned when plugin doesn't support diagnostics.
+	ErrDiagnosticsNotSupported = errors.New("Plugin diagnostics not supported")
+	// ErrHealthCheckFailed error returned when health check failed.
+	ErrHealthCheckFailed = errors.New("Health check failed")
 )
 
 func init() {
@@ -33,10 +38,13 @@ type Manager interface {
 	Register(descriptor PluginDescriptor) error
 	// StartPlugin starts a non-managed backend plugin
 	StartPlugin(ctx context.Context, pluginID string) error
+	// CheckHealth checks the health of a registered backend plugin.
+	CheckHealth(ctx context.Context, pluginID string) (*CheckHealthResult, error)
+	// CallResource calls a plugin resource.
+	CallResource(ctx context.Context, req CallResourceRequest) (*CallResourceResult, error)
 }
 
 type manager struct {
-	RouteRegister   routing.RouteRegister `inject:""`
 	pluginsMu       sync.RWMutex
 	plugins         map[string]*BackendPlugin
 	pluginCollector collector.PluginCollector
@@ -48,9 +56,6 @@ func (m *manager) Init() error {
 	m.logger = log.New("plugins.backend")
 	m.pluginCollector = collector.NewPluginCollector()
 	prometheus.MustRegister(m.pluginCollector)
-
-	m.RouteRegister.Get("/api/plugins/:pluginId/health", m.checkHealth)
-	m.RouteRegister.Any("/api/plugins/:pluginId/resources/*", m.callResource)
 
 	return nil
 }
@@ -141,71 +146,50 @@ func (m *manager) stop() {
 	}
 }
 
-// checkHealth http handler for checking plugin health.
-func (m *manager) checkHealth(c *models.ReqContext) {
-	pluginID := c.Params("pluginId")
+// CheckHealth checks the health of a registered backend plugin.
+func (m *manager) CheckHealth(ctx context.Context, pluginID string) (*CheckHealthResult, error) {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
 
-	if !registered || !p.supportsDiagnostics() {
-		c.JsonApiErr(404, "Plugin not found", nil)
-		return
+	if !registered {
+		return nil, ErrPluginNotRegistered
 	}
 
-	res, err := p.checkHealth(c.Req.Context())
+	if !p.supportsDiagnostics() {
+		return nil, ErrDiagnosticsNotSupported
+	}
+
+	res, err := p.checkHealth(ctx)
 	if err != nil {
 		p.logger.Error("Failed to check plugin health", "error", err)
-		c.JSON(503, map[string]interface{}{
-			"status": pluginv2.CheckHealth_Response_ERROR.String(),
-		})
-		return
+		return nil, ErrHealthCheckFailed
 	}
 
-	payload := map[string]interface{}{
-		"status": res.Status.String(),
-		"info":   res.Info,
-	}
-
-	if res.Status != pluginv2.CheckHealth_Response_OK {
-		c.JSON(503, payload)
-		return
-	}
-
-	c.JSON(200, payload)
+	return checkHealthResultFromProto(res), nil
 }
 
-// callResource http handler for calling plugin resource.
-func (m *manager) callResource(c *models.ReqContext) {
-	pluginID := c.Params("pluginId")
+// CallResource calls a plugin resource.
+func (m *manager) CallResource(ctx context.Context, req CallResourceRequest) (*CallResourceResult, error) {
 	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginID]
+	p, registered := m.plugins[req.Config.PluginID]
 	m.pluginsMu.RUnlock()
 
-	if !registered || !p.supportsDiagnostics() {
-		c.JsonApiErr(404, "Plugin not found", nil)
-		return
+	if !registered {
+		return nil, ErrPluginNotRegistered
 	}
 
-	req := &pluginv2.CallResource_Request{
-		Config:       &pluginv2.PluginConfig{},
-		ResourceName: "test",
-		ResourcePath: c.Params("*"),
-		Method:       c.Req.Method,
-		Url:          c.Req.URL.String(),
-	}
-	res, err := p.callResource(c.Req.Context(), req)
+	res, err := p.callResource(ctx, req)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to call resource", err)
-		return
+		return nil, err
 	}
 
-	c.Header().Add("Content-Type", "text/plain")
-	c.WriteHeader(int(res.Code))
-	_, err = c.Write(res.Body)
-	if err != nil {
-		m.logger.Error("Failed to write resource response", "error", err)
+	// Make sure a content type always is returned in response
+	if _, exists := res.Headers["Content-Type"]; !exists {
+		res.Headers["Content-Type"] = []string{"application/json"}
 	}
+
+	return res, nil
 }
 
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *BackendPlugin) error {

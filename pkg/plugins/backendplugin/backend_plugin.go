@@ -5,7 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/resource"
+
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -34,6 +39,7 @@ type BackendPlugin struct {
 	diagnostics    DiagnosticsPlugin
 	core           CorePlugin
 	resources      map[string]*pluginv2.Resource
+	routerTree     *macaron.Tree
 }
 
 func (p *BackendPlugin) start(ctx context.Context) error {
@@ -70,9 +76,7 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 
 		client = &Client{}
 		if rawBackend != nil {
-			p.logger.Info("Got raw backend")
 			if plugin, ok := rawBackend.(CorePlugin); ok {
-				p.logger.Info("Got core plugin")
 				p.core = plugin
 				client.DatasourcePlugin = plugin
 			}
@@ -109,6 +113,16 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 	}
 
 	p.resources = res.Resources
+	p.routerTree = macaron.NewTree()
+
+	for resourceName, resource := range p.resources {
+		p.logger.Info("got resource", "name", resourceName)
+		for _, r := range resource.Routes {
+			resourcePath := resource.Path + r.Path
+			p.logger.Info("adding route to tree", "resourcePath", resourcePath)
+			p.routerTree.Add(resourcePath, createResourceHandler(p, resourceName, resourcePath))
+		}
+	}
 
 	if legacyClient != nil && p.startFns.OnLegacyStart != nil {
 		if err := p.startFns.OnLegacyStart(p.id, legacyClient, p.logger); err != nil {
@@ -229,14 +243,85 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 	return res, nil
 }
 
-func (p *BackendPlugin) callResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
+func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (*CallResourceResult, error) {
 	if p.resources == nil {
-		return &pluginv2.CallResource_Response{
-			Code: int32(http.StatusNotFound),
+		return &CallResourceResult{
+			Status:  http.StatusNotFound,
+			Headers: map[string][]string{"Content-Type": {"application/json"}},
 		}, nil
 	}
 
-	return p.core.CallResource(ctx, req)
+	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
+
+	handle, params, matched := p.routerTree.Match(req.Path)
+	if !matched {
+		return &CallResourceResult{
+			Status:  http.StatusNotFound,
+			Headers: map[string][]string{"Content-Type": {"application/json"}},
+		}, nil
+	}
+
+	rw := resource.NewResourceResponseWriter()
+	r := bytes.NewReader(req.Body)
+	httpReq, err := http.NewRequest(req.Method, req.URL, r)
+	if err != nil {
+		return nil, err
+	}
+	handle(rw, httpReq, params)
+	result := rw.Result()
+	p.logger.Debug("Call resource response", "res", result)
+
+	headers := map[string][]string{}
+	for key, values := range result.Headers {
+		headers[key] = values.Values
+	}
+
+	return &CallResourceResult{
+		Headers: headers,
+		Body:    result.Body,
+		Status:  int(result.Code),
+	}, nil
+}
+
+func createResourceHandler(p *BackendPlugin, resourceName, resourcePath string) macaron.Handle {
+	return macaron.Handle(func(rw http.ResponseWriter, req *http.Request, params macaron.Params) {
+		var body []byte
+		var err error
+		if req.Body != nil {
+			defer req.Body.Close()
+			body, err = ioutil.ReadAll(req.Body)
+			if err != nil {
+				p.logger.Error("Failed to read request body", "error", err)
+				return
+			}
+		}
+		protoReq := &pluginv2.CallResource_Request{
+			Config:       &pluginv2.PluginConfig{},
+			ResourceName: resourceName,
+			ResourcePath: resourcePath,
+			Method:       req.Method,
+			Url:          req.URL.String(),
+			Params:       params,
+			Body:         body,
+		}
+		protoRes, err := p.core.CallResource(req.Context(), protoReq)
+		if err != nil {
+			p.logger.Error("Failed to call resource", "error", err)
+			return
+		}
+
+		for key, values := range protoRes.Headers {
+			for _, v := range values.Values {
+				rw.Header().Add(key, v)
+			}
+		}
+
+		rw.WriteHeader(int(protoRes.Code))
+		_, err = rw.Write(protoRes.Body)
+		if err != nil {
+			p.logger.Error("Failed to write resource response", "error", err)
+		}
+	})
 }
 
 // convertMetricFamily converts metric family to prometheus.Metric.
