@@ -142,7 +142,16 @@ Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom
 
 This section contains important information if you want to migrate from previous Grafana container versions to a more current one.
 
-### Migration from a previous version of the docker container to 5.1 or later
+### Migrate to v6.5 or later
+
+Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.org) based and one [Ubuntu](https://ubuntu.com/) based, see [Image Variants](#image-variants) for details.
+
+
+### Migrate to v6.4 or later
+
+Grafana Docker image was changed to be based on [Alpine](http://alpinelinux.org) instead of [Ubuntu](https://ubuntu.com/).
+
+### Migrate to v5.1 or later
 
 The Docker container for Grafana has seen a major rewrite for 5.1.
 
@@ -205,14 +214,6 @@ chmod -R a+r /etc/grafana && \
 chown -R grafana:grafana /var/lib/grafana && \
 chown -R grafana:grafana /usr/share/grafana
 ```
-
-### Migration from a previous version of the Docker container to 6.4 or later
-
-Grafana Docker image was changed to be based on [Alpine](http://alpinelinux.org) instead of [Ubuntu](https://ubuntu.com/).
-
-### Migration from a previous version of the docker container to 6.5 or later
-
-Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.org) based and one [Ubuntu](https://ubuntu.com/) based, see [Image Variants](#image-variants) for details.
 
 ## Next steps
 
