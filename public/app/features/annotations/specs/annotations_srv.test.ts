@@ -1,14 +1,6 @@
 import { AnnotationsSrv } from '../annotations_srv';
-import {
-  AnnotationEvent,
-  dateTime,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  AnnotationQueryRequest,
-} from '@grafana/data';
-import { TemplateSrv } from '../../templating/template_srv';
+import { AnnotationEvent, dateTime, DataQueryResponse, AnnotationQueryRequest } from '@grafana/data';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { promises } from 'fs';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   __esModule: true,
