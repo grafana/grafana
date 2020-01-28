@@ -58,7 +58,7 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana:6.5.0
 
 ### Run the Grafana master branch
 
-For every successful build of the master branch, we update the `grafana/grafana:master` and `grafana/grafana:master-ubuntu`. Additionally, two new tags are created, `grafana/grafana-dev:master-<commit hash>` and `grafana/grafana-dev:master-<commit hash>-ubuntu`, which includes the hash of the Git commit that was built. This means you can always get the latest version of Grafana.
+For every successful build of the master branch, we update the `grafana/grafana:master` and `grafana/grafana:master-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-dev:master-<commit hash>` and `grafana/grafana-dev:master-<commit hash>-ubuntu`, which includes the hash of the Git commit that was built. Use these to get access to the latest master builds of Grafana.
 
 When running Grafana master in production, we *strongly* recommend that you use the `grafana/grafana-dev:master-<commit hash>` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
 
