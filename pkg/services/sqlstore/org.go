@@ -220,6 +220,18 @@ func DeleteOrg(cmd *m.DeleteOrgCommand) error {
 	})
 }
 
+func verifyExistingOrg(sess *DBSession, orgId int64) error {
+	var org m.Org
+	has, err := sess.Where("id=?", orgId).Get(&org)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return m.ErrOrgNotFound
+	}
+	return nil
+}
+
 func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 	var org m.Org
 

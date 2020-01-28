@@ -14,6 +14,7 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) {
 		Email:    form.Email,
 		Password: form.Password,
 		Name:     form.Name,
+		OrgId:    form.OrgId,
 	}
 
 	if len(cmd.Login) == 0 {

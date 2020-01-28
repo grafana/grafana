@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"testing"
 	"time"
 
@@ -61,6 +62,53 @@ func TestUserDataAccess(t *testing.T) {
 				So(query.Result.Salt, ShouldHaveLength, 10)
 				So(query.Result.IsDisabled, ShouldBeTrue)
 			})
+		})
+
+		Convey("Given an organization", func() {
+			setting.AutoAssignOrg = true
+
+			orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
+			err := CreateOrg(orgCmd)
+			So(err, ShouldBeNil)
+
+			Convey("Creates user assigned to other organization", func() {
+				cmd := &models.CreateUserCommand{
+					Email: "usertest@test.com",
+					Name:  "user name",
+					Login: "user_test_login",
+					OrgId: orgCmd.Result.Id,
+				}
+
+				err := CreateUser(context.Background(), cmd)
+				So(err, ShouldBeNil)
+
+				Convey("Loading a user", func() {
+					query := models.GetUserByIdQuery{Id: cmd.Result.Id}
+					err := GetUserById(&query)
+					So(err, ShouldBeNil)
+
+					So(query.Result.Email, ShouldEqual, "usertest@test.com")
+					So(query.Result.Password, ShouldEqual, "")
+					So(query.Result.Rands, ShouldHaveLength, 10)
+					So(query.Result.Salt, ShouldHaveLength, 10)
+					So(query.Result.IsDisabled, ShouldBeFalse)
+					So(query.Result.OrgId, ShouldEqual, orgCmd.Result.Id)
+				})
+			})
+
+			Convey("Don't create user assigned to unknown organization", func() {
+				cmd := &models.CreateUserCommand{
+					Email: "usertest@test.com",
+					Name:  "user name",
+					Login: "user_test_login",
+					OrgId: 10000,
+				}
+
+				err := CreateUser(context.Background(), cmd)
+				So(err, ShouldNotBeNil)
+			})
+
+			setting.AutoAssignOrg = false
 		})
 
 		Convey("Given 5 users", func() {

@@ -18,6 +18,7 @@ type AdminCreateUserForm struct {
 	Login    string `json:"login"`
 	Name     string `json:"name"`
 	Password string `json:"password" binding:"Required"`
+	OrgId    int64  `json:"orgId"`
 }
 
 type AdminUpdateUserForm struct {
