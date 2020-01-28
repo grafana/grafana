@@ -17,6 +17,7 @@ interface FeatureToggles {
   inspect: boolean;
   expressions: boolean;
   newEdit: boolean;
+  meta: boolean;
 }
 
 interface LicenseInfo {
@@ -63,6 +64,7 @@ export class GrafanaBootConfig {
     inspect: false,
     expressions: false,
     newEdit: false,
+    meta: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
 
