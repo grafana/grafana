@@ -1906,10 +1906,12 @@ workflows:
           filters: *filter-only-master
           requires:
             - install-grabpl
+            - lint-go
       - postgres-integration-test:
           filters: *filter-only-master
           requires:
             - install-grabpl
+            - lint-go
       - package-oss:
           filters: *filter-only-master
           requires:
