@@ -1,22 +1,28 @@
 package social
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"golang.org/x/oauth2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 type SocialAzureAD struct {
 	*SocialBase
 	allowedDomains []string
-	hostedDomain   string
-	apiUrl         string
 	allowSignup    bool
-	wellKnwonUrl   string
+}
+
+type AzureClaims struct {
+	Email      string   `json:"email"`
+	UniqueName string   `json:"unique_name"`
+	Upn        string   `json:"upn"`
+	Roles      []string `json:"roles"`
 }
 
 func (s *SocialAzureAD) Type() int {
@@ -41,66 +47,78 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		Roles      string `json:"roles"`
 	}
 
-	var jwtToken = NewToken(token, s.wellKnwonUrl)
+	idToken := token.Extra("id_token")
+	if idToken == nil {
+		return nil, fmt.Errorf("No id_token found")
+	}
 
-	parsedToken, err := jwtToken.Parse()
+	parsedToken, err := jwt.ParseSigned(idToken.(string))
 	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %s", err)
+		return nil, fmt.Errorf("Error parsing id token")
 	}
 
-	if !parsedToken.Valid {
-		return nil, fmt.Errorf("Error validating token")
+	var claims AzureClaims
+	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return nil, fmt.Errorf("Error getting claims from id token")
 	}
 
-	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, fmt.Errorf("Error getting claims from token")
-	}
-
+	fmt.Printf("%#v", claims)
 	email := extractEmail(claims)
 
 	if email == "" {
-		return nil, fmt.Errorf("Error getting user info: No email found in access token")
+		return nil, errors.New("Error getting user info: No email found in access token")
 	}
 
-	role := extractRole(claims)
+	role := s.extractRole(client, claims)
 
 	return &BasicUserInfo{
 		Id:    data.Id,
 		Name:  data.Name,
 		Email: email,
 		Login: email,
-		Role:  role,
+		Role:  string(role),
 	}, nil
 }
 
-func extractEmail(claims jwt.MapClaims) string {
-	var email string
+func extractEmail(claims AzureClaims) string {
 
-	if _, ok := claims["email"]; !ok {
-		if u, ok := claims["upn"]; ok {
-			email = u.(string)
-			return email
+	if claims.Email == "" {
+		if len(claims.Upn) > 0 {
+			return claims.Upn
 		}
-		if u, ok := claims["unique_name"]; ok {
-			email = u.(string)
-			return email
+		if len(claims.UniqueName) > 0 {
+			return claims.UniqueName
 		}
 	}
 
-	return claims["email"].(string)
+	return claims.Email
 }
 
-func extractRole(claims jwt.MapClaims) string {
-	var role string
-	if roles, ok := claims["roles"].([]interface{}); ok {
-		if len(roles) > 0 {
-			switch r := roles[0].(type) {
-			case string:
-				role = r
-			}
+func (s *SocialAzureAD) extractRole(client *http.Client, claims AzureClaims) models.RoleType {
+	if len(claims.Roles) == 0 {
+		return models.ROLE_VIEWER
+	}
+
+	roleOrder := []models.RoleType{
+		models.ROLE_ADMIN,
+		models.ROLE_EDITOR,
+		models.ROLE_VIEWER,
+	}
+
+	for _, role := range roleOrder {
+		if found := hasRole(claims.Roles, role); found {
+			return role
 		}
 	}
 
-	return role
+	return models.ROLE_VIEWER
+}
+
+func hasRole(roles []string, role models.RoleType) bool {
+	for _, item := range roles {
+		if strings.ToLower(item) == strings.ToLower(string(role)) {
+			return true
+		}
+	}
+	return false
 }

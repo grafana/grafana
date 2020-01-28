@@ -160,8 +160,6 @@ func NewOAuthService() {
 					log:    logger,
 				},
 				allowedDomains: info.AllowedDomains,
-				wellKnwonUrl:   info.WellKnownUrl,
-				apiUrl:         info.ApiUrl,
 				allowSignup:    info.AllowSignup,
 			}
 		}
