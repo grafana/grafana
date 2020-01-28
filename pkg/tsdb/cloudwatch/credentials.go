@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -62,8 +63,9 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 				remoteCredProvider(stsSess),
 			})
 		stsConfig := &aws.Config{
-			Region:      aws.String(dsInfo.Region),
-			Credentials: stsCreds,
+			Region:              aws.String(dsInfo.Region),
+			Credentials:         stsCreds,
+			STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
 		}
 
 		sess, err := session.NewSession(stsConfig)
@@ -172,8 +174,9 @@ func (e *CloudWatchExecutor) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, 
 	}
 
 	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
+		Region:              aws.String(dsInfo.Region),
+		Credentials:         creds,
+		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
 	}
 
 	return cfg, nil

@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -724,8 +725,9 @@ func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error)
 		return cloudwatch.ListMetricsOutput{}, err
 	}
 	cfg := &aws.Config{
-		Region:      aws.String(cwData.Region),
-		Credentials: creds,
+		Region:              aws.String(cwData.Region),
+		Credentials:         creds,
+		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
 	}
 	sess, err := session.NewSession(cfg)
 	if err != nil {
