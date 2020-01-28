@@ -76,6 +76,12 @@ const getStyles = stylesFactory(() => {
     tabContent: css`
       height: calc(100% - 32px);
     `,
+    dataTabContent: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    `,
   };
 });
 
@@ -111,9 +117,9 @@ export class PanelInspector extends PureComponent<Props, State> {
       for (const frame of data) {
         const key = frame.meta?.datasource;
         if (key) {
-          const ds = await getDataSourceSrv().get(key);
-          if (ds && ds.components.MetadataInspector) {
-            metaDS = ds;
+          const dataSource = await getDataSourceSrv().get(key);
+          if (dataSource && dataSource.components?.MetadataInspector) {
+            metaDS = dataSource;
             break;
           }
         }
@@ -191,7 +197,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     });
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+      <div className={styles.dataTabContent}>
         <div className={styles.toolbar}>
           {choices.length > 1 && (
             <div className={styles.dataFrameSelect}>
@@ -211,7 +217,6 @@ export class PanelInspector extends PureComponent<Props, State> {
         <div style={{ flexGrow: 1 }}>
           <AutoSizer>
             {({ width, height }) => {
-              console.log(width);
               if (width === 0) {
                 return null;
               }
