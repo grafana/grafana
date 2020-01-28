@@ -68,7 +68,7 @@ For a list of available tags, check out [grafana/grafana](https://hub.docker.com
 
 You can install official and community plugins listed on the Grafana [plugins page](https://grafana.com/grafana/plugins) or from a custom URL.
 
-### Install official Grafana plugins
+### Install official and community Grafana plugins
 
 Pass the plugins you want installed to Docker with the `GF_INSTALL_PLUGINS` environment variable as a comma-separated list. This sends each plugin name to `grafana-cli plugins install ${plugin}` and installs them when Grafana starts.
 
