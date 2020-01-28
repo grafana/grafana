@@ -73,6 +73,9 @@ const getStyles = stylesFactory(() => {
     downloadCsv: css`
       margin-left: 16px;
     `,
+    tabContent: css`
+      height: calc(100% - 32px);
+    `,
   };
 });
 
@@ -163,13 +166,10 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 
-  renderDataTab(width: number, height: number) {
+  renderDataTab() {
     const { data, selected } = this.state;
-
-    // We need to subtract the height of the export csv and table header row
-    height -= 55;
-
     const styles = getStyles();
+
     if (!data || !data.length) {
       return <div>No Data</div>;
     }
@@ -191,7 +191,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     });
 
     return (
-      <div>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
         <div className={styles.toolbar}>
           {choices.length > 1 && (
             <div className={styles.dataFrameSelect}>
@@ -208,7 +208,21 @@ export class PanelInspector extends PureComponent<Props, State> {
             </Forms.Button>
           </div>
         </div>
-        <Table width={width} height={height} data={processed[selected]} />
+        <div style={{ flexGrow: 1 }}>
+          <AutoSizer>
+            {({ width, height }) => {
+              console.log(width);
+              if (width === 0) {
+                return null;
+              }
+              return (
+                <div style={{ width, height }}>
+                  <Table width={width} height={height} data={processed[selected]} />
+                </div>
+              );
+            }}
+          </AutoSizer>
+        </div>
       </div>
     );
   }
@@ -245,6 +259,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   render() {
     const { panel } = this.props;
     const { last, tab } = this.state;
+    const styles = getStyles();
 
     const error = last?.error;
     if (!panel) {
@@ -278,26 +293,26 @@ export class PanelInspector extends PureComponent<Props, State> {
             );
           })}
         </TabsBar>
-        <TabContent style={{ height: 'calc(100% - 32px)' }}>
-          <AutoSizer>
-            {({ width, height }) => {
-              if (width === 0) {
-                return null;
-              }
-              return (
-                <div style={{ width, height }}>
-                  {tab === InspectTab.Data && this.renderDataTab(width, height)}
-
-                  {tab === InspectTab.Meta && this.renderMetadataInspector()}
-
-                  {tab === InspectTab.Issue && this.renderIssueTab()}
-
-                  {tab === InspectTab.Raw && this.renderRawJsonTab(last)}
-                  {tab === InspectTab.Error && this.renderErrorTab(error)}
-                </div>
-              );
-            }}
-          </AutoSizer>
+        <TabContent className={styles.tabContent}>
+          {tab === InspectTab.Data ? (
+            this.renderDataTab()
+          ) : (
+            <AutoSizer>
+              {({ width, height }) => {
+                if (width === 0) {
+                  return null;
+                }
+                return (
+                  <div style={{ width, height }}>
+                    {tab === InspectTab.Meta && this.renderMetadataInspector()}
+                    {tab === InspectTab.Issue && this.renderIssueTab()}
+                    {tab === InspectTab.Raw && this.renderRawJsonTab(last)}
+                    {tab === InspectTab.Error && this.renderErrorTab(error)}
+                  </div>
+                );
+              }}
+            </AutoSizer>
+          )}
         </TabContent>
       </Drawer>
     );

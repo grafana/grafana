@@ -1,6 +1,6 @@
 import React, { FC, HTMLAttributes, ReactNode } from 'react';
 import { stylesFactory, useTheme } from '../../themes';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -15,12 +15,12 @@ const getTabContentStyle = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const TabContent: FC<Props> = ({ children, ...restProps }) => {
+export const TabContent: FC<Props> = ({ children, className, ...restProps }) => {
   const theme = useTheme();
   const styles = getTabContentStyle(theme);
 
   return (
-    <div {...restProps} className={styles.tabContent}>
+    <div {...restProps} className={cx(styles.tabContent, className)}>
       {children}
     </div>
   );
