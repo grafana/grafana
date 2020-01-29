@@ -164,30 +164,34 @@ describe('backendSrv', () => {
     describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
       it('then it should retry', async () => {
         jest.useFakeTimers();
+        const url = '/api/dashboard/';
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
           statusText: 'UnAuthorized',
           data: { message: 'UnAuthorized' },
+          url,
         });
         backendSrv.loginPing = jest
           .fn()
           .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
-        const url = '/api/dashboard/';
-        // it would be better if we could simulate that after the call to loginPing everything is successful but as
-        // our fromFetchMock returns ok:false the second time this retries it will still be ok:false going into the
-        // mergeMap in toFailureStream
-        await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(error => {
-          expect(error.status).toBe(401);
-          expect(error.statusText).toBe('UnAuthorized');
-          expect(error.data).toEqual({ message: 'UnAuthorized' });
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
-          expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-          expect(logoutMock).toHaveBeenCalledTimes(1);
-          expectRequestCallChain({ url, method: 'GET', retry: 0 });
-          jest.advanceTimersByTime(50);
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
-        });
+        await backendSrv
+          .request({ url, method: 'GET', retry: 0 })
+          .catch(error => {
+            expect(error.status).toBe(401);
+            expect(error.statusText).toBe('UnAuthorized');
+            expect(error.data).toEqual({ message: 'UnAuthorized' });
+            expect(appEventsMock.emit).not.toHaveBeenCalled();
+            expect(logoutMock).not.toHaveBeenCalled();
+            expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+            expectRequestCallChain({ url, method: 'GET', retry: 0 });
+            jest.advanceTimersByTime(50);
+          })
+          .catch(error => {
+            expect(error).toEqual({ message: 'UnAuthorized' });
+            expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+            expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
+          });
       });
     });
 
@@ -430,16 +434,18 @@ describe('backendSrv', () => {
           .fn()
           .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
         const url = '/api/dashboard/';
-        // it would be better if we could simulate that after the call to loginPing everything is successful but as
-        // our fromFetchMock returns ok:false the second time this retries it will still be ok:false going into the
-        // mergeMap in toFailureStream
         await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch(error => {
           expect(error.status).toBe(401);
           expect(error.statusText).toBe('UnAuthorized');
           expect(error.data).toEqual({ message: 'UnAuthorized' });
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
+          expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+          expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.dsRequestError, {
+            data: { message: 'UnAuthorized' },
+            status: 401,
+            statusText: 'UnAuthorized',
+          });
           expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-          expect(logoutMock).toHaveBeenCalledTimes(1);
+          expect(logoutMock).not.toHaveBeenCalled();
           expectDataSourceRequestCallChain({ url, method: 'GET', retry: 0 });
         });
       });
