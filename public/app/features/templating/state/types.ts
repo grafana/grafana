@@ -7,7 +7,7 @@ export interface VariableEditorState {
 }
 
 export const initialVariableEditorState: VariableEditorState = {
-  name: null,
+  name: '',
   errors: {},
   valid: false,
 };

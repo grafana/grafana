@@ -9,12 +9,15 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
-import { getVariables } from './state/selectors';
+import { getVariable, getVariables } from './state/selectors';
 import { variableAdapters } from './adapters';
+import { CoreEvents } from '../../types';
+import { VariableIdentifier } from './state/actions';
 
 export class VariableEditorCtrl {
   /** @ngInject */
-  constructor($scope: any, datasourceSrv: DatasourceSrv, variableSrv: VariableSrv, templateSrv: TemplateSrv) {
+  constructor(private $scope: any, datasourceSrv: DatasourceSrv, variableSrv: VariableSrv, templateSrv: TemplateSrv) {
+    appEvents.on(CoreEvents.variableNameInStateUpdated, this.onVariableNameInStateUpdated.bind(this), $scope);
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
@@ -268,6 +271,16 @@ export class VariableEditorCtrl {
     $scope.usesAdapter = () => {
       return variableAdapters.contains($scope.current.type);
     };
+  }
+
+  onVariableNameInStateUpdated(args: VariableIdentifier) {
+    for (let index = 0; index < this.$scope.variables.length; index++) {
+      const variable = this.$scope.variables[index];
+      if (variable.uuid && variable.uuid === args.uuid) {
+        variable.name = getVariable(args.uuid).name;
+        break;
+      }
+    }
   }
 }
 

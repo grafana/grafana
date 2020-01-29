@@ -7,6 +7,7 @@ import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { buildInitialState } from '../core/reducers/navModel';
+import { variableMiddleware } from '../features/templating/middleware/variableMiddleware';
 
 export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called
@@ -22,7 +23,10 @@ export function configureStore() {
     },
   });
 
-  const middleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, thunk, logger] : [thunk];
+  const middleware =
+    process.env.NODE_ENV !== 'production'
+      ? [toggleLogActionsMiddleware, thunk, variableMiddleware, logger]
+      : [thunk, variableMiddleware];
 
   const store = reduxConfigureStore<StoreState>({
     reducer: createRootReducer(),
