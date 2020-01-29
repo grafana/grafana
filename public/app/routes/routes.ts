@@ -7,13 +7,14 @@ import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
+import { SignupPage } from 'app/features/profile/SignupPage';
+
 import config from 'app/core/config';
 import { ILocationProvider, route } from 'angular';
 // Types
 import { DashboardRouteInfo } from 'app/types';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import SignupPage from 'app/features/profile/SignupPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
@@ -358,7 +359,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () => SignupPage,
       },
-      // pageClass: 'sidemenu-hidden',
+      pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {
       templateUrl: 'public/app/partials/reset_password.html',
