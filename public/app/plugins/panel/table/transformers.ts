@@ -153,8 +153,7 @@ transformers['annotations'] = {
     const annotationTagKeyValues: string[][][] = data.annotations.map((a: AnnotationEvent) =>
       a.tags ? a.tags.map(t => t.split(':', 2)).filter(t => t.length === 2) : []
     );
-    const tagKeys: string[] = []
-      .concat(...annotationTagKeyValues)
+    const tagKeys: string[] = _.flatten(annotationTagKeyValues)
       .map(kv => kv[0])
       .filter((v, i, a) => a.indexOf(v) === i);
     model.columns.push(...Array.from(tagKeys, k => ({ text: k })));
