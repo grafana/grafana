@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"golang.org/x/oauth2"
 
@@ -219,7 +218,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.cookieOptionsFromCfg)
-		redirectTo = strings.Replace(redirectTo, setting.AppSubUrl, "", 1)
+		// if there is a sub_url, prepend it
+		if setting.AppSubUrl != "" {
+			redirectTo = setting.AppSubUrl + redirectTo
+		}
 		ctx.Redirect(redirectTo)
 		return
 	}
