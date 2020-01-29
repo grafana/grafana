@@ -12,8 +12,6 @@ import {
   PanelProps,
   getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
-  DataFrameView,
-  DisplayProcessor,
 } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
@@ -37,7 +35,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
               height={height}
               orientation={options.orientation}
               field={field}
-              display={getDisplay(view, colIndex)}
+              display={view?.getFieldDisplayProcessor(colIndex)}
               theme={config.theme}
               itemSpacing={this.getItemSpacing()}
               displayMode={options.displayMode}
@@ -89,17 +87,3 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     );
   }
 }
-
-const getDisplay = (view: DataFrameView, colIndex: number): DisplayProcessor => {
-  if (!view || !view.dataFrame || !view.dataFrame.fields) {
-    return null;
-  }
-
-  const field = view.dataFrame.fields[colIndex];
-
-  if (!field) {
-    return null;
-  }
-
-  return field.display;
-};
