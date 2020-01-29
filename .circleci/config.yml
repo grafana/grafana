@@ -551,6 +551,9 @@ jobs:
             docker load -i /tmp/workspace/docker/grafana-oss-arm32v7.tar
             docker load -i /tmp/workspace/docker/grafana-oss-arm64v8.tar
       - run:
+          name: Log into Docker Hub
+          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+      - run:
           name: Publish Docker images
           command: |
             docker tag "grafana/grafana:master-${CIRCLE_SHA1}" "grafana/grafana:master-${CIRCLE_SHA1}-new-pipeline"
@@ -591,6 +594,9 @@ jobs:
             docker load -i /tmp/workspace/docker/grafana-oss-amd64-ubuntu.tar
             docker load -i /tmp/workspace/docker/grafana-oss-arm32v7-ubuntu.tar
             docker load -i /tmp/workspace/docker/grafana-oss-arm64v8-ubuntu.tar
+      - run:
+          name: Log into Docker Hub
+          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
       - run:
           name: Publish Docker images
           command: |
@@ -633,6 +639,9 @@ jobs:
             docker load -i /tmp/workspace/docker/grafana-enterprise-arm32v7.tar
             docker load -i /tmp/workspace/docker/grafana-enterprise-arm64v8.tar
       - run:
+          name: Log into Docker Hub
+          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+      - run:
           name: Publish Docker images
           command: |
             docker tag "grafana/grafana-enterprise:master-${CIRCLE_SHA1}" "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-new-pipeline"
@@ -673,6 +682,9 @@ jobs:
             docker load -i /tmp/workspace/docker/grafana-enterprise-amd64-ubuntu.tar
             docker load -i /tmp/workspace/docker/grafana-enterprise-arm32v7-ubuntu.tar
             docker load -i /tmp/workspace/docker/grafana-enterprise-arm64v8-ubuntu.tar
+      - run:
+          name: Log into Docker Hub
+          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
       - run:
           name: Publish Docker images
           command: |
