@@ -36,7 +36,7 @@ There are two data source specific settings for the plugin.json
 "annotations": false,
 ```
 
-These settings indicates what kind of data the plugin can deliver. At least one of them have to be true
+These settings indicate what kind of data the plugin can deliver. At least one of them have to be true.
 
 ## Data source
 
