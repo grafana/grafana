@@ -152,12 +152,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     });
   };
 
-  onInputChange = (value: string) => {
-    this.setState({
-      activeLabel: value,
-    });
-  };
-
   render() {
     const { size } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
