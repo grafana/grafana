@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo } from 'react';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
@@ -13,7 +13,6 @@ export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, Prom
 
 export function PromExploreQueryEditor(props: Props) {
   const { query, data, datasource, history, onChange, onRunQuery } = props;
-  const [step, setStep] = useState(query.interval || '');
 
   function onChangeQueryStep(value: string) {
     const { query, onChange } = props;
@@ -22,7 +21,9 @@ export function PromExploreQueryEditor(props: Props) {
   }
 
   function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
-    setStep(e.currentTarget.value);
+    if (e.currentTarget.value !== query.interval) {
+      onChangeQueryStep(e.currentTarget.value);
+    }
   }
 
   function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -30,10 +31,6 @@ export function PromExploreQueryEditor(props: Props) {
       onRunQuery();
     }
   }
-
-  useEffect(() => {
-    onChangeQueryStep(step);
-  }, [step]);
 
   return (
     <PromQueryField
@@ -48,7 +45,7 @@ export function PromExploreQueryEditor(props: Props) {
           label={'Step'}
           onChangeFunc={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
-          value={step}
+          value={query.interval}
         />
       }
     />
