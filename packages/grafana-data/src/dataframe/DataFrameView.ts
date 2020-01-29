@@ -56,12 +56,18 @@ export class DataFrameView<T = any> implements Vector<T> {
     return this.data.length;
   }
 
-  getFieldDisplayProcessor(colIndex: number): DisplayProcessor | undefined {
+  getFieldDisplayProcessor(colIndex: number): DisplayProcessor | null {
     if (!this.dataFrame || !this.dataFrame.fields) {
-      return;
+      return null;
     }
+
     const field = this.dataFrame.fields[colIndex];
-    return field?.display;
+
+    if (!field || !field.display) {
+      return null;
+    }
+
+    return field.display;
   }
 
   get(idx: number) {
