@@ -97,7 +97,7 @@ There are three ways that you can start developing a Grafana plugin.
 2. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/docs/grafana/latest/installation/configuration). By default, this is `/var/lib/grafana/plugins` on Linux systems.
 3. Place your plugin directory anywhere you like and specify it in grafana.ini.
 
-We encourage people to setup the full a Grafana environment so that you can get inspiration from the rest of grafana code base.
+We encourage people to set up the full Grafana environment so that you can get inspiration from the rest of the Grafana code base.
 
 When Grafana starts, it scans the plugin folders and mounts every folder that contains a plugin.json file unless
 the folder contains a subfolder named dist. In that case, Grafana mounts the dist folder instead.
