@@ -61,7 +61,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
       justify-content: center;
     `,
     content: css`
-      padding: ${theme.spacing.sm} ${theme.spacing.xs};
+      padding: ${theme.spacing.md};
       flex-grow: 1;
       overflow: ${!scollableContent ? 'hidden' : 'auto'};
       z-index: 0;
