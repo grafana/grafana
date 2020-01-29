@@ -133,6 +133,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
             <SelectComponent
+              captureMenuScroll={false}
               classNamePrefix="gf-form-select-box"
               className={selectClassNames}
               components={selectComponents}

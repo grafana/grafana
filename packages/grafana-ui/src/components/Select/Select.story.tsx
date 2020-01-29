@@ -17,6 +17,15 @@ SelectStories.add('default', () => {
   const options = object<Array<SelectableValue<string>>>('Options:', [
     intialState,
     { label: 'Another label', value: 'Another value' },
+
+    { label: 'Another label 1', value: ' 1Another value' },
+    { label: 'Another label 2', value: '2 Another value' },
+    { label: 'Another label 3', value: '3 Another value' },
+    { label: 'Another label 4', value: '4 Another value' },
+    { label: 'Another label 5', value: '5 Another value' },
+    { label: 'Another label 6', value: '6 Another value' },
+    { label: 'Another label 7', value: '7 Another value' },
+    { label: 'Another label 8', value: '8 Another value' },
   ]);
 
   return (
