@@ -1,6 +1,5 @@
 import React, { MouseEvent, PureComponent } from 'react';
 import debounce from 'lodash/debounce';
-import { Subscription } from 'rxjs';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
@@ -14,43 +13,41 @@ import {
 } from '../state/actions';
 import { QueryVariableState } from '../state/queryVariableReducer';
 import { variableAdapters } from '../adapters';
-import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
-import { VariablePickerProps } from './VariablePicker';
 
-export interface Props extends VariablePickerProps {}
+export interface Props extends QueryVariableState {}
 
-export class QueryVariablePicker extends PureComponent<Props, QueryVariableState> {
+export class QueryVariablePicker extends PureComponent<Props> {
   private readonly debouncedOnQueryChanged: Function;
-  private readonly subscription: Subscription = null;
+  // private readonly subscription: Subscription = null;
   constructor(props: Props) {
     super(props);
     this.debouncedOnQueryChanged = debounce((searchQuery: string) => {
       this.onQueryChanged(searchQuery);
     }, 200);
-    this.subscription = subscribeToVariableChanges<QueryVariableState>(props).subscribe({
-      next: state => {
-        if (this.state) {
-          this.setState({ ...state });
-          return;
-        }
-
-        this.state = state;
-      },
-    });
+    // this.subscription = subscribeToVariableChanges<QueryVariableState>(props).subscribe({
+    //   next: state => {
+    //     if (this.state) {
+    //       this.setState({ ...state });
+    //       return;
+    //     }
+    //
+    //     this.state = state;
+    //   },
+    // });
   }
 
-  componentDidMount(): void {}
-
-  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<QueryVariableState>): void {}
-
-  componentWillUnmount(): void {
-    this.subscription.unsubscribe();
-  }
+  // componentDidMount(): void {}
+  //
+  // componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<QueryVariableState>): void {}
+  //
+  // componentWillUnmount(): void {
+  //   this.subscription.unsubscribe();
+  // }
 
   onShowDropDown = (event: MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
     event.preventDefault();
-    dispatch(showQueryVariableDropDown(toVariablePayload(this.state.variable)));
+    dispatch(showQueryVariableDropDown(toVariablePayload(this.props.variable)));
   };
 
   selectValue = (option: VariableOption, event: MouseEvent<HTMLAnchorElement>, commitChange = false) => {
@@ -61,21 +58,21 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
     }
 
     dispatch(
-      selectVariableOption(toVariablePayload(this.state.variable, { option, forceSelect: commitChange, event }))
+      selectVariableOption(toVariablePayload(this.props.variable, { option, forceSelect: commitChange, event }))
     );
   };
 
   commitChanges = () => {
-    const { queryHasSearchFilter, oldVariableText } = this.state.picker;
+    const { queryHasSearchFilter, oldVariableText } = this.props.picker;
 
     if (queryHasSearchFilter) {
       // this.updateLazyLoadedOptions();
     }
 
-    if (this.state.variable.current.text !== oldVariableText) {
-      variableAdapters.get(this.state.variable.type).setValue(this.state.variable, this.state.variable.current);
+    if (this.props.variable.current.text !== oldVariableText) {
+      variableAdapters.get(this.props.variable.type).setValue(this.props.variable, this.props.variable.current);
     }
-    dispatch(hideQueryVariableDropDown(toVariablePayload(this.state.variable)));
+    dispatch(hideQueryVariableDropDown(toVariablePayload(this.props.variable)));
   };
 
   onQueryChanged = (searchQuery: string) => {};
@@ -94,14 +91,14 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
       highlightIndex,
       tags,
       options,
-    } = this.state.picker;
+    } = this.props.picker;
 
-    if (!this.state.variable) {
+    if (!this.props.variable) {
       return <div>Couldn't load variable</div>;
     }
 
-    const { name, hide, multi } = this.state.variable;
-    let { label } = this.state.variable;
+    const { name, hide, multi } = this.props.variable;
+    let { label } = this.props.variable;
 
     label = label || name;
     return (

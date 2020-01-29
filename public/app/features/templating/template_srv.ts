@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { variableRegex, VariableWithOptions } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
-import { getVariable } from './state/selectors';
+import { getVariableByName } from './state/selectors';
 import { getState } from '../../store/store';
 
 function luceneEscape(value: string) {
@@ -47,7 +47,7 @@ export class TemplateSrv {
     }
 
     if (!this.index[name]) {
-      return getVariable<VariableWithOptions>(name, getState(), false);
+      return getVariableByName<VariableWithOptions>(name, getState());
     }
 
     return this.index[name];

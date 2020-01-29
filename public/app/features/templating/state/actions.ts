@@ -276,7 +276,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(variable.name, getState());
+    const variableInState = getVariable<VariableWithOptions>(variable.uuid, getState());
     const setValue = variableAdapters.get(variableInState.type).setValue;
     if (!variableInState.current) {
       return setValue(variableInState, {} as VariableOption);

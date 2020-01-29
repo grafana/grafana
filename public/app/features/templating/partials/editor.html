@@ -104,7 +104,7 @@
   </div>
 
   <div ng-if="usesAdapter()">
-    <variable-editor uuid="current.uuid" type="current.type"></variable-editor>
+    <variable-renderer uuid="variable.uuid" type="variable.type" componentType="'editor'"></variable-renderer>
   </div>
 
   <div ng-if="!usesAdapter()">

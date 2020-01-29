@@ -23,8 +23,7 @@ import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
-import { VariablePicker } from '../features/templating/picker/VariablePicker';
-import { VariableEditor } from '../features/templating/editor/VariableEditor';
+import { VariableRenderer } from '../features/templating/adapters/VariableRenderer';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -138,6 +137,5 @@ export function registerAngularDirectives() {
     'dataSourceConfig',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('variablePicker', VariablePicker, ['type', 'uuid']);
-  react2AngularDirective('variableEditor', VariableEditor, ['type', 'uuid']);
+  react2AngularDirective('variableRenderer', VariableRenderer, ['type', 'uuid', 'componentType']);
 }

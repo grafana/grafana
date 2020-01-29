@@ -6,7 +6,7 @@
     aria-label="{{::ctrl.selectors.submenuItem}}"
   >
     <div class="gf-form" ng-if="ctrl.hasAdapter(variable)">
-      <variable-picker uuid="variable.uuid" type="variable.type"></variable-picker>
+      <variable-renderer uuid="variable.uuid" type="variable.type" componentType="'picker'"></variable-renderer>
     </div>
     <div class="gf-form" ng-if="!ctrl.hasAdapter(variable)">
       <label
