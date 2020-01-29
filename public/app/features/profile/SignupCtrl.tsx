@@ -43,13 +43,26 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
 
     this.state = {
       verifyEmailEnabled: false,
-      autoAssignOrg: false,
+      autoAssignOrg: true,
       orgName: props.routeParams.email,
       email: props.routeParams.email,
       username: props.routeParams.email,
       code: props.routeParams.code,
     };
   }
+
+  componentDidMount() {
+    getBackendSrv()
+      .get('/api/user/signup/options')
+      .then((options: any) => {
+        this.setState({
+          verifyEmailEnabled: options.verifyEmailEnabled,
+          autoAssignOrg: options.autoAssignOrg,
+        });
+      })
+      .catch(e => console.log(e));
+  }
+
   onSubmit = async (formData: SignupFormModel) => {
     this.setState({
       autoAssignOrg: this.state.autoAssignOrg,
@@ -75,12 +88,13 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
 
   render() {
     const { children } = this.props;
+    const { autoAssignOrg, verifyEmailEnabled } = this.state;
     return (
       <>
         {children({
           onSubmit: this.onSubmit,
-          autoAssignOrg: false,
-          verifyEmailEnabled: true,
+          autoAssignOrg,
+          verifyEmailEnabled,
         })}
       </>
     );

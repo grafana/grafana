@@ -22,15 +22,13 @@ export class SignupPage extends React.PureComponent {
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          <div className="signup">
-            <h3 className="p-b-1">You're almost there.</h3>
-            <div className="p-b-1">
-              We just need a couple of more bits of
-              <br /> information to finish creating your account.
-            </div>
-
-            <SignupCtrl>{props => <SignupForm {...props} />}</SignupCtrl>
+          <h3 className="p-b-1">You're almost there.</h3>
+          <div className="p-b-1">
+            We just need a couple of more bits of
+            <br /> information to finish creating your account.
           </div>
+
+          <SignupCtrl>{props => <SignupForm {...props} />}</SignupCtrl>
         </Page.Contents>
       </Page>
     );
