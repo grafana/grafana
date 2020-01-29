@@ -195,7 +195,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
           if (last && param.multiple) {
             paramValue = '+';
           } else if (!hasValue) {
-            // for params with no value default to param name and make it look like an input
+            // for params with no value default to param name
             paramValue = param.name;
             linkClass += ' query-part__link--no-value';
           }

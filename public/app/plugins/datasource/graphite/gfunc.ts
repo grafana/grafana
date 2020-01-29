@@ -1154,6 +1154,14 @@ function parseFuncDefs(rawDefs: any) {
         options: undefined,
       };
 
+      if (rawParam.default !== undefined) {
+        func.defaultParams.push(_.toString(rawParam.default));
+      } else if (rawParam.suggestions) {
+        func.defaultParams.push(_.toString(rawParam.suggestions[0]));
+      } else {
+        func.defaultParams.push('');
+      }
+
       if (rawParam.type === 'boolean') {
         param.type = 'boolean';
         param.options = ['true', 'false'];
@@ -1177,17 +1185,6 @@ function parseFuncDefs(rawDefs: any) {
         param.options = _.map(rawParam.options, _.toString);
       } else if (rawParam.suggestions) {
         param.options = _.map(rawParam.suggestions, _.toString);
-      }
-
-      if (rawParam.default !== undefined) {
-        func.defaultParams.push(_.toString(rawParam.default));
-      } else if (rawParam.suggestions) {
-        func.defaultParams.push(_.toString(rawParam.suggestions[0]));
-      } else {
-        // } else if (param.options && param.options.length > 0) {
-        //   func.defaultParams.push(param.options[0]);
-        // } else {
-        func.defaultParams.push('');
       }
 
       func.params.push(param);
