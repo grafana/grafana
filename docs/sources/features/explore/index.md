@@ -86,6 +86,8 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 
 ### Visualization Options
 
+It's possible to customize how logs are displayed and select which columns are shown.
+
 #### Deduping
 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
@@ -104,7 +106,7 @@ Shows or hides the unique labels column that includes only non-common labels. Al
 
 #### Wrap lines
 
-Wrap-lines option for logs, as for some of our users it’s more efficient to see one line per log message. The wrapped-line option is set as a default, unwrapped setting results in horizontal scrolling.
+Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
 
 ### Labels and Parsed fields
 

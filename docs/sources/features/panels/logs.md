@@ -30,8 +30,6 @@ To limit the number of lines rendered, you can use the queries-wide **Max data p
 
 ## Visualization Options
 
-### Columns
-
 1. **Time**: Show/hide the time column. This is the timestamp associated with the log line as reported from the datasource.
 2. **Order**: Set to **Ascending** to show the oldest log lines first.
 3. **Wrap lines**: The wrapped-line option is set as a default, unwrapped setting results in horizontal scrolling.
