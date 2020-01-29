@@ -100,7 +100,7 @@ There are three ways that you can start developing a Grafana plugin.
 We encourage people to setup the full a Grafana environment so that you can get inspiration from the rest of grafana code base.
 
 When Grafana starts, it scans the plugin folders and mounts every folder that contains a plugin.json file unless
-the folder contains a subfolder named dist. In that case grafana will mount the dist folder instead.
+the folder contains a subfolder named dist. In that case, Grafana mounts the dist folder instead.
 This makes it possible to have both built and src content in the same plugin git repo.
 
 ## Grafana Events
