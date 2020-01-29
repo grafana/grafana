@@ -547,9 +547,9 @@ jobs:
       - run:
           name: Load Docker images
           command: |
-            docker load -i tmp/workspace/docker/grafana-oss-amd64.tar
-            docker load -i tmp/workspace/docker/grafana-oss-arm32v7.tar
-            docker load -i tmp/workspace/docker/grafana-oss-arm64v8.tar
+            docker load -i /tmp/workspace/docker/grafana-oss-amd64.tar
+            docker load -i /tmp/workspace/docker/grafana-oss-arm32v7.tar
+            docker load -i /tmp/workspace/docker/grafana-oss-arm64v8.tar
       - run:
           name: Publish Docker images
           command: |
@@ -588,9 +588,9 @@ jobs:
           name: Load Docker images
           command: |
             mkdir docker
-            docker load -i tmp/workspace/docker/grafana-oss-amd64-ubuntu.tar
-            docker load -i tmp/workspace/docker/grafana-oss-arm32v7-ubuntu.tar
-            docker load -i tmp/workspace/docker/grafana-oss-arm64v8-ubuntu.tar
+            docker load -i /tmp/workspace/docker/grafana-oss-amd64-ubuntu.tar
+            docker load -i /tmp/workspace/docker/grafana-oss-arm32v7-ubuntu.tar
+            docker load -i /tmp/workspace/docker/grafana-oss-arm64v8-ubuntu.tar
       - run:
           name: Publish Docker images
           command: |
@@ -629,9 +629,9 @@ jobs:
           name: Load Docker images
           command: |
             mkdir docker
-            docker load -i tmp/workspace/docker/grafana-enterprise-amd64.tar
-            docker load -i tmp/workspace/docker/grafana-enterprise-arm32v7.tar
-            docker load -i tmp/workspace/docker/grafana-enterprise-arm64v8.tar
+            docker load -i /tmp/workspace/docker/grafana-enterprise-amd64.tar
+            docker load -i /tmp/workspace/docker/grafana-enterprise-arm32v7.tar
+            docker load -i /tmp/workspace/docker/grafana-enterprise-arm64v8.tar
       - run:
           name: Publish Docker images
           command: |
@@ -670,9 +670,9 @@ jobs:
           name: Load Docker images
           command: |
             mkdir docker
-            docker load -i tmp/workspace/docker/grafana-enterprise-amd64-ubuntu.tar
-            docker load -i tmp/workspace/docker/grafana-enterprise-arm32v7-ubuntu.tar
-            docker load -i tmp/workspace/docker/grafana-enterprise-arm64v8-ubuntu.tar
+            docker load -i /tmp/workspace/docker/grafana-enterprise-amd64-ubuntu.tar
+            docker load -i /tmp/workspace/docker/grafana-enterprise-arm32v7-ubuntu.tar
+            docker load -i /tmp/workspace/docker/grafana-enterprise-arm64v8-ubuntu.tar
       - run:
           name: Publish Docker images
           command: |
