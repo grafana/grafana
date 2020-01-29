@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
-import { PanelData, dateMath, TimeRange, VizOrientation, PanelProps } from '@grafana/data';
+import { PanelData, dateMath, TimeRange, VizOrientation, PanelProps, LoadingState, dateTime } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
 
 import { BarGaugePanel } from './BarGaugePanel';
@@ -10,8 +10,8 @@ describe('BarGaugePanel', () => {
   describe('when empty result is rendered', () => {
     const wrapper = createBarGaugePanelWithData({
       series: [],
-      timeRange: null,
-      state: null,
+      timeRange: createTimeRange(),
+      state: LoadingState.Done,
     });
 
     it('should render with title "No data"', () => {
@@ -21,12 +21,16 @@ describe('BarGaugePanel', () => {
   });
 });
 
-function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<BarGaugeOptions>> {
-  const timeRange: TimeRange = {
-    from: dateMath.parse('now-6h'),
-    to: dateMath.parse('now'),
+function createTimeRange(): TimeRange {
+  return {
+    from: dateMath.parse('now-6h') || dateTime(),
+    to: dateMath.parse('now') || dateTime(),
     raw: { from: 'now-6h', to: 'now' },
   };
+}
+
+function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<BarGaugeOptions>> {
+  const timeRange = createTimeRange();
 
   const options: BarGaugeOptions = {
     displayMode: BarGaugeDisplayMode.Lcd,
