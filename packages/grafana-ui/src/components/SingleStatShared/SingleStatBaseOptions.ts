@@ -151,11 +151,10 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
 
     // Migrate color from simple string to a mode
     const { defaults } = fieldOptions;
-    if (defaults.color) {
-      const old = defaults.color;
+    if (defaults.color && typeof defaults.color === 'string') {
       defaults.color = {
         mode: FieldColorMode.Fixed,
-        fixedColor: old,
+        fixedColor: defaults.color,
       };
     }
 

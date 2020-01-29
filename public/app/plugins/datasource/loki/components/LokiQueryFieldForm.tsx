@@ -73,8 +73,6 @@ export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiData
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
   plugins: Plugin[];
-  modifiedSearch: string;
-  modifiedQuery: string;
 
   constructor(props: LokiQueryFieldFormProps, context: React.Context<any>) {
     super(props, context);

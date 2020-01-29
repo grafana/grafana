@@ -1,5 +1,4 @@
 import { DataFrame, eventFactory, TimeRange } from '@grafana/data';
-import { IHttpResponse } from 'angular';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 /**
@@ -38,7 +37,19 @@ export interface ShowConfirmModalPayload {
   onAltAction?: () => void;
 }
 
-type DataSourceResponsePayload = IHttpResponse<any>;
+export interface DataSourceResponse<T> {
+  data: T;
+  readonly status: number;
+  readonly statusText: string;
+  readonly ok: boolean;
+  readonly headers: Headers;
+  readonly redirected: boolean;
+  readonly type: ResponseType;
+  readonly url: string;
+  readonly request: any;
+}
+
+type DataSourceResponsePayload = DataSourceResponse<any>;
 
 export interface SaveDashboardPayload {
   overwrite?: boolean;

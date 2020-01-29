@@ -1,12 +1,12 @@
 import {
-  loadDashboardPermissions,
-  dashboardInitFetching,
   dashboardInitCompleted,
   dashboardInitFailed,
+  dashboardInitFetching,
   dashboardInitSlow,
+  loadDashboardPermissions,
 } from './actions';
-import { OrgRole, PermissionLevel, DashboardState, DashboardInitPhase } from 'app/types';
-import { initialState, dashboardReducer } from './reducers';
+import { DashboardInitPhase, DashboardState, OrgRole, PermissionLevel } from 'app/types';
+import { dashboardReducer, initialState } from './reducers';
 import { DashboardModel } from './DashboardModel';
 
 describe('dashboard reducer', () => {
@@ -22,7 +22,7 @@ describe('dashboard reducer', () => {
     });
 
     it('should add permissions to state', async () => {
-      expect(state.permissions.length).toBe(2);
+      expect(state.permissions?.length).toBe(2);
     });
   });
 
@@ -36,7 +36,7 @@ describe('dashboard reducer', () => {
     });
 
     it('should set model', async () => {
-      expect(state.model.title).toBe('My dashboard');
+      expect(state.model?.title).toBe('My dashboard');
     });
 
     it('should set reset isInitSlow', async () => {
@@ -53,7 +53,7 @@ describe('dashboard reducer', () => {
     });
 
     it('should set model', async () => {
-      expect(state.model.title).toBe('Dashboard init failed');
+      expect(state.model?.title).toBe('Dashboard init failed');
     });
 
     it('should set reset isInitSlow', async () => {
@@ -61,7 +61,7 @@ describe('dashboard reducer', () => {
     });
 
     it('should set initError', async () => {
-      expect(state.initError.message).toBe('Oh no');
+      expect(state.initError?.message).toBe('Oh no');
     });
 
     it('should set phase failed', async () => {
