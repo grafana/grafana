@@ -1,7 +1,7 @@
 <div class="editor-row">
   <div class="gf-form-group">
     <div class="gf-form-inline">
-      <gf-form-switch class="gf-form" label="Match any" label-class="width-9" checked="ctrl.panel.annotation.matchAny" on-change="ctrl.refresh()"
+      <gf-form-switch class="gf-form" label="Match any" label-class="width-9" checked="ctrl.panel.options.annotation.matchAny" on-change="ctrl.refresh()"
         tooltip="By default Grafana only shows annotations that match all tags. Enabling this shows annotations that match any of the tags."></gf-form-switch>
       <span class="gf-form-label">
         Tags
@@ -9,7 +9,7 @@
           Tag filter entered here can include regular expressions and template variables, e.g. "(foo|bar:$var|other:.*)"
         </info-popover>
       </span>
-      <bootstrap-tagsinput ng-model="ctrl.panel.annotation.tags" tagclass="label label-tag" placeholder="add tags">
+      <bootstrap-tagsinput ng-model="ctrl.panel.options.annotation.tags" tagclass="label label-tag" placeholder="add tags">
       </bootstrap-tagsinput>
     </div>
   </div>
