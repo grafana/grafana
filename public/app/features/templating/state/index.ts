@@ -1,9 +1,15 @@
 import { AnyAction, PayloadAction } from '@reduxjs/toolkit';
 
-import { VariableState } from './queryVariableReducer';
 import { VariableType } from '../variable';
-import { addVariable, variableActions, VariablePayload } from './actions';
+import {
+  addVariable,
+  variableActions,
+  variableEditorMounted,
+  variableEditorUnMounted,
+  VariablePayload,
+} from './actions';
 import { variableAdapters } from '../adapters';
+import { initialVariableEditorState, VariableState } from './types';
 
 export interface TemplatingState {
   variables: VariableState[];
@@ -27,6 +33,41 @@ export const updateTemplatingState = (
     return {
       ...state,
       variables: [...state.variables, reducer(undefined, action)],
+    };
+  }
+
+  if (variableEditorMounted.match(action)) {
+    return {
+      ...state,
+      variables: state.variables.map(variableState => {
+        if (action.payload.uuid !== variableState.variable.uuid) {
+          return variableState;
+        }
+
+        return {
+          ...variableState,
+          editor: {
+            ...initialVariableEditorState,
+            name: variableState.variable.name,
+          },
+        };
+      }),
+    };
+  }
+
+  if (variableEditorUnMounted.match(action)) {
+    return {
+      ...state,
+      variables: state.variables.map(variableState => {
+        if (action.payload.uuid !== variableState.variable.uuid) {
+          return variableState;
+        }
+
+        return {
+          ...variableState,
+          editor: initialVariableEditorState,
+        };
+      }),
     };
   }
 

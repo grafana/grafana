@@ -1,9 +1,10 @@
-import { StoreState } from '../../types';
-import { VariableState } from './state/queryVariableReducer';
 import { Observable, Subscriber } from 'rxjs';
-import { store } from '../../store/store';
 import { distinctUntilChanged } from 'rxjs/operators';
+
+import { StoreState } from '../../types';
+import { store } from '../../store/store';
 import { VariableIdentifier } from './state/actions';
+import { VariableState } from './state/types';
 
 export const subscribeToVariableChanges = <State extends VariableState>(args: VariableIdentifier) => {
   const stateSelector = (state: StoreState): State => {

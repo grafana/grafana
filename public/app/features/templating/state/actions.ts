@@ -96,6 +96,14 @@ export const showQueryVariableDropDown = createAction<VariablePayload<undefined>
 export const hideQueryVariableDropDown = createAction<VariablePayload<undefined>>(
   'templating/hideQueryVariableDropDown'
 );
+export const variableEditorMounted = createAction<VariablePayload<undefined>>('templating/variableEditorMounted');
+export const variableEditorUnMounted = createAction<VariablePayload<undefined>>('templating/variableEditorUnMounted');
+export const changeVariableNameSucceeded = createAction<VariablePayload<string>>(
+  'templating/changeVariableNameSucceeded'
+);
+export const changeVariableNameFailed = createAction<VariablePayload<{ newName: string; errorText: string }>>(
+  'templating/changeVariableNameFailed'
+);
 
 export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any>>> = [
   addVariable,
@@ -108,6 +116,10 @@ export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any
   selectVariableOption,
   showQueryVariableDropDown,
   hideQueryVariableDropDown,
+  changeVariableNameSucceeded,
+  changeVariableNameFailed,
+  variableEditorMounted,
+  variableEditorUnMounted,
 ];
 
 export const toVariablePayload = <T extends {} = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
@@ -382,5 +394,31 @@ export const variableUpdated = (variable: VariableModel, emitChangeEvents?: any)
         //     this.dashboard.startRefresh();
       }
     });
+  };
+};
+
+export const changeVariableName = (variable: VariableModel, newName: string): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    let errorText = null;
+    if (!newName.match(/^(?!__).*$/)) {
+      errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
+    }
+
+    if (!newName.match(/^\w+$/)) {
+      errorText = 'Only word and digit characters are allowed in variable names';
+    }
+
+    const variablesWithSameName = getVariables(getState()).filter(v => v.name === newName && v.uuid !== variable.uuid);
+    if (variablesWithSameName.length) {
+      errorText = 'Variable with the same name already exists';
+    }
+
+    if (errorText) {
+      dispatch(changeVariableNameFailed(toVariablePayload(variable, { newName, errorText })));
+    }
+
+    if (!errorText) {
+      dispatch(changeVariableNameSucceeded(toVariablePayload(variable, newName)));
+    }
   };
 };

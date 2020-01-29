@@ -18,31 +18,12 @@ export interface Props extends QueryVariableState {}
 
 export class QueryVariablePicker extends PureComponent<Props> {
   private readonly debouncedOnQueryChanged: Function;
-  // private readonly subscription: Subscription = null;
   constructor(props: Props) {
     super(props);
     this.debouncedOnQueryChanged = debounce((searchQuery: string) => {
       this.onQueryChanged(searchQuery);
     }, 200);
-    // this.subscription = subscribeToVariableChanges<QueryVariableState>(props).subscribe({
-    //   next: state => {
-    //     if (this.state) {
-    //       this.setState({ ...state });
-    //       return;
-    //     }
-    //
-    //     this.state = state;
-    //   },
-    // });
   }
-
-  // componentDidMount(): void {}
-  //
-  // componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<QueryVariableState>): void {}
-  //
-  // componentWillUnmount(): void {
-  //   this.subscription.unsubscribe();
-  // }
 
   onShowDropDown = (event: MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();

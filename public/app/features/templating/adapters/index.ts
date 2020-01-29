@@ -4,9 +4,9 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from '../variable';
-import { VariableState } from '../state/queryVariableReducer';
 import { VariablePayload } from '../state/actions';
 import { createQueryVariableAdapter } from './queryVariableAdapter';
+import { VariableState } from '../state/types';
 
 export interface VariableAdapter<Model extends VariableModel, State extends VariableState> {
   dependsOn: (variable: Model, variableToTest: Model) => boolean;

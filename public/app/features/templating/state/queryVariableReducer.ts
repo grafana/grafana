@@ -3,7 +3,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 import {
   QueryVariableModel,
   VariableHide,
-  VariableModel,
   VariableOption,
   VariableRefresh,
   VariableSort,
@@ -11,6 +10,8 @@ import {
 } from '../variable';
 import {
   addVariable,
+  changeVariableNameFailed,
+  changeVariableNameSucceeded,
   hideQueryVariableDropDown,
   removeInitLock,
   resolveInitLock,
@@ -25,6 +26,7 @@ import _ from 'lodash';
 import { stringToJsRegex } from '@grafana/data';
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
+import { initialVariableEditorState, VariableEditorState, VariableState } from './types';
 
 export type MutateStateFunc<S extends VariableState> = (state: S) => S;
 export const appyStateChanges = <S extends VariableState>(state: S, ...args: Array<MutateStateFunc<S>>): S => {
@@ -32,11 +34,6 @@ export const appyStateChanges = <S extends VariableState>(state: S, ...args: Arr
     return cur(all);
   }, state);
 };
-
-export interface VariableState<PickerState extends {} = {}, ModelState extends VariableModel = VariableModel> {
-  picker: PickerState;
-  variable: ModelState;
-}
 
 export interface QueryVariablePickerState {
   showDropDown: boolean;
@@ -52,7 +49,10 @@ export interface QueryVariablePickerState {
   oldVariableText: string | string[];
 }
 
-export interface QueryVariableState extends VariableState<QueryVariablePickerState, QueryVariableModel> {}
+export interface QueryVariableEditorState extends VariableEditorState {}
+
+export interface QueryVariableState
+  extends VariableState<QueryVariablePickerState, QueryVariableEditorState, QueryVariableModel> {}
 
 export const initialQueryVariablePickerState: QueryVariablePickerState = {
   highlightIndex: -1,
@@ -95,6 +95,7 @@ export const initialQueryVariableModelState: QueryVariableModel = {
 
 export const initialQueryVariableState: QueryVariableState = {
   picker: initialQueryVariablePickerState,
+  editor: initialVariableEditorState,
   variable: initialQueryVariableModelState,
 };
 
@@ -306,7 +307,6 @@ export const queryVariableReducer = (
       definition,
     } = action.payload.data.model as QueryVariableModel;
     return {
-      picker: initialQueryVariablePickerState,
       variable: {
         uuid: action.payload.uuid,
         global: action.payload.data.global,
@@ -332,6 +332,8 @@ export const queryVariableReducer = (
         tagValuesQuery,
         definition,
       },
+      picker: initialQueryVariablePickerState,
+      editor: initialVariableEditorState,
     };
   }
 
@@ -491,6 +493,37 @@ export const queryVariableReducer = (
     const newState = { ...state, picker: { ...state.picker, showDropDown: false } };
 
     return appyStateChanges(newState, updateOptions, updateSelectedValues, updateSelectedTags, updateLinkText);
+  }
+
+  if (changeVariableNameSucceeded.match(action)) {
+    delete state.editor.errors['name'];
+    return {
+      ...state,
+      editor: {
+        ...state.editor,
+        name: action.payload.data,
+        valid: true,
+      },
+      variable: {
+        ...state.variable,
+        name: action.payload.data,
+      },
+    };
+  }
+
+  if (changeVariableNameFailed.match(action)) {
+    return {
+      ...state,
+      editor: {
+        ...state.editor,
+        valid: false,
+        name: action.payload.data.newName,
+        errors: {
+          ...state.editor.errors,
+          name: action.payload.data.errorText,
+        },
+      },
+    };
   }
 
   return state;
