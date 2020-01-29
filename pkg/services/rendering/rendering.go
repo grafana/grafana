@@ -66,7 +66,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.log = rs.log.New("renderer", "phantomJS")
 		rs.log.Info("Backend rendering via phantomJS")
 		rs.log.Warn("phantomJS is deprecated and will be removed in a future release. " +
-			"You should consider migrating from phantomJS to grafana-image-renderer plugin.")
+			"You should consider migrating from phantomJS to grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 		rs.renderAction = rs.renderViaPhantomJS
 		<-ctx.Done()
 		return nil
