@@ -35,9 +35,6 @@ describe('VariableSrv', function(this: any) {
     $location: {
       search: () => {},
     },
-    contextSrv: {
-      user: { id: 1, orgId: 1, orgName: 'testOrg' },
-    },
   } as any;
 
   function describeUpdateVariable(desc: string, fn: Function) {
