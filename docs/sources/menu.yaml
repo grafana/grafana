@@ -3,25 +3,27 @@
   children:
   - name: Requirements
     link: /installation/requirements/
-  - name: Installing on Ubuntu / Debian
+  - name: Install on Ubuntu / Debian
     link: /installation/debian/
-  - name: Installing on Centos / Redhat
+  - name: Install on Centos / Redhat
     link: /installation/rpm/
-  - name: Installing on Windows
+  - name: Install on Windows
     link: /installation/windows/
-  - name: Installing on macOS
+  - name: Install on macOS
     link: /installation/mac/
-  - name: Installing using Docker
+  - name: Install using Docker
     link: /installation/docker/
   - name: Building from source
     link: /project/building_from_source/
-  - name: Upgrading
+  - name: Upgrade Grafana
     link: /installation/upgrading/
 - name: Administration
   link: /administration/
   children:
   - name: Configuration
     link: /installation/configuration/
+  - name: Configure Docker image
+    link: /installation/configure-docker/
   - name: Security
     link: /installation/security/
   - name: Authentication
