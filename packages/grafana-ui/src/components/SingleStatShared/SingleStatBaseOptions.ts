@@ -86,7 +86,7 @@ export function sharedSingleStatPanelChangedHandler(
       defaults.mappings = mappings;
     }
 
-    if (panel.gauge) {
+    if (panel.gauge && panel.gauge.show) {
       defaults.min = panel.gauge.minValue;
       defaults.max = panel.gauge.maxValue;
     }
