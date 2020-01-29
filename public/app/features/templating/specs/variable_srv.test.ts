@@ -6,6 +6,12 @@ import $q from 'q';
 import { dateTime } from '@grafana/data';
 import { CustomVariable } from '../custom_variable';
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    user: { orgId: 1, orgName: 'TestOrg' },
+  },
+}));
+
 describe('VariableSrv', function(this: any) {
   const ctx = {
     datasourceSrv: {},
