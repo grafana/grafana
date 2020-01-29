@@ -77,9 +77,9 @@ export type LdapConnectionInfo = LdapServerInfo[];
 
 export interface LdapState {
   connectionInfo: LdapConnectionInfo;
-  user?: LdapUser;
-  syncInfo?: SyncInfo;
-  connectionError?: LdapError;
-  userError?: LdapError;
-  ldapError?: LdapError;
+  user?: LdapUser | null;
+  syncInfo?: SyncInfo | null;
+  connectionError?: LdapError | null;
+  userError?: LdapError | null;
+  ldapError?: LdapError | null;
 }

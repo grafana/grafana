@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { dateMath, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { dateMath, DataSourceApi, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
@@ -167,7 +167,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     return false;
   }
 
-  interpolateVariablesInQueries(queries: InfluxQuery[]): InfluxQuery[] {
+  interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
     if (!queries || queries.length === 0) {
       return [];
     }
@@ -178,11 +178,11 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          measurement: this.templateSrv.replace(query.measurement, null, 'regex'),
+          measurement: this.templateSrv.replace(query.measurement, scopedVars, 'regex'),
         };
 
         if (query.rawQuery) {
-          expandedQuery.query = this.templateSrv.replace(query.query, null, 'regex');
+          expandedQuery.query = this.templateSrv.replace(query.query, scopedVars, 'regex');
         }
 
         if (query.tags) {
@@ -204,7 +204,9 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   metricFindQuery(query: string, options?: any) {
     const interpolated = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(interpolated, options).then(() => this.responseParser.parse(query));
+    return this._seriesQuery(interpolated, options).then(resp => {
+      return this.responseParser.parse(query, resp);
+    });
   }
 
   getTagKeys(options: any = {}) {
@@ -323,7 +325,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
           return result.data;
         },
         (err: any) => {
-          if (err.status !== 0 || err.status >= 300) {
+          if ((Number.isInteger(err.status) && err.status !== 0) || err.status >= 300) {
             if (err.data && err.data.error) {
               throw {
                 message: 'InfluxDB Error: ' + err.data.error,
@@ -337,6 +339,8 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
                 config: err.config,
               };
             }
+          } else {
+            throw err;
           }
         }
       );

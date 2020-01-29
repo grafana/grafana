@@ -27,9 +27,9 @@
   "dependencies": {
     "@grafana/data": "6.7.0-pre",
     "@grafana/slate-react": "0.22.9-grafana",
-    "@torkelo/react-select": "2.1.1",
+    "@torkelo/react-select": "3.0.8",
     "@types/react-color": "2.17.0",
-    "@types/react-select": "2.0.15",
+    "@types/react-select": "3.0.8",
     "@types/react-table": "7.0.2",
     "@types/slate": "0.47.1",
     "@types/slate-react": "0.22.5",
