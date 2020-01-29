@@ -15,14 +15,17 @@
 
     <div class="p-t-2">
       <div class="gf-form">
-        <folder-picker on-change="ctrl.onFolderChange" enter-folder-creation="ctrl.onEnterFolderCreation"
-          exit-folder-creation="ctrl.onExitFolderCreation" enable-create-new="true" label-class="width-7">
-        </folder-picker>
+        <folder-picker on-change="ctrl.onFolderChange" label-class="width-7"> </folder-picker>
       </div>
     </div>
     <div class="gf-form-button-row text-center">
-      <button type="submit" class="btn btn-primary"
-        ng-disabled="ctrl.saveForm.$invalid || !ctrl.isValidFolderSelection">Move</button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        ng-disabled="ctrl.saveForm.$invalid || !ctrl.isValidFolderSelection"
+      >
+        Move
+      </button>
       <a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
     </div>
   </form>

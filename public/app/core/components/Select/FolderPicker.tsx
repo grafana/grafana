@@ -5,7 +5,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
 
 export interface Props {
-  onChange: ($folder: { id: number; title: string }) => void;
+  onChange: ($folder: { id: number; title: string; isNew: boolean }) => void;
   rootName?: string;
   enableReset?: boolean;
   dashboardId?: any;
@@ -14,27 +14,22 @@ export interface Props {
 }
 
 interface State {
-  folder: SelectableValue<number>;
   validationError: string;
   hasValidationError: boolean;
-  newFolderNameTouched: boolean;
-  isLoading: boolean;
+  folders: Array<SelectableValue<number>>;
 }
 
 export class FolderPicker extends PureComponent<Props, State> {
   static defaultProps = {
     rootName: 'General',
-    enableCreateNew: false,
     enableReset: false,
     initialTitle: '',
   };
 
   state: State = {
-    folder: {},
     validationError: '',
     hasValidationError: false,
-    newFolderNameTouched: false,
-    isLoading: true,
+    folders: [],
   };
 
   componentDidMount = async () => {
@@ -42,10 +37,6 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   getOptions = async (query: string) => {
-    this.setState({
-      isLoading: true,
-    });
-
     const { rootName, enableReset, initialTitle } = this.props;
     const params = {
       query,
@@ -63,9 +54,6 @@ export class FolderPicker extends PureComponent<Props, State> {
       options.unshift({ label: initialTitle, value: undefined });
     }
 
-    this.setState({
-      isLoading: false,
-    });
     return options;
   };
 
@@ -74,12 +62,7 @@ export class FolderPicker extends PureComponent<Props, State> {
       newFolder = { value: 0, label: this.props.rootName };
     }
 
-    this.setState(
-      {
-        folder: newFolder,
-      },
-      () => this.props.onChange({ id: newFolder.value, title: newFolder.text })
-    );
+    this.props.onChange({ id: newFolder.value, title: newFolder.label, isNew: newFolder.__isNew__ as boolean });
   };
 
   private loadInitialValue = async () => {
@@ -88,6 +71,10 @@ export class FolderPicker extends PureComponent<Props, State> {
     const rootFolder: SelectableValue<number> = { label: rootName, value: 0 };
 
     const options = await this.getOptions('');
+    this.setState({
+      folders: options,
+    });
+
     let folder: SelectableValue<number>;
     if (initialFolderId) {
       folder = options.find(option => option.value === initialFolderId);
@@ -109,32 +96,30 @@ export class FolderPicker extends PureComponent<Props, State> {
       }
     }
 
-    this.setState({
-      folder,
-    });
-
     // if this is not the same as our initial value notify parent
     if (folder.value !== initialFolderId) {
-      this.props.onChange({ id: folder.value, title: folder.text });
+      this.props.onChange({ id: folder.value, title: folder.text, isNew: false });
     }
   };
 
   render() {
-    const { folder, validationError, hasValidationError, newFolderNameTouched } = this.state;
+    const { validationError, hasValidationError } = this.state;
+    const { initialFolderId, initialTitle } = this.props;
 
     return (
       <>
         <Forms.Field label="Folder">
           <Forms.AsyncSelect
             loadingMessage="Loading folders..."
-            value={folder}
+            value={{ label: initialTitle, value: initialFolderId }}
             defaultOptions
+            allowCustomValue
             loadOptions={this.getOptions}
             onChange={this.onFolderChange}
             size="sm"
           />
         </Forms.Field>
-        {newFolderNameTouched && hasValidationError && (
+        {hasValidationError && (
           <div className="gf-form-inline">
             <div className="gf-form gf-form--grow">
               <label className="gf-form-label text-warning gf-form-label--grow">
