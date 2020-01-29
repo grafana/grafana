@@ -1,14 +1,13 @@
-import { VariableType } from './variable';
 import { StoreState } from '../../types';
 import { VariableState } from './state/queryVariableReducer';
 import { Observable, Subscriber } from 'rxjs';
 import { store } from '../../store/store';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { VariableIdentifier } from './state/actions';
 
-export const subscribeToVariableChanges = <State extends VariableState>(name: string, type: VariableType) => {
+export const subscribeToVariableChanges = <State extends VariableState>(args: VariableIdentifier) => {
   const stateSelector = (state: StoreState): State => {
-    const typeState = state.templating[type];
-    const variableState = typeState.find(s => s.variable.name === name);
+    const variableState = state.templating.variables.find(s => s.variable.uuid === args.uuid);
     return variableState as State;
   };
 

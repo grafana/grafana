@@ -1,9 +1,11 @@
 import React, { FunctionComponent } from 'react';
 
 import { variableAdapters } from '../adapters';
-import { VariableProps } from '../picker/VariablePicker';
+import { VariableIdentifier } from '../state/actions';
 
-export const VariableEditor: FunctionComponent<VariableProps> = ({ name, type }) => {
+export interface VariableEditorProps extends VariableIdentifier {}
+
+export const VariableEditor: FunctionComponent<VariableEditorProps> = ({ uuid, type }) => {
   if (!variableAdapters.contains(type)) {
     return null;
   }
@@ -13,5 +15,5 @@ export const VariableEditor: FunctionComponent<VariableProps> = ({ name, type })
     return null;
   }
 
-  return <EditorToRender name={name} type={type} />;
+  return <EditorToRender uuid={uuid} type={type} />;
 };

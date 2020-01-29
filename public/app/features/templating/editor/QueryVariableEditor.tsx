@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 
-import { VariableProps } from '../picker/VariablePicker';
+import { VariablePickerProps } from '../picker/VariablePicker';
 import { QueryVariableState } from '../state/queryVariableReducer';
 
-export interface Props extends VariableProps {}
+export interface Props extends VariablePickerProps {}
 
 export class QueryVariableEditor extends PureComponent<Props, QueryVariableState> {
   render() {

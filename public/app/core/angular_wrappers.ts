@@ -138,6 +138,6 @@ export function registerAngularDirectives() {
     'dataSourceConfig',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('variablePicker', VariablePicker, ['type', 'name']);
-  react2AngularDirective('variableEditor', VariableEditor, ['type', 'name']);
+  react2AngularDirective('variablePicker', VariablePicker, ['type', 'uuid']);
+  react2AngularDirective('variableEditor', VariableEditor, ['type', 'uuid']);
 }

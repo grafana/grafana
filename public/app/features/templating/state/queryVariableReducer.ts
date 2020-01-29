@@ -306,9 +306,9 @@ export const queryVariableReducer = (
       definition,
     } = action.payload.data.model as QueryVariableModel;
     return {
-      ...state,
+      picker: initialQueryVariablePickerState,
       variable: {
-        ...state.variable,
+        uuid: action.payload.uuid,
         global: action.payload.data.global,
         index: action.payload.data.index,
         type,

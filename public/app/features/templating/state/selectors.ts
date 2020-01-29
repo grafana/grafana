@@ -16,6 +16,5 @@ export const getVariable = <T extends VariableModel = VariableModel>(
 };
 
 export const getVariables = (state: StoreState = getState()): VariableModel[] => {
-  const queryVariables = state.templating.query.map(s => s.variable);
-  return [].concat(queryVariables);
+  return state.templating.variables.map(state => state.variable);
 };

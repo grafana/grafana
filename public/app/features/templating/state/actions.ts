@@ -1,5 +1,6 @@
 import { MouseEvent } from 'react';
-import { ActionCreatorWithPayload, createAction } from '@reduxjs/toolkit';
+import { v4 } from 'uuid';
+import { ActionCreatorWithPayload, createAction, PrepareAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
 
 import {
@@ -53,13 +54,13 @@ export interface AddVariable<T extends VariableModel = VariableModel> {
 //              action => setCurrentVariableValue
 //              thunk => variableUpdated
 //                adapter => updateOptions for dependent nodes
+
 export interface VariableIdentifier {
   type: VariableType;
-  name: string;
+  uuid: string;
 }
 
-export interface VariablePayload<T> {
-  id: VariableIdentifier;
+export interface VariablePayload<T> extends VariableIdentifier {
   data: T;
 }
 
@@ -69,7 +70,17 @@ export interface SelectVariableOption {
   event: MouseEvent<HTMLAnchorElement>;
 }
 
-export const addVariable = createAction<VariablePayload<AddVariable>>('templating/addVariable');
+export const addVariable = createAction<PrepareAction<VariablePayload<AddVariable>>>(
+  'templating/addVariable',
+  (payload: VariablePayload<AddVariable>) => {
+    return {
+      payload: {
+        ...payload,
+        uuid: v4(),
+      },
+    };
+  }
+);
 export const setInitLock = createAction<VariablePayload<undefined>>('templating/setInitLock');
 export const resolveInitLock = createAction<VariablePayload<undefined>>('templating/resolveInitLock');
 export const removeInitLock = createAction<VariablePayload<undefined>>('templating/removeInitLock');
@@ -100,7 +111,7 @@ export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any
 ];
 
 export const toVariablePayload = <T extends {} = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
-  return { id: { type: variable.type, name: variable.name }, data };
+  return { type: variable.type, uuid: variable.uuid, data };
 };
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {

@@ -1,22 +1,16 @@
 import { AnyAction, PayloadAction } from '@reduxjs/toolkit';
 
-import { QueryVariableState, VariableState } from './queryVariableReducer';
+import { VariableState } from './queryVariableReducer';
 import { VariableType } from '../variable';
-import { variableActions, VariablePayload } from './actions';
+import { addVariable, variableActions, VariablePayload } from './actions';
 import { variableAdapters } from '../adapters';
 
-export interface TemplatingState extends Record<VariableType, Array<VariableState<any, any>>> {
-  query: QueryVariableState[];
+export interface TemplatingState {
+  variables: VariableState[];
 }
 
 export const initialState: TemplatingState = {
-  query: [],
-  adhoc: [],
-  interval: [],
-  custom: [],
-  datasource: [],
-  constant: [],
-  textbox: [],
+  variables: [],
 };
 
 export const updateTemplatingState = (
@@ -28,7 +22,27 @@ export const updateTemplatingState = (
   if (!reducer) {
     throw new Error(`Reducer for type ${type} could not be found.`);
   }
-  return { ...state, [type]: reducer(state[type], action) };
+
+  if (addVariable.match(action)) {
+    return {
+      ...state,
+      variables: [...state.variables, reducer(undefined, action)],
+    };
+  }
+
+  return {
+    ...state,
+    variables: state.variables.map(variableState => {
+      if (action.payload.uuid !== variableState.variable.uuid) {
+        return variableState;
+      }
+
+      return {
+        ...variableState,
+        ...reducer(variableState, action),
+      };
+    }),
+  };
 };
 
 // I stumbled upon the error described here https://github.com/immerjs/immer/issues/430
@@ -42,8 +56,7 @@ export const templatingReducer = (state: TemplatingState = initialState, action:
 
   // now we're sure that this action is meant for variables so pass it to correct reducer
   const variableAction: PayloadAction<VariablePayload<any>> = action as PayloadAction<VariablePayload<any>>;
-  const { type } = variableAction.payload.id;
-  return updateTemplatingState(type, state, variableAction);
+  return updateTemplatingState(variableAction.payload.type, state, variableAction);
 };
 
 export default {

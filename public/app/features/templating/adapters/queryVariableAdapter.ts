@@ -2,13 +2,13 @@ import { containsVariable, QueryVariableModel } from '../variable';
 import { queryVariableReducer, QueryVariableState } from '../state/queryVariableReducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl, updateQueryVariableOptions } from '../state/actions';
-import { createVariableAdapter } from './index';
+import { VariableAdapter } from './index';
 import { QueryVariablePicker } from '../picker/QueryVariablePicker';
 import { QueryVariableEditor } from '../editor/QueryVariableEditor';
 
-export const createQueryVariableAdapter = () =>
-  createVariableAdapter<QueryVariableModel, QueryVariableState>('query', {
-    instanceReducer: queryVariableReducer,
+export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel, QueryVariableState> => {
+  return {
+    reducer: queryVariableReducer,
     picker: QueryVariablePicker,
     editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {
@@ -32,4 +32,5 @@ export const createQueryVariableAdapter = () =>
         resolve();
       });
     },
-  });
+  };
+};

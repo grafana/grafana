@@ -1,14 +1,10 @@
 import React, { FunctionComponent } from 'react';
-
-import { VariableType } from '../variable';
 import { variableAdapters } from '../adapters';
+import { VariableIdentifier } from '../state/actions';
 
-export interface VariableProps {
-  name: string;
-  type: VariableType;
-}
+export interface VariablePickerProps extends VariableIdentifier {}
 
-export const VariablePicker: FunctionComponent<VariableProps> = ({ name, type }) => {
+export const VariablePicker: FunctionComponent<VariablePickerProps> = ({ uuid, type }) => {
   if (!variableAdapters.contains(type)) {
     return null;
   }
@@ -18,5 +14,5 @@ export const VariablePicker: FunctionComponent<VariableProps> = ({ name, type })
     return null;
   }
 
-  return <PickerToRender name={name} type={type} />;
+  return <PickerToRender uuid={uuid} type={type} />;
 };

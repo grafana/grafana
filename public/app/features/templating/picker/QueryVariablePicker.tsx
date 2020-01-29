@@ -15,9 +15,9 @@ import {
 import { QueryVariableState } from '../state/queryVariableReducer';
 import { variableAdapters } from '../adapters';
 import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
-import { VariableProps } from './VariablePicker';
+import { VariablePickerProps } from './VariablePicker';
 
-export interface Props extends VariableProps {}
+export interface Props extends VariablePickerProps {}
 
 export class QueryVariablePicker extends PureComponent<Props, QueryVariableState> {
   private readonly debouncedOnQueryChanged: Function;
@@ -27,7 +27,7 @@ export class QueryVariablePicker extends PureComponent<Props, QueryVariableState
     this.debouncedOnQueryChanged = debounce((searchQuery: string) => {
       this.onQueryChanged(searchQuery);
     }, 200);
-    this.subscription = subscribeToVariableChanges<QueryVariableState>(props.name, 'query').subscribe({
+    this.subscription = subscribeToVariableChanges<QueryVariableState>(props).subscribe({
       next: state => {
         if (this.state) {
           this.setState({ ...state });

@@ -142,7 +142,8 @@ export interface VariableWithOptions extends VariableModel {
 }
 
 export interface VariableModel {
-  global?: boolean;
+  uuid?: string; // only exists for variables in state
+  global?: boolean; // only exists for variables in state
   type: VariableType;
   name: string;
   label: string;
