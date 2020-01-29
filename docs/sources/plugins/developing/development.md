@@ -39,7 +39,7 @@ Since everything turns into JavaScript, it's up to you to choose which language 
 
 ## Buildscript
 
-You can use any build system you like that supports systemjs. All the built content should end up in a folder named ```dist``` and committed to the repository. By committing the dist folder the person who installs your plugin does not have to run any build script. All of our example plugins have build script configured.
+You can use any build system that supports systemjs. All the built content should end up in a folder named ```dist``` and be committed to the repository. By committing the dist folder, the person who installs your plugin does not have to run any build script. All of our example plugins have a build script configured.
 
 ## Keep your plugin up to date
 
