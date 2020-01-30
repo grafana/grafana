@@ -14,7 +14,6 @@ require (
 	github.com/crewjam/saml v0.0.0-20191031171751-c42136edf9b1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect

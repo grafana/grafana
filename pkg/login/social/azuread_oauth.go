@@ -18,11 +18,13 @@ type SocialAzureAD struct {
 	allowSignup    bool
 }
 
-type AzureClaims struct {
+type azureClaims struct {
 	Email      string   `json:"email"`
 	UniqueName string   `json:"unique_name"`
 	Upn        string   `json:"upn"`
 	Roles      []string `json:"roles"`
+	Name       string   `json:"name"`
+	ID         string   `json:"oid"`
 }
 
 func (s *SocialAzureAD) Type() int {
@@ -38,15 +40,6 @@ func (s *SocialAzureAD) IsSignupAllowed() bool {
 }
 
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
-	var data struct {
-		Id         string `json:"id"`
-		Name       string `json:"name"`
-		Email      string `json:"email"`
-		Upn        string `json:"upn"`
-		UniqueName string `json:"unique_name"`
-		Roles      string `json:"roles"`
-	}
-
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, fmt.Errorf("No id_token found")
@@ -57,30 +50,29 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("Error parsing id token")
 	}
 
-	var claims AzureClaims
+	var claims azureClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
 		return nil, fmt.Errorf("Error getting claims from id token")
 	}
 
-	fmt.Printf("%#v", claims)
 	email := extractEmail(claims)
 
 	if email == "" {
 		return nil, errors.New("Error getting user info: No email found in access token")
 	}
 
-	role := s.extractRole(client, claims)
+	role := s.extractRole(claims)
 
 	return &BasicUserInfo{
-		Id:    data.Id,
-		Name:  data.Name,
+		Id:    claims.ID,
+		Name:  claims.Name,
 		Email: email,
 		Login: email,
 		Role:  string(role),
 	}, nil
 }
 
-func extractEmail(claims AzureClaims) string {
+func extractEmail(claims azureClaims) string {
 
 	if claims.Email == "" {
 		if len(claims.Upn) > 0 {
@@ -94,7 +86,7 @@ func extractEmail(claims AzureClaims) string {
 	return claims.Email
 }
 
-func (s *SocialAzureAD) extractRole(client *http.Client, claims AzureClaims) models.RoleType {
+func (s *SocialAzureAD) extractRole(claims azureClaims) models.RoleType {
 	if len(claims.Roles) == 0 {
 		return models.ROLE_VIEWER
 	}
@@ -116,7 +108,7 @@ func (s *SocialAzureAD) extractRole(client *http.Client, claims AzureClaims) mod
 
 func hasRole(roles []string, role models.RoleType) bool {
 	for _, item := range roles {
-		if strings.ToLower(item) == strings.ToLower(string(role)) {
+		if strings.EqualFold(item, string(role)) {
 			return true
 		}
 	}

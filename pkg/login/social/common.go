@@ -2,7 +2,6 @@ package social
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -31,32 +30,6 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 
 func HttpGet(client *http.Client, url string) (response HttpGetResponse, err error) {
 	r, err := client.Get(url)
-	if err != nil {
-		return
-	}
-
-	defer r.Body.Close()
-
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return
-	}
-
-	response = HttpGetResponse{body, r.Header}
-
-	if r.StatusCode >= 300 {
-		err = fmt.Errorf(string(response.Body))
-		return
-	}
-
-	log.Trace("HTTP GET %s: %s %s", url, r.Status, string(response.Body))
-
-	err = nil
-	return
-}
-
-func HttpPost(client *http.Client, url string, data io.Reader) (response HttpGetResponse, err error) {
-	r, err := client.Post(url, "application/json", data)
 	if err != nil {
 		return
 	}
