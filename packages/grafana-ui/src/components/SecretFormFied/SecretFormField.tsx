@@ -2,10 +2,10 @@ import omit from 'lodash/omit';
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { FormField } from '../FormField/FormField';
 
-interface Props extends InputHTMLAttributes<HTMLInputElement> {
+interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
   // component (or do something else if required).
-  onReset: (e: any) => void;
+  onReset: (event: React.SyntheticEvent<HTMLButtonElement>) => void;
   isConfigured: boolean;
 
   label?: string;

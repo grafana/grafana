@@ -2,7 +2,7 @@ import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { CustomHeadersSettings, Props } from './CustomHeadersSettings';
 
-const setup = (propOverrides?: object, isShallow = true) => {
+const setup = (propOverrides?: object) => {
   const props: Props = {
     dataSourceConfig: {
       id: 4,
@@ -33,34 +33,11 @@ const setup = (propOverrides?: object, isShallow = true) => {
     onChange: jest.fn(),
     ...propOverrides,
   };
-  if (isShallow) {
-    return shallow(<CustomHeadersSettings {...props} />);
-  }
+
   return mount(<CustomHeadersSettings {...props} />);
 };
 
 describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('should render a configured header', () => {
-    const wrapper = setup({
-      dataSourceConfig: {
-        jsonData: {
-          httpHeaderName1: 'X-Custom-Header',
-        },
-        secureJsonFields: {
-          httpHeaderValue1: true,
-        },
-      },
-    });
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
   it('should add a new header', () => {
     const wrapper = setup();
     const addButton = wrapper.find('Button').at(0);

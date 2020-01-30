@@ -1,10 +1,12 @@
 import React, { PureComponent } from 'react';
+import { DataSourceSettings } from '@grafana/data';
+import uniqueId from 'lodash/uniqueId';
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormFied/SecretFormField';
-import { DataSourceSettings } from '@grafana/data';
 
 export interface CustomHeader {
+  id: string;
   name: string;
   value: string;
   configured: boolean;
@@ -21,6 +23,51 @@ export interface State {
   headers: CustomHeaders;
 }
 
+interface CustomHeaderRowProps {
+  header: CustomHeader;
+  onReset: (id: string) => void;
+  onRemove: (id: string) => void;
+  onChange: (value: CustomHeader) => void;
+  onBlur: () => void;
+}
+
+const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onChange, onRemove, onReset }) => {
+  return (
+    <div className="gf-form-inline">
+      <div className="gf-form">
+        <FormField
+          label="Header"
+          name="name"
+          placeholder="X-Custom-Header"
+          labelWidth={5}
+          value={header.name || ''}
+          onChange={e => onChange({ ...header, name: e.target.value })}
+          onBlur={onBlur}
+        />
+      </div>
+      <div className="gf-form">
+        <SecretFormField
+          label="Value"
+          name="value"
+          isConfigured={header.configured}
+          value={header.value}
+          labelWidth={5}
+          inputWidth={header.configured ? 11 : 12}
+          placeholder="Header Value"
+          onReset={() => onReset(header.id)}
+          onChange={e => onChange({ ...header, value: e.target.value })}
+          onBlur={onBlur}
+        />
+      </div>
+      <div className="gf-form">
+        <Button variant="danger" size="xs" onClick={_e => onRemove(header.id)}>
+          <i className="fa fa-remove" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export class CustomHeadersSettings extends PureComponent<Props, State> {
   state: State = {
     headers: [],
@@ -28,15 +75,26 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
+    const { jsonData, secureJsonData, secureJsonFields } = this.props.dataSourceConfig;
+    this.state = {
+      headers: Object.keys(jsonData)
+        .sort()
+        .filter(key => key.startsWith('httpHeaderName'))
+        .map((key, index) => {
+          return {
+            id: uniqueId(),
+            name: jsonData[key],
+            value: secureJsonData !== undefined ? secureJsonData[key] : '',
+            configured: (secureJsonFields && secureJsonFields[`httpHeaderValue${index + 1}`]) || false,
+          };
+        }),
+    };
   }
 
-  componentDidMount(): void {
-    this.updateHeaders();
-  }
-
-  updateSettings(headers: CustomHeaders) {
-    const { jsonData, secureJsonData } = this.props.dataSourceConfig;
-
+  updateSettings = () => {
+    const { headers } = this.state;
+    const { jsonData } = this.props.dataSourceConfig;
+    const secureJsonData = this.props.dataSourceConfig.secureJsonData || {};
     for (const [index, header] of headers.entries()) {
       jsonData[`httpHeaderName${index + 1}`] = header.name;
       if (!header.configured) {
@@ -57,125 +115,72 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
       jsonData,
       secureJsonData,
     });
-  }
+  };
 
-  onHeaderAdd() {
-    this.setState(
-      prevState => {
-        return { headers: [...prevState.headers, { name: 'X-Custom-Header', value: '', configured: false }] };
-      },
-      () => this.updateSettings(this.state.headers)
-    );
-  }
-
-  onHeaderChange(headerIndex: number, key: string, value: string) {
+  onHeaderAdd = () => {
     this.setState(prevState => {
+      return { headers: [...prevState.headers, { id: uniqueId(), name: '', value: '', configured: false }] };
+    }, this.updateSettings);
+  };
+
+  onHeaderChange = (headerIndex: number, value: CustomHeader) => {
+    this.setState(({ headers }) => {
       return {
-        headers: prevState.headers.map((item, index) => {
+        headers: headers.map((item, index) => {
           if (headerIndex !== index) {
             return item;
           }
-          return {
-            ...item,
-            [key]: value,
-          };
+          return { ...value };
         }),
       };
     });
-  }
+  };
 
-  onHeaderReset(headerIndex: number) {
-    this.setState(prevState => {
+  onHeaderReset = (headerId: string) => {
+    this.setState(({ headers }) => {
       return {
-        headers: prevState.headers.map((item, index) => {
-          if (headerIndex !== index) {
-            return item;
+        headers: headers.map((h, i) => {
+          if (h.id !== headerId) {
+            return h;
           }
           return {
-            ...item,
+            ...h,
             value: '',
             configured: false,
           };
         }),
       };
     });
-  }
+  };
 
-  onHeaderRemove(headerIndex: number) {
+  onHeaderRemove = (headerId: string) => {
     this.setState(
-      prevState => {
-        return {
-          headers: [...prevState.headers.slice(0, headerIndex), ...prevState.headers.slice(headerIndex + 1)],
-        };
-      },
-      () => this.updateSettings(this.state.headers)
+      ({ headers }) => ({
+        headers: headers.filter(h => h.id !== headerId),
+      }),
+      this.updateSettings
     );
-  }
-
-  updateHeaders() {
-    const { jsonData, secureJsonData, secureJsonFields } = this.props.dataSourceConfig;
-    this.setState({
-      headers: Object.keys(jsonData)
-        .sort()
-        .filter(key => key.startsWith('httpHeaderName'))
-        .map((key, index) => {
-          return {
-            name: jsonData[key],
-            value: secureJsonData !== undefined ? secureJsonData[key] : '',
-            configured: (secureJsonFields && secureJsonFields[`httpHeaderValue${index + 1}`]) || false,
-          };
-        }),
-    });
-  }
+  };
 
   render() {
     const { headers } = this.state;
-
     return (
       <div className={'gf-form-group'}>
         <div className="gf-form">
           <h6>Custom HTTP Headers</h6>
         </div>
         <div>
-          {headers.map((header, index) => (
-            <div key={index} className="gf-form-inline">
-              <div className="gf-form">
-                <FormField
-                  label="Header"
-                  name="name"
-                  defaultValue={header.name}
-                  labelWidth={5}
-                  onChange={e => this.onHeaderChange(index, 'name', e.target.value)}
-                  onBlur={_ => this.updateSettings(this.state.headers)}
-                />
-              </div>
-              <div className="gf-form">
-                <SecretFormField
-                  label={'Value'}
-                  name={'value'}
-                  isConfigured={header.configured}
-                  value={header.value}
-                  labelWidth={5}
-                  inputWidth={header.configured ? 11 : 12}
-                  placeholder={'Header Value'}
-                  onReset={_ => this.onHeaderReset(index)}
-                  onChange={e => this.onHeaderChange(index, 'value', e.target.value)}
-                  onBlur={_ => this.updateSettings(this.state.headers)}
-                />
-              </div>
-              <div className="gf-form">
-                <Button
-                  variant="danger"
-                  size="xs"
-                  onClick={e => {
-                    e.preventDefault();
-                    this.onHeaderRemove(index);
-                  }}
-                >
-                  <i className="fa fa-remove" />
-                </Button>
-              </div>
-            </div>
+          {headers.map((header, i) => (
+            <CustomHeaderRow
+              key={header.id}
+              header={header}
+              onChange={h => {
+                this.onHeaderChange(i, h);
+              }}
+              onBlur={this.updateSettings}
+              onRemove={this.onHeaderRemove}
+              onReset={this.onHeaderReset}
+            />
           ))}
         </div>
         <div className="gf-form">
@@ -183,7 +188,6 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
             variant="inverse"
             size="xs"
             onClick={e => {
-              e.preventDefault();
               this.onHeaderAdd();
             }}
           >
