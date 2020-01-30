@@ -84,7 +84,7 @@ export class QueryVariablePicker extends PureComponent<Props> {
     label = label || name;
     return (
       <div className="gf-form">
-        {hide !== VariableHide.hideLabel && (
+        {hide === VariableHide.dontHide && (
           <label
             className="gf-form-label template-variable"
             aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemLabels(label)}

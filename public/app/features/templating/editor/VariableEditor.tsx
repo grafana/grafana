@@ -3,6 +3,7 @@ import { e2e } from '@grafana/e2e';
 
 import { dispatch } from '../../../store/store';
 import {
+  changeVariableHide,
   changeVariableLabel,
   changeVariableName,
   changeVariableType,
@@ -12,7 +13,7 @@ import {
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { VariableState } from '../state/types';
-import { VariableType } from '../variable';
+import { VariableHide, VariableType } from '../variable';
 
 export class VariableEditor extends PureComponent<VariableState> {
   componentDidMount(): void {
@@ -36,6 +37,13 @@ export class VariableEditor extends PureComponent<VariableState> {
   onLabelChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     dispatch(changeVariableLabel(toVariablePayload(this.props.variable, event.target.value)));
+  };
+
+  onHideChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    event.preventDefault();
+    dispatch(
+      changeVariableHide(toVariablePayload(this.props.variable, parseInt(event.target.value, 10) as VariableHide))
+    );
   };
 
   render() {
@@ -128,11 +136,19 @@ export class VariableEditor extends PureComponent<VariableState> {
                 <div className="gf-form-select-wrapper max-width-15">
                   <select
                     className="gf-form-input"
-                    // ng-model="current.hide"
-                    // ng-options="f.value as f.text for f in hideOptions"
+                    value={this.props.variable.hide}
+                    onChange={this.onHideChange}
                     aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalHideSelect}
                   >
-                    {/*  */}
+                    <option label="" value={VariableHide.dontHide}>
+                      {''}
+                    </option>
+                    <option label="" value={VariableHide.hideLabel}>
+                      Label
+                    </option>
+                    <option label="" value={VariableHide.hideVariable}>
+                      Variable
+                    </option>
                   </select>
                 </div>
               </div>

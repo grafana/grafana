@@ -5,6 +5,7 @@ import { UrlQueryValue } from '@grafana/runtime';
 
 import {
   QueryVariableModel,
+  VariableHide,
   VariableModel,
   VariableOption,
   VariableRefresh,
@@ -111,6 +112,7 @@ export const moveVariableTypeToAngular = createAction<VariablePayload<MoveVariab
   'templating/moveVariableTypeToAngular'
 );
 export const changeVariableLabel = createAction<VariablePayload<string>>('templating/changeVariableLabel');
+export const changeVariableHide = createAction<VariablePayload<VariableHide>>('templating/changeVariableHide');
 
 export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any>>> = [
   addVariable,
@@ -129,6 +131,7 @@ export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any
   variableEditorMounted,
   variableEditorUnMounted,
   changeVariableLabel,
+  changeVariableHide,
 ];
 
 export const toVariablePayload = <T extends {} = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
