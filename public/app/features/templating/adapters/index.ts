@@ -9,6 +9,7 @@ import { createQueryVariableAdapter } from './queryVariableAdapter';
 import { VariableState } from '../state/types';
 
 export interface VariableAdapter<Model extends VariableModel, State extends VariableState> {
+  description: string;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
   setValue: (variable: Model, option: VariableOption) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;

@@ -8,6 +8,7 @@ import { QueryVariableEditor } from '../editor/QueryVariableEditor';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel, QueryVariableState> => {
   return {
+    description: 'Variable values are fetched from a datasource query',
     reducer: queryVariableReducer,
     picker: QueryVariablePicker,
     editor: QueryVariableEditor,

@@ -14,6 +14,7 @@ import {
 import { variableAdapters } from '../adapters';
 import { VariableState } from '../state/types';
 import { VariableHide, VariableType } from '../variable';
+import { FormLabel } from '@grafana/ui';
 
 export class VariableEditor extends PureComponent<VariableState> {
   componentDidMount(): void {
@@ -87,12 +88,9 @@ export class VariableEditor extends PureComponent<VariableState> {
                 />
               </div>
               <div className="gf-form max-width-19">
-                <span className="gf-form-label width-6">
+                <FormLabel width={6} tooltip={variableAdapters.get(this.props.variable.type).description}>
                   Type
-                  {/*<info-popover mode="right-normal">*/}
-                  {/*  {{ variableTypes[current.type].description }}*/}
-                  {/*</info-popover>*/}
-                </span>
+                </FormLabel>
                 <div className="gf-form-select-wrapper max-width-17">
                   <select
                     className="gf-form-input"
