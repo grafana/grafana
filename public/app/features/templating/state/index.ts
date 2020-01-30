@@ -3,6 +3,7 @@ import { AnyAction, PayloadAction } from '@reduxjs/toolkit';
 import { VariableType } from '../variable';
 import {
   addVariable,
+  changeVariableLabel,
   removeVariable,
   variableActions,
   variableEditorMounted,
@@ -78,6 +79,25 @@ export const updateTemplatingState = (
         return {
           ...variableState,
           editor: initialVariableEditorState,
+        };
+      }),
+    };
+  }
+
+  if (changeVariableLabel.match(action)) {
+    return {
+      ...state,
+      variables: state.variables.map(variableState => {
+        if (action.payload.uuid !== variableState.variable.uuid) {
+          return variableState;
+        }
+
+        return {
+          ...variableState,
+          variable: {
+            ...variableState.variable,
+            label: action.payload.data,
+          },
         };
       }),
     };

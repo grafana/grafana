@@ -3,6 +3,7 @@ import { e2e } from '@grafana/e2e';
 
 import { dispatch } from '../../../store/store';
 import {
+  changeVariableLabel,
   changeVariableName,
   changeVariableType,
   toVariablePayload,
@@ -30,6 +31,11 @@ export class VariableEditor extends PureComponent<VariableState> {
   onTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
     event.preventDefault();
     dispatch(changeVariableType(this.props.variable, event.target.value as VariableType));
+  };
+
+  onLabelChange = (event: ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    dispatch(changeVariableLabel(toVariablePayload(this.props.variable, event.target.value)));
   };
 
   render() {
@@ -100,10 +106,7 @@ export class VariableEditor extends PureComponent<VariableState> {
             </div>
 
             {this.props.editor.errors.name && (
-              <div
-                className="gf-form"
-                // ng-show="ctrl.form.name.$error.pattern"
-              >
+              <div className="gf-form">
                 <span className="gf-form-label gf-form-label--error">{this.props.editor.errors.name}</span>
               </div>
             )}
@@ -114,7 +117,8 @@ export class VariableEditor extends PureComponent<VariableState> {
                 <input
                   type="text"
                   className="gf-form-input"
-                  // ng-model="current.label"
+                  value={this.props.variable.label}
+                  onChange={this.onLabelChange}
                   placeholder="optional display name"
                   aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalLabelInput}
                 />

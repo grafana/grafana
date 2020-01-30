@@ -110,6 +110,7 @@ export const changeVariableNameFailed = createAction<VariablePayload<{ newName: 
 export const moveVariableTypeToAngular = createAction<VariablePayload<MoveVariableType>>(
   'templating/moveVariableTypeToAngular'
 );
+export const changeVariableLabel = createAction<VariablePayload<string>>('templating/changeVariableLabel');
 
 export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any>>> = [
   addVariable,
@@ -127,6 +128,7 @@ export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any
   changeVariableNameFailed,
   variableEditorMounted,
   variableEditorUnMounted,
+  changeVariableLabel,
 ];
 
 export const toVariablePayload = <T extends {} = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
@@ -438,8 +440,6 @@ export const changeVariableType = (variable: VariableModel, newType: VariableTyp
     const currentIsAdapted = variableAdapters.contains(variable.type);
     const newIsAdapted = variableAdapters.contains(newType);
 
-    console.log('changeVariableType', variable.type, newType, currentIsAdapted, newIsAdapted);
-
     // existing type is adapted but new type is not
     if (currentIsAdapted && !newIsAdapted) {
       const { name, label, index } = variable;
@@ -450,16 +450,18 @@ export const changeVariableType = (variable: VariableModel, newType: VariableTyp
     // existing type is not adapted but new type is
     if (!currentIsAdapted && newIsAdapted) {
       // handled by middleware
+      throw new Error('Not supported');
     }
 
     // existing type and new type are not adapted
     if (!currentIsAdapted && !newIsAdapted) {
       // Let Angular handle this
-      return;
+      throw new Error('Not supported');
     }
 
     // existing type and new type are adapted
     if (currentIsAdapted && newIsAdapted) {
+      // implement this when we have more then 1 type using adapters
       throw new Error('Not implemented yet');
     }
   };
