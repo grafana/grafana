@@ -1999,178 +1999,178 @@ workflows:
   build-pipeline:
     jobs:
       - install-grabpl:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: armv6
           name: build-oss-backend-armv6
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: armv7
           name: build-oss-backend-armv7
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: arm64
           name: build-oss-backend-arm64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
             - install-grabpl
       - build-frontend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           name: build-oss-frontend
           edition: oss
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: armv6
           name: build-enterprise-backend-armv6
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: armv7
           name: build-enterprise-backend-armv7
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: armv7-musl
           name: build-enterprise-backend-armv7-musl
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: arm64
           name: build-enterprise-backend-arm64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: arm64-musl
           name: build-enterprise-backend-arm64-musl
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: osx64
           name: build-enterprise-backend-osx64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: win64
           name: build-enterprise-backend-win64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: linux-x64
           name: build-enterprise-backend-linux-x64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           edition: enterprise
           variant: linux-x64-musl
           name: build-enterprise-backend-linux-x64-musl
           requires:
             - install-grabpl
       - build-frontend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           name: build-enterprise-frontend
           edition: enterprise
           requires:
             - install-grabpl
       - codespell:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
       - lint-go:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
       - shellcheck-grabpl:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
       - test-backend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
             - lint-go
       - test-frontend:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
       - mysql-integration-test:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
             - lint-go
       - postgres-integration-test:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
             - lint-go
       - package-oss:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
             - build-oss-backend-armv6
@@ -2190,7 +2190,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
       - package-enterprise:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - install-grabpl
             - build-enterprise-backend-armv6
@@ -2210,69 +2210,69 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
       - build-oss-windows-installer:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - package-oss
       - build-enterprise-windows-installer:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - package-enterprise
       - release-next-packages-grabpl:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - test-frontend
       - publish-oss-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - package-oss
             - build-oss-windows-installer
             - end-to-end-tests-grabpl
       - docker-oss-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - package-oss
             - build-oss-windows-installer
       - docker-ubuntu-oss-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - package-oss
             - build-oss-windows-installer
       - publish-enterprise-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - package-enterprise
             - build-enterprise-windows-installer
             - end-to-end-tests-grabpl
       - docker-enterprise-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - package-enterprise
       - docker-ubuntu-enterprise-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - package-enterprise
       - end-to-end-tests-grabpl:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - docker-oss-master
       - publish-docker-oss-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - docker-oss-master
             - end-to-end-tests-grabpl
       - publish-docker-ubuntu-oss-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - docker-ubuntu-oss-master
             - end-to-end-tests-grabpl
       - publish-docker-enterprise-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - docker-enterprise-master
 
             - end-to-end-tests-grabpl
       - publish-docker-ubuntu-enterprise-master:
-          filters: *filter-not-release-or-master
+          filters: *filter-only-master
           requires:
             - docker-ubuntu-enterprise-master
             - end-to-end-tests-grabpl
