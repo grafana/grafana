@@ -94,7 +94,7 @@ export class LoginForm extends PureComponent<Props, State> {
         <div className="login-button-group">
           {!this.props.isLoggingIn ? (
             <button
-              type="submit"
+              type="button"
               aria-label={e2e.pages.Login.selectors.submit}
               className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
               onClick={this.onSubmit}
@@ -103,7 +103,7 @@ export class LoginForm extends PureComponent<Props, State> {
               Log In
             </button>
           ) : (
-            <button type="submit" className="btn btn-large p-x-2 btn-inverse btn-loading">
+            <button type="button" className="btn btn-large p-x-2 btn-inverse btn-loading">
               Logging In<span>.</span>
               <span>.</span>
               <span>.</span>
