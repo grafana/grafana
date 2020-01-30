@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { of, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { VariableIdentifier } from '../state/actions';
 import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
@@ -19,7 +19,7 @@ export class VariableRenderer extends PureComponent<VariableRendererProps, Varia
     // editing a new variable
     if (!props.uuid) {
       const initialState = variableAdapters.get(props.type).reducer(undefined, undefined);
-      this.subscription = of(initialState).subscribe();
+      this.state = initialState;
     } else {
       this.subscription = subscribeToVariableChanges<VariableState>(props).subscribe({
         next: state => {

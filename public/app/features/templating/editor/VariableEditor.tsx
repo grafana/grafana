@@ -4,12 +4,14 @@ import { e2e } from '@grafana/e2e';
 import { dispatch } from '../../../store/store';
 import {
   changeVariableName,
+  changeVariableType,
   toVariablePayload,
   variableEditorMounted,
   variableEditorUnMounted,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { VariableState } from '../state/types';
+import { VariableType } from '../variable';
 
 export class VariableEditor extends PureComponent<VariableState> {
   componentDidMount(): void {
@@ -20,9 +22,14 @@ export class VariableEditor extends PureComponent<VariableState> {
     dispatch(variableEditorUnMounted(toVariablePayload(this.props.variable)));
   }
 
-  onValidateName = (event: ChangeEvent<HTMLInputElement>) => {
+  onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     dispatch(changeVariableName(this.props.variable, event.target.value));
+  };
+
+  onTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    event.preventDefault();
+    dispatch(changeVariableType(this.props.variable, event.target.value as VariableType));
   };
 
   render() {
@@ -47,7 +54,7 @@ export class VariableEditor extends PureComponent<VariableState> {
                   // ng-model="current.name"
                   required
                   value={this.props.editor.name}
-                  onChange={this.onValidateName}
+                  onChange={this.onNameChange}
                   // ng-pattern="namePattern"
                   aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalNameInput}
                 />
@@ -62,12 +69,31 @@ export class VariableEditor extends PureComponent<VariableState> {
                 <div className="gf-form-select-wrapper max-width-17">
                   <select
                     className="gf-form-input"
-                    // ng-model="current.type"
-                    // ng-options="k as v.name for (k, v) in variableTypes"
-                    // ng-change="typeChanged()"
+                    value={this.props.editor.type}
+                    onChange={this.onTypeChange}
                     aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalTypeSelect}
                   >
-                    {/*  */}
+                    <option label="Interval" value="interval">
+                      Interval
+                    </option>
+                    <option label="Query" value="query">
+                      Query
+                    </option>
+                    <option label="Datasource" value="datasource">
+                      Datasource
+                    </option>
+                    <option label="Custom" value="custom">
+                      Custom
+                    </option>
+                    <option label="Constant" value="constant">
+                      Constant
+                    </option>
+                    <option label="Ad hoc filters" value="adhoc">
+                      Ad hoc filters
+                    </option>
+                    <option label="Text box" value="textbox">
+                      Text box
+                    </option>
                   </select>
                 </div>
               </div>

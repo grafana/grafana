@@ -1,6 +1,7 @@
 import { DataFrame, eventFactory, TimeRange } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { VariableIdentifier } from '../features/templating/state/actions';
+import { VariableType } from '../features/templating/variable';
 
 /**
  * Event Payloads
@@ -133,6 +134,20 @@ export const rowExpanded = eventFactory('row-expanded');
 export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 export const variableNameInStateUpdated = eventFactory<VariableIdentifier>('variable-name-in-state-updated');
+export interface VariableTypeInAngularUpdated {
+  name: string;
+  label: string;
+  index: number;
+  newType: VariableType;
+}
+export const variableTypeInAngularUpdated = eventFactory<VariableTypeInAngularUpdated>(
+  'variable-type-in-angular-updated'
+);
+export interface VariableMovedToState {
+  uuid: string;
+  index: number;
+}
+export const variableMovedToState = eventFactory<VariableMovedToState>('variable-moved-to-state');
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');

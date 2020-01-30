@@ -5,8 +5,9 @@ import { e2e } from '@grafana/e2e';
 import { VariableSrv } from 'app/features/templating/all';
 import { CoreEvents } from '../../../../types';
 import { VariableModel } from '../../../templating/variable';
-import { getVariables } from '../../../templating/state/selectors';
+import { getVariable, getVariables } from '../../../templating/state/selectors';
 import { variableAdapters } from '../../../templating/adapters';
+import { VariableMovedToState } from '../../../../types/events';
 
 export class SubMenuCtrl {
   annotations: any;
@@ -24,6 +25,7 @@ export class SubMenuCtrl {
     this.dashboard.events.on(CoreEvents.submenuVisibilityChanged, (enabled: boolean) => {
       this.submenuEnabled = enabled;
     });
+    this.dashboard.events.on(CoreEvents.variableMovedToState, this.onVariableMovedToState.bind(this));
     this.selectors = e2e.pages.Dashboard.SubMenu.selectors;
   }
 
@@ -45,6 +47,17 @@ export class SubMenuCtrl {
   openEditView(editview: any) {
     const search = _.extend(this.$location.search(), { editview: editview });
     this.$location.search(search);
+  }
+
+  onVariableMovedToState(args: VariableMovedToState) {
+    for (let index = 0; index < this.variables.length; index++) {
+      const variable = this.variables[index];
+      if (variable.index === args.index) {
+        const variable = { ...getVariable(args.uuid) };
+        this.variables[index] = variable;
+        break;
+      }
+    }
   }
 }
 

@@ -130,7 +130,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   return (dispatch, getState) => {
     for (let index = 0; index < list.length; index++) {
       const model = list[index];
-      if (model.type !== 'query') {
+      if (!variableAdapters.contains(model.type)) {
         continue;
       }
 
@@ -419,6 +419,36 @@ export const changeVariableName = (variable: VariableModel, newName: string): Th
 
     if (!errorText) {
       dispatch(changeVariableNameSucceeded(toVariablePayload(variable, newName)));
+    }
+  };
+};
+
+export const changeVariableType = (variable: VariableModel, newType: VariableType): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const currentIsAdapted = variableAdapters.contains(variable.type);
+    const newIsAdapted = variableAdapters.contains(newType);
+
+    console.log('changeVariableType', variable.type, newType, currentIsAdapted, newIsAdapted);
+
+    // existing type is adapted but new type is not
+    if (currentIsAdapted && !newIsAdapted) {
+      // delete variable in state
+    }
+
+    // existing type is not adapted but new type is
+    if (!currentIsAdapted && newIsAdapted) {
+      // add variable to state
+    }
+
+    // existing type and new type are not adapted
+    if (!currentIsAdapted && !newIsAdapted) {
+      // Let Angular handle this
+      return;
+    }
+
+    // existing type and new type are adapted
+    if (currentIsAdapted && newIsAdapted) {
+      // just change type
     }
   };
 };

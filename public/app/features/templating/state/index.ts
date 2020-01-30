@@ -49,6 +49,7 @@ export const updateTemplatingState = (
           editor: {
             ...initialVariableEditorState,
             name: variableState.variable.name,
+            type: variableState.variable.type,
           },
         };
       }),

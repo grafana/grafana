@@ -1,13 +1,15 @@
-import { VariableModel } from '../variable';
+import { VariableModel, VariableType } from '../variable';
 
 export interface VariableEditorState {
   name: string;
+  type: VariableType;
   errors: Record<string, string>;
   valid: boolean;
 }
 
 export const initialVariableEditorState: VariableEditorState = {
   name: '',
+  type: 'query',
   errors: {},
   valid: false,
 };

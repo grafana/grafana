@@ -137,5 +137,9 @@ export function registerAngularDirectives() {
     'dataSourceConfig',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('variableRenderer', VariableRenderer, ['type', 'uuid', 'componentType']);
+  react2AngularDirective('variableRenderer', VariableRenderer, [
+    ['type', { watchDepth: 'reference' }],
+    ['uuid', { watchDepth: 'reference' }],
+    'componentType',
+  ]);
 }

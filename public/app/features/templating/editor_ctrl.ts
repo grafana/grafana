@@ -13,11 +13,13 @@ import { getVariable, getVariables } from './state/selectors';
 import { variableAdapters } from './adapters';
 import { CoreEvents } from '../../types';
 import { VariableIdentifier } from './state/actions';
+import { VariableMovedToState } from '../../types/events';
 
 export class VariableEditorCtrl {
   /** @ngInject */
   constructor(private $scope: any, datasourceSrv: DatasourceSrv, variableSrv: VariableSrv, templateSrv: TemplateSrv) {
     appEvents.on(CoreEvents.variableNameInStateUpdated, this.onVariableNameInStateUpdated.bind(this), $scope);
+    appEvents.on(CoreEvents.variableMovedToState, this.onVariableMovedToState.bind(this), $scope);
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
@@ -228,6 +230,8 @@ export class VariableEditorCtrl {
 
     $scope.typeChanged = function() {
       if (variableAdapters.contains($scope.current.type as VariableType)) {
+        const { name, label, index, type } = $scope.current;
+        appEvents.emit(CoreEvents.variableTypeInAngularUpdated, { name, label, index, newType: type });
         return;
       }
       const old = $scope.current;
@@ -278,6 +282,19 @@ export class VariableEditorCtrl {
       const variable = this.$scope.variables[index];
       if (variable.uuid && variable.uuid === args.uuid) {
         variable.name = getVariable(args.uuid).name;
+        break;
+      }
+    }
+  }
+
+  onVariableMovedToState(args: VariableMovedToState) {
+    for (let index = 0; index < this.$scope.variables.length; index++) {
+      const variable = this.$scope.variables[index];
+      if (variable.index === args.index) {
+        const variable = { ...getVariable(args.uuid) };
+        this.$scope.current = variable;
+        this.$scope.variables[index] = variable;
+        this.$scope.validate();
         break;
       }
     }
