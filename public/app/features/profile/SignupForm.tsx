@@ -22,27 +22,43 @@ export const SignupForm: FC<Props> = props => {
           <>
             {props.verifyEmailEnabled && (
               <Forms.Field label="Email verification code (sent to your email)">
-                <Forms.Input name="code" size="md" ref={register({ required: true })} placeholder="Code" />
+                <Forms.Input name="code" size="md" ref={register} placeholder="Code" />
               </Forms.Field>
             )}
             {!props.autoAssignOrg && (
               <Forms.Field label="Org. name">
-                <Forms.Input size="md" name="orgName" placeholder="Org. name" ref={register({ required: true })} />
+                <Forms.Input size="md" name="orgName" placeholder="Org. name" ref={register} />
               </Forms.Field>
             )}
             <Forms.Field label="Your name">
               <Forms.Input size="md" name="name" placeholder="(optional)" ref={register} />
             </Forms.Field>
-            <Forms.Field label="Email">
-              <Forms.Input size="md" name="email" type="email" placeholder="Email" ref={register({ required: true })} />
+            <Forms.Field label="Email" invalid={!!errors.email} error={!!errors.email && errors.email.message}>
+              <Forms.Input
+                size="md"
+                name="email"
+                type="email"
+                placeholder="Email"
+                ref={register({
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^\S+@\S+$/,
+                    message: 'Email is invalid',
+                  },
+                })}
+              />
             </Forms.Field>
-            <Forms.Field label="Password">
+            <Forms.Field
+              label="Password"
+              invalid={!!errors.password}
+              error={!!errors.password && errors.password.message}
+            >
               <Forms.Input
                 size="md"
                 name="password"
                 type="password"
                 placeholder="Password"
-                ref={register({ required: true })}
+                ref={register({ required: 'Password is required' })}
               />
             </Forms.Field>
 
