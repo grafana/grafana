@@ -38,6 +38,11 @@ export class VariableEditorCtrl {
       this.onVariableMovedToAngular.bind(this),
       $scope
     );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableEditorChangeMode,
+      this.onVariableEditorChangeMode.bind(this),
+      $scope
+    );
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
@@ -339,6 +344,13 @@ export class VariableEditorCtrl {
         this.variableSrv.dashboard.events.emit(CoreEvents.variableMovedToAngularSucceeded, args);
         break;
       }
+    }
+  }
+
+  onVariableEditorChangeMode(mode: string) {
+    if (this.$scope.mode !== mode) {
+      this.$scope.mode = mode;
+      this.$scope.$digest();
     }
   }
 }

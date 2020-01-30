@@ -8,6 +8,7 @@ import {
   changeVariableNameSucceeded,
   moveVariableTypeToAngular,
   toVariablePayload,
+  updateVariableCompleted,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { dispatch } from '../../../store/store';
@@ -65,6 +66,14 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     const result = next(action);
     const { name, label, index, type } = action.payload.data;
     dashboardEvents?.emit(CoreEvents.variableMovedToAngular, { name, label, index, type });
+    return result;
+  }
+
+  if (updateVariableCompleted.match(action)) {
+    const result = next(action);
+    if (action.payload.data.notifyAngular) {
+      dashboardEvents?.emit(CoreEvents.variableEditorChangeMode, 'list');
+    }
     return result;
   }
 

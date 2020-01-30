@@ -19,6 +19,7 @@ import {
   setCurrentVariableValue,
   setInitLock,
   showQueryVariableDropDown,
+  updateVariableFailed,
   updateVariableOptions,
   updateVariableTags,
 } from './actions';
@@ -349,6 +350,10 @@ export const queryVariableReducer = (
     }
 
     return { ...state, variable: { ...state.variable, options } };
+  }
+
+  if (updateVariableFailed.match(action)) {
+    return { ...state, editor: { ...state.editor, valid: false, errors: { update: action.payload.data.message } } };
   }
 
   if (updateVariableTags.match(action)) {

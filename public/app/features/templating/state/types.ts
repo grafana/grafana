@@ -11,7 +11,7 @@ export const initialVariableEditorState: VariableEditorState = {
   name: '',
   type: 'query',
   errors: {},
-  valid: false,
+  valid: true,
 };
 
 export interface VariableState<

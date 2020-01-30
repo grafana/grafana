@@ -6,6 +6,9 @@ import {
   changeVariableHide,
   changeVariableLabel,
   removeVariable,
+  updateVariableCompleted,
+  updateVariableFailed,
+  updateVariableStarting,
   variableActions,
   variableEditorMounted,
   variableEditorUnMounted,
@@ -117,6 +120,64 @@ export const updateTemplatingState = (
           variable: {
             ...variableState.variable,
             hide: action.payload.data,
+          },
+        };
+      }),
+    };
+  }
+
+  if (updateVariableStarting.match(action)) {
+    return {
+      ...state,
+      variables: state.variables.map(variableState => {
+        if (action.payload.uuid !== variableState.variable.uuid) {
+          return variableState;
+        }
+
+        return {
+          ...variableState,
+          editor: {
+            ...initialVariableEditorState,
+            ...variableState.editor,
+          },
+        };
+      }),
+    };
+  }
+
+  if (updateVariableCompleted.match(action)) {
+    return {
+      ...state,
+      variables: state.variables.map(variableState => {
+        if (action.payload.uuid !== variableState.variable.uuid) {
+          return variableState;
+        }
+
+        return {
+          ...variableState,
+          editor: initialVariableEditorState,
+        };
+      }),
+    };
+  }
+
+  if (updateVariableFailed.match(action)) {
+    return {
+      ...state,
+      variables: state.variables.map(variableState => {
+        if (action.payload.uuid !== variableState.variable.uuid) {
+          return variableState;
+        }
+
+        return {
+          ...variableState,
+          editor: {
+            ...variableState.editor,
+            valid: false,
+            errors: {
+              ...variableState.editor.errors,
+              update: action.payload.data.message,
+            },
           },
         };
       }),

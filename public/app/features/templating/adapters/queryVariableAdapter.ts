@@ -28,7 +28,13 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     },
     updateOptions: (variable, searchFilter) => {
       return new Promise(async resolve => {
-        await dispatch(updateQueryVariableOptions(variable, searchFilter));
+        await dispatch(updateQueryVariableOptions(variable, searchFilter, false));
+        resolve();
+      });
+    },
+    onEditorUpdate: variable => {
+      return new Promise(async resolve => {
+        await dispatch(updateQueryVariableOptions(variable, undefined, true));
         resolve();
       });
     },

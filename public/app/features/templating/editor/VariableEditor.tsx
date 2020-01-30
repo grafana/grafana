@@ -1,4 +1,4 @@
-import React, { ChangeEvent, PureComponent } from 'react';
+import React, { ChangeEvent, MouseEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
 
 import { dispatch } from '../../../store/store';
@@ -46,6 +46,19 @@ export class VariableEditor extends PureComponent<VariableState> {
     );
   };
 
+  onUpdateClicked = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (!this.props.editor.valid) {
+      return;
+    }
+    await variableAdapters.get(this.props.variable.type).onEditorUpdate(this.props.variable);
+  };
+
+  onAddClicked = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    console.log('onAddClicked');
+  };
+
   render() {
     const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
     if (!EditorToRender) {
@@ -54,7 +67,7 @@ export class VariableEditor extends PureComponent<VariableState> {
 
     return (
       <div>
-        <form aria-label="Variable editor Form" onSubmit={e => console.log('Submitted', e)}>
+        <form aria-label="Variable editor Form">
           <h5 className="section-heading">General</h5>
           <div className="gf-form-group">
             <div className="gf-form-inline">
@@ -155,23 +168,13 @@ export class VariableEditor extends PureComponent<VariableState> {
             </div>
           </div>
           {EditorToRender && <EditorToRender {...this.props} />}
-          {/*{alertText && (*/}
-          {/*  <div*/}
-          {/*    className="alert alert-info gf-form-group"*/}
-          {/*    // ng-if="infoText"*/}
-          {/*    aria-label="Variable editor Form Alert"*/}
-          {/*  >*/}
-          {/*    {alertText}*/}
-          {/*  </div>*/}
-          {/*)}*/}
 
           <div className="gf-form-button-row p-y-0">
             {this.props.variable.uuid && (
               <button
                 type="submit"
                 className="btn btn-primary"
-                // ng-show="mode === 'edit'"
-                // ng-click="update();"
+                onClick={this.onUpdateClicked}
                 aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.updateButton}
               >
                 Update
@@ -181,8 +184,7 @@ export class VariableEditor extends PureComponent<VariableState> {
               <button
                 type="submit"
                 className="btn btn-primary"
-                // ng-show="mode === 'new'"
-                // ng-click="add();"
+                onClick={this.onAddClicked}
                 aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.addButton}
               >
                 Add

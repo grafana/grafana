@@ -148,6 +148,7 @@ export interface VariableMovedToState {
 export const variableMovedToState = eventFactory<VariableMovedToState>('variable-moved-to-state');
 export const variableMovedToAngular = eventFactory<MoveVariableType>('variable-moved-to-angular');
 export const variableMovedToAngularSucceeded = eventFactory<MoveVariableType>('variable-moved-to-angular-succeeded');
+export const variableEditorChangeMode = eventFactory<string>('variable-editor-change-mode');
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');

@@ -21,6 +21,8 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
 import { MoveVariableType } from '../../../types/events';
+import appEvents from '../../../core/app_events';
+import { AppEvents } from '@grafana/data';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -90,6 +92,11 @@ export const resolveInitLock = createAction<VariablePayload<undefined>>('templat
 export const removeInitLock = createAction<VariablePayload<undefined>>('templating/removeInitLock');
 export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>('templating/setVariableValue');
 export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
+export const updateVariableStarting = createAction<VariablePayload<undefined>>('templating/updateVariableStarting');
+export const updateVariableCompleted = createAction<VariablePayload<{ notifyAngular: boolean }>>(
+  'templating/updateVariableCompleted'
+);
+export const updateVariableFailed = createAction<VariablePayload<Error>>('templating/updateVariableFailed');
 export const updateVariableTags = createAction<VariablePayload<any[]>>('templating/updateVariableTags');
 export const selectVariableOption = createAction<VariablePayload<SelectVariableOption>>(
   'templating/selectVariableOption'
@@ -122,6 +129,9 @@ export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any
   removeInitLock,
   setCurrentVariableValue,
   updateVariableOptions,
+  updateVariableStarting,
+  updateVariableCompleted,
+  updateVariableFailed,
   updateVariableTags,
   selectVariableOption,
   showQueryVariableDropDown,
@@ -194,22 +204,39 @@ export const processVariables = (): ThunkResult<void> => {
   };
 };
 
-export const updateQueryVariableOptions = (variable: QueryVariableModel, searchFilter?: string): ThunkResult<void> => {
+export const updateQueryVariableOptions = (
+  variable: QueryVariableModel,
+  searchFilter?: string,
+  notifyAngular?: boolean
+): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const dataSource = await getDatasourceSrv().get(variable.datasource);
-    const queryOptions: any = { range: undefined, variable, searchFilter };
-    if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
-      queryOptions.range = getTimeSrv().timeRange();
-    }
-    const results = await dataSource.metricFindQuery(variable.query, queryOptions);
-    await dispatch(updateVariableOptions(toVariablePayload(variable, results)));
+    try {
+      dispatch(updateVariableStarting(toVariablePayload(variable)));
+      const dataSource = await getDatasourceSrv().get(variable.datasource);
+      const queryOptions: any = { range: undefined, variable, searchFilter };
+      if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+        queryOptions.range = getTimeSrv().timeRange();
+      }
+      const results = await dataSource.metricFindQuery(variable.query, queryOptions);
+      await dispatch(updateVariableOptions(toVariablePayload(variable, results)));
 
-    if (variable.useTags) {
-      const tagResults = await dataSource.metricFindQuery(variable.tagsQuery, queryOptions);
-      await dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
-    }
+      if (variable.useTags) {
+        const tagResults = await dataSource.metricFindQuery(variable.tagsQuery, queryOptions);
+        await dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
+      }
 
-    await dispatch(validateVariableSelectionState(variable));
+      await dispatch(validateVariableSelectionState(variable));
+      await dispatch(updateVariableCompleted(toVariablePayload(variable, { notifyAngular })));
+    } catch (err) {
+      if (err.data && err.data.message) {
+        err.message = err.data.message;
+      }
+      dispatch(updateVariableFailed(toVariablePayload(variable, err)));
+      appEvents.emit(AppEvents.alertError, [
+        'Templating',
+        'Template variables could not be initialized: ' + err.message,
+      ]);
+    }
   };
 };
 
