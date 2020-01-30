@@ -1,12 +1,13 @@
 import React, { FC } from 'react';
 import { Forms } from '@grafana/ui';
-import { SignupFormModel } from './SignupCtrl';
-import { css, cx } from 'emotion';
+import { SignupFormModel, SignupCtrlState } from './SignupCtrl';
+import { css } from 'emotion';
 
 interface Props {
   verifyEmailEnabled: boolean;
   autoAssignOrg: boolean;
   onSubmit(obj: SignupFormModel): void;
+  defaultValues: SignupCtrlState;
 }
 
 const buttonSpacing = css`
@@ -15,7 +16,7 @@ const buttonSpacing = css`
 
 export const SignupForm: FC<Props> = props => {
   return (
-    <Forms.Form onSubmit={(user: any) => console.log(user)}>
+    <Forms.Form defaultValues={props.defaultValues} onSubmit={props.onSubmit}>
       {({ register, errors }) => {
         return (
           <>
@@ -46,9 +47,9 @@ export const SignupForm: FC<Props> = props => {
             </Forms.Field>
 
             <Forms.Button type="submit">Submit</Forms.Button>
-            <Forms.Button className={cx(buttonSpacing)} variant="secondary">
-              Back
-            </Forms.Button>
+            <span className={buttonSpacing}>
+              <Forms.Button variant="secondary">Back</Forms.Button>
+            </span>
           </>
         );
       }}

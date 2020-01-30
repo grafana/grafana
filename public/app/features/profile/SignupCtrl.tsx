@@ -24,9 +24,10 @@ interface ChildProps {
   onSubmit(obj: SignupFormModel): void;
   verifyEmailEnabled: boolean;
   autoAssignOrg: boolean;
+  defaultValues: SignupCtrlState;
 }
 
-interface SignupCtrlState {
+export interface SignupCtrlState {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   orgName: string;
@@ -37,11 +38,12 @@ interface SignupCtrlState {
 }
 
 export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
+  private defaultValues: SignupCtrlState;
   constructor(props: SignupProps) {
     super(props);
-    //Set initial values from url via props.routeParams
 
-    this.state = {
+    //Set initial values from url via props.routeParams
+    this.state = this.defaultValues = {
       verifyEmailEnabled: false,
       autoAssignOrg: true,
       orgName: props.routeParams.email,
@@ -78,12 +80,11 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
       orgName: this.state.orgName,
       password: this.state.password,
     });
+
     if (response.code === 'redirect-to-select-org') {
-      //select location
-      this.props.updateLocation('/profile/select-org?signup=1');
-      console.log('Redirecting...');
+      this.props.updateLocation({ path: '/profile/select-org', query: { signup: 1 } });
     }
-    this.props.updateLocation('/');
+    this.props.updateLocation({ path: '/' });
   };
 
   render() {
@@ -95,6 +96,7 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
           onSubmit: this.onSubmit,
           autoAssignOrg,
           verifyEmailEnabled,
+          defaultValues: this.defaultValues,
         })}
       </>
     );
