@@ -1,7 +1,15 @@
 import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResultType, LokiResponse, LokiLegacyStreamResponse } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime, TimeRange, ExploreMode, FieldCache } from '@grafana/data';
+import {
+  AnnotationQueryRequest,
+  DataSourceApi,
+  DataFrame,
+  dateTime,
+  TimeRange,
+  ExploreMode,
+  FieldCache,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import { makeMockLokiDatasource } from './mocks';
