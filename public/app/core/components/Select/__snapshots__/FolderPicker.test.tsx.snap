@@ -14,22 +14,18 @@ exports[`FolderPicker should render 1`] = `
         Folder
       </label>
       <AsyncSelect
-        autoFocus={false}
-        backspaceRemovesValue={true}
-        className=""
-        components={Object {}}
+        allowCustomValue={false}
         defaultOptions={true}
-        isClearable={false}
-        isDisabled={false}
-        isLoading={true}
-        isMulti={false}
-        isSearchable={true}
         loadOptions={[Function]}
-        loadingMessage={[Function]}
-        maxMenuHeight={300}
+        loadingMessage="Loading folders..."
         onChange={[Function]}
-        openMenuOnFocus={false}
-        value={Object {}}
+        size="sm"
+        value={
+          Object {
+            "label": "",
+            "value": undefined,
+          }
+        }
       />
     </div>
   </div>
