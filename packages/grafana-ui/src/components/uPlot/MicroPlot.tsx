@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 import { DataFrame, getTimeField, FieldType } from '@grafana/data';
 
 import uPlot from 'uPlot/dist/uPlot.cjs';
-// import 'uPlot/src/uPlot.css';
 import { colors } from '../../utils';
 
 interface Props {
@@ -51,7 +50,7 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
       legend: {
         show: false,
       },
-      tzDate: (ts: any) => uPlot.tzDate(new Date(ts), 'Etc/UTC'),
+      tzDate: (ts: any) => uPlot.tzDate(new Date(ts * 1000), 'Etc/UTC'),
       scales,
       series,
       axes: [
@@ -143,6 +142,7 @@ export function getUPlotStuff(props: Props) {
     series.push({
       label: field.name,
       stroke: colors[i], // The line color
+      width: 3,
     });
     uData.push(field.values.toArray());
   }
