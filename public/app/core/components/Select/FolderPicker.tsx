@@ -113,17 +113,20 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     return (
       <>
-        <Forms.Field label="Folder">
-          <Forms.AsyncSelect
-            loadingMessage="Loading folders..."
-            value={{ label: initialTitle, value: initialFolderId }}
-            defaultOptions
-            allowCustomValue
-            loadOptions={this.getOptions}
-            onChange={this.onFolderChange}
-            size="sm"
-          />
-        </Forms.Field>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <label className="gf-form-label width-7">Folder</label>
+            <Forms.AsyncSelect
+              loadingMessage="Loading folders..."
+              value={{ label: initialTitle, value: initialFolderId }}
+              defaultOptions
+              allowCustomValue
+              loadOptions={this.getOptions}
+              onChange={this.onFolderChange}
+              size="sm"
+            />
+          </div>
+        </div>
         {hasValidationError && (
           <div className="gf-form-inline">
             <div className="gf-form gf-form--grow">
