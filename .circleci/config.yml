@@ -649,20 +649,23 @@ jobs:
           name: Publish Docker images
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker tag "grafana/grafana-enterprise:master-${CIRCLE_SHA1}" "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-new-pipeline"
-            docker push "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-new-pipeline"
-            docker tag "grafana/grafana-enterprise-arm32v7-linux:master-${CIRCLE_SHA1}" "grafana/grafana-enterprise-arm32v7-linux:master-${CIRCLE_SHA1}-new-pipeline"
-            docker push "grafana/grafana-enterprise-arm32v7-linux:master-${CIRCLE_SHA1}-new-pipeline"
-            docker tag "grafana/grafana-enterprise-arm64v8-linux:master-${CIRCLE_SHA1}" "grafana/grafana-enterprise-arm64v8-linux:master-${CIRCLE_SHA1}-new-pipeline"
-            docker push "grafana/grafana-enterprise-arm64v8-linux:master-${CIRCLE_SHA1}-new-pipeline"
+            docker tag "grafana/grafana-enterprise:master" "grafana/grafana-enterprise:master-new-pipeline"
+            docker push "grafana/grafana-enterprise:master-new-pipeline"
+            docker tag "grafana/grafana-enterprise-arm32v7-linux:master" \
+              "grafana/grafana-enterprise-arm32v7-linux:master-new-pipeline"
+            docker push "grafana/grafana-enterprise-arm32v7-linux:master-new-pipeline"
+            docker tag "grafana/grafana-enterprise-arm64v8-linux:master" \
+              "grafana/grafana-enterprise-arm64v8-linux:master-new-pipeline"
+            docker push "grafana/grafana-enterprise-arm64v8-linux:master-new-pipeline"
       - run:
           name: Publish Docker manifest
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker manifest create "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-new-pipeline" "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-new-pipeline" \
-              "grafana/grafana-enterprise-arm32v7-linux:master-${CIRCLE_SHA1}-new-pipeline" \
-              "grafana/grafana-enterprise-arm64v8-linux:master-${CIRCLE_SHA1}-new-pipeline"
-            docker manifest push "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-new-pipeline"
+            docker manifest create "grafana/grafana-enterprise:master-new-pipeline" \
+              "grafana/grafana-enterprise:master-new-pipeline" \
+              "grafana/grafana-enterprise-arm32v7-linux:master-new-pipeline" \
+              "grafana/grafana-enterprise-arm64v8-linux:master-new-pipeline"
+            docker manifest push "grafana/grafana-enterprise:master-new-pipeline"
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -695,24 +698,24 @@ jobs:
           name: Publish Docker images
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker tag "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-ubuntu" \
-              "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-ubuntu-new-pipeline"
-            docker push "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-ubuntu-new-pipeline"
-            docker tag "grafana/grafana-enterprise-arm32v7-linux:master-${CIRCLE_SHA1}-ubuntu" \
-              "grafana/grafana-enterprise-arm32v7-linux:master-${CIRCLE_SHA1}-ubuntu-new-pipeline"
-            docker push "grafana/grafana-enterprise-arm32v7-linux:master-${CIRCLE_SHA1}-ubuntu-new-pipeline"
-            docker tag "grafana/grafana-enterprise-arm64v8-linux:master-${CIRCLE_SHA1}-ubuntu" \
-              "grafana/grafana-enterprise-arm64v8-linux:master-${CIRCLE_SHA1}-ubuntu-new-pipeline"
-            docker push "grafana/grafana-enterprise-arm64v8-linux:master-${CIRCLE_SHA1}-ubuntu-new-pipeline"
+            docker tag "grafana/grafana-enterprise:master-ubuntu" \
+              "grafana/grafana-enterprise:master-ubuntu-new-pipeline"
+            docker push "grafana/grafana-enterprise:master-ubuntu-new-pipeline"
+            docker tag "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu" \
+              "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu-new-pipeline"
+            docker push "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu-new-pipeline"
+            docker tag "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu" \
+              "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
+            docker push "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
       - run:
           name: Publish Docker manifest
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker manifest create "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-ubuntu-new-pipeline" \
-              "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-ubuntu-new-pipeline" \
-              "grafana/grafana-enterprise-arm32v7-linux:master-${CIRCLE_SHA1}-ubuntu-new-pipeline" \
-              "grafana/grafana-enterprise-arm64v8-linux:master-${CIRCLE_SHA1}-ubuntu-new-pipeline"
-            docker manifest push "grafana/grafana-enterprise:master-${CIRCLE_SHA1}-ubuntu-new-pipeline"
+            docker manifest create "grafana/grafana-enterprise:master-ubuntu-new-pipeline" \
+              "grafana/grafana-enterprise:master-ubuntu-new-pipeline" \
+              "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu-new-pipeline" \
+              "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
+            docker manifest push "grafana/grafana-enterprise:master-ubuntu-new-pipeline"
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
