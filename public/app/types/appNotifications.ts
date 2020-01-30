@@ -4,6 +4,7 @@ export interface AppNotification {
   icon: string;
   title: string;
   text: string;
+  component?: React.ReactElement;
   timeout: AppNotificationTimeout;
 }
 

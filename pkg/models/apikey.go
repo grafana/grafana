@@ -50,7 +50,7 @@ type DeleteApiKeyCommand struct {
 
 type GetApiKeysQuery struct {
 	OrgId          int64
-	IncludeInvalid bool
+	IncludeExpired bool
 	Result         []*ApiKey
 }
 

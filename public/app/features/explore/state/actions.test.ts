@@ -1,4 +1,8 @@
-import { loadDatasource, navigateToExplore, refreshExplore } from './actions';
+import { PayloadAction } from '@reduxjs/toolkit';
+import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+
+import * as Actions from './actions';
+import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
 import { ExploreId, ExploreMode, ExploreUpdateState, ExploreUrlState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
@@ -7,25 +11,32 @@ import {
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   setQueriesAction,
+  updateDatasourceInstanceAction,
   updateUIStateAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
-import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
+import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => ({
-    getExternal: jest.fn().mockReturnValue([]),
-    get: jest.fn().mockReturnValue({
-      testDatasource: jest.fn(),
-      init: jest.fn(),
-    }),
-  }),
-}));
+jest.mock('app/features/plugins/datasource_srv');
+const getDatasourceSrvMock = (DatasourceSrv.getDatasourceSrv as any) as jest.Mock<DatasourceSrv.DatasourceSrv>;
+
+beforeEach(() => {
+  getDatasourceSrvMock.mockClear();
+  getDatasourceSrvMock.mockImplementation(
+    () =>
+      ({
+        getExternal: jest.fn().mockReturnValue([]),
+        get: jest.fn().mockReturnValue({
+          testDatasource: jest.fn(),
+          init: jest.fn(),
+        }),
+      } as any)
+  );
+});
 
 jest.mock('../../dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -107,7 +118,7 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        const initializeExplore = dispatchedActions[2] as ActionOf<InitializeExplorePayload>;
+        const initializeExplore = dispatchedActions[1] as PayloadAction<InitializeExplorePayload>;
         const { type, payload } = initializeExplore;
 
         expect(type).toEqual(initializeExploreAction.type);
@@ -160,6 +171,62 @@ describe('refreshExplore', () => {
 
       expect(dispatchedActions).toEqual([]);
     });
+  });
+});
+
+describe('changing datasource', () => {
+  it('should switch to logs mode when changing from prometheus to loki', async () => {
+    const lokiMock = {
+      testDatasource: () => Promise.resolve({ status: 'success' }),
+      name: 'Loki',
+      init: jest.fn(),
+      meta: { id: 'some id', name: 'Loki' },
+    };
+
+    getDatasourceSrvMock.mockImplementation(
+      () =>
+        ({
+          getExternal: jest.fn().mockReturnValue([]),
+          get: jest.fn().mockReturnValue(lokiMock),
+        } as any)
+    );
+
+    const exploreId = ExploreId.left;
+    const name = 'Prometheus';
+    const mockPromDatasourceInstance = {
+      testDatasource: () => Promise.resolve({ status: 'success' }),
+      name,
+      init: jest.fn(),
+      meta: { id: 'some id', name },
+    };
+
+    const initialState = {
+      explore: {
+        [exploreId]: {
+          requestedDatasourceName: 'Loki',
+          datasourceInstance: mockPromDatasourceInstance,
+        },
+      },
+      user: {
+        orgId: 1,
+      },
+    };
+
+    jest.spyOn(Actions, 'importQueries').mockImplementationOnce(() => jest.fn);
+    jest.spyOn(Actions, 'loadDatasource').mockImplementationOnce(() => jest.fn);
+    jest.spyOn(Actions, 'runQueries').mockImplementationOnce(() => jest.fn);
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(changeDatasource)
+      .whenThunkIsDispatched(exploreId, name);
+
+    expect(dispatchedActions).toEqual([
+      updateDatasourceInstanceAction({
+        exploreId,
+        datasourceInstance: lokiMock as any,
+        version: undefined,
+        mode: ExploreMode.Logs,
+      }),
+    ]);
   });
 });
 

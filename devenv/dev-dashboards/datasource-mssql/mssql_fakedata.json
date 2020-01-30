@@ -4,11 +4,37 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
+        "enable": false,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
+        "limit": 100,
         "name": "Annotations & Alerts",
+        "showIn": 0,
         "type": "dashboard"
+      },
+      {
+        "datasource": "gdev-mssql",
+        "enable": false,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "limit": 100,
+        "name": "Single",
+        "rawQuery": "SELECT TOP 1\n  createdAt as time,\n  'single' as text,\n hostname as tags\nFROM\n   grafana_metric\nWHERE\n  $__timeFilter(createdAt)\nORDER BY time\n",
+        "showIn": 0,
+        "tags": [],
+        "type": "tags"
+      },
+      {
+        "datasource": "gdev-mssql",
+        "enable": false,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "limit": 100,
+        "name": "Region",
+        "rawQuery": "SELECT TOP 1\n  DATEADD(MINUTE, 1, createdAt) as time,\n  DATEADD(MINUTE, 6, createdAt) as timeend,\n  'region' as text,\n hostname as tags\nFROM\n   grafana_metric\nWHERE\n  $__timeFilter(createdAt)\nORDER BY time",
+        "showIn": 0,
+        "tags": [],
+        "type": "tags"
       }
     ]
   },
@@ -16,7 +42,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1532618661457,
+  "iteration": 1576251075020,
   "links": [],
   "panels": [
     {
@@ -28,12 +54,14 @@
       "dashes": false,
       "datasource": "gdev-mssql",
       "fill": 2,
+      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 2,
       "legend": {
         "avg": false,
@@ -48,6 +76,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -79,6 +110,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Average logins / $summarize",
       "tooltip": {
@@ -125,12 +157,14 @@
       "dashes": false,
       "datasource": "gdev-mssql",
       "fill": 2,
+      "fillGradient": 0,
       "gridPos": {
         "h": 18,
         "w": 12,
         "x": 12,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 8,
       "legend": {
         "avg": false,
@@ -145,6 +179,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -169,6 +206,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Average payments started/ended / $summarize",
       "tooltip": {
@@ -214,12 +252,14 @@
       "dashes": false,
       "datasource": "gdev-mssql",
       "fill": 2,
+      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
         "y": 9
       },
+      "hiddenSeries": false,
       "id": 6,
       "legend": {
         "avg": false,
@@ -234,6 +274,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -252,6 +295,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Max CPU / $summarize",
       "tooltip": {
@@ -302,6 +346,7 @@
       },
       "id": 4,
       "links": [],
+      "options": {},
       "pageSize": null,
       "scroll": true,
       "showHeader": true,
@@ -340,15 +385,19 @@
       "type": "table"
     }
   ],
-  "schemaVersion": 16,
+  "schemaVersion": 21,
   "style": "dark",
   "tags": ["gdev", "mssql", "datasource-test"],
   "templating": {
     "list": [
       {
         "allValue": null,
-        "current": {},
+        "current": {
+          "text": "Africa",
+          "value": "Africa"
+        },
         "datasource": "gdev-mssql",
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "Datacenter",
@@ -368,8 +417,13 @@
       },
       {
         "allValue": null,
-        "current": {},
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
         "datasource": "gdev-mssql",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "Hostname",
@@ -392,6 +446,7 @@
         "auto_count": 30,
         "auto_min": "10s",
         "current": {
+          "selected": false,
           "text": "1m",
           "value": "1m"
         },
@@ -488,5 +543,5 @@
   "timezone": "",
   "title": "Datasource tests - MSSQL",
   "uid": "86Js1xRmk",
-  "version": 1
+  "version": 2
 }

@@ -15,8 +15,6 @@ import (
 )
 
 func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (*RenderResult, error) {
-	rs.log.Info("Rendering", "path", opts.Path)
-
 	var executable = "phantomjs"
 	if runtime.GOOS == "windows" {
 		executable = executable + ".exe"
@@ -65,6 +63,7 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 		cmdArgs = append([]string{fmt.Sprintf("--output-encoding=%s", opts.Encoding)}, cmdArgs...)
 	}
 
+	// gives phantomjs some additional time to timeout and return possible errors.
 	commandCtx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 

@@ -1,37 +1,36 @@
 // Libraries
 import $ from 'jquery';
-import React, { PureComponent, MouseEvent } from 'react';
+import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
-
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
+import { PanelEditor } from '../components/PanelEditor';
 import { CustomScrollbar, Alert } from '@grafana/ui';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/actions';
-import { updateLocation } from 'app/core/actions';
-import { notifyApp } from 'app/core/actions';
-
+import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
-  StoreState,
+  AppNotificationSeverity,
+  DashboardInitError,
   DashboardInitPhase,
   DashboardRouteInfo,
-  DashboardInitError,
-  AppNotificationSeverity,
+  StoreState,
 } from 'app/types';
+
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { PanelInspector } from '../components/Inspector/PanelInspector';
+import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
+
 export interface Props {
   urlUid?: string;
   urlSlug?: string;
@@ -39,6 +38,7 @@ export interface Props {
   editview?: string;
   urlPanelId?: string;
   urlFolderId?: string;
+  urlEditPanel?: string;
   inspectPanelId?: string;
   $scope: any;
   $injector: any;
@@ -53,6 +53,7 @@ export interface Props {
   cleanUpDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
+  inspectTab?: InspectTab;
 }
 
 export interface State {
@@ -252,7 +253,16 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId } = this.props;
+    const {
+      dashboard,
+      editview,
+      $injector,
+      isInitSlow,
+      initError,
+      inspectPanelId,
+      urlEditPanel,
+      inspectTab,
+    } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
@@ -274,6 +284,8 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // Find the panel to inspect
     const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
+    // find panel being edited
+    const editPanel = urlEditPanel ? dashboard.getPanelById(parseInt(urlEditPanel, 10)) : null;
 
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
@@ -301,7 +313,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
+              <SubMenu dashboard={dashboard} />
               <DashboardGrid
                 dashboard={dashboard}
                 isEditing={isEditing}
@@ -312,7 +324,8 @@ export class DashboardPage extends PureComponent<Props, State> {
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={inspectTab} />}
+        {editPanel && <PanelEditor dashboard={dashboard} panel={editPanel} />}
       </div>
     );
   }
@@ -324,6 +337,7 @@ export const mapStateToProps = (state: StoreState) => ({
   urlType: state.location.routeParams.type,
   editview: state.location.query.editview,
   urlPanelId: state.location.query.panelId,
+  urlEditPanel: state.location.query.editPanel,
   urlFolderId: state.location.query.folderId,
   urlFullscreen: !!state.location.query.fullscreen,
   urlEdit: !!state.location.query.edit,
@@ -332,6 +346,7 @@ export const mapStateToProps = (state: StoreState) => ({
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.model as DashboardModel,
+  inspectTab: state.location.query.tab,
 });
 
 const mapDispatchToProps = {
@@ -341,9 +356,4 @@ const mapDispatchToProps = {
   updateLocation,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(DashboardPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

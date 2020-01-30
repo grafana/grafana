@@ -1,37 +1,49 @@
-import { Action, ActionTypes } from './actions';
-import { PluginsState } from 'app/types';
-import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
-import { PluginDashboard } from '../../../types/plugins';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PluginMeta } from '@grafana/data';
+import { PluginsState } from 'app/types';
+import { LayoutMode, LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
+import { PluginDashboard } from '../../../types/plugins';
 
 export const initialState: PluginsState = {
-  plugins: [] as PluginMeta[],
+  plugins: [],
   searchQuery: '',
   layoutMode: LayoutModes.Grid,
   hasFetched: false,
-  dashboards: [] as PluginDashboard[],
+  dashboards: [],
   isLoadingPluginDashboards: false,
 };
 
-export const pluginsReducer = (state = initialState, action: Action): PluginsState => {
-  switch (action.type) {
-    case ActionTypes.LoadPlugins:
+const pluginsSlice = createSlice({
+  name: 'plugins',
+  initialState,
+  reducers: {
+    pluginsLoaded: (state, action: PayloadAction<PluginMeta[]>): PluginsState => {
       return { ...state, hasFetched: true, plugins: action.payload };
-
-    case ActionTypes.SetPluginsSearchQuery:
+    },
+    setPluginsSearchQuery: (state, action: PayloadAction<string>): PluginsState => {
       return { ...state, searchQuery: action.payload };
-
-    case ActionTypes.SetLayoutMode:
+    },
+    setPluginsLayoutMode: (state, action: PayloadAction<LayoutMode>): PluginsState => {
       return { ...state, layoutMode: action.payload };
-
-    case ActionTypes.LoadPluginDashboards:
+    },
+    pluginDashboardsLoad: (state, action: PayloadAction<undefined>): PluginsState => {
       return { ...state, dashboards: [], isLoadingPluginDashboards: true };
-
-    case ActionTypes.LoadedPluginDashboards:
+    },
+    pluginDashboardsLoaded: (state, action: PayloadAction<PluginDashboard[]>): PluginsState => {
       return { ...state, dashboards: action.payload, isLoadingPluginDashboards: false };
-  }
-  return state;
-};
+    },
+  },
+});
+
+export const {
+  pluginsLoaded,
+  pluginDashboardsLoad,
+  pluginDashboardsLoaded,
+  setPluginsLayoutMode,
+  setPluginsSearchQuery,
+} = pluginsSlice.actions;
+
+export const pluginsReducer = pluginsSlice.reducer;
 
 export default {
   plugins: pluginsReducer,

@@ -40,14 +40,12 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 ## Rule Config
 
-
-
-Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
-panels as well in a future release.
+Currently only the graph panel supports alert rules.
 
 ### Name and Evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
+**Note:** You can set a minimum interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Check out the [[configuration]]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) page for more information.
 
 ### For
 
@@ -107,7 +105,7 @@ we plan to track state **per series** in a future release.
 > Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
 > when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will
 > be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage
-> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here](/alerting/notifications/#send-reminders).
+> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here]({{< relref "notifications/#send-reminders" >}}).
 
 ### No Data / Null values
 

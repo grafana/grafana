@@ -3,8 +3,19 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { sanitizeUrl } from 'app/core/utils/text';
+import { getConfig } from 'app/core/config';
 import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
-import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
+import {
+  DataLink,
+  KeyValue,
+  deprecationWarning,
+  LinkModel,
+  DataFrame,
+  ScopedVars,
+  FieldType,
+  Field,
+} from '@grafana/data';
 
 const timeRangeVars = [
   {
@@ -27,12 +38,12 @@ const timeRangeVars = [
   },
 ];
 
-const fieldVars = [
+const seriesVars = [
   {
-    value: `${DataLinkBuiltInVars.fieldName}`,
+    value: `${DataLinkBuiltInVars.seriesName}`,
     label: 'Name',
-    documentation: 'Field name of the clicked datapoint (in ms epoch)',
-    origin: VariableOrigin.Field,
+    documentation: 'Name of the series',
+    origin: VariableOrigin.Series,
   },
 ];
 
@@ -76,41 +87,117 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...timeRangeVars,
 ];
 
-const getSeriesVars = (dataFrames: DataFrame[]) => {
-  const labels = _.chain(dataFrames.map(df => Object.keys(df.labels || {})))
+const getFieldVars = (dataFrames: DataFrame[]) => {
+  const all = [];
+  for (const df of dataFrames) {
+    for (const f of df.fields) {
+      if (f.labels) {
+        for (const k of Object.keys(f.labels)) {
+          all.push(k);
+        }
+      }
+    }
+  }
+
+  const labels = _.chain(all)
     .flatten()
     .uniq()
     .value();
 
   return [
     {
-      value: `${DataLinkBuiltInVars.seriesName}`,
+      value: `${DataLinkBuiltInVars.fieldName}`,
       label: 'Name',
-      documentation: 'Name of the series',
-      origin: VariableOrigin.Series,
+      documentation: 'Field name of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Field,
     },
     ...labels.map(label => ({
-      value: `__series.labels${buildLabelPath(label)}`,
+      value: `__field.labels${buildLabelPath(label)}`,
       label: `labels.${label}`,
       documentation: `${label} label value`,
-      origin: VariableOrigin.Series,
+      origin: VariableOrigin.Field,
     })),
   ];
 };
+
+const getDataFrameVars = (dataFrames: DataFrame[]) => {
+  let numeric: Field = undefined;
+  let title: Field = undefined;
+  const suggestions: VariableSuggestion[] = [];
+  const keys: KeyValue<true> = {};
+  for (const df of dataFrames) {
+    for (const f of df.fields) {
+      if (keys[f.name]) {
+        continue;
+      }
+      suggestions.push({
+        value: `__data.fields[${f.name}]`,
+        label: `${f.name}`,
+        documentation: `Formatted value for ${f.name} on the same row`,
+        origin: VariableOrigin.Fields,
+      });
+      keys[f.name] = true;
+      if (!numeric && f.type === FieldType.number) {
+        numeric = f;
+      }
+      if (!title && f.config.title && f.config.title !== f.name) {
+        title = f;
+      }
+    }
+  }
+
+  if (suggestions.length) {
+    suggestions.push({
+      value: `__data.fields[0]`,
+      label: `Select by index`,
+      documentation: `Enter the field order`,
+      origin: VariableOrigin.Fields,
+    });
+  }
+  if (numeric) {
+    suggestions.push({
+      value: `__data.fields[${numeric.name}].numeric`,
+      label: `Show numeric value`,
+      documentation: `the numeric field value`,
+      origin: VariableOrigin.Fields,
+    });
+    suggestions.push({
+      value: `__data.fields[${numeric.name}].text`,
+      label: `Show text value`,
+      documentation: `the text value`,
+      origin: VariableOrigin.Fields,
+    });
+  }
+  if (title) {
+    suggestions.push({
+      value: `__data.fields[${title.config.title}]`,
+      label: `Select by title`,
+      documentation: `Use the title to pick the field`,
+      origin: VariableOrigin.Fields,
+    });
+  }
+  return suggestions;
+};
+
 export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const seriesVars = getSeriesVars(dataFrames);
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
-
-  return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
+  return [
+    ...seriesVars,
+    ...getFieldVars(dataFrames),
+    ...valueVars,
+    valueTimeVar,
+    ...getDataFrameVars(dataFrames),
+    ...getPanelLinksVariableSuggestions(),
+  ];
 };
 
 export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const seriesVars = getSeriesVars(dataFrames);
+  const fieldVars = getFieldVars(dataFrames);
   const valueCalcVar = {
     value: `${DataLinkBuiltInVars.valueCalc}`,
     label: 'Calculation name',
@@ -199,7 +286,7 @@ export class LinkSrv implements LinkService {
         value: variablesQuery,
       },
     });
-
+    info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
     return info;
   };
 

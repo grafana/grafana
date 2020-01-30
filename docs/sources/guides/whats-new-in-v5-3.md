@@ -88,5 +88,5 @@ This new variable type will display as a free text input field with an optional 
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.

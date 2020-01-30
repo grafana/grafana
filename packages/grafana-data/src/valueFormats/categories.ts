@@ -1,4 +1,4 @@
-import { locale, scaledUnits, simpleCountUnit, toFixed, toFixedUnit, ValueFormatCategory } from './valueFormats';
+import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory } from './valueFormats';
 import {
   dateTimeAsIso,
   dateTimeAsUS,
@@ -24,7 +24,7 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Misc',
     formats: [
-      { name: 'none', id: 'none', fn: toFixed },
+      { name: 'none', id: 'none', fn: toFixedUnit('') },
       {
         name: 'short',
         id: 'short',
@@ -107,16 +107,17 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Rubles (₽)', id: 'currencyRUB', fn: currency('₽') },
       { name: 'Hryvnias (₴)', id: 'currencyUAH', fn: currency('₴') },
       { name: 'Real (R$)', id: 'currencyBRL', fn: currency('R$') },
-      { name: 'Danish Krone (kr)', id: 'currencyDKK', fn: currency('kr') },
-      { name: 'Icelandic Króna (kr)', id: 'currencyISK', fn: currency('kr') },
-      { name: 'Norwegian Krone (kr)', id: 'currencyNOK', fn: currency('kr') },
-      { name: 'Swedish Krona (kr)', id: 'currencySEK', fn: currency('kr') },
+      { name: 'Danish Krone (kr)', id: 'currencyDKK', fn: currency('kr', true) },
+      { name: 'Icelandic Króna (kr)', id: 'currencyISK', fn: currency('kr', true) },
+      { name: 'Norwegian Krone (kr)', id: 'currencyNOK', fn: currency('kr', true) },
+      { name: 'Swedish Krona (kr)', id: 'currencySEK', fn: currency('kr', true) },
       { name: 'Czech koruna (czk)', id: 'currencyCZK', fn: currency('czk') },
       { name: 'Swiss franc (CHF)', id: 'currencyCHF', fn: currency('CHF') },
       { name: 'Polish Złoty (PLN)', id: 'currencyPLN', fn: currency('PLN') },
       { name: 'Bitcoin (฿)', id: 'currencyBTC', fn: currency('฿') },
       { name: 'South African Rand (R)', id: 'currencyZAR', fn: currency('R') },
       { name: 'Indian Rupee (₹)', id: 'currencyINR', fn: currency('₹') },
+      { name: 'South Korean Won (₩)', id: 'currencyKRW', fn: currency('₩') },
     ],
   },
   {
@@ -165,7 +166,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Date & Time',
     formats: [
       { name: 'YYYY-MM-DD HH:mm:ss', id: 'dateTimeAsIso', fn: dateTimeAsIso },
-      { name: 'DD/MM/YYYY h:mm:ss a', id: 'dateTimeAsUS', fn: dateTimeAsUS },
+      { name: 'MM/DD/YYYY h:mm:ss a', id: 'dateTimeAsUS', fn: dateTimeAsUS },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },
@@ -175,6 +176,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Watt (W)', id: 'watt', fn: decimalSIPrefix('W') },
       { name: 'Kilowatt (kW)', id: 'kwatt', fn: decimalSIPrefix('W', 1) },
       { name: 'Megawatt (MW)', id: 'megwatt', fn: decimalSIPrefix('W', 2) },
+      { name: 'Gigawatt (GW)', id: 'gwatt', fn: decimalSIPrefix('W', 3) },
       { name: 'Milliwatt (mW)', id: 'mwatt', fn: decimalSIPrefix('W', -1) },
       { name: 'Watt per square meter (W/m²)', id: 'Wm2', fn: toFixedUnit('W/m²') },
       { name: 'Volt-ampere (VA)', id: 'voltamp', fn: decimalSIPrefix('VA') },
@@ -198,6 +200,16 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Millivolt (mV)', id: 'mvolt', fn: decimalSIPrefix('V', -1) },
       { name: 'Decibel-milliwatt (dBm)', id: 'dBm', fn: decimalSIPrefix('dBm') },
       { name: 'Ohm (Ω)', id: 'ohm', fn: decimalSIPrefix('Ω') },
+      { name: 'Kiloohm (kΩ)', id: 'kohm', fn: decimalSIPrefix('Ω', 1) },
+      { name: 'Megaohm (MΩ)', id: 'Mohm', fn: decimalSIPrefix('Ω', 2) },
+      { name: 'Farad (F)', id: 'farad', fn: decimalSIPrefix('F') },
+      { name: 'Microfarad (µF)', id: 'µfarad', fn: decimalSIPrefix('F', -2) },
+      { name: 'Nanofarad (nF)', id: 'nfarad', fn: decimalSIPrefix('F', -3) },
+      { name: 'Picofarad (pF)', id: 'pfarad', fn: decimalSIPrefix('F', -4) },
+      { name: 'Femtofarad (fF)', id: 'ffarad', fn: decimalSIPrefix('F', -5) },
+      { name: 'Henry (H)', id: 'henry', fn: decimalSIPrefix('H') },
+      { name: 'Millihenry (mH)', id: 'mhenry', fn: decimalSIPrefix('H', -1) },
+      { name: 'Microhenry (µH)', id: 'µhenry', fn: decimalSIPrefix('H', -2) },
       { name: 'Lumens (Lm)', id: 'lumens', fn: decimalSIPrefix('Lm') },
     ],
   },
@@ -280,8 +292,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Exposure (C/kg)', id: 'radexpckg', fn: decimalSIPrefix('C/kg') },
       { name: 'roentgen (R)', id: 'radr', fn: decimalSIPrefix('R') },
       { name: 'Sievert/hour (Sv/h)', id: 'radsvh', fn: decimalSIPrefix('Sv/h') },
-      { name: 'milliSievert/hour (mSv/h)', id: 'radmsvh', fn: decimalSIPrefix('mSv/h', -1) },
-      { name: 'microSievert/hour (µSv/h)', id: 'radusvh', fn: decimalSIPrefix('µSv/h', -2) },
+      { name: 'milliSievert/hour (mSv/h)', id: 'radmsvh', fn: decimalSIPrefix('Sv/h', -1) },
+      { name: 'microSievert/hour (µSv/h)', id: 'radusvh', fn: decimalSIPrefix('Sv/h', -2) },
     ],
   },
   {

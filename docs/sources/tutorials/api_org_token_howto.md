@@ -22,19 +22,19 @@ There are two authentication methods to access the API:
 
 The task is to create a new organization and then add a Token that can be used by other users. In the examples below which use basic auth, the user is `admin` and the password is `admin`.
 
-1. [Create the org](http://docs.grafana.org/http_api/org/#create-organisation). Here is an example using curl:
+1. [Create the org](http://docs.grafana.org/http_api/org/#create-organization). Here is an example using curl:
     ```bash
     curl -X POST -H "Content-Type: application/json" -d '{"name":"apiorg"}' http://admin:admin@localhost:3000/api/orgs
     ```
 
     This should return a response: `{"message":"Organization created","orgId":6}`. Use the orgId for the next steps.
 
-2. Optional step. If the org was created previously and/or step 3 fails then first [add your Admin user to the org](http://docs.grafana.org/http_api/org/#add-user-in-organisation):
+2. Optional step. If the org was created previously and/or step 3 fails then first [add your Admin user to the org](http://docs.grafana.org/http_api/org/#add-user-in-organization):
     ```bash
     curl -X POST -H "Content-Type: application/json" -d '{"loginOrEmail":"admin", "role": "Admin"}' http://admin:admin@localhost:3000/api/orgs/<org id of new org>/users
     ```
 
-3. [Switch the org context for the Admin user to the new org](http://docs.grafana.org/http_api/user/#switch-user-context):
+3. [Switch the org context for the Admin user to the new org](http://docs.grafana.org/http_api/user/#switch-user-context-for-signed-in-user):
     ```bash
     curl -X POST http://admin:admin@localhost:3000/api/user/using/<id of new org>
     ```

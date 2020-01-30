@@ -81,7 +81,11 @@ func (tracerOptions) RandomNumber(randomNumber func() uint64) TracerOption {
 // that can access parent spans after those spans have been finished.
 func (tracerOptions) PoolSpans(poolSpans bool) TracerOption {
 	return func(tracer *Tracer) {
-		tracer.options.poolSpans = poolSpans
+		if poolSpans {
+			tracer.spanAllocator = newSyncPollSpanAllocator()
+		} else {
+			tracer.spanAllocator = simpleSpanAllocator{}
+		}
 	}
 }
 
@@ -119,6 +123,12 @@ func (tracerOptions) ContribObserver(observer ContribObserver) TracerOption {
 func (tracerOptions) Gen128Bit(gen128Bit bool) TracerOption {
 	return func(tracer *Tracer) {
 		tracer.options.gen128Bit = gen128Bit
+	}
+}
+
+func (tracerOptions) NoDebugFlagOnForcedSampling(noDebugFlagOnForcedSampling bool) TracerOption {
+	return func(tracer *Tracer) {
+		tracer.options.noDebugFlagOnForcedSampling = noDebugFlagOnForcedSampling
 	}
 }
 

@@ -3,6 +3,7 @@ import { stringToJsRegex } from '@grafana/data';
 import { VariableSrv } from './variable_srv';
 import { TemplateSrv } from './template_srv';
 import { DatasourceSrv } from '../plugins/datasource_srv';
+import { config } from '@grafana/runtime';
 
 export class DatasourceVariable implements VariableActions {
   regex: any;
@@ -84,7 +85,8 @@ export class DatasourceVariable implements VariableActions {
     if (this.includeAll) {
       this.addAllOption();
     }
-    return this.variableSrv.validateVariableSelectionState(this);
+    const { defaultDatasource } = config.bootData.settings;
+    return this.variableSrv.validateVariableSelectionState(this, defaultDatasource);
   }
 
   addAllOption() {

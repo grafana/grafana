@@ -2,6 +2,9 @@ $arrowSize: 15px;
 .ColorPicker {
   @extend .popper;
   font-size: 12px;
+  // !important because these styles are also provided to popper via .popper classes from Tooltip component
+  // hope to get rid of those soon
+  padding: $arrowSize !important;
 }
 
 .ColorPicker__arrow {
@@ -75,32 +78,19 @@ $arrowSize: 15px;
   border-color: #1e2028;
 }
 
-// Top
-.ColorPicker[data-placement^='top'] {
-  padding-bottom: $arrowSize;
-}
-
-// Bottom
+// !important because these styles are also provided to popper via .popper classes from Tooltip component
+// hope to get rid of those soon
+.ColorPicker[data-placement^='top'],
 .ColorPicker[data-placement^='bottom'] {
-  padding-top: $arrowSize;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
-.ColorPicker[data-placement^='bottom-start'] {
-  padding-top: $arrowSize;
-}
-
-.ColorPicker[data-placement^='bottom-end'] {
-  padding-top: $arrowSize;
-}
-
-// Right
+// !important because these styles are also provided to popper via .popper classes from Tooltip component
+// hope to get rid of those soon
+.ColorPicker[data-placement^='left'],
 .ColorPicker[data-placement^='right'] {
-  padding-left: $arrowSize;
-}
-
-// Left
-.ColorPicker[data-placement^='left'] {
-  padding-right: $arrowSize;
+  padding-top: 0 !important;
 }
 
 .ColorPickerPopover {

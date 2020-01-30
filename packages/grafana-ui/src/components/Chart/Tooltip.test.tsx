@@ -12,7 +12,7 @@ describe('Chart Tooltip', () => {
       // We need to mock getBoundingClientRect to return what DOM would actually return
       // when measuring tooltip container (wrapper with padding and content inside)
       Element.prototype.getBoundingClientRect = jest.fn(() => {
-        return { width: 100, height: 100, top: 0, left: 0, bottom: 0, right: 0 };
+        return { width: 100, height: 100, top: 0, left: 0, bottom: 0, right: 0 } as DOMRect;
       });
     });
 

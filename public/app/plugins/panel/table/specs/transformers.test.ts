@@ -8,7 +8,10 @@ describe('when transforming time series table', () => {
     const timeSeries = [
       {
         target: 'series1',
-        datapoints: [[12.12, time], [14.44, time + 1]],
+        datapoints: [
+          [12.12, time],
+          [14.44, time + 1],
+        ],
       },
       {
         target: 'series2',
@@ -73,7 +76,10 @@ describe('when transforming time series table', () => {
       const panel = {
         transform: 'timeseries_aggregations',
         sort: { col: 0, desc: true },
-        columns: [{ text: 'Max', value: 'max' }, { text: 'Min', value: 'min' }],
+        columns: [
+          { text: 'Max', value: 'max' },
+          { text: 'Min', value: 'min' },
+        ],
       };
 
       beforeEach(() => {
@@ -306,7 +312,10 @@ describe('when transforming time series table', () => {
     const data = [
       {
         target: 'series1',
-        datapoints: [[12.12, time], [14.44, time + 1]],
+        datapoints: [
+          [12.12, time],
+          [14.44, time + 1],
+        ],
       },
       {
         columns: [
@@ -319,7 +328,10 @@ describe('when transforming time series table', () => {
           },
         ],
         type: 'table',
-        rows: [[time, 13.13], [time + 1, 26.26]],
+        rows: [
+          [time, 13.13],
+          [time + 1, 26.26],
+        ],
       },
     ];
 
@@ -377,7 +389,10 @@ describe('when transforming time series table', () => {
       const panel = {
         transform: 'timeseries_aggregations',
         sort: { col: 0, desc: true },
-        columns: [{ text: 'Max', value: 'max' }, { text: 'Min', value: 'min' }],
+        columns: [
+          { text: 'Max', value: 'max' },
+          { text: 'Min', value: 'min' },
+        ],
       };
 
       beforeEach(() => {
@@ -428,7 +443,10 @@ describe('timeSeriesFormatFilterer', () => {
       const data: any[] = [
         {
           target: 'series1',
-          datapoints: [[12.12, time], [14.44, time + 1]],
+          datapoints: [
+            [12.12, time],
+            [14.44, time + 1],
+          ],
         },
         {
           columns: [
@@ -441,7 +459,10 @@ describe('timeSeriesFormatFilterer', () => {
             },
           ],
           type: 'table',
-          rows: [[time, 13.13], [time + 1, 26.26]],
+          rows: [
+            [time, 13.13],
+            [time + 1, 26.26],
+          ],
         },
       ];
 
@@ -450,7 +471,10 @@ describe('timeSeriesFormatFilterer', () => {
       expect(result).toEqual([
         {
           target: 'series1',
-          datapoints: [[12.12, time], [14.44, time + 1]],
+          datapoints: [
+            [12.12, time],
+            [14.44, time + 1],
+          ],
         },
       ]);
     });
@@ -484,7 +508,10 @@ describe('tableDataFormatFilterer', () => {
       const data: any[] = [
         {
           target: 'series1',
-          datapoints: [[12.12, time], [14.44, time + 1]],
+          datapoints: [
+            [12.12, time],
+            [14.44, time + 1],
+          ],
         },
         {
           columns: [
@@ -497,7 +524,10 @@ describe('tableDataFormatFilterer', () => {
             },
           ],
           type: 'table',
-          rows: [[time, 13.13], [time + 1, 26.26]],
+          rows: [
+            [time, 13.13],
+            [time + 1, 26.26],
+          ],
         },
       ];
 
@@ -515,7 +545,10 @@ describe('tableDataFormatFilterer', () => {
             },
           ],
           type: 'table',
-          rows: [[time, 13.13], [time + 1, 26.26]],
+          rows: [
+            [time, 13.13],
+            [time + 1, 26.26],
+          ],
         },
       ]);
     });

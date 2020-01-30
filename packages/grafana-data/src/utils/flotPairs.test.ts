@@ -56,7 +56,16 @@ describe('getFlotPairsConstant', () => {
 
   it('should return an constant series for range', () => {
     const range: TimeRange = makeRange(0, 1);
-    const pairs = getFlotPairsConstant([[2, 123], [4, 456]], range);
-    expect(pairs).toMatchObject([[0, 123], [1, 123]]);
+    const pairs = getFlotPairsConstant(
+      [
+        [2, 123],
+        [4, 456],
+      ],
+      range
+    );
+    expect(pairs).toMatchObject([
+      [0, 123],
+      [1, 123],
+    ]);
   });
 });

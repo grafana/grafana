@@ -69,15 +69,15 @@ func (ps *provisioningServiceImpl) Init() error {
 		return err
 	}
 
-	err = ps.ProvisionDashboards()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
+	err := ps.ProvisionDashboards()
+	if err != nil {
+		ps.log.Error("Failed to provision dashboard", "error", err)
+	}
+
 	for {
 
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.

@@ -28,7 +28,7 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { sortInAscendingOrder } from 'app/core/utils/explore';
+import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
@@ -42,7 +42,7 @@ export const LogLevelColor = {
 };
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
-function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedupStrategy): boolean {
+function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy?: LogsDedupStrategy): boolean {
   switch (strategy) {
     case LogsDedupStrategy.exact:
       // Exact still strips dates
@@ -59,7 +59,7 @@ function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedu
   }
 }
 
-export function dedupLogRows(rows: LogRowModel[], strategy: LogsDedupStrategy): LogRowModel[] {
+export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy): LogRowModel[] {
   if (strategy === LogsDedupStrategy.none) {
     return rows;
   }
@@ -68,7 +68,7 @@ export function dedupLogRows(rows: LogRowModel[], strategy: LogsDedupStrategy): 
     const rowCopy = { ...row };
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
-      previous.duplicates++;
+      previous.duplicates!++;
     } else {
       rowCopy.duplicates = 0;
       result.push(rowCopy);
@@ -149,12 +149,16 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
     });
 
     const timeField = data.fields[1];
-
     timeField.display = getDisplayProcessor({
-      config: timeField.config,
-      type: timeField.type,
-      isUtc: timeZone === 'utc',
+      field: timeField,
+      timeZone,
     });
+
+    const valueField = data.fields[0];
+    valueField.config = {
+      ...valueField.config,
+      color: series.color,
+    };
 
     const graphSeries: GraphSeriesXY = {
       color: series.color,
@@ -168,7 +172,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
       },
       seriesIndex: i,
       timeField,
-      valueField: data.fields[0],
+      valueField,
       // for now setting the time step to be 0,
       // and handle the bar width by setting lineWidth instead of barWidth in flot options
       timeStep: 0,
@@ -240,6 +244,15 @@ function separateLogsAndMetrics(dataFrame: DataFrame[]) {
 
 const logTimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
+interface LogFields {
+  series: DataFrame;
+
+  timeField: FieldWithIndex;
+  stringField: FieldWithIndex;
+  logLevelField?: FieldWithIndex;
+  idField?: FieldWithIndex;
+}
+
 /**
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
@@ -248,29 +261,43 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (logSeries.length === 0) {
     return undefined;
   }
-  const commonLabels = findCommonLabelsFromDataFrames(logSeries);
+  const allLabels: Labels[] = [];
+
+  // Find the fields we care about and collect all labels
+  const allSeries: LogFields[] = logSeries.map(series => {
+    const fieldCache = new FieldCache(series);
+
+    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
+    // more explicit checks.
+    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+    if (stringField.labels) {
+      allLabels.push(stringField.labels);
+    }
+    return {
+      series,
+      timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+      stringField,
+      logLevelField: fieldCache.getFieldByName('level'),
+      idField: getIdField(fieldCache),
+    };
+  });
+
+  const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
 
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
-  for (let i = 0; i < logSeries.length; i++) {
-    const series = logSeries[i];
-    const fieldCache = new FieldCache(series);
-    const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
+  for (const info of allSeries) {
+    const { timeField, stringField, logLevelField, idField, series } = info;
+    const labels = stringField.labels;
+    const uniqueLabels = findUniqueLabels(labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
       hasUniqueLabels = true;
     }
 
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
-    // more explicit checks.
-    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-    const logLevelField = fieldCache.getFieldByName('level');
-    const idField = getIdField(fieldCache);
-
     let seriesLogLevel: LogLevel | undefined = undefined;
-    if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
-      seriesLogLevel = getLogLevelFromKey(series.labels['level']);
+    if (labels && Object.keys(labels).indexOf('level') !== -1) {
+      seriesLogLevel = getLogLevelFromKey(labels['level']);
     }
 
     for (let j = 0; j < series.length; j++) {
@@ -301,18 +328,19 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeFromNow: time.fromNow(),
         timeEpochMs: time.valueOf(),
         timeLocal: time.format(logTimeFormat),
-        timeUtc: toUtc(ts).format(logTimeFormat),
+        timeUtc: toUtc(time.valueOf()).format(logTimeFormat),
         uniqueLabels,
         hasAnsi,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
-        labels: series.labels,
-        timestamp: ts,
+        labels: stringField.labels,
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
   }
+
+  const deduplicatedLogRows = deduplicateLogRowsById(rows);
 
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
@@ -329,7 +357,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${rows.length} returned)`,
+      value: `${limits[0].meta.limit} (${deduplicatedLogRows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -337,23 +365,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   return {
     hasUniqueLabels,
     meta,
-    rows,
+    rows: deduplicatedLogRows,
   };
-}
-
-function findCommonLabelsFromDataFrames(logSeries: DataFrame[]): Labels {
-  const allLabels: Labels[] = [];
-  for (let n = 0; n < logSeries.length; n++) {
-    const series = logSeries[n];
-    if (series.labels) {
-      allLabels.push(series.labels);
-    }
-  }
-
-  if (allLabels.length > 0) {
-    return findCommonLabels(allLabels);
-  }
-  return {};
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

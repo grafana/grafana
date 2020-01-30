@@ -1,12 +1,11 @@
 package notifiers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -70,6 +69,26 @@ func (dd *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		messageURL = ""
 	}
 
+	body, err := dd.genBody(evalContext, messageURL)
+	if err != nil {
+		return err
+	}
+
+	cmd := &models.SendWebhookSync{
+		Url:  dd.URL,
+		Body: string(body),
+	}
+
+	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+		dd.log.Error("Failed to send DingDing", "error", err, "dingding", dd.Name)
+		return err
+	}
+
+	return nil
+}
+
+func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageURL string) ([]byte, error) {
+
 	q := url.Values{
 		"pc_slide": {"false"},
 		"url":      {messageURL},
@@ -92,54 +111,32 @@ func (dd *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message += fmt.Sprintf("\\n%2d. %s: %s", i+1, match.Metric, match.Value)
 	}
 
-	var bodyStr string
+	var bodyMsg map[string]interface{}
 	if dd.MsgType == "actionCard" {
 		// Embed the pic into the markdown directly because actionCard doesn't have a picUrl field
 		if picURL != "" {
 			message = "![](" + picURL + ")\\n\\n" + message
 		}
 
-		bodyStr = `{
+		bodyMsg = map[string]interface{}{
 			"msgtype": "actionCard",
-			"actionCard": {
-				"text": "` + strings.Replace(message, `"`, "'", -1) + `",
-				"title": "` + strings.Replace(title, `"`, "'", -1) + `",
+			"actionCard": map[string]string{
+				"text":        message,
+				"title":       title,
 				"singleTitle": "More",
-				"singleURL": "` + messageURL + `"
-			}
-		}`
+				"singleURL":   messageURL,
+			},
+		}
 	} else {
-		bodyStr = `{
+		bodyMsg = map[string]interface{}{
 			"msgtype": "link",
-			"link": {
-				"text": "` + message + `",
-				"title": "` + title + `",
-				"picUrl": "` + picURL + `",
-				"messageUrl": "` + messageURL + `"
-			}
-		}`
+			"link": map[string]string{
+				"text":       message,
+				"title":      title,
+				"picUrl":     picURL,
+				"messageUrl": messageURL,
+			},
+		}
 	}
-
-	bodyJSON, err := simplejson.NewJson([]byte(bodyStr))
-
-	if err != nil {
-		dd.log.Error("Failed to create Json data", "error", err, "dingding", dd.Name)
-	}
-
-	body, err := bodyJSON.MarshalJSON()
-	if err != nil {
-		return err
-	}
-
-	cmd := &models.SendWebhookSync{
-		Url:  dd.URL,
-		Body: string(body),
-	}
-
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		dd.log.Error("Failed to send DingDing", "error", err, "dingding", dd.Name)
-		return err
-	}
-
-	return nil
+	return json.Marshal(bodyMsg)
 }

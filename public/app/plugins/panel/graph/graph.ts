@@ -35,6 +35,8 @@ import {
   getDisplayProcessor,
   getFlotPairsConstant,
   PanelEvents,
+  formattedValueToString,
+  FieldType,
 } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -263,7 +265,7 @@ class GraphElement {
           links,
         };
         const fieldDisplay = getDisplayProcessor({
-          config: fieldConfig,
+          field: { config: fieldConfig, type: FieldType.number },
           theme: getCurrentTheme(),
         })(field.values.get(item.dataIndex));
         linksSupplier = links.length
@@ -469,6 +471,7 @@ class GraphElement {
       }
       default: {
         options.series.bars.barWidth = this.getMinTimeStepOfSeries(this.data) / 1.5;
+        options.series.bars.align = 'center';
         this.addTimeAxis(options);
         break;
       }
@@ -861,7 +864,7 @@ class GraphElement {
       if (!formatter) {
         throw new Error(`Unit '${format}' is not supported`);
       }
-      return formatter(val, axis.tickDecimals, axis.scaledDecimals);
+      return formattedValueToString(formatter(val, axis.tickDecimals, axis.scaledDecimals));
     };
   }
 

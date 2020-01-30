@@ -55,11 +55,11 @@ type SqlStore struct {
 	Bus          bus.Bus                  `inject:""`
 	CacheService *localcache.CacheService `inject:""`
 
-	dbCfg           DatabaseConfig
-	engine          *xorm.Engine
-	log             log.Logger
-	Dialect         migrator.Dialect
-	skipEnsureAdmin bool
+	dbCfg                       DatabaseConfig
+	engine                      *xorm.Engine
+	log                         log.Logger
+	Dialect                     migrator.Dialect
+	skipEnsureDefaultOrgAndUser bool
 }
 
 func (ss *SqlStore) Init() error {
@@ -100,19 +100,16 @@ func (ss *SqlStore) Init() error {
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 
-	// ensure admin user
-	if ss.skipEnsureAdmin {
+	if ss.skipEnsureDefaultOrgAndUser {
 		return nil
 	}
 
-	return ss.ensureAdminUser()
+	return ss.ensureMainOrgAndAdminUser()
 }
 
-func (ss *SqlStore) ensureAdminUser() error {
-	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
-
+func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-
+		systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
 		if err != nil {
 			return fmt.Errorf("Could not determine if admin user exists: %v", err)
@@ -122,18 +119,28 @@ func (ss *SqlStore) ensureAdminUser() error {
 			return nil
 		}
 
-		cmd := m.CreateUserCommand{}
-		cmd.Login = setting.AdminUser
-		cmd.Email = setting.AdminUser + "@localhost"
-		cmd.Password = setting.AdminPassword
-		cmd.IsAdmin = true
+		// ensure admin user
+		if !ss.Cfg.DisableInitAdminCreation {
+			cmd := m.CreateUserCommand{}
+			cmd.Login = setting.AdminUser
+			cmd.Email = setting.AdminUser + "@localhost"
+			cmd.Password = setting.AdminPassword
+			cmd.IsAdmin = true
 
-		if err := bus.DispatchCtx(ctx, &cmd); err != nil {
-			return fmt.Errorf("Failed to create admin user: %v", err)
+			if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+				return fmt.Errorf("Failed to create admin user: %v", err)
+			}
+
+			ss.log.Info("Created default admin", "user", setting.AdminUser)
+			return nil
 		}
 
-		ss.log.Info("Created default admin", "user", setting.AdminUser)
+		// ensure default org if default admin user is disabled
+		if err := createDefaultOrg(ctx); err != nil {
+			return errutil.Wrap("Failed to create default organization", err)
+		}
 
+		ss.log.Info("Created default organization")
 		return nil
 	})
 
@@ -305,9 +312,9 @@ type ITestDB interface {
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}
-	sqlstore.skipEnsureAdmin = true
 	sqlstore.Bus = bus.New()
 	sqlstore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
+	sqlstore.skipEnsureDefaultOrgAndUser = true
 
 	dbType := migrator.SQLITE
 

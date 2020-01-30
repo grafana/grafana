@@ -133,7 +133,10 @@ addFuncDef({
 addFuncDef({
   name: 'percentileOfSeries',
   category: 'Combine',
-  params: [{ name: 'n', type: 'int' }, { name: 'interpolate', type: 'boolean', options: ['true', 'false'] }],
+  params: [
+    { name: 'n', type: 'int' },
+    { name: 'interpolate', type: 'boolean', options: ['true', 'false'] },
+  ],
   defaultParams: [95, 'false'],
 });
 
@@ -173,7 +176,10 @@ addFuncDef({
 addFuncDef({
   name: 'aliasSub',
   category: 'Alias',
-  params: [{ name: 'search', type: 'string' }, { name: 'replace', type: 'string' }],
+  params: [
+    { name: 'search', type: 'string' },
+    { name: 'replace', type: 'string' },
+  ],
   defaultParams: ['', '\\1'],
 });
 
@@ -566,7 +572,10 @@ addFuncDef({
 addFuncDef({
   name: 'stdev',
   category: 'Calculate',
-  params: [{ name: 'n', type: 'int' }, { name: 'tolerance', type: 'int' }],
+  params: [
+    { name: 'n', type: 'int' },
+    { name: 'tolerance', type: 'int' },
+  ],
   defaultParams: [5, 0.1],
 });
 
@@ -615,7 +624,11 @@ addFuncDef({
 addFuncDef({
   name: 'useSeriesAbove',
   category: 'Filter Series',
-  params: [{ name: 'value', type: 'int' }, { name: 'search', type: 'string' }, { name: 'replace', type: 'string' }],
+  params: [
+    { name: 'value', type: 'int' },
+    { name: 'search', type: 'string' },
+    { name: 'replace', type: 'string' },
+  ],
   defaultParams: [0, 'search', 'replace'],
 });
 

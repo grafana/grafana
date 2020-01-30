@@ -14,6 +14,9 @@ exports[`Render should render component 1`] = `
         Email
       </th>
       <th>
+        Name
+      </th>
+      <th>
         Seen
       </th>
       <th>
@@ -44,6 +47,9 @@ exports[`Render should render users table 1`] = `
       </th>
       <th>
         Email
+      </th>
+      <th>
+        Name
       </th>
       <th>
         Seen
@@ -81,6 +87,9 @@ exports[`Render should render users table 1`] = `
         >
           user-0@test.com
         </span>
+      </td>
+      <td>
+        user-0 test
       </td>
       <td />
       <td>
@@ -145,6 +154,9 @@ exports[`Render should render users table 1`] = `
           user-1@test.com
         </span>
       </td>
+      <td>
+        user-1 test
+      </td>
       <td />
       <td>
         <div
@@ -207,6 +219,9 @@ exports[`Render should render users table 1`] = `
         >
           user-2@test.com
         </span>
+      </td>
+      <td>
+        user-2 test
       </td>
       <td />
       <td>
@@ -271,6 +286,9 @@ exports[`Render should render users table 1`] = `
           user-3@test.com
         </span>
       </td>
+      <td>
+        user-3 test
+      </td>
       <td />
       <td>
         <div
@@ -334,6 +352,9 @@ exports[`Render should render users table 1`] = `
           user-4@test.com
         </span>
       </td>
+      <td>
+        user-4 test
+      </td>
       <td />
       <td>
         <div
@@ -396,6 +417,9 @@ exports[`Render should render users table 1`] = `
         >
           user-5@test.com
         </span>
+      </td>
+      <td>
+        user-5 test
       </td>
       <td />
       <td>

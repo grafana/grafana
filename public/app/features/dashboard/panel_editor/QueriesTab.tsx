@@ -11,7 +11,7 @@ import { PanelOptionsGroup, TransformationsEditor, AlphaNotice } from '@grafana/
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
@@ -48,7 +48,7 @@ interface State {
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
-  backendSrv = getBackendSrv();
+  backendSrv = backendSrv;
   querySubscription: Unsubscribable;
 
   state: State = {
@@ -188,9 +188,13 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderMixedPicker = () => {
+    // We cannot filter on mixed flag as some mixed data sources like external plugin
+    // meta queries data source is mixed but also supports it's own queries
+    const filteredDsList = this.datasources.filter(ds => ds.meta.id !== 'mixed');
+
     return (
       <DataSourcePicker
-        datasources={this.datasources.filter(ds => !ds.meta.mixed)}
+        datasources={filteredDsList}
         onChange={this.onAddMixedQuery}
         current={null}
         autoFocus={true}

@@ -99,14 +99,22 @@ type Operation struct {
 	BeforePresignFn func(r *Request) error
 }
 
-// New returns a new Request pointer for the service API
-// operation and parameters.
+// New returns a new Request pointer for the service API operation and
+// parameters.
+//
+// A Retryer should be provided to direct how the request is retried. If
+// Retryer is nil, a default no retry value will be used. You can use
+// NoOpRetryer in the Client package to disable retry behavior directly.
 //
 // Params is any value of input parameters to be the request payload.
 // Data is pointer value to an object which the request's response
 // payload will be deserialized to.
 func New(cfg aws.Config, clientInfo metadata.ClientInfo, handlers Handlers,
 	retryer Retryer, operation *Operation, params interface{}, data interface{}) *Request {
+
+	if retryer == nil {
+		retryer = noOpRetryer{}
+	}
 
 	method := operation.HTTPMethod
 	if method == "" {

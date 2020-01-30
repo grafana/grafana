@@ -2,10 +2,30 @@ import React, { PureComponent } from 'react';
 import { shuffle } from 'lodash';
 import { ExploreStartPageProps, DataQuery } from '@grafana/data';
 import LokiLanguageProvider from '../language_provider';
+import { ExploreMode } from 'app/types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
 const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];
 const EXAMPLES_LIMIT = 5;
+
+const LOGQL_EXAMPLES = [
+  {
+    title: 'Count over time',
+    expression: 'count_over_time({job="mysql"}[5m])',
+    label: 'This query counts all the log lines within the last five minutes for the MySQL job.',
+  },
+  {
+    title: 'Rate',
+    expression: 'rate(({job="mysql"} |= "error" != "timeout")[10s])',
+    label:
+      'This query gets the per-second rate of all non-timeout errors within the last ten seconds for the MySQL job.',
+  },
+  {
+    title: 'Aggregate, count, and group',
+    expression: 'sum(count_over_time({job="mysql"}[5m])) by (level)',
+    label: 'Get the count of logs during the last five minutes, grouping by level.',
+  },
+];
 
 export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps, { userExamples: string[] }> {
   userLabelTimer: NodeJS.Timeout;
@@ -57,7 +77,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
     );
   }
 
-  render() {
+  renderLogsCheatSheet() {
     const { userExamples } = this.state;
 
     return (
@@ -97,5 +117,26 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
         </div>
       </>
     );
+  }
+
+  renderMetricsCheatSheet() {
+    return (
+      <div>
+        <h2>LogQL Cheat Sheet</h2>
+        {LOGQL_EXAMPLES.map(item => (
+          <div className="cheat-sheet-item" key={item.expression}>
+            <div className="cheat-sheet-item__title">{item.title}</div>
+            {this.renderExpression(item.expression)}
+            <div className="cheat-sheet-item__label">{item.label}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  render() {
+    const { exploreMode } = this.props;
+
+    return exploreMode === ExploreMode.Logs ? this.renderLogsCheatSheet() : this.renderMetricsCheatSheet();
   }
 }

@@ -14,6 +14,7 @@ import { ContextSrv } from './context_srv';
 import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getLocationSrv } from '@grafana/runtime';
+import { DashboardModel } from '../../features/dashboard/state';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -123,6 +124,12 @@ export class KeybindingSrv {
       return;
     }
 
+    if (search.editPanel) {
+      delete search.editPanel;
+      this.$location.search(search);
+      return;
+    }
+
     if (search.fullscreen) {
       appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
       return;
@@ -168,7 +175,7 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
-  setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: any) {
+  setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit(CoreEvents.graphHoverClear);
@@ -197,7 +204,7 @@ export class KeybindingSrv {
 
     // edit panel
     this.bind('e', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         appEvents.emit(PanelEvents.panelChangeView, {
           fullscreen: true,
           edit: true,
@@ -242,7 +249,7 @@ export class KeybindingSrv {
 
     // delete panel
     this.bind('p r', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         appEvents.emit(CoreEvents.removePanel, dashboard.meta.focusPanelId);
         dashboard.meta.focusPanelId = 0;
       }
@@ -250,7 +257,7 @@ export class KeybindingSrv {
 
     // duplicate panel
     this.bind('p d', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         const panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
         dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }

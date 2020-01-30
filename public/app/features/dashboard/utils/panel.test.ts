@@ -1,7 +1,9 @@
 import { TimeRange } from '@grafana/data';
-import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 import { advanceTo, clear } from 'jest-date-mock';
 import { dateTime, DateTime } from '@grafana/data';
+import { PanelModel } from '../state';
+import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
 
 const dashboardTimeRange: TimeRange = {
   from: dateTime([2019, 1, 11, 12, 0]),
@@ -70,5 +72,20 @@ describe('applyPanelTimeOverrides', () => {
     expect(overrides.timeRange.to.toISOString()).toBe(expectedToDate.toISOString());
     expect((overrides.timeRange.raw.from as DateTime).toISOString()).toEqual(expectedFromDate.toISOString());
     expect((overrides.timeRange.raw.to as DateTime).toISOString()).toEqual(expectedToDate.toISOString());
+  });
+
+  it('Calculate panel height', () => {
+    const panelModel = new PanelModel({});
+    const height = calculateInnerPanelHeight(panelModel, 100);
+
+    expect(height).toBe(82);
+  });
+
+  it('Calculate panel height with panel plugin zeroChromePadding', () => {
+    const panelModel = new PanelModel({});
+    panelModel.pluginLoaded(getPanelPlugin({ id: 'table' }, null, null).setNoPadding());
+
+    const height = calculateInnerPanelHeight(panelModel, 100);
+    expect(height).toBe(98);
   });
 });

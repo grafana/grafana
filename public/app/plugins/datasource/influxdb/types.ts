@@ -5,6 +5,10 @@ export interface InfluxOptions extends DataSourceJsonData {
   httpMode: string;
 }
 
+export interface InfluxSecureJsonData {
+  password?: string;
+}
+
 export interface InfluxQueryPart {
   type: string;
   params?: string[];

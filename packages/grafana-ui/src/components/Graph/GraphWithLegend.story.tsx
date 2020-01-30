@@ -6,13 +6,17 @@ import { withHorizontallyCenteredStory } from '../../utils/storybook/withCentere
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 
 import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
-import { GraphSeriesXY, FieldType, ArrayVector, dateTime } from '@grafana/data';
+import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorMode } from '@grafana/data';
 const GraphWithLegendStories = storiesOf('Visualizations/Graph/GraphWithLegend', module);
 GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);
 
 const series: GraphSeriesXY[] = [
   {
-    data: [[1546372800000, 10], [1546376400000, 20], [1546380000000, 10]],
+    data: [
+      [1546372800000, 10],
+      [1546376400000, 20],
+      [1546380000000, 10],
+    ],
     color: 'red',
     isVisible: true,
     label: 'A-series',
@@ -27,7 +31,12 @@ const series: GraphSeriesXY[] = [
       type: FieldType.number,
       name: 'a-series',
       values: new ArrayVector([10, 20, 10]),
-      config: { color: 'red' },
+      config: {
+        color: {
+          mode: FieldColorMode.Fixed,
+          fixedColor: 'red',
+        },
+      },
     },
     timeStep: 3600000,
     yAxis: {
@@ -35,7 +44,11 @@ const series: GraphSeriesXY[] = [
     },
   },
   {
-    data: [[1546372800000, 20], [1546376400000, 30], [1546380000000, 40]],
+    data: [
+      [1546372800000, 20],
+      [1546376400000, 30],
+      [1546380000000, 40],
+    ],
     color: 'blue',
     isVisible: true,
     label: 'B-series',
@@ -50,7 +63,12 @@ const series: GraphSeriesXY[] = [
       type: FieldType.number,
       name: 'b-series',
       values: new ArrayVector([20, 30, 40]),
-      config: { color: 'blue' },
+      config: {
+        color: {
+          mode: FieldColorMode.Fixed,
+          fixedColor: 'blue',
+        },
+      },
     },
     timeStep: 3600000,
     yAxis: {

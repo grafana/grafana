@@ -19,6 +19,13 @@ export interface QueryResultMeta {
 
   // Used in Explore to show limit applied to search result
   limit?: number;
+
+  // HACK: save the datassource name in the meta so we can load it from the response
+  // we should be able to find the datasource from the refId
+  datasource?: string;
+
+  // DatasSource Specific Values
+  custom?: Record<string, any>;
 }
 
 export interface QueryResultBase {
@@ -58,7 +65,6 @@ export interface TimeSeries extends QueryResultBase {
   target: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
-  color?: string;
   tags?: Labels;
 }
 

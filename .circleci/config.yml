@@ -1,3 +1,5 @@
+version: 2.1
+
 aliases:
   # Workflow filters
   - &filter-only-release
@@ -14,12 +16,509 @@ aliases:
     branches:
       only: master
 
-version: 2
+executors:
+  grafana-build:
+    docker:
+      - image: grafana/build-container:1.2.13
+  grafana-publish:
+    docker:
+      - image: grafana/grafana-ci-deploy:1.2.3
+  docker:
+    machine:
+      image: circleci/classic:201808-01
+  cloud-sdk:
+    docker:
+      - image: google/cloud-sdk
+  windows-installer:
+    docker:
+      - image: grafana/wix-toolset-ci:v3
 
 jobs:
+  install-grabpl:
+    description: Install the Grafana Build Pipeline tool
+    executor: grafana-build
+    steps:
+      - run:
+          name: Clone repo
+          command: |
+            mkdir -p ~/.ssh
+            echo 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==' >> ~/.ssh/known_hosts
+            git clone git@github.com:grafana/build-pipeline.git
+      - run:
+          name: Install Grafana Build Pipeline
+          command: |
+            cd build-pipeline
+            go build -o ../bin/grabpl ./cmd/grabpl
+      - persist_to_workspace:
+          root: .
+          paths:
+            - bin/grabpl
+
+  build-backend:
+    description: "Build a certain variant of Grafana back-end binaries"
+    parameters:
+      edition:
+        type: string
+      variant:
+        type: string
+    executor: grafana-build
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: Build Grafana backend
+          # TODO: Don't use $CIRCLE_TAG for master
+          command: /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> --variants << parameters.variant >> $CIRCLE_TAG
+      - run:
+          name: Move artifacts
+          command: mkdir -p << parameters.edition >> && mv bin << parameters.edition >>/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - << parameters.edition >>/bin/*
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  build-frontend:
+    description: "Build Grafana front-end artifacts"
+    parameters:
+      edition:
+        type: string
+    executor: grafana-build
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: Build Grafana frontend
+          command: /tmp/workspace/bin/grabpl build-frontend --edition << parameters.edition >>
+      - run:
+          name: Move artifacts
+          command: mkdir << parameters.edition >> && cp -r public << parameters.edition >>/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - << parameters.edition >>/public/*
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  shellcheck-grabpl:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: ShellCheck
+          command: /tmp/workspace/bin/grabpl shellcheck
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  build-oss-windows-installer:
+    executor: windows-installer
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: Copy artifacts from workspace
+          command: cp -r /tmp/workspace/oss/dist .
+      - run:
+          name: Build Windows installer
+          command: ./scripts/build/ci-msi-build/ci-msi-build-oss.sh
+      - run:
+          name: Move artifacts
+          command: mkdir oss && mv dist oss/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - oss/dist/grafana-*.msi
+            - oss/dist/grafana-*.msi.sha256
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  build-enterprise-windows-installer:
+    executor: windows-installer
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: './scripts/ci-job-started.sh'
+      - run:
+          name: Copy artifacts from workspace
+          command: cp -r /tmp/workspace/enterprise/dist enterprise-dist
+      - run:
+          name: Build Windows installer
+          command: ./scripts/build/ci-msi-build/ci-msi-build-ee.sh
+      - run:
+          name: Move artifacts
+          command: mkdir enterprise && mv enterprise-dist enterprise/dist
+      - persist_to_workspace:
+          root: .
+          paths:
+            - enterprise/dist/grafana-*.msi
+            - enterprise/dist/grafana-*.msi.sha256
+      - run:
+          name: CI job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
+  release-next-packages-grabpl:
+    executor: grafana-build
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: Bootstrap lerna
+          command: npx lerna bootstrap
+      - run:
+          name: npm - Prepare auth token
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
+          name: Release next packages
+          #command: ./scripts/circle-release-next-packages.sh
+          command: echo TODO
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  package-oss:
+    executor: grafana-build
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: Copy artifacts from workspace
+          command: cp -r /tmp/workspace/oss/* .
+      - run:
+          name: Package Grafana
+          command: /tmp/workspace/bin/grabpl package --edition oss
+      - run:
+          name: Move artifacts
+          command: |
+            mkdir -p oss
+            mv dist oss/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - oss/dist/*
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  package-enterprise:
+    executor: grafana-build
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: Copy artifacts from workspace
+          command: cp -r /tmp/workspace/enterprise/* .
+      - run:
+          name: Package Grafana
+          command: /tmp/workspace/bin/grabpl package --edition enterprise
+      - run:
+          name: Move artifacts
+          command: |
+            mkdir -p enterprise
+            mv dist enterprise/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - enterprise/dist/*
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  publish-oss-master:
+    executor: grafana-publish
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: GCP credentials
+          command: echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json
+      - run:
+          name: Sign in to GCP
+          command: /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+      - run:
+          name: Publish to GCP
+          command: |
+            echo /opt/google-cloud-sdk/bin/gsutil cp /tmp/workspace/oss/dist/* gs://$GCP_BUCKET_NAME/oss/master
+            # /opt/google-cloud-sdk/bin/gsutil cp /tmp/workspace/oss/dist/* gs://$GCP_BUCKET_NAME/oss/master
+      - run:
+          name: Publish to Grafana.com
+          command: |
+            cp -r /tmp/workspace/oss/dist .
+            rm -f dist/*latest*
+            cd dist
+            # ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
+
+  publish-enterprise-master:
+    executor: grafana-publish
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: GCP credentials
+          command: echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json
+      - run:
+          name: Sign in to GCP
+          command: /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+      - run:
+          name: Publish to GCP
+          command: |
+            echo /opt/google-cloud-sdk/bin/gsutil cp /tmp/workspace/enterprise/dist/* gs://$GCP_BUCKET_NAME/enterprise/master
+            # /opt/google-cloud-sdk/bin/gsutil cp /tmp/workspace/enterprise/dist/* gs://$GCP_BUCKET_NAME/enterprise/master
+      - run:
+          name: Publish to Grafana.com
+          command: |
+            cp -r /tmp/workspace/enterprise/dist .
+            rm -f dist/*latest*
+            cd dist
+            # ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
+
+  docker-oss-master:
+    executor: docker
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run:
+          name: Copy Grafana archives
+          command: |
+            cp /tmp/workspace/oss/dist/grafana-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
+            cp /tmp/workspace/oss/dist/grafana-*.linux-armv7-musl.tar.gz packaging/docker/grafana-latest.linux-armv7-musl.tar.gz
+            cp /tmp/workspace/oss/dist/grafana-*.linux-arm64-musl.tar.gz packaging/docker/grafana-latest.linux-arm64-musl.tar.gz
+      - run:
+          name: Build Docker images
+          command: |
+            pushd packaging/docker && ./build.sh "master-${CIRCLE_SHA1}" && popd
+            mkdir docker
+            docker save -o docker/grafana-oss-amd64.tar "grafana/grafana:master-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-arm32v7.tar "grafana/grafana-arm32v7-linux:master-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-arm64v8.tar "grafana/grafana-arm64v8-linux:master-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-dev.tar "grafana/grafana-dev:master-${CIRCLE_SHA1}"
+      # Publish dev image, since e2e tests need it
+      - run:
+          name: Publish development Docker image
+          command: |
+            docker tag "grafana/grafana:master-${CIRCLE_SHA1}" "grafana/grafana-dev:master-${CIRCLE_SHA1}"
+            docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+            docker push "grafana/grafana-dev:master-${CIRCLE_SHA1}"
+      #- run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docker/grafana-oss*.tar
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  docker-ubuntu-oss-master:
+    executor: docker
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp /tmp/workspace/oss/dist/grafana-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cd packaging/docker && echo ./build-deploy.sh --ubuntu "master-${CIRCLE_SHA1}"
+      # - run: cd packaging/docker && ./build-deploy.sh --ubuntu "master-${CIRCLE_SHA1}"
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  docker-enterprise-master:
+    executor: docker
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp /tmp/workspace/enterprise/dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
+      - run: cd packaging/docker && echo ./build-enterprise.sh "master"
+      # - run: cd packaging/docker && ./build-enterprise.sh "master"
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  docker-ubuntu-enterprise-master:
+    executor: docker
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp /tmp/workspace/enterprise/dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
+      - run: cd packaging/docker && echo ./build-enterprise.sh --ubuntu "master"
+      #- run: cd packaging/docker && ./build-enterprise.sh --ubuntu "master"
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
+  end-to-end-test-grabpl:
+    docker:
+      - image: circleci/node:12-browsers
+      - image: grafana/grafana-dev:master-$CIRCLE_SHA1
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: yarn install
+          command: yarn install --pure-lockfile --no-progress
+          no_output_timeout: 5m
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - run:
+          name: Run end-to-end tests
+          command: env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests
+          no_output_timeout: 5m
+      - store_artifacts:
+          path: public/e2e-tests/screenShots/theTruth
+          destination: expected-screenshots
+      - store_artifacts:
+          path: public/e2e-tests/screenShots/theOutput
+          destination: output-screenshots
+      - store_artifacts:
+          path: public/e2e-tests/videos
+          destination: output-videos
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -29,6 +528,9 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
         - checkout
+        - run:
+            name: ci job started
+            command: './scripts/ci-job-started.sh'
         - run: sudo apt update
         - run: sudo apt install -y default-mysql-client
         - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
@@ -36,10 +538,18 @@ jobs:
         - run:
             name: mysql integration tests
             command: './scripts/circle-test-mysql.sh'
+        - run:
+            name: ci job failed
+            command: './scripts/ci-job-failed.sh'
+            when: on_fail
+        - run:
+            name: ci job succeeded
+            command: './scripts/ci-job-succeeded.sh'
+            when: on_success
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -48,6 +558,9 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
         - checkout
+        - run:
+            name: ci job started
+            command: './scripts/ci-job-started.sh'
         - run: sudo apt update
         - run: sudo apt install -y postgresql-client
         - run: dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
@@ -55,28 +568,50 @@ jobs:
         - run:
             name: postgres integration tests
             command: './scripts/circle-test-postgres.sh'
+        - run:
+            name: ci job failed
+            command: './scripts/ci-job-failed.sh'
+            when: on_fail
+        - run:
+            name: ci job succeeded
+            command: './scripts/ci-job-succeeded.sh'
+            when: on_success
 
   cache-server-test:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
       - image: circleci/redis:4-alpine
       - image: memcached
     working_directory: /go/src/github.com/grafana/grafana
     steps:
         - checkout
+        - run:
+            name: ci job started
+            command: './scripts/ci-job-started.sh'
         - run: dockerize -wait tcp://127.0.0.1:11211 -timeout 120s
         - run: dockerize -wait tcp://127.0.0.1:6379 -timeout 120s
         - run:
             name: cache server tests
             command: './scripts/circle-test-cache-servers.sh'
+        - run:
+            name: ci job failed
+            command: './scripts/ci-job-failed.sh'
+            when: on_fail
+        - run:
+            name: ci job succeeded
+            command: './scripts/ci-job-succeeded.sh'
+            when: on_success
 
   end-to-end-test:
       docker:
-        - image: circleci/node:10-browsers
+        - image: circleci/node:12-browsers
         - image: grafana/grafana-dev:master-$CIRCLE_SHA1
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
           - checkout
+          - run:
+              name: ci job started
+              command: './scripts/ci-job-started.sh'
           - restore_cache:
               key: dependency-cache-{{ checksum "yarn.lock" }}
           - run:
@@ -92,19 +627,33 @@ jobs:
               command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
           - store_artifacts:
-                path: public/e2e-test/screenShots/theTruth
+                path: public/e2e-tests/screenShots/theTruth
                 destination: expected-screenshots
           - store_artifacts:
-                path: public/e2e-test/screenShots/theOutput
+                path: public/e2e-tests/screenShots/theOutput
                 destination: output-screenshots
+          - store_artifacts:
+              path: public/e2e-tests/videos
+              destination: output-videos
+          - run:
+              name: ci job failed
+              command: './scripts/ci-job-failed.sh'
+              when: on_fail
+          - run:
+              name: ci job succeeded
+              command: './scripts/ci-job-succeeded.sh'
+              when: on_success
 
   end-to-end-test-release:
       docker:
-        - image: circleci/node:10-browsers
+        - image: circleci/node:12-browsers
         - image: grafana/grafana-dev:$CIRCLE_TAG
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
           - checkout
+          - run:
+              name: ci job started
+              command: './scripts/ci-job-started.sh'
           - restore_cache:
               key: dependency-cache-{{ checksum "yarn.lock" }}
           - run:
@@ -120,11 +669,22 @@ jobs:
               command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
           - store_artifacts:
-                path: public/e2e-test/screenShots/theTruth
+                path: public/e2e-tests/screenShots/theTruth
                 destination: expected-screenshots
           - store_artifacts:
-                path: public/e2e-test/screenShots/theOutput
+                path: public/e2e-tests/screenShots/theOutput
                 destination: output-screenshots
+          - store_artifacts:
+              path: public/e2e-tests/videos
+              destination: output-videos
+          - run:
+              name: ci job failed
+              command: './scripts/ci-job-failed.sh'
+              when: on_fail
+          - run:
+              name: ci job succeeded
+              command: './scripts/ci-job-succeeded.sh'
+              when: on_success
 
   codespell:
     docker:
@@ -144,7 +704,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -166,9 +726,12 @@ jobs:
 
   test-frontend:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
@@ -182,26 +745,51 @@ jobs:
       - run:
           name: frontend tests
           command: './scripts/circle-test-frontend.sh'
+      - store_test_results:
+          path: reports/junit
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   test-backend:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - run:
           name: build backend and run go tests
           command: './scripts/circle-test-backend.sh'
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - restore_cache:
           key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
       - run:
@@ -236,13 +824,24 @@ jobs:
             - scripts/*.sh
             - scripts/build/release_publisher/release_publisher
             - scripts/build/publish.sh
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
@@ -265,16 +864,27 @@ jobs:
           root: .
           paths:
             - dist/*
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build-fast-backend:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - run:
           name: build grafana backend
           command: './scripts/build/build.sh --fast --backend-only'
@@ -282,21 +892,38 @@ jobs:
           root: .
           paths:
             - bin/*
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build-fast-frontend:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - restore_cache:
           key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: build grafana frontend
           command: './scripts/build/build.sh --fast --frontend-only'
+      - run:
+          name: es-check install
+          command: 'yarn global add es-check'
+      - run:
+          name: es-check run
+          command: 'es-check es5 ./public/build/*.js'
       - save_cache:
           key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
           paths:
@@ -306,13 +933,58 @@ jobs:
           paths:
             - public/build/*
             - tools/phantomjs/*
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
+  build-docs-website:
+    docker:
+        - image: grafana/build-container:1.2.13
+    working_directory: /docs
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - run:
+          name: install docker
+          command: |
+            apt-get update
+            apt-get install -y docker.io
+      - run:
+          name: build grafana docs website
+          command: |
+            # https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
+            # create a dummy container which will hold a volume with config
+            docker create -v /hugo/content/docs/grafana --name docs-website alpine:3.4 /bin/true
+            # copy a config file into this volume
+            docker cp ${PWD}/docs/sources docs-website:/hugo/content/docs/grafana/latest
+            # start an application container using this volume
+            docker run --volumes-from docs-website --rm -it grafana/docs-base:latest /bin/bash -c 'npm i && make prod'
+      - run:
+          name: ci job failed
+          command: 'docker stop docs-website && docker rm docs-website && ./scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: 'docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build-fast-package:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - attach_workspace:
           at: .
       - restore_cache:
@@ -333,13 +1005,24 @@ jobs:
           root: /go/src/github.com/grafana/grafana
           paths:
             - dist/*
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build-fast-save:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - attach_workspace:
           at: .
       - restore_cache:
@@ -379,12 +1062,23 @@ jobs:
           root: .
           paths:
             - dist/*
+      - run:
+            name: ci job failed
+            command: './scripts/ci-job-failed.sh'
+            when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   grafana-docker-master:
     machine:
       image: circleci/classic:201808-01
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - attach_workspace:
           at: .
       - run: docker info
@@ -394,25 +1088,95 @@ jobs:
       - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh "master"
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
+  grafana-docker-ubuntu-master:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - attach_workspace:
+          at: .
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cd packaging/docker && ./build-deploy.sh --ubuntu "master-${CIRCLE_SHA1}"
+      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cd packaging/docker && ./build-enterprise.sh --ubuntu "master"
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   grafana-docker-pr:
     machine:
       image: circleci/classic:201808-01
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - attach_workspace:
           at: .
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
+  grafana-docker-ubuntu-pr:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - attach_workspace:
+          at: .
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cd packaging/docker && ./build.sh --fast --ubuntu "${CIRCLE_SHA1}"
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   grafana-docker-release:
     machine:
       image: circleci/classic:201808-01
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - attach_workspace:
           at: .
       - run: docker info
@@ -422,16 +1186,53 @@ jobs:
       - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
+  grafana-docker-ubuntu-release:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - attach_workspace:
+          at: .
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cd packaging/docker && ./build-deploy.sh --ubuntu "${CIRCLE_TAG}"
+      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cd packaging/docker && ./build-enterprise.sh --ubuntu "${CIRCLE_TAG}"
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - run:
           name: checkout enterprise
           command: './scripts/build/prepare-enterprise.sh'
@@ -457,16 +1258,27 @@ jobs:
           root: .
           paths:
             - enterprise-dist/*
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.11
+    - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
     - run:
         name: prepare build tools
         command: '/tmp/bootstrap.sh'
+    - run:
+        name: ci job started
+        command: './scripts/ci-job-started.sh'
     - run:
         name: checkout enterprise
         command: './scripts/build/prepare-enterprise.sh'
@@ -504,10 +1316,18 @@ jobs:
         root: .
         paths:
         - enterprise-dist/*
+    - run:
+        name: ci job failed
+        command: './scripts/ci-job-failed.sh'
+        when: on_fail
+    - run:
+        name: ci job succeeded
+        command: './scripts/ci-job-succeeded.sh'
+        when: on_success
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.2
+      - image: grafana/grafana-ci-deploy:1.2.3
     steps:
       - attach_workspace:
           at: .
@@ -529,11 +1349,14 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.2.2
+    - image: grafana/grafana-ci-deploy:1.2.3
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - attach_workspace:
-         at: .
+          at: .
       - run:
           name: gcp credentials
           command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
@@ -564,11 +1387,19 @@ jobs:
       - run:
           name: Publish RPM repository
           command: './scripts/build/update_repo/publish-rpm.sh "enterprise" "$CIRCLE_TAG"'
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.2
+      - image: grafana/grafana-ci-deploy:1.2.3
     steps:
       - attach_workspace:
           at: .
@@ -592,9 +1423,12 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.2
+      - image: grafana/grafana-ci-deploy:1.2.3
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - attach_workspace:
           at: .
       - run:
@@ -627,12 +1461,23 @@ jobs:
       - run:
           name: Publish RPM repository
           command: './scripts/build/update_repo/publish-rpm.sh "oss" "$CIRCLE_TAG"'
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build-oss-msi:
     docker:
       - image: grafana/wix-toolset-ci:v3
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - attach_workspace:
           at: .
       - run:
@@ -643,52 +1488,83 @@ jobs:
           paths:
             - dist/grafana-*.msi
             - dist/grafana-*.msi.sha256
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
+  build-ee-msi:
+    docker:
+      - image: grafana/wix-toolset-ci:v3
+    steps:
+      - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build EE MSI
+          command: './scripts/build/ci-msi-build/ci-msi-build-ee.sh'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - enterprise-dist/grafana-*.msi
+            - enterprise-dist/grafana-*.msi.sha256
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   store-build-artifacts:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - attach_workspace:
           at: .
       - store_artifacts:
           path: ./dist
 
-  trigger-docs-update:
+  build-grafana-packages:
     docker:
-      - image: circleci/python:3.6.8
+      - image: circleci/node:12
     steps:
       - checkout
       - run:
-          name: Trigger Docs update
-          command: |
-            if git diff --name-only HEAD^ | grep -q "^docs"; then
-              echo "Build URL:"
-              curl -s -u "$DOCS_CIRCLE_TOKEN:" \
-                -d build_parameters[CIRCLE_JOB]=pull-submodule-changes \
-                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/master \
-              | jq .build_url
-            else
-              echo "-- no changes to docs files --"
-            fi
-
-  build-grafana-packages:
-    docker:
-      - image: circleci/node:10
-    steps:
-      - checkout
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - run:
           name: Boostrap lerna
           command: 'npx lerna bootstrap'
       - run:
           name: Build packages
           command: yarn packages:build
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
 
   release-next-packages:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - run:
           name: Boostrap lerna
           command: 'npx lerna bootstrap'
@@ -698,12 +1574,23 @@ jobs:
       - run:
           name: Release next packages
           command: './scripts/circle-release-next-packages.sh'
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   release-packages:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - run:
           name: Boostrap lerna
           command: 'npx lerna bootstrap'
@@ -713,6 +1600,14 @@ jobs:
       - run:
           name: Release packages
           command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   scan-docker-master:
     docker:
@@ -742,7 +1637,6 @@ jobs:
             - $HOME/.cache/trivy
 
 workflows:
-  version: 2
   build-master:
     jobs:
       - build-all:
@@ -787,6 +1681,18 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
+      - grafana-docker-ubuntu-master:
+          requires:
+            - build-all
+            - build-all-enterprise
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
       - deploy-enterprise-master:
           requires:
             - build-all
@@ -798,6 +1704,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
+            - build-ee-msi
           filters: *filter-only-master
       - build-oss-msi:
           requires:
@@ -810,19 +1717,283 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
+      - build-ee-msi:
+          requires:
+            - build-all-enterprise
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
       - end-to-end-test:
           requires:
             - grafana-docker-master
-          filters: *filter-only-master
-      - trigger-docs-update:
-          requires:
-            - end-to-end-test
           filters: *filter-only-master
       - release-next-packages:
           requires:
             - build-all
             - test-frontend
           filters: *filter-only-master
+
+  # Pipeline for building master branch, based on Grafana Build Pipeline tool
+  build-pipeline:
+    jobs:
+      - install-grabpl:
+          filters: *filter-only-master
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: armv6
+          name: build-oss-backend-armv6
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: armv7
+          name: build-oss-backend-armv7
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: armv7-musl
+          name: build-oss-backend-armv7-musl
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: arm64
+          name: build-oss-backend-arm64
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: arm64-musl
+          name: build-oss-backend-arm64-musl
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: osx64
+          name: build-oss-backend-osx64
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: win64
+          name: build-oss-backend-win64
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: linux-x64
+          name: build-oss-backend-linux-x64
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: oss
+          variant: linux-x64-musl
+          name: build-oss-backend-linux-x64-musl
+          requires:
+            - install-grabpl
+      - build-frontend:
+          filters: *filter-only-master
+          name: build-oss-frontend
+          edition: oss
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: armv6
+          name: build-enterprise-backend-armv6
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: armv7
+          name: build-enterprise-backend-armv7
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: armv7-musl
+          name: build-enterprise-backend-armv7-musl
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: arm64
+          name: build-enterprise-backend-arm64
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: arm64-musl
+          name: build-enterprise-backend-arm64-musl
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: osx64
+          name: build-enterprise-backend-osx64
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: win64
+          name: build-enterprise-backend-win64
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: linux-x64
+          name: build-enterprise-backend-linux-x64
+          requires:
+            - install-grabpl
+      - build-backend:
+          filters: *filter-only-master
+          edition: enterprise
+          variant: linux-x64-musl
+          name: build-enterprise-backend-linux-x64-musl
+          requires:
+            - install-grabpl
+      - build-frontend:
+          filters: *filter-only-master
+          name: build-enterprise-frontend
+          edition: enterprise
+          requires:
+            - install-grabpl
+      - codespell:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+      - lint-go:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+      - shellcheck-grabpl:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+      - test-backend:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+            - lint-go
+      - test-frontend:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+      - mysql-integration-test:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+      - postgres-integration-test:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+      - package-oss:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+            - build-oss-backend-armv6
+            - build-oss-backend-armv7
+            - build-oss-backend-armv7-musl
+            - build-oss-backend-arm64
+            - build-oss-backend-arm64-musl
+            - build-oss-backend-osx64
+            - build-oss-backend-win64
+            - build-oss-backend-linux-x64
+            - build-oss-backend-linux-x64-musl
+            - build-oss-frontend
+            - test-backend
+            - test-frontend
+            - codespell
+            - shellcheck-grabpl
+            - mysql-integration-test
+            - postgres-integration-test
+      - package-enterprise:
+          filters: *filter-only-master
+          requires:
+            - install-grabpl
+            - build-enterprise-backend-armv6
+            - build-enterprise-backend-armv7
+            - build-enterprise-backend-armv7-musl
+            - build-enterprise-backend-arm64
+            - build-enterprise-backend-arm64-musl
+            - build-enterprise-backend-osx64
+            - build-enterprise-backend-win64
+            - build-enterprise-backend-linux-x64
+            - build-enterprise-backend-linux-x64-musl
+            - build-enterprise-frontend
+            - test-backend
+            - test-frontend
+            - codespell
+            - shellcheck-grabpl
+            - mysql-integration-test
+            - postgres-integration-test
+      - build-oss-windows-installer:
+          filters: *filter-only-master
+          requires:
+            - package-oss
+      - build-enterprise-windows-installer:
+          filters: *filter-only-master
+          requires:
+            - package-enterprise
+      - release-next-packages-grabpl:
+          filters: *filter-only-master
+          requires:
+            - test-frontend
+      - publish-oss-master:
+          filters: *filter-only-master
+          requires:
+            - package-oss
+            - build-oss-windows-installer
+      - docker-oss-master:
+          filters: *filter-only-master
+          requires:
+            - package-oss
+            - build-oss-windows-installer
+      - docker-ubuntu-oss-master:
+          filters: *filter-only-master
+          requires:
+            - package-oss
+            - build-oss-windows-installer
+      - publish-enterprise-master:
+          filters: *filter-only-master
+          requires:
+            - package-enterprise
+            - build-enterprise-windows-installer
+      - docker-enterprise-master:
+          filters: *filter-only-master
+          requires:
+            - package-enterprise
+      - docker-ubuntu-enterprise-master:
+          filters: *filter-only-master
+          requires:
+            - package-enterprise
+      - end-to-end-test-grabpl:
+          filters: *filter-only-master
+          requires:
+            - docker-oss-master
 
   release:
     jobs:
@@ -867,8 +2038,21 @@ workflows:
             - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+            - build-ee-msi
           filters: *filter-only-release
       - grafana-docker-release:
+          requires:
+            - build-all
+            - build-all-enterprise
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
+      - grafana-docker-ubuntu-release:
           requires:
             - build-all
             - build-all-enterprise
@@ -895,6 +2079,17 @@ workflows:
       - build-oss-msi:
           requires:
             - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
+      - build-ee-msi:
+          requires:
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell
@@ -949,6 +2144,18 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
+        - grafana-docker-ubuntu-pr:
+            requires:
+              - build-fast-package
+              - test-backend
+              - test-frontend
+              - codespell
+              - lint-go
+              - shellcheck
+              - mysql-integration-test
+              - postgres-integration-test
+              - cache-server-test
+            filters: *filter-not-release-or-master
         - store-build-artifacts:
             requires:
               - build-fast-package
@@ -960,6 +2167,8 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
+            filters: *filter-not-release-or-master
+        - build-docs-website:
             filters: *filter-not-release-or-master
   nightly:
     triggers:

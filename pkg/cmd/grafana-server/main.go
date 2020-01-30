@@ -46,7 +46,9 @@ func main() {
 
 		v           = flag.Bool("v", false, "prints current version and exits")
 		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
-		profilePort = flag.Int("profile-port", 6060, "Define custom port for profiling")
+		profilePort = flag.Uint("profile-port", 6060, "Define custom port for profiling")
+		tracing     = flag.Bool("tracing", false, "Turn on tracing")
+		tracingFile = flag.String("tracing-file", "trace.out", "Define tracing output file")
 	)
 
 	flag.Parse()
@@ -56,16 +58,32 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *profile {
+	profileDiagnostics := newProfilingDiagnostics(*profile, *profilePort)
+	if err := profileDiagnostics.overrideWithEnv(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+
+	traceDiagnostics := newTracingDiagnostics(*tracing, *tracingFile)
+	if err := traceDiagnostics.overrideWithEnv(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+
+	if profileDiagnostics.enabled {
+		fmt.Println("diagnostics: pprof profiling enabled", "port", profileDiagnostics.port)
 		runtime.SetBlockProfileRate(1)
 		go func() {
-			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *profilePort), nil)
+			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", profileDiagnostics.port), nil)
 			if err != nil {
 				panic(err)
 			}
 		}()
+	}
 
-		f, err := os.Create("trace.out")
+	if traceDiagnostics.enabled {
+		fmt.Println("diagnostics: tracing enabled", "file", traceDiagnostics.file)
+		f, err := os.Create(traceDiagnostics.file)
 		if err != nil {
 			panic(err)
 		}

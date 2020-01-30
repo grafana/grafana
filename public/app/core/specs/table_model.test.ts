@@ -10,7 +10,11 @@ describe('when sorting table desc', () => {
     table = new TableModel();
     // @ts-ignore
     table.columns = [{}, {}];
-    table.rows = [[100, 12], [105, 10], [103, 11]];
+    table.rows = [
+      [100, 12],
+      [105, 10],
+      [103, 11],
+    ];
     table.sort(panel.sort);
   });
 
@@ -36,7 +40,11 @@ describe('when sorting table asc', () => {
     table = new TableModel();
     // @ts-ignore
     table.columns = [{}, {}];
-    table.rows = [[100, 11], [105, 15], [103, 10]];
+    table.rows = [
+      [100, 11],
+      [105, 15],
+      [103, 10],
+    ];
     table.sort(panel.sort);
   });
 
@@ -55,7 +63,16 @@ describe('when sorting with nulls', () => {
     table = new TableModel();
     // @ts-ignore
     table.columns = [{}, {}];
-    table.rows = [[42, ''], [19, 'a'], [null, 'b'], [0, 'd'], [null, null], [2, 'c'], [0, null], [-8, '']];
+    table.rows = [
+      [42, ''],
+      [19, 'a'],
+      [null, 'b'],
+      [0, 'd'],
+      [null, null],
+      [2, 'c'],
+      [0, null],
+      [-8, ''],
+    ];
   });
 
   it('numbers with nulls at end with asc sort', () => {
@@ -141,7 +158,10 @@ describe('mergeTables', () => {
     }),
     ({
       target: 'series1',
-      datapoints: [[12.12, time], [14.44, time + 1]],
+      datapoints: [
+        [12.12, time],
+        [14.44, time + 1],
+      ],
     } as any) as TableModel,
   ];
 

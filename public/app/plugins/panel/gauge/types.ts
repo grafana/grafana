@@ -1,6 +1,6 @@
-import { VizOrientation, FieldDisplayOptions } from '@grafana/data';
+import { VizOrientation, FieldDisplayOptions, SelectableValue } from '@grafana/data';
 import { SingleStatBaseOptions } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
-import { standardFieldDisplayOptions } from '../singlestat2/types';
+import { standardFieldDisplayOptions } from '../stat/types';
 
 export interface GaugeOptions extends SingleStatBaseOptions {
   showThresholdLabels: boolean;
@@ -10,6 +10,12 @@ export interface GaugeOptions extends SingleStatBaseOptions {
 export const standardGaugeFieldOptions: FieldDisplayOptions = {
   ...standardFieldDisplayOptions,
 };
+
+export const orientationOptions: Array<SelectableValue<VizOrientation>> = [
+  { value: VizOrientation.Auto, label: 'Auto' },
+  { value: VizOrientation.Horizontal, label: 'Horizontal' },
+  { value: VizOrientation.Vertical, label: 'Vertical' },
+];
 
 export const defaults: GaugeOptions = {
   showThresholdMarkers: true,

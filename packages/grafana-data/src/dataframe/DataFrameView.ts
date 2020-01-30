@@ -1,5 +1,6 @@
 import { Vector } from '../types/vector';
 import { DataFrame } from '../types/dataFrame';
+import { DisplayProcessor } from '../types';
 
 /**
  * This abstraction will present the contents of a DataFrame as if
@@ -26,22 +27,24 @@ export class DataFrameView<T = any> implements Vector<T> {
 
   constructor(private data: DataFrame) {
     const obj = ({} as unknown) as T;
+
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
-      const getter = () => {
-        return field.values.get(this.index);
-      };
+      const getter = () => field.values.get(this.index);
+
       if (!(obj as any).hasOwnProperty(field.name)) {
         Object.defineProperty(obj, field.name, {
           enumerable: true, // Shows up as enumerable property
           get: getter,
         });
       }
+
       Object.defineProperty(obj, i, {
         enumerable: false, // Don't enumerate array index
         get: getter,
       });
     }
+
     this.obj = obj;
   }
 
@@ -53,17 +56,27 @@ export class DataFrameView<T = any> implements Vector<T> {
     return this.data.length;
   }
 
+  getFieldDisplayProcessor(colIndex: number): DisplayProcessor | null {
+    if (!this.dataFrame || !this.dataFrame.fields) {
+      return null;
+    }
+
+    const field = this.dataFrame.fields[colIndex];
+
+    if (!field || !field.display) {
+      return null;
+    }
+
+    return field.display;
+  }
+
   get(idx: number) {
     this.index = idx;
     return this.obj;
   }
 
   toArray(): T[] {
-    const arr: T[] = [];
-    for (let i = 0; i < this.data.length; i++) {
-      arr.push({ ...this.get(i) });
-    }
-    return arr;
+    return new Array(this.data.length).fill(0).map((_, i) => ({ ...this.get(i) }));
   }
 
   toJSON(): T[] {
@@ -74,5 +87,13 @@ export class DataFrameView<T = any> implements Vector<T> {
     for (let i = 0; i < this.data.length; i++) {
       iterator(this.get(i));
     }
+  }
+
+  map<V>(iterator: (item: T, index: number) => V) {
+    const acc: V[] = [];
+    for (let i = 0; i < this.data.length; i++) {
+      acc.push(iterator(this.get(i), i));
+    }
+    return acc;
   }
 }

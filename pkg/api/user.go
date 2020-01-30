@@ -36,6 +36,8 @@ func getUserUserProfile(userID int64) Response {
 		query.Result.IsExternal = true
 	}
 
+	query.Result.AvatarUrl = dtos.GetGravatarUrl(query.Result.Email)
+
 	return JSON(200, query.Result)
 }
 

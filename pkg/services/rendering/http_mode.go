@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var netTransport = &http.Transport{
@@ -56,10 +58,15 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 		return nil, err
 	}
 
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
+	// gives service some additional time to timeout and return possible errors.
 	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
 	req = req.WithContext(reqContext)
+
+	rs.log.Debug("calling remote rendering service", "url", rendererUrl)
 
 	// make request to renderer server
 	resp, err := netClient.Do(req)

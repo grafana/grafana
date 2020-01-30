@@ -7,127 +7,181 @@ import (
 	"time"
 )
 
-// FieldType is used to describe the type of data in a field.
-type FieldType int
+// Frame represents a columnar storage with optional labels.
+type Frame struct {
+	Name   string
+	Fields []*Field
 
-// All valid field types.
-const (
-	FieldTypeOther FieldType = iota
-	FieldTypeTime
-	FieldTypeNumber
-	FieldTypeString
-	FieldTypeBoolean
-)
-
-func (f FieldType) String() string {
-	switch f {
-	case FieldTypeOther:
-		return "other"
-	case FieldTypeNumber:
-		return "number"
-	case FieldTypeString:
-		return "string"
-	case FieldTypeBoolean:
-		return "boolean"
-	case FieldTypeTime:
-		return "time"
-	default:
-		return "unknown"
-	}
+	RefID string
+	Meta  *QueryResultMeta
 }
 
 // Field represents a column of data with a specific type.
 type Field struct {
 	Name   string
-	Type   FieldType
-	Vector Vector
+	Config *FieldConfig
+	Vector Vector // TODO? in the frontend, the variable is called "Values"
+	Labels Labels
 }
 
+// Fields is a slice of Field pointers.
 type Fields []*Field
 
-func assertFieldType(got, want FieldType) {
-	if got != want {
-		panic(fmt.Sprintf("values doesn't match the specified field type"))
-	}
-}
-
 // NewField returns a new instance of Field.
-func NewField(name string, fieldType FieldType, values interface{}) *Field {
+func NewField(name string, labels Labels, values interface{}) *Field {
 	var vec Vector
-
 	switch v := values.(type) {
-	case []*float64:
-		assertFieldType(fieldType, FieldTypeNumber)
-		vec = newVector(fieldType, len(v))
+	case []int8:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*int8:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []int16:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*int16:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []int32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*int32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []int64:
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
 	case []*int64:
-		assertFieldType(fieldType, FieldTypeNumber)
-		vec = newVector(fieldType, len(v))
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
-	case []*time.Time:
-		assertFieldType(fieldType, FieldTypeTime)
-		vec = newVector(fieldType, len(v))
+	case []uint8:
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
-	case []*string:
-		assertFieldType(fieldType, FieldTypeString)
-		vec = newVector(fieldType, len(v))
+	case []*uint8:
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
-	case []*bool:
-		assertFieldType(fieldType, FieldTypeBoolean)
-		vec = newVector(fieldType, len(v))
+	case []uint16:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*uint16:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []uint32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*uint32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []uint64:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*uint64:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []float32:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*float32:
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
 	case []float64:
-		assertFieldType(fieldType, FieldTypeNumber)
-		vec = newVector(fieldType, len(v))
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
-			vec.Set(i, &v[i])
+			vec.Set(i, v[i])
 		}
-	case []int64:
-		assertFieldType(fieldType, FieldTypeNumber)
-		vec = newVector(fieldType, len(v))
+	case []*float64:
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
-			vec.Set(i, &v[i])
-		}
-	case []time.Time:
-		assertFieldType(fieldType, FieldTypeTime)
-		vec = newVector(fieldType, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, &v[i])
+			vec.Set(i, v[i])
 		}
 	case []string:
-		assertFieldType(fieldType, FieldTypeString)
-		vec = newVector(fieldType, len(v))
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
-			vec.Set(i, &v[i])
+			vec.Set(i, v[i])
+		}
+	case []*string:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
 		}
 	case []bool:
-		assertFieldType(fieldType, FieldTypeBoolean)
-		vec = newVector(fieldType, len(v))
+		vec = newVector(v, len(v))
 		for i := 0; i < len(v); i++ {
-			vec.Set(i, &v[i])
+			vec.Set(i, v[i])
 		}
+	case []*bool:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []time.Time:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*time.Time:
+		vec = newVector(v, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	default:
+		panic(fmt.Errorf("unsupported field type %T", v))
 	}
 
 	return &Field{
 		Name:   name,
-		Type:   fieldType,
 		Vector: vec,
+		Labels: labels,
 	}
 }
 
 // Len returns the number of elements in the field.
 func (f *Field) Len() int {
 	return f.Vector.Len()
+}
+
+// SetConfig modifies the Field's Config property to
+// be set to conf and returns the Field.
+func (f *Field) SetConfig(conf *FieldConfig) *Field {
+	f.Config = conf
+	return f
 }
 
 // Labels are used to add metadata to an object.
@@ -187,10 +241,10 @@ func (l Labels) String() string {
 // LabelsFromString parses the output of Labels.String() into
 // a Labels object. It probably has some flaws.
 func LabelsFromString(s string) (Labels, error) {
-	labels := make(map[string]string)
 	if s == "" {
-		return labels, nil
+		return nil, nil
 	}
+	labels := make(map[string]string)
 
 	for _, rawKV := range strings.Split(s, ", ") {
 		kV := strings.SplitN(rawKV, "=", 2)
@@ -203,20 +257,10 @@ func LabelsFromString(s string) (Labels, error) {
 	return labels, nil
 }
 
-// Frame represents a columnar storage with optional labels.
-type Frame struct {
-	Name   string
-	Labels Labels
-	Fields []*Field
-
-	RefID string
-}
-
 // New returns a new instance of a Frame.
-func New(name string, labels Labels, fields ...*Field) *Frame {
+func New(name string, fields ...*Field) *Frame {
 	return &Frame{
 		Name:   name,
-		Labels: labels,
 		Fields: fields,
 	}
 }

@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
+import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse, GrafanaTheme } from '@grafana/data';
+import { cx, css } from 'emotion';
 
 import {
   LogRowContextRows,
@@ -10,18 +11,23 @@ import {
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 //Components
 import { LogDetails } from './LogDetails';
 import { LogRowMessage } from './LogRowMessage';
+import { LogLabels } from './LogLabels';
 
 interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
+  showLabels: boolean;
   showTime: boolean;
+  wrapLogMessage: boolean;
   timeZone: TimeZone;
-  isLogsPanel?: boolean;
+  allowDetails?: boolean;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -33,8 +39,22 @@ interface Props extends Themeable {
 interface State {
   showContext: boolean;
   showDetails: boolean;
+  hasHoverBackground: boolean;
 }
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const bgColor = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.dark2 }, theme.type);
+  return {
+    topVerticalAlign: css`
+      label: topVerticalAlign;
+      vertical-align: top;
+    `,
+    hoverBackground: css`
+      label: hoverBackground;
+      background-color: ${bgColor};
+    `,
+  };
+});
 /**
  * Renders a log line.
  *
@@ -46,6 +66,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     showContext: false,
     showDetails: false,
+    hasHoverBackground: false,
   };
 
   toggleContext = () => {
@@ -56,7 +77,26 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
+  /**
+   * We are using onMouse events to change background of Log Details Table to hover-state-background when
+   * hovered over Log Row and vice versa. This can't be done with css because we use 2 separate table rows without common parent element.
+   */
+  addHoverBackground = () => {
+    this.setState({
+      hasHoverBackground: true,
+    });
+  };
+
+  clearHoverBackground = () => {
+    this.setState({
+      hasHoverBackground: false,
+    });
+  };
+
   toggleDetails = () => {
+    if (this.props.allowDetails) {
+      return;
+    }
     this.setState(state => {
       return {
         showDetails: !state.showDetails,
@@ -75,66 +115,86 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       onClickFilterLabel,
       onClickFilterOutLabel,
       highlighterExpressions,
-      isLogsPanel,
+      allowDetails,
       row,
       showDuplicates,
       timeZone,
+      showLabels,
       showTime,
+      wrapLogMessage,
       theme,
       getFieldLinks,
     } = this.props;
-    const { showDetails, showContext } = this.state;
+    const { showDetails, showContext, hasHoverBackground } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
+    const styles = getStyles(theme);
     const showUtc = timeZone === 'utc';
+    const showDetailsClassName = showDetails
+      ? cx(['fa fa-chevron-down', styles.topVerticalAlign])
+      : cx(['fa fa-chevron-right', styles.topVerticalAlign]);
+    const hoverBackground = cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground });
 
     return (
-      <div className={style.logsRow}>
-        {showDuplicates && (
-          <div className={style.logsRowDuplicates}>
-            {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
-          </div>
-        )}
-        <div className={style.logsRowLevel} />
-        {!isLogsPanel && (
-          <div title="See log details" onClick={this.toggleDetails} className={style.logsRowToggleDetails}>
-            <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
-          </div>
-        )}
-        <div>
-          <div>
-            {showTime && showUtc && (
-              <div className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-                {row.timeUtc}
-              </div>
-            )}
-            {showTime && !showUtc && (
-              <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
-                {row.timeLocal}
-              </div>
-            )}
-            <LogRowMessage
-              highlighterExpressions={highlighterExpressions}
-              row={row}
-              getRows={getRows}
-              errors={errors}
-              hasMoreContextRows={hasMoreContextRows}
-              updateLimit={updateLimit}
-              context={context}
-              showContext={showContext}
-              onToggleContext={this.toggleContext}
-            />
-          </div>
-          {this.state.showDetails && (
-            <LogDetails
-              getFieldLinks={getFieldLinks}
-              onClickFilterLabel={onClickFilterLabel}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              getRows={getRows}
-              row={row}
-            />
+      <>
+        <tr
+          className={hoverBackground}
+          onMouseEnter={this.addHoverBackground}
+          onMouseLeave={this.clearHoverBackground}
+          onClick={this.toggleDetails}
+        >
+          {showDuplicates && (
+            <td className={style.logsRowDuplicates}>
+              {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
+            </td>
           )}
-        </div>
-      </div>
+          <td className={style.logsRowLevel} />
+          {!allowDetails && (
+            <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
+              <i className={showDetailsClassName} />
+            </td>
+          )}
+          {showTime && showUtc && (
+            <td className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+              {row.timeUtc}
+            </td>
+          )}
+          {showTime && !showUtc && (
+            <td className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
+              {row.timeLocal}
+            </td>
+          )}
+          {showLabels && row.uniqueLabels && (
+            <td className={style.logsRowLabels}>
+              <LogLabels labels={row.uniqueLabels} />
+            </td>
+          )}
+          <LogRowMessage
+            highlighterExpressions={highlighterExpressions}
+            row={row}
+            getRows={getRows}
+            errors={errors}
+            hasMoreContextRows={hasMoreContextRows}
+            updateLimit={updateLimit}
+            context={context}
+            showContext={showContext}
+            wrapLogMessage={wrapLogMessage}
+            onToggleContext={this.toggleContext}
+          />
+        </tr>
+        {this.state.showDetails && (
+          <LogDetails
+            className={hoverBackground}
+            onMouseEnter={this.addHoverBackground}
+            onMouseLeave={this.clearHoverBackground}
+            showDuplicates={showDuplicates}
+            getFieldLinks={getFieldLinks}
+            onClickFilterLabel={onClickFilterLabel}
+            onClickFilterOutLabel={onClickFilterOutLabel}
+            getRows={getRows}
+            row={row}
+          />
+        )}
+      </>
     );
   }
 

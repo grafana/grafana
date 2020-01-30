@@ -1,0 +1,22 @@
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Field } from './Field';
+
+<Meta title="MDX|Field" component={Field} />
+
+# Field
+
+`Field` is the basic component for rendering form elements together with labels and description
+
+### Usage
+
+```jsx
+import { Forms } from '@grafana/ui';
+
+<Forms.Field label={...} description={...}>
+  <Forms.Input id="userName"  onChange={...}/>
+</Forms.Field>
+```
+
+### Props
+<Props of={Field} />
+

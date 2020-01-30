@@ -84,9 +84,15 @@ export const bucketAggTypes = [
   { text: 'Histogram', value: 'histogram', requiresField: true },
 ];
 
-export const orderByOptions = [{ text: 'Doc Count', value: '_count' }, { text: 'Term value', value: '_term' }];
+export const orderByOptions = [
+  { text: 'Doc Count', value: '_count' },
+  { text: 'Term value', value: '_term' },
+];
 
-export const orderOptions = [{ text: 'Top', value: 'desc' }, { text: 'Bottom', value: 'asc' }];
+export const orderOptions = [
+  { text: 'Top', value: 'desc' },
+  { text: 'Bottom', value: 'asc' },
+];
 
 export const sizeOptions = [
   { text: 'No limit', value: '0' },
@@ -144,7 +150,10 @@ export const movingAvgModelSettings: any = {
   simple: [],
   linear: [],
   ewma: [{ text: 'Alpha', value: 'alpha', default: undefined }],
-  holt: [{ text: 'Alpha', value: 'alpha', default: undefined }, { text: 'Beta', value: 'beta', default: undefined }],
+  holt: [
+    { text: 'Alpha', value: 'alpha', default: undefined },
+    { text: 'Beta', value: 'beta', default: undefined },
+  ],
   holt_winters: [
     { text: 'Alpha', value: 'alpha', default: undefined },
     { text: 'Beta', value: 'beta', default: undefined },

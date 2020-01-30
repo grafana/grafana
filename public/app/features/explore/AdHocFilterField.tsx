@@ -34,7 +34,7 @@ export class AdHocFilterField<
 > extends React.PureComponent<Props<TQuery, TOptions>, State> {
   state: State = { pairs: [] };
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props<TQuery, TOptions>) {
     if (_.isEqual(prevProps.extendedOptions, this.props.extendedOptions) === false) {
       const pairs: any[] = [];
 
@@ -131,7 +131,7 @@ export class AdHocFilterField<
         return allPairs;
       }
       return allPairs.concat(pair);
-    }, []);
+    }, [] as KeyValuePair[]);
 
     this.setState({ pairs });
   };

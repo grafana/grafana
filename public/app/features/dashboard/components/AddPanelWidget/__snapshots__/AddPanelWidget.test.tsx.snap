@@ -35,7 +35,7 @@ exports[`Render should render component 1`] = `
       >
         <div>
           <a
-            aria-label="Add Query CTA button"
+            aria-label="Add Panel Widget CTA Button Add Query"
             className="add-panel-widget__link btn btn-inverse"
             href="#"
             onClick={[Function]}
@@ -54,7 +54,7 @@ exports[`Render should render component 1`] = `
         </div>
         <div>
           <a
-            aria-label="Choose Visualization CTA button"
+            aria-label="Add Panel Widget CTA Button Choose Visualization"
             className="add-panel-widget__link btn btn-inverse"
             href="#"
             onClick={[Function]}

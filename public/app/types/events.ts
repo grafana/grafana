@@ -1,7 +1,5 @@
-import { DataFrame, TimeRange } from '@grafana/data';
-import { IHttpResponse } from 'angular';
+import { DataFrame, eventFactory, TimeRange } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { eventFactory } from '@grafana/data';
 
 /**
  * Event Payloads
@@ -39,7 +37,19 @@ export interface ShowConfirmModalPayload {
   onAltAction?: () => void;
 }
 
-type DataSourceResponsePayload = IHttpResponse<any>;
+export interface DataSourceResponse<T> {
+  data: T;
+  readonly status: number;
+  readonly statusText: string;
+  readonly ok: boolean;
+  readonly headers: Headers;
+  readonly redirected: boolean;
+  readonly type: ResponseType;
+  readonly url: string;
+  readonly request: any;
+}
+
+type DataSourceResponsePayload = DataSourceResponse<any>;
 
 export interface SaveDashboardPayload {
   overwrite?: boolean;
@@ -121,6 +131,7 @@ export const repeatsProcessed = eventFactory('repeats-processed');
 export const rowExpanded = eventFactory('row-expanded');
 export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
+export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
 

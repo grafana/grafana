@@ -6,28 +6,16 @@ import { Editor as CoreEditor } from 'slate';
 import { Plugin as SlatePlugin } from '@grafana/slate-react';
 
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
-import {
-  makeFragment,
-  TypeaheadOutput,
-  CompletionItem,
-  TypeaheadInput,
-  SuggestionsState,
-  CompletionItemGroup,
-} from '..';
 import { Typeahead } from '../components/Typeahead/Typeahead';
-export const TYPEAHEAD_DEBOUNCE = 100;
+import { CompletionItem, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../types/completion';
+import { makeFragment } from '../utils/slate';
+
+export const TYPEAHEAD_DEBOUNCE = 250;
 
 // Commands added to the editor by this plugin.
 interface SuggestionsPluginCommands {
   selectSuggestion: (suggestion: CompletionItem) => CoreEditor;
   applyTypeahead: (suggestion: CompletionItem) => CoreEditor;
-}
-
-export interface SuggestionsState {
-  groupedItems: CompletionItemGroup[];
-  typeaheadPrefix: string;
-  typeaheadContext: string;
-  typeaheadText: string;
 }
 
 export function SuggestionsPlugin({

@@ -7,39 +7,44 @@ type = "docs"
 name = "Requirements"
 identifier = "requirements"
 parent = "installation"
-weight = -1
+weight = 100
 +++
 
-# Requirements
+# Grafana requirements
 
-This page includes useful information on the supported Operating Systems as well as the hardware requirements that are needed to install and use Grafana.
+This page lists the minimum hardware and software requirements to install Grafana.
 
-## Operating Systems
+To run Grafana, you must have a supported operating system, hardware that meets or exceeds minimum requirements, a supported database, and a supported browser
 
-### Supported
+## Supported operating systems
 
-- [Debian / Ubuntu](/installation/debian)
-- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](/installation/rpm)
-- [macOS](/installation/mac)
-- [Windows](/installation/windows)
+The following operating systems are supported for Grafana installation:
 
-### Unsupported
+- [Debian / Ubuntu]({{< relref "debian" >}})
+- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)]({{< relref "rpm" >}})
+- [macOS]({{< relref "mac" >}})
+- [Windows]({{< relref "windows" >}})
 
-Installation of Grafana on other operating systems is possible, but not supported. Please see the [building from source](/project/building_from_source/#building-grafana-from-source) guide for more information.
+While you can install Grafana on other operating systems, we do not recommend doing so and do not provide support for that use case.
 
-## Hardware requirements
+Installation of Grafana on other operating systems is possible, but not supported. Please see the [building from source]({{< relref "../project/building_from_source/#building-grafana-from-source" >}}) guide for more information.
 
-Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. Minimum recommendation is 255mb of memory and 1 CPU.
+## Hardware recommendations
 
-Depending on what features are being used and to what extent the requirements varies. Features that consume and requires more resources:
+Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. 
 
-- Server side rendering of images
-- [Alerting](/alerting/rules/)
+Minimum recommended memory: 255 MB
+Minimum recommended CPU: 1
+
+Some features might require more memory or CPUs. Features require more resources include:
+
+- [Server side rendering of images]({{< relref "../administration/image_rendering/#requirements" >}})
+- [Alerting]({{< relref "../alerting/rules" >}})
 - Data source proxy
 
-## Database
+## Supported databases
 
-Grafana requires a database to store its configuration data, e.g. users, data sources and dashboards. The exact requirements depend on the size of the Grafana installation (e.g. the number of users, data sources, dashboards, features in use etc).
+Grafana requires a database to store its configuration data, such as users, data sources, and dashboards. The exact requirements depend on the size of the Grafana installation and features used.
 
 Grafana supports the following databases:
 
@@ -47,29 +52,16 @@ Grafana supports the following databases:
 - MySQL
 - PostgreSQL
 
-Per default Grafana ships with and uses SQLite which is an embedded database stored on disk in Grafana's installation location.
+By default, Grafana installs with and uses SQLite, which is an embedded database stored in the Grafana installation location.
 
 ## Supported web browsers
 
-Grafana is supported in the following browsers:
+Grafana is supported in the current version of the following browsers. Older versions of these browsers might not be supported, so you should always upgrade to the latest version when using Grafana.
 
 - Chrome/Chromium
 - Firefox
 - Safari
 - Microsoft Edge
+- Internet Explorer 11 is only fully supported in Grafana versions prior v6.0.
 
-> Note 1: Older versions of above browsers may not be supported
-
-> Note 2: Internet Explorer 11 is only fully supported in Grafana versions prior v6.0.
-
-> Note 3: Running Grafana without JavaScript enabled in the browser is not supported
-
-### Known issues
-
-#### Problem with logging in using Safari 12
-
-There is a known [iOS Safari 12 issue](https://bugs.webkit.org/show_bug.cgi?id=188165) that prevents the Grafana session cookie from being written after a successful login.
-A quick workaround for this problem would be to configure [cookie_samesite](/installation/configuration/#cookie-samesite) to `none`. However, there is another known [Safari 12 issue](https://bugs.webkit.org/show_bug.cgi?id=198181) that threats `SameSite=none` as `strict` which also
-prevents the Grafana session cookie from being written after a successful login.
-
-To resolve using `none` as `SameSite` cookie attribute in combination with Safari 12, please upgrade to at least Grafana v6.3.3 which includes a fix.
+> Note: Always enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.

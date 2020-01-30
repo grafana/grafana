@@ -10,7 +10,7 @@ import (
 )
 
 func GetAPIKeys(c *models.ReqContext) Response {
-	query := models.GetApiKeysQuery{OrgId: c.OrgId}
+	query := models.GetApiKeysQuery{OrgId: c.OrgId, IncludeExpired: c.QueryBool("includeExpired")}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return Error(500, "Failed to list api keys", err)

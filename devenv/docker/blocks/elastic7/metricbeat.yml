@@ -28,7 +28,7 @@ processors:
   - add_cloud_metadata: ~
 
 output.elasticsearch:
-  hosts: ["localhost:12200"]
+  hosts: ["elasticsearch7:9200"]
   index: "metricbeat-%{+yyyy.MM.dd}"
 
 setup.template.name: "metricbeat"

@@ -14,6 +14,7 @@ export interface TeamMember {
   teamId: number;
   avatarUrl: string;
   email: string;
+  name: string;
   login: string;
   labels: string[];
   permission: number;

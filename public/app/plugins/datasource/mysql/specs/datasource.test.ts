@@ -1,20 +1,28 @@
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import { dateTime, toUtc } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('MySQLDatasource', () => {
   const instanceSettings = { name: 'mysql' };
-  const backendSrv = {};
   const templateSrv: TemplateSrv = new TemplateSrv();
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   const raw = {
     from: toUtc('2018-04-25 10:00'),
     to: toUtc('2018-04-25 11:00'),
   };
   const ctx = {
-    backendSrv,
     timeSrvMock: {
       timeRange: () => ({
         from: raw.from,
@@ -25,7 +33,7 @@ describe('MySQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new MysqlDatasource(instanceSettings, backendSrv as BackendSrv, {} as any, templateSrv, ctx.timeSrvMock);
+    ctx.ds = new MysqlDatasource(instanceSettings, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', () => {
@@ -63,9 +71,8 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
       });
@@ -98,7 +105,11 @@ describe('MySQLDatasource', () => {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
             },
           ],
         },
@@ -106,9 +117,8 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -135,7 +145,11 @@ describe('MySQLDatasource', () => {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
             },
           ],
         },
@@ -143,7 +157,7 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         calledWith = options;
         return Promise.resolve({ data: response, status: 200 });
       });
@@ -153,7 +167,7 @@ describe('MySQLDatasource', () => {
     });
 
     it('should return list of all column values', () => {
-      expect(ctx.backendSrv.datasourceRequest).toBeCalledTimes(1);
+      expect(datasourceRequestMock).toBeCalledTimes(1);
       expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE 'aTit%'");
       expect(results.length).toBe(6);
     });
@@ -173,7 +187,11 @@ describe('MySQLDatasource', () => {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
             },
           ],
         },
@@ -181,7 +199,7 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         calledWith = options;
         return Promise.resolve({ data: response, status: 200 });
       });
@@ -191,7 +209,7 @@ describe('MySQLDatasource', () => {
     });
 
     it('should return list of all column values', () => {
-      expect(ctx.backendSrv.datasourceRequest).toBeCalledTimes(1);
+      expect(datasourceRequestMock).toBeCalledTimes(1);
       expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
       expect(results.length).toBe(6);
     });
@@ -210,7 +228,11 @@ describe('MySQLDatasource', () => {
           tables: [
             {
               columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [['value1', 'aTitle'], ['value2', 'aTitle2'], ['value3', 'aTitle3']],
+              rows: [
+                ['value1', 'aTitle'],
+                ['value2', 'aTitle2'],
+                ['value3', 'aTitle3'],
+              ],
             },
           ],
         },
@@ -218,9 +240,7 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(() => Promise.resolve({ data: response, status: 200 }));
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -248,7 +268,11 @@ describe('MySQLDatasource', () => {
           tables: [
             {
               columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [['aTitle', 'same'], ['aTitle', 'same'], ['aTitle', 'diff']],
+              rows: [
+                ['aTitle', 'same'],
+                ['aTitle', 'same'],
+                ['aTitle', 'diff'],
+              ],
             },
           ],
         },
@@ -256,9 +280,7 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(() => Promise.resolve({ data: response, status: 200 }));
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });

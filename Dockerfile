@@ -1,5 +1,5 @@
 # Golang build container
-FROM golang:1.13.1-alpine
+FROM golang:1.13.4-alpine
 
 RUN apk add --no-cache gcc g++
 
@@ -16,7 +16,7 @@ COPY build.go package.json ./
 RUN go run build.go build
 
 # Node build container
-FROM node:10.14.2-alpine
+FROM node:12.13.0-alpine
 
 # PhantomJS
 RUN apk add --no-cache curl &&\

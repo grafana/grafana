@@ -244,7 +244,30 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 	}
 
 	dashboard, err := dashboards.NewService().SaveDashboard(dashItem, allowUiUpdate)
+	if err != nil {
+		return dashboardSaveErrorToApiResponse(err)
+	}
 
+	if hs.Cfg.EditorsCanAdmin && newDashboard {
+		inFolder := cmd.FolderId > 0
+		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		if err != nil {
+			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
+		}
+	}
+
+	c.TimeRequest(metrics.MApiDashboardSave)
+	return JSON(200, util.DynMap{
+		"status":  "success",
+		"slug":    dashboard.Slug,
+		"version": dashboard.Version,
+		"id":      dashboard.Id,
+		"uid":     dashboard.Uid,
+		"url":     dashboard.GetUrl(),
+	})
+}
+
+func dashboardSaveErrorToApiResponse(err error) Response {
 	if err == m.ErrDashboardTitleEmpty ||
 		err == m.ErrDashboardWithSameNameAsFolder ||
 		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
@@ -267,44 +290,28 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		return Error(422, validationErr.Error(), nil)
 	}
 
-	if err != nil {
-		if err == m.ErrDashboardWithSameNameInFolderExists {
-			return JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
-		}
-		if err == m.ErrDashboardVersionMismatch {
-			return JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
-		}
-		if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
-			message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
-			// look up plugin name
-			if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
-				message = "The dashboard belongs to plugin " + pluginDef.Name + "."
-			}
-			return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
-		}
-		if err == m.ErrDashboardNotFound {
-			return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
-		}
-		return Error(500, "Failed to save dashboard", err)
+	if err == m.ErrDashboardWithSameNameInFolderExists {
+		return JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 	}
 
-	if hs.Cfg.EditorsCanAdmin && newDashboard {
-		inFolder := cmd.FolderId > 0
-		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
-		if err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
-		}
+	if err == m.ErrDashboardVersionMismatch {
+		return JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 	}
 
-	c.TimeRequest(metrics.MApiDashboardSave)
-	return JSON(200, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.Id,
-		"uid":     dashboard.Uid,
-		"url":     dashboard.GetUrl(),
-	})
+	if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
+		message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
+		// look up plugin name
+		if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
+			message = "The dashboard belongs to plugin " + pluginDef.Name + "."
+		}
+		return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
+	}
+
+	if err == m.ErrDashboardNotFound {
+		return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
+	}
+
+	return Error(500, "Failed to save dashboard", err)
 }
 
 func GetHomeDashboard(c *m.ReqContext) Response {

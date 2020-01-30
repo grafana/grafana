@@ -52,6 +52,7 @@ export interface PanelModel<TOptions = any> {
   id: number;
   options: TOptions;
   pluginVersion?: string;
+  scopedVars?: ScopedVars;
 }
 
 /**
@@ -74,6 +75,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
+  noPadding?: boolean;
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -92,6 +94,11 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
 
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
+    return this;
+  }
+
+  setNoPadding() {
+    this.noPadding = true;
     return this;
   }
 

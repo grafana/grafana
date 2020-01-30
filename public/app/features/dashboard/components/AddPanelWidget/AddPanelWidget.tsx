@@ -1,20 +1,17 @@
 // Libraries
 import React from 'react';
 import _ from 'lodash';
-
+import { LocationUpdate } from '@grafana/runtime';
+import { e2e } from '@grafana/e2e';
 // Utils
 import config from 'app/core/config';
 import store from 'app/core/store';
-
 // Store
 import { store as reduxStore } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-
 // Types
-import { PanelModel } from '../../state';
-import { DashboardModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { LocationUpdate } from '@grafana/runtime';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -141,7 +138,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
           href="#"
           onClick={onClick}
           className="add-panel-widget__link btn btn-inverse"
-          aria-label={`${text} CTA button`}
+          aria-label={e2e.pages.AddDashboard.selectors.ctaButtons(text)}
         >
           <div className="add-panel-widget__icon">
             <i className={`gicon gicon-${icon}`} />

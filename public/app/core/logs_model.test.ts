@@ -189,10 +189,6 @@ describe('dataFrameToLogsModel', () => {
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
       new MutableDataFrame({
-        labels: {
-          filename: '/var/log/grafana/grafana.log',
-          job: 'grafana',
-        },
         fields: [
           {
             name: 'time',
@@ -206,6 +202,10 @@ describe('dataFrameToLogsModel', () => {
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
               't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
             ],
+            labels: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
           },
           {
             name: 'id',
@@ -223,7 +223,6 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
       {
-        timestamp: '2019-04-26T09:28:11.352440161Z',
         entry: 't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
         logLevel: 'info',
@@ -231,7 +230,6 @@ describe('dataFrameToLogsModel', () => {
         uid: 'foo',
       },
       {
-        timestamp: '2019-04-26T14:42:50.991981292Z',
         entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
         logLevel: 'error',
@@ -244,7 +242,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta[0]).toMatchObject({
       label: 'Common labels',
-      value: series[0].labels,
+      value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta[1]).toMatchObject({
@@ -291,11 +289,6 @@ describe('dataFrameToLogsModel', () => {
   it('given multiple series with unique times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '1',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -306,16 +299,21 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['0'],
           },
         ],
       }),
       toDataFrame({
         name: 'logs',
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'err',
-        },
         fields: [
           {
             name: 'time',
@@ -326,6 +324,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
             values: ['INFO 1', 'INFO 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'err',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['1', '2'],
           },
         ],
       }),
@@ -367,11 +375,6 @@ describe('dataFrameToLogsModel', () => {
   it('given multiple series with equal times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '1',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -382,15 +385,20 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo 1'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['0'],
           },
         ],
       }),
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -401,16 +409,21 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'dbug',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['1'],
           },
         ],
       }),
       toDataFrame({
         name: 'logs',
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'err',
-        },
         fields: [
           {
             name: 'time',
@@ -421,6 +434,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
             values: ['INFO 1', 'INFO 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'err',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['2', '3'],
           },
         ],
       }),
@@ -476,5 +499,99 @@ describe('dataFrameToLogsModel', () => {
     ];
     const logsModel = dataFrameToLogsModel(series, 0, 'utc');
     expect(logsModel.rows[0].uid).toBe('0');
+  });
+
+  it('given multiple series with equal ids should return expected logs model', () => {
+    const series: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:00Z'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: ['WARN boooo 1'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['0'],
+          },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: ['WARN boooo 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'dbug',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['1'],
+          },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: ['WARN boooo 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'dbug',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['1'],
+          },
+        ],
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
+    expect(logsModel.hasUniqueLabels).toBeTruthy();
+    expect(logsModel.rows).toHaveLength(2);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'WARN boooo 1',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+        uniqueLabels: { baz: '1' },
+      },
+      {
+        entry: 'WARN boooo 2',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+        uniqueLabels: { baz: '2' },
+      },
+    ]);
   });
 });

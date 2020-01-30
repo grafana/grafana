@@ -15,7 +15,15 @@ import {
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { DataQueryError, LogsDedupStrategy, LogsModel, LogLevel, dateTime, MutableDataFrame } from '@grafana/data';
+import {
+  DataQueryError,
+  LogsDedupStrategy,
+  LogsModel,
+  LogLevel,
+  dateTime,
+  MutableDataFrame,
+  LogRowModel,
+} from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
@@ -202,20 +210,20 @@ describe('hasNonEmptyQuery', () => {
 
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const input: any = null;
       const result = getValueWithRefId(input);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
   describe('when called with a non object value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const input = 123;
       const result = getValueWithRefId(input);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -249,11 +257,11 @@ describe('hasRefId', () => {
 
 describe('getFirstQueryErrorWithoutRefId', () => {
   describe('when called with a null value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const errors: DataQueryError[] = null;
       const result = getFirstQueryErrorWithoutRefId(errors);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -372,11 +380,10 @@ describe('refreshIntervalToSortOrder', () => {
 });
 
 describe('sortLogsResult', () => {
-  const firstRow = {
+  const firstRow: LogRowModel = {
     rowIndex: 0,
     entryFieldIndex: 0,
     dataFrame: new MutableDataFrame(),
-    timestamp: '2019-01-01T21:00:0.0000000Z',
     entry: '',
     hasAnsi: false,
     labels: {},
@@ -389,17 +396,16 @@ describe('sortLogsResult', () => {
     uid: '1',
   };
   const sameAsFirstRow = firstRow;
-  const secondRow = {
+  const secondRow: LogRowModel = {
     rowIndex: 1,
     entryFieldIndex: 0,
     dataFrame: new MutableDataFrame(),
-    timestamp: '2019-01-01T22:00:0.0000000Z',
     entry: '',
     hasAnsi: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
-    timeEpochMs: 0,
+    timeEpochMs: 10,
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',

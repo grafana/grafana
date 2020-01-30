@@ -1,9 +1,11 @@
 import React, { PureComponent } from 'react';
-import { LogLabelStatsModel } from '@grafana/data';
+import { css, cx } from 'emotion';
+import { LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+import { stylesFactory } from '../../themes/stylesFactory';
 
 //Components
 import { LogLabelStats } from './LogLabelStats';
@@ -23,6 +25,25 @@ interface State {
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    noHoverBackground: css`
+      label: noHoverBackground;
+      :hover {
+        background-color: transparent;
+      }
+    `,
+    hoverCursor: css`
+      label: hoverCursor;
+      cursor: pointer;
+    `,
+    wordBreakAll: css`
+      label: wordBreakAll;
+      word-break: break-all;
+    `,
+  };
+});
 
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
@@ -66,34 +87,38 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   render() {
     const { theme, parsedKey, parsedValue, isLabel, links } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
+    const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     return (
-      <div className={style.logsRowDetailsValue}>
+      <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
-        <div onClick={this.showStats} aria-label={'Field stats'} className={style.logsRowDetailsIcon}>
-          <i className={'fa fa-signal'} />
-        </div>
-        {isLabel ? (
-          <div onClick={() => this.filterLabel()} className={style.logsRowDetailsIcon}>
-            <i className={'fa fa-search-plus'} />
-          </div>
-        ) : (
-          <div className={style.logsRowDetailsIcon} />
-        )}
-        {isLabel ? (
-          <div onClick={() => this.filterOutLabel()} className={style.logsRowDetailsIcon}>
-            <i className={'fa fa-search-minus'} />
-          </div>
-        ) : (
-          <div className={style.logsRowDetailsIcon} />
+        <td className={style.logsDetailsIcon} colSpan={isLabel ? undefined : 3}>
+          <i title="Ad-hoc statistics" className={`fa fa-signal ${styles.hoverCursor}`} onClick={this.showStats} />
+        </td>
+
+        {isLabel && (
+          <>
+            <td className={style.logsDetailsIcon}>
+              <i
+                title="Filter for value"
+                className={`fa fa-search-plus ${styles.hoverCursor}`}
+                onClick={this.filterLabel}
+              />
+            </td>
+            <td className={style.logsDetailsIcon}>
+              <i
+                title="Filter out value"
+                className={`fa fa-search-minus ${styles.hoverCursor}`}
+                onClick={this.filterOutLabel}
+              />
+            </td>
+          </>
         )}
 
         {/* Key - value columns */}
-        <div className={style.logsRowDetailsLabel}>
-          <span>{parsedKey}</span>
-        </div>
-        <div className={style.logsRowCell}>
-          <span>{parsedValue}</span>
+        <td className={style.logDetailsLabel}>{parsedKey}</td>
+        <td className={styles.wordBreakAll}>
+          {parsedValue}
           {links &&
             links.map(link => {
               return (
@@ -106,18 +131,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               );
             })}
           {showFieldsStats && (
-            <div className={style.logsRowCell}>
-              <LogLabelStats
-                stats={fieldStats!}
-                label={parsedKey}
-                value={parsedValue}
-                rowCount={fieldCount}
-                isLabel={isLabel}
-              />
-            </div>
+            <LogLabelStats
+              stats={fieldStats!}
+              label={parsedKey}
+              value={parsedValue}
+              rowCount={fieldCount}
+              isLabel={isLabel}
+            />
           )}
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   }
 }

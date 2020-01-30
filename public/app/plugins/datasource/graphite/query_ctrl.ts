@@ -37,7 +37,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     this.datasource.waitForFuncDefsLoaded().then(() => {
       this.queryModel = new GraphiteQuery(this.datasource, this.target, templateSrv);
-      this.buildSegments();
+      this.buildSegments(false);
     });
 
     this.removeTagValue = '-- remove tag --';
@@ -53,13 +53,13 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.parseTarget();
   }
 
-  buildSegments() {
+  buildSegments(modifyLastSegment = true) {
     this.segments = _.map(this.queryModel.segments, segment => {
       return this.uiSegmentSrv.newSegment(segment);
     });
 
     const checkOtherSegmentsIndex = this.queryModel.checkOtherSegmentsIndex || 0;
-    this.checkOtherSegments(checkOtherSegmentsIndex);
+    this.checkOtherSegments(checkOtherSegmentsIndex, modifyLastSegment);
 
     if (this.queryModel.seriesByTagUsed) {
       this.fixTagSegments();
@@ -71,7 +71,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.segments.push(this.uiSegmentSrv.newSelectMetric());
   }
 
-  checkOtherSegments(fromIndex: number) {
+  checkOtherSegments(fromIndex: number, modifyLastSegment = true) {
     if (this.queryModel.segments.length === 1 && this.queryModel.segments[0].type === 'series-ref') {
       return;
     }
@@ -90,7 +90,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       .metricFindQuery(path)
       .then((segments: any) => {
         if (segments.length === 0) {
-          if (path !== '') {
+          if (path !== '' && modifyLastSegment) {
             this.queryModel.segments = this.queryModel.segments.splice(0, fromIndex);
             this.segments = this.segments.splice(0, fromIndex);
             this.addSelectMetricSegment();
@@ -176,11 +176,9 @@ export class GraphiteQueryCtrl extends QueryCtrl {
           return altSegments;
         }
       })
-      .catch(
-        (err: any): any[] => {
-          return [];
-        }
-      );
+      .catch((err: any): any[] => {
+        return [];
+      });
   }
 
   addAltTagSegments(prefix: string, altSegments: any[]) {

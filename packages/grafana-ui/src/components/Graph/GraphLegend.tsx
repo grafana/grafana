@@ -43,7 +43,10 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
       })
       .reduce(
         (acc, current) => {
-          return union(acc, current.filter(item => !!item));
+          return union(
+            acc,
+            current.filter(item => !!item)
+          );
         },
         ['']
       ) as string[];

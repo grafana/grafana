@@ -18,4 +18,5 @@ export interface ApiKeysState {
   keys: ApiKey[];
   searchQuery: string;
   hasFetched: boolean;
+  includeExpired: boolean;
 }

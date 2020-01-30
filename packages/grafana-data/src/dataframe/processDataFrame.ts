@@ -1,7 +1,5 @@
 // Libraries
-import isNumber from 'lodash/isNumber';
-import isString from 'lodash/isString';
-import isBoolean from 'lodash/isBoolean';
+import { isArray, isBoolean, isNumber, isString } from 'lodash';
 
 // Types
 import {
@@ -34,6 +32,10 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     };
   });
 
+  if (!isArray(table.rows)) {
+    throw new Error(`Expected table rows to be array, got ${typeof table.rows}.`);
+  }
+
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {
       fields[i].values.buffer.push(row[i]);
@@ -57,38 +59,37 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 }
 
 function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const times: number[] = [];
+  const values: TimeSeriesValue[] = [];
+  for (const point of timeSeries.datapoints) {
+    values.push(point[0]);
+    times.push(point[1] as number);
+  }
+
   const fields = [
     {
       name: timeSeries.target || 'Value',
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
-        color: timeSeries.color,
       },
-      values: new ArrayVector<TimeSeriesValue>(),
-    } as Field<TimeSeriesValue, ArrayVector<TimeSeriesValue>>,
+      values: new ArrayVector<TimeSeriesValue>(values),
+      labels: timeSeries.tags,
+    },
     {
       name: 'Time',
       type: FieldType.time,
-      config: {
-        unit: 'dateTimeAsIso',
-      },
-      values: new ArrayVector<number>(),
-    } as Field<number, ArrayVector<number>>,
+      config: {},
+      values: new ArrayVector<number>(times),
+    },
   ];
-
-  for (const point of timeSeries.datapoints) {
-    fields[0].values.buffer.push(point[0]);
-    fields[1].values.buffer.push(point[1] as number);
-  }
 
   return {
     name: timeSeries.target,
-    labels: timeSeries.tags,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
     fields,
-    length: timeSeries.datapoints.length,
+    length: values.length,
   };
 }
 
@@ -133,6 +134,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
     {
       name: timeSeries.target,
       type: FieldType.other,
+      labels: timeSeries.tags,
       config: {
         unit: timeSeries.unit,
         filterable: (timeSeries as any).filterable,
@@ -147,7 +149,6 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
 
   return {
     name: timeSeries.target,
-    labels: timeSeries.tags,
     refId: timeSeries.target,
     meta: { json: true },
     fields,
@@ -441,11 +442,23 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
   const fields: FieldDTO[] = data.fields.map(f => {
+    let values = f.values.toArray();
+    if (!Array.isArray(values)) {
+      // Apache arrow will pack objects into typed arrays
+      // Float64Array, etc
+      // TODO: Float64Array could be used directly
+      values = [];
+      for (let i = 0; i < f.values.length; i++) {
+        values.push(f.values.get(i));
+      }
+    }
+
     return {
       name: f.name,
       type: f.type,
       config: f.config,
-      values: f.values.toArray(),
+      values,
+      labels: f.labels,
     };
   });
 
@@ -454,6 +467,5 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
     refId: data.refId,
     meta: data.meta,
     name: data.name,
-    labels: data.labels,
   };
 }

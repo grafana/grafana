@@ -5,6 +5,7 @@ import filter from 'lodash/filter';
 import find from 'lodash/find';
 import indexOf from 'lodash/indexOf';
 import map from 'lodash/map';
+import { e2e } from '@grafana/e2e';
 
 import coreModule from '../core_module';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
@@ -26,11 +27,13 @@ export class ValueSelectDropdownCtrl {
   onUpdated: any;
   queryHasSearchFilter: boolean;
   debouncedQueryChanged: Function;
+  selectors: typeof e2e.pages.Dashboard.SubMenu.selectors;
 
   /** @ngInject */
-  constructor(private $q: any, private $scope: IScope) {
+  constructor(private $scope: IScope) {
     this.queryHasSearchFilter = this.variable ? containsSearchFilter(this.variable.query) : false;
     this.debouncedQueryChanged = debounce(this.queryChanged.bind(this), 200);
+    this.selectors = e2e.pages.Dashboard.SubMenu.selectors;
   }
 
   show() {
@@ -114,7 +117,7 @@ export class ValueSelectDropdownCtrl {
     if (!tag.values) {
       tagValuesPromise = this.variable.getValuesForTag(tag.text);
     } else {
-      tagValuesPromise = this.$q.when(tag.values);
+      tagValuesPromise = Promise.resolve(tag.values);
     }
 
     return tagValuesPromise.then((values: any) => {
@@ -279,7 +282,7 @@ export class ValueSelectDropdownCtrl {
   }
 
   updateUIBoundOptions($scope: IScope, options: any[]) {
-    this.highlightIndex = -1;
+    this.highlightIndex = 0;
     this.search.options = options.slice(0, Math.min(options.length, 1000));
     $scope.$apply();
   }

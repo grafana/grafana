@@ -85,7 +85,10 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
               onChange={value => {
                 this.onTooltipOptionsChange({ mode: value.value as any });
               }}
-              options={[{ label: 'All series', value: 'multi' }, { label: 'Single', value: 'single' }]}
+              options={[
+                { label: 'All series', value: 'multi' },
+                { label: 'Single', value: 'single' },
+              ]}
             />
           </PanelOptionsGroup>
           <GraphLegendEditor options={this.props.options.legend} onChange={this.onLegendOptionsChange} />

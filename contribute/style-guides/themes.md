@@ -29,7 +29,7 @@ const Foo: React.FunctionComponent<FooProps> = () => {
 
 ```
 
-#### Using `withTheme` HOC
+#### Using `withTheme` higher-order component (HOC)
 
 With this method your component will be automatically wrapped in `ThemeContext.Consumer` and provided with current theme via `theme` prop. Component used with `withTheme` must implement `Themeable` interface.
 
@@ -41,6 +41,36 @@ interface FooProps extends Themeable {}
 const Foo: React.FunctionComponent<FooProps> = () => ...
 
 export default withTheme(Foo);
+```
+
+### Test components that use ThemeContext
+
+When implementing snapshot tests for components that use the `withTheme` HOC, the snapshot will contain the entire theme object. Any change to the theme renders the snapshot outdated.
+
+To make your snapshot theme independent, use the `mockThemeContext` helper function:
+
+```tsx
+import { mockThemeContext } from '@grafana/ui';
+import { MyComponent } from './MyComponent';
+
+describe('MyComponent', () => {
+  let restoreThemeContext;
+
+  beforeAll(() => {
+    // Create ThemeContext mock before any snapshot test is executed
+    restoreThemeContext = mockThemeContext({ type: GrafanaThemeType.Dark });
+  });
+
+  afterAll(() => {
+    // Make sure the theme is restored after snapshot tests are performed
+    restoreThemeContext();
+  });
+
+  it('renders correctyl', () => {
+    const wrapper = mount(<MyComponent />)
+    expect(wrapper).toMatchSnapshot();
+  });
+});
 ```
 
 ### Using themes in Storybook

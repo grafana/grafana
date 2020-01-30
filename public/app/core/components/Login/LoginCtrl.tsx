@@ -145,9 +145,4 @@ export const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = { updateLocation };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(LoginCtrl)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LoginCtrl));

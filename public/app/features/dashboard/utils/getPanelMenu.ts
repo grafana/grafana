@@ -41,6 +41,18 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     );
   };
 
+  const onNewEditPanel = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    store.dispatch(
+      updateLocation({
+        query: {
+          editPanel: panel.id,
+        },
+        partial: true,
+      })
+    );
+  };
+
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
@@ -83,7 +95,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   const onNavigateToExplore = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     const openInNewWindow = event.ctrlKey || event.metaKey ? (url: string) => window.open(url) : undefined;
-    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }));
+    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
   };
 
   const menu: PanelMenuItem[] = [];
@@ -95,7 +107,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     shortcut: 'v',
   });
 
-  if (dashboard.meta.canEdit) {
+  if (dashboard.canEditPanel(panel)) {
     menu.push({
       text: 'Edit',
       iconClassName: 'gicon gicon-editor',
@@ -119,6 +131,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
       onClick: onNavigateToExplore,
     });
   }
+
   if (config.featureToggles.inspect) {
     menu.push({
       text: 'Inspect',
@@ -128,9 +141,18 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     });
   }
 
+  if (config.featureToggles.newEdit) {
+    menu.push({
+      text: 'New edit',
+      iconClassName: 'gicon gicon-editor',
+      onClick: onNewEditPanel,
+      shortcut: 'p i',
+    });
+  }
+
   const subMenu: PanelMenuItem[] = [];
 
-  if (!panel.fullscreen && dashboard.meta.canEdit) {
+  if (!panel.fullscreen && dashboard.canEditPanel(panel)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -156,7 +178,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     onClick: onMore,
   });
 
-  if (dashboard.meta.canEdit) {
+  if (dashboard.canEditPanel(panel)) {
     menu.push({ type: 'divider' });
 
     menu.push({

@@ -11,7 +11,10 @@ import { PieChartOptions } from './types';
 
 const labelWidth = 8;
 
-const pieChartOptions = [{ value: PieChartType.PIE, label: 'Pie' }, { value: PieChartType.DONUT, label: 'Donut' }];
+const pieChartOptions = [
+  { value: PieChartType.PIE, label: 'Pie' },
+  { value: PieChartType.DONUT, label: 'Donut' },
+];
 
 export class PieChartOptionsBox extends PureComponent<PanelEditorProps<PieChartOptions>> {
   onPieTypeChange = (pieType: any) => this.props.onOptionsChange({ ...this.props.options, pieType: pieType.value });

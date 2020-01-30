@@ -1,6 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { variableRegex } from 'app/features/templating/variable';
+import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
 
 function luceneEscape(value: string) {
@@ -165,6 +166,12 @@ export class TemplateSrv {
         }
         return value;
       }
+      case 'html': {
+        if (_.isArray(value)) {
+          return escapeHtml(value.join(', '));
+        }
+        return escapeHtml(value);
+      }
       case 'json': {
         return JSON.stringify(value);
       }
@@ -186,6 +193,15 @@ export class TemplateSrv {
 
   setGrafanaVariable(name: string, value: any) {
     this.grafanaVariables[name] = value;
+  }
+
+  setGlobalVariable(name: string, variable: any) {
+    this.index = {
+      ...this.index,
+      [name]: {
+        current: variable,
+      },
+    };
   }
 
   getVariableName(expression: string) {
@@ -285,6 +301,15 @@ export class TemplateSrv {
         // skip formatting of custom all values
         if (variable.allValue) {
           return this.replace(value);
+        }
+      }
+
+      if (fieldPath) {
+        const fieldValue = this.getVariableValue(variableName, fieldPath, {
+          [variableName]: { value: value, text: '' },
+        });
+        if (fieldValue !== null && fieldValue !== undefined) {
+          return this.formatValue(fieldValue, fmt, variable);
         }
       }
 

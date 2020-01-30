@@ -3,7 +3,7 @@ import { YAxis, FieldDisplayOptions } from '@grafana/data';
 
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 // TODO move out from single stat
-import { standardFieldDisplayOptions } from '../singlestat2/types';
+import { standardFieldDisplayOptions } from '../stat/types';
 
 export interface SeriesOptions {
   color?: string;

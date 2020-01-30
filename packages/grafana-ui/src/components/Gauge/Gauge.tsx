@@ -1,16 +1,20 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { Threshold, DisplayValue } from '@grafana/data';
-
-import { getColorFromHexRgbOrName } from '@grafana/data';
+import {
+  DisplayValue,
+  getColorFromHexRgbOrName,
+  formattedValueToString,
+  FieldConfig,
+  ThresholdsMode,
+  getActiveThreshold,
+  Threshold,
+} from '@grafana/data';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
 
 export interface Props extends Themeable {
   height: number;
-  maxValue: number;
-  minValue: number;
-  thresholds: Threshold[];
+  field: FieldConfig;
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
   width: number;
@@ -25,11 +29,19 @@ export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
   static defaultProps: Partial<Props> = {
-    maxValue: 100,
-    minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    thresholds: [],
+    field: {
+      min: 0,
+      max: 100,
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 80, color: 'red' },
+        ],
+      },
+    },
   };
 
   componentDidMount() {
@@ -40,22 +52,38 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  getFormattedThresholds() {
-    const { maxValue, minValue, thresholds, theme } = this.props;
+  getFormattedThresholds(): Threshold[] {
+    const { field, theme } = this.props;
+    const isPercent = field.thresholds?.mode === ThresholdsMode.Percentage;
+    const steps = field.thresholds!.steps;
+    let min = field.min!;
+    let max = field.max!;
+    if (isPercent) {
+      min = 0;
+      max = 100;
+    }
 
-    const lastThreshold = thresholds[thresholds.length - 1];
-
-    return [
-      ...thresholds.map((threshold, index) => {
-        if (index === 0) {
-          return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
+    const first = getActiveThreshold(min, steps);
+    const last = getActiveThreshold(max, steps);
+    const formatted: Threshold[] = [];
+    formatted.push({ value: min, color: getColorFromHexRgbOrName(first.color, theme.type) });
+    let skip = true;
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      if (skip) {
+        if (first === step) {
+          skip = false;
         }
-
-        const previousThreshold = thresholds[index - 1];
-        return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
-      }),
-      { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
-    ];
+        continue;
+      }
+      const prev = steps[i - 1];
+      formatted.push({ value: step.value, color: getColorFromHexRgbOrName(prev!.color, theme.type) });
+      if (step === last) {
+        break;
+      }
+    }
+    formatted.push({ value: max, color: getColorFromHexRgbOrName(last.color, theme.type) });
+    return formatted;
   }
 
   getFontScale(length: number): number {
@@ -66,7 +94,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
+    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
@@ -82,16 +110,30 @@ export class Gauge extends PureComponent<Props> {
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize = Math.min(dimension / 4, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+    const text = formattedValueToString(value);
+    const fontSize = Math.min(dimension / 4, 100) * (text !== null ? this.getFontScale(text.length) : 1);
 
     const thresholdLabelFontSize = fontSize / 2.5;
+
+    let min = field.min!;
+    let max = field.max!;
+    let numeric = value.numeric;
+    if (field.thresholds?.mode === ThresholdsMode.Percentage) {
+      min = 0;
+      max = 100;
+      if (value.percent === undefined) {
+        numeric = ((numeric - min) / (max - min)) * 100;
+      } else {
+        numeric = value.percent! * 100;
+      }
+    }
 
     const options: any = {
       series: {
         gauges: {
           gauge: {
-            min: minValue,
-            max: maxValue,
+            min,
+            max,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },
@@ -114,7 +156,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: value.color,
             formatter: () => {
-              return value.text;
+              return text;
             },
             font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
           },
@@ -124,7 +166,7 @@ export class Gauge extends PureComponent<Props> {
     };
 
     const plotSeries = {
-      data: [[0, value.numeric]],
+      data: [[0, numeric]],
       label: value.title,
     };
 

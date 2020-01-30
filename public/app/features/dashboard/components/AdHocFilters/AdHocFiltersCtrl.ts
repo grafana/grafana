@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
@@ -16,7 +16,6 @@ export class AdHocFiltersCtrl {
   constructor(
     private uiSegmentSrv: any,
     private datasourceSrv: DatasourceSrv,
-    private $q: IQService,
     private variableSrv: VariableSrv,
     $scope: any
   ) {
@@ -51,11 +50,11 @@ export class AdHocFiltersCtrl {
 
   getOptions(segment: { type: string }, index: number) {
     if (segment.type === 'operator') {
-      return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '>', '=~', '!~']));
+      return Promise.resolve(this.uiSegmentSrv.newOperators(['=', '!=', '<', '>', '=~', '!~']));
     }
 
     if (segment.type === 'condition') {
-      return this.$q.when([this.uiSegmentSrv.newSegment('AND')]);
+      return Promise.resolve([this.uiSegmentSrv.newSegment('AND')]);
     }
 
     return this.datasourceSrv.get(this.variable.datasource).then(ds => {

@@ -1,5 +1,18 @@
 import { config, GrafanaBootConfig } from '@grafana/runtime';
-
 // Legacy binding paths
 export { config, GrafanaBootConfig as Settings };
-export default config;
+
+let grafanaConfig: GrafanaBootConfig = config;
+
+export default grafanaConfig;
+
+export const getConfig = () => {
+  return grafanaConfig;
+};
+
+export const updateConfig = (update: Partial<GrafanaBootConfig>) => {
+  grafanaConfig = {
+    ...grafanaConfig,
+    ...update,
+  };
+};

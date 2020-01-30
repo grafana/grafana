@@ -33,7 +33,10 @@ const evalFunctions = [
   { text: 'HAS NO VALUE', value: 'no_value' },
 ];
 
-const evalOperators = [{ text: 'OR', value: 'or' }, { text: 'AND', value: 'and' }];
+const evalOperators = [
+  { text: 'OR', value: 'or' },
+  { text: 'AND', value: 'and' },
+];
 
 const reducerTypes = [
   { text: 'avg()', value: 'avg' },
@@ -55,7 +58,10 @@ const noDataModes = [
   { text: 'Ok', value: 'ok' },
 ];
 
-const executionErrorModes = [{ text: 'Alerting', value: 'alerting' }, { text: 'Keep Last State', value: 'keep_state' }];
+const executionErrorModes = [
+  { text: 'Alerting', value: 'alerting' },
+  { text: 'Keep Last State', value: 'keep_state' },
+];
 
 function createReducerPart(model: any) {
   const def = new QueryPartDef({ type: model.type, defaultParams: [] });
