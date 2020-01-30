@@ -57,7 +57,8 @@
     "react-table": "7.0.0-rc.15",
     "react-transition-group": "2.6.1",
     "slate": "0.47.8",
-    "tinycolor2": "1.4.1"
+    "tinycolor2": "1.4.1",
+    "uPlot": "github:leeoniya/uPlot"
   },
   "devDependencies": {
     "@storybook/addon-actions": "5.2.4",

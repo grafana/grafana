@@ -1,0 +1,241 @@
+// NOTE:
+// This file is copied from:
+// https://github.com/leeoniya/uPlot/blob/master/src/uPlot.css
+// and then run through an online converter
+
+.uplot {
+  box-sizing: border-box;
+  background-color: $panel-bg;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  line-height: 1.5;
+  position: relative;
+  display: inline-block;
+  * {
+    box-sizing: border-box;
+    &::before {
+      box-sizing: border-box;
+    }
+    &::after {
+      box-sizing: border-box;
+    }
+  }
+  [class*='cursor'] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    will-change: transform;
+    z-index: 100;
+  }
+  .cursor-x {
+    height: 100%;
+    border-right: 1px dashed #607d8b;
+  }
+  .cursor-y {
+    width: 100%;
+    border-bottom: 1px dashed #607d8b;
+  }
+  .title {
+    text-align: center;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .wrap {
+    position: relative;
+  }
+  .plot {
+    position: relative;
+    display: inline-block;
+    outline: 1px solid #eee;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    user-select: none;
+  }
+  canvas {
+    display: block;
+  }
+  .legend {
+    font-size: 14px;
+    margin: auto;
+    text-align: center;
+    th {
+      font-weight: 600;
+      > * {
+        vertical-align: middle;
+      }
+    }
+    .ident {
+      width: 1em;
+      height: 1em;
+      margin-right: 4px;
+      border: 2px solid transparent;
+    }
+    .series {
+      > * {
+        padding: 4px;
+      }
+      th {
+        cursor: pointer;
+      }
+    }
+    .off {
+      > * {
+        opacity: 0.3;
+      }
+    }
+  }
+  .legend.inline {
+    display: block;
+    * {
+      display: inline-block;
+    }
+    tr {
+      margin-right: 16px;
+    }
+    th {
+      &::after {
+        content: ':';
+        vertical-align: middle;
+      }
+    }
+  }
+  .select {
+    background: rgba(0, 0, 0, 0.07);
+    position: absolute;
+    pointer-events: none;
+  }
+  .select.off {
+    display: none;
+  }
+  .point {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+    z-index: 100;
+  }
+  [class*='axis'].off {
+    display: none;
+  }
+  [class*='axis'] {
+    .labels {
+      text-align: center;
+      position: absolute;
+      font-size: 12px;
+      font-weight: bold;
+      > * {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        white-space: nowrap;
+      }
+    }
+    .values {
+      position: absolute;
+    }
+  }
+  [class*='axis-y-1'] {
+    .labels {
+      > * {
+        transform: translate(-50%, -50%) rotate(90deg);
+      }
+    }
+  }
+  [class*='axis-y-3'] {
+    .labels {
+      > * {
+        transform: translate(-50%, -50%) rotate(-90deg);
+      }
+    }
+  }
+  [class*='axis-y'] {
+    .values {
+      top: 0;
+      height: 100%;
+      > * {
+        position: absolute;
+        transform: translateY(-50%);
+        font-size: 12px;
+        white-space: pre-line;
+        width: 100%;
+        &::before {
+          content: '';
+          width: 10px;
+          border-top: 2px solid #eee;
+          transform: translateY(-50%);
+          position: absolute;
+          top: 50%;
+          z-index: -1;
+        }
+      }
+    }
+  }
+  [class*='axis-x'] {
+    .values {
+      > * {
+        position: absolute;
+        transform: translateX(-50%);
+        font-size: 12px;
+        white-space: pre-line;
+        text-align: center;
+        height: 100%;
+        &::before {
+          content: '';
+          height: 10px;
+          border-left: 2px solid #eee;
+          transform: translateX(-50%);
+          position: absolute;
+          left: 50%;
+          z-index: -1;
+        }
+      }
+    }
+  }
+  .axis-x-2 {
+    .values {
+      > * {
+        padding-top: 10px;
+        &::before {
+          top: 0;
+        }
+      }
+    }
+  }
+  .axis-x-0 {
+    .values {
+      > * {
+        padding-bottom: 10px;
+        &::before {
+          bottom: 0;
+        }
+      }
+    }
+  }
+  .axis-y-3 {
+    .values {
+      > * {
+        padding-right: 14px;
+        text-align: right;
+        &::before {
+          right: 0;
+        }
+      }
+    }
+  }
+  .axis-y-1 {
+    .values {
+      > * {
+        padding-left: 14px;
+        text-align: left;
+        &::before {
+          left: 0;
+        }
+      }
+    }
+  }
+}

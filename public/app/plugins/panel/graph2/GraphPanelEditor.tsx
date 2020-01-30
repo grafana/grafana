@@ -47,6 +47,10 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
     this.onGraphOptionsChange({ showPoints: !this.props.options.graph.showPoints });
   };
 
+  onToggleMicroPlot = () => {
+    this.onGraphOptionsChange({ useMicroPlot: !this.props.options.graph.useMicroPlot });
+  };
+
   onDefaultsChange = (field: FieldConfig) => {
     this.props.onOptionsChange({
       ...this.props.options,
@@ -59,7 +63,7 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
 
   render() {
     const {
-      graph: { showBars, showPoints, showLines },
+      graph: { showBars, showPoints, showLines, useMicroPlot },
       tooltipOptions: { mode },
     } = this.props.options;
 
@@ -70,6 +74,7 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
           <Switch label="Lines" labelClass="width-5" checked={showLines} onChange={this.onToggleLines} />
           <Switch label="Bars" labelClass="width-5" checked={showBars} onChange={this.onToggleBars} />
           <Switch label="Points" labelClass="width-5" checked={showPoints} onChange={this.onTogglePoints} />
+          <Switch label="uPlot" labelClass="width-5" checked={useMicroPlot} onChange={this.onToggleMicroPlot} />
         </div>
         <PanelOptionsGrid>
           <PanelOptionsGroup title="Field">

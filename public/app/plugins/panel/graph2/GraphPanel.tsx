@@ -1,9 +1,10 @@
 import React from 'react';
-import { GraphWithLegend, Chart } from '@grafana/ui';
-import { PanelProps } from '@grafana/data';
+import { GraphWithLegend, Chart, MicroPlot } from '@grafana/ui';
+import { PanelProps, applyFieldOverrides } from '@grafana/data';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
 import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
+import { config } from 'app/core/config';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -16,6 +17,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   options,
   onOptionsChange,
   onChangeTimeRange,
+  replaceVariables,
 }) => {
   if (!data) {
     return (
@@ -26,10 +28,25 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   }
 
   const {
-    graph: { showLines, showBars, showPoints },
+    graph: { showLines, showBars, showPoints, useMicroPlot },
     legend: legendOptions,
     tooltipOptions,
   } = options;
+
+  if (useMicroPlot) {
+    const dataProcessed = applyFieldOverrides({
+      data: data.series,
+      fieldOptions: options.fieldOptions,
+      theme: config.theme,
+      replaceVariables,
+    })[0];
+
+    return (
+      <div>
+        <MicroPlot width={width} height={height} data={dataProcessed} />
+      </div>
+    );
+  }
 
   const graphProps = {
     showBars,
