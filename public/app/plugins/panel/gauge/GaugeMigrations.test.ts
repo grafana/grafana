@@ -103,4 +103,23 @@ describe('Gauge Panel Migrations', () => {
     expect(newOptions.showThresholdMarkers).toBe(true);
     expect(newOptions.showThresholdLabels).toBe(true);
   });
+
+  it('change from angular singlestatt with no enabled gauge', () => {
+    const old: any = {
+      angular: {
+        format: 'ms',
+        decimals: 7,
+        gauge: {
+          maxValue: 150,
+          minValue: -10,
+          show: false,
+        },
+      },
+    };
+
+    const newOptions = gaugePanelChangedHandler({} as any, 'singlestat', old);
+    expect(newOptions.fieldOptions.defaults.unit).toBe('ms');
+    expect(newOptions.fieldOptions.defaults.min).toBe(undefined);
+    expect(newOptions.fieldOptions.defaults.max).toBe(undefined);
+  });
 });

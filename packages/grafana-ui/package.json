@@ -60,12 +60,12 @@
     "tinycolor2": "1.4.1"
   },
   "devDependencies": {
-    "@storybook/addon-actions": "5.2.4",
-    "@storybook/addon-docs": "^5.2.4",
-    "@storybook/addon-info": "5.2.4",
-    "@storybook/addon-knobs": "5.2.4",
-    "@storybook/react": "5.2.4",
-    "@storybook/theming": "5.2.4",
+    "@storybook/addon-actions": "5.3.9",
+    "@storybook/addon-docs": "5.3.9",
+    "@storybook/addon-info": "5.3.9",
+    "@storybook/addon-knobs": "5.3.9",
+    "@storybook/react": "5.3.9",
+    "@storybook/theming": "5.3.9",
     "@types/classnames": "2.2.7",
     "@types/common-tags": "^1.8.0",
     "@types/d3": "5.7.2",
@@ -79,8 +79,6 @@
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.9.0",
     "@types/react-transition-group": "2.0.16",
-    "@types/storybook__addon-info": "4.1.2",
-    "@types/storybook__react": "4.0.2",
     "@types/tinycolor2": "1.4.1",
     "common-tags": "^1.8.0",
     "pretty-format": "24.9.0",
@@ -93,6 +91,7 @@
     "rollup-plugin-terser": "4.0.4",
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
+    "ts-loader": "6.2.1",
     "typescript": "3.7.2"
   },
   "types": "src/index.ts"

@@ -229,6 +229,7 @@ export function SelectBase<T>({
     onKeyDown,
     menuShouldScrollIntoView: false,
     renderControl,
+    captureMenuScroll: false,
   };
 
   // width property is deprecated in favor of size or className
@@ -254,7 +255,6 @@ export function SelectBase<T>({
 
   return (
     <ReactSelectComponent
-      captureMenuScroll={false}
       components={{
         MenuList: SelectMenu,
         Group: SelectOptionGroup,
