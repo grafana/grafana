@@ -7,6 +7,7 @@ import appEvents from '../../app_events';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
+  enableCreateNew: boolean;
   rootName?: string;
   enableReset?: boolean;
   dashboardId?: any;
@@ -17,7 +18,6 @@ export interface Props {
 interface State {
   validationError: string;
   hasValidationError: boolean;
-  folders: Array<SelectableValue<number>>;
 }
 
 export class FolderPicker extends PureComponent<Props, State> {
@@ -25,12 +25,12 @@ export class FolderPicker extends PureComponent<Props, State> {
     rootName: 'General',
     enableReset: false,
     initialTitle: '',
+    enableCreateNew: false,
   };
 
   state: State = {
     validationError: '',
     hasValidationError: false,
-    folders: [],
   };
 
   componentDidMount = async () => {
@@ -91,9 +91,6 @@ export class FolderPicker extends PureComponent<Props, State> {
     const rootFolder: SelectableValue<number> = { label: rootName, value: 0 };
 
     const options = await this.getOptions('');
-    this.setState({
-      folders: options,
-    });
 
     let folder: SelectableValue<number>;
     if (initialFolderId) {
@@ -124,7 +121,7 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { validationError, hasValidationError } = this.state;
-    const { initialFolderId, initialTitle } = this.props;
+    const { enableCreateNew, initialFolderId, initialTitle } = this.props;
 
     return (
       <>
@@ -135,7 +132,7 @@ export class FolderPicker extends PureComponent<Props, State> {
               loadingMessage="Loading folders..."
               value={{ label: initialTitle, value: initialFolderId }}
               defaultOptions
-              allowCustomValue
+              allowCustomValue={enableCreateNew}
               loadOptions={this.getOptions}
               onChange={this.onFolderChange}
               size="sm"
