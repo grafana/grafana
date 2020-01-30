@@ -275,7 +275,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     // 3) default case - correct input, mapped to the value from the input field
 
     let linesLimit = 0;
-    if (typeof target.maxLines === 'undefined') {
+    if (target.maxLines === undefined) {
       // no target.maxLines, using options.maxDataPoints
       linesLimit = Math.min(options.maxDataPoints || Infinity, this.maxLines);
     } else {

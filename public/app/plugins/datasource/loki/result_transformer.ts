@@ -467,7 +467,7 @@ export function processRangeQueryResponse(
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(response.data.result.slice(0, limit), target, limit, config, reverse),
+        data: lokiStreamsToDataframes(response.data.result, target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 
