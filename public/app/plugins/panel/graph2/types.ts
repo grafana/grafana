@@ -14,7 +14,7 @@ export interface GraphOptions {
   showBars: boolean;
   showLines: boolean;
   showPoints: boolean;
-  useMicroPlot: boolean;
+  useMicroPlot?: boolean;
 }
 
 export interface Options {
