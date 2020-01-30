@@ -415,12 +415,9 @@ export const changeVariableName = (variable: VariableModel, newName: string): Th
       errorText = 'Only word and digit characters are allowed in variable names';
     }
 
-    const variablesWithSameName = (getState().dashboard.model as DashboardModel)?.templating.list.filter(v => {
-      if (variableAdapters.contains(v.type)) {
-        return v.name === newName && v.uuid !== variable.uuid;
-      }
-      return v.name === newName;
-    });
+    const variablesWithSameName = (getState().dashboard.model as DashboardModel)?.templating.list.filter(
+      v => v.name === newName
+    );
 
     if (variablesWithSameName.length) {
       errorText = 'Variable with the same name already exists';

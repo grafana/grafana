@@ -299,7 +299,7 @@ export class VariableEditorCtrl {
     for (let index = 0; index < this.$scope.variables.length; index++) {
       const variable = this.$scope.variables[index];
       if (variable.uuid && variable.uuid === args.uuid) {
-        variable.name = getVariable(args.uuid).name;
+        this.$scope.variables[index].name = getVariable(args.uuid).name;
         break;
       }
     }

@@ -1,4 +1,4 @@
-import angular, { ILocationService, IScope } from 'angular';
+import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
 import { e2e } from '@grafana/e2e';
 
@@ -17,7 +17,7 @@ export class SubMenuCtrl {
   selectors: typeof e2e.pages.Dashboard.SubMenu.selectors;
 
   /** @ngInject */
-  constructor(private variableSrv: VariableSrv, private $location: ILocationService, private $scope: IScope) {
+  constructor(private variableSrv: VariableSrv, private $location: ILocationService) {
     this.annotations = this.dashboard.templating.list;
     const variablesInState = getVariables().map(variable => ({ ...variable }));
     this.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
@@ -73,7 +73,6 @@ export class SubMenuCtrl {
         break;
       }
     }
-    this.$scope.$digest();
   }
 }
 

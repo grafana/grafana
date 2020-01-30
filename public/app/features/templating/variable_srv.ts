@@ -9,11 +9,13 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 // Types
-import { TimeRange, AppEvents } from '@grafana/data';
+import { AppEvents, TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
 import { variableAdapters } from './adapters';
 import { appEvents } from 'app/core/core';
+import { VariableIdentifier } from './state/actions';
+import { getVariable } from './state/selectors';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -37,6 +39,7 @@ export class VariableSrv {
       CoreEvents.templateVariableValueUpdated,
       this.updateUrlParamsWithCurrentVariables.bind(this)
     );
+    this.dashboard.events.on(CoreEvents.variableNameInStateUpdated, this.onVariableNameInStateUpdated.bind(this));
 
     // create working class models representing variables
     dashboard.templating.list = dashboard.templating.list.map((model: VariableModel, index) =>
@@ -139,6 +142,12 @@ export class VariableSrv {
     this.variables.splice(index, 1);
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
+  }
+
+  private onVariableNameInStateUpdated(args: VariableIdentifier) {
+    const { index, name } = getVariable(args.uuid);
+    // so that changeVariableName thunk can look for duplicate name
+    this.dashboard.templating.list[index].name = name;
   }
 
   updateOptions(variable: any) {
