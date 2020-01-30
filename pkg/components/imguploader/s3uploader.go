@@ -59,7 +59,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 			}},
 			&credentials.EnvProvider{},
 			remoteCredProvider(sess),
-			webidentityProvider(sess),
+			webIdentityProvider(sess),
 		})
 	cfg := &aws.Config{
 		Region:           aws.String(u.region),
@@ -99,7 +99,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	return result.Location, nil
 }
 
-func webidentityProvider(sess *session.Session) credentials.Provider {
+func webIdentityProvider(sess *session.Session) credentials.Provider {
 	svc := sts.New(sess)
 
 	roleARN := os.Getenv("AWS_ROLE_ARN")

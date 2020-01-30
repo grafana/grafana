@@ -106,7 +106,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			}},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 			remoteCredProvider(sess),
-			webidentityProvider(sess),
+			webIdentityProvider(sess),
 		})
 
 	credentialCacheLock.Lock()
@@ -119,7 +119,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	return creds, nil
 }
 
-func webidentityProvider(sess *session.Session) credentials.Provider {
+func webIdentityProvider(sess *session.Session) credentials.Provider {
 	svc := sts.New(sess)
 
 	roleARN := os.Getenv("AWS_ROLE_ARN")
