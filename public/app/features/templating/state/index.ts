@@ -3,6 +3,7 @@ import { AnyAction, PayloadAction } from '@reduxjs/toolkit';
 import { VariableType } from '../variable';
 import {
   addVariable,
+  removeVariable,
   variableActions,
   variableEditorMounted,
   variableEditorUnMounted,
@@ -33,6 +34,16 @@ export const updateTemplatingState = (
     return {
       ...state,
       variables: [...state.variables, reducer(undefined, action)],
+    };
+  }
+
+  if (removeVariable.match(action)) {
+    const index = state.variables.findIndex(v => v.variable.uuid === action.payload.uuid);
+    const variables = state.variables.filter(v => v.variable.uuid !== action.payload.uuid);
+    delete state.variables[index];
+    return {
+      ...state,
+      variables,
     };
   }
 

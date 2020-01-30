@@ -19,6 +19,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
+import { MoveVariableType } from '../../../types/events';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -82,6 +83,7 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
     };
   }
 );
+export const removeVariable = createAction<VariablePayload<undefined>>('templating/removeVariable');
 export const setInitLock = createAction<VariablePayload<undefined>>('templating/setInitLock');
 export const resolveInitLock = createAction<VariablePayload<undefined>>('templating/resolveInitLock');
 export const removeInitLock = createAction<VariablePayload<undefined>>('templating/removeInitLock');
@@ -105,9 +107,13 @@ export const changeVariableNameSucceeded = createAction<VariablePayload<string>>
 export const changeVariableNameFailed = createAction<VariablePayload<{ newName: string; errorText: string }>>(
   'templating/changeVariableNameFailed'
 );
+export const moveVariableTypeToAngular = createAction<VariablePayload<MoveVariableType>>(
+  'templating/moveVariableTypeToAngular'
+);
 
 export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any>>> = [
   addVariable,
+  removeVariable,
   setInitLock,
   resolveInitLock,
   removeInitLock,
@@ -439,12 +445,14 @@ export const changeVariableType = (variable: VariableModel, newType: VariableTyp
 
     // existing type is adapted but new type is not
     if (currentIsAdapted && !newIsAdapted) {
-      // delete variable in state
+      const { name, label, index } = variable;
+      dispatch(removeVariable(toVariablePayload(variable)));
+      dispatch(moveVariableTypeToAngular(toVariablePayload(variable, { name, label, index, type: newType })));
     }
 
     // existing type is not adapted but new type is
     if (!currentIsAdapted && newIsAdapted) {
-      // add variable to state
+      // handled by middleware
     }
 
     // existing type and new type are not adapted
@@ -455,7 +463,7 @@ export const changeVariableType = (variable: VariableModel, newType: VariableTyp
 
     // existing type and new type are adapted
     if (currentIsAdapted && newIsAdapted) {
-      // just change type
+      throw new Error('Not implemented yet');
     }
   };
 };

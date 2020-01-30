@@ -13,13 +13,31 @@ import { getVariable, getVariables } from './state/selectors';
 import { variableAdapters } from './adapters';
 import { CoreEvents } from '../../types';
 import { VariableIdentifier } from './state/actions';
-import { VariableMovedToState } from '../../types/events';
+import { MoveVariableType, VariableMovedToState } from '../../types/events';
 
 export class VariableEditorCtrl {
   /** @ngInject */
-  constructor(private $scope: any, datasourceSrv: DatasourceSrv, variableSrv: VariableSrv, templateSrv: TemplateSrv) {
-    appEvents.on(CoreEvents.variableNameInStateUpdated, this.onVariableNameInStateUpdated.bind(this), $scope);
-    appEvents.on(CoreEvents.variableMovedToState, this.onVariableMovedToState.bind(this), $scope);
+  constructor(
+    private $scope: any,
+    datasourceSrv: DatasourceSrv,
+    private variableSrv: VariableSrv,
+    templateSrv: TemplateSrv
+  ) {
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableNameInStateUpdated,
+      this.onVariableNameInStateUpdated.bind(this),
+      $scope
+    );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableMovedToState,
+      this.onVariableMovedToState.bind(this),
+      $scope
+    );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableMovedToAngular,
+      this.onVariableMovedToAngular.bind(this),
+      $scope
+    );
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
@@ -231,7 +249,7 @@ export class VariableEditorCtrl {
     $scope.typeChanged = function() {
       if (variableAdapters.contains($scope.current.type as VariableType)) {
         const { name, label, index, type } = $scope.current;
-        appEvents.emit(CoreEvents.variableTypeInAngularUpdated, { name, label, index, newType: type });
+        variableSrv.dashboard.events.emit(CoreEvents.variableTypeInAngularUpdated, { name, label, index, type });
         return;
       }
       const old = $scope.current;
@@ -288,6 +306,7 @@ export class VariableEditorCtrl {
   }
 
   onVariableMovedToState(args: VariableMovedToState) {
+    this.variableSrv.removeVariable(this.$scope.current);
     for (let index = 0; index < this.$scope.variables.length; index++) {
       const variable = this.$scope.variables[index];
       if (variable.index === args.index) {
@@ -295,6 +314,29 @@ export class VariableEditorCtrl {
         this.$scope.current = variable;
         this.$scope.variables[index] = variable;
         this.$scope.validate();
+        break;
+      }
+    }
+  }
+
+  onVariableMovedToAngular(args: MoveVariableType) {
+    for (let index = 0; index < this.$scope.variables.length; index++) {
+      const variable = this.$scope.variables[index];
+      if (variable.index === args.index) {
+        const angularVariable = this.variableSrv.createVariableFromModel(
+          {
+            type: args.type,
+          },
+          args.index
+        );
+        this.variableSrv.addVariable(angularVariable);
+        this.$scope.current = angularVariable;
+        this.$scope.current.name = args.name;
+        this.$scope.current.label = args.label;
+        this.$scope.variables[index] = this.$scope.current;
+        this.$scope.validate();
+        this.$scope.$digest();
+        this.variableSrv.dashboard.events.emit(CoreEvents.variableMovedToAngularSucceeded, args);
         break;
       }
     }

@@ -1,4 +1,4 @@
-import angular, { ILocationService } from 'angular';
+import angular, { ILocationService, IScope } from 'angular';
 import _ from 'lodash';
 import { e2e } from '@grafana/e2e';
 
@@ -7,7 +7,7 @@ import { CoreEvents } from '../../../../types';
 import { VariableModel } from '../../../templating/variable';
 import { getVariable, getVariables } from '../../../templating/state/selectors';
 import { variableAdapters } from '../../../templating/adapters';
-import { VariableMovedToState } from '../../../../types/events';
+import { MoveVariableType, VariableMovedToState } from '../../../../types/events';
 
 export class SubMenuCtrl {
   annotations: any;
@@ -17,7 +17,7 @@ export class SubMenuCtrl {
   selectors: typeof e2e.pages.Dashboard.SubMenu.selectors;
 
   /** @ngInject */
-  constructor(private variableSrv: VariableSrv, private $location: ILocationService) {
+  constructor(private variableSrv: VariableSrv, private $location: ILocationService, private $scope: IScope) {
     this.annotations = this.dashboard.templating.list;
     const variablesInState = getVariables().map(variable => ({ ...variable }));
     this.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
@@ -26,6 +26,11 @@ export class SubMenuCtrl {
       this.submenuEnabled = enabled;
     });
     this.dashboard.events.on(CoreEvents.variableMovedToState, this.onVariableMovedToState.bind(this));
+    this.dashboard.events.on(
+      CoreEvents.variableMovedToAngularSucceeded,
+      this.onVariableMovedToAngularSucceeded.bind(this)
+    );
+
     this.selectors = e2e.pages.Dashboard.SubMenu.selectors;
   }
 
@@ -58,6 +63,17 @@ export class SubMenuCtrl {
         break;
       }
     }
+  }
+
+  onVariableMovedToAngularSucceeded(args: MoveVariableType) {
+    const variable = this.variableSrv.variables.find(v => v.index === args.index && v.name === args.name);
+    for (let index = 0; index < this.variables.length; index++) {
+      if (index === variable.index) {
+        this.variables[index] = variable;
+        break;
+      }
+    }
+    this.$scope.$digest();
   }
 }
 
