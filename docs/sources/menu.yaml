@@ -108,6 +108,8 @@
   - name: Dashboard Features
     link: /features/dashboard/
     children:
+    - link: /features/dashboard/dashboards/
+      name: Overview
     - link: /reference/templating/
       name: Variables
     - link: /reference/annotations/
