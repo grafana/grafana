@@ -16,7 +16,6 @@ export class MoveToFolderCtrl {
 
   onFolderChange = (folder: any) => {
     this.folder = folder;
-    console.log(folder);
   };
 
   save = () => {
