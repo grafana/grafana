@@ -53,10 +53,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
   }
   datasource={Object {}}
   history={Array []}
-  logLabelOptions={Array []}
   onChange={[MockFunction]}
-  onLabelsRefresh={[Function]}
-  onLoadOptions={[Function]}
   onRunQuery={[MockFunction]}
   query={
     Object {
@@ -65,7 +62,5 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       "refId": "A",
     }
   }
-  syntax={null}
-  syntaxLoaded={false}
 />
 `;
