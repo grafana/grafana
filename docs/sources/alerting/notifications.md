@@ -88,8 +88,8 @@ Username | Set the username for the bot's message.
 Recipient | Allows you to override the Slack recipient.
 Icon emoji | Provide an emoji to use as the icon for the bot's message. Ex :smile:
 Icon URL | Provide a url to an image to use as the icon for the bot's message.
-Mention Users | Optionally mention one or more comma-separated users in the Slack notification sent by Grafana. You have to refer to users via their Slack IDs (you can get a user's ID from their Slack profile).
-Mention Groups | Optionally mention one or more comma-separated groups in the Slack notification sent by Grafana. You have to refer to groups via their Slack IDs (you can get a group's ID from its Slack profile URL).
+Mention Users | Optionally mention one or more users in the Slack notification sent by Grafana. You have to refer to users, comma-separated, via their corresponding Slack IDs (which you can find by clicking the overflow button on each user's Slack profile).
+Mention Groups | Optionally mention one or more groups in the Slack notification sent by Grafana. You have to refer to groups, comma-separated, via their corresponding Slack IDs (which you can get from each group's Slack profile URL).
 Mention Channel | Optionally mention either all channel members or just active ones.
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
