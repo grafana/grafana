@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { DataFrame, getTimeField, FieldType, formattedValueToString } from '@grafana/data';
+import { DataFrame, getTimeField, FieldType } from '@grafana/data';
 
 import uPlot from 'uPlot/dist/uPlot.cjs';
 // import 'uPlot/src/uPlot.css';
@@ -42,7 +42,7 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
   init = (element: any) => {
     const { width, height } = this.props;
 
-    const { series, uData } = getUPlotStuff(this.props);
+    const { series, uData, scales } = getUPlotStuff(this.props);
     const fmtt = (val: number, dec: number) => val.toFixed(dec);
 
     const opts = {
@@ -52,11 +52,7 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
         show: false,
       },
       tzDate: (ts: any) => uPlot.tzDate(new Date(ts), 'Etc/UTC'),
-      scales: {
-        x: {
-          distr: 2,
-        },
-      },
+      scales,
       series,
       axes: [
         {},
@@ -101,7 +97,7 @@ export class MicroPlot extends PureComponent<Props, PlotState> {
     };
 
     // Should only happen once!
-    console.log('INIT Plot', series, uData);
+    console.log('INIT Plot', series, scales, uData);
     this.plot = new uPlot.Line(opts, uData, element);
   };
 
@@ -118,13 +114,23 @@ export function getUPlotStuff(props: Props) {
   const { data } = props;
   const series: any[] = [];
   const uData: any[] = [];
-  let { timeIndex } = getTimeField(data);
-  if (!timeIndex) {
-    timeIndex = 0;
-  }
+  const scales: any = {
+    x: {
+      time: true,
+    },
+  };
 
+  let { timeIndex } = getTimeField(data);
+  if (isNaN(timeIndex!)) {
+    timeIndex = 0; // not really time, but just a value
+    scales.x.time = false;
+  }
+  let xvals = data.fields[timeIndex!].values.toArray();
+  if (scales.x.time) {
+    xvals = xvals.map(v => v / 1000); // Convert to second precision timestamp
+  }
+  uData.push(xvals); // make all numbers floating point
   series.push({});
-  uData.push(data.fields[timeIndex].values.toArray());
   for (let i = 0; i < data.fields.length; i++) {
     if (i === timeIndex) {
       continue; // already handled time
@@ -140,5 +146,5 @@ export function getUPlotStuff(props: Props) {
     });
     uData.push(field.values.toArray());
   }
-  return { series, uData };
+  return { series, uData, scales };
 }

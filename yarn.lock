@@ -22984,6 +22984,10 @@ typical@^2.6.1:
   resolved "https://registry.yarnpkg.com/typical/-/typical-2.6.1.tgz#5c080e5d661cbbe38259d2e70a3c7253e873881d"
   integrity sha1-XAgOXWYcu+OCWdLnCjxyU+hziB0=
 
+"uPlot@github:leeoniya/uPlot":
+  version "0.1.0"
+  resolved "https://codeload.github.com/leeoniya/uPlot/tar.gz/6774b8bb70fefa42dea5c216586e6f728a176b49"
+
 ua-parser-js@^0.7.18:
   version "0.7.20"
   resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-0.7.20.tgz#7527178b82f6a62a0f243d1f94fd30e3e3c21098"
