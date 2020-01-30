@@ -18,6 +18,7 @@ import _ from 'lodash';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { Graph } from '../../../core/utils/dag';
+import { DashboardModel } from '../../dashboard/state';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -408,7 +409,13 @@ export const changeVariableName = (variable: VariableModel, newName: string): Th
       errorText = 'Only word and digit characters are allowed in variable names';
     }
 
-    const variablesWithSameName = getVariables(getState()).filter(v => v.name === newName && v.uuid !== variable.uuid);
+    const variablesWithSameName = (getState().dashboard.model as DashboardModel)?.templating.list.filter(v => {
+      if (variableAdapters.contains(v.type)) {
+        return v.name === newName && v.uuid !== variable.uuid;
+      }
+      return v.name === newName;
+    });
+
     if (variablesWithSameName.length) {
       errorText = 'Variable with the same name already exists';
     }
