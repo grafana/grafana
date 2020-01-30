@@ -11,10 +11,7 @@ const navModel = {
     breadcrumbs: [{ title: 'Login', url: 'login' }],
   },
   node: {
-    icon: 'gicon gicon-branding',
-    text: 'Sign Up',
-    subTitle: 'Register your Grafana account',
-    breadcrumbs: [{ title: 'Login', url: 'login' }],
+    text: '',
   },
 };
 export class SignupPage extends React.PureComponent {
