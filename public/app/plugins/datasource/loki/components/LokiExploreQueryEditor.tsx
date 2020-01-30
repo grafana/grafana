@@ -1,5 +1,5 @@
 // Libraries
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo } from 'react';
 import _ from 'lodash';
 
 // Types
@@ -7,7 +7,6 @@ import { AbsoluteTimeRange, ExploreQueryFieldProps, ExploreMode } from '@grafana
 import { LokiDatasource } from '../datasource';
 import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';
-import { useLokiSyntax } from './useLokiSyntax';
 import { LokiExploreExtraField } from './LokiExploreExtraField';
 
 type Props = ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions>;
@@ -30,25 +29,10 @@ export function LokiExploreQueryEditor(props: Props) {
     };
   }
 
-  const [maxLines, setMaxLines] = useState(query?.maxLines?.toString() || datasource?.maxLines?.toString());
-
-  const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
-    datasource.languageProvider,
-    absolute
-  );
-
-  function onChangeQueryLimit(value: string, override?: boolean) {
-    const { query, onChange, onRunQuery } = props;
-    if (onChange) {
-      const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
-
-      if (query?.expr?.length > 0) {
-        onChange(nextQuery);
-        if (override && onRunQuery) {
-          onRunQuery();
-        }
-      }
-    }
+  function onChangeQueryLimit(value: string) {
+    const { query, onChange } = props;
+    const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
+    onChange(nextQuery);
   }
 
   function preprocessMaxLines(value: string): number {
@@ -65,16 +49,14 @@ export function LokiExploreQueryEditor(props: Props) {
     }
   }
 
-  useEffect(() => {
-    onChangeQueryLimit(maxLines);
-  }, [maxLines]);
-
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
-    setMaxLines(e.currentTarget.value);
+    if (e.currentTarget.value.length === 0 || parseInt(e.currentTarget.value, 10) !== query.maxLines) {
+      onChangeQueryLimit(e.currentTarget.value);
+    }
   }
 
   function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' && parseInt(maxLines, 10) > 0) {
+    if (e.key === 'Enter') {
       onRunQuery();
     }
   }
@@ -87,9 +69,6 @@ export function LokiExploreQueryEditor(props: Props) {
       onRunQuery={onRunQuery}
       history={history}
       data={data}
-      onLoadOptions={setActiveOption}
-      onLabelsRefresh={refreshLabels}
-      syntaxLoaded={isSyntaxReady}
       absoluteRange={absolute}
       ExtraFieldElement={
         exploreMode === ExploreMode.Logs ? (
@@ -97,13 +76,12 @@ export function LokiExploreQueryEditor(props: Props) {
             label={'Line limit'}
             onChangeFunc={onMaxLinesChange}
             onKeyDownFunc={onReturnKeyDown}
-            value={maxLines}
+            value={query?.maxLines?.toString() || ''}
             type={'number'}
             min={0}
           />
         ) : null
       }
-      {...syntaxProps}
     />
   );
 }
