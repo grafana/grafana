@@ -204,7 +204,6 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
             $('<span class="comma' + (last ? ' query-part__last' : '') + '">, </span>').appendTo(elem);
           }
 
-          console.log(linkClass);
           const $paramLink = $(`<a ng-click="" class="${linkClass}">${paramValue}</a>`);
           const $input = $(paramTemplate);
           $input.attr('placeholder', param.name);
