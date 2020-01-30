@@ -32,8 +32,8 @@ jobs:
         - run:
             name: ci job started
             command: './scripts/ci-job-started.sh'
-        - run: apt update
-        - run: apt install -y default-mysql-client
+        - run: sudo apt update
+        - run: sudo apt install -y default-mysql-client
         - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
         - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
         - run:
@@ -62,8 +62,8 @@ jobs:
         - run:
             name: ci job started
             command: './scripts/ci-job-started.sh'
-        - run: apt update
-        - run: apt install -y postgresql-client
+        - run: sudo apt update
+        - run: sudo apt install -y postgresql-client
         - run: dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
         - run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql'
         - run:
@@ -147,7 +147,7 @@ jobs:
 
   end-to-end-test-release:
       docker:
-        - image: circleci/node:12-browsers
+        - image: circleci/node:12-browsers #browsers variant likely to be replaced by service images,
         - image: grafana/grafana-dev:$CIRCLE_TAG
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
