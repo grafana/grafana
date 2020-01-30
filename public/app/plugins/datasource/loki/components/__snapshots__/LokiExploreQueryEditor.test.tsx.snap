@@ -3,7 +3,7 @@
 exports[`LokiExploreQueryEditor should render component 1`] = `
 <Component
   ExtraFieldElement={
-    <LokiExploreExtraField
+    <Memo(LokiExploreExtraField)
       label="Line limit"
       min={0}
       onChangeFunc={[Function]}
