@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
 import { Forms } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
+import appEvents from '../../app_events';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -57,17 +58,31 @@ export class FolderPicker extends PureComponent<Props, State> {
     return options;
   };
 
-  onFolderChange = (newFolder: SelectableValue<number>) => {
+  onFolderChange = async (newFolder: SelectableValue<number>) => {
     if (!newFolder) {
       newFolder = { value: 0, label: this.props.rootName };
     }
 
     if (newFolder.__isNew__) {
-      //
-      newFolder = { value: -1, label: newFolder.label };
+      newFolder = await this.createNewFolder(newFolder.label);
     }
 
-    this.props.onChange({ id: newFolder.value, title: newFolder.label });
+    if (newFolder.value > -1) {
+      this.props.onChange({ id: newFolder.value, title: newFolder.label });
+    }
+  };
+
+  createNewFolder = async (folderName: string) => {
+    const newFolder = await getBackendSrv().createFolder({ title: folderName });
+    let folder = { value: -1, label: 'Not created' };
+    if (newFolder.id > -1) {
+      appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
+      folder = { value: newFolder.id, label: newFolder.title };
+    } else {
+      appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
+    }
+
+    return folder;
   };
 
   private loadInitialValue = async () => {

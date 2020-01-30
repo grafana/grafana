@@ -16,24 +16,10 @@ export class MoveToFolderCtrl {
 
   onFolderChange = (folder: any) => {
     this.folder = folder;
+    console.log(folder);
   };
 
   save = () => {
-    if (this.folder.id === -1) {
-      promiseToDigest(this.$scope)(
-        backendSrv.createFolder({ title: this.folder.title }).then((result: { title: string; id: number }) => {
-          appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
-
-          this.folder = { title: result.title, id: result.id };
-          this.saveToFolder();
-        })
-      );
-    } else {
-      this.saveToFolder();
-    }
-  };
-
-  saveToFolder = () => {
     return promiseToDigest(this.$scope)(
       backendSrv.moveDashboards(this.dashboards, this.folder).then((result: any) => {
         if (result.successCount > 0) {
