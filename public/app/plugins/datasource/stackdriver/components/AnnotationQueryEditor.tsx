@@ -53,7 +53,9 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
       ...target,
     });
 
-    datasource.getLabels(target.metricType, target.refId).then(labels => this.setState({ labels }));
+    datasource
+      .getLabels(target.metricType, this.state.defaultProject, target.refId)
+      .then(labels => this.setState({ labels }));
   }
 
   onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
@@ -69,7 +71,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         onQueryChange(this.state);
       }
     );
-    datasource.getLabels(type, this.state.refId).then(labels => this.setState({ labels }));
+    datasource.getLabels(type, this.state.refId, this.state.defaultProject).then(labels => this.setState({ labels }));
   };
 
   onChange(prop: string, value: string | string[]) {

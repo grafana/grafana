@@ -10,18 +10,18 @@ export interface Props {
 
 export interface State {
   value: string;
-  projectList: string[][];
+  projectsList: string[][];
 }
 
 export class Project extends React.Component<Props, State> {
   state: State = {
-    projectList: [],
+    projectsList: [],
     value: '',
   };
 
   async componentDidMount() {
-    const projectList = await this.props.datasource.getProjects();
-    this.setState({ projectList });
+    const projectsList = await this.props.datasource.getProjects();
+    this.setState({ projectsList });
   }
 
   onProjectChange = (project: string) => {
@@ -29,7 +29,7 @@ export class Project extends React.Component<Props, State> {
   };
 
   render() {
-    const { projectList } = this.state;
+    const { projectsList } = this.state;
     const { defaultProject } = this.props;
     return (
       <div className="gf-form-inline">
@@ -37,7 +37,7 @@ export class Project extends React.Component<Props, State> {
           <span className="gf-form-label width-9 query-keyword">Project</span>
           <MetricSelect
             onChange={this.onProjectChange}
-            options={projectList}
+            options={projectsList}
             value={defaultProject}
             isSearchable={true}
             placeholder="Select Project"

@@ -288,7 +288,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
 
   async getProjects() {
     try {
-      const { data } = await this.backendSrv.datasourceRequest({
+      const { data } = await getBackendSrv().datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
         data: {

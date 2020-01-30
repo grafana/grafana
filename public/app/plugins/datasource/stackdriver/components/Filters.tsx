@@ -6,6 +6,7 @@ import { labelsToGroupedOptions, toOption } from '../functions';
 import { Filter } from '../types';
 
 export interface Props {
+  defaultProject: string;
   labels: { [key: string]: string[] };
   filters: string[];
   onChange: (filters: string[]) => void;

@@ -70,10 +70,16 @@ export class QueryEditor extends React.Component<Props, State> {
       alignOptions,
       perSeriesAligner,
       variableOptionGroup,
+      defaultProject:
+        this.props.target.defaultProject !== undefined && this.props.target.defaultProject !== null
+          ? this.props.target.defaultProject
+          : this.props.datasource.projectName,
       variableOptions: variableOptionGroup.options,
     });
 
-    datasource.getLabels(target.metricType, target.refId, target.groupBys).then(labels => this.setState({ labels }));
+    datasource
+      .getLabels(target.metricType, target.refId, this.props.datasource.projectName, target.groupBys)
+      .then(labels => this.setState({ labels }));
   }
 
   componentWillUnmount() {
@@ -117,7 +123,12 @@ export class QueryEditor extends React.Component<Props, State> {
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
       templateSrv
     );
-    const labels = await this.props.datasource.getLabels(type, target.refId, target.groupBys);
+    const labels = await this.props.datasource.getLabels(
+      type,
+      target.refId,
+      this.state.defaultProject,
+      target.groupBys
+    );
     this.setState(
       {
         alignOptions,
@@ -143,7 +154,9 @@ export class QueryEditor extends React.Component<Props, State> {
       this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
     });
-    datasource.getLabels(target.metricType, target.refId, value).then(labels => this.setState({ labels }));
+    datasource
+      .getLabels(target.metricType, target.refId, this.state.defaultProject, value)
+      .then(labels => this.setState({ labels }));
   }
 
   onPropertyChange(prop: string, value: string[]) {
