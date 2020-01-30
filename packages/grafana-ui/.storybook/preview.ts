@@ -32,6 +32,7 @@ addDecorator(withKnobs);
 addDecorator(withPaddedStory);
 
 addParameters({
+  info: {},
   options: {
     showPanel: true,
     panelPosition: 'bottom',

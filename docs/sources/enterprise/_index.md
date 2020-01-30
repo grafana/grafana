@@ -37,7 +37,13 @@ Supported auth providers:
 
 * [LDAP]({{< relref "../auth/enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 * [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
+* [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 * [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
+
+### White labeling
+
+White labeling makes it possible to customize the logos and footer links of Grafana. [Learn More]({{< relref "white-labeling.md" >}}).
+
 
 ### Data source permissions
 

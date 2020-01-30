@@ -31,6 +31,14 @@ describe('templateSrv', () => {
       expect(target).toBe('Server1 nested');
     });
 
+    it('built in vars should support objects', () => {
+      _templateSrv.setGlobalVariable('__dashboard', {
+        value: { name: 'hello' },
+      });
+      const target = _templateSrv.replace('${__dashboard.name}');
+      expect(target).toBe('hello');
+    });
+
     it('scoped vars should support objects with propert names with dot', () => {
       const target = _templateSrv.replace('${series.name} ${series.nested["field.with.dot"]}', {
         series: { value: { name: 'Server1', nested: { 'field.with.dot': 'nested' } } },
