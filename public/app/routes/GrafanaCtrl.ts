@@ -167,7 +167,7 @@ export function grafanaAppDirective(
       });
 
       // check if we are in server side render
-      if (document.cookie.indexOf('renderKey') !== -1) {
+      if (config.phantomJSRenderer && document.cookie.indexOf('renderKey') !== -1) {
         body.addClass('body--phantomjs');
       }
 
