@@ -69,6 +69,7 @@ export const longContent = () => {
             </div>
             {state.isOpen && (
               <Drawer
+                scrollableContent
                 title="Drawer with long content"
                 onClose={() => {
                   updateValue({ isOpen: !state.isOpen });
