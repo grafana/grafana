@@ -1,12 +1,14 @@
 import { DashboardImportCtrl } from './DashboardImportCtrl';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { IScope } from 'angular';
 
 describe('DashboardImportCtrl', () => {
   const ctx: any = {};
   jest.spyOn(backendSrv, 'getDashboardByUid').mockImplementation(() => Promise.resolve([]));
   jest.spyOn(backendSrv, 'search').mockImplementation(() => Promise.resolve([]));
   const getMock = jest.spyOn(backendSrv, 'get');
+  const $scope = ({ $evalAsync: jest.fn() } as any) as IScope;
 
   let navModelSrv: any;
   let validationSrv: any;
@@ -20,7 +22,7 @@ describe('DashboardImportCtrl', () => {
       validateNewDashboardName: jest.fn().mockReturnValue(Promise.resolve()),
     };
 
-    ctx.ctrl = new DashboardImportCtrl(validationSrv, navModelSrv, {} as any, {} as any);
+    ctx.ctrl = new DashboardImportCtrl($scope, validationSrv, navModelSrv, {} as any, {} as any);
 
     jest.clearAllMocks();
   });

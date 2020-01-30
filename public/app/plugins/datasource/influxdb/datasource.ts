@@ -204,7 +204,9 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   metricFindQuery(query: string, options?: any) {
     const interpolated = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(interpolated, options).then(() => this.responseParser.parse(query));
+    return this._seriesQuery(interpolated, options).then(resp => {
+      return this.responseParser.parse(query, resp);
+    });
   }
 
   getTagKeys(options: any = {}) {
@@ -323,7 +325,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
           return result.data;
         },
         (err: any) => {
-          if (err.status !== 0 || err.status >= 300) {
+          if ((Number.isInteger(err.status) && err.status !== 0) || err.status >= 300) {
             if (err.data && err.data.error) {
               throw {
                 message: 'InfluxDB Error: ' + err.data.error,
@@ -337,6 +339,8 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
                 config: err.config,
               };
             }
+          } else {
+            throw err;
           }
         }
       );

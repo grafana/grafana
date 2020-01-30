@@ -357,7 +357,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		Children:     []*dtos.NavLink{},
 	})
 
-	hs.HooksService.RunIndexDataHooks(&data)
+	hs.HooksService.RunIndexDataHooks(&data, c)
 
 	sort.SliceStable(data.NavTree, func(i, j int) bool {
 		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
