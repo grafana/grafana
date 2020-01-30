@@ -2,7 +2,7 @@
 title = "User HTTP API "
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/http_api/user/"]
+aliases = ["/docs/grafana/latest/http_api/user/"]
 type = "docs"
 [menu.docs]
 name = "Users"
@@ -330,6 +330,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {"message":"User password changed"}
+```
+
+**Change Password with a Script**
+
+If you need to change a password with a script, here is an example of changing the Admin password using curl with basic auth:
+
+```bash
+curl -X PUT -H "Content-Type: application/json" -d '{
+  "oldPassword": "oldpass",
+  "newPassword": "newpass",
+  "confirmNew": "newpass"
+}' http://admin:oldpass@<your_grafana_host>:3000/api/user/password
 ```
 
 ## Switch user context for a specified user

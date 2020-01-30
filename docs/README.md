@@ -19,11 +19,11 @@ Edit content in the `sources` directory.
 
 ### Using `relref` for internal links
 
-Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) anytime you are linking to other internal docs pages.
+Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) any time you are linking to other internal docs pages.
 
 ### Edit the side menu
 
-Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Restart the `make run` command for changes to take effect.
+Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Stop and rerun the `make docs` command for changes to take effect.
 
 ### Add images
 

@@ -4,14 +4,15 @@ import Page from 'app/core/components/Page/Page';
 import { DeleteButton } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { Team, OrgRole, StoreState } from 'app/types';
-import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
+import { OrgRole, StoreState, Team } from 'app/types';
+import { deleteTeam, loadTeams } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
+import { setSearchQuery } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;

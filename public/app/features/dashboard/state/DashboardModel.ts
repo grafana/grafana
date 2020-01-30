@@ -293,6 +293,14 @@ export class DashboardModel {
     return null;
   }
 
+  canEditPanel(panel?: PanelModel): boolean {
+    return this.meta.canEdit && panel && !panel.repeatPanelId;
+  }
+
+  canEditPanelById(id: number): boolean {
+    return this.canEditPanel(this.getPanelById(id));
+  }
+
   addPanel(panelData: any) {
     panelData.id = this.getNextPanelId();
 

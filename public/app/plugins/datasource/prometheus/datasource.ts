@@ -11,12 +11,14 @@ import {
   LoadingState,
   TimeRange,
   TimeSeries,
+  CoreApp,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  ScopedVars,
 } from '@grafana/data';
 import { from, merge, Observable, of, forkJoin } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
@@ -24,12 +26,12 @@ import { filter, map, tap } from 'rxjs/operators';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
 // Types
-import { PromContext, PromOptions, PromQuery, PromQueryRequest } from './types';
+import { PromOptions, PromQuery, PromQueryRequest } from './types';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -202,7 +204,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       target.requestId = options.panelId + target.refId;
 
-      if (target.context !== PromContext.Explore) {
+      if (options.app !== CoreApp.Explore) {
         activeTargets.push(target);
         queries.push(this.createQuery(target, options, start, end));
         continue;
@@ -237,11 +239,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   };
 
-  calledFromExplore = (options: DataQueryRequest<PromQuery>): boolean => {
-    const exploreTargets = options.targets.filter(target => target.context === PromContext.Explore).length;
-    return exploreTargets === options.targets.length;
-  };
-
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
@@ -255,7 +252,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       });
     }
 
-    if (this.calledFromExplore(options)) {
+    if (options.app === CoreApp.Explore) {
       return this.exploreQuery(queries, activeTargets, end);
     }
 
@@ -396,11 +393,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
     // Prometheus will drop queries that might return more than 11000 data points.
-    // Calibrate interval if it is too small.
-    if (interval !== 0 && range / intervalFactor / interval > 11000) {
-      interval = Math.ceil(range / intervalFactor / 11000);
-    }
-    return Math.max(interval * intervalFactor, minInterval, 1);
+    // Calculate a safe interval as an additional minimum to take into account.
+    const safeInterval = Math.ceil(range / 11000);
+    return Math.max(interval * intervalFactor, minInterval, safeInterval, 1);
   }
 
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
@@ -614,14 +609,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       : { status: 'error', message: response.error };
   }
 
-  interpolateVariablesInQueries(queries: PromQuery[]): PromQuery[] {
+  interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          expr: templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+          expr: templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
         };
         return expandedQuery;
       });

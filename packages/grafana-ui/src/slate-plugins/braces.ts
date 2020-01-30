@@ -1,11 +1,13 @@
 import { Plugin } from '@grafana/slate-react';
-import { Editor as CoreEditor } from 'slate';
+import { Editor as CoreEditor, Annotation } from 'slate';
 
 const BRACES: any = {
   '[': ']',
   '{': '}',
   '(': ')',
 };
+
+const MATCH_MARK = 'brace_match';
 
 export function BracesPlugin(): Plugin {
   return {
@@ -17,7 +19,6 @@ export function BracesPlugin(): Plugin {
         case '(':
         case '{':
         case '[': {
-          keyEvent.preventDefault();
           const {
             start: { offset: startOffset, key: startKey },
             end: { offset: endOffset, key: endKey },
@@ -27,21 +28,67 @@ export function BracesPlugin(): Plugin {
 
           // If text is selected, wrap selected text in parens
           if (value.selection.isExpanded) {
+            keyEvent.preventDefault();
             editor
               .insertTextByKey(startKey, startOffset, keyEvent.key)
               .insertTextByKey(endKey, endOffset + 1, BRACES[keyEvent.key])
               .moveEndBackward(1);
+            return true;
           } else if (
+            // Insert matching brace when there is no input after caret
             focusOffset === text.length ||
             text[focusOffset] === ' ' ||
             Object.values(BRACES).includes(text[focusOffset])
           ) {
-            editor.insertText(`${keyEvent.key}${BRACES[keyEvent.key]}`).moveBackward(1);
-          } else {
-            editor.insertText(keyEvent.key);
-          }
+            keyEvent.preventDefault();
+            const complement = BRACES[keyEvent.key];
+            const matchAnnotation = {
+              key: `${MATCH_MARK}-${Date.now()}`,
+              type: `${MATCH_MARK}-${complement}`,
+              anchor: {
+                key: startKey,
+                offset: startOffset,
+                object: 'point',
+              },
+              focus: {
+                key: endKey,
+                offset: endOffset + 1,
+                object: 'point',
+              },
+              object: 'annotation',
+            } as Annotation;
+            editor
+              .insertText(keyEvent.key)
+              .insertText(complement)
+              .addAnnotation(matchAnnotation)
+              .moveBackward(1);
 
-          return true;
+            return true;
+          }
+          break;
+        }
+
+        case ')':
+        case '}':
+        case ']': {
+          const text = value.anchorText.text;
+          const offset = value.selection.anchor.offset;
+          const nextChar = text[offset];
+          // Handle closing brace when it's already the next character
+          const complement = keyEvent.key;
+          const annotationType = `${MATCH_MARK}-${complement}`;
+          const annotation = value.annotations.find(
+            a => a?.type === annotationType && a.anchor.key === value.anchorText.key
+          );
+          if (annotation && nextChar === complement && !value.selection.isExpanded) {
+            keyEvent.preventDefault();
+            editor
+              .moveFocusForward(1)
+              .removeAnnotation(annotation)
+              .moveAnchorForward(1);
+            return true;
+          }
+          break;
         }
 
         case 'Backspace': {

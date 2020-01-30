@@ -114,7 +114,7 @@ String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
-Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
+Test the formatting options on the [Grafana Play site](https://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
 If any invalid formatting option is specified, then `glob` is the default/fallback option.
 
@@ -379,7 +379,7 @@ you want to repeat the row for.
 
 It may be a good idea to use a variable in the row title as well.
 
-Example: [Repeated Rows Dashboard](http://play.grafana.org/dashboard/db/repeated-rows)
+Example: [Repeated Rows Dashboard](https://play.grafana.org/dashboard/db/repeated-rows)
 
 ## URL state
 
@@ -387,6 +387,6 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 
 ## Examples
 
-- [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
-- [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
-- [InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+- [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
+- [Elasticsearch Templated Dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
+- [InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)

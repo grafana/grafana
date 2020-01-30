@@ -7,6 +7,7 @@ exports[`Render should render component 1`] = `
     onLoadSubscriptions={[Function]}
     onResetOptionKey={[Function]}
     onUpdateOption={[Function]}
+    onUpdateSecureOption={[Function]}
     options={
       Object {
         "access": "proxy",
@@ -44,6 +45,7 @@ exports[`Render should render component 1`] = `
     onResetOptionKey={[Function]}
     onUpdateOption={[Function]}
     onUpdateOptions={[Function]}
+    onUpdateSecureOption={[Function]}
     options={
       Object {
         "access": "proxy",
@@ -78,6 +80,7 @@ exports[`Render should render component 1`] = `
   <InsightsConfig
     onResetOptionKey={[Function]}
     onUpdateOption={[Function]}
+    onUpdateSecureOption={[Function]}
     options={
       Object {
         "access": "proxy",

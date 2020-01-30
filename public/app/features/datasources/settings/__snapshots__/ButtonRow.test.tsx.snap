@@ -16,7 +16,7 @@ exports[`Render should render component 1`] = `
     className="btn btn-danger"
     disabled={true}
     onClick={[MockFunction]}
-    type="submit"
+    type="button"
   >
     Delete
   </button>
@@ -47,7 +47,7 @@ exports[`Render should render with buttons enabled 1`] = `
     className="btn btn-danger"
     disabled={false}
     onClick={[MockFunction]}
-    type="submit"
+    type="button"
   >
     Delete
   </button>

@@ -107,7 +107,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     shortcut: 'v',
   });
 
-  if (dashboard.meta.canEdit) {
+  if (dashboard.canEditPanel(panel)) {
     menu.push({
       text: 'Edit',
       iconClassName: 'gicon gicon-editor',
@@ -152,7 +152,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
 
   const subMenu: PanelMenuItem[] = [];
 
-  if (!panel.fullscreen && dashboard.meta.canEdit) {
+  if (!panel.fullscreen && dashboard.canEditPanel(panel)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -178,7 +178,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     onClick: onMore,
   });
 
-  if (dashboard.meta.canEdit) {
+  if (dashboard.canEditPanel(panel)) {
     menu.push({ type: 'divider' });
 
     menu.push({

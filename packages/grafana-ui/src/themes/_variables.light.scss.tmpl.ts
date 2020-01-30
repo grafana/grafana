@@ -103,7 +103,7 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: $white;
+$panel-bg: ${theme.colors.panelBg};
 $panel-border: solid 1px $gray-5;
 $panel-header-hover-bg: $gray-6;
 $panel-corner: $gray-4;
@@ -124,13 +124,13 @@ $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: linear-gradient(135deg, $gray-6, $gray-5);
-$card-background-hover: linear-gradient(135deg, $gray-5, $gray-6);
+$card-background: linear-gradient(135deg, $gray-6, $gray-7);
+$card-background-hover: linear-gradient(135deg, $gray-6, $gray-5);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
 
 // Lists
-$list-item-bg: linear-gradient(135deg, $gray-5, $gray-6); //$card-background;
-$list-item-hover-bg: darken($gray-5, 5%);
+$list-item-bg: $gray-7;
+$list-item-hover-bg: $gray-6;
 $list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 

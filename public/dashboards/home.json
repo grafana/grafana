@@ -1,72 +1,79 @@
 {
-  "annotations": {
-    "list": []
-  },
-  "editable": true,
-  "folderId": null,
-  "gnetId": null,
-  "graphTooltip": 0,
-  "hideControls": true,
-  "id": null,
   "links": [],
   "panels": [
     {
-      "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
+      "content": "<div class=\"dashboard-header\">\n  <span>Welcome to Grafana</span>\n</div>",
+      "datasource": null,
       "editable": true,
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
       "links": [],
       "mode": "html",
+      "options": {},
       "style": {},
       "title": "",
       "transparent": true,
-      "type": "text",
-      "gridPos": {
-        "w": 24,
-        "h": 3,
-        "x": 0,
-        "y": 0
-      }
+      "type": "text"
     },
     {
+      "datasource": null,
       "folderId": 0,
+      "gridPos": {
+        "h": 15,
+        "w": 11,
+        "x": 0,
+        "y": 4
+      },
       "headings": true,
       "id": 3,
       "limit": 30,
       "links": [],
+      "options": {},
       "query": "",
       "recent": true,
       "search": false,
       "starred": true,
       "tags": [],
-      "title": "",
-      "transparent": false,
-      "type": "dashlist",
-      "gridPos": {
-        "w": 12,
-        "h": 17,
-        "x": 0,
-        "y": 6
-      }
+      "title": "Dashboards",
+      "type": "dashlist"
     },
     {
-      "editable": true,
-      "error": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 15,
+        "w": 8,
+        "x": 11,
+        "y": 4
+      },
       "id": 4,
       "links": [],
-      "title": "",
-      "transparent": false,
-      "type": "pluginlist",
+      "options": {
+        "feedUrl": "https://grafana.com/blog/news.xml"
+      },
+      "title": "Latest from the blog",
+      "type": "news"
+    },
+    {
+      "datasource": null,
       "gridPos": {
-        "w": 12,
-        "h": 17,
-        "x": 12,
-        "y": 6
-      }
+        "h": 15,
+        "w": 5,
+        "x": 19,
+        "y": 4
+      },
+      "id": 123124,
+      "links": [],
+      "options": {},
+      "title": "Useful links",
+      "type": "homelinks"
     }
   ],
-  "rows": [],
-  "schemaVersion": 17,
-  "style": "dark",
+  "schemaVersion": 22,
   "tags": [],
   "templating": {
     "list": []
@@ -82,6 +89,5 @@
     "type": "timepicker"
   },
   "timezone": "browser",
-  "title": "Home",
-  "version": 0
+  "title": "Home"
 }

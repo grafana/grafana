@@ -4,117 +4,92 @@ description = "Grafana intro and concept guide"
 keywords = ["grafana", "intro", "guide", "concepts"]
 type = "docs"
 [menu.docs]
-name = "Basic Concepts"
+name = "Basic concepts"
 identifier = "basic_concepts"
 parent = "guides"
 weight = 2
 +++
 
-# Basic Concepts
+# Basic concepts
 
-This document is a “bottom up” introduction to basic concepts in Grafana, and can be used as a starting point to get familiar with core features.
+This document is an introduction to basic concepts in Grafana. Use it as a starting point to get familiar with core Grafana features.
 
-### Data Source
+## Dashboard
 
-Grafana supports many different storage backends for your time series data (Data Source). Each Data Source has a specific Query Editor that is customized for the features and capabilities that the particular Data Source exposes.
+The *dashboard* is where it all comes together. A dashboard is a set of one or more panels organized and arranged into one or more rows.
 
-The following data sources are officially supported:
+The time period for the dashboard can be controlled by the [Time range controls]({{< relref "../reference/timerange.md" >}}) in the upper right of the dashboard.
 
-* [CloudWatch]({{< relref "../features/datasources/cloudwatch.md" >}})
-* [Elasticsearch]({{< relref "../features/datasources/elasticsearch.md" >}})
-* [Graphite]({{< relref "../features/datasources/graphite.md" >}})
-* [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
-* [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
-* [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
+Dashboards can use [templating]({{< relref "../reference/templating.md" >}}) to make them more dynamic and interactive.
 
-The query language and capabilities of each Data Source are obviously very different. You can combine data from multiple Data Sources onto a single Dashboard, but each Panel is tied to a specific Data Source that belongs to a particular Organization.
+Dashboards can use [annotations]({{< relref "../reference/annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
 
-### Organization
+Dashboards can be [shared]({{< relref "../reference/share_dashboard.md" >}}) easily in a variety of ways.
 
-Grafana supports multiple organizations in order to support a wide variety of deployment models, including using a single Grafana instance to provide service to multiple potentially untrusted Organizations.
+Dashboards can be tagged, and the dashboard picker provides quick, searchable access to all dashboards in a particular organization.
 
-In many cases, Grafana will be deployed with a single Organization.
+## Data source
 
-Each Organization can have one or more Data Sources.
+Grafana can visualize, explore, and alert on data from many different databases and cloud services. Each database or service type is accessed from a *data source*. 
 
-All Dashboards are owned by a particular Organization.
+Each data source has a specific query editor that is customized for the features and capabilities that the particular data source exposes. The query language and capabilities of each data source are obviously very different. You can combine data from multiple data sources into a single dashboard, but each panel is connected to a specific data source that belongs to a particular organization.
 
- > Note: It is important to remember that most metric databases do not provide any sort of per-user series authentication. Therefore, in Grafana, Data Sources and Dashboards are available to all Users in a particular Organization.
+Refer to the [Data sources section]({{< relref "../features/datasources" >}}) for a list of data sources that Grafana officially supports.
 
-For more details on the user model for Grafana, please refer to [Admin](/reference/admin/)
+## Organization
 
-### User
+Grafana supports multiple *organizations* in order to support a wide variety of deployment models, including using a single Grafana instance to provide service to multiple potentially untrusted organizations.
 
-A User is a named account in Grafana. A user can belong to one or more Organizations, and can be assigned different levels of privileges through roles.
+In most cases, Grafana is deployed with a single organization.
 
-Grafana supports a wide variety of internal and external ways for Users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
+Each organization can have one or more data sources.
 
-For more details please refer to [User Auth](/reference/http_api/#users)
+All dashboards are owned by a particular organization.
 
-### Row
+ > Note: Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
 
-A Row is a logical divider within a Dashboard, and is used to group Panels together.
+Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information.
 
-Rows are always 12 “units” wide. These units are automatically scaled dependent on the horizontal resolution of your browser. You can control the relative width of Panels within a row by setting their own width.
+## Panel
 
-We utilize a unit abstraction so that Grafana looks great on all screens both small and huge.
+The *panel* is the basic visualization building block in Grafana. Each panel has a Query Editor specific to the data source selected in the panel. The query editor allows you to extract the perfect visualization to display on the panel.
 
- > Note: With MaxDataPoint functionality, Grafana can show you the perfect amount of datapoints no matter your resolution or time-range.
+There are a wide variety of styling and formatting options for each panel. Panels can be dragged and dropped and rearranged on the Dashboard. They can also be resized.
 
-Utilize the [Repeating Rows functionality](/reference/templating/#repeating-rows) to dynamically create or remove entire Rows (that can be filled with Panels), based on the Template variables selected.
+Panels like the [Graph]({{< relref "../features/panels/graph.md" >}}) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat]({{< relref "../features/panels/singlestat.md" >}}) require a reduction of a single query into a single number.
 
-Rows can be collapsed by clicking on the Row Title. If you save a Dashboard with a Row collapsed, it will save in that state and will not preload those graphs until the row is expanded.
+Panels can be made more dynamic with [Dashboard Templating]({{< relref "../reference/templating.md" >}}) variable strings within the panel configuration. The template can include queries to your data source configured in the Query Editor.
 
-### Panel
+Panels can be [shared]({{< relref "../reference/share_panel.md" >}}) easily in a variety of ways.
 
-The Panel is the basic visualization building block in Grafana. Each Panel provides a Query Editor (dependent on the Data Source selected in the panel) that allows you to extract the perfect visualization to display on the Panel by utilizing the Query Editor
+## Query editor
 
-There are a wide variety of styling and formatting options that each Panel exposes to allow you to create the perfect picture.
+The *query editor* exposes capabilities of your data source and allows you to query the metrics that it contains.
 
-Panels can be dragged and dropped and rearranged on the Dashboard. They can also be resized.
+Use the query editor to build one or more queries in your time series database. The panel instantly updates, allowing you to effectively explore your data in real time and build a perfect query for that particular panel.
 
-These are the available Panel types: 
+You can use [template variables]({{< relref "../reference/templating.md" >}}) in the query editor within the queries themselves. This provides a powerful way to explore data dynamically based on the templating variables selected on the dashboard.
 
-- [Alert list](/reference/alertlist/)
-- [Dashboard list](/reference/dashlist/)
-- [Graph](/reference/graph/)
-- [Heatmap](/reference/heatmap/)
-- [Logs](/reference/logs/)
-- [Singlestat](/reference/singlestat/)
-- [Table](/reference/table_panel/)
-- [Text](/reference/text/)
+Grafana allows you to reference queries in the query editor by the row that they’re on. If you add a second query to graph, you can reference the first query by typing in #A. This provides an easy and convenient way to build compound queries.
 
-Panels like the [Graph](/reference/graph/) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat](/reference/singlestat/) require a reduction of a single query into a single number. [Dashlist](/reference/dashlist/) and [Text](/reference/text/) are special panels that do not connect to any Data Source.
+## Row
 
-Panels can be made more dynamic by utilizing [Dashboard Templating](/reference/templating/) variable strings within the panel configuration (including queries to your Data Source configured via the Query Editor).
+A *row* is a logical divider within a dashboard. It is used to group panels together.
 
-Utilize the [Repeating Panel](/reference/templating/#repeating-panels) functionality to dynamically create or remove Panels based on the [Templating Variables](/reference/templating/#repeating-panels) selected.
+Rows are always 12 “units” wide. These units are automatically scaled dependent on the horizontal resolution of your browser. You can control the relative width of panels within a row by setting their specific width.
 
-The time range on Panels is normally what is set in the [Dashboard time picker](/reference/timerange/) but this can be overridden by utilizes [Panel specific time overrides](/reference/timerange/#panel-time-overrides-timeshift).
+We use a unit abstraction so that Grafana looks great on all screens sizes.
 
-Panels (or an entire Dashboard) can be [Shared](/reference/sharing/) easily in a variety of ways. You can send a link to someone who has a login to your Grafana. You can use the [Snapshot](/reference/sharing/#snapshots) feature to encode all the data currently being viewed into a static and interactive JSON document; it's so much better than emailing a screenshot!
+ > Note: With MaxDataPoint functionality, Grafana can show you the perfect number of data points, regardless of resolution or time range.
 
+Collapse a row by clicking on the row title. If you save a dashboard with a row collapsed, then it saves in that state and does not load those graphs until you expand the row.
 
-### Query Editor
+Use the [repeating rows]({{< relref "../reference/templating.md#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
 
-The Query Editor exposes capabilities of your Data Source and allows you to query the metrics that it contains.
+## User
 
-Use the Query Editor to build one or more queries (for one or more series) in your time series database. The panel will instantly update allowing you to effectively explore your data in real time and build a perfect query for that particular Panel.
+A *user* is a named account in Grafana. A user can belong to one or more organizations and can be assigned different levels of privileges through roles.
 
-You can utilize [Template variables](/reference/templating/) in the Query Editor within the queries themselves. This provides a powerful way to explore data dynamically based on the Templating variables selected on the Dashboard.
+Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
 
-Grafana allows you to reference queries in the Query Editor by the row that they’re on. If you add a second query to graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
-
-### Dashboard
-
-The Dashboard is where it all comes together. Dashboards can be thought of as of a set of one or more Panels organized and arranged into one or more Rows.
-
-The time period for the Dashboard can be controlled by the [Dashboard time picker](/reference/timerange/) in the upper right of the Dashboard.
-
-Dashboards can utilize [Templating](/reference/templating/) to make them more dynamic and interactive.
-
-Dashboards can utilize [Annotations](/reference/annotations/) to display event data across Panels. This can help correlate the time series data in the Panel with other events.
-
-Dashboards (or a specific Panel) can be [Shared](/reference/sharing/) easily in a variety of ways. You can send a link to someone who has a login to your Grafana. You can use the [Snapshot](/reference/sharing/#snapshots) feature to encode all the data currently being viewed into a static and interactive JSON document; it's so much better than emailing a screenshot!
-
-Dashboards can be tagged, and the Dashboard picker provides quick, searchable access to all Dashboards in a particular Organization.
+Refer to the [Permissions overview](docs\sources\permissions\overview.md) for information about roles and permissions.

@@ -14,6 +14,7 @@ type AttachedFile struct {
 // Message is representation of the email message
 type Message struct {
 	To            []string
+	SingleEmail   bool
 	From          string
 	Subject       string
 	Body          string

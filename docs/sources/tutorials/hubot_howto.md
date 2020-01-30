@@ -57,7 +57,7 @@ Edit the file external-scripts.json, and add hubot-grafana to the list of plugin
 The `hubot-grafana` plugin requires a number of environment variables to be set in order to work properly.
 
 ```bash
-export HUBOT_GRAFANA_HOST=http://play.grafana.org
+export HUBOT_GRAFANA_HOST=https://play.grafana.org
 export HUBOT_GRAFANA_API_KEY=abcd01234deadbeef01234
 export HUBOT_GRAFANA_S3_BUCKET=mybucket
 export HUBOT_GRAFANA_S3_ACCESS_KEY_ID=ABCDEF123456XYZ

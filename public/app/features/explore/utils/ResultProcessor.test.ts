@@ -130,8 +130,15 @@ describe('ResultProcessor', () => {
     describe('when calling getTableResult', () => {
       it('then it should return correct table result', () => {
         const { resultProcessor } = testContext();
-        const theResult = resultProcessor.getTableResult();
-        const resultDataFrame = toDataFrame(
+        let theResult = resultProcessor.getTableResult();
+        expect(theResult.fields[0].name).toEqual('value');
+        expect(theResult.fields[1].name).toEqual('time');
+        expect(theResult.fields[2].name).toEqual('message');
+        expect(theResult.fields[1].display).not.toBeNull();
+        expect(theResult.length).toBe(3);
+
+        // Same data though a DataFrame
+        theResult = toDataFrame(
           new TableModel({
             columns: [
               { text: 'value', type: 'number' },
@@ -146,8 +153,11 @@ describe('ResultProcessor', () => {
             type: 'table',
           })
         );
-
-        expect(theResult).toEqual(resultDataFrame);
+        expect(theResult.fields[0].name).toEqual('value');
+        expect(theResult.fields[1].name).toEqual('time');
+        expect(theResult.fields[2].name).toEqual('message');
+        expect(theResult.fields[1].display).not.toBeNull();
+        expect(theResult.length).toBe(3);
       });
     });
 
@@ -177,7 +187,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 300,
               uid: '2',
               uniqueLabels: {},
             },
@@ -195,7 +204,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 200,
               uid: '1',
               uniqueLabels: {},
             },
@@ -213,7 +221,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 100,
               uid: '0',
               uniqueLabels: {},
             },

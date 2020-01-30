@@ -37,7 +37,7 @@ and complex queries for logs or metrics.
 - Query only relevant indices based on time pattern
 - Alias patterns for short readable series names
 
-Try the new Elasticsearch query editor on the [play.grafana.org](http://play.grafana.org/dashboard/db/elasticsearch-metrics) site.
+Try the new Elasticsearch query editor on the [play.grafana.org](https://play.grafana.org/dashboard/db/elasticsearch-metrics) site.
 
 ### CloudWatch
 

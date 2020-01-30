@@ -6,7 +6,7 @@ import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import { dateMath, AppEvents } from '@grafana/data';
 import impressionSrv from 'app/core/services/impression_srv';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from './DashboardSrv';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { UrlQueryValue } from '@grafana/runtime';
@@ -15,7 +15,6 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 export class DashboardLoaderSrv {
   /** @ngInject */
   constructor(
-    private backendSrv: BackendSrv,
     private dashboardSrv: DashboardSrv,
     private datasourceSrv: DatasourceSrv,
     private $http: any,
@@ -46,11 +45,11 @@ export class DashboardLoaderSrv {
     if (type === 'script') {
       promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot') {
-      promise = this.backendSrv.get('/api/snapshots/' + slug).catch(() => {
+      promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
     } else {
-      promise = this.backendSrv
+      promise = backendSrv
         .getDashboardByUid(uid)
         .then((result: any) => {
           if (result.meta.isFolder) {

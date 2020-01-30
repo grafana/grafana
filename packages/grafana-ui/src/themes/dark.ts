@@ -75,6 +75,7 @@ const darkTheme: GrafanaTheme = {
     linkExternal: basicColors.blue,
     headingColor: basicColors.gray4,
     pageHeaderBorder: basicColors.dark9,
+    panelBg: basicColors.dark4,
 
     // Next-gen forms functional colors
     formLabel: basicColors.gray70,

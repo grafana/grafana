@@ -8,6 +8,7 @@ export interface StyleDeps {
   theme: GrafanaTheme;
   size: ButtonSize;
   variant: ButtonVariant;
+  textAndIcon?: boolean;
 }
 
 export interface ButtonStyles {

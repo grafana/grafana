@@ -312,7 +312,7 @@ if (typeof Proxy !== 'undefined') {
       if (formatter) {
         // Return the results as a simple string
         return (value: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount, isUtc?: boolean) => {
-          return formattedValueToString(formatter(value, decimals, scaledDecimals, isUtc));
+          return formattedValueToString(formatter(value, decimals, scaledDecimals, isUtc ? 'utc' : 'browser'));
         };
       }
 

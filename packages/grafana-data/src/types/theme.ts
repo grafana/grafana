@@ -206,6 +206,9 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     textFaint: string;
     textEmphasis: string;
 
+    // panel
+    panelBg: string;
+
     // TODO: move to background section
     bodyBg: string;
     pageBg: string;

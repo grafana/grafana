@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Plugin } from 'slate';
 import {
-  Cascader,
+  ButtonCascader,
   CascaderOption,
   SlatePrism,
   TypeaheadInput,
@@ -15,7 +15,7 @@ import {
 import Prism from 'prismjs';
 
 // dom also includes Element polyfills
-import { PromQuery, PromContext, PromOptions, PromMetricsMetadata } from '../types';
+import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
@@ -188,9 +188,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
         remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
       })
       .then(() => this.onUpdateLanguage())
-      .catch(({ isCanceled }) => {
-        if (isCanceled) {
-          console.warn('PromQueryField has unmounted, language provider intialization was canceled');
+      .catch(err => {
+        if (!err.isCanceled) {
+          throw err;
         }
       });
   };
@@ -220,7 +220,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     // Send text change to parent
     const { query, onChange, onRunQuery } = this.props;
     if (onChange) {
-      const nextQuery: PromQuery = { ...query, expr: value, context: PromContext.Explore };
+      const nextQuery: PromQuery = { ...query, expr: value };
       onChange(nextQuery);
 
       if (override && onRunQuery) {
@@ -291,7 +291,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { data, query } = this.props;
+    const { data, query, children } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, metricsOptions);
@@ -300,15 +300,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--nowrap">
+        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form flex-shrink-0">
-            <Cascader
-              options={metricsOptions}
-              buttonText={chooserText}
-              disabled={buttonDisabled}
-              onChange={this.onChangeMetrics}
-              expandIcon={null}
-            />
+            <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
+              {chooserText}
+            </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
@@ -325,16 +321,23 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               syntaxLoaded={syntaxLoaded}
             />
           </div>
+          {children}
         </div>
-        {showError ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
+        {showError ? (
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-error">{data.error.message}</div>
+          </div>
+        ) : null}
         {hint ? (
-          <div className="prom-query-field-info text-warning">
-            {hint.label}{' '}
-            {hint.fix ? (
-              <a className="text-link muted" onClick={this.onClickHintFix}>
-                {hint.fix.label}
-              </a>
-            ) : null}
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-warning">
+              {hint.label}{' '}
+              {hint.fix ? (
+                <a className="text-link muted" onClick={this.onClickHintFix}>
+                  {hint.fix.label}
+                </a>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </>

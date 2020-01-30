@@ -47,6 +47,9 @@ const getStyles = (theme: GrafanaTheme) => ({
   button: css`
     margin-right: ${theme.spacing.sm};
   `,
+  fullWidth: css`
+    width: 100%;
+  `,
 });
 
 export interface Props extends Themeable {
@@ -139,7 +142,7 @@ class LiveLogs extends PureComponent<Props, State> {
 
     return (
       <div>
-        <table>
+        <table className={styles.fullWidth}>
           <tbody
             onScroll={isPaused ? undefined : this.onScroll}
             className={cx(['logs-rows', styles.logsRowsLive])}

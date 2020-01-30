@@ -2,13 +2,14 @@
 @import '~react-resizable/css/styles.css';
 
 .react-resizable-handle {
-  display: none;
+  // this needs to use visibility and not display none in order not to cause resize flickering
+  visibility: hidden;
 }
 
 .react-grid-item {
   &:hover {
     .react-resizable-handle {
-      display: initial;
+      visibility: visible;
     }
   }
 }
@@ -47,7 +48,7 @@
   }
 
   .react-resizable-handle {
-    display: none !important;
+    display: none;
   }
 
   // the react-grid has a height transition

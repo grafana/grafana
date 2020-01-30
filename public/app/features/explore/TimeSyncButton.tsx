@@ -24,6 +24,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: noRightBorderStyle;
       border-right: 0;
     `,
+    /*
+     * Required top-padding, otherwise is fa-link icon in active state
+     * cut off on top due to fontAwesome icon position
+     */
+    topPadding: css`
+      label: topPadding;
+      padding-top: 1px;
+    `,
   };
 });
 
@@ -52,7 +60,7 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
         onClick={() => onClick()}
       >
-        <i className={classNames('fa fa-link', isSynced && 'icon-brand-gradient')} />
+        <i className={classNames('fa fa-link', styles.topPadding, isSynced && 'icon-brand-gradient')} />
       </button>
     </Tooltip>
   );

@@ -81,3 +81,10 @@ export interface Segment {
   type: string;
   value: string;
 }
+
+export interface Filter {
+  key: string;
+  operator: string;
+  value: string;
+  condition: string;
+}

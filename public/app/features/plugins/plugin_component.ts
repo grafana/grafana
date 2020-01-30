@@ -126,10 +126,13 @@ function pluginDirectiveLoader(
       }
       // Annotations
       case 'annotations-query-ctrl': {
+        const baseUrl = scope.ctrl.currentDatasource.meta.baseUrl;
+        const pluginId = scope.ctrl.currentDatasource.meta.id;
+
         return importDataSourcePlugin(scope.ctrl.currentDatasource.meta).then(dsPlugin => {
           return {
-            baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
-            name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
+            baseUrl,
+            name: 'annotations-query-ctrl-' + pluginId,
             bindings: { annotation: '=', datasource: '=' },
             attrs: {
               annotation: 'ctrl.currentAnnotation',

@@ -30,6 +30,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         pattern: 'Time',
         alias: 'Time',
         dateFormat: 'YYYY-MM-DD HH:mm:ss',
+        align: 'auto',
       },
       {
         unit: 'short',
@@ -40,6 +41,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         colorMode: null,
         pattern: '/.*/',
         thresholds: [],
+        align: 'right',
       },
     ],
     columns: [],

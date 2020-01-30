@@ -1,4 +1,5 @@
 export * from './fieldDisplay';
 export * from './displayProcessor';
+export * from './scale';
 
-export { applyFieldOverrides } from './fieldOverrides';
+export { applyFieldOverrides, validateFieldConfig } from './fieldOverrides';

@@ -1,7 +1,7 @@
 +++
 title = "Data Sources"
 type = "docs"
-aliases = ["/datasources/overview/"]
+aliases = ["/docs/grafana/latest/datasources/overview/"]
 [menu.docs]
 name = "Data Sources"
 identifier = "datasources"
@@ -38,4 +38,4 @@ The following data sources are officially supported:
 
 ## Data source plugins
 
-Since grafana 3.0 you can install data sources as plugins. Check out [Grafana.net](https://grafana.com/plugins) for more data sources.
+Since Grafana 3.0 you can install data sources as plugins. Check out [Grafana.net](https://grafana.com/plugins) for more data sources.
