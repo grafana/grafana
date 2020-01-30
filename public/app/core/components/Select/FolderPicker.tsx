@@ -121,7 +121,7 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { validationError, hasValidationError } = this.state;
-    const { enableCreateNew, initialFolderId, initialTitle } = this.props;
+    const { enableCreateNew } = this.props;
 
     return (
       <>
@@ -130,7 +130,6 @@ export class FolderPicker extends PureComponent<Props, State> {
             <label className="gf-form-label width-7">Folder</label>
             <Forms.AsyncSelect
               loadingMessage="Loading folders..."
-              value={{ label: initialTitle, value: initialFolderId }}
               defaultOptions
               allowCustomValue={enableCreateNew}
               loadOptions={this.getOptions}
