@@ -5,7 +5,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
 
 export interface Props {
-  onChange: ($folder: { id: number; title: string; isNew: boolean }) => void;
+  onChange: ($folder: { title: string; id: number }) => void;
   rootName?: string;
   enableReset?: boolean;
   dashboardId?: any;
@@ -62,7 +62,12 @@ export class FolderPicker extends PureComponent<Props, State> {
       newFolder = { value: 0, label: this.props.rootName };
     }
 
-    this.props.onChange({ id: newFolder.value, title: newFolder.label, isNew: newFolder.__isNew__ as boolean });
+    if (newFolder.__isNew__) {
+      //
+      newFolder = { value: -1, label: newFolder.label };
+    }
+
+    this.props.onChange({ id: newFolder.value, title: newFolder.label });
   };
 
   private loadInitialValue = async () => {
@@ -98,7 +103,7 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     // if this is not the same as our initial value notify parent
     if (folder.value !== initialFolderId) {
-      this.props.onChange({ id: folder.value, title: folder.text, isNew: false });
+      this.props.onChange({ id: folder.value, title: folder.text });
     }
   };
 

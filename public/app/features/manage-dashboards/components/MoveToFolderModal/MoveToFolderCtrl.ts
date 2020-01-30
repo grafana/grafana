@@ -1,8 +1,8 @@
+import { IScope } from 'angular';
+import { AppEvents } from '@grafana/data';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { AppEvents } from '@grafana/data';
-import { IScope } from 'angular';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class MoveToFolderCtrl {
@@ -14,11 +14,26 @@ export class MoveToFolderCtrl {
 
   constructor(private $scope: IScope) {}
 
-  onFolderChange(folder: any) {
+  onFolderChange = (folder: any) => {
     this.folder = folder;
-  }
+  };
 
-  save() {
+  save = () => {
+    if (this.folder.id === -1) {
+      promiseToDigest(this.$scope)(
+        backendSrv.createFolder({ title: this.folder.title }).then((result: { title: string; id: number }) => {
+          appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
+
+          this.folder = { title: result.title, id: result.id };
+          this.saveToFolder();
+        })
+      );
+    } else {
+      this.saveToFolder();
+    }
+  };
+
+  saveToFolder = () => {
     return promiseToDigest(this.$scope)(
       backendSrv.moveDashboards(this.dashboards, this.folder).then((result: any) => {
         if (result.successCount > 0) {
@@ -37,7 +52,7 @@ export class MoveToFolderCtrl {
         return this.afterSave();
       })
     );
-  }
+  };
 
   onEnterFolderCreation = () => {
     this.isValidFolderSelection = false;
