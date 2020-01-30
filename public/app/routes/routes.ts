@@ -353,8 +353,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'sidemenu-hidden',
     })
     .when('/signup', {
-      // templateUrl: 'public/app/partials/signup_step2.html',
-      // controller: 'SignUpCtrl',
       template: '<react-container/>',
       resolve: {
         component: () => SignupPage,

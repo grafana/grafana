@@ -20,14 +20,12 @@ import {
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
-// import { SignupPage } from 'app/features/profile/SignupPage';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
-  // react2AngularDirective('signupPage', SignupPage, ['model', 'verifyEmailEnabled', 'autoAssignOrg']);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
