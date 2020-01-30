@@ -7,7 +7,7 @@ import { AbsoluteTimeRange, ExploreQueryFieldProps, ExploreMode } from '@grafana
 import { LokiDatasource } from '../datasource';
 import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';
-import { LokiExploreExtraField } from './LokiExploreExtraField';
+import LokiExploreExtraField from './LokiExploreExtraField';
 
 type Props = ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions>;
 
