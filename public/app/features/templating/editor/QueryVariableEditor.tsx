@@ -4,7 +4,7 @@ import { FormLabel } from '@grafana/ui';
 
 import templateSrv from '../template_srv';
 import { SelectionOptionsEditor } from './SelectionOptionsEditor';
-import { QueryVariableModel } from '../variable';
+import { QueryVariableModel, VariableRefresh, VariableSort } from '../variable';
 import { VariableEditorProps } from '../state/types';
 import { QueryVariableEditorState } from '../state/queryVariableReducer';
 import { dispatch } from '../../../store/store';
@@ -12,8 +12,15 @@ import { changeQueryVariableDataSource, initQueryVariableEditor } from '../state
 import { variableAdapters } from '../adapters';
 
 export interface Props extends VariableEditorProps<QueryVariableModel, QueryVariableEditorState> {}
+export interface State {
+  regex: string | null;
+}
 
-export class QueryVariableEditor extends PureComponent<Props> {
+export class QueryVariableEditor extends PureComponent<Props, State> {
+  state: State = {
+    regex: null,
+  };
+
   componentDidMount(): void {
     dispatch(initQueryVariableEditor(this.props.variable));
   }
@@ -40,6 +47,24 @@ export class QueryVariableEditor extends PureComponent<Props> {
   onQueryChange = async (query: any, definition: string) => {
     this.props.onPropChange('query', query);
     this.props.onPropChange('definition', definition);
+    await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+  };
+
+  onRegExChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ regex: event.target.value });
+  };
+
+  onRegExBlur = async (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onPropChange('regex', event.target.value);
+    await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+  };
+
+  onRefreshChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    this.props.onPropChange('refresh', event.target.value);
+  };
+
+  onSortChange = async (event: ChangeEvent<HTMLSelectElement>) => {
+    this.props.onPropChange('sort', parseInt(event.target.value, 10));
     await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
   };
 
@@ -82,13 +107,21 @@ export class QueryVariableEditor extends PureComponent<Props> {
               <div className="gf-form-select-wrapper width-15">
                 <select
                   className="gf-form-input"
-                  // ng-model="current.refresh"
-                  // ng-options="f.value as f.text for f in refreshOptions"
+                  value={this.props.variable.refresh}
+                  onChange={this.onRefreshChange}
                   aria-label={
                     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsRefreshSelect
                   }
                 >
-                  {/*{}*/}
+                  <option label="Never" value={VariableRefresh.never}>
+                    Never
+                  </option>
+                  <option label="On Dashboard Load" value={VariableRefresh.onDashboardLoad}>
+                    On Dashboard Load
+                  </option>
+                  <option label="On Time Range Change" value={VariableRefresh.onTimeRangeChanged}>
+                    On Time Range Change
+                  </option>
                 </select>
               </div>
             </div>
@@ -113,10 +146,10 @@ export class QueryVariableEditor extends PureComponent<Props> {
             <input
               type="text"
               className="gf-form-input"
-              // ng-model="current.regex"
               placeholder="/.*-(.*)-.*/"
-              // ng-model-onblur
-              // ng-change="runQuery()"
+              value={this.state.regex ?? this.props.variable.regex}
+              onChange={this.onRegExChange}
+              onBlur={this.onRegExBlur}
               aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsRegExInput}
             />
           </div>
@@ -127,12 +160,37 @@ export class QueryVariableEditor extends PureComponent<Props> {
             <div className="gf-form-select-wrapper max-width-14">
               <select
                 className="gf-form-input"
-                // ng-model="current.sort"
-                // ng-options="f.value as f.text for f in sortOptions"
-                // ng-change="runQuery()"
+                value={this.props.variable.sort}
+                onChange={this.onSortChange}
                 aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsSortSelect}
               >
-                {/*{}*/}
+                <option label="Disabled" value={VariableSort.disabled}>
+                  Disabled
+                </option>
+                <option label="Alphabetical (asc)" value={VariableSort.alphabeticalAsc}>
+                  Alphabetical (asc)
+                </option>
+                <option label="Alphabetical (desc)" value={VariableSort.alphabeticalDesc}>
+                  Alphabetical (desc)
+                </option>
+                <option label="Numerical (asc)" value={VariableSort.numericalAsc}>
+                  Numerical (asc)
+                </option>
+                <option label="Numerical (desc)" value={VariableSort.numericalDesc}>
+                  Numerical (desc)
+                </option>
+                <option
+                  label="Alphabetical (case-insensitive, asc)"
+                  value={VariableSort.alphabeticalCaseInsensitiveAsc}
+                >
+                  Alphabetical (case-insensitive, asc)
+                </option>
+                <option
+                  label="Alphabetical (case-insensitive, desc)"
+                  value={VariableSort.alphabeticalCaseInsensitiveDesc}
+                >
+                  Alphabetical (case-insensitive, desc)
+                </option>
               </select>
             </div>
           </div>
