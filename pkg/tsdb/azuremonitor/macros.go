@@ -60,8 +60,10 @@ func (m *kqlMacroEngine) evaluateMacro(name string, args []string) (string, erro
 			timeColumn = args[0]
 		}
 		return fmt.Sprintf("['%s'] >= datetime('%s') and ['%s'] <= datetime('%s')", timeColumn, m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339), timeColumn, m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
+	case "__timeFrom":
 	case "__from":
 		return fmt.Sprintf("datetime('%s')", m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
+	case "__timeTo":
 	case "__to":
 		return fmt.Sprintf("datetime('%s')", m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__interval":
