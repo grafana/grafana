@@ -7,7 +7,6 @@ export interface TabProps {
   label: string;
   active?: boolean;
   icon?: string;
-  hideFromTabs?: boolean;
   onChangeTab: () => void;
 }
 
@@ -63,13 +62,9 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab, hideFromTabs }) => {
+export const Tab: FC<TabProps> = ({ label, active, icon, onChangeTab }) => {
   const theme = useTheme();
   const tabsStyles = getTabStyles(theme);
-
-  if (hideFromTabs) {
-    return null;
-  }
 
   return (
     <li className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)} onClick={onChangeTab}>
