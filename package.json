@@ -105,6 +105,7 @@
     "mocha": "4.1.0",
     "module-alias": "2.2.0",
     "monaco-editor": "0.15.6",
+    "mutationobserver-shim": "0.3.3",
     "ng-annotate-loader": "0.6.1",
     "ng-annotate-webpack-plugin": "0.3.0",
     "ngtemplate-loader": "2.0.1",

@@ -7,7 +7,7 @@ interface Props {
   verifyEmailEnabled: boolean;
   autoAssignOrg: boolean;
   onSubmit(obj: SignupFormModel): void;
-  defaultValues: SignupCtrlState;
+  defaultValues?: SignupCtrlState;
 }
 
 const buttonSpacing = css`
