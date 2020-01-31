@@ -79,11 +79,9 @@ export class VariableEditor extends PureComponent<VariableState> {
                   className="gf-form-input"
                   name="name"
                   placeholder="name"
-                  // ng-model="current.name"
                   required
                   value={this.props.editor.name}
                   onChange={this.onNameChange}
-                  // ng-pattern="namePattern"
                   aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalNameInput}
                 />
               </div>
