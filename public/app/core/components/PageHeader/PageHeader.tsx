@@ -135,7 +135,6 @@ export default class PageHeader extends React.Component<Props, any> {
     }
 
     const main = model.main;
-    console.log(main);
 
     return (
       <div className="page-header-canvas">
