@@ -1,5 +1,5 @@
 import React from 'react';
-import { mount, shallow } from 'enzyme';
+import { mount } from 'enzyme';
 import { CustomHeadersSettings, Props } from './CustomHeadersSettings';
 
 const setup = (propOverrides?: object) => {
@@ -57,26 +57,23 @@ describe('Render', () => {
         },
       },
     });
-    const removeButton = wrapper.find('Button').find({ variant: 'danger' });
+    const removeButton = wrapper.find('Button').find({ variant: 'transparent' });
     removeButton.simulate('click', { preventDefault: () => {} });
     expect(wrapper.find('FormField').exists()).toBeFalsy();
     expect(wrapper.find('SecretFormField').exists()).toBeFalsy();
   });
 
   it('should reset a header', () => {
-    const wrapper = setup(
-      {
-        dataSourceConfig: {
-          jsonData: {
-            httpHeaderName1: 'X-Custom-Header',
-          },
-          secureJsonFields: {
-            httpHeaderValue1: true,
-          },
+    const wrapper = setup({
+      dataSourceConfig: {
+        jsonData: {
+          httpHeaderName1: 'X-Custom-Header',
+        },
+        secureJsonFields: {
+          httpHeaderValue1: true,
         },
       },
-      false
-    );
+    });
     const resetButton = wrapper.find('button').at(0);
     resetButton.simulate('click', { preventDefault: () => {} });
     const { isConfigured } = wrapper.find('SecretFormField').props() as any;

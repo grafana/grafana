@@ -1,9 +1,11 @@
 import React, { PureComponent } from 'react';
-import { DataSourceSettings } from '@grafana/data';
+import { css } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
+import { DataSourceSettings } from '@grafana/data';
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormFied/SecretFormField';
+import { stylesFactory } from '../../themes';
 
 export interface CustomHeader {
   id: string;
@@ -31,42 +33,57 @@ interface CustomHeaderRowProps {
   onBlur: () => void;
 }
 
+const getCustomHeaderRowStyles = stylesFactory(() => {
+  return {
+    layout: css`
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      > * {
+        margin-left: 4px;
+        margin-bottom: 0;
+        height: 100%;
+        &:first-child,
+        &:last-child {
+          margin-left: 0;
+        }
+      }
+    `,
+  };
+});
 const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onChange, onRemove, onReset }) => {
+  const styles = getCustomHeaderRowStyles();
   return (
-    <div className="gf-form-inline">
-      <div className="gf-form">
-        <FormField
-          label="Header"
-          name="name"
-          placeholder="X-Custom-Header"
-          labelWidth={5}
-          value={header.name || ''}
-          onChange={e => onChange({ ...header, name: e.target.value })}
-          onBlur={onBlur}
-        />
-      </div>
-      <div className="gf-form">
-        <SecretFormField
-          label="Value"
-          name="value"
-          isConfigured={header.configured}
-          value={header.value}
-          labelWidth={5}
-          inputWidth={header.configured ? 11 : 12}
-          placeholder="Header Value"
-          onReset={() => onReset(header.id)}
-          onChange={e => onChange({ ...header, value: e.target.value })}
-          onBlur={onBlur}
-        />
-      </div>
-      <div className="gf-form">
-        <Button variant="danger" size="xs" onClick={_e => onRemove(header.id)}>
-          <i className="fa fa-remove" />
-        </Button>
-      </div>
+    <div className={styles.layout}>
+      <FormField
+        label="Header"
+        name="name"
+        placeholder="X-Custom-Header"
+        labelWidth={5}
+        value={header.name || ''}
+        onChange={e => onChange({ ...header, name: e.target.value })}
+        onBlur={onBlur}
+      />
+      <SecretFormField
+        label="Value"
+        name="value"
+        isConfigured={header.configured}
+        value={header.value}
+        labelWidth={5}
+        inputWidth={header.configured ? 11 : 12}
+        placeholder="Header Value"
+        onReset={() => onReset(header.id)}
+        onChange={e => onChange({ ...header, value: e.target.value })}
+        onBlur={onBlur}
+      />
+      <Button variant="transparent" size="xs" onClick={_e => onRemove(header.id)}>
+        <i className="fa fa-trash" />
+      </Button>
     </div>
   );
 };
+
+CustomHeaderRow.displayName = 'CustomHeaderRow';
 
 export class CustomHeadersSettings extends PureComponent<Props, State> {
   state: State = {
