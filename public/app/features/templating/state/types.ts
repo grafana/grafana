@@ -1,17 +1,30 @@
 import { VariableModel, VariableType } from '../variable';
+import { DataSourceSelectItem } from '@grafana/data';
 
 export interface VariableEditorState {
   name: string;
   type: VariableType;
   errors: Record<string, string>;
-  valid: boolean;
+  isValid: boolean;
+  dataSources: DataSourceSelectItem[];
+}
+
+export interface VariableEditorProps<
+  Model extends VariableModel = VariableModel,
+  EditorState extends VariableEditorState = VariableEditorState
+> {
+  variable: Model;
+  editor: EditorState;
+  dataSources: DataSourceSelectItem[];
+  onPropChange: (propName: keyof Model, propValue: any) => void;
 }
 
 export const initialVariableEditorState: VariableEditorState = {
   name: '',
   type: 'query',
   errors: {},
-  valid: true,
+  isValid: true,
+  dataSources: [],
 };
 
 export interface VariableState<

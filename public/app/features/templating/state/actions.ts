@@ -1,7 +1,10 @@
+import castArray from 'lodash/castArray';
+import find from 'lodash/find';
 import { MouseEvent } from 'react';
 import { v4 } from 'uuid';
 import { ActionCreatorWithPayload, createAction, PrepareAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
+import { DataSourceSelectItem } from '@grafana/data';
 
 import {
   QueryVariableModel,
@@ -15,14 +18,11 @@ import {
 import { ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
-import _ from 'lodash';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
 import { MoveVariableType } from '../../../types/events';
-import appEvents from '../../../core/app_events';
-import { AppEvents } from '@grafana/data';
+import { queryVariableActions } from './queryVariableActions';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -98,16 +98,9 @@ export const updateVariableCompleted = createAction<VariablePayload<{ notifyAngu
 );
 export const updateVariableFailed = createAction<VariablePayload<Error>>('templating/updateVariableFailed');
 export const updateVariableTags = createAction<VariablePayload<any[]>>('templating/updateVariableTags');
-export const selectVariableOption = createAction<VariablePayload<SelectVariableOption>>(
-  'templating/selectVariableOption'
+export const variableEditorMounted = createAction<VariablePayload<DataSourceSelectItem[]>>(
+  'templating/variableEditorMounted'
 );
-export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(
-  'templating/showQueryVariableDropDown'
-);
-export const hideQueryVariableDropDown = createAction<VariablePayload<undefined>>(
-  'templating/hideQueryVariableDropDown'
-);
-export const variableEditorMounted = createAction<VariablePayload<undefined>>('templating/variableEditorMounted');
 export const variableEditorUnMounted = createAction<VariablePayload<undefined>>('templating/variableEditorUnMounted');
 export const changeVariableNameSucceeded = createAction<VariablePayload<string>>(
   'templating/changeVariableNameSucceeded'
@@ -120,29 +113,31 @@ export const moveVariableTypeToAngular = createAction<VariablePayload<MoveVariab
 );
 export const changeVariableLabel = createAction<VariablePayload<string>>('templating/changeVariableLabel');
 export const changeVariableHide = createAction<VariablePayload<VariableHide>>('templating/changeVariableHide');
+export const changeVariableProp = createAction<VariablePayload<{ propName: string; propValue: any }>>(
+  'templating/changeVariableProp'
+);
 
-export const variableActions: Array<ActionCreatorWithPayload<VariablePayload<any>>> = [
-  addVariable,
-  removeVariable,
-  setInitLock,
-  resolveInitLock,
-  removeInitLock,
-  setCurrentVariableValue,
-  updateVariableOptions,
-  updateVariableStarting,
-  updateVariableCompleted,
-  updateVariableFailed,
-  updateVariableTags,
-  selectVariableOption,
-  showQueryVariableDropDown,
-  hideQueryVariableDropDown,
-  changeVariableNameSucceeded,
-  changeVariableNameFailed,
-  variableEditorMounted,
-  variableEditorUnMounted,
-  changeVariableLabel,
-  changeVariableHide,
-];
+export const variableActions: Record<string, ActionCreatorWithPayload<VariablePayload<any>>> = {
+  [addVariable.type]: addVariable,
+  [removeVariable.type]: removeVariable,
+  [setInitLock.type]: setInitLock,
+  [resolveInitLock.type]: resolveInitLock,
+  [removeInitLock.type]: removeInitLock,
+  [setCurrentVariableValue.type]: setCurrentVariableValue,
+  [updateVariableOptions.type]: updateVariableOptions,
+  [updateVariableStarting.type]: updateVariableStarting,
+  [updateVariableCompleted.type]: updateVariableCompleted,
+  [updateVariableFailed.type]: updateVariableFailed,
+  [updateVariableTags.type]: updateVariableTags,
+  [changeVariableNameSucceeded.type]: changeVariableNameSucceeded,
+  [changeVariableNameFailed.type]: changeVariableNameFailed,
+  [variableEditorMounted.type]: variableEditorMounted,
+  [variableEditorUnMounted.type]: variableEditorUnMounted,
+  [changeVariableLabel.type]: changeVariableLabel,
+  [changeVariableHide.type]: changeVariableHide,
+  [changeVariableProp.type]: changeVariableProp,
+  ...queryVariableActions,
+};
 
 export const toVariablePayload = <T extends {} = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
   return { type: variable.type, uuid: variable.uuid, data };
@@ -204,42 +199,6 @@ export const processVariables = (): ThunkResult<void> => {
   };
 };
 
-export const updateQueryVariableOptions = (
-  variable: QueryVariableModel,
-  searchFilter?: string,
-  notifyAngular?: boolean
-): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    try {
-      dispatch(updateVariableStarting(toVariablePayload(variable)));
-      const dataSource = await getDatasourceSrv().get(variable.datasource);
-      const queryOptions: any = { range: undefined, variable, searchFilter };
-      if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
-        queryOptions.range = getTimeSrv().timeRange();
-      }
-      const results = await dataSource.metricFindQuery(variable.query, queryOptions);
-      await dispatch(updateVariableOptions(toVariablePayload(variable, results)));
-
-      if (variable.useTags) {
-        const tagResults = await dataSource.metricFindQuery(variable.tagsQuery, queryOptions);
-        await dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
-      }
-
-      await dispatch(validateVariableSelectionState(variable));
-      await dispatch(updateVariableCompleted(toVariablePayload(variable, { notifyAngular })));
-    } catch (err) {
-      if (err.data && err.data.message) {
-        err.message = err.data.message;
-      }
-      dispatch(updateVariableFailed(toVariablePayload(variable, err)));
-      appEvents.emit(AppEvents.alertError, [
-        'Templating',
-        'Template variables could not be initialized: ' + err.message,
-      ]);
-    }
-  };
-};
-
 export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValue): ThunkResult<void> => {
   return async (dispatch, getState) => {
     if (!variable.hasOwnProperty('refresh')) {
@@ -272,7 +231,7 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
       if (Array.isArray(urlValue)) {
         // Multiple values in the url. We construct text as a list of texts from all matched options.
         defaultText = (urlValue as string[]).reduce((acc, item) => {
-          const t: any = _.find(variableFromState.options, { value: item });
+          const t: any = find(variableFromState.options, { value: item });
           if (t) {
             acc.push(t.text);
           } else {
@@ -291,7 +250,7 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
     if (variableFromState.hasOwnProperty('multi')) {
       // In case variable is multiple choice, we cast to array to preserve the same behaviour as when selecting
       // the option directly, which will return even single value in an array.
-      option = { text: _.castArray(option.text), value: _.castArray(option.value), selected: false };
+      option = { text: castArray(option.text), value: castArray(option.value), selected: false };
     }
 
     await variableAdapters.get(variable.type).setValue(variableFromState, option);
@@ -494,5 +453,15 @@ export const changeVariableType = (variable: VariableModel, newType: VariableTyp
       // implement this when we have more then 1 type using adapters
       throw new Error('Not implemented yet');
     }
+  };
+};
+
+export const variableEditorInit = (variable: VariableModel): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const dataSources: DataSourceSelectItem[] = await getDatasourceSrv()
+      .getMetricSources()
+      .filter(ds => !ds.meta.mixed && ds.value !== null);
+
+    dispatch(variableEditorMounted(toVariablePayload(variable, dataSources)));
   };
 };

@@ -44,9 +44,8 @@ export class VariableRenderer extends PureComponent<VariableRendererProps, Varia
       return null;
     }
 
-    const adapter = variableAdapters.get(type);
-    if (this.props.componentType === 'picker') {
-      const ComponentToRender = adapter[componentType];
+    if (componentType === 'picker') {
+      const ComponentToRender = variableAdapters.get(type).picker;
       if (!ComponentToRender) {
         return null;
       }

@@ -6,7 +6,7 @@ import { UrlQueryValue } from '@grafana/runtime';
 import { VariableModel, VariableOption, VariableType } from '../variable';
 import { VariablePayload } from '../state/actions';
 import { createQueryVariableAdapter } from './queryVariableAdapter';
-import { VariableState } from '../state/types';
+import { VariableEditorProps, VariableState } from '../state/types';
 
 export interface VariableAdapter<Model extends VariableModel, State extends VariableState> {
   description: string;
@@ -16,7 +16,7 @@ export interface VariableAdapter<Model extends VariableModel, State extends Vari
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
   onEditorUpdate: (variable: Model) => Promise<void>;
   picker: ComponentType<VariableState>;
-  editor: ComponentType<VariableState>;
+  editor: ComponentType<VariableEditorProps>;
   reducer: Reducer<State, PayloadAction<VariablePayload<any>>>;
 }
 

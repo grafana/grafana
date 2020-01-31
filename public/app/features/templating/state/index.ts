@@ -66,6 +66,7 @@ export const updateTemplatingState = (
             ...initialVariableEditorState,
             name: variableState.variable.name,
             type: variableState.variable.type,
+            dataSources: action.payload.data,
           },
         };
       }),
@@ -155,7 +156,10 @@ export const updateTemplatingState = (
 
         return {
           ...variableState,
-          editor: initialVariableEditorState,
+          editor: {
+            ...initialVariableEditorState,
+            ...variableState.editor,
+          },
         };
       }),
     };
@@ -173,7 +177,7 @@ export const updateTemplatingState = (
           ...variableState,
           editor: {
             ...variableState.editor,
-            valid: false,
+            isValid: false,
             errors: {
               ...variableState.editor.errors,
               update: action.payload.data.message,
@@ -203,8 +207,8 @@ export const updateTemplatingState = (
 // So reverting to a "normal" reducer
 export const templatingReducer = (state: TemplatingState = initialState, action: AnyAction): TemplatingState => {
   // filter out all action creators that are not registered as variable action creator
-  const actionCreators = variableActions.filter(actionCreator => actionCreator.match(action));
-  if (actionCreators.length === 0) {
+  const actionCreator = variableActions[action.type];
+  if (!actionCreator) {
     return state;
   }
 

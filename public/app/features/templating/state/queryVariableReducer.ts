@@ -12,22 +12,29 @@ import {
   addVariable,
   changeVariableNameFailed,
   changeVariableNameSucceeded,
-  hideQueryVariableDropDown,
+  changeVariableProp,
   removeInitLock,
   resolveInitLock,
-  selectVariableOption,
   setCurrentVariableValue,
   setInitLock,
-  showQueryVariableDropDown,
   updateVariableFailed,
   updateVariableOptions,
   updateVariableTags,
 } from './actions';
 import _ from 'lodash';
-import { stringToJsRegex } from '@grafana/data';
+import { DataSourceApi, stringToJsRegex } from '@grafana/data';
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
 import { initialVariableEditorState, VariableEditorState, VariableState } from './types';
+import {
+  hideQueryVariableDropDown,
+  queryVariableDatasourceLoaded,
+  queryVariableEditorLoaded,
+  selectVariableOption,
+  showQueryVariableDropDown,
+} from './queryVariableActions';
+import { ComponentType } from 'react';
+import { VariableQueryProps } from '../../../types';
 
 export type MutateStateFunc<S extends VariableState> = (state: S) => S;
 export const appyStateChanges = <S extends VariableState>(state: S, ...args: Array<MutateStateFunc<S>>): S => {
@@ -50,7 +57,10 @@ export interface QueryVariablePickerState {
   oldVariableText: string | string[];
 }
 
-export interface QueryVariableEditorState extends VariableEditorState {}
+export interface QueryVariableEditorState extends VariableEditorState {
+  VariableQueryEditor: ComponentType<VariableQueryProps> | null;
+  dataSource: DataSourceApi | null;
+}
 
 export interface QueryVariableState
   extends VariableState<QueryVariablePickerState, QueryVariableEditorState, QueryVariableModel> {}
@@ -94,9 +104,15 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   definition: '',
 };
 
+export const initialQueryVariableEditorState: QueryVariableEditorState = {
+  ...initialVariableEditorState,
+  VariableQueryEditor: null,
+  dataSource: null,
+};
+
 export const initialQueryVariableState: QueryVariableState = {
   picker: initialQueryVariablePickerState,
-  editor: initialVariableEditorState,
+  editor: initialQueryVariableEditorState,
   variable: initialQueryVariableModelState,
 };
 
@@ -278,6 +294,42 @@ const updateOldVariableText = (state: QueryVariableState): QueryVariableState =>
   };
 };
 
+const updateEditorErrors = (state: QueryVariableState): QueryVariableState => {
+  let errorText = null;
+  if (
+    typeof state.variable.query === 'string' &&
+    state.variable.query.match(new RegExp('\\$' + state.variable.name + '(/| |$)'))
+  ) {
+    errorText = 'Query cannot contain a reference to itself. Variable: $' + state.variable.name;
+  }
+
+  if (!errorText) {
+    delete state.editor.errors.query;
+    return state;
+  }
+
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      errors: {
+        ...state.editor.errors,
+        query: errorText,
+      },
+    },
+  };
+};
+
+const updateEditorIsValid = (state: QueryVariableState): QueryVariableState => {
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      isValid: Object.keys(state.editor.errors).length === 0,
+    },
+  };
+};
+
 // I stumbled upon the error described here https://github.com/immerjs/immer/issues/430
 // So reverting to a "normal" reducer
 export const queryVariableReducer = (
@@ -334,7 +386,7 @@ export const queryVariableReducer = (
         definition,
       },
       picker: initialQueryVariablePickerState,
-      editor: initialVariableEditorState,
+      editor: initialQueryVariableEditorState,
     };
   }
 
@@ -353,7 +405,7 @@ export const queryVariableReducer = (
   }
 
   if (updateVariableFailed.match(action)) {
-    return { ...state, editor: { ...state.editor, valid: false, errors: { update: action.payload.data.message } } };
+    return { ...state, editor: { ...state.editor, isValid: false, errors: { update: action.payload.data.message } } };
   }
 
   if (updateVariableTags.match(action)) {
@@ -507,7 +559,7 @@ export const queryVariableReducer = (
       editor: {
         ...state.editor,
         name: action.payload.data,
-        valid: true,
+        isValid: true,
       },
       variable: {
         ...state.variable,
@@ -521,7 +573,7 @@ export const queryVariableReducer = (
       ...state,
       editor: {
         ...state.editor,
-        valid: false,
+        isValid: false,
         name: action.payload.data.newName,
         errors: {
           ...state.editor.errors,
@@ -529,6 +581,38 @@ export const queryVariableReducer = (
         },
       },
     };
+  }
+
+  if (queryVariableDatasourceLoaded.match(action)) {
+    return {
+      ...state,
+      editor: {
+        ...state.editor,
+        dataSource: action.payload.data,
+      },
+    };
+  }
+
+  if (queryVariableEditorLoaded.match(action)) {
+    return {
+      ...state,
+      editor: {
+        ...state.editor,
+        VariableQueryEditor: action.payload.data,
+      },
+    };
+  }
+
+  if (changeVariableProp.match(action)) {
+    const newState = {
+      ...state,
+      variable: {
+        ...state.variable,
+        [action.payload.data.propName]: action.payload.data.propValue,
+      },
+    };
+
+    return appyStateChanges(newState, updateEditorErrors, updateEditorIsValid);
   }
 
   return state;

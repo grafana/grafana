@@ -6,19 +6,30 @@ import {
   changeVariableHide,
   changeVariableLabel,
   changeVariableName,
+  changeVariableProp,
   changeVariableType,
   toVariablePayload,
-  variableEditorMounted,
+  variableEditorInit,
   variableEditorUnMounted,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { VariableState } from '../state/types';
 import { VariableHide, VariableType } from '../variable';
 import { FormLabel } from '@grafana/ui';
+import { appEvents } from '../../../core/core';
+import { AppEvents } from '@grafana/data';
 
 export class VariableEditor extends PureComponent<VariableState> {
   componentDidMount(): void {
-    dispatch(variableEditorMounted(toVariablePayload(this.props.variable)));
+    dispatch(variableEditorInit(this.props.variable));
+  }
+
+  componentDidUpdate(prevProps: Readonly<VariableState>, prevState: Readonly<{}>, snapshot?: any): void {
+    if (prevProps.editor.errors !== this.props.editor.errors) {
+      Object.values(this.props.editor.errors).forEach(error => {
+        appEvents.emit(AppEvents.alertWarning, ['Validation', error]);
+      });
+    }
   }
 
   componentWillUnmount(): void {
@@ -49,7 +60,7 @@ export class VariableEditor extends PureComponent<VariableState> {
 
   onUpdateClicked = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    if (!this.props.editor.valid) {
+    if (!this.props.editor.isValid) {
       return;
     }
     await variableAdapters.get(this.props.variable.type).onEditorUpdate(this.props.variable);
@@ -58,6 +69,10 @@ export class VariableEditor extends PureComponent<VariableState> {
   onAddClicked = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     console.log('onAddClicked');
+  };
+
+  onPropChanged = (propName: string, propValue: any) => {
+    dispatch(changeVariableProp(toVariablePayload(this.props.variable, { propName, propValue })));
   };
 
   render() {
@@ -163,7 +178,15 @@ export class VariableEditor extends PureComponent<VariableState> {
               </div>
             </div>
           </div>
-          {EditorToRender && <EditorToRender {...this.props} />}
+
+          {EditorToRender && (
+            <EditorToRender
+              editor={this.props.editor}
+              variable={this.props.variable}
+              dataSources={this.props.editor.dataSources}
+              onPropChange={this.onPropChanged}
+            />
+          )}
 
           <div className="gf-form-button-row p-y-0">
             {this.props.variable.uuid && (

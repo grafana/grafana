@@ -5,14 +5,14 @@ import { e2e } from '@grafana/e2e';
 
 import { VariableHide, VariableOption } from '../variable';
 import { dispatch } from '../../../store/store';
+import { toVariablePayload } from '../state/actions';
+import { QueryVariableState } from '../state/queryVariableReducer';
+import { variableAdapters } from '../adapters';
 import {
   hideQueryVariableDropDown,
   selectVariableOption,
   showQueryVariableDropDown,
-  toVariablePayload,
-} from '../state/actions';
-import { QueryVariableState } from '../state/queryVariableReducer';
-import { variableAdapters } from '../adapters';
+} from '../state/queryVariableActions';
 
 export interface Props extends QueryVariableState {}
 
