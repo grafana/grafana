@@ -1,11 +1,14 @@
 import React from 'react';
-import { FieldConfigEditorRegistry, FieldConfigSource } from '@grafana/data';
+import { FieldConfigEditorRegistry, FieldConfigSource, DataFrame } from '@grafana/data';
 
 interface Props {
   config: FieldConfigSource;
   custom?: FieldConfigEditorRegistry; // custom fields
   include?: string[]; // Ordered list of which fields should be shown/included
   onChange: (config: FieldConfigSource) => void;
+
+  // Helpful for IntelliSense
+  data: DataFrame[];
 }
 
 interface State {

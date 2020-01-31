@@ -42,6 +42,7 @@ FieldConfigStories.add('default', () => {
   return (
     <FieldConfigEditor
       config={cfg}
+      data={[]}
       custom={customEditorRegistry}
       onChange={(config: FieldConfigSource) => {
         console.log('Data', config);
