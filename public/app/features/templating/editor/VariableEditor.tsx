@@ -18,6 +18,7 @@ import { VariableHide, VariableType } from '../variable';
 import { FormLabel } from '@grafana/ui';
 import { appEvents } from '../../../core/core';
 import { AppEvents } from '@grafana/data';
+import { VariableValuesPreview } from './VariableValuesPreview';
 
 export class VariableEditor extends PureComponent<VariableState> {
   componentDidMount(): void {
@@ -187,6 +188,8 @@ export class VariableEditor extends PureComponent<VariableState> {
               onPropChange={this.onPropChanged}
             />
           )}
+
+          <VariableValuesPreview variable={this.props.variable} />
 
           <div className="gf-form-button-row p-y-0">
             {this.props.variable.uuid && (

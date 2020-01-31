@@ -1,6 +1,6 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
-import { FormLabel } from '@grafana/ui';
+import { FormLabel, Switch } from '@grafana/ui';
 
 import templateSrv from '../template_srv';
 import { SelectionOptionsEditor } from './SelectionOptionsEditor';
@@ -14,11 +14,15 @@ import { variableAdapters } from '../adapters';
 export interface Props extends VariableEditorProps<QueryVariableModel, QueryVariableEditorState> {}
 export interface State {
   regex: string | null;
+  tagsQuery: string | null;
+  tagValuesQuery: string | null;
 }
 
 export class QueryVariableEditor extends PureComponent<Props, State> {
   state: State = {
     regex: null,
+    tagsQuery: null,
+    tagValuesQuery: null,
   };
 
   componentDidMount(): void {
@@ -39,6 +43,8 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
     return foundItem ? foundItem.value : this.props.dataSources[0].value;
   };
 
+  runQuery = async () => await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+
   onDataSourceChange = (event: ChangeEvent<HTMLSelectElement>) => {
     this.props.onPropChange('query', '');
     this.props.onPropChange('datasource', event.target.value);
@@ -47,16 +53,34 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
   onQueryChange = async (query: any, definition: string) => {
     this.props.onPropChange('query', query);
     this.props.onPropChange('definition', definition);
-    await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+    await this.runQuery();
   };
 
-  onRegExChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ regex: event.target.value });
   };
 
   onRegExBlur = async (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onPropChange('regex', event.target.value);
-    await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+    await this.runQuery();
+  };
+
+  onTagsQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ tagsQuery: event.target.value });
+  };
+
+  onTagsQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onPropChange('tagsQuery', event.target.value);
+    await this.runQuery();
+  };
+
+  onTagValuesQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ tagValuesQuery: event.target.value });
+  };
+
+  onTagValuesQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onPropChange('tagValuesQuery', event.target.value);
+    await this.runQuery();
   };
 
   onRefreshChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -65,12 +89,17 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
 
   onSortChange = async (event: ChangeEvent<HTMLSelectElement>) => {
     this.props.onPropChange('sort', parseInt(event.target.value, 10));
-    await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+    await this.runQuery();
   };
 
   onSelectionOptionsChange = async (propName: keyof VariableWithMultiSupport, propValue: any) => {
     this.props.onPropChange(propName, propValue);
-    await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+    await this.runQuery();
+  };
+
+  onUseTagsChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onPropChange('useTags', event.target.checked);
+    await this.runQuery();
   };
 
   render() {
@@ -202,6 +231,52 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
         </div>
 
         <SelectionOptionsEditor variable={this.props.variable} onPropChange={this.onSelectionOptionsChange} />
+
+        <div className="gf-form-group">
+          <h5>Value groups/tags (Experimental feature)</h5>
+          <Switch
+            label="Enabled"
+            label-class="width-10"
+            checked={this.props.variable.useTags}
+            onChange={this.onUseTagsChange}
+            aria-label={
+              e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.valueGroupsTagsEnabledSwitch
+            }
+          />
+          {this.props.variable.useTags && (
+            <>
+              <div className="gf-form last">
+                <span className="gf-form-label width-10">Tags query</span>
+                <input
+                  type="text"
+                  className="gf-form-input"
+                  value={this.state.tagsQuery ?? this.props.variable.tagsQuery}
+                  placeholder="metric name or tags query"
+                  onChange={this.onTagsQueryChange}
+                  onBlur={this.onTagsQueryBlur}
+                  aria-label={
+                    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.valueGroupsTagsTagsQueryInput
+                  }
+                />
+              </div>
+              <div className="gf-form">
+                <li className="gf-form-label width-10">Tag values query</li>
+                <input
+                  type="text"
+                  className="gf-form-input"
+                  value={this.state.tagValuesQuery ?? this.props.variable.tagValuesQuery}
+                  placeholder="apps.$tag.*"
+                  onChange={this.onTagValuesQueryChange}
+                  onBlur={this.onTagValuesQueryBlur}
+                  aria-label={
+                    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors
+                      .valueGroupsTagsTagsValuesQueryInput
+                  }
+                />
+              </div>
+            </>
+          )}
+        </div>
       </>
     );
   }
