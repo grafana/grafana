@@ -59,18 +59,16 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
       <SelectNav customCss="page-header__select-nav" main={main} />
       <TabsBar className="page-header__tabs" hideBorder={true}>
         {main.children.map((child, index) => {
-          if (child.hideFromTabs) {
-            return null;
-          }
-
           return (
-            <Tab
-              label={child.text}
-              active={child.active}
-              key={`${child.url}-${index}`}
-              icon={child.icon}
-              onChangeTab={() => goToUrl(index)}
-            />
+            !child.hideFromTabs && (
+              <Tab
+                label={child.text}
+                active={child.active}
+                key={`${child.url}-${index}`}
+                icon={child.icon}
+                onChangeTab={() => goToUrl(index)}
+              />
+            )
           );
         })}
       </TabsBar>
