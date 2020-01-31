@@ -4,7 +4,7 @@ import { FormLabel } from '@grafana/ui';
 
 import templateSrv from '../template_srv';
 import { SelectionOptionsEditor } from './SelectionOptionsEditor';
-import { QueryVariableModel, VariableRefresh, VariableSort } from '../variable';
+import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../variable';
 import { VariableEditorProps } from '../state/types';
 import { QueryVariableEditorState } from '../state/queryVariableReducer';
 import { dispatch } from '../../../store/store';
@@ -65,6 +65,11 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
 
   onSortChange = async (event: ChangeEvent<HTMLSelectElement>) => {
     this.props.onPropChange('sort', parseInt(event.target.value, 10));
+    await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+  };
+
+  onSelectionOptionsChange = async (propName: keyof VariableWithMultiSupport, propValue: any) => {
+    this.props.onPropChange(propName, propValue);
     await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
   };
 
@@ -196,7 +201,7 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
           </div>
         </div>
 
-        <SelectionOptionsEditor variable={this.props.variable} />
+        <SelectionOptionsEditor variable={this.props.variable} onPropChange={this.onSelectionOptionsChange} />
       </>
     );
   }

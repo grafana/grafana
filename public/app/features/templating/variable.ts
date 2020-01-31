@@ -96,15 +96,9 @@ export interface AdHocVariableModel extends VariableModel {
   filters: AdHocVariableFilter[];
 }
 
-export interface CustomVariableModel extends VariableWithOptions {
-  allValue: string;
-  includeAll: boolean;
-  multi: boolean;
-}
+export interface CustomVariableModel extends VariableWithMultiSupport {}
 
-export interface DataSourceVariableModel extends VariableWithOptions {
-  includeAll: boolean;
-  multi: boolean;
+export interface DataSourceVariableModel extends VariableWithMultiSupport {
   refresh: VariableRefresh;
   regex: string;
 }
@@ -116,12 +110,9 @@ export interface IntervalVariableModel extends VariableWithOptions {
   refresh: VariableRefresh;
 }
 
-export interface QueryVariableModel extends VariableWithOptions {
-  allValue: string;
+export interface QueryVariableModel extends VariableWithMultiSupport {
   datasource: string;
   definition: string;
-  includeAll: boolean;
-  multi: boolean;
   refresh: VariableRefresh;
   regex: string;
   sort: VariableSort;
@@ -134,6 +125,12 @@ export interface QueryVariableModel extends VariableWithOptions {
 export interface TextBoxVariableModel extends VariableWithOptions {}
 
 export interface ConstantVariableModel extends VariableWithOptions {}
+
+export interface VariableWithMultiSupport extends VariableWithOptions {
+  multi: boolean;
+  includeAll: boolean;
+  allValue?: string;
+}
 
 export interface VariableWithOptions extends VariableModel {
   current: VariableOption;

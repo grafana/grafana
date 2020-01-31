@@ -9,14 +9,17 @@ export interface VariableEditorState {
   dataSources: DataSourceSelectItem[];
 }
 
+export interface VariableEditorOnPropChange<Model extends VariableModel = VariableModel> {
+  onPropChange: (propName: keyof Model, propValue: any) => void;
+}
+
 export interface VariableEditorProps<
   Model extends VariableModel = VariableModel,
   EditorState extends VariableEditorState = VariableEditorState
-> {
+> extends VariableEditorOnPropChange<Model> {
   variable: Model;
   editor: EditorState;
   dataSources: DataSourceSelectItem[];
-  onPropChange: (propName: keyof Model, propValue: any) => void;
 }
 
 export const initialVariableEditorState: VariableEditorState = {
