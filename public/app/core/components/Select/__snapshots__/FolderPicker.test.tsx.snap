@@ -20,12 +20,6 @@ exports[`FolderPicker should render 1`] = `
         loadingMessage="Loading folders..."
         onChange={[Function]}
         size="sm"
-        value={
-          Object {
-            "label": "",
-            "value": undefined,
-          }
-        }
       />
     </div>
   </div>
