@@ -1,4 +1,4 @@
-package backend
+package plugin
 
 import (
 	"context"
@@ -8,16 +8,20 @@ import (
 	"google.golang.org/grpc"
 )
 
+type CoreServer interface {
+	pluginv2.CoreServer
+}
+
 // CoreGRPCPlugin implements the GRPCPlugin interface from github.com/hashicorp/go-plugin.
 type CoreGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	plugin.GRPCPlugin
-	server pluginv2.CoreServer
+	CoreServer CoreServer
 }
 
 func (p *CoreGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	pluginv2.RegisterCoreServer(s, &coreGRPCServer{
-		server: p.server,
+		server: p.CoreServer,
 	})
 	return nil
 }
@@ -27,15 +31,15 @@ func (p *CoreGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBrok
 }
 
 type coreGRPCServer struct {
-	server pluginv2.CoreServer
+	server CoreServer
 }
 
 func (s *coreGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
 	return s.server.DataQuery(ctx, req)
 }
 
-func (s *coreGRPCServer) Resource(ctx context.Context, req *pluginv2.ResourceRequest) (*pluginv2.ResourceResponse, error) {
-	return s.server.Resource(ctx, req)
+func (s *coreGRPCServer) CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
+	return s.server.CallResource(ctx, req)
 }
 
 type coreGRPCClient struct {
@@ -46,6 +50,9 @@ func (m *coreGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryR
 	return m.client.DataQuery(ctx, req)
 }
 
-func (m *coreGRPCClient) Resource(ctx context.Context, req *pluginv2.ResourceRequest) (*pluginv2.ResourceResponse, error) {
-	return m.client.Resource(ctx, req)
+func (m *coreGRPCClient) CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
+	return m.client.CallResource(ctx, req)
 }
+
+var _ CoreServer = &coreGRPCServer{}
+var _ CoreServer = &coreGRPCClient{}

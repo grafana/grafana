@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
@@ -54,9 +53,9 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
 	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
-	if client.BackendPlugin != nil {
+	if client.DatasourcePlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, client.BackendPlugin), nil
+			return wrapper.NewDatasourcePluginWrapperV2(logger, client.DatasourcePlugin), nil
 		})
 	}
 
@@ -67,12 +66,12 @@ func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.C
 // Wrapper Code
 // ...
 
-func NewTransformWrapper(log log.Logger, plugin backend.TransformPlugin) *TransformWrapper {
+func NewTransformWrapper(log log.Logger, plugin backendplugin.TransformPlugin) *TransformWrapper {
 	return &TransformWrapper{plugin, log, &transformCallback{log}}
 }
 
 type TransformWrapper struct {
-	backend.TransformPlugin
+	backendplugin.TransformPlugin
 	logger   log.Logger
 	callback *transformCallback
 }
