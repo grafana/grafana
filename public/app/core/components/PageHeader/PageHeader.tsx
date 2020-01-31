@@ -65,6 +65,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
               active={child.active}
               key={`${child.url}-${index}`}
               icon={child.icon}
+              hideFromTabs={child.hideFromTabs}
               onChangeTab={() => goToUrl(index)}
             />
           );
@@ -134,6 +135,7 @@ export default class PageHeader extends React.Component<Props, any> {
     }
 
     const main = model.main;
+    console.log(main);
 
     return (
       <div className="page-header-canvas">
