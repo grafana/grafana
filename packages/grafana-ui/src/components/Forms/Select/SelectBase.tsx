@@ -232,6 +232,7 @@ export function SelectBase<T>({
     menuShouldScrollIntoView: false,
     renderControl,
     captureMenuScroll: false,
+    blurInputOnSelect: true,
   };
 
   // width property is deprecated in favor of size or className
