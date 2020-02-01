@@ -170,13 +170,13 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("diff of three positive points", func() {
-			result := testReducer("diff", 30, 40, 40)
-			So(result, ShouldEqual, float64(10))
+			result := testReducer("diff", 30, 40, 50)
+			So(result, ShouldEqual, float64(20))
 		})
 
 		Convey("diff of three negative points", func() {
-			result := testReducer("diff", -30, -40, -40)
-			So(result, ShouldEqual, float64(-10))
+			result := testReducer("diff", -30, -40, -50)
+			So(result, ShouldEqual, float64(-20))
 		})
 
 		Convey("diff with only nulls", func() {
@@ -233,13 +233,13 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("diff_abs of three positive points", func() {
-			result := testReducer("diff_abs", 30, 40, 40)
-			So(result, ShouldEqual, float64(10))
+			result := testReducer("diff_abs", 30, 40, 50)
+			So(result, ShouldEqual, float64(20))
 		})
 
 		Convey("diff_abs of three negative points", func() {
-			result := testReducer("diff_abs", -30, -40, -40)
-			So(result, ShouldEqual, float64(10))
+			result := testReducer("diff_abs", -30, -40, -50)
+			So(result, ShouldEqual, float64(20))
 		})
 
 		Convey("diff_abs with only nulls", func() {
@@ -296,13 +296,13 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("percent_diff of three positive points", func() {
-			result := testReducer("percent_diff", 30, 40, 40)
-			So(result, ShouldEqual, float64(33.33333333333333))
+			result := testReducer("percent_diff", 30, 40, 50)
+			So(result, ShouldEqual, float64(66.66666666666666))
 		})
 
 		Convey("percent_diff of three negative points", func() {
-			result := testReducer("percent_diff", -30, -40, -40)
-			So(result, ShouldEqual, float64(-33.33333333333333))
+			result := testReducer("percent_diff", -30, -40, -50)
+			So(result, ShouldEqual, float64(-66.66666666666666))
 		})
 
 		Convey("percent_diff with only nulls", func() {
@@ -359,13 +359,13 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("percent_diff_abs of three positive points", func() {
-			result := testReducer("percent_diff_abs", 30, 40, 40)
-			So(result, ShouldEqual, float64(33.33333333333333))
+			result := testReducer("percent_diff_abs", 30, 40, 50)
+			So(result, ShouldEqual, float64(66.66666666666666))
 		})
 
 		Convey("percent_diff_abs of three negative points", func() {
-			result := testReducer("percent_diff_abs", -30, -40, -40)
-			So(result, ShouldEqual, float64(33.33333333333333))
+			result := testReducer("percent_diff_abs", -30, -40, -50)
+			So(result, ShouldEqual, float64(66.66666666666666))
 		})
 
 		Convey("percent_diff_abs with only nulls", func() {
