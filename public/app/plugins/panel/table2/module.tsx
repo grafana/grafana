@@ -7,5 +7,5 @@ import { Options, defaults } from './types';
 
 export const plugin = new PanelPlugin<Options>(TablePanel)
   .setDefaults(defaults)
-  .setCustomFields(tableFieldRegistry)
+  .setCustomFieldConfigs(tableFieldRegistry)
   .setEditor(TablePanelEditor);

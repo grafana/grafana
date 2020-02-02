@@ -1,23 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
-import {
-  GrafanaTheme,
-  FieldConfigSource,
-  FieldPropertyEditorItem,
-  Registry,
-  FieldConfigEditorRegistry,
-  PanelData,
-  LoadingState,
-  DefaultTimeRange,
-} from '@grafana/data';
-import {
-  stylesFactory,
-  FieldConfigEditor,
-  NumberValueEditor,
-  NumberOverrideEditor,
-  numberOverrideProcessor,
-  NumberFieldConfigSettings,
-} from '@grafana/ui';
+import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
+import { stylesFactory, FieldConfigEditor } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -72,26 +56,6 @@ interface State {
   data: PanelData;
 }
 
-const columWidth: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
-  id: 'width', // Match field properties
-  name: 'Column Width',
-  description: 'column width (for table)',
-
-  editor: NumberValueEditor,
-  override: NumberOverrideEditor,
-  process: numberOverrideProcessor,
-
-  settings: {
-    placeholder: 'auto',
-    min: 20,
-    max: 300,
-  },
-};
-
-export const customEditorRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(() => {
-  return [columWidth];
-});
-
 export class PanelEditor extends PureComponent<Props, State> {
   querySubscription: Unsubscribable;
 
@@ -139,6 +103,7 @@ export class PanelEditor extends PureComponent<Props, State> {
 
   renderFieldOptions() {
     const { panel } = this.props;
+    const { plugin } = panel;
     const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
     if (!fieldOptions) {
       return null;
@@ -149,7 +114,7 @@ export class PanelEditor extends PureComponent<Props, State> {
         <FieldConfigEditor
           theme={config.theme}
           config={fieldOptions}
-          custom={customEditorRegistry}
+          custom={plugin.customFieldConfigs}
           onChange={this.onFieldConfigsChange}
           data={this.state.data.series}
         />

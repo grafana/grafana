@@ -5,6 +5,7 @@ import FieldConfigEditor from './FieldConfigEditor';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { FieldConfigSource, FieldConfigEditorRegistry, FieldPropertyEditorItem, Registry } from '@grafana/data';
 import { NumberFieldConfigSettings, NumberValueEditor, NumberOverrideEditor, numberOverrideProcessor } from './number';
+import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 const FieldConfigStories = storiesOf('UI/FieldConfig', module);
 
@@ -39,16 +40,14 @@ export const customEditorRegistry: FieldConfigEditorRegistry = new Registry<Fiel
 });
 
 FieldConfigStories.add('default', () => {
-  return (
-    <FieldConfigEditor
-      config={cfg}
-      data={[]}
-      custom={customEditorRegistry}
-      onChange={(config: FieldConfigSource) => {
-        console.log('Data', config);
-      }}
-    />
-  );
+  return renderComponentWithTheme(FieldConfigEditor, {
+    config: cfg,
+    data: [],
+    custom: customEditorRegistry,
+    onChange: (config: FieldConfigSource) => {
+      console.log('Data', config);
+    },
+  });
 });
 
 // config?: FieldConfigSource;

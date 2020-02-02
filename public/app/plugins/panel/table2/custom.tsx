@@ -1,16 +1,5 @@
+import { FieldPropertyEditorItem, Registry, FieldConfigEditorRegistry } from '@grafana/data';
 import {
-  GrafanaTheme,
-  FieldConfigSource,
-  FieldPropertyEditorItem,
-  Registry,
-  FieldConfigEditorRegistry,
-  PanelData,
-  LoadingState,
-  DefaultTimeRange,
-} from '@grafana/data';
-import {
-  stylesFactory,
-  FieldConfigEditor,
   NumberValueEditor,
   NumberOverrideEditor,
   numberOverrideProcessor,
