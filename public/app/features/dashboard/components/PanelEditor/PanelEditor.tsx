@@ -109,7 +109,8 @@ export class PanelEditor extends PureComponent<Props, State> {
     const dirtyPanel = new PanelModel(panel.getSaveModel());
     this.setState({ dirtyPanel });
 
-    const queryRunner = panel.getQueryRunner();
+    // Listen for queries on the new panel
+    const queryRunner = dirtyPanel.getQueryRunner();
     // if (this.shouldLoadAngularOptions()) {
     //   this.loadAngularOptions();
     // }
@@ -168,6 +169,10 @@ export class PanelEditor extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { data } = this.state;
     const { plugin } = panel;
+    if (!plugin) {
+      return null; // not yet ready
+    }
+
     if (plugin.editor) {
       return <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
     }
