@@ -1,4 +1,5 @@
 import { MatcherConfig, FieldConfig, Field } from '../types';
+import { Themeable } from './theme';
 import { Registry, RegistryItem } from '../utils';
 import { ComponentType } from 'react';
 import { InterpolateFunction } from './panel';
@@ -22,7 +23,7 @@ export interface FieldConfigSource {
   overrides: ConfigOverrideRule[];
 }
 
-export interface FieldConfigEditorProps<TValue, TSettings> {
+export interface FieldConfigEditorProps<TValue, TSettings> extends Themeable {
   item: FieldPropertyEditorItem<TValue, TSettings>; // The property info
   value: TValue;
   onChange: (value: TValue) => void;
@@ -34,7 +35,7 @@ export interface FieldOverrideContext {
   replaceVariables: InterpolateFunction;
 }
 
-export interface FieldOverrideEditorProps<TValue, TSettings> {
+export interface FieldOverrideEditorProps<TValue, TSettings> extends Themeable {
   item: FieldPropertyEditorItem<TValue, TSettings>;
   value: any;
   context: FieldOverrideContext;

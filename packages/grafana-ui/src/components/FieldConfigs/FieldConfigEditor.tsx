@@ -55,6 +55,7 @@ export class FieldConfigEditor extends React.PureComponent<Props, State> {
         <h3>{item.name}</h3>
         <p>{item.description}</p>
         <item.editor
+          theme={this.props.theme}
           item={item}
           value={value}
           onChange={v => {

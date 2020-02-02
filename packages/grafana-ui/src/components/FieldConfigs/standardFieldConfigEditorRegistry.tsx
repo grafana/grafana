@@ -1,6 +1,12 @@
-import { FieldConfigEditorRegistry, Registry, FieldPropertyEditorItem } from '@grafana/data';
+import { FieldConfigEditorRegistry, Registry, FieldPropertyEditorItem, ThresholdsConfig } from '@grafana/data';
 import { StringValueEditor, StringOverrideEditor, stringOverrideProcessor, StringFieldConfigSettings } from './string';
 import { NumberValueEditor, NumberOverrideEditor, numberOverrideProcessor, NumberFieldConfigSettings } from './number';
+import {
+  ThresholdsValueEditor,
+  ThresholdsOverrideEditor,
+  thresholdsOverrideProcessor,
+  ThresholdsFieldConfigSettings,
+} from './thresholds';
 
 const titleItem: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
   id: 'title', // Match field properties
@@ -47,8 +53,22 @@ const decimalsItem: FieldPropertyEditorItem<number, NumberFieldConfigSettings> =
   },
 };
 
+const thresholdItem: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
+  id: 'decimals', // Match field properties
+  name: 'Decimals',
+  description: 'How many decimal places should be shown on a number',
+
+  editor: ThresholdsValueEditor,
+  override: ThresholdsOverrideEditor,
+  process: thresholdsOverrideProcessor,
+
+  settings: {
+    // ??
+  },
+};
+
 export const standardFieldConfigEditorRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(
   () => {
-    return [titleItem, minItem, decimalsItem];
+    return [titleItem, minItem, decimalsItem, thresholdItem];
   }
 );

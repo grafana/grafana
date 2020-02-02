@@ -67,7 +67,7 @@ interface State {
   dirtyPanel?: PanelModel;
 }
 
-const columWidth: FieldPropertyEditorItem<number, NumberFieldConfigSetting> = {
+const columWidth: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
   id: 'width', // Match field properties
   name: 'Column Width',
   description: 'column width (for table)',

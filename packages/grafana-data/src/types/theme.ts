@@ -248,3 +248,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     pageHeader: string;
   };
 }
+
+export interface Themeable {
+  theme: GrafanaTheme;
+}
