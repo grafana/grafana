@@ -105,7 +105,7 @@ export class PanelEditor extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { plugin } = panel;
     const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
-    if (!fieldOptions) {
+    if (!fieldOptions || !plugin) {
       return null;
     }
 

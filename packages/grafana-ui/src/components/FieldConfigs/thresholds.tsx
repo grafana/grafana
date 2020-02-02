@@ -5,6 +5,7 @@ import {
   FieldOverrideEditorProps,
   FieldConfigEditorProps,
   ThresholdsConfig,
+  ThresholdsMode,
 } from '@grafana/data';
 import { ThresholdsEditor } from '../ThresholdsEditor/ThresholdsEditor';
 
@@ -28,7 +29,19 @@ export class ThresholdsValueEditor extends React.PureComponent<
   }
 
   render() {
-    const { theme, value, onChange } = this.props;
+    const { theme, onChange } = this.props;
+    let value = this.props.value;
+    if (!value) {
+      value = {
+        mode: ThresholdsMode.Percentage,
+
+        // Must be sorted by 'value', first value is always -Infinity
+        steps: [
+          // anything?
+        ],
+      };
+    }
+
     return <ThresholdsEditor showAlphaUI={true} thresholds={value} onChange={onChange} theme={theme} />;
   }
 }

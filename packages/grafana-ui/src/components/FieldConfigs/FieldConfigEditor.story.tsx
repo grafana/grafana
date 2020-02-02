@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { storiesOf } from '@storybook/react';
 import FieldConfigEditor from './FieldConfigEditor';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
