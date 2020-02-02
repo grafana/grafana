@@ -46,6 +46,29 @@ export class FieldConfigEditor extends React.PureComponent<Props, State> {
     this.styles = getStyles(this.props.theme);
   }
 
+  private setDefaultValue = (name: string, value: any, custom: boolean) => {
+    const defaults = { ...this.props.config.defaults };
+    const remove = value === undefined || value === null;
+    if (custom) {
+      if (defaults.custom) {
+        if (remove) {
+          defaults.custom = { ...defaults.custom }; // TODO!!
+          delete defaults.custom[name]; // something better???
+        } else {
+          defaults.custom = { ...defaults.custom, [name]: value };
+        }
+      } else if (remove) {
+        delete (defaults as any)[name];
+      } else {
+        (defaults as any)[name] = value;
+      }
+    }
+    this.props.onChange({
+      ...this.props.config,
+      defaults,
+    });
+  };
+
   renderEditor(item: FieldPropertyEditorItem, custom: boolean) {
     const config = this.props.config.defaults;
     const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
@@ -58,9 +81,7 @@ export class FieldConfigEditor extends React.PureComponent<Props, State> {
           theme={this.props.theme}
           item={item}
           value={value}
-          onChange={v => {
-            console.log('TODO, update item...');
-          }}
+          onChange={v => this.setDefaultValue(item.name, v, custom)}
         />
       </div>
     );

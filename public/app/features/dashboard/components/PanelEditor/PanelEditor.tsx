@@ -3,10 +3,12 @@ import { css } from 'emotion';
 import {
   GrafanaTheme,
   FieldConfigSource,
-  DataFrame,
   FieldPropertyEditorItem,
   Registry,
   FieldConfigEditorRegistry,
+  PanelData,
+  LoadingState,
+  DefaultTimeRange,
 } from '@grafana/data';
 import {
   stylesFactory,
@@ -22,6 +24,7 @@ import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
+import { Unsubscribable } from 'rxjs';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -46,6 +49,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 450px;
     height: 100%;
     flex-grow: 0;
+    overflow: scroll;
   `,
   leftPaneViz: css`
     width: 100%;
@@ -65,6 +69,7 @@ interface Props {
 
 interface State {
   dirtyPanel?: PanelModel;
+  data: PanelData;
 }
 
 const columWidth: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
@@ -88,17 +93,47 @@ export const customEditorRegistry: FieldConfigEditorRegistry = new Registry<Fiel
 });
 
 export class PanelEditor extends PureComponent<Props, State> {
-  state: State = {};
+  querySubscription: Unsubscribable;
+
+  state: State = {
+    data: {
+      // TODO!! actually hook in the query response
+      state: LoadingState.NotStarted,
+      series: [],
+      timeRange: DefaultTimeRange,
+    },
+  };
 
   componentDidMount() {
     const { panel } = this.props;
     const dirtyPanel = new PanelModel(panel.getSaveModel());
-
     this.setState({ dirtyPanel });
+
+    const queryRunner = panel.getQueryRunner();
+    // if (this.shouldLoadAngularOptions()) {
+    //   this.loadAngularOptions();
+    // }
+
+    this.querySubscription = queryRunner.getData().subscribe({
+      next: (data: PanelData) => this.setState({ data }),
+    });
   }
 
-  onFieldConfigsChange = (config: FieldConfigSource) => {
-    console.log('XXXX', config);
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+    }
+    //this.cleanUpAngularOptions();
+  }
+
+  onFieldConfigsChange = (fieldOptions: FieldConfigSource) => {
+    // NOTE: for now, assume this is from 'fieldOptions' -- TODO? put on panel model directly?
+    const { panel } = this.props;
+    const options = panel.getOptions();
+    panel.updateOptions({
+      ...options,
+      fieldOptions, // Assume it is from shared singlestat -- TODO own property?
+    });
   };
 
   renderFieldOptions() {
@@ -108,9 +143,6 @@ export class PanelEditor extends PureComponent<Props, State> {
       return null;
     }
 
-    // TODO: get data from the query results
-    const data: DataFrame[] = [];
-
     return (
       <div>
         <FieldConfigEditor
@@ -118,10 +150,29 @@ export class PanelEditor extends PureComponent<Props, State> {
           config={fieldOptions}
           custom={customEditorRegistry}
           onChange={this.onFieldConfigsChange}
-          data={data}
+          data={this.state.data.series}
         />
       </div>
     );
+  }
+
+  onPanelOptionsChanged = (options: any, callback?: () => void) => {
+    this.props.panel.updateOptions(options);
+    this.forceUpdate(callback);
+  };
+
+  /**
+   * The existing visualization tab
+   */
+  renderVisSettings() {
+    const { panel } = this.props;
+    const { data } = this.state;
+    const { plugin } = panel;
+    if (plugin.editor) {
+      return <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+    }
+
+    return <div>No editor (angular?)</div>;
   }
 
   render() {
@@ -151,8 +202,11 @@ export class PanelEditor extends PureComponent<Props, State> {
           </div>
         </div>
         <div className={styles.rightPane}>
-          Visualization settings
+          <div>
+            <h3>TODO: VizType picker</h3>
+          </div>
           {this.renderFieldOptions()}
+          {this.renderVisSettings()}
         </div>
       </div>
     );

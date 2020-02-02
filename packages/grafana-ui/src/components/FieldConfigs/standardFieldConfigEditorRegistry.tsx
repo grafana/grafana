@@ -54,9 +54,9 @@ const decimalsItem: FieldPropertyEditorItem<number, NumberFieldConfigSettings> =
 };
 
 const thresholdItem: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
-  id: 'decimals', // Match field properties
-  name: 'Decimals',
-  description: 'How many decimal places should be shown on a number',
+  id: 'thresholds', // Match field properties
+  name: 'Thresholds',
+  description: 'Manage Thresholds',
 
   editor: ThresholdsValueEditor,
   override: ThresholdsOverrideEditor,
