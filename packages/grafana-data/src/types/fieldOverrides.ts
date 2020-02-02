@@ -25,7 +25,7 @@ export interface FieldConfigSource {
 export interface FieldConfigEditorProps<TValue, TSettings> {
   item: FieldPropertyEditorItem<TValue, TSettings>; // The property info
   value: TValue;
-  onChange: (value: TSettings) => void;
+  onChange: (value: TValue) => void;
 }
 
 export interface FieldOverrideContext {

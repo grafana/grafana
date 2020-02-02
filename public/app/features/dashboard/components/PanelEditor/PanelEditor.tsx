@@ -1,7 +1,21 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
-import { GrafanaTheme, FieldConfigSource, DataFrame } from '@grafana/data';
-import { stylesFactory, FieldConfigEditor } from '@grafana/ui';
+import {
+  GrafanaTheme,
+  FieldConfigSource,
+  DataFrame,
+  FieldPropertyEditorItem,
+  Registry,
+  FieldConfigEditorRegistry,
+} from '@grafana/data';
+import {
+  stylesFactory,
+  FieldConfigEditor,
+  NumberValueEditor,
+  NumberOverrideEditor,
+  numberOverrideProcessor,
+  NumberFieldConfigSettings,
+} from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -53,6 +67,26 @@ interface State {
   dirtyPanel?: PanelModel;
 }
 
+const columWidth: FieldPropertyEditorItem<number, NumberFieldConfigSetting> = {
+  id: 'width', // Match field properties
+  name: 'Column Width',
+  description: 'column width (for table)',
+
+  editor: NumberValueEditor,
+  override: NumberOverrideEditor,
+  process: numberOverrideProcessor,
+
+  settings: {
+    placeholder: 'auto',
+    min: 20,
+    max: 300,
+  },
+};
+
+export const customEditorRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(() => {
+  return [columWidth];
+});
+
 export class PanelEditor extends PureComponent<Props, State> {
   state: State = {};
 
@@ -79,7 +113,13 @@ export class PanelEditor extends PureComponent<Props, State> {
 
     return (
       <div>
-        <FieldConfigEditor config={fieldOptions} onChange={this.onFieldConfigsChange} data={data} />
+        <FieldConfigEditor
+          theme={config.theme}
+          config={fieldOptions}
+          custom={customEditorRegistry}
+          onChange={this.onFieldConfigsChange}
+          data={data}
+        />
       </div>
     );
   }
