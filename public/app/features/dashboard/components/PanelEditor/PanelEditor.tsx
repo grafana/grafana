@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { GrafanaTheme, FieldConfigSource, DataFrame } from '@grafana/data';
+import { stylesFactory, FieldConfigEditor } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -63,6 +63,27 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.setState({ dirtyPanel });
   }
 
+  onFieldConfigsChange = (config: FieldConfigSource) => {
+    console.log('XXXX', config);
+  };
+
+  renderFieldOptions() {
+    const { panel } = this.props;
+    const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
+    if (!fieldOptions) {
+      return null;
+    }
+
+    // TODO: get data from the query results
+    const data: DataFrame[] = [];
+
+    return (
+      <div>
+        <FieldConfigEditor config={fieldOptions} onChange={this.onFieldConfigsChange} data={data} />
+      </div>
+    );
+  }
+
   render() {
     const { dashboard } = this.props;
     const { dirtyPanel } = this.state;
@@ -89,7 +110,10 @@ export class PanelEditor extends PureComponent<Props, State> {
             <QueriesTab panel={dirtyPanel} dashboard={dashboard} />;
           </div>
         </div>
-        <div className={styles.rightPane}>Visualization settings</div>
+        <div className={styles.rightPane}>
+          Visualization settings
+          {this.renderFieldOptions()}
+        </div>
       </div>
     );
   }

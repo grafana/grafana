@@ -117,5 +117,8 @@ export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
 
+// TODO: the rest of the standard base field types?
+export { FieldConfigEditor } from './FieldConfigs/FieldConfigEditor';
+
 // Next-gen forms
 export { default as Forms } from './Forms';
