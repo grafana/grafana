@@ -16,7 +16,7 @@ const defaultProps = {
 
 const variants = {
   size: ['xs', 'sm', 'md', 'lg'],
-  variant: ['primary', 'secondary', 'danger', 'inverse', 'transparent'],
+  variant: ['primary', 'secondary', 'danger', 'inverse', 'transparent', 'link'],
 };
 const combinationOptions = {
   CombinationRenderer: ThemeableCombinationsRowRenderer,

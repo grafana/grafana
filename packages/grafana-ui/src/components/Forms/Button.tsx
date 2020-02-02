@@ -38,7 +38,7 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
       ) as string;
 
       return {
-        borderColor: selectThemeVariant({ light: theme.colors.gray70, dark: theme.colors.gray33 }, theme.type),
+        borderColor: selectThemeVariant({ light: theme.colors.gray85, dark: theme.colors.gray25 }, theme.type),
         background: buttonVariantStyles(
           from,
           to,
@@ -57,7 +57,6 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
         borderColor: 'transparent',
         background: buttonVariantStyles('transparent', 'transparent', theme.colors.linkExternal),
         variantStyles: css`
-          text-decoration: underline;
           &:focus {
             outline: none;
             box-shadow: none;

@@ -33,8 +33,10 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     if (value.sparkline) {
       sparkline = {
         data: value.sparkline,
-        minX: timeRange.from.valueOf(),
-        maxX: timeRange.to.valueOf(),
+        xMin: timeRange.from.valueOf(),
+        xMax: timeRange.to.valueOf(),
+        yMin: value.field.min,
+        yMax: value.field.max,
       };
 
       const calc = options.fieldOptions.calcs[0];
@@ -75,6 +77,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       theme: config.theme,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
+      autoMinMax: true,
     });
   };
 

@@ -116,6 +116,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'DataDog',
       imgUrl: 'public/img/plugins/datadog.png',
     }),
+    getPhantomPlugin({
+      id: 'grafana-newrelic-datasource',
+      description: 'New Relic integration & data source',
+      name: 'New Relic',
+      imgUrl: 'public/img/plugins/newrelic.svg',
+    }),
   ];
 }
 

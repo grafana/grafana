@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { transformers } from './transformers';
-import { Column } from 'react-virtualized';
+import { ColumnStyle } from './types';
 
 export class TablePanelEditorCtrl {
   panel: any;
@@ -79,7 +79,7 @@ export class TablePanelEditorCtrl {
     this.panelCtrl.render();
   }
 
-  removeColumn(column: Column) {
+  removeColumn(column: ColumnStyle) {
     this.panel.columns = _.without(this.panel.columns, column);
     this.panelCtrl.render();
   }

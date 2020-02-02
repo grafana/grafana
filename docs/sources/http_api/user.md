@@ -332,6 +332,18 @@ Content-Type: application/json
 {"message":"User password changed"}
 ```
 
+**Change Password with a Script**
+
+If you need to change a password with a script, here is an example of changing the Admin password using curl with basic auth:
+
+```bash
+curl -X PUT -H "Content-Type: application/json" -d '{
+  "oldPassword": "oldpass",
+  "newPassword": "newpass",
+  "confirmNew": "newpass"
+}' http://admin:oldpass@<your_grafana_host>:3000/api/user/password
+```
+
 ## Switch user context for a specified user
 
 `POST /api/users/:userId/using/:organizationId`

@@ -18,17 +18,23 @@ import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import * as Backend from 'app/core/services/backend_srv';
-import { BackendSrv } from '@grafana/runtime/src/services/backendSrv';
+
+const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
 jest.mock('./metric_find_query');
-jest.mock('app/core/services/backend_srv');
+jest.mock('@grafana/runtime', () => ({
+  getBackendSrv: () => ({
+    datasourceRequest: datasourceRequestMock,
+  }),
+}));
+
 jest.mock('app/features/templating/template_srv', () => {
   return {
     getAdhocFilters: jest.fn(() => [] as any[]),
     replace: jest.fn((a: string) => a),
   };
 });
+
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   __esModule: true,
   getTimeSrv: jest.fn().mockReturnValue({
@@ -41,13 +47,12 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-const getBackendSrvMock = (Backend.getBackendSrv as any) as jest.Mock<BackendSrv>;
 const getAdhocFiltersMock = (templateSrv.getAdhocFilters as any) as jest.Mock<any>;
 const replaceMock = (templateSrv.replace as any) as jest.Mock<any>;
 const getTimeSrvMock = (getTimeSrv as any) as jest.Mock<TimeSrv>;
 
 beforeEach(() => {
-  getBackendSrvMock.mockClear();
+  datasourceRequestMock.mockClear();
   getAdhocFiltersMock.mockClear();
   replaceMock.mockClear();
   getTimeSrvMock.mockClear();
@@ -126,34 +131,13 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Datasource metadata requests', () => {
-    const originalBackendMock = getBackendSrvMock();
-
-    afterAll(() => {
-      getBackendSrvMock.mockImplementation(() => originalBackendMock);
-    });
-
     it('should perform a GET request with the default config', () => {
-      const datasourceRequestMock = jest.fn();
-      getBackendSrvMock.mockImplementation(
-        () =>
-          ({
-            datasourceRequest: datasourceRequestMock,
-          } as any)
-      );
-
       ds.metadataRequest('/foo');
       expect(datasourceRequestMock.mock.calls.length).toBe(1);
       expect(datasourceRequestMock.mock.calls[0][0].method).toBe('GET');
     });
 
     it('should still perform a GET request with the DS HTTP method set to POST', () => {
-      const datasourceRequestMock = jest.fn();
-      getBackendSrvMock.mockImplementation(
-        () =>
-          ({
-            datasourceRequest: datasourceRequestMock,
-          } as any)
-      );
       const postSettings = _.cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings);
@@ -215,26 +199,19 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('When performing performSuggestQuery', () => {
-    const originalBackendMock = getBackendSrvMock();
-
     it('should cache response', async () => {
-      const datasourceRequestMock = Promise.resolve({
-        status: 'success',
-        data: { data: ['value1', 'value2', 'value3'] },
-      });
-
-      getBackendSrvMock.mockImplementation(
-        () =>
-          ({
-            datasourceRequest: () => datasourceRequestMock,
-          } as any)
+      datasourceRequestMock.mockImplementation(() =>
+        Promise.resolve({
+          status: 'success',
+          data: { data: ['value1', 'value2', 'value3'] },
+        })
       );
 
       let results = await ds.performSuggestQuery('value', true);
 
       expect(results).toHaveLength(3);
 
-      getBackendSrvMock.mockImplementation(() => originalBackendMock);
+      datasourceRequestMock.mockImplementation(jest.fn());
       results = await ds.performSuggestQuery('value', true);
 
       expect(results).toHaveLength(3);
@@ -596,14 +573,14 @@ describe('PrometheusDatasource', () => {
             },
           },
         };
-        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
         ds.query(query as any).subscribe((data: any) => {
           results = data;
         });
       });
 
       it('should generate the correct query', () => {
-        const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        const res = datasourceRequestMock.mock.calls[0][0];
         expect(res.method).toBe('GET');
         expect(res.url).toBe(urlExpected);
       });
@@ -632,7 +609,7 @@ describe('PrometheusDatasource', () => {
       };
 
       it('should generate an error', () => {
-        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.reject(response));
+        datasourceRequestMock.mockImplementation(() => Promise.reject(response));
         ds.query(query as any).subscribe((e: any) => {
           results = e.message;
           expect(results).toBe(`"${errMessage}"`);
@@ -677,7 +654,7 @@ describe('PrometheusDatasource', () => {
         },
       };
 
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
 
       ds.query(query as any).subscribe((data: any) => {
         results = data;
@@ -740,14 +717,14 @@ describe('PrometheusDatasource', () => {
         },
       };
 
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any).subscribe((data: any) => {
         results = data;
       });
     });
 
     it('should generate the correct query', () => {
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -796,7 +773,7 @@ describe('PrometheusDatasource', () => {
 
     describe('when time series query is cancelled', () => {
       it('should return empty results', async () => {
-        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve({ cancelled: true }));
+        datasourceRequestMock.mockImplementation(() => Promise.resolve({ cancelled: true }));
 
         await ds.annotationQuery(options).then((data: any) => {
           results = data;
@@ -809,7 +786,7 @@ describe('PrometheusDatasource', () => {
     describe('not use useValueForTime', () => {
       beforeEach(async () => {
         options.annotation.useValueForTime = false;
-        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
 
         await ds.annotationQuery(options).then((data: any) => {
           results = data;
@@ -828,7 +805,7 @@ describe('PrometheusDatasource', () => {
     describe('use useValueForTime', () => {
       beforeEach(async () => {
         options.annotation.useValueForTime = true;
-        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
 
         await ds.annotationQuery(options).then((data: any) => {
           results = data;
@@ -842,7 +819,7 @@ describe('PrometheusDatasource', () => {
 
     describe('step parameter', () => {
       beforeEach(() => {
-        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       });
 
       it('should use default step for short range if no interval is given', () => {
@@ -854,7 +831,7 @@ describe('PrometheusDatasource', () => {
           },
         };
         ds.annotationQuery(query);
-        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        const req = datasourceRequestMock.mock.calls[0][0];
         expect(req.url).toContain('step=60');
       });
 
@@ -872,7 +849,7 @@ describe('PrometheusDatasource', () => {
           },
         };
         ds.annotationQuery(query);
-        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        const req = datasourceRequestMock.mock.calls[0][0];
         expect(req.url).toContain('step=10');
       });
 
@@ -890,7 +867,7 @@ describe('PrometheusDatasource', () => {
           },
         };
         ds.annotationQuery(query);
-        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        const req = datasourceRequestMock.mock.calls[0][0];
         expect(req.url).toContain('step=10');
       });
 
@@ -903,7 +880,7 @@ describe('PrometheusDatasource', () => {
           },
         };
         ds.annotationQuery(query);
-        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        const req = datasourceRequestMock.mock.calls[0][0];
         // Range in seconds: (to - from) / 1000
         // Max_datapoints: 11000
         // Step: range / max_datapoints
@@ -937,7 +914,7 @@ describe('PrometheusDatasource', () => {
         },
       };
 
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any).subscribe((data: any) => {
         results = data;
       });
@@ -973,9 +950,9 @@ describe('PrometheusDatasource', () => {
       };
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=10';
 
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -988,9 +965,9 @@ describe('PrometheusDatasource', () => {
         interval: '100ms',
       };
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=1';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -1008,9 +985,9 @@ describe('PrometheusDatasource', () => {
         interval: '10s',
       };
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=10';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -1025,9 +1002,9 @@ describe('PrometheusDatasource', () => {
       const end = 7 * 60 * 60;
       const start = 60 * 60;
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=' + start + '&end=' + end + '&step=2';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -1047,9 +1024,9 @@ describe('PrometheusDatasource', () => {
       };
       // times get rounded up to interval
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=50&end=400&step=50';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -1068,9 +1045,9 @@ describe('PrometheusDatasource', () => {
         interval: '5s',
       };
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=60&end=420&step=15';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -1090,9 +1067,9 @@ describe('PrometheusDatasource', () => {
       };
       // times get aligned to interval
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=0&end=400&step=100';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -1112,9 +1089,9 @@ describe('PrometheusDatasource', () => {
       const end = 7 * 24 * 60 * 60;
       const start = 0;
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=100';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -1145,9 +1122,9 @@ describe('PrometheusDatasource', () => {
       );
       const urlExpected =
         'proxied/api/v1/query_range?query=test' + '&start=' + adjusted.start + '&end=' + adjusted.end + '&step=' + step;
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
@@ -1187,9 +1164,9 @@ describe('PrometheusDatasource', () => {
         '&start=60&end=420&step=10';
 
       templateSrv.replace = jest.fn(str => str);
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
@@ -1226,10 +1203,10 @@ describe('PrometheusDatasource', () => {
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
@@ -1267,10 +1244,10 @@ describe('PrometheusDatasource', () => {
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[$__interval])') +
         '&start=0&end=400&step=100';
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
@@ -1315,9 +1292,9 @@ describe('PrometheusDatasource', () => {
         '&start=50&end=400&step=50';
 
       templateSrv.replace = jest.fn(str => str);
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
@@ -1356,9 +1333,9 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=15';
 
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
@@ -1412,10 +1389,10 @@ describe('PrometheusDatasource', () => {
         adjusted.end +
         '&step=' +
         step;
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
@@ -1464,9 +1441,9 @@ describe('PrometheusDatasource', () => {
       )}&start=0&end=3600&step=60`;
 
       templateSrv.replace = jest.fn(str => str);
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.url).toBe(urlExpected);
 
       // @ts-ignore
@@ -1533,14 +1510,14 @@ describe('PrometheusDatasource for POST', () => {
           },
         },
       };
-      getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any).subscribe((data: any) => {
         results = data;
       });
     });
 
     it('should generate the correct query', () => {
-      const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+      const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('POST');
       expect(res.url).toBe(urlExpected);
       expect(res.data).toEqual(dataExpected);
@@ -1798,4 +1775,22 @@ function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>
   };
 
   return Object.assign(defaults, overrides || {}) as DataQueryRequest<PromQuery>;
+}
+
+function createDefaultPromResponse() {
+  return {
+    data: {
+      data: {
+        result: [
+          {
+            metric: {
+              __name__: 'test_metric',
+            },
+            values: [[1568369640, 1]],
+          },
+        ],
+        resultType: 'matrix',
+      },
+    },
+  };
 }

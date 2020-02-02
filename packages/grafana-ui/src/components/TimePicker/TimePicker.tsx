@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent, memo, FormEvent } from 'react';
-import { css } from 'emotion';
-import classNames from 'classnames';
+import { css, cx } from 'emotion';
 
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -69,6 +68,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       i {
         font-size: ${theme.typography.size.md};
       }
+    `,
+    syncedTimePicker: css`
+      label: syncedTimePicker;
+      border-color: ${theme.colors.orangeDark};
+      background-image: none;
+      background-color: transparent;
+      color: ${theme.colors.orangeDark};
+      &:focus,
+      :hover {
+        color: ${theme.colors.orangeDark};
+        background-image: none;
+        background-color: transparent;
+      }
+    `,
+    noRightBorderStyle: css`
+      label: noRightBorderStyle;
+      border-right: 0;
     `,
   };
 });
@@ -140,6 +156,12 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
     const { isOpen } = this.state;
     const styles = getStyles(theme);
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
+    const syncedTimePicker = timeSyncButton && isSynced;
+    const timePickerIconClass = cx('fa fa-clock-o fa-fw', { ['icon-brand-gradient']: syncedTimePicker });
+    const timePickerButtonClass = cx('btn navbar-button navbar-button--tight', {
+      [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: !!timeSyncButton,
+      [`explore-active-button-glow ${styles.syncedTimePicker}`]: syncedTimePicker,
+    });
 
     return (
       <div className={styles.container}>
@@ -151,12 +173,8 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
           )}
           <div>
             <Tooltip content={<TimePickerTooltip timeRange={value} />} placement="bottom">
-              <button
-                aria-label="TimePicker Open Button"
-                className="btn navbar-button navbar-button--zoom"
-                onClick={this.onOpen}
-              >
-                <i className={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')} />
+              <button aria-label="TimePicker Open Button" className={timePickerButtonClass} onClick={this.onOpen}>
+                <i className={timePickerIconClass} />
                 <TimePickerButtonLabel {...this.props} />
                 <span className={styles.caretIcon}>
                   {isOpen ? <i className="fa fa-caret-up fa-fw" /> : <i className="fa fa-caret-down fa-fw" />}

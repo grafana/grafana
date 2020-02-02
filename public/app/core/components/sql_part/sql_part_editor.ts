@@ -172,7 +172,7 @@ export function sqlPartEditorDirective(templateSrv: any) {
           }
 
           const paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
-          const $paramLink = $('<a class="graphite-func-param-link pointer">' + paramValue + '</a>');
+          const $paramLink = $('<a class="query-part__link">' + paramValue + '</a>');
           const $input = $(paramTemplate);
 
           $paramLink.appendTo($paramsContainer);

@@ -1,5 +1,17 @@
 const path = require('path');
 
+// https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
+function shouldExclude(filename) {
+  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'apache-arrow', 'react-hook-form', 'rc-trigger'];
+  for (const package of packagesToProcessbyBabel) {
+    if (filename.indexOf(`node_modules/${package}`) > 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+console.log(path.resolve());
 module.exports = {
   target: 'web',
   entry: {
@@ -13,21 +25,44 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
-    alias: {},
+    alias: {
+      // rc-trigger uses babel-runtime which has internal dependency to core-js@2
+      // this alias maps that dependency to core-js@t3
+      'core-js/library/fn': 'core-js/stable',
+    },
     modules: [path.resolve('public'), path.resolve('node_modules')],
   },
   stats: {
     children: false,
     warningsFilter: /export .* was not found in/,
-    source: false
+    source: false,
   },
   node: {
     fs: 'empty',
   },
   module: {
-    rules: [{
+    rules: [
+      /**
+       * Some npm packages are bundled with es2015 syntax, ie. debug
+       * To make them work with PhantomJS we need to transpile them
+       * to get rid of unsupported syntax.
+       */
+      {
+        test: /\.js$/,
+        exclude: shouldExclude,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: [['@babel/preset-env']],
+            },
+          },
+        ],
+      },
+      {
         test: require.resolve('jquery'),
-        use: [{
+        use: [
+          {
             loader: 'expose-loader',
             query: 'jQuery',
           },
@@ -40,7 +75,8 @@ module.exports = {
       {
         test: /\.html$/,
         exclude: /(index|error)\-template\.html/,
-        use: [{
+        use: [
+          {
             loader: 'ngtemplate-loader?relativeTo=' + path.resolve(__dirname, '../../public') + '&prefix=public',
           },
           {
@@ -68,26 +104,26 @@ module.exports = {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: 20,
-          enforce: true
+          enforce: true,
         },
         angular: {
           test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: 50,
-          enforce: true
+          enforce: true,
         },
         vendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: -10,
           reuseExistingChunk: true,
-          enforce: true
+          enforce: true,
         },
         default: {
           priority: -20,
           chunks: 'all',
           test: /.*[jt]sx?$/,
-          reuseExistingChunk: true
+          reuseExistingChunk: true,
         },
       },
     },

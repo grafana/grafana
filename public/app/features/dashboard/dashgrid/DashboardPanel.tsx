@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 // Utils & Services
 import { getAngularLoader, AngularComponent } from '@grafana/runtime';
@@ -16,7 +17,6 @@ import { PanelResizer } from './PanelResizer';
 // Types
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPluginMeta, PanelPlugin } from '@grafana/data';
-import { AutoSizer } from 'react-virtualized';
 
 export interface Props {
   panel: PanelModel;

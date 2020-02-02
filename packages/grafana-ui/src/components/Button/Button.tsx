@@ -2,7 +2,6 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'r
 import { ThemeContext } from '../../themes';
 import { getButtonStyles } from './styles';
 import { ButtonContent } from './ButtonContent';
-import cx from 'classnames';
 import { ButtonSize, ButtonStyles, ButtonVariant } from './types';
 
 type CommonProps = {
@@ -31,11 +30,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
       theme,
       size: size || 'md',
       variant: variant || 'primary',
+      textAndIcon: !!(children && icon),
     });
 
-  const buttonClassName = cx(styles.button, icon && styles.buttonWithIcon, icon && !children && styles.iconButton);
   return (
-    <button className={buttonClassName} {...buttonProps} ref={ref}>
+    <button className={styles.button} {...buttonProps} ref={ref}>
       <ButtonContent icon={icon}>{children}</ButtonContent>
     </button>
   );
@@ -59,11 +58,11 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>((
       theme,
       size: size || 'md',
       variant: variant || 'primary',
+      textAndIcon: !!(children && icon),
     });
 
-  const buttonClassName = cx(styles.button, icon && styles.buttonWithIcon, icon && !children && styles.iconButton);
   return (
-    <a className={buttonClassName} {...anchorProps} ref={ref}>
+    <a className={styles.button} {...anchorProps} ref={ref}>
       <ButtonContent icon={icon}>{children}</ButtonContent>
     </a>
   );

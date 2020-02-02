@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Button, ButtonVariant, ButtonProps } from '../Button';
 import { ButtonSize } from '../../Button/types';
-import { SelectCommonProps, SelectBase } from './SelectBase';
+import { SelectCommonProps, SelectBase, CustomControlProps } from './SelectBase';
 import { css } from 'emotion';
 import { useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
@@ -73,13 +73,13 @@ export function ButtonSelect<T>({
   return (
     <SelectBase
       {...selectProps}
-      renderControl={({ onBlur, onClick, value, isOpen }) => {
+      renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, _ref) => {
         return (
           <SelectButton {...buttonProps} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
             {value ? value.label : placeholder}
           </SelectButton>
         );
-      }}
+      })}
     />
   );
 }

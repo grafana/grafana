@@ -12,6 +12,8 @@ weight = 1
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
+Grafana already has a strong community of contributors and plugin developers. By making it easier to develop and install plugins with resources such as this guide, we hope that the community can grow even stronger and develop new plugins that we would never think about.
+
 ## Short version
 
 1. [Setup grafana](http://docs.grafana.org/project/building_from_source/)

@@ -8,7 +8,7 @@ import {
   TimeSeries,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable } from 'rxjs';
 import { runStream } from './runStreams';

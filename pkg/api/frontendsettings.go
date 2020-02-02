@@ -3,6 +3,8 @@ package api
 import (
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/rendering"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -176,6 +178,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"alertingEnabled":            setting.AlertingEnabled,
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":        setting.AlertingMinInterval,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
@@ -193,6 +196,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
 			"buildstamp":    setting.BuildStamp,
+			"edition":       hs.License.Edition(),
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
@@ -201,8 +205,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"licenseInfo": map[string]interface{}{
 			"hasLicense": hs.License.HasLicense(),
 			"expiry":     hs.License.Expiry(),
+			"stateInfo":  hs.License.StateInfo(),
+			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
 		},
-		"featureToggles": hs.Cfg.FeatureToggles,
+		"featureToggles":    hs.Cfg.FeatureToggles,
+		"phantomJSRenderer": rendering.IsPhantomJSEnabled,
 	}
 
 	return jsonObj, nil
@@ -213,7 +220,7 @@ func getPanelSort(id string) int {
 	switch id {
 	case "graph":
 		sort = 1
-	case "singlestat":
+	case "stat":
 		sort = 2
 	case "gauge":
 		sort = 3
@@ -221,14 +228,18 @@ func getPanelSort(id string) int {
 		sort = 4
 	case "table":
 		sort = 5
-	case "text":
+	case "singlestat":
 		sort = 6
-	case "heatmap":
+	case "text":
 		sort = 7
-	case "alertlist":
+	case "heatmap":
 		sort = 8
-	case "dashlist":
+	case "alertlist":
 		sort = 9
+	case "dashlist":
+		sort = 10
+	case "news":
+		sort = 10
 	}
 	return sort
 }

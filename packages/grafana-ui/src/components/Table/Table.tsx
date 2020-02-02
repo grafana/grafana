@@ -1,12 +1,13 @@
-import React, { useMemo, CSSProperties } from 'react';
+import React, { useMemo } from 'react';
 import { DataFrame } from '@grafana/data';
-// @ts-ignore
-import { useSortBy, useTable, useBlockLayout } from 'react-table';
+import { useSortBy, useTable, useBlockLayout, Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getTableStyles } from './styles';
+import useMeasure from 'react-use/lib/useMeasure';
 import { getColumns, getTableRows } from './utils';
-import { TableColumn } from './types';
 import { useTheme } from '../../themes';
+import { TableFilterActionCallback } from './types';
+import { getTableStyles } from './styles';
+import { TableCell } from './TableCell';
 
 export interface Props {
   data: DataFrame;
@@ -15,17 +16,15 @@ export interface Props {
   onCellClick?: TableFilterActionCallback;
 }
 
-type TableFilterActionCallback = (key: string, value: string) => void;
-
 export const Table = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
+  const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data, width, theme), [data]),
+      columns: useMemo(() => getColumns(data, width), [data]),
       data: useMemo(() => getTableRows(data), [data]),
-      tableStyles,
     },
     useSortBy,
     useBlockLayout
@@ -37,7 +36,15 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {row.cells.map((cell: RenderCellProps) => renderCell(cell, onCellClick))}
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              field={data.fields[cell.column.index]}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellClick={onCellClick}
+            />
+          ))}
         </div>
       );
     },
@@ -48,45 +55,22 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
     <div {...getTableProps()} className={tableStyles.table}>
       <div>
         {headerGroups.map((headerGroup: any) => (
-          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
+          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
             {headerGroup.headers.map((column: any) => renderHeaderCell(column, tableStyles.headerCell))}
           </div>
         ))}
       </div>
-      <FixedSizeList height={height} itemCount={rows.length} itemSize={tableStyles.rowHeight} width={width}>
+      <FixedSizeList
+        height={height - headerRowMeasurements.height}
+        itemCount={rows.length}
+        itemSize={tableStyles.rowHeight}
+        width={width}
+      >
         {RenderRow}
       </FixedSizeList>
     </div>
   );
 };
-
-interface RenderCellProps {
-  column: TableColumn;
-  value: any;
-  getCellProps: () => { style: CSSProperties };
-  render: (component: string) => React.ReactNode;
-}
-
-function renderCell(cell: RenderCellProps, onCellClick?: TableFilterActionCallback) {
-  const filterable = cell.column.field.config.filterable;
-  const cellProps = cell.getCellProps();
-  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
-
-  if (filterable && onCellClick) {
-    cellProps.style.cursor = 'pointer';
-    onClick = () => onCellClick(cell.column.Header, cell.value);
-  }
-
-  if (cell.column.textAlign) {
-    cellProps.style.textAlign = cell.column.textAlign;
-  }
-
-  return (
-    <div {...cellProps} onClick={onClick}>
-      {cell.render('Cell')}
-    </div>
-  );
-}
 
 function renderHeaderCell(column: any, className: string) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
