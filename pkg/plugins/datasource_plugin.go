@@ -68,9 +68,9 @@ func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *backendp
 }
 
 func (p *DataSourcePlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
-	if client.BackendPlugin != nil {
+	if client.DatasourcePlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, client.BackendPlugin), nil
+			return wrapper.NewDatasourcePluginWrapperV2(logger, client.DatasourcePlugin), nil
 		})
 	}
 
