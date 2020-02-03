@@ -183,7 +183,6 @@ The `templating` field contains an array of template variables with their saved 
         ],
         "query": "tag_values(cpu.utilization.average,env)",
         "refresh": false,
-        "refresh": false,
         "type": "query"
       },
       {
