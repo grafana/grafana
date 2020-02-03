@@ -14,7 +14,7 @@ const getKnobs = () => {
   };
 };
 
-const FormFieldStories = storiesOf('UI/FormField', module);
+const FormFieldStories = storiesOf('Inputs/FormField', module);
 
 FormFieldStories.addDecorator(withCenteredStory);
 

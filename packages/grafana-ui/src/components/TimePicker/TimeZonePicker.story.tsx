@@ -6,7 +6,7 @@ import { TimeZonePicker } from './TimeZonePicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-const TimeZonePickerStories = storiesOf('UI/TimeZonePicker', module);
+const TimeZonePickerStories = storiesOf('Inputs/TimeZonePicker', module);
 
 TimeZonePickerStories.addDecorator(withCenteredStory);
 

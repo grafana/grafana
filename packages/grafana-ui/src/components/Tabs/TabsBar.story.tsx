@@ -7,7 +7,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './TabsBar.mdx';
 
 export default {
-  title: 'UI/Tabs/TabsBar',
+  title: 'UI elements/Tabs/TabsBar',
   component: TabsBar,
   decorators: [withCenteredStory],
   parameters: {

@@ -5,7 +5,7 @@ import { UnitPicker } from './UnitPicker';
 import mdx from './UnitPicker.mdx';
 
 export default {
-  title: 'UI/UnitPicker',
+  title: 'Inputs/UnitPicker',
   component: UnitPicker,
   decorators: [withCenteredStory],
   parameters: {

@@ -11,7 +11,7 @@ import { getIconKnob } from '../../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
 
 export default {
-  title: 'UI/Forms/Select',
+  title: 'Inputs/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
 };

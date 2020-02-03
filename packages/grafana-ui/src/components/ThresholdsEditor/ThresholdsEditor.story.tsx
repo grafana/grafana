@@ -6,7 +6,7 @@ import { ThresholdsEditor } from './ThresholdsEditor';
 import { getTheme } from '../../themes';
 import { ThresholdsMode, ThresholdsConfig } from '@grafana/data';
 
-const ThresholdsEditorStories = storiesOf('UI/ThresholdsEditor', module);
+const ThresholdsEditorStories = storiesOf('Inputs/ThresholdsEditor', module);
 const thresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
   steps: [
