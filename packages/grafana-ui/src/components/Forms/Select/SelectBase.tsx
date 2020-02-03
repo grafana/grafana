@@ -35,6 +35,7 @@ export interface SelectCommonProps<T> {
   value?: SelectValue<T>;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
+  onCreateOption?: (value: string) => void;
   onChange: (value: SelectableValue<T>) => {} | void;
   onInputChange?: (label: string) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
@@ -140,6 +141,7 @@ export function SelectBase<T>({
   defaultValue,
   inputValue,
   onInputChange,
+  onCreateOption,
   options = [],
   onChange,
   onBlur,
@@ -229,6 +231,7 @@ export function SelectBase<T>({
     onKeyDown,
     menuShouldScrollIntoView: false,
     renderControl,
+    captureMenuScroll: false,
   };
 
   // width property is deprecated in favor of size or className
@@ -241,6 +244,7 @@ export function SelectBase<T>({
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
+    creatableProps.onCreateOption = onCreateOption;
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect

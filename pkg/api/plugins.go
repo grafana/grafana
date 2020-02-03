@@ -3,6 +3,8 @@ package api
 import (
 	"sort"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -199,4 +201,75 @@ func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Respon
 	}
 
 	return JSON(200, cmd.Result)
+}
+
+// /api/plugins/:pluginId/health
+func (hs *HTTPServer) CheckHealth(c *m.ReqContext) Response {
+	pluginID := c.Params("pluginId")
+	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pluginID)
+	if err != nil {
+		if err == backendplugin.ErrPluginNotRegistered {
+			return Error(404, "Plugin not found", err)
+		}
+
+		// Return status unknown instead?
+		if err == backendplugin.ErrDiagnosticsNotSupported {
+			return Error(404, "Health check not implemented", err)
+		}
+
+		// Return status unknown or error instead?
+		if err == backendplugin.ErrHealthCheckFailed {
+			return Error(500, "Plugin health check failed", err)
+		}
+	}
+
+	payload := map[string]interface{}{
+		"status": resp.Status.String(),
+		"info":   resp.Info,
+	}
+
+	if resp.Status != backendplugin.HealthStatusOk {
+		return JSON(503, payload)
+	}
+
+	return JSON(200, payload)
+}
+
+// /api/plugins/:pluginId/resources/*
+func (hs *HTTPServer) CallResource(c *m.ReqContext) Response {
+	pluginID := c.Params("pluginId")
+	_, exists := plugins.Plugins[pluginID]
+	if !exists {
+		return Error(404, "Plugin not found, no installed plugin with that id", nil)
+	}
+
+	body, err := c.Req.Body().Bytes()
+	if err != nil {
+		return Error(500, "Failed to read request body", err)
+	}
+	req := backendplugin.CallResourceRequest{
+		Config: backendplugin.PluginConfig{
+			OrgID:    c.OrgId,
+			PluginID: pluginID,
+		},
+		Path:    c.Params("*"),
+		Method:  c.Req.Method,
+		URL:     c.Req.URL.String(),
+		Headers: c.Req.Header.Clone(),
+		Body:    body,
+	}
+	resp, err := hs.BackendPluginManager.CallResource(c.Req.Context(), req)
+	if err != nil {
+		return Error(500, "Failed to call resource", err)
+	}
+
+	if resp.Status >= 400 {
+		return Error(resp.Status, "", nil)
+	}
+
+	return &NormalResponse{
+		body:   resp.Body,
+		status: resp.Status,
+		header: resp.Headers,
+	}
 }

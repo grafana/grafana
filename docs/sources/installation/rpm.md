@@ -205,4 +205,4 @@ Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guid
 
 ## Configure Grafana
 
-Refer the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.

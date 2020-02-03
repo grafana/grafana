@@ -1,7 +1,6 @@
 package dataframe
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"strconv"
@@ -70,16 +69,6 @@ func (sf *ConfFloat64) UnmarshalJSON(data []byte) error {
 	cf := ConfFloat64(v)
 	*sf = cf
 	return nil
-}
-
-// FieldConfigFromJSON create a FieldConfig from json string
-func FieldConfigFromJSON(jsonStr string) (*FieldConfig, error) {
-	var cfg FieldConfig
-	err := json.Unmarshal([]byte(jsonStr), &cfg)
-	if err != nil {
-		return nil, err
-	}
-	return &cfg, nil
 }
 
 // SetDecimals modifies the FieldConfig's Decimals property to
