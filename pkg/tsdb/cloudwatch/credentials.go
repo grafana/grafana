@@ -61,6 +61,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 				remoteCredProvider(stsSess),
+				webIdentityProvider(stsSess),
 			})
 		stsConfig := &aws.Config{
 			Region:      aws.String(dsInfo.Region),
