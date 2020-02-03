@@ -285,15 +285,15 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
-	configNodes = append(configNodes, &dtos.NavLink{
-		Text:        "Plugins",
-		Id:          "plugins",
-		Description: "View and configure plugins",
-		Icon:        "gicon gicon-plugins",
-		Url:         setting.AppSubUrl + "/plugins",
-	})
-
 	if c.OrgRole == m.ROLE_ADMIN {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Plugins",
+			Id:          "plugins",
+			Description: "View and configure plugins",
+			Icon:        "gicon gicon-plugins",
+			Url:         setting.AppSubUrl + "/plugins",
+		})
+
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Preferences",
 			Id:          "org-settings",
@@ -310,15 +310,17 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
-	data.NavTree = append(data.NavTree, &dtos.NavLink{
-		Id:         "cfg",
-		Text:       "Configuration",
-		SubTitle:   "Organization: " + c.OrgName,
-		Icon:       "gicon gicon-cog",
-		Url:        configNodes[0].Url,
-		SortWeight: dtos.WeightConfig,
-		Children:   configNodes,
-	})
+	if len(configNodes) > 0 {
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
+			Id:         "cfg",
+			Text:       "Configuration",
+			SubTitle:   "Organization: " + c.OrgName,
+			Icon:       "gicon gicon-cog",
+			Url:        configNodes[0].Url,
+			SortWeight: dtos.WeightConfig,
+			Children:   configNodes,
+		})
+	}
 
 	if c.IsGrafanaAdmin {
 		adminNavLinks := []*dtos.NavLink{
