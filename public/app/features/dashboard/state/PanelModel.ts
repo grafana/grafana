@@ -343,8 +343,13 @@ export class PanelModel {
     });
   }
 
+  setQueryRunner(runner: PanelQueryRunner) {
+    this.queryRunner = runner;
+  }
+
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
+      console.log('creating new query runner');
       this.queryRunner = new PanelQueryRunner();
       this.setTransformations(this.transformations);
     }

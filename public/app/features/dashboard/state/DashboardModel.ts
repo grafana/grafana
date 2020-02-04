@@ -239,7 +239,9 @@ export class DashboardModel {
   panelInitialized(panel: PanelModel) {
     panel.initialized();
 
-    if (!this.otherPanelInFullscreen(panel)) {
+    // In new panel edit there is no need to trigger refresh as editor retrieves last results from the query runner
+    // as an initial value
+    if (!this.otherPanelInFullscreen(panel) && !panel.isNewEdit) {
       panel.refresh();
     }
   }
@@ -947,4 +949,16 @@ export class DashboardModel {
       panel.render();
     }
   }
+
+  updatePanel = (panelModel: PanelModel) => {
+    let index = 0;
+    for (const panel of this.panels) {
+      if (panel.id === panelModel.id) {
+        this.panels[index] = panelModel;
+        this.panels[index].refresh();
+        break;
+      }
+      index++;
+    }
+  };
 }

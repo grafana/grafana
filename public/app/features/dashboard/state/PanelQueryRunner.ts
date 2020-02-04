@@ -190,6 +190,13 @@ export class PanelQueryRunner {
   getLastResult(): PanelData {
     return this.lastResult;
   }
+
+  clone = () => {
+    const clone = new PanelQueryRunner();
+    clone.setTransformations(this.transformations);
+    clone.lastResult = { ...this.lastResult };
+    return clone;
+  };
 }
 
 async function getDataSource(

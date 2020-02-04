@@ -22,6 +22,7 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
+  isInEditMode?: boolean;
   isFullscreen: boolean;
   isInView: boolean;
 }
@@ -130,7 +131,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderPanel() {
-    const { dashboard, panel, isFullscreen, isInView } = this.props;
+    const { dashboard, panel, isFullscreen, isInView, isInEditMode } = this.props;
     const { plugin } = this.state;
 
     if (plugin.angularPanelCtrl) {
@@ -151,6 +152,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               dashboard={dashboard}
               isFullscreen={isFullscreen}
               isInView={isInView}
+              isInEditMode={isInEditMode}
               width={width}
               height={height}
             />

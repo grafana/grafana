@@ -1,13 +1,16 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory, Forms } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
+import { StoreState } from '../../../../types/store';
+import { connect } from 'react-redux';
+import { updateLocation } from '../../../../core/reducers/location';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -47,6 +50,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
+  updateLocation: typeof updateLocation;
 }
 
 interface State {
@@ -56,15 +60,17 @@ interface State {
 export class PanelEditor extends PureComponent<Props, State> {
   state: State = {};
 
-  componentDidMount() {
-    const { panel } = this.props;
+  constructor(props: Props) {
+    super(props);
+    const { panel } = props;
     const dirtyPanel = new PanelModel(panel.getSaveModel());
-
-    this.setState({ dirtyPanel });
+    dirtyPanel.setQueryRunner(panel.getQueryRunner().clone());
+    dirtyPanel.isNewEdit = true;
+    this.state = { dirtyPanel };
   }
 
   render() {
-    const { dashboard } = this.props;
+    const { dashboard, panel } = this.props;
     const { dirtyPanel } = this.state;
 
     const styles = getStyles(config.theme);
@@ -81,16 +87,47 @@ export class PanelEditor extends PureComponent<Props, State> {
               dashboard={dashboard}
               panel={dirtyPanel}
               isEditing={false}
+              isInEditMode
               isFullscreen={false}
               isInView={true}
             />
           </div>
           <div className={styles.leftPaneData}>
-            <QueriesTab panel={dirtyPanel} dashboard={dashboard} />;
+            <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
           </div>
         </div>
-        <div className={styles.rightPane}>Visualization settings</div>
+        <div className={styles.rightPane}>
+          <Forms.Button
+            onClick={() => {
+              dirtyPanel.setQueryRunner(panel.getQueryRunner());
+              this.props.dashboard.updatePanel(dirtyPanel);
+            }}
+          >
+            Save
+          </Forms.Button>
+          <Forms.Button
+            variant="destructive"
+            onClick={() => {
+              this.props.updateLocation({
+                query: { editPanel: null },
+                partial: true,
+              });
+            }}
+          >
+            Discard
+          </Forms.Button>
+        </div>
       </div>
     );
   }
 }
+
+const mapStateToProps = (state: StoreState) => ({
+  location: state.location,
+});
+
+const mapDispatchToProps = {
+  updateLocation,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(PanelEditor);

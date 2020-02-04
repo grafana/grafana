@@ -35,6 +35,7 @@ export interface Props {
   plugin: PanelPlugin;
   isFullscreen: boolean;
   isInView: boolean;
+  isInEditMode?: boolean;
   width: number;
   height: number;
 }
@@ -69,7 +70,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, isInEditMode } = this.props;
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
     dashboard.panelInitialized(this.props.panel);
@@ -84,6 +85,12 @@ export class PanelChrome extends PureComponent<Props, State> {
         },
         isFirstLoad: false,
       });
+    } else if (isInEditMode && this.panelHasLastResult()) {
+      console.log('Reusing results!');
+      const lastResult = panel.getQueryRunner().getLastResult();
+      if (lastResult) {
+        this.onDataUpdate(lastResult);
+      }
     } else if (!this.wantsQueryExecution) {
       this.setState({ isFirstLoad: false });
     }
@@ -160,8 +167,8 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   onRefresh = () => {
+    // debugger
     const { panel, isInView, width } = this.props;
-
     if (!isInView) {
       console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
@@ -232,8 +239,16 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
+  panelHasLastResult = () => {
+    return !!this.props.panel.getQueryRunner().getLastResult();
+  };
+
   get wantsQueryExecution() {
-    return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
+    return !(
+      this.props.plugin.meta.skipDataQuery ||
+      this.hasPanelSnapshot ||
+      (this.props.isInEditMode && !this.panelHasLastResult())
+    );
   }
 
   onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
