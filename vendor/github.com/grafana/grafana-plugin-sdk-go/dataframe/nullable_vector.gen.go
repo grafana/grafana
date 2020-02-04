@@ -2,8 +2,6 @@
 // Any changes will be lost if this file is regenerated.
 // see https://github.com/cheekybits/genny
 
-// -build !test
-
 package dataframe
 
 import "time"
@@ -34,12 +32,8 @@ func (v *nullableUint8Vector) Len() int {
 }
 
 func (v *nullableUint8Vector) PrimitiveType() VectorPType {
-	// following uint8erates the right code but makes this invalid
-	//return VectorPTypeNullableUint8
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Uint16erate uint16ny -in=$GOFILE -out=nullable_vector.Uint16.go uint16 "Uint16=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -67,12 +61,8 @@ func (v *nullableUint16Vector) Len() int {
 }
 
 func (v *nullableUint16Vector) PrimitiveType() VectorPType {
-	// following uint16erates the right code but makes this invalid
-	//return VectorPTypeNullableUint16
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Uint32erate uint32ny -in=$GOFILE -out=nullable_vector.Uint32.go uint32 "Uint32=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -100,12 +90,8 @@ func (v *nullableUint32Vector) Len() int {
 }
 
 func (v *nullableUint32Vector) PrimitiveType() VectorPType {
-	// following uint32erates the right code but makes this invalid
-	//return VectorPTypeNullableUint32
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Uint64erate uint64ny -in=$GOFILE -out=nullable_vector.Uint64.go uint64 "Uint64=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -133,12 +119,8 @@ func (v *nullableUint64Vector) Len() int {
 }
 
 func (v *nullableUint64Vector) PrimitiveType() VectorPType {
-	// following uint64erates the right code but makes this invalid
-	//return VectorPTypeNullableUint64
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Int8erate int8ny -in=$GOFILE -out=nullable_vector.Int8.go int8 "Int8=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -166,12 +148,8 @@ func (v *nullableInt8Vector) Len() int {
 }
 
 func (v *nullableInt8Vector) PrimitiveType() VectorPType {
-	// following int8erates the right code but makes this invalid
-	//return VectorPTypeNullableInt8
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Int16erate int16ny -in=$GOFILE -out=nullable_vector.Int16.go int16 "Int16=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -199,12 +177,8 @@ func (v *nullableInt16Vector) Len() int {
 }
 
 func (v *nullableInt16Vector) PrimitiveType() VectorPType {
-	// following int16erates the right code but makes this invalid
-	//return VectorPTypeNullableInt16
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Int32erate int32ny -in=$GOFILE -out=nullable_vector.Int32.go int32 "Int32=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -232,12 +206,8 @@ func (v *nullableInt32Vector) Len() int {
 }
 
 func (v *nullableInt32Vector) PrimitiveType() VectorPType {
-	// following int32erates the right code but makes this invalid
-	//return VectorPTypeNullableInt32
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Int64erate int64ny -in=$GOFILE -out=nullable_vector.Int64.go int64 "Int64=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -265,12 +235,8 @@ func (v *nullableInt64Vector) Len() int {
 }
 
 func (v *nullableInt64Vector) PrimitiveType() VectorPType {
-	// following int64erates the right code but makes this invalid
-	//return VectorPTypeNullableInt64
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Float32erate float32ny -in=$GOFILE -out=nullable_vector.Float32.go float32 "Float32=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -298,12 +264,8 @@ func (v *nullableFloat32Vector) Len() int {
 }
 
 func (v *nullableFloat32Vector) PrimitiveType() VectorPType {
-	// following float32erates the right code but makes this invalid
-	//return VectorPTypeNullableFloat32
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Float64erate float64ny -in=$GOFILE -out=nullable_vector.Float64.go float64 "Float64=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -331,12 +293,8 @@ func (v *nullableFloat64Vector) Len() int {
 }
 
 func (v *nullableFloat64Vector) PrimitiveType() VectorPType {
-	// following float64erates the right code but makes this invalid
-	//return VectorPTypeNullableFloat64
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Stringerate stringny -in=$GOFILE -out=nullable_vector.String.go string "String=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -364,12 +322,8 @@ func (v *nullableStringVector) Len() int {
 }
 
 func (v *nullableStringVector) PrimitiveType() VectorPType {
-	// following stringerates the right code but makes this invalid
-	//return VectorPTypeNullableString
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:Boolerate boolny -in=$GOFILE -out=nullable_vector.Bool.go bool "Bool=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -397,12 +351,8 @@ func (v *nullableBoolVector) Len() int {
 }
 
 func (v *nullableBoolVector) PrimitiveType() VectorPType {
-	// following boolerates the right code but makes this invalid
-	//return VectorPTypeNullableBool
 	return vectorPType(v)
 }
-
-// -build !test
 
 //go:TimeTimeerate timeTimeny -in=$GOFILE -out=nullable_vector.TimeTime.go time.Time "TimeTime=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
 
@@ -430,7 +380,5 @@ func (v *nullableTimeTimeVector) Len() int {
 }
 
 func (v *nullableTimeTimeVector) PrimitiveType() VectorPType {
-	// following timeTimeerates the right code but makes this invalid
-	//return VectorPTypeNullableTimeTime
 	return vectorPType(v)
 }

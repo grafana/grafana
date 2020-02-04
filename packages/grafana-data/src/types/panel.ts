@@ -123,11 +123,6 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   }
 }
 
-export interface PanelSize {
-  width: number;
-  height: number;
-}
-
 export interface PanelMenuItem {
   type?: 'submenu' | 'divider';
   text?: string;

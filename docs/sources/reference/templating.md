@@ -347,6 +347,18 @@ This variable is only available in the Singlestat panel and can be used in the p
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
+### The $__dashboard Variable
+> Only available in Grafana v6.6+
+
+This variable is the UID of the current dashboard.
+`${__dashboard.name}` is the name of the current dashboard.
+
+### The $__org Variable
+> Only available in Grafana v6.6+
+
+This variable is the ID of the current organization.
+`${__org.name}` is the name of the current organization.
+
 ## Repeating Panels
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want

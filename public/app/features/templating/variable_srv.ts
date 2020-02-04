@@ -14,7 +14,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { TimeRange, AppEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -55,6 +55,24 @@ export class VariableSrv {
       )
       .then(() => {
         this.templateSrv.updateIndex();
+        this.templateSrv.setGlobalVariable('__dashboard', {
+          value: {
+            name: dashboard.title,
+            uid: dashboard.uid,
+            toString: function() {
+              return this.uid;
+            },
+          },
+        });
+        this.templateSrv.setGlobalVariable('__org', {
+          value: {
+            name: contextSrv.user.orgName,
+            id: contextSrv.user.id,
+            toString: function() {
+              return this.id;
+            },
+          },
+        });
       });
   }
 
