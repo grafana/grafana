@@ -1,6 +1,7 @@
 import React from 'react';
-import { shallow, render } from 'enzyme';
+import { shallow, mount } from 'enzyme';
 import LokiExploreQueryEditor from './LokiExploreQueryEditor';
+import LokiExploreExtraField from './LokiExploreExtraField';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { ExploreMode, PanelData, LoadingState, dateTime } from '@grafana/data';
@@ -66,12 +67,13 @@ describe('LokiExploreQueryEditor', () => {
   });
 
   it('should render LokiQueryField with ExtraFieldElement when ExploreMode is set to Logs', () => {
-    const wrapper = setup(render);
-    expect(wrapper.find('.explore-input--ml')).toHaveLength(1);
+    const wrapper = setup(mount);
+    expect(wrapper.find(LokiExploreExtraField).length).toEqual(1);
   });
 
   it('should render LokiQueryField with no ExtraFieldElement when ExploreMode is not Logs', () => {
-    const wrapper = setup(render, { exploreMode: ExploreMode.Metrics });
-    expect(wrapper.find('.explore-input--ml')).toHaveLength(0);
+    const wrapper = setup(mount, { exploreMode: ExploreMode.Metrics });
+    expect(wrapper.props().ExtraFieldElement).toBeNull();
+    expect(wrapper.find(LokiExploreExtraField).length).toEqual(0);
   });
 });
