@@ -18,7 +18,7 @@ export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
     });
     const buttonGroupClasses = classNames('toggle-button-group', {
       'toggle-button-group--transparent': transparent,
-      'toggle-button-group--padded': width,
+      'toggle-button-group--padded': width, // Add extra padding to compensate for buttons border
     });
 
     return (
