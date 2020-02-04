@@ -35,10 +35,6 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         </div>
         <h5>Nightly Builds</h5>
     </a>
-    <div class="nav-cards__item nav-cards__item--install">
-        <h5>For other platforms read the <a href="{{< relref "project/building_from_source.md" >}}">build from source</a>
-        instructions for more information.</h5>
-    </div>
 </div>
 
 <h2>Guides</h2>
