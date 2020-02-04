@@ -53,18 +53,6 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
     };
   }
 
-  // componentDidMount() {
-  //   getBackendSrv()
-  //     .get('/api/user/signup/options')
-  //     .then((options: any) => {
-  //       this.setState({
-  //         verifyEmailEnabled: options.verifyEmailEnabled,
-  //         autoAssignOrg: options.autoAssignOrg,
-  //       });
-  //     })
-  //     .catch(e => console.log(e));
-  // }
-
   onSubmit = async (formData: SignupFormModel) => {
     this.setState({
       username: formData.email,
