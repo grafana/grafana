@@ -86,6 +86,24 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
   }
 );
 export const removeVariable = createAction<VariablePayload<undefined>>('templating/removeVariable');
+export interface DuplicateVariable {
+  newUuid: string;
+  variablesInAngular: number;
+}
+export const duplicateVariable = createAction<PrepareAction<VariablePayload<DuplicateVariable>>>(
+  'templating/duplicateVariable',
+  (payload: VariablePayload<DuplicateVariable>) => {
+    return {
+      payload: {
+        ...payload,
+        data: {
+          ...payload.data,
+          newUuid: v4(),
+        },
+      },
+    };
+  }
+);
 export const setInitLock = createAction<VariablePayload<undefined>>('templating/setInitLock');
 export const resolveInitLock = createAction<VariablePayload<undefined>>('templating/resolveInitLock');
 export const removeInitLock = createAction<VariablePayload<undefined>>('templating/removeInitLock');
@@ -120,6 +138,7 @@ export const changeVariableProp = createAction<VariablePayload<{ propName: strin
 
 export const variableActions: Record<string, ActionCreatorWithPayload<VariablePayload<any>>> = {
   [addVariable.type]: addVariable,
+  [duplicateVariable.type]: duplicateVariable,
   [removeVariable.type]: removeVariable,
   [setInitLock.type]: setInitLock,
   [resolveInitLock.type]: resolveInitLock,

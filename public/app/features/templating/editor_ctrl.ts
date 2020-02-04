@@ -3,7 +3,7 @@ import { AppEvents } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 
 import coreModule from 'app/core/core_module';
-import { VariableType, variableTypes } from './variable';
+import { VariableModel, VariableType, variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
@@ -41,6 +41,11 @@ export class VariableEditorCtrl {
     this.variableSrv.dashboard.events.on(
       CoreEvents.variableEditorChangeMode,
       this.onVariableEditorChangeMode.bind(this),
+      $scope
+    );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableDuplicateVariableSucceeded,
+      this.onVariableDuplicateVariableSucceeded.bind(this),
       $scope
     );
     $scope.variableTypes = variableTypes;
@@ -211,12 +216,19 @@ export class VariableEditorCtrl {
 
     $scope.duplicate = (variable: { getSaveModel: () => void; name: string; type: VariableType }) => {
       if (variableAdapters.contains(variable.type)) {
+        const model: VariableModel = (variable as unknown) as VariableModel;
+        this.variableSrv.dashboard.events.emit(CoreEvents.variableDuplicateVariableStart, {
+          uuid: model.uuid,
+          type: model.type,
+          variablesInAngular: this.variableSrv.variables.length,
+        });
         return;
       }
       const clone = _.cloneDeep(variable.getSaveModel());
       $scope.current = variableSrv.createVariableFromModel(clone, $scope.variables.length);
       $scope.current.name = 'copy_of_' + variable.name;
       variableSrv.addVariable($scope.current);
+      $scope.variables.push($scope.current);
     };
 
     $scope.update = () => {
@@ -352,6 +364,10 @@ export class VariableEditorCtrl {
       this.$scope.mode = mode;
       this.$scope.$digest();
     }
+  }
+
+  onVariableDuplicateVariableSucceeded(args: VariableMovedToState) {
+    this.$scope.variables.push({ ...getVariable(args.uuid ?? '') });
   }
 }
 

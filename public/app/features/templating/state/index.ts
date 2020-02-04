@@ -5,6 +5,7 @@ import {
   addVariable,
   changeVariableHide,
   changeVariableLabel,
+  duplicateVariable,
   removeVariable,
   updateVariableCompleted,
   updateVariableFailed,
@@ -159,6 +160,31 @@ export const updateTemplatingState = (
               ...state.variables[action.payload.uuid].editor.errors,
               update: action.payload.data.message,
             },
+          },
+        },
+      },
+    };
+  }
+
+  if (duplicateVariable.match(action)) {
+    const original = state.variables[action.payload.uuid].variable;
+    const cleanState = variableAdapters
+      .get(original.type)
+      .reducer((undefined as unknown) as VariableState, { type: '', payload: {} as VariablePayload });
+    const uuid = action.payload.data.newUuid;
+    const index = action.payload.data.variablesInAngular + Object.keys(state.variables).length;
+    const name = `copy_of_${original.name}`;
+    return {
+      ...state,
+      variables: {
+        ...state.variables,
+        [uuid]: {
+          ...cleanState,
+          variable: {
+            ...original,
+            uuid,
+            index,
+            name,
           },
         },
       },

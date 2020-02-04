@@ -6,6 +6,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import {
   addVariable,
   changeVariableNameSucceeded,
+  duplicateVariable,
   moveVariableTypeToAngular,
   setCurrentVariableValue,
   toVariablePayload,
@@ -13,15 +14,19 @@ import {
   VariablePayload,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
-import { dispatch } from '../../../store/store';
-import { MoveVariableType } from '../../../types/events';
+import { MoveVariableType, VariableDuplicateVariableStart } from '../../../types/events';
 import templateSrv from '../template_srv';
 import { getVariable } from '../state/selectors';
 import { VariableState } from '../state/types';
 
 let dashboardEvents: Emitter | null = null;
 
-const onVariableTypeInAngularUpdated = ({ name, label, index, type }: MoveVariableType) => {
+const onVariableTypeInAngularUpdated = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
+  name,
+  label,
+  index,
+  type,
+}: MoveVariableType) => {
   const initialState = variableAdapters
     .get(type)
     .reducer((undefined as unknown) as VariableState, { type: '', payload: {} as VariablePayload<any> });
@@ -32,7 +37,15 @@ const onVariableTypeInAngularUpdated = ({ name, label, index, type }: MoveVariab
     label,
     index,
   };
-  dispatch(addVariable(toVariablePayload(model, { global: false, index, model })));
+  store.dispatch(addVariable(toVariablePayload(model, { global: false, index, model })));
+};
+
+const onVariableDuplicateStart = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
+  uuid,
+  type,
+  variablesInAngular,
+}: VariableDuplicateVariableStart) => {
+  store.dispatch(duplicateVariable({ uuid, type, data: { variablesInAngular } }));
 };
 
 export const variableMiddleware: Middleware<{}, StoreState> = (store: MiddlewareAPI<Dispatch, StoreState>) => (
@@ -41,13 +54,15 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
   if (dashboardInitCompleted.match(action)) {
     const result = next(action);
     dashboardEvents = (store.getState().dashboard?.model as DashboardModel).events;
-    dashboardEvents.on(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated);
+    dashboardEvents.on(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated(store));
+    dashboardEvents.on(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
     return result;
   }
 
   if (cleanUpDashboard.match(action)) {
     const result = next(action);
-    dashboardEvents?.off(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated);
+    dashboardEvents?.off(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated(store));
+    dashboardEvents?.off(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
     dashboardEvents = null;
     return result;
   }
@@ -92,6 +107,14 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     if (action.payload.data.notifyAngular) {
       dashboardEvents?.emit(CoreEvents.variableEditorChangeMode, 'list');
     }
+    return result;
+  }
+
+  if (duplicateVariable.match(action)) {
+    const { newUuid } = action.payload.data;
+    const result = next(action);
+    const variable = getVariable(newUuid, store.getState());
+    dashboardEvents?.emit(CoreEvents.variableDuplicateVariableSucceeded, { uuid: variable.uuid ?? '' });
     return result;
   }
 
