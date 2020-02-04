@@ -4,6 +4,8 @@ Templates are both a starting point and an instruction manual for writing someth
 
 ## Create a template
 
+Feel free to add templates to the `templates` folder. Try to make them as generic as possible and include clear instructions for when and how to use the template. Assume that the template user is a brand new contributor and write accordingly.
+
 ## Use a template
 
 1. Read the template. Make sure you understand what it is for and how it is intended to be used.
@@ -37,6 +39,18 @@ If I was writing a topic called *Doggie handbook*, I might organize it like this
 **Reference**
 * List of dog equipment you will need
 * Table of breeds that includes breed name, size range, short or long hair, and type of dog
+
+### Audience
+
+Write for an audience that is computer literate and has general technical knowledge, but is not necessarily familiar with Grafana or the finer points of observability. 
+
+Pretend you are explaining your topic to a brand new Grafana user or developer.
+
+### Self-contained
+
+Thanks to search engines, every page in the documentation might be a reader's entry point. This means that each page needs to be self-contained and make sense on its own. The reader should not need to read other topics in order to perform the task or understand the concept.
+
+However, try to be helpful and link to related information. Using the *Doggie handbook* example, the concept topic that explains what dogs can be trained to do might link to the Train the dog task.
 
 ## Code templates
 
