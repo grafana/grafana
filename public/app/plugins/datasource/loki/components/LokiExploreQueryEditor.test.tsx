@@ -5,10 +5,10 @@ import LokiExploreExtraField from './LokiExploreExtraField';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { ExploreMode, PanelData, LoadingState, dateTime } from '@grafana/data';
+import { makeMockLokiDatasource } from '../mocks';
 
 const setup = (renderMethod: any, propOverrides?: object) => {
-  const datasourceMock: unknown = {};
-  const datasource: LokiDatasource = datasourceMock as LokiDatasource;
+  const datasource: LokiDatasource = makeMockLokiDatasource({});
   const onRunQuery = jest.fn();
   const onChange = jest.fn();
   const query: LokiQuery = { expr: '', refId: 'A', maxLines: 0 };
