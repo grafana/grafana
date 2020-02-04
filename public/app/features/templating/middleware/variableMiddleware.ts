@@ -7,12 +7,15 @@ import {
   addVariable,
   changeVariableNameSucceeded,
   moveVariableTypeToAngular,
+  setCurrentVariableValue,
   toVariablePayload,
   updateVariableCompleted,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { dispatch } from '../../../store/store';
 import { MoveVariableType } from '../../../types/events';
+import templateSrv from '../template_srv';
+import { getVariable } from '../state/selectors';
 
 let dashboardEvents: Emitter = null;
 
@@ -46,11 +49,14 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
   }
 
   if (changeVariableNameSucceeded.match(action)) {
+    const oldName = getVariable(action.payload.uuid, store.getState()).name;
     const result = next(action);
     dashboardEvents?.emit(CoreEvents.variableNameInStateUpdated, {
       type: action.payload.type,
       uuid: action.payload.uuid,
     });
+    templateSrv.variableInitialized(getVariable(action.payload.uuid, store.getState()));
+    templateSrv.variableRemoved(oldName);
     return result;
   }
 
@@ -59,6 +65,14 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     const uuid = action.payload.uuid;
     const index = action.payload.data.index;
     dashboardEvents?.emit(CoreEvents.variableMovedToState, { index, uuid });
+    templateSrv.variableInitialized(getVariable(uuid, store.getState()));
+    return result;
+  }
+
+  if (setCurrentVariableValue.match(action)) {
+    const result = next(action);
+    const uuid = action.payload.uuid;
+    templateSrv.variableInitialized(getVariable(uuid, store.getState()));
     return result;
   }
 

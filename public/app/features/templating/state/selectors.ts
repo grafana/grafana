@@ -3,14 +3,6 @@ import { VariableModel } from '../variable';
 import { getState } from '../../../store/store';
 import { VariableState } from './types';
 
-export const getVariableByName = <T extends VariableModel = VariableModel>(
-  name: string,
-  state: StoreState = getState()
-): T => {
-  const variable = getVariables(state).find(v => v.name === name);
-  return variable as T;
-};
-
 export const getVariableState = <T extends VariableState = VariableState>(
   uuid: string,
   state: StoreState = getState()

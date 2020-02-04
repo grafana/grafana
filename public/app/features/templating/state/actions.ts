@@ -90,7 +90,9 @@ export const removeVariable = createAction<VariablePayload<undefined>>('templati
 export const setInitLock = createAction<VariablePayload<undefined>>('templating/setInitLock');
 export const resolveInitLock = createAction<VariablePayload<undefined>>('templating/resolveInitLock');
 export const removeInitLock = createAction<VariablePayload<undefined>>('templating/removeInitLock');
-export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>('templating/setVariableValue');
+export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>(
+  'templating/setCurrentVariableValue'
+);
 export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
 export const updateVariableStarting = createAction<VariablePayload<undefined>>('templating/updateVariableStarting');
 export const updateVariableCompleted = createAction<VariablePayload<{ notifyAngular: boolean }>>(
