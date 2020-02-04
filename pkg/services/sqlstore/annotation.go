@@ -119,6 +119,10 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 	})
 }
 
+// Find Finds annotations
+// Note: modify the where clause condition with caution to the indices
+// otherwise it can have an impact on the performance
+// if there is a large amount of annotations.
 func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
