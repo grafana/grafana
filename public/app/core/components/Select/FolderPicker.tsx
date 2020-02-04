@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Forms } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
+import { debounce } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
 import appEvents from '../../app_events';
@@ -8,7 +9,6 @@ import appEvents from '../../app_events';
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
   enableCreateNew: boolean;
-  folder: any;
   rootName?: string;
   enableReset?: boolean;
   dashboardId?: any;
@@ -22,16 +22,26 @@ interface State {
 }
 
 export class FolderPicker extends PureComponent<Props, State> {
+  debouncedSearch: any;
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      validationError: '',
+      hasValidationError: false,
+    };
+
+    this.debouncedSearch = debounce(this.getOptions, 300, {
+      leading: true,
+      trailing: true,
+    });
+  }
+
   static defaultProps = {
     rootName: 'General',
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
-  };
-
-  state: State = {
-    validationError: '',
-    hasValidationError: false,
   };
 
   componentDidMount = async () => {
@@ -119,7 +129,7 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { validationError, hasValidationError } = this.state;
-    const { folder, enableCreateNew } = this.props;
+    const { enableCreateNew } = this.props;
 
     return (
       <>
@@ -128,10 +138,9 @@ export class FolderPicker extends PureComponent<Props, State> {
             <label className="gf-form-label width-7">Folder</label>
             <Forms.AsyncSelect
               loadingMessage="Loading folders..."
-              value={folder}
               defaultOptions
               allowCustomValue={enableCreateNew}
-              loadOptions={this.getOptions}
+              loadOptions={this.debouncedSearch}
               onChange={this.onFolderChange}
               onCreateOption={this.createNewFolder}
               size="sm"
