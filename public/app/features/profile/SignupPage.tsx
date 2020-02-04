@@ -1,6 +1,5 @@
 import React from 'react';
-import SignupCtrl from './SignupCtrl';
-import { SignupForm } from './SignupForm';
+import SignupForm from './SignupForm';
 import Page from 'app/core/components/Page/Page';
 
 const navModel = {
@@ -24,8 +23,7 @@ export class SignupPage extends React.PureComponent {
             We just need a couple of more bits of
             <br /> information to finish creating your account.
           </div>
-
-          <SignupCtrl>{props => <SignupForm {...props} />}</SignupCtrl>
+          <SignupForm />
         </Page.Contents>
       </Page>
     );
