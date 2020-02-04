@@ -225,6 +225,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		query.Limit = 100
 	}
 
+	// order of ORDER BY arguments match the order of a sql index for performance 
 	sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + dialect.Limit(query.Limit) + " ) dt on dt.id = annotation.id")
 
 	items := make([]*annotations.ItemDTO, 0)
