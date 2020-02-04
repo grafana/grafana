@@ -13,7 +13,6 @@ import { AppEvents, TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
 import { variableAdapters } from './adapters';
-import { appEvents } from 'app/core/core';
 import { VariableIdentifier } from './state/actions';
 import { getVariable } from './state/selectors';
 import { appEvents, contextSrv } from 'app/core/core';
