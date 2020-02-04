@@ -19,6 +19,8 @@ The title of the concept topic will generally be a noun or a gerund. Examples in
 
 Concepts are topic types for any information that doesn't involve task lists or reference information. Ideally you use concept elements to explain concepts, ideas, overviews, workflows, and the like. In the intro section, this first paragraph or two, you should explain to the user what to expect in this topic or section.
 
+[Permissions overview](https://grafana.com/docs/grafana/latest/permissions/overview/) is an example of a concept topic.
+
 ## Idea
 
 Concept topics or sections explain *what* and *why*. They do not explain *how*. If you are a new user, you might look for concept information to learn about what Grafana is, why it might be useful to you, and what the general workflow is. 
