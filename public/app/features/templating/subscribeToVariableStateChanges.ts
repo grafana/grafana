@@ -8,8 +8,7 @@ import { VariableState } from './state/types';
 
 export const subscribeToVariableChanges = <State extends VariableState>(args: VariableIdentifier) => {
   const stateSelector = (state: StoreState): State => {
-    const variableState = state.templating.variables.find(s => s.variable.uuid === args.uuid);
-    return variableState as State;
+    return state.templating.variables[args.uuid] as State;
   };
 
   return new Observable((observer: Subscriber<State>) => {

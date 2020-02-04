@@ -18,11 +18,11 @@ import { variableAdapters } from '../adapters';
 import { initialVariableEditorState, VariableState } from './types';
 
 export interface TemplatingState {
-  variables: VariableState[];
+  variables: Record<string, VariableState>;
 }
 
 export const initialState: TemplatingState = {
-  variables: [],
+  variables: {},
 };
 
 export const updateTemplatingState = (
@@ -38,168 +38,139 @@ export const updateTemplatingState = (
   if (addVariable.match(action)) {
     return {
       ...state,
-      variables: [...state.variables, reducer(undefined, action)],
+      variables: {
+        ...state.variables,
+        [action.payload.uuid]: reducer(undefined, action),
+      },
     };
   }
 
   if (removeVariable.match(action)) {
-    const index = state.variables.findIndex(v => v.variable.uuid === action.payload.uuid);
-    const variables = state.variables.filter(v => v.variable.uuid !== action.payload.uuid);
-    delete state.variables[index];
-    return {
-      ...state,
-      variables,
-    };
+    delete state.variables[action.payload.uuid];
+    return state;
   }
 
   if (variableEditorMounted.match(action)) {
     return {
       ...state,
-      variables: state.variables.map(variableState => {
-        if (action.payload.uuid !== variableState.variable.uuid) {
-          return variableState;
-        }
-
-        return {
-          ...variableState,
+      variables: {
+        ...state.variables,
+        [action.payload.uuid]: {
+          ...state.variables[action.payload.uuid],
           editor: {
             ...initialVariableEditorState,
-            name: variableState.variable.name,
-            type: variableState.variable.type,
+            name: state.variables[action.payload.uuid].variable.name,
+            type: state.variables[action.payload.uuid].variable.type,
             dataSources: action.payload.data,
           },
-        };
-      }),
+        },
+      },
     };
   }
 
   if (variableEditorUnMounted.match(action)) {
     return {
       ...state,
-      variables: state.variables.map(variableState => {
-        if (action.payload.uuid !== variableState.variable.uuid) {
-          return variableState;
-        }
-
-        return {
-          ...variableState,
+      variables: {
+        ...state.variables,
+        [action.payload.uuid]: {
+          ...state.variables[action.payload.uuid],
           editor: initialVariableEditorState,
-        };
-      }),
+        },
+      },
     };
   }
 
   if (changeVariableLabel.match(action)) {
     return {
       ...state,
-      variables: state.variables.map(variableState => {
-        if (action.payload.uuid !== variableState.variable.uuid) {
-          return variableState;
-        }
-
-        return {
-          ...variableState,
+      variables: {
+        ...state.variables,
+        [action.payload.uuid]: {
+          ...state.variables[action.payload.uuid],
           variable: {
-            ...variableState.variable,
+            ...state.variables[action.payload.uuid].variable,
             label: action.payload.data,
           },
-        };
-      }),
+        },
+      },
     };
   }
 
   if (changeVariableHide.match(action)) {
     return {
       ...state,
-      variables: state.variables.map(variableState => {
-        if (action.payload.uuid !== variableState.variable.uuid) {
-          return variableState;
-        }
-
-        return {
-          ...variableState,
+      variables: {
+        ...state.variables,
+        [action.payload.uuid]: {
+          ...state.variables[action.payload.uuid],
           variable: {
-            ...variableState.variable,
+            ...state.variables[action.payload.uuid].variable,
             hide: action.payload.data,
           },
-        };
-      }),
+        },
+      },
     };
   }
 
   if (updateVariableStarting.match(action)) {
     return {
       ...state,
-      variables: state.variables.map(variableState => {
-        if (action.payload.uuid !== variableState.variable.uuid) {
-          return variableState;
-        }
-
-        return {
-          ...variableState,
+      variables: {
+        ...state.variables,
+        [action.payload.uuid]: {
+          ...state.variables[action.payload.uuid],
           editor: {
             ...initialVariableEditorState,
-            ...variableState.editor,
+            ...state.variables[action.payload.uuid].editor,
           },
-        };
-      }),
+        },
+      },
     };
   }
 
   if (updateVariableCompleted.match(action)) {
     return {
       ...state,
-      variables: state.variables.map(variableState => {
-        if (action.payload.uuid !== variableState.variable.uuid) {
-          return variableState;
-        }
-
-        return {
-          ...variableState,
+      variables: {
+        ...state.variables,
+        [action.payload.uuid]: {
+          ...state.variables[action.payload.uuid],
           editor: {
             ...initialVariableEditorState,
-            ...variableState.editor,
+            ...state.variables[action.payload.uuid].editor,
           },
-        };
-      }),
+        },
+      },
     };
   }
 
   if (updateVariableFailed.match(action)) {
     return {
       ...state,
-      variables: state.variables.map(variableState => {
-        if (action.payload.uuid !== variableState.variable.uuid) {
-          return variableState;
-        }
-
-        return {
-          ...variableState,
+      variables: {
+        ...state.variables,
+        [action.payload.uuid]: {
+          ...state.variables[action.payload.uuid],
           editor: {
-            ...variableState.editor,
+            ...state.variables[action.payload.uuid].editor,
             isValid: false,
             errors: {
-              ...variableState.editor.errors,
+              ...state.variables[action.payload.uuid].editor.errors,
               update: action.payload.data.message,
             },
           },
-        };
-      }),
+        },
+      },
     };
   }
 
   return {
     ...state,
-    variables: state.variables.map(variableState => {
-      if (action.payload.uuid !== variableState.variable.uuid) {
-        return variableState;
-      }
-
-      return {
-        ...variableState,
-        ...reducer(variableState, action),
-      };
-    }),
+    variables: {
+      ...state.variables,
+      [action.payload.uuid]: reducer(state.variables[action.payload.uuid], action),
+    },
   };
 };
 
