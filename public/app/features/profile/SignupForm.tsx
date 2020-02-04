@@ -17,7 +17,7 @@ interface SignupFormModel {
   name?: string;
 }
 interface Props {
-  routeParams: {
+  routeParams?: {
     email?: string;
     orgName?: string;
     username?: string;
