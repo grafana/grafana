@@ -7,6 +7,3 @@ name = "Contribute"
 identifier = "contribute"
 weight = 20
 +++
-
-### Contribute info
-
