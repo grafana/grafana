@@ -15,7 +15,7 @@ import { ThunkResult, VariableQueryProps } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
-import { AppEvents, DataSourceApi } from '@grafana/data';
+import { AppEvents, DataSourceApi, DataSourcePluginMeta } from '@grafana/data';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { ComponentType } from 'react';
@@ -55,14 +55,19 @@ export const updateQueryVariableOptions = (
   notifyAngular?: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(variable.uuid);
+    const variableInState = getVariable<QueryVariableModel>(variable.uuid ?? '');
     try {
       dispatch(updateVariableStarting(toVariablePayload(variable)));
-      const dataSource = await getDatasourceSrv().get(variableInState.datasource);
+      const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
       const queryOptions: any = { range: undefined, variableInState, searchFilter };
       if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
         queryOptions.range = getTimeSrv().timeRange();
       }
+
+      if (!dataSource.metricFindQuery) {
+        return;
+      }
+
       const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
       await dispatch(updateVariableOptions(toVariablePayload(variableInState, results)));
 
@@ -72,7 +77,9 @@ export const updateQueryVariableOptions = (
       }
 
       await dispatch(validateVariableSelectionState(variableInState));
-      await dispatch(updateVariableCompleted(toVariablePayload(variableInState, { notifyAngular })));
+      await dispatch(
+        updateVariableCompleted(toVariablePayload(variableInState, { notifyAngular: notifyAngular ?? false }))
+      );
     } catch (err) {
       if (err.data && err.data.message) {
         err.message = err.data.message;
@@ -92,11 +99,11 @@ export const initQueryVariableEditor = (variable: QueryVariableModel): ThunkResu
   };
 };
 
-export const changeQueryVariableDataSource = (variable: QueryVariableModel, name: string): ThunkResult<void> => {
+export const changeQueryVariableDataSource = (variable: QueryVariableModel, name: string | null): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const dataSource = await getDatasourceSrv().get(name);
-      const dsPlugin = await importDataSourcePlugin(dataSource.meta);
+      const dataSource = await getDatasourceSrv().get(name ?? '');
+      const dsPlugin = await importDataSourcePlugin(dataSource.meta ?? ({} as DataSourcePluginMeta));
       const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? DefaultVariableQueryEditor;
       dispatch(queryVariableDatasourceLoaded(toVariablePayload(variable, dataSource)));
       dispatch(queryVariableEditorLoaded(toVariablePayload(variable, VariableQueryEditor)));

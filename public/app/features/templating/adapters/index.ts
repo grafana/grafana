@@ -20,7 +20,7 @@ export interface VariableAdapter<Model extends VariableModel, State extends Vari
   reducer: Reducer<State, PayloadAction<VariablePayload<any>>>;
 }
 
-const allVariableAdapters: Record<VariableType, VariableAdapter<any, any>> = {
+const allVariableAdapters: Record<VariableType, VariableAdapter<any, any> | null> = {
   query: null,
   textbox: null,
   constant: null,
@@ -30,15 +30,26 @@ const allVariableAdapters: Record<VariableType, VariableAdapter<any, any>> = {
   adhoc: null,
 };
 
-export const variableAdapters = {
-  contains: (type: VariableType) => !!allVariableAdapters[type],
-  get: (type: VariableType) => {
-    if (!variableAdapters.contains(type)) {
-      throw new Error(`There is no adapter for type:${type}`);
+export interface VariableAdapters {
+  contains: (type: VariableType) => boolean;
+  get: (type: VariableType) => VariableAdapter<any, any>;
+  set: (type: VariableType, adapter: VariableAdapter<any, any>) => void;
+}
+
+export const variableAdapters: VariableAdapters = {
+  contains: (type: VariableType): boolean => !!allVariableAdapters[type],
+  get: (type: VariableType): VariableAdapter<any, any> => {
+    if (allVariableAdapters[type] !== null) {
+      // @ts-ignore
+      // Suppressing strict null check in this case we know that this is an instance otherwise we throw
+      // Type 'VariableAdapter<any, any> | null' is not assignable to type 'VariableAdapter<any, any>'.
+      // Type 'null' is not assignable to type 'VariableAdapter<any, any>'.
+      return allVariableAdapters[type];
     }
-    return allVariableAdapters[type];
+
+    throw new Error(`There is no adapter for type:${type}`);
   },
-  set: (type: VariableType, adapter: VariableAdapter<any, any>) => {
+  set: (type: VariableType, adapter: VariableAdapter<any, any>): void => {
     allVariableAdapters[type] = adapter;
   },
 };

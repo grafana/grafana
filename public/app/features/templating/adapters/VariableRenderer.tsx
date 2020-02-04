@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
-import { VariableIdentifier } from '../state/actions';
+import { VariableIdentifier, VariablePayload } from '../state/actions';
 import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
 import { variableAdapters } from './index';
 import { VariableEditor } from '../editor/VariableEditor';
@@ -12,13 +12,15 @@ export interface VariableRendererProps extends VariableIdentifier {
 }
 
 export class VariableRenderer extends PureComponent<VariableRendererProps, VariableState> {
-  private readonly subscription: Subscription = null;
+  private readonly subscription: Subscription | null = null;
   constructor(props: VariableRendererProps) {
     super(props);
 
     // editing a new variable
     if (!props.uuid) {
-      const initialState = variableAdapters.get(props.type).reducer(undefined, undefined);
+      const initialState = variableAdapters
+        .get(props.type)
+        .reducer((undefined as unknown) as VariableState, { type: '', payload: {} as VariablePayload<any> });
       this.state = initialState;
     } else {
       this.subscription = subscribeToVariableChanges<VariableState>(props).subscribe({
@@ -35,7 +37,7 @@ export class VariableRenderer extends PureComponent<VariableRendererProps, Varia
   }
 
   componentWillUnmount(): void {
-    this.subscription.unsubscribe();
+    this.subscription?.unsubscribe();
   }
 
   render() {

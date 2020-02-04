@@ -75,7 +75,7 @@ export class DatasourceVariable implements DataSourceVariableModel, VariableActi
     let regex;
 
     if (this.regex) {
-      regex = this.templateSrv.replace(this.regex, null, 'regex');
+      regex = this.templateSrv.replace(this.regex, undefined, 'regex');
       regex = stringToJsRegex(regex);
     }
 

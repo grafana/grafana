@@ -45,16 +45,16 @@ export const appyStateChanges = <S extends VariableState>(state: S, ...args: Arr
 
 export interface QueryVariablePickerState {
   showDropDown: boolean;
-  linkText: string | string[];
+  linkText: string | string[] | null;
   selectedValues: VariableOption[];
   selectedTags: VariableTag[];
-  searchQuery: string;
+  searchQuery: string | null;
   searchOptions: VariableOption[];
   highlightIndex: number;
   tags: VariableTag[];
   options: VariableOption[];
   queryHasSearchFilter: boolean;
-  oldVariableText: string | string[];
+  oldVariableText: string | string[] | null;
 }
 
 export interface QueryVariableEditorState extends VariableEditorState {
@@ -80,6 +80,7 @@ export const initialQueryVariablePickerState: QueryVariablePickerState = {
 };
 
 export const initialQueryVariableModelState: QueryVariableModel = {
+  uuid: '00000000-0000-0000-0000-000000000000',
   global: false,
   index: -1,
   type: 'query',
@@ -102,6 +103,7 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   tagsQuery: '',
   tagValuesQuery: '',
   definition: '',
+  initLock: null,
 };
 
 export const initialQueryVariableEditorState: QueryVariableEditorState = {
@@ -210,10 +212,15 @@ const updateLinkText = (state: QueryVariableState): QueryVariableState => {
     if (!option.selected) {
       return false;
     }
+
+    if (!current || !current.tags || !current.tags.length) {
+      return false;
+    }
+
     for (let i = 0; i < current.tags.length; i++) {
       const tag = current.tags[i];
-      const foundIndex = tag.values.findIndex(v => v === option.value);
-      if (foundIndex !== -1) {
+      const foundIndex = tag?.values?.findIndex(v => v === option.value);
+      if (foundIndex && foundIndex !== -1) {
         return false;
       }
     }
@@ -277,7 +284,7 @@ const updateCurrent = (state: QueryVariableState): QueryVariableState => {
   }
 
   // if we have a search query and no options use that
-  if (searchOptions.length === 0 && searchQuery.length > 0) {
+  if (searchOptions.length === 0 && searchQuery && searchQuery.length > 0) {
     current = { text: searchQuery, value: searchQuery, selected: false };
   }
 
@@ -469,7 +476,7 @@ export const queryVariableReducer = (
 
   if (resolveInitLock.match(action)) {
     // unfortunate side effect in reducer
-    state.variable.initLock.resolve();
+    state.variable.initLock?.resolve();
     return { ...state };
   }
 

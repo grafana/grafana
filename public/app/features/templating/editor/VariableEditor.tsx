@@ -150,7 +150,7 @@ export class VariableEditor extends PureComponent<VariableState> {
                 <input
                   type="text"
                   className="gf-form-input"
-                  value={this.props.variable.label}
+                  value={this.props.variable.label ?? ''}
                   onChange={this.onLabelChange}
                   placeholder="optional display name"
                   aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalLabelInput}

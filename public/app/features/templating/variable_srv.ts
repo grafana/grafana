@@ -303,8 +303,12 @@ export class VariableSrv {
           defaultText = urlValue.reduce((acc, item) => {
             const t: any = _.find(variable.options, { value: item });
             if (t) {
+              // @ts-ignore according to strict null errors this can never happen
+              // TODO: investigate this further or refactor code
               acc.push(t.text);
             } else {
+              // @ts-ignore according to strict null errors this can never happen
+              // TODO: investigate this further or refactor code
               acc.push(item);
             }
 

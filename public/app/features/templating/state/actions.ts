@@ -1,5 +1,4 @@
 import castArray from 'lodash/castArray';
-import find from 'lodash/find';
 import { MouseEvent } from 'react';
 import { v4 } from 'uuid';
 import { ActionCreatorWithPayload, createAction, PrepareAction } from '@reduxjs/toolkit';
@@ -65,7 +64,7 @@ export interface VariableIdentifier {
   uuid: string;
 }
 
-export interface VariablePayload<T> extends VariableIdentifier {
+export interface VariablePayload<T extends any = undefined> extends VariableIdentifier {
   data: T;
 }
 
@@ -141,8 +140,8 @@ export const variableActions: Record<string, ActionCreatorWithPayload<VariablePa
   ...queryVariableActions,
 };
 
-export const toVariablePayload = <T extends {} = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
-  return { type: variable.type, uuid: variable.uuid, data };
+export const toVariablePayload = <T extends any = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
+  return { type: variable.type, uuid: variable.uuid ?? '', data: data as T };
 };
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
@@ -171,6 +170,9 @@ export const processVariables = (): ThunkResult<void> => {
       const variable = getVariables(getState())[index];
       for (const otherVariable of getVariables(getState())) {
         if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
+          if (!otherVariable.initLock) {
+            throw new Error(`No initLock defined for other variable:${otherVariable.name}`);
+          }
           dependencies.push(otherVariable.initLock.promise);
         }
       }
@@ -179,7 +181,7 @@ export const processVariables = (): ThunkResult<void> => {
 
       const urlValue = queryParams['var-' + variable.name];
       if (urlValue !== void 0) {
-        await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue);
+        await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
       }
 
       if (variable.hasOwnProperty('refresh')) {
@@ -215,14 +217,12 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
     await variableAdapters.get(variable.type).updateOptions(variable);
 
     // get variable from state
-    const variableFromState: VariableWithOptions = getVariables(getState()).find(
-      v => v.name === variable.name
-    ) as VariableWithOptions;
+    const variableFromState = getVariable<VariableWithOptions>(variable.uuid ?? '', getState());
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
     // Simple case. Value in url matches existing options text or value.
-    let option: VariableOption = variableFromState.options.find(op => {
+    let option = variableFromState.options.find(op => {
       return op.text === urlValue || op.value === urlValue;
     });
 
@@ -232,15 +232,18 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
 
       if (Array.isArray(urlValue)) {
         // Multiple values in the url. We construct text as a list of texts from all matched options.
-        defaultText = (urlValue as string[]).reduce((acc, item) => {
-          const t: any = find(variableFromState.options, { value: item });
-          if (t) {
-            acc.push(t.text);
-          } else {
-            acc.push(item);
+        const urlValueArray = urlValue as string[];
+        defaultText = urlValueArray.reduce((acc: string[], item: string) => {
+          const foundOption = variableFromState.options.find(o => o.value === item);
+          if (!foundOption) {
+            // @ts-ignore according to strict null errors this can never happen
+            // TODO: investigate this further or refactor code
+            return [].concat(acc, [item]);
           }
 
-          return acc;
+          // @ts-ignore according to strict null errors this can never happen
+          // TODO: investigate this further or refactor code
+          return [].concat(acc, [foundOption.text]);
         }, []);
       }
 
@@ -288,7 +291,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(variable.uuid, getState());
+    const variableInState = getVariable<VariableWithOptions>(variable.uuid ?? '', getState());
     const setValue = variableAdapters.get(variableInState.type).setValue;
     if (!variableInState.current) {
       return setValue(variableInState, {} as VariableOption);
@@ -311,7 +314,7 @@ export const validateVariableSelectionState = (
       return setValue(variableInState, option);
     }
 
-    let option: VariableOption = null;
+    let option: VariableOption | undefined | null = null;
 
     // 1. find the current value
     option = variableInState.options.find(v => v.text === variableInState.current.text);
@@ -383,8 +386,10 @@ export const variableUpdated = (variable: VariableModel, emitChangeEvents?: any)
     if (node) {
       promises = node.getOptimizedInputEdges().map(e => {
         const variable = variables.find(v => v.name === e.inputNode.name);
+        if (!variable) {
+          return Promise.resolve();
+        }
         return variableAdapters.get(variable.type).updateOptions(variable);
-        // return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
       });
     }
 
@@ -435,7 +440,9 @@ export const changeVariableType = (variable: VariableModel, newType: VariableTyp
     if (currentIsAdapted && !newIsAdapted) {
       const { name, label, index } = variable;
       dispatch(removeVariable(toVariablePayload(variable)));
-      dispatch(moveVariableTypeToAngular(toVariablePayload(variable, { name, label, index, type: newType })));
+      dispatch(
+        moveVariableTypeToAngular(toVariablePayload(variable, { name, label: label ?? '', index, type: newType }))
+      );
     }
 
     // existing type is not adapted but new type is

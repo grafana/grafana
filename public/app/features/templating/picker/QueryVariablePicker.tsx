@@ -126,7 +126,7 @@ export class QueryVariablePicker extends PureComponent<Props> {
                   }}
                   type="text"
                   className="gf-form-input"
-                  value={searchQuery}
+                  value={searchQuery ?? ''}
                   onChange={event => this.debouncedOnQueryChanged(event.target.value)}
                   // inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
                   // ng-keydown="vm.keyDown($event)"

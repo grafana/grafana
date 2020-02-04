@@ -21,7 +21,7 @@ export class CustomVariable implements CustomVariableModel, VariableActions {
   includeAll: boolean;
   multi: boolean;
   current: VariableOption;
-  allValue: string;
+  allValue: string | null;
   index: number;
 
   defaults: CustomVariableModel = {

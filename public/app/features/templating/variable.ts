@@ -92,7 +92,7 @@ export interface AdHocVariableFilter {
 }
 
 export interface AdHocVariableModel extends VariableModel {
-  datasource: string;
+  datasource: string | null;
   filters: AdHocVariableFilter[];
 }
 
@@ -111,7 +111,7 @@ export interface IntervalVariableModel extends VariableWithOptions {
 }
 
 export interface QueryVariableModel extends VariableWithMultiSupport {
-  datasource: string;
+  datasource: string | null;
   definition: string;
   refresh: VariableRefresh;
   regex: string;
@@ -129,7 +129,7 @@ export interface ConstantVariableModel extends VariableWithOptions {}
 export interface VariableWithMultiSupport extends VariableWithOptions {
   multi: boolean;
   includeAll: boolean;
-  allValue?: string;
+  allValue?: string | null;
 }
 
 export interface VariableWithOptions extends VariableModel {
@@ -143,11 +143,11 @@ export interface VariableModel {
   global?: boolean; // only exists for variables in state
   type: VariableType;
   name: string;
-  label: string;
+  label: string | null;
   hide: VariableHide;
   skipUrlSync: boolean;
   index: number;
-  initLock?: Deferred;
+  initLock?: Deferred | null;
 }
 
 export interface VariableActions {

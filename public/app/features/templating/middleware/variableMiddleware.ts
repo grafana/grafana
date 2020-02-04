@@ -10,17 +10,21 @@ import {
   setCurrentVariableValue,
   toVariablePayload,
   updateVariableCompleted,
+  VariablePayload,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { dispatch } from '../../../store/store';
 import { MoveVariableType } from '../../../types/events';
 import templateSrv from '../template_srv';
 import { getVariable } from '../state/selectors';
+import { VariableState } from '../state/types';
 
-let dashboardEvents: Emitter = null;
+let dashboardEvents: Emitter | null = null;
 
 const onVariableTypeInAngularUpdated = ({ name, label, index, type }: MoveVariableType) => {
-  const initialState = variableAdapters.get(type).reducer(undefined, { type: '', payload: null });
+  const initialState = variableAdapters
+    .get(type)
+    .reducer((undefined as unknown) as VariableState, { type: '', payload: {} as VariablePayload<any> });
   const model = {
     ...initialState.variable,
     name,
@@ -43,7 +47,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
 
   if (cleanUpDashboard.match(action)) {
     const result = next(action);
-    dashboardEvents.off(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated);
+    dashboardEvents?.off(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated);
     dashboardEvents = null;
     return result;
   }

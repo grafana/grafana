@@ -35,12 +35,13 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
     }
   }
 
-  getSelectedDataSourceValue = () => {
+  getSelectedDataSourceValue = (): string => {
     if (!this.props.dataSources.length) {
       return '';
     }
     const foundItem = this.props.dataSources.find(ds => ds.value === this.props.variable.datasource);
-    return foundItem ? foundItem.value : this.props.dataSources[0].value;
+    const value = foundItem ? foundItem.value : this.props.dataSources[0].value;
+    return value ?? '';
   };
 
   runQuery = async () => await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
@@ -126,7 +127,7 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
                   </option>
                   {this.props.dataSources.length &&
                     this.props.dataSources.map(ds => (
-                      <option key={ds.value} value={ds.value} label={ds.name}>
+                      <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.name}>
                         {ds.name}
                       </option>
                     ))}

@@ -16,7 +16,7 @@ export class AdhocVariable implements AdHocVariableModel, VariableActions {
   hide: VariableHide;
   skipUrlSync: boolean;
   filters: AdHocVariableFilter[];
-  datasource: string;
+  datasource: string | null;
   index: number;
 
   defaults: AdHocVariableModel = {
