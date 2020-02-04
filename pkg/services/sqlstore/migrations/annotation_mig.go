@@ -123,20 +123,20 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = epoch"))
 	mg.AddMigration("Move region to single row", &AddMakeRegionSingleRowMigration{})
 
-	mg.AddMigration("Remove index org_id_epoch on annotation table", NewDropIndexMigration(table, &Index{
+	mg.AddMigration("Remove index org_id_epoch from annotation table", NewDropIndexMigration(table, &Index{
 		Cols: []string{"org_id", "epoch"}, Type: IndexType,
 	}))
 
-	mg.AddMigration("Remove index org_id_dashboard_id_panel_id_epoch on annotation table", NewDropIndexMigration(table, &Index{
+	mg.AddMigration("Remove index org_id_dashboard_id_panel_id_epoch from annotation table", NewDropIndexMigration(table, &Index{
 		Cols: []string{"org_id", "dashboard_id", "panel_id", "epoch"}, Type: IndexType,
 	}))
 
-	mg.AddMigration("Add index for org_id_dashboard_id_epoch_epoch_end on annotation table", NewAddIndexMigration(table, &Index{
-		Cols: []string{"org_id", "dashboard_id", "epoch", "epoch_end"}, Type: IndexType,
+	mg.AddMigration("Add index for org_id_dashboard_id_epoch_end_epoch on annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "dashboard_id", "epoch_end", "epoch"}, Type: IndexType,
 	}))
 
-	mg.AddMigration("Add index for org_id_dashboard_id_panel_id on annotation table", NewAddIndexMigration(table, &Index{
-		Cols: []string{"org_id", "dashboard_id", "panel_id"}, Type: IndexType,
+	mg.AddMigration("Add index for org_id_epoch_end_epoch on annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "epoch_end", "epoch"}, Type: IndexType,
 	}))
 }
 
