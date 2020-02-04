@@ -6,6 +6,12 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 // @ts-ignore
 import $q from 'q';
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    user: { orgId: 1, orgName: 'TestOrg' },
+  },
+}));
+
 describe('VariableSrv init', function(this: any) {
   const templateSrv = {
     init: (vars: any) => {
@@ -13,6 +19,7 @@ describe('VariableSrv init', function(this: any) {
     },
     variableInitialized: () => {},
     updateIndex: () => {},
+    setGlobalVariable: (name: string, variable: any) => {},
     replace: (str: string) =>
       str.replace(this.regex, match => {
         return match;
