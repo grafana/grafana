@@ -4,6 +4,10 @@ import { updateLocation } from 'app/core/actions';
 import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { hot } from 'react-hot-loader';
+import { getConfig } from 'app/core/config';
+
+const verifyEmailEnabled = getConfig().verifyEmailEnabled;
+const autoAssignOrg = getConfig().autoAssignOrg;
 
 interface SignupProps {
   children(arg0: ChildProps): JSX.Element;
@@ -28,8 +32,6 @@ interface ChildProps {
 }
 
 export interface SignupCtrlState {
-  autoAssignOrg: boolean;
-  verifyEmailEnabled: boolean;
   orgName: string;
   email: string;
   username: string;
@@ -44,8 +46,6 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
 
     //Set initial values from url via props.routeParams
     this.state = this.defaultValues = {
-      verifyEmailEnabled: false,
-      autoAssignOrg: true,
       orgName: props.routeParams.email,
       email: props.routeParams.email,
       username: props.routeParams.email,
@@ -53,22 +53,20 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
     };
   }
 
-  componentDidMount() {
-    getBackendSrv()
-      .get('/api/user/signup/options')
-      .then((options: any) => {
-        this.setState({
-          verifyEmailEnabled: options.verifyEmailEnabled,
-          autoAssignOrg: options.autoAssignOrg,
-        });
-      })
-      .catch(e => console.log(e));
-  }
+  // componentDidMount() {
+  //   getBackendSrv()
+  //     .get('/api/user/signup/options')
+  //     .then((options: any) => {
+  //       this.setState({
+  //         verifyEmailEnabled: options.verifyEmailEnabled,
+  //         autoAssignOrg: options.autoAssignOrg,
+  //       });
+  //     })
+  //     .catch(e => console.log(e));
+  // }
 
   onSubmit = async (formData: SignupFormModel) => {
     this.setState({
-      autoAssignOrg: this.state.autoAssignOrg,
-      verifyEmailEnabled: this.state.verifyEmailEnabled,
       username: formData.email,
       ...formData,
     });
@@ -89,7 +87,6 @@ export class SignupCtrl extends PureComponent<SignupProps, SignupCtrlState> {
 
   render() {
     const { children } = this.props;
-    const { autoAssignOrg, verifyEmailEnabled } = this.state;
     return (
       <>
         {children({
