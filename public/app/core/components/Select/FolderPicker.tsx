@@ -8,6 +8,7 @@ import appEvents from '../../app_events';
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
   enableCreateNew: boolean;
+  folder: any;
   rootName?: string;
   enableReset?: boolean;
   dashboardId?: any;
@@ -47,7 +48,7 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     const searchHits = await getBackendSrv().search(params);
     const options: Array<SelectableValue<number>> = searchHits.map(hit => ({ label: hit.title, value: hit.id }));
-    if (contextSrv.isEditor && rootName.toLowerCase().startsWith(query.toLowerCase())) {
+    if (contextSrv.isEditor && rootName?.toLowerCase().startsWith(query.toLowerCase())) {
       options.unshift({ label: rootName, value: 0 });
     }
 
@@ -63,12 +64,8 @@ export class FolderPicker extends PureComponent<Props, State> {
       newFolder = { value: 0, label: this.props.rootName };
     }
 
-    if (newFolder.__isNew__) {
-      newFolder = await this.createNewFolder(newFolder.label);
-    }
-
-    if (newFolder.value > -1) {
-      this.props.onChange({ id: newFolder.value, title: newFolder.label });
+    if (newFolder.value ?? -1 > 0) {
+      this.props.onChange({ id: newFolder.value!, title: newFolder.label! });
     }
   };
 
@@ -78,6 +75,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     if (newFolder.id > -1) {
       appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
       folder = { value: newFolder.id, label: newFolder.title };
+      await this.onFolderChange(folder);
     } else {
       appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
     }
@@ -92,9 +90,9 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     const options = await this.getOptions('');
 
-    let folder: SelectableValue<number>;
+    let folder: SelectableValue<number> = { value: -1 };
     if (initialFolderId) {
-      folder = options.find(option => option.value === initialFolderId);
+      folder = options.find(option => option.value === initialFolderId) || { value: -1 };
     } else if (enableReset && initialTitle && initialFolderId === undefined) {
       folder = resetFolder;
     }
@@ -115,13 +113,13 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     // if this is not the same as our initial value notify parent
     if (folder.value !== initialFolderId) {
-      this.props.onChange({ id: folder.value, title: folder.text });
+      this.props.onChange({ id: folder.value!, title: folder.text });
     }
   };
 
   render() {
     const { validationError, hasValidationError } = this.state;
-    const { enableCreateNew } = this.props;
+    const { folder, enableCreateNew } = this.props;
 
     return (
       <>
@@ -130,10 +128,12 @@ export class FolderPicker extends PureComponent<Props, State> {
             <label className="gf-form-label width-7">Folder</label>
             <Forms.AsyncSelect
               loadingMessage="Loading folders..."
+              value={folder}
               defaultOptions
               allowCustomValue={enableCreateNew}
               loadOptions={this.getOptions}
               onChange={this.onFolderChange}
+              onCreateOption={this.createNewFolder}
               size="sm"
             />
           </div>
