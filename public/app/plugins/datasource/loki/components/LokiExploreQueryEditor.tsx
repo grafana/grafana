@@ -50,7 +50,7 @@ export function LokiExploreQueryEditor(props: Props) {
   }
 
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
-    if (e.currentTarget.value.length === 0 || parseInt(e.currentTarget.value, 10) !== query.maxLines) {
+    if (query.maxLines !== preprocessMaxLines(e.currentTarget.value)) {
       onChangeQueryLimit(e.currentTarget.value);
     }
   }
