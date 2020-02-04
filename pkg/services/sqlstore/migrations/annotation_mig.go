@@ -138,6 +138,10 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add index for org_id_epoch_end_epoch on annotation table", NewAddIndexMigration(table, &Index{
 		Cols: []string{"org_id", "epoch_end", "epoch"}, Type: IndexType,
 	}))
+
+	mg.AddMigration("Remove index org_id_epoch_epoch_end from annotation table", NewDropIndexMigration(table, &Index{
+		Cols: []string{"org_id", "epoch", "epoch_end"}, Type: IndexType,
+	}))
 }
 
 type AddMakeRegionSingleRowMigration struct {
