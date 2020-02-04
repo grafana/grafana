@@ -48,6 +48,14 @@ export class VariableEditorCtrl {
       this.onVariableDuplicateVariableSucceeded.bind(this),
       $scope
     );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableRemoveVariableInAngularSucceeded,
+      this.onVariableRemoveVariableInAngularSucceeded.bind(this)
+    );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableRemoveVariableSucceeded,
+      this.onVariableRemoveVariableSucceeded.bind(this)
+    );
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
@@ -287,8 +295,12 @@ export class VariableEditorCtrl {
       $scope.validate();
     };
 
-    $scope.removeVariable = (variable: any) => {
-      if (variableAdapters.contains($scope.current.type as VariableType)) {
+    $scope.removeVariable = (variable: VariableModel) => {
+      if (variableAdapters.contains(variable.type)) {
+        this.variableSrv.dashboard.events.emit(CoreEvents.variableRemoveVariableStart, {
+          uuid: variable.uuid ?? '',
+          type: variable.type,
+        });
         return;
       }
       variableSrv.removeVariable(variable);
@@ -368,6 +380,14 @@ export class VariableEditorCtrl {
 
   onVariableDuplicateVariableSucceeded(args: VariableMovedToState) {
     this.$scope.variables.push({ ...getVariable(args.uuid ?? '') });
+  }
+
+  onVariableRemoveVariableInAngularSucceeded(args: { name: string }) {
+    this.$scope.variables = this.$scope.variables.filter((v: VariableModel) => v.name !== args.name);
+  }
+
+  onVariableRemoveVariableSucceeded(args: { uuid: string }) {
+    this.$scope.variables = this.$scope.variables.filter((v: VariableModel) => v.uuid !== args.uuid);
   }
 }
 

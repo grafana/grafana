@@ -8,13 +8,14 @@ import {
   changeVariableNameSucceeded,
   duplicateVariable,
   moveVariableTypeToAngular,
+  removeVariable,
   setCurrentVariableValue,
   toVariablePayload,
   updateVariableCompleted,
   VariablePayload,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
-import { MoveVariableType, VariableDuplicateVariableStart } from '../../../types/events';
+import { MoveVariableType, VariableDuplicateVariableStart, VariableRemoveVariable } from '../../../types/events';
 import templateSrv from '../template_srv';
 import { getVariable } from '../state/selectors';
 import { VariableState } from '../state/types';
@@ -48,6 +49,13 @@ const onVariableDuplicateStart = (store: MiddlewareAPI<Dispatch, StoreState>) =>
   store.dispatch(duplicateVariable({ uuid, type, data: { variablesInAngular } }));
 };
 
+const onVariableRemoveStart = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
+  uuid,
+  type,
+}: VariableRemoveVariable) => {
+  store.dispatch(removeVariable({ uuid, type, data: { notifyAngular: true } }));
+};
+
 export const variableMiddleware: Middleware<{}, StoreState> = (store: MiddlewareAPI<Dispatch, StoreState>) => (
   next: Dispatch
 ) => (action: AnyAction) => {
@@ -56,6 +64,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     dashboardEvents = (store.getState().dashboard?.model as DashboardModel).events;
     dashboardEvents.on(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated(store));
     dashboardEvents.on(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
+    dashboardEvents.on(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));
     return result;
   }
 
@@ -63,6 +72,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     const result = next(action);
     dashboardEvents?.off(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated(store));
     dashboardEvents?.off(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
+    dashboardEvents?.off(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));
     dashboardEvents = null;
     return result;
   }
@@ -115,6 +125,12 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     const result = next(action);
     const variable = getVariable(newUuid, store.getState());
     dashboardEvents?.emit(CoreEvents.variableDuplicateVariableSucceeded, { uuid: variable.uuid ?? '' });
+    return result;
+  }
+
+  if (removeVariable.match(action)) {
+    const result = next(action);
+    dashboardEvents?.emit(CoreEvents.variableRemoveVariableSucceeded, { uuid: action.payload.uuid ?? '' });
     return result;
   }
 

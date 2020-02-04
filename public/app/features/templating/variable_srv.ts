@@ -156,10 +156,12 @@ export class VariableSrv {
   }
 
   removeVariable(variable: any) {
+    const name = variable.name;
     const index = _.indexOf(this.variables, variable);
     this.variables.splice(index, 1);
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
+    this.dashboard.events.emit(CoreEvents.variableRemoveVariableInAngularSucceeded, { name });
   }
 
   private onVariableNameInStateUpdated(args: VariableIdentifier) {

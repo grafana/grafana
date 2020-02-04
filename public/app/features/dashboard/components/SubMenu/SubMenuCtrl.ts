@@ -30,6 +30,15 @@ export class SubMenuCtrl {
       CoreEvents.variableMovedToAngularSucceeded,
       this.onVariableMovedToAngularSucceeded.bind(this)
     );
+    this.dashboard.on(
+      CoreEvents.variableDuplicateVariableSucceeded,
+      this.onVariableDuplicateVariableSucceeded.bind(this)
+    );
+    this.dashboard.on(
+      CoreEvents.variableRemoveVariableInAngularSucceeded,
+      this.onVariableRemoveVariableInAngularSucceeded.bind(this)
+    );
+    this.dashboard.on(CoreEvents.variableRemoveVariableSucceeded, this.onVariableRemoveVariableSucceeded.bind(this));
 
     this.selectors = e2e.pages.Dashboard.SubMenu.selectors;
   }
@@ -73,6 +82,18 @@ export class SubMenuCtrl {
         break;
       }
     }
+  }
+
+  onVariableDuplicateVariableSucceeded(args: VariableMovedToState) {
+    this.variables.push({ ...getVariable(args.uuid ?? '') });
+  }
+
+  onVariableRemoveVariableInAngularSucceeded(args: { name: string }) {
+    this.variables = this.variables.filter(v => v.name !== args.name);
+  }
+
+  onVariableRemoveVariableSucceeded(args: { uuid: string }) {
+    this.variables = this.variables.filter(v => v.uuid !== args.uuid);
   }
 }
 

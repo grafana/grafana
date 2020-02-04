@@ -85,7 +85,7 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
     };
   }
 );
-export const removeVariable = createAction<VariablePayload<undefined>>('templating/removeVariable');
+export const removeVariable = createAction<VariablePayload<{ notifyAngular: boolean }>>('templating/removeVariable');
 export interface DuplicateVariable {
   newUuid: string;
   variablesInAngular: number;
@@ -458,7 +458,7 @@ export const changeVariableType = (variable: VariableModel, newType: VariableTyp
     // existing type is adapted but new type is not
     if (currentIsAdapted && !newIsAdapted) {
       const { name, label, index } = variable;
-      dispatch(removeVariable(toVariablePayload(variable)));
+      dispatch(removeVariable(toVariablePayload(variable, { notifyAngular: false })));
       dispatch(
         moveVariableTypeToAngular(toVariablePayload(variable, { name, label: label ?? '', index, type: newType }))
       );

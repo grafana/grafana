@@ -160,6 +160,15 @@ export const variableDuplicateVariableStart = eventFactory<VariableDuplicateVari
 export const variableDuplicateVariableSucceeded = eventFactory<{ uuid: string }>(
   'variable-duplicate-variable-succeeded'
 );
+export interface VariableRemoveVariable {
+  uuid: string;
+  type: VariableType;
+}
+export const variableRemoveVariableStart = eventFactory<VariableRemoveVariable>('variable-remove-variable-start');
+export const variableRemoveVariableSucceeded = eventFactory<{ uuid: string }>('variable-remove-variable-succeeded');
+export const variableRemoveVariableInAngularSucceeded = eventFactory<{ name: string }>(
+  'variable-remove-variable-in-angular-succeeded'
+);
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
