@@ -225,32 +225,31 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	message := ""
+	msgBuilder := strings.Builder{}
+	appendSpace := func() {
+		if msgBuilder.Len() > 0 {
+			msgBuilder.WriteString(" ")
+		}
+	}
 	mentionChannel := strings.TrimSpace(sn.MentionChannel)
 	if mentionChannel != "" {
-		message = fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel)
+		msgBuilder.WriteString(fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel))
 	}
 	if len(sn.MentionGroups) > 0 {
-		if message != "" {
-			message += " "
-		}
+		appendSpace()
 		for _, g := range sn.MentionGroups {
-			message += fmt.Sprintf("<!subteam^%s>", g)
+			msgBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", g))
 		}
 	}
 	if len(sn.MentionUsers) > 0 {
-		if message != "" {
-			message += " "
-		}
+		appendSpace()
 		for _, u := range sn.MentionUsers {
-			message += fmt.Sprintf("<@%s>", u)
+			msgBuilder.WriteString(fmt.Sprintf("<@%s>", u))
 		}
 	}
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
-		if message != "" {
-			message += " "
-		}
-		message += evalContext.Rule.Message
+		appendSpace()
+		msgBuilder.WriteString(evalContext.Rule.Message)
 	}
 	imageURL := ""
 	// default to file.upload API method if a token is provided
@@ -264,7 +263,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"type": "section",
 				"text": map[string]interface{}{
 					"type": "mrkdwn",
-					"text": message,
+					"text": msgBuilder.String(),
 				},
 			},
 		},
