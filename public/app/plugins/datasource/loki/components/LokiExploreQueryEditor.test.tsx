@@ -6,9 +6,11 @@ import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { ExploreMode, PanelData, LoadingState, dateTime } from '@grafana/data';
 import { makeMockLokiDatasource } from '../mocks';
+import LokiLanguageProvider from '../language_provider';
 
 const setup = (renderMethod: any, propOverrides?: object) => {
   const datasource: LokiDatasource = makeMockLokiDatasource({});
+  datasource.languageProvider = new LokiLanguageProvider(datasource);
   const onRunQuery = jest.fn();
   const onChange = jest.fn();
   const query: LokiQuery = { expr: '', refId: 'A', maxLines: 0 };
