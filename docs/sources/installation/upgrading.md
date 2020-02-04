@@ -105,10 +105,10 @@ sudo yum update grafana
 This just an example, details depend on how you configured your grafana container.
 
 ```bash
-docker pull grafana
+docker pull grafana/grafana
 docker stop my-grafana-container
 docker rm my-grafana-container
-docker run --name=my-grafana-container --restart=always -v /var/lib/grafana:/var/lib/grafana
+docker run -d --name=my-grafana-container --restart=always -v /var/lib/grafana:/var/lib/grafana grafana/grafana
 ```
 
 ### Windows
