@@ -7,11 +7,11 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import {
-  DataSourceInstanceSettings,
-  DataQueryResponseData,
-  DataQueryRequest,
-  dateTime,
   CoreApp,
+  DataQueryRequest,
+  DataQueryResponseData,
+  DataSourceInstanceSettings,
+  dateTime,
   LoadingState,
 } from '@grafana/data';
 import { PromOptions, PromQuery } from './types';
@@ -858,6 +858,23 @@ describe('PrometheusDatasource', () => {
         expect(req.url).toContain('step=60');
       });
 
+      it('should use default step for short range when annotation step is empty string', () => {
+        const query = {
+          ...options,
+          annotation: {
+            ...options.annotation,
+            step: '',
+          },
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ seconds: 123 }),
+          },
+        };
+        ds.annotationQuery(query);
+        const req = datasourceRequestMock.mock.calls[0][0];
+        expect(req.url).toContain('step=60');
+      });
+
       it('should use custom step for short range', () => {
         const annotation = {
           ...options.annotation,
@@ -910,6 +927,22 @@ describe('PrometheusDatasource', () => {
         const step = 236;
         expect(req.url).toContain(`step=${step}`);
       });
+    });
+  });
+
+  describe('createAnnotationQueryOptions', () => {
+    it.each`
+      options                                | expected
+      ${{}}                                  | ${{ interval: '60s' }}
+      ${{ annotation: {} }}                  | ${{ annotation: {}, interval: '60s' }}
+      ${{ annotation: { step: undefined } }} | ${{ annotation: { step: undefined }, interval: '60s' }}
+      ${{ annotation: { step: null } }}      | ${{ annotation: { step: null }, interval: '60s' }}
+      ${{ annotation: { step: '' } }}        | ${{ annotation: { step: '' }, interval: '60s' }}
+      ${{ annotation: { step: 0 } }}         | ${{ annotation: { step: 0 }, interval: '60s' }}
+      ${{ annotation: { step: 5 } }}         | ${{ annotation: { step: 5 }, interval: '60s' }}
+      ${{ annotation: { step: '5m' } }}      | ${{ annotation: { step: '5m' }, interval: '5m' }}
+    `("when called with options: '$options'", ({ options, expected }) => {
+      expect(ds.createAnnotationQueryOptions(options)).toEqual(expected);
     });
   });
 
