@@ -3,25 +3,25 @@
   children:
   - name: Requirements
     link: /installation/requirements/
-  - name: Installing on Ubuntu / Debian
+  - name: Install on Ubuntu / Debian
     link: /installation/debian/
-  - name: Installing on Centos / Redhat
+  - name: Install on Centos / Redhat
     link: /installation/rpm/
-  - name: Installing on Windows
+  - name: Install on Windows
     link: /installation/windows/
-  - name: Installing on macOS
+  - name: Install on macOS
     link: /installation/mac/
-  - name: Installing using Docker
+  - name: Install using Docker
     link: /installation/docker/
-  - name: Building from source
-    link: /project/building_from_source/
-  - name: Upgrading
+  - name: Upgrade Grafana
     link: /installation/upgrading/
 - name: Administration
   link: /administration/
   children:
   - name: Configuration
     link: /installation/configuration/
+  - name: Configure Docker image
+    link: /installation/configure-docker/
   - name: Security
     link: /installation/security/
   - name: Authentication
@@ -131,34 +131,34 @@
   - name: Data Sources
     link: /features/datasources/
     children:
-    - link: /features/datasources/graphite/
-      name: Graphite
-    - link: /features/datasources/prometheus/
-      name: Prometheus
-    - link: /features/datasources/influxdb/
-      name: InfluxDB
-    - link: /features/datasources/elasticsearch/
-      name: Elasticsearch
-    - link: /features/datasources/stackdriver/
-      name: Google Stackdriver
     - link: /features/datasources/cloudwatch/
       name: AWS Cloudwatch
     - link: /features/datasources/azuremonitor/
       name: Azure Monitor
+    - link: /features/datasources/elasticsearch/
+      name: Elasticsearch
+    - link: /features/datasources/stackdriver/
+      name: Google Stackdriver
+    - link: /features/datasources/graphite/
+      name: Graphite
+    - link: /features/datasources/influxdb/
+      name: InfluxDB
     - link: /features/datasources/loki/
       name: Loki
-    - link: /features/datasources/mysql/
-      name: MySQL
-    - link: /features/datasources/postgres/
-      name: PostgreSQL
     - link: /features/datasources/mssql/
       name: Microsoft SQL Server
-    - link: /features/datasources/opentsdb/
-      name: OpenTSDB
     - link: /features/datasources/mixed/
       name: MixedData
+    - link: /features/datasources/mysql/
+      name: MySQL
+    - link: /features/datasources/opentsdb/
+      name: OpenTSDB
+    - link: /features/datasources/postgres/
+      name: PostgreSQL
+    - link: /features/datasources/prometheus/
+      name: Prometheus
     - link: /features/datasources/testdata/
-      name: TestData
+      name: Testdata
   - name: Explore
     link: /features/explore/
   - name: Alerting
@@ -237,6 +237,10 @@
     name: SAML
   - link: /auth/team-sync/
     name: Team Sync
+  - link: /enterprise/white-labeling/
+    name: White labeling
+  - link: /enterprise/license-expiration/
+    name: License expiration
 - name: Tutorials
   link: /tutorials/
   children:
@@ -253,9 +257,9 @@
 - name: Plugins
   link: /plugins/
   children:
-  - name: Installing Plugins
+  - name: Install Plugins
     link: /plugins/installation/
-  - name: Developing Plugins
+  - name: Develop Plugins
     link: /plugins/developing/
     children:
     - link: /plugins/developing/development/
@@ -325,10 +329,12 @@
     link: /http_api/team/
   - name: Users
     link: /http_api/user/
-- name: Contribute
-  link: /contribute/
+- name: Developers
+  link: /developers/
   children:
+  - name: Developer resources
+    link: /developers/developer-resources/
   - name: Contributor License Agreement (CLA)
-    link: /contribute/cla/
+    link: /developers/cla/
 - name: Docs Archive
   link: /archive/

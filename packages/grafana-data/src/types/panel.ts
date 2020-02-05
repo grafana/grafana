@@ -52,6 +52,7 @@ export interface PanelModel<TOptions = any> {
   id: number;
   options: TOptions;
   pluginVersion?: string;
+  scopedVars?: ScopedVars;
 }
 
 /**
@@ -120,11 +121,6 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
     this.onPanelTypeChanged = handler;
     return this;
   }
-}
-
-export interface PanelSize {
-  width: number;
-  height: number;
 }
 
 export interface PanelMenuItem {

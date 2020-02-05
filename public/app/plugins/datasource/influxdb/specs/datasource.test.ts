@@ -31,7 +31,7 @@ describe('InfluxDataSource', () => {
         to: '2018-01-02T00:00:00Z',
       },
     };
-    let requestQuery: any, requestMethod: any, requestData: any;
+    let requestQuery: any, requestMethod: any, requestData: any, response: any;
 
     beforeEach(async () => {
       datasourceRequestMock.mockImplementation((req: any) => {
@@ -39,21 +39,23 @@ describe('InfluxDataSource', () => {
         requestQuery = req.params.q;
         requestData = req.data;
         return Promise.resolve({
-          results: [
-            {
-              series: [
-                {
-                  name: 'measurement',
-                  columns: ['max'],
-                  values: [[1]],
-                },
-              ],
-            },
-          ],
+          data: {
+            results: [
+              {
+                series: [
+                  {
+                    name: 'measurement',
+                    columns: ['name'],
+                    values: [['cpu']],
+                  },
+                ],
+              },
+            ],
+          },
         });
       });
 
-      await ctx.ds.metricFindQuery(query, queryOptions).then(() => {});
+      response = await ctx.ds.metricFindQuery(query, queryOptions);
     });
 
     it('should replace $timefilter', () => {
@@ -66,6 +68,10 @@ describe('InfluxDataSource', () => {
 
     it('should not have any data in request body', () => {
       expect(requestData).toBeNull();
+    });
+
+    it('parse response correctly', () => {
+      expect(response).toEqual([{ text: 'cpu' }]);
     });
   });
 

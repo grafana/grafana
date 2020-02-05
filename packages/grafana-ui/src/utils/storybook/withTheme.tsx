@@ -1,9 +1,9 @@
 import React from 'react';
-import { RenderFunction } from '@storybook/react';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { select } from '@storybook/addon-knobs';
 import { getTheme } from '../../themes/index';
 import { GrafanaThemeType } from '@grafana/data';
+import { RenderFunction } from '../../types';
 
 type SassThemeChangeHandler = (theme: GrafanaThemeType) => void;
 const ThemableStory: React.FunctionComponent<{ handleSassThemeChange: SassThemeChangeHandler }> = ({

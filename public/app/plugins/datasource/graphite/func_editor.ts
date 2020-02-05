@@ -184,24 +184,27 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
           }
 
           let paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
-          const hasValue = paramValue !== null && paramValue !== undefined;
-
+          const hasValue = paramValue !== null && paramValue !== undefined && paramValue !== '';
           const last = index >= func.params.length - 1 && param.optional && !hasValue;
+          let linkClass = 'query-part__link';
+
+          if (last) {
+            linkClass += ' query-part__last';
+          }
+
           if (last && param.multiple) {
             paramValue = '+';
+          } else if (!hasValue) {
+            // for params with no value default to param name
+            paramValue = param.name;
+            linkClass += ' query-part__link--no-value';
           }
 
           if (index > 0) {
             $('<span class="comma' + (last ? ' query-part__last' : '') + '">, </span>').appendTo(elem);
           }
 
-          const $paramLink = $(
-            '<a ng-click="" class="graphite-func-param-link' +
-              (last ? ' query-part__last' : '') +
-              '">' +
-              (hasValue ? paramValue : '&nbsp;') +
-              '</a>'
-          );
+          const $paramLink = $(`<a ng-click="" class="${linkClass}">${paramValue}</a>`);
           const $input = $(paramTemplate);
           $input.attr('placeholder', param.name);
 
@@ -232,7 +235,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
           $scope.func.added = false;
           setTimeout(() => {
             elem
-              .find('.graphite-func-param-link')
+              .find('.query-part__link')
               .first()
               .click();
           }, 10);

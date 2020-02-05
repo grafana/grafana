@@ -3,7 +3,8 @@ package wrapper
 import (
 	"context"
 
-	sdk "github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -11,12 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewDatasourcePluginWrapperV2(log log.Logger, plugin sdk.BackendPlugin) *DatasourcePluginWrapperV2 {
-	return &DatasourcePluginWrapperV2{BackendPlugin: plugin, logger: log}
+func NewDatasourcePluginWrapperV2(log log.Logger, plugin backendplugin.DatasourcePlugin) *DatasourcePluginWrapperV2 {
+	return &DatasourcePluginWrapperV2{DatasourcePlugin: plugin, logger: log}
 }
 
 type DatasourcePluginWrapperV2 struct {
-	sdk.BackendPlugin
+	backendplugin.DatasourcePlugin
 	logger log.Logger
 }
 
@@ -56,7 +57,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		})
 	}
 
-	pbRes, err := tw.BackendPlugin.DataQuery(ctx, pbQuery)
+	pbRes, err := tw.DatasourcePlugin.DataQuery(ctx, pbQuery)
 	if err != nil {
 		return nil, err
 	}

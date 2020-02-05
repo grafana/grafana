@@ -13,6 +13,7 @@ import { RATE_RANGES } from '../prometheus/promql';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import { Grammar } from 'prismjs';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -70,7 +71,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // Strip syntax chars
   cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 
-  getSyntax() {
+  getSyntax(): Grammar {
     return syntax;
   }
 

@@ -1,4 +1,4 @@
-.PHONY: docs docs-test
+.PHONY: docs docs-no-pull docs-test
 
 docs:
 	docker pull grafana/docs-base:latest
