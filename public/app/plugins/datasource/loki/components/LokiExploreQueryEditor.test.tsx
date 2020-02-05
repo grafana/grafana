@@ -1,7 +1,8 @@
 import React from 'react';
 import { shallow, mount } from 'enzyme';
+import { act } from 'react-dom/test-utils';
 import LokiExploreQueryEditor from './LokiExploreQueryEditor';
-import LokiExploreExtraField from './LokiExploreExtraField';
+import { LokiExploreExtraField } from './LokiExploreExtraField';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { ExploreMode, PanelData, LoadingState, dateTime } from '@grafana/data';
@@ -63,19 +64,32 @@ const setup = (renderMethod: any, propOverrides?: object) => {
 };
 
 describe('LokiExploreQueryEditor', () => {
+  let originalGetSelection: typeof window.getSelection;
+  beforeAll(() => {
+    originalGetSelection = window.getSelection;
+    window.getSelection = () => null;
+  });
+
+  afterAll(() => {
+    window.getSelection = originalGetSelection;
+  });
+
   it('should render component', () => {
     const wrapper = setup(shallow);
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should render LokiQueryField with ExtraFieldElement when ExploreMode is set to Logs', () => {
-    const wrapper = setup(mount);
-    expect(wrapper.find(LokiExploreExtraField).length).toEqual(1);
+  it('should render LokiQueryField with ExtraFieldElement when ExploreMode is set to Logs', async () => {
+    await act(async () => {
+      const wrapper = setup(mount);
+      expect(wrapper.find(LokiExploreExtraField).length).toBe(1);
+    });
   });
 
-  it('should render LokiQueryField with no ExtraFieldElement when ExploreMode is not Logs', () => {
-    const wrapper = setup(mount, { exploreMode: ExploreMode.Metrics });
-    expect(wrapper.props().ExtraFieldElement).toBeNull();
-    expect(wrapper.find(LokiExploreExtraField).length).toEqual(0);
+  it('should render LokiQueryField with no ExtraFieldElement when ExploreMode is not Logs', async () => {
+    await act(async () => {
+      const wrapper = setup(mount, { exploreMode: ExploreMode.Metrics });
+      expect(wrapper.find(LokiExploreExtraField).length).toBe(0);
+    });
   });
 });
