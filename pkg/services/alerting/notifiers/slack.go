@@ -270,7 +270,6 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		},
 		"attachments": []map[string]interface{}{
 			{
-				"fallback":    evalContext.GetNotificationTitle(),
 				"color":       evalContext.GetStateModel().Color,
 				"title":       evalContext.GetNotificationTitle(),
 				"title_link":  ruleURL,
@@ -297,7 +296,10 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if sn.IconURL != "" {
 		body["icon_url"] = sn.IconURL
 	}
-	data, _ := json.Marshal(&body)
+	data, err := json.Marshal(&body)
+	if err != nil {
+		return err
+	}
 	cmd := &models.SendWebhookSync{Url: sn.URL, Body: string(data)}
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send slack notification", "error", err, "webhook", sn.Name)
