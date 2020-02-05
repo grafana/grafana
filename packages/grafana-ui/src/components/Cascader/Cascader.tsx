@@ -108,16 +108,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   //For select
   onSelect = (obj: SelectableValue<string[]>) => {
-    if (obj.__isNew__ && this.props.allowCustomValue) {
-      this.setState({
-        activeLabel: obj.label || '',
-        rcValue: [],
-        isSearching: false,
-      });
-      this.props.onSelect(obj.label || '');
-      return;
-    }
-
     const valueArray = obj.value || [];
     this.setState({
       activeLabel: obj.singleLabel || '',
@@ -125,6 +115,15 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       isSearching: false,
     });
     this.props.onSelect(valueArray[valueArray.length - 1]);
+  };
+
+  onCreateOption = (value: string) => {
+    this.setState({
+      activeLabel: value,
+      rcValue: [],
+      isSearching: false,
+    });
+    this.props.onSelect(value);
   };
 
   onClick = () => {
@@ -183,6 +182,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onBlur={this.onBlur}
             options={searchableOptions}
             size={size || 'md'}
+            onCreateOption={this.onCreateOption}
           />
         ) : (
           <RCCascader
