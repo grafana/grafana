@@ -87,7 +87,7 @@ const getStoriesKnobs = (table = false) => {
   };
 };
 
-const LegendStories = storiesOf('UI elements/Legend/Legend', module);
+const LegendStories = storiesOf('General/Legend/Legend', module);
 
 LegendStories.add('list', () => {
   const { numberOfSeries, itemRenderer, containerWidth, rightAxisSeries, legendPlacement } = getStoriesKnobs();

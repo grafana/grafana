@@ -48,7 +48,7 @@ export const ArrayOptions = () => {
 };
 
 export default {
-  title: 'Inputs/Segment/SegmentAsync',
+  title: 'Panel/Segment/SegmentAsync',
   component: ArrayOptions,
 };
 

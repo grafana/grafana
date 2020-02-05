@@ -29,7 +29,7 @@ export const BasicInput = () => {
 };
 
 export default {
-  title: 'Inputs/Segment/SegmentInput',
+  title: 'Panel/Segment/SegmentInput',
   component: BasicInput,
 };
 

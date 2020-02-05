@@ -6,7 +6,7 @@ import mdx from './Cascader.mdx';
 import React from 'react';
 
 export default {
-  title: 'Inputs/Cascader',
+  title: 'General/Cascader',
   component: Cascader,
   decorators: [withCenteredStory],
   parameters: {

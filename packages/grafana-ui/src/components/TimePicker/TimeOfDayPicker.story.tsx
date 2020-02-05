@@ -7,7 +7,7 @@ import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { dateTime } from '@grafana/data';
 
-const TimeOfDayPickerStories = storiesOf('Inputs/TimeOfDayPicker', module);
+const TimeOfDayPickerStories = storiesOf('General/TimeOfDayPicker', module);
 
 TimeOfDayPickerStories.addDecorator(withCenteredStory);
 

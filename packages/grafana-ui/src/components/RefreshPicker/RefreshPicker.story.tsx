@@ -5,7 +5,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { RefreshPicker } from './RefreshPicker';
 
-const RefreshSelectStories = storiesOf('Inputs/RefreshPicker', module);
+const RefreshSelectStories = storiesOf('Panel/RefreshPicker', module);
 
 RefreshSelectStories.addDecorator(withCenteredStory);
 
