@@ -428,8 +428,10 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     const queryOptions: QueryOptions = {
       minInterval,
-      // This is used for logs streaming for buffer size, with undefined it falls back to datasource config if it
-      // supports that.
+      // maxDataPoints is used in:
+      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
+      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
+      // Influx - used to correctly display logs ingraph
       maxDataPoints: mode === ExploreMode.Logs && datasourceInstance.name === 'Loki' ? undefined : containerWidth,
       liveStreaming: live,
       showingGraph,
