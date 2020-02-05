@@ -84,7 +84,7 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
 
-### Visualization Options
+### Visualization options
 
 You can customize how logs are displayed and select which columns are shown.
 
