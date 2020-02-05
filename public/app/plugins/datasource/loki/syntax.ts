@@ -69,7 +69,7 @@ export const FUNCTIONS = [...AGGREGATION_OPERATORS, ...RANGE_VEC_FUNCTIONS];
 
 const tokenizer: Grammar = {
   comment: {
-    pattern: /(^|[^\n"[a-zA-Z])#.*/,
+    pattern: /(^|[^\n"a-zA-Z])#.*/,
     lookbehind: true,
   },
   'context-aggregation': {
