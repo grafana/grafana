@@ -17,7 +17,7 @@ const MAX_HISTORY_ENTRIES_TO_DELETE = 900
 
 func deleteExpiredAnnotations(cmd *m.DeleteExpiredVAnnotationsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		daysToKeep := setting.AnnotationsDaysToKeep
+		daysToKeep := setting.DaysToKeepAnnotations
 		if daysToKeep < 5 {
 			daysToKeep = 5
 		}

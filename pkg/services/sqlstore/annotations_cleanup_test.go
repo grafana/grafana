@@ -51,13 +51,13 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 	Convey("Testing annotations history clean up", t, func() {
 		InitTestDB(t)
 		repo := SqlAnnotationRepo{}
-		annotationsDaysToKeep := 5
+		daysToKeepAnnotations := 5
 		annotationsToWrite := 10
-		setting.AnnotationsDaysToKeep = annotationsDaysToKeep
+		setting.DaysToKeepAnnotations = daysToKeepAnnotations
 
 		savedDash := insertTestDashboard("test dash 111", 1, 0, false, "this-is-fun")
 		for i := 0; i < annotationsToWrite-1; i++ {
-			err := repo.addTestAnnotation(savedDash, repo, annotationsDaysToKeep, &annotations.Item{OrgId: 1})
+			err := repo.addTestAnnotation(savedDash, repo, daysToKeepAnnotations, &annotations.Item{OrgId: 1})
 			So(err, ShouldBeNil)
 		}
 
@@ -86,7 +86,7 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		})
 
 		Convey("Don't delete anything if there're no expired versions", func() {
-			setting.AnnotationsDaysToKeep = annotationsToWrite
+			setting.DaysToKeepAnnotations = annotationsToWrite
 
 			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
 			So(err, ShouldBeNil)
@@ -102,7 +102,7 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		Convey("Don't delete more than MAX_VERSIONS_TO_DELETE per iteration", func() {
 			annotationsToWriteBigNumber := MAX_HISTORY_ENTRIES_TO_DELETE + annotationsToWrite
 			for i := 0; i < annotationsToWriteBigNumber-annotationsToWrite; i++ {
-				err := repo.addTestAnnotation(savedDash, repo, annotationsDaysToKeep, &annotations.Item{OrgId: 1})
+				err := repo.addTestAnnotation(savedDash, repo, daysToKeepAnnotations, &annotations.Item{OrgId: 1})
 				So(err, ShouldBeNil)
 			}
 
@@ -114,8 +114,8 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 				DashboardId: 1,
 			})
 
-			// Ensure we have at least annotationsDaysToKeep versions
-			So(len(items), ShouldBeGreaterThanOrEqualTo, annotationsDaysToKeep)
+			// Ensure we have at least daysToKeepAnnotations versions
+			So(len(items), ShouldBeGreaterThanOrEqualTo, daysToKeepAnnotations)
 			// Ensure we haven't deleted more than MAX_VERSIONS_TO_DELETE rows
 			So(annotationsToWriteBigNumber-len(items), ShouldBeLessThanOrEqualTo, MAX_HISTORY_ENTRIES_TO_DELETE)
 		})
