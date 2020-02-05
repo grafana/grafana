@@ -61,7 +61,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, errors.New("Error getting user info: No email found in access token")
 	}
 
-	role := s.extractRole(claims)
+	role := extractRole(claims)
 
 	return &BasicUserInfo{
 		Id:    claims.ID,
@@ -86,7 +86,7 @@ func extractEmail(claims azureClaims) string {
 	return claims.Email
 }
 
-func (s *SocialAzureAD) extractRole(claims azureClaims) models.RoleType {
+func extractRole(claims azureClaims) models.RoleType {
 	if len(claims.Roles) == 0 {
 		return models.ROLE_VIEWER
 	}
