@@ -19,12 +19,11 @@ type SocialAzureAD struct {
 }
 
 type azureClaims struct {
-	Email      string   `json:"email"`
-	UniqueName string   `json:"unique_name"`
-	Upn        string   `json:"upn"`
-	Roles      []string `json:"roles"`
-	Name       string   `json:"name"`
-	ID         string   `json:"oid"`
+	Email             string   `json:"email"`
+	PreferredUsername string   `json:"preferred_username"`
+	Roles             []string `json:"roles"`
+	Name              string   `json:"name"`
+	ID                string   `json:"oid"`
 }
 
 func (s *SocialAzureAD) Type() int {
@@ -39,7 +38,7 @@ func (s *SocialAzureAD) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, fmt.Errorf("No id_token found")
@@ -73,13 +72,9 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 }
 
 func extractEmail(claims azureClaims) string {
-
 	if claims.Email == "" {
-		if len(claims.Upn) > 0 {
-			return claims.Upn
-		}
-		if len(claims.UniqueName) > 0 {
-			return claims.UniqueName
+		if claims.PreferredUsername != "" {
+			return claims.PreferredUsername
 		}
 	}
 

@@ -31,12 +31,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Email in email claim",
 			claims: &azureClaims{
-				Email:      "me@example.com",
-				UniqueName: "",
-				Upn:        "",
-				Roles:      []string{},
-				Name:       "My Name",
-				ID:         "1234",
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Name:              "My Name",
+				ID:                "1234",
 			},
 			want: &BasicUserInfo{
 				Id:      "1234",
@@ -51,12 +50,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "No email",
 			claims: &azureClaims{
-				Email:      "",
-				UniqueName: "",
-				Upn:        "",
-				Roles:      []string{},
-				Name:       "My Name",
-				ID:         "1234",
+				Email:             "",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Name:              "My Name",
+				ID:                "1234",
 			},
 			want:    nil,
 			wantErr: true,
@@ -68,34 +66,13 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Email in unique_name claim",
+			name: "Email in preferred_username claim",
 			claims: &azureClaims{
-				Email:      "",
-				UniqueName: "me@example.com",
-				Upn:        "",
-				Roles:      []string{},
-				Name:       "My Name",
-				ID:         "1234",
-			},
-			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Viewer",
-				Groups:  nil,
-			},
-		},
-		{
-			name: "Email in upn claim",
-			claims: &azureClaims{
-				Email:      "",
-				UniqueName: "",
-				Upn:        "me@example.com",
-				Roles:      []string{},
-				Name:       "My Name",
-				ID:         "1234",
+				Email:             "",
+				PreferredUsername: "me@example.com",
+				Roles:             []string{},
+				Name:              "My Name",
+				ID:                "1234",
 			},
 			want: &BasicUserInfo{
 				Id:      "1234",
@@ -110,12 +87,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Admin role",
 			claims: &azureClaims{
-				Email:      "me@example.com",
-				UniqueName: "",
-				Upn:        "",
-				Roles:      []string{"Admin"},
-				Name:       "My Name",
-				ID:         "1234",
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"Admin"},
+				Name:              "My Name",
+				ID:                "1234",
 			},
 			want: &BasicUserInfo{
 				Id:      "1234",
@@ -130,12 +106,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Lowercase Admin role",
 			claims: &azureClaims{
-				Email:      "me@example.com",
-				UniqueName: "",
-				Upn:        "",
-				Roles:      []string{"admin"},
-				Name:       "My Name",
-				ID:         "1234",
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"admin"},
+				Name:              "My Name",
+				ID:                "1234",
 			},
 			want: &BasicUserInfo{
 				Id:      "1234",
@@ -150,12 +125,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Only other roles",
 			claims: &azureClaims{
-				Email:      "me@example.com",
-				UniqueName: "",
-				Upn:        "",
-				Roles:      []string{"AppAdmin"},
-				Name:       "My Name",
-				ID:         "1234",
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"AppAdmin"},
+				Name:              "My Name",
+				ID:                "1234",
 			},
 			want: &BasicUserInfo{
 				Id:      "1234",
@@ -171,12 +145,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Editor role",
 			claims: &azureClaims{
-				Email:      "me@example.com",
-				UniqueName: "",
-				Upn:        "",
-				Roles:      []string{"Editor"},
-				Name:       "My Name",
-				ID:         "1234",
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"Editor"},
+				Name:              "My Name",
+				ID:                "1234",
 			},
 			want: &BasicUserInfo{
 				Id:      "1234",
@@ -191,12 +164,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Admin and Editor roles in claim",
 			claims: &azureClaims{
-				Email:      "me@example.com",
-				UniqueName: "",
-				Upn:        "",
-				Roles:      []string{"Admin", "Editor"},
-				Name:       "My Name",
-				ID:         "1234",
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"Admin", "Editor"},
+				Name:              "My Name",
+				ID:                "1234",
 			},
 			want: &BasicUserInfo{
 				Id:      "1234",
