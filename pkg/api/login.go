@@ -96,10 +96,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				return
 			}
 			middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
-			// remove subpath if it exists at the beginning of the redirect_to
-			if setting.AppSubUrl != "" && strings.Index(redirectTo, setting.AppSubUrl) == 0 {
-				redirectTo = strings.Replace(redirectTo, setting.AppSubUrl, "", 1)
-			}
 			c.Redirect(redirectTo)
 			return
 		}
@@ -184,6 +180,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		if err := hs.validateRedirectTo(redirectTo); err == nil {
 			// remove subpath if it exists at the beginning of the redirect_to
+			// LoginCtrl.tsx is already prepending the redirectUrl with the subpath
 			if setting.AppSubUrl != "" && strings.Index(redirectTo, setting.AppSubUrl) == 0 {
 				redirectTo = strings.Replace(redirectTo, setting.AppSubUrl, "", 1)
 			}
