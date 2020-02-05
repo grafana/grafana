@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -17,12 +16,7 @@ const MAX_HISTORY_ENTRIES_TO_DELETE = 900
 
 func deleteExpiredAnnotations(cmd *m.DeleteExpiredVAnnotationsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		daysToKeep := setting.DaysToKeepAnnotations
-		if daysToKeep < 5 {
-			daysToKeep = 5
-		}
-
-		historyTimeStamp := (time.Now().Unix() - int64(daysToKeep*86400)) * 1000
+		historyTimeStamp := (time.Now().Unix() - int64(cmd.DaysToKeep*86400)) * 1000
 
 		annotationsIdsToDeleteQuery := `SELECT id FROM annotation WHERE created <= ? ORDER BY id LIMIT ?`
 

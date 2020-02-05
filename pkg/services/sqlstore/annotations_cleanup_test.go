@@ -8,7 +8,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (r *SqlAnnotationRepo) addTestAnnotation(dashboard *m.Dashboard, repo SqlAnnotationRepo, daysToKeep int, item *annotations.Item) error {
@@ -32,7 +31,7 @@ func (r *SqlAnnotationRepo) addTestAnnotation(dashboard *m.Dashboard, repo SqlAn
 			return err
 		}
 
-		if item.Tags != nil {
+		if len(item.Tags) > 0 {
 			tags, err := EnsureTagsExist(sess, tags)
 			if err != nil {
 				return err
@@ -53,7 +52,6 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		repo := SqlAnnotationRepo{}
 		daysToKeepAnnotations := 5
 		annotationsToWrite := 10
-		setting.DaysToKeepAnnotations = daysToKeepAnnotations
 
 		savedDash := insertTestDashboard("test dash 111", 1, 0, false, "this-is-fun")
 		for i := 0; i < annotationsToWrite-1; i++ {
@@ -66,18 +64,19 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Clean up old annotations", func() {
-			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
+			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{DaysToKeep: daysToKeepAnnotations})
 			So(err, ShouldBeNil)
 
 			from := (time.Now().Unix() - int64(annotationsToWrite*86400)) * 1000
 			to := time.Now().Unix() * 1000
 
-			items, _ := repo.Find(&annotations.ItemQuery{
+			items, err := repo.Find(&annotations.ItemQuery{
 				OrgId:       1,
 				DashboardId: 1,
 				From:        from,
 				To:          to,
 			})
+			So(err, ShouldBeNil)
 
 			So(len(items), ShouldEqual, 1)
 			Convey("Can read tags", func() {
@@ -86,15 +85,14 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		})
 
 		Convey("Don't delete anything if there're no expired versions", func() {
-			setting.DaysToKeepAnnotations = annotationsToWrite
-
-			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
+			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{DaysToKeep: annotationsToWrite})
 			So(err, ShouldBeNil)
 
-			items, _ := repo.Find(&annotations.ItemQuery{
+			items, err := repo.Find(&annotations.ItemQuery{
 				OrgId:       1,
 				DashboardId: 1,
 			})
+			So(err, ShouldBeNil)
 
 			So(len(items), ShouldEqual, 1)
 		})
