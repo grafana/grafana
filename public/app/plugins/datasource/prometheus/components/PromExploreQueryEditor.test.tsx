@@ -1,6 +1,7 @@
 import React from 'react';
-import { shallow, render } from 'enzyme';
+import { shallow, mount } from 'enzyme';
 import PromExploreQueryEditor from './PromExploreQueryEditor';
+import PromExploreExtraField from './PromExploreExtraField';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 import { PanelData, LoadingState, dateTime } from '@grafana/data';
@@ -67,7 +68,7 @@ describe('PromExploreQueryEditor', () => {
   });
 
   it('should render PromQueryField with ExtraFieldElement', () => {
-    const wrapper = setup(render);
-    expect(wrapper.find('.explore-input--ml')).toHaveLength(1);
+    const wrapper = setup(mount);
+    expect(wrapper.find(PromExploreExtraField).length).toEqual(1);
   });
 });
