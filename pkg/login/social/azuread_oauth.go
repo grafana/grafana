@@ -22,6 +22,7 @@ type azureClaims struct {
 	Email             string   `json:"email"`
 	PreferredUsername string   `json:"preferred_username"`
 	Roles             []string `json:"roles"`
+	Groups            []string `json:"groups"`
 	Name              string   `json:"name"`
 	ID                string   `json:"oid"`
 }
@@ -62,12 +63,15 @@ func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUse
 
 	role := extractRole(claims)
 
+	groups := extractGroups(claims)
+
 	return &BasicUserInfo{
-		Id:    claims.ID,
-		Name:  claims.Name,
-		Email: email,
-		Login: email,
-		Role:  string(role),
+		Id:     claims.ID,
+		Name:   claims.Name,
+		Email:  email,
+		Login:  email,
+		Role:   string(role),
+		Groups: groups,
 	}, nil
 }
 
@@ -108,4 +112,12 @@ func hasRole(roles []string, role models.RoleType) bool {
 		}
 	}
 	return false
+}
+
+func extractGroups(claims azureClaims) []string {
+	groups := make([]string, 0)
+	for _, groupId := range claims.Groups {
+		groups = append(groups, groupId)
+	}
+	return groups
 }
