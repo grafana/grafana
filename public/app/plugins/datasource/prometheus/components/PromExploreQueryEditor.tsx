@@ -45,7 +45,7 @@ export function PromExploreQueryEditor(props: Props) {
           label={'Step'}
           onChangeFunc={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
-          value={query.interval}
+          value={query.interval || ''}
         />
       }
     />
