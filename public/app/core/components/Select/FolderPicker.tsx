@@ -17,6 +17,7 @@ export interface Props {
 }
 
 interface State {
+  folder: any;
   validationError: string;
   hasValidationError: boolean;
 }
@@ -27,6 +28,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
+      folder: {},
       validationError: '',
       hasValidationError: false,
     };
@@ -74,9 +76,12 @@ export class FolderPicker extends PureComponent<Props, State> {
       newFolder = { value: 0, label: this.props.rootName };
     }
 
-    if (newFolder.value ?? -1 > 0) {
-      this.props.onChange({ id: newFolder.value!, title: newFolder.label! });
-    }
+    this.setState(
+      {
+        folder: newFolder,
+      },
+      () => this.props.onChange({ id: newFolder.value!, title: newFolder.label! })
+    );
   };
 
   createNewFolder = async (folderName: string) => {
@@ -101,7 +106,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     const options = await this.getOptions('');
 
     let folder: SelectableValue<number> = { value: -1 };
-    if (initialFolderId) {
+    if (initialFolderId || (initialFolderId && initialFolderId > -1)) {
       folder = options.find(option => option.value === initialFolderId) || { value: -1 };
     } else if (enableReset && initialTitle && initialFolderId === undefined) {
       folder = resetFolder;
@@ -121,6 +126,10 @@ export class FolderPicker extends PureComponent<Props, State> {
       }
     }
 
+    this.setState({
+      folder,
+    });
+
     // if this is not the same as our initial value notify parent
     if (folder.value !== initialFolderId) {
       this.props.onChange({ id: folder.value!, title: folder.text });
@@ -128,7 +137,7 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { validationError, hasValidationError } = this.state;
+    const { folder, validationError, hasValidationError } = this.state;
     const { enableCreateNew } = this.props;
 
     return (
@@ -139,6 +148,7 @@ export class FolderPicker extends PureComponent<Props, State> {
             <Forms.AsyncSelect
               loadingMessage="Loading folders..."
               defaultOptions
+              value={folder}
               allowCustomValue={enableCreateNew}
               loadOptions={this.debouncedSearch}
               onChange={this.onFolderChange}
