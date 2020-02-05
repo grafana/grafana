@@ -1,5 +1,6 @@
 import { Vector } from '../types/vector';
 import { DataFrame } from '../types/dataFrame';
+import { DisplayProcessor } from '../types';
 
 /**
  * This abstraction will present the contents of a DataFrame as if
@@ -64,12 +65,20 @@ export class DataFrameView<T = any> implements Vector<T> {
     return this.data.length;
   }
 
-  /**
-   * Some short description about this class function
-   *
-   * @param idx - Not super clear what this id does but it should be passed
-   * @returns DataFrameView and some text about what it returns
-   */
+  getFieldDisplayProcessor(colIndex: number): DisplayProcessor | null {
+    if (!this.dataFrame || !this.dataFrame.fields) {
+      return null;
+    }
+
+    const field = this.dataFrame.fields[colIndex];
+
+    if (!field || !field.display) {
+      return null;
+    }
+
+    return field.display;
+  }
+
   get(idx: number) {
     this.index = idx;
     return this.obj;

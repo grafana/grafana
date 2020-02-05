@@ -53,7 +53,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Namespace:  "AWS/ApplicationELB",
 				MetricName: "TargetResponseTime",
 				Dimensions: map[string][]string{
-					"LoadBalancer": {"lb2"},
+					"LoadBalancer": {"lb1", "lb2"},
 					"TargetGroup":  {"tg"},
 				},
 				Stats:  "Average",
@@ -65,8 +65,12 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)
-			So(timeSeries.Name, ShouldEqual, "lb2 Expanded")
-			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb2")
+			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+
+			timeSeries2 := (*series)[1]
+			So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
+			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
 		})
 
 		Convey("can expand dimension value using substring", func() {
@@ -110,7 +114,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Namespace:  "AWS/ApplicationELB",
 				MetricName: "TargetResponseTime",
 				Dimensions: map[string][]string{
-					"LoadBalancer": {"lb1"},
+					"LoadBalancer": {"lb1", "lb2"},
 					"TargetGroup":  {"tg"},
 				},
 				Stats:  "Average",
@@ -119,11 +123,14 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			}
 			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
-
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)
 			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
 			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+
+			timeSeries2 := (*series)[1]
+			So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
+			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
 		})
 
 		Convey("can expand dimension value using wildcard", func() {

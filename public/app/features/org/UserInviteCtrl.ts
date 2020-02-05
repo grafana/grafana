@@ -1,7 +1,8 @@
 import coreModule from 'app/core/core_module';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
-import { ILocationService } from 'angular';
+import { ILocationService, IScope } from 'angular';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class UserInviteCtrl {
   navModel: any;
@@ -9,7 +10,7 @@ export class UserInviteCtrl {
   inviteForm: any;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv, private $location: ILocationService) {
+  constructor(private $scope: IScope, navModelSrv: NavModelSrv, private $location: ILocationService) {
     this.navModel = navModelSrv.getNav('cfg', 'users', 0);
 
     this.invite = {
@@ -25,9 +26,13 @@ export class UserInviteCtrl {
       return;
     }
 
-    return this.backendSrv.post('/api/org/invites', this.invite).then(() => {
-      this.$location.path('org/users/');
-    });
+    promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .post('/api/org/invites', this.invite)
+        .then(() => {
+          this.$location.path('org/users/');
+        })
+    );
   }
 }
 

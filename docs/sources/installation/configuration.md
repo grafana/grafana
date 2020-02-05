@@ -1,6 +1,6 @@
 +++
 title = "Configuration"
-description = "Configuration Docs"
+description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
 type = "docs"
 [menu.docs]
@@ -18,20 +18,22 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 
 ## Config file locations
 
-Do not change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
+*Do not* change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-**Linux**
-
+### Linux
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
-**Windows**
+### Docker
+Refer to [Configure a Grafana Docker image](configure-docker.md) for information about environmental variables, persistent storage, and building custom Docker images.
+
+### Windows
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-**macOS**
+### MacOS
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
@@ -46,16 +48,15 @@ Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` 
 
 A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
 
-## Using environment variables
+## Configure with environment variables
 
-All options in the configuration file (listed below) can be overridden using environment variables using the syntax:
+All options in the configuration file can be overridden using environment variables using the syntax:
 
 ```bash
 GF_<SectionName>_<KeyName>
 ```
 
-Where the section name is the text within the brackets. Everything
-should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
+Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
 
 ```bash
 # default section
@@ -68,15 +69,15 @@ admin_user = admin
 client_secret = 0ldS3cretKey
 ```
 
-Then you can override them using:
+You can override them on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
+export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 ```
 
-<hr />
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
 
 ## instance_name
 
@@ -128,8 +129,7 @@ The IP address to bind to. If empty will bind to all interfaces
 
 ### http_port
 
-The port to bind to, defaults to `3000`. To use port 80 you need to
-either give the Grafana binary permission for example:
+The port to bind to, defaults to `3000`. To use port 80 you need to either give the Grafana binary permission for example:
 
 ```bash
 $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
@@ -154,13 +154,11 @@ Path where the socket should be created when `protocol=socket`. Please make sure
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you
-use GitHub or Google OAuth.
+This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
 
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain.
-Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -175,8 +173,7 @@ callback URL to be correct).
 ### serve_from_sub_path
 > Available in 6.3 and above
 
-Serve Grafana from subpath specified in `root_url` setting. By
-default it is set to `false` for compatibility reasons.
+Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
 By enabling this setting and using a subpath in `root_url` above, e.g.
 `root_url = http://localhost:3000/grafana`, Grafana will be accessible on
@@ -555,11 +552,83 @@ Either "console", "file", "syslog". Default is "console" and "file".
 Use spaces to separate multiple modes, e.g. `console file`
 
 ### level
-Either "debug", "info", "warn", "error", "critical", default is `info`
+
+Either "debug", "info", "warn", "error", "critical", default is `info`.
 
 ### filters
+
 optional settings to set different levels for specific loggers.
-For example `filters = sqlstore:debug`
+For example `filters = sqlstore:debug`.
+
+## [log.console]
+
+Only applicable when "console" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+## [log.file]
+
+Only applicable when "file" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+### log_rotate
+
+Enable automated log rotation, valid options are false or true. Default is `true`.
+When enabled use the `max_lines`, `max_size_shift`, `daily_rotate` and `max_days` below
+to configure the behavior of the log rotation.
+
+### max_lines
+
+Maximum lines per file before rotating it. Default is 1000000.
+
+### max_size_shift
+
+Maximum size of file before rotating it. Default is `28` which means `1 << 28`, `256MB`.
+
+### daily_rotate
+
+Enable daily rotation of files, valid options are false or true. Default is `true`.
+
+### max_days
+
+Maximum number of days to keep log files. Default is `7`.
+
+## [log.syslog]
+
+Only applicable when "syslog" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+### network and address
+
+Syslog network type and address. This can be udp, tcp, or unix. If left blank, the default unix endpoints will be used.
+
+### facility
+
+Syslog facility. Valid options are user, daemon or local0 through local7. Default is empty.
+
+### tag
+
+Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
 

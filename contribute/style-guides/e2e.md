@@ -150,6 +150,14 @@ describe('List test', () => {
 
 ## Debugging PhantomJS image rendering
 
+### Common Error
+The most common error with PhantomJs image rendering is when a PR introduces an import that has functionality that's not supported by PhantomJs. To quickly identify which new import causes this you can use a tool like `es-check`.
+   
+1. Run > `npx es-check es5 './public/build/*.js'`
+2. Check the output for files that break es5 compatibility.
+3. Lazy load the failing imports if possible. 
+
+### Debugging
 There is no easy or comprehensive way to debug PhantomJS smoke test (image rendering) failures. However, PhantomJS exposes remote debugging interface which can give you a sense of what is going wrong in the smoke test. Before performing the steps described below make sure your local Grafana instance is running:
 
 1. Go to `tools/phantomjs` directory

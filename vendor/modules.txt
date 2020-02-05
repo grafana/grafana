@@ -133,6 +133,12 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/snappy
 # github.com/google/flatbuffers v1.11.0
 github.com/google/flatbuffers/go
+# github.com/google/go-cmp v0.3.1
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
 github.com/gopherjs/gopherjs/js
 # github.com/gorilla/websocket v1.4.1
@@ -142,12 +148,10 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.11.0
-github.com/grafana/grafana-plugin-sdk-go/backend
+# github.com/grafana/grafana-plugin-sdk-go v0.14.0
+github.com/grafana/grafana-plugin-sdk-go/backend/plugin
 github.com/grafana/grafana-plugin-sdk-go/dataframe
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
-# github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-github.com/grpc-ecosystem/go-grpc-prometheus
 # github.com/hashicorp/go-hclog v0.8.0
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-plugin v1.0.1

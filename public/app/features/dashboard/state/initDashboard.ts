@@ -1,6 +1,6 @@
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -38,7 +38,7 @@ export interface InitDashboardArgs {
 }
 
 async function redirectToNewUrl(slug: string, dispatch: ThunkDispatch, currentPath: string) {
-  const res = await getBackendSrv().getDashboardBySlug(slug);
+  const res = await backendSrv.getDashboardBySlug(slug);
 
   if (res) {
     let newUrl = res.meta.url;
@@ -62,7 +62,7 @@ async function fetchDashboard(
     switch (args.routeInfo) {
       case DashboardRouteInfo.Home: {
         // load home dash
-        const dashDTO: DashboardDTO = await getBackendSrv().get('/api/dashboards/home');
+        const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {

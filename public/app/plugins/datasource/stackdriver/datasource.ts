@@ -4,7 +4,7 @@ import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
 import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CoreEvents } from 'app/types';
@@ -20,7 +20,6 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
-    private backendSrv: BackendSrv,
     public templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
@@ -59,7 +58,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       });
 
     if (queries.length > 0) {
-      const { data } = await this.backendSrv.datasourceRequest({
+      const { data } = await getBackendSrv().datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
         data: {
@@ -181,7 +180,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       },
     ];
 
-    const { data } = await this.backendSrv.datasourceRequest({
+    const { data } = await getBackendSrv().datasourceRequest({
       url: '/api/tsdb/query',
       method: 'POST',
       data: {
@@ -261,7 +260,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   async getDefaultProject() {
     try {
       if (this.authenticationType === 'gce' || !this.projectName) {
-        const { data } = await this.backendSrv.datasourceRequest({
+        const { data } = await getBackendSrv().datasourceRequest({
           url: '/api/tsdb/query',
           method: 'POST',
           data: {
@@ -308,8 +307,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     }
   }
 
-  async doRequest(url: string, maxRetries = 1) {
-    return this.backendSrv
+  async doRequest(url: string, maxRetries = 1): Promise<any> {
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',

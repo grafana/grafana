@@ -169,7 +169,7 @@ loadPluginCss({
 });
 ```
 
-You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm instal @grafana/runtime`.
+You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm install @grafana/runtime`.
 
 > Note that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
 
@@ -179,7 +179,7 @@ Starting from Grafana 6.2 *our suggested way* for styling plugins is by using [E
 To start using Emotion, you first must add it to your plugin dependencies:
 
 ```
-  yarn add "@emotion/core"@10.0.14
+  yarn add "emotion"@10.0.27
 ```
 
 Then, import `css` function from Emotion:

@@ -15,7 +15,7 @@ import {
   DataQueryRequest,
   DataSourceInstanceSettings,
 } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
@@ -48,7 +48,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
@@ -193,7 +192,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     )}`;
   }
 
-  performTimeSeriesQuery(request: any, { from, to }: TimeRange) {
+  performTimeSeriesQuery(request: any, { from, to }: TimeRange): Promise<any> {
     return this.awsRequest('/api/tsdb/query', request)
       .then((res: any) => {
         if (!res.results) {
@@ -530,9 +529,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       data,
     };
 
-    return this.backendSrv.datasourceRequest(options).then((result: any) => {
-      return result.data;
-    });
+    return getBackendSrv()
+      .datasourceRequest(options)
+      .then((result: any) => {
+        return result.data;
+      });
   }
 
   getDefaultRegion() {
