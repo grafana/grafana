@@ -10,12 +10,12 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", DeleteExpiredAnnotations)
+	bus.AddHandler("sql", deleteExpiredAnnotations)
 }
 
 const MAX_HISTORY_ENTRIES_TO_DELETE = 900
 
-func DeleteExpiredAnnotations(cmd *m.DeleteExpiredVAnnotationsCommand) error {
+func deleteExpiredAnnotations(cmd *m.DeleteExpiredVAnnotationsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		daysToKeep := setting.AnnotationsDaysToKeep
 		if daysToKeep < 5 {
