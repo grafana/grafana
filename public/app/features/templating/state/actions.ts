@@ -3,7 +3,7 @@ import { MouseEvent } from 'react';
 import { v4 } from 'uuid';
 import { ActionCreatorWithPayload, createAction, PrepareAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
-import { DataSourceSelectItem } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
 import {
   QueryVariableModel,
@@ -20,7 +20,7 @@ import { variableAdapters } from '../adapters';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
-import { MoveVariableType } from '../../../types/events';
+import { MoveVariableType, VariableNewVariableStart } from '../../../types/events';
 import { queryVariableActions } from './queryVariableActions';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
@@ -86,6 +86,18 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
   }
 );
 export const removeVariable = createAction<VariablePayload<{ notifyAngular: boolean }>>('templating/removeVariable');
+export const newVariable = createAction<VariablePayload<VariableNewVariableStart>>('templating/newVariable');
+export const storeNewVariable = createAction<PrepareAction<VariablePayload>>(
+  'templating/storeNewVariable',
+  (payload: VariablePayload) => {
+    return {
+      payload: {
+        ...payload,
+        uuid: v4(),
+      },
+    };
+  }
+);
 export interface DuplicateVariable {
   newUuid: string;
   variablesInAngular: number;
@@ -107,14 +119,14 @@ export const duplicateVariable = createAction<PrepareAction<VariablePayload<Dupl
 export const changeVariableOrder = createAction<VariablePayload<{ fromIndex: number; toIndex: number }>>(
   'templating/changeVariableOrder'
 );
-export const setInitLock = createAction<VariablePayload<undefined>>('templating/setInitLock');
-export const resolveInitLock = createAction<VariablePayload<undefined>>('templating/resolveInitLock');
-export const removeInitLock = createAction<VariablePayload<undefined>>('templating/removeInitLock');
+export const setInitLock = createAction<VariablePayload>('templating/setInitLock');
+export const resolveInitLock = createAction<VariablePayload>('templating/resolveInitLock');
+export const removeInitLock = createAction<VariablePayload>('templating/removeInitLock');
 export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>(
   'templating/setCurrentVariableValue'
 );
 export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
-export const updateVariableStarting = createAction<VariablePayload<undefined>>('templating/updateVariableStarting');
+export const updateVariableStarting = createAction<VariablePayload>('templating/updateVariableStarting');
 export const updateVariableCompleted = createAction<VariablePayload<{ notifyAngular: boolean }>>(
   'templating/updateVariableCompleted'
 );
@@ -123,7 +135,7 @@ export const updateVariableTags = createAction<VariablePayload<any[]>>('templati
 export const variableEditorMounted = createAction<VariablePayload<DataSourceSelectItem[]>>(
   'templating/variableEditorMounted'
 );
-export const variableEditorUnMounted = createAction<VariablePayload<undefined>>('templating/variableEditorUnMounted');
+export const variableEditorUnMounted = createAction<VariablePayload>('templating/variableEditorUnMounted');
 export const changeVariableNameSucceeded = createAction<VariablePayload<string>>(
   'templating/changeVariableNameSucceeded'
 );
@@ -143,6 +155,8 @@ export const variableActions: Record<string, ActionCreatorWithPayload<VariablePa
   [addVariable.type]: addVariable,
   [duplicateVariable.type]: duplicateVariable,
   [removeVariable.type]: removeVariable,
+  [newVariable.type]: newVariable,
+  [storeNewVariable.type]: storeNewVariable,
   [changeVariableOrder.type]: changeVariableOrder,
   [setInitLock.type]: setInitLock,
   [resolveInitLock.type]: resolveInitLock,
@@ -427,6 +441,7 @@ export const variableUpdated = (variable: VariableModel, emitChangeEvents?: any)
 
 export const changeVariableName = (variable: VariableModel, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
+    const variableInState = getVariable(variable.uuid ?? '', getState());
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
@@ -436,11 +451,14 @@ export const changeVariableName = (variable: VariableModel, newName: string): Th
       errorText = 'Only word and digit characters are allowed in variable names';
     }
 
-    const variablesWithSameName = (getState().dashboard.model as DashboardModel)?.templating.list.filter(
+    const angularVariables = (getState().dashboard.model as DashboardModel)?.templating.list.filter(
       v => v.name === newName
     );
 
-    if (variablesWithSameName.length) {
+    const variables = getVariables(getState());
+    const stateVariables = variables.filter(v => v.name === newName && v.uuid !== variableInState.uuid);
+
+    if (angularVariables.length || stateVariables.length) {
       errorText = 'Variable with the same name already exists';
     }
 
@@ -489,11 +507,27 @@ export const changeVariableType = (variable: VariableModel, newType: VariableTyp
 };
 
 export const variableEditorInit = (variable: VariableModel): ThunkResult<void> => {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     const dataSources: DataSourceSelectItem[] = await getDatasourceSrv()
       .getMetricSources()
       .filter(ds => !ds.meta.mixed && ds.value !== null);
+    const defaultDatasource: DataSourceSelectItem = { name: '', value: '', meta: {} as DataSourcePluginMeta, sort: '' };
 
-    dispatch(variableEditorMounted(toVariablePayload(variable, dataSources)));
+    dispatch(variableEditorMounted(toVariablePayload(variable, [defaultDatasource].concat(dataSources))));
+  };
+};
+
+export const onEditorUpdate = (variable: VariableModel): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const variableInState = getVariable(variable.uuid ?? '', getState());
+    await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
+  };
+};
+
+export const onEditorAdd = (variable: VariableModel): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const variableInState = { ...getVariable(variable.uuid ?? '', getState()) };
+    dispatch(storeNewVariable(toVariablePayload(variableInState)));
+    await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
   };
 };

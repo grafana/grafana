@@ -1,13 +1,16 @@
+import cloneDeep from 'lodash/cloneDeep';
 import { AnyAction, PayloadAction } from '@reduxjs/toolkit';
 
-import { VariableType } from '../variable';
+import { VariableModel, VariableType } from '../variable';
 import {
   addVariable,
   changeVariableHide,
   changeVariableLabel,
   changeVariableOrder,
   duplicateVariable,
+  newVariable,
   removeVariable,
+  storeNewVariable,
   updateVariableCompleted,
   updateVariableFailed,
   updateVariableStarting,
@@ -17,7 +20,7 @@ import {
   VariablePayload,
 } from './actions';
 import { variableAdapters } from '../adapters';
-import { initialVariableEditorState, VariableState } from './types';
+import { emptyUuid, initialVariableEditorState, VariableState } from './types';
 
 export interface TemplatingState {
   variables: Record<string, VariableState>;
@@ -71,7 +74,11 @@ export const updateTemplatingState = (
   }
 
   if (variableEditorUnMounted.match(action)) {
-    return {
+    if (!state.variables[action.payload.uuid]) {
+      // this could be an unmount event from a variable that doesn't exist any longer
+      return state;
+    }
+    const newState = {
       ...state,
       variables: {
         ...state.variables,
@@ -81,6 +88,10 @@ export const updateTemplatingState = (
         },
       },
     };
+    if (newState.variables[emptyUuid]) {
+      delete newState.variables[emptyUuid];
+    }
+    return newState;
   }
 
   if (changeVariableLabel.match(action)) {
@@ -168,7 +179,7 @@ export const updateTemplatingState = (
   }
 
   if (duplicateVariable.match(action)) {
-    const original = state.variables[action.payload.uuid].variable;
+    const original = cloneDeep<VariableModel>(state.variables[action.payload.uuid].variable);
     const cleanState = variableAdapters
       .get(original.type)
       .reducer((undefined as unknown) as VariableState, { type: '', payload: {} as VariablePayload });
@@ -223,6 +234,50 @@ export const updateTemplatingState = (
     return {
       ...state,
       variables: newVariables,
+    };
+  }
+
+  if (newVariable.match(action)) {
+    const newInitialState: VariableState = reducer((undefined as unknown) as VariableState, {
+      type: '',
+      payload: {} as VariablePayload,
+    });
+    const newVariableState: VariableState = {
+      ...newInitialState,
+      variable: {
+        ...newInitialState.variable,
+        index: action.payload.data.variablesInAngular + Object.keys(state.variables).length,
+      },
+    };
+    return {
+      ...state,
+      variables: {
+        ...state.variables,
+        [emptyUuid]: newVariableState,
+      },
+    };
+  }
+
+  if (storeNewVariable.match(action)) {
+    const uuid = action.payload.uuid ?? '';
+    const newInitialState: VariableState = reducer((undefined as unknown) as VariableState, {
+      type: '',
+      payload: {} as VariablePayload,
+    });
+    const emptyVariable: VariableModel = cloneDeep<VariableModel>(state.variables[emptyUuid].variable);
+    const newVariableState: VariableState = {
+      ...newInitialState,
+      variable: {
+        ...emptyVariable,
+        uuid,
+      },
+    };
+    return {
+      ...state,
+      variables: {
+        ...state.variables,
+        [uuid]: newVariableState,
+      },
     };
   }
 

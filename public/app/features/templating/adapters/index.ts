@@ -13,8 +13,7 @@ export interface VariableAdapter<Model extends VariableModel, State extends Vari
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
   setValue: (variable: Model, option: VariableOption) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
-  updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
-  onEditorUpdate: (variable: Model) => Promise<void>;
+  updateOptions: (variable: Model, searchFilter?: string, notifyAngular?: boolean) => Promise<void>;
   picker: ComponentType<VariableState>;
   editor: ComponentType<VariableEditorProps>;
   reducer: Reducer<State, PayloadAction<VariablePayload<any>>>;

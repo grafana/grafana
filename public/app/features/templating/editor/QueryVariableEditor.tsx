@@ -122,9 +122,6 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
                     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsDataSourceSelect
                   }
                 >
-                  <option value={''} label="">
-                    {''}
-                  </option>
                   {this.props.dataSources.length &&
                     this.props.dataSources.map(ds => (
                       <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.name}>

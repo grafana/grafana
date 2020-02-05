@@ -40,6 +40,11 @@ export class SubMenuCtrl {
     );
     this.dashboard.on(CoreEvents.variableRemoveVariableSucceeded, this.onVariableRemoveVariableSucceeded.bind(this));
     this.dashboard.on(CoreEvents.variableChangeOrderSucceeded, this.onVariableChangeOrderSucceeded.bind(this));
+    this.dashboard.on(CoreEvents.variableNewVariableSucceeded, this.onVariableNewVariableSucceeded.bind(this));
+    this.dashboard.on(
+      CoreEvents.variableStoreNewVariableSucceeded,
+      this.onVariableStoreNewVariableSucceeded.bind(this)
+    );
 
     this.selectors = e2e.pages.Dashboard.SubMenu.selectors;
   }
@@ -100,6 +105,12 @@ export class SubMenuCtrl {
   onVariableChangeOrderSucceeded() {
     const variablesInState = getVariables().map(variable => ({ ...variable }));
     this.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+  }
+
+  onVariableNewVariableSucceeded() {}
+
+  onVariableStoreNewVariableSucceeded(args: { uuid: string }) {
+    this.variables.push({ ...getVariable(args.uuid) });
   }
 }
 

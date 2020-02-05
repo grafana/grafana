@@ -28,15 +28,9 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
         resolve();
       });
     },
-    updateOptions: (variable, searchFilter) => {
+    updateOptions: (variable, searchFilter, notifyAngular) => {
       return new Promise(async resolve => {
-        await dispatch(updateQueryVariableOptions(variable, searchFilter, false));
-        resolve();
-      });
-    },
-    onEditorUpdate: variable => {
-      return new Promise(async resolve => {
-        await dispatch(updateQueryVariableOptions(variable, undefined, true));
+        await dispatch(updateQueryVariableOptions(variable, searchFilter, notifyAngular));
         resolve();
       });
     },

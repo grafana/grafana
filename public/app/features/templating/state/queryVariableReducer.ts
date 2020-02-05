@@ -25,7 +25,7 @@ import _ from 'lodash';
 import { DataSourceApi, stringToJsRegex } from '@grafana/data';
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
-import { initialVariableEditorState, VariableEditorState, VariableState } from './types';
+import { emptyUuid, initialVariableEditorState, VariableEditorState, VariableState } from './types';
 import {
   hideQueryVariableDropDown,
   queryVariableDatasourceLoaded,
@@ -80,7 +80,7 @@ export const initialQueryVariablePickerState: QueryVariablePickerState = {
 };
 
 export const initialQueryVariableModelState: QueryVariableModel = {
-  uuid: '00000000-0000-0000-0000-000000000000',
+  uuid: emptyUuid,
   global: false,
   index: -1,
   type: 'query',

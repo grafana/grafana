@@ -14,6 +14,7 @@ import { variableAdapters } from './adapters';
 import { CoreEvents } from '../../types';
 import { VariableIdentifier } from './state/actions';
 import { MoveVariableType, VariableMovedToState } from '../../types/events';
+import { emptyUuid } from './state/types';
 
 export class VariableEditorCtrl {
   /** @ngInject */
@@ -52,6 +53,14 @@ export class VariableEditorCtrl {
     this.variableSrv.dashboard.events.on(
       CoreEvents.variableChangeOrderSucceeded,
       this.onVariableChangeOrderSucceeded.bind(this)
+    );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableNewVariableSucceeded,
+      this.onVariableNewVariableSucceeded.bind(this)
+    );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableStoreNewVariableSucceeded,
+      this.onVariableStoreNewVariableSucceeded.bind(this)
     );
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
@@ -120,6 +129,11 @@ export class VariableEditorCtrl {
     };
 
     $scope.setMode = (mode: any) => {
+      if (mode === 'new') {
+        variableSrv.dashboard.events.emit(CoreEvents.variableNewVariableStart, {
+          variablesInAngular: variableSrv.variables.length,
+        });
+      }
       $scope.mode = mode;
     };
 
@@ -128,10 +142,10 @@ export class VariableEditorCtrl {
     };
 
     $scope.add = () => {
+      if (variableAdapters.contains($scope.current.type as VariableType)) {
+        return;
+      }
       if ($scope.isValid()) {
-        if (variableAdapters.contains($scope.current.type as VariableType)) {
-          return;
-        }
         variableSrv.addVariable($scope.current);
         $scope.update();
       }
@@ -341,6 +355,8 @@ export class VariableEditorCtrl {
 
   onVariableMovedToState(args: VariableMovedToState) {
     this.variableSrv.removeVariable(this.$scope.current);
+    const variablesInState = getVariables().map(variable => ({ ...variable }));
+    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
     for (let index = 0; index < this.$scope.variables.length; index++) {
       const variable = this.$scope.variables[index];
       if (variable.index === args.index) {
@@ -354,6 +370,21 @@ export class VariableEditorCtrl {
   }
 
   onVariableMovedToAngular(args: MoveVariableType) {
+    if (this.$scope.mode === 'new') {
+      const angularVariable = this.variableSrv.createVariableFromModel(
+        {
+          type: args.type,
+        },
+        args.index
+      );
+      this.$scope.current = angularVariable;
+      this.$scope.current.name = args.name;
+      this.$scope.current.label = args.label;
+      this.$scope.validate();
+      this.$scope.$digest();
+      return;
+    }
+
     for (let index = 0; index < this.$scope.variables.length; index++) {
       const variable = this.$scope.variables[index];
       if (variable.index === args.index) {
@@ -384,20 +415,34 @@ export class VariableEditorCtrl {
   }
 
   onVariableDuplicateVariableSucceeded(args: VariableMovedToState) {
-    this.$scope.variables.push({ ...getVariable(args.uuid ?? '') });
+    const variablesInState = getVariables().map(variable => ({ ...variable }));
+    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+  }
+
+  onVariableNewVariableSucceeded() {
+    const variable = { ...getVariable(emptyUuid) };
+    this.$scope.current = variable;
   }
 
   onVariableRemoveVariableInAngularSucceeded(args: { name: string }) {
-    this.$scope.variables = this.$scope.variables.filter((v: VariableModel) => v.name !== args.name);
+    const variablesInState = getVariables().map(variable => ({ ...variable }));
+    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
   }
 
   onVariableRemoveVariableSucceeded(args: { uuid: string }) {
-    this.$scope.variables = this.$scope.variables.filter((v: VariableModel) => v.uuid !== args.uuid);
+    const variablesInState = getVariables().map(variable => ({ ...variable }));
+    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
   }
 
   onVariableChangeOrderSucceeded() {
     const variablesInState = getVariables().map(variable => ({ ...variable }));
     this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+  }
+
+  onVariableStoreNewVariableSucceeded(args: { uuid: string }) {
+    const variable = { ...getVariable(args.uuid) };
+    this.$scope.variables.push(variable);
+    this.$scope.current = variable;
   }
 }
 

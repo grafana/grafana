@@ -1,6 +1,8 @@
 import { VariableModel, VariableType } from '../variable';
 import { DataSourceSelectItem } from '@grafana/data';
 
+export const emptyUuid = '00000000-0000-0000-0000-000000000000';
+
 export interface VariableEditorState {
   name: string;
   type: VariableType;

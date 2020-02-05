@@ -9,8 +9,10 @@ import {
   changeVariableOrder,
   duplicateVariable,
   moveVariableTypeToAngular,
+  newVariable,
   removeVariable,
   setCurrentVariableValue,
+  storeNewVariable,
   toVariablePayload,
   updateVariableCompleted,
   VariablePayload,
@@ -20,11 +22,12 @@ import {
   MoveVariableType,
   VariableChangeOrderStart,
   VariableDuplicateVariableStart,
+  VariableNewVariableStart,
   VariableRemoveVariable,
 } from '../../../types/events';
 import templateSrv from '../template_srv';
 import { getVariable } from '../state/selectors';
-import { VariableState } from '../state/types';
+import { emptyUuid, VariableState } from '../state/types';
 
 let dashboardEvents: Emitter | null = null;
 
@@ -81,6 +84,12 @@ const onVariableChangeOrderStart = (store: MiddlewareAPI<Dispatch, StoreState>) 
   );
 };
 
+const onVariableNewVariableStart = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
+  variablesInAngular,
+}: VariableNewVariableStart) => {
+  store.dispatch(newVariable({ uuid: emptyUuid, type: 'query', data: { variablesInAngular } }));
+};
+
 export const variableMiddleware: Middleware<{}, StoreState> = (store: MiddlewareAPI<Dispatch, StoreState>) => (
   next: Dispatch
 ) => (action: AnyAction) => {
@@ -91,6 +100,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     dashboardEvents.on(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
     dashboardEvents.on(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));
     dashboardEvents.on(CoreEvents.variableChangeOrderStart, onVariableChangeOrderStart(store));
+    dashboardEvents.on(CoreEvents.variableNewVariableStart, onVariableNewVariableStart(store));
     return result;
   }
 
@@ -100,6 +110,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     dashboardEvents?.off(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
     dashboardEvents?.off(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));
     dashboardEvents?.off(CoreEvents.variableChangeOrderStart, onVariableChangeOrderStart(store));
+    dashboardEvents?.off(CoreEvents.variableNewVariableStart, onVariableNewVariableStart(store));
     dashboardEvents = null;
     return result;
   }
@@ -107,6 +118,9 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
   if (changeVariableNameSucceeded.match(action)) {
     const oldName = getVariable(action.payload.uuid, store.getState()).name;
     const result = next(action);
+    if (action.payload.uuid === emptyUuid) {
+      return result;
+    }
     dashboardEvents?.emit(CoreEvents.variableNameInStateUpdated, {
       type: action.payload.type,
       uuid: action.payload.uuid,
@@ -157,7 +171,21 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
 
   if (removeVariable.match(action)) {
     const result = next(action);
-    dashboardEvents?.emit(CoreEvents.variableRemoveVariableSucceeded, { uuid: action.payload.uuid ?? '' });
+    if (action.payload.data.notifyAngular) {
+      dashboardEvents?.emit(CoreEvents.variableRemoveVariableSucceeded, { uuid: action.payload.uuid ?? '' });
+    }
+    return result;
+  }
+
+  if (newVariable.match(action)) {
+    const result = next(action);
+    dashboardEvents?.emit(CoreEvents.variableNewVariableSucceeded);
+    return result;
+  }
+
+  if (storeNewVariable.match(action)) {
+    const result = next(action);
+    dashboardEvents?.emit(CoreEvents.variableStoreNewVariableSucceeded, { uuid: action.payload.uuid ?? '' });
     return result;
   }
 

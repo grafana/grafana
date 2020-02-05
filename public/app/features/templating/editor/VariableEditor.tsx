@@ -1,4 +1,4 @@
-import React, { ChangeEvent, MouseEvent, PureComponent } from 'react';
+import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import { e2e } from '@grafana/e2e';
 
 import { dispatch } from '../../../store/store';
@@ -8,12 +8,14 @@ import {
   changeVariableName,
   changeVariableProp,
   changeVariableType,
+  onEditorAdd,
+  onEditorUpdate,
   toVariablePayload,
   variableEditorInit,
   variableEditorUnMounted,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
-import { VariableState } from '../state/types';
+import { emptyUuid, VariableState } from '../state/types';
 import { VariableHide, VariableType } from '../variable';
 import { FormLabel } from '@grafana/ui';
 import { appEvents } from '../../../core/core';
@@ -59,21 +61,23 @@ export class VariableEditor extends PureComponent<VariableState> {
     );
   };
 
-  onUpdateClicked = async (event: MouseEvent<HTMLButtonElement>) => {
+  onPropChanged = (propName: string, propValue: any) => {
+    dispatch(changeVariableProp(toVariablePayload(this.props.variable, { propName, propValue })));
+  };
+
+  onHandleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!this.props.editor.isValid) {
       return;
     }
-    await variableAdapters.get(this.props.variable.type).onEditorUpdate(this.props.variable);
-  };
 
-  onAddClicked = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    console.log('onAddClicked');
-  };
+    if (this.props.variable.uuid !== emptyUuid) {
+      await dispatch(onEditorUpdate(this.props.variable));
+    }
 
-  onPropChanged = (propName: string, propValue: any) => {
-    dispatch(changeVariableProp(toVariablePayload(this.props.variable, { propName, propValue })));
+    if (this.props.variable.uuid === emptyUuid) {
+      await dispatch(onEditorAdd(this.props.variable));
+    }
   };
 
   render() {
@@ -81,10 +85,11 @@ export class VariableEditor extends PureComponent<VariableState> {
     if (!EditorToRender) {
       return null;
     }
+    const newVariable = this.props.variable.uuid && this.props.variable.uuid === emptyUuid;
 
     return (
       <div>
-        <form aria-label="Variable editor Form">
+        <form aria-label="Variable editor Form" onSubmit={this.onHandleSubmit}>
           <h5 className="section-heading">General</h5>
           <div className="gf-form-group">
             <div className="gf-form-inline">
@@ -192,21 +197,21 @@ export class VariableEditor extends PureComponent<VariableState> {
           <VariableValuesPreview variable={this.props.variable} />
 
           <div className="gf-form-button-row p-y-0">
-            {this.props.variable.uuid && (
+            {!newVariable && (
               <button
                 type="submit"
                 className="btn btn-primary"
-                onClick={this.onUpdateClicked}
+                // onClick={this.onUpdateClicked}
                 aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.updateButton}
               >
                 Update
               </button>
             )}
-            {!this.props.variable.uuid && (
+            {newVariable && (
               <button
                 type="submit"
                 className="btn btn-primary"
-                onClick={this.onAddClicked}
+                // onClick={this.onAddClicked}
                 aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.addButton}
               >
                 Add
