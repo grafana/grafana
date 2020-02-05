@@ -12,7 +12,6 @@ import (
 )
 
 func (r *SqlAnnotationRepo) addTestAnnotation(dashboard *m.Dashboard, repo SqlAnnotationRepo, daysToKeep int, item *annotations.Item) error {
-
 	return inTransaction(func(sess *DBSession) error {
 		tags := m.ParseTagPairs([]string{"outage", "error", "type:outage", "server:server-1"})
 		item.Tags = m.JoinTagPairs(tags)
