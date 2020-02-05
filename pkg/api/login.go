@@ -96,8 +96,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				return
 			}
 			middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
-			// remove subpath if it exists
-			redirectTo = strings.Replace(redirectTo, setting.AppSubUrl, "", 1)
 			c.Redirect(redirectTo)
 			return
 		}
