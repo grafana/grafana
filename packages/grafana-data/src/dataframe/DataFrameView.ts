@@ -8,10 +8,9 @@ import { DisplayProcessor } from '../types';
  *
  * @remarks
  * The contents of the object returned from `view.get(index)`
- * are optimized for use in a loop.  All calls return the same object
+ * are optimized for use in a loop. All calls return the same object
  * but the index has changed.
  *
- * @category dataframe
  * @example
  * ```typescript
  *   // For example, the three objects:
@@ -25,7 +24,7 @@ import { DisplayProcessor } from '../types';
  *   const second = { ...view.get(1) };
  *   const third = { ...view.get(2) };
  *```
- *  @public
+ *  @beta
  */
 export class DataFrameView<T = any> implements Vector<T> {
   private index = 0;
@@ -55,16 +54,24 @@ export class DataFrameView<T = any> implements Vector<T> {
   }
 
   /**
-   * Gets the data frame from this object
+   * Getter to access the data frame in this view
    */
   get dataFrame() {
     return this.data;
   }
 
+  /**
+   * Getter to access the length of the data frame.
+   */
   get length() {
     return this.data.length;
   }
 
+  /**
+   * Helper function to return the {@link @grafana/data#DisplayProcessor | DisplayProcessor} for a given field column.
+   * @param colIndex - the field column index for the data frame.
+   * @returns {@link @grafana/data#DisplayProcessor | DisplayProcessor} if field exits in data frame otherwise `undefined`.
+   */
   getFieldDisplayProcessor(colIndex: number): DisplayProcessor | null {
     if (!this.dataFrame || !this.dataFrame.fields) {
       return null;

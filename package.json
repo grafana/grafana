@@ -17,6 +17,7 @@
     "@babel/preset-react": "7.8.3",
     "@babel/preset-typescript": "7.8.3",
     "@emotion/core": "10.0.10",
+    "@grafana/api-documenter": "^0.9.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/react-hooks": "^3.2.1",
     "@types/angular": "1.6.56",
@@ -175,7 +176,9 @@
     "packages:publish": "lerna publish from-package --contents dist",
     "packages:publishLatest": "lerna publish from-package --contents dist --yes",
     "packages:publishNext": "lerna publish from-package --contents dist --dist-tag next --yes",
-    "packages:publishCanary": "lerna publish from-package --contents dist --dist-tag canary --yes"
+    "packages:publishCanary": "lerna publish from-package --contents dist --dist-tag canary --yes",
+    "packages:docs-extract": "rm -rf ./scripts/docs && lerna run docs-extract",
+    "packages:docs-to-markdown": "api-documenter markdown --input-folder ./reports/docs/ --output-folder ./docs/sources/packages_api/ --hugo --draft"
   },
   "husky": {
     "hooks": {
