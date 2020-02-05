@@ -28,7 +28,7 @@ Note that you can scroll inside the panel in case the datasource returns more li
 
 To limit the number of lines rendered, you can use the queries-wide **Max data points** setting. If it is not set, the datasource will usually enforce a limit.
 
-## Visualization Options
+## Visualization options
 
 1. **Time**: Show/hide the time column. This is the timestamp associated with the log line as reported from the data source.
 2. **Order**: Set to **Ascending** to show the oldest log lines first.
