@@ -46,5 +46,6 @@ if [ "${confirm}" == "y" ]; then
     git push origin "${_branch}"
 else
     git checkout -- .
+    git clean -f docs/sources/packages_api
     echo "Abort! "
 fi
