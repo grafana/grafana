@@ -10,7 +10,9 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func (r *SqlAnnotationRepo) addTestAnnotation(dashboard *m.Dashboard, repo SqlAnnotationRepo, daysToKeep int, item *annotations.Item) error {
+func (r *SqlAnnotationRepo) addTestAnnotation(dashboard *m.Dashboard, repo SqlAnnotationRepo, created int64, item *annotations.Item) error {
+	created *= 1000
+
 	return inTransaction(func(sess *DBSession) error {
 		tags := m.ParseTagPairs([]string{"outage", "error", "type:outage", "server:server-1"})
 		item.Tags = m.JoinTagPairs(tags)
@@ -19,11 +21,11 @@ func (r *SqlAnnotationRepo) addTestAnnotation(dashboard *m.Dashboard, repo SqlAn
 		item.UserId = 1
 		item.OrgId = dashboard.OrgId
 		item.DashboardId = dashboard.Id
-		item.Created = (time.Now().Unix() - int64(daysToKeep*2*86400)) * 1000
-		item.Updated = item.Created
+		item.Created = created
+		item.Updated = created
 		if item.Epoch == 0 {
-			item.Epoch = item.Created
-			item.EpochEnd = item.Created
+			item.Epoch = created
+			item.EpochEnd = created
 		}
 
 		_, err := sess.Table("annotation").Insert(item)
@@ -53,35 +55,34 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		daysToKeepAnnotations := 5
 		annotationsToWrite := 10
 
+		expiredCreated := (time.Now().Unix() - int64(daysToKeepAnnotations*2*86400))
+		// TODO: Insert all annotations in one transaction, for speed * 1000
+		// Add expired annotations
 		savedDash := insertTestDashboard("test dash 111", 1, 0, false, "this-is-fun")
 		for i := 0; i < annotationsToWrite-1; i++ {
-			err := repo.addTestAnnotation(savedDash, repo, daysToKeepAnnotations, &annotations.Item{OrgId: 1})
+			err := repo.addTestAnnotation(savedDash, repo, expiredCreated, &annotations.Item{OrgId: 1})
 			So(err, ShouldBeNil)
 		}
 
 		// add one recent
-		err := repo.addTestAnnotation(savedDash, repo, 1, &annotations.Item{OrgId: 1})
+		newCreated := (time.Now().Unix() - int64(2*86400))
+		err := repo.addTestAnnotation(savedDash, repo, newCreated, &annotations.Item{OrgId: 1})
 		So(err, ShouldBeNil)
 
-		Convey("Clean up old annotations", func() {
+		Convey("Clean up expired annotations", func() {
 			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{DaysToKeep: daysToKeepAnnotations})
 			So(err, ShouldBeNil)
-
-			from := (time.Now().Unix() - int64(annotationsToWrite*86400)) * 1000
-			to := time.Now().Unix() * 1000
 
 			items, err := repo.Find(&annotations.ItemQuery{
 				OrgId:       1,
 				DashboardId: 1,
-				From:        from,
-				To:          to,
+				From:        expiredCreated,
+				To:          time.Now().Unix() * 1000,
 			})
 			So(err, ShouldBeNil)
 
 			So(len(items), ShouldEqual, 1)
-			Convey("Can read tags", func() {
-				So(items[0].Tags, ShouldResemble, []string{"outage", "error", "type:outage", "server:server-1"})
-			})
+			So(items[0].Tags, ShouldResemble, []string{"outage", "error", "type:outage", "server:server-1"})
 		})
 
 		Convey("Don't delete anything if there're no expired versions", func() {
@@ -100,7 +101,8 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		Convey("Don't delete more than MAX_VERSIONS_TO_DELETE per iteration", func() {
 			annotationsToWriteBigNumber := MAX_HISTORY_ENTRIES_TO_DELETE + annotationsToWrite
 			for i := 0; i < annotationsToWriteBigNumber-annotationsToWrite; i++ {
-				err := repo.addTestAnnotation(savedDash, repo, daysToKeepAnnotations, &annotations.Item{OrgId: 1})
+				created := (time.Now().Unix() - int64(daysToKeepAnnotations*2*86400))
+				err := repo.addTestAnnotation(savedDash, repo, created, &annotations.Item{OrgId: 1})
 				So(err, ShouldBeNil)
 			}
 
