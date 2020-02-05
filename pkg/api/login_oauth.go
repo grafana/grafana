@@ -218,10 +218,6 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.cookieOptionsFromCfg)
-		// if there is a sub_url, prepend it
-		if setting.AppSubUrl != "" {
-			redirectTo = setting.AppSubUrl + redirectTo
-		}
 		ctx.Redirect(redirectTo)
 		return
 	}
