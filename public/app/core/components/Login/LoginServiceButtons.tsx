@@ -18,6 +18,7 @@ const loginServices: () => LoginServices = () => {
     azuread: {
       enabled: config.oauth.azuread,
       name: 'Azure AD',
+      icon: 'windows',
     },
     github: {
       enabled: oauthEnabled && config.oauth.github,
