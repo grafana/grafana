@@ -3,7 +3,7 @@ import { PrometheusDatasource } from './datasource';
 
 import { PromQueryEditor } from './components/PromQueryEditor';
 import PromCheatSheet from './components/PromCheatSheet';
-import { PromExploreQueryEditor } from './components/PromExploreQueryEditor';
+import PromExploreQueryEditor from './components/PromExploreQueryEditor';
 
 import { ConfigEditor } from './configuration/ConfigEditor';
 
