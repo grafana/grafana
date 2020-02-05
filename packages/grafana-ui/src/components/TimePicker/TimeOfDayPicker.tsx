@@ -12,9 +12,19 @@ interface Props {
 }
 
 export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onChange, value }) => {
+  const theme = useContext(ThemeContext);
+
+  const popupStyles = css`
+    & .rc-time-picker-panel-select {
+      border-color: ${theme.colors.dark6};
+      font-size: 14px;
+    }
+  `;
+
   return (
     <div>
       <RcTimePicker
+        popupClassName={popupStyles}
         defaultValue={dateTimeAsMoment()}
         onChange={(value: any) => onChange(dateTime(value))}
         allowEmpty={false}
