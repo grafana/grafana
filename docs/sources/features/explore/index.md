@@ -86,7 +86,7 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 
 ### Visualization Options
 
-It's possible to customize how logs are displayed and select which columns are shown.
+You can customize how logs are displayed and select which columns are shown.
 
 #### Deduping
 
