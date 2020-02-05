@@ -17,7 +17,7 @@ interface SignupFormModel {
   name?: string;
 }
 interface Props {
-  routeParams?: {
+  routeParams: {
     email?: string;
     orgName?: string;
     username?: string;
@@ -40,6 +40,10 @@ export const SignupForm: FC<Props> = props => {
   const autoAssignOrg = props.autoAssignOrg || getConfig().autoAssignOrg;
 
   const onSubmit = async (formData: SignupFormModel) => {
+    if (formData.name === '') {
+      delete formData.name;
+    }
+
     const response = await getBackendSrv().post('/api/user/signup/step2', {
       email: formData.email,
       code: formData.code,
