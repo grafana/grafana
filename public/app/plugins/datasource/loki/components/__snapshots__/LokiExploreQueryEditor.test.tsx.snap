@@ -51,7 +51,21 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       },
     }
   }
-  datasource={Object {}}
+  datasource={
+    Object {
+      "languageProvider": LokiLanguageProvider {
+        "cleanText": [Function],
+        "datasource": [Circular],
+        "getBeginningCompletionItems": [Function],
+        "getTermCompletionItems": [Function],
+        "labelKeys": Object {},
+        "labelValues": Object {},
+        "request": [Function],
+        "start": [Function],
+      },
+      "metadataRequest": [Function],
+    }
+  }
   history={Array []}
   onChange={[MockFunction]}
   onRunQuery={[MockFunction]}
