@@ -169,6 +169,12 @@ export const variableRemoveVariableSucceeded = eventFactory<{ uuid: string }>('v
 export const variableRemoveVariableInAngularSucceeded = eventFactory<{ name: string }>(
   'variable-remove-variable-in-angular-succeeded'
 );
+export interface VariableChangeOrderStart {
+  fromIndex: number;
+  toIndex: number;
+}
+export const variableChangeOrderStart = eventFactory<VariableChangeOrderStart>('variable-change-order-start');
+export const variableChangeOrderSucceeded = eventFactory('variable-change-order-succeeded');
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');

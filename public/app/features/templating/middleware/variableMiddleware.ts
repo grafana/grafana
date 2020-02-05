@@ -6,6 +6,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import {
   addVariable,
   changeVariableNameSucceeded,
+  changeVariableOrder,
   duplicateVariable,
   moveVariableTypeToAngular,
   removeVariable,
@@ -15,7 +16,12 @@ import {
   VariablePayload,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
-import { MoveVariableType, VariableDuplicateVariableStart, VariableRemoveVariable } from '../../../types/events';
+import {
+  MoveVariableType,
+  VariableChangeOrderStart,
+  VariableDuplicateVariableStart,
+  VariableRemoveVariable,
+} from '../../../types/events';
 import templateSrv from '../template_srv';
 import { getVariable } from '../state/selectors';
 import { VariableState } from '../state/types';
@@ -56,6 +62,25 @@ const onVariableRemoveStart = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
   store.dispatch(removeVariable({ uuid, type, data: { notifyAngular: true } }));
 };
 
+const onVariableChangeOrderStart = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
+  fromIndex,
+  toIndex,
+}: VariableChangeOrderStart) => {
+  const stateSlice = Object.values(store.getState().templating.variables).find(
+    s => s.variable.index === fromIndex || s.variable.index === toIndex
+  );
+  if (!stateSlice) {
+    throw new Error(`Couldn't find state slice for variable with index:${fromIndex} or ${toIndex}`);
+  }
+  store.dispatch(
+    changeVariableOrder({
+      uuid: stateSlice.variable.uuid ?? '',
+      type: stateSlice.variable.type,
+      data: { fromIndex, toIndex },
+    })
+  );
+};
+
 export const variableMiddleware: Middleware<{}, StoreState> = (store: MiddlewareAPI<Dispatch, StoreState>) => (
   next: Dispatch
 ) => (action: AnyAction) => {
@@ -65,6 +90,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     dashboardEvents.on(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated(store));
     dashboardEvents.on(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
     dashboardEvents.on(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));
+    dashboardEvents.on(CoreEvents.variableChangeOrderStart, onVariableChangeOrderStart(store));
     return result;
   }
 
@@ -73,6 +99,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     dashboardEvents?.off(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated(store));
     dashboardEvents?.off(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
     dashboardEvents?.off(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));
+    dashboardEvents?.off(CoreEvents.variableChangeOrderStart, onVariableChangeOrderStart(store));
     dashboardEvents = null;
     return result;
   }

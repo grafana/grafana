@@ -5,6 +5,7 @@ import {
   addVariable,
   changeVariableHide,
   changeVariableLabel,
+  changeVariableOrder,
   duplicateVariable,
   removeVariable,
   updateVariableCompleted,
@@ -188,6 +189,40 @@ export const updateTemplatingState = (
           },
         },
       },
+    };
+  }
+
+  if (changeVariableOrder.match(action)) {
+    const variables = Object.values(state.variables).map(s => s.variable);
+    const fromVariable = variables.find(v => v.index === action.payload.data.fromIndex);
+    const toVariable = variables.find(v => v.index === action.payload.data.toIndex);
+    const newVariables = { ...state.variables };
+
+    if (fromVariable) {
+      const fromUuid = fromVariable.uuid ?? '';
+      newVariables[fromUuid] = {
+        ...newVariables[fromUuid],
+        variable: {
+          ...newVariables[fromUuid].variable,
+          index: action.payload.data.toIndex,
+        },
+      };
+    }
+
+    if (toVariable) {
+      const toUuid = toVariable.uuid ?? '';
+      newVariables[toUuid] = {
+        ...newVariables[toUuid],
+        variable: {
+          ...newVariables[toUuid].variable,
+          index: action.payload.data.fromIndex,
+        },
+      };
+    }
+
+    return {
+      ...state,
+      variables: newVariables,
     };
   }
 

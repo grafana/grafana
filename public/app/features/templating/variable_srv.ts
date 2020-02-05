@@ -170,6 +170,24 @@ export class VariableSrv {
     this.dashboard.templating.list[index].name = name;
   }
 
+  changeOrder(fromIndex: number, toIndex: number) {
+    const fromVariable: VariableModel = this.variables.find((v: VariableModel) => v.index === fromIndex);
+    const toVariable: VariableModel = this.variables.find((v: VariableModel) => v.index === toIndex);
+    if (!fromVariable || !toVariable) {
+      this.dashboard.events.emit(CoreEvents.variableChangeOrderStart, { fromIndex, toIndex });
+    }
+
+    if (fromVariable) {
+      fromVariable.index = toIndex;
+    }
+
+    if (toVariable) {
+      toVariable.index = fromIndex;
+    }
+
+    this.dashboard.events.emit(CoreEvents.variableChangeOrderSucceeded);
+  }
+
   updateOptions(variable: any) {
     return variable.updateOptions();
   }

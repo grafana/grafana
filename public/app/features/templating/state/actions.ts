@@ -104,6 +104,9 @@ export const duplicateVariable = createAction<PrepareAction<VariablePayload<Dupl
     };
   }
 );
+export const changeVariableOrder = createAction<VariablePayload<{ fromIndex: number; toIndex: number }>>(
+  'templating/changeVariableOrder'
+);
 export const setInitLock = createAction<VariablePayload<undefined>>('templating/setInitLock');
 export const resolveInitLock = createAction<VariablePayload<undefined>>('templating/resolveInitLock');
 export const removeInitLock = createAction<VariablePayload<undefined>>('templating/removeInitLock');
@@ -140,6 +143,7 @@ export const variableActions: Record<string, ActionCreatorWithPayload<VariablePa
   [addVariable.type]: addVariable,
   [duplicateVariable.type]: duplicateVariable,
   [removeVariable.type]: removeVariable,
+  [changeVariableOrder.type]: changeVariableOrder,
   [setInitLock.type]: setInitLock,
   [resolveInitLock.type]: resolveInitLock,
   [removeInitLock.type]: removeInitLock,

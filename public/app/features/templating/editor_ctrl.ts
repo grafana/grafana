@@ -25,14 +25,9 @@ export class VariableEditorCtrl {
   ) {
     this.variableSrv.dashboard.events.on(
       CoreEvents.variableNameInStateUpdated,
-      this.onVariableNameInStateUpdated.bind(this),
-      $scope
+      this.onVariableNameInStateUpdated.bind(this)
     );
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableMovedToState,
-      this.onVariableMovedToState.bind(this),
-      $scope
-    );
+    this.variableSrv.dashboard.events.on(CoreEvents.variableMovedToState, this.onVariableMovedToState.bind(this));
     this.variableSrv.dashboard.events.on(
       CoreEvents.variableMovedToAngular,
       this.onVariableMovedToAngular.bind(this),
@@ -40,13 +35,11 @@ export class VariableEditorCtrl {
     );
     this.variableSrv.dashboard.events.on(
       CoreEvents.variableEditorChangeMode,
-      this.onVariableEditorChangeMode.bind(this),
-      $scope
+      this.onVariableEditorChangeMode.bind(this)
     );
     this.variableSrv.dashboard.events.on(
       CoreEvents.variableDuplicateVariableSucceeded,
-      this.onVariableDuplicateVariableSucceeded.bind(this),
-      $scope
+      this.onVariableDuplicateVariableSucceeded.bind(this)
     );
     this.variableSrv.dashboard.events.on(
       CoreEvents.variableRemoveVariableInAngularSucceeded,
@@ -55,6 +48,10 @@ export class VariableEditorCtrl {
     this.variableSrv.dashboard.events.on(
       CoreEvents.variableRemoveVariableSucceeded,
       this.onVariableRemoveVariableSucceeded.bind(this)
+    );
+    this.variableSrv.dashboard.events.on(
+      CoreEvents.variableChangeOrderSucceeded,
+      this.onVariableChangeOrderSucceeded.bind(this)
     );
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
@@ -322,6 +319,14 @@ export class VariableEditorCtrl {
     $scope.usesAdapter = () => {
       return variableAdapters.contains($scope.current.type);
     };
+
+    $scope.moveUp = (index: number) => {
+      variableSrv.changeOrder(index, index - 1);
+    };
+
+    $scope.moveDown = (index: number) => {
+      variableSrv.changeOrder(index, index + 1);
+    };
   }
 
   onVariableNameInStateUpdated(args: VariableIdentifier) {
@@ -388,6 +393,11 @@ export class VariableEditorCtrl {
 
   onVariableRemoveVariableSucceeded(args: { uuid: string }) {
     this.$scope.variables = this.$scope.variables.filter((v: VariableModel) => v.uuid !== args.uuid);
+  }
+
+  onVariableChangeOrderSucceeded() {
+    const variablesInState = getVariables().map(variable => ({ ...variable }));
+    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
   }
 }
 

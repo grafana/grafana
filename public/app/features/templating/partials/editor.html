@@ -65,7 +65,7 @@
             </td>
             <td style="width: 1%">
               <i
-                ng-click="_.move(variables,$index,$index-1)"
+                ng-click="moveUp($index)"
                 ng-hide="$first"
                 class="pointer fa fa-arrow-up"
                 aria-label="{{::selectors.tableRowArrowUpButtons(variable.name)}}"
@@ -73,7 +73,7 @@
             </td>
             <td style="width: 1%">
               <i
-                ng-click="_.move(variables,$index,$index+1)"
+                ng-click="moveDown($index)"
                 ng-hide="$last"
                 class="pointer fa fa-arrow-down"
                 aria-label="{{::selectors.tableRowArrowDownButtons(variable.name)}}"

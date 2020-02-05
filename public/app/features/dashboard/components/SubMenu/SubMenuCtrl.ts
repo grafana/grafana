@@ -39,6 +39,7 @@ export class SubMenuCtrl {
       this.onVariableRemoveVariableInAngularSucceeded.bind(this)
     );
     this.dashboard.on(CoreEvents.variableRemoveVariableSucceeded, this.onVariableRemoveVariableSucceeded.bind(this));
+    this.dashboard.on(CoreEvents.variableChangeOrderSucceeded, this.onVariableChangeOrderSucceeded.bind(this));
 
     this.selectors = e2e.pages.Dashboard.SubMenu.selectors;
   }
@@ -94,6 +95,11 @@ export class SubMenuCtrl {
 
   onVariableRemoveVariableSucceeded(args: { uuid: string }) {
     this.variables = this.variables.filter(v => v.uuid !== args.uuid);
+  }
+
+  onVariableChangeOrderSucceeded() {
+    const variablesInState = getVariables().map(variable => ({ ...variable }));
+    this.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
   }
 }
 
