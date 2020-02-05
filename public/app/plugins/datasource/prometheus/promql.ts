@@ -377,7 +377,7 @@ export const FUNCTIONS = [
 
 const tokenizer = {
   comment: {
-    pattern: /(^|[^\n])#.*/,
+    pattern: /(^|[^\n"])#.*/,
     lookbehind: true,
   },
   'context-aggregation': {
