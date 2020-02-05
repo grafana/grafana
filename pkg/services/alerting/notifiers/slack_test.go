@@ -59,17 +59,17 @@ func TestSlackNotifier(t *testing.T) {
 
 			Convey("from settings with Recipient, Username, IconEmoji, IconUrl, MentionUsers, MentionGroups, MentionChannel, and Token", func() {
 				json := `
-				{
-          "url": "http://google.com",
-          "recipient": "#ds-opentsdb",
-          "username": "Grafana Alerts",
-          "icon_emoji": ":smile:",
-          "icon_url": "https://grafana.com/img/fav32.png",
-          "mentionUsers": "user1, user2",
-          "mentionGroups": "group1, group2",
-		  "mentionChannel": "here",
-          "token": "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX"
-				}`
+                    {
+                      "url": "http://google.com",
+                      "recipient": "#ds-opentsdb",
+                      "username": "Grafana Alerts",
+                      "icon_emoji": ":smile:",
+                      "icon_url": "https://grafana.com/img/fav32.png",
+                      "mentionUsers": "user1, user2",
+                      "mentionGroups": "group1, group2",
+                      "mentionChannel": "here",
+                      "token": "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX"
+                    }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &models.AlertNotification{
