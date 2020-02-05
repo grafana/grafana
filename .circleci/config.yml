@@ -2269,7 +2269,6 @@ workflows:
           filters: *filter-only-master
           requires:
             - docker-enterprise-master
-
             - end-to-end-tests-grabpl
       - publish-docker-ubuntu-enterprise-master:
           filters: *filter-only-master
