@@ -30,9 +30,11 @@ interface CascaderState {
 export interface CascaderOption {
   value: any;
   label: string;
+  // Items will be just flattened into the main list of items recursively.
   items?: CascaderOption[];
   disabled?: boolean;
   title?: string;
+  // Children will be shown in a submenu.
   children?: CascaderOption[];
 }
 

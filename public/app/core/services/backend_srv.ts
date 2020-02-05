@@ -170,11 +170,6 @@ export class BackendSrv implements BackendService {
     return merge(successStream, failureStream)
       .pipe(
         catchError((err: ErrorResponse) => {
-          if (err.status === 401) {
-            this.dependencies.logout();
-            return throwError(err);
-          }
-
           // this setTimeout hack enables any caller catching this err to set isHandled to true
           setTimeout(() => this.requestErrorHandler(err), 50);
           return throwError(err);
@@ -202,7 +197,7 @@ export class BackendSrv implements BackendService {
     );
 
     const fromFetchStream = this.getFromFetchStream(options);
-    const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
+    const failureStream = fromFetchStream.pipe(this.toDataSourceRequestFailureStream(options));
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
@@ -224,11 +219,6 @@ export class BackendSrv implements BackendService {
               err,
               cancelled: true,
             });
-          }
-
-          if (err.status === 401) {
-            this.dependencies.logout();
-            return throwError(err);
           }
 
           // populate error obj on Internal Error
@@ -498,7 +488,50 @@ export class BackendSrv implements BackendService {
             const firstAttempt = i === 0 && options.retry === 0;
 
             if (error.status === 401 && this.dependencies.contextSrv.user.isSignedIn && firstAttempt) {
-              return from(this.loginPing());
+              return from(this.loginPing()).pipe(
+                catchError(err => {
+                  if (err.status === 401) {
+                    this.dependencies.logout();
+                    return throwError(err);
+                  }
+                  return throwError(err);
+                })
+              );
+            }
+
+            return throwError(error);
+          })
+        )
+      )
+    );
+
+  private toDataSourceRequestFailureStream = (
+    options: BackendSrvRequest
+  ): MonoTypeOperatorFunction<FetchResponse> => inputStream =>
+    inputStream.pipe(
+      filter(response => response.ok === false),
+      mergeMap(response => {
+        const { status, statusText, data } = response;
+        const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+        return throwError(fetchErrorResponse);
+      }),
+      retryWhen((attempts: Observable<any>) =>
+        attempts.pipe(
+          mergeMap((error, i) => {
+            const requestIsLocal = !options.url.match(/^http/);
+            const firstAttempt = i === 0 && options.retry === 0;
+
+            // First retry, if loginPing returns 401 this retry sequence will abort with throwError and user is logged out
+            if (requestIsLocal && firstAttempt && error.status === 401) {
+              return from(this.loginPing()).pipe(
+                catchError(err => {
+                  if (err.status === 401) {
+                    this.dependencies.logout();
+                    return throwError(err);
+                  }
+                  return throwError(err);
+                })
+              );
             }
 
             return throwError(error);
