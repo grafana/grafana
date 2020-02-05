@@ -43,6 +43,7 @@ read -n 1 confirm
 
 if [ "${confirm}" == "y" ]; then
     git commit -am "docs: updated packages api documentation"
+    git push origin "${_branch}"
 else
     git checkout -- .
     echo "Abort! "
