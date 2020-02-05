@@ -47,7 +47,7 @@ export const SignupForm: FC<Props> = props => {
     const response = await getBackendSrv().post('/api/user/signup/step2', {
       email: formData.email,
       code: formData.code,
-      username: formData.username,
+      username: formData.email,
       orgName: formData.orgName,
       password: formData.password,
       name: formData.name,
