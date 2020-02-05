@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-xorm/xorm"
-	sqlite3 "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 )
 
 type Sqlite3 struct {
