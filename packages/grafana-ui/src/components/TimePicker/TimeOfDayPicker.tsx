@@ -15,9 +15,17 @@ export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, on
   const theme = useContext(ThemeContext);
 
   const popupStyles = css`
-    & .rc-time-picker-panel-select {
+    .rc-time-picker-panel-select {
       border-color: ${theme.colors.dark6};
       font-size: 14px;
+      li {
+        outline-width: 2px;
+        &.rc-time-picker-panel-select-option-selected {
+          background-color: inherit;
+          border: 1px solid ${theme.colors.orange};
+          border-radius: 2px;
+        }
+      }
     }
   `;
 
