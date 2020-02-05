@@ -258,6 +258,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	body := map[string]interface{}{
+		"text": evalContext.Rule.Message,
 		"blocks": []map[string]interface{}{
 			{
 				"type": "section",
