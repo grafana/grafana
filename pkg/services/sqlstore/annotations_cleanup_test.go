@@ -67,7 +67,7 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Clean up old annotations", func() {
-			err := DeleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
+			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
 			So(err, ShouldBeNil)
 
 			from := (time.Now().Unix() - int64(annotationsToWrite*86400)) * 1000
@@ -89,7 +89,7 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		Convey("Don't delete anything if there're no expired versions", func() {
 			setting.AnnotationsDaysToKeep = annotationsToWrite
 
-			err := DeleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
+			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
 			So(err, ShouldBeNil)
 
 			items, _ := repo.Find(&annotations.ItemQuery{
@@ -107,7 +107,7 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 				So(err, ShouldBeNil)
 			}
 
-			err := DeleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
+			err := deleteExpiredAnnotations(&m.DeleteExpiredVAnnotationsCommand{})
 			So(err, ShouldBeNil)
 
 			items, _ := repo.Find(&annotations.ItemQuery{
