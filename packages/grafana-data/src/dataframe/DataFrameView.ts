@@ -23,7 +23,7 @@ import { DisplayProcessor } from '../types';
  *   const first = { ...view.get(0) };
  *   const second = { ...view.get(1) };
  *   const third = { ...view.get(2) };
- *```
+ * ```
  *  @beta
  */
 export class DataFrameView<T = any> implements Vector<T> {
