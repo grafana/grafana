@@ -3,9 +3,10 @@
 # abort if we get any error
 set -e
 
-_branch="$(git rev-parse --abbrev-ref HEAD)"
+_current="$(git rev-parse --abbrev-ref HEAD)"
+_branch="${_current}-docs"
 
-if [ "${_branch}" == "master" ]; then
+if [ "${_current}" == "master" ]; then
     echo "you cannot generate api docs from the master branch"
     echo "please checkout the release branch"
     echo "ex 'git checkout v5.1.x'"
@@ -20,8 +21,12 @@ if ! git diff-index --quiet HEAD --; then
 fi
 
 # always make sure to pull latest changes from origin
-echo "pulling latest changes from ${_branch}"
-git pull origin "${_branch}"
+echo "pulling latest changes from ${_current}"
+git pull origin "${_current}"
+
+# creating new branch for docs update
+echo "creating new branch ${_branch}"
+git checkout -b "${_branch}"
 
 # building grafana packages
 echo "bulding grafana packages..."
@@ -44,6 +49,7 @@ read -n 1 confirm
 if [ "${confirm}" == "y" ]; then
     git commit -am "docs: updated packages api documentation"
     git push origin "${_branch}"
+    echo "Packages docs successfully updated. Please open a PR from ${_branch} to master."
 else
     git checkout -- .
     git clean -f docs/sources/packages_api
