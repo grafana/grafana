@@ -871,7 +871,7 @@ describe('PrometheusDatasource', () => {
           },
         };
         ds.annotationQuery(query);
-        const req = datasourceRequestMock.mock.calls[0][0];
+        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
         expect(req.url).toContain('step=60');
       });
 
