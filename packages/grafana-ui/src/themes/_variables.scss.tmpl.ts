@@ -220,8 +220,8 @@ $external-services: (
     icon: '',
   ),
   azuread: (
-    bgColor: #0078d4,
-    borderColor: #143ed4,
+    bgColor: #2f2f2f,
+    borderColor: #2f2f2f,
     icon: '',
   ),
   grafanacom: (
