@@ -2,12 +2,14 @@ import React, { Component } from 'react';
 
 import { renderMarkdown, LinkModelSupplier, ScopedVars } from '@grafana/data';
 import { Tooltip, PopoverContent } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getLocationSrv } from '@grafana/runtime';
 import { InspectTab } from '../../components/Inspector/PanelInspector';
+import { getConfig } from 'app/core/config';
+import locationUtil from 'app/core/utils/location_util';
 
 enum InfoMode {
   Error = 'Error',
@@ -56,9 +58,14 @@ export class PanelHeaderCorner extends Component<Props> {
         {links && links.length > 0 && (
           <ul className="panel-info-corner-links">
             {links.map((link, idx) => {
+              console.log('corner', `${getConfig().appSubUrl}${locationUtil.stripBaseFromUrl(link.href)}`);
               return (
                 <li key={idx}>
-                  <a className="panel-info-corner-links__item" href={link.href} target={link.target}>
+                  <a
+                    className="panel-info-corner-links__item"
+                    href={`${getConfig().appSubUrl}${locationUtil.stripBaseFromUrl(link.href)}`}
+                    target={link.target}
+                  >
                     {link.title}
                   </a>
                 </li>

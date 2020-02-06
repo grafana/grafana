@@ -5,6 +5,7 @@ import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
+import locationUtil from 'app/core/utils/location_util';
 import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
 import {
   DataLink,
@@ -215,8 +216,17 @@ export class LinkSrv implements LinkService {
   /** @ngInject */
   constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
+  assureBaseUrl(url: string) {
+    console.log('assuring', url);
+    if (url.startsWith('/')) {
+      return `${getConfig().appSubUrl}${locationUtil.stripBaseFromUrl(url)}`;
+    }
+    return url;
+  }
+
   getLinkUrl(link: any) {
-    const url = this.templateSrv.replace(link.url || '');
+    const url = this.assureBaseUrl(this.templateSrv.replace(link.url || ''));
+
     const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
@@ -266,7 +276,7 @@ export class LinkSrv implements LinkService {
     }
 
     const info: LinkModel<T> = {
-      href: href.replace(/\s|\n/g, ''),
+      href: this.assureBaseUrl(href.replace(/\s|\n/g, '')),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,
@@ -286,7 +296,9 @@ export class LinkSrv implements LinkService {
         value: variablesQuery,
       },
     });
+    console.log(info);
     info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
+    console.log(info);
     return info;
   };
 
