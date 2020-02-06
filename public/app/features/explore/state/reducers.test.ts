@@ -4,8 +4,9 @@ import {
   dateTime,
   LoadingState,
   LogsDedupStrategy,
-  RawTimeRange,
   toDataFrame,
+  ExploreMode,
+  RawTimeRange,
 } from '@grafana/data';
 
 import {
@@ -16,7 +17,7 @@ import {
   makeExploreItemState,
   makeInitialUpdateState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState, ExploreUrlState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   changeModeAction,
