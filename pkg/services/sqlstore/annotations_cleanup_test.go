@@ -45,15 +45,16 @@ func addTestAnnotation(dashboard *m.Dashboard, created int64, sess *DBSession) e
 }
 
 func TestDeleteExpiredAnnotations(t *testing.T) {
+	daysToKeepAnnotations := 5
+	repo := SqlAnnotationRepo{}
+
 	Convey("Deletion of expired annotations", t, func() {
-		InitTestDB(t)
-		repo := SqlAnnotationRepo{}
-		daysToKeepAnnotations := 5
 		annotationsToWrite := 10
 
-		expiredCreated := (time.Now().Unix() - int64(daysToKeepAnnotations*2*86400))
-		// Add expired annotations
+		InitTestDB(t)
 		savedDash := insertTestDashboard("test dash 111", 1, 0, false, "this-is-fun")
+
+		expiredCreated := (time.Now().Unix() - int64(daysToKeepAnnotations*86400))
 		err := inTransaction(func(sess *DBSession) error {
 			for i := 0; i < annotationsToWrite-1; i++ {
 				if err := addTestAnnotation(savedDash, expiredCreated, sess); err != nil {
@@ -61,21 +62,19 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 				}
 			}
 
-			// Add one recent
+			// Add a non-expired one
 			newCreated := (time.Now().Unix() - int64(2*86400))
 			return addTestAnnotation(savedDash, newCreated, sess)
 		})
 		So(err, ShouldBeNil)
 
-		Convey("Clean up expired annotations", func() {
+		Convey("Expired annotations should be deleted", func() {
 			err := deleteExpiredAnnotations(&m.DeleteExpiredAnnotationsCommand{DaysToKeep: daysToKeepAnnotations})
 			So(err, ShouldBeNil)
 
 			items, err := repo.Find(&annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        expiredCreated,
-				To:          time.Now().Unix() * 1000,
+				OrgId:       savedDash.OrgId,
+				DashboardId: savedDash.Id,
 			})
 			So(err, ShouldBeNil)
 
@@ -84,44 +83,44 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		})
 
 		Convey("Don't delete anything if there're no expired versions", func() {
-			err := deleteExpiredAnnotations(&m.DeleteExpiredAnnotationsCommand{DaysToKeep: annotationsToWrite})
+			err := deleteExpiredAnnotations(&m.DeleteExpiredAnnotationsCommand{DaysToKeep: daysToKeepAnnotations})
 			So(err, ShouldBeNil)
 
 			items, err := repo.Find(&annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
+				OrgId:       savedDash.OrgId,
+				DashboardId: savedDash.Id,
 			})
 			So(err, ShouldBeNil)
 
 			So(len(items), ShouldEqual, 1)
 		})
+	})
 
-		Convey("Don't delete more than MAX_VERSIONS_TO_DELETE per iteration", func() {
-			annotationsToWriteBigNumber := MAX_HISTORY_ENTRIES_TO_DELETE + annotationsToWrite
-			err := inTransaction(func(sess *DBSession) error {
-				created := (time.Now().Unix() - int64(daysToKeepAnnotations*86400))
-				for i := 0; i < annotationsToWriteBigNumber-annotationsToWrite; i++ {
-					if err := addTestAnnotation(savedDash, created, sess); err != nil {
-						return err
-					}
+	Convey("No more than MAX_VERSIONS_TO_DELETE annotations should be deleted per iteration", t, func() {
+		InitTestDB(t)
+		savedDash := insertTestDashboard("test dash 111", 1, 0, false, "this-is-fun")
+
+		numAnnotations := MAX_HISTORY_ENTRIES_TO_DELETE + 10
+		err := inTransaction(func(sess *DBSession) error {
+			created := (time.Now().Unix() - int64(daysToKeepAnnotations*86400))
+			for i := 0; i < numAnnotations; i++ {
+				if err := addTestAnnotation(savedDash, created, sess); err != nil {
+					return err
 				}
-				return nil
-			})
-			So(err, ShouldBeNil)
-
-			err = deleteExpiredAnnotations(&m.DeleteExpiredAnnotationsCommand{})
-			So(err, ShouldBeNil)
-
-			items, err := repo.Find(&annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-			})
-			So(err, ShouldBeNil)
-
-			// Ensure we have at least daysToKeepAnnotations versions
-			So(len(items), ShouldBeGreaterThanOrEqualTo, daysToKeepAnnotations)
-			// Ensure we haven't deleted more than MAX_VERSIONS_TO_DELETE rows
-			So(annotationsToWriteBigNumber-len(items), ShouldBeLessThanOrEqualTo, MAX_HISTORY_ENTRIES_TO_DELETE)
+			}
+			return nil
 		})
+		So(err, ShouldBeNil)
+
+		err = deleteExpiredAnnotations(&m.DeleteExpiredAnnotationsCommand{})
+		So(err, ShouldBeNil)
+
+		items, err := repo.Find(&annotations.ItemQuery{
+			OrgId:       savedDash.OrgId,
+			DashboardId: savedDash.Id,
+		})
+		So(err, ShouldBeNil)
+
+		So(len(items), ShouldEqual, numAnnotations-MAX_HISTORY_ENTRIES_TO_DELETE)
 	})
 }
