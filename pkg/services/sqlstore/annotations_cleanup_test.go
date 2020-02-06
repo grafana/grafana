@@ -99,7 +99,7 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		Convey("Don't delete more than MAX_VERSIONS_TO_DELETE per iteration", func() {
 			annotationsToWriteBigNumber := MAX_HISTORY_ENTRIES_TO_DELETE + annotationsToWrite
 			err := inTransaction(func(sess *DBSession) error {
-				created := (time.Now().Unix() - int64(daysToKeepAnnotations*2*86400))
+				created := (time.Now().Unix() - int64(daysToKeepAnnotations*86400))
 				for i := 0; i < annotationsToWriteBigNumber-annotationsToWrite; i++ {
 					if err := addTestAnnotation(savedDash, created, sess); err != nil {
 						return err
