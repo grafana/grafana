@@ -17,13 +17,14 @@ export interface Props {
 }
 
 interface State {
-  folder: any;
+  folder: SelectableValue<number>;
   validationError: string;
   hasValidationError: boolean;
 }
 
 export class FolderPicker extends PureComponent<Props, State> {
   debouncedSearch: any;
+
   constructor(props: Props) {
     super(props);
 
@@ -126,14 +127,17 @@ export class FolderPicker extends PureComponent<Props, State> {
       }
     }
 
-    this.setState({
-      folder,
-    });
-
-    // if this is not the same as our initial value notify parent
-    if (folder.value !== initialFolderId) {
-      this.props.onChange({ id: folder.value!, title: folder.text });
-    }
+    this.setState(
+      {
+        folder,
+      },
+      () => {
+        // if this is not the same as our initial value notify parent
+        if (folder.value !== initialFolderId) {
+          this.props.onChange({ id: folder.value!, title: folder.text });
+        }
+      }
+    );
   };
 
   render() {
@@ -148,6 +152,7 @@ export class FolderPicker extends PureComponent<Props, State> {
             <Forms.AsyncSelect
               loadingMessage="Loading folders..."
               defaultOptions
+              defaultValue={folder}
               value={folder}
               allowCustomValue={enableCreateNew}
               loadOptions={this.debouncedSearch}
