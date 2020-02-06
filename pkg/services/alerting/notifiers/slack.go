@@ -225,31 +225,31 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	msgBuilder := strings.Builder{}
+	mentionsBuilder := strings.Builder{}
 	appendSpace := func() {
-		if msgBuilder.Len() > 0 {
-			msgBuilder.WriteString(" ")
+		if mentionsBuilder.Len() > 0 {
+			mentionsBuilder.WriteString(" ")
 		}
 	}
 	mentionChannel := strings.TrimSpace(sn.MentionChannel)
 	if mentionChannel != "" {
-		msgBuilder.WriteString(fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel))
+		mentionsBuilder.WriteString(fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel))
 	}
 	if len(sn.MentionGroups) > 0 {
 		appendSpace()
 		for _, g := range sn.MentionGroups {
-			msgBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", g))
+			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", g))
 		}
 	}
 	if len(sn.MentionUsers) > 0 {
 		appendSpace()
 		for _, u := range sn.MentionUsers {
-			msgBuilder.WriteString(fmt.Sprintf("<@%s>", u))
+			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", u))
 		}
 	}
+	msg := ""
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
-		appendSpace()
-		msgBuilder.WriteString(evalContext.Rule.Message)
+		msg = evalContext.Rule.Message
 	}
 	imageURL := ""
 	// default to file.upload API method if a token is provided
@@ -257,22 +257,28 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		imageURL = evalContext.ImagePublicURL
 	}
 
-	body := map[string]interface{}{
-		"text": evalContext.GetNotificationTitle(),
-		"blocks": []map[string]interface{}{
+	var blocks []map[string]interface{}
+	if mentionsBuilder.Len() > 0 {
+		blocks = []map[string]interface{}{
 			{
 				"type": "section",
 				"text": map[string]interface{}{
 					"type": "mrkdwn",
-					"text": msgBuilder.String(),
+					"text": mentionsBuilder.String(),
 				},
 			},
-		},
+		}
+	}
+	body := map[string]interface{}{
+		"text":   evalContext.GetNotificationTitle(),
+		"blocks": blocks,
 		"attachments": []map[string]interface{}{
 			{
 				"color":       evalContext.GetStateModel().Color,
 				"title":       evalContext.GetNotificationTitle(),
 				"title_link":  ruleURL,
+				"text":        msg,
+				"fallback":    evalContext.GetNotificationTitle(),
 				"fields":      fields,
 				"image_url":   imageURL,
 				"footer":      "Grafana v" + setting.BuildVersion,
