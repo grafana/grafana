@@ -3,7 +3,7 @@ import { ANNOTATION_QUERY_STEP_DEFAULT, PrometheusDatasource } from './datasourc
 
 import { PromQueryEditor } from './components/PromQueryEditor';
 import PromCheatSheet from './components/PromCheatSheet';
-import { PromExploreQueryEditor } from './components/PromExploreQueryEditor';
+import PromExploreQueryEditor from './components/PromExploreQueryEditor';
 
 import { ConfigEditor } from './configuration/ConfigEditor';
 
