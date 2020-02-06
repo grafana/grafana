@@ -9,4 +9,11 @@ export const stripBaseFromUrl = (url: string): string => {
   return urlWithoutBase;
 };
 
-export default { stripBaseFromUrl };
+export const assureBaseUrl = (url: string) => {
+  if (url.startsWith('/')) {
+    return `${getConfig().appSubUrl}${stripBaseFromUrl(url)}`;
+  }
+  return url;
+};
+
+export default { stripBaseFromUrl, assureBaseUrl };
