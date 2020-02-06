@@ -950,23 +950,25 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
-	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
-	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
-	AlertingErrorOrTimeout, err = valueAsString(alerting, "error_or_timeout", "alerting")
-	if err != nil {
-		return err
-	}
-	AlertingNoDataOrNullValues, err = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
-	if err != nil {
-		return err
-	}
+	if AlertingEnabled == true {
+		ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+		AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
+		AlertingErrorOrTimeout, err = valueAsString(alerting, "error_or_timeout", "alerting")
+		if err != nil {
+			return err
+		}
+		AlertingNoDataOrNullValues, err = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
+		if err != nil {
+			return err
+		}
 
-	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
-	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
-	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
-	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
-	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
+		evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
+		AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
+		notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
+		AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
+		AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
+		AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
+	}
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
