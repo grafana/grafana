@@ -21,6 +21,7 @@ import {
 } from './reducers';
 import { buildCategories } from './buildCategories';
 import { getDataSource, getDataSourceMeta } from './selectors';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -32,6 +33,11 @@ export interface InitDataSourceSettingDependencies {
   getDataSource: typeof getDataSource;
   getDataSourceMeta: typeof getDataSourceMeta;
   importDataSourcePlugin: typeof importDataSourcePlugin;
+}
+
+export interface TestDataSourceDependencies {
+  getDatasourceSrv: typeof getDataSourceSrv;
+  getBackendSrv: typeof getBackendSrv;
 }
 
 export const initDataSourceSettings = (
@@ -67,9 +73,15 @@ export const initDataSourceSettings = (
   };
 };
 
-export const testDataSource = (dataSourceName: string): ThunkResult<void> => {
+export const testDataSource = (
+  dataSourceName: string,
+  dependencies: TestDataSourceDependencies = {
+    getDatasourceSrv,
+    getBackendSrv,
+  }
+): ThunkResult<void> => {
   return async (dispatch: ThunkDispatch, getState) => {
-    const dsApi = await getDatasourceSrv().get(dataSourceName);
+    const dsApi = await dependencies.getDatasourceSrv().get(dataSourceName);
 
     if (!dsApi.testDatasource) {
       return;
@@ -77,7 +89,7 @@ export const testDataSource = (dataSourceName: string): ThunkResult<void> => {
 
     dispatch(testDataSourceStarting());
 
-    getBackendSrv().withNoBackendCache(async () => {
+    dependencies.getBackendSrv().withNoBackendCache(async () => {
       try {
         const result = await dsApi.testDatasource();
 

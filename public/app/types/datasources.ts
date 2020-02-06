@@ -1,5 +1,5 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { GenericDataSourcePlugin } from 'app/features/datasources/settings/PluginSettings';
 
 export interface DataSourcesState {
@@ -17,12 +17,12 @@ export interface DataSourcesState {
 }
 
 export interface DataSourceSettingsState {
-  plugin?: GenericDataSourcePlugin;
+  plugin?: GenericDataSourcePlugin | null;
   testingStatus?: {
-    message?: string;
-    status?: string;
+    message?: string | null;
+    status?: string | null;
   };
-  loadError?: string;
+  loadError?: string | null;
 }
 
 export interface DataSourcePluginCategory {
