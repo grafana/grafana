@@ -295,7 +295,6 @@ export class LinkSrv implements LinkService {
       },
     });
     info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
-    console.log(info);
     return info;
   };
 
