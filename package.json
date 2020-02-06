@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "grafana",
-  "version": "6.6.0",
+  "version": "6.6.1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
