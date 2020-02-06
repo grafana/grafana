@@ -1,6 +1,7 @@
 import { eventFactory } from './utils';
 import { DataQueryError, DataQueryResponseData } from './datasource';
 
+/* tslint:disable:no-namespace */
 export namespace PanelEvents {
   /** Payloads */
   export interface PanelChangeViewPayload {

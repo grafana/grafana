@@ -5,6 +5,7 @@ import { TimeZone } from '../types/index';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
+/* tslint:disable:no-namespace */
 export namespace dateMath {
   export function isMathString(text: string | DateTime | Date): boolean {
     if (!text) {
