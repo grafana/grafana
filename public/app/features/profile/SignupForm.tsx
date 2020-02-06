@@ -36,8 +36,8 @@ const buttonSpacing = css`
 `;
 
 export const SignupForm: FC<Props> = props => {
-  const verifyEmailEnabled = props.verifyEmailEnabled || getConfig().verifyEmailEnabled;
-  const autoAssignOrg = props.autoAssignOrg || getConfig().autoAssignOrg;
+  const verifyEmailEnabled = props.verifyEmailEnabled;
+  const autoAssignOrg = props.autoAssignOrg;
 
   const onSubmit = async (formData: SignupFormModel) => {
     if (formData.name === '') {
@@ -56,7 +56,7 @@ export const SignupForm: FC<Props> = props => {
     if (response.code === 'redirect-to-select-org') {
       window.location.href = getConfig().appSubUrl + '/profile/select-org?signup=1';
     }
-    window.location.href = getConfig().appSubUrl;
+    window.location.href = getConfig().appSubUrl + '/';
   };
 
   const routeParams = props.routeParams || {};
@@ -117,7 +117,9 @@ export const SignupForm: FC<Props> = props => {
 
             <Forms.Button type="submit">Submit</Forms.Button>
             <span className={buttonSpacing}>
-              <Forms.Button variant="secondary">Back</Forms.Button>
+              <Forms.LinkButton href={getConfig().appSubUrl + '/login'} variant="secondary">
+                Back
+              </Forms.LinkButton>
             </span>
           </>
         );

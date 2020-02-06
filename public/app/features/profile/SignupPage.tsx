@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import SignupForm from './SignupForm';
 import Page from 'app/core/components/Page/Page';
+import { getConfig } from 'app/core/config';
 
 const navModel = {
   main: {
@@ -22,7 +23,7 @@ export const SignupPage: FC = () => {
           We just need a couple of more bits of
           <br /> information to finish creating your account.
         </div>
-        <SignupForm />
+        <SignupForm verifyEmailEnabled={getConfig().verifyEmailEnabled} autoAssignOrg={getConfig().autoAssignOrg} />
       </Page.Contents>
     </Page>
   );
