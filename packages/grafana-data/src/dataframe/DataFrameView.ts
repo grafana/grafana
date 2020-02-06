@@ -7,23 +7,10 @@ import { DisplayProcessor } from '../types';
  * it were a well typed javascript object Vector.
  *
  * @remarks
- * The contents of the object returned from `view.get(index)`
- * are optimized for use in a loop. All calls return the same object
- * but the index has changed.
+ * The {@link DataFrameView.get} is optimized for use in a loop and will return same object.
+ * See function for more details.
  *
- * @example
- * ```typescript
- *   // For example, the three objects:
- *   const first = view.get(0);
- *   const second = view.get(1);
- *   const third = view.get(2);
- *   // will point to the contents at index 2
- *
- *   // If you need three different objects, consider something like:
- *   const first = { ...view.get(0) };
- *   const second = { ...view.get(1) };
- *   const third = { ...view.get(2) };
- * ```
+ * @typeParam T - Type of object stored in the DataFrame.
  * @beta
  */
 export class DataFrameView<T = any> implements Vector<T> {
@@ -53,24 +40,17 @@ export class DataFrameView<T = any> implements Vector<T> {
     this.obj = obj;
   }
 
-  /**
-   * Getter to access the data frame in this view
-   */
   get dataFrame() {
     return this.data;
   }
 
-  /**
-   * Getter to access the length of the data frame.
-   */
   get length() {
     return this.data.length;
   }
 
   /**
-   * Helper function to return the {@link @grafana/data#DisplayProcessor | DisplayProcessor} for a given field column.
+   * Helper function to return the {@link DisplayProcessor} for a given field column.
    * @param colIndex - the field column index for the data frame.
-   * @returns {@link @grafana/data#DisplayProcessor | DisplayProcessor} if field exits in data frame otherwise `undefined`.
    */
   getFieldDisplayProcessor(colIndex: number): DisplayProcessor | null {
     if (!this.dataFrame || !this.dataFrame.fields) {
@@ -86,6 +66,25 @@ export class DataFrameView<T = any> implements Vector<T> {
     return field.display;
   }
 
+  /**
+   * The contents of the object returned from this function
+   * are optimized for use in a loop. All calls return the same object
+   * but the index has changed.
+   *
+   * @example
+   * ```typescript
+   *   // `first`, `second` and `third` will all point to the same contents at index 2:
+   *   const first = view.get(0);
+   *   const second = view.get(1);
+   *   const third = view.get(2);
+   *
+   *   // If you need three different objects, consider something like:
+   *   const first = { ...view.get(0) };
+   *   const second = { ...view.get(1) };
+   *   const third = { ...view.get(2) };
+   * ```
+   * @param idx - The index of the object you currently are inspecting
+   */
   get(idx: number) {
     this.index = idx;
     return this.obj;
