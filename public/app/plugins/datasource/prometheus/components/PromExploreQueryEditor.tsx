@@ -46,6 +46,8 @@ export function PromExploreQueryEditor(props: Props) {
           onChangeFunc={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
           value={query.interval || ''}
+          hasTooltip={true}
+          tooltipContent={'Needs to be a valid time unit string, for example 5s, 1m, 3h, 1d, 1y'}
         />
       }
     />
