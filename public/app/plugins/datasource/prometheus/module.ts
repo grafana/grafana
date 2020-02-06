@@ -1,5 +1,5 @@
 import { DataSourcePlugin } from '@grafana/data';
-import { PrometheusDatasource } from './datasource';
+import { ANNOTATION_QUERY_STEP_DEFAULT, PrometheusDatasource } from './datasource';
 
 import { PromQueryEditor } from './components/PromQueryEditor';
 import PromCheatSheet from './components/PromCheatSheet';
@@ -9,6 +9,7 @@ import { ConfigEditor } from './configuration/ConfigEditor';
 
 class PrometheusAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
+  stepDefaultValuePlaceholder = ANNOTATION_QUERY_STEP_DEFAULT;
 }
 
 export const plugin = new DataSourcePlugin(PrometheusDatasource)

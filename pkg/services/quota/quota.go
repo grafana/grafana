@@ -23,7 +23,12 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 	if !setting.Quota.Enabled {
 		return false, nil
 	}
-
+	// No request context means this is a background service, like LDAP Background Sync.
+	// TODO: we should replace the req context with a more limited interface or struct,
+	//       something that we could easily provide from background jobs.
+	if c == nil {
+		return false, nil
+	}
 	// get the list of scopes that this target is valid for. Org, User, Global
 	scopes, err := m.GetQuotaScopes(target)
 	if err != nil {

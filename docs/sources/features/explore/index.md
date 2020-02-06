@@ -84,7 +84,11 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
 
-### Deduping
+### Visualization options
+
+You can customize how logs are displayed and select which columns are shown.
+
+#### Deduping
 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
 
@@ -92,18 +96,23 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 * `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
 * `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
-### Timestamp and Local time
+#### Time
 
-There are some other check boxes under the logging graph apart from the Deduping options.
+Shows or hides the time column. This is the timestamp associated with the log line as reported from the data source.
 
-* Timestamp: shows/hides the Timestamp column
-* Local time: shows/hides the Local time column
+#### Unique labels
+
+Shows or hides the unique labels column that includes only non-common labels. All common labels are displayed above.
+
+#### Wrap lines
+
+Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
 
 ### Labels and Parsed fields
 
-Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs. 
+Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
-### Loki-specific Features
+### Loki-specific features
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Grafana Loki [here](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 

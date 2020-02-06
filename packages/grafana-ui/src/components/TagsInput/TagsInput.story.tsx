@@ -5,7 +5,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { TagsInput } from './TagsInput';
 
-const TagsInputStories = storiesOf('UI/TagsInput', module);
+const TagsInputStories = storiesOf('General/TagsInput', module);
 const mockTags = ['Some', 'Tags', 'With', 'This', 'New', 'Component'];
 
 TagsInputStories.addDecorator(withCenteredStory);
