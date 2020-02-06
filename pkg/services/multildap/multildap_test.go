@@ -506,46 +506,6 @@ func (mock *MockLDAP) Bind() error {
 	return mock.bindErrReturn
 }
 
-// MockMultiLDAP represents testing struct for multildap testing
-type MockMultiLDAP struct {
-	LoginCalledTimes int
-	UsersCalledTimes int
-	UserCalledTimes  int
-	PingCalledTimes  int
-
-	UsersResult []*models.ExternalUserInfo
-}
-
-func (mock *MockMultiLDAP) Ping() ([]*ServerStatus, error) {
-	mock.PingCalledTimes = mock.PingCalledTimes + 1
-
-	return nil, nil
-}
-
-// Login test fn
-func (mock *MockMultiLDAP) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo, error,
-) {
-	mock.LoginCalledTimes = mock.LoginCalledTimes + 1
-	return nil, nil
-}
-
-// Users test fn
-func (mock *MockMultiLDAP) Users(logins []string) (
-	[]*models.ExternalUserInfo, error,
-) {
-	mock.UsersCalledTimes = mock.UsersCalledTimes + 1
-	return mock.UsersResult, nil
-}
-
-// User test fn
-func (mock *MockMultiLDAP) User(login string) (
-	*models.ExternalUserInfo, ldap.ServerConfig, error,
-) {
-	mock.UserCalledTimes = mock.UserCalledTimes + 1
-	return nil, ldap.ServerConfig{}, nil
-}
-
 func setup() *MockLDAP {
 	mock := &MockLDAP{}
 
