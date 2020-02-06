@@ -3,9 +3,9 @@ import isDate from 'lodash/isDate';
 import { DateTime, dateTime, dateTimeForTimeZone, ISO_8601, isDateTime, DurationUnit } from './moment_wrapper';
 import { TimeZone } from '../types/index';
 
-namespace dateMath {
-  const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
+export namespace dateMath {
   export function isMathString(text: string | DateTime | Date): boolean {
     if (!text) {
       return false;
@@ -158,7 +158,3 @@ namespace dateMath {
     return dateTime;
   }
 }
-
-//@ts-ignore
-export = dateMath;
-export default dateMath;

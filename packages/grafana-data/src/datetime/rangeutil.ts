@@ -3,10 +3,10 @@ import groupBy from 'lodash/groupBy';
 
 import { RawTimeRange } from '../types/time';
 
-import dateMath from './datemath';
+import { dateMath } from './datemath';
 import { isDateTime, DateTime } from './moment_wrapper';
 
-namespace rangeUtil {
+export namespace rangeUtil {
   const spans: { [key: string]: { display: string; section?: number } } = {
     s: { display: 'second' },
     m: { display: 'minute' },
@@ -182,7 +182,3 @@ namespace rangeUtil {
     return info.invalid !== true;
   };
 }
-
-//@ts-ignore
-export = rangeUtil;
-export default rangeUtil;

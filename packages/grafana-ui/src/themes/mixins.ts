@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 
-namespace styleMixins {
+export namespace styleMixins {
   export function cardChrome(theme: GrafanaTheme): string {
     if (theme.isDark) {
       return `
@@ -45,7 +45,3 @@ namespace styleMixins {
     `;
   }
 }
-
-// @ts-ignore
-export = styleMixins;
-export default styleMixins;

@@ -1,4 +1,4 @@
-namespace DOMUtil {
+export namespace DOMUtil {
   // Node.closest() polyfill
   if ('Element' in window && !Element.prototype.closest) {
     Element.prototype.closest = function(this: any, s: string) {
@@ -41,7 +41,3 @@ namespace DOMUtil {
     return text!.substr(offset, 1);
   }
 }
-
-//@ts-ignore
-export = DOMUtil;
-export default DOMUtil;

@@ -7,4 +7,4 @@ export * from './measureText';
 export { default as ansicolor } from './ansicolor';
 
 // Export with a namespace
-export { default as DOMUtil } from './dom'; // includes Element.closest polyfil
+export { DOMUtil } from './dom'; // includes Element.closest polyfil

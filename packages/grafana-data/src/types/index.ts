@@ -25,4 +25,4 @@ export * from './orgs';
 export * from './flot';
 
 export { AppEvent, AppEvents } from './appEvents';
-export { default as PanelEvents } from './panelEvents';
+export { PanelEvents } from './panelEvents';

@@ -1,7 +1,7 @@
 import { eventFactory } from './utils';
 import { DataQueryError, DataQueryResponseData } from './datasource';
 
-namespace PanelEvents {
+export namespace PanelEvents {
   /** Payloads */
   export interface PanelChangeViewPayload {
     fullscreen?: boolean;
@@ -23,7 +23,6 @@ namespace PanelEvents {
   }
 
   /** Events */
-
   export const refresh = eventFactory('refresh');
   export const componentDidMount = eventFactory('component-did-mount');
   export const dataError = eventFactory<DataQueryError>('data-error');
@@ -38,7 +37,3 @@ namespace PanelEvents {
   export const render = eventFactory<any>('render');
   export const viewModeChanged = eventFactory('view-mode-changed');
 }
-
-// @ts-ignore
-export = PanelEvents;
-export default PanelEvents;
