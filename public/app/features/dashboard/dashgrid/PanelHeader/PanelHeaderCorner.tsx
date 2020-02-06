@@ -58,7 +58,6 @@ export class PanelHeaderCorner extends Component<Props> {
         {links && links.length > 0 && (
           <ul className="panel-info-corner-links">
             {links.map((link, idx) => {
-              console.log('corner', `${getConfig().appSubUrl}${locationUtil.stripBaseFromUrl(link.href)}`);
               return (
                 <li key={idx}>
                   <a
