@@ -100,7 +100,7 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		InitTestDB(t)
 		savedDash := insertTestDashboard("test dash 111", 1, 0, false, "this-is-fun")
 
-		numAnnotations := MAX_HISTORY_ENTRIES_TO_DELETE + 10
+		numAnnotations := MAX_EXPIRED_ANNOTATIONS_TO_DELETE + 10
 		err := inTransaction(func(sess *DBSession) error {
 			created := (time.Now().Unix() - int64(daysToKeepAnnotations*86400))
 			for i := 0; i < numAnnotations; i++ {
@@ -121,6 +121,6 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 		})
 		So(err, ShouldBeNil)
 
-		So(len(items), ShouldEqual, numAnnotations-MAX_HISTORY_ENTRIES_TO_DELETE)
+		So(len(items), ShouldEqual, numAnnotations-MAX_EXPIRED_ANNOTATIONS_TO_DELETE)
 	})
 }

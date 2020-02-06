@@ -14,7 +14,7 @@ func init() {
 	bus.AddHandler("sql", deleteExpiredAnnotations)
 }
 
-const MAX_HISTORY_ENTRIES_TO_DELETE = 900
+const MAX_EXPIRED_ANNOTATIONS_TO_DELETE = 900
 
 func deleteExpiredAnnotations(cmd *m.DeleteExpiredAnnotationsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
@@ -22,7 +22,7 @@ func deleteExpiredAnnotations(cmd *m.DeleteExpiredAnnotationsCommand) error {
 
 		query := "SELECT id FROM annotation WHERE created <= ? ORDER BY id LIMIT ?"
 		var annotationIdsToDelete []interface{}
-		if err := sess.SQL(query, historyTimeStamp, MAX_HISTORY_ENTRIES_TO_DELETE).Find(&annotationIdsToDelete); err != nil {
+		if err := sess.SQL(query, historyTimeStamp, MAX_EXPIRED_ANNOTATIONS_TO_DELETE).Find(&annotationIdsToDelete); err != nil {
 			return errutil.Wrapf(err, "failed to query for expired annotations")
 		}
 		if len(annotationIdsToDelete) == 0 {
