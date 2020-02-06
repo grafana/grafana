@@ -8,7 +8,8 @@ exports[`PrometheusExploreExtraField should render component 1`] = `
     className="gf-form"
   >
     <Component
-      width={4}
+      tooltip={null}
+      width={5}
     >
       Prometheus Explore Extra Field
     </Component>
