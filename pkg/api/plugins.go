@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding/json"
 	"sort"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -238,19 +240,44 @@ func (hs *HTTPServer) CheckHealth(c *m.ReqContext) Response {
 // /api/plugins/:pluginId/resources/*
 func (hs *HTTPServer) CallResource(c *m.ReqContext) Response {
 	pluginID := c.Params("pluginId")
-	_, exists := plugins.Plugins[pluginID]
+	plugin, exists := plugins.Plugins[pluginID]
 	if !exists {
 		return Error(404, "Plugin not found, no installed plugin with that id", nil)
+	}
+
+	var appSettings *backendplugin.AppInstanceSettings
+
+	ps, err := hs.getCachedPluginSettings(pluginID, c.SignedInUser)
+	if err != nil {
+		if err != m.ErrPluginSettingNotFound {
+			return Error(500, "Failed to get plugin settings", err)
+		}
+	} else {
+		jsonDataBytes, err := json.Marshal(&ps.JsonData)
+		if err != nil {
+			return Error(500, "Failed to marshal JSON data to bytes", err)
+		}
+
+		appSettings = &backendplugin.AppInstanceSettings{
+			InstanceSettings: &backendplugin.InstanceSettings{
+				JSONData:                jsonDataBytes,
+				DecryptedSecureJSONData: ps.DecryptedValues(),
+				Updated:                 ps.Updated,
+			},
+		}
 	}
 
 	body, err := c.Req.Body().Bytes()
 	if err != nil {
 		return Error(500, "Failed to read request body", err)
 	}
+
 	req := backendplugin.CallResourceRequest{
 		Config: backendplugin.PluginConfig{
-			OrgID:    c.OrgId,
-			PluginID: pluginID,
+			OrgID:       c.OrgId,
+			PluginID:    plugin.Id,
+			PluginType:  plugin.Type,
+			AppSettings: appSettings,
 		},
 		Path:    c.Params("*"),
 		Method:  c.Req.Method,
@@ -272,4 +299,23 @@ func (hs *HTTPServer) CallResource(c *m.ReqContext) Response {
 		status: resp.Status,
 		header: resp.Headers,
 	}
+}
+
+func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *m.SignedInUser) (*m.PluginSetting, error) {
+	cacheKey := "plugin-setting-" + pluginID
+
+	if cached, found := hs.CacheService.Get(cacheKey); found {
+		ps := cached.(*m.PluginSetting)
+		if ps.OrgId == user.OrgId {
+			return ps, nil
+		}
+	}
+
+	query := m.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: user.OrgId}
+	if err := hs.Bus.Dispatch(&query); err != nil {
+		return nil, err
+	}
+
+	hs.CacheService.Set(cacheKey, query.Result, time.Second*5)
+	return query.Result, nil
 }
