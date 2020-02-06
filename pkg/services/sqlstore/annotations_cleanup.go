@@ -18,30 +18,32 @@ func deleteExpiredAnnotations(cmd *m.DeleteExpiredAnnotationsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		historyTimeStamp := (time.Now().Unix() - int64(cmd.DaysToKeep*86400)) * 1000
 
-		annotationsIdsToDeleteQuery := `SELECT id FROM annotation WHERE created <= ? ORDER BY id LIMIT ?`
+		annotationIdsToDeleteQuery := `SELECT id FROM annotation WHERE created <= ? ORDER BY id LIMIT ?`
 
-		var annotationsIdsToDelete []interface{}
-		err := sess.SQL(annotationsIdsToDeleteQuery, historyTimeStamp, MAX_HISTORY_ENTRIES_TO_DELETE).Find(&annotationsIdsToDelete)
+		var annotationIdsToDelete []interface{}
+		err := sess.SQL(annotationIdsToDeleteQuery, historyTimeStamp, MAX_HISTORY_ENTRIES_TO_DELETE).Find(&annotationIdsToDelete)
 		if err != nil {
 			return err
 		}
 
-		if len(annotationsIdsToDelete) > 0 {
-
-			deleteExpiredTagsSql := `DELETE FROM annotation_tag WHERE annotation_id IN (?` + strings.Repeat(",?", len(annotationsIdsToDelete)-1) + `)`
-			sqlOrArgsTags := append([]interface{}{deleteExpiredTagsSql}, annotationsIdsToDelete...)
+		if len(annotationIdsToDelete) > 0 {
+			deleteExpiredTagsSql := `DELETE FROM annotation_tag WHERE annotation_id IN (?` + strings.Repeat(",?", len(annotationIdsToDelete)-1) + `)`
+			sqlOrArgsTags := append([]interface{}{deleteExpiredTagsSql}, annotationIdsToDelete...)
 			_, err := sess.Exec(sqlOrArgsTags...)
 			if err != nil {
 				return err
 			}
 
-			deleteExpiredSql := `DELETE FROM annotation WHERE id IN (?` + strings.Repeat(",?", len(annotationsIdsToDelete)-1) + `)`
-			sqlOrArgs := append([]interface{}{deleteExpiredSql}, annotationsIdsToDelete...)
+			deleteExpiredSql := `DELETE FROM annotation WHERE id IN (?` + strings.Repeat(",?", len(annotationIdsToDelete)-1) + `)`
+			sqlOrArgs := append([]interface{}{deleteExpiredSql}, annotationIdsToDelete...)
 			expiredResponse, err := sess.Exec(sqlOrArgs...)
 			if err != nil {
 				return err
 			}
-			cmd.DeletedRows, _ = expiredResponse.RowsAffected()
+			cmd.DeletedRows, err = expiredResponse.RowsAffected()
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil

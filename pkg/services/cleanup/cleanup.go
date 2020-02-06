@@ -135,6 +135,6 @@ func (srv *CleanUpService) deleteExpiredAnnotations() {
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired annotations", "error", err.Error())
 	} else {
-		srv.log.Debug("Deleted old/expired annotations", "rows affected", cmd.DeletedRows)
+		srv.log.Debug("Deleted expired annotations", "rows affected", cmd.DeletedRows)
 	}
 }
