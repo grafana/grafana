@@ -24,7 +24,7 @@ import { DisplayProcessor } from '../types';
  *   const second = { ...view.get(1) };
  *   const third = { ...view.get(2) };
  * ```
- *  @beta
+ * @beta
  */
 export class DataFrameView<T = any> implements Vector<T> {
   private index = 0;
