@@ -42,7 +42,9 @@ export class VariableSrv {
     const allVariables = dashboard.templating.list.map((model: VariableModel, index) =>
       this.createVariableFromModel(model, index)
     );
-    this.variables = dashboard.templating.list = allVariables.filter((m: VariableModel) => !variableAdapters.contains(m.type));
+    this.variables = dashboard.templating.list = allVariables.filter(
+      (m: VariableModel) => !variableAdapters.contains(m.type)
+    );
     this.templateSrv.init(this.variables, this.timeSrv.timeRange());
 
     // init variables
