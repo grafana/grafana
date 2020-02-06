@@ -13,7 +13,7 @@ import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import PanelEditor from '../components/PanelEditor/PanelEditor';
-import { CustomScrollbar, Alert } from '@grafana/ui';
+import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
@@ -325,7 +325,11 @@ export class DashboardPage extends PureComponent<Props, State> {
         </div>
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={inspectTab} />}
-        {editPanel && <PanelEditor dashboard={dashboard} panel={editPanel} />}
+        {editPanel && (
+          <Portal>
+            <PanelEditor dashboard={dashboard} panel={editPanel} />
+          </Portal>
+        )}
       </div>
     );
   }

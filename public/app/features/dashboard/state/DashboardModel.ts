@@ -954,7 +954,7 @@ export class DashboardModel {
     let index = 0;
     for (const panel of this.panels) {
       if (panel.id === panelModel.id) {
-        this.panels[index] = panelModel;
+        this.panels[index].restoreModel(panelModel.getSaveModel());
         this.panels[index].refresh();
         break;
       }

@@ -191,11 +191,8 @@ export class PanelQueryRunner {
     return this.lastResult;
   }
 
-  clone = () => {
-    const clone = new PanelQueryRunner();
-    clone.setTransformations(this.transformations);
-    clone.lastResult = { ...this.lastResult };
-    return clone;
+  setLastResult = (data: PanelData) => {
+    this.lastResult = { ...data };
   };
 }
 

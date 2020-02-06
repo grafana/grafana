@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useState, useCallback, FC, useEffect } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, Forms } from '@grafana/ui';
+import { stylesFactory, Forms, ConfirmModal, Portal } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -11,6 +11,7 @@ import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { StoreState } from '../../../../types/store';
 import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
+import { ButtonProps } from '@grafana/ui/src/components/Forms/Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -55,22 +56,61 @@ interface Props {
 
 interface State {
   dirtyPanel?: PanelModel;
+  showConfirm?: boolean;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
-  state: State = {};
+  state: State = {
+    showConfirm: false,
+  };
 
   constructor(props: Props) {
     super(props);
     const { panel } = props;
+    //  use Proxy for change detection ?
     const dirtyPanel = new PanelModel(panel.getSaveModel());
-    dirtyPanel.setQueryRunner(panel.getQueryRunner().clone());
+    console.log(panel.getQueryRunner().getLastResult());
+    const lastResult = panel.getQueryRunner().getLastResult();
+    if (lastResult) {
+      dirtyPanel.getQueryRunner().setLastResult(panel.getQueryRunner().getLastResult());
+    }
     dirtyPanel.isNewEdit = true;
     this.state = { dirtyPanel };
   }
 
+  onPanelSave = () => {
+    const { dirtyPanel } = this.state;
+    const { dashboard } = this.props;
+    dashboard.updatePanel(dirtyPanel);
+  };
+
+  onPanelExit = () => {
+    // if changes detected
+    this.setState({ showConfirm: true });
+
+    // otherwise go back to dashboat=rd
+  };
+
+  onSaveConfirm = () => {
+    const { updateLocation } = this.props;
+    this.onPanelSave();
+    updateLocation({
+      query: { editPanel: null },
+      partial: true,
+    });
+  };
+
+  onSaveDiscard = () => {
+    const { updateLocation } = this.props;
+    this.setState({ showConfirm: false });
+    updateLocation({
+      query: { editPanel: null },
+      partial: true,
+    });
+  };
+
   render() {
-    const { dashboard, panel } = this.props;
+    const { dashboard } = this.props;
     const { dirtyPanel } = this.state;
 
     const styles = getStyles(config.theme);
@@ -80,47 +120,78 @@ export class PanelEditor extends PureComponent<Props, State> {
     }
 
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.leftPane}>
-          <div className={styles.leftPaneViz}>
-            <DashboardPanel
-              dashboard={dashboard}
-              panel={dirtyPanel}
-              isEditing={false}
-              isInEditMode
-              isFullscreen={false}
-              isInView={true}
-            />
+      <>
+        <div className={styles.wrapper}>
+          <div className={styles.leftPane}>
+            <div className={styles.leftPaneViz}>
+              <DashboardPanel
+                dashboard={dashboard}
+                panel={dirtyPanel}
+                isEditing={false}
+                isInEditMode
+                isFullscreen={false}
+                isInView={true}
+              />
+            </div>
+            <div className={styles.leftPaneData}>
+              <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
+            </div>
           </div>
-          <div className={styles.leftPaneData}>
-            <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
+          <div className={styles.rightPane}>
+            <SaveButton onClick={this.onPanelSave}>Save</SaveButton>
+            <Forms.Button variant="destructive" onClick={this.onPanelExit}>
+              Exit
+            </Forms.Button>
           </div>
         </div>
-        <div className={styles.rightPane}>
-          <Forms.Button
-            onClick={() => {
-              dirtyPanel.setQueryRunner(panel.getQueryRunner());
-              this.props.dashboard.updatePanel(dirtyPanel);
-            }}
-          >
-            Save
-          </Forms.Button>
-          <Forms.Button
-            variant="destructive"
-            onClick={() => {
-              this.props.updateLocation({
-                query: { editPanel: null },
-                partial: true,
-              });
-            }}
-          >
-            Discard
-          </Forms.Button>
-        </div>
-      </div>
+        <Portal>
+          <ConfirmModal
+            isOpen={this.state.showConfirm}
+            title="Unsaved changes"
+            body="Do you want to save your changes?"
+            confirmText="Save"
+            dismissText="Discard"
+            onConfirm={this.onSaveConfirm}
+            onDismiss={this.onSaveDiscard}
+          />
+        </Portal>
+      </>
     );
   }
 }
+
+// Adds visual que changes are saved. Needs better UI for sure
+const SaveButton: FC<ButtonProps> = ({ onClick, ...otherProps }) => {
+  const [isSaved, setIsSaved] = useState(false);
+  useEffect(() => {
+    if (isSaved) {
+      const timeout = setTimeout(() => {
+        setIsSaved(false);
+      }, 1000);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+    return () => {};
+  }, [isSaved]);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<any>) => {
+      onClick(e);
+      setIsSaved(true);
+    },
+    [onClick, isSaved]
+  );
+
+  const label = isSaved ? 'Saved, yay!' : 'Save';
+
+  return (
+    <Forms.Button onClick={handleClick} {...otherProps}>
+      {label}
+    </Forms.Button>
+  );
+};
 
 const mapStateToProps = (state: StoreState) => ({
   location: state.location,
