@@ -137,15 +137,14 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
-		if id, err := jsonModel.Get("id").Int64(); err == nil {
-			maybeUID := translateNotificationIDToUID(id, ruleDef.OrgId)
-			model.Notifications = append(model.Notifications, maybeUID...)
-		} else {
-			uid, err := jsonModel.Get("uid").String()
-			if err != nil {
-				return nil, ValidationError{Reason: "Neither id nor uid is specified in 'notifications' block, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
-			}
+		if uid, err := getNotificationUidFromIdField(jsonModel, ruleDef); err == nil {
 			model.Notifications = append(model.Notifications, uid)
+		} else if err.Error() != "invalid value type" {
+			return nil, ValidationError{Reason: "Unable to translate notification id to uid, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+		} else if uid, err := getNotificationUidFromUidField(jsonModel); err == nil {
+			model.Notifications = append(model.Notifications, uid)
+		} else {
+			return nil, ValidationError{Reason: "Neither id nor uid is specified in 'notifications' block, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
 		}
 	}
 	model.AlertRuleTags = ruleDef.GetTagsFromSettings()
@@ -171,14 +170,32 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	return model, nil
 }
 
-func translateNotificationIDToUID(id int64, orgID int64) []string {
+func getNotificationUidFromUidField(jsonModel *simplejson.Json) (string, error) {
+	return jsonModel.Get("uid").String()
+}
+
+func getNotificationUidFromIdField(jsonModel *simplejson.Json, ruleDef *models.Alert) (string, error) {
+	id, parseErr := jsonModel.Get("id").Int64()
+	if parseErr != nil {
+		return "", parseErr
+	}
+
+	uid, translateErr := translateNotificationIDToUID(id, ruleDef.OrgId)
+	if translateErr != nil {
+		return "", translateErr
+	}
+
+	return uid, nil
+}
+
+func translateNotificationIDToUID(id int64, orgID int64) (string, error) {
 	notificationDto, err := getAlertNotificationByIDAndOrgID(id, orgID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to translate Notification Id to Uid for [ OrgId: %v, Id: %v ]", orgID, id))
-		return []string{}
+		return "", err
 	}
 
-	return []string{notificationDto.Uid}
+	return notificationDto.Uid, nil
 }
 
 func getAlertNotificationByIDAndOrgID(notificationID int64, orgID int64) (*models.AlertNotification, error) {

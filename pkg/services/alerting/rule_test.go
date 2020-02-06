@@ -114,6 +114,41 @@ func TestAlertRuleModel(t *testing.T) {
 			})
 		})
 
+		Convey("with non existing notification id", func() {
+			json := `
+				{
+					"name": "name3",
+					"description": "desc3",
+					"handler": 0,
+					"noDataMode": "critical",
+					"enabled": true,
+					"frequency": "60s",
+					"conditions": [{"type": "test", "prop": 123 }],
+					"notifications": [
+						{"id": 999}
+					]
+				}
+				`
+
+			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+			So(jsonErr, ShouldBeNil)
+
+			alert := &models.Alert{
+				Id:          1,
+				OrgId:       1,
+				DashboardId: 1,
+				PanelId:     1,
+
+				Settings: alertJSON,
+			}
+
+			_, err := NewRuleFromDBAlert(alert)
+			Convey("raises an error", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "Alert validation error: Unable to translate notification id to uid, Alert notification [ Id: 999, OrgId: 1 ] doesn't exists AlertId: 1 PanelId: 1 DashboardId: 1")
+			})
+		})
+
 		Convey("can construct alert rule model with invalid frequency", func() {
 			json := `
 			{
