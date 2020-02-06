@@ -225,7 +225,6 @@ export class LinkSrv implements LinkService {
 
   getLinkUrl(link: any) {
     const url = this.assureBaseUrl(this.templateSrv.replace(link.url || ''));
-
     const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
