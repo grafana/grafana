@@ -9,7 +9,7 @@ const getKnobs = () => {
 };
 
 export default {
-  title: 'UI/Forms/FieldValidationMessage',
+  title: 'Forms/FieldValidationMessage',
   component: FieldValidationMessage,
 };
 

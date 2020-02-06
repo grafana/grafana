@@ -35,6 +35,7 @@ addParameters({
   info: {},
   options: {
     showPanel: true,
+    showRoots: true,
     panelPosition: 'bottom',
     showNav: true,
     isFullscreen: false,

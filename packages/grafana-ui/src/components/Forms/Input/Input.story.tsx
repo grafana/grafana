@@ -9,7 +9,7 @@ import { KeyValue } from '@grafana/data';
 import { Icon } from '../../Icon/Icon';
 
 export default {
-  title: 'UI/Forms/Input',
+  title: 'Forms/Input',
   component: Input,
   decorators: [withCenteredStory],
   parameters: {
