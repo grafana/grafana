@@ -55,7 +55,7 @@ func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.C
 
 	if client.DatasourcePlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, client.DatasourcePlugin), nil
+			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DatasourcePlugin), nil
 		})
 	}
 
@@ -123,8 +123,12 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 	}
 
 	getDsInfo := &models.GetDataSourceByIdQuery{
-		Id:    req.Config.Id,
 		OrgId: req.Config.OrgId,
+	}
+
+	ds := req.Config.GetDataSource()
+	if ds != nil {
+		getDsInfo.Id = ds.Id
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
