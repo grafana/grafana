@@ -22,46 +22,103 @@ Start by figuring out how you're currently navigating between dashboards. If you
 
 The next step is to figure out which link type is right for your workflow. Even though all the link types in Grafana are used to create shortcuts to other dashboards or external websites, they work in different contexts.
 
-- If the link relates to most if not all of the panels in the dashboard, use a Dashboard Link.
-- If you want to drill down into specific panels, use a Panel Link.
-- If you want to drill down into a specific series, or even a single measurement, use a Data Link.
+- If the link relates to most if not all of the panels in the dashboard, use a *dashboard link*.
+- If you want to drill down into specific panels, use a *panel link*.
+- If you want to drill down into a specific series, or even a single measurement, use a *data link*.
 
+## Dashboard links
 
+When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data.
 
+Dashboard links can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
 
+To see an example of dashboard links in action, check out [this demo](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1).
 
-## Dashboard Links
+Once you've added a dashboard link, it appears in the upper right corner of your dashboard.
 
-Imagine you have a dashboard displaying HTTP request rates and errors for your services. You've zoomed in on an interval with several errors, and you suspect it's related to the underlying hardware. Using Dashboard Links, you can create a shortcut to a dashboard displaying resource usage for the host machines where the service is running.
+### Add links to dashboards
 
-When you create a Dashboard Link, you have the option to include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether you’re looking at the right data.
+Add a links to other dashboards at the top of your current dashboard.
 
-They can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
+1. While viewing the dashboard you want to link, click the gear at the top of the screen to open **Dashboard settings**.
+1. Click **Links** and then click **Add Dashboard Link** or **New**.
+1. In **Type**, select **dashboards**.
+1. Select link options:
+   - **With tags** – Enter tags to limit the linked dashboards to only the ones with the tags you enter. Otherwise, Grafana includes links to all other dashboards.
+   - **As dropdown** – If you are linking to lots of dashboards, then you probably want to select this option and add an optional title to the dropdown. Otherwise, Grafana displays the dashboard links side by side across the top of your dashboard.
+   - **Time range** – ?What does this do? How do you select this? Time range to display when you open a linked dashboard?
+   - **Variable values** – ?What does this do? Variables for which dashboard, current or linked?
+   - **Open in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
+1. Click **Add**.
 
-To add a Dashboard Link, go to **Dashboard settings** -> **Links**, and click **New**. Once you've added a Dashboard Link, it will appear in the upper right corner of your dashboard.
+### Add a link to a URL
 
-{{< docs-imagebox img="/static/assets/img/blog/dashboard_links2.png" max-width="800px" caption="Add Dashboard Link" >}}
+Add a link to a URL at the top of your current dashboard. You can link to any available URL, including dashboards, panels, or external sites. You can even [control the time range](https://grafana.com/docs/grafana/latest/reference/timerange/#controlling-time-range-using-url) to ensure the user is zoomed in on the right data in Grafana.
 
-To see an example of Dashboard Links in action, check out [this demo](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1).
+1. While viewing the dashboard you want to link, click the gear at the top of the screen to open **Dashboard settings**.
+1. Click **Links** and then click **Add Dashboard Link** or **New**.
+1. In **Type**, select **link**.
+1. Select link options:
+   - **Url** – Enter the URL you want to link to. Depending on the target, you might want to include field values. **Example:** https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests
+   - **Title** – Enter the title you want the link to display.
+   - **Tooltip** – Enter the tooltip you want the link to display when the user hovers their mouse over it.
+   - **Icon** – Choose the icon you want displayed with the link.
+   - **Time range** – ?What does this do? How do you select this? Time range to display when you open a linked dashboard?
+   - **Variable values** – ?What does this do? Variables for which dashboard, current or linked?
+   - **Open in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
+1. Click **Add**. 
 
-## Panel Links
+### Update a dashboard link
 
-Often, Dashboard Links are all you need for linking between dashboards. But imagine that you have a high-level dashboard with several panels representing different systems, and you want to link to separate dashboards for each system. With Dashboard Links, it's not always obvious which link to click to drill down into that service. Instead, use Panel Links to create a link from a specific panel. That way, it's easier to find the drill-down link for that system. 
+To change or update an existing dashboard link, follow this procedure.
 
-Each panel can have its own set of links that will appear in the upper left corner of your panel. To add a Panel Link, open the **General** tab in the panel settings and find the Panel Links section.
+1. In Dashboard Settings, on the Links tab, click the existing link that you want to edit.
+1. Change the settings and then click **Update**.
 
-{{< docs-imagebox img="/static/assets/img/blog/dashboard_links3.png" max-width="800px" caption="Add Panel Link" >}}
+### Delete a dashboard link
 
-You can even add one of the template variables that are available. Press **Ctrl + Space** in the **URL** field to see the available variables. By adding template variables to your Panel Link, the link sends the user to the right context, with the relevant variables already set. You can even [control the time range](https://grafana.com/docs/grafana/latest/reference/timerange/#controlling-time-range-using-url) to ensure the user is zoomed in on the right data.
+To delete an existing dashboard link, click the red **X** next to the existing link that you want to delete.
 
-To see an example of Panel Links in action, check out [this demo](https://play.grafana.org/d/000000156/dashboard-with-panel-link?orgId=1).
+## Panel links
 
-## Data Links
+Each panel can have its own set of links that are shown in the upper left corner of the panel. You can link to any available URL, including dashboards, panels, or external sites. You can even [control the time range](https://grafana.com/docs/grafana/latest/reference/timerange/#controlling-time-range-using-url) to ensure the user is zoomed in on the right data in Grafana.
 
-Data Links, which [were recently added to Grafana](https://grafana.com/blog/2019/08/27/new-in-grafana-6.3-easy-to-use-data-links/), allow you to provide even more granular context to your links. You can create links that include the series name or even the value under the cursor. Currently, Data Links are only supported in the Graph, Gauge, and Bar Gauge visualizations.
+Click the icon on the top left corner of a panel to see available panel links. To see an example of panel links in action, check out [this demo](https://play.grafana.org/d/000000156/dashboard-with-panel-link?orgId=1).
 
-To add a Data Link, go to the **Visualization** tab in the panel settings, and find the **Data Links** section. Click on a point in your graph to access your Data Links. Your links appear in the context menu.
+### Add a panel link
 
-{{< docs-imagebox img="/static/assets/img/blog/dashboard_links4.png" max-width="800px" caption="Add Data Link" >}}
+1. Hover your cursor over the panel that you want to add a link to and then press `e`. Or click the dropdown arrow next to the panel title and then click **Edit**.
+2. Open the **General** tab in the panel settings and then scroll down to the Panel links section.
+3. Click **Add link**.
+4. Enter a **Title**.
+5. If you want the link to open in a new tab, then select **Open in a new tab**.
+6. Enter the **URL** you want to link to.
+   You can even add one of the template variables that are available. Press Ctrl+Space in the **URL** field to see the available variables. By adding template variables to your panel ink, the link sends the user to the right context, with the relevant variables already set.
 
-To see an example of Data Links in action, check out [this demo](https://play.grafana.org/d/ZvPm55mWk/new-features-in-v6-3?orgId=1&fullscreen&panelId=27). Refer to the [documentation](https://grafana.com/docs/grafana/latest/features/panels/graph/#data-link) for more information on Data Links.
+### Update or delete a panel link
+
+On the panel settings General tab, in the Panel links section, find the panel link that you want to make changes to or delete. Make any necessary changes, or click the **X** to the right of the title to delete the link.
+
+## Data links
+
+Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization showed four servers, you could add a data link to one or two of them.
+
+Click directly on the panel to see the data link. It appears on the context menu under **Add annotation**.
+
+To see an example of data links in action, check out [this demo](https://play.grafana.org/d/ZvPm55mWk/new-features-in-v6-3?orgId=1&fullscreen&panelId=27).
+
+## Add a data link to a panel
+
+Currently, data links are only supported in the Graph, Stat, Gauge, and Bar Gauge visualizations.
+
+1. Hover your cursor over the panel that you want to add a link to and then press `e`. Or click the dropdown arrow next to the panel title and then click **Edit**.
+1. Open the **Visualization** tab in the panel settings and then scroll down to the Data links section.
+1. Click **Add link**.
+1. Enter a **Title**.
+1. If you want the link to open in a new tab, then select **Open in a new tab**.
+1. Enter the **URL** you want to link to.
+   You can even add one of the template variables that are available. Press Ctrl+Space in the **URL** field to see the available variables. By adding template variables to your panel ink, the link sends the user to the right context, with the relevant variables already set.
+
+### Update or delete a panel link
+
+On the panel settings General tab, in the Panel links section, find the panel link that you want to make changes to or delete. Make any necessary changes, or click the **X** to the right of the title to delete the link.
