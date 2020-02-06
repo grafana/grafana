@@ -319,7 +319,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
           // Dividig the width by 1.5 to make the bars not touch each other
           barWidth: showBars ? this.getBarWidth() / 1.5 : 1,
           zero: false,
-          lineWidth: lineWidth,
+          lineWidth: 0,
         },
         shadowSize: 0,
       },

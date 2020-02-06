@@ -13,8 +13,6 @@
     link: /installation/mac/
   - name: Install using Docker
     link: /installation/docker/
-  - name: Building from source
-    link: /project/building_from_source/
   - name: Upgrade Grafana
     link: /installation/upgrading/
 - name: Administration
@@ -259,9 +257,9 @@
 - name: Plugins
   link: /plugins/
   children:
-  - name: Installing Plugins
+  - name: Install Plugins
     link: /plugins/installation/
-  - name: Developing Plugins
+  - name: Develop Plugins
     link: /plugins/developing/
     children:
     - link: /plugins/developing/development/
@@ -331,10 +329,12 @@
     link: /http_api/team/
   - name: Users
     link: /http_api/user/
-- name: Contribute
-  link: /contribute/
+- name: Developers
+  link: /developers/
   children:
+  - name: Developer resources
+    link: /developers/developer-resources/
   - name: Contributor License Agreement (CLA)
-    link: /contribute/cla/
+    link: /developers/cla/
 - name: Docs Archive
   link: /archive/

@@ -44,7 +44,7 @@ export const ArrayOptions = () => {
 };
 
 export default {
-  title: 'UI/Segment/SegmentSync',
+  title: 'Panel/Segment/SegmentSync',
   component: ArrayOptions,
 };
 
