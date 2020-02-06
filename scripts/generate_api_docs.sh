@@ -34,11 +34,11 @@ yarn packages:build
 
 # extract packages api documentation json
 echo "extracting packages documentation data..."
-yarn packages:docs-extract
+yarn packages:docsExtract
 
 # generating api documentation markdown
 echo "generating markdown from documentation data..."
-yarn packages:docs-to-markdown
+yarn packages:docsToMarkdown
 
 echo "updated files:"
 git status --porcelain | sed s/^...//

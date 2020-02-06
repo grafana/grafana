@@ -19,7 +19,7 @@
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=runtime",
-    "docs-extract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log"
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log"
   },
   "dependencies": {
     "@grafana/data": "6.7.0-pre",
