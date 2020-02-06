@@ -1,11 +1,13 @@
 package sqlstore
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func init() {
@@ -18,34 +20,30 @@ func deleteExpiredAnnotations(cmd *m.DeleteExpiredAnnotationsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		historyTimeStamp := (time.Now().Unix() - int64(cmd.DaysToKeep*86400)) * 1000
 
-		annotationIdsToDeleteQuery := `SELECT id FROM annotation WHERE created <= ? ORDER BY id LIMIT ?`
-
+		query := "SELECT id FROM annotation WHERE created <= ? ORDER BY id LIMIT ?"
 		var annotationIdsToDelete []interface{}
-		err := sess.SQL(annotationIdsToDeleteQuery, historyTimeStamp, MAX_HISTORY_ENTRIES_TO_DELETE).Find(&annotationIdsToDelete)
+		if err := sess.SQL(query, historyTimeStamp, MAX_HISTORY_ENTRIES_TO_DELETE).Find(&annotationIdsToDelete); err != nil {
+			return errutil.Wrapf(err, "failed to query for expired annotations")
+		}
+		if len(annotationIdsToDelete) == 0 {
+			return nil
+		}
+
+		query = fmt.Sprintf("DELETE FROM annotation_tag WHERE annotation_id IN (?%s)", strings.Repeat(",?",
+			len(annotationIdsToDelete)-1))
+		sqlOrArgs := append([]interface{}{query}, annotationIdsToDelete...)
+		if _, err := sess.Exec(sqlOrArgs...); err != nil {
+			return errutil.Wrapf(err, "failed to delete annotation tags")
+		}
+
+		query = fmt.Sprintf("DELETE FROM annotation WHERE id IN (?%s)",
+			strings.Repeat(",?", len(annotationIdsToDelete)-1))
+		sqlOrArgs = append([]interface{}{query}, annotationIdsToDelete...)
+		expiredResponse, err := sess.Exec(sqlOrArgs...)
 		if err != nil {
-			return err
+			return errutil.Wrapf(err, "failed to delete annotations")
 		}
-
-		if len(annotationIdsToDelete) > 0 {
-			deleteExpiredTagsSql := `DELETE FROM annotation_tag WHERE annotation_id IN (?` + strings.Repeat(",?", len(annotationIdsToDelete)-1) + `)`
-			sqlOrArgsTags := append([]interface{}{deleteExpiredTagsSql}, annotationIdsToDelete...)
-			_, err := sess.Exec(sqlOrArgsTags...)
-			if err != nil {
-				return err
-			}
-
-			deleteExpiredSql := `DELETE FROM annotation WHERE id IN (?` + strings.Repeat(",?", len(annotationIdsToDelete)-1) + `)`
-			sqlOrArgs := append([]interface{}{deleteExpiredSql}, annotationIdsToDelete...)
-			expiredResponse, err := sess.Exec(sqlOrArgs...)
-			if err != nil {
-				return err
-			}
-			cmd.DeletedRows, err = expiredResponse.RowsAffected()
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
+		cmd.DeletedRows, err = expiredResponse.RowsAffected()
+		return err
 	})
 }

@@ -770,6 +770,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	annotations := iniFile.Section("annotations")
 	DaysToKeepAnnotations = annotations.Key("days_to_keep").MustInt(60)
+	if DaysToKeepAnnotations < 5 {
+		DaysToKeepAnnotations = 5
+	}
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)

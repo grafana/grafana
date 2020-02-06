@@ -126,12 +126,9 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 	}
 }
 
+// deleteExpiredAnnotations removes expired annotations from the database.
 func (srv *CleanUpService) deleteExpiredAnnotations() {
-	daysToKeep := setting.DaysToKeepAnnotations
-	if daysToKeep < 5 {
-		daysToKeep = 5
-	}
-	cmd := m.DeleteExpiredAnnotationsCommand{DaysToKeep: daysToKeep}
+	cmd := m.DeleteExpiredAnnotationsCommand{DaysToKeep: setting.DaysToKeepAnnotations}
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired annotations", "error", err.Error())
 	} else {
