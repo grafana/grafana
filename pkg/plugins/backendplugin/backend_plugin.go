@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -205,13 +206,45 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 	}
 
 	protoReq := &pluginv2.CallResource_Request{
-		Config:  &pluginv2.PluginConfig{},
+		Config: &pluginv2.PluginConfig{
+			OrgId:      req.Config.OrgID,
+			PluginId:   req.Config.PluginID,
+			PluginType: req.Config.PluginType,
+		},
 		Path:    req.Path,
 		Method:  req.Method,
 		Url:     req.URL,
 		Headers: reqHeaders,
 		Body:    req.Body,
 	}
+
+	if req.Config.AppSettings != nil {
+		protoReq.Config.InstanceSettings = &pluginv2.PluginConfig_App{
+			App: &pluginv2.PluginConfig_AppInstanceSettings{
+				UpdatedMS:               req.Config.AppSettings.Updated.UnixNano() / int64(time.Millisecond),
+				JsonData:                req.Config.AppSettings.JSONData,
+				DecryptedSecureJsonData: req.Config.AppSettings.DecryptedSecureJSONData,
+			},
+		}
+	}
+
+	if req.Config.DataSourceSettings != nil {
+		protoReq.Config.InstanceSettings = &pluginv2.PluginConfig_DataSource{
+			DataSource: &pluginv2.PluginConfig_DataSourceInstanceSettings{
+				Id:                      req.Config.DataSourceSettings.ID,
+				Name:                    req.Config.DataSourceSettings.Name,
+				Url:                     req.Config.DataSourceSettings.URL,
+				Database:                req.Config.DataSourceSettings.Database,
+				User:                    req.Config.DataSourceSettings.User,
+				BasicAuthEnabled:        req.Config.DataSourceSettings.BasicAuthEnabled,
+				BasicAuthUser:           req.Config.DataSourceSettings.BasicAuthUser,
+				UpdatedMS:               req.Config.DataSourceSettings.Updated.UnixNano() / int64(time.Millisecond),
+				JsonData:                req.Config.DataSourceSettings.JSONData,
+				DecryptedSecureJsonData: req.Config.DataSourceSettings.DecryptedSecureJSONData,
+			},
+		}
+	}
+
 	protoResp, err := p.core.CallResource(ctx, protoReq)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
