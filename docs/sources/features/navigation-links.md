@@ -1,14 +1,14 @@
 +++
-title = "Linking"
+title = "Navigation links"
 description = ""
-keywords = ["grafana", "linking", "create links", "link panels", "link dashboards"]
+keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
 type = "docs"
 [menu.docs]
 parent = "features"
 weight = 9
 +++
 
-# Linking 
+# Navigation links 
 
 You can use links to navigate between commonly used dashboards. Links let you create shortcuts to other dashboards, panels, and even external websites.
 

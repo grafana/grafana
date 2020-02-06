@@ -176,8 +176,8 @@
     link: /features/shortcuts/
   - name: Reporting
     link: /features/reporting/
-  - name: Linking
-    link: /features/linking/
+  - name: Navigation links
+    link: /features/navigation-links/
 - name: What's New In Grafana
   link: /whatsnew/
   children:
