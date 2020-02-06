@@ -4,8 +4,15 @@ import _ from 'lodash';
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
-import { DataQuery, DataQueryResponseData, PanelPlugin, PanelEvents } from '@grafana/ui';
-import { DataLink, DataTransformerConfig, ScopedVars } from '@grafana/data';
+import {
+  DataQuery,
+  DataQueryResponseData,
+  PanelPlugin,
+  PanelEvents,
+  DataLink,
+  DataTransformerConfig,
+  ScopedVars,
+} from '@grafana/data';
 
 import config from 'app/core/config';
 
@@ -28,6 +35,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   isInView: true,
+  isNewEdit: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -118,6 +126,7 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isNewEdit: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -248,7 +257,11 @@ export class PanelModel {
     if (plugin.angularConfigCtrl) {
       return;
     }
-    this.options = _.defaultsDeep({}, this.options || {}, plugin.defaults);
+    this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
+      if (_.isArray(srcValue)) {
+        return srcValue;
+      }
+    });
   }
 
   pluginLoaded(plugin: PanelPlugin) {

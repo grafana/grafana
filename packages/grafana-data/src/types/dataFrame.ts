@@ -1,10 +1,11 @@
-import { Threshold } from './threshold';
+import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DisplayProcessor } from './displayValue';
 import { DataLink } from './dataLink';
 import { Vector } from './vector';
 import { FieldCalcs } from '../transformations/fieldReducer';
+import { FieldColor } from './fieldColor';
 
 export enum FieldType {
   time = 'time', // or date
@@ -17,7 +18,7 @@ export enum FieldType {
 /**
  * Every property is optional
  *
- * Plugins may extend this with additional properties.  Somethign like series overrides
+ * Plugins may extend this with additional properties. Something like series overrides
  */
 export interface FieldConfig {
   title?: string; // The display value for this field.  This supports template variables blank is auto
@@ -32,8 +33,11 @@ export interface FieldConfig {
   // Convert input values into a display string
   mappings?: ValueMapping[];
 
-  // Must be sorted by 'value', first value is always -Infinity
-  thresholds?: Threshold[];
+  // Map numeric values to states
+  thresholds?: ThresholdsConfig;
+
+  // Map values to a display color
+  color?: FieldColor;
 
   // Used when reducing field values
   nullValueMode?: NullValueMode;
@@ -43,13 +47,26 @@ export interface FieldConfig {
 
   // Alternative to empty string
   noValue?: string;
+
+  // Panel Specific Values
+  custom?: Record<string, any>;
 }
 
 export interface Field<T = any, V = Vector<T>> {
-  name: string; // The column name
+  /**
+   * Name of the field (column)
+   */
+  name: string;
+  /**
+   *  Field value type (string, number, etc)
+   */
   type: FieldType;
+  /**
+   *  Meta info about how field and how to display it
+   */
   config: FieldConfig;
   values: V; // The raw field values
+  labels?: Labels;
 
   /**
    * Cache of reduced values
@@ -70,7 +87,6 @@ export interface Field<T = any, V = Vector<T>> {
 export interface DataFrame extends QueryResultBase {
   name?: string;
   fields: Field[]; // All fields of equal length
-  labels?: Labels;
 
   // The number of rows
   length: number;
@@ -84,6 +100,7 @@ export interface FieldDTO<T = any> {
   type?: FieldType;
   config?: FieldConfig;
   values?: Vector<T> | T[]; // toJSON will always be T[], input could be either
+  labels?: Labels;
 }
 
 /**
@@ -91,6 +108,5 @@ export interface FieldDTO<T = any> {
  */
 export interface DataFrameDTO extends QueryResultBase {
   name?: string;
-  labels?: Labels;
   fields: Array<FieldDTO | Field>;
 }

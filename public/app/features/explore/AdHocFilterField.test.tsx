@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount, shallow } from 'enzyme';
-import { DataSourceApi } from '@grafana/ui';
+import { DataSourceApi } from '@grafana/data';
 
 import { AdHocFilterField, DEFAULT_REMOVE_FILTER_VALUE, KeyValuePair, Props } from './AdHocFilterField';
 import { AdHocFilter } from './AdHocFilter';
@@ -174,11 +174,11 @@ describe('AdHocFilterField', () => {
           const { instance } = setup();
           const pairs: KeyValuePair[] = [];
           const index = 0;
-          const key: string = undefined;
+          const key: undefined = undefined;
           const keys: string[] = ['key 1', 'key 2'];
-          const value: string = undefined;
-          const values: string[] = undefined;
-          const operator: string = undefined;
+          const value: undefined = undefined;
+          const values: undefined = undefined;
+          const operator: undefined = undefined;
 
           const result = instance.updatePairs(pairs, index, { key, keys, value, values, operator });
 

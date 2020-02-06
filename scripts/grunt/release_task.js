@@ -25,7 +25,7 @@ module.exports = function(grunt) {
       dest: '<%= tempDir %>/public/',
     });
     grunt.config('copy.backend_bin', {
-      cwd: 'bin/<%= platform %>-<%= arch %>',
+      cwd: 'bin/<%= platform %>-<%= arch %><%= libc ? "-" + libc : "" %>',
       expand: true,
       src: ['*'],
       options: { mode: true},
@@ -33,7 +33,7 @@ module.exports = function(grunt) {
     });
     grunt.config('copy.backend_files', {
       expand: true,
-      src: ['conf/**', 'tools/phantomjs/*', 'scripts/*'],
+      src: ['conf/**', 'tools/**', 'scripts/*'],
       options: { mode: true},
       dest: '<%= tempDir %>'
     });

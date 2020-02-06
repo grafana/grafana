@@ -38,9 +38,4 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {};
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(ChangePasswordPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ChangePasswordPage));

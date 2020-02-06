@@ -1,7 +1,8 @@
-import defaultTheme from './default';
-import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
+import defaultTheme, { commonColorsPalette } from './default';
+import { GrafanaThemeType, GrafanaTheme } from '@grafana/data';
 
 const basicColors = {
+  ...commonColorsPalette,
   black: '#000000',
   white: '#ffffff',
   dark1: '#141414',
@@ -74,6 +75,35 @@ const darkTheme: GrafanaTheme = {
     linkExternal: basicColors.blue,
     headingColor: basicColors.gray4,
     pageHeaderBorder: basicColors.dark9,
+    panelBg: basicColors.dark4,
+
+    // Next-gen forms functional colors
+    formLabel: basicColors.gray70,
+    formDescription: basicColors.gray70,
+    formLegend: basicColors.gray85,
+    formInputBg: basicColors.gray15,
+    formInputBgDisabled: basicColors.gray10,
+    formInputBorder: basicColors.gray25,
+    formInputBorderHover: basicColors.gray33,
+    formInputBorderActive: basicColors.blue95,
+    formInputBorderInvalid: basicColors.red88,
+    formInputText: basicColors.gray85,
+    formInputDisabledText: basicColors.gray70,
+    formInputTextStrong: basicColors.gray85,
+    formInputTextWhite: basicColors.white,
+    formFocusOutline: basicColors.blueShade,
+    formValidationMessageText: basicColors.white,
+    formValidationMessageBg: basicColors.red88,
+    formSwitchBg: basicColors.gray25,
+    formSwitchBgActive: basicColors.blueLight,
+    formSwitchBgHover: basicColors.gray33,
+    formSwitchBgActiveHover: basicColors.blueBase,
+    formSwitchBgDisabled: basicColors.gray25,
+    formSwitchDot: basicColors.gray15,
+    formCheckboxBg: basicColors.dark5,
+    formCheckboxBgChecked: basicColors.blueLight,
+    formCheckboxBgCheckedHover: basicColors.blueBase,
+    formCheckboxCheckmark: basicColors.gray25,
   },
   background: {
     dropdown: basicColors.dark3,

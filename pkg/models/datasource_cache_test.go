@@ -9,16 +9,18 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 //nolint:goconst
-func TestDataSourceCache(t *testing.T) {
+func TestDataSourceProxyCache(t *testing.T) {
 	Convey("When caching a datasource proxy", t, func() {
-		clearCache()
+		clearDSProxyCache()
 		ds := DataSource{
 			Id:   1,
 			Url:  "http://k8s:8001",
@@ -40,13 +42,13 @@ func TestDataSourceCache(t *testing.T) {
 		Convey("Should have no TLS client certificate configured", func() {
 			So(len(t1.transport.TLSClientConfig.Certificates), ShouldEqual, 0)
 		})
-		Convey("Should have no user-supplied TLS CA onfigured", func() {
+		Convey("Should have no user-supplied TLS CA configured", func() {
 			So(t1.transport.TLSClientConfig.RootCAs, ShouldBeNil)
 		})
 	})
 
 	Convey("When caching a datasource proxy then updating it", t, func() {
-		clearCache()
+		clearDSProxyCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
@@ -88,7 +90,7 @@ func TestDataSourceCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy with TLS client authentication enabled", t, func() {
-		clearCache()
+		clearDSProxyCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
@@ -122,7 +124,7 @@ func TestDataSourceCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy with a user-supplied TLS CA", t, func() {
-		clearCache()
+		clearDSProxyCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
@@ -151,7 +153,7 @@ func TestDataSourceCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy when user skips TLS verification", t, func() {
-		clearCache()
+		clearDSProxyCache()
 
 		json := simplejson.New()
 		json.Set("tlsSkipVerify", true)
@@ -172,7 +174,7 @@ func TestDataSourceCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy with custom headers specified", t, func() {
-		clearCache()
+		clearDSProxyCache()
 
 		json := simplejson.NewFromAny(map[string]interface{}{
 			"httpHeaderName1": "Authorization",
@@ -201,11 +203,14 @@ func TestDataSourceCache(t *testing.T) {
 				// Can't use So() here, see: https://github.com/smartystreets/goconvey/issues/561
 				if r.Header.Get("Authorization") == "Bearer xf5yhfkpsnmgo" {
 					w.WriteHeader(200)
-					w.Write([]byte("Ok"))
+					_, err := w.Write([]byte("Ok"))
+					require.Nil(t, err)
 					return
 				}
+
 				w.WriteHeader(403)
-				w.Write([]byte("Invalid bearer token provided"))
+				_, err := w.Write([]byte("Invalid bearer token provided"))
+				require.Nil(t, err)
 			}))
 			defer backend.Close()
 
@@ -232,7 +237,64 @@ func TestDataSourceCache(t *testing.T) {
 	})
 }
 
-func clearCache() {
+func TestDataSourceDecryptionCache(t *testing.T) {
+	Convey("When datasource hasn't been updated, encrypted JSON should be fetched from cache", t, func() {
+		ClearDSDecryptionCache()
+
+		ds := DataSource{
+			Id:       1,
+			Type:     DS_INFLUXDB_08,
+			JsonData: simplejson.New(),
+			User:     "user",
+			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
+				"password": "password",
+			}),
+		}
+
+		// Populate cache
+		password, ok := ds.DecryptedValue("password")
+		So(password, ShouldEqual, "password")
+		So(ok, ShouldBeTrue)
+
+		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
+			"password": "",
+		})
+
+		password, ok = ds.DecryptedValue("password")
+		So(password, ShouldEqual, "password")
+		So(ok, ShouldBeTrue)
+	})
+
+	Convey("When datasource is updated, encrypted JSON should not be fetched from cache", t, func() {
+		ClearDSDecryptionCache()
+
+		ds := DataSource{
+			Id:       1,
+			Type:     DS_INFLUXDB_08,
+			JsonData: simplejson.New(),
+			User:     "user",
+			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
+				"password": "password",
+			}),
+		}
+
+		// Populate cache
+		password, ok := ds.DecryptedValue("password")
+		So(password, ShouldEqual, "password")
+		So(ok, ShouldBeTrue)
+
+		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
+			"password": "",
+		})
+		ds.Updated = time.Now()
+
+		password, ok = ds.DecryptedValue("password")
+		So(password, ShouldEqual, "")
+		So(ok, ShouldBeTrue)
+	})
+}
+
+func clearDSProxyCache() {
 	ptc.Lock()
 	defer ptc.Unlock()
 

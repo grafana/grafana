@@ -5,6 +5,7 @@ Object {
   "fields": Array [
     Object {
       "config": Object {},
+      "labels": undefined,
       "name": "Field",
       "type": "string",
       "values": Array [
@@ -16,6 +17,7 @@ Object {
       "config": Object {
         "title": "First",
       },
+      "labels": undefined,
       "name": "first",
       "type": "number",
       "values": Array [
@@ -27,6 +29,7 @@ Object {
       "config": Object {
         "title": "Min",
       },
+      "labels": undefined,
       "name": "min",
       "type": "number",
       "values": Array [
@@ -38,6 +41,7 @@ Object {
       "config": Object {
         "title": "Max",
       },
+      "labels": undefined,
       "name": "max",
       "type": "number",
       "values": Array [
@@ -49,6 +53,7 @@ Object {
       "config": Object {
         "title": "Delta",
       },
+      "labels": undefined,
       "name": "delta",
       "type": "number",
       "values": Array [
@@ -57,7 +62,6 @@ Object {
       ],
     },
   ],
-  "labels": undefined,
   "meta": Object {
     "transformations": Array [
       "reduce",

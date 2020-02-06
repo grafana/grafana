@@ -41,7 +41,7 @@ Name | Description
 
 ### Min time interval
 
-A lower limit for the [$__interval](/reference/templating/#the-interval-variable) and [$__interval_ms](/reference/templating/#the-interval-ms-variable) variables.
+A lower limit for the [$__interval]({{< relref "../../reference/templating/#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../../reference/templating/#the-interval-ms-variable" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -182,7 +182,7 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing Unix epoch.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch.
 Any column except `time` and `metric` is treated as a value column.
 You may return a column named `metric` that is used as metric name for the value column.
 If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
@@ -238,7 +238,7 @@ This feature is currently available in the nightly builds and will be included i
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -274,6 +274,21 @@ the hosts variable only show hosts from the current selected region with a query
 
 ```sql
 SELECT hostname FROM my_host  WHERE region IN($region)
+```
+
+#### Using `__searchFilter` to filter results in Query Variable
+> Available from Grafana 6.5 and above
+
+Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
+When nothing has been entered by the user the default value for `__searchFilter` is `%`.
+
+> Important that you surround the `__searchFilter` expression with quotes as Grafana does not do this for you.
+
+The example below shows how to use `__searchFilter` as part of the query field to enable searching for `hostname` while the user types in the dropdown select box.
+
+Query
+```sql
+SELECT hostname FROM my_host  WHERE hostname LIKE '$__searchFilter'
 ```
 
 ### Using Variables in Queries
@@ -320,7 +335,7 @@ Read more about variable formatting options in the [Variables]({{< relref "../..
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 
@@ -335,7 +350,7 @@ WHERE
   $__unixEpochFilter(epoch_time)
 ```
 
-**Example query using time column of native sql date/time data type:**
+**Example query using time column of native SQL date/time data type:**
 
 ```sql
 SELECT
@@ -350,7 +365,8 @@ WHERE
 
 Name | Description
 ------------ | -------------
-time | The name of the date/time field. Could be a column with a native sql date/time data type or epoch value.
+time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
+timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
@@ -360,7 +376,7 @@ Time series queries should work in alerting conditions. Table formatted queries 
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 

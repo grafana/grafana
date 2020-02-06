@@ -3,13 +3,14 @@ package api
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"path"
-	"time"
+	"sync"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	macaron "gopkg.in/macaron.v1"
@@ -47,6 +49,7 @@ type ProvisioningService interface {
 	ProvisionNotifications() error
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
+	GetAllowUiUpdatesFromConfig(name string) bool
 }
 
 type HTTPServer struct {
@@ -56,18 +59,20 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister       routing.RouteRegister    `inject:""`
-	Bus                 bus.Bus                  `inject:""`
-	RenderService       rendering.Service        `inject:""`
-	Cfg                 *setting.Cfg             `inject:""`
-	HooksService        *hooks.HooksService      `inject:""`
-	CacheService        *localcache.CacheService `inject:""`
-	DatasourceCache     datasources.CacheService `inject:""`
-	AuthTokenService    models.UserTokenService  `inject:""`
-	QuotaService        *quota.QuotaService      `inject:""`
-	RemoteCacheService  *remotecache.RemoteCache `inject:""`
-	ProvisioningService ProvisioningService      `inject:""`
-	Login               *login.LoginService      `inject:""`
+	RouteRegister        routing.RouteRegister    `inject:""`
+	Bus                  bus.Bus                  `inject:""`
+	RenderService        rendering.Service        `inject:""`
+	Cfg                  *setting.Cfg             `inject:""`
+	HooksService         *hooks.HooksService      `inject:""`
+	CacheService         *localcache.CacheService `inject:""`
+	DatasourceCache      datasources.CacheService `inject:""`
+	AuthTokenService     models.UserTokenService  `inject:""`
+	QuotaService         *quota.QuotaService      `inject:""`
+	RemoteCacheService   *remotecache.RemoteCache `inject:""`
+	ProvisioningService  ProvisioningService      `inject:""`
+	Login                *login.LoginService      `inject:""`
+	License              models.Licensing         `inject:""`
+	BackendPluginManager backendplugin.Manager    `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
@@ -81,79 +86,98 @@ func (hs *HTTPServer) Init() error {
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
-	var err error
-
 	hs.context = ctx
 
 	hs.applyRoutes()
 	hs.streamManager.Run(ctx)
 
-	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("HTTP Server Listen", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+	hs.httpSrv = &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
+		Handler: hs.macaron,
+	}
+	switch setting.Protocol {
+	case setting.HTTP2:
+		if err := hs.configureHttp2(); err != nil {
+			return err
+		}
+	case setting.HTTPS:
+		if err := hs.configureHttps(); err != nil {
+			return err
+		}
+	}
 
-	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
+	var listener net.Listener
+	switch setting.Protocol {
+	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+		var err error
+		listener, err = net.Listen("tcp", hs.httpSrv.Addr)
+		if err != nil {
+			return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+		}
+	case setting.SOCKET:
+		var err error
+		listener, err = net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		if err != nil {
+			return errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+		}
+
+		// Make socket writable by group
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			return errutil.Wrapf(err, "failed to change socket permissions")
+		}
+	default:
+		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
+		return fmt.Errorf("invalid protocol %q", setting.Protocol)
+	}
+
+	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
+		setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
 
 	// handle http shutdown on server context done
 	go func() {
+		defer wg.Done()
+
 		<-ctx.Done()
-		// Hacky fix for race condition between ListenAndServe and Shutdown
-		time.Sleep(time.Millisecond * 100)
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
 	}()
 
 	switch setting.Protocol {
-	case setting.HTTP:
-		err = hs.httpSrv.ListenAndServe()
-		if err == http.ErrServerClosed {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
+	case setting.HTTP, setting.SOCKET:
+		if err := hs.httpSrv.Serve(listener); err != nil {
+			if err == http.ErrServerClosed {
+				hs.log.Debug("server was shutdown gracefully")
+				return nil
+			}
+			return err
 		}
-	case setting.HTTP2:
-		err = hs.listenAndServeH2TLS(setting.CertFile, setting.KeyFile)
-		if err == http.ErrServerClosed {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
-		}
-	case setting.HTTPS:
-		err = hs.listenAndServeTLS(setting.CertFile, setting.KeyFile)
-		if err == http.ErrServerClosed {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
-		}
-	case setting.SOCKET:
-		ln, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
-		if err != nil {
-			hs.log.Debug("server was shutdown gracefully", "err", err)
-			return nil
-		}
-
-		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
-			hs.log.Debug("server was shutdown gracefully", "err", err)
-			return nil
-		}
-
-		err = hs.httpSrv.Serve(ln)
-		if err != nil {
-			hs.log.Debug("server was shutdown gracefully", "err", err)
-			return nil
+	case setting.HTTP2, setting.HTTPS:
+		if err := hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile); err != nil {
+			if err == http.ErrServerClosed {
+				hs.log.Debug("server was shutdown gracefully")
+				return nil
+			}
+			return err
 		}
 	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		err = errors.New("Invalid Protocol")
+		panic(fmt.Sprintf("Unhandled protocol %q", setting.Protocol))
 	}
 
-	return err
+	wg.Wait()
+
+	return nil
 }
 
-func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
-	if certfile == "" {
+func (hs *HTTPServer) configureHttps() error {
+	if setting.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
 
-	if keyfile == "" {
+	if setting.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
 	}
 
@@ -187,15 +211,15 @@ func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 	hs.httpSrv.TLSConfig = tlsCfg
 	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 
-	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+	return nil
 }
 
-func (hs *HTTPServer) listenAndServeH2TLS(certfile, keyfile string) error {
-	if certfile == "" {
+func (hs *HTTPServer) configureHttp2() error {
+	if setting.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
 	}
 
-	if keyfile == "" {
+	if setting.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
 	}
 
@@ -226,7 +250,7 @@ func (hs *HTTPServer) listenAndServeH2TLS(certfile, keyfile string) error {
 
 	hs.httpSrv.TLSConfig = tlsCfg
 
-	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+	return nil
 }
 
 func (hs *HTTPServer) newMacaron() *macaron.Macaron {
@@ -264,7 +288,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
 		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(hs.macaron, route.Directory, "", pluginRoute)
+		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
 	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")

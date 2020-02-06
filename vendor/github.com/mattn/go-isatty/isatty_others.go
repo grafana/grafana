@@ -1,4 +1,4 @@
-// +build appengine js
+// +build appengine js nacl
 
 package isatty
 

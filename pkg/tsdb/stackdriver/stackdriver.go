@@ -30,9 +30,15 @@ import (
 )
 
 var (
-	slog             log.Logger
-	legendKeyFormat  *regexp.Regexp
-	metricNameFormat *regexp.Regexp
+	slog log.Logger
+)
+
+var (
+	matchAllCap       = regexp.MustCompile("(.)([A-Z][a-z]*)")
+	legendKeyFormat   = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	metricNameFormat  = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
+	wildcardRegexRe   = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+	alignmentPeriodRe = regexp.MustCompile("[0-9]+")
 )
 
 const (
@@ -62,8 +68,6 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 func init() {
 	slog = log.New("tsdb.stackdriver")
 	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
-	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	metricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
 }
 
 // Query takes in the frontend queries, parses them into the Stackdriver query format
@@ -197,8 +201,7 @@ func interpolateFilterWildcards(value string) string {
 		value = reverse(strings.Replace(reverse(value), "*", "", 1))
 		value = fmt.Sprintf(`starts_with("%s")`, value)
 	} else if matches != 0 {
-		re := regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
-		value = string(re.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
+		value = string(wildcardRegexRe.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
 		}))
 		value = strings.Replace(value, "*", ".*", -1)
@@ -287,8 +290,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
 
 	if ok {
-		re := regexp.MustCompile("[0-9]+")
-		seconds, err := strconv.ParseInt(re.FindString(alignmentPeriod[0]), 10, 64)
+		seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
 		if err == nil {
 			queryResult.Meta.Set("alignmentPeriod", seconds)
 		}
@@ -303,10 +305,13 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 
 	defer span.Finish()
 
-	opentracing.GlobalTracer().Inject(
+	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
+		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
+		queryResult.Error = err
+		return queryResult, StackdriverResponse{}, nil
+	}
 
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
@@ -330,8 +335,6 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 		return StackdriverResponse{}, err
 	}
 
-	// slog.Info("stackdriver", "response", string(body))
-
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
 		return StackdriverResponse{}, fmt.Errorf(string(body))
@@ -348,39 +351,63 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 }
 
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
-	metricLabels := make(map[string][]string)
-	resourceLabels := make(map[string][]string)
-	var resourceTypes []string
-
-	for _, series := range data.TimeSeries {
-		if !containsLabel(resourceTypes, series.Resource.Type) {
-			resourceTypes = append(resourceTypes, series.Resource.Type)
-		}
-	}
+	labels := make(map[string]map[string]bool)
 
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
-
+		seriesLabels := make(map[string]string)
 		defaultMetricName := series.Metric.Type
-		if len(resourceTypes) > 1 {
-			defaultMetricName += " " + series.Resource.Type
-		}
+		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
 
 		for key, value := range series.Metric.Labels {
-			if !containsLabel(metricLabels[key], value) {
-				metricLabels[key] = append(metricLabels[key], value)
+			if _, ok := labels["metric.label."+key]; !ok {
+				labels["metric.label."+key] = map[string]bool{}
 			}
+			labels["metric.label."+key][value] = true
+			seriesLabels["metric.label."+key] = value
+
 			if len(query.GroupBys) == 0 || containsLabel(query.GroupBys, "metric.label."+key) {
 				defaultMetricName += " " + value
 			}
 		}
 
 		for key, value := range series.Resource.Labels {
-			if !containsLabel(resourceLabels[key], value) {
-				resourceLabels[key] = append(resourceLabels[key], value)
+			if _, ok := labels["resource.label."+key]; !ok {
+				labels["resource.label."+key] = map[string]bool{}
 			}
+			labels["resource.label."+key][value] = true
+			seriesLabels["resource.label."+key] = value
+
 			if containsLabel(query.GroupBys, "resource.label."+key) {
 				defaultMetricName += " " + value
+			}
+		}
+
+		for labelType, labelTypeValues := range series.MetaData {
+			for labelKey, labelValue := range labelTypeValues {
+				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
+				if _, ok := labels[key]; !ok {
+					labels[key] = map[string]bool{}
+				}
+
+				switch v := labelValue.(type) {
+				case string:
+					labels[key][v] = true
+					seriesLabels[key] = v
+				case bool:
+					strVal := strconv.FormatBool(v)
+					labels[key][strVal] = true
+					seriesLabels[key] = strVal
+				case []interface{}:
+					for _, v := range v {
+						strVal := v.(string)
+						labels[key][strVal] = true
+						if len(seriesLabels[key]) > 0 {
+							strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
+						}
+						seriesLabels[key] = strVal
+					}
+				}
 			}
 		}
 
@@ -408,7 +435,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 				points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
 			}
 
-			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, make(map[string]string), query)
+			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, query)
 
 			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 				Name:   metricName,
@@ -434,7 +461,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
 						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, query),
 							Points: make([]tsdb.TimePoint, 0),
 						}
 						if maxKey < i {
@@ -450,7 +477,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
 						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, query),
 							Points: make([]tsdb.TimePoint, 0),
 						}
 					}
@@ -462,12 +489,21 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		}
 	}
 
-	queryRes.Meta.Set("resourceLabels", resourceLabels)
-	queryRes.Meta.Set("metricLabels", metricLabels)
+	labelsByKey := make(map[string][]string)
+	for key, values := range labels {
+		for value := range values {
+			labelsByKey[key] = append(labelsByKey[key], value)
+		}
+	}
+
+	queryRes.Meta.Set("labels", labelsByKey)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
-	queryRes.Meta.Set("resourceTypes", resourceTypes)
 
 	return nil
+}
+
+func toSnakeCase(str string) string {
+	return strings.ToLower(matchAllCap.ReplaceAllString(str, "${1}_${2}"))
 }
 
 func containsLabel(labels []string, newLabel string) bool {
@@ -479,7 +515,7 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func formatLegendKeys(metricType string, defaultMetricName string, resourceType string, metricLabels map[string]string, resourceLabels map[string]string, additionalLabels map[string]string, query *StackdriverQuery) string {
+func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string, additionalLabels map[string]string, query *StackdriverQuery) string {
 	if query.AliasBy == "" {
 		return defaultMetricName
 	}
@@ -493,25 +529,13 @@ func formatLegendKeys(metricType string, defaultMetricName string, resourceType 
 			return []byte(metricType)
 		}
 
-		if metaPartName == "resource.type" && resourceType != "" {
-			return []byte(resourceType)
-		}
-
 		metricPart := replaceWithMetricPart(metaPartName, metricType)
 
 		if metricPart != nil {
 			return metricPart
 		}
 
-		metaPartName = strings.Replace(metaPartName, "metric.label.", "", 1)
-
-		if val, exists := metricLabels[metaPartName]; exists {
-			return []byte(val)
-		}
-
-		metaPartName = strings.Replace(metaPartName, "resource.label.", "", 1)
-
-		if val, exists := resourceLabels[metaPartName]; exists {
+		if val, exists := labels[metaPartName]; exists {
 			return []byte(val)
 		}
 
@@ -530,8 +554,8 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	shortMatches := metricNameFormat.FindStringSubmatch(metricType)
 
 	if metaPartName == "metric.name" {
-		if len(shortMatches) > 0 {
-			return []byte(shortMatches[2])
+		if len(shortMatches) > 2 {
+			return []byte(shortMatches[3])
 		}
 	}
 

@@ -14,11 +14,12 @@ if [ -z "$GPG_KEY_PASSWORD" ]; then
     exit 1
 fi
 
-gpg --allow-secret-key-import --import ~/private-repo/signing/private.key
+gpg --batch --allow-secret-key-import --import ~/private-repo/signing/private.key
 
 cp ./scripts/build/rpmmacros ~/.rpmmacros
+echo "$GPG_KEY_PASSWORD" > /tmp/gpg-passphrase
 
 for package in $_files; do
     [ -e "$package" ] || continue
-    ./scripts/build/sign_expect "$GPG_KEY_PASSWORD" "$package"
+    rpm --addsign "$package"
 done

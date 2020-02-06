@@ -1,7 +1,8 @@
 import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
-import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import { selectThemeVariant, ThemeContext } from '../../index';
+import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { Portal, List } from '../index';
 import { LinkTarget } from '@grafana/data';
@@ -24,7 +25,7 @@ export interface ContextMenuProps {
   y: number;
   onClose: () => void;
   items?: ContextMenuGroup[];
-  renderHeader?: () => JSX.Element;
+  renderHeader?: () => React.ReactNode;
 }
 
 const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -134,7 +135,7 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
     groupLabel: css`
       color: ${groupLabelColor};
       font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.lineHeight.lg};
+      line-height: ${theme.typography.lineHeight.md};
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
     `,
     icon: css`
@@ -180,16 +181,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
   });
 
   const styles = getContextMenuStyles(theme);
+  const header = renderHeader && renderHeader();
   return (
     <Portal>
       <div ref={menuRef} style={positionStyles} className={styles.wrapper}>
-        {renderHeader && <div className={styles.header}>{renderHeader()}</div>}
+        {header && <div className={styles.header}>{header}</div>}
         <List
           items={items || []}
           renderItem={(item, index) => {
             return (
               <>
-                <ContextMenuGroup group={item} onItemClick={onClose} />
+                <ContextMenuGroup group={item} onClick={onClose} />
               </>
             );
           }}
@@ -215,7 +217,7 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
     return (
       <div className={styles.item}>
         <a
-          href={url}
+          href={url ? url : undefined}
           target={target || '_self'}
           className={cx(className, styles.link)}
           onClick={e => {
@@ -233,10 +235,10 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
 
 interface ContextMenuGroupProps {
   group: ContextMenuGroup;
-  onItemClick?: () => void;
+  onClick?: () => void; // Used with 'onClose'
 }
 
-const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onItemClick }) => {
+const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onClick }) => {
   const theme = useContext(ThemeContext);
   const styles = getContextMenuStyles(theme);
 
@@ -261,8 +263,9 @@ const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onItemClick 
                   item.onClick(e);
                 }
 
-                if (onItemClick) {
-                  onItemClick();
+                // Typically closes the context menu
+                if (onClick) {
+                  onClick();
                 }
               }}
             />

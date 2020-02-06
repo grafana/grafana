@@ -51,9 +51,7 @@ export function annotationTooltipDirective(
 
       let header = `<div class="graph-annotation__header">`;
       if (event.login) {
-        header += `<div class="graph-annotation__user" bs-tooltip="'Created by ${event.login}'"><img src="${
-          event.avatarUrl
-        }" /></div>`;
+        header += `<div class="graph-annotation__user" bs-tooltip="'Created by ${event.login}'"><img src="${event.avatarUrl}" /></div>`;
       }
       header += `
           <span class="graph-annotation__title ${titleStateClass}">${sanitizeString(title)}</span>

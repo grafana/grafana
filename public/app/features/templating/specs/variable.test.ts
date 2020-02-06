@@ -1,4 +1,11 @@
-import { containsVariable, assignModelProperties } from '../variable';
+import {
+  assignModelProperties,
+  containsSearchFilter,
+  containsVariable,
+  getSearchFilterScopedVar,
+  SEARCH_FILTER_VARIABLE,
+} from '../variable';
+import { ScopedVars } from '@grafana/data';
 
 describe('containsVariable', () => {
   describe('when checking if a string contains a variable', () => {
@@ -66,5 +73,194 @@ describe('assignModelProperties', () => {
     const target: any = { test: 'asd' };
     assignModelProperties(target, { propA: 1, propB: 2 }, { propC: 10 });
     expect(target.propC).toBe(10);
+  });
+});
+
+describe('containsSearchFilter', () => {
+  describe('when called without query', () => {
+    it('then it should return false', () => {
+      const result = containsSearchFilter(null);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('when called with an object', () => {
+    it('then it should return false', () => {
+      const result = containsSearchFilter({});
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe(`when called with a query without ${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return false', () => {
+      const result = containsSearchFilter('$app.*');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe(`when called with a query with $${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return true', () => {
+      const result = containsSearchFilter(`$app.$${SEARCH_FILTER_VARIABLE}`);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe(`when called with a query with [[${SEARCH_FILTER_VARIABLE}]]`, () => {
+    it('then it should return true', () => {
+      const result = containsSearchFilter(`$app.[[${SEARCH_FILTER_VARIABLE}]]`);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe(`when called with a query with \$\{${SEARCH_FILTER_VARIABLE}:regex\}`, () => {
+    it('then it should return true', () => {
+      const result = containsSearchFilter(`$app.\$\{${SEARCH_FILTER_VARIABLE}:regex\}`);
+
+      expect(result).toBe(true);
+    });
+  });
+});
+
+interface GetSearchFilterScopedVarScenario {
+  query: string;
+  wildcardChar: string;
+  options: { searchFilter?: string };
+  expected: ScopedVars;
+}
+
+const scenarios: GetSearchFilterScopedVarScenario[] = [
+  // testing the $__searchFilter notation
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '', text: '' } },
+  },
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '*',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '*', text: '' } },
+  },
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a', text: '' } },
+  },
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '*',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a*', text: '' } },
+  },
+  // testing the [[__searchFilter]] notation
+  {
+    query: 'abc.[[__searchFilter]]',
+    wildcardChar: '',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '', text: '' } },
+  },
+  {
+    query: 'abc.[[__searchFilter]]',
+    wildcardChar: '*',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '*', text: '' } },
+  },
+  {
+    query: 'abc.[[__searchFilter]]',
+    wildcardChar: '',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a', text: '' } },
+  },
+  {
+    query: 'abc.[[__searchFilter]]',
+    wildcardChar: '*',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a*', text: '' } },
+  },
+  // testing the ${__searchFilter:fmt} notation
+  {
+    query: 'abc.${__searchFilter:regex}',
+    wildcardChar: '',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '', text: '' } },
+  },
+  {
+    query: 'abc.${__searchFilter:regex}',
+    wildcardChar: '*',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '*', text: '' } },
+  },
+  {
+    query: 'abc.${__searchFilter:regex}',
+    wildcardChar: '',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a', text: '' } },
+  },
+  {
+    query: 'abc.${__searchFilter:regex}',
+    wildcardChar: '*',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a*', text: '' } },
+  },
+  // testing the no options
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '',
+    options: null,
+    expected: { __searchFilter: { value: '', text: '' } },
+  },
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '*',
+    options: null,
+    expected: { __searchFilter: { value: '*', text: '' } },
+  },
+  // testing the no search filter at all
+  {
+    query: 'abc.$def',
+    wildcardChar: '',
+    options: { searchFilter: '' },
+    expected: {},
+  },
+  {
+    query: 'abc.$def',
+    wildcardChar: '*',
+    options: { searchFilter: '' },
+    expected: {},
+  },
+  {
+    query: 'abc.$def',
+    wildcardChar: '',
+    options: { searchFilter: 'a' },
+    expected: {},
+  },
+  {
+    query: 'abc.$def',
+    wildcardChar: '*',
+    options: { searchFilter: 'a' },
+    expected: {},
+  },
+];
+
+scenarios.map(scenario => {
+  describe('getSearchFilterScopedVar', () => {
+    describe(`when called with query:'${scenario.query}'`, () => {
+      describe(`and wildcardChar:'${scenario.wildcardChar}'`, () => {
+        describe(`and options:'${JSON.stringify(scenario.options, null, 0)}'`, () => {
+          it(`then the result should be ${JSON.stringify(scenario.expected, null, 0)}`, () => {
+            const { expected, ...args } = scenario;
+
+            expect(getSearchFilterScopedVar(args)).toEqual(expected);
+          });
+        });
+      });
+    });
   });
 });

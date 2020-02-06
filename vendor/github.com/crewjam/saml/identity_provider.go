@@ -20,9 +20,10 @@ import (
 	"time"
 
 	"github.com/beevik/etree"
+	dsig "github.com/russellhaering/goxmldsig"
+
 	"github.com/crewjam/saml/logger"
 	"github.com/crewjam/saml/xmlenc"
-	dsig "github.com/russellhaering/goxmldsig"
 )
 
 // Session represents a user session. It is returned by the
@@ -34,13 +35,14 @@ type Session struct {
 	ExpireTime time.Time
 	Index      string
 
-	NameID         string
-	Groups         []string
-	UserName       string
-	UserEmail      string
-	UserCommonName string
-	UserSurname    string
-	UserGivenName  string
+	NameID                string
+	Groups                []string
+	UserName              string
+	UserEmail             string
+	UserCommonName        string
+	UserSurname           string
+	UserGivenName         string
+	UserScopedAffiliation string
 }
 
 // SessionProvider is an interface used by IdentityProvider to determine the
@@ -110,7 +112,7 @@ func (idp *IdentityProvider) Metadata() *EntityDescriptor {
 		ValidUntil:    TimeNow().Add(DefaultValidDuration),
 		CacheDuration: DefaultValidDuration,
 		IDPSSODescriptors: []IDPSSODescriptor{
-			IDPSSODescriptor{
+			{
 				SSODescriptor: SSODescriptor{
 					RoleDescriptor: RoleDescriptor{
 						ProtocolSupportEnumeration: "urn:oasis:names:tc:SAML:2.0:protocol",
@@ -620,6 +622,18 @@ func (DefaultAssertionMaker) MakeAssertion(req *IdpAuthnRequest, session *Sessio
 		})
 	}
 
+	if session.UserScopedAffiliation != "" {
+		attributes = append(attributes, Attribute{
+			FriendlyName: "uid",
+			Name:         "urn:oid:1.3.6.1.4.1.5923.1.1.1.9",
+			NameFormat:   "urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+			Values: []AttributeValue{{
+				Type:  "xs:string",
+				Value: session.UserScopedAffiliation,
+			}},
+		})
+	}
+
 	if len(session.Groups) != 0 {
 		groupMemberAttributeValues := []AttributeValue{}
 		for _, group := range session.Groups {
@@ -661,7 +675,7 @@ func (DefaultAssertionMaker) MakeAssertion(req *IdpAuthnRequest, session *Sessio
 				Value:           session.NameID,
 			},
 			SubjectConfirmations: []SubjectConfirmation{
-				SubjectConfirmation{
+				{
 					Method: "urn:oasis:names:tc:SAML:2.0:cm:bearer",
 					SubjectConfirmationData: &SubjectConfirmationData{
 						Address:      req.HTTPRequest.RemoteAddr,
@@ -676,13 +690,13 @@ func (DefaultAssertionMaker) MakeAssertion(req *IdpAuthnRequest, session *Sessio
 			NotBefore:    notBefore,
 			NotOnOrAfter: notOnOrAfterAfter,
 			AudienceRestrictions: []AudienceRestriction{
-				AudienceRestriction{
+				{
 					Audience: Audience{Value: req.ServiceProviderMetadata.EntityID},
 				},
 			},
 		},
 		AuthnStatements: []AuthnStatement{
-			AuthnStatement{
+			{
 				AuthnInstant: session.CreateTime,
 				SessionIndex: session.Index,
 				SubjectLocality: &SubjectLocality{
@@ -696,7 +710,7 @@ func (DefaultAssertionMaker) MakeAssertion(req *IdpAuthnRequest, session *Sessio
 			},
 		},
 		AttributeStatements: []AttributeStatement{
-			AttributeStatement{
+			{
 				Attributes: attributes,
 			},
 		},

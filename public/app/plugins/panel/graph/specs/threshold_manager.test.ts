@@ -109,12 +109,18 @@ describe('ThresholdManager', () => {
     plotOptionsScenario('for threshold on two Y axes', (ctx: any) => {
       const data = new Array(2);
       data[0] = new TimeSeries({
-        datapoints: [[0, 1], [300, 2]],
+        datapoints: [
+          [0, 1],
+          [300, 2],
+        ],
         alias: 'left',
       });
       data[0].yaxis = 1;
       data[1] = new TimeSeries({
-        datapoints: [[0, 1], [300, 2]],
+        datapoints: [
+          [0, 1],
+          [300, 2],
+        ],
         alias: 'right',
       });
       data[1].yaxis = 2;

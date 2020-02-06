@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["../src/**/*.ts", "../src/**/*.tsx"],
+  "exclude": ["../dist", "../node_modules"],
+  "compilerOptions": {
+    "noUnusedLocals": false,
+
+    "declarationDir": "dist",
+    "outDir": "compiled"
+  }
+}

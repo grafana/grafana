@@ -39,7 +39,6 @@ import { contextSrv } from './services/context_srv';
 import { KeybindingSrv } from './services/keybindingSrv';
 import { NavModelSrv } from './nav_model_srv';
 import { geminiScrollbar } from './components/scroll/scroll';
-import { orgSwitcher } from './components/org_switcher';
 import { profiler } from './profiler';
 import { registerAngularDirectives } from './angular_wrappers';
 import { updateLegendValues } from './time_series2';
@@ -72,7 +71,6 @@ export {
   NavModelSrv,
   NavModel,
   geminiScrollbar,
-  orgSwitcher,
   manageDashboardsDirective,
   TimeSeries,
   updateLegendValues,

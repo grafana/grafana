@@ -17,6 +17,7 @@ const UsersTable: FC<Props> = props => {
           <th />
           <th>Login</th>
           <th>Email</th>
+          <th>Name</th>
           <th>Seen</th>
           <th>Role</th>
           <th style={{ width: '34px' }} />
@@ -33,6 +34,7 @@ const UsersTable: FC<Props> = props => {
               <td>
                 <span className="ellipsis">{user.email}</span>
               </td>
+              <td>{user.name}</td>
               <td>{user.lastSeenAtAge}</td>
               <td>
                 <div className="gf-form-select-wrapper width-12">

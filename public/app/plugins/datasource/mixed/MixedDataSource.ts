@@ -3,12 +3,23 @@ import groupBy from 'lodash/groupBy';
 import { from, of, Observable, merge } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-import { LoadingState } from '@grafana/data';
-import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
+import {
+  LoadingState,
+  DataSourceApi,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { mergeMap, map } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
+
+export interface BatchedQueries {
+  datasource: Promise<DataSourceApi>;
+  targets: DataQuery[];
+}
 
 export class MixedDatasource extends DataSourceApi<DataQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
@@ -25,31 +36,35 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       return of({ data: [] } as DataQueryResponse); // nothing
     }
 
+    // Build groups of queries to run in parallel
     const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource');
-    const observables: Array<Observable<DataQueryResponse>> = [];
-    let runningSubRequests = 0;
-
+    const mixed: BatchedQueries[] = [];
     for (const key in sets) {
       const targets = sets[key];
       const dsName = targets[0].datasource;
+      mixed.push({
+        datasource: getDataSourceSrv().get(dsName),
+        targets,
+      });
+    }
+    return this.batchQueries(mixed, request);
+  }
 
-      const observable = from(getDataSourceSrv().get(dsName)).pipe(
+  batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
+    const observables: Array<Observable<DataQueryResponse>> = [];
+    let runningSubRequests = 0;
+
+    for (let i = 0; i < mixed.length; i++) {
+      const query = mixed[i];
+      if (!query.targets || !query.targets.length) {
+        continue;
+      }
+      const observable = from(query.datasource).pipe(
         mergeMap((dataSourceApi: DataSourceApi) => {
           const datasourceRequest = cloneDeep(request);
 
-          // Remove any unused hidden queries
-          let newTargets = targets.slice();
-          if (!dataSourceApi.meta.hiddenQueries) {
-            newTargets = newTargets.filter((t: DataQuery) => !t.hide);
-          }
-
-          datasourceRequest.targets = newTargets;
-          datasourceRequest.requestId = `${dsName}${datasourceRequest.requestId || ''}`;
-
-          // all queries hidden return empty result for for this requestId
-          if (datasourceRequest.targets.length === 0) {
-            return of({ data: [], key: datasourceRequest.requestId });
-          }
+          datasourceRequest.requestId = `mixed-${i}-${datasourceRequest.requestId || ''}`;
+          datasourceRequest.targets = query.targets;
 
           runningSubRequests++;
           let hasCountedAsDone = false;
@@ -80,7 +95,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
                 ...response,
                 data: response.data || [],
                 state: runningSubRequests === 0 ? LoadingState.Done : LoadingState.Loading,
-                key: `${dsName}${response.key || ''}`,
+                key: `mixed-${i}-${response.key || ''}`,
               } as DataQueryResponse;
             })
           );

@@ -70,6 +70,7 @@ type TeamMemberDTO struct {
 	External   bool           `json:"-"`
 	AuthModule string         `json:"auth_module"`
 	Email      string         `json:"email"`
+	Name       string         `json:"name"`
 	Login      string         `json:"login"`
 	AvatarUrl  string         `json:"avatarUrl"`
 	Labels     []string       `json:"labels"`

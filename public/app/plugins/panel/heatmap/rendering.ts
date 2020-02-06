@@ -6,8 +6,14 @@ import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
-import { PanelEvents, GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
-import { toUtc } from '@grafana/data';
+import {
+  toUtc,
+  PanelEvents,
+  GrafanaThemeType,
+  getColorFromHexRgbOrName,
+  getValueFormat,
+  formattedValueToString,
+} from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
 const MIN_CARD_SIZE = 1,
@@ -442,11 +448,14 @@ export class HeatmapRenderer {
     const format = this.panel.yAxis.format;
     return (value: any) => {
       try {
-        return format !== 'none' ? getValueFormat(format)(value, decimals, scaledDecimals) : value;
+        if (format !== 'none') {
+          const v = getValueFormat(format)(value, decimals, scaledDecimals);
+          return formattedValueToString(v);
+        }
       } catch (err) {
         console.error(err.message || err);
-        return value;
       }
+      return value;
     };
   }
 

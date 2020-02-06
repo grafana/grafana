@@ -50,9 +50,4 @@ const mapDispatchToProps = {
   resetExploreAction,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Wrapper)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));

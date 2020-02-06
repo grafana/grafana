@@ -60,7 +60,7 @@ export class SearchCtrl {
   queryParser: SearchQueryParser;
 
   /** @ngInject */
-  constructor($scope: any, private $location: any, private $timeout: any, private searchSrv: SearchSrv) {
+  constructor(private $scope: any, private $location: any, private $timeout: any, private searchSrv: SearchSrv) {
     appEvents.on(CoreEvents.showDashSearch, this.openSearch.bind(this), $scope);
     appEvents.on(CoreEvents.hideDashSearch, this.closeSearch.bind(this), $scope);
     appEvents.on(CoreEvents.searchQuery, debounce(this.search.bind(this), 500), $scope);
@@ -252,6 +252,7 @@ export class SearchCtrl {
         this.results = results || [];
         this.isLoading = false;
         this.moveSelection(1);
+        this.$scope.$digest();
       });
   }
 

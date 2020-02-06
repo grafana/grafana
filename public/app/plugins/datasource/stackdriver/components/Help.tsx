@@ -66,8 +66,8 @@ export class Help extends React.Component<Props, State> {
         )}
 
         {displayHelp && (
-          <div className="gf-form grafana-info-box" style={{ padding: 0 }}>
-            <pre className="gf-form-pre alert alert-info" style={{ marginRight: 0 }}>
+          <div className="gf-form grafana-info-box alert-info">
+            <div>
               <h5>Alias Patterns</h5>Format the legend keys any way you want by using alias patterns. Format the legend
               keys any way you want by using alias patterns.
               <br /> <br />
@@ -98,11 +98,19 @@ export class Help extends React.Component<Props, State> {
                   <code>{`${'{{resource.label.label_name}}'}`}</code> = Resource label metadata e.g. resource.label.zone
                 </li>
                 <li>
+                  <code>{`${'{{metadata.system_labels.name}}'}`}</code> = Meta data system labels e.g.
+                  metadata.system_labels.name. For this to work, the needs to be included in the group by
+                </li>
+                <li>
+                  <code>{`${'{{metadata.user_labels.name}}'}`}</code> = Meta data user labels e.g.
+                  metadata.user_labels.name. For this to work, the needs to be included in the group by
+                </li>
+                <li>
                   <code>{`${'{{bucket}}'}`}</code> = bucket boundary for distribution metrics when using a heatmap in
                   Grafana
                 </li>
               </ul>
-            </pre>
+            </div>
           </div>
         )}
 

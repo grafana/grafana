@@ -33,4 +33,5 @@ type renderFunc func(ctx context.Context, options Opts) (*RenderResult, error)
 
 type Service interface {
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
+	RenderErrorImage(error error) (*RenderResult, error)
 }

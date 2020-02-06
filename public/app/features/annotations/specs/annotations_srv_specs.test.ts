@@ -9,7 +9,11 @@ describe('Annotations deduplication', () => {
       { id: 5, time: 5 },
       { id: 5, time: 5 },
     ];
-    const expectedAnnotations = [{ id: 1, time: 1 }, { id: 2, time: 2 }, { id: 5, time: 5 }];
+    const expectedAnnotations = [
+      { id: 1, time: 1 },
+      { id: 2, time: 2 },
+      { id: 5, time: 5 },
+    ];
 
     const deduplicated = dedupAnnotations(testAnnotations);
     expect(deduplicated).toEqual(expectedAnnotations);
@@ -23,7 +27,11 @@ describe('Annotations deduplication', () => {
       { id: 5, time: 5 },
       { id: 5, time: 5 },
     ];
-    const expectedAnnotations = [{ id: 1, time: 1 }, { id: 2, time: 2 }, { id: 5, time: 5 }];
+    const expectedAnnotations = [
+      { id: 1, time: 1 },
+      { id: 2, time: 2 },
+      { id: 5, time: 5 },
+    ];
 
     const deduplicated = dedupAnnotations(testAnnotations);
     expect(deduplicated).toEqual(expectedAnnotations);

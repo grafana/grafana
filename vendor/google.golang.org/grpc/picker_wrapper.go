@@ -19,10 +19,10 @@
 package grpc
 
 import (
+	"context"
 	"io"
 	"sync"
 
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -101,10 +101,7 @@ func doneChannelzWrapper(acw *acBalancerWrapper, done func(balancer.DoneInfo)) f
 // - the subConn returned by the current picker is not READY
 // When one of these situations happens, pick blocks until the picker gets updated.
 func (bp *pickerWrapper) pick(ctx context.Context, failfast bool, opts balancer.PickOptions) (transport.ClientTransport, func(balancer.DoneInfo), error) {
-	var (
-		p  balancer.Picker
-		ch chan struct{}
-	)
+	var ch chan struct{}
 
 	for {
 		bp.mu.Lock()
@@ -123,6 +120,14 @@ func (bp *pickerWrapper) pick(ctx context.Context, failfast bool, opts balancer.
 			bp.mu.Unlock()
 			select {
 			case <-ctx.Done():
+				if connectionErr := bp.connectionError(); connectionErr != nil {
+					switch ctx.Err() {
+					case context.DeadlineExceeded:
+						return nil, nil, status.Errorf(codes.DeadlineExceeded, "latest connection error: %v", connectionErr)
+					case context.Canceled:
+						return nil, nil, status.Errorf(codes.Canceled, "latest connection error: %v", connectionErr)
+					}
+				}
 				return nil, nil, ctx.Err()
 			case <-ch:
 			}
@@ -130,7 +135,7 @@ func (bp *pickerWrapper) pick(ctx context.Context, failfast bool, opts balancer.
 		}
 
 		ch = bp.blockingCh
-		p = bp.picker
+		p := bp.picker
 		bp.mu.Unlock()
 
 		subConn, done, err := p.Pick(ctx, opts)
@@ -144,15 +149,22 @@ func (bp *pickerWrapper) pick(ctx context.Context, failfast bool, opts balancer.
 					continue
 				}
 				return nil, nil, status.Errorf(codes.Unavailable, "%v, latest connection error: %v", err, bp.connectionError())
+			case context.DeadlineExceeded:
+				return nil, nil, status.Error(codes.DeadlineExceeded, err.Error())
+			case context.Canceled:
+				return nil, nil, status.Error(codes.Canceled, err.Error())
 			default:
+				if _, ok := status.FromError(err); ok {
+					return nil, nil, err
+				}
 				// err is some other error.
-				return nil, nil, toRPCErr(err)
+				return nil, nil, status.Error(codes.Unknown, err.Error())
 			}
 		}
 
 		acw, ok := subConn.(*acBalancerWrapper)
 		if !ok {
-			grpclog.Infof("subconn returned from pick is not *acBalancerWrapper")
+			grpclog.Error("subconn returned from pick is not *acBalancerWrapper")
 			continue
 		}
 		if t, ok := acw.getAddrConn().getReadyTransport(); ok {
@@ -160,6 +172,11 @@ func (bp *pickerWrapper) pick(ctx context.Context, failfast bool, opts balancer.
 				return t, doneChannelzWrapper(acw, done), nil
 			}
 			return t, done, nil
+		}
+		if done != nil {
+			// Calling done with nil error, no bytes sent and no bytes received.
+			// DoneInfo with default value works.
+			done(balancer.DoneInfo{})
 		}
 		grpclog.Infof("blockingPicker: the picked transport is not ready, loop back to repick")
 		// If ok == false, ac.state is not READY.

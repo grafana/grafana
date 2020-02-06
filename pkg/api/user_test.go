@@ -1,10 +1,12 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -48,9 +50,10 @@ func TestUserApiEndpoint(t *testing.T) {
 			})
 
 			sc.handlerFunc = GetUserByID
+			avatarUrl := dtos.GetGravatarUrl("daniel@grafana.com")
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
-			expected := `
+			expected := fmt.Sprintf(`
 			{
 				"id": 1,
 				"email": "daniel@grafana.com",
@@ -64,10 +67,11 @@ func TestUserApiEndpoint(t *testing.T) {
 				"authLabels": [
 					"LDAP"
 				],
+				"avatarUrl": "%s",
 				"updatedAt": "2019-02-11T17:30:40Z",
 				"createdAt": "2019-02-11T17:30:40Z"
 			}
-			`
+			`, avatarUrl)
 
 			require.Equal(t, http.StatusOK, sc.resp.Code)
 			require.JSONEq(t, expected, sc.resp.Body.String())
@@ -109,6 +113,7 @@ func TestUserApiEndpoint(t *testing.T) {
 				"isDisabled": false,
 				"authLabels": null,
 				"isExternal": false,
+				"avatarUrl": "",
 				"updatedAt": "2019-02-11T17:30:40Z",
 				"createdAt": "2019-02-11T17:30:40Z"
 			}

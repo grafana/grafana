@@ -9,7 +9,7 @@ export class Store {
     window.localStorage[key] = value;
   }
 
-  getBool(key: string, def: any) {
+  getBool(key: string, def: boolean): boolean {
     if (def !== void 0 && !this.exists(key)) {
       return def;
     }

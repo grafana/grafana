@@ -7,7 +7,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery } from '@grafana/ui';
+import { DataQuery } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
 import 'app/features/plugins/plugin_loader';
 import { dateTime } from '@grafana/data';
@@ -45,13 +45,13 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         target,
         refresh: () => {
           setTimeout(() => {
-            this.props.onQueryChange(target);
-            this.props.onExecuteQuery();
+            this.props.onQueryChange?.(target);
+            this.props.onExecuteQuery?.();
           }, 1);
         },
         onQueryChange: () => {
           setTimeout(() => {
-            this.props.onQueryChange(target);
+            this.props.onQueryChange?.(target);
           }, 1);
         },
         events: exploreEvents,
@@ -64,8 +64,8 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     this.angularScope = scopeProps.ctrl;
 
     setTimeout(() => {
-      this.props.onQueryChange(target);
-      this.props.onExecuteQuery();
+      this.props.onQueryChange?.(target);
+      this.props.onExecuteQuery?.();
     }, 1);
   }
 

@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import $ from 'jquery';
 import _ from 'lodash';
 import { getValueBucketBound } from './heatmap_data_converter';
-import { getValueFormat } from '@grafana/ui';
+import { getValueFormat, formattedValueToString } from '@grafana/data';
 
 const TOOLTIP_PADDING_X = 30;
 const TOOLTIP_PADDING_Y = 5;
@@ -216,7 +216,11 @@ export class HeatmapTooltip {
     barWidth = Math.max(barWidth, 1);
 
     // Normalize histogram Y axis
-    const histogramDomain = _.reduce(_.map(histogramData, d => d[1]), (sum, val) => sum + val, 0);
+    const histogramDomain = _.reduce(
+      _.map(histogramData, d => d[1]),
+      (sum, val) => sum + val,
+      0
+    );
     const histYScale = d3
       .scaleLinear()
       .domain([0, histogramDomain])
@@ -269,9 +273,9 @@ export class HeatmapTooltip {
   }
 
   countValueFormatter(decimals: number, scaledDecimals: any = null) {
-    const format = 'short';
+    const fmt = getValueFormat('short');
     return (value: number) => {
-      return getValueFormat(format)(value, decimals, scaledDecimals);
+      return formattedValueToString(fmt(value, decimals, scaledDecimals));
     };
   }
 }

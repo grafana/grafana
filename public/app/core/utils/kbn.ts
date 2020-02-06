@@ -1,6 +1,14 @@
 import { has } from 'lodash';
-import { getValueFormat, getValueFormatterIndex, getValueFormats } from '@grafana/ui';
-import { stringToJsRegex, TimeRange, deprecationWarning } from '@grafana/data';
+import {
+  getValueFormat,
+  getValueFormatterIndex,
+  getValueFormats,
+  stringToJsRegex,
+  TimeRange,
+  deprecationWarning,
+  DecimalCount,
+  formattedValueToString,
+} from '@grafana/data';
 
 const kbn: any = {};
 
@@ -302,7 +310,10 @@ if (typeof Proxy !== 'undefined') {
 
       const formatter = getValueFormat(name);
       if (formatter) {
-        return formatter;
+        // Return the results as a simple string
+        return (value: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount, isUtc?: boolean) => {
+          return formattedValueToString(formatter(value, decimals, scaledDecimals, isUtc ? 'utc' : 'browser'));
+        };
       }
 
       // default to look here

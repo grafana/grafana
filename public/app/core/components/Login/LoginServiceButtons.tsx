@@ -1,38 +1,42 @@
 import React from 'react';
 import config from 'app/core/config';
 
-const loginServices: () => LoginServices = () => ({
-  saml: {
-    enabled: config.samlEnabled,
-    name: 'SAML',
-    className: 'github',
-    icon: 'key',
-  },
-  google: {
-    enabled: config.oauth.google,
-    name: 'Google',
-  },
-  github: {
-    enabled: config.oauth.github,
-    name: 'GitHub',
-  },
-  gitlab: {
-    enabled: config.oauth.gitlab,
-    name: 'GitLab',
-  },
-  grafanacom: {
-    enabled: config.oauth.grafana_com,
-    name: 'Grafana.com',
-    hrefName: 'grafana_com',
-    icon: 'grafana_com',
-  },
-  oauth: {
-    enabled: config.oauth.generic_oauth,
-    name: 'OAuth',
-    icon: 'sign-in',
-    hrefName: 'generic_oauth',
-  },
-});
+const loginServices: () => LoginServices = () => {
+  const oauthEnabled = !!config.oauth;
+
+  return {
+    saml: {
+      enabled: config.samlEnabled,
+      name: 'SAML',
+      className: 'github',
+      icon: 'key',
+    },
+    google: {
+      enabled: oauthEnabled && config.oauth.google,
+      name: 'Google',
+    },
+    github: {
+      enabled: oauthEnabled && config.oauth.github,
+      name: 'GitHub',
+    },
+    gitlab: {
+      enabled: oauthEnabled && config.oauth.gitlab,
+      name: 'GitLab',
+    },
+    grafanacom: {
+      enabled: oauthEnabled && config.oauth.grafana_com,
+      name: 'Grafana.com',
+      hrefName: 'grafana_com',
+      icon: 'grafana_com',
+    },
+    oauth: {
+      enabled: oauthEnabled && config.oauth.generic_oauth,
+      name: oauthEnabled && config.oauth.generic_oauth ? config.oauth.generic_oauth.name : 'OAuth',
+      icon: 'sign-in',
+      hrefName: 'generic_oauth',
+    },
+  };
+};
 
 export interface LoginService {
   enabled: boolean;

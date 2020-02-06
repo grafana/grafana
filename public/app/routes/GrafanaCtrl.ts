@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { setBackendSrv, BackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
@@ -27,8 +27,10 @@ import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 import { AppEvent, AppEvents } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -40,11 +42,11 @@ export class GrafanaCtrl {
     $rootScope: GrafanaRootScope,
     contextSrv: ContextSrv,
     bridgeSrv: BridgeSrv,
-    backendSrv: BackendSrv,
     timeSrv: TimeSrv,
     linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
+    dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
@@ -54,6 +56,8 @@ export class GrafanaCtrl {
     setTimeSrv(timeSrv);
     setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
+    setDashboardSrv(dashboardSrv);
+
     const store = configureStore();
     setLocationSrv({
       update: (opt: LocationUpdate) => {
@@ -141,7 +145,6 @@ export function grafanaAppDirective(
     controller: GrafanaCtrl,
     link: (scope: IRootScopeService & AppEventEmitter, elem: JQuery) => {
       const body = $('body');
-
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 
@@ -164,7 +167,7 @@ export function grafanaAppDirective(
       });
 
       // check if we are in server side render
-      if (document.cookie.indexOf('renderKey') !== -1) {
+      if (config.phantomJSRenderer && document.cookie.indexOf('renderKey') !== -1) {
         body.addClass('body--phantomjs');
       }
 

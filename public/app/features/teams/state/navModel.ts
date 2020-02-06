@@ -28,7 +28,7 @@ export function buildNavModel(team: Team): NavModelItem {
     ],
   };
 
-  if (config.buildInfo.isEnterprise) {
+  if (config.licenseInfo.hasLicense) {
     navModel.children.push({
       active: false,
       icon: 'fa fa-fw fa-refresh',

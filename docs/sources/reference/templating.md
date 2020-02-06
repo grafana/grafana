@@ -114,7 +114,7 @@ String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
-Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
+Test the formatting options on the [Grafana Play site](https://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
 If any invalid formatting option is specified, then `glob` is the default/fallback option.
 
@@ -236,11 +236,12 @@ demo.robustperception.io:9100
 
 The query expressions are different for each data source.
 
-- [Graphite templating queries]({{< relref "features/datasources/graphite.md#templating" >}})
-- [Elasticsearch templating queries]({{< relref "features/datasources/elasticsearch.md#templating" >}})
-- [InfluxDB templating queries]({{< relref "features/datasources/influxdb.md#templating" >}})
-- [Prometheus templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
-- [OpenTSDB templating queries]({{< relref "features/datasources/opentsdb.md#templating" >}})
+- [Graphite templating queries]({{< relref "../features/datasources/graphite.md#templating" >}})
+- [Elasticsearch templating queries]({{< relref "../features/datasources/elasticsearch.md#templating" >}})
+- [InfluxDB templating queries]({{< relref "../features/datasources/influxdb.md#templating" >}})
+- [Prometheus templating queries]({{< relref "../features/datasources/prometheus.md#templating" >}})
+- [OpenTSDB templating queries]({{< relref "../features/datasources/opentsdb.md#templating" >}})
+- [AzureMonitor templating queries]({{< relref "../features/datasources/azuremonitor.md#templating-with-variables-for-the-azure-monitor-service" >}})
 
 One thing to note is that query expressions can contain references to other variables and in effect create linked variables.
 Grafana will detect this and automatically refresh a variable when one of it's containing variables change.
@@ -346,6 +347,18 @@ This variable is only available in the Singlestat panel and can be used in the p
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
+### The $__dashboard Variable
+> Only available in Grafana v6.6+
+
+This variable is the UID of the current dashboard.
+`${__dashboard.name}` is the name of the current dashboard.
+
+### The $__org Variable
+> Only available in Grafana v6.6+
+
+This variable is the ID of the current organization.
+`${__org.name}` is the name of the current organization.
+
 ## Repeating Panels
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
@@ -378,7 +391,7 @@ you want to repeat the row for.
 
 It may be a good idea to use a variable in the row title as well.
 
-Example: [Repeated Rows Dashboard](http://play.grafana.org/dashboard/db/repeated-rows)
+Example: [Repeated Rows Dashboard](https://play.grafana.org/dashboard/db/repeated-rows)
 
 ## URL state
 
@@ -386,6 +399,6 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 
 ## Examples
 
-- [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
-- [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
-- [InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+- [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
+- [Elasticsearch Templated Dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
+- [InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)

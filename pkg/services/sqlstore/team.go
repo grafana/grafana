@@ -387,7 +387,17 @@ func GetTeamMembers(query *models.GetTeamMembersQuery) error {
 	if query.External {
 		sess.Where("team_member.external=?", dialect.BooleanStr(true))
 	}
-	sess.Cols("team_member.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login", "team_member.external", "team_member.permission", "user_auth.auth_module")
+	sess.Cols(
+		"team_member.org_id",
+		"team_member.team_id",
+		"team_member.user_id",
+		"user.email",
+		"user.name",
+		"user.login",
+		"team_member.external",
+		"team_member.permission",
+		"user_auth.auth_module",
+	)
 	sess.Asc("user.login", "user.email")
 
 	err := sess.Find(&query.Result)

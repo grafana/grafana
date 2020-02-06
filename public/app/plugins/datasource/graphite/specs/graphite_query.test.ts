@@ -40,7 +40,10 @@ describe('Graphite query model', () => {
 
     it('should not hang on circular references', () => {
       ctx.target.target = 'asPercent(#A, #B)';
-      ctx.targets = [{ refId: 'A', target: 'asPercent(#B, #C)' }, { refId: 'B', target: 'asPercent(#A, #C)' }];
+      ctx.targets = [
+        { refId: 'A', target: 'asPercent(#B, #C)' },
+        { refId: 'B', target: 'asPercent(#A, #C)' },
+      ];
       ctx.queryModel.updateRenderedTarget(ctx.target, ctx.targets);
       // Just ensure updateRenderedTarget() is completed and doesn't hang
       expect(ctx.queryModel.target.targetFull).toBeDefined();

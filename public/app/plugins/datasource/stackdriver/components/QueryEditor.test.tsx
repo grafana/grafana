@@ -11,6 +11,8 @@ const props: Props = {
   datasource: {
     getDefaultProject: () => Promise.resolve('project'),
     getMetricTypes: () => Promise.resolve([]),
+    getLabels: () => Promise.resolve([]),
+    variables: [],
   } as any,
   templateSrv: new TemplateSrv(),
 };

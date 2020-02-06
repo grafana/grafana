@@ -74,8 +74,9 @@ describe('Functions', () => {
       teamId: 2,
       avatarUrl: '',
       email: 'user@user.org',
-      labels: [],
       login: 'member',
+      name: 'member',
+      labels: [],
       permission: TeamPermissionLevel.Member,
     };
     const { instance } = setup({ member });

@@ -6,9 +6,18 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { toLegacyResponseData, toDataFrameDTO, TimeRange, LoadingState, DataFrame } from '@grafana/data';
-
-import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse, PanelEvents } from '@grafana/ui';
+import {
+  DataFrame,
+  DataQueryResponse,
+  DataSourceApi,
+  LegacyResponseData,
+  LoadingState,
+  PanelData,
+  PanelEvents,
+  TimeRange,
+  toDataFrameDTO,
+  toLegacyResponseData,
+} from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
 import { CoreEvents } from 'app/types';
@@ -16,7 +25,6 @@ import { CoreEvents } from 'app/types';
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: DataSourceApi;
-  $q: any;
   $timeout: any;
   contextSrv: ContextSrv;
   datasourceSrv: any;
@@ -35,7 +43,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
 
-    this.$q = $injector.get('$q');
     this.contextSrv = $injector.get('contextSrv');
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
@@ -97,23 +104,23 @@ class MetricsPanelCtrl extends PanelCtrl {
       return;
     }
 
-    this.loading = false;
     this.error = err.message || 'Request Error';
-    this.inspector = { error: err };
 
     if (err.data) {
       if (err.data.message) {
         this.error = err.data.message;
-      }
-      if (err.data.error) {
+      } else if (err.data.error) {
         this.error = err.data.error;
       }
     }
 
-    console.log('Panel data error:', err);
-    return this.$timeout(() => {
-      this.events.emit(PanelEvents.dataError, err);
-    });
+    this.angularDirtyCheck();
+  }
+
+  angularDirtyCheck() {
+    if (!this.$scope.$root.$$phase) {
+      this.$scope.$digest();
+    }
   }
 
   // Updates the response with information from the stream
@@ -122,12 +129,12 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-        return;
       }
 
       // Ignore data in loading state
       if (data.state === LoadingState.Loading) {
         this.loading = true;
+        this.angularDirtyCheck();
         return;
       }
 
@@ -149,6 +156,8 @@ class MetricsPanelCtrl extends PanelCtrl {
         const legacy = data.series.map(v => toLegacyResponseData(v));
         this.handleQueryResult({ data: legacy });
       }
+
+      this.angularDirtyCheck();
     },
   };
 
@@ -247,7 +256,13 @@ class MetricsPanelCtrl extends PanelCtrl {
         text: 'Explore',
         icon: 'gicon gicon-explore',
         shortcut: 'x',
-        href: await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
+        href: await getExploreUrl({
+          panel: this.panel,
+          panelTargets: this.panel.targets,
+          panelDatasource: this.datasource,
+          datasourceSrv: this.datasourceSrv,
+          timeSrv: this.timeSrv,
+        }),
       });
     }
     return items;

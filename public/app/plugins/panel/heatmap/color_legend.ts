@@ -5,7 +5,7 @@ import { contextSrv } from 'app/core/core';
 import { tickStep } from 'app/core/utils/ticks';
 import { getColorScale, getOpacityScale } from './color_scale';
 import coreModule from 'app/core/core_module';
-import { PanelEvents, GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
+import { PanelEvents, GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/data';
 
 const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;
@@ -109,7 +109,7 @@ function drawColorLegend(
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
-  const colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
+  const colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, rangeTo, rangeFrom);
   legend
     .append('g')
     .attr('class', 'legend-color-bar')
@@ -147,7 +147,7 @@ function drawOpacityLegend(
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
-  const opacityScale = getOpacityScale(options, maxValue, minValue);
+  const opacityScale = getOpacityScale(options, rangeTo, rangeFrom);
   legend
     .append('g')
     .attr('class', 'legend-color-bar')

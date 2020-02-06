@@ -14,7 +14,8 @@ func TestEmailCodes(t *testing.T) {
 		setting.EmailCodeValidMinutes = 120
 
 		user := &m.User{Id: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
-		code := createUserEmailCode(user, nil)
+		code, err := createUserEmailCode(user, nil)
+		So(err, ShouldBeNil)
 
 		Convey("getLoginForCode should return login", func() {
 			login := getLoginForEmailCode(code)
@@ -22,12 +23,16 @@ func TestEmailCodes(t *testing.T) {
 		})
 
 		Convey("Can verify valid code", func() {
-			So(validateUserEmailCode(user, code), ShouldBeTrue)
+			isValid, err := validateUserEmailCode(user, code)
+			So(err, ShouldBeNil)
+			So(isValid, ShouldBeTrue)
 		})
 
 		Convey("Cannot verify in-valid code", func() {
 			code = "ASD"
-			So(validateUserEmailCode(user, code), ShouldBeFalse)
+			isValid, err := validateUserEmailCode(user, code)
+			So(err, ShouldBeNil)
+			So(isValid, ShouldBeFalse)
 		})
 
 	})

@@ -1,27 +1,45 @@
 # Backend style guide
 
-Grafanas backend has been developed for a long time with a mix of code styles.
+Grafanas backend has been developed for a long time with a mix of code styles.  This guide explains how we want to write Go code in the future.
 
-This style guide is a guide for how we want to write Go code in the future. Generally, we want to follow the style guides used in Go [Code Review Comments](https://code.google.com/p/go-wiki/wiki/CodeReviewComments) and Peter Bourgon's [Go: Best Practices for Production Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style)
+Unless stated otherwise, use the guidelines listed in the following articles:
+
+- [Effective Go](https://golang.org/doc/effective_go.html)
+- [Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
+- [Go: Best Practices for Production Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style)
 
 ## Linting and formatting
-We enforce strict `gofmt` formatting and use some linters on our codebase. You can lint the codebase with <akefile -
+
+To ensure consistency across the Go codebase, we require all code to pass a number of linter checks.
+
+We use the standard following linters:
+
+- [gofmt](https://golang.org/cmd/gofmt/)
+- [golint](https://github.com/golang/lint)
+- [go vet](https://golang.org/cmd/vet/)
+
+In addition to the standard linters, we also use:
+
+- [revive](https://revive.run/) with a [custom config](https://github.com/grafana/grafana/blob/master/conf/revive.toml)
+- [GolangCI-Lint](https://github.com/golangci/golangci-lint)
+- [gosec](https://github.com/securego/gosec)
+
+To run all linters, use the `lint-go` Makefile target:
+
 ```bash
-$ make lint-go
+make lint-go
 ```
 
-We use [revive](https://github.com/mgechev/revive) as a go linter, and do enforce our [custom config](https://github.com/grafana/grafana/blob/master/conf/revive.toml) for it.
-
-The end goal is to follow the golint. And the approuch for reachin that goal is to lint all parts of the codebase that we are currently working on and enable stricter linting for more areas as we go. 
-
 ## Testing
-We use GoConvey for BDD/scenario based testing. Which we think is useful for testing certain chain or interactions. Ex https://github.com/grafana/grafana/blob/master/pkg/services/auth/auth_token_test.go
 
-We value clean & readable code that is loosely coupled and covered by unit tests. This makes it easier to collaborate and maintain the code. In the sqlstore package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value. 
+We value clean and readable code, that is loosely coupled and covered by unit tests. This makes it easier to collaborate and maintain the code.
 
-For new tests its preferred to use standard library testing.
+Tests must use the standard library, `testing`. For assertions, prefer using [testify](https://github.com/stretchr/testify).
 
-### Mocks/Stubs
-As a general rule of thumb we try to override/replace functions/methods when mocks/stubs are needed. One common task is the need of overriding time (`time.Now()`). See usage of `getTime` variable in [code](https://github.com/grafana/grafana/blob/52c39904120fb0b98494b961be67bb47574245b1/pkg/services/auth/auth_token.go#L22) and in [test](https://github.com/grafana/grafana/blob/52c39904120fb0b98494b961be67bb47574245b1/pkg/services/auth/auth_token_test.go#L23-L26) as an example.
+The majority of our tests uses [GoConvey](http://goconvey.co/) but that's something we want to avoid going forward.
 
-When you need to stub/mock an interface you can implement a struct that allows you to override methods on a test-by-test basis. See [stub](https://github.com/grafana/grafana/blob/52c39904120fb0b98494b961be67bb47574245b1/pkg/services/auth/testing.go) and [example usage](https://github.com/grafana/grafana/blob/52c39904120fb0b98494b961be67bb47574245b1/pkg/middleware/middleware_test.go#L153-L180).
+In the `sqlstore` package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value.
+
+## General guidelines
+
+- Avoid using import aliases, e.g. `import m "github.com/grafana/grafana/pkg/models"`.

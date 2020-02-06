@@ -64,10 +64,13 @@ exports[`Render should render component 1`] = `
         <tr>
           <th />
           <th>
-            Name
+            Login
           </th>
           <th>
             Email
+          </th>
+          <th>
+            Name
           </th>
           <Component
             featureToggle={false}
@@ -155,10 +158,13 @@ exports[`Render should render team members 1`] = `
         <tr>
           <th />
           <th>
-            Name
+            Login
           </th>
           <th>
             Email
+          </th>
+          <th>
+            Name
           </th>
           <Component
             featureToggle={false}
@@ -189,6 +195,7 @@ exports[`Render should render team members 1`] = `
                 "label 2",
               ],
               "login": "testUser-1",
+              "name": "testName",
               "permission": 0,
               "teamId": 1,
               "userId": 1,
@@ -209,6 +216,7 @@ exports[`Render should render team members 1`] = `
                 "label 2",
               ],
               "login": "testUser-2",
+              "name": "testName",
               "permission": 0,
               "teamId": 1,
               "userId": 2,
@@ -229,6 +237,7 @@ exports[`Render should render team members 1`] = `
                 "label 2",
               ],
               "login": "testUser-3",
+              "name": "testName",
               "permission": 0,
               "teamId": 1,
               "userId": 3,
@@ -249,6 +258,7 @@ exports[`Render should render team members 1`] = `
                 "label 2",
               ],
               "login": "testUser-4",
+              "name": "testName",
               "permission": 0,
               "teamId": 1,
               "userId": 4,
@@ -269,6 +279,7 @@ exports[`Render should render team members 1`] = `
                 "label 2",
               ],
               "login": "testUser-5",
+              "name": "testName",
               "permission": 4,
               "teamId": 1,
               "userId": 5,

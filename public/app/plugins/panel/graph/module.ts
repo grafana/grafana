@@ -11,9 +11,9 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, VariableSuggestion, PanelEvents } from '@grafana/ui';
+import { VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -27,6 +27,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   renderError: boolean;
   hiddenSeries: any = {};
+  hiddenSeriesTainted = false;
   seriesList: TimeSeries[] = [];
   dataList: DataFrame[] = [];
   annotations: any = [];
@@ -78,12 +79,14 @@ class GraphCtrl extends MetricsPanelCtrl {
     lines: true,
     // fill factor
     fill: 1,
-    // fill factor
+    // fill gradient
     fillGradient: 0,
     // line width in pixels
     linewidth: 1,
     // show/hide dashed line
     dashes: false,
+    // show/hide line
+    hiddenSeries: false,
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
@@ -150,7 +153,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
-    this.events.on(PanelEvents.dataReceived, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
@@ -165,6 +167,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
     this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
+    this.hiddenSeriesTainted = false;
   }
 
   onInitPanelActions(actions: any[]) {
@@ -203,12 +206,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     const frames = getProcessedDataFrames(snapshotData);
     this.onDataFramesReceived(frames);
-  }
-
-  onDataError(err: any) {
-    this.seriesList = [];
-    this.annotations = [];
-    this.render([]);
   }
 
   onDataFramesReceived(data: DataFrame[]) {
@@ -267,6 +264,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
+      if (this.hiddenSeriesTainted === false && series.hiddenSeries === true) {
+        this.hiddenSeries[series.alias] = true;
+      }
     }
   }
 
@@ -277,6 +277,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 
   onToggleSeries = (hiddenSeries: any) => {
+    this.hiddenSeriesTainted = true;
     this.hiddenSeries = hiddenSeries;
     this.render();
   };
@@ -326,7 +327,9 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   exportCsv() {
     const scope = this.$scope.$new(true);
-    scope.seriesList = this.seriesList;
+    scope.seriesList = this.seriesList
+      .filter(series => !this.panel.legend.hideEmpty || !series.allIsNull)
+      .filter(series => !this.panel.legend.hideZero || !series.allIsZero);
     this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,

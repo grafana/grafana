@@ -180,6 +180,55 @@ type FscryptKey struct {
 	Size uint32
 }
 
+type FscryptPolicyV1 struct {
+	Version                   uint8
+	Contents_encryption_mode  uint8
+	Filenames_encryption_mode uint8
+	Flags                     uint8
+	Master_key_descriptor     [8]uint8
+}
+
+type FscryptPolicyV2 struct {
+	Version                   uint8
+	Contents_encryption_mode  uint8
+	Filenames_encryption_mode uint8
+	Flags                     uint8
+	_                         [4]uint8
+	Master_key_identifier     [16]uint8
+}
+
+type FscryptGetPolicyExArg struct {
+	Size   uint64
+	Policy [24]byte
+}
+
+type FscryptKeySpecifier struct {
+	Type uint32
+	_    uint32
+	U    [32]byte
+}
+
+type FscryptAddKeyArg struct {
+	Key_spec FscryptKeySpecifier
+	Raw_size uint32
+	_        [9]uint32
+}
+
+type FscryptRemoveKeyArg struct {
+	Key_spec             FscryptKeySpecifier
+	Removal_status_flags uint32
+	_                    [5]uint32
+}
+
+type FscryptGetKeyStatusArg struct {
+	Key_spec     FscryptKeySpecifier
+	_            [6]uint32
+	Status       uint32
+	Status_flags uint32
+	User_count   uint32
+	_            [13]uint32
+}
+
 type KeyctlDHParams struct {
 	Private int32
 	Prime   int32
@@ -257,7 +306,7 @@ type RawSockaddrRFCOMM struct {
 type RawSockaddrCAN struct {
 	Family  uint16
 	Ifindex int32
-	Addr    [8]byte
+	Addr    [16]byte
 }
 
 type RawSockaddrALG struct {
@@ -285,6 +334,13 @@ type RawSockaddrXDP struct {
 }
 
 type RawSockaddrPPPoX [0x1e]byte
+
+type RawSockaddrTIPC struct {
+	Family   uint16
+	Addrtype uint8
+	Scope    int8
+	Addr     [12]byte
+}
 
 type RawSockaddr struct {
 	Family uint16
@@ -422,11 +478,12 @@ const (
 	SizeofSockaddrHCI       = 0x6
 	SizeofSockaddrL2        = 0xe
 	SizeofSockaddrRFCOMM    = 0xa
-	SizeofSockaddrCAN       = 0x10
+	SizeofSockaddrCAN       = 0x18
 	SizeofSockaddrALG       = 0x58
 	SizeofSockaddrVM        = 0x10
 	SizeofSockaddrXDP       = 0x10
 	SizeofSockaddrPPPoX     = 0x1e
+	SizeofSockaddrTIPC      = 0x10
 	SizeofLinger            = 0x8
 	SizeofIovec             = 0x10
 	SizeofIPMreq            = 0x8
@@ -593,22 +650,6 @@ const (
 	RTN_THROW               = 0x9
 	RTN_NAT                 = 0xa
 	RTN_XRESOLVE            = 0xb
-	RTNLGRP_NONE            = 0x0
-	RTNLGRP_LINK            = 0x1
-	RTNLGRP_NOTIFY          = 0x2
-	RTNLGRP_NEIGH           = 0x3
-	RTNLGRP_TC              = 0x4
-	RTNLGRP_IPV4_IFADDR     = 0x5
-	RTNLGRP_IPV4_MROUTE     = 0x6
-	RTNLGRP_IPV4_ROUTE      = 0x7
-	RTNLGRP_IPV4_RULE       = 0x8
-	RTNLGRP_IPV6_IFADDR     = 0x9
-	RTNLGRP_IPV6_MROUTE     = 0xa
-	RTNLGRP_IPV6_ROUTE      = 0xb
-	RTNLGRP_IPV6_IFINFO     = 0xc
-	RTNLGRP_IPV6_PREFIX     = 0x12
-	RTNLGRP_IPV6_RULE       = 0x13
-	RTNLGRP_ND_USEROPT      = 0x14
 	SizeofNlMsghdr          = 0x10
 	SizeofNlMsgerr          = 0x14
 	SizeofRtGenmsg          = 0x1
@@ -616,6 +657,7 @@ const (
 	SizeofRtAttr            = 0x4
 	SizeofIfInfomsg         = 0x10
 	SizeofIfAddrmsg         = 0x8
+	SizeofIfaCacheinfo      = 0x10
 	SizeofRtMsg             = 0xc
 	SizeofRtNexthop         = 0x8
 	SizeofNdUseroptmsg      = 0x10
@@ -664,6 +706,13 @@ type IfAddrmsg struct {
 	Flags     uint8
 	Scope     uint8
 	Index     uint32
+}
+
+type IfaCacheinfo struct {
+	Prefered uint32
+	Valid    uint32
+	Cstamp   uint32
+	Tstamp   uint32
 }
 
 type RtMsg struct {
@@ -783,6 +832,7 @@ type Ustat_t struct {
 
 type EpollEvent struct {
 	Events uint32
+	_      int32
 	Fd     int32
 	Pad    int32
 }
@@ -2035,6 +2085,7 @@ type XDPRingOffset struct {
 	Producer uint64
 	Consumer uint64
 	Desc     uint64
+	Flags    uint64
 }
 
 type XDPMmapOffsets struct {
@@ -2049,6 +2100,8 @@ type XDPUmemReg struct {
 	Len      uint64
 	Size     uint32
 	Headroom uint32
+	Flags    uint32
+	_        [4]byte
 }
 
 type XDPStatistics struct {
@@ -2462,6 +2515,42 @@ const (
 	BPF_FD_TYPE_URETPROBE               = 0x5
 )
 
+const (
+	RTNLGRP_NONE          = 0x0
+	RTNLGRP_LINK          = 0x1
+	RTNLGRP_NOTIFY        = 0x2
+	RTNLGRP_NEIGH         = 0x3
+	RTNLGRP_TC            = 0x4
+	RTNLGRP_IPV4_IFADDR   = 0x5
+	RTNLGRP_IPV4_MROUTE   = 0x6
+	RTNLGRP_IPV4_ROUTE    = 0x7
+	RTNLGRP_IPV4_RULE     = 0x8
+	RTNLGRP_IPV6_IFADDR   = 0x9
+	RTNLGRP_IPV6_MROUTE   = 0xa
+	RTNLGRP_IPV6_ROUTE    = 0xb
+	RTNLGRP_IPV6_IFINFO   = 0xc
+	RTNLGRP_DECnet_IFADDR = 0xd
+	RTNLGRP_NOP2          = 0xe
+	RTNLGRP_DECnet_ROUTE  = 0xf
+	RTNLGRP_DECnet_RULE   = 0x10
+	RTNLGRP_NOP4          = 0x11
+	RTNLGRP_IPV6_PREFIX   = 0x12
+	RTNLGRP_IPV6_RULE     = 0x13
+	RTNLGRP_ND_USEROPT    = 0x14
+	RTNLGRP_PHONET_IFADDR = 0x15
+	RTNLGRP_PHONET_ROUTE  = 0x16
+	RTNLGRP_DCB           = 0x17
+	RTNLGRP_IPV4_NETCONF  = 0x18
+	RTNLGRP_IPV6_NETCONF  = 0x19
+	RTNLGRP_MDB           = 0x1a
+	RTNLGRP_MPLS_ROUTE    = 0x1b
+	RTNLGRP_NSID          = 0x1c
+	RTNLGRP_MPLS_NETCONF  = 0x1d
+	RTNLGRP_IPV4_MROUTE_R = 0x1e
+	RTNLGRP_IPV6_MROUTE_R = 0x1f
+	RTNLGRP_NEXTHOP       = 0x20
+)
+
 type CapUserHeader struct {
 	Version uint32
 	Pid     int32
@@ -2516,3 +2605,201 @@ type LoopInfo64 struct {
 	Encrypt_key      [32]uint8
 	Init             [2]uint64
 }
+
+type TIPCSocketAddr struct {
+	Ref  uint32
+	Node uint32
+}
+
+type TIPCServiceRange struct {
+	Type  uint32
+	Lower uint32
+	Upper uint32
+}
+
+type TIPCServiceName struct {
+	Type     uint32
+	Instance uint32
+	Domain   uint32
+}
+
+type TIPCSubscr struct {
+	Seq     TIPCServiceRange
+	Timeout uint32
+	Filter  uint32
+	Handle  [8]int8
+}
+
+type TIPCEvent struct {
+	Event uint32
+	Lower uint32
+	Upper uint32
+	Port  TIPCSocketAddr
+	S     TIPCSubscr
+}
+
+type TIPCGroupReq struct {
+	Type     uint32
+	Instance uint32
+	Scope    uint32
+	Flags    uint32
+}
+
+type TIPCSIOCLNReq struct {
+	Peer     uint32
+	Id       uint32
+	Linkname [68]int8
+}
+
+type TIPCSIOCNodeIDReq struct {
+	Peer uint32
+	Id   [16]int8
+}
+
+const (
+	TIPC_CLUSTER_SCOPE = 0x2
+	TIPC_NODE_SCOPE    = 0x3
+)
+
+const (
+	SYSLOG_ACTION_CLOSE         = 0
+	SYSLOG_ACTION_OPEN          = 1
+	SYSLOG_ACTION_READ          = 2
+	SYSLOG_ACTION_READ_ALL      = 3
+	SYSLOG_ACTION_READ_CLEAR    = 4
+	SYSLOG_ACTION_CLEAR         = 5
+	SYSLOG_ACTION_CONSOLE_OFF   = 6
+	SYSLOG_ACTION_CONSOLE_ON    = 7
+	SYSLOG_ACTION_CONSOLE_LEVEL = 8
+	SYSLOG_ACTION_SIZE_UNREAD   = 9
+	SYSLOG_ACTION_SIZE_BUFFER   = 10
+)
+
+const (
+	DEVLINK_CMD_UNSPEC                        = 0x0
+	DEVLINK_CMD_GET                           = 0x1
+	DEVLINK_CMD_SET                           = 0x2
+	DEVLINK_CMD_NEW                           = 0x3
+	DEVLINK_CMD_DEL                           = 0x4
+	DEVLINK_CMD_PORT_GET                      = 0x5
+	DEVLINK_CMD_PORT_SET                      = 0x6
+	DEVLINK_CMD_PORT_NEW                      = 0x7
+	DEVLINK_CMD_PORT_DEL                      = 0x8
+	DEVLINK_CMD_PORT_SPLIT                    = 0x9
+	DEVLINK_CMD_PORT_UNSPLIT                  = 0xa
+	DEVLINK_CMD_SB_GET                        = 0xb
+	DEVLINK_CMD_SB_SET                        = 0xc
+	DEVLINK_CMD_SB_NEW                        = 0xd
+	DEVLINK_CMD_SB_DEL                        = 0xe
+	DEVLINK_CMD_SB_POOL_GET                   = 0xf
+	DEVLINK_CMD_SB_POOL_SET                   = 0x10
+	DEVLINK_CMD_SB_POOL_NEW                   = 0x11
+	DEVLINK_CMD_SB_POOL_DEL                   = 0x12
+	DEVLINK_CMD_SB_PORT_POOL_GET              = 0x13
+	DEVLINK_CMD_SB_PORT_POOL_SET              = 0x14
+	DEVLINK_CMD_SB_PORT_POOL_NEW              = 0x15
+	DEVLINK_CMD_SB_PORT_POOL_DEL              = 0x16
+	DEVLINK_CMD_SB_TC_POOL_BIND_GET           = 0x17
+	DEVLINK_CMD_SB_TC_POOL_BIND_SET           = 0x18
+	DEVLINK_CMD_SB_TC_POOL_BIND_NEW           = 0x19
+	DEVLINK_CMD_SB_TC_POOL_BIND_DEL           = 0x1a
+	DEVLINK_CMD_SB_OCC_SNAPSHOT               = 0x1b
+	DEVLINK_CMD_SB_OCC_MAX_CLEAR              = 0x1c
+	DEVLINK_CMD_ESWITCH_GET                   = 0x1d
+	DEVLINK_CMD_ESWITCH_SET                   = 0x1e
+	DEVLINK_CMD_DPIPE_TABLE_GET               = 0x1f
+	DEVLINK_CMD_DPIPE_ENTRIES_GET             = 0x20
+	DEVLINK_CMD_DPIPE_HEADERS_GET             = 0x21
+	DEVLINK_CMD_DPIPE_TABLE_COUNTERS_SET      = 0x22
+	DEVLINK_CMD_MAX                           = 0x44
+	DEVLINK_PORT_TYPE_NOTSET                  = 0x0
+	DEVLINK_PORT_TYPE_AUTO                    = 0x1
+	DEVLINK_PORT_TYPE_ETH                     = 0x2
+	DEVLINK_PORT_TYPE_IB                      = 0x3
+	DEVLINK_SB_POOL_TYPE_INGRESS              = 0x0
+	DEVLINK_SB_POOL_TYPE_EGRESS               = 0x1
+	DEVLINK_SB_THRESHOLD_TYPE_STATIC          = 0x0
+	DEVLINK_SB_THRESHOLD_TYPE_DYNAMIC         = 0x1
+	DEVLINK_ESWITCH_MODE_LEGACY               = 0x0
+	DEVLINK_ESWITCH_MODE_SWITCHDEV            = 0x1
+	DEVLINK_ESWITCH_INLINE_MODE_NONE          = 0x0
+	DEVLINK_ESWITCH_INLINE_MODE_LINK          = 0x1
+	DEVLINK_ESWITCH_INLINE_MODE_NETWORK       = 0x2
+	DEVLINK_ESWITCH_INLINE_MODE_TRANSPORT     = 0x3
+	DEVLINK_ESWITCH_ENCAP_MODE_NONE           = 0x0
+	DEVLINK_ESWITCH_ENCAP_MODE_BASIC          = 0x1
+	DEVLINK_ATTR_UNSPEC                       = 0x0
+	DEVLINK_ATTR_BUS_NAME                     = 0x1
+	DEVLINK_ATTR_DEV_NAME                     = 0x2
+	DEVLINK_ATTR_PORT_INDEX                   = 0x3
+	DEVLINK_ATTR_PORT_TYPE                    = 0x4
+	DEVLINK_ATTR_PORT_DESIRED_TYPE            = 0x5
+	DEVLINK_ATTR_PORT_NETDEV_IFINDEX          = 0x6
+	DEVLINK_ATTR_PORT_NETDEV_NAME             = 0x7
+	DEVLINK_ATTR_PORT_IBDEV_NAME              = 0x8
+	DEVLINK_ATTR_PORT_SPLIT_COUNT             = 0x9
+	DEVLINK_ATTR_PORT_SPLIT_GROUP             = 0xa
+	DEVLINK_ATTR_SB_INDEX                     = 0xb
+	DEVLINK_ATTR_SB_SIZE                      = 0xc
+	DEVLINK_ATTR_SB_INGRESS_POOL_COUNT        = 0xd
+	DEVLINK_ATTR_SB_EGRESS_POOL_COUNT         = 0xe
+	DEVLINK_ATTR_SB_INGRESS_TC_COUNT          = 0xf
+	DEVLINK_ATTR_SB_EGRESS_TC_COUNT           = 0x10
+	DEVLINK_ATTR_SB_POOL_INDEX                = 0x11
+	DEVLINK_ATTR_SB_POOL_TYPE                 = 0x12
+	DEVLINK_ATTR_SB_POOL_SIZE                 = 0x13
+	DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE       = 0x14
+	DEVLINK_ATTR_SB_THRESHOLD                 = 0x15
+	DEVLINK_ATTR_SB_TC_INDEX                  = 0x16
+	DEVLINK_ATTR_SB_OCC_CUR                   = 0x17
+	DEVLINK_ATTR_SB_OCC_MAX                   = 0x18
+	DEVLINK_ATTR_ESWITCH_MODE                 = 0x19
+	DEVLINK_ATTR_ESWITCH_INLINE_MODE          = 0x1a
+	DEVLINK_ATTR_DPIPE_TABLES                 = 0x1b
+	DEVLINK_ATTR_DPIPE_TABLE                  = 0x1c
+	DEVLINK_ATTR_DPIPE_TABLE_NAME             = 0x1d
+	DEVLINK_ATTR_DPIPE_TABLE_SIZE             = 0x1e
+	DEVLINK_ATTR_DPIPE_TABLE_MATCHES          = 0x1f
+	DEVLINK_ATTR_DPIPE_TABLE_ACTIONS          = 0x20
+	DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED = 0x21
+	DEVLINK_ATTR_DPIPE_ENTRIES                = 0x22
+	DEVLINK_ATTR_DPIPE_ENTRY                  = 0x23
+	DEVLINK_ATTR_DPIPE_ENTRY_INDEX            = 0x24
+	DEVLINK_ATTR_DPIPE_ENTRY_MATCH_VALUES     = 0x25
+	DEVLINK_ATTR_DPIPE_ENTRY_ACTION_VALUES    = 0x26
+	DEVLINK_ATTR_DPIPE_ENTRY_COUNTER          = 0x27
+	DEVLINK_ATTR_DPIPE_MATCH                  = 0x28
+	DEVLINK_ATTR_DPIPE_MATCH_VALUE            = 0x29
+	DEVLINK_ATTR_DPIPE_MATCH_TYPE             = 0x2a
+	DEVLINK_ATTR_DPIPE_ACTION                 = 0x2b
+	DEVLINK_ATTR_DPIPE_ACTION_VALUE           = 0x2c
+	DEVLINK_ATTR_DPIPE_ACTION_TYPE            = 0x2d
+	DEVLINK_ATTR_DPIPE_VALUE                  = 0x2e
+	DEVLINK_ATTR_DPIPE_VALUE_MASK             = 0x2f
+	DEVLINK_ATTR_DPIPE_VALUE_MAPPING          = 0x30
+	DEVLINK_ATTR_DPIPE_HEADERS                = 0x31
+	DEVLINK_ATTR_DPIPE_HEADER                 = 0x32
+	DEVLINK_ATTR_DPIPE_HEADER_NAME            = 0x33
+	DEVLINK_ATTR_DPIPE_HEADER_ID              = 0x34
+	DEVLINK_ATTR_DPIPE_HEADER_FIELDS          = 0x35
+	DEVLINK_ATTR_DPIPE_HEADER_GLOBAL          = 0x36
+	DEVLINK_ATTR_DPIPE_HEADER_INDEX           = 0x37
+	DEVLINK_ATTR_DPIPE_FIELD                  = 0x38
+	DEVLINK_ATTR_DPIPE_FIELD_NAME             = 0x39
+	DEVLINK_ATTR_DPIPE_FIELD_ID               = 0x3a
+	DEVLINK_ATTR_DPIPE_FIELD_BITWIDTH         = 0x3b
+	DEVLINK_ATTR_DPIPE_FIELD_MAPPING_TYPE     = 0x3c
+	DEVLINK_ATTR_PAD                          = 0x3d
+	DEVLINK_ATTR_ESWITCH_ENCAP_MODE           = 0x3e
+	DEVLINK_ATTR_MAX                          = 0x89
+	DEVLINK_DPIPE_FIELD_MAPPING_TYPE_NONE     = 0x0
+	DEVLINK_DPIPE_FIELD_MAPPING_TYPE_IFINDEX  = 0x1
+	DEVLINK_DPIPE_MATCH_TYPE_FIELD_EXACT      = 0x0
+	DEVLINK_DPIPE_ACTION_TYPE_FIELD_MODIFY    = 0x0
+	DEVLINK_DPIPE_FIELD_ETHERNET_DST_MAC      = 0x0
+	DEVLINK_DPIPE_FIELD_IPV4_DST_IP           = 0x0
+	DEVLINK_DPIPE_FIELD_IPV6_DST_IP           = 0x0
+	DEVLINK_DPIPE_HEADER_ETHERNET             = 0x0
+	DEVLINK_DPIPE_HEADER_IPV4                 = 0x1
+	DEVLINK_DPIPE_HEADER_IPV6                 = 0x2
+)

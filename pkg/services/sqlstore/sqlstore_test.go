@@ -90,12 +90,18 @@ func TestSqlConnectionString(t *testing.T) {
 func makeSqlStoreTestConfig(dbType string, host string) *setting.Cfg {
 	cfg := setting.NewCfg()
 
-	sec, _ := cfg.Raw.NewSection("database")
-	sec.NewKey("type", dbType)
-	sec.NewKey("host", host)
-	sec.NewKey("user", "user")
-	sec.NewKey("name", "test_db")
-	sec.NewKey("password", "pass")
+	sec, err := cfg.Raw.NewSection("database")
+	So(err, ShouldBeNil)
+	_, err = sec.NewKey("type", dbType)
+	So(err, ShouldBeNil)
+	_, err = sec.NewKey("host", host)
+	So(err, ShouldBeNil)
+	_, err = sec.NewKey("user", "user")
+	So(err, ShouldBeNil)
+	_, err = sec.NewKey("name", "test_db")
+	So(err, ShouldBeNil)
+	_, err = sec.NewKey("password", "pass")
+	So(err, ShouldBeNil)
 
 	return cfg
 }

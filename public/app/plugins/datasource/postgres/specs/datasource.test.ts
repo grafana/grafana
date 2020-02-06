@@ -1,21 +1,29 @@
 import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { toUtc, dateTime } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
-import { IQService } from 'angular';
+import { dateTime, toUtc } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
+
 describe('PostgreSQLDatasource', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const instanceSettings = { name: 'postgresql' };
 
-  const backendSrv = {};
   const templateSrv: TemplateSrv = new TemplateSrv();
   const raw = {
     from: toUtc('2018-04-25 10:00'),
     to: toUtc('2018-04-25 11:00'),
   };
   const ctx = {
-    backendSrv,
     timeSrvMock: {
       timeRange: () => ({
         from: raw.from,
@@ -26,13 +34,7 @@ describe('PostgreSQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new PostgresDatasource(
-      instanceSettings,
-      backendSrv as BackendSrv,
-      {} as IQService,
-      templateSrv,
-      ctx.timeSrvMock
-    );
+    ctx.ds = new PostgresDatasource(instanceSettings, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', () => {
@@ -70,9 +72,8 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
       });
@@ -105,7 +106,11 @@ describe('PostgreSQLDatasource', () => {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
             },
           ],
         },
@@ -113,9 +118,8 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -125,6 +129,92 @@ describe('PostgreSQLDatasource', () => {
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
       expect(results[5].text).toBe('some text3');
+    });
+  });
+
+  describe('When performing metricFindQuery with $__searchFilter and a searchFilter is given', () => {
+    let results: any;
+    let calledWith: any = {};
+    const query = "select title from atable where title LIKE '$__searchFilter'";
+    const response = {
+      results: {
+        tempvar: {
+          meta: {
+            rowCount: 3,
+          },
+          refId: 'tempvar',
+          tables: [
+            {
+              columns: [{ text: 'title' }, { text: 'text' }],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    beforeEach(() => {
+      datasourceRequestMock.mockImplementation(options => {
+        calledWith = options;
+        return Promise.resolve({ data: response, status: 200 });
+      });
+
+      ctx.ds.metricFindQuery(query, { searchFilter: 'aTit' }).then((data: any) => {
+        results = data;
+      });
+    });
+
+    it('should return list of all column values', () => {
+      expect(datasourceRequestMock).toBeCalledTimes(1);
+      expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE 'aTit%'");
+      expect(results.length).toBe(6);
+    });
+  });
+
+  describe('When performing metricFindQuery with $__searchFilter but no searchFilter is given', () => {
+    let results: any;
+    let calledWith: any = {};
+    const query = "select title from atable where title LIKE '$__searchFilter'";
+    const response = {
+      results: {
+        tempvar: {
+          meta: {
+            rowCount: 3,
+          },
+          refId: 'tempvar',
+          tables: [
+            {
+              columns: [{ text: 'title' }, { text: 'text' }],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    beforeEach(() => {
+      datasourceRequestMock.mockImplementation(options => {
+        calledWith = options;
+        return Promise.resolve({ data: response, status: 200 });
+      });
+
+      ctx.ds.metricFindQuery(query, {}).then((data: any) => {
+        results = data;
+      });
+    });
+
+    it('should return list of all column values', () => {
+      expect(datasourceRequestMock).toBeCalledTimes(1);
+      expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
+      expect(results.length).toBe(6);
     });
   });
 
@@ -141,7 +231,11 @@ describe('PostgreSQLDatasource', () => {
           tables: [
             {
               columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [['value1', 'aTitle'], ['value2', 'aTitle2'], ['value3', 'aTitle3']],
+              rows: [
+                ['value1', 'aTitle'],
+                ['value2', 'aTitle2'],
+                ['value3', 'aTitle3'],
+              ],
             },
           ],
         },
@@ -149,9 +243,8 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -179,7 +272,11 @@ describe('PostgreSQLDatasource', () => {
           tables: [
             {
               columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [['aTitle', 'same'], ['aTitle', 'same'], ['aTitle', 'diff']],
+              rows: [
+                ['aTitle', 'same'],
+                ['aTitle', 'same'],
+                ['aTitle', 'diff'],
+              ],
             },
           ],
         },
@@ -187,9 +284,8 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });

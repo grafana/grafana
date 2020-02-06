@@ -1,32 +1,42 @@
-import { refreshExplore, testDatasource, loadDatasource } from './actions';
-import { ExploreId, ExploreUrlState, ExploreUpdateState, ExploreMode } from 'app/types';
+import { PayloadAction } from '@reduxjs/toolkit';
+import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+
+import * as Actions from './actions';
+import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
+import { ExploreId, ExploreMode, ExploreUpdateState, ExploreUrlState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   initializeExploreAction,
   InitializeExplorePayload,
-  updateUIStateAction,
-  setQueriesAction,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
+  setQueriesAction,
+  updateDatasourceInstanceAction,
+  updateUIStateAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
-import { DataQuery } from '@grafana/ui/src/types/datasource';
-import { DefaultTimeZone, RawTimeRange, LogsDedupStrategy, toUtc } from '@grafana/data';
+import { PanelModel } from 'app/features/dashboard/state';
+import { updateLocation } from '../../../core/actions';
+import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
+import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => ({
-    getExternal: jest.fn().mockReturnValue([]),
-    get: jest.fn().mockReturnValue({
-      testDatasource: jest.fn(),
-      init: jest.fn(),
-    }),
-  }),
-}));
+jest.mock('app/features/plugins/datasource_srv');
+const getDatasourceSrvMock = (DatasourceSrv.getDatasourceSrv as any) as jest.Mock<DatasourceSrv.DatasourceSrv>;
+
+beforeEach(() => {
+  getDatasourceSrvMock.mockClear();
+  getDatasourceSrvMock.mockImplementation(
+    () =>
+      ({
+        getExternal: jest.fn().mockReturnValue([]),
+        get: jest.fn().mockReturnValue({
+          testDatasource: jest.fn(),
+          init: jest.fn(),
+        }),
+      } as any)
+  );
+});
 
 jest.mock('../../dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -108,7 +118,7 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        const initializeExplore = dispatchedActions[2] as ActionOf<InitializeExplorePayload>;
+        const initializeExplore = dispatchedActions[1] as PayloadAction<InitializeExplorePayload>;
         const { type, payload } = initializeExplore;
 
         expect(type).toEqual(initializeExploreAction.type);
@@ -164,69 +174,59 @@ describe('refreshExplore', () => {
   });
 });
 
-describe('test datasource', () => {
-  describe('when testDatasource thunk is dispatched', () => {
-    describe('and testDatasource call on instance is successful', () => {
-      it('then it should dispatch testDataSourceSuccessAction', async () => {
-        const exploreId = ExploreId.left;
-        const mockDatasourceInstance = {
-          testDatasource: () => {
-            return Promise.resolve({ status: 'success' });
-          },
-        };
+describe('changing datasource', () => {
+  it('should switch to logs mode when changing from prometheus to loki', async () => {
+    const lokiMock = {
+      testDatasource: () => Promise.resolve({ status: 'success' }),
+      name: 'Loki',
+      init: jest.fn(),
+      meta: { id: 'some id', name: 'Loki' },
+    };
 
-        const dispatchedActions = await thunkTester({})
-          .givenThunk(testDatasource)
-          .whenThunkIsDispatched(exploreId, mockDatasourceInstance);
+    getDatasourceSrvMock.mockImplementation(
+      () =>
+        ({
+          getExternal: jest.fn().mockReturnValue([]),
+          get: jest.fn().mockReturnValue(lokiMock),
+        } as any)
+    );
 
-        expect(dispatchedActions).toEqual([
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceSuccessAction({ exploreId }),
-        ]);
-      });
-    });
+    const exploreId = ExploreId.left;
+    const name = 'Prometheus';
+    const mockPromDatasourceInstance = {
+      testDatasource: () => Promise.resolve({ status: 'success' }),
+      name,
+      init: jest.fn(),
+      meta: { id: 'some id', name },
+    };
 
-    describe('and testDatasource call on instance is not successful', () => {
-      it('then it should dispatch testDataSourceFailureAction', async () => {
-        const exploreId = ExploreId.left;
-        const error = 'something went wrong';
-        const mockDatasourceInstance = {
-          testDatasource: () => {
-            return Promise.resolve({ status: 'fail', message: error });
-          },
-        };
+    const initialState = {
+      explore: {
+        [exploreId]: {
+          requestedDatasourceName: 'Loki',
+          datasourceInstance: mockPromDatasourceInstance,
+        },
+      },
+      user: {
+        orgId: 1,
+      },
+    };
 
-        const dispatchedActions = await thunkTester({})
-          .givenThunk(testDatasource)
-          .whenThunkIsDispatched(exploreId, mockDatasourceInstance);
+    jest.spyOn(Actions, 'importQueries').mockImplementationOnce(() => jest.fn);
+    jest.spyOn(Actions, 'loadDatasource').mockImplementationOnce(() => jest.fn);
+    jest.spyOn(Actions, 'runQueries').mockImplementationOnce(() => jest.fn);
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(changeDatasource)
+      .whenThunkIsDispatched(exploreId, name);
 
-        expect(dispatchedActions).toEqual([
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceFailureAction({ exploreId, error }),
-        ]);
-      });
-    });
-
-    describe('and testDatasource call on instance throws', () => {
-      it('then it should dispatch testDataSourceFailureAction', async () => {
-        const exploreId = ExploreId.left;
-        const error = 'something went wrong';
-        const mockDatasourceInstance = {
-          testDatasource: () => {
-            throw { statusText: error };
-          },
-        };
-
-        const dispatchedActions = await thunkTester({})
-          .givenThunk(testDatasource)
-          .whenThunkIsDispatched(exploreId, mockDatasourceInstance);
-
-        expect(dispatchedActions).toEqual([
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceFailureAction({ exploreId, error }),
-        ]);
-      });
-    });
+    expect(dispatchedActions).toEqual([
+      updateDatasourceInstanceAction({
+        exploreId,
+        datasourceInstance: lokiMock as any,
+        version: undefined,
+        mode: ExploreMode.Logs,
+      }),
+    ]);
   });
 });
 
@@ -255,8 +255,6 @@ describe('loading datasource', () => {
             exploreId,
             requestedDatasourceName: mockDatasourceInstance.name,
           }),
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceSuccessAction({ exploreId }),
           loadDatasourceReadyAction({ exploreId, history: [] }),
         ]);
       });
@@ -285,9 +283,133 @@ describe('loading datasource', () => {
             exploreId,
             requestedDatasourceName: mockDatasourceInstance.name,
           }),
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceSuccessAction({ exploreId }),
         ]);
+      });
+    });
+  });
+});
+
+const getNavigateToExploreContext = async (openInNewWindow: (url: string) => void = undefined) => {
+  const url = 'http://www.someurl.com';
+  const panel: Partial<PanelModel> = {
+    datasource: 'mocked datasource',
+    targets: [{ refId: 'A' }],
+  };
+  const datasource = new MockDataSourceApi(panel.datasource);
+  const get = jest.fn().mockResolvedValue(datasource);
+  const getDataSourceSrv = jest.fn().mockReturnValue({ get });
+  const getTimeSrv = jest.fn();
+  const getExploreUrl = jest.fn().mockResolvedValue(url);
+
+  const dispatchedActions = await thunkTester({})
+    .givenThunk(navigateToExplore)
+    .whenThunkIsDispatched(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow });
+
+  return {
+    url,
+    panel,
+    datasource,
+    get,
+    getDataSourceSrv,
+    getTimeSrv,
+    getExploreUrl,
+    dispatchedActions,
+  };
+};
+
+describe('navigateToExplore', () => {
+  describe('when navigateToExplore thunk is dispatched', () => {
+    describe('and openInNewWindow is undefined', () => {
+      const openInNewWindow: (url: string) => void = undefined;
+      it('then it should dispatch correct actions', async () => {
+        const { dispatchedActions, url } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(dispatchedActions).toEqual([updateLocation({ path: url, query: {} })]);
+      });
+
+      it('then getDataSourceSrv should have been once', async () => {
+        const { getDataSourceSrv } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
+      });
+
+      it('then getDataSourceSrv.get should have been called with correct arguments', async () => {
+        const { get, panel } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(get).toHaveBeenCalledTimes(1);
+        expect(get).toHaveBeenCalledWith(panel.datasource);
+      });
+
+      it('then getTimeSrv should have been called once', async () => {
+        const { getTimeSrv } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(getTimeSrv).toHaveBeenCalledTimes(1);
+      });
+
+      it('then getExploreUrl should have been called with correct arguments', async () => {
+        const { getExploreUrl, panel, datasource, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext(
+          openInNewWindow
+        );
+
+        expect(getExploreUrl).toHaveBeenCalledTimes(1);
+        expect(getExploreUrl).toHaveBeenCalledWith({
+          panel,
+          panelTargets: panel.targets,
+          panelDatasource: datasource,
+          datasourceSrv: getDataSourceSrv(),
+          timeSrv: getTimeSrv(),
+        });
+      });
+    });
+
+    describe('and openInNewWindow is defined', () => {
+      const openInNewWindow: (url: string) => void = jest.fn();
+      it('then it should dispatch no actions', async () => {
+        const { dispatchedActions } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(dispatchedActions).toEqual([]);
+      });
+
+      it('then getDataSourceSrv should have been once', async () => {
+        const { getDataSourceSrv } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
+      });
+
+      it('then getDataSourceSrv.get should have been called with correct arguments', async () => {
+        const { get, panel } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(get).toHaveBeenCalledTimes(1);
+        expect(get).toHaveBeenCalledWith(panel.datasource);
+      });
+
+      it('then getTimeSrv should have been called once', async () => {
+        const { getTimeSrv } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(getTimeSrv).toHaveBeenCalledTimes(1);
+      });
+
+      it('then getExploreUrl should have been called with correct arguments', async () => {
+        const { getExploreUrl, panel, datasource, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext(
+          openInNewWindow
+        );
+
+        expect(getExploreUrl).toHaveBeenCalledTimes(1);
+        expect(getExploreUrl).toHaveBeenCalledWith({
+          panel,
+          panelTargets: panel.targets,
+          panelDatasource: datasource,
+          datasourceSrv: getDataSourceSrv(),
+          timeSrv: getTimeSrv(),
+        });
+      });
+
+      it('then openInNewWindow should have been called with correct arguments', async () => {
+        const openInNewWindowFunc = jest.fn();
+        const { url } = await getNavigateToExploreContext(openInNewWindowFunc);
+
+        expect(openInNewWindowFunc).toHaveBeenCalledTimes(1);
+        expect(openInNewWindowFunc).toHaveBeenCalledWith(url);
       });
     });
   });

@@ -8,12 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-
-	// cachePrefix is a prefix for the cache key
-	cachePrefix = authproxy.CachePrefix
-)
-
 var header = setting.AuthProxyHeaderName
 
 func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *m.ReqContext, orgID int64) bool {

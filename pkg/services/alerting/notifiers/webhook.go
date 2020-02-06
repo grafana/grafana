@@ -80,6 +80,9 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("ruleName", evalContext.Rule.Name)
 	bodyJSON.Set("state", evalContext.Rule.State)
 	bodyJSON.Set("evalMatches", evalContext.EvalMatches)
+	bodyJSON.Set("orgId", evalContext.Rule.OrgID)
+	bodyJSON.Set("dashboardId", evalContext.Rule.DashboardID)
+	bodyJSON.Set("panelId", evalContext.Rule.PanelID)
 
 	tags := make(map[string]string)
 

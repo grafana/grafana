@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 
 import MappingRow from './MappingRow';
 import { MappingType, ValueMapping } from '@grafana/data';
-import { Button } from '../index';
+import { Button } from '../Button/Button';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
@@ -28,7 +28,12 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
   }
 
   getMaxIdFromValueMappings(mappings: ValueMapping[]) {
-    return Math.max.apply(null, mappings.map(mapping => mapping.id).map(m => m)) + 1;
+    return (
+      Math.max.apply(
+        null,
+        mappings.map(mapping => mapping.id).map(m => m)
+      ) + 1
+    );
   }
 
   onAddMapping = () =>

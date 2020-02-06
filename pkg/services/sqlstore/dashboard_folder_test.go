@@ -38,7 +38,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 			Convey("and acl is set for dashboard folder", func() {
 				var otherUser int64 = 999
-				testHelperUpdateDashboardAcl(folder.Id, models.DashboardAcl{DashboardId: folder.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT})
+				err := testHelperUpdateDashboardAcl(folder.Id, models.DashboardAcl{
+					DashboardId: folder.Id,
+					OrgId:       1,
+					UserId:      otherUser,
+					Permission:  models.PERMISSION_EDIT,
+				})
+				So(err, ShouldBeNil)
 
 				Convey("should not return folder", func() {
 					query := &search.FindPersistedDashboardsQuery{
@@ -46,14 +52,17 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
 					err := SearchDashboards(query)
-
 					So(err, ShouldBeNil)
+
 					So(len(query.Result), ShouldEqual, 1)
 					So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
 				})
 
 				Convey("when the user is given permission", func() {
-					testHelperUpdateDashboardAcl(folder.Id, models.DashboardAcl{DashboardId: folder.Id, OrgId: 1, UserId: currentUser.Id, Permission: models.PERMISSION_EDIT})
+					err := testHelperUpdateDashboardAcl(folder.Id, models.DashboardAcl{
+						DashboardId: folder.Id, OrgId: 1, UserId: currentUser.Id, Permission: models.PERMISSION_EDIT,
+					})
+					So(err, ShouldBeNil)
 
 					Convey("should be able to access folder", func() {
 						query := &search.FindPersistedDashboardsQuery{
@@ -91,11 +100,17 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 			Convey("and acl is set for dashboard child and folder has all permissions removed", func() {
 				var otherUser int64 = 999
-				testHelperUpdateDashboardAcl(folder.Id)
-				testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{DashboardId: folder.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT})
+				err := testHelperUpdateDashboardAcl(folder.Id)
+				So(err, ShouldBeNil)
+				err = testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{
+					DashboardId: folder.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT,
+				})
+				So(err, ShouldBeNil)
 
 				Convey("should not return folder or child", func() {
-					query := &search.FindPersistedDashboardsQuery{SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
+					query := &search.FindPersistedDashboardsQuery{
+						SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id},
+					}
 					err := SearchDashboards(query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
@@ -103,7 +118,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("when the user is given permission to child", func() {
-					testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{DashboardId: childDash.Id, OrgId: 1, UserId: currentUser.Id, Permission: models.PERMISSION_EDIT})
+					err := testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{DashboardId: childDash.Id, OrgId: 1, UserId: currentUser.Id, Permission: models.PERMISSION_EDIT})
+					So(err, ShouldBeNil)
 
 					Convey("should be able to search for child dashboard but not folder", func() {
 						query := &search.FindPersistedDashboardsQuery{SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
@@ -162,7 +178,10 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 			Convey("and acl is set for one dashboard folder", func() {
 				var otherUser int64 = 999
-				testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT})
+				err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
+					DashboardId: folder1.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT,
+				})
+				So(err, ShouldBeNil)
 
 				Convey("and a dashboard is moved from folder without acl to the folder with an acl", func() {
 					moveDashboard(1, childDash2.Data, folder1.Id)
@@ -199,7 +218,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("and a dashboard with an acl is moved to the folder without an acl", func() {
-					testHelperUpdateDashboardAcl(childDash1.Id, models.DashboardAcl{DashboardId: childDash1.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT})
+					err := testHelperUpdateDashboardAcl(childDash1.Id, models.DashboardAcl{
+						DashboardId: childDash1.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT,
+					})
+					So(err, ShouldBeNil)
+
 					moveDashboard(1, childDash1.Data, folder2.Id)
 
 					Convey("should return folder without acl but not the dashboard with acl", func() {
@@ -318,9 +341,12 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("Should have write access to one dashboard folder if default role changed to view for one folder", func() {
-					testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: editorUser.Id, Permission: models.PERMISSION_VIEW})
+					err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
+						DashboardId: folder1.Id, OrgId: 1, UserId: editorUser.Id, Permission: models.PERMISSION_VIEW,
+					})
+					So(err, ShouldBeNil)
 
-					err := SearchDashboards(&query)
+					err = SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -379,9 +405,12 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to get one dashboard folder if default role changed to edit for one folder", func() {
-					testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_EDIT})
+					err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
+						DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_EDIT,
+					})
+					So(err, ShouldBeNil)
 
-					err := SearchDashboards(&query)
+					err = SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -407,7 +436,10 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("and admin permission is given for user with org role viewer in one dashboard folder", func() {
-					testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_ADMIN})
+					err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
+						DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_ADMIN,
+					})
+					So(err, ShouldBeNil)
 
 					Convey("should have edit permission in folders", func() {
 						query := &models.HasEditPermissionInFoldersQuery{
@@ -420,7 +452,10 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("and edit permission is given for user with org role viewer in one dashboard folder", func() {
-					testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_EDIT})
+					err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
+						DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_EDIT,
+					})
+					So(err, ShouldBeNil)
 
 					Convey("should have edit permission in folders", func() {
 						query := &models.HasEditPermissionInFoldersQuery{

@@ -2,11 +2,11 @@ package plugins
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,7 +33,7 @@ func (e PluginNotFoundError) Error() string {
 }
 
 type PluginLoader interface {
-	Load(decoder *json.Decoder, pluginDir string) error
+	Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error
 }
 
 type PluginBase struct {
@@ -61,7 +61,7 @@ type PluginBase struct {
 
 func (pb *PluginBase) registerPlugin(pluginDir string) error {
 	if _, exists := Plugins[pb.Id]; exists {
-		return errors.New("Plugin with same id already exists")
+		return fmt.Errorf("Plugin with ID %q already exists", pb.Id)
 	}
 
 	if !strings.HasPrefix(pluginDir, setting.StaticRootPath) {

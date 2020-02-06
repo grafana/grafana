@@ -145,7 +145,9 @@ func TestDataAccess(t *testing.T) {
 				err := DeleteDataSourceById(&models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: ds.OrgId})
 				So(err, ShouldBeNil)
 
-				GetDataSources(&query)
+				err = GetDataSources(&query)
+				So(err, ShouldBeNil)
+
 				So(len(query.Result), ShouldEqual, 0)
 			})
 
@@ -153,7 +155,9 @@ func TestDataAccess(t *testing.T) {
 				err := DeleteDataSourceByName(&models.DeleteDataSourceByNameCommand{Name: ds.Name, OrgId: ds.OrgId})
 				So(err, ShouldBeNil)
 
-				GetDataSources(&query)
+				err = GetDataSources(&query)
+				So(err, ShouldBeNil)
+
 				So(len(query.Result), ShouldEqual, 0)
 			})
 
@@ -161,7 +165,9 @@ func TestDataAccess(t *testing.T) {
 				err := DeleteDataSourceById(&models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: 123123})
 				So(err, ShouldBeNil)
 
-				GetDataSources(&query)
+				err = GetDataSources(&query)
+				So(err, ShouldBeNil)
+
 				So(len(query.Result), ShouldEqual, 1)
 			})
 		})

@@ -1,4 +1,5 @@
-import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import { selectThemeVariant, ThemeContext } from '../../index';
+import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import _ from 'lodash';
 import React, { useRef, useContext, useMemo } from 'react';
@@ -10,6 +11,7 @@ import { stylesFactory } from '../../themes';
 export enum VariableOrigin {
   Series = 'series',
   Field = 'field',
+  Fields = 'fields',
   Value = 'value',
   BuiltIn = 'built-in',
   Template = 'template',

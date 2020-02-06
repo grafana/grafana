@@ -3,7 +3,7 @@
 # Jaeger Bindings for Go OpenTracing API
 
 Instrumentation library that implements an
-[OpenTracing](http://opentracing.io) Tracer for Jaeger (https://jaegertracing.io).
+[OpenTracing Go](https://github.com/opentracing/opentracing-go) Tracer for Jaeger (https://jaegertracing.io).
 
 **IMPORTANT**: The library's import path is based on its original location under `github.com/uber`. Do not try to import it as `github.com/jaegertracing`, it will not compile. We might revisit this in the next major release.
   * :white_check_mark: `import "github.com/uber/jaeger-client-go"`
@@ -15,19 +15,20 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Installation
 
-We recommended using a dependency manager like [glide](https://github.com/Masterminds/glide)
+We recommended using a dependency manager like [dep](https://golang.github.io/dep/)
 and [semantic versioning](http://semver.org/) when including this library into an application.
 For example, Jaeger backend imports this library like this:
 
-```yaml
-- package: github.com/uber/jaeger-client-go
-  version: ^2.7.0
+```toml
+[[constraint]]
+  name = "github.com/uber/jaeger-client-go"
+  version = "2.17"
 ```
 
 If you instead want to use the latest version in `master`, you can pull it via `go get`.
 Note that during `go get` you may see build errors due to incompatible dependencies, which is why
 we recommend using semantic versions for dependencies.  The error  may be fixed by running
-`make install` (it will install `glide` if you don't have it):
+`make install` (it will install `dep` if you don't have it):
 
 ```shell
 go get -u github.com/uber/jaeger-client-go/
@@ -181,6 +182,29 @@ are available:
   1. `RateLimitingSampler` can be used to allow only a certain fixed
      number of traces to be sampled per second.
 
+#### Delayed sampling
+
+Version 2.20 introduced the ability to delay sampling decisions in the life cycle
+of the root span. It involves several features and architectural changes:
+  * **Shared sampling state**: the sampling state is shared across all local
+    (i.e. in-process) spans for a given trace.
+  * **New `SamplerV2` API** allows the sampler to be called at multiple points 
+    in the life cycle of a span:
+    * on span creation
+    * on overwriting span operation name
+    * on setting span tags
+    * on finishing the span
+  * **Final/non-final sampling state**: the new `SamplerV2` API allows the sampler
+    to indicate if the negative sampling decision is final or not (positive sampling
+    decisions are always final). If the decision is not final, the sampler will be
+    called again on further span life cycle events, like setting tags.
+
+These new features are used in the experimental `x.TagMatchingSampler`, which
+can sample a trace based on a certain tag added to the root
+span or one of its local (in-process) children. The sampler can be used with
+another experimental `x.PrioritySampler` that allows multiple samplers to try
+to make a sampling decision, in a certain priority order.
+
 ### Baggage Injection
 
 The OpenTracing spec allows for [baggage][baggage], which are key value pairs that are added
@@ -222,7 +246,7 @@ import (
 )
 
 span := opentracing.SpanFromContext(ctx)
-ext.SamplingPriority.Set(span, 1)    
+ext.SamplingPriority.Set(span, 1)
 ```
 
 #### Via HTTP Headers
@@ -252,6 +276,24 @@ Jaeger Tracer supports Zipkin B3 Propagation HTTP headers, which are used
 by a lot of Zipkin tracers. This means that you can use Jaeger in conjunction with e.g. [these OpenZipkin tracers](https://github.com/openzipkin).
 
 However it is not the default propagation format, see [here](zipkin/README.md#NewZipkinB3HTTPHeaderPropagator) how to set it up.
+
+## SelfRef
+
+Jaeger Tracer supports an additional [reference](https://github.com/opentracing/specification/blob/1.1/specification.md#references-between-spans)
+type call `Self`. This allows a caller to provide an already established `SpanContext`.
+This allows loading and continuing spans/traces from offline (ie log-based) storage. The `Self` reference
+bypasses trace and span id generation.
+
+
+Usage requires passing in a `SpanContext` and the jaeger `Self` reference type:
+```
+span := tracer.StartSpan(
+    "continued_span",
+    SelfRef(yourSpanContext),
+)
+...
+defer span.finish()
+```
 
 ## License
 

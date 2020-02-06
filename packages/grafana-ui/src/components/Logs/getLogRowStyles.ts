@@ -1,12 +1,21 @@
 import { css } from 'emotion';
 import { LogLevel } from '@grafana/data';
 
-import { GrafanaTheme } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: LogLevel) => {
   let logColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.gray2 }, theme.type);
+  const borderColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.gray2 }, theme.type);
+  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark4 }, theme.type);
+  const context = css`
+    label: context;
+    visibility: hidden;
+    white-space: nowrap;
+    position: relative;
+  `;
+
   switch (logLevel) {
     case LogLevel.crit:
     case LogLevel.critical:
@@ -32,34 +41,11 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
   }
 
   return {
-    logsRowFieldHighLight: css`
-      label: logs-row__field-highlight;
-      background: inherit;
-      padding: inherit;
-      border-bottom: 1px dotted ${theme.colors.yellow};
-
-      .logs-row__field-highlight--icon {
-        margin-left: 0.5em;
-        cursor: pointer;
-        display: none;
-      }
-
-      &:hover {
-        color: ${theme.colors.yellow};
-        border-bottom-style: solid;
-
-        .logs-row__field-highlight--icon {
-          display: inline;
-        }
-      }
-    `,
     logsRowMatchHighLight: css`
       label: logs-row__match-highlight;
       background: inherit;
       padding: inherit;
-
       color: ${theme.colors.yellow};
-      border-bottom: 1px solid ${theme.colors.yellow};
       background-color: rgba(${theme.colors.yellow}, 0.1);
     `,
     logsRowMatchHighLightPreview: css`
@@ -67,23 +53,41 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       background-color: rgba(${theme.colors.yellow}, 0.2);
       border-bottom-style: dotted;
     `,
-    logsRows: css`
+    logsRowsTable: css`
       label: logs-rows;
       font-family: ${theme.typography.fontFamily.monospace};
       font-size: ${theme.typography.size.sm};
-      display: table;
-      table-layout: fixed;
       width: 100%;
     `,
+    logsRowsHorizontalScroll: css`
+      label: logs-rows__horizontal-scroll;
+      overflow: scroll;
+    `,
+    context: context,
     logsRow: css`
       label: logs-row;
-      display: table-row;
+      width: 100%;
+      cursor: pointer;
+      vertical-align: top;
+      &:hover {
+        .${context} {
+          visibility: visible;
+          z-index: 1;
+          margin-left: 10px;
+          text-decoration: underline;
+          &:hover {
+            color: ${theme.colors.yellow};
+          }
+        }
+      }
+      td:last-child {
+        width: 100%;
+      }
 
-      > div {
-        display: table-cell;
-        padding-right: 10px;
-        border-top: 1px solid transparent;
-        border-bottom: 1px solid transparent;
+      > td {
+        padding-right: ${theme.spacing.sm};
+        border-top: ${theme.border.width.sm} solid transparent;
+        border-bottom: ${theme.border.width.sm} solid transparent;
         height: 100%;
       }
 
@@ -95,12 +99,13 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row__duplicates;
       text-align: right;
       width: 4em;
+      cursor: default;
     `,
     logsRowLevel: css`
       label: logs-row__level;
       position: relative;
-      width: 10px;
-
+      max-width: 10px;
+      cursor: default;
       &::after {
         content: '';
         display: block;
@@ -111,24 +116,70 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
         background-color: ${logColor};
       }
     `,
+    logsRowToggleDetails: css`
+      label: logs-row-toggle-details__level;
+      position: relative;
+      font-size: 9px;
+      padding-top: 5px;
+      max-width: 15px;
+    `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
       white-space: nowrap;
-      width: 12.5em;
+      max-width: 12.5em;
     `,
     logsRowLabels: css`
       label: logs-row__labels;
-      width: 20%;
-      line-height: 1.2;
-      position: relative;
+      white-space: nowrap;
+      max-width: 22em;
     `,
     logsRowMessage: css`
       label: logs-row__message;
       word-break: break-all;
     `,
-    logsRowStats: css`
-      label: logs-row__stats;
-      margin: 5px 0;
+    //Log details sepcific CSS
+    logDetailsContainer: css`
+      label: logs-row-details-table;
+      border: 1px solid ${borderColor};
+      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm};
+      border-radius: 3px;
+      margin: 20px 8px 20px 16px;
+      cursor: default;
+    `,
+    logDetailsTable: css`
+      label: logs-row-details-table;
+      line-height: 2;
+      width: 100%;
+      td:last-child {
+        width: 100%;
+      }
+    `,
+    logsDetailsIcon: css`
+      label: logs-row-details__icon;
+      position: relative;
+      padding-right: ${theme.spacing.md};
+      color: ${theme.colors.gray3};
+    `,
+    logDetailsLabel: css`
+      label: logs-row-details__label;
+      max-width: 30em;
+      min-width: 20em;
+      padding: 0 ${theme.spacing.sm};
+      overflow-wrap: break-word;
+    `,
+    logDetailsHeading: css`
+      label: logs-row-details__heading;
+      font-weight: ${theme.typography.weight.bold};
+      padding: ${theme.spacing.sm} 0 ${theme.spacing.xs};
+    `,
+    logDetailsValue: css`
+      label: logs-row-details__row;
+      position: relative;
+      vertical-align: top;
+      cursor: default;
+      &:hover {
+        background-color: ${bgColor};
+      }
     `,
   };
 });

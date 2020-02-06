@@ -6,8 +6,6 @@ import {
   FoldersAndDashboardUids,
 } from 'app/core/components/manage_dashboards/manage_dashboards';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { BackendSrv } from '../services/backend_srv';
-import { NavModelSrv } from '../nav_model_srv';
 import { ContextSrv } from '../services/context_srv';
 
 const mockSection = (overides?: object): Section => {
@@ -593,8 +591,7 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
   };
 
   return new ManageDashboardsCtrl(
-    {} as BackendSrv,
-    { getNav: () => {} } as NavModelSrv,
+    { $digest: jest.fn() } as any,
     searchSrvStub as SearchSrv,
     { isEditor: true } as ContextSrv
   );

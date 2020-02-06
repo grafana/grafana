@@ -57,10 +57,12 @@ func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
 		rows, _ := res.RowsAffected()
 		sqlog.Info("SQL TestData: Truncate done", "rows", rows)
 
-		sqlRandomWalk("server1", "frontend", 100, 1.123, sess)
-		sqlRandomWalk("server2", "frontend", 100, 1.123, sess)
-		sqlRandomWalk("server3", "frontend", 100, 1.123, sess)
-
-		return err
+		if err := sqlRandomWalk("server1", "frontend", 100, 1.123, sess); err != nil {
+			return err
+		}
+		if err := sqlRandomWalk("server2", "frontend", 100, 1.123, sess); err != nil {
+			return err
+		}
+		return sqlRandomWalk("server3", "frontend", 100, 1.123, sess)
 	})
 }
