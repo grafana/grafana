@@ -7,7 +7,7 @@ _current="$(git rev-parse --abbrev-ref HEAD)"
 _branch="${_current}-docs"
 
 if [ "${_current}" == "master" ]; then
-    echo -e "\e[91myou cannot generate api docs from the master branch\e[0m"
+    echo -e "\033[91myou cannot generate api docs from the master branch\033[0m"
     echo "please checkout the release branch"
     echo "ex 'git checkout v5.1.x'"
     exit 1
@@ -15,8 +15,8 @@ fi
 
 # always make sure we have a clean workspace
 if ! git diff-index --quiet HEAD --; then
-    echo -e "\e[91mgit workspace is dirty and contains changes\e[0"
-    echo -e "\e[91mmake sure you have a clean workspace before running this script\e[0m"
+    echo -e "\033[91mgit workspace is dirty and contains changes\033[0"
+    echo -e "\033[91mmake sure you have a clean workspace before running this script\033[0m"
     exit 1
 fi
 
@@ -51,10 +51,11 @@ if [ "${confirm}" == "y" ]; then
     git commit -m "docs: updated packages api documentation"
     git push origin "${_branch}"
     git checkout "${_current}"
-    echo -e "\e[92mPackages docs successfully updated. Please open a PR from ${_branch} to master.\e[0m"
+    echo -e "\033[92mPackages docs successfully updated. Please open a PR from ${_branch} to master.\033[0m"
 else
     git checkout -- .
     git clean -f docs/sources/packages_api
     git checkout "${_current}"
-    echo -e "\e[91mAbort!\e[0m"
+    git branch -d "${_branch}"
+    echo -e "\033[91mAbort!\033[0m"
 fi
