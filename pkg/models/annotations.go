@@ -1,6 +1,6 @@
 package models
 
-type DeleteExpiredVAnnotationsCommand struct {
+type DeleteExpiredAnnotationsCommand struct {
 	DaysToKeep  int
 	DeletedRows int64
 }

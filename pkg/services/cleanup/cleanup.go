@@ -131,7 +131,7 @@ func (srv *CleanUpService) deleteExpiredAnnotations() {
 	if daysToKeep < 5 {
 		daysToKeep = 5
 	}
-	cmd := m.DeleteExpiredVAnnotationsCommand{DaysToKeep: daysToKeep}
+	cmd := m.DeleteExpiredAnnotationsCommand{DaysToKeep: daysToKeep}
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired annotations", "error", err.Error())
 	} else {

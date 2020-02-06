@@ -14,7 +14,7 @@ func init() {
 
 const MAX_HISTORY_ENTRIES_TO_DELETE = 900
 
-func deleteExpiredAnnotations(cmd *m.DeleteExpiredVAnnotationsCommand) error {
+func deleteExpiredAnnotations(cmd *m.DeleteExpiredAnnotationsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		historyTimeStamp := (time.Now().Unix() - int64(cmd.DaysToKeep*86400)) * 1000
 
