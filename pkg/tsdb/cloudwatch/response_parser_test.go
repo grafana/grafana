@@ -1,13 +1,13 @@
 package cloudwatch
 
 import (
-	"testing"
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/null"
 	. "github.com/smartystreets/goconvey/convey"
+	"log"
+	"testing"
+	"time"
 )
 
 func TestCloudWatchResponseParser(t *testing.T) {
@@ -61,6 +61,72 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
 			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
+			timeSeries := (*series)[0]
+
+			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
+			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+
+			timeSeries2 := (*series)[1]
+			So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
+			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+		})
+
+		Convey("correctly expands alias when there's no data found", func() {
+			// timestamp := time.Unix(0, 0)
+			resp := map[string]*cloudwatch.MetricDataResult{
+				// "lb1": {
+				// 	Id:    aws.String("id1"),
+				// 	Label: aws.String("lb1"),
+				// 	Timestamps: []*time.Time{
+				// 		aws.Time(timestamp),
+				// 		aws.Time(timestamp.Add(60 * time.Second)),
+				// 		aws.Time(timestamp.Add(180 * time.Second)),
+				// 	},
+				// 	Values: []*float64{
+				// 		aws.Float64(10),
+				// 		aws.Float64(20),
+				// 		aws.Float64(30),
+				// 	},
+				// 	StatusCode: aws.String("Complete"),
+				// },
+				// "lb2": {
+				// 	Id:    aws.String("id2"),
+				// 	Label: aws.String("lb2"),
+				// 	Timestamps: []*time.Time{
+				// 		aws.Time(timestamp),
+				// 		aws.Time(timestamp.Add(60 * time.Second)),
+				// 		aws.Time(timestamp.Add(180 * time.Second)),
+				// 	},
+				// 	Values: []*float64{
+				// 		aws.Float64(10),
+				// 		aws.Float64(20),
+				// 		aws.Float64(30),
+				// 	},
+				// 	StatusCode: aws.String("Complete"),
+				// },
+			}
+
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1", "lb2"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{LoadBalancer}} Expanded",
+			}
+			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
+
+			log.Println("")
+			log.Println("series")
+			log.Println(prettyPrint(series))
+
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
