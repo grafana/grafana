@@ -217,7 +217,6 @@ export class LinkSrv implements LinkService {
   constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
   assureBaseUrl(url: string) {
-    console.log('assuring', url);
     if (url.startsWith('/')) {
       return `${getConfig().appSubUrl}${locationUtil.stripBaseFromUrl(url)}`;
     }
