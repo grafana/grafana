@@ -2,6 +2,7 @@ import React, { CSSProperties, FC, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
+import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { stylesFactory, useTheme, selectThemeVariant } from '../../themes';
 
 export interface Props {
@@ -15,10 +16,13 @@ export interface Props {
   /** Either a number in px or a string with unit postfix */
   width?: number | string;
 
+  /** Set to true if the component rendered within in drawer content has its own scroll */
+  scrollableContent?: boolean;
+
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean) => {
   const closeButtonWidth = '50px';
   const borderColor = selectThemeVariant(
     {
@@ -31,6 +35,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     drawer: css`
       .drawer-content {
         background-color: ${theme.colors.bodyBg};
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
     `,
     titleWrapper: css`
@@ -41,8 +48,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border-bottom: 1px solid ${borderColor};
       padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
       background-color: ${theme.colors.bodyBg};
-      position: sticky;
       top: 0;
+      z-index: 1;
+      flex-grow: 0;
     `,
     close: css`
       cursor: pointer;
@@ -54,7 +62,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     content: css`
       padding: ${theme.spacing.md};
-      height: 100%;
+      flex-grow: 1;
+      overflow: ${!scollableContent ? 'hidden' : 'auto'};
+      z-index: 0;
     `,
   };
 });
@@ -64,11 +74,12 @@ export const Drawer: FC<Props> = ({
   inline = false,
   onClose,
   closeOnMaskClick = false,
+  scrollableContent = false,
   title,
   width = '40%',
 }) => {
   const theme = useTheme();
-  const drawerStyles = getStyles(theme);
+  const drawerStyles = getStyles(theme, scrollableContent);
 
   return (
     <RcDrawer
@@ -89,7 +100,9 @@ export const Drawer: FC<Props> = ({
           <i className="fa fa-close" />
         </div>
       </div>
-      <div className={drawerStyles.content}>{children}</div>
+      <div className={drawerStyles.content}>
+        {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
+      </div>
     </RcDrawer>
   );
 };

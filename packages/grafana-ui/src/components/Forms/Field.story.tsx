@@ -6,7 +6,7 @@ import { Switch } from './Switch';
 import mdx from './Field.mdx';
 
 export default {
-  title: 'UI/Forms/Field',
+  title: 'Forms/Field',
   component: Field,
   parameters: {
     docs: {

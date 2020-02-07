@@ -251,6 +251,9 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins", Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", Wrap(GetPluginSettingByID))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", Wrap(GetPluginMarkdown))
+		apiRoute.Get("/plugins/:pluginId/health", Wrap(hs.CheckHealth))
+		apiRoute.Any("/plugins/:pluginId/resources", Wrap(hs.CallResource))
+		apiRoute.Any("/plugins/:pluginId/resources/*", Wrap(hs.CallResource))
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
@@ -260,6 +263,8 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/:id/resources", Wrap(hs.CallDatasourceResource))
+		apiRoute.Any("/datasources/:id/resources/*", Wrap(hs.CallDatasourceResource))
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {

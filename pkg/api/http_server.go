@@ -10,6 +10,8 @@ import (
 	"path"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+
 	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -57,19 +59,20 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister       routing.RouteRegister    `inject:""`
-	Bus                 bus.Bus                  `inject:""`
-	RenderService       rendering.Service        `inject:""`
-	Cfg                 *setting.Cfg             `inject:""`
-	HooksService        *hooks.HooksService      `inject:""`
-	CacheService        *localcache.CacheService `inject:""`
-	DatasourceCache     datasources.CacheService `inject:""`
-	AuthTokenService    models.UserTokenService  `inject:""`
-	QuotaService        *quota.QuotaService      `inject:""`
-	RemoteCacheService  *remotecache.RemoteCache `inject:""`
-	ProvisioningService ProvisioningService      `inject:""`
-	Login               *login.LoginService      `inject:""`
-	License             models.Licensing         `inject:""`
+	RouteRegister        routing.RouteRegister    `inject:""`
+	Bus                  bus.Bus                  `inject:""`
+	RenderService        rendering.Service        `inject:""`
+	Cfg                  *setting.Cfg             `inject:""`
+	HooksService         *hooks.HooksService      `inject:""`
+	CacheService         *localcache.CacheService `inject:""`
+	DatasourceCache      datasources.CacheService `inject:""`
+	AuthTokenService     models.UserTokenService  `inject:""`
+	QuotaService         *quota.QuotaService      `inject:""`
+	RemoteCacheService   *remotecache.RemoteCache `inject:""`
+	ProvisioningService  ProvisioningService      `inject:""`
+	Login                *login.LoginService      `inject:""`
+	License              models.Licensing         `inject:""`
+	BackendPluginManager backendplugin.Manager    `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

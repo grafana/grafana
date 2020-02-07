@@ -1,13 +1,16 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory, Forms } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
+import { StoreState } from '../../../../types/store';
+import { connect } from 'react-redux';
+import { updateLocation } from '../../../../core/reducers/location';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -47,6 +50,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
+  updateLocation: typeof updateLocation;
 }
 
 interface State {
@@ -54,14 +58,34 @@ interface State {
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
-  state: State = {};
-
-  componentDidMount() {
-    const { panel } = this.props;
-    const dirtyPanel = new PanelModel(panel.getSaveModel());
-
-    this.setState({ dirtyPanel });
+  constructor(props: Props) {
+    super(props);
+    const { panel } = props;
+    const dirtyPanel = panel.getEditClone();
+    this.state = { dirtyPanel };
   }
+
+  onPanelUpdate = () => {
+    const { dirtyPanel } = this.state;
+    const { dashboard } = this.props;
+    dashboard.updatePanel(dirtyPanel);
+  };
+
+  onPanelExit = () => {
+    const { updateLocation } = this.props;
+    this.onPanelUpdate();
+    updateLocation({
+      query: { editPanel: null },
+      partial: true,
+    });
+  };
+
+  onDiscard = () => {
+    this.props.updateLocation({
+      query: { editPanel: null },
+      partial: true,
+    });
+  };
 
   render() {
     const { dashboard } = this.props;
@@ -74,23 +98,41 @@ export class PanelEditor extends PureComponent<Props, State> {
     }
 
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.leftPane}>
-          <div className={styles.leftPaneViz}>
-            <DashboardPanel
-              dashboard={dashboard}
-              panel={dirtyPanel}
-              isEditing={false}
-              isFullscreen={false}
-              isInView={true}
-            />
+      <>
+        <div className={styles.wrapper}>
+          <div className={styles.leftPane}>
+            <div className={styles.leftPaneViz}>
+              <DashboardPanel
+                dashboard={dashboard}
+                panel={dirtyPanel}
+                isEditing={false}
+                isInEditMode
+                isFullscreen={false}
+                isInView={true}
+              />
+            </div>
+            <div className={styles.leftPaneData}>
+              <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
+            </div>
           </div>
-          <div className={styles.leftPaneData}>
-            <QueriesTab panel={dirtyPanel} dashboard={dashboard} />;
+          <div className={styles.rightPane}>
+            <Forms.Button variant="destructive" onClick={this.onDiscard}>
+              Discard
+            </Forms.Button>
+            <Forms.Button onClick={this.onPanelExit}>Exit</Forms.Button>
           </div>
         </div>
-        <div className={styles.rightPane}>Visualization settings</div>
-      </div>
+      </>
     );
   }
 }
+
+const mapStateToProps = (state: StoreState) => ({
+  location: state.location,
+});
+
+const mapDispatchToProps = {
+  updateLocation,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(PanelEditor);
