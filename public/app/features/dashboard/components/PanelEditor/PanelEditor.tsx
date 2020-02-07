@@ -1,4 +1,4 @@
-import React, { PureComponent, useState, useCallback, FC, useEffect } from 'react';
+import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, Forms, ConfirmModal, Portal } from '@grafana/ui';
@@ -11,7 +11,6 @@ import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { StoreState } from '../../../../types/store';
 import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
-import { ButtonProps } from '@grafana/ui/src/components/Forms/Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -132,7 +131,6 @@ export class PanelEditor extends PureComponent<Props, State> {
             </div>
           </div>
           <div className={styles.rightPane}>
-            <SaveButton onClick={this.onPanelSave}>Save</SaveButton>
             <Forms.Button variant="destructive" onClick={this.onPanelExit}>
               Exit
             </Forms.Button>
@@ -153,39 +151,6 @@ export class PanelEditor extends PureComponent<Props, State> {
     );
   }
 }
-
-// Adds visual que changes are saved. Needs better UI for sure
-const SaveButton: FC<ButtonProps> = ({ onClick, ...otherProps }) => {
-  const [isSaved, setIsSaved] = useState(false);
-  useEffect(() => {
-    if (isSaved) {
-      const timeout = setTimeout(() => {
-        setIsSaved(false);
-      }, 1000);
-
-      return () => {
-        clearTimeout(timeout);
-      };
-    }
-    return () => {};
-  }, [isSaved]);
-
-  const handleClick = useCallback(
-    (e: React.MouseEvent<any>) => {
-      onClick(e);
-      setIsSaved(true);
-    },
-    [onClick, isSaved]
-  );
-
-  const label = isSaved ? 'Saved, yay!' : 'Save';
-
-  return (
-    <Forms.Button onClick={handleClick} {...otherProps}>
-      {label}
-    </Forms.Button>
-  );
-};
 
 const mapStateToProps = (state: StoreState) => ({
   location: state.location,
