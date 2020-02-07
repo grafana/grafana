@@ -9,6 +9,7 @@ import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { toUrlParams } from '../../../../core/utils/url';
 
 export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };
 
@@ -145,9 +146,15 @@ export class DashLinksContainerCtrl {
       }
 
       if (linkDef.type === 'rendering') {
+        const urlParams = {
+          encoding: linkDef.encoding ? linkDef.encoding : 'png',
+          width: linkDef.width ? linkDef.width : 1000,
+          height: linkDef.height ? linkDef.height : 500,
+        };
+
         return Promise.resolve([
           {
-            url: config.appSubUrl + '/render' + $location.path(),
+            url: config.appSubUrl + '/render' + $location.path() + '?' + toUrlParams(urlParams),
             urlParams: linkDef.urlParams,
             title: linkDef.title,
             // @ts-ignore

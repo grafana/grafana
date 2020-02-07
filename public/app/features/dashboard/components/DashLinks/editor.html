@@ -115,6 +115,18 @@
       </div>
       <div ng-show="ctrl.link.type === 'rendering'">
         <div class="gf-form">
+          <li class="gf-form-label width-8">Encoding</li>
+          <input type="text" ng-model="ctrl.link.encoding" class="gf-form-input width-20" placeholder="png if not specified" ng-model-onblur />
+        </div>
+        <div class="gf-form">
+          <li class="gf-form-label width-8">Width</li>
+          <input type="number" ng-model="ctrl.link.width" class="gf-form-input width-20" ng-model-onblur />
+        </div>
+        <div class="gf-form">
+          <li class="gf-form-label width-8">Height</li>
+          <input type="number" ng-model="ctrl.link.height" class="gf-form-input width-20" ng-model-onblur />
+        </div>
+        <div class="gf-form">
           <li class="gf-form-label width-8">Url parameters</li>
           <input type="text" ng-model="ctrl.link.urlParams" class="gf-form-input width-20" ng-model-onblur />
         </div>
