@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
-import { stylesFactory, Forms, FieldConfigEditor } from '@grafana/ui';
+import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -36,7 +36,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 450px;
     height: 100%;
     flex-grow: 0;
-    overflow: scroll;
   `,
   leftPaneViz: css`
     width: 100%;
@@ -216,7 +215,9 @@ export class PanelEditor extends PureComponent<Props, State> {
               />
             </div>
             <div className={styles.leftPaneData}>
-              <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
+              <CustomScrollbar>
+                <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
+              </CustomScrollbar>
             </div>
           </div>
           <div className={styles.rightPane}>
@@ -226,12 +227,13 @@ export class PanelEditor extends PureComponent<Props, State> {
               </Forms.Button>
               <Forms.Button onClick={this.onPanelExit}>Exit</Forms.Button>
             </div>
-
-            <div>
-              <h3>TODO: VizType picker</h3>
-            </div>
-            {this.renderFieldOptions()}
-            {this.renderVisSettings()}
+            <CustomScrollbar>
+              <div>
+                <h3>TODO: VizType picker</h3>
+              </div>
+              {this.renderFieldOptions()}
+              {this.renderVisSettings()}
+            </CustomScrollbar>
           </div>
         </div>
       </>
