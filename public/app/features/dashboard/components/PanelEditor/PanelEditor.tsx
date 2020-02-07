@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
-import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
+import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
 import { stylesFactory, Forms, FieldConfigEditor } from '@grafana/ui';
 import config from 'app/core/config';
 
@@ -56,6 +56,7 @@ interface Props {
 }
 
 interface State {
+  pluginLoadedCounter: number;
   dirtyPanel?: PanelModel;
   data: PanelData;
 }
@@ -64,12 +65,25 @@ export class PanelEditor extends PureComponent<Props, State> {
   querySubscription: Unsubscribable;
 
   state: State = {
+    pluginLoadedCounter: 0,
     data: {
       state: LoadingState.NotStarted,
       series: [],
       timeRange: DefaultTimeRange,
     },
   };
+
+  constructor(props: Props) {
+    super(props);
+
+    // To ensure visualisation  settings are re-rendered when plugin has loaded
+    // panelInitialised event is emmited from PanelChrome
+    props.panel.events.on(PanelEvents.panelInitialized, () => {
+      this.setState(state => ({
+        pluginLoadedCounter: state.pluginLoadedCounter + 1,
+      }));
+    });
+  }
 
   componentDidMount() {
     const { panel } = this.props;
@@ -92,11 +106,6 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.querySubscription = queryRunner.getData().subscribe({
       next: (data: PanelData) => this.setState({ data }),
     });
-
-    // // TODO -- make sure it is actually needs a query?
-    // if(!queryRunner.getLastResult()) {
-    //   dirtyPanel.refresh();
-    // }
   }
 
   componentWillUnmount() {
