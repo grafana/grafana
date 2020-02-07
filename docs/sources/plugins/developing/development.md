@@ -117,7 +117,7 @@ If a panel receives data and hooks into the `data-received` event then it should
 
 ## Examples
 
-We currently have three different examples that you can fork/download to get started developing your grafana plugin.
+We have three different examples that you can fork/download to get started developing your Grafana plugin.
 
  - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small data source plugin for querying json data from backends)
  - [simple-app-plugin](https://github.com/grafana/simple-app-plugin)
