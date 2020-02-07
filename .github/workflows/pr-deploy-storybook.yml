@@ -24,10 +24,10 @@ jobs:
     - name: Build Storybook
       run: yarn storybook:build
     - name: Set outputs
-        id: vars
+        id: testing
         run: echo ::set-output name=sha_short::$(git rev-parse --short HEAD)
     - name: Deploy Storybook
-      run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${{ steps.vars.outputs.sha_short }}
+      run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${{ steps.testing.outputs.sha_short }}
       run: ls -l ${GITHUB_WORKSPACE}/packages/grafana-ui/dist
       # run: gsutil cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook gs://grafana-storybook
 s
