@@ -50,4 +50,4 @@ Hit `?` on your keyboard to open the shortcuts help modal.
 - `t`	Move time range back
 - `t`	Move time range forward
 
-mod = CTRL on windows or linux and CMD key on Mac
+mod = Ctrl on Windows or Linux and Cmd key on macOS

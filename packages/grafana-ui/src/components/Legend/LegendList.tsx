@@ -4,6 +4,30 @@ import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 import { css, cx } from 'emotion';
 import { ThemeContext } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes';
+import { GrafanaTheme } from '@grafana/data';
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  item: css`
+    padding-left: 10px;
+    display: flex;
+    font-size: ${theme.typography.size.sm};
+    white-space: nowrap;
+  `,
+  wrapper: css`
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+  `,
+  section: css`
+    display: flex;
+  `,
+  sectionRight: css`
+    justify-content: flex-end;
+    flex-grow: 1;
+  `,
+}));
 
 export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
   items,
@@ -12,45 +36,16 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
   className,
 }) => {
   const theme = useContext(ThemeContext);
+  const styles = getStyles(theme);
 
   const renderItem = (item: LegendItem, index: number) => {
-    return (
-      <span
-        className={css`
-          padding-left: 10px;
-          display: flex;
-          font-size: ${theme.typography.size.sm};
-          white-space: nowrap;
-        `}
-      >
-        {itemRenderer ? itemRenderer(item, index) : item.label}
-      </span>
-    );
+    return <span className={styles.item}>{itemRenderer ? itemRenderer(item, index) : item.label}</span>;
   };
 
   const getItemKey = (item: LegendItem) => `${item.label}`;
 
-  const styles = {
-    wrapper: cx(
-      css`
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        width: 100%;
-      `,
-      className
-    ),
-    section: css`
-      display: flex;
-    `,
-    sectionRight: css`
-      justify-content: flex-end;
-      flex-grow: 1;
-    `,
-  };
-
   return placement === 'under' ? (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, className)}>
       <div className={styles.section}>
         <InlineList items={items.filter(item => item.yAxis === 1)} renderItem={renderItem} getItemKey={getItemKey} />
       </div>

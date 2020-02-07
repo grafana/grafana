@@ -1,30 +1,31 @@
-import angular, { IQService } from 'angular';
+import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
-import { DataSourceApi } from '@grafana/ui';
+import { DataSourceApi } from '@grafana/data';
 import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 import DatasourceSrv from './datasource_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 /** @ngInject */
 function pluginDirectiveLoader(
   $compile: any,
   datasourceSrv: DatasourceSrv,
-  $rootScope: any,
-  $q: IQService,
+  $rootScope: GrafanaRootScope,
   $http: any,
   $templateCache: any,
-  $timeout: any
+  $timeout: any,
+  $location: ILocationService
 ) {
   function getTemplate(component: { template: any; templateUrl: any }) {
     if (component.template) {
-      return $q.when(component.template);
+      return Promise.resolve(component.template);
     }
     const cached = $templateCache.get(component.templateUrl);
     if (cached) {
-      return $q.when(cached);
+      return Promise.resolve(cached);
     }
     return $http.get(component.templateUrl).then((res: any) => {
       return res.data;
@@ -112,7 +113,7 @@ function pluginDirectiveLoader(
       case 'query-ctrl': {
         const ds: DataSourceApi = scope.ctrl.datasource as DataSourceApi;
 
-        return $q.when({
+        return Promise.resolve({
           baseUrl: ds.meta.baseUrl,
           name: 'query-ctrl-' + ds.meta.id,
           bindings: { target: '=', panelCtrl: '=', datasource: '=' },
@@ -126,10 +127,13 @@ function pluginDirectiveLoader(
       }
       // Annotations
       case 'annotations-query-ctrl': {
+        const baseUrl = scope.ctrl.currentDatasource.meta.baseUrl;
+        const pluginId = scope.ctrl.currentDatasource.meta.id;
+
         return importDataSourcePlugin(scope.ctrl.currentDatasource.meta).then(dsPlugin => {
           return {
-            baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
-            name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
+            baseUrl,
+            name: 'annotations-query-ctrl-' + pluginId,
             bindings: { annotation: '=', datasource: '=' },
             attrs: {
               annotation: 'ctrl.currentAnnotation',
@@ -142,11 +146,19 @@ function pluginDirectiveLoader(
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         const dsMeta = scope.ctrl.datasourceMeta;
+        const angularUrl = $location.url();
         return importDataSourcePlugin(dsMeta).then(dsPlugin => {
           scope.$watch(
             'ctrl.current',
             () => {
-              scope.onModelChanged(scope.ctrl.current);
+              // This watcher can trigger when we navigate away due to late digests
+              // This check is to stop onModelChanged from being called when navigating away
+              // as it triggers a redux action which comes before the angular $routeChangeSucces and
+              // This makes the bridgeSrv think location changed from redux before detecting it was actually
+              // changed from angular.
+              if (angularUrl === $location.url()) {
+                scope.onModelChanged(scope.ctrl.current);
+              }
             },
             true
           );
@@ -191,7 +203,7 @@ function pluginDirectiveLoader(
         return loadPanelComponentInfo(scope, attrs);
       }
       default: {
-        return $q.reject({
+        return Promise.reject({
           message: 'Could not find component type: ' + attrs.type,
         });
       }

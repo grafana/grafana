@@ -106,7 +106,7 @@ Interpolation result: '("test1" OR "test2")'
 ```
 
 ### Percentencode
-Formats single & multi valued variables for use in URL parameters.
+Formats single and multi valued variables for use in URL parameters.
 
 ```bash
 servers = ['foo()bar BAZ', 'test2']
@@ -114,7 +114,7 @@ String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
-Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
+Test the formatting options on the [Grafana Play site](https://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
 If any invalid formatting option is specified, then `glob` is the default/fallback option.
 
@@ -150,7 +150,7 @@ Type | Description
 *Data source* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
 *Custom* | Define the variable options manually using a comma separated list.
 *Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
-*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB & Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
+*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB and Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
 *Text box* | This variable type will display as a free text input field with an optional default value.
 
 ### Query options
@@ -236,11 +236,12 @@ demo.robustperception.io:9100
 
 The query expressions are different for each data source.
 
-- [Graphite templating queries]({{< relref "features/datasources/graphite.md#templating" >}})
-- [Elasticsearch templating queries]({{< relref "features/datasources/elasticsearch.md#templating" >}})
-- [InfluxDB templating queries]({{< relref "features/datasources/influxdb.md#templating" >}})
-- [Prometheus templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
-- [OpenTSDB templating queries]({{< relref "features/datasources/opentsdb.md#templating" >}})
+- [Graphite templating queries]({{< relref "../features/datasources/graphite.md#templating" >}})
+- [Elasticsearch templating queries]({{< relref "../features/datasources/elasticsearch.md#templating" >}})
+- [InfluxDB templating queries]({{< relref "../features/datasources/influxdb.md#templating" >}})
+- [Prometheus templating queries]({{< relref "../features/datasources/prometheus.md#templating" >}})
+- [OpenTSDB templating queries]({{< relref "../features/datasources/opentsdb.md#templating" >}})
+- [AzureMonitor templating queries]({{< relref "../features/datasources/azuremonitor.md#templating-with-variables-for-the-azure-monitor-service" >}})
 
 One thing to note is that query expressions can contain references to other variables and in effect create linked variables.
 Grafana will detect this and automatically refresh a variable when one of it's containing variables change.
@@ -273,7 +274,7 @@ needs to be escaped so that the value can contain lucene control words and quota
 
 #### Formatting troubles
 
-Automatic escaping & formatting can cause problems and it can be tricky to grasp the logic is behind it.
+Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic is behind it.
 Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.
 If you do not want Grafana to do this automatic regex escaping and formatting your only option is to disable the *Multi-value* or *Include All option*
 options.
@@ -346,6 +347,18 @@ This variable is only available in the Singlestat panel and can be used in the p
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
+### The $__dashboard Variable
+> Only available in Grafana v6.6+
+
+This variable is the UID of the current dashboard.
+`${__dashboard.name}` is the name of the current dashboard.
+
+### The $__org Variable
+> Only available in Grafana v6.6+
+
+This variable is the ID of the current organization.
+`${__org.name}` is the name of the current organization.
+
 ## Repeating Panels
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
@@ -378,7 +391,7 @@ you want to repeat the row for.
 
 It may be a good idea to use a variable in the row title as well.
 
-Example: [Repeated Rows Dashboard](http://play.grafana.org/dashboard/db/repeated-rows)
+Example: [Repeated Rows Dashboard](https://play.grafana.org/dashboard/db/repeated-rows)
 
 ## URL state
 
@@ -386,6 +399,6 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 
 ## Examples
 
-- [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
-- [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
-- [InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+- [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
+- [Elasticsearch Templated Dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
+- [InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)

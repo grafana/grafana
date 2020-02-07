@@ -1,7 +1,7 @@
 import execa from 'execa';
 import path from 'path';
 import fs from 'fs';
-import { PluginBuildInfo } from '@grafana/ui';
+import { PluginBuildInfo } from '@grafana/data';
 import { JobInfo } from './types';
 
 const getJobFromProcessArgv = () => {

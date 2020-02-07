@@ -16,6 +16,7 @@ const buildCjsPackage = ({ env }) => {
         name: libraryName,
         format: 'cjs',
         sourcemap: true,
+        strict: false,
         exports: 'named',
         globals: {
           react: 'React',
@@ -23,7 +24,7 @@ const buildCjsPackage = ({ env }) => {
         },
       },
     ],
-    external: ['react', 'react-dom', '@grafana/data'],
+    external: ['react', 'react-dom', '@grafana/data', 'moment'],
     plugins: [
       commonjs({
         include: /node_modules/,
@@ -57,6 +58,7 @@ const buildCjsPackage = ({ env }) => {
           ],
           'node_modules/immutable/dist/immutable.js': ['Record', 'Set', 'Map', 'List', 'OrderedSet', 'is', 'Stack'],
           '../../node_modules/esrever/esrever.js': ['reverse'],
+          '../../node_modules/bizcharts/es6/index.js': ['Chart', 'Geom', 'View', 'Tooltip', 'Legend', 'Guide'],
         },
       }),
       resolve(),

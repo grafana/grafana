@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { setBackendSrv, BackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
@@ -21,27 +21,32 @@ import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { KioskUrlValue } from 'app/types';
+import { KioskUrlValue, CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
-import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
+import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
+import { AppEvent, AppEvents } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
 export class GrafanaCtrl {
   /** @ngInject */
   constructor(
     $scope: any,
     utilSrv: UtilSrv,
-    $rootScope: any,
+    $rootScope: GrafanaRootScope,
     contextSrv: ContextSrv,
     bridgeSrv: BridgeSrv,
-    backendSrv: BackendSrv,
     timeSrv: TimeSrv,
     linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
+    dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
@@ -51,6 +56,8 @@ export class GrafanaCtrl {
     setTimeSrv(timeSrv);
     setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
+    setDashboardSrv(dashboardSrv);
+
     const store = configureStore();
     setLocationSrv({
       update: (opt: LocationUpdate) => {
@@ -70,8 +77,18 @@ export class GrafanaCtrl {
 
     $rootScope.colors = colors;
 
-    $rootScope.onAppEvent = function(name: string, callback: () => void, localScope: any) {
-      const unbind = $rootScope.$on(name, callback);
+    $rootScope.onAppEvent = function<T>(
+      event: AppEvent<T> | string,
+      callback: (event: IAngularEvent, ...args: any[]) => void,
+      localScope?: any
+    ) {
+      let unbind;
+      if (typeof event === 'string') {
+        unbind = $rootScope.$on(event, callback);
+      } else {
+        unbind = $rootScope.$on(event.name, callback);
+      }
+
       let callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
         console.log('warning rootScope onAppEvent called without localscope');
@@ -82,9 +99,14 @@ export class GrafanaCtrl {
       callerScope.$on('$destroy', unbind);
     };
 
-    $rootScope.appEvent = (name: string, payload: any) => {
-      $rootScope.$emit(name, payload);
-      appEvents.emit(name, payload);
+    $rootScope.appEvent = <T>(event: AppEvent<T> | string, payload?: T | any) => {
+      if (typeof event === 'string') {
+        $rootScope.$emit(event, payload);
+        appEvents.emit(event, payload);
+      } else {
+        $rootScope.$emit(event.name, payload);
+        appEvents.emit(event, payload);
+      }
     };
 
     $scope.init();
@@ -121,32 +143,31 @@ export function grafanaAppDirective(
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
-    link: (scope: any, elem: JQuery) => {
+    link: (scope: IRootScopeService & AppEventEmitter, elem: JQuery) => {
       const body = $('body');
-
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 
       $('.preloader').remove();
 
-      appEvents.on('toggle-sidemenu-mobile', () => {
+      appEvents.on(CoreEvents.toggleSidemenuMobile, () => {
         body.toggleClass('sidemenu-open--xs');
       });
 
-      appEvents.on('toggle-sidemenu-hidden', () => {
+      appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');
       });
 
-      appEvents.on('playlist-started', () => {
+      appEvents.on(CoreEvents.playlistStarted, () => {
         elem.toggleClass('view-mode--playlist', true);
       });
 
-      appEvents.on('playlist-stopped', () => {
+      appEvents.on(CoreEvents.playlistStopped, () => {
         elem.toggleClass('view-mode--playlist', false);
       });
 
       // check if we are in server side render
-      if (document.cookie.indexOf('renderKey') !== -1) {
+      if (config.phantomJSRenderer && document.cookie.indexOf('renderKey') !== -1) {
         body.addClass('body--phantomjs');
       }
 
@@ -178,11 +199,11 @@ export function grafanaAppDirective(
           drop.destroy();
         }
 
-        appEvents.emit('hide-dash-search');
+        appEvents.emit(CoreEvents.hideDashSearch);
       });
 
       // handle kiosk mode
-      appEvents.on('toggle-kiosk-mode', (options: { exit?: boolean }) => {
+      appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
         const search: { kiosk?: KioskUrlValue } = $location.search();
 
         if (options && options.exit) {
@@ -192,7 +213,7 @@ export function grafanaAppDirective(
         switch (search.kiosk) {
           case 'tv': {
             search.kiosk = true;
-            appEvents.emit('alert-success', ['Press ESC to exit Kiosk mode']);
+            appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
             break;
           }
           case '1':
@@ -248,7 +269,7 @@ export function grafanaAppDirective(
       // check every 2 seconds
       setInterval(checkForInActiveUser, 2000);
 
-      appEvents.on('toggle-view-mode', () => {
+      appEvents.on(CoreEvents.toggleViewMode, () => {
         lastActivity = 0;
         checkForInActiveUser();
       });
@@ -278,7 +299,7 @@ export function grafanaAppDirective(
         if (body.find('.search-container').length > 0) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(() => {
-              scope.appEvent('hide-dash-search');
+              scope.appEvent(CoreEvents.hideDashSearch);
             });
           }
         }

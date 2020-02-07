@@ -1,10 +1,11 @@
-import React, { useState, ChangeEvent, useContext } from 'react';
+import React, { ChangeEvent, useContext } from 'react';
 import { DataLink } from '@grafana/data';
 import { FormField, Switch } from '../index';
 import { VariableSuggestion } from './DataLinkSuggestions';
 import { css } from 'emotion';
-import { ThemeContext } from '../../themes/index';
+import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';
+import { GrafanaTheme } from '@grafana/data';
 
 interface DataLinkEditorProps {
   index: number;
@@ -15,20 +16,27 @@ interface DataLinkEditorProps {
   onRemove: (link: DataLink) => void;
 }
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  listItem: css`
+    margin-bottom: ${theme.spacing.sm};
+  `,
+  infoText: css`
+    padding-bottom: ${theme.spacing.md};
+    margin-left: 66px;
+    color: ${theme.colors.textWeak};
+  `,
+}));
+
 export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
   ({ index, value, onChange, onRemove, suggestions, isLast }) => {
     const theme = useContext(ThemeContext);
-    const [title, setTitle] = useState(value.title);
+    const styles = getStyles(theme);
 
     const onUrlChange = (url: string, callback?: () => void) => {
       onChange(index, { ...value, url }, callback);
     };
     const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
-      setTitle(event.target.value);
-    };
-
-    const onTitleBlur = () => {
-      onChange(index, { ...value, title: title });
+      onChange(index, { ...value, title: event.target.value });
     };
 
     const onRemoveClick = () => {
@@ -39,25 +47,14 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
       onChange(index, { ...value, targetBlank: !value.targetBlank });
     };
 
-    const listItemStyle = css`
-      margin-bottom: ${theme.spacing.sm};
-    `;
-
-    const infoTextStyle = css`
-      padding-bottom: ${theme.spacing.md};
-      margin-left: 66px;
-      color: ${theme.colors.textWeak};
-    `;
-
     return (
-      <div className={listItemStyle}>
+      <div className={styles.listItem}>
         <div className="gf-form gf-form--inline">
           <FormField
             className="gf-form--grow"
             label="Title"
-            value={title}
+            value={value.title}
             onChange={onTitleChange}
-            onBlur={onTitleBlur}
             inputWidth={0}
             labelWidth={5}
             placeholder="Show details"
@@ -76,7 +73,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
           `}
         />
         {isLast && (
-          <div className={infoTextStyle}>
+          <div className={styles.infoText}>
             With data links you can reference data variables like series name, labels and values. Type CMD+Space,
             CTRL+Space, or $ to open variable suggestions.
           </div>

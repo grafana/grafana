@@ -45,7 +45,7 @@ export class TeamPages extends PureComponent<Props, State> {
 
     this.state = {
       isLoading: false,
-      isSyncEnabled: config.buildInfo.isEnterprise,
+      isSyncEnabled: config.licenseInfo.hasLicense,
     };
   }
 
@@ -148,9 +148,4 @@ const mapDispatchToProps = {
   loadTeamMembers,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TeamPages)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamPages));

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+PACKAGES=("@grafana/ui" "@grafana/data" "@grafana/toolkit" "@grafana/runtime")
 GRAFANA_TAG=${1:-}
 RELEASE_CHANNEL="latest"
 
@@ -15,6 +16,9 @@ if grep -q "beta" <<< "$GRAFANA_TAG"; then
 fi
 
 echo "$_grafana_version"
+
+# lerna bootstrap might have created yarn.lock
+git checkout .
 
 # Get current version from lerna.json
 # Since this happens on tagged branch, the lerna.json version and package.json file SHOULD be updated already
@@ -38,3 +42,11 @@ yarn packages:build
 echo $'\nPublishing packages'
 yarn packages:${SCRIPT}
 
+# When releasing stable(latest) version of packages we are updating previously published next tag(beta) to be the same version as latest
+if [ $RELEASE_CHANNEL == "latest" ]; then
+  for i in "${PACKAGES[@]}"
+  do
+    :
+    npm dist-tag add "$i"@"$PACKAGE_VERSION" next
+  done
+fi

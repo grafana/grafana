@@ -3,7 +3,7 @@ import React from 'react';
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-import { OptionProps } from 'react-select/lib/components/Option';
+import { OptionProps } from 'react-select';
 
 // https://github.com/JedWatson/react-select/issues/3038
 export interface ExtendedOptionProps extends OptionProps<any> {
@@ -27,20 +27,6 @@ export const SelectOption = (props: ExtendedOptionProps) => {
         {isSelected && <i className="fa fa-check" aria-hidden="true" />}
       </div>
     </components.Option>
-  );
-};
-
-// was not able to type this without typescript error
-export const SingleValue = (props: any) => {
-  const { children, data } = props;
-
-  return (
-    <components.SingleValue {...props}>
-      <div className="gf-form-select-box__img-value">
-        {data.imgUrl && <img className="gf-form-select-box__desc-option__img" src={data.imgUrl} />}
-        {children}
-      </div>
-    </components.SingleValue>
   );
 };
 

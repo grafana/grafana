@@ -22,19 +22,27 @@ Package ini provides INI file read and write functionality in Go.
 
 The minimum requirement of Go is **1.6**.
 
-To use a tagged revision:
-
 ```sh
 $ go get gopkg.in/ini.v1
 ```
 
-To use with latest changes:
+Please add `-u` flag to update in the future.
 
-```sh
-$ go get github.com/go-ini/ini
+## Go Modules
+
+For historical reason, people use two different import paths for this package: `github.com/go-ini/ini` and `gopkg.in/ini.v1`. If you get error similar to the following one:
+
+```
+go: finding github.com/go-ini/ini v0.0.0-00010101000000-000000000000
+go: github.com/go-ini/ini@v0.0.0-00010101000000-000000000000: unknown revision 000000000000
+go: error loading module requirements
 ```
 
-Please add `-u` flag to update in the future.
+It is because one of your dependencies is using deprecated import path `github.com/go-ini/ini`, you can make a quick fix by adding the following line to your `go.mod` file (`v.1.44.0` was the latest version tagged on `master` branch):
+
+```
+replace github.com/go-ini/ini => gopkg.in/ini.v1 v1.44.0
+```
 
 ## Getting Help
 

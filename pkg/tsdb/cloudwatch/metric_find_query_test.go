@@ -120,8 +120,9 @@ func TestCloudWatchMetrics(t *testing.T) {
 		result, _ := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
 
 		Convey("Should return regions", func() {
-			So(result[0].Text, ShouldEqual, "ap-northeast-1")
-			So(result[1].Text, ShouldEqual, "ap-northeast-2")
+			So(result[0].Text, ShouldEqual, "ap-east-1")
+			So(result[1].Text, ShouldEqual, "ap-northeast-1")
+			So(result[2].Text, ShouldEqual, "ap-northeast-2")
 		})
 	})
 

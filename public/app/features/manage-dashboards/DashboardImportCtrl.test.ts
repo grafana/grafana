@@ -1,11 +1,16 @@
 import { DashboardImportCtrl } from './DashboardImportCtrl';
 import config from 'app/core/config';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { IScope } from 'angular';
 
 describe('DashboardImportCtrl', () => {
   const ctx: any = {};
+  jest.spyOn(backendSrv, 'getDashboardByUid').mockImplementation(() => Promise.resolve([]));
+  jest.spyOn(backendSrv, 'search').mockImplementation(() => Promise.resolve([]));
+  const getMock = jest.spyOn(backendSrv, 'get');
+  const $scope = ({ $evalAsync: jest.fn() } as any) as IScope;
 
   let navModelSrv: any;
-  let backendSrv: any;
   let validationSrv: any;
 
   beforeEach(() => {
@@ -13,17 +18,13 @@ describe('DashboardImportCtrl', () => {
       getNav: () => {},
     };
 
-    backendSrv = {
-      search: jest.fn().mockReturnValue(Promise.resolve([])),
-      getDashboardByUid: jest.fn().mockReturnValue(Promise.resolve([])),
-      get: jest.fn(),
-    };
-
     validationSrv = {
       validateNewDashboardName: jest.fn().mockReturnValue(Promise.resolve()),
     };
 
-    ctx.ctrl = new DashboardImportCtrl(backendSrv, validationSrv, navModelSrv, {} as any, {} as any);
+    ctx.ctrl = new DashboardImportCtrl($scope, validationSrv, navModelSrv, {} as any, {} as any);
+
+    jest.clearAllMocks();
   });
 
   describe('when uploading json', () => {
@@ -61,16 +62,12 @@ describe('DashboardImportCtrl', () => {
     beforeEach(() => {
       ctx.ctrl.gnetUrl = 'http://grafana.com/dashboards/123';
       // setup api mock
-      backendSrv.get = jest.fn(() => {
-        return Promise.resolve({
-          json: {},
-        });
-      });
+      getMock.mockImplementation(() => Promise.resolve({ json: {} }));
       return ctx.ctrl.checkGnetDashboard();
     });
 
     it('should call gnet api with correct dashboard id', () => {
-      expect(backendSrv.get.mock.calls[0][0]).toBe('api/gnet/dashboards/123');
+      expect(getMock.mock.calls[0][0]).toBe('api/gnet/dashboards/123');
     });
   });
 
@@ -78,16 +75,12 @@ describe('DashboardImportCtrl', () => {
     beforeEach(() => {
       ctx.ctrl.gnetUrl = '2342';
       // setup api mock
-      backendSrv.get = jest.fn(() => {
-        return Promise.resolve({
-          json: {},
-        });
-      });
+      getMock.mockImplementation(() => Promise.resolve({ json: {} }));
       return ctx.ctrl.checkGnetDashboard();
     });
 
     it('should call gnet api with correct dashboard id', () => {
-      expect(backendSrv.get.mock.calls[0][0]).toBe('api/gnet/dashboards/2342');
+      expect(getMock.mock.calls[0][0]).toBe('api/gnet/dashboards/2342');
     });
   });
 });

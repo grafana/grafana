@@ -186,21 +186,32 @@ type artifactFilter struct {
 	arch string
 }
 
-func filterBuildArtifacts(filters []artifactFilter) ([]buildArtifact, error) {
-	var artifacts []buildArtifact
-	for _, f := range filters {
-		matched := false
+type filterType string
 
-		for _, a := range completeBuildArtifactConfigurations {
+const (
+	Add    filterType = "add"
+	Remove filterType = "remove"
+)
+
+func filterBuildArtifacts(filterFrom []buildArtifact, ft filterType, filters []artifactFilter) ([]buildArtifact, error) {
+	var artifacts []buildArtifact
+
+	for _, a := range filterFrom {
+		matched := false
+		var match buildArtifact
+
+		for _, f := range filters {
 			if f.os == a.os && f.arch == a.arch {
-				artifacts = append(artifacts, a)
+				match = a
 				matched = true
 				break
 			}
 		}
 
-		if !matched {
-			return nil, fmt.Errorf("No buildArtifact for os=%v, arch=%v", f.os, f.arch)
+		if matched && ft == Add {
+			artifacts = append(artifacts, match)
+		} else if !matched && ft == Remove {
+			artifacts = append(artifacts, a)
 		}
 	}
 	return artifacts, nil

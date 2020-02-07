@@ -1,12 +1,25 @@
 import cloneDeep from 'lodash/cloneDeep';
 import groupBy from 'lodash/groupBy';
 import { from, of, Observable, merge } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
-import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
+import {
+  LoadingState,
+  DataSourceApi,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { mergeMap, map, filter } from 'rxjs/operators';
+import { mergeMap, map } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
+
+export interface BatchedQueries {
+  datasource: Promise<DataSourceApi>;
+  targets: DataQuery[];
+}
 
 export class MixedDatasource extends DataSourceApi<DataQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
@@ -23,55 +36,73 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       return of({ data: [] } as DataQueryResponse); // nothing
     }
 
+    // Build groups of queries to run in parallel
     const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource');
-    const observables: Array<Observable<DataQueryResponse>> = [];
-
+    const mixed: BatchedQueries[] = [];
     for (const key in sets) {
       const targets = sets[key];
       const dsName = targets[0].datasource;
+      mixed.push({
+        datasource: getDataSourceSrv().get(dsName),
+        targets,
+      });
+    }
+    return this.batchQueries(mixed, request);
+  }
 
-      const observable = from(getDataSourceSrv().get(dsName)).pipe(
-        map((dataSourceApi: DataSourceApi) => {
+  batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
+    const observables: Array<Observable<DataQueryResponse>> = [];
+    let runningSubRequests = 0;
+
+    for (let i = 0; i < mixed.length; i++) {
+      const query = mixed[i];
+      if (!query.targets || !query.targets.length) {
+        continue;
+      }
+      const observable = from(query.datasource).pipe(
+        mergeMap((dataSourceApi: DataSourceApi) => {
           const datasourceRequest = cloneDeep(request);
 
-          // Remove any unused hidden queries
-          let newTargets = targets.slice();
-          if (!dataSourceApi.meta.hiddenQueries) {
-            newTargets = newTargets.filter((t: DataQuery) => !t.hide);
-          }
+          datasourceRequest.requestId = `mixed-${i}-${datasourceRequest.requestId || ''}`;
+          datasourceRequest.targets = query.targets;
 
-          datasourceRequest.targets = newTargets;
-          datasourceRequest.requestId = `${dsName}${datasourceRequest.requestId || ''}`;
-          return {
-            dataSourceApi,
-            datasourceRequest,
-          };
-        })
-      );
+          runningSubRequests++;
+          let hasCountedAsDone = false;
 
-      const noTargets = observable.pipe(
-        filter(({ datasourceRequest }) => datasourceRequest.targets.length === 0),
-        mergeMap(() => {
-          return of({ data: [] } as DataQueryResponse);
-        })
-      );
-
-      const hasTargets = observable.pipe(
-        filter(({ datasourceRequest }) => datasourceRequest.targets.length > 0),
-        mergeMap(({ dataSourceApi, datasourceRequest }) => {
           return from(dataSourceApi.query(datasourceRequest)).pipe(
+            tap(
+              (response: DataQueryResponse) => {
+                if (
+                  hasCountedAsDone ||
+                  response.state === LoadingState.Streaming ||
+                  response.state === LoadingState.Loading
+                ) {
+                  return;
+                }
+                runningSubRequests--;
+                hasCountedAsDone = true;
+              },
+              () => {
+                if (hasCountedAsDone) {
+                  return;
+                }
+                hasCountedAsDone = true;
+                runningSubRequests--;
+              }
+            ),
             map((response: DataQueryResponse) => {
               return {
                 ...response,
                 data: response.data || [],
-                key: `${dsName}${response.key || ''}`,
+                state: runningSubRequests === 0 ? LoadingState.Done : LoadingState.Loading,
+                key: `mixed-${i}-${response.key || ''}`,
               } as DataQueryResponse;
             })
           );
         })
       );
 
-      observables.push(merge(noTargets, hasTargets));
+      observables.push(observable);
     }
 
     return merge(...observables);

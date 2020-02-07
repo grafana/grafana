@@ -89,12 +89,13 @@ func pluginScenario(desc string, t *testing.T, fn func()) {
 	Convey("Given a plugin", t, func() {
 		setting.Raw = ini.Empty()
 		sec, _ := setting.Raw.NewSection("plugin.test-app")
-		sec.NewKey("path", "testdata/test-app")
+		_, err := sec.NewKey("path", "testdata/test-app")
+		So(err, ShouldBeNil)
 
 		pm := &PluginManager{}
-		err := pm.Init()
-
+		err = pm.Init()
 		So(err, ShouldBeNil)
+
 		Convey(desc, fn)
 	})
 }

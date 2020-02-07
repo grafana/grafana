@@ -28,44 +28,46 @@ import (
 )
 
 const (
-	// Name for default section. You can use this constant or the string literal.
+	// DefaultSection is the name of default section. You can use this constant or the string literal.
 	// In most of cases, an empty string is all you need to access the section.
-	DEFAULT_SECTION = "DEFAULT"
+	DefaultSection = "DEFAULT"
+	// Deprecated: Use "DefaultSection" instead.
+	DEFAULT_SECTION = DefaultSection
 
 	// Maximum allowed depth when recursively substituing variable names.
-	_DEPTH_VALUES = 99
-	_VERSION      = "1.42.0"
+	depthValues = 99
+	version     = "1.46.0"
 )
 
 // Version returns current package version literal.
 func Version() string {
-	return _VERSION
+	return version
 }
 
 var (
-	// Delimiter to determine or compose a new line.
-	// This variable will be changed to "\r\n" automatically on Windows
-	// at package init time.
+	// LineBreak is the delimiter to determine or compose a new line.
+	// This variable will be changed to "\r\n" automatically on Windows at package init time.
 	LineBreak = "\n"
 
-	// Place custom spaces when PrettyFormat and PrettyEqual are both disabled
-	DefaultFormatLeft  = ""
+	// DefaultFormatLeft places custom spaces on the left when PrettyFormat and PrettyEqual are both disabled.
+	DefaultFormatLeft = ""
+	// DefaultFormatRight places custom spaces on the right when PrettyFormat and PrettyEqual are both disabled.
 	DefaultFormatRight = ""
 
 	// Variable regexp pattern: %(variable)s
 	varPattern = regexp.MustCompile(`%\(([^\)]+)\)s`)
 
-	// Indicate whether to align "=" sign with spaces to produce pretty output
+	// PrettyFormat indicates whether to align "=" sign with spaces to produce pretty output
 	// or reduce all possible spaces for compact format.
 	PrettyFormat = true
 
-	// Place spaces around "=" sign even when PrettyFormat is false
+	// PrettyEqual places spaces around "=" sign even when PrettyFormat is false.
 	PrettyEqual = false
 
-	// Explicitly write DEFAULT section header
+	// DefaultHeader explicitly writes default section header.
 	DefaultHeader = false
 
-	// Indicate whether to put a line between sections
+	// PrettySection indicates whether to put a line between sections.
 	PrettySection = true
 )
 
@@ -129,6 +131,7 @@ func parseDataSource(source interface{}) (dataSource, error) {
 	}
 }
 
+// LoadOptions contains all customized options used for load data source(s).
 type LoadOptions struct {
 	// Loose indicates whether the parser should ignore nonexistent files or return error.
 	Loose bool
@@ -174,6 +177,7 @@ type LoadOptions struct {
 	PreserveSurroundedQuote bool
 }
 
+// LoadSources allows caller to apply customized options for loading from data source(s).
 func LoadSources(opts LoadOptions, source interface{}, others ...interface{}) (_ *File, err error) {
 	sources := make([]dataSource, len(others)+1)
 	sources[0], err = parseDataSource(source)

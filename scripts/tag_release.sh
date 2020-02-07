@@ -31,7 +31,7 @@ git tag -v "${_tag}"
 echo "Make sure the tag is signed as expected"
 echo "press [y] to push the tags"
 
-read -n -r 1 confirm
+read -n 1 confirm
 
 if [ "${confirm}" == "y" ]; then
     git push origin "${_branch}" --tags

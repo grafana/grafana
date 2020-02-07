@@ -1,19 +1,15 @@
+import { DataSourcePlugin } from '@grafana/data';
 import Datasource from './datasource';
 
 import LokiCheatSheet from './components/LokiCheatSheet';
-import LokiQueryField from './components/LokiQueryField';
+import LokiExploreQueryEditor from './components/LokiExploreQueryEditor';
 import LokiQueryEditor from './components/LokiQueryEditor';
 import { LokiAnnotationsQueryCtrl } from './LokiAnnotationsQueryCtrl';
+import { ConfigEditor } from './configuration/ConfigEditor';
 
-export class LokiConfigCtrl {
-  static templateUrl = 'partials/config.html';
-}
-
-export {
-  Datasource,
-  LokiQueryEditor as QueryEditor,
-  LokiConfigCtrl as ConfigCtrl,
-  LokiQueryField as ExploreQueryField,
-  LokiCheatSheet as ExploreStartPage,
-  LokiAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-};
+export const plugin = new DataSourcePlugin(Datasource)
+  .setQueryEditor(LokiQueryEditor)
+  .setConfigEditor(ConfigEditor)
+  .setExploreQueryField(LokiExploreQueryEditor)
+  .setExploreStartPage(LokiCheatSheet)
+  .setAnnotationQueryCtrl(LokiAnnotationsQueryCtrl);

@@ -1,11 +1,8 @@
 import _ from 'lodash';
 import React from 'react';
 
-import { SlatePrism } from '@grafana/ui';
-
-// dom also includes Element polyfills
-import QueryField from 'app/features/explore/QueryField';
-import { ExploreQueryFieldProps } from '@grafana/ui';
+import { QueryField, SlatePrism } from '@grafana/ui';
+import { ExploreQueryFieldProps } from '@grafana/data';
 import { ElasticDatasource } from '../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../types';
 
@@ -71,7 +68,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
-              initialQuery={query.query}
+              query={query.query}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
               placeholder="Enter a Lucene query"
@@ -80,7 +77,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
             />
           </div>
         </div>
-        {data && data.error ? <div className="prom-query-field-info text-error"> data.error.message}</div> : null}
+        {data && data.error ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
       </>
     );
   }

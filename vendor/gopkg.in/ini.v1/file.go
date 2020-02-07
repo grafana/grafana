@@ -68,7 +68,7 @@ func Empty() *File {
 func (f *File) NewSection(name string) (*Section, error) {
 	if len(name) == 0 {
 		return nil, errors.New("error creating new section: empty section name")
-	} else if f.options.Insensitive && name != DEFAULT_SECTION {
+	} else if f.options.Insensitive && name != DefaultSection {
 		name = strings.ToLower(name)
 	}
 
@@ -111,7 +111,7 @@ func (f *File) NewSections(names ...string) (err error) {
 // GetSection returns section by given name.
 func (f *File) GetSection(name string) (*Section, error) {
 	if len(name) == 0 {
-		name = DEFAULT_SECTION
+		name = DefaultSection
 	}
 	if f.options.Insensitive {
 		name = strings.ToLower(name)
@@ -141,7 +141,7 @@ func (f *File) Section(name string) *Section {
 	return sec
 }
 
-// Section returns list of Section.
+// Sections returns a list of Section stored in the current instance.
 func (f *File) Sections() []*Section {
 	if f.BlockMode {
 		f.lock.RLock()
@@ -175,7 +175,7 @@ func (f *File) DeleteSection(name string) {
 	}
 
 	if len(name) == 0 {
-		name = DEFAULT_SECTION
+		name = DefaultSection
 	}
 
 	for i, s := range f.sectionList {
@@ -306,7 +306,7 @@ func (f *File) writeToBuffer(indent string) (*bytes.Buffer, error) {
 		for _, kname := range sec.keyList {
 			key := sec.Key(kname)
 			if len(key.Comment) > 0 {
-				if len(indent) > 0 && sname != DEFAULT_SECTION {
+				if len(indent) > 0 && sname != DefaultSection {
 					buf.WriteString(indent)
 				}
 
@@ -325,7 +325,7 @@ func (f *File) writeToBuffer(indent string) (*bytes.Buffer, error) {
 				}
 			}
 
-			if len(indent) > 0 && sname != DEFAULT_SECTION {
+			if len(indent) > 0 && sname != DefaultSection {
 				buf.WriteString(indent)
 			}
 

@@ -1,5 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
+import { CoreEvents } from 'app/types';
+import { sanitize } from 'app/core/utils/text';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -155,7 +157,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         plot.unhighlight();
       }
     }
-    appEvents.emit('graph-hover-clear');
+    appEvents.emit(CoreEvents.graphHoverClear);
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
@@ -163,11 +165,23 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    appEvents.emit('graph-hover', { pos: pos, panel: panel });
+    appEvents.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {
-    appEvents.emit('graph-click', { pos: pos, panel: panel, item: item });
+    appEvents.emit(CoreEvents.graphClicked, { pos: pos, panel: panel, item: item });
+  });
+
+  elem.bind('plotleave', () => {
+    if (!panel.tooltip.shared) {
+      return;
+    }
+
+    const plot = elem.data().plot;
+    if (plot) {
+      $tooltip.detach();
+      plot.unhighlight();
+    }
   });
 
   this.clear = (plot: { clearCrosshair: () => void; unhighlight: () => void }) => {
@@ -254,13 +268,14 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         }
 
         series = seriesList[hoverInfo.index];
+        value = sanitize(series.formatValue(hoverInfo.value));
 
-        value = series.formatValue(hoverInfo.value);
+        const color = sanitize(hoverInfo.color);
+        const label = sanitize(hoverInfo.label);
 
         seriesHtml +=
           '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
-        seriesHtml +=
-          '<i class="fa fa-minus" style="color:' + hoverInfo.color + ';"></i> ' + hoverInfo.label + ':</div>';
+        seriesHtml += '<i class="fa fa-minus" style="color:' + color + ';"></i> ' + label + ':</div>';
         seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
         plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
       }
@@ -268,10 +283,10 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       self.renderAndShow(absoluteTime, seriesHtml, pos, xMode);
     } else if (item) {
       // single series tooltip
+      const color = sanitize(item.series.color);
       series = seriesList[item.seriesIndex];
       group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-      group +=
-        '<i class="fa fa-minus" style="color:' + item.series.color + ';"></i> ' + series.aliasEscaped + ':</div>';
+      group += '<i class="fa fa-minus" style="color:' + color + ';"></i> ' + series.aliasEscaped + ':</div>';
 
       if (panel.stack && panel.tooltip.value_type === 'individual') {
         value = item.datapoint[1] - item.datapoint[2];
@@ -279,8 +294,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         value = item.datapoint[1];
       }
 
-      value = series.formatValue(value);
-
+      value = sanitize(series.formatValue(value));
       absoluteTime = dashboard.formatDate(item.datapoint[0], tooltipFormat);
 
       group += '<div class="graph-tooltip-value">' + value + '</div>';

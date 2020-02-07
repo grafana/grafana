@@ -47,7 +47,11 @@ func ResetPassword(c *m.ReqContext, form dtos.ResetUserPasswordForm) Response {
 
 	cmd := m.ChangeUserPasswordCommand{}
 	cmd.UserId = query.Result.Id
-	cmd.NewPassword = util.EncodePassword(form.NewPassword, query.Result.Salt)
+	var err error
+	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, query.Result.Salt)
+	if err != nil {
+		return Error(500, "Failed to encode password", err)
+	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Failed to change user password", err)

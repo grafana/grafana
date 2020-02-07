@@ -7,16 +7,25 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 // Components
 import QueryEditor from './QueryEditor';
+import { QueryRowActions } from './QueryRowActions';
 // Actions
-import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
+import { changeQuery, modifyQueries, runQueries } from './state/actions';
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData } from '@grafana/ui';
-import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
+import {
+  DataQuery,
+  DataSourceApi,
+  PanelData,
+  HistoryItem,
+  TimeRange,
+  AbsoluteTimeRange,
+  LoadingState,
+  ExploreMode,
+} from '@grafana/data';
+
+import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
-import QueryStatus from './QueryStatus';
 
 interface PropsFromParent {
   exploreId: ExploreId;
@@ -25,12 +34,10 @@ interface PropsFromParent {
 }
 
 interface QueryRowProps extends PropsFromParent {
-  addQueryRow: typeof addQueryRow;
   changeQuery: typeof changeQuery;
   className?: string;
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
-  datasourceStatus: DataSourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
   query: DataQuery;
@@ -40,13 +47,16 @@ interface QueryRowProps extends PropsFromParent {
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
-  latency: number;
   mode: ExploreMode;
+  latency: number;
 }
 
 interface QueryRowState {
   textEditModeEnabled: boolean;
 }
+
+// Empty function to override blur execution on query field
+const noopOnBlur = () => {};
 
 export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   state: QueryRowState = {
@@ -71,21 +81,13 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     console.log('QueryRow will unmount');
   }
 
-  onClickAddButton = () => {
-    const { exploreId, index } = this.props;
-    this.props.addQueryRow(exploreId, index);
-  };
-
-  onClickClearButton = () => {
-    this.onChange(null, true);
-  };
-
-  onClickHintFix = (action: QueryFixAction) => {
-    const { datasourceInstance, exploreId, index } = this.props;
-    if (datasourceInstance && datasourceInstance.modifyQuery) {
-      const modifier = (queries: DataQuery, action: QueryFixAction) => datasourceInstance.modifyQuery(queries, action);
-      this.props.modifyQueries(exploreId, action, index, modifier);
-    }
+  onClickToggleDisabled = () => {
+    const { exploreId, index, query } = this.props;
+    const newQuery = {
+      ...query,
+      hide: !query.hide,
+    };
+    this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
   onClickRemoveButton = () => {
@@ -115,39 +117,39 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       exploreEvents,
       range,
       absoluteRange,
-      datasourceStatus,
       queryResponse,
-      latency,
       mode,
+      latency,
     } = this.props;
+
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const isNotStarted = queryResponse.state === LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
-    if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
+    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
       QueryField = datasourceInstance.components.ExploreMetricsQueryField;
-    } else if (mode === ExploreMode.Logs && datasourceInstance.components.ExploreLogsQueryField) {
+    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
       QueryField = datasourceInstance.components.ExploreLogsQueryField;
     } else {
-      QueryField = datasourceInstance.components.ExploreQueryField;
+      QueryField = datasourceInstance.components?.ExploreQueryField;
     }
 
     return (
       <div className="query-row">
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
-            //@ts-ignore
             <QueryField
               datasource={datasourceInstance}
-              datasourceStatus={datasourceStatus}
               query={query}
               history={history}
               onRunQuery={this.onRunQuery}
-              onHint={this.onClickHintFix}
+              onBlur={noopOnBlur}
               onChange={this.onChange}
               data={queryResponse}
               absoluteRange={absoluteRange}
+              exploreMode={mode}
             />
           ) : (
             <QueryEditor
@@ -162,33 +164,15 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
             />
           )}
         </div>
-        <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={latency} />
-        </div>
-        <div className="gf-form-inline flex-shrink-0">
-          {canToggleEditorModes && (
-            <div className="gf-form">
-              <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleEditorMode}>
-                <i className="fa fa-pencil" />
-              </button>
-            </div>
-          )}
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
-              <i className="fa fa-times" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickAddButton}>
-              <i className="fa fa-plus" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickRemoveButton}>
-              <i className="fa fa-minus" />
-            </button>
-          </div>
-        </div>
+        <QueryRowActions
+          canToggleEditorModes={canToggleEditorModes}
+          isDisabled={query.hide}
+          isNotStarted={isNotStarted}
+          latency={latency}
+          onClickToggleEditorMode={this.onClickToggleEditorMode}
+          onClickToggleDisabled={this.onClickToggleDisabled}
+          onClickRemoveButton={this.onClickRemoveButton}
+        />
       </div>
     );
   }
@@ -197,19 +181,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const {
-    datasourceInstance,
-    history,
-    queries,
-    range,
-    absoluteRange,
-    datasourceError,
-    latency,
-    mode,
-    queryResponse,
-  } = item;
+  const { datasourceInstance, history, queries, range, absoluteRange, mode, queryResponse, latency } = item;
   const query = queries[index];
-  const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
 
   return {
     datasourceInstance,
@@ -217,15 +190,13 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     query,
     range,
     absoluteRange,
-    datasourceStatus,
     queryResponse,
-    latency,
     mode,
+    latency,
   };
 }
 
 const mapDispatchToProps = {
-  addQueryRow,
   changeQuery,
   highlightLogsExpressionAction,
   modifyQueries,
@@ -233,7 +204,6 @@ const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(QueryRow) as React.ComponentType<PropsFromParent>);
+export default hot(module)(
+  connect(mapStateToProps, mapDispatchToProps)(QueryRow) as React.ComponentType<PropsFromParent>
+);

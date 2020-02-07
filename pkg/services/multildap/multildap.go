@@ -109,11 +109,17 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		return nil, ErrNoLDAPServers
 	}
 
-	for _, config := range multiples.configs {
+	for index, config := range multiples.configs {
 		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, err
+			logDialFailure(err, config)
+
+			// Only return an error if it is the last server so we can try next server
+			if index == len(multiples.configs)-1 {
+				return nil, err
+			}
+			continue
 		}
 
 		defer server.Close()
@@ -155,11 +161,17 @@ func (multiples *MultiLDAP) User(login string) (
 	}
 
 	search := []string{login}
-	for _, config := range multiples.configs {
+	for index, config := range multiples.configs {
 		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, *config, err
+			logDialFailure(err, config)
+
+			// Only return an error if it is the last server so we can try next server
+			if index == len(multiples.configs)-1 {
+				return nil, *config, err
+			}
+			continue
 		}
 
 		defer server.Close()
@@ -192,11 +204,17 @@ func (multiples *MultiLDAP) Users(logins []string) (
 		return nil, ErrNoLDAPServers
 	}
 
-	for _, config := range multiples.configs {
+	for index, config := range multiples.configs {
 		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, err
+			logDialFailure(err, config)
+
+			// Only return an error if it is the last server so we can try next server
+			if index == len(multiples.configs)-1 {
+				return nil, err
+			}
+			continue
 		}
 
 		defer server.Close()
@@ -227,4 +245,13 @@ func isSilentError(err error) bool {
 	}
 
 	return false
+}
+
+func logDialFailure(err error, config *ldap.ServerConfig) {
+	logger.Debug(
+		"unable to dial LDAP server",
+		"host", config.Host,
+		"port", config.Port,
+		"error", err,
+	)
 }

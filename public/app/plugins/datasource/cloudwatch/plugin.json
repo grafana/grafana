@@ -3,11 +3,20 @@
   "name": "CloudWatch",
   "id": "cloudwatch",
   "category": "cloud",
-
-  "hiddenQueries": true,
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "includes": [
+    { "type": "dashboard", "name": "EC2", "path": "dashboards/ec2.json" },
+    { "type": "dashboard", "name": "EBS", "path": "dashboards/EBS.json" },
+    { "type": "dashboard", "name": "Lambda", "path": "dashboards/Lambda.json" },
+    { "type": "dashboard", "name": "Logs", "path": "dashboards/Logs.json" },
+    { "type": "dashboard", "name": "RDS", "path": "dashboards/RDS.json" }
+  ],
+
+  "queryOptions": {
+    "minInterval": true
+  },
 
   "info": {
     "description": "Data source for Amazon AWS monitoring service",

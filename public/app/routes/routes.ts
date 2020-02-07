@@ -6,13 +6,13 @@ import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
-import LdapUserPage from 'app/features/admin/ldap/LdapUserPage';
+import UserAdminPage from 'app/features/admin/UserAdminPage';
 import config from 'app/core/config';
-import { route, ILocationProvider } from 'angular';
+import { ILocationProvider, route } from 'angular';
 // Types
 import { DashboardRouteInfo } from 'app/types';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
-import { SafeDynamicImport } from '../core/components/SafeDynamicImport';
+import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
@@ -83,6 +83,18 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
     })
+    .when('/d-solo/:uid', {
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+          ),
+      },
+    })
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
@@ -115,7 +127,9 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webpackChunkName: "DataSourceSettingsPage"*/ '../features/datasources/settings/DataSourceSettingsPage')
+            import(
+              /* webpackChunkName: "DataSourceSettingsPage"*/ '../features/datasources/settings/DataSourceSettingsPage'
+            )
           ),
       },
     })
@@ -231,9 +245,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/org/teams/new', {
-      templateUrl: 'public/app/features/teams/partials/create_team.html',
-      controller: 'CreateTeamCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
+      },
     })
     .when('/org/teams/edit/:id/:page?', {
       template: '<react-container />',
@@ -267,9 +284,17 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controllerAs: 'ctrl',
     })
     .when('/admin/settings', {
-      templateUrl: 'public/app/features/admin/partials/settings.html',
-      controller: 'AdminSettingsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')),
+      },
+    })
+    .when('/admin/upgrading', {
+      template: '<react-container />',
+      resolve: {
+        component: () => SafeDynamicImport(import('app/features/admin/UpgradePage')),
+      },
     })
     .when('/admin/users', {
       templateUrl: 'public/app/features/admin/partials/users.html',
@@ -277,17 +302,16 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controllerAs: 'ctrl',
     })
     .when('/admin/users/create', {
-      templateUrl: 'public/app/features/admin/partials/new_user.html',
-      controller: 'AdminEditUserCtrl',
-    })
-    .when('/admin/users/edit/:id', {
-      templateUrl: 'public/app/features/admin/partials/edit_user.html',
-      controller: 'AdminEditUserCtrl',
-    })
-    .when('/admin/users/ldap/edit/:id', {
       template: '<react-container />',
       resolve: {
-        component: () => LdapUserPage,
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')),
+      },
+    })
+    .when('/admin/users/edit/:id', {
+      template: '<react-container />',
+      resolve: {
+        component: () => UserAdminPage,
       },
     })
     .when('/admin/orgs', {
@@ -365,11 +389,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
       controller: 'AppPageCtrl',
       controllerAs: 'ctrl',
-    })
-    .when('/styleguide/:page?', {
-      controller: 'StyleGuideCtrl',
-      controllerAs: 'ctrl',
-      templateUrl: 'public/app/features/admin/partials/styleguide.html',
     })
     .when('/alerting', {
       redirectTo: '/alerting/list',

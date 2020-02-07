@@ -1,6 +1,7 @@
 import React, { FC, useContext } from 'react';
 import { css, cx } from 'emotion';
-import { PluginState, ThemeContext } from '../../index';
+import { ThemeContext } from '../../index';
+import { PluginState } from '@grafana/data';
 
 interface Props {
   state?: PluginState;

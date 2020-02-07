@@ -1,24 +1,23 @@
 import React, { FunctionComponent } from 'react';
 import { LokiQueryFieldForm, LokiQueryFieldFormProps } from './LokiQueryFieldForm';
-import { useLokiSyntax } from './useLokiSyntax';
+import { useLokiSyntaxAndLabels } from './useLokiSyntaxAndLabels';
 import LokiLanguageProvider from '../language_provider';
 
-export const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({
-  datasource,
-  datasourceStatus,
-  ...otherProps
-}) => {
-  const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
+type LokiQueryFieldProps = Omit<
+  LokiQueryFieldFormProps,
+  'syntax' | 'syntaxLoaded' | 'onLoadOptions' | 'onLabelsRefresh' | 'logLabelOptions'
+>;
+
+export const LokiQueryField: FunctionComponent<LokiQueryFieldProps> = props => {
+  const { datasource, absoluteRange, ...otherProps } = props;
+  const { isSyntaxReady, setActiveOption, refreshLabels, syntax, logLabelOptions } = useLokiSyntaxAndLabels(
     datasource.languageProvider as LokiLanguageProvider,
-    datasourceStatus,
-    otherProps.absoluteRange
+    absoluteRange
   );
 
   return (
     <LokiQueryFieldForm
       datasource={datasource}
-      datasourceStatus={datasourceStatus}
-      syntaxLoaded={isSyntaxReady}
       /**
        * setActiveOption name is intentional. Because of the way rc-cascader requests additional data
        * https://github.com/react-component/cascader/blob/master/src/Cascader.jsx#L165
@@ -27,7 +26,10 @@ export const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({
        */
       onLoadOptions={setActiveOption}
       onLabelsRefresh={refreshLabels}
-      {...syntaxProps}
+      absoluteRange={absoluteRange}
+      syntax={syntax}
+      syntaxLoaded={isSyntaxReady}
+      logLabelOptions={logLabelOptions}
       {...otherProps}
     />
   );

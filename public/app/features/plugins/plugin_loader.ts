@@ -15,15 +15,24 @@ import slateReact from '@grafana/slate-react';
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
-import reactRedux from 'react-redux';
-import redux from 'redux';
+import * as reactRedux from 'react-redux';
+import * as redux from 'redux';
 
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui';
-import { dateMath } from '@grafana/data';
+import {
+  DataSourcePlugin,
+  AppPlugin,
+  PanelPlugin,
+  PluginMeta,
+  DataSourcePluginMeta,
+  dateMath,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataQuery,
+} from '@grafana/data';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
@@ -33,8 +42,17 @@ import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 import * as emotion from 'emotion';
 import * as grafanaData from '@grafana/data';
-import * as grafanaUI from '@grafana/ui';
+import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
+
+// Help the 6.4 to 6.5 migration
+// The base classes were moved from @grafana/ui to @grafana/data
+// This exposes the same classes on both import paths
+const grafanaUI = grafanaUIraw as any;
+grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
+grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
+grafanaUI.AppPlugin = grafanaData.AppPlugin;
+grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 // rxjs
 import * as rxjs from 'rxjs';
@@ -135,7 +153,6 @@ import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.stack';
-import 'vendor/flot/jquery.flot.pie';
 import 'vendor/flot/jquery.flot.stackpercent';
 import 'vendor/flot/jquery.flot.fillbelow';
 import 'vendor/flot/jquery.flot.crosshair';
@@ -172,16 +189,20 @@ export async function importPluginModule(path: string): Promise<any> {
   return grafanaRuntime.SystemJS.import(path);
 }
 
-export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<DataSourcePlugin<any>> {
+export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
   return importPluginModule(meta.module).then(pluginExports => {
     if (pluginExports.plugin) {
-      const dsPlugin = pluginExports.plugin as DataSourcePlugin<any>;
+      const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
       return dsPlugin;
     }
 
     if (pluginExports.Datasource) {
-      const dsPlugin = new DataSourcePlugin(pluginExports.Datasource);
+      const dsPlugin = new DataSourcePlugin<
+        DataSourceApi<DataQuery, DataSourceJsonData>,
+        DataQuery,
+        DataSourceJsonData
+      >(pluginExports.Datasource);
       dsPlugin.setComponentsFromLegacyExports(pluginExports);
       dsPlugin.meta = meta;
       return dsPlugin;
@@ -202,6 +223,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
 }
 
 import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
+import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 interface PanelCache {
   [key: string]: PanelPlugin;

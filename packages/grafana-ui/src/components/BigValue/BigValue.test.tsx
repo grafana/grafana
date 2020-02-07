@@ -1,14 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { BigValue, Props } from './BigValue';
-import { getTheme } from '../../themes/index';
+import { BigValue, Props, BigValueColorMode, BigValueGraphMode } from './BigValue';
+import { getTheme } from '../../themes';
 
-jest.mock('jquery', () => ({
-  plot: jest.fn(),
-}));
-
-const setup = (propOverrides?: object) => {
+function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
+    colorMode: BigValueColorMode.Background,
+    graphMode: BigValueGraphMode.Line,
     height: 300,
     width: 300,
     value: {
@@ -19,7 +17,11 @@ const setup = (propOverrides?: object) => {
   };
 
   Object.assign(props, propOverrides);
+  return props;
+}
 
+const setup = (propOverrides?: object) => {
+  const props = getProps(propOverrides);
   const wrapper = shallow(<BigValue {...props} />);
   const instance = wrapper.instance() as BigValue;
 
@@ -29,10 +31,11 @@ const setup = (propOverrides?: object) => {
   };
 };
 
-describe('Render BarGauge with basic options', () => {
-  it('should render', () => {
-    const { wrapper } = setup();
-    expect(wrapper).toBeDefined();
-    // expect(wrapper).toMatchSnapshot();
+describe('BigValue', () => {
+  describe('Render with basic options', () => {
+    it('should render', () => {
+      const { wrapper } = setup();
+      expect(wrapper).toMatchSnapshot();
+    });
   });
 });

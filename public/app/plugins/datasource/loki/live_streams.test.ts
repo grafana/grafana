@@ -36,13 +36,13 @@ describe('Live Stream Tests', () => {
     fakeSocket = new Subject<any>();
     const labels: Labels = { job: 'varlogs' };
     const target = makeTarget('fake', labels);
-    const stream = new LiveStreams().getStream(target);
+    const stream = new LiveStreams().getLegacyStream(target);
     expect.assertions(4);
 
     const tests = [
       (val: DataFrame[]) => {
         expect(val[0].length).toEqual(7);
-        expect(val[0].labels).toEqual(labels);
+        expect(val[0].fields[1].labels).toEqual(labels);
       },
       (val: DataFrame[]) => {
         expect(val[0].length).toEqual(8);
@@ -50,6 +50,7 @@ describe('Live Stream Tests', () => {
         const last = { ...view.get(view.length - 1) };
         expect(last).toEqual({
           ts: '2019-08-28T20:50:40.118944705Z',
+          id: '81d963f31c276ad2ea1af38b38436237',
           line: 'Kittens',
           labels: { filename: '/var/log/sntpc.log' },
         });
@@ -73,21 +74,21 @@ describe('Live Stream Tests', () => {
   it('returns the same subscription if the url matches existing one', () => {
     fakeSocket = new Subject<any>();
     const liveStreams = new LiveStreams();
-    const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
-    const stream2 = liveStreams.getStream(makeTarget('url_to_match'));
+    const stream1 = liveStreams.getLegacyStream(makeTarget('url_to_match'));
+    const stream2 = liveStreams.getLegacyStream(makeTarget('url_to_match'));
     expect(stream1).toBe(stream2);
   });
 
   it('returns new subscription when the previous unsubscribed', () => {
     fakeSocket = new Subject<any>();
     const liveStreams = new LiveStreams();
-    const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
+    const stream1 = liveStreams.getLegacyStream(makeTarget('url_to_match'));
     const subscription = stream1.subscribe({
       next: noop,
     });
     subscription.unsubscribe();
 
-    const stream2 = liveStreams.getStream(makeTarget('url_to_match'));
+    const stream2 = liveStreams.getLegacyStream(makeTarget('url_to_match'));
     expect(stream1).not.toBe(stream2);
   });
 
@@ -100,7 +101,7 @@ describe('Live Stream Tests', () => {
     spy.and.returnValue(fakeSocket);
 
     const liveStreams = new LiveStreams();
-    const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
+    const stream1 = liveStreams.getLegacyStream(makeTarget('url_to_match'));
     const subscription = stream1.subscribe({
       next: noop,
     });

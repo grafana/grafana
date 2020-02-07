@@ -21,7 +21,7 @@ type Props = {
   splitted: boolean;
   loading: boolean;
   onRun: () => void;
-  refreshInterval: string;
+  refreshInterval?: string;
   onChangeRefreshInterval: (interval: string) => void;
   showDropdown: boolean;
 };

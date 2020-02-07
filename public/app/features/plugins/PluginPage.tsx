@@ -3,23 +3,22 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import find from 'lodash/find';
-
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { StoreState, AppNotificationSeverity } from 'app/types';
+import { StoreState, AppNotificationSeverity, CoreEvents } from 'app/types';
+import { Alert, Tooltip } from '@grafana/ui';
 import {
-  Alert,
-  PluginType,
+  AppPlugin,
   GrafanaPlugin,
-  PluginInclude,
   PluginDependencies,
+  PluginInclude,
+  PluginIncludeType,
   PluginMeta,
   PluginMetaInfo,
-  Tooltip,
-  AppPlugin,
-  PluginIncludeType,
-} from '@grafana/ui';
-import { NavModel, NavModelItem } from '@grafana/data';
+  PluginType,
+  NavModel,
+  NavModelItem,
+} from '@grafana/data';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -62,6 +61,9 @@ function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
           return plugin;
         });
       });
+    }
+    if (info.type === PluginType.renderer) {
+      return Promise.resolve({ meta: info } as GrafanaPlugin);
     }
     return Promise.reject('Unknown Plugin type: ' + info.type);
   });
@@ -171,7 +173,7 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
-    appEvents.emit('show-modal', {
+    appEvents.emit(CoreEvents.showModal, {
       src: 'public/app/features/plugins/partials/update_instructions.html',
       model: this.state.plugin.meta,
     });
@@ -372,7 +374,7 @@ function getPluginTabsNav(
           pages.push({
             text: page.title,
             icon: page.icon,
-            url: path + '?page=' + page.id,
+            url: `${appSubUrl}${path}?page=${page.id}`,
             id: page.id,
           });
           if (!defaultPage) {
@@ -401,7 +403,7 @@ function getPluginTabsNav(
     text: meta.name,
     img: meta.info.logos.large,
     subTitle: meta.info.author.name,
-    breadcrumbs: [{ title: 'Plugins', url: '/plugins' }],
+    breadcrumbs: [{ title: 'Plugins', url: 'plugins' }],
     url: `${appSubUrl}${path}`,
     children: setActivePage(query.page as string, pages, defaultPage),
   };

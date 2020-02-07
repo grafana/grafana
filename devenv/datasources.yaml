@@ -20,8 +20,8 @@ datasources:
     url: http://localhost:3011
 
   - name: gdev-testdata
-    type: testdata
     isDefault: true
+    type: testdata
 
   - name: gdev-influxdb
     type: influxdb
@@ -226,6 +226,20 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
+
+  # Keep to test old /api/prom API
+  - name: gdev-loki-0.3
+    type: loki
+    access: proxy
+    url: http://localhost:3103
+    editable: false
+
+  # First version with new v1 API (remove once v1 is out)
+  - name: gdev-loki-0.4
+    type: loki
+    access: proxy
+    url: http://localhost:3104
+    editable: false
 
   - name: gdev-loki
     type: loki

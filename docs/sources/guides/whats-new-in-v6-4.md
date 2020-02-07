@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v6.4"
-description = "Feature & improvement highlights for Grafana v6.4"
+description = "Feature and improvement highlights for Grafana v6.4"
 keywords = ["grafana", "new", "documentation", "6.4"]
 type = "docs"
 [menu.docs]
@@ -25,16 +25,15 @@ Some of those new capabilities can already be seen in this release, like sharing
 - **Loki:** Use Loki in dashboard panels
 - [**Panels:** New logs panel]({{< relref "#new-logs-panel" >}})
 - [**Panels:** Data links improvements]({{< relref "#data-links-improvements" >}})
-- **Graph:** Series override to turn constant (point) into a line
+- [**Graph:** Series override to turn constant (point) into a line]({{< relref "#series-override-to turn-constant-into-a-line" >}})
 - [**Dashboard:** Share query results between panels]({{< relref "#share-query-results-between-panels" >}})
 - [**Plugins:** Alpha version of grafana-toolkit]({{< relref "#alpha-version-of-grafana-toolkit" >}})
-- [**Azure:** Query over multiple resources in Azure Monitor]({{< relref "#query-over-multiple-resources-in-azure-monitor" >}})
-- [**ImageRendering:** PhantomJS deprecation]({{< relref "#phantomjs-deprecation" >}})
+- [**Image Rendering:** PhantomJS deprecation]({{< relref "#phantomjs-deprecation" >}})
 - [**Docker:** Alpine based docker image]({{< relref "#alpine-based-docker-image" >}})
 - [**LDAP:** Debug UI]({{< relref "#ldap-debug-ui" >}})
 - [**Enterprise**: Reporting]({{< relref "#reporting" >}})
 - [**Enterprise**: GitLab OAuth Team Sync support]({{< relref "#gitlab-oauth-team-sync-support" >}})
-- [**Enterprise**: Teams & LDAP Improvements]({{< relref "#ldap-teams" >}})
+- [**Enterprise**: Teams and LDAP Improvements]({{< relref "#ldap-teams" >}})
 
 
 ### Go back to dashboard from Explore
@@ -63,16 +62,27 @@ We also introduced some performance optimizations to allow live tailing of highe
 
 ### New Logs Panel
 
-A new panel specifically to show logs is added in this release. It’s in early alpha state so you have to enable alpha panels (in config file) to be able to try it out.
+The logs panel shows log lines from datasources that support logs, e.g., Elastic, Influx, and Loki. Typically you would use this panel next to a graph panel to display the log output of a related process.
+
+<img src="/img/docs/v64/logs-panel.png" />
+
+Limitations: Even though Live tailing can be enabled on logs panels in dashboards, we recommend using Live tailing in Explore. On dashboards, the refresher at the top of the page should be used instead to keep the data of all panels in sync. Note that the logs panel is still beta and we're looking to get feedback.
 
 ## Data Links improvements
 
 With Grafana 6.3 we introduced a new way of creating [Data Links](https://grafana.com/blog/2019/08/27/new-in-grafana-6.3-easy-to-use-data-links/).
 Grafana 6.4 improves Data Links and adds them to the Gauge and Bar Gauge and panels.
 
-With Data Links you can define dynamic links to other dashboards and systems. The link can now reference template variables and query results like series name & labels, field name, value and time.
+With Data Links you can define dynamic links to other dashboards and systems. The link can now reference template variables and query results like series name and labels, field name, value and time.
 
 Read more about Data Links and what you can do with them in [documentation](https://grafana.com/docs/features/panels/graph/#data-link)
+
+## Series override to turn constant into a line
+
+Some graph query results are made up only of one datapoint per series but can be shown in the graph panel with the help of [series overrides](/features/panels/graph/#series-overrides).
+To show a horizontal line through the Y-value of the datapoint across the whole graph, add a series override and select `Transform > constant`.
+
+<img src="/img/docs/v64/constant-series-override.png" />
 
 ## Share query results between panels
 
@@ -93,12 +103,6 @@ streaming in the future!
 
 You can read more about the grafana-toolkit [in the Readme](https://github.com/grafana/grafana/blob/master/packages/grafana-toolkit/README.md) and play with it by trying out our [react panel](https://github.com/grafana/simple-react-panel) or [angular panel](https://github.com/grafana/simple-angular-panel) templates.
 
-## Query over multiple resources in Azure Monitor
-
-Up until now it has only been possible to query over one resource in one subscription in the Azure Monitor datasource. In Grafana 6.4, the Azure Monitor query editor contains a new option called Query Mode which allows for querying over multiple resources in multiple subscriptions. This can be very useful in many situations, e.g cpu credits consumed by all virtual machines over many subscriptions.
-
-Alerting is yet to be implemented for Multiple Resources queries.
-
 ## PhantomJS deprecation
 
 [PhantomJS](https://phantomjs.org/), which is used for rendering images of dashboards and panels, have been deprecated and will be removed in a future Grafana release. A deprecation warning will from now on be logged when Grafana starts up if PhantomJS is in use.
@@ -117,7 +121,7 @@ You'll be able to see how a user authenticating with LDAP would be mapped and wh
 
 The feature is currently limited to Grafana Server Admins.
 
-For more information on how to use this new feature, follow the [guide](TBD).
+For more information on how to use this new feature, follow the [guide]({{< relref "../auth/ldap.md#ldap-debug-view" >}}).
 
 ## Grafana Enterprise
 
@@ -137,11 +141,9 @@ GitLab OAuth gets support for Team Sync, making it possible to synchronize your 
 
 ## Upgrading
 
-See [upgrade notes](/docs/installation/upgrading/#upgrading-to-v6-4).
+See [upgrade notes](/installation/upgrading/#upgrading-to-v6-4).
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
-
-
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
 

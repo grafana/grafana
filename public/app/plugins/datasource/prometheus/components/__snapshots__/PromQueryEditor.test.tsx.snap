@@ -9,7 +9,6 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         "getPrometheusTime": [MockFunction],
       }
     }
-    datasourceStatus={0}
     history={Array []}
     onChange={[Function]}
     onRunQuery={[Function]}
@@ -39,15 +38,23 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         onChange={[Function]}
         placeholder="legend format"
         type="text"
+        value=""
       />
     </div>
     <div
       className="gf-form"
     >
       <Component
-        tooltip="Leave blank for auto handling based on time range and panel width.
-            Note that the actual dates used in the query will be adjusted
-        to a multiple of the interval step."
+        tooltip={
+          <React.Fragment>
+            An additional lower limit for the step parameter of the Prometheus query and for the
+             
+            <code>
+              $__interval
+            </code>
+             variable. The limit is absolute and not modified by the "Resolution" setting.
+          </React.Fragment>
+        }
         width={7}
       >
         Min step
@@ -56,7 +63,9 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         className="gf-form-input width-8"
         onBlur={[Function]}
         onChange={[Function]}
+        placeholder=""
         type="text"
+        value=""
       />
     </div>
     <div
@@ -68,6 +77,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         Resolution
       </div>
       <Select
+        allowCustomValue={false}
         autoFocus={false}
         backspaceRemovesValue={true}
         className=""
@@ -134,6 +144,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         Format
       </div>
       <Select
+        allowCustomValue={false}
         autoFocus={false}
         backspaceRemovesValue={true}
         className=""
@@ -197,6 +208,8 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           query={
             Object {
               "expr": "",
+              "interval": "",
+              "legendFormat": "",
               "refId": "A",
             }
           }

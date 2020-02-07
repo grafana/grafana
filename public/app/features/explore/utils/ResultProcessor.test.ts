@@ -14,9 +14,9 @@ jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
 }));
 
 import { ResultProcessor } from './ResultProcessor';
-import { ExploreItemState, ExploreMode } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, LogRowModel, toDataFrame, FieldType } from '@grafana/data';
+import { TimeSeries, LogRowModel, toDataFrame, FieldType, ExploreMode } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
@@ -58,7 +58,7 @@ const testContext = (options: any = {}) => {
     queryIntervals: { intervalMs: 10 },
   } as any) as ExploreItemState;
 
-  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames, 60000);
+  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames, 60000, 'utc');
 
   return {
     dataFrames: combinedOptions.dataFrames,
@@ -99,19 +99,29 @@ describe('ResultProcessor', () => {
   describe('constructed with a result that is a DataQueryResponse', () => {
     describe('when calling getGraphResult', () => {
       it('then it should return correct graph result', () => {
-        const { resultProcessor } = testContext();
+        const { resultProcessor, dataFrames } = testContext();
+        const timeField = dataFrames[0].fields[1];
+        const valueField = dataFrames[0].fields[0];
         const theResult = resultProcessor.getGraphResult();
 
         expect(theResult).toEqual([
           {
             label: 'A-series',
             color: '#7EB26D',
-            data: [[100, 4], [200, 5], [300, 6]],
+            data: [
+              [100, 4],
+              [200, 5],
+              [300, 6],
+            ],
             info: undefined,
             isVisible: true,
             yAxis: {
               index: 1,
             },
+            seriesIndex: 0,
+            timeField,
+            valueField,
+            timeStep: 100,
           },
         ]);
       });
@@ -120,24 +130,43 @@ describe('ResultProcessor', () => {
     describe('when calling getTableResult', () => {
       it('then it should return correct table result', () => {
         const { resultProcessor } = testContext();
-        const theResult = resultProcessor.getTableResult();
+        let theResult = resultProcessor.getTableResult();
+        expect(theResult.fields[0].name).toEqual('value');
+        expect(theResult.fields[1].name).toEqual('time');
+        expect(theResult.fields[2].name).toEqual('message');
+        expect(theResult.fields[1].display).not.toBeNull();
+        expect(theResult.length).toBe(3);
 
-        expect(theResult).toEqual({
-          columnMap: {},
-          columns: [
-            { text: 'value', type: 'number', filterable: undefined },
-            { text: 'time', type: 'time', filterable: undefined },
-            { text: 'message', type: 'string', filterable: undefined },
-          ],
-          rows: [[4, 100, 'this is a message'], [5, 200, 'second message'], [6, 300, 'third']],
-          type: 'table',
-        });
+        // Same data though a DataFrame
+        theResult = toDataFrame(
+          new TableModel({
+            columns: [
+              { text: 'value', type: 'number' },
+              { text: 'time', type: 'time' },
+              { text: 'message', type: 'string' },
+            ],
+            rows: [
+              [4, 100, 'this is a message'],
+              [5, 200, 'second message'],
+              [6, 300, 'third'],
+            ],
+            type: 'table',
+          })
+        );
+        expect(theResult.fields[0].name).toEqual('value');
+        expect(theResult.fields[1].name).toEqual('time');
+        expect(theResult.fields[2].name).toEqual('message');
+        expect(theResult.fields[1].display).not.toBeNull();
+        expect(theResult.length).toBe(3);
       });
     });
 
     describe('when calling getLogsResult', () => {
       it('then it should return correct logs result', () => {
-        const { resultProcessor } = testContext({ mode: ExploreMode.Logs });
+        const { resultProcessor, dataFrames } = testContext({ mode: ExploreMode.Logs });
+        const timeField = dataFrames[0].fields[1];
+        const valueField = dataFrames[0].fields[0];
+        const logsDataFrame = dataFrames[1];
         const theResult = resultProcessor.getLogsResult();
 
         expect(theResult).toEqual({
@@ -145,7 +174,10 @@ describe('ResultProcessor', () => {
           meta: [],
           rows: [
             {
+              rowIndex: 2,
+              dataFrame: logsDataFrame,
               entry: 'third',
+              entryFieldIndex: 2,
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
@@ -155,11 +187,14 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 300,
+              uid: '2',
               uniqueLabels: {},
             },
             {
+              rowIndex: 1,
+              dataFrame: logsDataFrame,
               entry: 'second message',
+              entryFieldIndex: 2,
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
@@ -169,11 +204,14 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 200,
+              uid: '1',
               uniqueLabels: {},
             },
             {
+              rowIndex: 0,
+              dataFrame: logsDataFrame,
               entry: 'this is a message',
+              entryFieldIndex: 2,
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
@@ -183,7 +221,7 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 100,
+              uid: '0',
               uniqueLabels: {},
             },
           ],
@@ -191,12 +229,20 @@ describe('ResultProcessor', () => {
             {
               label: 'A-series',
               color: '#7EB26D',
-              data: [[100, 4], [200, 5], [300, 6]],
+              data: [
+                [100, 4],
+                [200, 5],
+                [300, 6],
+              ],
               info: undefined,
               isVisible: true,
               yAxis: {
                 index: 1,
               },
+              seriesIndex: 0,
+              timeField,
+              valueField,
+              timeStep: 100,
             },
           ],
         });

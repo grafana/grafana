@@ -1,17 +1,17 @@
 import { Reducer } from 'redux';
-
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { PayloadAction } from '@reduxjs/toolkit';
 
 export interface Given<State> {
-  givenReducer: (reducer: Reducer<State, ActionOf<any>>, state: State) => When<State>;
+  givenReducer: (reducer: Reducer<State, PayloadAction<any>>, state: State, disableDeepFreeze?: boolean) => When<State>;
 }
 
 export interface When<State> {
-  whenActionIsDispatched: (action: ActionOf<any>) => Then<State>;
+  whenActionIsDispatched: (action: PayloadAction<any>) => Then<State>;
 }
 
 export interface Then<State> {
   thenStateShouldEqual: (state: State) => When<State>;
+  thenStatePredicateShouldEqual: (predicate: (resultingState: State) => boolean) => When<State>;
 }
 
 interface ObjectType extends Object {
@@ -49,19 +49,25 @@ export const deepFreeze = <T>(obj: T): T => {
 interface ReducerTester<State> extends Given<State>, When<State>, Then<State> {}
 
 export const reducerTester = <State>(): Given<State> => {
-  let reducerUnderTest: Reducer<State, ActionOf<any>>;
+  let reducerUnderTest: Reducer<State, PayloadAction<any>>;
   let resultingState: State;
   let initialState: State;
 
-  const givenReducer = (reducer: Reducer<State, ActionOf<any>>, state: State): When<State> => {
+  const givenReducer = (
+    reducer: Reducer<State, PayloadAction<any>>,
+    state: State,
+    disableDeepFreeze = false
+  ): When<State> => {
     reducerUnderTest = reducer;
     initialState = { ...state };
-    initialState = deepFreeze(initialState);
+    if (!disableDeepFreeze) {
+      initialState = deepFreeze(initialState);
+    }
 
     return instance;
   };
 
-  const whenActionIsDispatched = (action: ActionOf<any>): Then<State> => {
+  const whenActionIsDispatched = (action: PayloadAction<any>): Then<State> => {
     resultingState = reducerUnderTest(resultingState || initialState, action);
 
     return instance;
@@ -73,7 +79,18 @@ export const reducerTester = <State>(): Given<State> => {
     return instance;
   };
 
-  const instance: ReducerTester<State> = { thenStateShouldEqual, givenReducer, whenActionIsDispatched };
+  const thenStatePredicateShouldEqual = (predicate: (resultingState: State) => boolean): When<State> => {
+    expect(predicate(resultingState)).toBe(true);
+
+    return instance;
+  };
+
+  const instance: ReducerTester<State> = {
+    thenStateShouldEqual,
+    thenStatePredicateShouldEqual,
+    givenReducer,
+    whenActionIsDispatched,
+  };
 
   return instance;
 };

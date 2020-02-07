@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
@@ -8,6 +8,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   maxConcurrentShardRequests?: number;
   logMessageField?: string;
   logLevelField?: string;
+  dataLinks?: DataLinkConfig[];
 }
 
 export interface ElasticsearchAggregation {
@@ -24,3 +25,8 @@ export interface ElasticsearchQuery extends DataQuery {
   bucketAggs?: ElasticsearchAggregation[];
   metrics?: ElasticsearchAggregation[];
 }
+
+export type DataLinkConfig = {
+  field: string;
+  url: string;
+};

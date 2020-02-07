@@ -14,9 +14,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"golang.org/x/xerrors"
 )
 
 var (
@@ -27,6 +31,7 @@ var (
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
+	Transform    *TransformPlugin
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -34,12 +39,14 @@ var (
 )
 
 type PluginScanner struct {
-	pluginPath string
-	errors     []error
+	pluginPath           string
+	errors               []error
+	backendPluginManager backendplugin.Manager
 }
 
 type PluginManager struct {
-	log log.Logger
+	BackendPluginManager backendplugin.Manager `inject:""`
+	log                  log.Logger
 }
 
 func init() {
@@ -60,10 +67,14 @@ func (pm *PluginManager) Init() error {
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
 		"renderer":   RendererPlugin{},
+		"transform":  TransformPlugin{},
 	}
 
 	pm.log.Info("Starting plugin search")
-	scan(path.Join(setting.StaticRootPath, "app/plugins"))
+	plugDir := path.Join(setting.StaticRootPath, "app/plugins")
+	if err := pm.scan(plugDir); err != nil {
+		return errutil.Wrapf(err, "Failed to scan main plugin directory '%s'", plugDir)
+	}
 
 	// check if plugins dir exists
 	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
@@ -71,14 +82,22 @@ func (pm *PluginManager) Init() error {
 			plog.Error("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
 		} else {
 			plog.Info("Plugin dir created", "dir", setting.PluginsPath)
-			scan(setting.PluginsPath)
+			if err := pm.scan(setting.PluginsPath); err != nil {
+				return errutil.Wrapf(err, "Failed to scan configured plugin directory '%s'",
+					setting.PluginsPath)
+			}
 		}
 	} else {
-		scan(setting.PluginsPath)
+		if err := pm.scan(setting.PluginsPath); err != nil {
+			return errutil.Wrapf(err, "Failed to scan configured plugin directory '%s'",
+				setting.PluginsPath)
+		}
 	}
 
 	// check plugin paths defined in config
-	checkPluginPaths()
+	if err := pm.checkPluginPaths(); err != nil {
+		return err
+	}
 
 	for _, panel := range Panels {
 		panel.initFrontendPlugin()
@@ -92,15 +111,9 @@ func (pm *PluginManager) Init() error {
 		app.initApp()
 	}
 
-	return nil
-}
-
-func (pm *PluginManager) startBackendPlugins(ctx context.Context) error {
-	for _, ds := range DataSources {
-		if ds.Backend {
-			if err := ds.startBackendPlugin(ctx, plog); err != nil {
-				pm.log.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
-			}
+	for _, p := range Plugins {
+		if !p.IsCorePlugin {
+			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}
 
@@ -108,7 +121,6 @@ func (pm *PluginManager) startBackendPlugins(ctx context.Context) error {
 }
 
 func (pm *PluginManager) Run(ctx context.Context) error {
-	pm.startBackendPlugins(ctx)
 	pm.updateAppDashboards()
 	pm.checkForUpdates()
 
@@ -124,40 +136,53 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 		}
 	}
 
-	// kill backend plugins
-	for _, p := range DataSources {
-		p.Kill()
-	}
-
 	return ctx.Err()
 }
 
-func checkPluginPaths() error {
+func (pm *PluginManager) checkPluginPaths() error {
 	for _, section := range setting.Raw.Sections() {
-		if strings.HasPrefix(section.Name(), "plugin.") {
-			path := section.Key("path").String()
-			if path != "" {
-				scan(path)
-			}
+		if !strings.HasPrefix(section.Name(), "plugin.") {
+			continue
+		}
+
+		path := section.Key("path").String()
+		if path == "" {
+			continue
+		}
+
+		if err := pm.scan(path); err != nil {
+			return errutil.Wrapf(err, "Failed to scan directory configured for plugin '%s': '%s'",
+				section.Name(), path)
 		}
 	}
+
 	return nil
 }
 
-func scan(pluginDir string) error {
+// scan a directory for plugins.
+func (pm *PluginManager) scan(pluginDir string) error {
 	scanner := &PluginScanner{
-		pluginPath: pluginDir,
+		pluginPath:           pluginDir,
+		backendPluginManager: pm.BackendPluginManager,
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
+		if xerrors.Is(err, os.ErrNotExist) {
+			pm.log.Debug("Couldn't scan dir '%s' since it doesn't exist")
+			return nil
+		}
+		if xerrors.Is(err, os.ErrPermission) {
+			pm.log.Debug("Couldn't scan dir '%s' due to lack of permissions")
+			return nil
+		}
 		if pluginDir != "data/plugins" {
-			log.Warn("Could not scan dir \"%v\" error: %s", pluginDir, err)
+			pm.log.Warn("Could not scan dir", "pluginDir", pluginDir, "err", err)
 		}
 		return err
 	}
 
 	if len(scanner.errors) > 0 {
-		return errors.New("Some plugins failed to load")
+		pm.log.Warn("Some plugins failed to load", "errors", scanner.errors)
 	}
 
 	return nil
@@ -167,7 +192,6 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
 	// is embedded in worldping app.
-
 	if err != nil {
 		return err
 	}
@@ -227,12 +251,14 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		}
 	}
 
-	reader.Seek(0, 0)
-	return loader.Load(jsonParser, currentDir)
+	if _, err := reader.Seek(0, 0); err != nil {
+		return err
+	}
+	return loader.Load(jsonParser, currentDir, scanner.backendPluginManager)
 }
 
 func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
-	return pluginType == "renderer"
+	return pluginType == "renderer" || pluginType == "transform"
 }
 
 func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {

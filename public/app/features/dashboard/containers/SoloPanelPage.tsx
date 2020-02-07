@@ -107,9 +107,4 @@ const mapDispatchToProps = {
   initDashboard,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(SoloPanelPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SoloPanelPage));

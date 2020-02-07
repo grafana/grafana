@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { getPluginId } from '../utils/getPluginId';
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-const supportedExtensions = ['css', 'scss'];
+const supportedExtensions = ['css', 'scss', 'less'];
 
 const getStylesheetPaths = (root: string = process.cwd()) => {
   return [`${root}/src/styles/light`, `${root}/src/styles/dark`];
@@ -113,6 +114,22 @@ export const getStyleLoaders = () => {
       use: ['style-loader', ...cssLoaders, 'sass-loader'],
       exclude: [`${styleDir}light.scss`, `${styleDir}dark.scss`],
     },
+    {
+      test: /\.less$/,
+      use: [
+        {
+          loader: 'style-loader',
+        },
+        ...cssLoaders,
+        {
+          loader: 'less-loader',
+          options: {
+            javascriptEnabled: true,
+          },
+        },
+      ],
+      exclude: [`${styleDir}light.less`, `${styleDir}dark.less`],
+    },
   ];
 
   return rules;
@@ -138,6 +155,15 @@ export const getFileLoaders = () => {
               loader: 'url-loader',
             },
       ],
+    },
+    {
+      test: /\.(woff|woff2|eot|ttf|otf)(\?v=\d+\.\d+\.\d+)?$/,
+      loader: 'file-loader',
+      options: {
+        publicPath: `/public/plugins/${getPluginId()}/fonts`,
+        outputPath: 'fonts',
+        name: '[name].[ext]',
+      },
     },
   ];
 };

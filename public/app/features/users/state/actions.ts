@@ -1,47 +1,7 @@
-import { ThunkAction } from 'redux-thunk';
-import { StoreState } from '../../../types';
+import { ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
-import { Invitee, OrgUser } from 'app/types';
-
-export enum ActionTypes {
-  LoadUsers = 'LOAD_USERS',
-  LoadInvitees = 'LOAD_INVITEES',
-  SetUsersSearchQuery = 'SET_USERS_SEARCH_QUERY',
-}
-
-export interface LoadUsersAction {
-  type: ActionTypes.LoadUsers;
-  payload: OrgUser[];
-}
-
-export interface LoadInviteesAction {
-  type: ActionTypes.LoadInvitees;
-  payload: Invitee[];
-}
-
-export interface SetUsersSearchQueryAction {
-  type: ActionTypes.SetUsersSearchQuery;
-  payload: string;
-}
-
-const usersLoaded = (users: OrgUser[]): LoadUsersAction => ({
-  type: ActionTypes.LoadUsers,
-  payload: users,
-});
-
-const inviteesLoaded = (invitees: Invitee[]): LoadInviteesAction => ({
-  type: ActionTypes.LoadInvitees,
-  payload: invitees,
-});
-
-export const setUsersSearchQuery = (query: string): SetUsersSearchQueryAction => ({
-  type: ActionTypes.SetUsersSearchQuery,
-  payload: query,
-});
-
-export type Action = LoadUsersAction | SetUsersSearchQueryAction | LoadInviteesAction;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
+import { OrgUser } from 'app/types';
+import { inviteesLoaded, usersLoaded } from './reducers';
 
 export function loadUsers(): ThunkResult<void> {
   return async dispatch => {

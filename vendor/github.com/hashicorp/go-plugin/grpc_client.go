@@ -3,6 +3,7 @@ package plugin
 import (
 	"crypto/tls"
 	"fmt"
+	"math"
 	"net"
 	"time"
 
@@ -31,6 +32,11 @@ func dialGRPCConn(tls *tls.Config, dialer func(string, time.Duration) (net.Conn,
 		opts = append(opts, grpc.WithTransportCredentials(
 			credentials.NewTLS(tls)))
 	}
+
+	opts = append(opts,
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(math.MaxInt32)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(math.MaxInt32)))
+
 
 	// Connect. Note the first parameter is unused because we use a custom
 	// dialer that has the state to see the address.

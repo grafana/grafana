@@ -5,6 +5,7 @@ providers:
    folder: 'gdev dashboards'
    folderUid: ''
    type: file
+   allowUiUpdates: false
    updateIntervalSeconds: 60
    options:
      path: devenv/dev-dashboards

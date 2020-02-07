@@ -46,7 +46,7 @@ export class ResultTransformer {
 
     metricLabel = this.createMetricLabel(metricData.metric, options);
 
-    const stepMs = parseInt(options.step, 10) * 1000;
+    const stepMs = parseFloat(options.step) * 1000;
     let baseTimestamp = start * 1000;
 
     if (metricData.values === undefined) {
@@ -75,6 +75,7 @@ export class ResultTransformer {
     return {
       datapoints: dps,
       query: options.query,
+      refId: options.refId,
       target: metricLabel,
       tags: metricData.metric,
     };
@@ -82,6 +83,8 @@ export class ResultTransformer {
 
   transformMetricDataToTable(md: any, resultCount: number, refId: string, valueWithRefId?: boolean): TableModel {
     const table = new TableModel();
+    table.refId = refId;
+
     let i: number, j: number;
     const metricLabels: { [key: string]: number } = {};
 
@@ -141,7 +144,7 @@ export class ResultTransformer {
     let metricLabel = null;
     metricLabel = this.createMetricLabel(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: metricLabel, datapoints: dps, labels: md.metric };
+    return { target: metricLabel, datapoints: dps, tags: md.metric, refId: options.refId };
   }
 
   createMetricLabel(labelData: { [key: string]: string }, options: any) {

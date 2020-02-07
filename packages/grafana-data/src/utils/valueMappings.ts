@@ -11,7 +11,7 @@ const addValueToTextMappingText = (
     return allValueMappings;
   }
 
-  if (value === null && valueToTextMapping.value && valueToTextMapping.value.toLowerCase() === 'null') {
+  if (value === null && isNullValueMap(valueToTextMapping)) {
     return allValueMappings.concat(valueToTextMapping);
   }
 
@@ -64,18 +64,15 @@ const addRangeToTextMappingText = (
 };
 
 const getAllFormattedValueMappings = (valueMappings: ValueMapping[], value: TimeSeriesValue) => {
-  const allFormattedValueMappings = valueMappings.reduce(
-    (allValueMappings, valueMapping) => {
-      if (valueMapping.type === MappingType.ValueToText) {
-        allValueMappings = addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
-      } else if (valueMapping.type === MappingType.RangeToText) {
-        allValueMappings = addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
-      }
+  const allFormattedValueMappings = valueMappings.reduce((allValueMappings, valueMapping) => {
+    if (valueMapping.type === MappingType.ValueToText) {
+      allValueMappings = addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
+    } else if (valueMapping.type === MappingType.RangeToText) {
+      allValueMappings = addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
+    }
 
-      return allValueMappings;
-    },
-    [] as ValueMapping[]
-  );
+    return allValueMappings;
+  }, [] as ValueMapping[]);
 
   allFormattedValueMappings.sort((t1, t2) => {
     return t1.id - t2.id;
@@ -86,4 +83,11 @@ const getAllFormattedValueMappings = (valueMappings: ValueMapping[], value: Time
 
 export const getMappedValue = (valueMappings: ValueMapping[], value: TimeSeriesValue): ValueMapping => {
   return getAllFormattedValueMappings(valueMappings, value)[0];
+};
+
+const isNullValueMap = (mapping: ValueMap): boolean => {
+  if (!mapping || !mapping.value) {
+    return false;
+  }
+  return mapping.value.toLowerCase() === 'null';
 };

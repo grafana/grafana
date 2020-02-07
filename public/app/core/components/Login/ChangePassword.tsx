@@ -1,5 +1,8 @@
-import React, { PureComponent, SyntheticEvent, ChangeEvent } from 'react';
+import React, { ChangeEvent, PureComponent, SyntheticEvent } from 'react';
 import { Tooltip } from '@grafana/ui';
+import { AppEvents } from '@grafana/data';
+import { e2e } from '@grafana/e2e';
+
 import appEvents from 'app/core/app_events';
 
 interface Props {
@@ -42,7 +45,7 @@ export class ChangePassword extends PureComponent<Props, State> {
     if (valid) {
       this.props.onSubmit(newPassword);
     } else {
-      appEvents.emit('alert-warning', ['New passwords do not match', '']);
+      appEvents.emit(AppEvents.alertWarning, ['New passwords do not match']);
     }
   };
 
@@ -114,7 +117,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               placement="bottom"
               content="If you skip you will be prompted to change password next time you login."
             >
-              <a className="btn btn-link" onClick={this.onSkip}>
+              <a className="btn btn-link" onClick={this.onSkip} aria-label={e2e.pages.Login.selectors.skip}>
                 Skip
               </a>
             </Tooltip>

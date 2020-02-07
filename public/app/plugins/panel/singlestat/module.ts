@@ -1,32 +1,34 @@
 import _ from 'lodash';
+import { auto } from 'angular';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
+
 import {
+  DataFrame,
+  DisplayValue,
+  Field,
+  fieldReducers,
+  FieldType,
+  GraphSeriesValue,
+  KeyValue,
+  LinkModel,
+  reduceField,
+  ReducerID,
   LegacyResponseData,
   getFlotPairs,
   getDisplayProcessor,
-  convertOldAngulrValueMapping,
   getColorFromHexRgbOrName,
-} from '@grafana/ui';
+  PanelEvents,
+  formattedValueToString,
+} from '@grafana/data';
 
-import kbn from 'app/core/utils/kbn';
+import { convertOldAngularValueMapping } from '@grafana/ui';
+
+import { CoreEvents } from 'app/types';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import {
-  DataFrame,
-  FieldType,
-  reduceField,
-  ReducerID,
-  Field,
-  GraphSeriesValue,
-  DisplayValue,
-  fieldReducers,
-  KeyValue,
-  LinkModel,
-} from '@grafana/data';
-import { auto } from 'angular';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 
@@ -50,7 +52,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   data: Partial<ShowData> = {};
 
   fontSizes: any[];
-  unitFormats: any[];
   fieldNames: string[] = [];
 
   invalidGaugeRange: boolean;
@@ -83,7 +84,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     postfix: '',
     nullText: null,
     valueMaps: [{ value: 'null', op: '=', text: 'N/A' }],
-    mappingTypes: [{ name: 'value to text', value: 1 }, { name: 'range to text', value: 2 }],
+    mappingTypes: [
+      { name: 'value to text', value: 1 },
+      { name: 'range to text', value: 2 },
+    ],
     rangeMaps: [{ from: 'null', to: 'null', text: 'N/A' }],
     mappingType: 1,
     nullPointMode: 'connected',
@@ -118,10 +122,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('data-frames-received', this.onFramesReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onSnapshotLoad.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
     this.useDataFrames = true;
 
@@ -133,7 +136,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.fontSizes = ['20%', '30%', '50%', '70%', '80%', '100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
-    this.unitFormats = kbn.getUnitFormats();
   }
 
   migrateToGaugePanel(migrate: boolean) {
@@ -145,13 +147,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
   }
 
-  setUnitFormat(subItem: { value: any }) {
-    this.panel.format = subItem.value;
-    this.refresh();
-  }
-
-  onDataError(err: any) {
-    this.handleDataFrames([]);
+  setUnitFormat() {
+    return (unit: string) => {
+      this.panel.format = unit;
+      this.refresh();
+    };
   }
 
   onSnapshotLoad(dataList: LegacyResponseData[]) {
@@ -182,13 +182,19 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (!fieldInfo) {
+      const processor = getDisplayProcessor({
+        field: {
+          config: {
+            mappings: convertOldAngularValueMapping(this.panel),
+            noValue: 'No Data',
+          },
+        },
+        theme: config.theme,
+      });
       // When we don't have any field
       this.data = {
-        value: 'No Data',
-        display: {
-          text: 'No Data',
-          numeric: NaN,
-        },
+        value: null,
+        display: processor(null),
       };
     } else {
       this.data = this.processField(fieldInfo);
@@ -238,14 +244,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     const processor = getDisplayProcessor({
-      config: {
-        ...fieldInfo.field.config,
-        unit: panel.format,
-        decimals: panel.decimals,
-        mappings: convertOldAngulrValueMapping(panel),
+      field: {
+        ...fieldInfo.field,
+        config: {
+          ...fieldInfo.field.config,
+          unit: panel.format,
+          decimals: panel.decimals,
+          mappings: convertOldAngularValueMapping(panel),
+        },
       },
       theme: config.theme,
-      isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
+      timeZone: dashboard.getTimezone(),
     });
 
     const sparkline: any[] = [];
@@ -257,7 +266,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       sparkline,
     };
 
-    data.scopedVars['__name'] = name;
+    data.scopedVars['__name'] = { value: name };
     panel.tableColumn = this.fieldNames.length > 1 ? name : '';
 
     // Get the fields for a sparkline
@@ -367,7 +376,12 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, panel.colorPrefix, panel.prefix);
       }
 
-      body += getSpan('singlestat-panel-value', panel.valueFontSize, panel.colorValue, data.display.text);
+      body += getSpan(
+        'singlestat-panel-value',
+        panel.valueFontSize,
+        panel.colorValue,
+        formattedValueToString(data.display)
+      );
 
       if (panel.postfix) {
         body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.colorPostfix, panel.postfix);
@@ -381,7 +395,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function getValueText() {
       const data: ShowData = ctrl.data;
       let result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedVars) : '';
-      result += data.display.text;
+      result += formattedValueToString(data.display);
       result += panel.postfix ? templateSrv.replace(panel.postfix, data.scopedVars) : '';
 
       return result;
@@ -658,7 +672,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     hookupDrilldownLinkTooltip();
 
-    this.events.on('render', () => {
+    this.events.on(PanelEvents.render, () => {
       render();
       ctrl.renderingCompleted();
     });

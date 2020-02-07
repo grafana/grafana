@@ -3,12 +3,24 @@ import { Editor as SlateEditor } from 'slate';
 
 import LanguageProvider, { LABEL_REFRESH_INTERVAL, LokiHistoryItem, rangeToParams } from './language_provider';
 import { AbsoluteTimeRange } from '@grafana/data';
+import { TypeaheadInput } from '@grafana/ui';
 import { advanceTo, clear, advanceBy } from 'jest-date-mock';
 import { beforeEach } from 'test/lib/common';
 
-import { TypeaheadInput } from '../../../types';
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
+
+jest.mock('app/store/store', () => ({
+  store: {
+    getState: jest.fn().mockReturnValue({
+      explore: {
+        left: {
+          mode: 'Logs',
+        },
+      },
+    }),
+  },
+}));
 
 describe('Language completion provider', () => {
   const datasource = makeMockLokiDatasource({});
@@ -18,7 +30,7 @@ describe('Language completion provider', () => {
     to: 1560163909000,
   };
 
-  describe('empty query suggestions', () => {
+  describe('query suggestions', () => {
     it('returns no suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
@@ -28,7 +40,7 @@ describe('Language completion provider', () => {
       expect(result.suggestions.length).toEqual(0);
     });
 
-    it('returns default suggestions with history on empty context when history was provided', async () => {
+    it('returns history on empty context when history was provided', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const history: LokiHistoryItem[] = [
@@ -55,9 +67,10 @@ describe('Language completion provider', () => {
       ]);
     });
 
-    it('returns no suggestions within regexp', async () => {
+    it('returns function and history suggestions', async () => {
       const instance = new LanguageProvider(datasource);
-      const input = createTypeaheadInput('{} ()', '', undefined, 4, []);
+      const input = createTypeaheadInput('m', 'm', undefined, 1, [], instance);
+      // Historic expressions don't have to match input, filtering is done in field
       const history: LokiHistoryItem[] = [
         {
           query: { refId: '1', expr: '{app="foo"}' },
@@ -66,8 +79,9 @@ describe('Language completion provider', () => {
       ];
       const result = await instance.provideCompletionItems(input, { history });
       expect(result.context).toBeUndefined();
-
-      expect(result.suggestions.length).toEqual(0);
+      expect(result.suggestions.length).toEqual(2);
+      expect(result.suggestions[0].label).toEqual('History');
+      expect(result.suggestions[1].label).toEqual('Functions');
     });
   });
 
@@ -230,14 +244,15 @@ function createTypeaheadInput(
   text: string,
   labelKey?: string,
   anchorOffset?: number,
-  wrapperClasses?: string[]
+  wrapperClasses?: string[],
+  instance?: LanguageProvider
 ): TypeaheadInput {
   const deserialized = Plain.deserialize(value);
   const range = deserialized.selection.setAnchor(deserialized.selection.anchor.setOffset(anchorOffset || 1));
   const valueWithSelection = deserialized.setSelection(range);
   return {
     text,
-    prefix: '',
+    prefix: instance ? instance.cleanText(text) : '',
     wrapperClasses: wrapperClasses || ['context-labels'],
     value: valueWithSelection,
     labelKey,

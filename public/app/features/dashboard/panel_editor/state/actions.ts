@@ -1,18 +1,6 @@
-import { actionCreatorFactory } from '../../../../core/redux';
-import { PanelEditorTabIds, PanelEditorTab, getPanelEditorTab } from './reducers';
+import { getPanelEditorTab, panelEditorInitCompleted, PanelEditorTab, PanelEditorTabIds } from './reducers';
 import { ThunkResult } from '../../../../types';
 import { updateLocation } from '../../../../core/actions';
-
-export interface PanelEditorInitCompleted {
-  activeTab: PanelEditorTabIds;
-  tabs: PanelEditorTab[];
-}
-
-export const panelEditorInitCompleted = actionCreatorFactory<PanelEditorInitCompleted>(
-  'PANEL_EDITOR_INIT_COMPLETED'
-).create();
-
-export const panelEditorCleanUp = actionCreatorFactory('PANEL_EDITOR_CLEAN_UP').create();
 
 export const refreshPanelEditor = (props: {
   hasQueriesTab?: boolean;

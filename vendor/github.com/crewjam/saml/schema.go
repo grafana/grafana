@@ -39,6 +39,75 @@ type AuthnRequest struct {
 	ProviderName                   string `xml:",attr"`
 }
 
+type LogoutRequest struct {
+	XMLName xml.Name `xml:"urn:oasis:names:tc:SAML:2.0:protocol LogoutRequest"`
+
+	ID           string    `xml:",attr"`
+	Version      string    `xml:",attr"`
+	IssueInstant time.Time `xml:",attr"`
+	Destination  string    `xml:",attr"`
+	Issuer       *Issuer   `xml:"urn:oasis:names:tc:SAML:2.0:assertion Issuer"`
+	NameID       *NameID
+	Signature    *etree.Element
+
+	SessionIndex string `xml:",attr"`
+}
+
+// Element returns an etree.Element representing the object in XML form.
+func (r *LogoutRequest) Element() *etree.Element {
+	el := etree.NewElement("samlp:LogoutRequest")
+	el.CreateAttr("xmlns:saml", "urn:oasis:names:tc:SAML:2.0:assertion")
+	el.CreateAttr("xmlns:samlp", "urn:oasis:names:tc:SAML:2.0:protocol")
+	el.CreateAttr("ID", r.ID)
+	el.CreateAttr("Version", r.Version)
+	el.CreateAttr("IssueInstant", r.IssueInstant.Format(timeFormat))
+	if r.Destination != "" {
+		el.CreateAttr("Destination", r.Destination)
+	}
+	if r.Issuer != nil {
+		el.AddChild(r.Issuer.Element())
+	}
+	if r.NameID != nil {
+		el.AddChild(r.NameID.Element())
+	}
+	if r.Signature != nil {
+		el.AddChild(r.Signature)
+	}
+	if r.SessionIndex != "" {
+		el.CreateAttr("SessionIndex", r.SessionIndex)
+	}
+	return el
+}
+
+// MarshalXML implements xml.Marshaler
+func (r *LogoutRequest) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type Alias LogoutRequest
+	aux := &struct {
+		IssueInstant RelaxedTime `xml:",attr"`
+		*Alias
+	}{
+		IssueInstant: RelaxedTime(r.IssueInstant),
+		Alias:        (*Alias)(r),
+	}
+	return e.Encode(aux)
+}
+
+// UnmarshalXML implements xml.Unmarshaler
+func (r *LogoutRequest) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	type Alias LogoutRequest
+	aux := &struct {
+		IssueInstant RelaxedTime `xml:",attr"`
+		*Alias
+	}{
+		Alias: (*Alias)(r),
+	}
+	if err := d.DecodeElement(&aux, &start); err != nil {
+		return err
+	}
+	r.IssueInstant = time.Time(aux.IssueInstant)
+	return nil
+}
+
 // Element returns an etree.Element representing the object
 // Element returns an etree.Element representing the object in XML form.
 func (r *AuthnRequest) Element() *etree.Element {
@@ -218,7 +287,7 @@ func (r *Response) Element() *etree.Element {
 	// cannonicalizer. This could be avoided by providing a prefix list to the
 	// cannonicalizer, but prefix lists do not appear to be implemented correctly
 	// in some libraries, so the safest action is to always produce XML that is
-	// (a) in cannonical form and (b) does not require prefix lists.
+	// (a) in canonical form and (b) does not require prefix lists.
 	el.CreateAttr("xmlns:xs", "http://www.w3.org/2001/XMLSchema")
 
 	el.CreateAttr("ID", r.ID)
@@ -357,7 +426,7 @@ const (
 	StatusNoAvailableIDP = "urn:oasis:names:tc:SAML:2.0:status:NoAvailableIDP"
 
 	// StatusNoPassive means Indicates the responding provider cannot authenticate the principal passively, as has been requested.
-	StatusNoPassive = "urn:oasis:names:tc:SAML:2.0:status:NoPassive"
+	StatusNoPassive = "urn:oasis:names:tc:SAML:2.0:status:NoPassive" //nolint:gosec
 
 	// StatusNoSupportedIDP is used by an intermediary to indicate that none of the identity providers in an <IDPList> are supported by the intermediary.
 	StatusNoSupportedIDP = "urn:oasis:names:tc:SAML:2.0:status:NoSupportedIDP"
@@ -928,4 +997,77 @@ func (a *AttributeValue) Element() *etree.Element {
 	}
 	el.SetText(a.Value)
 	return el
+}
+
+// LogoutResponse represents the SAML object of the same name.
+//
+// See http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf
+type LogoutResponse struct {
+	XMLName      xml.Name  `xml:"urn:oasis:names:tc:SAML:2.0:protocol LogoutResponse"`
+	ID           string    `xml:",attr"`
+	InResponseTo string    `xml:",attr"`
+	Version      string    `xml:",attr"`
+	IssueInstant time.Time `xml:",attr"`
+	Destination  string    `xml:",attr"`
+	Consent      string    `xml:",attr"`
+	Issuer       *Issuer   `xml:"urn:oasis:names:tc:SAML:2.0:assertion Issuer"`
+	Signature    *etree.Element
+	Status       Status `xml:"urn:oasis:names:tc:SAML:2.0:protocol Status"`
+}
+
+// Element returns an etree.Element representing the object in XML form.
+func (r *LogoutResponse) Element() *etree.Element {
+	el := etree.NewElement("samlp:Response")
+	el.CreateAttr("xmlns:saml", "urn:oasis:names:tc:SAML:2.0:assertion")
+	el.CreateAttr("xmlns:samlp", "urn:oasis:names:tc:SAML:2.0:protocol")
+
+	el.CreateAttr("ID", r.ID)
+	if r.InResponseTo != "" {
+		el.CreateAttr("InResponseTo", r.InResponseTo)
+	}
+	el.CreateAttr("Version", r.Version)
+	el.CreateAttr("IssueInstant", r.IssueInstant.Format(timeFormat))
+	if r.Destination != "" {
+		el.CreateAttr("Destination", r.Destination)
+	}
+	if r.Consent != "" {
+		el.CreateAttr("Consent", r.Consent)
+	}
+	if r.Issuer != nil {
+		el.AddChild(r.Issuer.Element())
+	}
+	if r.Signature != nil {
+		el.AddChild(r.Signature)
+	}
+	el.AddChild(r.Status.Element())
+	return el
+}
+
+// MarshalXML implements xml.Marshaler
+func (r *LogoutResponse) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type Alias LogoutResponse
+	aux := &struct {
+		IssueInstant RelaxedTime `xml:",attr"`
+		*Alias
+	}{
+		IssueInstant: RelaxedTime(r.IssueInstant),
+		Alias:        (*Alias)(r),
+	}
+	return e.Encode(aux)
+}
+
+// UnmarshalXML implements xml.Unmarshaler
+func (r *LogoutResponse) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	type Alias LogoutResponse
+	aux := &struct {
+		IssueInstant RelaxedTime `xml:",attr"`
+		*Alias
+	}{
+		Alias: (*Alias)(r),
+	}
+	if err := d.DecodeElement(&aux, &start); err != nil {
+		return err
+	}
+	r.IssueInstant = time.Time(aux.IssueInstant)
+	return nil
 }

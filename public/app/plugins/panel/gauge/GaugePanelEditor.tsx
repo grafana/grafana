@@ -1,24 +1,30 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import {
-  PanelEditorProps,
   ThresholdsEditor,
   PanelOptionsGrid,
   ValueMappingsEditor,
-  FieldDisplayOptions,
   FieldDisplayEditor,
   FieldPropertiesEditor,
   Switch,
   PanelOptionsGroup,
   DataLinksEditor,
 } from '@grafana/ui';
-import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
+import {
+  PanelEditorProps,
+  FieldDisplayOptions,
+  ThresholdsConfig,
+  ValueMapping,
+  FieldConfig,
+  DataLink,
+} from '@grafana/data';
 
 import { GaugeOptions } from './types';
 import {
   getCalculationValueDataLinksVariableSuggestions,
   getDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
+import { config } from 'app/core/config';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -32,7 +38,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       showThresholdMarkers: !this.props.options.showThresholdMarkers,
     });
 
-  onThresholdsChanged = (thresholds: Threshold[]) => {
+  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,
@@ -48,24 +54,39 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     });
   };
 
-  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      fieldOptions,
-    });
+  onDisplayOptionsChanged = (
+    fieldOptions: FieldDisplayOptions,
+    event?: React.SyntheticEvent<HTMLElement>,
+    callback?: () => void
+  ) =>
+    this.props.onOptionsChange(
+      {
+        ...this.props.options,
+        fieldOptions,
+      },
+      callback
+    );
 
-  onDefaultsChange = (field: FieldConfig) => {
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
-      defaults: field,
-    });
+  onDefaultsChange = (field: FieldConfig, event?: React.SyntheticEvent<HTMLElement>, callback?: () => void) => {
+    this.onDisplayOptionsChanged(
+      {
+        ...this.props.options.fieldOptions,
+        defaults: field,
+      },
+      event,
+      callback
+    );
   };
 
-  onDataLinksChanged = (links: DataLink[]) => {
-    this.onDefaultsChange({
-      ...this.props.options.fieldOptions.defaults,
-      links,
-    });
+  onDataLinksChanged = (links: DataLink[], callback?: () => void) => {
+    this.onDefaultsChange(
+      {
+        ...this.props.options.fieldOptions.defaults,
+        links,
+      },
+      undefined,
+      callback
+    );
   };
 
   render() {
@@ -101,10 +122,20 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
           </PanelOptionsGroup>
 
           <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
+            <FieldPropertiesEditor
+              showMinMax={true}
+              showTitle={true}
+              onChange={this.onDefaultsChange}
+              value={defaults}
+            />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+          <ThresholdsEditor
+            onChange={this.onThresholdsChanged}
+            thresholds={defaults.thresholds}
+            theme={config.theme}
+            showAlphaUI={config.featureToggles.newEdit}
+          />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />

@@ -9,11 +9,11 @@ import {
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
 } from '../types';
-import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
 
 import { TimeSeries, toDataFrame } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 export default class AzureMonitorDatasource {
   apiVersion = '2018-01-01';
@@ -31,7 +31,6 @@ export default class AzureMonitorDatasource {
   /** @ngInject */
   constructor(
     private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
@@ -75,6 +74,7 @@ export default class AzureMonitorDatasource {
       const metricDefinition = this.templateSrv.replace(item.metricDefinition, options.scopedVars);
       const timeGrain = this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars);
       const aggregation = this.templateSrv.replace(item.aggregation, options.scopedVars);
+      const top = this.templateSrv.replace(item.top || '', options.scopedVars);
 
       return {
         refId: target.refId,
@@ -95,6 +95,7 @@ export default class AzureMonitorDatasource {
             metricNamespace && metricNamespace !== this.defaultDropdownValue ? metricNamespace : metricDefinition,
           aggregation: aggregation,
           dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
+          top: top || '10',
           dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
           alias: item.alias,
           format: target.format,
@@ -106,7 +107,7 @@ export default class AzureMonitorDatasource {
       return Promise.resolve([]);
     }
 
-    const { data } = await this.backendSrv.datasourceRequest({
+    const { data } = await getBackendSrv().datasourceRequest({
       url: '/api/tsdb/query',
       method: 'POST',
       data: {
@@ -202,7 +203,6 @@ export default class AzureMonitorDatasource {
       const resourceGroup = this.toVariable(metricNamespaceQueryWithSub[2]);
       const metricDefinition = this.toVariable(metricNamespaceQueryWithSub[3]);
       const resourceName = this.toVariable(metricNamespaceQueryWithSub[4]);
-      console.log(metricNamespaceQueryWithSub);
       return this.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
     }
 
@@ -252,9 +252,7 @@ export default class AzureMonitorDatasource {
   }
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
-    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${
-      this.apiVersion
-    }`;
+    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`;
     return this.doRequest(url)
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
@@ -303,9 +301,7 @@ export default class AzureMonitorDatasource {
   }
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
-    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${
-      this.apiVersion
-    }`;
+    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`;
 
     return this.doRequest(url).then((result: any) => {
       if (!_.startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
@@ -437,8 +433,8 @@ export default class AzureMonitorDatasource {
     return field && field.length > 0;
   }
 
-  doRequest(url: string, maxRetries = 1) {
-    return this.backendSrv
+  doRequest(url: string, maxRetries = 1): Promise<any> {
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',

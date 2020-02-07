@@ -1,5 +1,6 @@
 import React from 'react';
-import { PanelProps, GraphWithLegend } from '@grafana/ui';
+import { GraphWithLegend, Chart } from '@grafana/ui';
+import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
 import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
@@ -27,17 +28,20 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   const {
     graph: { showLines, showBars, showPoints },
     legend: legendOptions,
+    tooltipOptions,
   } = options;
 
   const graphProps = {
     showBars,
     showLines,
     showPoints,
+    tooltipOptions,
   };
   const { asTable, isVisible, ...legendProps } = legendOptions;
   return (
     <GraphPanelController
       data={data}
+      timeZone={timeZone}
       options={options}
       onOptionsChange={onOptionsChange}
       onChangeTimeRange={onChangeTimeRange}
@@ -58,7 +62,9 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
             {...graphProps}
             {...legendProps}
             {...controllerApi}
-          />
+          >
+            <Chart.Tooltip mode={tooltipOptions.mode} />
+          </GraphWithLegend>
         );
       }}
     </GraphPanelController>

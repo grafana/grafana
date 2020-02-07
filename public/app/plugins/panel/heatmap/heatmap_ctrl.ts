@@ -13,10 +13,10 @@ import {
   sortSeriesByLabel,
 } from './heatmap_data_converter';
 import { auto } from 'angular';
-import { LegacyResponseData } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { DataFrame } from '@grafana/data';
 import { DataProcessor } from '../graph/data_processor';
+import { LegacyResponseData, PanelEvents, DataFrame } from '@grafana/data';
+import { CoreEvents } from 'app/types';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -142,11 +142,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     });
 
     // Bind grafana panel events
-    this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onSnapshotLoad.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.render, this.onRender.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
     this.onCardColorChange = this.onCardColorChange.bind(this);
   }
@@ -158,7 +157,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    this.publishAppEvent('zoom-out', 2);
+    this.publishAppEvent(CoreEvents.zoomOut, 2);
   }
 
   onRender() {

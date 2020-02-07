@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil"
 )
 
 type xmlErrorResponse struct {
@@ -42,29 +43,34 @@ func unmarshalError(r *request.Request) {
 		return
 	}
 
-	var errCode, errMsg string
-
 	// Attempt to parse error from body if it is known
-	resp := &xmlErrorResponse{}
-	err := xml.NewDecoder(r.HTTPResponse.Body).Decode(resp)
-	if err != nil && err != io.EOF {
-		errCode = "SerializationError"
-		errMsg = "failed to decode S3 XML error response"
-	} else {
-		errCode = resp.Code
-		errMsg = resp.Message
+	var errResp xmlErrorResponse
+	err := xmlutil.UnmarshalXMLError(&errResp, r.HTTPResponse.Body)
+	if err == io.EOF {
+		// Only capture the error if an unmarshal error occurs that is not EOF,
+		// because S3 might send an error without a error message which causes
+		// the XML unmarshal to fail with EOF.
 		err = nil
+	}
+	if err != nil {
+		r.Error = awserr.NewRequestFailure(
+			awserr.New(request.ErrCodeSerialization,
+				"failed to unmarshal error message", err),
+			r.HTTPResponse.StatusCode,
+			r.RequestID,
+		)
+		return
 	}
 
 	// Fallback to status code converted to message if still no error code
-	if len(errCode) == 0 {
+	if len(errResp.Code) == 0 {
 		statusText := http.StatusText(r.HTTPResponse.StatusCode)
-		errCode = strings.Replace(statusText, " ", "", -1)
-		errMsg = statusText
+		errResp.Code = strings.Replace(statusText, " ", "", -1)
+		errResp.Message = statusText
 	}
 
 	r.Error = awserr.NewRequestFailure(
-		awserr.New(errCode, errMsg, err),
+		awserr.New(errResp.Code, errResp.Message, err),
 		r.HTTPResponse.StatusCode,
 		r.RequestID,
 	)

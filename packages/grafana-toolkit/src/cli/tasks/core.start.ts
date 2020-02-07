@@ -27,9 +27,12 @@ const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, noTs
   ];
 
   try {
-    await concurrently(jobs.filter(job => !!job), {
-      killOthers: ['failure', 'failure'],
-    });
+    await concurrently(
+      jobs.filter(job => !!job),
+      {
+        killOthers: ['failure', 'failure'],
+      }
+    );
   } catch (e) {
     console.error(e);
     process.exit(1);

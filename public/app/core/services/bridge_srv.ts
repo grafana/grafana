@@ -3,19 +3,27 @@ import appEvents from 'app/core/app_events';
 import { store } from 'app/store/store';
 import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
-import { ITimeoutService, ILocationService, IWindowService, IRootScopeService } from 'angular';
+import { ITimeoutService, ILocationService, IWindowService } from 'angular';
+import { CoreEvents } from 'app/types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { UrlQueryMap } from '@grafana/runtime';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { VariableSrv } from 'app/features/templating/all';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
   private fullPageReloadRoutes: string[];
+  private lastQuery: UrlQueryMap = {};
+  private lastPath = '';
 
   /** @ngInject */
   constructor(
     private $location: ILocationService,
     private $timeout: ITimeoutService,
     private $window: IWindowService,
-    private $rootScope: IRootScopeService,
-    private $route: any
+    private $rootScope: GrafanaRootScope,
+    private $route: any,
+    private variableSrv: VariableSrv
   ) {
     this.fullPageReloadRoutes = ['/logout'];
   }
@@ -49,7 +57,7 @@ export class BridgeSrv {
     store.subscribe(() => {
       const state = store.getState();
       const angularUrl = this.$location.url();
-      const url = locationUtil.stripBaseFromUrl(state.location.url);
+      const url = state.location.url;
       if (angularUrl !== url) {
         this.$timeout(() => {
           this.$location.url(url);
@@ -60,9 +68,24 @@ export class BridgeSrv {
         });
         console.log('store updating angular $location.url', url);
       }
+
+      // Check for template variable changes on a dashboard
+      if (state.location.path === this.lastPath) {
+        const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
+        if (changes) {
+          const dash = getDashboardSrv().getCurrent();
+          if (dash) {
+            this.variableSrv.templateVarsChangedInUrl(changes);
+          }
+        }
+        this.lastQuery = state.location.query;
+      } else {
+        this.lastQuery = {};
+      }
+      this.lastPath = state.location.path;
     });
 
-    appEvents.on('location-change', (payload: any) => {
+    appEvents.on(CoreEvents.locationChange, payload => {
       const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);
       if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
         this.$window.location.href = payload.href;
@@ -75,6 +98,30 @@ export class BridgeSrv {
       });
     });
   }
+}
+
+export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
+  let count = 0;
+  const changes: UrlQueryMap = {};
+  for (const key in query) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+    if (query[key] !== old[key]) {
+      changes[key] = query[key];
+      count++;
+    }
+  }
+  for (const key in old) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+    if (!query[key]) {
+      changes[key] = ''; // removed
+      count++;
+    }
+  }
+  return count ? changes : undefined;
 }
 
 coreModule.service('bridgeSrv', BridgeSrv);

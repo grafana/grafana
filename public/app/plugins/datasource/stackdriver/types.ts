@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export enum MetricFindQueryTypes {
   Services = 'services',
@@ -79,4 +79,11 @@ export interface MetricDescriptor {
 export interface Segment {
   type: string;
   value: string;
+}
+
+export interface Filter {
+  key: string;
+  operator: string;
+  value: string;
+  condition: string;
 }

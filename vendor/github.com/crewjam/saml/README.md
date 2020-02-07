@@ -39,7 +39,10 @@ Let us assume we have a simple web application to protect. We'll modify this app
 ```golang
 package main
 
-import "net/http"
+import (
+    "fmt"
+    "net/http"
+)
 
 func hello(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "Hello, World!")
@@ -55,7 +58,7 @@ Each service provider must have an self-signed X.509 key pair established. You c
 
     openssl req -x509 -newkey rsa:2048 -keyout myservice.key -out myservice.cert -days 365 -nodes -subj "/CN=myservice.example.com"
 
-We will use `samlsp.Middleware` to wrap the endpoint we want to protect. Middleware provides both an `http.Handler` to serve the SAML specific URLs **and** a set of wrappers to require the user to be logged in. We also provide the URL where the service provider can fetch the metadata from the IDP at startup. In our case, we'll use [testshib.org](https://www.testshib.org/), an identity provider designed for testing.
+We will use `samlsp.Middleware` to wrap the endpoint we want to protect. Middleware provides both an `http.Handler` to serve the SAML specific URLs **and** a set of wrappers to require the user to be logged in. We also provide the URL where the service provider can fetch the metadata from the IDP at startup. In our case, we'll use [samltest.id](https://samltest.id/), an identity provider designed for testing.
 
 ```golang
 package main
@@ -85,7 +88,7 @@ func main() {
 		panic(err) // TODO handle error
 	}
 
-	idpMetadataURL, err := url.Parse("https://www.testshib.org/metadata/testshib-providers.xml")
+	idpMetadataURL, err := url.Parse("https://samltest.id/saml/idp")
 	if err != nil {
 		panic(err) // TODO handle error
 	}
@@ -108,22 +111,22 @@ func main() {
 }
 ```
 
-Next we'll have to register our service provider with the identity provider to establish trust from the service provider to the IDP. For [testshib.org](https://www.testshib.org/), you can do something like:
+Next we'll have to register our service provider with the identity provider to establish trust from the service provider to the IDP. For [samltest.id](https://samltest.id/), you can do something like:
 
     mdpath=saml-test-$USER-$HOST.xml
     curl localhost:8000/saml/metadata > $mdpath
 
-Navigate to https://www.testshib.org/register.html and upload the file you fetched.
+Navigate to https://samltest.id/upload.php and upload the file you fetched.
 
 Now you should be able to authenticate. The flow should look like this:
 
 1. You browse to `localhost:8000/hello`
 
-1. The middleware redirects you to `https://idp.testshib.org/idp/profile/SAML2/Redirect/SSO`
+1. The middleware redirects you to `https://samltest.id/idp/profile/SAML2/Redirect/SSO`
 
-1. testshib.org prompts you for a username and password.
+1. samltest.id prompts you for a username and password.
 
-1. testshib.org returns you an HTML document which contains an HTML form setup to POST to `localhost:8000/saml/acs`. The form is automatically submitted if you have javascript enabled.
+1. samltest.id returns you an HTML document which contains an HTML form setup to POST to `localhost:8000/saml/acs`. The form is automatically submitted if you have javascript enabled.
 
 1. The local service validates the response, issues a session cookie, and redirects you to the original URL, `localhost:8000/hello`.
 
@@ -131,7 +134,7 @@ Now you should be able to authenticate. The flow should look like this:
 
 ## Getting Started as an Identity Provider
 
-Please see `examples/idp/` for a substantially complete example of how to use the library and helpers to be an identity provider.
+Please see `example/idp/` for a substantially complete example of how to use the library and helpers to be an identity provider.
 
 ## Support
 
@@ -159,7 +162,7 @@ The SAML specification is a collection of PDFs (sadly):
 
 - [SAMLConformance](http://docs.oasis-open.org/security/saml/v2.0/saml-conformance-2.0-os.pdf) includes a support matrix for various parts of the protocol.
 
-[TestShib](https://www.testshib.org/) is a testing ground for SAML service and identity providers.
+[SAMLtest](https://samltest.id/) is a testing ground for SAML service and identity providers.
 
 ## Security Issues
 

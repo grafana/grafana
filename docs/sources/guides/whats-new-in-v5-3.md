@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v5.3"
-description = "Feature & improvement highlights for Grafana v5.3"
+description = "Feature and improvement highlights for Grafana v5.3"
 keywords = ["grafana", "new", "documentation", "5.3"]
 type = "docs"
 [menu.docs]
@@ -45,7 +45,7 @@ Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdri
 
 {{< docs-imagebox img="/img/docs/v53/tv_mode_still.png" max-width="600px" class="docs-image--no-shadow docs-image--right" animated-gif="/img/docs/v53/tv_mode.gif" >}}
 
-We've improved the TV & kiosk mode to make it easier to use. There's now an icon in the top bar that will let you cycle through the different view modes.
+We've improved the TV and kiosk mode to make it easier to use. There's now an icon in the top bar that will let you cycle through the different view modes.
 
 1. In the first view mode, the sidebar and most of the buttons in the top bar will be hidden.
 2. In the second view mode, the top bar is completely hidden so that only the dashboard itself is shown.
@@ -88,5 +88,5 @@ This new variable type will display as a free text input field with an optional 
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.

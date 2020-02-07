@@ -7,9 +7,16 @@ import { FormField } from '../FormField/FormField';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
 
 // Types
-import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
 import Select from '../Select/Select';
-import { ReducerID, toNumberString, toIntegerOrUndefined, SelectableValue, FieldConfig } from '@grafana/data';
+import {
+  FieldDisplayOptions,
+  DEFAULT_FIELD_DISPLAY_VALUES_LIMIT,
+  ReducerID,
+  toNumberString,
+  toIntegerOrUndefined,
+  SelectableValue,
+  FieldConfig,
+} from '@grafana/data';
 
 const showOptions: Array<SelectableValue<boolean>> = [
   {

@@ -18,18 +18,13 @@ interface State {
 }
 
 export class ServerStats extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      stats: [],
-      isLoading: false,
-    };
-  }
+  state: State = {
+    stats: [],
+    isLoading: true,
+  };
 
   async componentDidMount() {
     try {
-      this.setState({ isLoading: true });
       const stats = await this.props.getServerStats();
       this.setState({ stats, isLoading: false });
     } catch (error) {

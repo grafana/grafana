@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -61,7 +62,9 @@ func GetGravatarUrl(text string) string {
 	}
 
 	hasher := md5.New()
-	hasher.Write([]byte(strings.ToLower(text)))
+	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
+		log.Warn("Failed to hash text: %s", err)
+	}
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
 }
 

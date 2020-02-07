@@ -51,17 +51,32 @@ type AzureMonitorResponse struct {
 	Resourceregion string `json:"resourceregion"`
 }
 
-// ApplicationInsightsResponse is the json response from the Application Insights API
 type ApplicationInsightsResponse struct {
+	MetricResponse *ApplicationInsightsMetricsResponse
+	QueryResponse  *ApplicationInsightsQueryResponse
+}
+
+// ApplicationInsightsResponse is the json response from the Application Insights API
+type ApplicationInsightsQueryResponse struct {
 	Tables []struct {
-		TableName string `json:"TableName"`
-		Columns   []struct {
-			ColumnName string `json:"ColumnName"`
-			DataType   string `json:"DataType"`
-			ColumnType string `json:"ColumnType"`
-		} `json:"Columns"`
-		Rows [][]interface{} `json:"Rows"`
-	} `json:"Tables"`
+		Name    string `json:"name"`
+		Columns []struct {
+			Name string `json:"name"`
+			Type string `json:"type"`
+		} `json:"columns"`
+		Rows [][]interface{} `json:"rows"`
+	} `json:"tables"`
+}
+
+// ApplicationInsightsMetricsResponse is the json response from the Application Insights API
+type ApplicationInsightsMetricsResponse struct {
+	Name     string
+	Segments []struct {
+		Start     time.Time
+		End       time.Time
+		Segmented map[string]float64
+		Value     float64
+	}
 }
 
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.

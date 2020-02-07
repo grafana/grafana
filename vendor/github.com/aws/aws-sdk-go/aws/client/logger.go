@@ -67,10 +67,14 @@ func logRequest(r *request.Request) {
 		if !bodySeekable {
 			r.SetReaderBody(aws.ReadSeekCloser(r.HTTPRequest.Body))
 		}
-		// Reset the request body because dumpRequest will re-wrap the r.HTTPRequest's
-		// Body as a NoOpCloser and will not be reset after read by the HTTP
-		// client reader.
-		r.ResetBody()
+		// Reset the request body because dumpRequest will re-wrap the
+		// r.HTTPRequest's Body as a NoOpCloser and will not be reset after
+		// read by the HTTP client reader.
+		if err := r.Error; err != nil {
+			r.Config.Logger.Log(fmt.Sprintf(logReqErrMsg,
+				r.ClientInfo.ServiceName, r.Operation.Name, err))
+			return
+		}
 	}
 
 	r.Config.Logger.Log(fmt.Sprintf(logReqMsg,

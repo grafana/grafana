@@ -236,8 +236,8 @@ function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean
     mean: null,
     last: null,
     first: null,
-    lastNotNull: undefined,
-    firstNotNull: undefined,
+    lastNotNull: null,
+    firstNotNull: null,
     count: 0,
     nonNullCount: 0,
     allIsNull: true,
@@ -272,8 +272,8 @@ function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean
       }
     }
 
-    if (currentValue !== null) {
-      const isFirst = calcs.firstNotNull === undefined;
+    if (currentValue !== null && currentValue !== undefined) {
+      const isFirst = calcs.firstNotNull === null;
       if (isFirst) {
         calcs.firstNotNull = currentValue;
       }
@@ -366,11 +366,11 @@ function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: b
   const data = field.values;
   for (let idx = 0; idx < data.length; idx++) {
     const v = data.get(idx);
-    if (v != null) {
+    if (v != null && v !== undefined) {
       return { firstNotNull: v };
     }
   }
-  return { firstNotNull: undefined };
+  return { firstNotNull: null };
 }
 
 function calculateLast(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
@@ -383,11 +383,11 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
   let idx = data.length - 1;
   while (idx >= 0) {
     const v = data.get(idx--);
-    if (v != null) {
+    if (v != null && v !== undefined) {
       return { lastNotNull: v };
     }
   }
-  return { lastNotNull: undefined };
+  return { lastNotNull: null };
 }
 
 function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {

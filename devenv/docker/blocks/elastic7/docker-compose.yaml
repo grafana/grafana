@@ -9,10 +9,12 @@
 
   fake-elastic7-data:
     image: grafana/fake-data-gen
-    network_mode: bridge
+    links:
+      - elasticsearch7
     environment:
+      FD_SERVER: elasticsearch7
       FD_DATASOURCE: elasticsearch7
-      FD_PORT: 12200
+      FD_PORT: 9200
 
   filebeat7:
     image: docker.elastic.co/beats/filebeat-oss:7.0.0
@@ -24,7 +26,6 @@
 
   metricbeat7:
     image: docker.elastic.co/beats/metricbeat-oss:7.0.0
-    network_mode: host
     command: metricbeat -e -strict.perms=false
     user: root
     volumes:
@@ -35,5 +36,7 @@
     image: docker.elastic.co/kibana/kibana-oss:7.0.0
     ports:
       - "5601:5601"
+    links:
+      - elasticsearch7
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch7:9200

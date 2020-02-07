@@ -28,12 +28,13 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	metrics := map[string]interface{}{}
 	report := map[string]interface{}{
-		"version":   version,
-		"metrics":   metrics,
-		"os":        runtime.GOOS,
-		"arch":      runtime.GOARCH,
-		"edition":   getEdition(),
-		"packaging": setting.Packaging,
+		"version":         version,
+		"metrics":         metrics,
+		"os":              runtime.GOOS,
+		"arch":            runtime.GOARCH,
+		"edition":         getEdition(),
+		"hasValidLicense": uss.License.HasValidLicense(),
+		"packaging":       setting.Packaging,
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -60,6 +61,9 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
 	metrics["stats.teams.count"] = statsQuery.Result.Teams
 	metrics["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
+	metrics["stats.valid_license.count"] = getValidLicenseCount(uss.License.HasValidLicense())
+	metrics["stats.edition.oss.count"] = getOssEditionCount()
+	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
 
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
@@ -151,7 +155,11 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	data := bytes.NewBuffer(out)
 
 	client := http.Client{Timeout: 5 * time.Second}
-	go client.Post(usageStatsURL, "application/json", data)
+	go func() {
+		if _, err := client.Post(usageStatsURL, "application/json", data); err != nil {
+			metricsLogger.Error("Failed to send usage stats", "err", err)
+		}
+	}()
 }
 
 func (uss *UsageStatsService) updateTotalStats() {
@@ -179,8 +187,31 @@ func (uss *UsageStatsService) updateTotalStats() {
 }
 
 func getEdition() string {
+	edition := "oss"
 	if setting.IsEnterprise {
-		return "enterprise"
+		edition = "enterprise"
 	}
-	return "oss"
+
+	return edition
+}
+
+func getEnterpriseEditionCount() int {
+	if setting.IsEnterprise {
+		return 1
+	}
+	return 0
+}
+
+func getOssEditionCount() int {
+	if setting.IsEnterprise {
+		return 0
+	}
+	return 1
+}
+
+func getValidLicenseCount(validLicense bool) int {
+	if validLicense {
+		return 1
+	}
+	return 0
 }

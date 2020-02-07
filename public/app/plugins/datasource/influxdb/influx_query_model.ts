@@ -24,8 +24,16 @@ export default class InfluxQueryModel {
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
-    target.groupBy = target.groupBy || [{ type: 'time', params: ['$__interval'] }, { type: 'fill', params: ['null'] }];
-    target.select = target.select || [[{ type: 'field', params: ['value'] }, { type: 'mean', params: [] }]];
+    target.groupBy = target.groupBy || [
+      { type: 'time', params: ['$__interval'] },
+      { type: 'fill', params: ['null'] },
+    ];
+    target.select = target.select || [
+      [
+        { type: 'field', params: ['value'] },
+        { type: 'mean', params: [] },
+      ],
+    ];
 
     this.updateProjection();
   }

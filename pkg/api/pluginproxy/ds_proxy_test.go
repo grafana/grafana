@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -331,37 +330,6 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
-		Convey("When proxying a data source with custom headers specified", func() {
-			plugin := &plugins.DataSourcePlugin{}
-
-			encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
-			ds := &m.DataSource{
-				Type: m.DS_PROMETHEUS,
-				Url:  "http://prometheus:9090",
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"httpHeaderName1": "Authorization",
-				}),
-				SecureJsonData: map[string][]byte{
-					"httpHeaderValue1": encryptedData,
-				},
-			}
-
-			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
-
-			requestURL, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestURL, Header: make(http.Header)}
-			proxy.getDirector()(&req)
-
-			if err != nil {
-				log.Fatal(4, err.Error())
-			}
-
-			Convey("Match header value after decryption", func() {
-				So(req.Header.Get("Authorization"), ShouldEqual, "Bearer xf5yhfkpsnmgo")
-			})
-		})
-
 		Convey("When proxying a custom datasource", func() {
 			plugin := &plugins.DataSourcePlugin{}
 			ds := &m.DataSource{
@@ -495,15 +463,17 @@ func TestDSRouteRule(t *testing.T) {
 				createAuthTest(m.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
 			}
 			for _, test := range tests {
+				m.ClearDSDecryptionCache()
 				runDatasourceAuthTest(test)
 			}
 		})
 
 		Convey("HandleRequest()", func() {
+			var writeErr error
 			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.SetCookie(w, &http.Cookie{Name: "flavor", Value: "chocolateChip"})
 				w.WriteHeader(200)
-				w.Write([]byte("I am the backend"))
+				_, writeErr = w.Write([]byte("I am the backend"))
 			}))
 			defer backend.Close()
 
@@ -533,19 +503,28 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			Convey("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func() {
+				writeErr = nil
 				ctx := setupCtx(nil)
 				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+
 				proxy.HandleRequest()
+
+				So(writeErr, ShouldBeNil)
 				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldBeEmpty)
 			})
 
 			Convey("When response header Set-Cookie is set should remove proxied Set-Cookie header and restore the original Set-Cookie header", func() {
+				writeErr = nil
 				ctx := setupCtx(func(w http.ResponseWriter) {
 					w.Header().Set("Set-Cookie", "important_cookie=important_value")
 				})
 				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+
 				proxy.HandleRequest()
-				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldEqual, "important_cookie=important_value")
+
+				So(writeErr, ShouldBeNil)
+				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldEqual,
+					"important_cookie=important_value")
 			})
 		})
 	})

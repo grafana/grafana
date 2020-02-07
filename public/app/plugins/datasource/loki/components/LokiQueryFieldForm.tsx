@@ -1,30 +1,30 @@
 // Libraries
-import React from 'react';
-// @ts-ignore
-import Cascader from 'rc-cascader';
+import React, { ReactNode } from 'react';
 
-import { SlatePrism } from '@grafana/ui';
+import {
+  ButtonCascader,
+  CascaderOption,
+  SlatePrism,
+  TypeaheadOutput,
+  SuggestionsState,
+  QueryField,
+  TypeaheadInput,
+  BracesPlugin,
+} from '@grafana/ui';
 
-// Components
-import QueryField, { TypeaheadInput } from 'app/features/explore/QueryField';
 // Utils & Services
 // dom also includes Element polyfills
-import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import { Plugin, Node } from 'slate';
 
 // Types
-import { LokiQuery } from '../types';
-import { TypeaheadOutput } from 'app/types/explore';
-import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, DOMUtil } from '@grafana/ui';
-import { AbsoluteTimeRange } from '@grafana/data';
+import { DOMUtil } from '@grafana/ui';
+import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
+import { LokiQuery, LokiOptions } from '../types';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
-import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
+import LokiDatasource from '../datasource';
 
-function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
-  if (datasourceStatus === DataSourceStatus.Disconnected) {
-    return '(Disconnected)';
-  }
+function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
   if (!hasSyntax) {
     return 'Loading labels...';
   }
@@ -61,27 +61,19 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
   return suggestion;
 }
 
-export interface CascaderOption {
-  label: string;
-  value: string;
-  children?: CascaderOption[];
-  disabled?: boolean;
-}
-
-export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<DataSourceApi<LokiQuery>, LokiQuery> {
+export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
   syntax: Grammar;
-  logLabelOptions: any[];
+  logLabelOptions: CascaderOption[];
   syntaxLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
   onLoadOptions: (selectedOptions: CascaderOption[]) => void;
   onLabelsRefresh?: () => void;
+  ExtraFieldElement?: ReactNode;
 }
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
   plugins: Plugin[];
-  modifiedSearch: string;
-  modifiedQuery: string;
 
   constructor(props: LokiQueryFieldFormProps, context: React.Context<any>) {
     super(props, context);
@@ -144,6 +136,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
   render() {
     const {
+      ExtraFieldElement,
       data,
       query,
       syntaxLoaded,
@@ -151,51 +144,50 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       onLoadOptions,
       onLabelsRefresh,
       datasource,
-      datasourceStatus,
     } = this.props;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
-    const chooserText = getChooserText(syntaxLoaded, hasLogLabels, datasourceStatus);
-    const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
+    const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
+    const buttonDisabled = !(syntaxLoaded && hasLogLabels);
     const showError = data && data.error && data.error.refId === query.refId;
 
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <Cascader
-              options={logLabelOptions}
+        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
+          <div className="gf-form flex-shrink-0">
+            <ButtonCascader
+              options={logLabelOptions || []}
+              disabled={buttonDisabled}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
-              expandIcon={null}
-              onPopupVisibleChange={(isVisible: boolean) => {
-                if (isVisible && onLabelsRefresh) {
-                  onLabelsRefresh();
-                }
-              }}
+              onPopupVisibleChange={isVisible => isVisible && onLabelsRefresh && onLabelsRefresh()}
             >
-              <button className="gf-form-label gf-form-label--btn" disabled={buttonDisabled}>
-                {chooserText} <i className="fa fa-caret-down" />
-              </button>
-            </Cascader>
+              {chooserText}
+            </ButtonCascader>
           </div>
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialQuery={query.expr}
+              query={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onChange={this.onChangeQuery}
+              onBlur={this.props.onBlur}
               onRunQuery={this.props.onRunQuery}
               placeholder="Enter a Loki query"
               portalOrigin="loki"
               syntaxLoaded={syntaxLoaded}
             />
           </div>
+          {ExtraFieldElement}
         </div>
-        <div>{showError ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}</div>
+        {showError ? (
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-error">{data.error.message}</div>
+          </div>
+        ) : null}
       </>
     );
   }

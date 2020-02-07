@@ -76,7 +76,7 @@ func (ds *DataSource) DecryptedPassword() string {
 
 // decryptedValue returns decrypted value from secureJsonData
 func (ds *DataSource) decryptedValue(field string, fallback string) string {
-	if value, ok := ds.SecureJsonData.DecryptedValue(field); ok {
+	if value, ok := ds.DecryptedValue(field); ok {
 		return value
 	}
 	return fallback

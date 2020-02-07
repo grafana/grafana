@@ -2,10 +2,10 @@
 
 exports[`AbstractList allows custom item key 1`] = `
 <ul
-  className="css-9xf0yn"
+  className="css-1ld8h5b"
 >
   <li
-    className="css-rwbibe"
+    className="css-8qpjjf"
     key="item1"
   >
     <div>
@@ -18,7 +18,7 @@ exports[`AbstractList allows custom item key 1`] = `
     </div>
   </li>
   <li
-    className="css-rwbibe"
+    className="css-8qpjjf"
     key="item2"
   >
     <div>
@@ -31,7 +31,7 @@ exports[`AbstractList allows custom item key 1`] = `
     </div>
   </li>
   <li
-    className="css-rwbibe"
+    className="css-8qpjjf"
     key="item3"
   >
     <div>
@@ -48,10 +48,10 @@ exports[`AbstractList allows custom item key 1`] = `
 
 exports[`AbstractList renders items using renderItem prop function 1`] = `
 <ul
-  className="css-9xf0yn"
+  className="css-1ld8h5b"
 >
   <li
-    className="css-rwbibe"
+    className="css-8qpjjf"
     key="0"
   >
     <div>
@@ -64,7 +64,7 @@ exports[`AbstractList renders items using renderItem prop function 1`] = `
     </div>
   </li>
   <li
-    className="css-rwbibe"
+    className="css-8qpjjf"
     key="1"
   >
     <div>
@@ -77,7 +77,7 @@ exports[`AbstractList renders items using renderItem prop function 1`] = `
     </div>
   </li>
   <li
-    className="css-rwbibe"
+    className="css-8qpjjf"
     key="2"
   >
     <div>

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-import { setUsersSearchQuery } from './state/actions';
+import { setUsersSearchQuery } from './state/reducers';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
@@ -49,7 +49,7 @@ export class UsersActionBar extends PureComponent<Props> {
             inputClassName="gf-form-input width-20"
             value={searchQuery}
             onChange={setUsersSearchQuery}
-            placeholder="Filter by name or type"
+            placeholder="Filter by email, login or name"
           />
           {pendingInvitesCount > 0 && (
             <div style={{ marginLeft: '1rem' }}>
@@ -69,7 +69,7 @@ export class UsersActionBar extends PureComponent<Props> {
           )}
           {externalUserMngLinkUrl && (
             <a className="btn btn-primary" href={externalUserMngLinkUrl} target="_blank" rel="noopener">
-              <i className="fa fa-external-link-square" /> {externalUserMngLinkName}
+              {externalUserMngLinkName}
             </a>
           )}
         </div>
@@ -92,7 +92,4 @@ const mapDispatchToProps = {
   setUsersSearchQuery,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(UsersActionBar);
+export default connect(mapStateToProps, mapDispatchToProps)(UsersActionBar);

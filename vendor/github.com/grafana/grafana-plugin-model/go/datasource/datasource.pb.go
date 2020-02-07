@@ -61,13 +61,13 @@ func (x RowValue_Kind) String() string {
 	return proto.EnumName(RowValue_Kind_name, int32(x))
 }
 func (RowValue_Kind) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{8, 0}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{8, 0}
 }
 
 type DatasourceRequest struct {
-	TimeRange            *TimeRange      `protobuf:"bytes,1,opt,name=timeRange" json:"timeRange,omitempty"`
-	Datasource           *DatasourceInfo `protobuf:"bytes,2,opt,name=datasource" json:"datasource,omitempty"`
-	Queries              []*Query        `protobuf:"bytes,3,rep,name=queries" json:"queries,omitempty"`
+	TimeRange            *TimeRange      `protobuf:"bytes,1,opt,name=timeRange,proto3" json:"timeRange,omitempty"`
+	Datasource           *DatasourceInfo `protobuf:"bytes,2,opt,name=datasource,proto3" json:"datasource,omitempty"`
+	Queries              []*Query        `protobuf:"bytes,3,rep,name=queries,proto3" json:"queries,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
 	XXX_unrecognized     []byte          `json:"-"`
 	XXX_sizecache        int32           `json:"-"`
@@ -77,7 +77,7 @@ func (m *DatasourceRequest) Reset()         { *m = DatasourceRequest{} }
 func (m *DatasourceRequest) String() string { return proto.CompactTextString(m) }
 func (*DatasourceRequest) ProtoMessage()    {}
 func (*DatasourceRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{0}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{0}
 }
 func (m *DatasourceRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DatasourceRequest.Unmarshal(m, b)
@@ -119,10 +119,10 @@ func (m *DatasourceRequest) GetQueries() []*Query {
 }
 
 type Query struct {
-	RefId                string   `protobuf:"bytes,1,opt,name=refId" json:"refId,omitempty"`
-	MaxDataPoints        int64    `protobuf:"varint,2,opt,name=maxDataPoints" json:"maxDataPoints,omitempty"`
-	IntervalMs           int64    `protobuf:"varint,3,opt,name=intervalMs" json:"intervalMs,omitempty"`
-	ModelJson            string   `protobuf:"bytes,4,opt,name=modelJson" json:"modelJson,omitempty"`
+	RefId                string   `protobuf:"bytes,1,opt,name=refId,proto3" json:"refId,omitempty"`
+	MaxDataPoints        int64    `protobuf:"varint,2,opt,name=maxDataPoints,proto3" json:"maxDataPoints,omitempty"`
+	IntervalMs           int64    `protobuf:"varint,3,opt,name=intervalMs,proto3" json:"intervalMs,omitempty"`
+	ModelJson            string   `protobuf:"bytes,4,opt,name=modelJson,proto3" json:"modelJson,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -132,7 +132,7 @@ func (m *Query) Reset()         { *m = Query{} }
 func (m *Query) String() string { return proto.CompactTextString(m) }
 func (*Query) ProtoMessage()    {}
 func (*Query) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{1}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{1}
 }
 func (m *Query) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Query.Unmarshal(m, b)
@@ -181,10 +181,10 @@ func (m *Query) GetModelJson() string {
 }
 
 type TimeRange struct {
-	FromRaw              string   `protobuf:"bytes,1,opt,name=fromRaw" json:"fromRaw,omitempty"`
-	ToRaw                string   `protobuf:"bytes,2,opt,name=toRaw" json:"toRaw,omitempty"`
-	FromEpochMs          int64    `protobuf:"varint,3,opt,name=fromEpochMs" json:"fromEpochMs,omitempty"`
-	ToEpochMs            int64    `protobuf:"varint,4,opt,name=toEpochMs" json:"toEpochMs,omitempty"`
+	FromRaw              string   `protobuf:"bytes,1,opt,name=fromRaw,proto3" json:"fromRaw,omitempty"`
+	ToRaw                string   `protobuf:"bytes,2,opt,name=toRaw,proto3" json:"toRaw,omitempty"`
+	FromEpochMs          int64    `protobuf:"varint,3,opt,name=fromEpochMs,proto3" json:"fromEpochMs,omitempty"`
+	ToEpochMs            int64    `protobuf:"varint,4,opt,name=toEpochMs,proto3" json:"toEpochMs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -194,7 +194,7 @@ func (m *TimeRange) Reset()         { *m = TimeRange{} }
 func (m *TimeRange) String() string { return proto.CompactTextString(m) }
 func (*TimeRange) ProtoMessage()    {}
 func (*TimeRange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{2}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{2}
 }
 func (m *TimeRange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TimeRange.Unmarshal(m, b)
@@ -243,7 +243,7 @@ func (m *TimeRange) GetToEpochMs() int64 {
 }
 
 type DatasourceResponse struct {
-	Results              []*QueryResult `protobuf:"bytes,1,rep,name=results" json:"results,omitempty"`
+	Results              []*QueryResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -253,7 +253,7 @@ func (m *DatasourceResponse) Reset()         { *m = DatasourceResponse{} }
 func (m *DatasourceResponse) String() string { return proto.CompactTextString(m) }
 func (*DatasourceResponse) ProtoMessage()    {}
 func (*DatasourceResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{3}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{3}
 }
 func (m *DatasourceResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DatasourceResponse.Unmarshal(m, b)
@@ -281,11 +281,11 @@ func (m *DatasourceResponse) GetResults() []*QueryResult {
 }
 
 type QueryResult struct {
-	Error                string        `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
-	RefId                string        `protobuf:"bytes,2,opt,name=refId" json:"refId,omitempty"`
-	MetaJson             string        `protobuf:"bytes,3,opt,name=metaJson" json:"metaJson,omitempty"`
-	Series               []*TimeSeries `protobuf:"bytes,4,rep,name=series" json:"series,omitempty"`
-	Tables               []*Table      `protobuf:"bytes,5,rep,name=tables" json:"tables,omitempty"`
+	Error                string        `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
+	RefId                string        `protobuf:"bytes,2,opt,name=refId,proto3" json:"refId,omitempty"`
+	MetaJson             string        `protobuf:"bytes,3,opt,name=metaJson,proto3" json:"metaJson,omitempty"`
+	Series               []*TimeSeries `protobuf:"bytes,4,rep,name=series,proto3" json:"series,omitempty"`
+	Tables               []*Table      `protobuf:"bytes,5,rep,name=tables,proto3" json:"tables,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
 	XXX_unrecognized     []byte        `json:"-"`
 	XXX_sizecache        int32         `json:"-"`
@@ -295,7 +295,7 @@ func (m *QueryResult) Reset()         { *m = QueryResult{} }
 func (m *QueryResult) String() string { return proto.CompactTextString(m) }
 func (*QueryResult) ProtoMessage()    {}
 func (*QueryResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{4}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{4}
 }
 func (m *QueryResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryResult.Unmarshal(m, b)
@@ -351,8 +351,8 @@ func (m *QueryResult) GetTables() []*Table {
 }
 
 type Table struct {
-	Columns              []*TableColumn `protobuf:"bytes,1,rep,name=columns" json:"columns,omitempty"`
-	Rows                 []*TableRow    `protobuf:"bytes,2,rep,name=rows" json:"rows,omitempty"`
+	Columns              []*TableColumn `protobuf:"bytes,1,rep,name=columns,proto3" json:"columns,omitempty"`
+	Rows                 []*TableRow    `protobuf:"bytes,2,rep,name=rows,proto3" json:"rows,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -362,7 +362,7 @@ func (m *Table) Reset()         { *m = Table{} }
 func (m *Table) String() string { return proto.CompactTextString(m) }
 func (*Table) ProtoMessage()    {}
 func (*Table) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{5}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{5}
 }
 func (m *Table) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Table.Unmarshal(m, b)
@@ -397,7 +397,7 @@ func (m *Table) GetRows() []*TableRow {
 }
 
 type TableColumn struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -407,7 +407,7 @@ func (m *TableColumn) Reset()         { *m = TableColumn{} }
 func (m *TableColumn) String() string { return proto.CompactTextString(m) }
 func (*TableColumn) ProtoMessage()    {}
 func (*TableColumn) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{6}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{6}
 }
 func (m *TableColumn) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TableColumn.Unmarshal(m, b)
@@ -435,7 +435,7 @@ func (m *TableColumn) GetName() string {
 }
 
 type TableRow struct {
-	Values               []*RowValue `protobuf:"bytes,1,rep,name=values" json:"values,omitempty"`
+	Values               []*RowValue `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
 	XXX_unrecognized     []byte      `json:"-"`
 	XXX_sizecache        int32       `json:"-"`
@@ -445,7 +445,7 @@ func (m *TableRow) Reset()         { *m = TableRow{} }
 func (m *TableRow) String() string { return proto.CompactTextString(m) }
 func (*TableRow) ProtoMessage()    {}
 func (*TableRow) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{7}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{7}
 }
 func (m *TableRow) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TableRow.Unmarshal(m, b)
@@ -473,11 +473,11 @@ func (m *TableRow) GetValues() []*RowValue {
 }
 
 type RowValue struct {
-	Kind                 RowValue_Kind `protobuf:"varint,1,opt,name=kind,enum=models.RowValue_Kind" json:"kind,omitempty"`
-	DoubleValue          float64       `protobuf:"fixed64,2,opt,name=doubleValue" json:"doubleValue,omitempty"`
-	Int64Value           int64         `protobuf:"varint,3,opt,name=int64Value" json:"int64Value,omitempty"`
-	BoolValue            bool          `protobuf:"varint,4,opt,name=boolValue" json:"boolValue,omitempty"`
-	StringValue          string        `protobuf:"bytes,5,opt,name=stringValue" json:"stringValue,omitempty"`
+	Kind                 RowValue_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=models.RowValue_Kind" json:"kind,omitempty"`
+	DoubleValue          float64       `protobuf:"fixed64,2,opt,name=doubleValue,proto3" json:"doubleValue,omitempty"`
+	Int64Value           int64         `protobuf:"varint,3,opt,name=int64Value,proto3" json:"int64Value,omitempty"`
+	BoolValue            bool          `protobuf:"varint,4,opt,name=boolValue,proto3" json:"boolValue,omitempty"`
+	StringValue          string        `protobuf:"bytes,5,opt,name=stringValue,proto3" json:"stringValue,omitempty"`
 	BytesValue           []byte        `protobuf:"bytes,6,opt,name=bytesValue,proto3" json:"bytesValue,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
 	XXX_unrecognized     []byte        `json:"-"`
@@ -488,7 +488,7 @@ func (m *RowValue) Reset()         { *m = RowValue{} }
 func (m *RowValue) String() string { return proto.CompactTextString(m) }
 func (*RowValue) ProtoMessage()    {}
 func (*RowValue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{8}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{8}
 }
 func (m *RowValue) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RowValue.Unmarshal(m, b)
@@ -551,13 +551,13 @@ func (m *RowValue) GetBytesValue() []byte {
 }
 
 type DatasourceInfo struct {
-	Id                      int64             `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
-	OrgId                   int64             `protobuf:"varint,2,opt,name=orgId" json:"orgId,omitempty"`
-	Name                    string            `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Type                    string            `protobuf:"bytes,4,opt,name=type" json:"type,omitempty"`
-	Url                     string            `protobuf:"bytes,5,opt,name=url" json:"url,omitempty"`
-	JsonData                string            `protobuf:"bytes,6,opt,name=jsonData" json:"jsonData,omitempty"`
-	DecryptedSecureJsonData map[string]string `protobuf:"bytes,7,rep,name=decryptedSecureJsonData" json:"decryptedSecureJsonData,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Id                      int64             `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	OrgId                   int64             `protobuf:"varint,2,opt,name=orgId,proto3" json:"orgId,omitempty"`
+	Name                    string            `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Type                    string            `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+	Url                     string            `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	JsonData                string            `protobuf:"bytes,6,opt,name=jsonData,proto3" json:"jsonData,omitempty"`
+	DecryptedSecureJsonData map[string]string `protobuf:"bytes,7,rep,name=decryptedSecureJsonData,proto3" json:"decryptedSecureJsonData,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral    struct{}          `json:"-"`
 	XXX_unrecognized        []byte            `json:"-"`
 	XXX_sizecache           int32             `json:"-"`
@@ -567,7 +567,7 @@ func (m *DatasourceInfo) Reset()         { *m = DatasourceInfo{} }
 func (m *DatasourceInfo) String() string { return proto.CompactTextString(m) }
 func (*DatasourceInfo) ProtoMessage()    {}
 func (*DatasourceInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{9}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{9}
 }
 func (m *DatasourceInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DatasourceInfo.Unmarshal(m, b)
@@ -637,9 +637,9 @@ func (m *DatasourceInfo) GetDecryptedSecureJsonData() map[string]string {
 }
 
 type TimeSeries struct {
-	Name                 string            `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Tags                 map[string]string `protobuf:"bytes,2,rep,name=tags" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Points               []*Point          `protobuf:"bytes,3,rep,name=points" json:"points,omitempty"`
+	Name                 string            `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Tags                 map[string]string `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Points               []*Point          `protobuf:"bytes,3,rep,name=points,proto3" json:"points,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
@@ -649,7 +649,7 @@ func (m *TimeSeries) Reset()         { *m = TimeSeries{} }
 func (m *TimeSeries) String() string { return proto.CompactTextString(m) }
 func (*TimeSeries) ProtoMessage()    {}
 func (*TimeSeries) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{10}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{10}
 }
 func (m *TimeSeries) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TimeSeries.Unmarshal(m, b)
@@ -691,8 +691,8 @@ func (m *TimeSeries) GetPoints() []*Point {
 }
 
 type Point struct {
-	Timestamp            int64    `protobuf:"varint,1,opt,name=timestamp" json:"timestamp,omitempty"`
-	Value                float64  `protobuf:"fixed64,2,opt,name=value" json:"value,omitempty"`
+	Timestamp            int64    `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Value                float64  `protobuf:"fixed64,2,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -702,7 +702,7 @@ func (m *Point) Reset()         { *m = Point{} }
 func (m *Point) String() string { return proto.CompactTextString(m) }
 func (*Point) ProtoMessage()    {}
 func (*Point) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{11}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{11}
 }
 func (m *Point) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Point.Unmarshal(m, b)
@@ -786,8 +786,7 @@ func (c *datasourcePluginClient) Query(ctx context.Context, in *DatasourceReques
 	return out, nil
 }
 
-// Server API for DatasourcePlugin service
-
+// DatasourcePluginServer is the server API for DatasourcePlugin service.
 type DatasourcePluginServer interface {
 	Query(context.Context, *DatasourceRequest) (*DatasourceResponse, error)
 }
@@ -827,9 +826,9 @@ var _DatasourcePlugin_serviceDesc = grpc.ServiceDesc{
 	Metadata: "datasource.proto",
 }
 
-func init() { proto.RegisterFile("datasource.proto", fileDescriptor_datasource_1e8c5a099546b349) }
+func init() { proto.RegisterFile("datasource.proto", fileDescriptor_datasource_09b4ea28a76e017e) }
 
-var fileDescriptor_datasource_1e8c5a099546b349 = []byte{
+var fileDescriptor_datasource_09b4ea28a76e017e = []byte{
 	// 841 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0xdb, 0x8e, 0x23, 0x35,
 	0x10, 0xa5, 0x2f, 0xc9, 0xa4, 0x2b, 0x3b, 0xa1, 0xd7, 0xdc, 0x42, 0x34, 0x42, 0xa1, 0xb5, 0x88,

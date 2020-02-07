@@ -1,5 +1,5 @@
 +++
-title = "Export & Import"
+title = "Export and Import"
 keywords = ["grafana", "dashboard", "documentation", "export", "import"]
 type = "docs"
 [menu.docs]
@@ -9,7 +9,7 @@ weight = 8
 
 # Export and Import
 
-Grafana Dashboards can easily be exported and imported, either from the UI or from the HTTP API.
+Grafana Dashboards can easily be exported and imported, either from the UI or from the [HTTP API]({{< relref "../http_api/dashboard.md#create-update-dashboard" >}}).
 
 ## Exporting a dashboard
 
@@ -47,7 +47,7 @@ Find dashboards for common server applications at [Grafana.com/dashboards](https
 
 {{< docs-imagebox img="/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
 
-## Import & Sharing with Grafana 2.x or 3.0
+## Import and Sharing with Grafana 2.x or 3.0
 
 Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
 to update each panel so that they are using a data source of your choosing. If you are running a

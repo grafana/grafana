@@ -13,11 +13,19 @@ import {
   sortLogsResult,
   buildQueryTransaction,
 } from './explore';
-import { ExploreUrlState, ExploreMode } from 'app/types/explore';
+import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
-import { LogsDedupStrategy, LogsModel, LogLevel, dateTime } from '@grafana/data';
-import { DataQueryError } from '@grafana/ui';
-import { liveOption, offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import {
+  DataQueryError,
+  LogsDedupStrategy,
+  LogsModel,
+  LogLevel,
+  dateTime,
+  MutableDataFrame,
+  ExploreMode,
+  LogRowModel,
+} from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -203,20 +211,20 @@ describe('hasNonEmptyQuery', () => {
 
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const input: any = null;
       const result = getValueWithRefId(input);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
   describe('when called with a non object value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const input = 123;
       const result = getValueWithRefId(input);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -250,11 +258,11 @@ describe('hasRefId', () => {
 
 describe('getFirstQueryErrorWithoutRefId', () => {
   describe('when called with a null value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const errors: DataQueryError[] = null;
       const result = getFirstQueryErrorWithoutRefId(errors);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -341,7 +349,7 @@ describe('getRefIds', () => {
 describe('refreshIntervalToSortOrder', () => {
   describe('when called with live option', () => {
     it('then it should return ascending', () => {
-      const result = refreshIntervalToSortOrder(liveOption.value);
+      const result = refreshIntervalToSortOrder(RefreshPicker.liveOption.value);
 
       expect(result).toBe(SortOrder.Ascending);
     });
@@ -349,7 +357,7 @@ describe('refreshIntervalToSortOrder', () => {
 
   describe('when called with off option', () => {
     it('then it should return descending', () => {
-      const result = refreshIntervalToSortOrder(offOption.value);
+      const result = refreshIntervalToSortOrder(RefreshPicker.offOption.value);
 
       expect(result).toBe(SortOrder.Descending);
     });
@@ -373,8 +381,10 @@ describe('refreshIntervalToSortOrder', () => {
 });
 
 describe('sortLogsResult', () => {
-  const firstRow = {
-    timestamp: '2019-01-01T21:00:0.0000000Z',
+  const firstRow: LogRowModel = {
+    rowIndex: 0,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
     entry: '',
     hasAnsi: false,
     labels: {},
@@ -384,19 +394,23 @@ describe('sortLogsResult', () => {
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
+    uid: '1',
   };
   const sameAsFirstRow = firstRow;
-  const secondRow = {
-    timestamp: '2019-01-01T22:00:0.0000000Z',
+  const secondRow: LogRowModel = {
+    rowIndex: 1,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
     entry: '',
     hasAnsi: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
-    timeEpochMs: 0,
+    timeEpochMs: 10,
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
+    uid: '2',
   };
 
   describe('when called with SortOrder.Descending', () => {

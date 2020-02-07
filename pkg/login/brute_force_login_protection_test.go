@@ -50,11 +50,12 @@ func TestLoginAttemptsValidation(t *testing.T) {
 					return nil
 				})
 
-				saveInvalidLoginAttempt(&m.LoginUserQuery{
+				err := saveInvalidLoginAttempt(&m.LoginUserQuery{
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",
 				})
+				So(err, ShouldBeNil)
 
 				Convey("it should dispatch command", func() {
 					So(createLoginAttemptCmd, ShouldNotBeNil)
@@ -103,11 +104,12 @@ func TestLoginAttemptsValidation(t *testing.T) {
 					return nil
 				})
 
-				saveInvalidLoginAttempt(&m.LoginUserQuery{
+				err := saveInvalidLoginAttempt(&m.LoginUserQuery{
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",
 				})
+				So(err, ShouldBeNil)
 
 				Convey("it should not dispatch command", func() {
 					So(createLoginAttemptCmd, ShouldBeNil)

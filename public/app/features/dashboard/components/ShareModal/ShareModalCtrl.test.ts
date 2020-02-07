@@ -45,7 +45,7 @@ describe('ShareModalCtrl', () => {
     // @ts-ignore
     ctx.ctrl = new ShareModalCtrl(
       ctx.scope,
-      {},
+      {} as any,
       ctx.$location,
       {},
       ctx.timeSrv,

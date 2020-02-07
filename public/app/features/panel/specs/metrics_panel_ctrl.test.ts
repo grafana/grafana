@@ -10,6 +10,9 @@ jest.mock('app/core/config', () => {
         name: 'test',
       },
     },
+    config: {
+      appSubUrl: 'test',
+    },
   };
 });
 

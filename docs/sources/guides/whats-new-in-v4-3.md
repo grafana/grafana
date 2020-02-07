@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v4.3"
-description = "Feature & improvement highlights for Grafana v4.3"
+description = "Feature and improvement highlights for Grafana v4.3"
 keywords = ["grafana", "new", "documentation", "4.3.0"]
 type = "docs"
 [menu.docs]
@@ -23,7 +23,7 @@ Grafana v4.3 Beta is now [available for download](https://grafana.com/grafana/do
 - New [MySQL Data Source](http://docs.grafana.org/features/datasources/mysql/) (alpha version to get some early feedback)
 - 60+ small fixes and improvements, most of them contributed by our fantastic community!
 
-Check out the [New Features in v4.3 Dashboard](http://play.grafana.org/dashboard/db/new-features-in-v4-3?orgId=1) on the Grafana Play site for a showcase of these new features.
+Check out the [New Features in v4.3 Dashboard](https://play.grafana.org/dashboard/db/new-features-in-v4-3?orgId=1) on the Grafana Play site for a showcase of these new features.
 
 ## Histogram Support
 
@@ -86,7 +86,7 @@ Changes:
 - **InfluxDB**: influxdb query builder support for ORDER BY and LIMIT (allows TOPN queries) [#6065](https://github.com/grafana/grafana/issues/6065) Support influxdb's SLIMIT Feature [#7232](https://github.com/grafana/grafana/issues/7232) thx [@thuck](https://github.com/thuck)
 - **Graph**: Support auto grid min/max when using log scale [#3090](https://github.com/grafana/grafana/issues/3090), thx [@bigbenhur](https://github.com/bigbenhur)
 - **Prometheus**: Make Prometheus query field a textarea [#7663](https://github.com/grafana/grafana/issues/7663), thx [@hagen1778](https://github.com/hagen1778)
-- **Server**: Support listening on a UNIX socket [#4030](https://github.com/grafana/grafana/issues/4030), thx [@mitjaziv](https://github.com/mitjaziv)
+- **Server**: Support listening on a Unix socket [#4030](https://github.com/grafana/grafana/issues/4030), thx [@mitjaziv](https://github.com/mitjaziv)
 
 Fixes:
 
@@ -97,7 +97,7 @@ Lots more enhancements and fixes can be found in the [Changelog](https://github.
 
 ## Download
 
-Head to the [v4.3 download page](https://grafana.com/grafana/download) for download links & instructions.
+Head to the [v4.3 download page](https://grafana.com/grafana/download) for download links and instructions.
 
 ## Thanks
 

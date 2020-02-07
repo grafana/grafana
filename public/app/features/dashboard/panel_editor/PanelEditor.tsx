@@ -2,8 +2,10 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Tooltip, PanelPlugin, PanelPluginMeta } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { AngularComponent, config } from '@grafana/runtime';
+import { e2e } from '@grafana/e2e';
 
 import { QueriesTab } from './QueriesTab';
 import VisualizationTab from './VisualizationTab';
@@ -12,8 +14,9 @@ import { AlertTab } from '../../alerting/AlertTab';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { StoreState } from '../../../types';
-import { PanelEditorTabIds, PanelEditorTab } from './state/reducers';
-import { refreshPanelEditor, changePanelEditorTab, panelEditorCleanUp } from './state/actions';
+import { panelEditorCleanUp, PanelEditorTab, PanelEditorTabIds } from './state/reducers';
+import { changePanelEditorTab, refreshPanelEditor } from './state/actions';
+import { getActiveTabAndTabs } from './state/selectors';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -108,19 +111,11 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => ({
-  activeTab: state.location.query.tab || PanelEditorTabIds.Queries,
-  tabs: state.panelEditor.tabs,
-});
+export const mapStateToProps = (state: StoreState) => getActiveTabAndTabs(state.location, state.panelEditor);
 
 const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab };
 
-export const PanelEditor = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedPanelEditor)
-);
+export const PanelEditor = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedPanelEditor));
 
 interface TabItemParams {
   tab: PanelEditorTab;
@@ -136,7 +131,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
 
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
-      <a className={tabClasses} aria-label={`${tab.text} tab button`}>
+      <a className={tabClasses} aria-label={e2e.pages.Dashboard.Panels.EditPanel.selectors.tabItems(tab.text)}>
         <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>

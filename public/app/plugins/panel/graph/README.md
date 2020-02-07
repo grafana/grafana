@@ -4,4 +4,4 @@ This is the main Graph panel and is **included** with Grafana. It provides a ver
 
 For full reference documentation:
 
-[http://docs.grafana.org/reference/graph/](http://docs.grafana.org/reference/graph/)
+[https://grafana.com/docs/grafana/latest/features/panels/graph/](https://grafana.com/docs/grafana/latest/features/panels/graph/)

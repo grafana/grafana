@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
-import escapeRegExp from 'lodash/escapeRegExp';
 
 const path = require('path');
 
@@ -120,21 +119,6 @@ const toolkitBuildTaskRunner: TaskRunner<ToolkitBuildOptions> = async () => {
   fs.mkdirSync('./dist/sass');
   await copyFiles();
   await copySassFiles();
-
-  // RYAN HACK HACK HACK
-  // when Dominik is back from vacation, we can find a better way
-  // This moves the index to the root so plugin e2e tests can import them
-  console.warn('hacking an index.js file for toolkit.  Help!');
-  const index = `${distDir}/src/index.js`;
-  fs.readFile(index, 'utf8', (err, data) => {
-    const pattern = 'require("./';
-    const js = data.replace(new RegExp(escapeRegExp(pattern), 'g'), 'require("./src/');
-    fs.writeFile(`${distDir}/index.js`, js, err => {
-      if (err) {
-        throw new Error('Error writing index: ' + err);
-      }
-    });
-  });
 };
 
 export const toolkitBuildTask = new Task<ToolkitBuildOptions>('@grafana/toolkit build', toolkitBuildTaskRunner);

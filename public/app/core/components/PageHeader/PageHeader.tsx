@@ -1,7 +1,8 @@
 import React, { FormEvent } from 'react';
-import classNames from 'classnames';
+import { Tab, TabsBar } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
+import { CoreEvents } from 'app/types';
 
 export interface Props {
   model: NavModel;
@@ -15,7 +16,7 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
   const gotoUrl = (evt: FormEvent) => {
     const element = evt.target as HTMLSelectElement;
     const url = element.options[element.selectedIndex].value;
-    appEvents.emit('location-change', { href: url });
+    appEvents.emit(CoreEvents.locationChange, { href: url });
   };
 
   return (
@@ -44,37 +45,33 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
   );
 };
 
-const Tabs = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
-  return (
-    <ul className={`gf-tabs ${customCss}`}>
-      {main.children.map((tab, idx) => {
-        if (tab.hideFromTabs) {
-          return null;
-        }
-
-        const tabClasses = classNames({
-          'gf-tabs-link': true,
-          active: tab.active,
-        });
-
-        return (
-          <li className="gf-tabs-item" key={tab.url}>
-            <a className={tabClasses} target={tab.target} href={tab.url}>
-              <i className={tab.icon} />
-              {tab.text}
-            </a>
-          </li>
-        );
-      })}
-    </ul>
-  );
-};
-
 const Navigation = ({ main }: { main: NavModelItem }) => {
+  const goToUrl = (index: number) => {
+    main.children.forEach((child, i) => {
+      if (i === index) {
+        appEvents.emit(CoreEvents.locationChange, { href: child.url });
+      }
+    });
+  };
+
   return (
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
-      <Tabs customCss="page-header__tabs" main={main} />
+      <TabsBar className="page-header__tabs" hideBorder={true}>
+        {main.children.map((child, index) => {
+          return (
+            !child.hideFromTabs && (
+              <Tab
+                label={child.text}
+                active={child.active}
+                key={`${child.url}-${index}`}
+                icon={child.icon}
+                onChangeTab={() => goToUrl(index)}
+              />
+            )
+          );
+        })}
+      </TabsBar>
     </nav>
   );
 };

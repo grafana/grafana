@@ -1,7 +1,7 @@
 enable:
 
-run: 
-   deadline: 10m
+run:
+  deadline: 10m
 
 linters:
   disable-all: true
@@ -15,11 +15,11 @@ linters:
     - typecheck
     - unconvert
     - unused
-    - varcheck 
-    - goconst 
-    - staticcheck 
+    - varcheck
+    - goconst
+    - staticcheck
+    - errcheck
 
 linter-settings:
   goconst:
     ignore-tests: true
-  

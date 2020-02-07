@@ -6,6 +6,7 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   $scope.overrideMenu = [];
   $scope.currentOverrides = [];
   $scope.override = $scope.override || {};
+  $scope.colorPickerModel = {};
 
   $scope.addOverrideOption = (name: string, propertyName: string, values: any) => {
     const option = {
@@ -45,22 +46,25 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
     $scope.override['color'] = color;
     $scope.updateCurrentOverrides();
     $scope.ctrl.render();
+
+    // update picker model so that the picker UI will also update
+    $scope.colorPickerModel.series.color = color;
   };
 
   $scope.openColorSelector = (color: any) => {
-    const fakeSeries = { color };
+    $scope.colorPickerModel = {
+      autoClose: true,
+      colorSelected: $scope.colorSelected,
+      series: { color },
+    };
+
     popoverSrv.show({
       element: $element.find('.dropdown')[0],
       position: 'top center',
       openOn: 'click',
-      template: '<series-color-picker-popover color="color" onColorChange="colorSelected" />',
+      template: '<series-color-picker-popover color="series.color" onColorChange="colorSelected" />',
       classNames: 'drop-popover drop-popover--transparent',
-      model: {
-        autoClose: true,
-        colorSelected: $scope.colorSelected,
-        series: fakeSeries,
-        color,
-      },
+      model: $scope.colorPickerModel,
       onClose: () => {
         $scope.ctrl.render();
       },
@@ -97,11 +101,13 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   $scope.addOverrideOption('Bars', 'bars', [true, false]);
   $scope.addOverrideOption('Lines', 'lines', [true, false]);
   $scope.addOverrideOption('Line fill', 'fill', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  $scope.addOverrideOption('Fill gradient', 'fillGradient', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   $scope.addOverrideOption('Line width', 'linewidth', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   $scope.addOverrideOption('Null point mode', 'nullPointMode', ['connected', 'null', 'null as zero']);
   $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());
   $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
   $scope.addOverrideOption('Dashes', 'dashes', [true, false]);
+  $scope.addOverrideOption('Hidden Series', 'hiddenSeries', [true, false]);
   $scope.addOverrideOption('Dash Length', 'dashLength', [
     1,
     2,

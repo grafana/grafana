@@ -1,9 +1,12 @@
 import _ from 'lodash';
+import { dateMath, dateTime } from '@grafana/data';
+import { e2e } from '@grafana/e2e';
 
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './runStreams';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dateTime } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { IScope } from 'angular';
 
 export const defaultPulse: any = {
   timeStep: 60,
@@ -28,11 +31,13 @@ export class TestDataQueryCtrl extends QueryCtrl {
   newPointValue: number;
   newPointTime: any;
   selectedPoint: any;
+  digest: (promise: Promise<any>) => Promise<any>;
 
   showLabels = false;
+  selectors: typeof e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
 
   /** @ngInject */
-  constructor($scope: any, $injector: any) {
+  constructor($scope: IScope, $injector: any) {
     super($scope, $injector);
 
     this.target.scenarioId = this.target.scenarioId || 'random_walk';
@@ -40,6 +45,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
     this.showLabels = showLabelsFor.includes(this.target.scenarioId);
+    this.selectors = e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
   }
 
   getPoints() {
@@ -63,18 +69,21 @@ export class TestDataQueryCtrl extends QueryCtrl {
 
   addPoint() {
     this.target.points = this.target.points || [];
+    this.newPointTime = dateMath.parse(this.newPointTime);
     this.target.points.push([this.newPointValue, this.newPointTime.valueOf()]);
     this.target.points = _.sortBy(this.target.points, p => p[1]);
     this.refresh();
   }
 
   $onInit() {
-    return getBackendSrv()
-      .get('/api/tsdb/testdata/scenarios')
-      .then((res: any) => {
-        this.scenarioList = res;
-        this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
-      });
+    return promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .get('/api/tsdb/testdata/scenarios')
+        .then((res: any) => {
+          this.scenarioList = res;
+          this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
+        })
+    );
   }
 
   scenarioChanged() {

@@ -1,8 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import omit from 'lodash/omit';
 
-import { VizOrientation, PanelModel } from '../../types/panel';
-import { FieldDisplayOptions } from '../../utils/fieldDisplay';
 import {
   fieldReducers,
   Threshold,
@@ -11,6 +9,14 @@ import {
   ReducerID,
   ValueMapping,
   MappingType,
+  VizOrientation,
+  PanelModel,
+  FieldDisplayOptions,
+  ConfigOverrideRule,
+  ThresholdsMode,
+  ThresholdsConfig,
+  validateFieldConfig,
+  FieldColorMode,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -32,7 +38,7 @@ export function sharedSingleStatPanelChangedHandler(
     const options = {
       fieldOptions: {
         defaults: {} as FieldConfig,
-        override: {} as FieldConfig,
+        overrides: [] as ConfigOverrideRule[],
         calcs: [reducer ? reducer.id : ReducerID.mean],
       },
       orientation: VizOrientation.Horizontal,
@@ -68,16 +74,19 @@ export function sharedSingleStatPanelChangedHandler(
           thresholds.push({ value: -Infinity, color });
         }
       }
-      defaults.thresholds = thresholds;
+      defaults.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: thresholds,
+      };
     }
 
     // Convert value mappings
-    const mappings = convertOldAngulrValueMapping(panel);
+    const mappings = convertOldAngularValueMapping(panel);
     if (mappings && mappings.length) {
       defaults.mappings = mappings;
     }
 
-    if (panel.gauge) {
+    if (panel.gauge && panel.gauge.show) {
       defaults.min = panel.gauge.minValue;
       defaults.max = panel.gauge.maxValue;
     }
@@ -109,6 +118,49 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     options = moveThresholdsAndMappingsToField(options);
   }
 
+  if (previousVersion < 6.6) {
+    const { fieldOptions } = options;
+
+    // discard the old `override` options and enter an empty array
+    if (fieldOptions && fieldOptions.override) {
+      const { override, ...rest } = options.fieldOptions;
+      options = {
+        ...options,
+        fieldOptions: {
+          ...rest,
+          overrides: [],
+        },
+      };
+    }
+
+    // Move thresholds to steps
+    let thresholds = fieldOptions?.defaults?.thresholds;
+    if (thresholds) {
+      delete fieldOptions.defaults.thresholds;
+    } else {
+      thresholds = fieldOptions?.thresholds;
+      delete fieldOptions.thresholds;
+    }
+
+    if (thresholds) {
+      fieldOptions.defaults.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: thresholds,
+      };
+    }
+
+    // Migrate color from simple string to a mode
+    const { defaults } = fieldOptions;
+    if (defaults.color && typeof defaults.color === 'string') {
+      defaults.color = {
+        mode: FieldColorMode.Fixed,
+        fixedColor: defaults.color,
+      };
+    }
+
+    validateFieldConfig(defaults);
+  }
+
   return options as SingleStatBaseOptions;
 }
 
@@ -119,7 +171,15 @@ export function moveThresholdsAndMappingsToField(old: any) {
     return old;
   }
 
-  const { mappings, thresholds, ...rest } = old.fieldOptions;
+  const { mappings, ...rest } = old.fieldOptions;
+
+  let thresholds: ThresholdsConfig | undefined = undefined;
+  if (old.thresholds) {
+    thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: migrateOldThresholds(old.thresholds)!,
+    };
+  }
 
   return {
     ...old,
@@ -128,7 +188,7 @@ export function moveThresholdsAndMappingsToField(old: any) {
       defaults: {
         ...fieldOptions.defaults,
         mappings,
-        thresholds: migrateOldThresholds(thresholds),
+        thresholds,
       },
     },
   };
@@ -192,7 +252,7 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
 /**
  * Convert the angular single stat mapping to new react style
  */
-export function convertOldAngulrValueMapping(panel: any): ValueMapping[] {
+export function convertOldAngularValueMapping(panel: any): ValueMapping[] {
   const mappings: ValueMapping[] = [];
 
   // Guess the right type based on options

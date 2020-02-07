@@ -1,10 +1,32 @@
-import { DataFrame, LoadingState, dateTime } from '@grafana/data';
-import { PanelData, DataSourceApi, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
+import {
+  DataFrame,
+  LoadingState,
+  dateTime,
+  PanelData,
+  DataSourceApi,
+  DataQueryRequest,
+  DataQueryResponse,
+} from '@grafana/data';
 import { Subscriber, Observable, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
+import { DashboardModel } from './DashboardModel';
+import { setEchoSrv } from '@grafana/runtime';
+import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
+
+const dashboardModel = new DashboardModel({
+  panels: [{ id: 1, type: 'graph' }],
+});
+
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => {
+    return {
+      getCurrent: () => dashboardModel,
+    };
+  },
+}));
 
 class ScenarioCtx {
   ds: DataSourceApi;
@@ -26,8 +48,8 @@ class ScenarioCtx {
     this.results = [];
     this.request = {
       range: {
-        from: this.toStartTime,
-        to: this.fromStartTime,
+        from: this.fromStartTime,
+        to: this.toStartTime,
         raw: { from: '1h', to: 'now' },
       },
       targets: [
@@ -77,6 +99,7 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
     const ctx = new ScenarioCtx();
 
     beforeEach(() => {
+      setEchoSrv(new Echo());
       ctx.reset();
       return ctx.setupFn();
     });

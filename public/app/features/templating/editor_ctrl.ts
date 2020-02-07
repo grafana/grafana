@@ -1,10 +1,14 @@
 import _ from 'lodash';
+import { AppEvents } from '@grafana/data';
+import { e2e } from '@grafana/e2e';
+
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class VariableEditorCtrl {
   /** @ngInject */
@@ -49,7 +53,18 @@ export class VariableEditorCtrl {
       { value: 6, text: 'Alphabetical (case-insensitive, desc)' },
     ];
 
-    $scope.hideOptions = [{ value: 0, text: '' }, { value: 1, text: 'Label' }, { value: 2, text: 'Variable' }];
+    $scope.hideOptions = [
+      { value: 0, text: '' },
+      { value: 1, text: 'Label' },
+      { value: 2, text: 'Variable' },
+    ];
+
+    $scope.selectors = {
+      ...e2e.pages.Dashboard.Settings.Variables.List.selectors,
+      ...e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors,
+      ...e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors,
+      ...e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.selectors,
+    };
 
     $scope.init = () => {
       $scope.mode = 'list';
@@ -85,13 +100,16 @@ export class VariableEditorCtrl {
       }
 
       if (!$scope.current.name.match(/^\w+$/)) {
-        appEvents.emit('alert-warning', ['Validation', 'Only word and digit characters are allowed in variable names']);
+        appEvents.emit(AppEvents.alertWarning, [
+          'Validation',
+          'Only word and digit characters are allowed in variable names',
+        ]);
         return false;
       }
 
       const sameName: any = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
-        appEvents.emit('alert-warning', ['Validation', 'Variable with the same name already exists']);
+        appEvents.emit(AppEvents.alertWarning, ['Validation', 'Variable with the same name already exists']);
         return false;
       }
 
@@ -100,7 +118,7 @@ export class VariableEditorCtrl {
         _.isString($scope.current.query) &&
         $scope.current.query.match(new RegExp('\\$' + $scope.current.name + '(/| |$)'))
       ) {
-        appEvents.emit('alert-warning', [
+        appEvents.emit(AppEvents.alertWarning, [
           'Validation',
           'Query cannot contain a reference to itself. Variable: $' + $scope.current.name,
         ]);
@@ -114,11 +132,13 @@ export class VariableEditorCtrl {
       $scope.infoText = '';
       if ($scope.current.type === 'adhoc' && $scope.current.datasource !== null) {
         $scope.infoText = 'Adhoc filters are applied automatically to all queries that target this datasource';
-        datasourceSrv.get($scope.current.datasource).then(ds => {
-          if (!ds.getTagKeys) {
-            $scope.infoText = 'This datasource does not support adhoc filters yet.';
-          }
-        });
+        promiseToDigest($scope)(
+          datasourceSrv.get($scope.current.datasource).then(ds => {
+            if (!ds.getTagKeys) {
+              $scope.infoText = 'This datasource does not support adhoc filters yet.';
+            }
+          })
+        );
       }
     };
 
@@ -128,7 +148,10 @@ export class VariableEditorCtrl {
         if (err.data && err.data.message) {
           err.message = err.data.message;
         }
-        appEvents.emit('alert-error', ['Templating', 'Template variables could not be initialized: ' + err.message]);
+        appEvents.emit(AppEvents.alertError, [
+          'Templating',
+          'Template variables could not be initialized: ' + err.message,
+        ]);
       });
     };
 
@@ -143,9 +166,11 @@ export class VariableEditorCtrl {
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
       $scope.validate();
-      datasourceSrv.get($scope.current.datasource).then(ds => {
-        $scope.currentDatasource = ds;
-      });
+      promiseToDigest($scope)(
+        datasourceSrv.get($scope.current.datasource).then(ds => {
+          $scope.currentDatasource = ds;
+        })
+      );
     };
 
     $scope.duplicate = (variable: { getSaveModel: () => void; name: string }) => {
@@ -157,11 +182,13 @@ export class VariableEditorCtrl {
 
     $scope.update = () => {
       if ($scope.isValid()) {
-        $scope.runQuery().then(() => {
-          $scope.reset();
-          $scope.mode = 'list';
-          templateSrv.updateIndex();
-        });
+        promiseToDigest($scope)(
+          $scope.runQuery().then(() => {
+            $scope.reset();
+            $scope.mode = 'list';
+            templateSrv.updateIndex();
+          })
+        );
       }
     };
 
@@ -207,10 +234,12 @@ export class VariableEditorCtrl {
     };
 
     $scope.datasourceChanged = async () => {
-      datasourceSrv.get($scope.current.datasource).then(ds => {
-        $scope.current.query = '';
-        $scope.currentDatasource = ds;
-      });
+      promiseToDigest($scope)(
+        datasourceSrv.get($scope.current.datasource).then(ds => {
+          $scope.current.query = '';
+          $scope.currentDatasource = ds;
+        })
+      );
     };
   }
 }

@@ -3,6 +3,9 @@
     "moduleNameMapper": {
       "someOverride": "somePath"
     },
-    "snapshotSerializers": "serializers"
+    "snapshotSerializers": "serializers",
+    "globalSetup": "path",
+    "globalTeardown": "path",
+    "testEnvironment": "node"
   }
 }

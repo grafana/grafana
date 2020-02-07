@@ -18,3 +18,6 @@ This is a container for cross-platform builds of Grafana. You can run it locally
 * `make attach`
   - Opens bash within the running container
 
+## Build/Publish Docker Image
+In order to build and publish the Grafana build Docker image, execute the following:
+`./build-deploy.sh`.

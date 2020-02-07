@@ -27,7 +27,8 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 		middlewareScenario(t, "Valid API key", func(sc *scenarioContext) {
 			var orgID int64 = 2
-			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			So(err, ShouldBeNil)
 
 			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
 				query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
@@ -54,8 +55,12 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 			var orgID int64 = 2
 
 			bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
+				encoded, err := util.EncodePassword(password, salt)
+				if err != nil {
+					return err
+				}
 				query.User = &models.User{
-					Password: util.EncodePassword(password, salt),
+					Password: encoded,
 					Salt:     salt,
 				}
 				return nil
@@ -85,8 +90,12 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 			authLogin.Init()
 
 			bus.AddHandler("user-query", func(query *models.GetUserByLoginQuery) error {
+				encoded, err := util.EncodePassword(password, salt)
+				if err != nil {
+					return err
+				}
 				query.Result = &models.User{
-					Password: util.EncodePassword(password, salt),
+					Password: encoded,
 					Id:       id,
 					Salt:     salt,
 				}

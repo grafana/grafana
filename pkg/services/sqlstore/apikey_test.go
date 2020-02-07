@@ -91,7 +91,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 			// advance mocked getTime by 1s
 			timeNow()
 
-			query := models.GetApiKeysQuery{OrgId: 1, IncludeInvalid: false}
+			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false}
 			err = GetApiKeys(&query)
 			assert.Nil(t, err)
 
@@ -101,7 +101,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 				}
 			}
 
-			query = models.GetApiKeysQuery{OrgId: 1, IncludeInvalid: true}
+			query = models.GetApiKeysQuery{OrgId: 1, IncludeExpired: true}
 			err = GetApiKeys(&query)
 			assert.Nil(t, err)
 

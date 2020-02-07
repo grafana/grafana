@@ -8,6 +8,8 @@ import appEvents from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 import kbn from 'app/core/utils/kbn';
 import { store } from 'app/store/store';
+import { CoreEvents } from 'app/types';
+import { getBackendSrv } from '@grafana/runtime';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -27,7 +29,7 @@ export class PlaylistSrv {
   isPlaying: boolean;
 
   /** @ngInject */
-  constructor(private $location: any, private $timeout: any, private backendSrv: any) {}
+  constructor(private $location: any, private $timeout: any) {}
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
@@ -86,22 +88,26 @@ export class PlaylistSrv {
     this.storeUnsub = store.subscribe(() => this.storeUpdated());
     this.validPlaylistUrl = this.$location.path();
 
-    appEvents.emit('playlist-started');
+    appEvents.emit(CoreEvents.playlistStarted);
 
-    return this.backendSrv.get(`/api/playlists/${playlistId}`).then((playlist: any) => {
-      return this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then((dashboards: any) => {
-        this.dashboards = dashboards;
-        this.interval = kbn.interval_to_ms(playlist.interval);
-        this.next();
+    return getBackendSrv()
+      .get(`/api/playlists/${playlistId}`)
+      .then((playlist: any) => {
+        return getBackendSrv()
+          .get(`/api/playlists/${playlistId}/dashboards`)
+          .then((dashboards: any) => {
+            this.dashboards = dashboards;
+            this.interval = kbn.interval_to_ms(playlist.interval);
+            this.next();
+          });
       });
-    });
   }
 
   stop() {
     if (this.isPlaying) {
       const queryParams = this.$location.search();
       if (queryParams.kiosk) {
-        appEvents.emit('toggle-kiosk-mode', { exit: true });
+        appEvents.emit(CoreEvents.toggleKioskMode, { exit: true });
       }
     }
 
@@ -116,7 +122,7 @@ export class PlaylistSrv {
       this.$timeout.cancel(this.cancelPromise);
     }
 
-    appEvents.emit('playlist-stopped');
+    appEvents.emit(CoreEvents.playlistStopped);
   }
 }
 

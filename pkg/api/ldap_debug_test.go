@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,9 +18,6 @@ import (
 
 type LDAPMock struct {
 	Results []*models.ExternalUserInfo
-}
-
-type TokenServiceMock struct {
 }
 
 var userSearchResult *models.ExternalUserInfo
@@ -44,10 +41,6 @@ func (m *LDAPMock) Users(logins []string) ([]*models.ExternalUserInfo, error) {
 
 func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConfig, error) {
 	return userSearchResult, userSearchConfig, userSearchError
-}
-
-func (ts *TokenServiceMock) RevokeAllUserTokens(ctx context.Context, userId int64) error {
-	return nil
 }
 
 //***
@@ -122,7 +115,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 				OrgRole: models.ROLE_ADMIN,
 			},
 			{
-				GroupDN: "cn=admins,ou=groups,dc=grafana2,dc=org",
+				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
 				OrgId:   2,
 				OrgRole: models.ROLE_VIEWER,
 			},
@@ -148,7 +141,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 
 	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe")
 
-	require.Equal(t, sc.resp.Code, http.StatusBadRequest)
+	require.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
 	expected := `
 	{
@@ -180,6 +173,11 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
+				OrgId:   1,
+				OrgRole: models.ROLE_ADMIN,
+			},
+			{
+				GroupDN: "cn=admins2,ou=groups,dc=grafana,dc=org",
 				OrgId:   1,
 				OrgRole: models.ROLE_ADMIN,
 			},
@@ -240,6 +238,7 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
+		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
 		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
 		IsGrafanaAdmin: &isAdmin,
 	}
@@ -385,7 +384,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string) *scenarioConte
 	setting.LDAPEnabled = true
 	defer func() { setting.LDAPEnabled = ldap }()
 
-	hs := &HTTPServer{Cfg: setting.NewCfg()}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), AuthTokenService: auth.NewFakeUserAuthTokenService()}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 		sc.context = c
@@ -484,7 +483,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 		return &LDAPMock{}
 	}
 
-	userSearchError = ldap.ErrCouldNotFindUser
+	userSearchError = multildap.ErrDidNotFindUser
 
 	admin := setting.AdminUser
 	setting.AdminUser = "ldap-daniel"
@@ -510,7 +509,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 	expected := `
 	{
-		"error": "Can't find user in LDAP",
+		"error": "Did not find a user",
 		"message": "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled"
 	}
 	`
@@ -522,8 +521,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	getLDAPConfig = func() (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
-
-	tokenService = &TokenServiceMock{}
 
 	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
 		return &LDAPMock{}
@@ -557,11 +554,11 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
 
-	assert.Equal(t, http.StatusOK, sc.resp.Code)
+	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
 	expected := `
 	{
-		"message": "User disabled without any updates in the information"
+		"message": "User not found in LDAP. Disabled the user without updating information"
 	}
 	`
 
