@@ -1,8 +1,8 @@
-import React, { FC, useContext } from 'react';
+import React, { FC } from 'react';
 import RcTimePicker from 'rc-time-picker';
 import { css } from 'emotion';
-import { dateTime, DateTime, dateTimeAsMoment } from '@grafana/data';
-import { ThemeContext } from '../../index';
+import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme, Icon } from '../../index';
 
 interface Props {
   onChange: (value: DateTime) => void;
@@ -11,28 +11,42 @@ interface Props {
   minuteStep?: number;
 }
 
-export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onChange, value }) => {
-  const theme = useContext(ThemeContext);
-
-  const popupStyles = css`
-    .rc-time-picker-panel-select {
-      border-color: ${theme.colors.dark6};
-      font-size: 14px;
-      li {
-        outline-width: 2px;
-        &.rc-time-picker-panel-select-option-selected {
-          background-color: inherit;
-          border: 1px solid ${theme.colors.orange};
-          border-radius: 2px;
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    caretWrapper: css`
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: inline-block;
+      text-align: right;
+      z-index: 1071;
+    `,
+    picker: css`
+      .rc-time-picker-panel-select {
+        border-color: ${theme.colors.dark6};
+        font-size: 14px;
+        li {
+          outline-width: 2px;
+          &.rc-time-picker-panel-select-option-selected {
+            background-color: inherit;
+            border: 1px solid ${theme.colors.orange};
+            border-radius: ${theme.border.radius.sm};
+          }
         }
       }
-    }
-  `;
+    `,
+  };
+});
+
+export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onChange, value }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
 
   return (
     <div>
       <RcTimePicker
-        popupClassName={popupStyles}
+        popupClassName={styles.picker}
         defaultValue={dateTimeAsMoment()}
         onChange={(value: any) => onChange(dateTime(value))}
         allowEmpty={false}
@@ -40,38 +54,20 @@ export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, on
         value={dateTimeAsMoment(value)}
         showHour={showHour}
         minuteStep={minuteStep}
-        inputIcon={<Caret />}
+        inputIcon={<Caret wrapperStyle={styles.caretWrapper} />}
       />
     </div>
   );
 };
 
-const Caret: FC = () => {
-  const theme = useContext(ThemeContext);
+interface CaretProps {
+  wrapperStyle?: string;
+}
 
+const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
   return (
-    <div
-      className={css`
-        position: absolute;
-        height: 100%;
-        right: 8px;
-        display: inline-block;
-        text-align: right;
-        z-index: 1071;
-      `}
-    >
-      <span
-        className={css`
-          border-color: ${theme.colors.white} transparent transparent;
-          border-style: solid;
-          border-width: 4px 4px 2.5px;
-          display: inline-block;
-          position: absolute;
-          top: 50%;
-          right: 2px;
-          margin-top: -2px;
-        `}
-      />
+    <div className={wrapperStyle}>
+      <Icon name="caret-down" />
     </div>
   );
 };
