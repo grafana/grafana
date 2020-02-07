@@ -68,13 +68,7 @@ export class PanelEditor extends PureComponent<Props, State> {
     super(props);
     const { panel } = props;
     //  use Proxy for change detection ?
-    const dirtyPanel = new PanelModel(panel.getSaveModel());
-    console.log(panel.getQueryRunner().getLastResult());
-    const lastResult = panel.getQueryRunner().getLastResult();
-    if (lastResult) {
-      dirtyPanel.getQueryRunner().setLastResult(panel.getQueryRunner().getLastResult());
-    }
-    dirtyPanel.isNewEdit = true;
+    const dirtyPanel = panel.getEditClone();
     this.state = { dirtyPanel };
   }
 

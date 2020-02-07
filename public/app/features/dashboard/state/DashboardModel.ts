@@ -955,7 +955,7 @@ export class DashboardModel {
     for (const panel of this.panels) {
       if (panel.id === panelModel.id) {
         this.panels[index].restoreModel(panelModel.getSaveModel());
-        this.panels[index].refresh();
+        this.panels[index].getQueryRunner().pipeDataToSubject(panelModel.getQueryRunner().getLastResult());
         break;
       }
       index++;

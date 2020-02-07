@@ -347,13 +347,15 @@ export class PanelModel {
     });
   }
 
-  setQueryRunner(runner: PanelQueryRunner) {
-    this.queryRunner = runner;
+  getEditClone() {
+    const clone = new PanelModel(this.getSaveModel());
+    clone.queryRunner = new PanelQueryRunner(this.queryRunner.getLastResult());
+    clone.isNewEdit = true;
+    return clone;
   }
 
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      console.log('creating new query runner');
       this.queryRunner = new PanelQueryRunner();
       this.setTransformations(this.transformations);
     }
