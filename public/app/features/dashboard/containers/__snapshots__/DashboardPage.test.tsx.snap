@@ -66,6 +66,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "y": 0,
             },
             "id": 1,
+            "restoreModel": [Function],
             "targets": Array [
               Object {
                 "refId": "A",
@@ -93,6 +94,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "timezone": "",
         "title": "My dashboard",
         "uid": null,
+        "updatePanel": [Function],
         "version": 0,
       }
     }
@@ -179,6 +181,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "y": 0,
                   },
                   "id": 1,
+                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -206,6 +209,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
+              "updatePanel": [Function],
               "version": 0,
             }
           }
@@ -271,6 +275,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "y": 0,
                   },
                   "id": 1,
+                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -298,6 +303,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
+              "updatePanel": [Function],
               "version": 0,
             }
           }
@@ -395,6 +401,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "y": 0,
             },
             "id": 1,
+            "restoreModel": [Function],
             "targets": Array [
               Object {
                 "refId": "A",
@@ -422,6 +429,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "timezone": "",
         "title": "My dashboard",
         "uid": null,
+        "updatePanel": [Function],
         "version": 0,
       }
     }
@@ -506,6 +514,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   "y": 0,
                 },
                 "id": 1,
+                "restoreModel": [Function],
                 "targets": Array [
                   Object {
                     "refId": "A",
@@ -533,6 +542,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             "timezone": "",
             "title": "My dashboard",
             "uid": null,
+            "updatePanel": [Function],
             "version": 0,
           }
         }
@@ -601,6 +611,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "y": 0,
                   },
                   "id": 1,
+                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -628,6 +639,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
+              "updatePanel": [Function],
               "version": 0,
             }
           }
@@ -693,6 +705,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "y": 0,
                   },
                   "id": 1,
+                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -720,6 +733,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
+              "updatePanel": [Function],
               "version": 0,
             }
           }
