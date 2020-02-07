@@ -146,7 +146,7 @@ export class DashLinksContainerCtrl {
       if (linkDef.type === 'rendering') {
         return Promise.resolve([
           {
-            url: '/render' + $location.url(),
+            url: '/render' + $location.path(),
             urlParams: linkDef.urlParams,
             title: linkDef.title,
             // @ts-ignore
