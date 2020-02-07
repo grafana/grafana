@@ -1,5 +1,6 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import { VizOrientation } from '@grafana/data';
+import { calculatePreferredSizeForChild } from '../../utils/squares';
 
 interface Props<V, D> {
   /**
@@ -21,6 +22,7 @@ interface Props<V, D> {
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;
   itemSpacing?: number;
+  itemAsSquares?: boolean;
 }
 
 interface DefaultProps {
@@ -68,7 +70,8 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   render() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors } = this.props as PropsWithDefaults<V, D>;
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, itemAsSquares } = this
+      .props as PropsWithDefaults<V, D>;
     const { values } = this.state;
     const orientation = this.getOrientation();
 
@@ -88,6 +91,13 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       itemStyles.marginBottom = `${itemSpacing}px`;
       vizWidth = width;
       vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
+    } else if (itemAsSquares) {
+      const side = calculatePreferredSizeForChild(width, height, values.length, itemSpacing || 0);
+      repeaterStyle.flexDirection = 'row';
+      repeaterStyle.flexWrap = 'wrap';
+      repeaterStyle.justifyContent = 'space-between';
+      vizHeight = side;
+      vizWidth = side;
     } else {
       repeaterStyle.flexDirection = 'row';
       repeaterStyle.justifyContent = 'space-between';
@@ -100,6 +110,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     itemStyles.height = `${vizHeight}px`;
 
     const dims = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
+
     return (
       <div style={repeaterStyle}>
         {values.map((value, index) => {
