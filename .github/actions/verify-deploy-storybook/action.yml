@@ -1,4 +1,0 @@
-name: 'Check need for Storybook deployment'
-runs:
-  using: 'node12'
-  main: 'index.js'
