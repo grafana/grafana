@@ -35,11 +35,11 @@ There are two blog posts about authoring a plugin that might also be of interest
 
 ## What languages?
 
-Since everything turns into javascript it's up to you to choose which language you want. That said, it's probably a good idea to choose es6 or typescript since we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo if you choose one of those languages.
+Since everything turns into JavaScript, it's up to you to choose which language you want. That said, it's probably a good idea to choose es6 or TypeScript, because we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo if you choose one of those languages.
 
 ## Buildscript
 
-You can use any build system you like that supports systemjs. All the built content should end up in a folder named ```dist``` and committed to the repository. By committing the dist folder the person who installs your plugin does not have to run any build script. All of our example plugins have build script configured.
+You can use any build system that supports systemjs. All the built content should end up in a folder named ```dist``` and be committed to the repository. By committing the dist folder, the person who installs your plugin does not have to run any build script. All of our example plugins have a build script configured.
 
 ## Keep your plugin up to date
 
@@ -97,11 +97,11 @@ There are three ways that you can start developing a Grafana plugin.
 2. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/installation/configuration). By default this is `/var/lib/grafana/plugins` on Linux systems.
 3. Place your plugin directory anywhere you like and specify it grafana.ini.
 
-We encourage people to setup the full a Grafana environment so that you can get inspiration from the rest of grafana code base.
+We encourage people to set up the full Grafana environment so that you can get inspiration from the rest of the Grafana code base.
 
-When Grafana starts, it will scan the plugin folders and mount every folder that contains a plugin.json file unless
-the folder contains a subfolder named dist. In that case grafana will mount the dist folder instead.
-This makes it possible to have both built and src content in the same plugin git repo.
+When Grafana starts, it scans the plugin folders and mounts every folder that contains a plugin.json file unless
+the folder contains a subfolder named dist. In that case, Grafana mounts the dist folder instead.
+This makes it possible to have both built and src content in the same plugin Git repo.
 
 ## Grafana Events
 
