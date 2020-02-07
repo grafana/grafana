@@ -198,10 +198,6 @@ export class PanelQueryRunner {
   getLastResult(): PanelData {
     return this.lastResult;
   }
-
-  // setLastResult = (data: PanelData) => {
-  //   this.lastResult = { ...data };
-  // };
 }
 
 async function getDataSource(
