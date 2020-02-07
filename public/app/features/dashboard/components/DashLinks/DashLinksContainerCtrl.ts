@@ -1,5 +1,6 @@
 import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
+import config from 'app/core/config';
 import { iconMap } from './DashLinksEditorCtrl';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -146,7 +147,7 @@ export class DashLinksContainerCtrl {
       if (linkDef.type === 'rendering') {
         return Promise.resolve([
           {
-            url: '/render' + $location.path(),
+            url: config.appSubUrl + '/render' + $location.path(),
             urlParams: linkDef.urlParams,
             title: linkDef.title,
             // @ts-ignore
