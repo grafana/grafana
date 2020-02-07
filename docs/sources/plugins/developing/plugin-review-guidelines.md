@@ -57,7 +57,7 @@ A minimal `plugin.json` file:
 }
 ```
 
-- The convention for the plugin id is **[github username/org]-[plugin name]-[datasource|app|panel]** and it has to be unique. Although if org and plugin name are the same then **[plugin name]-[datasource|app|panel]** is also valid. The org **cannot** be `grafana` unless it is a plugin created by the Grafana core team.
+- The convention for the plugin id is **[grafana.com username/org]-[plugin name]-[datasource|app|panel]** and it has to be unique. The org **cannot** be `grafana` unless it is a plugin created by the Grafana core team.
 
     Examples:
 

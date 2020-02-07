@@ -17,8 +17,11 @@ time series data so that any grafana panel can then show it.
 ## Data source development
 
 > Our goal is not to have a very extensive documentation but rather have actual
-> code that people can look at. An example implementation of a data source can be
-> found in this [example data source repo](https://github.com/grafana/simple-json-datasource)
+> code that people can look at. Example implementations of a data source can be
+> found in these repos:
+> - [simple-json-datasource ](https://github.com/grafana/simple-json-datasource)
+> - [simple-datasource ](https://github.com/grafana/simple-datasource)
+> - [simple-json-backend-datasource ](https://github.com/grafana/simple-json-backend-datasource)
 
 To interact with the rest of grafana the plugins module file can export 5 different components.
 
