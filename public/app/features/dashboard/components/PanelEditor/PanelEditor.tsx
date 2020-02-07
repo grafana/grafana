@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, Forms, ConfirmModal, Portal } from '@grafana/ui';
+import { stylesFactory, Forms } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -11,6 +11,8 @@ import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { StoreState } from '../../../../types/store';
 import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
+import { replacePanel } from '../../utils/panel';
+import { panel } from '../../../../../e2e-test/pages/panels/panel';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -55,14 +57,9 @@ interface Props {
 
 interface State {
   dirtyPanel?: PanelModel;
-  showConfirm?: boolean;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
-  state: State = {
-    showConfirm: false,
-  };
-
   constructor(props: Props) {
     super(props);
     const { panel } = props;
@@ -70,32 +67,23 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.state = { dirtyPanel };
   }
 
-  onPanelSave = () => {
+  onPanelUpdate = () => {
     const { dirtyPanel } = this.state;
     const { dashboard } = this.props;
     dashboard.updatePanel(dirtyPanel);
   };
 
   onPanelExit = () => {
-    // if changes detected
-    this.setState({ showConfirm: true });
-
-    // otherwise go back to dashboat=rd
-  };
-
-  onSaveConfirm = () => {
     const { updateLocation } = this.props;
-    this.onPanelSave();
+    this.onPanelUpdate();
     updateLocation({
       query: { editPanel: null },
       partial: true,
     });
   };
 
-  onSaveDiscard = () => {
-    const { updateLocation } = this.props;
-    this.setState({ showConfirm: false });
-    updateLocation({
+  onDiscard = () => {
+    this.props.updateLocation({
       query: { editPanel: null },
       partial: true,
     });
@@ -130,22 +118,12 @@ export class PanelEditor extends PureComponent<Props, State> {
             </div>
           </div>
           <div className={styles.rightPane}>
-            <Forms.Button variant="destructive" onClick={this.onPanelExit}>
-              Exit
+            <Forms.Button variant="destructive" onClick={this.onDiscard}>
+              Discard
             </Forms.Button>
+            <Forms.Button onClick={this.onPanelExit}>Exit</Forms.Button>
           </div>
         </div>
-        <Portal>
-          <ConfirmModal
-            isOpen={this.state.showConfirm}
-            title="Unsaved changes"
-            body="Do you want to save your changes?"
-            confirmText="Save"
-            dismissText="Discard"
-            onConfirm={this.onSaveConfirm}
-            onDismiss={this.onSaveDiscard}
-          />
-        </Portal>
       </>
     );
   }
