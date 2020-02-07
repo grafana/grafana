@@ -66,7 +66,6 @@ export class PanelEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     const { panel } = props;
-    //  use Proxy for change detection ?
     const dirtyPanel = panel.getEditClone();
     this.state = { dirtyPanel };
   }
