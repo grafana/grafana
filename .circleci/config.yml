@@ -1340,7 +1340,7 @@ jobs:
       - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
       - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
-      - run: cd packaging/docker && ./build-enterprise.sh "master"
+      - run: cd packaging/docker && ./build-enterprise.sh "master-${CIRCLE_SHA1}"
       - run:
           name: ci job failed
           command: './scripts/ci-job-failed.sh'
@@ -1366,7 +1366,7 @@ jobs:
       - run: cd packaging/docker && ./build-deploy.sh --ubuntu "master-${CIRCLE_SHA1}"
       - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
-      - run: cd packaging/docker && ./build-enterprise.sh --ubuntu "master"
+      - run: cd packaging/docker && ./build-enterprise.sh --ubuntu "master-${CIRCLE_SHA1}"
       - run:
           name: ci job failed
           command: './scripts/ci-job-failed.sh'

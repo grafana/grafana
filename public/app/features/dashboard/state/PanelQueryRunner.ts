@@ -56,8 +56,11 @@ export class PanelQueryRunner {
   private transformations?: DataTransformerConfig[];
   private lastResult?: PanelData;
 
-  constructor() {
+  constructor(data?: PanelData) {
     this.subject = new ReplaySubject(1);
+    if (data) {
+      this.pipeDataToSubject(data);
+    }
   }
 
   /**
@@ -168,6 +171,11 @@ export class PanelQueryRunner {
       },
     });
   }
+
+  pipeDataToSubject = (data: PanelData) => {
+    this.subject.next(data);
+    this.lastResult = data;
+  };
 
   setTransformations(transformations?: DataTransformerConfig[]) {
     this.transformations = transformations;
