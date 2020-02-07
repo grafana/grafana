@@ -11,8 +11,6 @@ import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { StoreState } from '../../../../types/store';
 import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
-import { replacePanel } from '../../utils/panel';
-import { panel } from '../../../../../e2e-test/pages/panels/panel';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
