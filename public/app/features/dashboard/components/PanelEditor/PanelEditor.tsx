@@ -76,11 +76,27 @@ export class PanelEditor extends PureComponent<Props, State> {
     const dirtyPanel = panel.getEditClone();
     this.setState({ dirtyPanel });
 
+    // Get data from any pending
+    panel
+      .getQueryRunner()
+      .getData()
+      .subscribe({
+        next: (data: PanelData) => {
+          this.setState({ data });
+          // TODO, cancel????
+        },
+      });
+
     // Listen for queries on the new panel
     const queryRunner = dirtyPanel.getQueryRunner();
     this.querySubscription = queryRunner.getData().subscribe({
       next: (data: PanelData) => this.setState({ data }),
     });
+
+    // // TODO -- make sure it is actually needs a query?
+    // if(!queryRunner.getLastResult()) {
+    //   dirtyPanel.refresh();
+    // }
   }
 
   componentWillUnmount() {
