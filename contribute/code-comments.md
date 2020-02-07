@@ -5,7 +5,7 @@
 1. [Package description](#package-description)
 1. [Stability of APIs](#stability-of-apis)
 1. [Deprecation of APIs](#deprecation-of-apis)
-
+1. [Examples for reference](#examples)
 ____
 
  ## Package description
