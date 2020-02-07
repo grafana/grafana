@@ -12,17 +12,22 @@ jobs:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
-        node-version: 10.x
+        node-version: 12.x
+    # - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+    #   with:
+    #     version: '278.0.0'
+    #     service_account_email: ${{ secrets.GKE_EMAIL }}
+    #     service_account_key: ${{ secrets.GKE_KEY }}
+    # - run: gcloud info
     - run: npm install -g yarn
     - run: yarn install --pure-lockfile
-    - name: Verify if storybook should be deployed
-      uses: ./.github/actions/verify-deploy-storybook
-      id: deployVerify
     - name: Build Storybook
-      if: steps.deployVerify.outputs.shouldDeploy == 'true'
       run: yarn storybook:build
+    - name: Set outputs
+        id: vars
+        run: echo ::set-output name=sha_short::$(git rev-parse --short HEAD)
     - name: Deploy Storybook
-      if: steps.deployVerify.outputs.shouldDeploy == 'true'
-      env:
-        NOW_TOKEN: ${{ secrets.NOW_SH }}
-      run: now ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook --token=${NOW_TOKEN} -n grafana-storybook
+      run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${{ steps.vars.outputs.sha_short }}
+      run: ls -l ${GITHUB_WORKSPACE}/packages/grafana-ui/dist
+      # run: gsutil cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook gs://grafana-storybook
+s
