@@ -80,7 +80,7 @@
           <select
             class="gf-form-input"
             ng-model="ctrl.link.type"
-            ng-options="f for f in ['dashboards','link']"
+            ng-options="f for f in ['dashboards','link','rendering']"
           ></select>
         </div>
       </div>
@@ -112,7 +112,15 @@
           <li class="gf-form-label width-8">Url</li>
           <input type="text" ng-model="ctrl.link.url" class="gf-form-input width-20" ng-model-onblur />
         </div>
+      </div>
+      <div ng-show="ctrl.link.type === 'rendering'">
+        <div class="gf-form">
+          <li class="gf-form-label width-8">Url parameters</li>
+          <input type="text" ng-model="ctrl.link.urlParams" class="gf-form-input width-20" ng-model-onblur />
+        </div>
+      </div>
 
+      <div ng-show="ctrl.link.type === 'link' || ctrl.link.type === 'rendering'">
         <div class="gf-form">
           <span class="gf-form-label width-8">Title</span>
           <input type="text" ng-model="ctrl.link.title" class="gf-form-input width-20" ng-model-onblur />

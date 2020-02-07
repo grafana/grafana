@@ -229,7 +229,13 @@ export class LinkSrv implements LinkService {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    return appendQueryToUrl(url, toUrlParams(params));
+    let res = appendQueryToUrl(url, toUrlParams(params));
+
+    if (link.urlParams) {
+      res = appendQueryToUrl(res, link.urlParams);
+    }
+
+    return res;
   }
 
   getAnchorInfo(link: any) {

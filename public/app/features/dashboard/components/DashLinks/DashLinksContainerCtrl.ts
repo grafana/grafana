@@ -1,4 +1,4 @@
-import angular from 'angular';
+import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
 import { iconMap } from './DashLinksEditorCtrl';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
@@ -95,7 +95,13 @@ function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
 
 export class DashLinksContainerCtrl {
   /** @ngInject */
-  constructor($scope: any, $rootScope: GrafanaRootScope, dashboardSrv: DashboardSrv, linkSrv: LinkSrv) {
+  constructor(
+    $scope: any,
+    $rootScope: GrafanaRootScope,
+    $location: ILocationService,
+    dashboardSrv: DashboardSrv,
+    linkSrv: LinkSrv
+  ) {
     const currentDashId = dashboardSrv.getCurrent().id;
 
     function buildLinks(linkDef: any) {
@@ -126,6 +132,22 @@ export class DashLinksContainerCtrl {
         return Promise.resolve([
           {
             url: linkDef.url,
+            title: linkDef.title,
+            // @ts-ignore
+            icon: iconMap[linkDef.icon],
+            tooltip: linkDef.tooltip,
+            target: linkDef.targetBlank ? '_blank' : '_self',
+            keepTime: linkDef.keepTime,
+            includeVars: linkDef.includeVars,
+          },
+        ]);
+      }
+
+      if (linkDef.type === 'rendering') {
+        return Promise.resolve([
+          {
+            url: '/render' + $location.url(),
+            urlParams: linkDef.urlParams,
             title: linkDef.title,
             // @ts-ignore
             icon: iconMap[linkDef.icon],
