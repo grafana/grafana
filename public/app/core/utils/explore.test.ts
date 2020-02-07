@@ -13,7 +13,7 @@ import {
   sortLogsResult,
   buildQueryTransaction,
 } from './explore';
-import { ExploreUrlState, ExploreMode } from 'app/types/explore';
+import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
 import {
   DataQueryError,
@@ -22,6 +22,7 @@ import {
   LogLevel,
   dateTime,
   MutableDataFrame,
+  ExploreMode,
   LogRowModel,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';

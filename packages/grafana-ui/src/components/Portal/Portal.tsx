@@ -1,4 +1,4 @@
-﻿import { PureComponent } from 'react';
+﻿import React, { PureComponent } from 'react';
 import ReactDOM from 'react-dom';
 
 interface Props {
@@ -27,6 +27,10 @@ export class Portal extends PureComponent<Props> {
   }
 
   render() {
-    return ReactDOM.createPortal(this.props.children, this.node);
+    // Default z-index is high to make sure
+    return ReactDOM.createPortal(
+      <div style={{ zIndex: 1051, position: 'relative' }}>{this.props.children}</div>,
+      this.node
+    );
   }
 }

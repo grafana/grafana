@@ -6,9 +6,9 @@ import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
 import { css } from 'emotion';
 
-import { ExploreId, ExploreItemState, ExploreMode } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { ToggleButtonGroup, ToggleButton, Tooltip, ButtonSelect, SetInterval } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, DataQuery } from '@grafana/data';
+import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
