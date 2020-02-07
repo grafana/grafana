@@ -18,6 +18,7 @@ jobs:
     - name: Build Storybook
       run: yarn storybook:build
     - name: Deploy Storybook
-      run: |
-        mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
-        ls -l ${GITHUB_WORKSPACE}/packages/grafana-ui/dist
+      run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
+    - name: test
+      run: ls ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
+
