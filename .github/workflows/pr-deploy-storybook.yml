@@ -13,20 +13,10 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 12.x
-    # - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-    #   with:
-    #     version: '278.0.0'
-    #     service_account_email: ${{ secrets.GKE_EMAIL }}
-    #     service_account_key: ${{ secrets.GKE_KEY }}
-    # - run: gcloud info
     - run: npm install -g yarn
     - run: yarn install --pure-lockfile
     - name: Build Storybook
       run: yarn storybook:build
-    # - name: Set outputs
-    #     id: testing
-    #     run: echo ::set-output name=sha_short::$(git rev-parse --short HEAD)
     - name: Deploy Storybook
       run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
       run: ls -l ${GITHUB_WORKSPACE}/packages/grafana-ui/dist
-      # run: gsutil cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook gs://grafana-storybook
