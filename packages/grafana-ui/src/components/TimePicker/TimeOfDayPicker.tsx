@@ -2,7 +2,8 @@ import React, { FC } from 'react';
 import RcTimePicker from 'rc-time-picker';
 import { css } from 'emotion';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme, Icon } from '../../index';
+import { useTheme, Icon } from '../../index';
+import { stylesFactory } from '../../themes';
 
 interface Props {
   onChange: (value: DateTime) => void;
