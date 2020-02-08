@@ -5,8 +5,9 @@ import { InterpolateFunction } from './panel';
 import { DataFrame } from 'apache-arrow';
 
 export interface DynamicConfigValue {
-  path: string;
+  name: string;
   value: any;
+  custom?: boolean;
 }
 
 export interface ConfigOverrideRule {

@@ -217,7 +217,11 @@ export class PanelEditor extends PureComponent<Props, State> {
     }
 
     if (plugin.editor && panel) {
-      return <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+      return (
+        <div style={{ marginTop: '40px' }}>
+          <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />
+        </div>
+      );
     }
 
     return <div>No editor (angular?)</div>;
@@ -290,11 +294,11 @@ export class PanelEditor extends PureComponent<Props, State> {
                 <QueriesTab panel={panel} dashboard={dashboard} />
               </div>
             </SplitPane>
-            <div className={styles.noScrollPaneContent}>
+            <div className={styles.noScrollPaneContent} style={{ height: '100%' }}>
               <CustomScrollbar>
                 <div style={{ padding: '10px' }}>
                   {this.renderFieldOptions()}
-                  {this.renderVisSettings()}
+                  {/* {this.renderVisSettings()} */}
                 </div>
               </CustomScrollbar>
             </div>

@@ -2,6 +2,9 @@ import React from 'react';
 import { FieldConfigEditorRegistry, FieldConfigSource, DataFrame, FieldPropertyEditorItem } from '@grafana/data';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import Forms from '../Forms';
+import { fieldMatchersUI } from '../MatchersUI/fieldMatchersUI';
+import { FieldMatcherUIRegistryItem } from '../MatchersUI/types';
+import { ButtonSelect } from '../Forms/Select/ButtonSelect';
 
 interface Props {
   config: FieldConfigSource;
@@ -71,12 +74,76 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   }
 
   renderOverrides() {
-    return <div>Override rules</div>;
+    const { config, data, custom } = this.props;
+    let configPropertiesOptions = standardFieldConfigEditorRegistry.list().map(i => ({
+      label: i.name,
+      value: i.id,
+      description: i.description,
+      custom: false,
+    }));
+
+    if (custom) {
+      configPropertiesOptions = configPropertiesOptions.concat(
+        custom.list().map(i => ({
+          label: i.name,
+          value: i.id,
+          description: i.description,
+          custom: true,
+        }))
+      );
+    }
+
+    return (
+      <>
+        {config.overrides.map((o, i) => {
+          const matcherUi = fieldMatchersUI.get(o.matcher.id);
+          return (
+            <div key={`${o.matcher.id}/${i}`}>
+              <Forms.Field label={matcherUi.name} description={matcherUi.description}>
+                <>
+                  <matcherUi.component
+                    matcher={matcherUi.matcher}
+                    data={data}
+                    options={o.matcher.options}
+                    onChange={options => {
+                      console.log(options);
+                    }}
+                  />
+                  <Forms.ButtonSelect icon="plus" placeholder="Set config property" options={configPropertiesOptions} />
+                </>
+              </Forms.Field>
+            </div>
+          );
+        })}
+      </>
+    );
   }
 
-  renderAddOverride() {
-    return <div>Override rules</div>;
-  }
+  renderAddOverride = () => {
+    return (
+      <Forms.ButtonSelect
+        icon="plus"
+        placeholder={'Add override'}
+        value={{ label: 'Add override' }}
+        options={fieldMatchersUI.list().map(i => ({ label: i.name, value: i.id, description: i.description }))}
+        onChange={value => {
+          const { onChange, config } = this.props;
+          onChange({
+            ...config,
+            overrides: [
+              ...config.overrides,
+              {
+                matcher: {
+                  id: value.value!,
+                },
+                properties: [],
+              },
+            ],
+          });
+        }}
+      />
+    );
+  };
 
   render() {
     return (
