@@ -111,6 +111,13 @@ export class PanelEditor extends PureComponent<Props, State> {
 
     return (
       <div className={styles.wrapper}>
+        <div>
+          <Forms.Button onClick={this.onPanelExit}>Exit</Forms.Button>
+          {this.props.panel.title}
+          <Forms.Button variant="destructive" onClick={this.onDiscard}>
+            Discard
+          </Forms.Button>
+        </div>
         <SplitPane
           split="vertical"
           minSize={50}
@@ -142,12 +149,6 @@ export class PanelEditor extends PureComponent<Props, State> {
             </div>
           </SplitPane>
           <div>
-            <div>
-              <Forms.Button variant="destructive" onClick={this.onDiscard}>
-                Discard
-              </Forms.Button>
-              <Forms.Button onClick={this.onPanelExit}>Exit</Forms.Button>
-            </div>
             <div>TODO: viz settings</div>
           </div>
         </SplitPane>
