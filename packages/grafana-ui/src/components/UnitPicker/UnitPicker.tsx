@@ -69,7 +69,7 @@ export class UnitPicker extends PureComponent<Props> {
         allowCustomValue
         formatCreateLabel={formatCreateLabel}
         options={groupOptions as CascaderOption[]}
-        // placeholder="Choose"
+        placeholder="Choose"
         onSelect={this.props.onChange}
       />
     ) : (
