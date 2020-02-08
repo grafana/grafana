@@ -5,16 +5,11 @@ import { Unsubscribable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 // Utils & Services
-/* import { profiler } from 'app/core/profiler'; */
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { getAngularLoader } from '@grafana/runtime';
-/* import config from 'app/core/config'; */
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin, PanelEvents } from '@grafana/data';
-/* import { PANEL_BORDER } from 'app/core/constants'; */
-
-/* const DEFAULT_PLUGIN_ERROR = 'Error in plugin'; */
 
 export interface Props {
   panel: PanelModel;
@@ -58,7 +53,8 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
-    // Subscribe to render events (needed for some things like when title changed from angular general tab)
+    // Subscribe to render event, this is as far as I know only needed for changes to title & transparent
+    // These changes are modified in the model and only way to communicate that change is via this event
     // Need to find another solution for this in tthe future (panel title in redux?)
     panel.events.on(PanelEvents.render, this.onPanelRenderEvent);
   }
@@ -68,7 +64,18 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   };
 
   onPanelDataUpdate(data: PanelData) {
-    this.setState({ data });
+    let errorMessage: string | null = null;
+
+    if (data.state === LoadingState.Error) {
+      const { error } = data;
+      if (error) {
+        if (errorMessage !== error.message) {
+          errorMessage = error.message;
+        }
+      }
+    }
+
+    this.setState({ data, errorMessage });
   }
 
   componentWillUnmount() {

@@ -206,6 +206,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       panelId: panel.id,
       dashboardId: this.dashboard.id,
       timezone: this.dashboard.timezone,
+      timeInfo: this.timeInfo,
       timeRange: this.range,
       widthPixels: this.resolution, // The pixel width
       maxDataPoints: panel.maxDataPoints,
