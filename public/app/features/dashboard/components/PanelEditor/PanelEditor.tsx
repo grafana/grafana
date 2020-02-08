@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
-import { stylesFactory, Forms } from '@grafana/ui';
+import { stylesFactory, Forms, CustomScrollbar } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -175,8 +175,9 @@ export class PanelEditor extends PureComponent<Props, State> {
         </div>
         <SplitPane
           split="vertical"
+          primary="second"
           minSize={50}
-          defaultSize={'80%'}
+          defaultSize={350}
           resizerClassName={styles.resizerV}
           onDragStarted={() => (document.body.style.cursor = 'col-resize')}
           onDragFinished={this.onDragFinished}
@@ -184,11 +185,11 @@ export class PanelEditor extends PureComponent<Props, State> {
           <SplitPane
             split="horizontal"
             minSize={50}
+            primary="second"
             defaultSize="40%"
             resizerClassName={styles.resizerH}
             onDragStarted={() => (document.body.style.cursor = 'row-resize')}
             onDragFinished={this.onDragFinished}
-            primary="second"
           >
             <div className={styles.fill}>
               <DashboardPanel
