@@ -78,6 +78,11 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
 
       /*
        * Mirror some events on panel model to angular controller and vice versa
+       * PanelCtrl event is a different emitter from the PanelModel events
+       * the reason is that we can change visualization type but the PanelModel will stay, so we need a way
+       * to clear the events subscribed to only by the angular code.
+       *
+       * But some events (render & refresh) needs to be forwarded from panel model emitter to the panel ctrl emitter
        */
 
       function onPanelModelRender(payload?: any) {
@@ -106,6 +111,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         panel.events.off(PanelEvents.viewModeChanged, onViewModeChanged);
 
         ctrl.events.emit(PanelEvents.panelTeardown);
+        ctrl.events.removeAllListeners();
 
         if (panelScrollbar) {
           panelScrollbar.dispose();
