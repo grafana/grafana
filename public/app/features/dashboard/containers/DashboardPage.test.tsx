@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
-import { cleanUpDashboard } from '../state/actions';
+import { cleanUpDashboard } from '../state/reducers';
 import {
   mockToolkitActionCreator,
   mockToolkitActionCreatorWithoutPayload,
