@@ -327,7 +327,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={inspectTab} />}
         {editPanel && (
           <Portal>
-            <PanelEditor dashboard={dashboard} panel={editPanel} />
+            <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />
           </Portal>
         )}
       </div>

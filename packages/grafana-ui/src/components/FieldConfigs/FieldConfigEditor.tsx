@@ -1,6 +1,7 @@
 import React from 'react';
 import { FieldConfigEditorRegistry, FieldConfigSource, DataFrame, FieldPropertyEditorItem } from '@grafana/data';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import Forms from '../Forms';
 
 interface Props {
   config: FieldConfigSource;
@@ -12,23 +13,13 @@ interface Props {
   data: DataFrame[];
 }
 
-interface State {
-  //
-}
-
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-export class FieldConfigEditor extends React.PureComponent<Props, State> {
-  styles: any; // ???
-
-  constructor(props: Props) {
-    super(props);
-  }
-
+export class FieldConfigEditor extends React.PureComponent<Props> {
   private setDefaultValue = (name: string, value: any, custom: boolean) => {
     const defaults = { ...this.props.config.defaults };
-    const remove = value === undefined || value === null;
+    const remove = value === undefined || value === null || '';
     if (custom) {
       if (defaults.custom) {
         if (remove) {
@@ -37,28 +28,32 @@ export class FieldConfigEditor extends React.PureComponent<Props, State> {
         } else {
           defaults.custom = { ...defaults.custom, [name]: value };
         }
-      } else if (remove) {
-        delete (defaults as any)[name];
-      } else {
-        (defaults as any)[name] = value;
+      } else if (!remove) {
+        defaults.custom = { [name]: value };
       }
+    } else if (remove) {
+      delete (defaults as any)[name];
+    } else {
+      (defaults as any)[name] = value;
     }
+
     this.props.onChange({
       ...this.props.config,
       defaults,
     });
   };
 
+  componentWillReceiveProps(np: Props) {
+    debugger;
+  }
   renderEditor(item: FieldPropertyEditorItem, custom: boolean) {
     const config = this.props.config.defaults;
     const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
 
     return (
-      <div key={`${item.id}/${custom}`}>
-        <h3>{item.name}</h3>
-        <p>{item.description}</p>
-        <item.editor item={item} value={value} onChange={v => this.setDefaultValue(item.name, v, custom)} />
-      </div>
+      <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
+        <item.editor item={item} value={value} onChange={v => this.setDefaultValue(item.id, v, custom)} />
+      </Forms.Field>
     );
   }
 
@@ -87,6 +82,7 @@ export class FieldConfigEditor extends React.PureComponent<Props, State> {
   }
 
   render() {
+    debugger;
     return (
       <div>
         {this.renderStandardConfigs()}

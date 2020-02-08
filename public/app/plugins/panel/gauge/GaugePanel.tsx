@@ -19,7 +19,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     const { field, display } = value;
 
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)} {...options}>
         {({ openMenu, targetClassName }) => {
           return (
             <Gauge

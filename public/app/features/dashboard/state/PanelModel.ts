@@ -174,7 +174,8 @@ export class PanelModel {
   }
 
   updateOptions(options: object) {
-    this.options = options;
+    this.options = { ...options };
+
     this.render();
   }
 

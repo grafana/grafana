@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { FieldOverrideContext, FieldOverrideEditorProps, FieldConfigEditorProps } from '@grafana/data';
+import Forms from '../Forms';
 
 export interface StringFieldConfigSettings {
   placeholder?: string;
@@ -15,15 +16,13 @@ export const stringOverrideProcessor = (
   return `${value}`;
 };
 
-export class StringValueEditor extends React.PureComponent<FieldConfigEditorProps<string, StringFieldConfigSettings>> {
-  constructor(props: FieldConfigEditorProps<string, StringFieldConfigSettings>) {
-    super(props);
-  }
-
-  render() {
-    return <div>SHOW STRING FIELD EDITOR {this.props.item.name}</div>;
-  }
-}
+export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFieldConfigSettings>> = ({
+  value,
+  onChange,
+}) => {
+  debugger;
+  return <Forms.Input value={value || ''} onChange={e => onChange(e.currentTarget.value)} />;
+};
 
 export class StringOverrideEditor extends React.PureComponent<
   FieldOverrideEditorProps<string, StringFieldConfigSettings>

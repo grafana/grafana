@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { FieldOverrideContext, FieldOverrideEditorProps, FieldConfigEditorProps } from '@grafana/data';
+import Forms from '../Forms';
 
 export interface NumberFieldConfigSettings {
   placeholder?: string;
@@ -22,15 +23,27 @@ export const numberOverrideProcessor = (
   return v;
 };
 
-export class NumberValueEditor extends React.PureComponent<FieldConfigEditorProps<number, NumberFieldConfigSettings>> {
-  constructor(props: FieldConfigEditorProps<number, NumberFieldConfigSettings>) {
-    super(props);
-  }
-
-  render() {
-    return <div>SHOW number FIELD EDITOR {this.props.item.name}</div>;
-  }
-}
+export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFieldConfigSettings>> = ({
+  value,
+  onChange,
+  item,
+}) => {
+  const { settings } = item;
+  return (
+    <Forms.Input
+      value={value}
+      type="number"
+      step={settings.step}
+      onChange={e => {
+        onChange(
+          item.settings.integer
+            ? parseInt(e.currentTarget.value, settings.step || 10)
+            : parseFloat(e.currentTarget.value)
+        );
+      }}
+    />
+  );
+};
 
 export class NumberOverrideEditor extends React.PureComponent<
   FieldOverrideEditorProps<number, NumberFieldConfigSettings>

@@ -288,7 +288,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       'panel-content': true,
       'panel-content--no-padding': plugin.noPadding,
     });
-
+    debugger;
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
