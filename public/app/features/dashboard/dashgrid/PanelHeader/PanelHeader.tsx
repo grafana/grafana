@@ -23,6 +23,7 @@ export interface Props {
   links?: DataLink[];
   error?: string;
   isFullscreen: boolean;
+  isLoading: boolean;
 }
 
 interface ClickCoordinates {
@@ -72,8 +73,16 @@ export class PanelHeader extends Component<Props, State> {
     });
   };
 
+  private renderLoadingState(): JSX.Element {
+    return (
+      <div className="panel-loading">
+        <i className="fa fa-spinner fa-spin" />
+      </div>
+    );
+  }
+
   render() {
-    const { panel, dashboard, timeInfo, scopedVars, error, isFullscreen } = this.props;
+    const { panel, dashboard, timeInfo, scopedVars, error, isFullscreen, isLoading } = this.props;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
     const panelHeaderClass = classNames({
@@ -83,6 +92,7 @@ export class PanelHeader extends Component<Props, State> {
 
     return (
       <>
+        {isLoading && this.renderLoadingState()}
         <div className={panelHeaderClass}>
           <PanelHeaderCorner
             panel={panel}

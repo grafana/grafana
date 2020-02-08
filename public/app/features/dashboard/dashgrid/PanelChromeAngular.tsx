@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+import { Unsubscribable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 // Utils & Services
@@ -33,6 +34,7 @@ export interface State {
 export class PanelChromeAngular extends PureComponent<Props, State> {
   element?: HTMLElement;
   timeSrv: TimeSrv = getTimeSrv();
+  querySubscription: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
@@ -49,10 +51,25 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     const { panel, dashboard } = this.props;
     dashboard.panelInitialized(panel);
     this.loadAngularPanel();
+
+    // subscribe to data events
+    const queryRunner = panel.getQueryRunner();
+    this.querySubscription = queryRunner.getData(false).subscribe({
+      next: (data: PanelData) => this.onPanelDataUpdate(data),
+    });
+  }
+
+  onPanelDataUpdate(data: PanelData) {
+    this.setState({ data });
   }
 
   componentWillUnmount() {
     this.cleanUpAngularPanel();
+
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -88,14 +105,6 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
       panel.setAngularPanel(undefined);
     }
   }
-
-  /* private renderLoadingState(): JSX.Element { */
-  /*   return ( */
-  /*     <div className="panel-loading"> */
-  /*       <i className="fa fa-spinner fa-spin" /> */
-  /*     </div> */
-  /*   ); */
-  /* } */
 
   hasOverlayHeader() {
     const { panel } = this.props;
@@ -143,6 +152,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
+          isLoading={data.state === LoadingState.Loading}
         />
         <div className={panelContentClassNames}>
           <div ref={element => (this.element = element)} className="panel-height-helper" />
