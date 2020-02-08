@@ -42,7 +42,7 @@ const setup = () => {
       namespace: 'ec2',
       metricName: 'CPUUtilization',
       dimensions: { somekey: 'somevalue' },
-      statistics: new Array<string>(),
+      statistics: [],
       period: '',
       expression: '',
       alias: '',
