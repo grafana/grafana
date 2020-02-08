@@ -2,13 +2,13 @@ import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
-import { cleanUpDashboard } from '../state/actions';
+import { cleanUpDashboard } from '../state/reducers';
 import {
   mockToolkitActionCreator,
   mockToolkitActionCreatorWithoutPayload,
   ToolkitActionCreatorWithoutPayloadMockType,
 } from 'test/core/redux/mocks';
-import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
+import { DashboardInitPhase, DashboardRouteInfo, MutableDashboard } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
@@ -271,7 +271,9 @@ describe('DashboardPage', () => {
           edit: false,
         },
       },
-      dashboard: {},
+      dashboard: {
+        getModel: () => null as MutableDashboard,
+      },
     } as any);
 
     expect(props.urlFullscreen).toBe(true);
@@ -287,7 +289,9 @@ describe('DashboardPage', () => {
           edit: 'true',
         },
       },
-      dashboard: {},
+      dashboard: {
+        getModel: () => null as MutableDashboard,
+      },
     } as any);
 
     expect(props.urlFullscreen).toBe(false);
