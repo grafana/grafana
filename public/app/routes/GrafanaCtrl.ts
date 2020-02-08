@@ -15,7 +15,7 @@ import { TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
-import { configureStore } from 'app/store/configureStore';
+// import { configureStore } from 'app/store/configureStore';
 
 import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
 import { updateLocation } from 'app/core/actions';
@@ -31,6 +31,7 @@ import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/D
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 import { AppEvent, AppEvents } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { store } from '../store/store';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -58,7 +59,6 @@ export class GrafanaCtrl {
     setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
 
-    const store = configureStore();
     setLocationSrv({
       update: (opt: LocationUpdate) => {
         store.dispatch(updateLocation(opt));

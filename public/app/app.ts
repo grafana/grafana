@@ -25,13 +25,13 @@ import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import { setLocale, setMarkdownOptions } from '@grafana/data';
+import { setLocale, setMarkdownOptions, AppEvents } from '@grafana/data';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
-// import { checkBrowserCompatibility } from 'app/core/utils/browser';
+import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
-import { registerAngularDirectives } from 'app/core/core';
-import { setupAngularRoutes } from 'app/routes/routes';
+import { registerAngularDirectives, appEvents } from 'app/core/core';
+// import { setupAngularRoutes } from 'app/routes/routes';
 import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
@@ -44,6 +44,7 @@ import ReactDOM from 'react-dom';
 import React from 'react';
 import AppWrapper from './core/navigation/AppWrapper';
 import { LoadDashboardCtrl, NewDashboardCtrl } from './routes/dashboard_loaders';
+import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -86,7 +87,7 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
-
+    configureStore();
     app.config(
       (
         $locationProvider: angular.ILocationProvider,
@@ -158,26 +159,29 @@ export class GrafanaApp {
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    // angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
-    //   _.each(this.preBootModules, (module: angular.IModule) => {
-    //     _.extend(module, this.registerFunctions);
-    //   });
+    const injector = angular.bootstrap(document, this.ngModuleDependencies);
+    injector.invoke(() => {
+      _.each(this.preBootModules, (module: angular.IModule) => {
+        _.extend(module, this.registerFunctions);
+      });
 
-    //   this.preBootModules = null;
+      this.preBootModules = null;
 
-    //   if (!checkBrowserCompatibility()) {
-    //     setTimeout(() => {
-    //       appEvents.emit(AppEvents.alertWarning, [
-    //         'Your browser is not fully supported',
-    //         'A newer browser version is recommended',
-    //       ]);
-    //     }, 1000);
-    //   }
-    // });
+      if (!checkBrowserCompatibility()) {
+        setTimeout(() => {
+          appEvents.emit(AppEvents.alertWarning, [
+            'Your browser is not fully supported',
+            'A newer browser version is recommended',
+          ]);
+        }, 1000);
+      }
 
+      // return () => {}
+    });
     ReactDOM.render(
       React.createElement(AppWrapper, {
         app: this,
+        injector,
       }),
       document.getElementById('reactRoot')
     );

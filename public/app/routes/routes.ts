@@ -17,6 +17,8 @@ import { GrafanaLegacyRouteDescriptor } from '../core/navigation/GrafanaRoute';
 import ServerStats from '../features/admin/ServerStats';
 import FolderSettingsPage from '../features/folders/FolderSettingsPage';
 import FolderPermissions from '../features/folders/FolderPermissions';
+import PluginListPage from '../features/plugins/PluginListPage';
+import PluginPage from '../features/plugins/PluginPage';
 
 const importDashboardPage = () =>
   SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
@@ -160,6 +162,21 @@ export const legacyRoutes: GrafanaLegacyRouteDescriptor[] = [
     controller: 'LoginCtrl',
     pageClass: 'login-page sidemenu-hidden',
     exact: true,
+  },
+];
+
+export const reactRoutes: any[] = [
+  {
+    path: '/plugins/:pluginId',
+    // TODO: fix  dynamic imports
+    // component: () => SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
+    component: PluginPage,
+  },
+  {
+    path: '/plugins',
+    // TODO: fix  dynamic imports
+    // component: () => SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
+    component: PluginListPage,
   },
 ];
 
