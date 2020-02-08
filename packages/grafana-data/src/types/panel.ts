@@ -129,6 +129,7 @@ export interface PanelMenuItem {
   iconClassName?: string;
   onClick?: (event: React.MouseEvent<any>) => void;
   shortcut?: string;
+  href?: string;
   subMenu?: PanelMenuItem[];
 }
 

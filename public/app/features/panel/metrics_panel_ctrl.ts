@@ -3,7 +3,6 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
-import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import {
@@ -248,25 +247,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     } catch (err) {
       this.processDataError(err);
     }
-  }
-
-  async getAdditionalMenuItems() {
-    const items = [];
-    if (this.contextSrv.hasAccessToExplore() && this.datasource) {
-      items.push({
-        text: 'Explore',
-        icon: 'gicon gicon-explore',
-        shortcut: 'x',
-        href: await getExploreUrl({
-          panel: this.panel,
-          panelTargets: this.panel.targets,
-          panelDatasource: this.datasource,
-          datasourceSrv: this.datasourceSrv,
-          timeSrv: this.timeSrv,
-        }),
-      });
-    }
-    return items;
   }
 }
 

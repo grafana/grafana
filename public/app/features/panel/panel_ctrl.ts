@@ -14,7 +14,7 @@ import {
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
-import { AppEvent, PanelEvents, PanelPluginMeta, renderMarkdown } from '@grafana/data';
+import { AppEvent, PanelEvents, PanelPluginMeta, renderMarkdown, AngularPanelMenuItem } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
 import { DashboardModel } from '../dashboard/state';
 
@@ -114,88 +114,8 @@ export class PanelCtrl {
     }
   }
 
-  async getMenu() {
-    const menu = [];
-    menu.push({
-      text: 'View',
-      click: 'ctrl.viewPanel();',
-      icon: 'gicon gicon-viewer',
-      shortcut: 'v',
-    });
-
-    if (this.dashboard.canEditPanel(this.panel)) {
-      menu.push({
-        text: 'Edit',
-        click: 'ctrl.editPanel();',
-        role: 'Editor',
-        icon: 'gicon gicon-editor',
-        shortcut: 'e',
-      });
-    }
-
-    menu.push({
-      text: 'Share',
-      click: 'ctrl.sharePanel();',
-      icon: 'fa fa-fw fa-share',
-      shortcut: 'p s',
-    });
-
-    if (config.featureToggles.inspect) {
-      menu.push({
-        text: 'Inspect',
-        icon: 'fa fa-fw fa-info-circle',
-        click: 'ctrl.inspectPanel();',
-        shortcut: 'p i',
-      });
-    }
-
-    // Additional items from sub-class
-    menu.push(...(await this.getAdditionalMenuItems()));
-
-    const extendedMenu = this.getExtendedMenu();
-    menu.push({
-      text: 'More ...',
-      click: '',
-      icon: 'fa fa-fw fa-cube',
-      submenu: extendedMenu,
-    });
-
-    if (this.dashboard.canEditPanel(this.panel)) {
-      menu.push({ divider: true, role: 'Editor' });
-      menu.push({
-        text: 'Remove',
-        click: 'ctrl.removePanel();',
-        role: 'Editor',
-        icon: 'fa fa-fw fa-trash',
-        shortcut: 'p r',
-      });
-    }
-
-    return menu;
-  }
-
   getExtendedMenu() {
-    const menu = [];
-    if (!this.panel.fullscreen && this.dashboard.canEditPanel(this.panel)) {
-      menu.push({
-        text: 'Duplicate',
-        click: 'ctrl.duplicate()',
-        role: 'Editor',
-        shortcut: 'p d',
-      });
-
-      menu.push({
-        text: 'Copy',
-        click: 'ctrl.copyPanel()',
-        role: 'Editor',
-      });
-    }
-
-    menu.push({
-      text: 'Panel JSON',
-      click: 'ctrl.editPanelJson(); dismiss();',
-    });
-
+    const menu: AngularPanelMenuItem[] = [];
     this.events.emit(PanelEvents.initPanelActions, menu);
     return menu;
   }
