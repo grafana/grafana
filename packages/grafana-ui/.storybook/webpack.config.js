@@ -73,7 +73,7 @@ module.exports = ({ config, mode }) => {
     ],
   });
 
-  config.resolve.extensions.push('.ts', '.tsx', '.mdx', '.svg');
+  config.resolve.extensions.push('.ts', '.tsx', '.mdx');
   config.stats = {
     warningsFilter: /export .* was not found in/,
   };
