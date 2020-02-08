@@ -350,7 +350,6 @@ export class PanelModel {
 
   getEditClone() {
     const clone = new PanelModel(this.getSaveModel());
-
     clone.queryRunner = new PanelQueryRunner();
 
     // This will send the last result to the new runner
