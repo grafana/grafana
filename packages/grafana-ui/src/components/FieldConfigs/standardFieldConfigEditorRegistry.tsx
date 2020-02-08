@@ -8,7 +8,7 @@ import {
   ThresholdsFieldConfigSettings,
 } from './thresholds';
 
-const titleItem: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
   id: 'title', // Match field properties
   name: 'Title',
   description: 'The field title',
@@ -22,7 +22,21 @@ const titleItem: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
   },
 };
 
-const minItem: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  id: 'unit', // Match field properties
+  name: 'Unit',
+  description: 'value units',
+
+  editor: StringValueEditor,
+  override: StringOverrideEditor,
+  process: stringOverrideProcessor,
+
+  settings: {
+    placeholder: 'none',
+  },
+};
+
+const min: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
   id: 'min', // Match field properties
   name: 'Min',
   description: 'Minimum expected value',
@@ -36,7 +50,21 @@ const minItem: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
   },
 };
 
-const decimalsItem: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+const max: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  id: 'max', // Match field properties
+  name: 'Max',
+  description: 'Maximum expected value',
+
+  editor: NumberValueEditor,
+  override: NumberOverrideEditor,
+  process: numberOverrideProcessor,
+
+  settings: {
+    placeholder: 'auto',
+  },
+};
+
+const decimals: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
   id: 'decimals', // Match field properties
   name: 'Decimals',
   description: 'How many decimal places should be shown on a number',
@@ -53,7 +81,7 @@ const decimalsItem: FieldPropertyEditorItem<number, NumberFieldConfigSettings> =
   },
 };
 
-const thresholdItem: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
+const thresholds: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
   id: 'thresholds', // Match field properties
   name: 'Thresholds',
   description: 'Manage Thresholds',
@@ -67,8 +95,22 @@ const thresholdItem: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldCo
   },
 };
 
+const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  id: 'noValue', // Match field properties
+  name: 'No Value',
+  description: 'What to show when there is no value',
+
+  editor: StringValueEditor,
+  override: StringOverrideEditor,
+  process: stringOverrideProcessor,
+
+  settings: {
+    placeholder: '-',
+  },
+};
+
 export const standardFieldConfigEditorRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(
   () => {
-    return [titleItem, minItem, decimalsItem, thresholdItem];
+    return [title, unit, min, max, decimals, thresholds, noValue];
   }
 );
