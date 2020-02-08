@@ -11,7 +11,7 @@ import { getAngularLoader } from '@grafana/runtime';
 /* import config from 'app/core/config'; */
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin } from '@grafana/data';
+import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin, PanelEvents } from '@grafana/data';
 /* import { PANEL_BORDER } from 'app/core/constants'; */
 
 /* const DEFAULT_PLUGIN_ERROR = 'Error in plugin'; */
@@ -57,7 +57,15 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     this.querySubscription = queryRunner.getData(false).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
+
+    // Subscribe to render events (needed for some things like when title changed from angular general tab)
+    // Need to find another solution for this in tthe future (panel title in redux?)
+    panel.events.on(PanelEvents.render, this.onPanelRenderEvent);
   }
+
+  onPanelRenderEvent = () => {
+    this.forceUpdate();
+  };
 
   onPanelDataUpdate(data: PanelData) {
     this.setState({ data });
@@ -70,6 +78,8 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
     }
+
+    this.props.panel.events.off(PanelEvents.render, this.onPanelRenderEvent);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
