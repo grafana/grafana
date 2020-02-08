@@ -383,6 +383,11 @@ export class PanelModel {
       this.queryRunner.destroy();
       this.queryRunner = null;
     }
+
+    if (this.angularPanel) {
+      this.angularPanel.destroy();
+      this.angularPanel = undefined;
+    }
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {

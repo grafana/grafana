@@ -50,8 +50,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard } = this.props;
-    dashboard.panelInitialized(panel);
+    const { panel } = this.props;
     this.loadAngularPanel();
 
     // subscribe to data events
@@ -131,7 +130,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     const { panel } = this.props;
 
     if (panel.angularPanel) {
-      panel.destroy();
+      panel.angularPanel.destroy();
       panel.setAngularPanel(undefined);
     }
   }
