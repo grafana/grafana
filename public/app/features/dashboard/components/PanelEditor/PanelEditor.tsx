@@ -52,6 +52,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         cursor: row-resize;
       `
     ),
+    noScrollPaneContent: css`
+      height: 100%;
+      overflow: hidden;
+    `,
   };
 });
 
@@ -224,8 +228,9 @@ export class PanelEditor extends PureComponent<Props, State> {
         </div>
         <SplitPane
           split="vertical"
+          primary="second"
           minSize={50}
-          defaultSize={'80%'}
+          defaultSize={350}
           resizerClassName={styles.resizerV}
           onDragStarted={() => (document.body.style.cursor = 'col-resize')}
           onDragFinished={this.onDragFinished}
@@ -233,7 +238,8 @@ export class PanelEditor extends PureComponent<Props, State> {
           <SplitPane
             split="horizontal"
             minSize={50}
-            defaultSize={'60%'}
+            primary="second"
+            defaultSize="40%"
             resizerClassName={styles.resizerH}
             onDragStarted={() => (document.body.style.cursor = 'row-resize')}
             onDragFinished={this.onDragFinished}
@@ -248,16 +254,16 @@ export class PanelEditor extends PureComponent<Props, State> {
                 isInView={true}
               />
             </div>
-            <div>
-              <CustomScrollbar>
-                <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
-              </CustomScrollbar>
+            <div className={styles.noScrollPaneContent}>
+              <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
             </div>
           </SplitPane>
-          <div>
+          <div className={styles.noScrollPaneContent}>
             <CustomScrollbar>
-              {this.renderFieldOptions()}
-              {this.renderVisSettings()}
+              <>
+                {this.renderFieldOptions()}
+                {this.renderVisSettings()}
+              </>
             </CustomScrollbar>
           </div>
         </SplitPane>
