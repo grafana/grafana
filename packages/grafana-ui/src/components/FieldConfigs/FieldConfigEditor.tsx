@@ -1,26 +1,8 @@
 import React from 'react';
-import {
-  FieldConfigEditorRegistry,
-  FieldConfigSource,
-  DataFrame,
-  FieldPropertyEditorItem,
-  GrafanaTheme,
-} from '@grafana/data';
+import { FieldConfigEditorRegistry, FieldConfigSource, DataFrame, FieldPropertyEditorItem } from '@grafana/data';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import { stylesFactory } from '../../themes';
-import { css } from 'emotion';
-import { Themeable } from '../../types';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  fieldEditor: css`
-    border: 1px solid red;
-  `,
-  customEditor: css`
-    border: 1px solid green;
-  `,
-}));
-
-interface Props extends Themeable {
+interface Props {
   config: FieldConfigSource;
   custom?: FieldConfigEditorRegistry; // custom fields
   include?: string[]; // Ordered list of which fields should be shown/included
@@ -42,8 +24,6 @@ export class FieldConfigEditor extends React.PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-
-    this.styles = getStyles(this.props.theme);
   }
 
   private setDefaultValue = (name: string, value: any, custom: boolean) => {
@@ -74,15 +54,10 @@ export class FieldConfigEditor extends React.PureComponent<Props, State> {
     const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
 
     return (
-      <div key={`${item.id}/${custom}`} className={custom ? this.styles.customEditor : this.styles.fieldEditor}>
+      <div key={`${item.id}/${custom}`}>
         <h3>{item.name}</h3>
         <p>{item.description}</p>
-        <item.editor
-          theme={this.props.theme}
-          item={item}
-          value={value}
-          onChange={v => this.setDefaultValue(item.name, v, custom)}
-        />
+        <item.editor item={item} value={value} onChange={v => this.setDefaultValue(item.name, v, custom)} />
       </div>
     );
   }

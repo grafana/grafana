@@ -164,7 +164,6 @@ export class PanelEditor extends PureComponent<Props, State> {
     return (
       <div>
         <FieldConfigEditor
-          theme={config.theme}
           config={fieldOptions}
           custom={plugin.customFieldConfigs}
           onChange={this.onFieldConfigsChange}

@@ -29,7 +29,7 @@ export class ThresholdsValueEditor extends React.PureComponent<
   }
 
   render() {
-    const { theme, onChange } = this.props;
+    const { onChange } = this.props;
     let value = this.props.value;
     if (!value) {
       value = {
@@ -42,7 +42,7 @@ export class ThresholdsValueEditor extends React.PureComponent<
       };
     }
 
-    return <ThresholdsEditor showAlphaUI={true} thresholds={value} onChange={onChange} theme={theme} />;
+    return <ThresholdsEditor showAlphaUI={true} thresholds={value} onChange={onChange} />;
   }
 }
 
