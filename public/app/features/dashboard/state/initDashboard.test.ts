@@ -108,12 +108,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         location: {
           query: {},
         },
-        dashboard: {
-          modifiedQueries: {
-            panelId: undefined,
-            queries: undefined,
-          },
-        },
+        dashboard: {},
         user: {},
         explore: {
           left: {

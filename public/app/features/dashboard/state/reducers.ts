@@ -23,76 +23,45 @@ const dashbardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
-    loadDashboardPermissions: (state, action: PayloadAction<DashboardAclDTO[]>): DashboardState => {
-      return {
-        ...state,
-        permissions: processAclItems(action.payload),
+    loadDashboardPermissions: (state, action: PayloadAction<DashboardAclDTO[]>) => {
+      state.permissions = processAclItems(action.payload);
+    },
+    dashboardInitFetching: (state, action: PayloadAction) => {
+      state.initPhase = DashboardInitPhase.Fetching;
+    },
+    dashboardInitServices: (state, action: PayloadAction) => {
+      state.initPhase = DashboardInitPhase.Services;
+    },
+    dashboardInitSlow: (state, action: PayloadAction) => {
+      state.isInitSlow = true;
+    },
+    dashboardInitCompleted: (state, action: PayloadAction<MutableDashboard>) => {
+      state.getModel = () => action.payload;
+      state.initPhase = DashboardInitPhase.Completed;
+      state.isInitSlow = false;
+    },
+    dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
+      state.initPhase = DashboardInitPhase.Failed;
+      state.initError = action.payload;
+      state.getModel = () => {
+        return new DashboardModel({ title: 'Dashboard init failed' }, { canSave: false, canEdit: false });
       };
     },
-    dashboardInitFetching: (state, action: PayloadAction): DashboardState => {
-      return {
-        ...state,
-        initPhase: DashboardInitPhase.Fetching,
-      };
-    },
-    dashboardInitServices: (state, action: PayloadAction): DashboardState => {
-      return {
-        ...state,
-        initPhase: DashboardInitPhase.Services,
-      };
-    },
-    dashboardInitSlow: (state, action: PayloadAction): DashboardState => {
-      return {
-        ...state,
-        isInitSlow: true,
-      };
-    },
-    dashboardInitCompleted: (state, action: PayloadAction<MutableDashboard>): DashboardState => {
-      return {
-        ...state,
-        getModel: () => action.payload,
-        initPhase: DashboardInitPhase.Completed,
-        isInitSlow: false,
-      };
-    },
-    dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>): DashboardState => {
-      const model = new DashboardModel({ title: 'Dashboard init failed' }, { canSave: false, canEdit: false });
-
-      return {
-        ...state,
-        initPhase: DashboardInitPhase.Failed,
-        isInitSlow: false,
-        initError: action.payload,
-        getModel: () => model,
-      };
-    },
-    cleanUpDashboard: (state, action: PayloadAction): DashboardState => {
-      if (state.getModel) {
+    cleanUpDashboard: (state, action: PayloadAction) => {
+      if (state.getModel()) {
         state.getModel().destroy();
+        state.getModel = () => null;
       }
 
-      return {
-        ...state,
-        initPhase: DashboardInitPhase.NotStarted,
-        getModel: () => null,
-        isInitSlow: false,
-        initError: null,
-      };
+      state.initPhase = DashboardInitPhase.NotStarted;
+      state.isInitSlow = false;
+      state.initError = null;
     },
-    setDashboardQueriesToUpdateOnLoad: (
-      state,
-      action: PayloadAction<QueriesToUpdateOnDashboardLoad>
-    ): DashboardState => {
-      return {
-        ...state,
-        modifiedQueries: action.payload,
-      };
+    setDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction<QueriesToUpdateOnDashboardLoad>) => {
+      state.modifiedQueries = action.payload;
     },
-    clearDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction): DashboardState => {
-      return {
-        ...state,
-        modifiedQueries: null,
-      };
+    clearDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction) => {
+      state.modifiedQueries = null;
     },
   },
 });
