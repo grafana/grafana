@@ -59,10 +59,8 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       });
 
       function onPanelSizeChanged() {
-        console.log('onPanelSizeChanged');
         $timeout(() => {
           resizeScrollableContent();
-          console.log('onPanelSizeChanged.render');
           ctrl.render();
         });
       }
