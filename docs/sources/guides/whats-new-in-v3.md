@@ -128,7 +128,7 @@ And here's the new look for Dashboard settings:
 
 <img src="/img/docs/v3/dashboard_settings.png">
 
-Check out the <a href="http://play.grafana.org" target="_blank">Play
+Check out the <a href="https://play.grafana.org" target="_blank">Play
 Site</a> to get a feel for some of the UI changes.
 
 ## Improved Annotations

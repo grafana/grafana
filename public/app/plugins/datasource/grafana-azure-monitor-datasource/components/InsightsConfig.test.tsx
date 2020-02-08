@@ -35,6 +35,7 @@ const setup = (propOverrides?: object) => {
       readOnly: false,
     },
     onUpdateOption: jest.fn(),
+    onUpdateSecureOption: jest.fn(),
     onResetOptionKey: jest.fn(),
   };
 

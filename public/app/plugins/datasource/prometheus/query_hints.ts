@@ -1,12 +1,13 @@
 import _ from 'lodash';
 import { QueryHint, QueryFix } from '@grafana/data';
+import { PrometheusDatasource } from './datasource';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
  */
 export const SUM_HINT_THRESHOLD_COUNT = 20;
 
-export function getQueryHints(query: string, series?: any[], datasource?: any): QueryHint[] | null {
+export function getQueryHints(query: string, series?: any[], datasource?: PrometheusDatasource): QueryHint[] | null {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
@@ -26,44 +27,49 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
     });
   }
 
-  // Check for monotonicity on series (table results are being ignored here)
-  if (series && series.length > 0) {
-    series.forEach(s => {
-      const datapoints: number[][] = s.datapoints || s.rows || [];
-      if (query.indexOf('rate(') === -1 && datapoints.length > 1) {
-        let increasing = false;
-        const nonNullData = datapoints.filter(dp => dp[0] !== null);
-        const monotonic = nonNullData.every((dp, index) => {
-          if (index === 0) {
+  // Check for need of rate()
+  if (query.indexOf('rate(') === -1 && query.indexOf('increase(') === -1) {
+    // Use metric metadata for exact types
+    const nameMatch = query.match(/\b(\w+_(total|sum|count))\b/);
+    let counterNameMetric = nameMatch ? nameMatch[1] : '';
+    const metricsMetadata = datasource?.languageProvider?.metricsMetadata;
+    let certain = false;
+    if (_.size(metricsMetadata) > 0) {
+      counterNameMetric = Object.keys(metricsMetadata).find(metricName => {
+        // Only considering first type information, could be non-deterministic
+        const metadata = metricsMetadata[metricName][0];
+        if (metadata.type.toLowerCase() === 'counter') {
+          const metricRegex = new RegExp(`\\b${metricName}\\b`);
+          if (query.match(metricRegex)) {
+            certain = true;
             return true;
           }
-          increasing = increasing || dp[0] > nonNullData[index - 1][0];
-          // monotonic?
-          return dp[0] >= nonNullData[index - 1][0];
-        });
-        if (increasing && monotonic) {
-          const simpleMetric = query.trim().match(/^\w+$/);
-          let label = 'Time series is monotonically increasing.';
-          let fix: QueryFix;
-          if (simpleMetric) {
-            fix = {
-              label: 'Fix by adding rate().',
-              action: {
-                type: 'ADD_RATE',
-                query,
-              },
-            } as QueryFix;
-          } else {
-            label = `${label} Try applying a rate() function.`;
-          }
-          hints.push({
-            type: 'APPLY_RATE',
-            label,
-            fix,
-          });
         }
+        return false;
+      });
+    }
+    if (counterNameMetric) {
+      const simpleMetric = query.trim().match(/^\w+$/);
+      const verb = certain ? 'is' : 'looks like';
+      let label = `Metric ${counterNameMetric} ${verb} a counter.`;
+      let fix: QueryFix;
+      if (simpleMetric) {
+        fix = {
+          label: 'Fix by adding rate().',
+          action: {
+            type: 'ADD_RATE',
+            query,
+          },
+        } as QueryFix;
+      } else {
+        label = `${label} Try applying a rate() function.`;
       }
-    });
+      hints.push({
+        type: 'APPLY_RATE',
+        label,
+        fix,
+      });
+    }
   }
 
   // Check for recording rules expansion

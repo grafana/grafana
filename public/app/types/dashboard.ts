@@ -1,4 +1,5 @@
 import { DashboardAcl } from './acl';
+import { DataQuery } from '@grafana/data';
 
 export interface MutableDashboard {
   title: string;
@@ -71,4 +72,8 @@ export interface DashboardState {
   isInitSlow: boolean;
   initError?: DashboardInitError;
   permissions: DashboardAcl[] | null;
+  modifiedQueries?: {
+    panelId: number;
+    queries: DataQuery[];
+  };
 }

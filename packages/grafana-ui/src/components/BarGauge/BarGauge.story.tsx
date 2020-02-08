@@ -1,7 +1,7 @@
 import { storiesOf } from '@storybook/react';
 import { number, text } from '@storybook/addon-knobs';
 import { BarGauge, Props, BarGaugeDisplayMode } from './BarGauge';
-import { VizOrientation } from '@grafana/data';
+import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -35,6 +35,23 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
       threshold2Value,
     } = getKnobs();
 
+    const field: Partial<Field> = {
+      type: FieldType.number,
+      config: {
+        min: minValue,
+        max: maxValue,
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: threshold1Value, color: threshold1Color },
+            { value: threshold2Value, color: threshold2Color },
+          ],
+        },
+      },
+    };
+    field.display = getDisplayProcessor({ field });
+
     const props: Props = {
       theme: {} as any,
       width: 300,
@@ -44,15 +61,10 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
         title: title,
         numeric: value,
       },
-      minValue: minValue,
-      maxValue: maxValue,
       orientation: VizOrientation.Vertical,
       displayMode: BarGaugeDisplayMode.Basic,
-      thresholds: [
-        { value: -Infinity, color: 'green' },
-        { value: threshold1Value, color: threshold1Color },
-        { value: threshold2Value, color: threshold2Color },
-      ],
+      field: field.config!,
+      display: field.display!,
     };
 
     Object.assign(props, overrides);

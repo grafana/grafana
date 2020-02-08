@@ -1,7 +1,7 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import SelectOption from './SelectOption';
-import { OptionProps } from 'react-select/lib/components/Option';
+import { OptionProps } from 'react-select/src/components/Option';
 
 // @ts-ignore
 const model: OptionProps<any> = {

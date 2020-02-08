@@ -1,90 +1,122 @@
-import { DashboardState, DashboardInitPhase } from 'app/types';
+import { Action } from 'redux';
+import { DashboardInitPhase, DashboardState } from 'app/types';
 import {
-  loadDashboardPermissions,
-  dashboardInitFetching,
-  dashboardInitSlow,
-  dashboardInitServices,
-  dashboardInitFailed,
-  dashboardInitCompleted,
   cleanUpDashboard,
+  dashboardInitCompleted,
+  dashboardInitFailed,
+  dashboardInitFetching,
+  dashboardInitServices,
+  dashboardInitSlow,
+  loadDashboardPermissions,
+  setDashboardQueriesToUpdate,
+  clearDashboardQueriesToUpdate,
 } from './actions';
-import { reducerFactory } from 'app/core/redux';
 import { processAclItems } from 'app/core/utils/acl';
-import { DashboardModel } from './DashboardModel';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
+import { DashboardModel } from './DashboardModel';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
   isInitSlow: false,
   model: null,
   permissions: [],
+  modifiedQueries: {
+    panelId: undefined,
+    queries: undefined,
+  },
 };
 
-export const dashboardReducer = reducerFactory(initialState)
-  .addMapper({
-    filter: loadDashboardPermissions,
-    mapper: (state, action) => ({
+// Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
+// ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
+// because the state would become frozen and during run time we would get errors because Angular would try to mutate
+// the frozen state.
+// https://github.com/reduxjs/redux-toolkit/issues/242
+export const dashboardReducer = (state: DashboardState = initialState, action: Action<unknown>): DashboardState => {
+  if (loadDashboardPermissions.match(action)) {
+    return {
       ...state,
       permissions: processAclItems(action.payload),
-    }),
-  })
-  .addMapper({
-    filter: dashboardInitFetching,
-    mapper: state => ({
+    };
+  }
+
+  if (dashboardInitFetching.match(action)) {
+    return {
       ...state,
       initPhase: DashboardInitPhase.Fetching,
-    }),
-  })
-  .addMapper({
-    filter: dashboardInitServices,
-    mapper: state => ({
+    };
+  }
+
+  if (dashboardInitServices.match(action)) {
+    return {
       ...state,
       initPhase: DashboardInitPhase.Services,
-    }),
-  })
-  .addMapper({
-    filter: dashboardInitSlow,
-    mapper: state => ({
+    };
+  }
+
+  if (dashboardInitSlow.match(action)) {
+    return {
       ...state,
       isInitSlow: true,
-    }),
-  })
-  .addMapper({
-    filter: dashboardInitFailed,
-    mapper: (state, action) => ({
+    };
+  }
+
+  if (dashboardInitFailed.match(action)) {
+    return {
       ...state,
       initPhase: DashboardInitPhase.Failed,
       isInitSlow: false,
       initError: action.payload,
       model: new DashboardModel({ title: 'Dashboard init failed' }, { canSave: false, canEdit: false }),
-    }),
-  })
-  .addMapper({
-    filter: dashboardInitCompleted,
-    mapper: (state, action) => ({
+    };
+  }
+
+  if (dashboardInitCompleted.match(action)) {
+    return {
       ...state,
       initPhase: DashboardInitPhase.Completed,
       model: action.payload,
       isInitSlow: false,
-    }),
-  })
-  .addMapper({
-    filter: cleanUpDashboard,
-    mapper: (state, action) => {
-      // Destroy current DashboardModel
-      // Very important as this removes all dashboard event listeners
-      state.model.destroy();
+    };
+  }
 
-      return {
-        ...state,
-        initPhase: DashboardInitPhase.NotStarted,
-        model: null,
-        isInitSlow: false,
-        initError: null,
-      };
-    },
-  })
-  .create();
+  if (cleanUpDashboard.match(action)) {
+    // Destroy current DashboardModel
+    // Very important as this removes all dashboard event listeners
+    state.model.destroy();
+
+    return {
+      ...state,
+      initPhase: DashboardInitPhase.NotStarted,
+      model: null,
+      isInitSlow: false,
+      initError: null,
+    };
+  }
+
+  if (setDashboardQueriesToUpdate.match(action)) {
+    const { panelId, queries } = action.payload;
+
+    return {
+      ...state,
+      modifiedQueries: {
+        panelId,
+        queries,
+      },
+    };
+  }
+
+  if (clearDashboardQueriesToUpdate.match(action)) {
+    return {
+      ...state,
+      modifiedQueries: {
+        panelId: undefined,
+        queries: undefined,
+      },
+    };
+  }
+
+  return state;
+};
 
 export default {
   dashboard: dashboardReducer,

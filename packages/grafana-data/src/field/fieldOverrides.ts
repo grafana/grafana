@@ -8,12 +8,17 @@ import {
   Field,
   FieldType,
   FieldConfigSource,
+  ThresholdsMode,
+  FieldColorMode,
+  ColorScheme,
+  TimeZone,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
+import { guessFieldTypeForField } from '../dataframe';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -30,6 +35,7 @@ export interface ApplyFieldOverrideOptions {
   fieldOptions: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme;
+  timeZone?: TimeZone;
   autoMinMax?: boolean;
 }
 
@@ -112,6 +118,32 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
+      // Try harder to set a real value that is not 'other'
+      let type = field.type;
+      if (!type || type === FieldType.other) {
+        const t = guessFieldTypeForField(field);
+        if (t) {
+          type = t;
+        }
+      }
+
+      // Some units have an implied range
+      if (config.unit === 'percent') {
+        if (!isNumber(config.min)) {
+          config.min = 0;
+        }
+        if (!isNumber(config.max)) {
+          config.max = 100;
+        }
+      } else if (config.unit === 'percentunit') {
+        if (!isNumber(config.min)) {
+          config.min = 0;
+        }
+        if (!isNumber(config.max)) {
+          config.max = 1;
+        }
+      }
+
       // Set the Min/Max value automatically
       if (options.autoMinMax && field.type === FieldType.number) {
         if (!isNumber(config.min) || !isNumber(config.max)) {
@@ -127,19 +159,19 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
-      return {
+      // Overwrite the configs
+      const f: Field = {
         ...field,
-
-        // Overwrite the configs
         config,
-
-        // Set the display processor
-        display: getDisplayProcessor({
-          type: field.type,
-          config: config,
-          theme: options.theme,
-        }),
+        type,
       };
+      // and set the display processor using it
+      f.display = getDisplayProcessor({
+        field: f,
+        theme: options.theme,
+        timeZone: options.timeZone,
+      });
+      return f;
     });
 
     return {
@@ -206,9 +238,47 @@ export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig)
     }
   }
 
-  // First value is always -Infinity
-  if (config.thresholds && config.thresholds.length) {
-    config.thresholds[0].value = -Infinity;
+  validateFieldConfig(config);
+}
+
+/**
+ * This checks that all options on FieldConfig make sense.  It mutates any value that needs
+ * fixed.  In particular this makes sure that the first threshold value is -Infinity (not valid in JSON)
+ */
+export function validateFieldConfig(config: FieldConfig) {
+  const { thresholds } = config;
+  if (thresholds) {
+    if (!thresholds.mode) {
+      thresholds.mode = ThresholdsMode.Absolute;
+    }
+    if (!thresholds.steps) {
+      thresholds.steps = [];
+    } else if (thresholds.steps.length) {
+      // First value is always -Infinity
+      // JSON saves it as null
+      thresholds.steps[0].value = -Infinity;
+    }
+  }
+
+  if (!config.color) {
+    if (thresholds) {
+      config.color = {
+        mode: FieldColorMode.Thresholds,
+      };
+    }
+    // No Color settings
+  } else if (!config.color.mode) {
+    // Without a mode, skip color altogether
+    delete config.color;
+  } else {
+    const { color } = config;
+    if (color.mode === FieldColorMode.Scheme) {
+      if (!color.schemeName) {
+        color.schemeName = ColorScheme.BrBG;
+      }
+    } else {
+      delete color.schemeName;
+    }
   }
 
   // Verify that max > min (swap if necessary)

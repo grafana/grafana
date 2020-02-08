@@ -1,7 +1,8 @@
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { selectThemeVariant, stylesFactory } from '../../themes';
-import { StyleDeps } from './types';
+import { StyleDeps, ButtonSize } from './types';
+import { GrafanaTheme } from '@grafana/data';
 
 const buttonVariantStyles = (
   from: string,
@@ -24,39 +25,11 @@ const buttonVariantStyles = (
   }
 `;
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleDeps) => {
+export const getButtonStyles = stylesFactory(({ theme, size, variant, textAndIcon }: StyleDeps) => {
   const borderRadius = theme.border.radius.sm;
-  let padding,
-    background,
-    fontSize,
-    height,
-    fontWeight = theme.typography.weight.semibold;
+  const { padding, fontSize, height, fontWeight } = calculateMeasures(theme, size, !!textAndIcon);
 
-  switch (size) {
-    case 'sm':
-      padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
-      fontSize = theme.typography.size.sm;
-      height = theme.height.sm;
-      break;
-
-    case 'md':
-      padding = `${theme.spacing.sm} ${theme.spacing.md}`;
-      fontSize = theme.typography.size.md;
-      height = theme.height.md;
-      break;
-
-    case 'lg':
-      padding = `${theme.spacing.md} ${theme.spacing.lg}`;
-      fontSize = theme.typography.size.lg;
-      fontWeight = theme.typography.weight.regular;
-      height = theme.height.lg;
-      break;
-
-    default:
-      padding = `${theme.spacing.sm} ${theme.spacing.md}`;
-      fontSize = theme.typography.size.base;
-      height = theme.height.md;
-  }
+  let background;
 
   switch (variant) {
     case 'primary':
@@ -94,6 +67,13 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleDep
         background: transparent;
       `;
       break;
+
+    case 'link':
+      background = css`
+        ${buttonVariantStyles('', '', theme.colors.linkExternal, 'rgba(0, 0, 0, 0.1)', true)};
+        background: transparent;
+      `;
+      break;
   }
 
   return {
@@ -122,8 +102,62 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleDep
     `,
     iconWrap: css`
       label: button-icon-wrap;
-      display: flex;
-      align-items: center;
+      & + * {
+        margin-left: ${theme.spacing.sm};
+      }
     `,
   };
 });
+
+type ButtonMeasures = {
+  padding: string;
+  fontSize: string;
+  height: string;
+  fontWeight: number;
+};
+
+const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: boolean): ButtonMeasures => {
+  switch (size) {
+    case 'sm': {
+      return {
+        padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+        fontSize: theme.typography.size.sm,
+        height: theme.height.sm,
+        fontWeight: theme.typography.weight.semibold,
+      };
+    }
+
+    case 'md': {
+      const leftPadding = textAndIcon ? theme.spacing.sm : theme.spacing.md;
+
+      return {
+        padding: `${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${leftPadding}`,
+        fontSize: theme.typography.size.md,
+        height: theme.height.md,
+        fontWeight: theme.typography.weight.semibold,
+      };
+    }
+
+    case 'lg': {
+      const leftPadding = textAndIcon ? theme.spacing.md : theme.spacing.lg;
+
+      return {
+        padding: `${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} ${leftPadding}`,
+        fontSize: theme.typography.size.lg,
+        height: theme.height.lg,
+        fontWeight: theme.typography.weight.regular,
+      };
+    }
+
+    default: {
+      const leftPadding = textAndIcon ? theme.spacing.sm : theme.spacing.md;
+
+      return {
+        padding: `${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${leftPadding}`,
+        fontSize: theme.typography.size.base,
+        height: theme.height.md,
+        fontWeight: theme.typography.weight.regular,
+      };
+    }
+  }
+};

@@ -40,14 +40,12 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 ## Rule Config
 
-
-
-Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
-panels as well in a future release.
+Currently only the graph panel supports alert rules.
 
 ### Name and Evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
+**Note:** You can set a minimum interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Check out the [[configuration]]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) page for more information.
 
 ### For
 

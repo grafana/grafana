@@ -31,7 +31,7 @@ const setup = () => {
     ),
   ]);
 
-  const datasource = new CloudWatchDatasource(instanceSettings, {} as any, templateSrv as any, {} as any);
+  const datasource = new CloudWatchDatasource(instanceSettings, templateSrv as any, {} as any);
   datasource.metricFindQuery = async () => [{ value: 'test', label: 'test' }];
 
   const props: Props = {
@@ -42,7 +42,7 @@ const setup = () => {
       namespace: 'ec2',
       metricName: 'CPUUtilization',
       dimensions: { somekey: 'somevalue' },
-      statistics: new Array<string>(),
+      statistics: [],
       period: '',
       expression: '',
       alias: '',

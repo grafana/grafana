@@ -13,18 +13,24 @@ import {
   DataLinksEditor,
   Switch,
 } from '@grafana/ui';
-import { FieldDisplayOptions, FieldConfig, DataLink, PanelEditorProps } from '@grafana/data';
-
-import { Threshold, ValueMapping } from '@grafana/data';
+import {
+  ThresholdsConfig,
+  ValueMapping,
+  FieldDisplayOptions,
+  FieldConfig,
+  DataLink,
+  PanelEditorProps,
+} from '@grafana/data';
 import { BarGaugeOptions, displayModes } from './types';
 import { orientationOptions } from '../gauge/types';
 import {
   getDataLinksVariableSuggestions,
   getCalculationValueDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
+import { config } from 'app/core/config';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) => {
+  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,
@@ -118,7 +124,12 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+          <ThresholdsEditor
+            onChange={this.onThresholdsChanged}
+            thresholds={defaults.thresholds}
+            theme={config.theme}
+            showAlphaUI={config.featureToggles.newEdit}
+          />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />

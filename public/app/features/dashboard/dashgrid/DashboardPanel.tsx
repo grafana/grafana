@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 // Utils & Services
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
@@ -16,12 +17,12 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 // Types
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPluginMeta, PanelPlugin } from '@grafana/data';
-import { AutoSizer } from 'react-virtualized';
 
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
+  isInEditMode?: boolean;
   isFullscreen: boolean;
   isInView: boolean;
 }
@@ -103,7 +104,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderPanel() {
-    const { dashboard, panel, isFullscreen, isInView } = this.props;
+    const { dashboard, panel, isFullscreen, isInView, isInEditMode } = this.props;
     const { plugin } = this.state;
 
     return (
@@ -134,6 +135,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               dashboard={dashboard}
               isFullscreen={isFullscreen}
               isInView={isInView}
+              isInEditMode={isInEditMode}
               width={width}
               height={height}
             />

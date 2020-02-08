@@ -1,25 +1,35 @@
 import React, { FC } from 'react';
-import { ReactTableCellProps, TableCellDisplayMode } from './types';
+import { ThresholdsConfig, ThresholdsMode, VizOrientation } from '@grafana/data';
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
-import { VizOrientation } from '@grafana/data';
+import { TableCellProps, TableCellDisplayMode } from './types';
 
-const defaultThresholds = [
-  {
-    color: 'blue',
-    value: -Infinity,
-  },
-  {
-    color: 'green',
-    value: 20,
-  },
-];
+const defaultScale: ThresholdsConfig = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    {
+      color: 'blue',
+      value: -Infinity,
+    },
+    {
+      color: 'green',
+      value: 20,
+    },
+  ],
+};
 
-export const BarGaugeCell: FC<ReactTableCellProps> = props => {
-  const { column, tableStyles, cell } = props;
-  const { field } = column;
+export const BarGaugeCell: FC<TableCellProps> = props => {
+  const { field, column, tableStyles, cell } = props;
 
   if (!field.display) {
     return null;
+  }
+
+  let { config } = field;
+  if (!config.thresholds) {
+    config = {
+      ...config,
+      thresholds: defaultScale,
+    };
   }
 
   const displayValue = field.display(cell.value);
@@ -29,15 +39,20 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
     barGaugeMode = BarGaugeDisplayMode.Lcd;
   }
 
+  let width;
+  if (column.width) {
+    width = (column.width as number) - tableStyles.cellPadding * 2;
+  } else {
+    width = tableStyles.cellPadding * 2;
+  }
+
   return (
     <div className={tableStyles.tableCell}>
       <BarGauge
-        width={column.width - tableStyles.cellPadding * 2}
+        width={width}
         height={tableStyles.cellHeightInner}
-        thresholds={field.config.thresholds || defaultThresholds}
+        field={config}
         value={displayValue}
-        maxValue={field.config.max || 100}
-        minValue={field.config.min || 0}
         orientation={VizOrientation.Horizontal}
         theme={tableStyles.theme}
         itemSpacing={1}

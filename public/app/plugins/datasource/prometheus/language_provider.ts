@@ -51,7 +51,7 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Com
   return item;
 }
 
-const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|and|or|unless|==|>=|!=|<=|>|<|=|~|,)/;
+const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics?: string[];
@@ -88,7 +88,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   cleanText(s: string) {
     const parts = s.split(PREFIX_DELIMITER_REGEX);
     const last = parts.pop();
-    return last.trimLeft().replace(/"$/, '');
+    return last
+      .trimLeft()
+      .replace(/"$/, '')
+      .replace(/^"/, '');
   }
 
   get syntax() {
@@ -143,7 +146,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // Prevent suggestions in `function(|suffix)`
     const noSuffix = !nextCharacter || nextCharacter === ')';
 
-    // Empty prefix is safe if it does not immediately follow a complete expression and has no text after it
+    // Prefix is safe if it does not immediately follow a complete expression and has no text after it
     const safePrefix = prefix && !text.match(/^[\]})\s]+$/) && noSuffix;
 
     // About to type next operand if preceded by binary operator
@@ -297,8 +300,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     labelKey,
     value,
   }: TypeaheadInput): Promise<TypeaheadOutput> => {
+    const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
+    const suffix = line.substr(cursorOffset);
+    const prefix = line.substr(0, cursorOffset);
+    const isValueStart = text.match(/^(=|=~|!=|!~)/);
+    const isValueEnd = suffix.match(/^"?[,}]/);
+    // detect cursor in front of value, e.g., {key=|"}
+    const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
+
+    // Don't suggestq anything at the beginning or inside a value
+    const isValueEmpty = isValueStart && isValueEnd;
+    const hasValuePrefix = isValueEnd && !isValueStart;
+    if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
+      return { suggestions };
+    }
 
     // Get normalized selector
     let selector;
@@ -313,7 +330,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const containsMetric = selector.includes('__name__=');
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
-    const suggestions: CompletionItemGroup[] = [];
     let labelValues;
     // Query labels for selector
     if (selector) {
@@ -326,7 +342,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     let context: string;
-    if ((text && text.match(/^!?=~?/)) || wrapperClasses.includes('attr-value')) {
+    if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
       // Label values
       if (labelKey && labelValues[labelKey]) {
         context = 'context-label-values';

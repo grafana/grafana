@@ -1,6 +1,6 @@
 +++
 title = "Configuration"
-description = "Configuration Docs"
+description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
 type = "docs"
 [menu.docs]
@@ -18,21 +18,23 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 
 ## Config file locations
 
-Do not change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
+*Do not* change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-**Linux** 
-
+### Linux
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
-**Windows**
+### Docker
+Refer to [Configure a Grafana Docker image](configure-docker.md) for information about environmental variables, persistent storage, and building custom Docker images.
+
+### Windows
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-**macOS** 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
+### MacOS
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
 
@@ -46,16 +48,15 @@ Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` 
 
 A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
 
-## Using environment variables
+## Configure with environment variables
 
-All options in the configuration file (listed below) can be overridden using environment variables using the syntax:
+All options in the configuration file can be overridden using environment variables using the syntax:
 
 ```bash
 GF_<SectionName>_<KeyName>
 ```
 
-Where the section name is the text within the brackets. Everything
-should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
+Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
 
 ```bash
 # default section
@@ -68,15 +69,15 @@ admin_user = admin
 client_secret = 0ldS3cretKey
 ```
 
-Then you can override them using:
+You can override them on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
+export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 ```
 
-<hr />
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
 
 ## instance_name
 
@@ -128,8 +129,7 @@ The IP address to bind to. If empty will bind to all interfaces
 
 ### http_port
 
-The port to bind to, defaults to `3000`. To use port 80 you need to
-either give the Grafana binary permission for example:
+The port to bind to, defaults to `3000`. To use port 80 you need to either give the Grafana binary permission for example:
 
 ```bash
 $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
@@ -154,13 +154,11 @@ Path where the socket should be created when `protocol=socket`. Please make sure
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you
-use GitHub or Google OAuth.
+This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
 
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain.
-Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -175,8 +173,7 @@ callback URL to be correct).
 ### serve_from_sub_path
 > Available in 6.3 and above
 
-Serve Grafana from subpath specified in `root_url` setting. By
-default it is set to `false` for compatibility reasons.
+Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
 By enabling this setting and using a subpath in `root_url` above, e.g.
 `root_url = http://localhost:3000/grafana`, Grafana will be accessible on
@@ -361,7 +358,7 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 ### cookie_samesite
 
-Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF),  [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
 ### allow_embedding
 
@@ -555,11 +552,83 @@ Either "console", "file", "syslog". Default is "console" and "file".
 Use spaces to separate multiple modes, e.g. `console file`
 
 ### level
-Either "debug", "info", "warn", "error", "critical", default is `info`
+
+Either "debug", "info", "warn", "error", "critical", default is `info`.
 
 ### filters
+
 optional settings to set different levels for specific loggers.
-For example `filters = sqlstore:debug`
+For example `filters = sqlstore:debug`.
+
+## [log.console]
+
+Only applicable when "console" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+## [log.file]
+
+Only applicable when "file" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+### log_rotate
+
+Enable automated log rotation, valid options are false or true. Default is `true`.
+When enabled use the `max_lines`, `max_size_shift`, `daily_rotate` and `max_days` below
+to configure the behavior of the log rotation.
+
+### max_lines
+
+Maximum lines per file before rotating it. Default is 1000000.
+
+### max_size_shift
+
+Maximum size of file before rotating it. Default is `28` which means `1 << 28`, `256MB`.
+
+### daily_rotate
+
+Enable daily rotation of files, valid options are false or true. Default is `true`.
+
+### max_days
+
+Maximum number of days to keep log files. Default is `7`.
+
+## [log.syslog]
+
+Only applicable when "syslog" used in `[log]` mode.
+
+### level
+
+Either "debug", "info", "warn", "error", "critical", default is inherited from `[log]` level.
+
+### format
+
+Log line format, valid options are text, console and json. Default is `console`.
+
+### network and address
+
+Syslog network type and address. This can be udp, tcp, or unix. If left blank, the default unix endpoints will be used.
+
+### facility
+
+Syslog facility. Valid options are user, daemon or local0 through local7. Default is empty.
+
+### tag
+
+Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
 
@@ -610,14 +679,24 @@ You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafa
 
 ## [external_image_storage.s3]
 
+### endpoint
+Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to
+keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
+
+## path_style_access
+Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
+of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
+
+Note: This option is specific to the Amazon S3 service.
+
 ### bucket
-Bucket name for S3. e.g. grafana.snapshot
+Bucket name for S3. e.g. grafana.snapshot.
 
 ### region
-Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc.
 
 ### path
-Optional extra path inside bucket, useful to apply expiration policies
+Optional extra path inside bucket, useful to apply expiration policies.
 
 ### bucket_url
 (for backward compatibility, only works when no bucket or region are configured)
@@ -626,12 +705,12 @@ Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-eas
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
 
 ### access_key
-Access key. e.g. AAAAAAAAAAAAAAAAAAAA
+Access key, e.g. AAAAAAAAAAAAAAAAAAAA.
 
 Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
 
 ### secret_key
-Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 
 ## [external_image_storage.webdav]
 
@@ -712,6 +791,12 @@ Default setting for alert notification timeout. Default value is `30`
 
 Default setting for max attempts to sending alert notifications. Default value is `3`
 
+### min_interval_seconds
+
+Default setting for minimum interval between rule evaluations. Default value is `1`
+
+> **Note.** This setting has precedence over each individual rule frequency. Therefore, if a rule frequency is lower than this value, this value will be enforced.
+
 ## [rendering]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
@@ -741,6 +826,65 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 ### enable
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+
+## [tracing.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+You can also use the standard `JAEGER_*` environment variables to configure
+Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
+for the full list. Environment variables will override any settings provided here.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:6381`)
+
+Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+
+### always_included_tag
+
+Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
+
+Can be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different tracing types.
+
+Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
+
+### sampler_param
+
+Default value is `1`.
+
+This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+
+- For `const` sampler, `0` or `1` for always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
+  and indicates the initial sampling rate before the actual one
+  is received from the mothership
+
+May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### zipkin_propagation
+
+Default value is `false`.
+
+Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
+
+Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
+
+### disable_shared_zipkin_spans
+
+Default value is `false`.
+
+Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
 
 <hr />
 

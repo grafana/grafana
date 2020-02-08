@@ -1,4 +1,4 @@
-/* tslint:disable:max-line-length */
+/* eslint-disable max-len */
 
 import { GrafanaThemeCommons } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';

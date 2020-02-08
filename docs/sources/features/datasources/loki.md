@@ -3,7 +3,7 @@ title = "Using Loki in Grafana"
 description = "Guide for using Loki in Grafana"
 keywords = ["grafana", "loki", "logging", "guide"]
 type = "docs"
-aliases = ["/datasources/loki"]
+aliases = ["/docs/grafana/latest/datasources/loki"]
 [menu.docs]
 name = "Loki"
 parent = "datasources"

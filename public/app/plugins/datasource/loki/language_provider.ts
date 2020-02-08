@@ -13,7 +13,7 @@ import { RATE_RANGES } from '../prometheus/promql';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
-import { ExploreMode } from 'app/types/explore';
+import { Grammar } from 'prismjs';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -71,7 +71,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // Strip syntax chars
   cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 
-  getSyntax() {
+  getSyntax(): Grammar {
     return syntax;
   }
 
@@ -130,8 +130,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     // Prevent suggestions in `function(|suffix)`
     const noSuffix = !nextCharacter || nextCharacter === ')';
 
-    // Empty prefix is safe if it does not immediately follow a complete expression and has no text after it
-    const safeEmptyPrefix = prefix === '' && !text.match(/^[\]})\s]+$/) && noSuffix;
+    // Prefix is safe if it does not immediately follow a complete expression and has no text after it
+    const safePrefix = prefix && !text.match(/^['"~=\]})\s]+$/) && noSuffix;
 
     // About to type next operand if preceded by binary operator
     const operatorsPattern = /[+\-*/^%]/;
@@ -145,8 +145,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
       // Suggestions for {|} and {foo=|}
       return await this.getLabelCompletionItems(input, context);
     } else if (empty) {
-      return this.getEmptyCompletionItems(context || {}, ExploreMode.Metrics);
-    } else if ((prefixUnrecognized && noSuffix) || safeEmptyPrefix || isNextOperand) {
+      // Suggestions for empty query field
+      return this.getEmptyCompletionItems(context);
+    } else if (prefixUnrecognized && noSuffix && !isNextOperand) {
+      // Show term suggestions in a couple of scenarios
+      return this.getBeginningCompletionItems(context);
+    } else if (prefixUnrecognized && safePrefix) {
       // Show term suggestions in a couple of scenarios
       return this.getTermCompletionItems();
     }
@@ -156,8 +160,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
     };
   }
 
-  getEmptyCompletionItems(context: TypeaheadContext, mode?: ExploreMode): TypeaheadOutput {
-    const { history } = context;
+  getBeginningCompletionItems = (context: TypeaheadContext): TypeaheadOutput => {
+    return {
+      suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
+    };
+  };
+
+  getEmptyCompletionItems(context: TypeaheadContext): TypeaheadOutput {
+    const history = context?.history;
     const suggestions = [];
 
     if (history && history.length) {
@@ -176,11 +186,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
         label: 'History',
         items: historyItems,
       });
-    }
-
-    if (mode === ExploreMode.Metrics) {
-      const termCompletionItems = this.getTermCompletionItems();
-      suggestions.push(...termCompletionItems.suggestions);
     }
 
     return { suggestions };
@@ -262,7 +267,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       return Promise.all(
         queries.map(async query => {
           const expr = await this.importPrometheusQuery(query.expr);
-          const { context, ...rest } = query as PromQuery;
+          const { ...rest } = query as PromQuery;
           return {
             ...rest,
             expr,

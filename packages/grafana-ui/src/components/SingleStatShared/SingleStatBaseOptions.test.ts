@@ -37,6 +37,36 @@ describe('sharedSingleStatMigrationHandler', () => {
     expect(sharedSingleStatMigrationHandler(panel as any)).toMatchSnapshot();
   });
 
+  it('move thresholds to scale', () => {
+    const panel = {
+      options: {
+        fieldOptions: {
+          defaults: {
+            thresholds: [
+              {
+                color: 'green',
+                index: 0,
+                value: null,
+              },
+              {
+                color: 'orange',
+                index: 1,
+                value: 40,
+              },
+              {
+                color: 'red',
+                index: 2,
+                value: 80,
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    expect(sharedSingleStatMigrationHandler(panel as any)).toMatchSnapshot();
+  });
+
   it('Remove unused `overrides` option', () => {
     const panel = {
       options: {

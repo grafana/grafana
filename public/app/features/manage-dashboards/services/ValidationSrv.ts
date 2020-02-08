@@ -1,5 +1,5 @@
 import coreModule from 'app/core/core_module';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 const hitTypes = {
   FOLDER: 'dash-folder',
@@ -8,9 +8,6 @@ const hitTypes = {
 
 export class ValidationSrv {
   rootName = 'general';
-
-  /** @ngInject */
-  constructor(private backendSrv: BackendSrv) {}
 
   validateNewDashboardName(folderId: any, name: string) {
     return this.validate(folderId, name, 'A dashboard in this folder with the same name already exists');
@@ -39,8 +36,8 @@ export class ValidationSrv {
     }
 
     const promises = [];
-    promises.push(this.backendSrv.search({ type: hitTypes.FOLDER, folderIds: [folderId], query: name }));
-    promises.push(this.backendSrv.search({ type: hitTypes.DASHBOARD, folderIds: [folderId], query: name }));
+    promises.push(backendSrv.search({ type: hitTypes.FOLDER, folderIds: [folderId], query: name }));
+    promises.push(backendSrv.search({ type: hitTypes.DASHBOARD, folderIds: [folderId], query: name }));
 
     return Promise.all(promises).then(res => {
       let hits: any[] = [];

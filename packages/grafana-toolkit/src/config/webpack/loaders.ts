@@ -4,7 +4,7 @@ import { getPluginId } from '../utils/getPluginId';
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-const supportedExtensions = ['css', 'scss'];
+const supportedExtensions = ['css', 'scss', 'less'];
 
 const getStylesheetPaths = (root: string = process.cwd()) => {
   return [`${root}/src/styles/light`, `${root}/src/styles/dark`];
@@ -113,6 +113,22 @@ export const getStyleLoaders = () => {
       test: /\.scss$/,
       use: ['style-loader', ...cssLoaders, 'sass-loader'],
       exclude: [`${styleDir}light.scss`, `${styleDir}dark.scss`],
+    },
+    {
+      test: /\.less$/,
+      use: [
+        {
+          loader: 'style-loader',
+        },
+        ...cssLoaders,
+        {
+          loader: 'less-loader',
+          options: {
+            javascriptEnabled: true,
+          },
+        },
+      ],
+      exclude: [`${styleDir}light.less`, `${styleDir}dark.less`],
     },
   ];
 

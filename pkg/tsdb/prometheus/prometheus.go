@@ -112,7 +112,7 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		value, err := client.QueryRange(ctx, query.Expr, timeRange)
+		value, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 		if err != nil {
 			return nil, err

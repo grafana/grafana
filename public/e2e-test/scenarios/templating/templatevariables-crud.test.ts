@@ -17,7 +17,7 @@ e2eScenario({
   createTestDashboard: true,
   skipScenario: true,
   scenario: async (browser: Browser, page: Page, datasourceName?: string, dashboardPage?: TestPage<DashboardPage>) => {
-    await dashboardPage.pageObjects.settings.click();
+    await dashboardPage?.pageObjects.settings.click();
 
     await dashboardSettingsPage.init(page);
     await dashboardSettingsPage.pageObjects.variablesSection.click();
@@ -57,7 +57,7 @@ e2eScenario({
 
     await variablesPage.pageObjects.goBackButton.click();
 
-    await dashboardPage.pageObjects.settings.click();
+    await dashboardPage?.pageObjects.settings.click();
 
     await dashboardSettingsPage.init(page);
     await dashboardSettingsPage.pageObjects.variablesSection.click();
@@ -76,7 +76,7 @@ e2eScenario({
       const asserts = queryVariables.slice(0, queryVariableIndex + 1);
       await createQueryVariable({
         page: variablePage,
-        datasourceName,
+        datasourceName: datasourceName as string,
         name,
         label,
         query,
@@ -92,9 +92,9 @@ e2eScenario({
 
       await variablesPage.pageObjects.goBackButton.click();
 
-      await assertVariableLabelsAndComponents(dashboardPage, asserts);
+      await assertVariableLabelsAndComponents(dashboardPage as TestPage<DashboardPage>, asserts);
 
-      await dashboardPage.pageObjects.settings.click();
+      await dashboardPage?.pageObjects.settings.click();
 
       await dashboardSettingsPage.pageObjects.variablesSection.click();
 

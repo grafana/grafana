@@ -12,8 +12,9 @@ export * from './Button/Button';
 export { Select, AsyncSelect } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
-export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
 export { ButtonSelect } from './Select/ButtonSelect';
+export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 
 // Forms
@@ -48,6 +49,9 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
+export { TabsBar } from './Tabs/TabsBar';
+export { Tab } from './Tabs/Tab';
+export { TabContent } from './Tabs/TabContent';
 
 // Visualizations
 export {
@@ -62,6 +66,7 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
+export { GraphContextMenu } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater } from './VizRepeater/VizRepeater';

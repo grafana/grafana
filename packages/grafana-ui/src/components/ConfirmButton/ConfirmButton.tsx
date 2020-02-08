@@ -133,9 +133,11 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
     return (
       <span className={styles.buttonContainer}>
         {typeof children === 'string' ? (
-          <Forms.Button className={buttonClass} size={size} variant="link" onClick={onClick}>
-            {children}
-          </Forms.Button>
+          <span className={buttonClass}>
+            <Forms.Button size={size} variant="link" onClick={onClick}>
+              {children}
+            </Forms.Button>
+          </span>
         ) : (
           <span className={buttonClass} onClick={onClick}>
             {children}

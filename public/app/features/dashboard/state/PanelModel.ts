@@ -43,6 +43,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   angularPanel: true,
+  restoreModel: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -142,11 +143,14 @@ export class PanelModel {
 
   constructor(model: any) {
     this.events = new Emitter();
-
     // should not be part of defaults as defaults are removed in save model and
     // this should not be removed in save model as exporter needs to templatize it
     this.datasource = null;
+    this.restoreModel(model);
+  }
 
+  /** Given a persistened PanelModel restores property values */
+  restoreModel = (model: any) => {
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
@@ -157,7 +161,7 @@ export class PanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
-  }
+  };
 
   ensureQueryIds() {
     if (this.targets && _.isArray(this.targets)) {
@@ -346,6 +350,13 @@ export class PanelModel {
       }
       return item;
     });
+  }
+
+  getEditClone() {
+    const clone = new PanelModel(this.getSaveModel());
+    clone.queryRunner = new PanelQueryRunner(this.queryRunner.getLastResult());
+    clone.isNewEdit = true;
+    return clone;
   }
 
   getQueryRunner(): PanelQueryRunner {

@@ -12,8 +12,8 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
-import { PanelEditor } from '../components/PanelEditor';
-import { CustomScrollbar, Alert } from '@grafana/ui';
+import PanelEditor from '../components/PanelEditor/PanelEditor';
+import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
@@ -29,7 +29,7 @@ import {
 } from 'app/types';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { PanelInspector } from '../components/Inspector/PanelInspector';
+import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
 
 export interface Props {
   urlUid?: string;
@@ -53,6 +53,7 @@ export interface Props {
   cleanUpDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
+  inspectTab?: InspectTab;
 }
 
 export interface State {
@@ -252,7 +253,16 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId, urlEditPanel } = this.props;
+    const {
+      dashboard,
+      editview,
+      $injector,
+      isInitSlow,
+      initError,
+      inspectPanelId,
+      urlEditPanel,
+      inspectTab,
+    } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
@@ -314,8 +324,12 @@ export class DashboardPage extends PureComponent<Props, State> {
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-        {editPanel && <PanelEditor dashboard={dashboard} panel={editPanel} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={inspectTab} />}
+        {editPanel && (
+          <Portal>
+            <PanelEditor dashboard={dashboard} panel={editPanel} />
+          </Portal>
+        )}
       </div>
     );
   }
@@ -336,6 +350,7 @@ export const mapStateToProps = (state: StoreState) => ({
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.model as DashboardModel,
+  inspectTab: state.location.query.tab,
 });
 
 const mapDispatchToProps = {
