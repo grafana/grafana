@@ -23,8 +23,8 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
     if (custom) {
       if (defaults.custom) {
         if (remove) {
-          defaults.custom = { ...defaults.custom }; // TODO!!
-          delete defaults.custom[name]; // something better???
+          defaults.custom = { ...defaults.custom };
+          delete defaults.custom[name];
         } else {
           defaults.custom = { ...defaults.custom, [name]: value };
         }

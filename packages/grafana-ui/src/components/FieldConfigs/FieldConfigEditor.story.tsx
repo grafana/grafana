@@ -47,8 +47,3 @@ FieldConfigStories.add('default', () => {
     },
   });
 });
-
-// config?: FieldConfigSource;
-// custom?: FieldConfigEditorRegistry; // custom fields
-// include?: string[]; // Ordered list of which fields should be shown/included
-// onChange: (config: FieldConfigSource) => void;

@@ -7,6 +7,9 @@ describe('standardFieldConfigEditorRegistry', () => {
     min: 10,
     max: 10,
     decimals: 10,
+    thresholds: {} as any,
+    noValue: 'no value',
+    unit: 'km/s',
   };
 
   it('make sure all fields have a valid name', () => {
