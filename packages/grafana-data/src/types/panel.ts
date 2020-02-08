@@ -5,6 +5,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { FieldConfigEditorRegistry } from './fieldOverrides';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -72,6 +73,7 @@ export type PanelTypeChangedHandler<TOptions = any> = (
 export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
+  customFieldConfigs?: FieldConfigEditorRegistry;
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -119,6 +121,11 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
    */
   setPanelChangeHandler(handler: PanelTypeChangedHandler) {
     this.onPanelTypeChanged = handler;
+    return this;
+  }
+
+  setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
+    this.customFieldConfigs = registry;
     return this;
   }
 }

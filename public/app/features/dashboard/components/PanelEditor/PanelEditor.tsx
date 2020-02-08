@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
+import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
+import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar } from '@grafana/ui';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
-import { stylesFactory, Forms, CustomScrollbar } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -61,47 +61,46 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface Props {
   dashboard: DashboardModel;
-  panel: PanelModel;
+  sourcePanel: PanelModel;
   updateLocation: typeof updateLocation;
 }
 
 interface State {
   pluginLoadedCounter: number;
-  dirtyPanel?: PanelModel;
+  panel: PanelModel;
   data: PanelData;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
   querySubscription: Unsubscribable;
 
-  state: State = {
-    pluginLoadedCounter: 0,
-    data: {
-      state: LoadingState.NotStarted,
-      series: [],
-      timeRange: DefaultTimeRange,
-    },
-  };
-
   constructor(props: Props) {
     super(props);
 
     // To ensure visualisation  settings are re-rendered when plugin has loaded
     // panelInitialised event is emmited from PanelChrome
-    props.panel.events.on(PanelEvents.panelInitialized, () => {
+    const panel = props.sourcePanel.getEditClone();
+    this.state = {
+      panel,
+      pluginLoadedCounter: 0,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+        timeRange: DefaultTimeRange,
+      },
+    };
+  }
+
+  componentDidMount() {
+    const { sourcePanel } = this.props;
+    const { panel } = this.state;
+    panel.events.on(PanelEvents.panelInitialized, () => {
       this.setState(state => ({
         pluginLoadedCounter: state.pluginLoadedCounter + 1,
       }));
     });
-  }
-
-  componentDidMount() {
-    const { panel } = this.props;
-    const dirtyPanel = panel.getEditClone();
-    this.setState({ dirtyPanel });
-
     // Get data from any pending
-    panel
+    sourcePanel
       .getQueryRunner()
       .getData()
       .subscribe({
@@ -112,7 +111,7 @@ export class PanelEditor extends PureComponent<Props, State> {
       });
 
     // Listen for queries on the new panel
-    const queryRunner = dirtyPanel.getQueryRunner();
+    const queryRunner = panel.getQueryRunner();
     this.querySubscription = queryRunner.getData().subscribe({
       next: (data: PanelData) => this.setState({ data }),
     });
@@ -126,9 +125,9 @@ export class PanelEditor extends PureComponent<Props, State> {
   }
 
   onPanelUpdate = () => {
-    const { dirtyPanel } = this.state;
+    const { panel } = this.state;
     const { dashboard } = this.props;
-    dashboard.updatePanel(dirtyPanel);
+    dashboard.updatePanel(panel);
   };
 
   onPanelExit = () => {
@@ -147,6 +146,59 @@ export class PanelEditor extends PureComponent<Props, State> {
     });
   };
 
+  onFieldConfigsChange = (fieldOptions: FieldConfigSource) => {
+    // NOTE: for now, assume this is from 'fieldOptions' -- TODO? put on panel model directly?
+    const { panel } = this.state;
+    const options = panel.getOptions();
+    panel.updateOptions({
+      ...options,
+      fieldOptions, // Assume it is from shared singlestat -- TODO own property?
+    });
+    this.forceUpdate();
+  };
+
+  renderFieldOptions() {
+    const { panel, data } = this.state;
+    const { plugin } = panel;
+    const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
+    if (!fieldOptions || !plugin) {
+      return null;
+    }
+
+    return (
+      <div>
+        <FieldConfigEditor
+          config={fieldOptions}
+          custom={plugin.customFieldConfigs}
+          onChange={this.onFieldConfigsChange}
+          data={data.series}
+        />
+      </div>
+    );
+  }
+
+  onPanelOptionsChanged = (options: any) => {
+    this.state.panel.updateOptions(options);
+    this.forceUpdate();
+  };
+
+  /**
+   * The existing visualization tab
+   */
+  renderVisSettings() {
+    const { data, panel } = this.state;
+    const { plugin } = panel;
+    if (!plugin) {
+      return null; // not yet ready
+    }
+
+    if (plugin.editor && panel) {
+      return <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+    }
+
+    return <div>No editor (angular?)</div>;
+  }
+
   onDragFinished = () => {
     document.body.style.cursor = 'auto';
     console.log('TODO, save splitter settings');
@@ -154,11 +206,10 @@ export class PanelEditor extends PureComponent<Props, State> {
 
   render() {
     const { dashboard } = this.props;
-    const { dirtyPanel } = this.state;
-
+    const { panel } = this.state;
     const styles = getStyles(config.theme);
 
-    if (!dirtyPanel) {
+    if (!panel) {
       return null;
     }
 
@@ -168,7 +219,7 @@ export class PanelEditor extends PureComponent<Props, State> {
           <button className="navbar-edit__back-btn" onClick={this.onPanelExit}>
             <i className="fa fa-arrow-left"></i>
           </button>
-          {this.props.panel.title}
+          {panel.title}
           <Forms.Button variant="destructive" onClick={this.onDiscard}>
             Discard
           </Forms.Button>
@@ -194,7 +245,7 @@ export class PanelEditor extends PureComponent<Props, State> {
             <div className={styles.fill}>
               <DashboardPanel
                 dashboard={dashboard}
-                panel={dirtyPanel}
+                panel={panel}
                 isEditing={false}
                 isInEditMode
                 isFullscreen={false}
@@ -202,12 +253,15 @@ export class PanelEditor extends PureComponent<Props, State> {
               />
             </div>
             <div className={styles.noScrollPaneContent}>
-              <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
+              <QueriesTab panel={panel} dashboard={dashboard} />
             </div>
           </SplitPane>
           <div className={styles.noScrollPaneContent}>
             <CustomScrollbar>
-              <div>Viz settings</div>
+              <div style={{ padding: '10px' }}>
+                {this.renderFieldOptions()}
+                {this.renderVisSettings()}
+              </div>
             </CustomScrollbar>
           </div>
         </SplitPane>
