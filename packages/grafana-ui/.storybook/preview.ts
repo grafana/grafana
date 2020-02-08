@@ -27,7 +27,6 @@ const handleThemeChange = (theme: any) => {
     lightTheme.use();
   }
 };
-
 addDecorator(withTheme(handleThemeChange));
 addDecorator(withKnobs);
 addDecorator(withPaddedStory);
