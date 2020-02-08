@@ -47,3 +47,7 @@ export const simple = () => (
 export const withInitialValue = () => (
   <Cascader options={options} initialValue="3" onSelect={val => console.log(val)} />
 );
+
+export const withCustomValue = () => (
+  <Cascader options={options} allowCustomValue initialValue="Custom Initial Value" onSelect={val => console.log(val)} />
+);

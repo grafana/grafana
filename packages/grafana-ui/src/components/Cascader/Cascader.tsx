@@ -15,6 +15,7 @@ interface CascaderProps {
   onSelect(val: string): void;
   size?: FormInputSize;
   initialValue?: string;
+  allowCustomValue?: boolean;
 }
 
 interface CascaderState {
@@ -64,6 +65,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       cpy.push(option);
       if (!option.items) {
         selectOptions.push({
+          singleLabel: cpy[cpy.length - 1].label,
           label: cpy.map(o => o.label).join(this.props.separator || ' / '),
           value: cpy.map(o => o.value),
         });
@@ -84,9 +86,12 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       if (optionPath.indexOf(initValue) === optionPath.length - 1) {
         return {
           rcValue: optionPath,
-          activeLabel: option.label || '',
+          activeLabel: option.singleLabel || '',
         };
       }
+    }
+    if (this.props.allowCustomValue) {
+      return { rcValue: [], activeLabel: initValue };
     }
     return { rcValue: [], activeLabel: '' };
   }
@@ -95,7 +100,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   onChange = (value: string[], selectedOptions: CascaderOption[]) => {
     this.setState({
       rcValue: value,
-      activeLabel: selectedOptions.map(o => o.label).join(this.props.separator || ' / '),
+      activeLabel: selectedOptions[selectedOptions.length - 1].label,
     });
 
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
@@ -103,12 +108,22 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   //For select
   onSelect = (obj: SelectableValue<string[]>) => {
+    const valueArray = obj.value || [];
     this.setState({
-      activeLabel: obj.label || '',
-      rcValue: obj.value || [],
+      activeLabel: obj.singleLabel || '',
+      rcValue: valueArray,
       isSearching: false,
     });
-    this.props.onSelect(this.state.rcValue[this.state.rcValue.length - 1]);
+    this.props.onSelect(valueArray[valueArray.length - 1]);
+  };
+
+  onCreateOption = (value: string) => {
+    this.setState({
+      activeLabel: value,
+      rcValue: [],
+      isSearching: false,
+    });
+    this.props.onSelect(value);
   };
 
   onClick = () => {
@@ -138,47 +153,36 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
   onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (
-      e.key !== 'ArrowDown' &&
-      e.key !== 'ArrowUp' &&
-      e.key !== 'Enter' &&
-      e.key !== 'ArrowLeft' &&
-      e.key !== 'ArrowRight'
+      e.key === 'ArrowDown' ||
+      e.key === 'ArrowUp' ||
+      e.key === 'Enter' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight'
     ) {
-      this.setState({
-        focusCascade: false,
-        isSearching: true,
-      });
-      if (e.key === 'Backspace') {
-        const label = this.state.activeLabel || '';
-        this.setState({
-          activeLabel: label.slice(0, -1),
-        });
-      }
+      return;
     }
-  };
-
-  onInputChange = (value: string) => {
     this.setState({
-      activeLabel: value,
+      focusCascade: false,
+      isSearching: true,
     });
   };
 
   render() {
-    const { size } = this.props;
+    const { size, allowCustomValue } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
       <div>
         {isSearching ? (
           <Select
-            inputValue={activeLabel}
+            allowCustomValue={allowCustomValue}
             placeholder="Search"
             autoFocus={!focusCascade}
             onChange={this.onSelect}
-            onInputChange={this.onInputChange}
             onBlur={this.onBlur}
             options={searchableOptions}
             size={size || 'md'}
+            onCreateOption={this.onCreateOption}
           />
         ) : (
           <RCCascader
