@@ -43,9 +43,6 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
     });
   };
 
-  componentWillReceiveProps(np: Props) {
-    debugger;
-  }
   renderEditor(item: FieldPropertyEditorItem, custom: boolean) {
     const config = this.props.config.defaults;
     const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
@@ -82,7 +79,6 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   }
 
   render() {
-    debugger;
     return (
       <div>
         {this.renderStandardConfigs()}

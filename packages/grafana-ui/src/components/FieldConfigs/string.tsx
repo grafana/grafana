@@ -20,7 +20,6 @@ export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFi
   value,
   onChange,
 }) => {
-  debugger;
   return <Forms.Input value={value || ''} onChange={e => onChange(e.currentTarget.value)} />;
 };
 

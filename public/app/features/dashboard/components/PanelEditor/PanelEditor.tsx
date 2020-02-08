@@ -150,7 +150,6 @@ export class PanelEditor extends PureComponent<Props, State> {
     // NOTE: for now, assume this is from 'fieldOptions' -- TODO? put on panel model directly?
     const { panel } = this.state;
     const options = panel.getOptions();
-    debugger;
     panel.updateOptions({
       ...options,
       fieldOptions, // Assume it is from shared singlestat -- TODO own property?
@@ -162,7 +161,6 @@ export class PanelEditor extends PureComponent<Props, State> {
     const { panel, data } = this.state;
     const { plugin } = panel;
     const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
-    debugger;
     if (!fieldOptions || !plugin) {
       return null;
     }
@@ -209,7 +207,6 @@ export class PanelEditor extends PureComponent<Props, State> {
   render() {
     const { dashboard } = this.props;
     const { panel } = this.state;
-    debugger;
     const styles = getStyles(config.theme);
 
     if (!panel) {
