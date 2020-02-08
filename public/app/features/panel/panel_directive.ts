@@ -55,7 +55,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       });
 
       ctrl.events.on(PanelEvents.panelSizeChanged, () => {
-        ctrl.calculatePanelHeight(elem[0].offsetHeight);
+        ctrl.height = scope.$parent.$parent.height;
         $timeout(() => {
           resizeScrollableContent();
           ctrl.render();
@@ -66,7 +66,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
         setTimeout(() => {
           // then recalc style
-          ctrl.calculatePanelHeight(elem[0].offsetHeight);
+          ctrl.height = scope.$parent.$parent.height;
           // then wait another cycle (this might not be needed)
           $timeout(() => {
             ctrl.render();
@@ -75,10 +75,17 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }, 10);
       });
 
-      ctrl.events.on(PanelEvents.render, () => {});
+      ctrl.events.on(PanelEvents.render, () => {
+        // set initial height
+        ctrl.height = scope.$parent.$parent.height;
+      });
 
       scope.$on('$destroy', () => {
         elem.off();
+
+        if (panelScrollbar) {
+          panelScrollbar.dispose();
+        }
       });
     },
   };

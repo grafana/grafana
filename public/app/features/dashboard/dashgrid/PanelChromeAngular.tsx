@@ -26,9 +26,16 @@ export interface State {
   errorMessage?: string;
 }
 
+interface AngularScopeProps {
+  panel: PanelModel;
+  dashboard: DashboardModel;
+  height: number;
+}
+
 export class PanelChromeAngular extends PureComponent<Props, State> {
   element?: HTMLElement;
   timeSrv: TimeSrv = getTimeSrv();
+  scopeProps?: AngularScopeProps;
   querySubscription: Unsubscribable;
 
   constructor(props: Props) {
@@ -99,19 +106,25 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   }
 
   loadAngularPanel() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, height } = this.props;
 
     // if we have no element or already have loaded the panel return
     if (!this.element || panel.angularPanel) {
+      // update height so angular panel can access it
+      this.scopeProps.height = height;
       return;
     }
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
-    const scopeProps = { panel: panel, dashboard: dashboard };
-    const angularPanel = loader.load(this.element, scopeProps, template);
 
-    panel.setAngularPanel(angularPanel);
+    this.scopeProps = {
+      panel: panel,
+      dashboard: dashboard,
+      height,
+    };
+
+    panel.setAngularPanel(loader.load(this.element, this.scopeProps, template));
   }
 
   cleanUpAngularPanel() {

@@ -183,6 +183,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     try {
       this.props.dashboard.render();
     } catch (err) {
+      console.error(err);
       this.props.notifyApp(createErrorNotification(`Panel rendering error`, err));
     }
   }

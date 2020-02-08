@@ -4,7 +4,6 @@ import { escapeHtml, sanitize } from 'app/core/utils/text';
 import config from 'app/core/config';
 import { Emitter, profiler } from 'app/core/core';
 import {
-  calculateInnerPanelHeight,
   copyPanel as copyPanelUtil,
   duplicatePanel,
   editPanelJson as editPanelJsonUtil,
@@ -127,11 +126,6 @@ export class PanelCtrl {
 
   otherPanelInFullscreenMode() {
     return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
-  }
-
-  calculatePanelHeight(containerHeight: number) {
-    this.containerHeight = containerHeight;
-    this.height = calculateInnerPanelHeight(this.panel, containerHeight);
   }
 
   render(payload?: any) {
