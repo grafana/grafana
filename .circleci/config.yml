@@ -73,8 +73,9 @@ jobs:
           command: ./scripts/ci-job-started.sh
       - run:
           name: Build Grafana backend
-          command: /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
-            --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
+          command: |
+            /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+              --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
       - run:
           name: Move artifacts
           command: mkdir -p << parameters.edition >> && mv bin << parameters.edition >>/
