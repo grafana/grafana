@@ -13,6 +13,155 @@ import { ILocationProvider, route } from 'angular';
 import { DashboardRouteInfo } from 'app/types';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
+import { GrafanaLegacyRouteDescriptor } from '../core/navigation/GrafanaRoute';
+import ServerStats from '../features/admin/ServerStats';
+import FolderSettingsPage from '../features/folders/FolderSettingsPage';
+import FolderPermissions from '../features/folders/FolderPermissions';
+
+const importDashboardPage = () =>
+  SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
+
+export const legacyRoutes: GrafanaLegacyRouteDescriptor[] = [
+  {
+    path: '/',
+    template: '<react-container />',
+    resolve: {
+      component: importDashboardPage,
+    },
+    reloadOnSearch: false,
+    pageClass: 'page-dashboard',
+    exact: true,
+    routeInfo: DashboardRouteInfo.Home,
+  },
+  {
+    path: '/d/:uid/:slug',
+    templateUrl: 'public/app/partials/dashboard.html',
+    controller: 'LoadDashboardCtrl',
+    reloadOnSearch: false,
+    pageClass: 'page-dashboard',
+    exact: true,
+  },
+  {
+    path: '/d/:uid',
+    templateUrl: 'public/app/partials/dashboard.html',
+    controller: 'LoadDashboardCtrl',
+    reloadOnSearch: false,
+    pageClass: 'page-dashboard',
+    exact: true,
+  },
+  {
+    path: '/dashboard/:type/:slug',
+    templateUrl: 'public/app/partials/dashboard.html',
+    controller: 'LoadDashboardCtrl',
+    reloadOnSearch: false,
+    pageClass: 'page-dashboard',
+    exact: true,
+  },
+  {
+    path: '/d-solo/:uid/:slug',
+    templateUrl: 'public/app/features/panel/partials/soloPanel.html',
+    controller: 'SoloPanelCtrl',
+    reloadOnSearch: false,
+    pageClass: 'page-dashboard',
+    exact: true,
+  },
+  {
+    path: '/dashboard-solo/:type/:slug',
+    templateUrl: 'public/app/features/panel/partials/soloPanel.html',
+    controller: 'SoloPanelCtrl',
+    reloadOnSearch: false,
+    pageClass: 'page-dashboard',
+    exact: true,
+  },
+  {
+    path: '/dashboard/new',
+    templateUrl: 'public/app/partials/dashboard.html',
+    controller: 'NewDashboardCtrl',
+    reloadOnSearch: false,
+    pageClass: 'page-dashboard',
+    exact: true,
+  },
+  {
+    // TODO: fix
+    path: '/dashboard/import',
+    templateUrl: 'public/app/features/dashboard/partials/dashboard_import.html',
+    controller: 'DashboardImportCtrl',
+    controllerAs: 'ctrl',
+    exact: true,
+  },
+  {
+    path: '/datasources',
+    templateUrl: 'public/app/features/plugins/partials/ds_list.html',
+    controller: 'DataSourcesCtrl',
+    controllerAs: 'ctrl',
+    exact: true,
+  },
+  {
+    path: '/dashboards',
+    templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
+    controller: 'DashboardListCtrl',
+    controllerAs: 'ctrl',
+    exact: true,
+  },
+  {
+    path: '/dashboards/folder/new',
+    templateUrl: 'public/app/features/dashboard/partials/create_folder.html',
+    controller: 'CreateFolderCtrl',
+    controllerAs: 'ctrl',
+    exact: true,
+  },
+  {
+    path: '/dashboards/f/:uid/:slug/permissions',
+    template: '<react-container />',
+    resolve: {
+      component: () => FolderPermissions,
+    },
+    exact: true,
+  },
+  {
+    path: '/dashboards/f/:uid/:slug/settings',
+    template: '<react-container />',
+    resolve: {
+      component: () => FolderSettingsPage,
+    },
+    exact: true,
+  },
+  {
+    path: '/dashboards/f/:uid/:slug',
+    templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
+    controller: 'FolderDashboardsCtrl',
+    controllerAs: 'ctrl',
+    exact: true,
+  },
+  {
+    path: '/dashboards/f/:uid',
+    templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
+    controller: 'FolderDashboardsCtrl',
+    controllerAs: 'ctrl',
+    exact: true,
+  },
+  {
+    path: '/profile',
+    templateUrl: 'public/app/features/org/partials/profile.html',
+    controller: 'ProfileCtrl',
+    controllerAs: 'ctrl',
+    exact: true,
+  },
+  {
+    path: '/admin/stats',
+    template: '<react-container />',
+    resolve: {
+      component: () => ServerStats,
+    },
+  },
+  {
+    path: '/login',
+    templateUrl: 'public/app/partials/login.html',
+    controller: 'LoginCtrl',
+    pageClass: 'login-page sidemenu-hidden',
+    exact: true,
+  },
+];
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
@@ -27,13 +176,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
   $routeProvider
     .when('/', {
       template: '<react-container />',
+      resolve: {
+        component: importDashboardPage,
+      },
       //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
-      resolve: {
-        component: importDashboardPage,
-      },
     })
     .when('/d/:uid/:slug', {
       template: '<react-container />',

@@ -10,14 +10,14 @@ export class LoadDashboardCtrl {
   /** @ngInject */
   constructor(
     $scope: Scope & AppEventEmitter,
-    $routeParams: UrlQueryMap,
+    $route: any,
     dashboardLoaderSrv: DashboardLoaderSrv,
     $location: ILocationService,
     $browser: any
   ) {
+    debugger;
     $scope.appEvent(CoreEvents.dashboardFetchStart);
-
-    if (!$routeParams.uid && !$routeParams.slug) {
+    if (!$route.current.params.uid && !$route.current.params.slug) {
       backendSrv.get('/api/dashboards/home').then((homeDash: { redirectUri: string; meta: any }) => {
         if (homeDash.redirectUri) {
           const newUrl = locationUtil.stripBaseFromUrl(homeDash.redirectUri);
@@ -32,9 +32,12 @@ export class LoadDashboardCtrl {
     }
 
     // if no uid, redirect to new route based on slug
-    if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
+    if (
+      !($route.current.params.type === 'script' || $route.current.params.type === 'snapshot') &&
+      !$route.current.params.uid
+    ) {
       // @ts-ignore
-      backendSrv.getDashboardBySlug($routeParams.slug).then(res => {
+      backendSrv.getDashboardBySlug($route.current.params.slug).then(res => {
         if (res) {
           $location.path(locationUtil.stripBaseFromUrl(res.meta.url)).replace();
         }
@@ -42,35 +45,37 @@ export class LoadDashboardCtrl {
       return;
     }
 
-    dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then((result: any) => {
-      if (result.meta.url) {
-        const url = locationUtil.stripBaseFromUrl(result.meta.url);
+    dashboardLoaderSrv
+      .loadDashboard($route.current.params.type, $route.current.params.slug, $route.current.params.uid)
+      .then((result: any) => {
+        if (result.meta.url) {
+          const url = locationUtil.stripBaseFromUrl(result.meta.url);
 
-        if (url !== $location.path()) {
-          // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
-          $location.path(url).replace();
-          return;
+          if (url !== $location.path()) {
+            // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
+            $location.path(url).replace();
+            return;
+          }
         }
-      }
 
-      result.meta.autofitpanels = $routeParams.autofitpanels;
-      result.meta.kiosk = $routeParams.kiosk;
+        result.meta.autofitpanels = $route.current.params.autofitpanels;
+        result.meta.kiosk = $route.current.params.kiosk;
 
-      $scope.initDashboard(result, $scope);
-    });
+        $scope.initDashboard(result, $scope);
+      });
   }
 }
 
 export class NewDashboardCtrl {
   /** @ngInject */
-  constructor($scope: any, $routeParams: UrlQueryMap) {
+  constructor($scope: any, $route: UrlQueryMap) {
     $scope.initDashboard(
       {
         meta: {
           canStar: false,
           canShare: false,
           isNew: true,
-          folderId: Number($routeParams.folderId),
+          folderId: Number($route.current.params.folderId),
         },
         dashboard: {
           title: 'New dashboard',
@@ -88,5 +93,5 @@ export class NewDashboardCtrl {
   }
 }
 
-coreModule.controller('LoadDashboardCtrl', LoadDashboardCtrl);
-coreModule.controller('NewDashboardCtrl', NewDashboardCtrl);
+// coreModule.controller('LoadDashboardCtrl', LoadDashboardCtrl);
+// coreModule.controller('NewDashboardCtrl', NewDashboardCtrl);

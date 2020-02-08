@@ -1,6 +1,6 @@
 import angular from 'angular';
 
-const coreModule = angular.module('grafana.core', ['ngRoute']);
+const coreModule = angular.module('grafana.core', []);
 
 // legacy modules
 const angularModules = [

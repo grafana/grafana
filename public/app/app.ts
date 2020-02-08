@@ -25,10 +25,9 @@ import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import { AppEvents, setLocale, setMarkdownOptions } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+import { setLocale, setMarkdownOptions } from '@grafana/data';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
-import { checkBrowserCompatibility } from 'app/core/utils/browser';
+// import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
@@ -40,6 +39,11 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
+import bridgeReactAngularRouting from './core/navigation/bridgeAngularReactRouting';
+import ReactDOM from 'react-dom';
+import React from 'react';
+import AppWrapper from './core/navigation/AppWrapper';
+import { LoadDashboardCtrl, NewDashboardCtrl } from './routes/dashboard_loaders';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -129,7 +133,7 @@ export class GrafanaApp {
 
     this.ngModuleDependencies = [
       'grafana.core',
-      'ngRoute',
+      // 'ngRoute',
       'ngSanitize',
       '$strap.directives',
       'ang-drag-drop',
@@ -144,30 +148,39 @@ export class GrafanaApp {
     });
 
     // register react angular wrappers
-    coreModule.config(setupAngularRoutes);
+    // coreModule.config(setupAngularRoutes);
+    coreModule.controller('LoadDashboardCtrl', LoadDashboardCtrl);
+    coreModule.controller('NewDashboardCtrl', NewDashboardCtrl);
     registerAngularDirectives();
+    bridgeReactAngularRouting();
 
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
-      _.each(this.preBootModules, (module: angular.IModule) => {
-        _.extend(module, this.registerFunctions);
-      });
+    // angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+    //   _.each(this.preBootModules, (module: angular.IModule) => {
+    //     _.extend(module, this.registerFunctions);
+    //   });
 
-      this.preBootModules = null;
+    //   this.preBootModules = null;
 
-      if (!checkBrowserCompatibility()) {
-        setTimeout(() => {
-          appEvents.emit(AppEvents.alertWarning, [
-            'Your browser is not fully supported',
-            'A newer browser version is recommended',
-          ]);
-        }, 1000);
-      }
-    });
+    //   if (!checkBrowserCompatibility()) {
+    //     setTimeout(() => {
+    //       appEvents.emit(AppEvents.alertWarning, [
+    //         'Your browser is not fully supported',
+    //         'A newer browser version is recommended',
+    //       ]);
+    //     }, 1000);
+    //   }
+    // });
 
+    ReactDOM.render(
+      React.createElement(AppWrapper, {
+        app: this,
+      }),
+      document.getElementById('reactRoot')
+    );
     // Preload selected app plugins
     for (const modulePath of config.pluginsToPreload) {
       importPluginModule(modulePath);

@@ -30,4 +30,4 @@ function grafanaRoutes($routeProvider: any) {
     });
 }
 
-angular.module('grafana.routes').config(grafanaRoutes);
+// angular.module('grafana.routes').config(grafanaRoutes);

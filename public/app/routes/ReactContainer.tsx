@@ -33,6 +33,7 @@ export function reactContainer(
     restrict: 'E',
     template: '',
     link(scope: any, elem: JQuery) {
+      debugger;
       // Check permissions for this component
       const roles: string[] = $route.current.locals.roles;
       if (roles && roles.length) {
@@ -47,6 +48,7 @@ export function reactContainer(
         component = component.default;
       }
 
+      debugger;
       const props = {
         $injector: $injector,
         $rootScope: $rootScope,

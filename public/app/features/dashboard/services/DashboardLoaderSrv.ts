@@ -20,7 +20,7 @@ export class DashboardLoaderSrv {
     private $http: any,
     private $timeout: any,
     contextSrv: any,
-    private $routeParams: any,
+    private $route: any,
     private $rootScope: GrafanaRootScope
   ) {}
 
@@ -122,7 +122,18 @@ export class DashboardLoaderSrv {
       'services',
       result.data
     );
-    const scriptResult = scriptFunc(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
+    const scriptResult = scriptFunc(
+      this.$route.current.params,
+      kbn,
+      dateMath,
+      _,
+      moment,
+      window,
+      document,
+      $,
+      $,
+      services
+    );
 
     // Handle async dashboard scripts
     if (_.isFunction(scriptResult)) {
