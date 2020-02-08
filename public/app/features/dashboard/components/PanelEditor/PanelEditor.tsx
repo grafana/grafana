@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
 import { stylesFactory, Forms } from '@grafana/ui';
 import config from 'app/core/config';
