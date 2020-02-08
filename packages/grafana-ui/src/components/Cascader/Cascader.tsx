@@ -9,7 +9,7 @@ import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 interface CascaderProps {
-  /**The seperator between levels in the search */
+  /** The seperator between levels in the search */
   separator?: string;
   placeholder?: string;
   options: CascaderOption[];
@@ -33,7 +33,7 @@ interface CascaderState {
 export interface CascaderOption {
   value: any;
   label: string;
-  /**Items will be just flattened into the main list of items recursively. */
+  /** Items will be just flattened into the main list of items recursively. */
   items?: CascaderOption[];
   disabled?: boolean;
   title?: string;

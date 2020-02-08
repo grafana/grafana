@@ -8,6 +8,7 @@ interface Props {
   onChange: (item?: string) => void;
   value?: string;
   width?: number;
+  /** Temporary flag that uses the new form styles. */
   useNewForms?: boolean;
 }
 
