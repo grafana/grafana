@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { css } from 'emotion';
+import { GrafanaTheme, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
 import { stylesFactory, Forms } from '@grafana/ui';
 import config from 'app/core/config';
 
@@ -12,6 +12,7 @@ import SplitPane from 'react-split-pane';
 import { StoreState } from '../../../../types/store';
 import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
+import { Unsubscribable } from 'rxjs';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const resizer = css`
@@ -61,15 +62,63 @@ interface Props {
 }
 
 interface State {
+  pluginLoadedCounter: number;
   dirtyPanel?: PanelModel;
+  data: PanelData;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
+  querySubscription: Unsubscribable;
+
+  state: State = {
+    pluginLoadedCounter: 0,
+    data: {
+      state: LoadingState.NotStarted,
+      series: [],
+      timeRange: DefaultTimeRange,
+    },
+  };
+
   constructor(props: Props) {
     super(props);
-    const { panel } = props;
+
+    // To ensure visualisation  settings are re-rendered when plugin has loaded
+    // panelInitialised event is emmited from PanelChrome
+    props.panel.events.on(PanelEvents.panelInitialized, () => {
+      this.setState(state => ({
+        pluginLoadedCounter: state.pluginLoadedCounter + 1,
+      }));
+    });
+  }
+
+  componentDidMount() {
+    const { panel } = this.props;
     const dirtyPanel = panel.getEditClone();
-    this.state = { dirtyPanel };
+    this.setState({ dirtyPanel });
+
+    // Get data from any pending
+    panel
+      .getQueryRunner()
+      .getData()
+      .subscribe({
+        next: (data: PanelData) => {
+          this.setState({ data });
+          // TODO, cancel????
+        },
+      });
+
+    // Listen for queries on the new panel
+    const queryRunner = dirtyPanel.getQueryRunner();
+    this.querySubscription = queryRunner.getData().subscribe({
+      next: (data: PanelData) => this.setState({ data }),
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+    }
+    //this.cleanUpAngularOptions();
   }
 
   onPanelUpdate = () => {

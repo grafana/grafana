@@ -85,14 +85,19 @@ export class PanelChrome extends PureComponent<Props, State> {
         },
         isFirstLoad: false,
       });
-    } else if (isInEditMode && this.panelHasLastResult()) {
-      console.log('Reusing results!');
-      const lastResult = panel.getQueryRunner().getLastResult();
-      if (lastResult) {
-        this.onDataUpdate(lastResult);
+    } else {
+      if (isInEditMode) {
+        this.querySubscription = panel
+          .getQueryRunner()
+          .getData()
+          .subscribe({
+            next: data => this.onDataUpdate(data),
+          });
       }
-    } else if (!this.wantsQueryExecution) {
-      this.setState({ isFirstLoad: false });
+
+      if (!this.wantsQueryExecution) {
+        this.setState({ isFirstLoad: false });
+      }
     }
   }
 
@@ -244,11 +249,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   get wantsQueryExecution() {
-    return !(
-      this.props.plugin.meta.skipDataQuery ||
-      this.hasPanelSnapshot ||
-      (this.props.isInEditMode && !this.panelHasLastResult())
-    );
+    return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
 
   onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {

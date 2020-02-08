@@ -18,6 +18,7 @@ import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { eventFactory } from '@grafana/data';
+import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -349,7 +350,14 @@ export class PanelModel {
 
   getEditClone() {
     const clone = new PanelModel(this.getSaveModel());
-    clone.queryRunner = new PanelQueryRunner(this.queryRunner.getLastResult());
+    clone.queryRunner = new PanelQueryRunner();
+
+    // This will send the last result to the new runner
+    this.getQueryRunner()
+      .getData()
+      .pipe(take(1))
+      .subscribe(val => clone.queryRunner.pipeDataToSubject(val));
+
     clone.isNewEdit = true;
     return clone;
   }
