@@ -1,6 +1,5 @@
 import React from 'react';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { select } from '@storybook/addon-knobs';
 import { getTheme } from '../../themes/index';
 import { GrafanaThemeType } from '@grafana/data';
 import { RenderFunction } from '../../types';
