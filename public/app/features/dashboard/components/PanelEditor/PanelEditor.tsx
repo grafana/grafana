@@ -52,6 +52,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         cursor: row-resize;
       `
     ),
+    noScrollPaneContent: css`
+      height: 100%;
+      overflow: hidden;
+    `,
   };
 });
 
@@ -180,10 +184,11 @@ export class PanelEditor extends PureComponent<Props, State> {
           <SplitPane
             split="horizontal"
             minSize={50}
-            defaultSize={'60%'}
+            defaultSize="40%"
             resizerClassName={styles.resizerH}
             onDragStarted={() => (document.body.style.cursor = 'row-resize')}
             onDragFinished={this.onDragFinished}
+            primary="second"
           >
             <div className={styles.fill}>
               <DashboardPanel
@@ -195,12 +200,14 @@ export class PanelEditor extends PureComponent<Props, State> {
                 isInView={true}
               />
             </div>
-            <div>
+            <div className={styles.noScrollPaneContent}>
               <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
             </div>
           </SplitPane>
-          <div>
-            <div>TODO: viz settings</div>
+          <div className={styles.noScrollPaneContent}>
+            <CustomScrollbar>
+              <div>Viz settings</div>
+            </CustomScrollbar>
           </div>
         </SplitPane>
       </div>
