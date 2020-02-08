@@ -59,8 +59,10 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       });
 
       function onPanelSizeChanged() {
+        console.log('onPanelSizeChanged');
         $timeout(() => {
           resizeScrollableContent();
+          console.log('onPanelSizeChanged.render');
           ctrl.render();
         });
       }
@@ -81,16 +83,14 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
        */
 
       function onPanelModelRender(payload?: any) {
-        ctrl.height = scope.$parent.$parent.height;
-        ctrl.width = scope.$parent.$parent.width;
-
+        ctrl.height = scope.$parent.$parent.size.height;
+        ctrl.width = scope.$parent.$parent.size.width;
         ctrl.events.emit(PanelEvents.render, payload);
       }
 
       function onPanelModelRefresh() {
-        ctrl.height = scope.$parent.$parent.height;
-        ctrl.width = scope.$parent.$parent.width;
-
+        ctrl.height = scope.$parent.$parent.size.height;
+        ctrl.width = scope.$parent.$parent.size.width;
         ctrl.events.emit(PanelEvents.refresh);
       }
 

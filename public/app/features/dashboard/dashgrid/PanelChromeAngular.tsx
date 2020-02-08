@@ -29,8 +29,10 @@ export interface State {
 interface AngularScopeProps {
   panel: PanelModel;
   dashboard: DashboardModel;
-  height: number;
-  width: number;
+  size: {
+    height: number;
+    width: number;
+  };
 }
 
 export class PanelChromeAngular extends PureComponent<Props, State> {
@@ -110,9 +112,8 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
 
     // if we have no element or already have loaded the panel return
     if (!this.element || panel.angularPanel) {
-      // update height so angular panel can access it
-      this.scopeProps.height = height;
-      this.scopeProps.width = width;
+      this.scopeProps.size.height = height;
+      this.scopeProps.size.width = width;
       return;
     }
 
@@ -122,8 +123,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     this.scopeProps = {
       panel: panel,
       dashboard: dashboard,
-      height,
-      width,
+      size: { width, height },
     };
 
     panel.setAngularPanel(loader.load(this.element, this.scopeProps, template));
