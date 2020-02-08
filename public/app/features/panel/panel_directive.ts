@@ -2,6 +2,8 @@ import angular from 'angular';
 // @ts-ignore
 import baron from 'baron';
 import { PanelEvents } from '@grafana/data';
+import { PanelModel } from '../dashboard/state';
+import { PanelCtrl } from './panel_ctrl';
 
 const module = angular.module('grafana.directives');
 
@@ -16,7 +18,9 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
     transclude: true,
     scope: { ctrl: '=' },
     link: (scope: any, elem) => {
-      const ctrl = scope.ctrl;
+      const ctrl: PanelCtrl = scope.ctrl;
+      const panel: PanelModel = scope.ctrl.panel;
+
       let panelScrollbar: any;
 
       function resizeScrollableContent() {
@@ -26,7 +30,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       }
 
       ctrl.events.on(PanelEvents.componentDidMount, () => {
-        if (ctrl.__proto__.constructor.scrollable) {
+        if ((ctrl as any).__proto__.constructor.scrollable) {
           const scrollRootClass = 'baron baron__root baron__clipper panel-content--scrollable';
           const scrollerClass = 'baron__scroller';
           const scrollBarHTML = `
@@ -54,34 +58,54 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
       });
 
-      ctrl.events.on(PanelEvents.panelSizeChanged, () => {
-        ctrl.height = scope.$parent.$parent.height;
+      function onPanelSizeChanged() {
         $timeout(() => {
           resizeScrollableContent();
           ctrl.render();
         });
-      });
+      }
 
-      ctrl.events.on(PanelEvents.viewModeChanged, () => {
+      function onViewModeChanged() {
         // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
         setTimeout(() => {
-          // then recalc style
-          ctrl.height = scope.$parent.$parent.height;
           // then wait another cycle (this might not be needed)
           $timeout(() => {
             ctrl.render();
             resizeScrollableContent();
           });
         }, 10);
-      });
+      }
 
-      ctrl.events.on(PanelEvents.render, () => {
-        // set initial height
+      /*
+       * Mirror some events on panel model to angular controller and vice versa
+       */
+
+      function onPanelModelRender(payload?: any) {
         ctrl.height = scope.$parent.$parent.height;
-      });
+        ctrl.width = scope.$parent.$parent.width;
+
+        ctrl.events.emit(PanelEvents.render, payload);
+      }
+
+      function onPanelModelRefresh() {
+        ctrl.height = scope.$parent.$parent.height;
+        ctrl.width = scope.$parent.$parent.width;
+
+        ctrl.events.emit(PanelEvents.refresh);
+      }
+
+      panel.events.on(PanelEvents.refresh, onPanelModelRefresh);
+      panel.events.on(PanelEvents.render, onPanelModelRender);
+      panel.events.on(PanelEvents.panelSizeChanged, onPanelSizeChanged);
+      panel.events.on(PanelEvents.viewModeChanged, onViewModeChanged);
 
       scope.$on('$destroy', () => {
         elem.off();
+
+        panel.events.off(PanelEvents.refresh, onPanelModelRefresh);
+        panel.events.off(PanelEvents.render, onPanelModelRender);
+        panel.events.off(PanelEvents.panelSizeChanged, onPanelSizeChanged);
+        panel.events.off(PanelEvents.viewModeChanged, onViewModeChanged);
 
         if (panelScrollbar) {
           panelScrollbar.dispose();

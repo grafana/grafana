@@ -1,9 +1,6 @@
 import _ from 'lodash';
-
-import kbn from 'app/core/utils/kbn';
-
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
-import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import {
   DataFrame,
@@ -163,30 +160,12 @@ class MetricsPanelCtrl extends PanelCtrl {
   updateTimeRange(datasource?: DataSourceApi) {
     this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
-    this.resolution = getResolution(this.panel);
 
     const newTimeData = applyPanelTimeOverrides(this.panel, this.range);
     this.timeInfo = newTimeData.timeInfo;
     this.range = newTimeData.timeRange;
 
-    this.calculateInterval();
-
     return this.datasource;
-  }
-
-  calculateInterval() {
-    let intervalOverride = this.panel.interval;
-
-    // if no panel interval check datasource
-    if (intervalOverride) {
-      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
-    } else if (this.datasource && this.datasource.interval) {
-      intervalOverride = this.datasource.interval;
-    }
-
-    const res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
-    this.interval = res.interval;
-    this.intervalMs = res.intervalMs;
   }
 
   issueQueries(datasource: DataSourceApi) {
@@ -207,7 +186,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       timezone: this.dashboard.timezone,
       timeInfo: this.timeInfo,
       timeRange: this.range,
-      widthPixels: this.resolution, // The pixel width
+      widthPixels: this.width,
       maxDataPoints: panel.maxDataPoints,
       minInterval: panel.interval,
       scopedVars: panel.scopedVars,

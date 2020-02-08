@@ -291,11 +291,10 @@ export class PanelModel {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
-    const wasAngular = !!this.plugin.angularPanelCtrl;
+    const wasAngular = !!this.angularPanel;
 
-    // for angular panels we must remove all events and let angular panels do some cleanup
-    if (wasAngular) {
-      this.destroy();
+    if (this.angularPanel) {
+      this.setAngularPanel(undefined);
     }
 
     // remove panel type specific  options
@@ -376,7 +375,6 @@ export class PanelModel {
   }
 
   destroy() {
-    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
@@ -386,7 +384,6 @@ export class PanelModel {
 
     if (this.angularPanel) {
       this.angularPanel.destroy();
-      this.angularPanel = undefined;
     }
   }
 
@@ -396,6 +393,10 @@ export class PanelModel {
   }
 
   setAngularPanel(component: AngularComponent) {
+    if (this.angularPanel) {
+      this.angularPanel.destroy();
+    }
+
     this.angularPanel = component;
     this.events.emit(angularPanelUpdated);
   }
