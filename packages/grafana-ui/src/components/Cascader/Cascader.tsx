@@ -8,14 +8,17 @@ import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
-
 interface CascaderProps {
+  /**The seperator between levels in the search */
   separator?: string;
+  placeholder?: string;
   options: CascaderOption[];
   onSelect(val: string): void;
   size?: FormInputSize;
   initialValue?: string;
   allowCustomValue?: boolean;
+  /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
+  formatCreateLabel?: (val: string) => string;
 }
 
 interface CascaderState {
@@ -30,11 +33,11 @@ interface CascaderState {
 export interface CascaderOption {
   value: any;
   label: string;
-  // Items will be just flattened into the main list of items recursively.
+  /**Items will be just flattened into the main list of items recursively. */
   items?: CascaderOption[];
   disabled?: boolean;
   title?: string;
-  // Children will be shown in a submenu.
+  /**  Children will be shown in a submenu. Use 'items' instead, as this is ensure backwards compability.*/
   children?: CascaderOption[];
 }
 
@@ -168,7 +171,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { size, allowCustomValue } = this.props;
+    const { size, allowCustomValue, placeholder } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
 
     return (
@@ -176,13 +179,14 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
         {isSearching ? (
           <Select
             allowCustomValue={allowCustomValue}
-            placeholder="Search"
+            placeholder={placeholder}
             autoFocus={!focusCascade}
             onChange={this.onSelect}
             onBlur={this.onBlur}
             options={searchableOptions}
             size={size || 'md'}
             onCreateOption={this.onCreateOption}
+            formatCreateLabel={this.props.formatCreateLabel}
           />
         ) : (
           <RCCascader
@@ -197,6 +201,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           >
             <div className={disableDivFocus}>
               <Input
+                placeholder={placeholder}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
