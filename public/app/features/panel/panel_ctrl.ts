@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import config from 'app/core/config';
-import { Emitter, profiler } from 'app/core/core';
+import { profiler } from 'app/core/core';
+import { Emitter } from 'app/core/utils/emitter';
 import { auto } from 'angular';
 import { AppEvent, PanelEvents, PanelPluginMeta, AngularPanelMenuItem } from '@grafana/data';
 import { DashboardModel } from '../dashboard/state';

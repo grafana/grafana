@@ -291,7 +291,7 @@ export class PanelModel {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
-    const wasAngular = !!this.angularPanel;
+    const wasAngular = !!this.plugin.angularPanelCtrl;
 
     if (this.angularPanel) {
       this.setAngularPanel(undefined);

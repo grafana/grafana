@@ -105,6 +105,8 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         panel.events.off(PanelEvents.panelSizeChanged, onPanelSizeChanged);
         panel.events.off(PanelEvents.viewModeChanged, onViewModeChanged);
 
+        ctrl.events.emit(PanelEvents.panelTeardown);
+
         if (panelScrollbar) {
           panelScrollbar.dispose();
         }
