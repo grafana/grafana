@@ -31,7 +31,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   const { settings } = item;
   return (
     <Forms.Input
-      value={value}
+      value={isNaN(value) ? '' : value}
       type="number"
       step={settings.step}
       onChange={e => {
