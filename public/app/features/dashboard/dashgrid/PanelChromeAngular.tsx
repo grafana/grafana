@@ -24,6 +24,7 @@ export interface Props {
 export interface State {
   data: PanelData;
   errorMessage?: string;
+  alertState?: string;
 }
 
 interface AngularScopeProps {
@@ -68,8 +69,17 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     panel.events.on(PanelEvents.render, this.onPanelRenderEvent);
   }
 
-  onPanelRenderEvent = () => {
-    this.forceUpdate();
+  onPanelRenderEvent = (payload?: any) => {
+    const { alertState } = this.state;
+
+    if (payload && payload.alertState) {
+      this.setState({ alertState: payload.alertState });
+    } else if (payload && alertState) {
+      this.setState({ alertState: undefined });
+    } else {
+      // only needed for detecting title updates right now fix before 7.0
+      this.forceUpdate();
+    }
   };
 
   onPanelDataUpdate(data: PanelData) {
@@ -157,7 +167,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, panel, isFullscreen, plugin } = this.props;
-    const { errorMessage, data } = this.state;
+    const { errorMessage, data, alertState } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = classNames({
@@ -165,6 +175,8 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
       'panel-container--absolute': true,
       'panel-container--transparent': transparent,
       'panel-container--no-title': this.hasOverlayHeader(),
+      'panel-has-alert': panel.alert !== undefined,
+      [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
     const panelContentClassNames = classNames({
