@@ -316,6 +316,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.GetContextHandler(
 		hs.AuthTokenService,
 		hs.RemoteCacheService,
+		hs.RenderService,
 	))
 	m.Use(middleware.OrgRedirect())
 
