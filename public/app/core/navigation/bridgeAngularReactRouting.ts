@@ -50,7 +50,7 @@ const tamperAngularLocation = () => {
 };
 // Intercepting $location service with implementation based on history
 const interceptAngularLocation = () => {
-  debugger;
+  // debugger;
   coreModule.config([
     '$provide',
     ($provide: any) => {

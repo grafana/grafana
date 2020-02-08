@@ -15,50 +15,16 @@ import { store } from '../../store/store';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 
 interface AppWrapperProps {
-  app: GrafanaApp;
   injector: any;
 }
 
 export default class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
 
-  // constructor(props: AppWrapperProps) {
-  //   super(props);
-
-  //   this.state = {
-  //     ngInjector: null,
-  //   };
-  // }
-
-  // componentDidMount() {
-  //   if (this.container) {
-  //     this.bootstrapNgApp();
-  //   } else {
-  //     throw new Error('Failed to boot angular app, no container to attach to');
-  //   }
-  // }
-
-  // bootstrapNgApp() {
-  //   const { app } = this.props;
-  //   console.log('Bootstrappiong angular app')
-
-  //   this.setState(
-  //     { ngInjector: invoker },
-  //     invoker.invoke(() => {
-  //       each(app.preBootModules, module => {
-  //         extend(module, app.registerFunctions);
-  //       });
-  //       app.preBootModules = null;
-  //       // I don't know
-  //       return () => {};
-  //     })
-  //   );
-  // }
-
   renderRoutes() {
     return (
       <>
-        {legacyRoutes.map((descriptor, i) => {
+        {/* {legacyRoutes.map((descriptor, i) => {
           return (
             <GrafanaRoute
               {...descriptor}
@@ -67,7 +33,7 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
               key={i}
             />
           );
-        })}
+        })} */}
         {reactRoutes.map((descriptor, i) => {
           return (
             <Route
@@ -87,7 +53,7 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
 
   render() {
     // tslint:disable-next-line
-    const appSeed = `<grafana-app class="grafana-app"><sidemenu class="sidemenu"></sidemenu><div class="main-view"><div class="scroll-canvas" page-scrollbar><div id="ngRoot"></div></div></div></grafana-app>`;
+    // const appSeed = `<grafana-app class="grafana-app"><sidemenu class="sidemenu"></sidemenu><div class="main-view"><div class="scroll-canvas" page-scrollbar><div id="ngRoot"></div></div></div></grafana-app>`;
     return (
       <>
         <Provider store={store}>
@@ -96,12 +62,12 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
               <ThemeProvider>
                 <Router history={locationService().getHistory()}>
                   <>
-                    <div
+                    {/* <div
                       ref={this.container}
                       dangerouslySetInnerHTML={{
                         __html: appSeed,
                       }}
-                    />
+                    /> */}
                     {this.props.injector && this.container && this.renderRoutes()}
                   </>
                 </Router>

@@ -178,17 +178,20 @@ export class GrafanaApp {
 
       // return () => {}
     });
-    ReactDOM.render(
-      React.createElement(AppWrapper, {
-        app: this,
-        injector,
-      }),
-      document.getElementById('reactRoot')
-    );
-    // Preload selected app plugins
+    const promises = [];
     for (const modulePath of config.pluginsToPreload) {
-      importPluginModule(modulePath);
+      promises.push(importPluginModule(modulePath));
     }
+    Promise.all(promises).then(() => {
+      ReactDOM.render(
+        React.createElement(AppWrapper, {
+          injector,
+        }),
+        document.getElementById('reactRoot')
+      );
+    });
+    // console.log(config.pluginsToPreload);
+    // Preload selected app plugins
   }
 
   initEchoSrv() {

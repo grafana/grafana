@@ -5,7 +5,9 @@ import { pluginDashboardsLoad, pluginDashboardsLoaded, pluginsLoaded } from './r
 
 export function loadPlugins(): ThunkResult<void> {
   return async dispatch => {
+    debugger;
     const result = await getBackendSrv().get('api/plugins', { embedded: 0 });
+    debugger;
     dispatch(pluginsLoaded(result));
   };
 }

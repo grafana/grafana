@@ -18,6 +18,7 @@ const pluginsSlice = createSlice({
   initialState,
   reducers: {
     pluginsLoaded: (state, action: PayloadAction<PluginMeta[]>): PluginsState => {
+      debugger;
       return { ...state, hasFetched: true, plugins: action.payload };
     },
     setPluginsSearchQuery: (state, action: PayloadAction<string>): PluginsState => {

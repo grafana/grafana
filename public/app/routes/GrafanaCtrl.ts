@@ -50,6 +50,7 @@ export class GrafanaCtrl {
     dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader
   ) {
+    debugger;
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
     setBackendSrv(backendSrv);

@@ -42,6 +42,7 @@ class GrafanaRoute extends React.Component<GrafanaRouteProps> {
     return (
       <Route
         render={routeProps => {
+          debugger;
           return (
             <NgController
               injector={injector}

@@ -25,7 +25,7 @@ export interface Props {
 
 export class PluginListPage extends PureComponent<Props> {
   componentDidMount() {
-    debugger;
+    // debugger;
     this.fetchPlugins();
   }
 
