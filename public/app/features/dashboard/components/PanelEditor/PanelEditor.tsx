@@ -112,7 +112,9 @@ export class PanelEditor extends PureComponent<Props, State> {
     return (
       <div className={styles.wrapper}>
         <div>
-          <Forms.Button onClick={this.onPanelExit}>Exit</Forms.Button>
+          <button className="navbar-edit__back-btn" onClick={this.onPanelExit}>
+            <i className="fa fa-arrow-left"></i>
+          </button>
           {this.props.panel.title}
           <Forms.Button variant="destructive" onClick={this.onDiscard}>
             Discard
