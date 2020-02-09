@@ -250,7 +250,6 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.setState({
       mode: mode.value!,
     });
-    console.log('CHANGED', this.state.mode, mode);
   };
 
   render() {
@@ -304,7 +303,7 @@ export class PanelEditor extends PureComponent<Props, State> {
               <div className={styles.panelWrapper}>
                 <AutoSizer>
                   {({ width, height }) => {
-                    if (width < 1) {
+                    if (width < 3 || height < 3) {
                       return null;
                     }
                     return (
