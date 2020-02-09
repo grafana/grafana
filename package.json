@@ -37,7 +37,7 @@
     "@types/lru-cache": "^5.1.0",
     "@types/marked": "0.7.2",
     "@types/mousetrap": "1.6.3",
-    "@types/node": "11.13.4",
+    "@types/node": "13.7.0",
     "@types/papaparse": "4.5.9",
     "@types/pixelmatch": "4.0.0",
     "@types/pngjs": "3.3.2",
