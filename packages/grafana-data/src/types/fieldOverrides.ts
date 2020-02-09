@@ -6,7 +6,7 @@ import { DataFrame } from 'apache-arrow';
 
 export interface DynamicConfigValue {
   name: string;
-  value: any;
+  value?: any;
   custom?: boolean;
 }
 

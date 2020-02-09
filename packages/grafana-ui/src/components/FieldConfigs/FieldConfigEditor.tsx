@@ -1,10 +1,15 @@
 import React from 'react';
-import { FieldConfigEditorRegistry, FieldConfigSource, DataFrame, FieldPropertyEditorItem } from '@grafana/data';
+import cloneDeep from 'lodash/cloneDeep';
+import {
+  FieldConfigEditorRegistry,
+  FieldConfigSource,
+  DataFrame,
+  FieldPropertyEditorItem,
+  DynamicConfigValue,
+} from '@grafana/data';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import Forms from '../Forms';
 import { fieldMatchersUI } from '../MatchersUI/fieldMatchersUI';
-import { FieldMatcherUIRegistryItem } from '../MatchersUI/types';
-import { ButtonSelect } from '../Forms/Select/ButtonSelect';
 
 interface Props {
   config: FieldConfigSource;
@@ -46,6 +51,34 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
     });
   };
 
+  onMatcherConfigChange = (index: number, matcherConfig?: any) => {
+    const { config } = this.props;
+    let overrides = cloneDeep(config.overrides);
+    if (matcherConfig === undefined) {
+      overrides = overrides.splice(index, 1);
+    } else {
+      overrides[index].matcher.options = matcherConfig;
+    }
+    this.props.onChange({ ...config, overrides });
+  };
+
+  onDynamicConfigValueAdd = (index: number, name: string, custom?: boolean) => {
+    const { config } = this.props;
+    let overrides = cloneDeep(config.overrides);
+
+    const propertyConfig: DynamicConfigValue = {
+      name,
+      custom,
+    };
+    if (overrides[index].properties) {
+      overrides[index].properties.push(propertyConfig);
+    } else {
+      overrides[index].properties = [propertyConfig];
+    }
+
+    this.props.onChange({ ...config, overrides });
+  };
+
   renderEditor(item: FieldPropertyEditorItem, custom: boolean) {
     const config = this.props.config.defaults;
     const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
@@ -75,6 +108,7 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
 
   renderOverrides() {
     const { config, data, custom } = this.props;
+
     let configPropertiesOptions = standardFieldConfigEditorRegistry.list().map(i => ({
       label: i.name,
       value: i.id,
@@ -105,11 +139,33 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
                     matcher={matcherUi.matcher}
                     data={data}
                     options={o.matcher.options}
-                    onChange={options => {
-                      console.log(options);
+                    onChange={option => this.onMatcherConfigChange(i, option)}
+                  />
+                  <Forms.ButtonSelect
+                    icon="plus"
+                    placeholder="Set config property"
+                    options={configPropertiesOptions}
+                    onChange={o => {
+                      this.onDynamicConfigValueAdd(i, o.value!, o.custom);
                     }}
                   />
-                  <Forms.ButtonSelect icon="plus" placeholder="Set config property" options={configPropertiesOptions} />
+
+                  {o.properties.map((p, j) => {
+                    const item = p.custom ? custom?.get(p.name) : standardFieldConfigEditorRegistry.get(p.name);
+                    if (!item) {
+                      return <div>Unknown property: {p.name}</div>;
+                    }
+                    return (
+                      <item.override
+                        value={p.value}
+                        onChange={value => {
+                          o.properties[j].value = value;
+                        }}
+                        item={item}
+                        context={{} as any}
+                      />
+                    );
+                  })}
                 </>
               </Forms.Field>
             </div>
@@ -150,8 +206,8 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
       <div>
         {this.renderStandardConfigs()}
         {this.renderCustomConfigs()}
-        {this.renderOverrides()}
         {this.renderAddOverride()}
+        {this.renderOverrides()}
       </div>
     );
   }

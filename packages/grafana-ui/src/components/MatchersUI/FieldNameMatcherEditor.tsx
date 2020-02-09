@@ -22,11 +22,10 @@ export class FieldNameMatcherEditor extends React.PureComponent<MatcherUIProps<s
     }));
     const selectedOption = selectOptions.find(v => v.value === options);
 
-    debugger;
     return (
       <Forms.Select
         allowCustomValue
-        // value={selectedOption[0]}
+        value={selectedOption}
         options={selectOptions}
         onChange={o => onChange(o.value!)}
       />
