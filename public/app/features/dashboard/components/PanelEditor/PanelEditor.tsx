@@ -128,11 +128,11 @@ export class PanelEditor extends PureComponent<Props, State> {
     // panelInitialised event is emmited from PanelChrome
     const panel = props.sourcePanel.getEditClone();
     this.state = {
-      mode: DisplayMode.Fit,
-      showPanelOptions: true,
       panel,
       tab: EditorTab.Query,
       pluginLoadedCounter: 0,
+      mode: DisplayMode.Fill,
+      showPanelOptions: true,
       data: {
         state: LoadingState.NotStarted,
         series: [],
