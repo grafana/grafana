@@ -1,6 +1,12 @@
 import React from 'react';
 
-import { FieldOverrideContext, FieldOverrideEditorProps, FieldConfigEditorProps } from '@grafana/data';
+import {
+  FieldOverrideContext,
+  FieldOverrideEditorProps,
+  FieldConfigEditorProps,
+  toIntegerOrUndefined,
+  toFloatOrUndefined,
+} from '@grafana/data';
 import Forms from '../Forms';
 
 export interface NumberFieldConfigSettings {
@@ -32,27 +38,37 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   return (
     <Forms.Input
       value={isNaN(value) ? '' : value}
+      min={settings.min}
+      max={settings.max}
       type="number"
       step={settings.step}
       onChange={e => {
         onChange(
-          item.settings.integer
-            ? parseInt(e.currentTarget.value, settings.step || 10)
-            : parseFloat(e.currentTarget.value)
+          settings.integer ? toIntegerOrUndefined(e.currentTarget.value) : toFloatOrUndefined(e.currentTarget.value)
         );
       }}
     />
   );
 };
 
-export class NumberOverrideEditor extends React.PureComponent<
-  FieldOverrideEditorProps<number, NumberFieldConfigSettings>
-> {
-  constructor(props: FieldOverrideEditorProps<number, NumberFieldConfigSettings>) {
-    super(props);
-  }
-
-  render() {
-    return <div>SHOW OVERRIDE EDITOR {this.props.item.name}</div>;
-  }
-}
+export const NumberOverrideEditor: React.FC<FieldOverrideEditorProps<number, NumberFieldConfigSettings>> = ({
+  value,
+  onChange,
+  item,
+}) => {
+  const { settings } = item;
+  return (
+    <Forms.Input
+      value={isNaN(value) ? '' : value}
+      min={settings.min}
+      max={settings.max}
+      type="number"
+      step={settings.step}
+      onChange={e => {
+        onChange(
+          settings.integer ? toIntegerOrUndefined(e.currentTarget.value) : toFloatOrUndefined(e.currentTarget.value)
+        );
+      }}
+    />
+  );
+};

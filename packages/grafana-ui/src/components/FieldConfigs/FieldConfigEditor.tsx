@@ -79,6 +79,13 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
     this.props.onChange({ ...config, overrides });
   };
 
+  onDynamicConfigValueChange = (overrideIndex: number, propertyIndex: number, value?: any) => {
+    const { config } = this.props;
+    let overrides = cloneDeep(config.overrides);
+    overrides[overrideIndex].properties[propertyIndex].value = value;
+    this.props.onChange({ ...config, overrides });
+  };
+
   renderEditor(item: FieldPropertyEditorItem, custom: boolean) {
     const config = this.props.config.defaults;
     const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
@@ -156,14 +163,16 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
                       return <div>Unknown property: {p.name}</div>;
                     }
                     return (
-                      <item.override
-                        value={p.value}
-                        onChange={value => {
-                          o.properties[j].value = value;
-                        }}
-                        item={item}
-                        context={{} as any}
-                      />
+                      <Forms.Field label={item.name} description={item.description}>
+                        <item.override
+                          value={p.value}
+                          onChange={value => {
+                            this.onDynamicConfigValueChange(i, j, value);
+                          }}
+                          item={item}
+                          context={{} as any}
+                        />
+                      </Forms.Field>
                     );
                   })}
                 </>
