@@ -73,7 +73,7 @@
     "enzyme": "3.11.0",
     "enzyme-adapter-react-16": "1.15.2",
     "enzyme-to-json": "3.4.4",
-    "es6-promise": "3.3.1",
+    "es6-promise": "4.2.8",
     "es6-shim": "0.35.5",
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.10.0",
