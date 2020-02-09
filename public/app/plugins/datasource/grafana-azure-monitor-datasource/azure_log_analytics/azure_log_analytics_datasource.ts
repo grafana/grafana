@@ -21,7 +21,9 @@ export default class AzureLogAnalyticsDatasource {
     private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
-    this.baseUrl = '/loganalyticsazure';
+    this.baseUrl = this.instanceSettings.jsonData.azureLogAnalyticsSameAs
+      ? '/sameasloganalyticsazure'
+      : `/loganalyticsazure`;
     this.url = instanceSettings.url;
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
 

@@ -131,6 +131,25 @@
         { "name": "Cache-Control", "content": "public, max-age=60" },
         { "name": "Accept-Encoding", "content": "gzip" }
       ]
+    },
+    {
+      "path": "sameasloganalyticsazure",
+      "method": "GET",
+      "url": "https://api.loganalytics.io/v1/workspaces",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "resource": "https://api.loganalytics.io"
+        }
+      },
+      "headers": [
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" },
+        { "name": "Accept-Encoding", "content": "gzip" }
+      ]
     }
   ],
 
