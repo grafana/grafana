@@ -8,7 +8,14 @@ import {
   PanelEvents,
   SelectableValue,
 } from '@grafana/data';
-import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
+import {
+  stylesFactory,
+  Forms,
+  FieldConfigEditor,
+  CustomScrollbar,
+  selectThemeVariant,
+  ControlledCollapse,
+} from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -211,14 +218,12 @@ export class PanelEditor extends PureComponent<Props, State> {
     }
 
     return (
-      <div>
-        <FieldConfigEditor
-          config={fieldOptions}
-          custom={plugin.customFieldConfigs}
-          onChange={this.onFieldConfigsChange}
-          data={data.series}
-        />
-      </div>
+      <FieldConfigEditor
+        config={fieldOptions}
+        custom={plugin.customFieldConfigs}
+        onChange={this.onFieldConfigsChange}
+        data={data.series}
+      />
     );
   }
 
@@ -359,7 +364,10 @@ export class PanelEditor extends PureComponent<Props, State> {
                 <CustomScrollbar>
                   <div style={{ padding: '10px' }}>
                     {this.renderFieldOptions()}
-                    {this.renderVisSettings()}
+
+                    <ControlledCollapse label="Visualization Settings" collapsible>
+                      {this.renderVisSettings()}
+                    </ControlledCollapse>
                   </div>
                 </CustomScrollbar>
               </div>

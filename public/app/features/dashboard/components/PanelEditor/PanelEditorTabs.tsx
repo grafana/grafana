@@ -58,7 +58,7 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
               return (
                 <div style={{ width, height }}>
                   {activeTab === EditorTab.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
-                  {activeTab === EditorTab.Alerts && <AlertTab panel={panel} dashboard={dashboard} />}}
+                  {activeTab === EditorTab.Alerts && <AlertTab panel={panel} dashboard={dashboard} />}
                   {activeTab === EditorTab.Transform && <div>TODO: Show Transform</div>}
                 </div>
               );
