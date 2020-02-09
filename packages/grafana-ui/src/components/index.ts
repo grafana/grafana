@@ -134,3 +134,4 @@ export {
 
 // Next-gen forms
 export { default as Forms } from './Forms';
+export { ValuePicker } from './ValuePicker/ValuePicker';
