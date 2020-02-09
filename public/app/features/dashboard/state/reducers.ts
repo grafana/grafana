@@ -72,6 +72,7 @@ const dashbardSlice = createSlice({
     panelPluginLoaded: (state, action: PayloadAction<PanelPluginLoadedPayload>) => {
       state.panels[action.payload.panelId] = { plugin: action.payload.plugin };
     },
+    /* This action is not ready yet */
     addPanelToDashboard: (state, action: PayloadAction<AddPanelPayload>) => {},
   },
 });

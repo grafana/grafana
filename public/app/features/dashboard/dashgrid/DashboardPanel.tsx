@@ -16,7 +16,7 @@ import { loadPanelPlugin } from '../state/actions';
 // Types
 import { PanelModel, DashboardModel } from '../state';
 import { StoreState } from 'app/types';
-import { PanelPluginMeta, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -52,10 +52,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       isLazy: !props.isInView,
     };
   }
-
-  onPluginTypeChange = (plugin: PanelPluginMeta) => {
-    this.props.loadPanelPlugin(this.props.panel, plugin.id);
-  };
 
   componentDidMount() {
     this.props.loadPanelPlugin(this.props.panel, this.props.panel.type);
@@ -157,21 +153,14 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
             </div>
           )}
         />
-        {panel.isEditing && (
-          <PanelEditor
-            panel={panel}
-            plugin={plugin}
-            dashboard={dashboard}
-            onPluginTypeChange={this.onPluginTypeChange}
-          />
-        )}
+        {panel.isEditing && <PanelEditor panel={panel} plugin={plugin} dashboard={dashboard} />}
       </div>
     );
   }
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = state.dashboard.panels[props.panel.id];
+  const panelState = state.dashboard.panels[props.panel.id] ?? {};
 
   return {
     plugin: panelState.plugin,

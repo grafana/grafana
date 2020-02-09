@@ -135,3 +135,28 @@ export function loadPanelPlugin(panel: PanelModel, pluginId: string): ThunkResul
     }
   };
 }
+
+export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const store = getStore();
+    const panelState = store.dashboard.panels[panel.id] || {};
+    const { plugin } = panelState;
+
+    if (!plugin || plugin.meta.id !== pluginId) {
+      const plugin = await importPanelPlugin(pluginId);
+
+      if (panel.type !== pluginId) {
+        panel.changePlugin(plugin);
+      } else {
+        panel.pluginLoaded(plugin);
+      }
+
+      dispatch(
+        panelPluginLoaded({
+          panelId: panel.id,
+          plugin: plugin,
+        })
+      );
+    }
+  };
+}
