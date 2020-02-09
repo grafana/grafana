@@ -237,7 +237,6 @@ export const customizedControl = () => {
         setValue(v);
       }}
       size="md"
-      portal={document.body}
       renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
         return (
           <Button {...otherProps} ref={ref}>

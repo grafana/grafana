@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { SelectableValue, deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
@@ -24,6 +24,7 @@ import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
+import { RefForwardingPortal } from '../../Portal/Portal';
 
 type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
@@ -64,8 +65,6 @@ export interface SelectCommonProps<T> {
   prefix?: JSX.Element | string | null;
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
-  /** An element where the dropdown menu should be rendered. In all Select implementations it defaults to document.body .*/
-  portal?: HTMLElement | null;
 }
 
 export interface SelectAsyncProps<T> {
@@ -84,7 +83,6 @@ export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'o
 
 export interface SelectBaseProps<T> extends SelectCommonProps<T>, SelectAsyncProps<T> {
   invalid?: boolean;
-  portal: HTMLElement | null;
 }
 
 export interface CustomControlProps<T> {
@@ -177,10 +175,10 @@ export function SelectBase<T>({
   renderControl,
   width,
   invalid,
-  portal,
   components,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
+  const portalRef = useRef<HTMLDivElement>();
   const styles = getSelectStyles(theme);
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
@@ -238,7 +236,7 @@ export function SelectBase<T>({
     renderControl,
     captureMenuScroll: false,
     blurInputOnSelect: true,
-    menuPortalTarget: portal,
+    menuPortalTarget: portalRef.current,
     menuPlacement: 'auto',
   };
 
@@ -265,95 +263,98 @@ export function SelectBase<T>({
   }
 
   return (
-    <ReactSelectComponent
-      components={{
-        MenuList: SelectMenu,
-        Group: SelectOptionGroup,
-        ValueContainer: ValueContainer,
-        Placeholder: (props: any) => (
-          <div
-            {...props.innerProps}
-            className={cx(
-              css(props.getStyles('placeholder', props)),
-              css`
-                display: inline-block;
-                color: hsl(0, 0%, 50%);
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                box-sizing: border-box;
-                line-height: 1;
-              `
-            )}
-          >
-            {props.children}
-          </div>
-        ),
-        SelectContainer: (props: any) => (
-          <div
-            {...props.innerProps}
-            className={cx(
-              css(props.getStyles('container', props)),
-              css`
-                position: relative;
-              `,
-              inputSizes()[size]
-            )}
-          >
-            {props.children}
-          </div>
-        ),
-        IndicatorsContainer: IndicatorsContainer,
-        IndicatorSeparator: () => <></>,
-        Control: CustomControl,
-        Option: SelectMenuOptions,
-        ClearIndicator: (props: any) => {
-          const { clearValue } = props;
-          return (
-            <Icon
-              name="times"
-              onMouseDown={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                clearValue();
-              }}
-            />
-          );
-        },
-        LoadingIndicator: (props: any) => {
-          return <Icon name="spinner" className="fa fa-spin" />;
-        },
-        LoadingMessage: (props: any) => {
-          return <div className={styles.loadingMessage}>{loadingMessage}</div>;
-        },
-        NoOptionsMessage: (props: any) => {
-          return (
-            <div className={styles.loadingMessage} aria-label="No options provided">
-              {noOptionsMessage}
+    <>
+      <ReactSelectComponent
+        components={{
+          MenuList: SelectMenu,
+          Group: SelectOptionGroup,
+          ValueContainer: ValueContainer,
+          Placeholder: (props: any) => (
+            <div
+              {...props.innerProps}
+              className={cx(
+                css(props.getStyles('placeholder', props)),
+                css`
+                  display: inline-block;
+                  color: hsl(0, 0%, 50%);
+                  position: absolute;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  box-sizing: border-box;
+                  line-height: 1;
+                `
+              )}
+            >
+              {props.children}
             </div>
-          );
-        },
-        DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
-        SingleValue: SingleValue,
-        MultiValueContainer: MultiValueContainer,
-        MultiValueRemove: MultiValueRemove,
-        ...components,
-      }}
-      styles={{
-        ...resetSelectStyles(),
-        //These are required for the menu positioning to function
-        menu: ({ top, bottom, width, position }: any) => ({
-          top,
-          bottom,
-          width,
-          position,
-          marginBottom: !!bottom ? '10px' : '0',
-        }),
-      }}
-      className={widthClass}
-      {...commonSelectProps}
-      {...creatableProps}
-      {...asyncSelectProps}
-    />
+          ),
+          SelectContainer: (props: any) => (
+            <div
+              {...props.innerProps}
+              className={cx(
+                css(props.getStyles('container', props)),
+                css`
+                  position: relative;
+                `,
+                inputSizes()[size]
+              )}
+            >
+              {props.children}
+            </div>
+          ),
+          IndicatorsContainer: IndicatorsContainer,
+          IndicatorSeparator: () => <></>,
+          Control: CustomControl,
+          Option: SelectMenuOptions,
+          ClearIndicator: (props: any) => {
+            const { clearValue } = props;
+            return (
+              <Icon
+                name="times"
+                onMouseDown={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  clearValue();
+                }}
+              />
+            );
+          },
+          LoadingIndicator: (props: any) => {
+            return <Icon name="spinner" className="fa fa-spin" />;
+          },
+          LoadingMessage: (props: any) => {
+            return <div className={styles.loadingMessage}>{loadingMessage}</div>;
+          },
+          NoOptionsMessage: (props: any) => {
+            return (
+              <div className={styles.loadingMessage} aria-label="No options provided">
+                {noOptionsMessage}
+              </div>
+            );
+          },
+          DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
+          SingleValue: SingleValue,
+          MultiValueContainer: MultiValueContainer,
+          MultiValueRemove: MultiValueRemove,
+          ...components,
+        }}
+        styles={{
+          ...resetSelectStyles(),
+          //These are required for the menu positioning to function
+          menu: ({ top, bottom, width, position }: any) => ({
+            top,
+            bottom,
+            width,
+            position,
+            marginBottom: !!bottom ? '10px' : '0',
+          }),
+        }}
+        className={widthClass}
+        {...commonSelectProps}
+        {...creatableProps}
+        {...asyncSelectProps}
+      />
+      <RefForwardingPortal ref={portalRef as any} />
+    </>
   );
 }
