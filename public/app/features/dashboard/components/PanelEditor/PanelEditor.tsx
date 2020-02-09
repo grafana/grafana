@@ -105,6 +105,7 @@ interface State {
   panel: PanelModel;
   data: PanelData;
   mode: DisplayMode;
+  showPanelOptions: boolean;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
@@ -118,6 +119,7 @@ export class PanelEditor extends PureComponent<Props, State> {
     const panel = props.sourcePanel.getEditClone();
     this.state = {
       mode: DisplayMode.Fit,
+      showPanelOptions: true,
       panel,
       pluginLoadedCounter: 0,
       data: {
@@ -252,9 +254,56 @@ export class PanelEditor extends PureComponent<Props, State> {
     });
   };
 
-  render() {
+  onTogglePanelOptions = () => {
+    this.setState({
+      showPanelOptions: !this.state.showPanelOptions,
+    });
+  };
+
+  renderHorizontalSplit(styles: any) {
     const { dashboard } = this.props;
     const { panel, mode } = this.state;
+
+    return (
+      <SplitPane
+        split="horizontal"
+        minSize={50}
+        primary="second"
+        defaultSize="40%"
+        resizerClassName={styles.resizerH}
+        onDragStarted={() => (document.body.style.cursor = 'row-resize')}
+        onDragFinished={this.onDragFinished}
+      >
+        <div className={styles.panelWrapper}>
+          <AutoSizer>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
+              }
+              return (
+                <div style={calculatePanelSize(mode, width, height, panel)}>
+                  <DashboardPanel
+                    dashboard={dashboard}
+                    panel={panel}
+                    isEditing={false}
+                    isInEditMode
+                    isFullscreen={false}
+                    isInView={true}
+                  />
+                </div>
+              );
+            }}
+          </AutoSizer>
+        </div>
+        <div className={styles.noScrollPaneContent}>
+          <QueriesTab panel={panel} dashboard={dashboard} />
+        </div>
+      </SplitPane>
+    );
+  }
+
+  render() {
+    const { panel, mode, showPanelOptions } = this.state;
     const styles = getStyles(config.theme);
 
     if (!panel) {
@@ -276,64 +325,38 @@ export class PanelEditor extends PureComponent<Props, State> {
               options={displayModes}
               onChange={this.onDiplayModeChange}
             />
+            <Forms.Button variant="inverse" onClick={this.onTogglePanelOptions}>
+              O
+            </Forms.Button>
             <Forms.Button variant="destructive" onClick={this.onDiscard}>
               Discard
             </Forms.Button>
           </div>
         </div>
         <div className={styles.panes}>
-          <SplitPane
-            split="vertical"
-            primary="second"
-            minSize={50}
-            defaultSize={350}
-            resizerClassName={styles.resizerV}
-            onDragStarted={() => (document.body.style.cursor = 'col-resize')}
-            onDragFinished={this.onDragFinished}
-          >
+          {showPanelOptions ? (
             <SplitPane
-              split="horizontal"
-              minSize={50}
+              split="vertical"
               primary="second"
-              defaultSize="40%"
-              resizerClassName={styles.resizerH}
-              onDragStarted={() => (document.body.style.cursor = 'row-resize')}
+              minSize={50}
+              defaultSize={350}
+              resizerClassName={styles.resizerV}
+              onDragStarted={() => (document.body.style.cursor = 'col-resize')}
               onDragFinished={this.onDragFinished}
             >
-              <div className={styles.panelWrapper}>
-                <AutoSizer>
-                  {({ width, height }) => {
-                    if (width < 3 || height < 3) {
-                      return null;
-                    }
-                    return (
-                      <div style={calculatePanelSize(mode, width, height, panel)}>
-                        <DashboardPanel
-                          dashboard={dashboard}
-                          panel={panel}
-                          isEditing={false}
-                          isInEditMode
-                          isFullscreen={false}
-                          isInView={true}
-                        />
-                      </div>
-                    );
-                  }}
-                </AutoSizer>
-              </div>
+              {this.renderHorizontalSplit(styles)}
               <div className={styles.noScrollPaneContent}>
-                <QueriesTab panel={panel} dashboard={dashboard} />
+                <CustomScrollbar>
+                  <div style={{ padding: '10px' }}>
+                    {this.renderFieldOptions()}
+                    {this.renderVisSettings()}
+                  </div>
+                </CustomScrollbar>
               </div>
             </SplitPane>
-            <div className={styles.noScrollPaneContent}>
-              <CustomScrollbar>
-                <div style={{ padding: '10px' }}>
-                  {this.renderFieldOptions()}
-                  {this.renderVisSettings()}
-                </div>
-              </CustomScrollbar>
-            </div>
-          </SplitPane>
+          ) : (
+            this.renderHorizontalSplit(styles)
+          )}
         </div>
       </div>
     );
