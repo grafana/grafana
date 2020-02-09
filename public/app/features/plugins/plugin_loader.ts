@@ -231,10 +231,13 @@ const panelCache: PanelCache = {};
 
 export function importPanelPlugin(id: string): Promise<PanelPlugin> {
   const loaded = panelCache[id];
+
   if (loaded) {
     return Promise.resolve(loaded);
   }
+
   const meta = config.panels[id];
+
   if (!meta) {
     return Promise.resolve(getPanelPluginNotFound(id));
   }
