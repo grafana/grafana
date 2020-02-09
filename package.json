@@ -128,7 +128,7 @@
     "prettier": "1.19.1",
     "puppeteer-core": "2.1.1",
     "react-hot-loader": "4.12.9",
-    "react-test-renderer": "16.9.0",
+    "react-test-renderer": "16.12.0",
     "redux-mock-store": "1.5.3",
     "regexp-replace-loader": "1.0.1",
     "rimraf": "2.6.3",
