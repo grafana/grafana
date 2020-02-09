@@ -29,7 +29,7 @@
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/expect-puppeteer": "4.4.0",
     "@types/file-saver": "2.0.1",
-    "@types/hoist-non-react-statics": "3.3.0",
+    "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "24.0.13",
     "@types/jquery": "1.10.35",
