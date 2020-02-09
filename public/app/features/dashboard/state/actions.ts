@@ -6,6 +6,7 @@ import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 import { loadPluginDashboards } from '../../plugins/state/actions';
 import { loadDashboardPermissions, panelPluginLoaded } from './reducers';
 import { notifyApp } from 'app/core/actions';
+import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 // Types
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 import { PanelModel } from './PanelModel';
@@ -111,52 +112,33 @@ export function removeDashboard(uri: string): ThunkResult<void> {
   };
 }
 
-export function loadPanelPlugin(panel: PanelModel, pluginId: string): ThunkResult<void> {
+export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const store = getStore();
-    const panelState = store.dashboard.panels[panel.id] || {};
-    const { plugin } = panelState;
+    let plugin = getStore().plugins.panels[panel.type];
 
-    if (!plugin || plugin.meta.id !== pluginId) {
-      const plugin = await importPanelPlugin(pluginId);
+    if (!plugin) {
+      await dispatch(loadPanelPlugin(panel.type));
+      plugin = getStore().plugins.panels[panel.type];
+    }
 
-      if (panel.type !== pluginId) {
-        panel.changePlugin(plugin);
-      } else {
-        panel.pluginLoaded(plugin);
-      }
-
-      dispatch(
-        panelPluginLoaded({
-          panelId: panel.id,
-          plugin: plugin,
-        })
-      );
+    if (panel.plugin) {
+      panel.pluginLoaded(plugin);
     }
   };
 }
 
 export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const store = getStore();
-    const panelState = store.dashboard.panels[panel.id] || {};
-    const { plugin } = panelState;
+    const panelState = getStore().dashboard.panels[panel.id] || {};
+    let plugin = getStore().plugins.panels[panel.type];
 
-    if (!plugin || plugin.meta.id !== pluginId) {
-      const plugin = await importPanelPlugin(pluginId);
-
-      if (panel.type !== pluginId) {
-        panel.changePlugin(plugin);
-      } else {
-        panel.pluginLoaded(plugin);
-      }
-
-      dispatch(
-        panelPluginLoaded({
-          panelId: panel.id,
-          plugin: plugin,
-        })
-      );
+    if (!plugin) {
+      await dispatch(loadPanelPlugin(panel.type));
+      plugin = getStore().plugins.panels[panel.type];
     }
+
+    panel.changePlugin(plugin);
+
+    dispatch(panelPluginLoaded({ panelId: panel.id, plugin: plugin }));
   };
 }

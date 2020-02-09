@@ -11,7 +11,7 @@ import { PanelResizer } from './PanelResizer';
 import { PanelChromeAngular } from './PanelChromeAngular';
 
 // Actions
-import { loadPanelPlugin } from '../state/actions';
+import { initDashboardPanel } from '../state/actions';
 
 // Types
 import { PanelModel, DashboardModel } from '../state';
@@ -32,7 +32,7 @@ export interface ConnectedProps {
 }
 
 export interface DispatchProps {
-  loadPanelPlugin: typeof loadPanelPlugin;
+  initDashboardPanel: typeof initDashboardPanel;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -54,7 +54,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.loadPanelPlugin(this.props.panel, this.props.panel.type);
+    this.props.initDashboardPanel(this.props.panel);
   }
 
   componentDidUpdate() {
@@ -160,13 +160,11 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = state.dashboard.panels[props.panel.id] ?? {};
-
   return {
-    plugin: panelState.plugin,
+    plugin: state.plugins.panels[props.panel.type],
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { loadPanelPlugin };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { initDashboardPanel };
 
 export const DashboardPanel = connect(mapStateToProps, mapDispatchToProps)(DashboardPanelUnconnected);
