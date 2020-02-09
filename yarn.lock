@@ -5501,10 +5501,10 @@
   resolved "https://registry.yarnpkg.com/@types/sizzle/-/sizzle-2.3.2.tgz#a811b8c18e2babab7d542b3365887ae2e4d9de47"
   integrity sha512-7EJYyKTL7tFR8+gDbB6Wwz/arpGa0Mywk1TJbNzKzHtzbwVmY4HR9WqS5VV7dsBUKQmPNr192jHr/VpBluj/hg==
 
-"@types/slate-plain-serializer@0.6.1":
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/@types/slate-plain-serializer/-/slate-plain-serializer-0.6.1.tgz#c392ce51621f7c55df0976f161dcfca18bd559ee"
-  integrity sha512-5meyKFvmWH1T02j2dbAaY8kn/FNofxP79jV3TsfuLsUIeHkON5CroBxAyrgkYF4vHp+MVWZddI36Yvwl7Y0Feg==
+"@types/slate-plain-serializer@0.7.0":
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/@types/slate-plain-serializer/-/slate-plain-serializer-0.7.0.tgz#ae5ccf376881db9234bfc0877fffec24994eedbe"
+  integrity sha512-Df/VsJI/1c3YTUzzQF4mj9aRoDVotYud6nQnc7twUfr109RG1wzVkw/NXYvarMo8U4JQttJibrqPyCFDmIgt3w==
   dependencies:
     "@types/slate" "*"
 
