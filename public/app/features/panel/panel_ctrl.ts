@@ -31,7 +31,7 @@ export class PanelCtrl {
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabs = [];
-    this.events = new Emitter();
+    this.events = this.panel.events;
     this.timing = {}; // not used but here to not break plugins
 
     const plugin = config.panels[this.panel.type];
@@ -99,8 +99,7 @@ export class PanelCtrl {
   }
 
   render(payload?: any) {
-    // this needs to be on the panel emitter, it gets redirected to the panel ctrl emitter as well in panel_directive
-    this.panel.events.emit(PanelEvents.render, payload);
+    this.events.emit(PanelEvents.render, payload);
   }
 
   // overriden from react

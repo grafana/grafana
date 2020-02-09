@@ -76,25 +76,14 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }, 10);
       }
 
-      /*
-       * Mirror some events on panel model to angular controller and vice versa
-       * PanelCtrl event is a different emitter from the PanelModel events
-       * the reason is that we can change visualization type but the PanelModel will stay, so we need a way
-       * to clear the events subscribed to only by the angular code.
-       *
-       * But some events (render & refresh) needs to be forwarded from panel model emitter to the panel ctrl emitter
-       */
-
       function onPanelModelRender(payload?: any) {
         ctrl.height = scope.$parent.$parent.size.height;
         ctrl.width = scope.$parent.$parent.size.width;
-        ctrl.events.emit(PanelEvents.render, payload);
       }
 
       function onPanelModelRefresh() {
         ctrl.height = scope.$parent.$parent.size.height;
         ctrl.width = scope.$parent.$parent.size.width;
-        ctrl.events.emit(PanelEvents.refresh);
       }
 
       panel.events.on(PanelEvents.refresh, onPanelModelRefresh);
@@ -105,13 +94,8 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       scope.$on('$destroy', () => {
         elem.off();
 
-        panel.events.off(PanelEvents.refresh, onPanelModelRefresh);
-        panel.events.off(PanelEvents.render, onPanelModelRender);
-        panel.events.off(PanelEvents.panelSizeChanged, onPanelSizeChanged);
-        panel.events.off(PanelEvents.viewModeChanged, onViewModeChanged);
-
-        ctrl.events.emit(PanelEvents.panelTeardown);
-        ctrl.events.removeAllListeners();
+        panel.events.emit(PanelEvents.panelTeardown);
+        panel.events.removeAllListeners();
 
         if (panelScrollbar) {
           panelScrollbar.dispose();

@@ -62,11 +62,13 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     this.querySubscription = queryRunner.getData(false).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
+  }
 
+  subscribeToRenderEvent() {
     // Subscribe to render event, this is as far as I know only needed for changes to title & transparent
     // These changes are modified in the model and only way to communicate that change is via this event
     // Need to find another solution for this in tthe future (panel title in redux?)
-    panel.events.on(PanelEvents.render, this.onPanelRenderEvent);
+    this.props.panel.events.on(PanelEvents.render, this.onPanelRenderEvent);
   }
 
   onPanelRenderEvent = (payload?: any) => {
@@ -136,7 +138,11 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
       size: { width, height },
     };
 
+    // compile angular template and get back handle to scope
     panel.setAngularPanel(loader.load(this.element, this.scopeProps, template));
+
+    // need to to this every time we load an angular as all events are unsubscribed when panel is destroyed
+    this.subscribeToRenderEvent();
   }
 
   cleanUpAngularPanel() {

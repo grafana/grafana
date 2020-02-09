@@ -394,6 +394,7 @@ export class PanelModel {
 
   setAngularPanel(component: AngularComponent) {
     if (this.angularPanel) {
+      // this will remove all event listeners
       this.angularPanel.destroy();
     }
 
