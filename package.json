@@ -208,7 +208,7 @@
     "@reduxjs/toolkit": "1.2.3",
     "@torkelo/react-select": "3.0.8",
     "@types/md5": "^2.1.33",
-    "@types/react-loadable": "5.5.2",
+    "@types/react-loadable": "5.5.3",
     "@types/react-virtualized-auto-sizer": "1.0.0",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.6.9",
