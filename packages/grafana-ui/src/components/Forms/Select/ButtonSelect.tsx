@@ -4,9 +4,10 @@ import { Button, ButtonVariant, ButtonProps } from '../Button';
 import { ButtonSize } from '../../Button/types';
 import { SelectCommonProps, SelectBase, CustomControlProps } from './SelectBase';
 import { css } from 'emotion';
-import { useTheme } from '../../../themes';
+import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { IconType } from '../../Icon/types';
+import { GrafanaTheme } from '@grafana/data';
 
 interface ButtonSelectProps<T> extends Omit<SelectCommonProps<T>, 'renderControl' | 'size' | 'prefix'> {
   icon?: IconType;
@@ -21,8 +22,7 @@ interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {
 
 const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
   ({ icon, children, isOpen, ...buttonProps }, ref) => {
-    const theme = useTheme();
-    const styles = {
+    const getStyles = stylesFactory((theme: GrafanaTheme) => ({
       wrapper: css`
         display: flex;
         align-items: center;
@@ -39,7 +39,8 @@ const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
         margin-right: -${theme.spacing.sm};
         height: 100%;
       `,
-    };
+    }));
+    const styles = getStyles(useTheme());
     const buttonIcon = `fa fa-${icon}`;
     const caretIcon = isOpen ? 'caret-up' : 'caret-down';
     return (
