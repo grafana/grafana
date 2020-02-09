@@ -74,7 +74,6 @@ export function ButtonSelect<T>({
   return (
     <SelectBase
       {...selectProps}
-      portal={document.body}
       renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, ref) => {
         return (
           <SelectButton {...buttonProps} innerRef={ref} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
