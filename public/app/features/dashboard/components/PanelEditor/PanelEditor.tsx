@@ -395,7 +395,7 @@ export class PanelEditor extends PureComponent<Props, State> {
 }
 
 function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
-  if (mode === DisplayMode.Full) {
+  if (mode === DisplayMode.Fill) {
     return { width, height };
   }
   const colWidth = (window.innerWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
