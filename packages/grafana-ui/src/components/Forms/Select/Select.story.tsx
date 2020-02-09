@@ -237,9 +237,15 @@ export const customizedControl = () => {
         setValue(v);
       }}
       size="md"
-      renderControl={({ isOpen, value, ...otherProps }) => {
-        return <Button {...otherProps}> {isOpen ? 'Open' : 'Closed'}</Button>;
-      }}
+      portal={document.body}
+      renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
+        return (
+          <Button {...otherProps} ref={ref}>
+            {' '}
+            {isOpen ? 'Open' : 'Closed'}
+          </Button>
+        );
+      })}
       {...getDynamicProps()}
     />
   );

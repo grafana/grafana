@@ -17,9 +17,10 @@ interface ButtonSelectProps<T> extends Omit<SelectCommonProps<T>, 'renderControl
 interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {
   icon?: IconType;
   isOpen?: boolean;
+  innerRef: any;
 }
 
-const SelectButton: React.FC<SelectButtonProps> = ({ icon, children, isOpen, ...buttonProps }) => {
+const SelectButton: React.FC<SelectButtonProps> = ({ icon, children, isOpen, innerRef, ...buttonProps }) => {
   const theme = useTheme();
   const styles = {
     wrapper: css`
@@ -42,7 +43,7 @@ const SelectButton: React.FC<SelectButtonProps> = ({ icon, children, isOpen, ...
   const buttonIcon = `fa fa-${icon}`;
   const caretIcon = isOpen ? 'caret-up' : 'caret-down';
   return (
-    <Button {...buttonProps} icon={buttonIcon}>
+    <Button {...buttonProps} ref={innerRef} icon={buttonIcon}>
       <span className={styles.wrapper}>
         <span>{children}</span>
         <span className={styles.caretWrap}>
@@ -73,9 +74,10 @@ export function ButtonSelect<T>({
   return (
     <SelectBase
       {...selectProps}
-      renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, _ref) => {
+      portal={document.body}
+      renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, ref) => {
         return (
-          <SelectButton {...buttonProps} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
+          <SelectButton {...buttonProps} innerRef={ref} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
             {value ? value.label : placeholder}
           </SelectButton>
         );
