@@ -62,7 +62,10 @@ export interface SelectCommonProps<T> {
   size?: FormInputSize;
   /** item to be rendered in front of the input */
   prefix?: JSX.Element | string | null;
+  /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
+  /** An element where the dropdown menu should be rendered. In all Select implementations it defaults to document.body .*/
+  portal?: HTMLElement | null;
 }
 
 export interface SelectAsyncProps<T> {
@@ -81,6 +84,7 @@ export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'o
 
 export interface SelectBaseProps<T> extends SelectCommonProps<T>, SelectAsyncProps<T> {
   invalid?: boolean;
+  portal: HTMLElement | null;
 }
 
 export interface CustomControlProps<T> {
@@ -173,6 +177,7 @@ export function SelectBase<T>({
   renderControl,
   width,
   invalid,
+  portal,
   components,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
@@ -233,6 +238,8 @@ export function SelectBase<T>({
     renderControl,
     captureMenuScroll: false,
     blurInputOnSelect: true,
+    menuPortalTarget: portal,
+    menuPlacement: 'auto',
   };
 
   // width property is deprecated in favor of size or className
@@ -334,6 +341,14 @@ export function SelectBase<T>({
       }}
       styles={{
         ...resetSelectStyles(),
+        //These are required for the menu positioning to function
+        menu: ({ top, bottom, width, position }: any) => ({
+          top,
+          bottom,
+          width,
+          position,
+          marginBottom: !!bottom ? '10px' : '0',
+        }),
       }}
       className={widthClass}
       {...commonSelectProps}
