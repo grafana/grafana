@@ -99,6 +99,7 @@ export class PanelCtrl {
   }
 
   render(payload?: any) {
+    // this needs to be on the panel emitter, it gets redirected to the panel ctrl emitter as well in panel_directive
     this.panel.events.emit(PanelEvents.render, payload);
   }
 

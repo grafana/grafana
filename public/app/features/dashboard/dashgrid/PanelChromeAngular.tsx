@@ -143,7 +143,6 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     const { panel } = this.props;
 
     if (panel.angularPanel) {
-      panel.angularPanel.destroy();
       panel.setAngularPanel(undefined);
     }
   }
