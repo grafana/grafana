@@ -35,7 +35,7 @@
     "@types/jquery": "3.3.32",
     "@types/lodash": "4.14.149",
     "@types/lru-cache": "^5.1.0",
-    "@types/marked": "0.6.5",
+    "@types/marked": "0.7.2",
     "@types/mousetrap": "1.6.3",
     "@types/node": "11.13.4",
     "@types/papaparse": "4.5.9",
