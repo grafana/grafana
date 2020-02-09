@@ -14,12 +14,9 @@ export const UnitValueEditor: React.FC<FieldConfigEditorProps<string, UnitFieldC
   return <UnitPicker value={value} onChange={onChange} />;
 };
 
-export class UnitOverrideEditor extends React.PureComponent<FieldOverrideEditorProps<string, UnitFieldConfigSettings>> {
-  constructor(props: FieldOverrideEditorProps<string, UnitFieldConfigSettings>) {
-    super(props);
-  }
-
-  render() {
-    return <div>SHOW OVERRIDE EDITOR {this.props.item.name}</div>;
-  }
-}
+export const UnitOverrideEditor: React.FC<FieldOverrideEditorProps<string, UnitFieldConfigSettings>> = ({
+  value,
+  onChange,
+}) => {
+  return <UnitPicker value={value} onChange={onChange} />;
+};
