@@ -63,7 +63,7 @@
     "@typescript-eslint/parser": "2.19.0",
     "angular-mocks": "1.7.9",
     "autoprefixer": "9.7.4",
-    "axios": "0.19.0",
+    "axios": "0.19.2",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "24.8.0",
     "babel-loader": "8.0.5",
