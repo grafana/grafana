@@ -241,7 +241,7 @@
     "mousetrap": "1.6.5",
     "mousetrap-global-bind": "1.1.0",
     "nodemon": "2.0.2",
-    "papaparse": "4.6.3",
+    "papaparse": "5.1.1",
     "prismjs": "1.16.0",
     "prop-types": "15.7.2",
     "rc-cascader": "0.17.5",
