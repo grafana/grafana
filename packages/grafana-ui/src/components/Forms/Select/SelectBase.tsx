@@ -65,6 +65,7 @@ export interface SelectCommonProps<T> {
   prefix?: JSX.Element | string | null;
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
+  display?: 'block' | 'inline' | 'inline-block';
 }
 
 export interface SelectAsyncProps<T> {
@@ -175,7 +176,9 @@ export function SelectBase<T>({
   renderControl,
   width,
   invalid,
+  className,
   components,
+  display = 'block',
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const portalRef = useRef<HTMLDivElement>();
@@ -348,8 +351,11 @@ export function SelectBase<T>({
             position,
             marginBottom: !!bottom ? '10px' : '0',
           }),
+          container: () => ({
+            display,
+          }),
         }}
-        className={widthClass}
+        className={cx(widthClass, className)}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}

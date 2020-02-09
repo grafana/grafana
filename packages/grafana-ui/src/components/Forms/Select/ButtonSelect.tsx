@@ -75,6 +75,7 @@ export function ButtonSelect<T>({
 
   return (
     <SelectBase
+      display="inline-block"
       {...selectProps}
       renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, ref) => {
         return (

@@ -3,6 +3,8 @@ import { SplitButtons } from './SplitButtons';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './SplitButtons.mdx';
 import { Button, LinkButton } from '../Forms/Button';
+import { ButtonSelect } from '../Forms/Select/ButtonSelect';
+import { cx } from 'emotion';
 
 export default {
   title: 'General/SplitButtons',
@@ -21,5 +23,6 @@ export const simple = () => (
     <LinkButton>Second</LinkButton>
     <Button>Third</Button>
     <LinkButton>Fourth</LinkButton>
+    <ButtonSelect onChange={() => {}} placeholder="Awesome" />
   </SplitButtons>
 );
