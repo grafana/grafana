@@ -1,4 +1,3 @@
-import set from 'lodash/set';
 import {
   GrafanaTheme,
   DynamicConfigValue,
@@ -12,11 +11,12 @@ import {
   FieldColorMode,
   ColorScheme,
   TimeZone,
+  FieldConfigEditorRegistry,
+  FieldOverrideContext,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
-import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 
@@ -37,6 +37,8 @@ export interface ApplyFieldOverrideOptions {
   theme: GrafanaTheme;
   timeZone?: TimeZone;
   autoMinMax?: boolean;
+  standard?: FieldConfigEditorRegistry;
+  custom?: FieldConfigEditorRegistry;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
@@ -90,6 +92,12 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     }
   }
 
+  const env = {
+    replaceVariables: options.replaceVariables,
+    standard: options.standard,
+    custom: options.custom,
+  };
+
   return options.data.map((frame, index) => {
     let name = frame.name;
     if (!name) {
@@ -98,22 +106,17 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
     const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
+      const e2 = { ...env, data: frame, field };
       const config: FieldConfig = { ...field.config } || {};
       if (field.type === FieldType.number) {
-        setFieldConfigDefaults(config, source.defaults);
+        setFieldConfigDefaults(config, source.defaults, e2);
       }
 
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field)) {
           for (const prop of rule.properties) {
-            setDynamicConfigValue(config, {
-              value: prop,
-              config,
-              field,
-              data: frame,
-              replaceVariables: options.replaceVariables,
-            });
+            setDynamicConfigValue(config, prop, e2);
           }
         }
       }
@@ -182,59 +185,51 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   });
 }
 
-interface DynamicConfigValueOptions {
-  value: DynamicConfigValue;
-  config: FieldConfig;
-  field: Field;
-  data: DataFrame;
-  replaceVariables: InterpolateFunction;
+interface FieldOverrideEnv extends FieldOverrideContext {
+  standard?: FieldConfigEditorRegistry;
+  custom?: FieldConfigEditorRegistry;
 }
 
-const numericFieldProps: any = {
-  decimals: true,
-  min: true,
-  max: true,
-};
-
-function prepareConfigValue(key: string, input: any, options?: DynamicConfigValueOptions): any {
-  if (options) {
-    // TODO template variables etc
-  }
-
-  if (numericFieldProps[key]) {
-    const num = toNumber(input);
-    if (isNaN(num)) {
-      return null;
-    }
-    return num;
-  } else if (input) {
-    // skips empty string
-    if (key === 'unit' && input === 'none') {
-      return null;
+function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, env: FieldOverrideEnv) {
+  const reg = value.custom ? env.custom : env.custom;
+  const item = reg?.getIfExists(value.prop);
+  if (item) {
+    const val = item.process(value.value, env, item.settings);
+    const remove = val === undefined || val === null;
+    if (remove) {
+      if (value.custom) {
+        delete (config?.custom as any)[value.prop];
+      } else {
+        delete (config as any)[value.prop];
+      }
+    } else {
+      if (value.custom) {
+        if (!config.custom) {
+          config.custom = {};
+        }
+        config.custom[value.prop] = val;
+      } else {
+        (config as any)[value.prop] = val;
+      }
     }
   }
-  return input;
 }
 
-export function setDynamicConfigValue(config: FieldConfig, options: DynamicConfigValueOptions) {
-  const { value } = options;
-  const v = prepareConfigValue(value.prop, value.value, options);
-  set(config, value.prop, v);
-}
-
-/**
- * For numeric values, only valid numbers will be applied
- * for units, 'none' will be skipped
- */
-export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig) {
+function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig, env?: FieldOverrideEnv) {
   if (props) {
     const keys = Object.keys(props);
     for (const key of keys) {
-      const val = prepareConfigValue(key, (props as any)[key]);
-      if (val === null || val === undefined) {
-        continue;
+      if (key === 'custom') {
+        // TODO? iterate through the sub elements?
+      } else {
+        const item = env?.standard?.getIfExists(key);
+        if (item) {
+          const val = item.process((props as any)[key], env!, item.settings);
+          if (val !== undefined && val !== null) {
+            (config as any)[key] = val;
+          }
+        }
       }
-      set(config, key, val);
     }
   }
 

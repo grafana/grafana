@@ -1,8 +1,7 @@
-import { MatcherConfig, FieldConfig, Field } from '../types';
+import { MatcherConfig, FieldConfig, Field, DataFrame } from '../types';
 import { Registry, RegistryItem } from '../utils';
 import { ComponentType } from 'react';
 import { InterpolateFunction } from './panel';
-import { DataFrame } from 'apache-arrow';
 
 export interface DynamicConfigValue {
   prop: string;

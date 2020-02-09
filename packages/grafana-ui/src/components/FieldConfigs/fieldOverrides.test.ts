@@ -1,8 +1,17 @@
-import { setFieldConfigDefaults, findNumericFieldMinMax, applyFieldOverrides } from './fieldOverrides';
-import { MutableDataFrame } from '../dataframe';
-import { FieldConfig, FieldConfigSource, InterpolateFunction, GrafanaTheme } from '../types';
-import { FieldMatcherID } from '../transformations';
-import { FieldDisplayOptions } from './fieldDisplay';
+import {
+  applyFieldOverrides,
+  FieldConfig,
+  FieldConfigSource,
+  InterpolateFunction,
+  GrafanaTheme,
+  FieldMatcherID,
+  FieldDisplayOptions,
+  MutableDataFrame,
+  DataFrame,
+  toDataFrame,
+} from '@grafana/data';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { getTheme } from '../../themes';
 
 describe('FieldOverrides', () => {
   const f0 = new MutableDataFrame();
@@ -42,10 +51,25 @@ describe('FieldOverrides', () => {
       max: parseFloat('NOPE'), // should be ignored
       min: null, // should alo be ignored!
     };
-    setFieldConfigDefaults(field, f1 as FieldConfig);
-    expect(field.min).toEqual(0);
-    expect(field.max).toEqual(100);
-    expect(field.unit).toEqual('ms');
+
+    const f: DataFrame = toDataFrame({
+      fields: [{ name: 'x', config: field, values: [] }],
+    });
+    const processed = applyFieldOverrides({
+      data: [f],
+      standard: standardFieldConfigEditorRegistry,
+      fieldOptions: {
+        defaults: f1 as FieldConfig,
+        overrides: [],
+      },
+      replaceVariables: v => v,
+      theme: getTheme(),
+    })[0];
+    const out = processed.fields[0].config;
+
+    expect(out.min).toEqual(0);
+    expect(out.max).toEqual(100);
+    expect(out.unit).toEqual('ms');
   });
 
   it('will apply field overrides', () => {
@@ -80,7 +104,6 @@ describe('FieldOverrides', () => {
       fieldOptions: src as FieldDisplayOptions, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       theme: (undefined as any) as GrafanaTheme,
-      autoMinMax: true,
     })[0];
     const valueColumn = data.fields[1];
     const config = valueColumn.config;
@@ -90,19 +113,5 @@ describe('FieldOverrides', () => {
 
     // Don't Automatically pick the min value
     expect(config.min).toEqual(-20);
-  });
-});
-
-describe('Global MinMax', () => {
-  it('find global min max', () => {
-    const f0 = new MutableDataFrame();
-    f0.add({ title: 'AAA', value: 100, value2: 1234 }, true);
-    f0.add({ title: 'BBB', value: -20 }, true);
-    f0.add({ title: 'CCC', value: 200, value2: 1000 }, true);
-    expect(f0.length).toEqual(3);
-
-    const minmax = findNumericFieldMinMax([f0]);
-    expect(minmax.min).toEqual(-20);
-    expect(minmax.max).toEqual(1234);
   });
 });
