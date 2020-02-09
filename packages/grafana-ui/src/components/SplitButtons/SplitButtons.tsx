@@ -26,10 +26,10 @@ const getStyles = stylesFactory((children: number, current: number) => {
   `;
 });
 
-export const SplitButtons: FC<SplitButtonsProps> = ({ children }) => {
+export const SplitButtons: FC<SplitButtonsProps> = ({ children, ...restProps }) => {
   const newChildren = React.Children.map(children, (child, i) =>
     React.cloneElement(child, { className: getStyles(children.length, i) })
   );
 
-  return <div>{newChildren}</div>;
+  return <div {...restProps}>{newChildren}</div>;
 };
