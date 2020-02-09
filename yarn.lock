@@ -21113,6 +21113,15 @@ react-highlight-words@0.11.0:
     highlight-words-core "^1.2.0"
     prop-types "^15.5.8"
 
+react-highlight-words@0.16.0:
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/react-highlight-words/-/react-highlight-words-0.16.0.tgz#4b4b9824e3d2b98789d3e3b3aedb5e961ae1b7cf"
+  integrity sha512-q34TwCSJOL+5pVDv6LUj3amaoyXdNDwd7zRqVAvceOrO9g1haWLAglK6WkGLMNUa3PFN8EgGedLg/k8Gpndxqg==
+  dependencies:
+    highlight-words-core "^1.2.0"
+    memoize-one "^4.0.0"
+    prop-types "^15.5.8"
+
 react-hook-form@4.5.3:
   version "4.5.3"
   resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-4.5.3.tgz#3f9abac7bd78eedf0624d02aa9e1f8487d729e18"
