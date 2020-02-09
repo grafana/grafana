@@ -198,6 +198,10 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             value={rcValue}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
+            // Required, otherwise the portal that the popup is shown in will render under other components
+            popupClassName={css`
+              z-index: 9999;
+            `}
           >
             <div className={disableDivFocus}>
               <Input
