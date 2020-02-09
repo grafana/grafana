@@ -1,6 +1,15 @@
 import React, { PureComponent } from 'react';
 import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
-import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
+import {
+  stylesFactory,
+  Forms,
+  FieldConfigEditor,
+  CustomScrollbar,
+  selectThemeVariant,
+  TabContent,
+  Tab,
+  TabsBar,
+} from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 
@@ -233,6 +242,29 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
+  renderBottomOptions() {
+    const { dashboard } = this.props;
+    const { panel } = this.state;
+
+    return (
+      <div>
+        <TabsBar>
+          <Tab label="Query" active={true} />
+        </TabsBar>
+        <TabContent>
+          <DashboardPanel
+            dashboard={dashboard}
+            panel={panel}
+            isEditing={false}
+            isInEditMode
+            isFullscreen={false}
+            isInView={true}
+          />
+        </TabContent>
+      </div>
+    );
+  }
+
   render() {
     const { dashboard } = this.props;
     const { panel } = this.state;
@@ -276,16 +308,7 @@ export class PanelEditor extends PureComponent<Props, State> {
               onDragStarted={() => (document.body.style.cursor = 'row-resize')}
               onDragFinished={this.onDragFinished}
             >
-              <div className={styles.fill}>
-                <DashboardPanel
-                  dashboard={dashboard}
-                  panel={panel}
-                  isEditing={false}
-                  isInEditMode
-                  isFullscreen={false}
-                  isInView={true}
-                />
-              </div>
+              <div className={styles.fill}>{this.renderBottomOptions()}</div>
               <div className={styles.noScrollPaneContent}>
                 <QueriesTab panel={panel} dashboard={dashboard} />
               </div>
