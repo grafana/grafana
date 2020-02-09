@@ -89,7 +89,7 @@
     "gaze": "1.1.3",
     "glob": "7.1.6",
     "grunt": "1.0.4",
-    "grunt-angular-templates": "1.1.0",
+    "grunt-angular-templates": "1.2.0",
     "grunt-cli": "1.2.0",
     "grunt-contrib-clean": "1.0.0",
     "grunt-contrib-compress": "1.6.0",
