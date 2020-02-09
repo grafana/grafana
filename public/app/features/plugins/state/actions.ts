@@ -27,7 +27,10 @@ export function loadPanelPlugin(pluginId: string): ThunkResult<Promise<PanelPlug
     if (!plugin) {
       plugin = await importPanelPlugin(pluginId);
 
-      dispatch(panelPluginLoaded(plugin));
+      // second check to protect against raise condition
+      if (!getStore().plugins.panels[pluginId]) {
+        dispatch(panelPluginLoaded(plugin));
+      }
     }
 
     return plugin;
