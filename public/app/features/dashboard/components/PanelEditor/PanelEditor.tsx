@@ -325,7 +325,7 @@ export class PanelEditor extends PureComponent<Props, State> {
               options={displayModes}
               onChange={this.onDiplayModeChange}
             />
-            <Forms.Button variant="inverse" onClick={this.onTogglePanelOptions}>
+            <Forms.Button variant="secondary" onClick={this.onTogglePanelOptions}>
               O
             </Forms.Button>
             <Forms.Button variant="destructive" onClick={this.onDiscard}>
