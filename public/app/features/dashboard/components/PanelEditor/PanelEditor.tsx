@@ -244,7 +244,7 @@ export class PanelEditor extends PureComponent<Props, State> {
 
     if (plugin.editor && panel) {
       return (
-        <div style={{ marginTop: '40px' }}>
+        <div style={{ marginTop: '10px' }}>
           <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />
         </div>
       );
@@ -364,7 +364,6 @@ export class PanelEditor extends PureComponent<Props, State> {
                 <CustomScrollbar>
                   <div style={{ padding: '10px' }}>
                     {this.renderFieldOptions()}
-
                     <ControlledCollapse label="Visualization Settings" collapsible>
                       {this.renderVisSettings()}
                     </ControlledCollapse>
