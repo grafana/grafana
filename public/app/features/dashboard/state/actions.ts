@@ -1,12 +1,14 @@
 // Services & Utils
 import { getBackendSrv } from '@grafana/runtime';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
-import { loadDashboardPermissions } from './reducers';
+import { loadDashboardPermissions, panelPluginLoaded } from './reducers';
 import { notifyApp } from 'app/core/actions';
 // Types
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
+import { PanelModel } from './PanelModel';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {
@@ -106,5 +108,30 @@ export function removeDashboard(uri: string): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().delete(`/api/dashboards/${uri}`);
     dispatch(loadPluginDashboards());
+  };
+}
+
+export function loadPanelPlugin(panel: PanelModel, pluginId: string): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const store = getStore();
+    const panelState = store.dashboard.panels[panel.id] || {};
+    const { plugin } = panelState;
+
+    if (!plugin || plugin.meta.id !== pluginId) {
+      const plugin = await importPanelPlugin(pluginId);
+
+      if (panel.type !== pluginId) {
+        panel.changePlugin(plugin);
+      } else {
+        panel.pluginLoaded(plugin);
+      }
+
+      dispatch(
+        panelPluginLoaded({
+          panelId: panel.id,
+          plugin: plugin,
+        })
+      );
+    }
   };
 }

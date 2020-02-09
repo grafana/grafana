@@ -10,6 +10,7 @@ import {
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
 import { DashboardModel } from './DashboardModel';
+import { PanelPlugin } from '@grafana/data';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
@@ -17,6 +18,7 @@ export const initialState: DashboardState = {
   getModel: () => null,
   permissions: [],
   modifiedQueries: null,
+  panels: {},
 };
 
 const dashbardSlice = createSlice({
@@ -63,8 +65,16 @@ const dashbardSlice = createSlice({
     clearDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction) => {
       state.modifiedQueries = null;
     },
+    panelPluginLoaded: (state, action: PayloadAction<PanelPluginLoadedPayload>) => {
+      state.panels[action.payload.panelId] = { plugin: action.payload.plugin };
+    },
   },
 });
+
+export interface PanelPluginLoadedPayload {
+  panelId: number;
+  plugin: PanelPlugin;
+}
 
 export const {
   loadDashboardPermissions,
@@ -76,6 +86,7 @@ export const {
   cleanUpDashboard,
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
+  panelPluginLoaded,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;

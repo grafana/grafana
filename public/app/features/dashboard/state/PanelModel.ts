@@ -280,6 +280,7 @@ export class PanelModel {
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
+
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;

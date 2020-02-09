@@ -1,5 +1,6 @@
 import { DashboardAcl } from './acl';
-import { DataQuery } from '@grafana/data';
+import { DataQuery, PanelPlugin } from '@grafana/data';
+import { AngularComponent } from '@grafana/runtime';
 
 export interface MutableDashboard {
   title: string;
@@ -72,6 +73,11 @@ export interface QueriesToUpdateOnDashboardLoad {
   queries: DataQuery[];
 }
 
+export interface PanelState {
+  plugin?: PanelPlugin;
+  angularPanel?: AngularComponent;
+}
+
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
@@ -79,4 +85,5 @@ export interface DashboardState {
   initError?: DashboardInitError;
   permissions: DashboardAcl[] | null;
   modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
+  panels: { [id: number]: PanelState };
 }
