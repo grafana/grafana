@@ -17,7 +17,6 @@ interface ButtonSelectProps<T> extends Omit<SelectCommonProps<T>, 'renderControl
 interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {
   icon?: IconType;
   isOpen?: boolean;
-  innerRef: any;
 }
 
 const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
