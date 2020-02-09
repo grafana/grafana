@@ -117,5 +117,20 @@ export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
 
+// TODO: namespace!!
+export { FieldConfigEditor } from './FieldConfigs/FieldConfigEditor';
+export {
+  StringValueEditor,
+  StringOverrideEditor,
+  stringOverrideProcessor,
+  StringFieldConfigSettings,
+} from './FieldConfigs/string';
+export {
+  NumberValueEditor,
+  NumberOverrideEditor,
+  numberOverrideProcessor,
+  NumberFieldConfigSettings,
+} from './FieldConfigs/number';
+
 // Next-gen forms
 export { default as Forms } from './Forms';

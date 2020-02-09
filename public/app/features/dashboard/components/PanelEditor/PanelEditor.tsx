@@ -1,74 +1,157 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, Forms } from '@grafana/ui';
+import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
+import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
+import { css, cx } from 'emotion';
 import config from 'app/core/config';
 
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
+import SplitPane from 'react-split-pane';
 import { StoreState } from '../../../../types/store';
 import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
+import { Unsubscribable } from 'rxjs';
+import { PanelTitle } from './PanelTitle';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  wrapper: css`
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    z-index: ${theme.zIndex.modal};
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: ${theme.colors.pageBg};
-    display: flex;
-    padding: ${theme.spacing.md};
-    flex-direction: row;
-  `,
-  leftPane: css`
-    flex-grow: 1;
-    height: 100%;
-  `,
-  rightPane: css`
-    width: 450px;
-    height: 100%;
-    flex-grow: 0;
-  `,
-  leftPaneViz: css`
-    width: 100%;
-    height: 50%;
-  `,
-  leftPaneData: css`
-    width: 100%;
-    height: 50%;
-    padding-top: ${theme.spacing.md};
-  `,
-}));
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const handleColor = selectThemeVariant(
+    {
+      dark: theme.colors.dark9,
+      light: theme.colors.gray6,
+    },
+    theme.type
+  );
+
+  const resizer = css`
+    padding: 3px;
+    font-style: italic;
+    background: ${theme.colors.panelBg};
+    &:hover {
+      background: ${handleColor};
+    }
+  `;
+
+  return {
+    wrapper: css`
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      z-index: ${theme.zIndex.modal};
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: ${theme.colors.pageBg};
+    `,
+    fill: css`
+      width: 100%;
+      height: 100%;
+    `,
+    resizerV: cx(
+      resizer,
+      css`
+        cursor: col-resize;
+      `
+    ),
+    resizerH: cx(
+      resizer,
+      css`
+        cursor: row-resize;
+      `
+    ),
+    noScrollPaneContent: css`
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    `,
+    toolbar: css`
+      padding: ${theme.spacing.sm};
+      height: 48px;
+      display: flex;
+      justify-content: space-between;
+    `,
+    panes: css`
+      height: calc(100% - 48px);
+      position: relative;
+    `,
+    toolbarLeft: css`
+      display: flex;
+      align-items: center;
+    `,
+  };
+});
 
 interface Props {
   dashboard: DashboardModel;
-  panel: PanelModel;
+  sourcePanel: PanelModel;
   updateLocation: typeof updateLocation;
 }
 
 interface State {
-  dirtyPanel?: PanelModel;
+  pluginLoadedCounter: number;
+  panel: PanelModel;
+  data: PanelData;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
+  querySubscription: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
-    const { panel } = props;
-    const dirtyPanel = panel.getEditClone();
-    this.state = { dirtyPanel };
+
+    // To ensure visualisation  settings are re-rendered when plugin has loaded
+    // panelInitialised event is emmited from PanelChrome
+    const panel = props.sourcePanel.getEditClone();
+    this.state = {
+      panel,
+      pluginLoadedCounter: 0,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+        timeRange: DefaultTimeRange,
+      },
+    };
+  }
+
+  componentDidMount() {
+    const { sourcePanel } = this.props;
+    const { panel } = this.state;
+    panel.events.on(PanelEvents.panelInitialized, () => {
+      this.setState(state => ({
+        pluginLoadedCounter: state.pluginLoadedCounter + 1,
+      }));
+    });
+    // Get data from any pending
+    sourcePanel
+      .getQueryRunner()
+      .getData()
+      .subscribe({
+        next: (data: PanelData) => {
+          this.setState({ data });
+          // TODO, cancel????
+        },
+      });
+
+    // Listen for queries on the new panel
+    const queryRunner = panel.getQueryRunner();
+    this.querySubscription = queryRunner.getData().subscribe({
+      next: (data: PanelData) => this.setState({ data }),
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+    }
+    //this.cleanUpAngularOptions();
   }
 
   onPanelUpdate = () => {
-    const { dirtyPanel } = this.state;
+    const { panel } = this.state;
     const { dashboard } = this.props;
-    dashboard.updatePanel(dirtyPanel);
+    dashboard.updatePanel(panel);
   };
 
   onPanelExit = () => {
@@ -87,42 +170,137 @@ export class PanelEditor extends PureComponent<Props, State> {
     });
   };
 
-  render() {
-    const { dashboard } = this.props;
-    const { dirtyPanel } = this.state;
+  onFieldConfigsChange = (fieldOptions: FieldConfigSource) => {
+    // NOTE: for now, assume this is from 'fieldOptions' -- TODO? put on panel model directly?
+    const { panel } = this.state;
+    const options = panel.getOptions();
+    panel.updateOptions({
+      ...options,
+      fieldOptions, // Assume it is from shared singlestat -- TODO own property?
+    });
+    this.forceUpdate();
+  };
 
-    const styles = getStyles(config.theme);
-
-    if (!dirtyPanel) {
+  renderFieldOptions() {
+    const { panel, data } = this.state;
+    const { plugin } = panel;
+    const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
+    if (!fieldOptions || !plugin) {
       return null;
     }
 
     return (
-      <>
-        <div className={styles.wrapper}>
-          <div className={styles.leftPane}>
-            <div className={styles.leftPaneViz}>
-              <DashboardPanel
-                dashboard={dashboard}
-                panel={dirtyPanel}
-                isEditing={false}
-                isInEditMode
-                isFullscreen={false}
-                isInView={true}
-              />
-            </div>
-            <div className={styles.leftPaneData}>
-              <QueriesTab panel={dirtyPanel} dashboard={dashboard} />
-            </div>
+      <div>
+        <FieldConfigEditor
+          config={fieldOptions}
+          custom={plugin.customFieldConfigs}
+          onChange={this.onFieldConfigsChange}
+          data={data.series}
+        />
+      </div>
+    );
+  }
+
+  onPanelOptionsChanged = (options: any) => {
+    this.state.panel.updateOptions(options);
+    this.forceUpdate();
+  };
+
+  /**
+   * The existing visualization tab
+   */
+  renderVisSettings() {
+    const { data, panel } = this.state;
+    const { plugin } = panel;
+    if (!plugin) {
+      return null; // not yet ready
+    }
+
+    if (plugin.editor && panel) {
+      return <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+    }
+
+    return <div>No editor (angular?)</div>;
+  }
+
+  onDragFinished = () => {
+    document.body.style.cursor = 'auto';
+    console.log('TODO, save splitter settings');
+  };
+
+  onPanelTitleChange = (title: string) => {
+    this.state.panel.title = title;
+    this.forceUpdate();
+  };
+
+  render() {
+    const { dashboard } = this.props;
+    const { panel } = this.state;
+    const styles = getStyles(config.theme);
+
+    if (!panel) {
+      return null;
+    }
+
+    return (
+      <div className={styles.wrapper}>
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarLeft}>
+            <button className="navbar-edit__back-btn" onClick={this.onPanelExit}>
+              <i className="fa fa-arrow-left"></i>
+            </button>
+            <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
           </div>
-          <div className={styles.rightPane}>
+          <div>
             <Forms.Button variant="destructive" onClick={this.onDiscard}>
               Discard
             </Forms.Button>
-            <Forms.Button onClick={this.onPanelExit}>Exit</Forms.Button>
           </div>
         </div>
-      </>
+        <div className={styles.panes}>
+          <SplitPane
+            split="vertical"
+            primary="second"
+            minSize={50}
+            defaultSize={350}
+            resizerClassName={styles.resizerV}
+            onDragStarted={() => (document.body.style.cursor = 'col-resize')}
+            onDragFinished={this.onDragFinished}
+          >
+            <SplitPane
+              split="horizontal"
+              minSize={50}
+              primary="second"
+              defaultSize="40%"
+              resizerClassName={styles.resizerH}
+              onDragStarted={() => (document.body.style.cursor = 'row-resize')}
+              onDragFinished={this.onDragFinished}
+            >
+              <div className={styles.fill}>
+                <DashboardPanel
+                  dashboard={dashboard}
+                  panel={panel}
+                  isEditing={false}
+                  isInEditMode
+                  isFullscreen={false}
+                  isInView={true}
+                />
+              </div>
+              <div className={styles.noScrollPaneContent}>
+                <QueriesTab panel={panel} dashboard={dashboard} />
+              </div>
+            </SplitPane>
+            <div className={styles.noScrollPaneContent}>
+              <CustomScrollbar>
+                <div style={{ padding: '10px' }}>
+                  {this.renderFieldOptions()}
+                  {this.renderVisSettings()}
+                </div>
+              </CustomScrollbar>
+            </div>
+          </SplitPane>
+        </div>
+      </div>
     );
   }
 }
