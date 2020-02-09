@@ -113,7 +113,7 @@
     "load-grunt-tasks": "5.1.0",
     "mini-css-extract-plugin": "0.9.0",
     "mocha": "7.0.1",
-    "module-alias": "2.2.0",
+    "module-alias": "2.2.2",
     "monaco-editor": "0.15.6",
     "ngtemplate-loader": "2.0.1",
     "node-sass": "4.12.0",
