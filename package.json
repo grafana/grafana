@@ -87,7 +87,7 @@
     "file-loader": "5.0.2",
     "fork-ts-checker-webpack-plugin": "4.0.3",
     "gaze": "1.1.3",
-    "glob": "7.1.3",
+    "glob": "7.1.6",
     "grunt": "1.0.1",
     "grunt-angular-templates": "1.1.0",
     "grunt-cli": "1.2.0",
