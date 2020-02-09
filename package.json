@@ -39,7 +39,7 @@
     "@types/mousetrap": "1.6.3",
     "@types/node": "13.7.0",
     "@types/papaparse": "5.0.3",
-    "@types/pixelmatch": "4.0.0",
+    "@types/pixelmatch": "5.0.0",
     "@types/pngjs": "3.3.2",
     "@types/prismjs": "1.16.0",
     "@types/puppeteer-core": "1.9.0",
