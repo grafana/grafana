@@ -20,8 +20,8 @@ export default {
 export const simple = () => (
   <SplitButtons>
     <Button>First</Button>
-    <LinkButton>Second</LinkButton>
-    <Button>Third</Button>
+    <LinkButton variant="destructive">Second</LinkButton>
+    <Button variant="secondary">Third</Button>
     <LinkButton>Fourth</LinkButton>
     <ButtonSelect onChange={() => {}} placeholder="Awesome" />
   </SplitButtons>
