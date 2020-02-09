@@ -22815,10 +22815,10 @@ scss-tokenizer@^0.2.3:
     js-base64 "^2.1.8"
     source-map "^0.4.2"
 
-search-query-parser@1.5.2:
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/search-query-parser/-/search-query-parser-1.5.2.tgz#f6c8c9ecbde439cbbce75110045944c3cb5fe546"
-  integrity sha512-PcvjC0eJMmFIYAxUaeaRVLnPHctzsymtMJUSGKv6xJtctGrunihoCItrQ3AcM5eO7q90pNeIVTrLwuqW0LIzyg==
+search-query-parser@1.5.4:
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/search-query-parser/-/search-query-parser-1.5.4.tgz#b474185e02717bee95f408e1003d0c1c932fcf55"
+  integrity sha512-Mw3BpGU9SCid5uaEUTAz5y2hu7LT0VZbwmLKOH7bgoH+vxnP52kvX0xRXVwl14iCeL668mDeL92RxVX2dVX6Pg==
 
 select-hose@^2.0.0:
   version "2.0.0"
