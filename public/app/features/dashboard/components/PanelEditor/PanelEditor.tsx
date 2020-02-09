@@ -26,6 +26,8 @@ import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
 import { DisplayMode, displayModes } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
+import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
+import { LocationState } from 'app/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -104,6 +106,7 @@ interface Props {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
   updateLocation: typeof updateLocation;
+  location: LocationState;
 }
 
 interface State {
@@ -315,6 +318,7 @@ export class PanelEditor extends PureComponent<Props, State> {
   }
 
   render() {
+    const { dashboard, location } = this.props;
     const { panel, mode, showPanelOptions } = this.state;
     const styles = getStyles(config.theme);
 
@@ -341,6 +345,10 @@ export class PanelEditor extends PureComponent<Props, State> {
             <Forms.Button variant="destructive" onClick={this.onDiscard}>
               Discard
             </Forms.Button>
+
+            <div>
+              <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            </div>
           </div>
         </div>
         <div className={styles.panes}>

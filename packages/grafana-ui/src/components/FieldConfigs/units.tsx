@@ -11,12 +11,12 @@ export const UnitValueEditor: React.FC<FieldConfigEditorProps<string, UnitFieldC
   value,
   onChange,
 }) => {
-  return <UnitPicker value={value} onChange={onChange} />;
+  return <UnitPicker value={value} onChange={onChange} useNewForms />;
 };
 
 export const UnitOverrideEditor: React.FC<FieldOverrideEditorProps<string, UnitFieldConfigSettings>> = ({
   value,
   onChange,
 }) => {
-  return <UnitPicker value={value} onChange={onChange} />;
+  return <UnitPicker value={value} onChange={onChange} useNewForms />;
 };
