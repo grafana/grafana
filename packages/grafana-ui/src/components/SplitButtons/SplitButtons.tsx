@@ -1,5 +1,12 @@
-import React from 'react';
+import React, { FC } from 'react';
+// import { Button, LinkButton } from '../Forms/Button';
 
-export const SplitButtons = () => {
-  return <div>Button</div>;
+export interface SplitButtonsProps {
+  children: any;
+}
+
+export const SplitButtons: FC<SplitButtonsProps> = ({ children }) => {
+  const newChildren = React.cloneElement(children, {});
+
+  return <div>{newChildren}</div>;
 };
