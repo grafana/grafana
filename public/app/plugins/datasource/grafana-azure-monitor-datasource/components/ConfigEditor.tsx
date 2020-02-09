@@ -39,7 +39,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
 
     this.templateSrv = new TemplateSrv();
+
     if (this.props.options.id) {
+      // This does not update props.options.url
       updateDatasourcePluginOption(this.props, 'url', '/api/datasources/proxy/' + this.props.options.id);
     }
   }
@@ -155,24 +157,29 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onLoadSubscriptions = async (type?: string) => {
-    await getBackendSrv()
-      .put(`/api/datasources/${this.props.options.id}`, this.props.options)
-      .then((result: AzureDataSourceSettings) => {
-        updateDatasourcePluginOption(this.props, 'version', result.version);
-      });
+    // Reloading the subs sets readonly to false? Making the ds writable by users..
+    if (!this.props.options.readOnly) {
+      await getBackendSrv()
+        .put(`/api/datasources/${this.props.options.id}`, this.props.options)
+        .then((result: AzureDataSourceSettings) => {
+          updateDatasourcePluginOption(this.props, 'version', result.version);
+        });
+    }
 
     if (type && type === 'workspacesloganalytics') {
-      this.getLogAnalyticsSubscriptions();
+      await this.getLogAnalyticsSubscriptions();
     } else {
-      this.getSubscriptions();
+      await this.getSubscriptions();
     }
   };
 
   loadSubscriptions = async (route?: string) => {
-    const url = `/${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
+    const url = `${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
 
+    // this.props.options.url is always empty at this point?
+    // Overriding proxy url her fixes sub load issue but surely it should be set in props.options at this point?
     const result = await getBackendSrv().datasourceRequest({
-      url: this.props.options.url + url,
+      url: `/api/datasources/proxy/${this.props.options.id}/${url}`,
       method: 'GET',
     });
 
