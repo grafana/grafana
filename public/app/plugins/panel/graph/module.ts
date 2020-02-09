@@ -244,6 +244,13 @@ class GraphCtrl extends MetricsPanelCtrl {
         this.loading = false;
         this.alertState = result.alertState;
         this.annotations = result.annotations;
+
+        // Temp alerting & react hack
+        // Add it to the seriesList so react can access it
+        if (this.alertState) {
+          (this.seriesList as any).alertState = this.alertState.state;
+        }
+
         this.render(this.seriesList);
       },
       () => {

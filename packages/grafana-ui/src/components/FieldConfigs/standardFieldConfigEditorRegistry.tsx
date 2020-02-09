@@ -1,6 +1,7 @@
 import { FieldConfigEditorRegistry, Registry, FieldPropertyEditorItem, ThresholdsConfig } from '@grafana/data';
 import { StringValueEditor, StringOverrideEditor, stringOverrideProcessor, StringFieldConfigSettings } from './string';
 import { NumberValueEditor, NumberOverrideEditor, numberOverrideProcessor, NumberFieldConfigSettings } from './number';
+import { UnitValueEditor, UnitOverrideEditor } from './units';
 import {
   ThresholdsValueEditor,
   ThresholdsOverrideEditor,
@@ -27,8 +28,8 @@ const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
   name: 'Unit',
   description: 'value units',
 
-  editor: StringValueEditor,
-  override: StringOverrideEditor,
+  editor: UnitValueEditor,
+  override: UnitOverrideEditor,
   process: stringOverrideProcessor,
 
   settings: {

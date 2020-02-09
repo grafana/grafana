@@ -8,7 +8,16 @@ import {
   PanelEvents,
   SelectableValue,
 } from '@grafana/data';
-import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
+import {
+  stylesFactory,
+  Forms,
+  FieldConfigEditor,
+  CustomScrollbar,
+  selectThemeVariant,
+  TabContent,
+  Tab,
+  TabsBar,
+} from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -24,7 +33,7 @@ import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
-import { DisplayMode, displayModes } from './types';
+import { DisplayMode, displayModes, EditorTab, allTabs } from './types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -106,6 +115,7 @@ interface State {
   data: PanelData;
   mode: DisplayMode;
   showPanelOptions: boolean;
+  tab: EditorTab;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
@@ -121,6 +131,7 @@ export class PanelEditor extends PureComponent<Props, State> {
       mode: DisplayMode.Fit,
       showPanelOptions: true,
       panel,
+      tab: EditorTab.Query,
       pluginLoadedCounter: 0,
       data: {
         state: LoadingState.NotStarted,
@@ -262,7 +273,7 @@ export class PanelEditor extends PureComponent<Props, State> {
 
   renderHorizontalSplit(styles: any) {
     const { dashboard } = this.props;
-    const { panel, mode } = this.state;
+    const { panel, mode, tab } = this.state;
 
     return (
       <SplitPane
@@ -296,7 +307,29 @@ export class PanelEditor extends PureComponent<Props, State> {
           </AutoSizer>
         </div>
         <div className={styles.noScrollPaneContent}>
-          <QueriesTab panel={panel} dashboard={dashboard} />
+          <div>
+            <TabsBar>
+              {allTabs.map(t => {
+                if (t.show(panel)) {
+                  return (
+                    <Tab
+                      label={t.label}
+                      active={tab === t.tab}
+                      onChangeTab={() => {
+                        this.setState({ tab: t.tab });
+                      }}
+                    />
+                  );
+                }
+                return null;
+              })}
+            </TabsBar>
+            <TabContent>
+              {tab === EditorTab.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
+              {tab === EditorTab.Alerts && <div>TODO: Show Alerts</div>}
+              {tab === EditorTab.Transform && <div>TODO: Show Transform</div>}
+            </TabContent>
+          </div>
         </div>
       </SplitPane>
     );
@@ -335,8 +368,8 @@ export class PanelEditor extends PureComponent<Props, State> {
           {showPanelOptions ? (
             <SplitPane
               split="vertical"
+              minSize={100}
               primary="second"
-              minSize={50}
               defaultSize={350}
               resizerClassName={styles.resizerV}
               onDragStarted={() => (document.body.style.cursor = 'col-resize')}
