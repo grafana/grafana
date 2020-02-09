@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
@@ -28,13 +28,13 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaTheme, hideBorder = false)
   };
 });
 
-export const TabsBar: FC<Props> = ({ children, className, hideBorder }) => {
+export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder }, ref) => {
   const theme = useTheme();
   const tabsStyles = getTabsBarStyles(theme, hideBorder);
 
   return (
-    <div className={cx(tabsStyles.tabsWrapper, className)}>
+    <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
       <ul className={tabsStyles.tabs}>{children}</ul>
     </div>
   );
-};
+});
