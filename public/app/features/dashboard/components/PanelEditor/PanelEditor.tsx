@@ -238,7 +238,11 @@ export class PanelEditor extends PureComponent<Props, State> {
     }
 
     if (plugin.editor && panel) {
-      return <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+      return (
+        <div style={{ marginTop: '40px' }}>
+          <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />
+        </div>
+      );
     }
 
     return <div>No editor (angular?)</div>;

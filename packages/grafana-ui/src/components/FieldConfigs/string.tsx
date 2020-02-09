@@ -23,14 +23,9 @@ export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFi
   return <Forms.Input value={value || ''} onChange={e => onChange(e.currentTarget.value)} />;
 };
 
-export class StringOverrideEditor extends React.PureComponent<
-  FieldOverrideEditorProps<string, StringFieldConfigSettings>
-> {
-  constructor(props: FieldOverrideEditorProps<string, StringFieldConfigSettings>) {
-    super(props);
-  }
-
-  render() {
-    return <div>SHOW OVERRIDE EDITOR {this.props.item.name}</div>;
-  }
-}
+export const StringOverrideEditor: React.FC<FieldOverrideEditorProps<string, StringFieldConfigSettings>> = ({
+  value,
+  onChange,
+}) => {
+  return <Forms.Input value={value || ''} onChange={e => onChange(e.currentTarget.value)} />;
+};
