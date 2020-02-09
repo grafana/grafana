@@ -31,7 +31,7 @@
     "@types/file-saver": "2.0.1",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.1",
-    "@types/jest": "24.0.13",
+    "@types/jest": "25.1.2",
     "@types/jquery": "1.10.35",
     "@types/lodash": "4.14.123",
     "@types/lru-cache": "^5.1.0",
