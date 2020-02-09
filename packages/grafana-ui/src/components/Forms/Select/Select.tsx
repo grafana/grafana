@@ -3,12 +3,12 @@ import { SelectableValue } from '@grafana/data';
 import { SelectCommonProps, SelectBase, MultiSelectCommonProps, SelectAsyncProps } from './SelectBase';
 
 export function Select<T>(props: SelectCommonProps<T>) {
-  return <SelectBase {...props} portal={props.portal || document.body} />;
+  return <SelectBase {...props} />;
 }
 
 export function MultiSelect<T>(props: MultiSelectCommonProps<T>) {
   // @ts-ignore
-  return <SelectBase {...props} portal={props.portal || document.body} isMulti />;
+  return <SelectBase {...props} isMulti />;
 }
 
 interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {
@@ -17,7 +17,7 @@ interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, Sel
 }
 
 export function AsyncSelect<T>(props: AsyncSelectProps<T>) {
-  return <SelectBase {...props} portal={props.portal || document.body} />;
+  return <SelectBase {...props} />;
 }
 
 interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {
@@ -27,5 +27,5 @@ interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'opti
 
 export function AsyncMultiSelect<T>(props: AsyncMultiSelectProps<T>) {
   // @ts-ignore
-  return <SelectBase {...props} portal={props.portal || document.body} isMulti />;
+  return <SelectBase {...props} isMulti />;
 }
