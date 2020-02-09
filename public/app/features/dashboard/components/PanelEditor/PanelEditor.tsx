@@ -131,10 +131,6 @@ export class PanelEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    props.dashboard.on(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
-
-    //    this.events.emit(, timeRange);
-
     // To ensure visualisation  settings are re-rendered when plugin has loaded
     // panelInitialised event is emmited from PanelChrome
     const panel = props.sourcePanel.getEditClone();
@@ -155,11 +151,16 @@ export class PanelEditor extends PureComponent<Props, State> {
     const { sourcePanel } = this.props;
     const { panel } = this.state;
     panel.events.on(PanelEvents.panelInitialized, () => {
+      const { panel } = this.state;
+      if (panel.angularPanel) {
+        console.log('Refresh angular panel in new editor');
+      }
       this.setState(state => ({
         pluginLoadedCounter: state.pluginLoadedCounter + 1,
       }));
     });
-    // Get data from any pending
+
+    // Get data from any pending queries
     sourcePanel
       .getQueryRunner()
       .getData()
@@ -175,6 +176,9 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.querySubscription = queryRunner.getData().subscribe({
       next: (data: PanelData) => this.setState({ data }),
     });
+
+    // Listen to timepicker changes
+    this.props.dashboard.on(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
   }
 
   componentWillUnmount() {
@@ -182,13 +186,15 @@ export class PanelEditor extends PureComponent<Props, State> {
       this.querySubscription.unsubscribe();
     }
     //this.cleanUpAngularOptions();
+
+    // Remove the time listener
+    this.props.dashboard.off(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
   }
 
   onTimeRangeUpdated = (timeRange: TimeRange) => {
     const { panel } = this.state;
     if (panel) {
       panel.refresh();
-      console.log('TIME Changed (do refresh)', timeRange);
     }
   };
 
