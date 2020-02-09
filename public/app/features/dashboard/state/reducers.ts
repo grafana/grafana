@@ -3,7 +3,6 @@ import {
   DashboardInitPhase,
   DashboardState,
   DashboardAclDTO,
-  MutableDashboard,
   DashboardInitError,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';
@@ -37,10 +36,14 @@ const dashbardSlice = createSlice({
     dashboardInitSlow: (state, action: PayloadAction) => {
       state.isInitSlow = true;
     },
-    dashboardInitCompleted: (state, action: PayloadAction<MutableDashboard>) => {
+    dashboardInitCompleted: (state, action: PayloadAction<DashboardModel>) => {
       state.getModel = () => action.payload;
       state.initPhase = DashboardInitPhase.Completed;
       state.isInitSlow = false;
+
+      for (const panel of action.payload.panels) {
+        state.panels[panel.id] = {};
+      }
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
       state.initPhase = DashboardInitPhase.Failed;

@@ -92,6 +92,7 @@ const defaults: any = {
 };
 
 export class PanelModel {
+  /* persisted id, used in URL to identify a panel */
   id: number;
   gridPos: GridPos;
   type: string;

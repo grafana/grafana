@@ -8,7 +8,7 @@ import {
   mockToolkitActionCreatorWithoutPayload,
   ToolkitActionCreatorWithoutPayloadMockType,
 } from 'test/core/redux/mocks';
-import { DashboardInitPhase, DashboardRouteInfo, MutableDashboard } from 'app/types';
+import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
@@ -272,7 +272,7 @@ describe('DashboardPage', () => {
         },
       },
       dashboard: {
-        getModel: () => null as MutableDashboard,
+        getModel: () => null as DashboardModel,
       },
     } as any);
 
@@ -290,7 +290,7 @@ describe('DashboardPage', () => {
         },
       },
       dashboard: {
-        getModel: () => null as MutableDashboard,
+        getModel: () => null as DashboardModel,
       },
     } as any);
 
