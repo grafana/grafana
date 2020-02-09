@@ -33,7 +33,7 @@
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "25.1.2",
     "@types/jquery": "3.3.32",
-    "@types/lodash": "4.14.123",
+    "@types/lodash": "4.14.149",
     "@types/lru-cache": "^5.1.0",
     "@types/marked": "0.6.5",
     "@types/mousetrap": "1.6.3",
