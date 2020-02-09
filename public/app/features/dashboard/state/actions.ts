@@ -1,10 +1,9 @@
 // Services & Utils
 import { getBackendSrv } from '@grafana/runtime';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
-import { loadDashboardPermissions, panelPluginLoaded } from './reducers';
+import { loadDashboardPermissions, dashboardPanelTypeChanged } from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 // Types
@@ -117,11 +116,10 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
     let plugin = getStore().plugins.panels[panel.type];
 
     if (!plugin) {
-      await dispatch(loadPanelPlugin(panel.type));
-      plugin = getStore().plugins.panels[panel.type];
+      plugin = await dispatch(loadPanelPlugin(panel.type));
     }
 
-    if (panel.plugin) {
+    if (!panel.plugin) {
       panel.pluginLoaded(plugin);
     }
   };
@@ -129,16 +127,18 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
 
 export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const panelState = getStore().dashboard.panels[panel.id] || {};
-    let plugin = getStore().plugins.panels[panel.type];
+    // ignore action is no change
+    if (panel.type === pluginId) {
+      return;
+    }
+
+    let plugin = getStore().plugins.panels[pluginId];
 
     if (!plugin) {
-      await dispatch(loadPanelPlugin(panel.type));
-      plugin = getStore().plugins.panels[panel.type];
+      plugin = await dispatch(loadPanelPlugin(pluginId));
     }
 
     panel.changePlugin(plugin);
-
-    dispatch(panelPluginLoaded({ panelId: panel.id, plugin: plugin }));
+    dispatch(dashboardPanelTypeChanged({ panelId: panel.id, pluginId }));
   };
 }

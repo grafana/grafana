@@ -1,5 +1,5 @@
 import { DashboardAcl } from './acl';
-import { DataQuery, PanelPlugin } from '@grafana/data';
+import { DataQuery } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
@@ -69,7 +69,7 @@ export interface QueriesToUpdateOnDashboardLoad {
 }
 
 export interface PanelState {
-  plugin?: PanelPlugin;
+  pluginId: string;
   angularPanel?: AngularComponent;
 }
 

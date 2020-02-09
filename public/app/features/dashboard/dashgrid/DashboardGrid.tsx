@@ -261,7 +261,7 @@ export class DashboardGrid extends PureComponent<Props> {
             this.panelRef[id] = elem;
           }}
         >
-          {this.renderPanel(panel)}>
+          {this.renderPanel(panel)}
         </div>
       );
     }

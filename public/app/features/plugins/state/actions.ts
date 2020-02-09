@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { PanelPlugin } from '@grafana/data';
 import { ThunkResult } from 'app/types';
 import { pluginDashboardsLoad, pluginDashboardsLoaded, pluginsLoaded, panelPluginLoaded } from './reducers';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
@@ -19,14 +20,16 @@ export function loadPluginDashboards(): ThunkResult<void> {
   };
 }
 
-export function loadPanelPlugin(pluginId: string): ThunkResult<void> {
+export function loadPanelPlugin(pluginId: string): ThunkResult<Promise<PanelPlugin>> {
   return async (dispatch, getStore) => {
-    const plugin = getStore().plugins.panels[pluginId];
+    let plugin = getStore().plugins.panels[pluginId];
 
     if (!plugin) {
-      const plugin = await importPanelPlugin(pluginId);
+      plugin = await importPanelPlugin(pluginId);
 
       dispatch(panelPluginLoaded(plugin));
     }
+
+    return plugin;
   };
 }
