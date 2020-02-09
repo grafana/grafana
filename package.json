@@ -72,7 +72,7 @@
     "css-loader": "3.4.2",
     "enzyme": "3.11.0",
     "enzyme-adapter-react-16": "1.15.2",
-    "enzyme-to-json": "3.3.5",
+    "enzyme-to-json": "3.4.4",
     "es6-promise": "3.3.1",
     "es6-shim": "0.35.5",
     "eslint": "6.8.0",
