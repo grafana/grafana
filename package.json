@@ -267,7 +267,7 @@
     "rxjs": "6.5.4",
     "search-query-parser": "1.5.4",
     "slate": "0.57.1",
-    "slate-plain-serializer": "0.7.10",
+    "slate-plain-serializer": "0.7.11",
     "tether": "1.4.5",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
