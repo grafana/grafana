@@ -8,16 +8,7 @@ import {
   PanelEvents,
   SelectableValue,
 } from '@grafana/data';
-import {
-  stylesFactory,
-  Forms,
-  FieldConfigEditor,
-  CustomScrollbar,
-  selectThemeVariant,
-  TabContent,
-  Tab,
-  TabsBar,
-} from '@grafana/ui';
+import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -26,14 +17,15 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-import { QueriesTab } from '../../panel_editor/QueriesTab';
+
 import SplitPane from 'react-split-pane';
 import { StoreState } from '../../../../types/store';
 import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
-import { DisplayMode, displayModes, EditorTab, allTabs } from './types';
+import { DisplayMode, displayModes } from './types';
+import { PanelEditorTabs } from './PanelEditorTabs';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -120,7 +112,6 @@ interface State {
   data: PanelData;
   mode: DisplayMode;
   showPanelOptions: boolean;
-  tab: EditorTab;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
@@ -134,7 +125,6 @@ export class PanelEditor extends PureComponent<Props, State> {
     const panel = props.sourcePanel.getEditClone();
     this.state = {
       panel,
-      tab: EditorTab.Query,
       pluginLoadedCounter: 0,
       mode: DisplayMode.Fill,
       showPanelOptions: true,
@@ -278,7 +268,7 @@ export class PanelEditor extends PureComponent<Props, State> {
 
   renderHorizontalSplit(styles: any) {
     const { dashboard } = this.props;
-    const { panel, mode, tab } = this.state;
+    const { panel, mode } = this.state;
 
     return (
       <SplitPane
@@ -314,29 +304,7 @@ export class PanelEditor extends PureComponent<Props, State> {
           </AutoSizer>
         </div>
         <div className={styles.noScrollPaneContent}>
-          <div>
-            <TabsBar>
-              {allTabs.map(t => {
-                if (t.show(panel)) {
-                  return (
-                    <Tab
-                      label={t.label}
-                      active={tab === t.tab}
-                      onChangeTab={() => {
-                        this.setState({ tab: t.tab });
-                      }}
-                    />
-                  );
-                }
-                return null;
-              })}
-            </TabsBar>
-            <TabContent>
-              {tab === EditorTab.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
-              {tab === EditorTab.Alerts && <div>TODO: Show Alerts</div>}
-              {tab === EditorTab.Transform && <div>TODO: Show Transform</div>}
-            </TabContent>
-          </div>
+          <PanelEditorTabs panel={panel} dashboard={dashboard} />
         </div>
       </SplitPane>
     );
