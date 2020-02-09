@@ -62,12 +62,12 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
     this.props.onChange({ ...config, overrides });
   };
 
-  onDynamicConfigValueAdd = (index: number, name: string, custom?: boolean) => {
+  onDynamicConfigValueAdd = (index: number, prop: string, custom?: boolean) => {
     const { config } = this.props;
     let overrides = cloneDeep(config.overrides);
 
     const propertyConfig: DynamicConfigValue = {
-      name,
+      prop,
       custom,
     };
     if (overrides[index].properties) {
@@ -158,9 +158,10 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
                   />
 
                   {o.properties.map((p, j) => {
-                    const item = p.custom ? custom?.get(p.name) : standardFieldConfigEditorRegistry.get(p.name);
+                    const reg = p.custom ? custom : standardFieldConfigEditorRegistry;
+                    const item = reg?.get(p.prop);
                     if (!item) {
-                      return <div>Unknown property: {p.name}</div>;
+                      return <div>Unknown property: {p.prop}</div>;
                     }
                     return (
                       <Forms.Field label={item.name} description={item.description}>

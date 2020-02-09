@@ -5,7 +5,7 @@ import { InterpolateFunction } from './panel';
 import { DataFrame } from 'apache-arrow';
 
 export interface DynamicConfigValue {
-  name: string;
+  prop: string;
   value?: any;
   custom?: boolean;
 }
