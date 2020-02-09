@@ -20,39 +20,41 @@ interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {
   innerRef: any;
 }
 
-const SelectButton: React.FC<SelectButtonProps> = ({ icon, children, isOpen, innerRef, ...buttonProps }) => {
-  const theme = useTheme();
-  const styles = {
-    wrapper: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      max-width: 200px;
-      text-overflow: ellipsis;
-    `,
-    iconWrap: css`
-      padding: 0 15px 0 0;
-    `,
-    caretWrap: css`
-      padding-left: ${theme.spacing.sm};
-      margin-left: ${theme.spacing.sm};
-      margin-right: -${theme.spacing.sm};
-      height: 100%;
-    `,
-  };
-  const buttonIcon = `fa fa-${icon}`;
-  const caretIcon = isOpen ? 'caret-up' : 'caret-down';
-  return (
-    <Button {...buttonProps} ref={innerRef} icon={buttonIcon}>
-      <span className={styles.wrapper}>
-        <span>{children}</span>
-        <span className={styles.caretWrap}>
-          <Icon name={caretIcon} />
+const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
+  ({ icon, children, isOpen, ...buttonProps }, ref) => {
+    const theme = useTheme();
+    const styles = {
+      wrapper: css`
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 200px;
+        text-overflow: ellipsis;
+      `,
+      iconWrap: css`
+        padding: 0 15px 0 0;
+      `,
+      caretWrap: css`
+        padding-left: ${theme.spacing.sm};
+        margin-left: ${theme.spacing.sm};
+        margin-right: -${theme.spacing.sm};
+        height: 100%;
+      `,
+    };
+    const buttonIcon = `fa fa-${icon}`;
+    const caretIcon = isOpen ? 'caret-up' : 'caret-down';
+    return (
+      <Button {...buttonProps} ref={ref} icon={buttonIcon}>
+        <span className={styles.wrapper}>
+          <span>{children}</span>
+          <span className={styles.caretWrap}>
+            <Icon name={caretIcon} />
+          </span>
         </span>
-      </span>
-    </Button>
-  );
-};
+      </Button>
+    );
+  }
+);
 
 export function ButtonSelect<T>({
   placeholder,
@@ -74,10 +76,10 @@ export function ButtonSelect<T>({
   return (
     <SelectBase
       {...selectProps}
-      portal={document.body}
+      portal={null}
       renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, ref) => {
         return (
-          <SelectButton {...buttonProps} innerRef={ref} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
+          <SelectButton {...buttonProps} ref={ref} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
             {value ? value.label : placeholder}
           </SelectButton>
         );
