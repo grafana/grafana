@@ -90,6 +90,7 @@ export class AnnotationsSrv {
     this.alertStatesPromise = getBackendSrv().get('/api/alerts/states-for-dashboard', {
       dashboardId: options.dashboard.id,
     });
+
     return this.alertStatesPromise;
   }
 

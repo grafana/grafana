@@ -1,6 +1,5 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelEvents } from '@grafana/data';
 
 class TablePanelCtrl {}
 
@@ -148,18 +147,19 @@ describe('PanelModel', () => {
     });
 
     describe('when changing from angular panel', () => {
-      let tearDownPublished = false;
+      const angularPanel = {
+        scope: {},
+        destroy: jest.fn(),
+      };
 
       beforeEach(() => {
-        model.events.on(PanelEvents.panelTeardown, () => {
-          tearDownPublished = true;
-        });
+        model.angularPanel = angularPanel;
         model.changePlugin(getPanelPlugin({ id: 'graph' }));
       });
 
-      it('should teardown / destroy panel so angular panels event subscriptions are removed', () => {
-        expect(tearDownPublished).toBe(true);
-        expect(model.events.getEventCount()).toBe(0);
+      it('should set angularPanel to undefined and call destory', () => {
+        expect(angularPanel.destroy.mock.calls.length).toBe(1);
+        expect(model.angularPanel).toBe(undefined);
       });
     });
 

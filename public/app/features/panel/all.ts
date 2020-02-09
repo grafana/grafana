@@ -1,4 +1,3 @@
-import './panel_header';
 import './panel_directive';
 import './query_ctrl';
 import './panel_editor_tab';

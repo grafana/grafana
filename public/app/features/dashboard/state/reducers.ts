@@ -26,13 +26,13 @@ const dashbardSlice = createSlice({
     loadDashboardPermissions: (state, action: PayloadAction<DashboardAclDTO[]>) => {
       state.permissions = processAclItems(action.payload);
     },
-    dashboardInitFetching: state => {
+    dashboardInitFetching: (state, action: PayloadAction) => {
       state.initPhase = DashboardInitPhase.Fetching;
     },
-    dashboardInitServices: state => {
+    dashboardInitServices: (state, action: PayloadAction) => {
       state.initPhase = DashboardInitPhase.Services;
     },
-    dashboardInitSlow: state => {
+    dashboardInitSlow: (state, action: PayloadAction) => {
       state.isInitSlow = true;
     },
     dashboardInitCompleted: (state, action: PayloadAction<MutableDashboard>) => {
@@ -41,16 +41,13 @@ const dashbardSlice = createSlice({
       state.isInitSlow = false;
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
-      const failedDashboard = new DashboardModel(
-        { title: 'Dashboard init failed' },
-        { canSave: false, canEdit: false }
-      );
-
       state.initPhase = DashboardInitPhase.Failed;
       state.initError = action.payload;
-      state.getModel = () => failedDashboard;
+      state.getModel = () => {
+        return new DashboardModel({ title: 'Dashboard init failed' }, { canSave: false, canEdit: false });
+      };
     },
-    cleanUpDashboard: state => {
+    cleanUpDashboard: (state, action: PayloadAction) => {
       if (state.getModel()) {
         state.getModel().destroy();
         state.getModel = () => null;
@@ -63,7 +60,7 @@ const dashbardSlice = createSlice({
     setDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction<QueriesToUpdateOnDashboardLoad>) => {
       state.modifiedQueries = action.payload;
     },
-    clearDashboardQueriesToUpdateOnLoad: state => {
+    clearDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction) => {
       state.modifiedQueries = null;
     },
   },
