@@ -6424,10 +6424,10 @@ angular-native-dragdrop@1.2.2:
   resolved "https://registry.yarnpkg.com/angular-native-dragdrop/-/angular-native-dragdrop-1.2.2.tgz#d646c6b75b131c48073c3f6e36a225b2726d8bae"
   integrity sha1-1kbGt1sTHEgHPD9uNqIlsnJti64=
 
-angular-route@1.6.6:
-  version "1.6.6"
-  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.6.6.tgz#8c11748aa195c717b1b615a7e746442bfc7c61f4"
-  integrity sha1-jBF0iqGVxxexthWn50ZEK/x8YfQ=
+angular-route@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.7.9.tgz#f9910a2af0ba3ad7a969c5dd369b8360d0d5e4ef"
+  integrity sha512-vRoj5hzdQtWbODhWJqDzD1iNOEfCKshO6GFBuPVV7RHlPjzIc4R2dHCc7Qiv/8F3LDxJDohc6vSnTDMLHuaqeA==
 
 angular-sanitize@1.6.6:
   version "1.6.6"
