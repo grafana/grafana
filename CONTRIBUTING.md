@@ -52,7 +52,9 @@ Unsure where to begin contributing to Grafana? Start by browsing issues labeled 
 - [Beginner-friendly](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
 - [Help wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
 
-If you're looking to make a code change, see how to set up your environment for [local development](contribute/developer-guide.md).
+If you're looking to make a code change, you can either use an online dev environment by pressing the button below or see how to set up your environment for [local development](contribute/developer-guide.md).
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/grafana/grafana)
 
 When you're ready to contribute, it's time to [Create a pull request](/contribute/create-pull-request.md).
 

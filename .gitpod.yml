@@ -1,0 +1,17 @@
+image:
+  file: .gitpod.Dockerfile
+tasks:
+  - name: frontend
+    init: |
+      echo 'app_mode = development' > ./conf/custom.ini &&
+      make deps-js build-js &&
+      yarn dev
+    command: make run-frontend
+  - name: backend
+    init: make build-go build-server build-cli
+    command: make run
+    openMode: split-right
+
+ports:
+  - port: 3000
+    onOpen: open-preview
