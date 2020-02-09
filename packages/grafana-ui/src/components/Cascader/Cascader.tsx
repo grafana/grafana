@@ -7,7 +7,7 @@ import { Select } from '../Forms/Select/Select';
 import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 interface CascaderProps {
   /** The seperator between levels in the search */
   separator?: string;
@@ -198,6 +198,12 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             value={rcValue}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
+            // Required, otherwise the portal that the popup is shown in will render under other components
+            popupClassName={cx(
+              css`
+                z-index: 9999;
+              `
+            )}
           >
             <div className={disableDivFocus}>
               <Input
