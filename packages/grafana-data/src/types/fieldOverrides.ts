@@ -26,7 +26,7 @@ export interface FieldConfigSource {
 export interface FieldConfigEditorProps<TValue, TSettings> {
   item: FieldPropertyEditorItem<TValue, TSettings>; // The property info
   value: TValue;
-  onChange: (value: TValue) => void;
+  onChange: (value?: TValue) => void;
 }
 
 export interface FieldOverrideContext {
@@ -39,7 +39,7 @@ export interface FieldOverrideEditorProps<TValue, TSettings> {
   item: FieldPropertyEditorItem<TValue, TSettings>;
   value: any;
   context: FieldOverrideContext;
-  onChange: (value: any) => void;
+  onChange: (value?: any) => void;
 }
 
 export interface FieldPropertyEditorItem<TValue = any, TSettings = any> extends RegistryItem {

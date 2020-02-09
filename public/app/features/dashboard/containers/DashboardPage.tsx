@@ -17,7 +17,7 @@ import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
-import { cleanUpDashboard } from '../state/actions';
+import { cleanUpDashboard } from '../state/reducers';
 import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
@@ -183,6 +183,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     try {
       this.props.dashboard.render();
     } catch (err) {
+      console.error(err);
       this.props.notifyApp(createErrorNotification(`Panel rendering error`, err));
     }
   }
@@ -349,7 +350,7 @@ export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
-  dashboard: state.dashboard.model as DashboardModel,
+  dashboard: state.dashboard.getModel() as DashboardModel,
   inspectTab: state.location.query.tab,
 });
 

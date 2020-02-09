@@ -272,7 +272,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
-      return this.renderLoadingState();
+      return null;
     }
 
     const PanelComponent = plugin.panel;
@@ -290,7 +290,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     return (
       <>
-        {loading === LoadingState.Loading && this.renderLoadingState()}
         <div className={panelContentClassNames}>
           <PanelComponent
             id={panel.id}
@@ -308,14 +307,6 @@ export class PanelChrome extends PureComponent<Props, State> {
           />
         </div>
       </>
-    );
-  }
-
-  private renderLoadingState(): JSX.Element {
-    return (
-      <div className="panel-loading">
-        <i className="fa fa-spinner fa-spin" />
-      </div>
     );
   }
 
@@ -360,6 +351,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
+          isLoading={data.state === LoadingState.Loading}
         />
         <ErrorBoundary>
           {({ error, errorInfo }) => {

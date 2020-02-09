@@ -1,6 +1,15 @@
 import React, { PureComponent } from 'react';
 import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
-import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
+import {
+  stylesFactory,
+  Forms,
+  FieldConfigEditor,
+  CustomScrollbar,
+  selectThemeVariant,
+  TabContent,
+  Tab,
+  TabsBar,
+} from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 
@@ -83,6 +92,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+enum EditorTab {
+  Query = 'query',
+  Alerts = 'alerts',
+  Transform = 'xform',
+}
+
+const allTabs = [
+  { tab: EditorTab.Query, label: 'Query', show: (panel: PanelModel) => true },
+  { tab: EditorTab.Alerts, label: 'Alerts', show: (panel: PanelModel) => true },
+  { tab: EditorTab.Transform, label: 'Transform', show: (panel: PanelModel) => true },
+];
+
 interface Props {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
@@ -93,6 +114,7 @@ interface State {
   pluginLoadedCounter: number;
   panel: PanelModel;
   data: PanelData;
+  tab: EditorTab;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
@@ -106,6 +128,7 @@ export class PanelEditor extends PureComponent<Props, State> {
     const panel = props.sourcePanel.getEditClone();
     this.state = {
       panel,
+      tab: EditorTab.Query,
       pluginLoadedCounter: 0,
       data: {
         state: LoadingState.NotStarted,
@@ -237,6 +260,37 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
+  renderBottomOptions() {
+    const { dashboard } = this.props;
+    const { panel, tab } = this.state;
+
+    return (
+      <div>
+        <TabsBar>
+          {allTabs.map(t => {
+            if (t.show(panel)) {
+              return (
+                <Tab
+                  label={t.label}
+                  active={tab === t.tab}
+                  onChangeTab={() => {
+                    this.setState({ tab: t.tab });
+                  }}
+                />
+              );
+            }
+            return null;
+          })}
+        </TabsBar>
+        <TabContent>
+          {tab === EditorTab.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
+          {tab === EditorTab.Alerts && <div>TODO: Show Alerts</div>}
+          {tab === EditorTab.Transform && <div>TODO: Show Transform</div>}
+        </TabContent>
+      </div>
+    );
+  }
+
   render() {
     const { dashboard } = this.props;
     const { panel } = this.state;
@@ -273,7 +327,7 @@ export class PanelEditor extends PureComponent<Props, State> {
           >
             <SplitPane
               split="horizontal"
-              minSize={50}
+              minSize={100}
               primary="second"
               defaultSize="40%"
               resizerClassName={styles.resizerH}
@@ -290,15 +344,13 @@ export class PanelEditor extends PureComponent<Props, State> {
                   isInView={true}
                 />
               </div>
-              <div className={styles.noScrollPaneContent}>
-                <QueriesTab panel={panel} dashboard={dashboard} />
-              </div>
+              <div className={styles.noScrollPaneContent}>{this.renderBottomOptions()}</div>
             </SplitPane>
-            <div className={styles.noScrollPaneContent} style={{ height: '100%' }}>
+            <div className={styles.noScrollPaneContent}>
               <CustomScrollbar>
                 <div style={{ padding: '10px' }}>
                   {this.renderFieldOptions()}
-                  {/* {this.renderVisSettings()} */}
+                  {this.renderVisSettings()}
                 </div>
               </CustomScrollbar>
             </div>

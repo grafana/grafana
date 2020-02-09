@@ -65,15 +65,18 @@ export interface DashboardInitError {
 
 export const KIOSK_MODE_TV = 'tv';
 export type KioskUrlValue = 'tv' | '1' | true;
+export type GetMutableDashboardModelFn = () => MutableDashboard | null;
+
+export interface QueriesToUpdateOnDashboardLoad {
+  panelId: number;
+  queries: DataQuery[];
+}
 
 export interface DashboardState {
-  model: MutableDashboard | null;
+  getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   initError?: DashboardInitError;
   permissions: DashboardAcl[] | null;
-  modifiedQueries?: {
-    panelId: number;
-    queries: DataQuery[];
-  };
+  modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
 }

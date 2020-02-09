@@ -31,7 +31,7 @@ import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
-import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/actions';
+import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -120,7 +120,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
     if (withChanges) {
-      this.props.setDashboardQueriesToUpdateOnLoad(originPanelId, this.cleanQueries(queries));
+      this.props.setDashboardQueriesToUpdateOnLoad({
+        panelId: originPanelId,
+        queries: this.cleanQueries(queries),
+      });
     }
 
     const dashViewOptions = {
