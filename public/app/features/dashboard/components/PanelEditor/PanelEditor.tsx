@@ -7,6 +7,7 @@ import {
   DefaultTimeRange,
   PanelEvents,
   SelectableValue,
+  TimeRange,
 } from '@grafana/data';
 import {
   stylesFactory,
@@ -34,7 +35,7 @@ import { PanelTitle } from './PanelTitle';
 import { DisplayMode, displayModes } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { LocationState } from 'app/types';
+import { LocationState, CoreEvents } from 'app/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -130,6 +131,10 @@ export class PanelEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
+    props.dashboard.on(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
+
+    //    this.events.emit(, timeRange);
+
     // To ensure visualisation  settings are re-rendered when plugin has loaded
     // panelInitialised event is emmited from PanelChrome
     const panel = props.sourcePanel.getEditClone();
@@ -178,6 +183,14 @@ export class PanelEditor extends PureComponent<Props, State> {
     }
     //this.cleanUpAngularOptions();
   }
+
+  onTimeRangeUpdated = (timeRange: TimeRange) => {
+    const { panel } = this.state;
+    if (panel) {
+      panel.refresh();
+      console.log('TIME Changed (do refresh)', timeRange);
+    }
+  };
 
   onPanelUpdate = () => {
     const { panel } = this.state;
