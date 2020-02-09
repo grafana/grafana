@@ -249,7 +249,13 @@ export class PanelEditor extends PureComponent<Props, State> {
     return (
       <div>
         <TabsBar>
-          <Tab label="Query" active={true} />
+          <Tab
+            label="Query"
+            active={true}
+            onChangeTab={() => {
+              console.log('Changed!');
+            }}
+          />
         </TabsBar>
         <TabContent>
           <DashboardPanel
