@@ -19,7 +19,7 @@
     "@emotion/core": "10.0.27",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/react-hooks": "^3.2.1",
-    "@types/angular": "1.6.56",
+    "@types/angular": "1.6.57",
     "@types/angular-route": "1.7.0",
     "@types/classnames": "2.2.7",
     "@types/clipboard": "2.0.1",
