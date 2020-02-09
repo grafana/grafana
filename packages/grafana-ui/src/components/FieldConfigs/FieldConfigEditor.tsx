@@ -10,6 +10,7 @@ import {
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import Forms from '../Forms';
 import { fieldMatchersUI } from '../MatchersUI/fieldMatchersUI';
+import { ControlledCollapse } from '../Collapse/Collapse';
 
 interface Props {
   config: FieldConfigSource;
@@ -214,10 +215,17 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   render() {
     return (
       <div>
-        {this.renderStandardConfigs()}
-        {this.renderCustomConfigs()}
-        {this.renderAddOverride()}
-        {this.renderOverrides()}
+        <ControlledCollapse label="Standard Field Configuration" collapsible>
+          {this.renderStandardConfigs()}
+        </ControlledCollapse>
+        {this.props.custom && (
+          <ControlledCollapse label="Standard Field Configuration">{this.renderCustomConfigs()}</ControlledCollapse>
+        )}
+
+        <ControlledCollapse label="Field Overrides" collapsible>
+          {this.renderAddOverride()}
+          {this.renderOverrides()}
+        </ControlledCollapse>
       </div>
     );
   }

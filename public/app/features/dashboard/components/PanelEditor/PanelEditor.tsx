@@ -23,6 +23,7 @@ import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
+import { AlertTab } from 'app/features/alerting/AlertTab';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -284,7 +285,7 @@ export class PanelEditor extends PureComponent<Props, State> {
         </TabsBar>
         <TabContent>
           {tab === EditorTab.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
-          {tab === EditorTab.Alerts && <div>TODO: Show Alerts</div>}
+          {tab === EditorTab.Alerts && <AlertTab panel={panel} dashboard={dashboard} />}
           {tab === EditorTab.Transform && <div>TODO: Show Transform</div>}
         </TabContent>
       </div>
