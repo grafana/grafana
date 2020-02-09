@@ -1,28 +1,31 @@
-import React, { PureComponent } from 'react';
-import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
+import React, { PureComponent, CSSProperties } from 'react';
 import {
-  stylesFactory,
-  Forms,
-  FieldConfigEditor,
-  CustomScrollbar,
-  selectThemeVariant,
-  TabContent,
-  Tab,
-  TabsBar,
-} from '@grafana/ui';
+  GrafanaTheme,
+  FieldConfigSource,
+  PanelData,
+  LoadingState,
+  DefaultTimeRange,
+  PanelEvents,
+  SelectableValue,
+} from '@grafana/data';
+import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-import { QueriesTab } from '../../panel_editor/QueriesTab';
+
 import SplitPane from 'react-split-pane';
 import { StoreState } from '../../../../types/store';
 import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
+import { DisplayMode, displayModes } from './types';
+import { PanelEditorTabs } from './PanelEditorTabs';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -54,7 +57,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       bottom: 0;
       background: ${theme.colors.pageBg};
     `,
-    fill: css`
+    panelWrapper: css`
       width: 100%;
       height: 100%;
     `,
@@ -89,20 +92,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
     `,
+    centeringContainer: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    `,
   };
 });
-
-enum EditorTab {
-  Query = 'query',
-  Alerts = 'alerts',
-  Transform = 'xform',
-}
-
-const allTabs = [
-  { tab: EditorTab.Query, label: 'Query', show: (panel: PanelModel) => true },
-  { tab: EditorTab.Alerts, label: 'Alerts', show: (panel: PanelModel) => true },
-  { tab: EditorTab.Transform, label: 'Transform', show: (panel: PanelModel) => true },
-];
 
 interface Props {
   dashboard: DashboardModel;
@@ -114,7 +110,8 @@ interface State {
   pluginLoadedCounter: number;
   panel: PanelModel;
   data: PanelData;
-  tab: EditorTab;
+  mode: DisplayMode;
+  showPanelOptions: boolean;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
@@ -128,8 +125,9 @@ export class PanelEditor extends PureComponent<Props, State> {
     const panel = props.sourcePanel.getEditClone();
     this.state = {
       panel,
-      tab: EditorTab.Query,
       pluginLoadedCounter: 0,
+      mode: DisplayMode.Fill,
+      showPanelOptions: true,
       data: {
         state: LoadingState.NotStarted,
         series: [],
@@ -240,7 +238,11 @@ export class PanelEditor extends PureComponent<Props, State> {
     }
 
     if (plugin.editor && panel) {
-      return <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+      return (
+        <div style={{ marginTop: '40px' }}>
+          <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />
+        </div>
+      );
     }
 
     return <div>No editor (angular?)</div>;
@@ -256,40 +258,64 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
-  renderBottomOptions() {
+  onDiplayModeChange = (mode: SelectableValue<DisplayMode>) => {
+    this.setState({
+      mode: mode.value!,
+    });
+  };
+
+  onTogglePanelOptions = () => {
+    this.setState({
+      showPanelOptions: !this.state.showPanelOptions,
+    });
+  };
+
+  renderHorizontalSplit(styles: any) {
     const { dashboard } = this.props;
-    const { panel, tab } = this.state;
+    const { panel, mode } = this.state;
 
     return (
-      <div>
-        <TabsBar>
-          {allTabs.map(t => {
-            if (t.show(panel)) {
+      <SplitPane
+        split="horizontal"
+        minSize={50}
+        primary="second"
+        defaultSize="40%"
+        resizerClassName={styles.resizerH}
+        onDragStarted={() => (document.body.style.cursor = 'row-resize')}
+        onDragFinished={this.onDragFinished}
+      >
+        <div className={styles.panelWrapper}>
+          <AutoSizer>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
+              }
               return (
-                <Tab
-                  label={t.label}
-                  active={tab === t.tab}
-                  onChangeTab={() => {
-                    this.setState({ tab: t.tab });
-                  }}
-                />
+                <div className={styles.centeringContainer} style={{ width, height }}>
+                  <div style={calculatePanelSize(mode, width, height, panel)}>
+                    <DashboardPanel
+                      dashboard={dashboard}
+                      panel={panel}
+                      isEditing={false}
+                      isInEditMode
+                      isFullscreen={false}
+                      isInView={true}
+                    />
+                  </div>
+                </div>
               );
-            }
-            return null;
-          })}
-        </TabsBar>
-        <TabContent>
-          {tab === EditorTab.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
-          {tab === EditorTab.Alerts && <div>TODO: Show Alerts</div>}
-          {tab === EditorTab.Transform && <div>TODO: Show Transform</div>}
-        </TabContent>
-      </div>
+            }}
+          </AutoSizer>
+        </div>
+        <div className={styles.noScrollPaneContent}>
+          <PanelEditorTabs panel={panel} dashboard={dashboard} />
+        </div>
+      </SplitPane>
     );
   }
 
   render() {
-    const { dashboard } = this.props;
-    const { panel } = this.state;
+    const { panel, mode, showPanelOptions } = this.state;
     const styles = getStyles(config.theme);
 
     if (!panel) {
@@ -305,56 +331,68 @@ export class PanelEditor extends PureComponent<Props, State> {
             </button>
             <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
           </div>
-          <div>
+          <div className={styles.toolbarLeft}>
+            <Forms.Select
+              value={displayModes.find(v => v.value === mode)}
+              options={displayModes}
+              onChange={this.onDiplayModeChange}
+            />
+            <Forms.Button icon="fa fa-cog" variant="secondary" onClick={this.onTogglePanelOptions} />
             <Forms.Button variant="destructive" onClick={this.onDiscard}>
               Discard
             </Forms.Button>
           </div>
         </div>
         <div className={styles.panes}>
-          <SplitPane
-            split="vertical"
-            primary="second"
-            minSize={50}
-            defaultSize={350}
-            resizerClassName={styles.resizerV}
-            onDragStarted={() => (document.body.style.cursor = 'col-resize')}
-            onDragFinished={this.onDragFinished}
-          >
+          {showPanelOptions ? (
             <SplitPane
-              split="horizontal"
+              split="vertical"
               minSize={100}
               primary="second"
-              defaultSize="40%"
-              resizerClassName={styles.resizerH}
-              onDragStarted={() => (document.body.style.cursor = 'row-resize')}
+              defaultSize={350}
+              resizerClassName={styles.resizerV}
+              onDragStarted={() => (document.body.style.cursor = 'col-resize')}
               onDragFinished={this.onDragFinished}
             >
-              <div className={styles.fill}>
-                <DashboardPanel
-                  dashboard={dashboard}
-                  panel={panel}
-                  isEditing={false}
-                  isInEditMode
-                  isFullscreen={false}
-                  isInView={true}
-                />
+              {this.renderHorizontalSplit(styles)}
+              <div className={styles.noScrollPaneContent}>
+                <CustomScrollbar>
+                  <div style={{ padding: '10px' }}>
+                    {this.renderFieldOptions()}
+                    {this.renderVisSettings()}
+                  </div>
+                </CustomScrollbar>
               </div>
-              <div className={styles.noScrollPaneContent}>{this.renderBottomOptions()}</div>
             </SplitPane>
-            <div className={styles.noScrollPaneContent}>
-              <CustomScrollbar>
-                <div style={{ padding: '10px' }}>
-                  {this.renderFieldOptions()}
-                  {this.renderVisSettings()}
-                </div>
-              </CustomScrollbar>
-            </div>
-          </SplitPane>
+          ) : (
+            this.renderHorizontalSplit(styles)
+          )}
         </div>
       </div>
     );
   }
+}
+
+function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
+  if (mode === DisplayMode.Fill) {
+    return { width, height };
+  }
+  const colWidth = (window.innerWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
+  const pWidth = colWidth * panel.gridPos.w;
+  const pHeight = GRID_CELL_HEIGHT * panel.gridPos.h;
+  const scale = Math.min(width / pWidth, height / pHeight);
+
+  if (mode === DisplayMode.Exact && pWidth <= width && pHeight <= height) {
+    return {
+      width: pWidth,
+      height: pHeight,
+    };
+  }
+
+  return {
+    width: pWidth * scale,
+    height: pHeight * scale,
+  };
 }
 
 const mapStateToProps = (state: StoreState) => ({
