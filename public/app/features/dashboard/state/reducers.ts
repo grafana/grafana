@@ -9,6 +9,7 @@ import {
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
 import { DashboardModel } from './DashboardModel';
+import { PanelModel } from './PanelModel';
 import { PanelPlugin } from '@grafana/data';
 
 export const initialState: DashboardState = {
@@ -71,12 +72,17 @@ const dashbardSlice = createSlice({
     panelPluginLoaded: (state, action: PayloadAction<PanelPluginLoadedPayload>) => {
       state.panels[action.payload.panelId] = { plugin: action.payload.plugin };
     },
+    addPanelToDashboard: (state, action: PayloadAction<AddPanelPayload>) => {},
   },
 });
 
 export interface PanelPluginLoadedPayload {
   panelId: number;
   plugin: PanelPlugin;
+}
+
+export interface AddPanelPayload {
+  panel: PanelModel;
 }
 
 export const {
@@ -90,6 +96,7 @@ export const {
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
   panelPluginLoaded,
+  addPanelToDashboard,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;

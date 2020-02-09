@@ -5,8 +5,6 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 
 // Components
-import { AddPanelWidget } from '../components/AddPanelWidget';
-import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelResizer } from './PanelResizer';
@@ -53,21 +51,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     this.state = {
       isLazy: !props.isInView,
     };
-
-    this.specialPanels['row'] = this.renderRow.bind(this);
-    this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
-  }
-
-  isSpecial(pluginId: string) {
-    return this.specialPanels[pluginId];
-  }
-
-  renderRow() {
-    return <DashboardRow panel={this.props.panel} dashboard={this.props.dashboard} />;
-  }
-
-  renderAddPanel() {
-    return <AddPanelWidget panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
   onPluginTypeChange = (plugin: PanelPluginMeta) => {
@@ -75,9 +58,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
-    if (!this.isSpecial(this.props.panel.type)) {
-      this.props.loadPanelPlugin(this.props.panel, this.props.panel.type);
-    }
+    this.props.loadPanelPlugin(this.props.panel, this.props.panel.type);
   }
 
   componentDidUpdate() {
@@ -138,10 +119,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   render() {
     const { panel, dashboard, isFullscreen, isEditing, plugin } = this.props;
     const { isLazy } = this.state;
-
-    if (this.isSpecial(panel.type)) {
-      return this.specialPanels[panel.type]();
-    }
 
     // if we have not loaded plugin exports yet, wait
     if (!plugin) {
