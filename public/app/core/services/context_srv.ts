@@ -45,17 +45,17 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
   }
 
-  hasRole(role: string) {
+  hasRole = (role: string) => {
     return this.user.orgRole === role;
-  }
+  };
 
-  isGrafanaVisible() {
+  isGrafanaVisible = () => {
     return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
-  }
+  };
 
-  hasAccessToExplore() {
+  hasAccessToExplore = () => {
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
-  }
+  };
 }
 
 const contextSrv = new ContextSrv();

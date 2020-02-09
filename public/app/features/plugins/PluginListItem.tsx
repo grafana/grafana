@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { PluginMeta } from '@grafana/data';
-
+import { Link } from 'react-router-dom';
 interface Props {
   plugin: PluginMeta;
 }
@@ -10,7 +10,7 @@ const PluginListItem: FC<Props> = props => {
 
   return (
     <li className="card-item-wrapper">
-      <a className="card-item" href={`plugins/${plugin.id}/`}>
+      <Link className="card-item" to={`plugins/${plugin.id}/`}>
         <div className="card-item-header">
           <div className="card-item-type">{plugin.type}</div>
           {plugin.hasUpdate && (
@@ -28,7 +28,7 @@ const PluginListItem: FC<Props> = props => {
             <div className="card-item-sub-name">{`By ${plugin.info.author.name}`}</div>
           </div>
         </div>
-      </a>
+      </Link>
     </li>
   );
 };

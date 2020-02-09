@@ -166,13 +166,24 @@ export const legacyRoutes: GrafanaLegacyRouteDescriptor[] = [
 ];
 
 export const reactRoutes: any[] = [
-  // {
-  //   path: '/plugins/:pluginId',
-  //   // TODO: fix  dynamic imports
-  //   // component: () => SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
-  //   component: PluginPage,
-  //   exact: true
-  // },
+  {
+    template: '<react-container />',
+    resolve: {
+      component: importDashboardPage,
+    },
+    //@ts-ignore
+    pageClass: 'page-dashboard',
+    routeInfo: DashboardRouteInfo.Home,
+    reloadOnSearch: false,
+    exact: true,
+  },
+  {
+    path: '/plugins/:pluginId',
+    // TODO: fix  dynamic imports
+    // component: () => SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
+    component: PluginPage,
+    exact: true,
+  },
   {
     path: '/plugins',
     // TODO: fix  dynamic imports

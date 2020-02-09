@@ -82,7 +82,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   async componentDidMount() {
     this.props.initDashboard({
       $injector: this.props.$injector,
-      $scope: this.props.$scope,
+      // $scope: this.props.$scope,
+      $scope: {},
       urlSlug: this.props.urlSlug,
       urlUid: this.props.urlUid,
       urlType: this.props.urlType,

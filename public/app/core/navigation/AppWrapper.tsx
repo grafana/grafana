@@ -41,8 +41,13 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
               path={descriptor.path}
               key={`${descriptor.path}/${i}`}
               render={routeProps => {
-                debugger;
-                return React.createElement(descriptor.component, {});
+                const s = this.props.injector.get('$rootScope');
+                return React.createElement(descriptor.resolve.component(), {
+                  $injector: this.props.injector,
+                  $rootScope: s,
+                  $scope: s.$new(),
+                  routeInfo: descriptor.routeInfo,
+                });
               }}
             />
           );

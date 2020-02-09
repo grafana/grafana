@@ -29,7 +29,7 @@ import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
-import { ContextSrv } from '../../core/services/context_srv';
+import { contextSrv } from '../../core/services/context_srv';
 
 export function getLoadingNav(): NavModel {
   const node = {
@@ -73,7 +73,6 @@ interface Props {
   pluginId: string;
   query: UrlQueryMap;
   path: string; // the URL path
-  $contextSrv: ContextSrv;
 }
 
 interface State {
@@ -98,7 +97,7 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const { pluginId, path, query, $contextSrv } = this.props;
+    const { pluginId, path, query } = this.props;
     const { appSubUrl } = config;
 
     const plugin = await loadPlugin(pluginId);
@@ -110,7 +109,7 @@ class PluginPage extends PureComponent<Props, State> {
       return; // 404
     }
 
-    const { defaultPage, nav } = getPluginTabsNav(plugin, appSubUrl, path, query, $contextSrv.hasRole('Admin'));
+    const { defaultPage, nav } = getPluginTabsNav(plugin, appSubUrl, path, query, contextSrv.hasRole('Admin'));
 
     this.setState({
       loading: false,
@@ -293,8 +292,7 @@ class PluginPage extends PureComponent<Props, State> {
 
   render() {
     const { loading, nav, plugin } = this.state;
-    const { $contextSrv } = this.props;
-    const isAdmin = $contextSrv.hasRole('Admin');
+    const isAdmin = contextSrv.hasRole('Admin');
     return (
       <Page navModel={nav}>
         <Page.Contents isLoading={loading}>
