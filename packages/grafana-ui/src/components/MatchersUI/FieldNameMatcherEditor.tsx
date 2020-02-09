@@ -1,12 +1,35 @@
 import React from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
+import Forms from '../Forms';
 
 export class FieldNameMatcherEditor extends React.PureComponent<MatcherUIProps<string>> {
   render() {
-    const { matcher } = this.props;
+    const { data, options, onChange } = this.props;
+    const names: Set<string> = new Set();
 
-    return <div>TODO: MATCH STRING for: {matcher.id}</div>;
+    for (const frame of data) {
+      for (const field of frame.fields) {
+        names.add(field.name);
+      }
+    }
+    if (options) {
+      names.add(options);
+    }
+    const selectOptions = Array.from(names).map(n => ({
+      value: n,
+      label: n,
+    }));
+    const selectedOption = selectOptions.find(v => v.value === options);
+
+    return (
+      <Forms.Select
+        allowCustomValue
+        value={selectedOption}
+        options={selectOptions}
+        onChange={o => onChange(o.value!)}
+      />
+    );
   }
 }
 
