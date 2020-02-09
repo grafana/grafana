@@ -57,7 +57,7 @@
     "@types/slate": "0.47.5",
     "@types/slate-plain-serializer": "0.7.0",
     "@types/slate-react": "0.22.9",
-    "@types/testing-library__react-hooks": "^3.1.0",
+    "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.2",
     "@typescript-eslint/eslint-plugin": "2.19.0",
     "@typescript-eslint/parser": "2.19.0",
