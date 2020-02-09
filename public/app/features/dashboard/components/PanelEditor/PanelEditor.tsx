@@ -100,6 +100,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
     `,
+    centeringContainer: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    `,
   };
 });
 
@@ -292,15 +297,17 @@ export class PanelEditor extends PureComponent<Props, State> {
                 return null;
               }
               return (
-                <div style={calculatePanelSize(mode, width, height, panel)}>
-                  <DashboardPanel
-                    dashboard={dashboard}
-                    panel={panel}
-                    isEditing={false}
-                    isInEditMode
-                    isFullscreen={false}
-                    isInView={true}
-                  />
+                <div className={styles.centeringContainer} style={{ width, height }}>
+                  <div style={calculatePanelSize(mode, width, height, panel)}>
+                    <DashboardPanel
+                      dashboard={dashboard}
+                      panel={panel}
+                      isEditing={false}
+                      isInEditMode
+                      isFullscreen={false}
+                      isInView={true}
+                    />
+                  </div>
                 </div>
               );
             }}
