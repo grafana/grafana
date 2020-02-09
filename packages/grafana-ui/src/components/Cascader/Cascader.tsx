@@ -7,7 +7,7 @@ import { Select } from '../Forms/Select/Select';
 import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 interface CascaderProps {
   /** The seperator between levels in the search */
   separator?: string;
