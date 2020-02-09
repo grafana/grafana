@@ -1,8 +1,18 @@
-import React, { PureComponent } from 'react';
-import { GrafanaTheme, FieldConfigSource, PanelData, LoadingState, DefaultTimeRange, PanelEvents } from '@grafana/data';
+import React, { PureComponent, CSSProperties } from 'react';
+import {
+  GrafanaTheme,
+  FieldConfigSource,
+  PanelData,
+  LoadingState,
+  DefaultTimeRange,
+  PanelEvents,
+  SelectableValue,
+} from '@grafana/data';
 import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -14,6 +24,7 @@ import { connect } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
+import { DisplayMode, displayModes } from './types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -45,7 +56,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       bottom: 0;
       background: ${theme.colors.pageBg};
     `,
-    fill: css`
+    panelWrapper: css`
       width: 100%;
       height: 100%;
     `,
@@ -93,6 +104,7 @@ interface State {
   pluginLoadedCounter: number;
   panel: PanelModel;
   data: PanelData;
+  mode: DisplayMode;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
@@ -105,6 +117,7 @@ export class PanelEditor extends PureComponent<Props, State> {
     // panelInitialised event is emmited from PanelChrome
     const panel = props.sourcePanel.getEditClone();
     this.state = {
+      mode: DisplayMode.Fit,
       panel,
       pluginLoadedCounter: 0,
       data: {
@@ -233,9 +246,16 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
+  onDiplayModeChange = (mode: SelectableValue<DisplayMode>) => {
+    this.setState({
+      mode: mode.value!,
+    });
+    console.log('CHANGED', this.state.mode, mode);
+  };
+
   render() {
     const { dashboard } = this.props;
-    const { panel } = this.state;
+    const { panel, mode } = this.state;
     const styles = getStyles(config.theme);
 
     if (!panel) {
@@ -251,7 +271,12 @@ export class PanelEditor extends PureComponent<Props, State> {
             </button>
             <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
           </div>
-          <div>
+          <div className={styles.toolbarLeft}>
+            <Forms.Select
+              value={displayModes.find(v => v.value === mode)}
+              options={displayModes}
+              onChange={this.onDiplayModeChange}
+            />
             <Forms.Button variant="destructive" onClick={this.onDiscard}>
               Discard
             </Forms.Button>
@@ -276,15 +301,26 @@ export class PanelEditor extends PureComponent<Props, State> {
               onDragStarted={() => (document.body.style.cursor = 'row-resize')}
               onDragFinished={this.onDragFinished}
             >
-              <div className={styles.fill}>
-                <DashboardPanel
-                  dashboard={dashboard}
-                  panel={panel}
-                  isEditing={false}
-                  isInEditMode
-                  isFullscreen={false}
-                  isInView={true}
-                />
+              <div className={styles.panelWrapper}>
+                <AutoSizer>
+                  {({ width, height }) => {
+                    if (width < 1) {
+                      return null;
+                    }
+                    return (
+                      <div style={calculatePanelSize(mode, width, height, panel)}>
+                        <DashboardPanel
+                          dashboard={dashboard}
+                          panel={panel}
+                          isEditing={false}
+                          isInEditMode
+                          isFullscreen={false}
+                          isInView={true}
+                        />
+                      </div>
+                    );
+                  }}
+                </AutoSizer>
               </div>
               <div className={styles.noScrollPaneContent}>
                 <QueriesTab panel={panel} dashboard={dashboard} />
@@ -303,6 +339,28 @@ export class PanelEditor extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
+  if (mode === DisplayMode.Full) {
+    return { width, height };
+  }
+  const colWidth = (window.innerWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
+  const pWidth = colWidth * panel.gridPos.w;
+  const pHeight = GRID_CELL_HEIGHT * panel.gridPos.h;
+  const scale = Math.min(width / pWidth, height / pHeight);
+
+  if (mode === DisplayMode.Exact && pWidth <= width && pHeight <= height) {
+    return {
+      width: pWidth,
+      height: pHeight,
+    };
+  }
+
+  return {
+    width: pWidth * scale,
+    height: pHeight * scale,
+  };
 }
 
 const mapStateToProps = (state: StoreState) => ({
