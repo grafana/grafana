@@ -418,6 +418,10 @@
               "value": "currencyCZK"
             },
             {
+              "text": "Hungarian Forint (HUF)",
+              "value": "currencyHUF"
+            },
+            {
               "text": "Swiss franc (CHF)",
               "value": "currencyCHF"
             },
@@ -1517,6 +1521,10 @@
               "value": "currencyCZK"
             },
             {
+              "text": "Hungarian Forint (HUF)",
+              "value": "currencyHUF"
+            },
+            {
               "text": "Swiss franc (CHF)",
               "value": "currencyCHF"
             },
@@ -2594,6 +2602,10 @@
             {
               "text": "Czech koruna (czk)",
               "value": "currencyCZK"
+            },
+            {
+              "text": "Hungarian Forint (HUF)",
+              "value": "currencyHUF"
             },
             {
               "text": "Swiss franc (CHF)",

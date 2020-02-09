@@ -112,6 +112,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Norwegian Krone (kr)', id: 'currencyNOK', fn: currency('kr', true) },
       { name: 'Swedish Krona (kr)', id: 'currencySEK', fn: currency('kr', true) },
       { name: 'Czech koruna (czk)', id: 'currencyCZK', fn: currency('czk') },
+      { name: 'Hungarian Forint (HUF)', id: 'currencyHUF', fn: currency('Ft', true) },
       { name: 'Swiss franc (CHF)', id: 'currencyCHF', fn: currency('CHF') },
       { name: 'Polish Złoty (PLN)', id: 'currencyPLN', fn: currency('PLN') },
       { name: 'Bitcoin (฿)', id: 'currencyBTC', fn: currency('฿') },
