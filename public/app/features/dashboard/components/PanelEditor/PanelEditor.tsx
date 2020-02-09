@@ -92,6 +92,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+enum EditorTab {
+  Query = 'query',
+  Alerts = 'alerts',
+  Transform = 'xform',
+}
+
+const allTabs = [
+  { tab: EditorTab.Query, label: 'Query', show: (panel: PanelModel) => true },
+  { tab: EditorTab.Alerts, label: 'Alerts', show: (panel: PanelModel) => true },
+  { tab: EditorTab.Transform, label: 'Transform', show: (panel: PanelModel) => true },
+];
+
 interface Props {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
@@ -102,6 +114,7 @@ interface State {
   pluginLoadedCounter: number;
   panel: PanelModel;
   data: PanelData;
+  tab: EditorTab;
 }
 
 export class PanelEditor extends PureComponent<Props, State> {
@@ -115,6 +128,7 @@ export class PanelEditor extends PureComponent<Props, State> {
     const panel = props.sourcePanel.getEditClone();
     this.state = {
       panel,
+      tab: EditorTab.Query,
       pluginLoadedCounter: 0,
       data: {
         state: LoadingState.NotStarted,
@@ -244,28 +258,30 @@ export class PanelEditor extends PureComponent<Props, State> {
 
   renderBottomOptions() {
     const { dashboard } = this.props;
-    const { panel } = this.state;
+    const { panel, tab } = this.state;
 
     return (
       <div>
         <TabsBar>
-          <Tab
-            label="Query"
-            active={true}
-            onChangeTab={() => {
-              console.log('Changed!');
-            }}
-          />
+          {allTabs.map(t => {
+            if (t.show(panel)) {
+              return (
+                <Tab
+                  label={t.label}
+                  active={tab === t.tab}
+                  onChangeTab={() => {
+                    this.setState({ tab: t.tab });
+                  }}
+                />
+              );
+            }
+            return null;
+          })}
         </TabsBar>
         <TabContent>
-          <DashboardPanel
-            dashboard={dashboard}
-            panel={panel}
-            isEditing={false}
-            isInEditMode
-            isFullscreen={false}
-            isInView={true}
-          />
+          {tab === EditorTab.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
+          {tab === EditorTab.Alerts && <div>TODO: Show Alerts</div>}
+          {tab === EditorTab.Transform && <div>TODO: Show Transform</div>}
         </TabContent>
       </div>
     );
@@ -307,17 +323,24 @@ export class PanelEditor extends PureComponent<Props, State> {
           >
             <SplitPane
               split="horizontal"
-              minSize={50}
+              minSize={100}
               primary="second"
               defaultSize="40%"
               resizerClassName={styles.resizerH}
               onDragStarted={() => (document.body.style.cursor = 'row-resize')}
               onDragFinished={this.onDragFinished}
             >
-              <div className={styles.fill}>{this.renderBottomOptions()}</div>
-              <div className={styles.noScrollPaneContent}>
-                <QueriesTab panel={panel} dashboard={dashboard} />
+              <div className={styles.fill}>
+                <DashboardPanel
+                  dashboard={dashboard}
+                  panel={panel}
+                  isEditing={false}
+                  isInEditMode
+                  isFullscreen={false}
+                  isInView={true}
+                />
               </div>
+              <div className={styles.noScrollPaneContent}>{this.renderBottomOptions()}</div>
             </SplitPane>
             <div className={styles.noScrollPaneContent}>
               <CustomScrollbar>
