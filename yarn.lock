@@ -4892,6 +4892,14 @@
     "@types/jest" "*"
     "@types/puppeteer" "*"
 
+"@types/expect-puppeteer@4.4.0":
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/@types/expect-puppeteer/-/expect-puppeteer-4.4.0.tgz#8e1ee1e7ed7e12f36efcfe81c17d4d6b817cb3d2"
+  integrity sha512-j2zKlMms/qrdr5clPWWnhTqFGc2HFWv465gowMmCfBkorrFhDXpYgTduJRFSAwYcmNOopK5pgNXKb7dwon8pqQ==
+  dependencies:
+    "@types/jest" "*"
+    "@types/puppeteer" "*"
+
 "@types/express-serve-static-core@*":
   version "4.16.10"
   resolved "https://registry.yarnpkg.com/@types/express-serve-static-core/-/express-serve-static-core-4.16.10.tgz#3c1313c6e6b75594561b473a286f016a9abf2132"
