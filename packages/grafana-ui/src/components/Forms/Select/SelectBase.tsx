@@ -233,6 +233,8 @@ export function SelectBase<T>({
     renderControl,
     captureMenuScroll: false,
     blurInputOnSelect: true,
+    menuPortalTarget: document.body,
+    menuPlacement: 'auto',
   };
 
   // width property is deprecated in favor of size or className
@@ -334,6 +336,14 @@ export function SelectBase<T>({
       }}
       styles={{
         ...resetSelectStyles(),
+        //These are required for the menu positioning to function
+        menu: ({ top, bottom, width, position }: any) => ({
+          top,
+          bottom,
+          width,
+          position,
+          marginBottom: !!bottom ? '10px' : '0',
+        }),
       }}
       className={widthClass}
       {...commonSelectProps}

@@ -11,7 +11,7 @@ import { getIconKnob } from '../../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
 
 export default {
-  title: 'General/Select',
+  title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
 };
@@ -242,6 +242,26 @@ export const customizedControl = () => {
       }}
       {...getDynamicProps()}
     />
+  );
+};
+
+export const autoMenuPlacement = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <div style={{ height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+        <Select
+          options={generateOptions()}
+          value={value}
+          onChange={v => {
+            setValue(v);
+          }}
+          size="md"
+          {...getDynamicProps()}
+        />
+      </div>
+    </>
   );
 };
 
