@@ -13,14 +13,17 @@ import {
   DataTransformerConfig,
   ScopedVars,
 } from '@grafana/data';
+import { AngularComponent } from '@grafana/runtime';
 
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { eventFactory } from '@grafana/data';
+import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
+export const angularPanelUpdated = eventFactory('panel-angular-panel-updated');
 
 export interface GridPos {
   x: number;
@@ -40,6 +43,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
+  angularPanel: true,
   restoreModel: true,
 };
 
@@ -134,6 +138,8 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
+  angularPanel?: AngularComponent;
+
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
@@ -174,6 +180,7 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
+
     this.render();
   }
 
@@ -288,9 +295,8 @@ export class PanelModel {
     const oldPluginId = this.type;
     const wasAngular = !!this.plugin.angularPanelCtrl;
 
-    // for angular panels we must remove all events and let angular panels do some cleanup
-    if (wasAngular) {
-      this.destroy();
+    if (this.angularPanel) {
+      this.setAngularPanel(undefined);
     }
 
     // remove panel type specific  options
@@ -349,7 +355,14 @@ export class PanelModel {
 
   getEditClone() {
     const clone = new PanelModel(this.getSaveModel());
-    clone.queryRunner = new PanelQueryRunner(this.queryRunner.getLastResult());
+    clone.queryRunner = new PanelQueryRunner();
+
+    // This will send the last result to the new runner
+    this.getQueryRunner()
+      .getData()
+      .pipe(take(1))
+      .subscribe(val => clone.queryRunner.pipeDataToSubject(val));
+
     clone.isNewEdit = true;
     return clone;
   }
@@ -371,18 +384,31 @@ export class PanelModel {
   }
 
   destroy() {
-    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
       this.queryRunner.destroy();
       this.queryRunner = null;
     }
+
+    if (this.angularPanel) {
+      this.angularPanel.destroy();
+    }
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.getQueryRunner().setTransformations(transformations);
+  }
+
+  setAngularPanel(component: AngularComponent) {
+    if (this.angularPanel) {
+      // this will remove all event listeners
+      this.angularPanel.destroy();
+    }
+
+    this.angularPanel = component;
+    this.events.emit(angularPanelUpdated);
   }
 }
 

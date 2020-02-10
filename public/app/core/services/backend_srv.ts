@@ -1,6 +1,6 @@
 import omitBy from 'lodash/omitBy';
 import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
@@ -214,13 +214,6 @@ export class BackendSrv implements BackendService {
     return merge(successStream, failureStream)
       .pipe(
         catchError((err: ErrorResponse) => {
-          if (err.status === this.HTTP_REQUEST_CANCELED) {
-            return throwError({
-              err,
-              cancelled: true,
-            });
-          }
-
           // populate error obj on Internal Error
           if (typeof err.data === 'string' && err.status === 500) {
             err.data = {
@@ -253,7 +246,15 @@ export class BackendSrv implements BackendService {
               return cancelRequest;
             })
           )
-        )
+        ),
+        // when a request is cancelled by takeUntil it will complete without emitting anything
+        // throwIfEmpty will then throw an error with cancelled set to true
+        throwIfEmpty(() => ({
+          cancelled: true,
+          status: this.HTTP_REQUEST_CANCELED,
+          statusText: 'Request was aborted',
+          request: { url: parseUrlFromOptions(options), ...parseInitFromOptions(options) },
+        }))
       )
       .toPromise();
   }
