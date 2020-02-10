@@ -28,7 +28,7 @@ import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { LocationState, CoreEvents } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp } from './state/actions';
-import { setDisplayMode, toggleOptionsView } from './state/reducers';
+import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/reducers';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -51,6 +51,7 @@ interface DispatchProps {
   panelEditorCleanUp: typeof panelEditorCleanUp;
   setDisplayMode: typeof setDisplayMode;
   toggleOptionsView: typeof toggleOptionsView;
+  setDiscardChanges: typeof setDiscardChanges;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -84,6 +85,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onDiscard = () => {
+    this.props.setDiscardChanges(true);
     this.props.updateLocation({
       query: { editPanel: null },
       partial: true,
@@ -289,6 +291,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   panelEditorCleanUp,
   setDisplayMode,
   toggleOptionsView,
+  setDiscardChanges,
 };
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);

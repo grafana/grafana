@@ -12,6 +12,7 @@ export interface PanelEditorStateNew {
   isPanelOptionsVisible: boolean;
   querySubscription?: Unsubscribable;
   initDone: boolean;
+  shouldDiscardChanges: boolean;
 }
 
 export const initialState: PanelEditorStateNew = {
@@ -25,6 +26,7 @@ export const initialState: PanelEditorStateNew = {
   isPanelOptionsVisible: true,
   mode: DisplayMode.Fill,
   initDone: false,
+  shouldDiscardChanges: false,
 };
 
 interface InitEditorPayload {
@@ -52,9 +54,18 @@ const pluginsSlice = createSlice({
     setDisplayMode: (state, action: PayloadAction<DisplayMode>) => {
       state.mode = action.payload;
     },
+    setDiscardChanges: (state, action: PayloadAction<boolean>) => {
+      state.shouldDiscardChanges = action.payload;
+    },
   },
 });
 
-export const { updateEditorInitState, setEditorPanelData, toggleOptionsView, setDisplayMode } = pluginsSlice.actions;
+export const {
+  updateEditorInitState,
+  setEditorPanelData,
+  toggleOptionsView,
+  setDisplayMode,
+  setDiscardChanges,
+} = pluginsSlice.actions;
 
 export const panelEditorReducerNew = pluginsSlice.reducer;

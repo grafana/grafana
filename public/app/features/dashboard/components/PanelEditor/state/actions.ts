@@ -25,9 +25,11 @@ export function initPanelEditor(sourcePanel: PanelModel): ThunkResult<void> {
 export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, querySubscription } = getStore().panelEditorNew;
+    const { getPanel, querySubscription, shouldDiscardChanges } = getStore().panelEditorNew;
 
-    dashboard.updatePanel(getPanel());
+    if (!shouldDiscardChanges) {
+      dashboard.updatePanel(getPanel());
+    }
 
     querySubscription.unsubscribe();
   };
