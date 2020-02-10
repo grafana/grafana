@@ -30,9 +30,11 @@ const pluginsSlice = createSlice({
     },
     pluginDashboardsLoad: (state, action: PayloadAction<undefined>) => {
       state.isLoadingPluginDashboards = true;
+      state.dashboards = [];
     },
     pluginDashboardsLoaded: (state, action: PayloadAction<PluginDashboard[]>) => {
       state.isLoadingPluginDashboards = false;
+      state.dashboards = action.payload;
     },
     panelPluginLoaded: (state, action: PayloadAction<PanelPlugin>) => {
       state.panels[action.payload.meta!.id] = action.payload;

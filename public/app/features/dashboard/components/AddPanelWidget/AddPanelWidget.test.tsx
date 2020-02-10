@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { AddPanelWidget, Props } from './AddPanelWidget';
+import { AddPanelWidgetUnconnected as AddPanelWidget, Props } from './AddPanelWidget';
 import { DashboardModel, PanelModel } from '../../state';
 
 const setup = (propOverrides?: object) => {

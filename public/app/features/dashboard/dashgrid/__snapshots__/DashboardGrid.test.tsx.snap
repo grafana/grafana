@@ -49,7 +49,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     id="panel-1"
     key="1"
   >
-    <DashboardPanel
+    <Component
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -292,7 +292,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     id="panel-2"
     key="2"
   >
-    <DashboardPanel
+    <Component
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -535,7 +535,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     id="panel-3"
     key="3"
   >
-    <DashboardPanel
+    <Component
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -778,7 +778,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     id="panel-4"
     key="4"
   >
-    <DashboardPanel
+    <Component
       dashboard={
         DashboardModel {
           "annotations": Object {

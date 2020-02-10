@@ -178,7 +178,6 @@ export class DashboardGrid extends PureComponent<Props> {
     for (const panel of this.props.dashboard.panels) {
       panel.resizeDone();
     }
-    this.forceUpdate();
   };
 
   onViewModeChanged = () => {
