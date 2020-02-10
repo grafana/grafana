@@ -1,14 +1,5 @@
 import React, { PureComponent } from 'react';
-import {
-  GrafanaTheme,
-  FieldConfigSource,
-  PanelData,
-  LoadingState,
-  DefaultTimeRange,
-  PanelPlugin,
-  SelectableValue,
-  TimeRange,
-} from '@grafana/data';
+import { GrafanaTheme, FieldConfigSource, PanelData, PanelPlugin, SelectableValue, TimeRange } from '@grafana/data';
 import {
   stylesFactory,
   Forms,
@@ -36,6 +27,7 @@ import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { LocationState, CoreEvents } from 'app/types';
 import { calculatePanelSize } from './utils';
+import { initPanelEditor } from './state/actions';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -45,63 +37,25 @@ interface OwnProps {
 interface ConnectedProps {
   location: LocationState;
   plugin?: PanelPlugin;
+  panel: PanelModel;
+  data: PanelData;
+  mode: DisplayMode;
+  isPanelOptionsVisible: boolean;
+  initDone: boolean;
 }
 
 interface DispatchProps {
   updateLocation: typeof updateLocation;
+  initPanelEditor: typeof initPanelEditor;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-interface State {
-  panel: PanelModel;
-  data: PanelData;
-  mode: DisplayMode;
-  showPanelOptions: boolean;
-}
-
-export class PanelEditorUnconnected extends PureComponent<Props, State> {
+export class PanelEditorUnconnected extends PureComponent<Props> {
   querySubscription: Unsubscribable;
 
-  constructor(props: Props) {
-    super(props);
-
-    const panel = props.sourcePanel.getEditClone();
-
-    this.state = {
-      panel,
-      mode: DisplayMode.Fill,
-      showPanelOptions: true,
-      data: {
-        state: LoadingState.NotStarted,
-        series: [],
-        timeRange: DefaultTimeRange,
-      },
-    };
-  }
-
   componentDidMount() {
-    const { sourcePanel } = this.props;
-    const { panel } = this.state;
-
-    // Get data from any pending queries
-    sourcePanel
-      .getQueryRunner()
-      .getData()
-      .subscribe({
-        next: (data: PanelData) => {
-          this.setState({ data });
-          // TODO, cancel????
-        },
-      });
-
-    // Listen for queries on the new panel
-    const queryRunner = panel.getQueryRunner();
-    this.querySubscription = queryRunner.getData().subscribe({
-      next: (data: PanelData) => this.setState({ data }),
-    });
-
-    // Listen to timepicker changes
+    this.props.initPanelEditor(this.props.sourcePanel);
     this.props.dashboard.on(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
   }
 
@@ -115,15 +69,15 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
   }
 
   onTimeRangeUpdated = (timeRange: TimeRange) => {
-    const { panel } = this.state;
+    const { panel } = this.props;
+
     if (panel) {
       panel.refresh();
     }
   };
 
   onPanelUpdate = () => {
-    const { panel } = this.state;
-    const { dashboard } = this.props;
+    const { dashboard, panel } = this.props;
     dashboard.updatePanel(panel);
   };
 
@@ -145,7 +99,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
 
   onFieldConfigsChange = (fieldOptions: FieldConfigSource) => {
     // NOTE: for now, assume this is from 'fieldOptions' -- TODO? put on panel model directly?
-    const { panel } = this.state;
+    const { panel } = this.props;
     const options = panel.getOptions();
     panel.updateOptions({
       ...options,
@@ -155,8 +109,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
   };
 
   renderFieldOptions() {
-    const { plugin } = this.props;
-    const { panel, data } = this.state;
+    const { plugin, panel, data } = this.props;
 
     const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
 
@@ -175,7 +128,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
   }
 
   onPanelOptionsChanged = (options: any) => {
-    this.state.panel.updateOptions(options);
+    this.props.panel.updateOptions(options);
     this.forceUpdate();
   };
 
@@ -183,7 +136,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
    * The existing visualization tab
    */
   renderVisSettings() {
-    const { data, panel } = this.state;
+    const { data, panel } = this.props;
     const { plugin } = this.props;
 
     if (!plugin) {
@@ -207,25 +160,24 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
   };
 
   onPanelTitleChange = (title: string) => {
-    this.state.panel.title = title;
+    this.props.panel.title = title;
     this.forceUpdate();
   };
 
   onDiplayModeChange = (mode: SelectableValue<DisplayMode>) => {
-    this.setState({
-      mode: mode.value!,
-    });
+    /* this.setState({ */
+    /*   mode: mode.value!, */
+    /* }); */
   };
 
   onTogglePanelOptions = () => {
-    this.setState({
-      showPanelOptions: !this.state.showPanelOptions,
-    });
+    /* this.setState({ */
+    /*   showPanelOptions: !this.state.showPanelOptions, */
+    /* }); */
   };
 
   renderHorizontalSplit(styles: any) {
-    const { dashboard } = this.props;
-    const { panel, mode } = this.state;
+    const { dashboard, panel, mode } = this.props;
 
     return (
       <SplitPane
@@ -268,11 +220,10 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, location } = this.props;
-    const { panel, mode, showPanelOptions } = this.state;
+    const { dashboard, location, panel, mode, isPanelOptionsVisible, initDone } = this.props;
     const styles = getStyles(config.theme);
 
-    if (!panel) {
+    if (!initDone) {
       return null;
     }
 
@@ -302,7 +253,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
           </div>
         </div>
         <div className={styles.panes}>
-          {showPanelOptions ? (
+          {isPanelOptionsVisible ? (
             <SplitPane
               split="vertical"
               minSize={100}
@@ -336,10 +287,16 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => ({
   location: state.location,
   plugin: state.plugins.panels[props.sourcePanel.type],
+  panel: state.panelEditorNew.getPanel(),
+  mode: state.panelEditorNew.mode,
+  isPanelOptionsVisible: state.panelEditorNew.isPanelOptionsVisible,
+  data: state.panelEditorNew.data,
+  initDone: state.panelEditorNew.initDone,
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateLocation,
+  initPanelEditor,
 };
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);
