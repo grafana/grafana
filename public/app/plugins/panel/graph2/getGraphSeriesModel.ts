@@ -4,7 +4,6 @@ import {
   getDisplayProcessor,
   NullValueMode,
   reduceField,
-  FieldType,
   DisplayValue,
   GraphSeriesXY,
   getTimeField,

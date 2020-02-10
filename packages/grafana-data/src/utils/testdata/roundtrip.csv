@@ -1,5 +1,4 @@
 #name#a,b,c
-#type#number,string,boolean
 #unit#ms,,s
 10,"this ""has quotes"" inside",true
 20,XX,false
