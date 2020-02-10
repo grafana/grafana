@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SplitButtons } from './SplitButtons';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './SplitButtons.mdx';
 import { Button, LinkButton } from '../Forms/Button';
 import { ButtonSelect } from '../Forms/Select/ButtonSelect';
-import { cx } from 'emotion';
+import { Icon } from '../Icon/Icon';
+import { action } from '@storybook/addon-actions';
 
 export default {
   title: 'General/SplitButtons',
@@ -26,3 +27,22 @@ export const simple = () => (
     <ButtonSelect onChange={() => {}} placeholder="Awesome" />
   </SplitButtons>
 );
+
+export const playControlsExample = () => {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  return (
+    <SplitButtons>
+      <Button
+        onClick={() => {
+          setIsPlaying(!isPlaying);
+        }}
+      >
+        <Icon name={isPlaying ? 'pause' : 'play'} />
+      </Button>
+      <Button onClick={() => setIsPlaying(false)} variant="destructive">
+        <Icon name="stop" />
+      </Button>
+    </SplitButtons>
+  );
+};

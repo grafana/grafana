@@ -1,7 +1,21 @@
 import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
 import { SplitButtons } from './SplitButtons';
+import { Icon } from '../Icon/Icon';
+import { Button } from '../Forms/Button';
 
 <Meta title="MDX|SplitButtons" component={SplitButtons} />
 
 # SplitButtons
-<Props/>
+This component is created to wrap buttons, eliminating the border between them. It makes sense to use this when two relatable actions are next to eachother - like pause, play and 
+
+<Preview>
+<Story id="play-example" name="play examples">
+<SplitButtons>
+<Button><Icon name="play"/></Button>
+<Button><Icon name="pause"/></Button>
+<Button variant="destructive"><Icon name="stop"/></Button>
+</SplitButtons>
+</Story>
+</Preview>
+
+<Props of={SplitButtons}/>
