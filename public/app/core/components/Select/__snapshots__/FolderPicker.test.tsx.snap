@@ -16,10 +16,13 @@ exports[`FolderPicker should render 1`] = `
       <AsyncSelect
         allowCustomValue={false}
         defaultOptions={true}
+        defaultValue={Object {}}
         loadOptions={[Function]}
         loadingMessage="Loading folders..."
         onChange={[Function]}
+        onCreateOption={[Function]}
         size="sm"
+        value={Object {}}
       />
     </div>
   </div>
