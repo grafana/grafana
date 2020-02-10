@@ -21,3 +21,14 @@ export function initPanelEditor(sourcePanel: PanelModel): ThunkResult<void> {
     );
   };
 }
+
+export function panelEditorCleanUp(): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const dashboard = getStore().dashboard.getModel();
+    const { getPanel, querySubscription } = getStore().panelEditorNew;
+
+    dashboard.updatePanel(getPanel());
+
+    querySubscription.unsubscribe();
+  };
+}

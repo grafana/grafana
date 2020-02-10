@@ -27,7 +27,7 @@ import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { LocationState, CoreEvents } from 'app/types';
 import { calculatePanelSize } from './utils';
-import { initPanelEditor } from './state/actions';
+import { initPanelEditor, panelEditorCleanUp } from './state/actions';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -47,6 +47,7 @@ interface ConnectedProps {
 interface DispatchProps {
   updateLocation: typeof updateLocation;
   initPanelEditor: typeof initPanelEditor;
+  panelEditorCleanUp: typeof panelEditorCleanUp;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -60,11 +61,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-    }
-
-    // Remove the time listener
+    this.props.panelEditorCleanUp();
     this.props.dashboard.off(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
   }
 
@@ -83,7 +80,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onPanelExit = () => {
     const { updateLocation } = this.props;
-    this.onPanelUpdate();
     updateLocation({
       query: { editPanel: null },
       partial: true,
@@ -297,6 +293,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateLocation,
   initPanelEditor,
+  panelEditorCleanUp,
 };
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);
