@@ -7,7 +7,7 @@ import { DisplayMode } from '../types';
 export interface PanelEditorStateNew {
   getSourcePanel: () => PanelModel;
   getPanel: () => PanelModel;
-  data: PanelData;
+  getData: () => PanelData;
   mode: DisplayMode;
   isPanelOptionsVisible: boolean;
   querySubscription?: Unsubscribable;
@@ -17,11 +17,11 @@ export interface PanelEditorStateNew {
 export const initialState: PanelEditorStateNew = {
   getPanel: () => new PanelModel({}),
   getSourcePanel: () => new PanelModel({}),
-  data: {
+  getData: () => ({
     state: LoadingState.NotStarted,
     series: [],
     timeRange: DefaultTimeRange,
-  },
+  }),
   isPanelOptionsVisible: true,
   mode: DisplayMode.Fill,
   initDone: false,
@@ -44,7 +44,7 @@ const pluginsSlice = createSlice({
       state.initDone = true;
     },
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
-      state.data = action.payload;
+      state.getData = () => action.payload;
     },
   },
 });

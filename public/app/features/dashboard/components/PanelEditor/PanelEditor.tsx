@@ -286,7 +286,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   panel: state.panelEditorNew.getPanel(),
   mode: state.panelEditorNew.mode,
   isPanelOptionsVisible: state.panelEditorNew.isPanelOptionsVisible,
-  data: state.panelEditorNew.data,
+  data: state.panelEditorNew.getData(),
   initDone: state.panelEditorNew.initDone,
 });
 
