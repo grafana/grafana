@@ -141,9 +141,8 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 			uid, err := translateNotificationIDToUID(id, ruleDef.OrgId)
 			if err != nil {
 				return nil, ValidationError{Reason: "Unable to translate notification id to uid, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
-			} else {
-				model.Notifications = append(model.Notifications, uid)
 			}
+			model.Notifications = append(model.Notifications, uid)
 		} else if uid, err := jsonModel.Get("uid").String(); err == nil {
 			model.Notifications = append(model.Notifications, uid)
 		} else {
