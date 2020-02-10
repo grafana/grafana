@@ -8,7 +8,6 @@ import {
   PanelEvents,
   SelectableValue,
   TimeRange,
-  DataLink,
 } from '@grafana/data';
 import {
   stylesFactory,
