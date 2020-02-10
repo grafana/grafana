@@ -66,9 +66,8 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    // To ensure visualisation  settings are re-rendered when plugin has loaded
-    // panelInitialised event is emmited from PanelChrome
     const panel = props.sourcePanel.getEditClone();
+
     this.state = {
       panel,
       mode: DisplayMode.Fill,
@@ -110,7 +109,6 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
     }
-    //this.cleanUpAngularOptions();
 
     // Remove the time listener
     this.props.dashboard.off(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);

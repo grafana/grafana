@@ -1,8 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { PanelModel } from '../../../state/PanelModel';
 
-export interface PanelEditorStateNew {}
+export interface PanelEditorStateNew {
+  getPanel: () => PanelModel;
+}
 
-export const initialState: PanelEditorStateNew = {};
+export const initialState: PanelEditorStateNew = {
+  getPanel: () => PanelModel,
+};
 
 const pluginsSlice = createSlice({
   name: 'panelEditorNew',
