@@ -6,7 +6,7 @@ export interface PanelEditorStateNew {
 }
 
 export const initialState: PanelEditorStateNew = {
-  getPanel: () => PanelModel,
+  getPanel: () => new PanelModel({}),
 };
 
 const pluginsSlice = createSlice({
