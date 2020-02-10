@@ -84,7 +84,7 @@ export {
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
-export { Collapse } from './Collapse/Collapse';
+export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { LogLabels } from './Logs/LogLabels';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
@@ -117,5 +117,21 @@ export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
 
+// TODO: namespace!!
+export { FieldConfigEditor } from './FieldConfigs/FieldConfigEditor';
+export {
+  StringValueEditor,
+  StringOverrideEditor,
+  stringOverrideProcessor,
+  StringFieldConfigSettings,
+} from './FieldConfigs/string';
+export {
+  NumberValueEditor,
+  NumberOverrideEditor,
+  numberOverrideProcessor,
+  NumberFieldConfigSettings,
+} from './FieldConfigs/number';
+
 // Next-gen forms
 export { default as Forms } from './Forms';
+export { ValuePicker } from './ValuePicker/ValuePicker';

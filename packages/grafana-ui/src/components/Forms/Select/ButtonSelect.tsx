@@ -4,9 +4,10 @@ import { Button, ButtonVariant, ButtonProps } from '../Button';
 import { ButtonSize } from '../../Button/types';
 import { SelectCommonProps, SelectBase, CustomControlProps } from './SelectBase';
 import { css } from 'emotion';
-import { useTheme } from '../../../themes';
+import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { IconType } from '../../Icon/types';
+import { GrafanaTheme } from '@grafana/data';
 
 interface ButtonSelectProps<T> extends Omit<SelectCommonProps<T>, 'renderControl' | 'size' | 'prefix'> {
   icon?: IconType;
@@ -19,39 +20,41 @@ interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {
   isOpen?: boolean;
 }
 
-const SelectButton: React.FC<SelectButtonProps> = ({ icon, children, isOpen, ...buttonProps }) => {
-  const theme = useTheme();
-  const styles = {
-    wrapper: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      max-width: 200px;
-      text-overflow: ellipsis;
-    `,
-    iconWrap: css`
-      padding: 0 15px 0 0;
-    `,
-    caretWrap: css`
-      padding-left: ${theme.spacing.sm};
-      margin-left: ${theme.spacing.sm};
-      margin-right: -${theme.spacing.sm};
-      height: 100%;
-    `,
-  };
-  const buttonIcon = `fa fa-${icon}`;
-  const caretIcon = isOpen ? 'caret-up' : 'caret-down';
-  return (
-    <Button {...buttonProps} icon={buttonIcon}>
-      <span className={styles.wrapper}>
-        <span>{children}</span>
-        <span className={styles.caretWrap}>
-          <Icon name={caretIcon} />
+const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
+  ({ icon, children, isOpen, ...buttonProps }, ref) => {
+    const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+      wrapper: css`
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 200px;
+        text-overflow: ellipsis;
+      `,
+      iconWrap: css`
+        padding: 0 15px 0 0;
+      `,
+      caretWrap: css`
+        padding-left: ${theme.spacing.sm};
+        margin-left: ${theme.spacing.sm};
+        margin-right: -${theme.spacing.sm};
+        height: 100%;
+      `,
+    }));
+    const styles = getStyles(useTheme());
+    const buttonIcon = `fa fa-${icon}`;
+    const caretIcon = isOpen ? 'caret-up' : 'caret-down';
+    return (
+      <Button {...buttonProps} ref={ref} icon={buttonIcon}>
+        <span className={styles.wrapper}>
+          <span>{children}</span>
+          <span className={styles.caretWrap}>
+            <Icon name={caretIcon} />
+          </span>
         </span>
-      </span>
-    </Button>
-  );
-};
+      </Button>
+    );
+  }
+);
 
 export function ButtonSelect<T>({
   placeholder,
@@ -73,9 +76,9 @@ export function ButtonSelect<T>({
   return (
     <SelectBase
       {...selectProps}
-      renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, _ref) => {
+      renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, ref) => {
         return (
-          <SelectButton {...buttonProps} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
+          <SelectButton {...buttonProps} ref={ref} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
             {value ? value.label : placeholder}
           </SelectButton>
         );

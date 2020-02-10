@@ -26,7 +26,7 @@ const getKnobs = () => {
   };
 };
 
-storiesOf('UI/ConfirmButton', module)
+storiesOf('General/ConfirmButton', module)
   .addDecorator(withCenteredStory)
   .add('default', () => {
     const { size, buttonText, confirmText, confirmVariant, disabled } = getKnobs();
