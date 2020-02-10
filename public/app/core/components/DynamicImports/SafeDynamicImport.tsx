@@ -18,6 +18,7 @@ export const loadComponentHandler = (props: { error: Error; pastDelay: boolean }
 };
 
 export const SafeDynamicImport = (importStatement: Promise<any>) => ({ ...props }) => {
+  debugger;
   const LoadableComponent = Loadable({
     loader: () => importStatement,
     loading: loadComponentHandler,

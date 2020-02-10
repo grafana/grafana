@@ -10,7 +10,7 @@ const PluginListItem: FC<Props> = props => {
 
   return (
     <li className="card-item-wrapper">
-      <Link className="card-item" to={`plugins/${plugin.id}/`}>
+      <Link className="card-item" to={`/plugins/${plugin.id}/`}>
         <div className="card-item-header">
           <div className="card-item-type">{plugin.type}</div>
           {plugin.hasUpdate && (

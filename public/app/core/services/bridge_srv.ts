@@ -54,36 +54,36 @@ export class BridgeSrv {
     });
 
     // Listen for changes in redux location -> update angular location
-    store.subscribe(() => {
-      const state = store.getState();
-      const angularUrl = this.$location.url();
-      const url = state.location.url;
-      if (angularUrl !== url) {
-        this.$timeout(() => {
-          this.$location.url(url);
-          // some state changes should not trigger new browser history
-          if (state.location.replace) {
-            this.$location.replace();
-          }
-        });
-        console.log('store updating angular $location.url', url);
-      }
+    // store.subscribe(() => {
+    //   const state = store.getState();
+    //   const angularUrl = this.$location.url();
+    //   const url = state.location.url;
+    //   if (angularUrl !== url) {
+    //     this.$timeout(() => {
+    //       this.$location.url(url);
+    //       // some state changes should not trigger new browser history
+    //       if (state.location.replace) {
+    //         this.$location.replace();
+    //       }
+    //     });
+    //     console.log('store updating angular $location.url', url);
+    //   }
 
-      // Check for template variable changes on a dashboard
-      if (state.location.path === this.lastPath) {
-        const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
-        if (changes) {
-          const dash = getDashboardSrv().getCurrent();
-          if (dash) {
-            this.variableSrv.templateVarsChangedInUrl(changes);
-          }
-        }
-        this.lastQuery = state.location.query;
-      } else {
-        this.lastQuery = {};
-      }
-      this.lastPath = state.location.path;
-    });
+    //   // Check for template variable changes on a dashboard
+    //   if (state.location.path === this.lastPath) {
+    //     const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
+    //     if (changes) {
+    //       const dash = getDashboardSrv().getCurrent();
+    //       if (dash) {
+    //         this.variableSrv.templateVarsChangedInUrl(changes);
+    //       }
+    //     }
+    //     this.lastQuery = state.location.query;
+    //   } else {
+    //     this.lastQuery = {};
+    //   }
+    //   this.lastPath = state.location.path;
+    // });
 
     appEvents.on(CoreEvents.locationChange, payload => {
       const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);

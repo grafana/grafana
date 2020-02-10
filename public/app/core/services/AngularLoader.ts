@@ -15,7 +15,7 @@ export class AngularLoader implements AngularLoaderInterface {
 
   load(elem: any, scopeProps: any, template: string): AngularComponent {
     const scope = this.$rootScope.$new();
-
+    debugger;
     _.assign(scope, scopeProps);
 
     const compiledElem = this.$compile(template)(scope);

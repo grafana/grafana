@@ -36,24 +36,24 @@ export class DashboardImportCtrl {
     private $scope: IScope,
     private validationSrv: ValidationSrv,
     navModelSrv: NavModelSrv,
-    private $location: ILocationService,
-    $routeParams: any
-  ) {
+    private $location: ILocationService
+  ) // $routeParams: any
+  {
     this.navModel = navModelSrv.getNav('create', 'import');
-
+    debugger;
     this.step = 1;
     this.nameExists = false;
     this.uidExists = false;
     this.autoGenerateUid = true;
     this.autoGenerateUidValue = 'auto-generated';
-    this.folderId = $routeParams.folderId ? Number($routeParams.folderId) || 0 : null;
+    // this.folderId = $routeParams.folderId ? Number($routeParams.folderId) || 0 : null;
     this.initialFolderTitle = 'Select a folder';
 
     // check gnetId in url
-    if ($routeParams.gnetId) {
-      this.gnetUrl = $routeParams.gnetId;
-      this.checkGnetDashboard();
-    }
+    // if ($routeParams.gnetId) {
+    // this.gnetUrl = $routeParams/.gnetId;
+    // this.checkGnetDashboard();
+    // }
   }
 
   onUpload(dash: any) {

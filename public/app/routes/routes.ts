@@ -45,132 +45,28 @@ export const legacyRoutes: GrafanaLegacyRouteDescriptor[] = [
   },
   {
     path: '/d/:uid',
-    templateUrl: 'public/app/partials/dashboard.html',
-    controller: 'LoadDashboardCtrl',
-    reloadOnSearch: false,
+    template: '<react-container />',
     pageClass: 'page-dashboard',
+    reloadOnSearch: false,
+    routeInfo: DashboardRouteInfo.Normal,
+    resolve: {
+      component: importDashboardPage,
+    },
     exact: true,
   },
   {
-    path: '/dashboard/:type/:slug',
-    templateUrl: 'public/app/partials/dashboard.html',
-    controller: 'LoadDashboardCtrl',
-    reloadOnSearch: false,
-    pageClass: 'page-dashboard',
-    exact: true,
-  },
-  {
-    path: '/d-solo/:uid/:slug',
-    templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-    controller: 'SoloPanelCtrl',
-    reloadOnSearch: false,
-    pageClass: 'page-dashboard',
-    exact: true,
-  },
-  {
-    path: '/dashboard-solo/:type/:slug',
-    templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-    controller: 'SoloPanelCtrl',
-    reloadOnSearch: false,
-    pageClass: 'page-dashboard',
-    exact: true,
-  },
-  {
-    path: '/dashboard/new',
-    templateUrl: 'public/app/partials/dashboard.html',
-    controller: 'NewDashboardCtrl',
-    reloadOnSearch: false,
-    pageClass: 'page-dashboard',
-    exact: true,
-  },
-  {
-    // TODO: fix
     path: '/dashboard/import',
-    templateUrl: 'public/app/features/dashboard/partials/dashboard_import.html',
+    templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_import.html',
     controller: 'DashboardImportCtrl',
     controllerAs: 'ctrl',
-    exact: true,
-  },
-  {
-    path: '/datasources',
-    templateUrl: 'public/app/features/plugins/partials/ds_list.html',
-    controller: 'DataSourcesCtrl',
-    controllerAs: 'ctrl',
-    exact: true,
-  },
-  {
-    path: '/dashboards',
-    templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
-    controller: 'DashboardListCtrl',
-    controllerAs: 'ctrl',
-    exact: true,
-  },
-  {
-    path: '/dashboards/folder/new',
-    templateUrl: 'public/app/features/dashboard/partials/create_folder.html',
-    controller: 'CreateFolderCtrl',
-    controllerAs: 'ctrl',
-    exact: true,
-  },
-  {
-    path: '/dashboards/f/:uid/:slug/permissions',
-    template: '<react-container />',
-    resolve: {
-      component: () => FolderPermissions,
-    },
-    exact: true,
-  },
-  {
-    path: '/dashboards/f/:uid/:slug/settings',
-    template: '<react-container />',
-    resolve: {
-      component: () => FolderSettingsPage,
-    },
-    exact: true,
-  },
-  {
-    path: '/dashboards/f/:uid/:slug',
-    templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
-    controller: 'FolderDashboardsCtrl',
-    controllerAs: 'ctrl',
-    exact: true,
-  },
-  {
-    path: '/dashboards/f/:uid',
-    templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
-    controller: 'FolderDashboardsCtrl',
-    controllerAs: 'ctrl',
-    exact: true,
-  },
-  {
-    path: '/profile',
-    templateUrl: 'public/app/features/org/partials/profile.html',
-    controller: 'ProfileCtrl',
-    controllerAs: 'ctrl',
-    exact: true,
-  },
-  {
-    path: '/admin/stats',
-    template: '<react-container />',
-    resolve: {
-      component: () => ServerStats,
-    },
-  },
-  {
-    path: '/login',
-    templateUrl: 'public/app/partials/login.html',
-    controller: 'LoginCtrl',
-    pageClass: 'login-page sidemenu-hidden',
-    exact: true,
   },
 ];
 
 export const reactRoutes: any[] = [
   {
-    template: '<react-container />',
-    resolve: {
-      component: importDashboardPage,
-    },
+    // template: '<react-container />',
+    path: '/',
+    component: importDashboardPage,
     //@ts-ignore
     pageClass: 'page-dashboard',
     routeInfo: DashboardRouteInfo.Home,
@@ -180,15 +76,17 @@ export const reactRoutes: any[] = [
   {
     path: '/plugins/:pluginId',
     // TODO: fix  dynamic imports
-    // component: () => SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
-    component: PluginPage,
+    component: () =>
+      SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginPage')),
+    // component: PluginPage,
     exact: true,
   },
   {
     path: '/plugins',
     // TODO: fix  dynamic imports
-    // component: () => SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
-    component: PluginListPage,
+    component: () =>
+      SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
+    // component: PluginListPage,
     exact: true,
   },
 ];

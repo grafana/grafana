@@ -17,7 +17,7 @@ export class SubMenu extends PureComponent<Props> {
 
   componentDidMount() {
     const loader = getAngularLoader();
-
+    //
     const template = '<dashboard-submenu dashboard="dashboard" />';
     const scopeProps = { dashboard: this.props.dashboard };
 

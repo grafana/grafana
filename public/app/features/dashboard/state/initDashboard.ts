@@ -196,8 +196,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       }
 
       // init unsaved changes tracking
-      unsavedChangesSrv.init(dashboard, args.$scope);
-      keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
+      // ROUTER: FIX
+      // unsavedChangesSrv.init(dashboard, args.$scope);
+      // keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
       console.log(err);

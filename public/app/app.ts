@@ -45,6 +45,7 @@ import React from 'react';
 import AppWrapper from './core/navigation/AppWrapper';
 import { LoadDashboardCtrl, NewDashboardCtrl } from './routes/dashboard_loaders';
 import { configureStore } from './store/configureStore';
+import DashboardImportCtrl from './features/manage-dashboards/DashboardImportCtrl';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -151,6 +152,7 @@ export class GrafanaApp {
     // register react angular wrappers
     // coreModule.config(setupAngularRoutes);
     coreModule.controller('LoadDashboardCtrl', LoadDashboardCtrl);
+    coreModule.controller('DashboardImportCtrl', DashboardImportCtrl);
     coreModule.controller('NewDashboardCtrl', NewDashboardCtrl);
     registerAngularDirectives();
     bridgeReactAngularRouting();
@@ -159,25 +161,25 @@ export class GrafanaApp {
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    const injector = angular.bootstrap(document, this.ngModuleDependencies);
-    injector.invoke(() => {
-      _.each(this.preBootModules, (module: angular.IModule) => {
-        _.extend(module, this.registerFunctions);
-      });
+    // const injector = angular.bootstrap(document, this.ngModuleDependencies);
+    // injector.invoke(() => {
+    //   _.each(this.preBootModules, (module: angular.IModule) => {
+    //     _.extend(module, this.registerFunctions);
+    //   });
 
-      this.preBootModules = null;
+    //   this.preBootModules = null;
 
-      if (!checkBrowserCompatibility()) {
-        setTimeout(() => {
-          appEvents.emit(AppEvents.alertWarning, [
-            'Your browser is not fully supported',
-            'A newer browser version is recommended',
-          ]);
-        }, 1000);
-      }
+    //   if (!checkBrowserCompatibility()) {
+    //     setTimeout(() => {
+    //       appEvents.emit(AppEvents.alertWarning, [
+    //         'Your browser is not fully supported',
+    //         'A newer browser version is recommended',
+    //       ]);
+    //     }, 1000);
+    //   }
 
-      // return () => {}
-    });
+    //   // return () => {}
+    // });
     const promises = [];
     for (const modulePath of config.pluginsToPreload) {
       promises.push(importPluginModule(modulePath));
@@ -185,7 +187,7 @@ export class GrafanaApp {
     Promise.all(promises).then(() => {
       ReactDOM.render(
         React.createElement(AppWrapper, {
-          injector,
+          app: this,
         }),
         document.getElementById('reactRoot')
       );

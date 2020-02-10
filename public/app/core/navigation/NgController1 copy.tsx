@@ -2,7 +2,6 @@ import React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { GrafanaLegacyRouteDescriptor } from './GrafanaRoute';
 import jQuery from 'jquery';
-import { getAngularLoader } from '@grafana/runtime';
 
 interface NgControllerProps extends RouteComponentProps<any>, GrafanaLegacyRouteDescriptor {
   injector: any;
@@ -104,62 +103,58 @@ class NgController extends React.Component<NgControllerProps, {}> {
       templateToRender = (await $http.get(routeDescriptor.templateUrl)).data;
     }
 
-    const ctrl = $controller(routeDescriptor.controller, { $scope: this.childScope });
+    if (resolve) {
+      const resolved = { ...resolve };
 
-    getAngularLoader().load(mountContainer.querySelector('#ngRoot'), { ctrl }, templateToRender);
+      Object.keys(resolved).map(r => {
+        resolved[r] = resolved[r]();
+      });
 
-    // if (resolve) {
-    //   const resolved = { ...resolve };
-
-    //   Object.keys(resolved).map(r => {
-    //     resolved[r] = resolved[r]();
-    //   });
-
-    //   routeLocals = {
-    //     ...routeLocals,
-    //     ...resolved,
-    //   };
-    //   this.childScope['$resolve'] = resolved;
-    // }
+      routeLocals = {
+        ...routeLocals,
+        ...resolved,
+      };
+      this.childScope['$resolve'] = resolved;
+    }
     // @ts-ignore
-    // routeLocals['$sscope'] = this.childScope;
+    routeLocals['$sscope'] = this.childScope;
     // ng compatibility
-    // $route.updateRouteLocals(routeLocals);
+    $route.updateRouteLocals(routeLocals);
     // ng compatibility
-    // $route.updateCurrentRoute({
-    //   $$route: { routeInfo: routeDescriptor.routeInfo },
-    // });
+    $route.updateCurrentRoute({
+      $$route: { routeInfo: routeDescriptor.routeInfo },
+    });
 
     // TODO: not sure if this is the placev I want do emit this event
     // Best thing would be to get rid of the $route[] events at all
-    // scope.appEvent('$routeChangeSuccess', {
-    //   locals: { ...routeLocals },
-    //   params: { ...$route.current.params },
-    //   $$route: { ...routeDescriptor },
-    // });
+    scope.appEvent('$routeChangeSuccess', {
+      locals: { ...routeLocals },
+      params: { ...$route.current.params },
+      $$route: { ...routeDescriptor },
+    });
 
-    // if (routeDescriptor.controller) {
-    //   console.log('Initialising controller:', routeDescriptor.controller);
-    //   // const ctrl = $controller(routeDescriptor.controller, {
-    //   //   ...routeLocals,
-    //   //   $scope: this.childScope,
-    //   // });
-    //   // debugger
-    //   // this.ctrl = ctrl;
+    if (routeDescriptor.controller) {
+      console.log('Initialising controller:', routeDescriptor.controller);
+      // const ctrl = $controller(routeDescriptor.controller, {
+      //   ...routeLocals,
+      //   $scope: this.childScope,
+      // });
+      // debugger
+      // this.ctrl = ctrl;
 
-    //   // if (controllerAs) {
-    //   //   this.childScope[controllerAs || '$ctrl'] = ctrl;
-    //   // }
-    //   // jQuery('#ngRoot').data('$ngControllerController', ctrl);
-    //   // jQuery('#ngRoot')
-    //   //   .children()
-    //   //   .data('$ngControllerController', ctrl);
-    //   console.log('Controller instantiated:', routeDescriptor.controller);
-    // }
+      // if (controllerAs) {
+      //   this.childScope[controllerAs || '$ctrl'] = ctrl;
+      // }
+      // jQuery('#ngRoot').data('$ngControllerController', ctrl);
+      // jQuery('#ngRoot')
+      //   .children()
+      //   .data('$ngControllerController', ctrl);
+      console.log('Controller instantiated:', routeDescriptor.controller);
+    }
     debugger;
-    // .innerHTML = templateToRender;
+    mountContainer.querySelector('#ngRoot').innerHTML = templateToRender;
 
-    // $compile(mountContainer.querySelector('#ngRoot'))(scope);
+    $compile(mountContainer.querySelector('#ngRoot'))(scope);
     this.setBodyClass();
     this.mounted = true;
   }

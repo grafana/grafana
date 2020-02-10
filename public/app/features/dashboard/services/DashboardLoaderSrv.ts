@@ -53,6 +53,7 @@ export class DashboardLoaderSrv {
         .getDashboardByUid(uid)
         .then((result: any) => {
           if (result.meta.isFolder) {
+            debugger;
             this.$rootScope.appEvent(AppEvents.alertError, ['Dashboard not found']);
             throw new Error('Dashboard not found');
           }
