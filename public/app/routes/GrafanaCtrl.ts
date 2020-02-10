@@ -50,9 +50,7 @@ export class GrafanaCtrl {
     dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader
   ) {
-    debugger;
     // make angular loader service available to react components
-    debugger;
     setAngularLoader(angularLoader);
     setBackendSrv(backendSrv);
     setDataSourceSrv(datasourceSrv);
@@ -78,7 +76,6 @@ export class GrafanaCtrl {
     };
 
     $rootScope.colors = colors;
-    debugger;
     $rootScope.onAppEvent = function<T>(
       event: AppEvent<T> | string,
       callback: (event: IAngularEvent, ...args: any[]) => void,

@@ -10,10 +10,8 @@ const registerInterceptedLinkDirective = () => {
       restrict: 'E', // only Elements (<a>),
       link: (scope, elm, attr) => {
         // every time you click on the link
-        debugger;
         elm.on('click', $event => {
           const href = elm.attr('href');
-          debugger;
           if (href) {
             $event.preventDefault();
             $event.stopPropagation();

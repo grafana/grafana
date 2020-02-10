@@ -150,7 +150,6 @@ export class BackendSrv implements BackendService {
   };
 
   async request(options: BackendSrvRequest): Promise<any> {
-    debugger;
     options = this.parseRequestOptions(options, this.dependencies.contextSrv.user?.orgId);
 
     const fromFetchStream = this.getFromFetchStream(options);

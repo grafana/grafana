@@ -1,48 +1,33 @@
 import * as React from 'react';
-import { Route, RouteProps } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import NgController from './NgController';
+import { RouteDescriptor } from '../../routes/routes';
 
-export interface GrafanaLegacyRouteDescriptor {
-  path?: string | string[];
-  exact?: boolean;
-  templateUrl?: string;
-  template?: string;
-  controller?: string;
-  reloadOnSearch?: boolean;
-  pageClass?: string;
-  controllerAs?: string;
-  resolve?: { [key: string]: Function };
-  routeInfo?: string;
-}
-
-export interface GrafanaLegacyRouteProps extends RouteProps, GrafanaLegacyRouteDescriptor {
+interface AngularRouteProps extends RouteDescriptor {
   injector: {};
   mountContainer: HTMLElement;
-  // TODO: remove render props as those are handled by the component itself
 }
 
-interface GrafanaRouteProps extends GrafanaLegacyRouteProps {}
-
-class GrafanaRoute extends React.Component<GrafanaRouteProps> {
+class AngularRoute extends React.Component<AngularRouteProps> {
   render() {
     const {
-      template,
       templateUrl,
       controller,
       controllerAs,
-      resolve,
       reloadOnSearch,
       pageClass,
       mountContainer,
       injector,
       routeInfo,
+      path,
       ...otherProps
     } = this.props;
 
     return (
       <Route
+        exact
+        path={path}
         render={routeProps => {
-          debugger;
           return (
             <NgController
               injector={injector}
@@ -50,11 +35,10 @@ class GrafanaRoute extends React.Component<GrafanaRouteProps> {
               controller={controller}
               controllerAs={controllerAs}
               templateUrl={templateUrl}
-              template={template}
               routeInfo={routeInfo}
-              resolve={resolve}
               pageClass={pageClass}
               reloadOnSearch={reloadOnSearch}
+              path={path}
               {...routeProps}
             />
           );
@@ -65,4 +49,4 @@ class GrafanaRoute extends React.Component<GrafanaRouteProps> {
   }
 }
 
-export default GrafanaRoute;
+export default AngularRoute;

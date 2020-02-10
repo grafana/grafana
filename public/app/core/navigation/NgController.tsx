@@ -1,24 +1,27 @@
 import React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { GrafanaLegacyRouteDescriptor } from './GrafanaRoute';
-import jQuery from 'jquery';
+// import jQuery from 'jquery';
 import { getAngularLoader } from '@grafana/runtime';
+import { RouteDescriptor } from '../../routes/routes';
 
-interface NgControllerProps extends RouteComponentProps<any>, GrafanaLegacyRouteDescriptor {
+interface NgControllerProps extends RouteComponentProps<any>, RouteDescriptor {
   injector: any;
   mountContainer: HTMLElement;
 }
 
-class NgController extends React.Component<NgControllerProps, {}> {
+class NgController extends React.Component<NgControllerProps, { $scope: any }> {
   container: HTMLElement;
   childScope: any;
   mounted: boolean;
   ctrl: any;
+  $angularComponent: any;
 
   constructor(props: NgControllerProps) {
     super(props);
     this.mounted = false;
-    this.updateUrl();
+  }
+  componentWillReceiveProps() {
+    console.log('component will receive');
   }
 
   updateUrl() {
@@ -26,10 +29,11 @@ class NgController extends React.Component<NgControllerProps, {}> {
     const $route = injector.get('$route');
     debugger;
 
-    $route.updateRoute(match, location);
+    // $route.updateRoute(match, location);
   }
 
   componentDidUpdate(prevProps: NgControllerProps) {
+    // console.log('updating', prevProps, this.props)
     const {
       location: { search },
       reloadOnSearch /*injector, mountContainer*/,
@@ -45,10 +49,12 @@ class NgController extends React.Component<NgControllerProps, {}> {
 
   componentWillUnmount() {
     this.mounted = false;
+    console.log('Unmounting', this.props.controller);
     this.destroyControllerInstance();
   }
-  componentDidMount() {
-    this.mountController();
+
+  async componentDidMount() {
+    await this.mountController();
   }
 
   // @ts-ignore
@@ -59,114 +65,49 @@ class NgController extends React.Component<NgControllerProps, {}> {
   async mountController() {
     // This is basically a revrite on ngView directive
     // TODO: handle resolve prop on ng route
-    const {
-      injector,
-      mountContainer,
-      controller,
-      controllerAs,
-      resolve,
-      templateUrl,
-      template,
-      pageClass,
-      routeInfo,
-    } = this.props;
+    const { injector, mountContainer, controller, templateUrl, pageClass, routeInfo } = this.props;
 
     // Let's get access to injector's services
-    const $route = injector.get('$route');
+    // const $route = injector.get('$route');
     const $http = injector.get('$http');
     const $controller = injector.get('$controller');
-    const $compile = injector.get('$compile');
     // We are retrieving rootScope here as Grafana routes are directly under rootScope
     const scope = injector.get('$rootScope');
     const routeDescriptor = {
       templateUrl,
-      template,
       controller,
       pageClass,
       reloadOnSearch: false,
       routeInfo,
     };
-    let templateToRender = routeDescriptor.template;
+    // let templateToRender = routeDescriptor.templte;
+
     // This object is an answer to Angular's https://docs.angularjs.org/api/ngRoute/service/$route#current
     // Best thing is to get rid of it and store these data in e.g. Redux store
-    let routeLocals = {};
+    // let routeLocals = {};
+    // this.childScope = ;
+    const $scope = scope.$new();
 
-    this.childScope = scope.$new();
+    const templateToRender = (await $http.get(routeDescriptor.templateUrl)).data;
+    const ctrl = $controller(routeDescriptor.controller, { $scope: scope.$new() });
+    this.$angularComponent = getAngularLoader().load(
+      mountContainer.querySelector('#ngRoot'),
+      { ctrl },
+      templateToRender
+    );
 
-    if (routeDescriptor.templateUrl && routeDescriptor.template) {
-      templateToRender = routeDescriptor.template;
-    }
+    this.ctrl = ctrl;
 
-    // template get's precedence over templateUrl
-    // https://docs.angularjs.org/api/ngRoute/provider/$routeProvider#when
-    // We retrieve the template only if it wasn't privided with template prop in route definition
-    if (!templateToRender && routeDescriptor.templateUrl) {
-      templateToRender = (await $http.get(routeDescriptor.templateUrl)).data;
-    }
-
-    const ctrl = $controller(routeDescriptor.controller, { $scope: this.childScope });
-
-    getAngularLoader().load(mountContainer.querySelector('#ngRoot'), { ctrl }, templateToRender);
-
-    // if (resolve) {
-    //   const resolved = { ...resolve };
-
-    //   Object.keys(resolved).map(r => {
-    //     resolved[r] = resolved[r]();
-    //   });
-
-    //   routeLocals = {
-    //     ...routeLocals,
-    //     ...resolved,
-    //   };
-    //   this.childScope['$resolve'] = resolved;
-    // }
-    // @ts-ignore
-    // routeLocals['$sscope'] = this.childScope;
-    // ng compatibility
-    // $route.updateRouteLocals(routeLocals);
-    // ng compatibility
-    // $route.updateCurrentRoute({
-    //   $$route: { routeInfo: routeDescriptor.routeInfo },
-    // });
-
-    // TODO: not sure if this is the placev I want do emit this event
-    // Best thing would be to get rid of the $route[] events at all
-    // scope.appEvent('$routeChangeSuccess', {
-    //   locals: { ...routeLocals },
-    //   params: { ...$route.current.params },
-    //   $$route: { ...routeDescriptor },
-    // });
-
-    // if (routeDescriptor.controller) {
-    //   console.log('Initialising controller:', routeDescriptor.controller);
-    //   // const ctrl = $controller(routeDescriptor.controller, {
-    //   //   ...routeLocals,
-    //   //   $scope: this.childScope,
-    //   // });
-    //   // debugger
-    //   // this.ctrl = ctrl;
-
-    //   // if (controllerAs) {
-    //   //   this.childScope[controllerAs || '$ctrl'] = ctrl;
-    //   // }
-    //   // jQuery('#ngRoot').data('$ngControllerController', ctrl);
-    //   // jQuery('#ngRoot')
-    //   //   .children()
-    //   //   .data('$ngControllerController', ctrl);
-    //   console.log('Controller instantiated:', routeDescriptor.controller);
-    // }
-    debugger;
-    // .innerHTML = templateToRender;
-
-    // $compile(mountContainer.querySelector('#ngRoot'))(scope);
     this.setBodyClass();
     this.mounted = true;
+    // this.setStat e({$scope})
   }
 
   destroyControllerInstance() {
-    this.childScope.$destroy();
+    // this.state.$scope.$destroy();
     this.ctrl = null;
+    // debugger
+    this.$angularComponent.destroy();
   }
 
   setBodyClass() {

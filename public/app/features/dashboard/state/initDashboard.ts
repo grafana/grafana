@@ -169,7 +169,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     const keybindingSrv: KeybindingSrv = args.$injector.get('keybindingSrv');
     const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
     const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
-    debugger;
+    // debugger;
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
