@@ -13,7 +13,7 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
     <li className="divider" />
   ) : (
     <li className={isSubMenu ? 'dropdown-submenu' : null}>
-      <a onClick={props.onClick}>
+      <a onClick={props.onClick} href={props.href}>
         {props.iconClassName && <i className={props.iconClassName} />}
         <span
           className="dropdown-item-text"

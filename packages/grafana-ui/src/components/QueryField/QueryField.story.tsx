@@ -3,7 +3,7 @@ import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { QueryField } from './QueryField';
 
-const QueryFieldStories = storiesOf('UI/QueryField', module);
+const QueryFieldStories = storiesOf('Panel/QueryField', module);
 
 QueryFieldStories.addDecorator(withCenteredStory);
 

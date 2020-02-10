@@ -16,7 +16,7 @@
   },
   "main": "src/index.ts",
   "scripts": {
-    "tslint": "tslint -c tslint.json --project tsconfig.json",
+    "lint": "eslint .storybook/ src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "storybook": "start-storybook -p 9001 -c .storybook",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
@@ -27,6 +27,7 @@
   "dependencies": {
     "@grafana/data": "6.7.0-pre",
     "@grafana/slate-react": "0.22.9-grafana",
+    "@grafana/tsconfig": "^1.0.0-rc1",
     "@torkelo/react-select": "3.0.8",
     "@types/react-color": "2.17.0",
     "@types/react-select": "3.0.8",

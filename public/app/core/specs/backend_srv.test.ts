@@ -416,8 +416,22 @@ describe('backendSrv', () => {
           },
         });
 
-        const slowResponse = await slowRequest;
-        expect(slowResponse).toEqual(undefined);
+        await slowRequest.catch(error => {
+          expect(error).toEqual({
+            cancelled: true,
+            status: -1,
+            statusText: 'Request was aborted',
+            request: {
+              url,
+              method: 'GET',
+              body: undefined,
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json, text/plain, */*',
+              },
+            },
+          });
+        });
         expect(unsubscribe).toHaveBeenCalledTimes(1);
       });
     });
@@ -476,31 +490,6 @@ describe('backendSrv', () => {
           expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
           expect(logoutMock).not.toHaveBeenCalled();
           expectDataSourceRequestCallChain({ url, method: 'GET', retry: 0 });
-        });
-      });
-    });
-
-    describe('when making a HTTP_REQUEST_CANCELED call', () => {
-      it('then it should throw cancelled error', async () => {
-        const { backendSrv, appEventsMock, logoutMock, expectDataSourceRequestCallChain } = getTestContext({
-          ok: false,
-          status: -1,
-          statusText: 'HTTP_REQUEST_CANCELED',
-          data: { message: 'HTTP_REQUEST_CANCELED' },
-        });
-        const url = '/api/dashboard/';
-        await backendSrv.datasourceRequest({ url, method: 'GET' }).catch(error => {
-          expect(error).toEqual({
-            err: {
-              status: -1,
-              statusText: 'HTTP_REQUEST_CANCELED',
-              data: { message: 'HTTP_REQUEST_CANCELED' },
-            },
-            cancelled: true,
-          });
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
-          expect(logoutMock).not.toHaveBeenCalled();
-          expectDataSourceRequestCallChain({ url, method: 'GET' });
         });
       });
     });

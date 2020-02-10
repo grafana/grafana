@@ -1,6 +1,6 @@
 import { AnyAction, Dispatch, Middleware, MiddlewareAPI } from 'redux';
 import { CoreEvents, StoreState } from '../../../types';
-import { cleanUpDashboard, dashboardInitCompleted } from '../../dashboard/state/actions';
+import { cleanUpDashboard, dashboardInitCompleted } from '../../dashboard/state/reducers';
 import { DashboardModel } from '../../dashboard/state';
 import { Emitter } from 'app/core/utils/emitter';
 import {
@@ -95,7 +95,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
 ) => (action: AnyAction) => {
   if (dashboardInitCompleted.match(action)) {
     const result = next(action);
-    dashboardEvents = (store.getState().dashboard?.model as DashboardModel).events;
+    dashboardEvents = (store.getState().dashboard?.getModel() as DashboardModel)?.events;
     dashboardEvents.on(CoreEvents.variableTypeInAngularUpdated, onVariableTypeInAngularUpdated(store));
     dashboardEvents.on(CoreEvents.variableDuplicateVariableStart, onVariableDuplicateStart(store));
     dashboardEvents.on(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));

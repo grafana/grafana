@@ -20,8 +20,8 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
   label: string;
   hide: VariableHide;
   skipUrlSync: boolean;
-  auto_count: number; // tslint:disable-line variable-name
-  auto_min: string; // tslint:disable-line variable-name
+  auto_count: number; // eslint-disable-line camelcase
+  auto_min: string; // eslint-disable-line camelcase
   options: VariableOption[];
   auto: boolean;
   query: string;

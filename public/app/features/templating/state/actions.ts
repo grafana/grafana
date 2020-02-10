@@ -451,7 +451,7 @@ export const changeVariableName = (variable: VariableModel, newName: string): Th
       errorText = 'Only word and digit characters are allowed in variable names';
     }
 
-    const angularVariables = (getState().dashboard.model as DashboardModel)?.templating.list.filter(
+    const angularVariables = (getState().dashboard?.getModel() as DashboardModel)?.templating.list.filter(
       v => v.name === newName
     );
 

@@ -4,7 +4,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { Tooltip } from '@grafana/ui';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { AngularComponent, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { e2e } from '@grafana/e2e';
 
 import { QueriesTab } from './QueriesTab';
@@ -22,7 +22,6 @@ interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  angularPanel?: AngularComponent;
   onPluginTypeChange: (newType: PanelPluginMeta) => void;
   activeTab: PanelEditorTabIds;
   tabs: PanelEditorTab[];
@@ -71,15 +70,14 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   renderCurrentTab(activeTab: string) {
-    const { panel, dashboard, plugin, angularPanel } = this.props;
-
+    const { panel, dashboard, plugin } = this.props;
     switch (activeTab) {
       case 'advanced':
         return <GeneralTab panel={panel} />;
       case 'queries':
         return <QueriesTab panel={panel} dashboard={dashboard} />;
       case 'alert':
-        return <AlertTab angularPanel={angularPanel} dashboard={dashboard} panel={panel} />;
+        return <AlertTab dashboard={dashboard} panel={panel} />;
       case 'visualization':
         return (
           <VisualizationTab
@@ -87,7 +85,6 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
             dashboard={dashboard}
             plugin={plugin}
             onPluginTypeChange={this.onPluginTypeChange}
-            angularPanel={angularPanel}
           />
         );
       default:

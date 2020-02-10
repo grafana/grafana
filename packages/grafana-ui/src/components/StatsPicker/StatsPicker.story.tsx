@@ -61,7 +61,7 @@ export class WrapperWithState extends PureComponent<any, State> {
   }
 }
 
-const story = storiesOf('UI/StatsPicker', module);
+const story = storiesOf('Panel/StatsPicker', module);
 story.addDecorator(withCenteredStory);
 story.add('picker', () => {
   const { placeholder, defaultStat, allowMultiple, initialStats } = getKnobs();
