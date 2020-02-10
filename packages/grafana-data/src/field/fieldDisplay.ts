@@ -109,7 +109,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         const field = series.fields[i];
 
         // Show all number fields
-        if (isSimpleNumberField(field.type)) {
+        if (!isSimpleNumberField(field.type)) {
           continue;
         }
         const config = field.config; // already set by the prepare task
