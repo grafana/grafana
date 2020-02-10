@@ -215,7 +215,7 @@ describe('DashboardPage', () => {
     it('should set scrollTop to 0', () => {
       expect(ctx.wrapper).not.toBe(null);
       expect(ctx.wrapper?.state()).not.toBe(null);
-      expect(ctx.wrapper?.state().scrollTop).toBe(0);
+      expect(ctx.wrapper?.state().updateScrollTop).toBe(0);
     });
 
     it('should add panel widget to dashboard panels', () => {
