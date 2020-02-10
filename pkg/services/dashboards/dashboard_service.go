@@ -217,7 +217,7 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
-		dr.log.Warn("resetting refresh interval for provisioned dashboard to minimum refresh interval", "title", dto.Dashboard.Title, "min_refresh_rate_duration", setting.MinRefreshInterval)
+		dr.log.Warn("resetting refresh interval for provisioned dashboard to minimum refresh interval", "title", dto.Dashboard.Title, "min_refresh_interval", setting.MinRefreshInterval)
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
