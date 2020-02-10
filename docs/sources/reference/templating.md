@@ -347,6 +347,8 @@ This variable is only available in the Singlestat panel and can be used in the p
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
+**Bug**: `$__range` rounds the value of the range excessively. Until the variable has been fixed to represent the precise range use `${__range_s}s` instead.
+
 ### The $__dashboard Variable
 > Only available in Grafana v6.6+
 
