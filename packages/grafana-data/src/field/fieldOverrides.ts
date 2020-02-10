@@ -218,8 +218,8 @@ function prepareConfigValue(key: string, input: any, options?: DynamicConfigValu
 
 export function setDynamicConfigValue(config: FieldConfig, options: DynamicConfigValueOptions) {
   const { value } = options;
-  const v = prepareConfigValue(value.path, value.value, options);
-  set(config, value.path, v);
+  const v = prepareConfigValue(value.prop, value.value, options);
+  set(config, value.prop, v);
 }
 
 /**

@@ -10,6 +10,11 @@ jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
   return new AngularJSMock();
 });
+jest.mock('app/core/core', () => ({
+  appEvents: {
+    on: () => {},
+  },
+}));
 
 const dataPointMock = {
   seriesName: 'A-series',

@@ -1,8 +1,7 @@
 import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
-// tslint:disable:import-blacklist
-import moment from 'moment';
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import angular from 'angular';
 import jquery from 'jquery';
 
