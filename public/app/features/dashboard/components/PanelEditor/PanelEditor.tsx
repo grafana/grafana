@@ -7,8 +7,16 @@ import {
   DefaultTimeRange,
   PanelEvents,
   SelectableValue,
+  TimeRange,
 } from '@grafana/data';
-import { stylesFactory, Forms, FieldConfigEditor, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
+import {
+  stylesFactory,
+  Forms,
+  FieldConfigEditor,
+  CustomScrollbar,
+  selectThemeVariant,
+  ControlledCollapse,
+} from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -26,6 +34,8 @@ import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
 import { DisplayMode, displayModes } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
+import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
+import { LocationState, CoreEvents } from 'app/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -104,6 +114,7 @@ interface Props {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
   updateLocation: typeof updateLocation;
+  location: LocationState;
 }
 
 interface State {
@@ -140,11 +151,16 @@ export class PanelEditor extends PureComponent<Props, State> {
     const { sourcePanel } = this.props;
     const { panel } = this.state;
     panel.events.on(PanelEvents.panelInitialized, () => {
+      const { panel } = this.state;
+      if (panel.angularPanel) {
+        console.log('Refresh angular panel in new editor');
+      }
       this.setState(state => ({
         pluginLoadedCounter: state.pluginLoadedCounter + 1,
       }));
     });
-    // Get data from any pending
+
+    // Get data from any pending queries
     sourcePanel
       .getQueryRunner()
       .getData()
@@ -160,6 +176,9 @@ export class PanelEditor extends PureComponent<Props, State> {
     this.querySubscription = queryRunner.getData().subscribe({
       next: (data: PanelData) => this.setState({ data }),
     });
+
+    // Listen to timepicker changes
+    this.props.dashboard.on(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
   }
 
   componentWillUnmount() {
@@ -167,7 +186,17 @@ export class PanelEditor extends PureComponent<Props, State> {
       this.querySubscription.unsubscribe();
     }
     //this.cleanUpAngularOptions();
+
+    // Remove the time listener
+    this.props.dashboard.off(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
   }
+
+  onTimeRangeUpdated = (timeRange: TimeRange) => {
+    const { panel } = this.state;
+    if (panel) {
+      panel.refresh();
+    }
+  };
 
   onPanelUpdate = () => {
     const { panel } = this.state;
@@ -211,14 +240,12 @@ export class PanelEditor extends PureComponent<Props, State> {
     }
 
     return (
-      <div>
-        <FieldConfigEditor
-          config={fieldOptions}
-          custom={plugin.customFieldConfigs}
-          onChange={this.onFieldConfigsChange}
-          data={data.series}
-        />
-      </div>
+      <FieldConfigEditor
+        config={fieldOptions}
+        custom={plugin.customFieldConfigs}
+        onChange={this.onFieldConfigsChange}
+        data={data.series}
+      />
     );
   }
 
@@ -239,7 +266,7 @@ export class PanelEditor extends PureComponent<Props, State> {
 
     if (plugin.editor && panel) {
       return (
-        <div style={{ marginTop: '40px' }}>
+        <div style={{ marginTop: '10px' }}>
           <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />
         </div>
       );
@@ -315,6 +342,7 @@ export class PanelEditor extends PureComponent<Props, State> {
   }
 
   render() {
+    const { dashboard, location } = this.props;
     const { panel, mode, showPanelOptions } = this.state;
     const styles = getStyles(config.theme);
 
@@ -341,6 +369,10 @@ export class PanelEditor extends PureComponent<Props, State> {
             <Forms.Button variant="destructive" onClick={this.onDiscard}>
               Discard
             </Forms.Button>
+
+            <div>
+              <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            </div>
           </div>
         </div>
         <div className={styles.panes}>
@@ -359,7 +391,9 @@ export class PanelEditor extends PureComponent<Props, State> {
                 <CustomScrollbar>
                   <div style={{ padding: '10px' }}>
                     {this.renderFieldOptions()}
-                    {this.renderVisSettings()}
+                    <ControlledCollapse label="Visualization Settings" collapsible>
+                      {this.renderVisSettings()}
+                    </ControlledCollapse>
                   </div>
                 </CustomScrollbar>
               </div>

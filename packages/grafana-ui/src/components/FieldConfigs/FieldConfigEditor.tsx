@@ -10,6 +10,8 @@ import {
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import Forms from '../Forms';
 import { fieldMatchersUI } from '../MatchersUI/fieldMatchersUI';
+import { ControlledCollapse } from '../Collapse/Collapse';
+import { ValuePicker } from '../ValuePicker/ValuePicker';
 
 interface Props {
   config: FieldConfigSource;
@@ -115,6 +117,9 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
 
   renderOverrides() {
     const { config, data, custom } = this.props;
+    if (config.overrides.length === 0) {
+      return null;
+    }
 
     let configPropertiesOptions = standardFieldConfigEditorRegistry.list().map(i => ({
       label: i.name,
@@ -135,11 +140,11 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
     }
 
     return (
-      <>
+      <div>
         {config.overrides.map((o, i) => {
           const matcherUi = fieldMatchersUI.get(o.matcher.id);
           return (
-            <div key={`${o.matcher.id}/${i}`}>
+            <div key={`${o.matcher.id}/${i}`} style={{ border: `2px solid red`, marginBottom: '10px' }}>
               <Forms.Field label={matcherUi.name} description={matcherUi.description}>
                 <>
                   <matcherUi.component
@@ -148,49 +153,50 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
                     options={o.matcher.options}
                     onChange={option => this.onMatcherConfigChange(i, option)}
                   />
-                  <Forms.ButtonSelect
-                    icon="plus"
-                    placeholder="Set config property"
-                    options={configPropertiesOptions}
-                    onChange={o => {
-                      this.onDynamicConfigValueAdd(i, o.value!, o.custom);
-                    }}
-                  />
 
-                  {o.properties.map((p, j) => {
-                    const reg = p.custom ? custom : standardFieldConfigEditorRegistry;
-                    const item = reg?.get(p.prop);
-                    if (!item) {
-                      return <div>Unknown property: {p.prop}</div>;
-                    }
-                    return (
-                      <Forms.Field label={item.name} description={item.description}>
-                        <item.override
-                          value={p.value}
-                          onChange={value => {
-                            this.onDynamicConfigValueChange(i, j, value);
-                          }}
-                          item={item}
-                          context={{} as any}
-                        />
-                      </Forms.Field>
-                    );
-                  })}
+                  <div style={{ border: `2px solid blue`, marginBottom: '5px' }}>
+                    {o.properties.map((p, j) => {
+                      const reg = p.custom ? custom : standardFieldConfigEditorRegistry;
+                      const item = reg?.getIfExists(p.prop);
+                      if (!item) {
+                        return <div>Unknown property: {p.prop}</div>;
+                      }
+                      return (
+                        <Forms.Field label={item.name} description={item.description}>
+                          <item.override
+                            value={p.value}
+                            onChange={value => {
+                              this.onDynamicConfigValueChange(i, j, value);
+                            }}
+                            item={item}
+                            context={{} as any}
+                          />
+                        </Forms.Field>
+                      );
+                    })}
+                    <ValuePicker
+                      icon="plus"
+                      label="Set config property"
+                      options={configPropertiesOptions}
+                      onChange={o => {
+                        this.onDynamicConfigValueAdd(i, o.value!, o.custom);
+                      }}
+                    />
+                  </div>
                 </>
               </Forms.Field>
             </div>
           );
         })}
-      </>
+      </div>
     );
   }
 
   renderAddOverride = () => {
     return (
-      <Forms.ButtonSelect
+      <ValuePicker
         icon="plus"
-        placeholder={'Add override'}
-        value={{ label: 'Add override' }}
+        label="Add override"
         options={fieldMatchersUI.list().map(i => ({ label: i.name, value: i.id, description: i.description }))}
         onChange={value => {
           const { onChange, config } = this.props;
@@ -214,10 +220,17 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   render() {
     return (
       <div>
-        {this.renderStandardConfigs()}
-        {this.renderCustomConfigs()}
-        {this.renderAddOverride()}
-        {this.renderOverrides()}
+        <ControlledCollapse label="Standard Field Configuration" collapsible>
+          {this.renderStandardConfigs()}
+        </ControlledCollapse>
+        {this.props.custom && (
+          <ControlledCollapse label="Standard Field Configuration">{this.renderCustomConfigs()}</ControlledCollapse>
+        )}
+
+        <ControlledCollapse label="Field Overrides" collapsible>
+          {this.renderOverrides()}
+          {this.renderAddOverride()}
+        </ControlledCollapse>
       </div>
     );
   }

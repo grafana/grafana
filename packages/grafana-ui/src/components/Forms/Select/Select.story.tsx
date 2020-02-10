@@ -16,7 +16,7 @@ export default {
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
 };
 
-const generateOptions = () => {
+export const generateOptions = () => {
   const values = [
     'Sharilyn Markowitz',
     'Naomi Striplin',
