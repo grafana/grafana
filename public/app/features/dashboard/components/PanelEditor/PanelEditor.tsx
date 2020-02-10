@@ -1,11 +1,11 @@
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { PureComponent } from 'react';
 import {
   GrafanaTheme,
   FieldConfigSource,
   PanelData,
   LoadingState,
   DefaultTimeRange,
-  PanelEvents,
+  PanelPlugin,
   SelectableValue,
   TimeRange,
 } from '@grafana/data';
@@ -20,7 +20,6 @@ import {
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -28,7 +27,7 @@ import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
 import SplitPane from 'react-split-pane';
 import { StoreState } from '../../../../types/store';
-import { connect } from 'react-redux';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
@@ -36,96 +35,32 @@ import { DisplayMode, displayModes } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { LocationState, CoreEvents } from 'app/types';
+import { calculatePanelSize } from './utils';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const handleColor = selectThemeVariant(
-    {
-      dark: theme.colors.dark9,
-      light: theme.colors.gray6,
-    },
-    theme.type
-  );
-
-  const resizer = css`
-    padding: 3px;
-    font-style: italic;
-    background: ${theme.colors.panelBg};
-    &:hover {
-      background: ${handleColor};
-    }
-  `;
-
-  return {
-    wrapper: css`
-      width: 100%;
-      height: 100%;
-      position: fixed;
-      z-index: ${theme.zIndex.modal};
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: ${theme.colors.pageBg};
-    `,
-    panelWrapper: css`
-      width: 100%;
-      height: 100%;
-    `,
-    resizerV: cx(
-      resizer,
-      css`
-        cursor: col-resize;
-      `
-    ),
-    resizerH: cx(
-      resizer,
-      css`
-        cursor: row-resize;
-      `
-    ),
-    noScrollPaneContent: css`
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    `,
-    toolbar: css`
-      padding: ${theme.spacing.sm};
-      height: 48px;
-      display: flex;
-      justify-content: space-between;
-    `,
-    panes: css`
-      height: calc(100% - 48px);
-      position: relative;
-    `,
-    toolbarLeft: css`
-      display: flex;
-      align-items: center;
-    `,
-    centeringContainer: css`
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    `,
-  };
-});
-
-interface Props {
+interface OwnProps {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
-  updateLocation: typeof updateLocation;
-  location: LocationState;
 }
 
+interface ConnectedProps {
+  location: LocationState;
+  plugin?: PanelPlugin;
+}
+
+interface DispatchProps {
+  updateLocation: typeof updateLocation;
+}
+
+type Props = OwnProps & ConnectedProps & DispatchProps;
+
 interface State {
-  pluginLoadedCounter: number;
   panel: PanelModel;
   data: PanelData;
   mode: DisplayMode;
   showPanelOptions: boolean;
 }
 
-export class PanelEditor extends PureComponent<Props, State> {
+export class PanelEditorUnconnected extends PureComponent<Props, State> {
   querySubscription: Unsubscribable;
 
   constructor(props: Props) {
@@ -136,7 +71,6 @@ export class PanelEditor extends PureComponent<Props, State> {
     const panel = props.sourcePanel.getEditClone();
     this.state = {
       panel,
-      pluginLoadedCounter: 0,
       mode: DisplayMode.Fill,
       showPanelOptions: true,
       data: {
@@ -150,15 +84,6 @@ export class PanelEditor extends PureComponent<Props, State> {
   componentDidMount() {
     const { sourcePanel } = this.props;
     const { panel } = this.state;
-    panel.events.on(PanelEvents.panelInitialized, () => {
-      const { panel } = this.state;
-      if (panel.angularPanel) {
-        console.log('Refresh angular panel in new editor');
-      }
-      this.setState(state => ({
-        pluginLoadedCounter: state.pluginLoadedCounter + 1,
-      }));
-    });
 
     // Get data from any pending queries
     sourcePanel
@@ -232,9 +157,11 @@ export class PanelEditor extends PureComponent<Props, State> {
   };
 
   renderFieldOptions() {
+    const { plugin } = this.props;
     const { panel, data } = this.state;
-    const { plugin } = panel;
+
     const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
+
     if (!fieldOptions || !plugin) {
       return null;
     }
@@ -259,9 +186,10 @@ export class PanelEditor extends PureComponent<Props, State> {
    */
   renderVisSettings() {
     const { data, panel } = this.state;
-    const { plugin } = panel;
+    const { plugin } = this.props;
+
     if (!plugin) {
-      return null; // not yet ready
+      return null;
     }
 
     if (plugin.editor && panel) {
@@ -407,34 +335,89 @@ export class PanelEditor extends PureComponent<Props, State> {
   }
 }
 
-function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
-  if (mode === DisplayMode.Fill) {
-    return { width, height };
-  }
-  const colWidth = (window.innerWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
-  const pWidth = colWidth * panel.gridPos.w;
-  const pHeight = GRID_CELL_HEIGHT * panel.gridPos.h;
-  const scale = Math.min(width / pWidth, height / pHeight);
-
-  if (mode === DisplayMode.Exact && pWidth <= width && pHeight <= height) {
-    return {
-      width: pWidth,
-      height: pHeight,
-    };
-  }
-
-  return {
-    width: pWidth * scale,
-    height: pHeight * scale,
-  };
-}
-
-const mapStateToProps = (state: StoreState) => ({
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => ({
   location: state.location,
+  plugin: state.plugins.panels[props.sourcePanel.type],
 });
 
-const mapDispatchToProps = {
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateLocation,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(PanelEditor);
+export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);
+
+/*
+ * Styles
+ */
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const handleColor = selectThemeVariant(
+    {
+      dark: theme.colors.dark9,
+      light: theme.colors.gray6,
+    },
+    theme.type
+  );
+
+  const resizer = css`
+    padding: 3px;
+    font-style: italic;
+    background: ${theme.colors.panelBg};
+    &:hover {
+      background: ${handleColor};
+    }
+  `;
+
+  return {
+    wrapper: css`
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      z-index: ${theme.zIndex.modal};
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: ${theme.colors.pageBg};
+    `,
+    panelWrapper: css`
+      width: 100%;
+      height: 100%;
+    `,
+    resizerV: cx(
+      resizer,
+      css`
+        cursor: col-resize;
+      `
+    ),
+    resizerH: cx(
+      resizer,
+      css`
+        cursor: row-resize;
+      `
+    ),
+    noScrollPaneContent: css`
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    `,
+    toolbar: css`
+      padding: ${theme.spacing.sm};
+      height: 48px;
+      display: flex;
+      justify-content: space-between;
+    `,
+    panes: css`
+      height: calc(100% - 48px);
+      position: relative;
+    `,
+    toolbarLeft: css`
+      display: flex;
+      align-items: center;
+    `,
+    centeringContainer: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    `,
+  };
+});
