@@ -95,7 +95,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async get(url: string, params?: any, requestId?: any) {
+  async get(url: string, params?: any, requestId?: string) {
     return await this.request({ method: 'GET', url, params, requestId });
   }
 
