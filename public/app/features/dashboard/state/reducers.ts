@@ -18,6 +18,7 @@ export const initialState: DashboardState = {
   permissions: [],
   modifiedQueries: null,
   panels: {},
+  initError: null,
 };
 
 const dashbardSlice = createSlice({
@@ -56,7 +57,7 @@ const dashbardSlice = createSlice({
     },
     cleanUpDashboard: (state, action: PayloadAction) => {
       if (state.getModel()) {
-        state.getModel().destroy();
+        state.getModel()!.destroy();
         state.getModel = () => null;
       }
 

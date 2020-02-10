@@ -77,7 +77,7 @@ export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
-  initError?: DashboardInitError;
+  initError: DashboardInitError | null;
   permissions: DashboardAcl[] | null;
   modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
   panels: { [id: string]: PanelState };
