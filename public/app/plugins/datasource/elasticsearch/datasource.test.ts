@@ -50,13 +50,33 @@ describe('ElasticDatasource', function(this: any) {
     }),
   };
 
+  const threeDayTimeSrv: any = {
+    time: { from: 'now-3d', to: 'now' },
+    timeRange: jest.fn(() => {
+      return {
+        from: dateMath.parse(threeDayTimeSrv.time.from, false),
+        to: dateMath.parse(threeDayTimeSrv.time.to, true),
+      };
+    }),
+    setTime: jest.fn(time => {
+      this.time = time;
+    }),
+  };
+
   const ctx = {
     $rootScope,
   } as any;
 
   function createDatasource(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
+    createDatasourceWithTime(instanceSettings, timeSrv as TimeSrv);
+  }
+
+  function createDatasourceWithTime(
+    instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
+    timeSrv: TimeSrv
+  ) {
     instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
-    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv, timeSrv as TimeSrv);
+    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv, timeSrv);
   }
 
   describe('When testing datasource with index pattern', () => {
@@ -352,6 +372,62 @@ describe('ElasticDatasource', function(this: any) {
 
       const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual(['@timestamp']);
+    });
+  });
+
+  describe('When getting field mappings on indices with gaps', () => {
+    beforeEach(() => {
+      createDatasourceWithTime(
+        {
+          url: 'http://es.com',
+          database: '[asd-]YYYY.MM.DD',
+          jsonData: { interval: 'Daily', esVersion: 50 } as ElasticsearchOptions,
+        } as DataSourceInstanceSettings<ElasticsearchOptions>,
+        threeDayTimeSrv
+      );
+
+      const twoDaysBefore = toUtc()
+        .subtract(2, 'day')
+        .format('YYYY.MM.DD');
+
+      datasourceRequestMock.mockImplementation(options => {
+        if (options.url === 'http://es.com/asd-' + twoDaysBefore + '/_mapping') {
+          return Promise.resolve({
+            data: {
+              metricbeat: {
+                mappings: {
+                  metricsets: {
+                    _all: {},
+                    properties: {
+                      '@timestamp': { type: 'date' },
+                      beat: {
+                        properties: {
+                          name: {
+                            fields: { raw: { type: 'keyword' } },
+                            type: 'string',
+                          },
+                          hostname: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        return Promise.reject();
+      });
+    });
+
+    it('should return fields of the next available index', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+      });
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['@timestamp', 'beat.name.raw', 'beat.name', 'beat.hostname']);
     });
   });
 
