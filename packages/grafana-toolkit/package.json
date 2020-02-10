@@ -86,6 +86,7 @@
     "postcss-loader": "3.0.0",
     "postcss-preset-env": "6.6.0",
     "prettier": "^1.19.1",
+    "promise.allsettled": "^1.0.2",
     "puppeteer-core": "1.18.1",
     "react-dev-utils": "^9.0.1",
     "replace-in-file": "^4.1.0",

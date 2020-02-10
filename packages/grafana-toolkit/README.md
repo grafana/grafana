@@ -251,7 +251,9 @@ Typically plugins should be developed using the `@grafana/toolkit` installed fro
 1. Clone [Grafana repository](https://github.com/grafana/grafana).
 2. Navigate to the directory you have cloned Grafana repo to and then run `yarn install --pure-lockfile`.
 3. Navigate to `<GRAFANA_DIR>/packages/grafana-toolkit` and then run `yarn link`.
-2. Navigate to the directory where your plugin code is and then run `npx grafana-toolkit plugin:dev --yarnlink`. This adds all dependencies required by grafana-toolkit to your project, as well as link your local grafana-toolkit version to be used by the plugin.
+3. Navigate to `<GRAFANA_DIR>/packages/grafana-eslint-config` and then run `yarn link`.
+3. Navigate to `<GRAFANA_DIR>/packages/grafana-tsconfig` and then run `yarn link`.
+2. Navigate to the directory where your plugin code is and then run `npx grafana-toolkit plugin:dev --yarnlink`. This adds all dependencies required by grafana-toolkit to your project, as well as link your local grafana-toolkit version to be used by the plugin. If `yarn install` had been ran previously, you may have to first remove the `node_modules` directory.
 
 
 ### Debug grafana-toolkit
