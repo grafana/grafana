@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
-import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { AnnotationEvent, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
+import { getRequestWithCancel } from '../../../core/utils/getRequestWithCancel';
 
 class GrafanaDatasource extends DataSourceApi<any> {
   /** @ngInject */
@@ -80,7 +81,11 @@ class GrafanaDatasource extends DataSourceApi<any> {
       params.tags = tags;
     }
 
-    return getBackendSrv().get('/api/annotations', params);
+    return getRequestWithCancel<AnnotationEvent>({
+      url: '/api/annotations',
+      params,
+      requestId: `grafana-data-source-annotations-${options.annotation.name}-${options.dashboard?.id}`,
+    });
   }
 
   testDatasource() {
