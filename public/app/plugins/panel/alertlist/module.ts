@@ -1,11 +1,11 @@
 import _ from 'lodash';
-import alertDef from '../../../features/alerting/state/alertDef';
-import { PanelCtrl } from 'app/plugins/sdk';
-
+import { getBackendSrv } from '@grafana/runtime';
 import { dateMath, dateTime, PanelEvents } from '@grafana/data';
 import { auto, IScope } from 'angular';
+
+import alertDef from '../../../features/alerting/state/alertDef';
+import { PanelCtrl } from 'app/plugins/sdk';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
-import { getRequestWithCancel } from '../../../core/utils/getRequestWithCancel';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -121,22 +121,20 @@ class AlertListPanel extends PanelCtrl {
     params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
 
     return promiseToDigest(this.$scope)(
-      getRequestWithCancel<any>({
-        url: '/api/annotations',
-        params,
-        requestId: `alert-list-get-state-changes-${this.panel.id}`,
-      }).then(data => {
-        this.alertHistory = _.map(data, al => {
-          al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
-          al.stateModel = alertDef.getStateDisplayModel(al.newState);
-          al.info = alertDef.getAlertAnnotationInfo(al);
-          return al;
-        });
+      getBackendSrv()
+        .get('/api/annotations', params, `alert-list-get-state-changes-${this.panel.id}`)
+        .then(data => {
+          this.alertHistory = _.map(data, al => {
+            al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
+            al.stateModel = alertDef.getStateDisplayModel(al.newState);
+            al.info = alertDef.getAlertAnnotationInfo(al);
+            return al;
+          });
 
-        this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
+          this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
 
-        return this.alertHistory;
-      })
+          return this.alertHistory;
+        })
     );
   }
 
@@ -166,27 +164,25 @@ class AlertListPanel extends PanelCtrl {
     }
 
     return promiseToDigest(this.$scope)(
-      getRequestWithCancel<any>({
-        url: '/api/alerts',
-        params,
-        requestId: `alert-list-get-current-alert-state-${this.panel.id}`,
-      }).then(data => {
-        this.currentAlerts = this.sortResult(
-          _.map(data, al => {
-            al.stateModel = alertDef.getStateDisplayModel(al.state);
-            al.newStateDateAgo = dateTime(al.newStateDate)
-              .locale('en')
-              .fromNow(true);
-            return al;
-          })
-        );
-        if (this.currentAlerts.length > this.panel.limit) {
-          this.currentAlerts = this.currentAlerts.slice(0, this.panel.limit);
-        }
-        this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
+      getBackendSrv()
+        .get('/api/alerts', params, `alert-list-get-current-alert-state-${this.panel.id}`)
+        .then(data => {
+          this.currentAlerts = this.sortResult(
+            _.map(data, al => {
+              al.stateModel = alertDef.getStateDisplayModel(al.state);
+              al.newStateDateAgo = dateTime(al.newStateDate)
+                .locale('en')
+                .fromNow(true);
+              return al;
+            })
+          );
+          if (this.currentAlerts.length > this.panel.limit) {
+            this.currentAlerts = this.currentAlerts.slice(0, this.panel.limit);
+          }
+          this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
 
-        return this.currentAlerts;
-      })
+          return this.currentAlerts;
+        })
     );
   }
 

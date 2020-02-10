@@ -9,10 +9,9 @@ import { dedupAnnotations } from './events_processing';
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, PanelModel, TimeRange } from '@grafana/data';
-import { appEvents } from 'app/core/core';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
-import { getRequestWithCancel } from '../../core/utils/getRequestWithCancel';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -85,13 +84,13 @@ export class AnnotationsSrv {
       return this.alertStatesPromise;
     }
 
-    this.alertStatesPromise = getRequestWithCancel({
-      url: '/api/alerts/states-for-dashboard',
-      params: {
+    this.alertStatesPromise = getBackendSrv().get(
+      '/api/alerts/states-for-dashboard',
+      {
         dashboardId: options.dashboard.id,
       },
-      requestId: `annotation-srv-get-alert-states-${options.dashboard.id}-${options.panel.id}`,
-    });
+      `annotation-srv-get-alert-states-${options.dashboard.id}`
+    );
 
     return this.alertStatesPromise;
   }

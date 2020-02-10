@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
-import alertDef from './state/alertDef';
 import { getBackendSrv } from '@grafana/runtime';
+
+import alertDef from './state/alertDef';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import appEvents from '../../core/app_events';
 import { CoreEvents } from 'app/types';
-import { getRequestWithCancel } from '../../core/utils/getRequestWithCancel';
 
 interface Props {
   dashboard: DashboardModel;
@@ -24,23 +24,25 @@ class StateHistory extends PureComponent<Props, State> {
   componentDidMount(): void {
     const { dashboard, panelId } = this.props;
 
-    getRequestWithCancel<any>({
-      url: `/api/annotations?dashboardId=${dashboard.id}&panelId=${panelId}&limit=50&type=alert`,
-      requestId: `state-history-${dashboard.id}-${panelId}`,
-      params: {},
-    }).then(data => {
-      const items = data.map((item: any) => {
-        return {
-          stateModel: alertDef.getStateDisplayModel(item.newState),
-          time: dashboard.formatDate(item.time, 'MMM D, YYYY HH:mm:ss'),
-          info: alertDef.getAlertAnnotationInfo(item),
-        };
-      });
+    getBackendSrv()
+      .get(
+        `/api/annotations?dashboardId=${dashboard.id}&panelId=${panelId}&limit=50&type=alert`,
+        {},
+        `state-history-${dashboard.id}-${panelId}`
+      )
+      .then(data => {
+        const items = data.map((item: any) => {
+          return {
+            stateModel: alertDef.getStateDisplayModel(item.newState),
+            time: dashboard.formatDate(item.time, 'MMM D, YYYY HH:mm:ss'),
+            info: alertDef.getAlertAnnotationInfo(item),
+          };
+        });
 
-      this.setState({
-        stateHistoryItems: items,
+        this.setState({
+          stateHistoryItems: items,
+        });
       });
-    });
   }
 
   clearHistory = () => {

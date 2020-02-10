@@ -13,7 +13,6 @@ import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import { css, cx } from 'emotion';
-import { getRequestWithCancel } from '../../../core/utils/getRequestWithCancel';
 
 interface UserInfo {
   id: number;
@@ -98,11 +97,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       params.tags = params.tags ? [...params.tags, ...queryTags] : queryTags;
     }
 
-    const annotations = await getRequestWithCancel<AnnotationEvent>({
-      url: '/api/annotations',
-      params,
-      requestId: `anno-list-panel-${this.props.id}`,
-    });
+    const annotations = await getBackendSrv().get('/api/annotations', params, `anno-list-panel-${this.props.id}`);
 
     this.setState({
       annotations,

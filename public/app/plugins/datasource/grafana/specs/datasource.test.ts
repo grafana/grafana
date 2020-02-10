@@ -1,6 +1,12 @@
 import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { GrafanaDatasource } from '../datasource';
-import * as getRequestWithCancel from '../../../../core/utils/getRequestWithCancel';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 jest.mock('app/features/templating/template_srv', () => ({
   replace: (val: string) => {
@@ -9,7 +15,7 @@ jest.mock('app/features/templating/template_srv', () => ({
 }));
 
 describe('grafana data source', () => {
-  const getRequestWithCancelMock = jest.spyOn(getRequestWithCancel, 'getRequestWithCancel');
+  const getMock = jest.spyOn(backendSrv, 'get');
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -19,7 +25,7 @@ describe('grafana data source', () => {
     let calledBackendSrvParams: any;
     let ds: GrafanaDatasource;
     beforeEach(() => {
-      getRequestWithCancelMock.mockImplementation(options => {
+      getMock.mockImplementation((url: string, options: any) => {
         calledBackendSrvParams = options;
         return Promise.resolve([]);
       });
@@ -35,7 +41,7 @@ describe('grafana data source', () => {
       });
 
       it('should interpolate template variables in tags in query options', () => {
-        expect(calledBackendSrvParams.params.tags[0]).toBe('tag1:replaced');
+        expect(calledBackendSrvParams.tags[0]).toBe('tag1:replaced');
       });
     });
 
@@ -47,8 +53,8 @@ describe('grafana data source', () => {
       });
 
       it('should interpolate template variables in tags in query options', () => {
-        expect(calledBackendSrvParams.params.tags[0]).toBe('replaced');
-        expect(calledBackendSrvParams.params.tags[1]).toBe('replaced2');
+        expect(calledBackendSrvParams.tags[0]).toBe('replaced');
+        expect(calledBackendSrvParams.tags[1]).toBe('replaced2');
       });
     });
 
@@ -66,7 +72,7 @@ describe('grafana data source', () => {
       });
 
       it('should remove tags from query options', () => {
-        expect(calledBackendSrvParams.params.tags).toBe(undefined);
+        expect(calledBackendSrvParams.tags).toBe(undefined);
       });
     });
   });
