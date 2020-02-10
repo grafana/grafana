@@ -28,6 +28,7 @@ import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { LocationState, CoreEvents } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp } from './state/actions';
+import { setDisplayMode, toggleOptionsView } from './state/reducers';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -48,6 +49,8 @@ interface DispatchProps {
   updateLocation: typeof updateLocation;
   initPanelEditor: typeof initPanelEditor;
   panelEditorCleanUp: typeof panelEditorCleanUp;
+  setDisplayMode: typeof setDisplayMode;
+  toggleOptionsView: typeof toggleOptionsView;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -73,14 +76,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
   };
 
-  onPanelUpdate = () => {
-    const { dashboard, panel } = this.props;
-    dashboard.updatePanel(panel);
-  };
-
   onPanelExit = () => {
-    const { updateLocation } = this.props;
-    updateLocation({
+    this.props.updateLocation({
       query: { editPanel: null },
       partial: true,
     });
@@ -161,15 +158,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onDiplayModeChange = (mode: SelectableValue<DisplayMode>) => {
-    /* this.setState({ */
-    /*   mode: mode.value!, */
-    /* }); */
+    this.props.setDisplayMode(mode.value);
   };
 
   onTogglePanelOptions = () => {
-    /* this.setState({ */
-    /*   showPanelOptions: !this.state.showPanelOptions, */
-    /* }); */
+    this.props.toggleOptionsView();
   };
 
   renderHorizontalSplit(styles: any) {
@@ -294,6 +287,8 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateLocation,
   initPanelEditor,
   panelEditorCleanUp,
+  setDisplayMode,
+  toggleOptionsView,
 };
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);

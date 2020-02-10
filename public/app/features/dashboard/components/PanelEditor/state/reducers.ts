@@ -46,9 +46,15 @@ const pluginsSlice = createSlice({
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;
     },
+    toggleOptionsView: state => {
+      state.isPanelOptionsVisible = !state.isPanelOptionsVisible;
+    },
+    setDisplayMode: (state, action: PayloadAction<DisplayMode>) => {
+      state.mode = action.payload;
+    },
   },
 });
 
-export const { updateEditorInitState, setEditorPanelData } = pluginsSlice.actions;
+export const { updateEditorInitState, setEditorPanelData, toggleOptionsView, setDisplayMode } = pluginsSlice.actions;
 
 export const panelEditorReducerNew = pluginsSlice.reducer;
