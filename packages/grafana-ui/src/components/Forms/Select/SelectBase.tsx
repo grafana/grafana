@@ -197,6 +197,9 @@ export function SelectBase<T>({
           return v === o.value || o.value === v.value;
         })[0];
       });
+    } else if (loadOptions) {
+      const hasValue = defaultValue || value;
+      selectedValue = hasValue ? [hasValue] : [];
     } else {
       selectedValue = options.filter(o => o.value === value || o === value);
     }
