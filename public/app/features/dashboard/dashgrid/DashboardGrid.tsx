@@ -4,7 +4,7 @@ import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
 // @ts-ignore
-import sizeMe from 'react-sizeme';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 // Components
 import { AddPanelWidget } from '../components/AddPanelWidget';
@@ -90,8 +90,6 @@ function GridWrapper({
     </ReactGridLayout>
   );
 }
-
-const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
 
 export interface Props {
   dashboard: DashboardModel;
@@ -292,20 +290,27 @@ export class DashboardGrid extends PureComponent<Props> {
     const { dashboard, isFullscreen } = this.props;
 
     return (
-      <SizedReactLayoutGrid
-        className={classNames({ layout: true })}
-        layout={this.buildLayout()}
-        isResizable={dashboard.meta.canEdit}
-        isDraggable={dashboard.meta.canEdit}
-        onLayoutChange={this.onLayoutChange}
-        onWidthChange={this.onWidthChange}
-        onDragStop={this.onDragStop}
-        onResize={this.onResize}
-        onResizeStop={this.onResizeStop}
-        isFullscreen={isFullscreen}
-      >
-        {this.renderPanels()}
-      </SizedReactLayoutGrid>
+      <AutoSizer>
+        {({ width }) => {
+          return (
+            <GridWrapper
+              size={{ width }}
+              className={classNames({ layout: true })}
+              layout={this.buildLayout()}
+              isResizable={dashboard.meta.canEdit}
+              isDraggable={dashboard.meta.canEdit}
+              onLayoutChange={this.onLayoutChange}
+              onWidthChange={this.onWidthChange}
+              onDragStop={this.onDragStop}
+              onResize={this.onResize}
+              onResizeStop={this.onResizeStop}
+              isFullscreen={isFullscreen}
+            >
+              {this.renderPanels()}
+            </GridWrapper>
+          );
+        }}
+      </AutoSizer>
     );
   }
 }
