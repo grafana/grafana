@@ -157,7 +157,7 @@ export default class InfluxSeries {
         // Check that the first column is indeed 'time'
         if (series.columns[0] === 'time') {
           // Push this now before the tags and with the right type
-          table.columns.push({ text: 'Time', type: FieldType.time });
+          table.columns.push({ text: 'Time', type: 'time' });
           j++;
         }
         _.each(_.keys(series.tags), key => {

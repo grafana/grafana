@@ -1,7 +1,7 @@
 import React from 'react';
 import { Graph } from './Graph';
 import Chart from '../Chart';
-import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorMode } from '@grafana/data';
+import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorMode, SemanticType } from '@grafana/data';
 import { select } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TooltipContentProps } from '../Chart/Tooltip';
@@ -38,13 +38,18 @@ const series: GraphSeriesXY[] = [
     label: 'A-series',
     seriesIndex: 0,
     timeField: {
-      type: FieldType.time,
+      type: {
+        value: FieldType.number,
+        semantic: SemanticType.time,
+      },
       name: 'time',
       values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
       config: {},
     },
     valueField: {
-      type: FieldType.number,
+      type: {
+        value: FieldType.number,
+      },
       name: 'a-series',
       values: new ArrayVector([10, 20, 10]),
       config: {
@@ -71,13 +76,18 @@ const series: GraphSeriesXY[] = [
       "B-series with an ultra wide label that probably gonna make the tooltip to overflow window. This situation happens, so let's better make sure it behaves nicely :)",
     seriesIndex: 1,
     timeField: {
-      type: FieldType.time,
+      type: {
+        value: FieldType.number,
+        semantic: SemanticType.time,
+      },
       name: 'time',
       values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
       config: {},
     },
     valueField: {
-      type: FieldType.number,
+      type: {
+        value: FieldType.number,
+      },
       name:
         "B-series with an ultra wide label that is probably going go make the tooltip overflow window. This situation happens, so let's better make sure it behaves nicely :)",
       values: new ArrayVector([20, 30, 40]),

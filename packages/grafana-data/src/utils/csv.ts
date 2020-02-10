@@ -205,13 +205,13 @@ function writeValue(value: any, config: CSVConfig): string {
 
 function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
   if (field.type) {
-    if (field.type === FieldType.boolean) {
+    if (field.type.value === FieldType.boolean) {
       return (value: any) => {
         return value ? 'true' : 'false';
       };
     }
 
-    if (field.type === FieldType.number) {
+    if (field.type.value === FieldType.number) {
       return (value: any) => {
         if (isNumber(value)) {
           return value.toString();
@@ -279,11 +279,9 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
 
     if (config.headerStyle === CSVHeaderStyle.full) {
       csv =
-        csv +
-        getHeaderLine('name', fields, config) +
-        getHeaderLine('type', fields, config) +
-        getHeaderLine('unit', fields, config) +
-        getHeaderLine('dateFormat', fields, config);
+        csv + // append
+        getHeaderLine('name', fields, config) + // the name
+        getHeaderLine('unit', fields, config); // The Unit
     } else if (config.headerStyle === CSVHeaderStyle.name) {
       for (let i = 0; i < fields.length; i++) {
         if (i > 0) {

@@ -30,7 +30,7 @@ export default {
 function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFrame {
   const data = new MutableDataFrame({
     fields: [
-      { name: 'Time', type: FieldType.time, values: [] }, // The time field
+      { name: 'Time', type: 'time', values: [] }, // The time field
       {
         name: 'Quantity',
         type: FieldType.number,

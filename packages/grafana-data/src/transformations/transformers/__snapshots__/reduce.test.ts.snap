@@ -7,7 +7,9 @@ Object {
       "config": Object {},
       "labels": undefined,
       "name": "Field",
-      "type": "string",
+      "type": Object {
+        "value": "string",
+      },
       "values": Array [
         "A",
         "B",
@@ -19,7 +21,9 @@ Object {
       },
       "labels": undefined,
       "name": "first",
-      "type": "number",
+      "type": Object {
+        "value": "number",
+      },
       "values": Array [
         1,
         "a",
@@ -31,7 +35,9 @@ Object {
       },
       "labels": undefined,
       "name": "min",
-      "type": "number",
+      "type": Object {
+        "value": "number",
+      },
       "values": Array [
         1,
         null,
@@ -43,7 +49,9 @@ Object {
       },
       "labels": undefined,
       "name": "max",
-      "type": "number",
+      "type": Object {
+        "value": "number",
+      },
       "values": Array [
         4,
         null,
@@ -55,7 +63,9 @@ Object {
       },
       "labels": undefined,
       "name": "delta",
-      "type": "number",
+      "type": Object {
+        "value": "number",
+      },
       "values": Array [
         3,
         0,

@@ -1,7 +1,7 @@
 import { getDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { ValueMapping, MappingType } from '../types/valueMapping';
-import { FieldType, Threshold, GrafanaTheme, Field, FieldConfig, ThresholdsMode } from '../types';
+import { FieldType, Threshold, GrafanaTheme, Field, FieldConfig, ThresholdsMode, SemanticType } from '../types';
 import { getScaleCalculator, sortThresholds } from './scale';
 import { ArrayVector } from '../vector';
 import { validateFieldConfig } from './fieldOverrides';
@@ -10,7 +10,9 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
   return getDisplayProcessor({
     field: {
       config,
-      type: FieldType.number,
+      type: {
+        value: FieldType.number,
+      },
     },
   });
 }
@@ -19,7 +21,9 @@ function getColorFromThreshold(value: number, steps: Threshold[], theme?: Grafan
   const field: Field = {
     name: 'test',
     config: { thresholds: { mode: ThresholdsMode.Absolute, steps: sortThresholds(steps) } },
-    type: FieldType.number,
+    type: {
+      value: FieldType.number,
+    },
     values: new ArrayVector([]),
   };
   validateFieldConfig(field.config!);
@@ -248,7 +252,10 @@ describe('Date display options', () => {
     const processor = getDisplayProcessor({
       timeZone: 'utc',
       field: {
-        type: FieldType.time,
+        type: {
+          value: FieldType.number,
+          semantic: SemanticType.time,
+        },
         config: {
           unit: 'xyz', // ignore non-date formats
         },
@@ -261,7 +268,10 @@ describe('Date display options', () => {
     const processor = getDisplayProcessor({
       timeZone: 'utc',
       field: {
-        type: FieldType.time,
+        type: {
+          value: FieldType.number,
+          semantic: SemanticType.time,
+        },
         config: {
           unit: 'dateTimeAsUS', // ignore non-date formats
         },
@@ -274,7 +284,10 @@ describe('Date display options', () => {
     const processor = getDisplayProcessor({
       timeZone: 'utc',
       field: {
-        type: FieldType.time,
+        type: {
+          value: FieldType.number,
+          semantic: SemanticType.time,
+        },
         config: {
           unit: 'time:YYYY', // ignore non-date formats
         },

@@ -6,7 +6,6 @@ describe('FieldCache', () => {
   it('when creating a new FieldCache from fields should be able to query cache', () => {
     const frame = toDataFrame({
       fields: [
-        { name: 'time', type: FieldType.time },
         { name: 'string', type: FieldType.string },
         { name: 'number', type: FieldType.number },
         { name: 'boolean', type: FieldType.boolean },
@@ -16,25 +15,24 @@ describe('FieldCache', () => {
     });
     const fieldCache = new FieldCache(frame);
     const allFields = fieldCache.getFields();
-    expect(allFields).toHaveLength(6);
+    expect(allFields).toHaveLength(5);
 
-    const expectedFieldNames = ['time', 'string', 'number', 'boolean', 'other', 'undefined'];
+    const expectedFieldNames = ['string', 'number', 'boolean', 'other', 'undefined'];
 
     expect(allFields.map(f => f.name)).toEqual(expectedFieldNames);
 
-    expect(fieldCache.hasFieldOfType(FieldType.time)).toBeTruthy();
+    expect(fieldCache.hasFieldOfType(FieldType.number)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.string)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.number)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.boolean)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.other)).toBeTruthy();
 
-    expect(fieldCache.getFields(FieldType.time).map(f => f.name)).toEqual([expectedFieldNames[0]]);
-    expect(fieldCache.getFields(FieldType.string).map(f => f.name)).toEqual([expectedFieldNames[1]]);
-    expect(fieldCache.getFields(FieldType.number).map(f => f.name)).toEqual([expectedFieldNames[2]]);
-    expect(fieldCache.getFields(FieldType.boolean).map(f => f.name)).toEqual([expectedFieldNames[3]]);
+    expect(fieldCache.getFields(FieldType.string).map(f => f.name)).toEqual([expectedFieldNames[0]]);
+    expect(fieldCache.getFields(FieldType.number).map(f => f.name)).toEqual([expectedFieldNames[1]]);
+    expect(fieldCache.getFields(FieldType.boolean).map(f => f.name)).toEqual([expectedFieldNames[2]]);
     expect(fieldCache.getFields(FieldType.other).map(f => f.name)).toEqual([
+      expectedFieldNames[3],
       expectedFieldNames[4],
-      expectedFieldNames[5],
     ]);
 
     expect(fieldCache.fields[0].name).toEqual(expectedFieldNames[0]);
@@ -42,17 +40,14 @@ describe('FieldCache', () => {
     expect(fieldCache.fields[2].name).toEqual(expectedFieldNames[2]);
     expect(fieldCache.fields[3].name).toEqual(expectedFieldNames[3]);
     expect(fieldCache.fields[4].name).toEqual(expectedFieldNames[4]);
-    expect(fieldCache.fields[5].name).toEqual(expectedFieldNames[5]);
-    expect(fieldCache.fields[6]).toBeUndefined();
+    expect(fieldCache.fields[5]).toBeUndefined();
 
-    expect(fieldCache.getFirstFieldOfType(FieldType.time)!.name).toEqual(expectedFieldNames[0]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.string)!.name).toEqual(expectedFieldNames[1]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.number)!.name).toEqual(expectedFieldNames[2]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.boolean)!.name).toEqual(expectedFieldNames[3]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.other)!.name).toEqual(expectedFieldNames[4]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.string)!.name).toEqual(expectedFieldNames[0]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.number)!.name).toEqual(expectedFieldNames[1]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.boolean)!.name).toEqual(expectedFieldNames[2]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.other)!.name).toEqual(expectedFieldNames[3]);
 
     expect(fieldCache.hasFieldNamed('tim')).toBeFalsy();
-    expect(fieldCache.hasFieldNamed('time')).toBeTruthy();
     expect(fieldCache.hasFieldNamed('string')).toBeTruthy();
     expect(fieldCache.hasFieldNamed('number')).toBeTruthy();
     expect(fieldCache.hasFieldNamed('boolean')).toBeTruthy();
@@ -71,7 +66,7 @@ describe('FieldCache', () => {
   describe('field retrieval', () => {
     const frame = toDataFrame({
       fields: [
-        { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+        { name: 'time', type: 'time', values: [100, 200, 300] },
         { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
         { name: 'value', type: FieldType.number, values: [1, 2, 3] },
         { name: 'value', type: FieldType.number, values: [4, 5, 6] },
@@ -87,7 +82,7 @@ describe('FieldCache', () => {
 
     it('should return index of the field', () => {
       const field = ext.getFirstFieldOfType(FieldType.number);
-      expect(field!.index).toEqual(2);
+      expect(field!.index).toEqual(0);
     });
   });
 });

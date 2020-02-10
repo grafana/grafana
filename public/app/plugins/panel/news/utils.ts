@@ -1,5 +1,5 @@
 import { RssFeed } from './types';
-import { ArrayVector, FieldType, DataFrame, dateTime } from '@grafana/data';
+import { ArrayVector, FieldType, DataFrame, dateTime, SemanticType } from '@grafana/data';
 
 export function feedToDataFrame(feed: RssFeed): DataFrame {
   const date = new ArrayVector<number>([]);
@@ -26,10 +26,18 @@ export function feedToDataFrame(feed: RssFeed): DataFrame {
 
   return {
     fields: [
-      { name: 'date', type: FieldType.time, config: { title: 'Date' }, values: date },
-      { name: 'title', type: FieldType.string, config: {}, values: title },
-      { name: 'link', type: FieldType.string, config: {}, values: link },
-      { name: 'content', type: FieldType.string, config: {}, values: content },
+      {
+        name: 'date',
+        type: {
+          value: FieldType.number,
+          semantic: SemanticType.time,
+        },
+        config: { title: 'Date' },
+        values: date,
+      },
+      { name: 'title', type: { value: FieldType.string }, config: {}, values: title },
+      { name: 'link', type: { value: FieldType.string }, config: {}, values: link },
+      { name: 'content', type: { value: FieldType.string }, config: {}, values: content },
     ],
     length: date.length,
   };

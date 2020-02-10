@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, Field, Vector } from '../types';
+import { DataFrame, FieldType, Field, Vector, TypeInfo, SemanticType } from '../types';
 import {
   Table,
   ArrowType,
@@ -11,6 +11,7 @@ import {
   Bool,
   Column,
 } from 'apache-arrow';
+import { guessSemanticTypeFromName } from './processDataFrame';
 
 export interface ArrowDataFrame extends DataFrame {
   table: Table;
@@ -46,29 +47,39 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
     const col = table.getColumnAt(i);
     if (col) {
       const schema = table.schema.fields[i];
-      let type = FieldType.other;
+
+      const type = (parseOptionalMeta(col.metadata.get('type')) || {}) as TypeInfo;
+      type.value = FieldType.other;
+
       const values: Vector<any> = col;
       switch ((schema.typeId as unknown) as ArrowType) {
         case ArrowType.Decimal:
         case ArrowType.Int:
         case ArrowType.FloatingPoint: {
-          type = FieldType.number;
+          type.value = FieldType.number;
           break;
         }
         case ArrowType.Bool: {
-          type = FieldType.boolean;
+          type.value = FieldType.boolean;
           break;
         }
         case ArrowType.Timestamp: {
-          type = FieldType.time;
+          type.value = FieldType.number;
+          type.semantic = SemanticType.time;
           break;
         }
         case ArrowType.Utf8: {
-          type = FieldType.string;
+          type.value = FieldType.string;
           break;
         }
         default:
           console.log('UNKNOWN Type:', schema);
+      }
+      if (!type.semantic) {
+        const v = guessSemanticTypeFromName(col.name);
+        if (v) {
+          type.semantic = v;
+        }
       }
 
       fields.push({
@@ -95,13 +106,13 @@ function toArrowVector(field: Field): ArrowVector {
   // OR: Float64Vector.from([1, 2, 3]));
 
   let type: DataType;
-  if (field.type === FieldType.number) {
-    type = new Float64();
-  } else if (field.type === FieldType.time) {
+  if (field.type.semantic === SemanticType.time) {
     type = new TimestampMillisecond();
-  } else if (field.type === FieldType.boolean) {
+  } else if (field.type.value === FieldType.number) {
+    type = new Float64();
+  } else if (field.type.value === FieldType.boolean) {
     type = new Bool();
-  } else if (field.type === FieldType.string) {
+  } else if (field.type.value === FieldType.string) {
     type = new Utf8();
   } else {
     type = new Utf8();

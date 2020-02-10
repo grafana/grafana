@@ -2,7 +2,7 @@ import React from 'react';
 import { mount } from 'enzyme';
 import Graph from './Graph';
 import Chart from '../Chart';
-import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorMode } from '@grafana/data';
+import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorMode, SemanticType } from '@grafana/data';
 
 const series: GraphSeriesXY[] = [
   {
@@ -16,13 +16,18 @@ const series: GraphSeriesXY[] = [
     label: 'A-series',
     seriesIndex: 0,
     timeField: {
-      type: FieldType.time,
+      type: {
+        value: FieldType.number,
+        semantic: SemanticType.time,
+      },
       name: 'time',
       values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
       config: {},
     },
     valueField: {
-      type: FieldType.number,
+      type: {
+        value: FieldType.number,
+      },
       name: 'a-series',
       values: new ArrayVector([10, 20, 10]),
       config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'red' } },
@@ -43,13 +48,18 @@ const series: GraphSeriesXY[] = [
     label: 'B-series',
     seriesIndex: 0,
     timeField: {
-      type: FieldType.time,
+      type: {
+        value: FieldType.number,
+        semantic: SemanticType.time,
+      },
       name: 'time',
       values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
       config: {},
     },
     valueField: {
-      type: FieldType.number,
+      type: {
+        value: FieldType.number,
+      },
       name: 'b-series',
       values: new ArrayVector([20, 30, 40]),
       config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'blue' } },

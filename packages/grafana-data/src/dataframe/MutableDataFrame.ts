@@ -1,6 +1,11 @@
-import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
+import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType, TypeInfo, SemanticType } from '../types/dataFrame';
 import { KeyValue, QueryResultMeta } from '../types/data';
-import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
+import {
+  guessFieldTypeFromValue,
+  guessFieldTypeFromValues,
+  toDataFrameDTO,
+  guessSemanticTypeFromName,
+} from './processDataFrame';
 import isArray from 'lodash/isArray';
 import isString from 'lodash/isString';
 import { makeFieldParser } from '../utils/fieldParser';
@@ -84,27 +89,34 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
       }
     }
 
-    let type = f.type;
-
-    if (!type && ('time' === f.name || 'Time' === f.name)) {
-      type = FieldType.time;
-    } else {
-      if (!type && buffer && buffer.length) {
-        type = guessFieldTypeFromValue(buffer[0]);
+    let type = f.type as TypeInfo;
+    if (isString(type)) {
+      if ('time' === type) {
+        type = {
+          value: FieldType.number,
+          semantic: SemanticType.time,
+        };
+      } else {
+        type = {
+          value: f.type as FieldType, // Convert from string
+        };
       }
-      if (!type) {
-        type = FieldType.other;
+    } else if (!type) {
+      type = {
+        value: FieldType.other,
+      };
+    }
+
+    if (!type.semantic) {
+      const v = guessSemanticTypeFromName(f.name);
+      if (v) {
+        type.semantic = v;
       }
     }
 
-    // Make sure it has a name
     let name = f.name;
     if (!name) {
-      if (type === FieldType.time) {
-        name = this.values['Time'] ? `Time ${this.fields.length + 1}` : 'Time';
-      } else {
-        name = `Field ${this.fields.length + 1}`;
-      }
+      name = `Field ${this.fields.length + 1}`;
     }
 
     const field: MutableField = {
@@ -115,11 +127,8 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
       labels: f.labels,
     };
 
-    if (type === FieldType.other) {
-      type = guessFieldTypeForField(field);
-      if (type) {
-        field.type = type;
-      }
+    if (type.value === FieldType.other) {
+      type.value = guessFieldTypeFromValues(field.values);
     }
 
     this.fields.push(field);
@@ -194,8 +203,8 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
     if (this.length < 1) {
       for (let i = 0; i < this.fields.length; i++) {
         const f = this.fields[i];
-        if (!f.type || f.type === FieldType.other) {
-          f.type = guessFieldTypeFromValue(row[i]);
+        if (!f.type.value || f.type.value === FieldType.other) {
+          f.type.value = guessFieldTypeFromValue(row[i]);
         }
       }
     }
@@ -203,7 +212,7 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
     for (let i = 0; i < this.fields.length; i++) {
       const f = this.fields[i];
       let v = row[i];
-      if (f.type !== FieldType.string && isString(v)) {
+      if (f.type.value !== FieldType.string && isString(v)) {
         if (!f.parse) {
           f.parse = makeFieldParser(v, f);
         }
@@ -226,7 +235,7 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
     for (const field of this.fields) {
       let val = obj[field.name];
 
-      if (field.type !== FieldType.string && isString(val)) {
+      if (field.type.value !== FieldType.string && isString(val)) {
         if (!field.parse) {
           field.parse = makeFieldParser(val, field);
         }

@@ -14,8 +14,9 @@ import {
   TimeSeriesValue,
   FieldDTO,
   DataFrameDTO,
+  SemanticType,
+  Vector,
 } from '../types/index';
-import { isDateTime } from '../datetime/moment_wrapper';
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
@@ -28,7 +29,10 @@ function convertTableToDataFrame(table: TableData): DataFrame {
       name: text, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
       values: new ArrayVector(),
-      type: FieldType.other,
+      type: {
+        value: FieldType.other,
+        semantic: guessSemanticTypeFromName(text),
+      },
     };
   });
 
@@ -43,9 +47,9 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   }
 
   for (const f of fields) {
-    const t = guessFieldTypeForField(f);
+    const t = guessFieldTypeFromValues(f.values);
     if (t) {
-      f.type = t;
+      f.type.value = t;
     }
   }
 
@@ -69,7 +73,9 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const fields = [
     {
       name: timeSeries.target || 'Value',
-      type: FieldType.number,
+      type: {
+        value: FieldType.number,
+      },
       config: {
         unit: timeSeries.unit,
       },
@@ -78,7 +84,10 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     },
     {
       name: 'Time',
-      type: FieldType.time,
+      type: {
+        value: FieldType.number,
+        semantic: SemanticType.time,
+      },
       config: {},
       values: new ArrayVector<number>(times),
     },
@@ -112,13 +121,18 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
     fields: [
       {
         name: graphSeries.label || 'Value',
-        type: FieldType.number,
+        type: {
+          value: FieldType.number,
+        },
         config: {},
         values: x,
       },
       {
         name: 'Time',
-        type: FieldType.time,
+        type: {
+          value: FieldType.number,
+          semantic: SemanticType.time,
+        },
         config: {
           unit: 'dateTimeAsIso',
         },
@@ -133,7 +147,9 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
   const fields = [
     {
       name: timeSeries.target,
-      type: FieldType.other,
+      type: {
+        value: FieldType.other,
+      },
       labels: timeSeries.tags,
       config: {
         unit: timeSeries.unit,
@@ -162,8 +178,6 @@ const NUMBER = /^\s*(-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?|NAN)\s*$/i;
 
 /**
  * Given a value this will guess the best column type
- *
- * TODO: better Date/Time support!  Look for standard date strings?
  */
 export function guessFieldTypeFromValue(v: any): FieldType {
   if (isNumber(v)) {
@@ -186,34 +200,46 @@ export function guessFieldTypeFromValue(v: any): FieldType {
     return FieldType.boolean;
   }
 
-  if (v instanceof Date || isDateTime(v)) {
-    return FieldType.time;
-  }
-
   return FieldType.other;
 }
 
 /**
  * Looks at the data to guess the column type.  This ignores any existing setting
  */
-export function guessFieldTypeForField(field: Field): FieldType | undefined {
-  // 1. Use the column name to guess
-  if (field.name) {
-    const name = field.name.toLowerCase();
-    if (name === 'date' || name === 'time') {
-      return FieldType.time;
-    }
-  }
-
-  // 2. Check the first non-null value
-  for (let i = 0; i < field.values.length; i++) {
-    const v = field.values.get(i);
+export function guessFieldTypeFromValues(values: Vector): FieldType {
+  // Check the first non-null value
+  for (let i = 0; i < values.length; i++) {
+    const v = values.get(i);
     if (v !== null) {
       return guessFieldTypeFromValue(v);
     }
   }
 
   // Could not find anything
+  return FieldType.other;
+}
+
+export function guessSemanticTypeFromName(name: string): SemanticType | undefined {
+  if (name) {
+    switch (name.toLowerCase()) {
+      case 'date':
+      case 'time':
+        return SemanticType.time;
+
+      case 'lat':
+      case 'latitude':
+        return SemanticType.latitude;
+
+      case 'lng':
+      case 'lon':
+      case 'longitude':
+        return SemanticType.longitude;
+
+      case 'geo':
+      case 'geometry':
+        return SemanticType.geo;
+    }
+  }
   return undefined;
 }
 
@@ -228,13 +254,16 @@ export const guessFieldTypes = (series: DataFrame): DataFrame => {
       return {
         ...series,
         fields: series.fields.map(field => {
-          if (field.type && field.type !== FieldType.other) {
+          if (field.type && field.type.value !== FieldType.other) {
             return field;
           }
           // Calculate a reasonable schema value
           return {
             ...field,
-            type: guessFieldTypeForField(field) || FieldType.other,
+            type: {
+              semantic: guessSemanticTypeFromName(field.name),
+              value: guessFieldTypeFromValues(field.values),
+            },
           };
         }),
       };
@@ -306,11 +335,11 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   }
 
   if (fields.length === 2) {
-    let type = fields[1].type;
+    let type = fields[1].type.semantic;
     if (!type) {
-      type = guessFieldTypeForField(fields[1]) || FieldType.other;
+      type = guessSemanticTypeFromName(fields[1].name);
     }
-    if (type === FieldType.time) {
+    if (type === SemanticType.time) {
       return {
         alias: fields[0].name || frame.name,
         target: fields[0].name || frame.name,
@@ -371,7 +400,7 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
   };
 
   // String Comparison
-  if (field.type === FieldType.string) {
+  if (field.type.value === FieldType.string) {
     compare = (a: number, b: number) => {
       const vA: string = values.get(a);
       const vB: string = values.get(b);
@@ -416,7 +445,7 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
 
 export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
   for (let i = 0; i < series.fields.length; i++) {
-    if (series.fields[i].type === FieldType.time) {
+    if (series.fields[i].type.semantic === SemanticType.time) {
       return {
         timeField: series.fields[i],
         timeIndex: i,

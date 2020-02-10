@@ -6,7 +6,7 @@ describe('Reversing DataFrame', () => {
     it('then it should reverse the order of values in all fields', () => {
       const frame: DataFrameDTO = {
         fields: [
-          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+          { name: 'time', type: 'time', values: [100, 200, 300] },
           { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
           { name: 'value', type: FieldType.number, values: [1, 2, 3] },
         ],
@@ -31,7 +31,7 @@ describe('Apending DataFrame', () => {
   it('Should append values', () => {
     const dto: DataFrameDTO = {
       fields: [
-        { name: 'time', type: FieldType.time, values: [100] },
+        { name: 'time', type: 'time', values: [100] },
         { name: 'name', type: FieldType.string, values: ['a', 'b'] },
         { name: 'value', type: FieldType.number, values: [1, 2, 3] },
       ],

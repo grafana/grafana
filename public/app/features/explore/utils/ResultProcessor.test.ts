@@ -24,7 +24,7 @@ const testContext = (options: any = {}) => {
     refId: 'A',
     fields: [
       { name: 'A-series', type: FieldType.number, values: [4, 5, 6] },
-      { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+      { name: 'time', type: 'time', values: [100, 200, 300] },
     ],
   });
 
@@ -33,7 +33,7 @@ const testContext = (options: any = {}) => {
     refId: 'A',
     fields: [
       { name: 'value', type: FieldType.number, values: [4, 5, 6] },
-      { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+      { name: 'time', type: 'time', values: [100, 200, 300] },
       { name: 'message', type: FieldType.string, values: ['this is a message', 'second message', 'third'] },
     ],
   });

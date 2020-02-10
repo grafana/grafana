@@ -5,7 +5,7 @@ import { FieldType } from '../../types/dataFrame';
 
 export const seriesWithNamesToMatch = toDataFrame({
   fields: [
-    { name: 'startsWithA', type: FieldType.time, values: [1000, 2000] },
+    { name: 'startsWithA', type: 'time', values: [1000, 2000] },
     { name: 'B', type: FieldType.boolean, values: [true, false] },
     { name: 'startsWithC', type: FieldType.string, values: ['a', 'b'] },
     { name: 'D', type: FieldType.number, values: [1, 2] },

@@ -5,7 +5,7 @@ import { alwaysFieldMatcher } from '../matchers/predicates';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { KeyValue } from '../../types/data';
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { guessFieldTypeFromValues } from '../../dataframe/processDataFrame';
 import { getFieldMatcher } from '../matchers';
 
 export interface ReduceTransformerOptions {
@@ -39,7 +39,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         values.push(new ArrayVector()); // The name
         fields.push({
           name: 'Field',
-          type: FieldType.string,
+          type: {
+            value: FieldType.string,
+          },
           values: values[0],
           config: {},
         });
@@ -49,7 +51,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           values.push(vals);
           fields.push({
             name: info.id,
-            type: FieldType.other, // UNKNOWN until after we call the functions
+            type: {
+              value: FieldType.other, // UNKNOWN until after we call the functions
+            },
             values: values[values.length - 1],
             config: {
               title: info.name,
@@ -73,9 +77,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           }
         }
         for (const f of fields) {
-          const t = guessFieldTypeForField(f);
+          const t = guessFieldTypeFromValues(f.values);
           if (t) {
-            f.type = t;
+            f.type.value = t;
           }
         }
         processed.push({

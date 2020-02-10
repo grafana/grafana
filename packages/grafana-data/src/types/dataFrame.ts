@@ -7,14 +7,6 @@ import { Vector } from './vector';
 import { FieldCalcs } from '../transformations/fieldReducer';
 import { FieldColor } from './fieldColor';
 
-export enum FieldType {
-  time = 'time', // or date
-  number = 'number',
-  string = 'string',
-  boolean = 'boolean',
-  other = 'other', // Object, Array, etc
-}
-
 /**
  * Every property is optional
  *
@@ -52,15 +44,45 @@ export interface FieldConfig {
   custom?: Record<string, any>;
 }
 
+export enum FieldType {
+  number = 'number',
+  string = 'string',
+  boolean = 'boolean',
+  other = 'other',
+}
+
+export enum MetricType {
+  counter = 'counter',
+  gauge = 'gauge',
+  histogram = 'histogram',
+  summary = 'summary ',
+}
+
+export enum SemanticType {
+  time = 'time',
+  latitude = 'latitude',
+  longitude = 'longitude',
+  geo = 'geo', // GEOJSON object
+}
+
+export interface TypeInfo {
+  value: FieldType;
+  isArray?: boolean; // The values in a cell are an array (currently not really supported)
+  metric?: MetricType;
+  semantic?: SemanticType;
+}
+
 export interface Field<T = any, V = Vector<T>> {
   /**
    * Name of the field (column)
    */
   name: string;
+
   /**
    *  Field value type (string, number, etc)
    */
-  type: FieldType;
+  type: TypeInfo;
+
   /**
    *  Meta info about how field and how to display it
    */
@@ -97,7 +119,7 @@ export interface DataFrame extends QueryResultBase {
  */
 export interface FieldDTO<T = any> {
   name: string; // The column name
-  type?: FieldType;
+  type?: TypeInfo | string; // The `| string` is to help with migration
   config?: FieldConfig;
   values?: Vector<T> | T[]; // toJSON will always be T[], input could be either
   labels?: Labels;

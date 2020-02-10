@@ -13,7 +13,7 @@ interface MySpecialObject {
 describe('dataFrameView', () => {
   const frame: DataFrameDTO = {
     fields: [
-      { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+      { name: 'time', type: 'time', values: [100, 200, 300] },
       { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
       { name: 'value', type: FieldType.number, values: [1, 2, 3] },
     ],

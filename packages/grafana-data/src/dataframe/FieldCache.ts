@@ -1,4 +1,4 @@
-import { Field, DataFrame, FieldType, guessFieldTypeForField } from '../index';
+import { Field, DataFrame, FieldType, guessFieldTypeFromValues } from '../index';
 
 export interface FieldWithIndex extends Field {
   index: number;
@@ -19,16 +19,16 @@ export class FieldCache {
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
       // Make sure it has a type
-      if (field.type === FieldType.other) {
-        const t = guessFieldTypeForField(field);
+      if (field.type.value === FieldType.other) {
+        const t = guessFieldTypeFromValues(field.values);
         if (t) {
-          field.type = t;
+          field.type.value = t;
         }
       }
-      if (!this.fieldByType[field.type]) {
-        this.fieldByType[field.type] = [];
+      if (!this.fieldByType[field.type.value]) {
+        this.fieldByType[field.type.value] = [];
       }
-      this.fieldByType[field.type].push({
+      this.fieldByType[field.type.value].push({
         ...field,
         index: i,
       });

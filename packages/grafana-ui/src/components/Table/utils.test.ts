@@ -1,10 +1,17 @@
-import { MutableDataFrame, FieldType } from '@grafana/data';
+import { MutableDataFrame, FieldType, SemanticType } from '@grafana/data';
 import { getColumns, getTextAlign } from './utils';
 
 function getData() {
   const data = new MutableDataFrame({
     fields: [
-      { name: 'Time', type: FieldType.time, values: [] },
+      {
+        name: 'Time',
+        type: {
+          value: FieldType.number,
+          semantic: SemanticType.time,
+        },
+        values: [],
+      },
       {
         name: 'Value',
         type: FieldType.number,

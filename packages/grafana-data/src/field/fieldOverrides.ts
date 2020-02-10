@@ -12,13 +12,14 @@ import {
   FieldColorMode,
   ColorScheme,
   TimeZone,
+  TypeInfo,
+  SemanticType,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
-import { guessFieldTypeForField } from '../dataframe';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -46,7 +47,7 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
   const reducers = [ReducerID.min, ReducerID.max];
   for (const frame of data) {
     for (const field of frame.fields) {
-      if (field.type === FieldType.number) {
+      if (field.type.value === FieldType.number) {
         const stats = reduceField({ field, reducers });
         if (stats[ReducerID.min] < min) {
           min = stats[ReducerID.min];
@@ -59,6 +60,10 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
   }
 
   return { min, max };
+}
+
+function isSimpleNumber(type: TypeInfo) {
+  return type.value === FieldType.number && type.semantic !== SemanticType.time;
 }
 
 /**
@@ -99,7 +104,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
       const config: FieldConfig = { ...field.config } || {};
-      if (field.type === FieldType.number) {
+      const isNumberField = isSimpleNumber(field.type);
+      if (isNumberField) {
         setFieldConfigDefaults(config, source.defaults);
       }
 
@@ -115,15 +121,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
               replaceVariables: options.replaceVariables,
             });
           }
-        }
-      }
-
-      // Try harder to set a real value that is not 'other'
-      let type = field.type;
-      if (!type || type === FieldType.other) {
-        const t = guessFieldTypeForField(field);
-        if (t) {
-          type = t;
         }
       }
 
@@ -145,7 +142,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       // Set the Min/Max value automatically
-      if (options.autoMinMax && field.type === FieldType.number) {
+      if (options.autoMinMax && isNumberField) {
         if (!isNumber(config.min) || !isNumber(config.max)) {
           if (!range) {
             range = findNumericFieldMinMax(options.data!); // Global value
@@ -163,7 +160,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const f: Field = {
         ...field,
         config,
-        type,
       };
       // and set the display processor using it
       f.display = getDisplayProcessor({

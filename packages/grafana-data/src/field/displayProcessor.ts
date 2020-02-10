@@ -2,7 +2,7 @@
 import _ from 'lodash';
 
 // Types
-import { Field, FieldType } from '../types/dataFrame';
+import { Field, SemanticType } from '../types/dataFrame';
 import { GrafanaTheme } from '../types/theme';
 import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
@@ -33,7 +33,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const { field } = options;
   const config = field.config ?? {};
 
-  if (field.type === FieldType.time) {
+  if (field.type?.semantic === SemanticType.time) {
     if (config.unit && timeFormats[config.unit]) {
       // Currently selected unit is valid for time fields
     } else if (config.unit && config.unit.startsWith('time:')) {

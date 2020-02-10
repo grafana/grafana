@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
-import { createDimension, ArrayVector, FieldType } from '@grafana/data';
+import { createDimension, ArrayVector, FieldType, SemanticType } from '@grafana/data';
 import { GraphDimensions } from './types';
 import { ActiveDimensions } from '../../Chart/Tooltip';
 
@@ -16,13 +16,19 @@ describe('MultiModeGraphTooltip', () => {
             config: {},
             values: new ArrayVector([0, 100, 200]),
             name: 'A-series time',
-            type: FieldType.time,
+            type: {
+              value: FieldType.number,
+              semantic: SemanticType.time,
+            },
           },
           {
             config: {},
             values: new ArrayVector([0, 100, 200]),
             name: 'B-series time',
-            type: FieldType.time,
+            type: {
+              value: FieldType.number,
+              semantic: SemanticType.time,
+            },
           },
         ]),
         yAxis: createDimension('yAxis', [
@@ -30,13 +36,17 @@ describe('MultiModeGraphTooltip', () => {
             config: {},
             values: new ArrayVector([10, 20, 10]),
             name: 'A-series values',
-            type: FieldType.number,
+            type: {
+              value: FieldType.number,
+            },
           },
           {
             config: {},
             values: new ArrayVector([20, 30, 40]),
             name: 'B-series values',
-            type: FieldType.number,
+            type: {
+              value: FieldType.number,
+            },
           },
         ]),
       };

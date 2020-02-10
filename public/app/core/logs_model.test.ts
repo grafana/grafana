@@ -7,6 +7,7 @@ import {
   MutableDataFrame,
   toDataFrame,
   LogRowModel,
+  SemanticType,
 } from '@grafana/data';
 import { dedupLogRows, dataFrameToLogsModel } from './logs_model';
 
@@ -177,7 +178,10 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'time',
-            type: FieldType.time,
+            type: {
+              value: FieldType.number,
+              semantic: SemanticType.time,
+            },
             values: [],
           },
         ],
@@ -192,7 +196,10 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'time',
-            type: FieldType.time,
+            type: {
+              value: FieldType.number,
+              semantic: SemanticType.time,
+            },
             values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
           },
           {
@@ -258,7 +265,10 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'time',
-            type: FieldType.time,
+            type: {
+              value: FieldType.number,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:01Z'],
           },
           {
@@ -292,12 +302,17 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'ts',
-            type: FieldType.time,
+            type: {
+              value: FieldType.string,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'line',
-            type: FieldType.string,
+            type: {
+              value: FieldType.string,
+            },
             values: ['WARN boooo'],
             labels: {
               foo: 'bar',
@@ -307,7 +322,9 @@ describe('dataFrameToLogsModel', () => {
           },
           {
             name: 'id',
-            type: FieldType.string,
+            type: {
+              value: FieldType.string,
+            },
             values: ['0'],
           },
         ],
@@ -317,12 +334,17 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'time',
-            type: FieldType.time,
+            type: {
+              value: FieldType.string,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:02Z'],
           },
           {
             name: 'message',
-            type: FieldType.string,
+            type: {
+              value: FieldType.string,
+            },
             values: ['INFO 1', 'INFO 2'],
             labels: {
               foo: 'bar',
@@ -332,7 +354,9 @@ describe('dataFrameToLogsModel', () => {
           },
           {
             name: 'id',
-            type: FieldType.string,
+            type: {
+              value: FieldType.string,
+            },
             values: ['1', '2'],
           },
         ],
@@ -378,12 +402,17 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'ts',
-            type: FieldType.time,
+            type: {
+              value: FieldType.string,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:00Z'],
           },
           {
             name: 'line',
-            type: FieldType.string,
+            type: {
+              value: FieldType.string,
+            },
             values: ['WARN boooo 1'],
             labels: {
               foo: 'bar',
@@ -393,7 +422,9 @@ describe('dataFrameToLogsModel', () => {
           },
           {
             name: 'id',
-            type: FieldType.string,
+            type: {
+              value: FieldType.string,
+            },
             values: ['0'],
           },
         ],
@@ -402,12 +433,17 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'ts',
-            type: FieldType.time,
+            type: {
+              value: FieldType.string,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'line',
-            type: FieldType.string,
+            type: {
+              value: FieldType.string,
+            },
             values: ['WARN boooo 2'],
             labels: {
               foo: 'bar',
@@ -427,7 +463,10 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'time',
-            type: FieldType.time,
+            type: {
+              value: FieldType.number,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:01Z'],
           },
           {
@@ -486,7 +525,10 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'ts',
-            type: FieldType.time,
+            type: {
+              value: FieldType.string,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:00Z'],
           },
           {
@@ -507,7 +549,10 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'ts',
-            type: FieldType.time,
+            type: {
+              value: FieldType.string,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:00Z'],
           },
           {
@@ -531,7 +576,10 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'ts',
-            type: FieldType.time,
+            type: {
+              value: FieldType.string,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:01Z'],
           },
           {
@@ -555,7 +603,10 @@ describe('dataFrameToLogsModel', () => {
         fields: [
           {
             name: 'ts',
-            type: FieldType.time,
+            type: {
+              value: FieldType.string,
+              semantic: SemanticType.time,
+            },
             values: ['1970-01-01T00:00:01Z'],
           },
           {

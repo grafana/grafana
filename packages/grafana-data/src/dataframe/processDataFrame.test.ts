@@ -7,8 +7,7 @@ import {
   toDataFrame,
   toLegacyResponseData,
 } from './processDataFrame';
-import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
-import { dateTime } from '../datetime/moment_wrapper';
+import { DataFrameDTO, FieldType, TableData, TimeSeries, SemanticType } from '../types/index';
 import { MutableDataFrame } from './MutableDataFrame';
 
 describe('toDataFrame', () => {
@@ -54,7 +53,7 @@ describe('toDataFrame', () => {
       ],
     };
     const data = toDataFrame(input1);
-    expect(data.fields[0].type).toBe(FieldType.number);
+    expect(data.fields[0].type.value).toBe(FieldType.number);
   });
 
   it('keeps dataFrame unchanged', () => {
@@ -99,8 +98,6 @@ describe('toDataFrame', () => {
     expect(guessFieldTypeFromValue(3.125e7)).toBe(FieldType.number);
     expect(guessFieldTypeFromValue(true)).toBe(FieldType.boolean);
     expect(guessFieldTypeFromValue(false)).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue(new Date())).toBe(FieldType.time);
-    expect(guessFieldTypeFromValue(dateTime())).toBe(FieldType.time);
   });
 
   it('Guess Colum Types from strings', () => {
@@ -125,11 +122,11 @@ describe('toDataFrame', () => {
       ],
     });
     const norm = guessFieldTypes(series);
-    expect(norm.fields[0].type).toBe(FieldType.number);
-    expect(norm.fields[1].type).toBe(FieldType.string);
-    expect(norm.fields[2].type).toBe(FieldType.other);
-    expect(norm.fields[3].type).toBe(FieldType.time); // based on name
-    expect(norm.fields[4].type).toBe(FieldType.number);
+    expect(norm.fields[0].type.value).toBe(FieldType.number);
+    expect(norm.fields[1].type.value).toBe(FieldType.string);
+    expect(norm.fields[2].type.value).toBe(FieldType.other);
+    expect(norm.fields[3].type.semantic).toBe(SemanticType.time); // based on name
+    expect(norm.fields[4].type.value).toBe(FieldType.number);
   });
 
   it('converts JSON document data to series', () => {
@@ -231,7 +228,7 @@ describe('SerisData backwards compatibility', () => {
         somethign: 8,
       },
       fields: [
-        { name: 'T', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'T', type: 'time', values: [1, 2, 3] },
         { name: 'N', type: FieldType.number, config: { filterable: true }, values: [100, 200, 300] },
         { name: 'S', type: FieldType.string, config: { filterable: true }, values: ['1', '2', '3'] },
       ],
@@ -280,7 +277,7 @@ describe('SerisData backwards compatibility', () => {
 describe('sorted DataFrame', () => {
   const frame = toDataFrame({
     fields: [
-      { name: 'fist', type: FieldType.time, values: [1, 2, 3] },
+      { name: 'fist', type: 'time', values: [1, 2, 3] },
       { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
       { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
     ],

@@ -7,7 +7,7 @@ describe('getRowContexts', () => {
       const firstResult = new MutableDataFrame({
         refId: 'B',
         fields: [
-          { name: 'ts', type: FieldType.time, values: [3, 2, 1] },
+          { name: 'ts', type: 'time', values: [3, 2, 1] },
           { name: 'line', type: FieldType.string, values: ['3', '2', '1'], labels: {} },
           { name: 'id', type: FieldType.string, values: ['3', '2', '1'], labels: {} },
         ],
@@ -15,7 +15,7 @@ describe('getRowContexts', () => {
       const secondResult = new MutableDataFrame({
         refId: 'B',
         fields: [
-          { name: 'ts', type: FieldType.time, values: [6, 5, 4] },
+          { name: 'ts', type: 'time', values: [6, 5, 4] },
           { name: 'line', type: FieldType.string, values: ['6', '5', '4'], labels: {} },
           { name: 'id', type: FieldType.string, values: ['6', '5', '4'], labels: {} },
         ],
@@ -38,14 +38,14 @@ describe('getRowContexts', () => {
       const firstResult = new MutableDataFrame({
         refId: 'B',
         fields: [
-          { name: 'ts', type: FieldType.time, values: [3, 2, 1] },
+          { name: 'ts', type: 'time', values: [3, 2, 1] },
           { name: 'line', type: FieldType.string, values: ['3', '2', '1'], labels: {} },
         ],
       });
       const secondResult = new MutableDataFrame({
         refId: 'B',
         fields: [
-          { name: 'ts', type: FieldType.time, values: [6, 5, 4] },
+          { name: 'ts', type: 'time', values: [6, 5, 4] },
           { name: 'line', type: FieldType.string, values: ['6', '5', '4'], labels: {} },
         ],
       });

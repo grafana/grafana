@@ -1,4 +1,4 @@
-import { Field, FieldType } from '../../types/dataFrame';
+import { Field, FieldType, SemanticType } from '../../types/dataFrame';
 import { FieldMatcherID } from './ids';
 import { FieldMatcherInfo } from '../../types/transformations';
 
@@ -11,7 +11,7 @@ const fieldTypeMacher: FieldMatcherInfo<FieldType> = {
 
   get: (type: FieldType) => {
     return (field: Field) => {
-      return type === field.type;
+      return type === field.type.value;
     };
   },
 
@@ -27,8 +27,10 @@ const numericMacher: FieldMatcherInfo = {
   name: 'Numeric Fields',
   description: 'Fields with type number',
 
-  get: () => {
-    return fieldTypeMacher.get(FieldType.number);
+  get: (type: FieldType) => {
+    return (field: Field) => {
+      return FieldType.number === field.type.value && field.type.semantic !== SemanticType.time;
+    };
   },
 
   getOptionsDisplayText: () => {
@@ -43,7 +45,9 @@ const timeMacher: FieldMatcherInfo = {
   description: 'Fields with type time',
 
   get: () => {
-    return fieldTypeMacher.get(FieldType.time);
+    return (field: Field) => {
+      return field.type.semantic === SemanticType.time;
+    };
   },
 
   getOptionsDisplayText: () => {

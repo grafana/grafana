@@ -6,7 +6,7 @@ import { transformDataFrame } from '../transformers';
 
 export const simpleSeriesWithTypes = toDataFrame({
   fields: [
-    { name: 'A', type: FieldType.time, values: [1000, 2000] },
+    { name: 'A', type: 'time', values: [1000, 2000] },
     { name: 'B', type: FieldType.boolean, values: [true, false] },
     { name: 'C', type: FieldType.string, values: ['a', 'b'] },
     { name: 'D', type: FieldType.number, values: [1, 2] },
