@@ -26,8 +26,6 @@ export function getFilePaths(root: string, work?: string, acc?: string[]): strin
 }
 
 const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
-  console.log('Building file manifest...');
-
   const filename = 'MANIFEST.txt';
   const files = getFilePaths(folder).filter(f => f !== filename);
 

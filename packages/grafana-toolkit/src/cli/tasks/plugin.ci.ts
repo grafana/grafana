@@ -164,7 +164,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     }
   });
 
-  console.log('Create a file manifest');
+  // Write a manifest.txt file in the dist folder
   await execTask(manifestTask)({ folder: distContentDir });
 
   console.log('Building ZIP');
