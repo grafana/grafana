@@ -92,6 +92,7 @@ const defaults: any = {
 };
 
 export class PanelModel {
+  /* persisted id, used in URL to identify a panel */
   id: number;
   gridPos: GridPos;
   type: string;
@@ -280,6 +281,7 @@ export class PanelModel {
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
+
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;
