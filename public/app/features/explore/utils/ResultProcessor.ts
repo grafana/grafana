@@ -2,11 +2,11 @@ import {
   LogsModel,
   GraphSeriesXY,
   DataFrame,
-  FieldType,
   TimeZone,
   toDataFrame,
   getDisplayProcessor,
   ExploreMode,
+  SemanticType,
 } from '@grafana/data';
 import { ExploreItemState } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
@@ -114,10 +114,9 @@ export class ResultProcessor {
 
 export function isTimeSeries(frame: DataFrame): boolean {
   if (frame.fields.length === 2) {
-    if (frame.fields[1].type === FieldType.time) {
+    if (frame.fields[1].type.semantic === SemanticType.time) {
       return true;
     }
   }
-
   return false;
 }

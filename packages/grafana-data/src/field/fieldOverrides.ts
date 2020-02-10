@@ -12,14 +12,13 @@ import {
   FieldColorMode,
   ColorScheme,
   TimeZone,
-  TypeInfo,
-  SemanticType,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
+import { isSimpleNumberField } from '../dataframe';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -62,10 +61,6 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
   return { min, max };
 }
 
-function isSimpleNumber(type: TypeInfo) {
-  return type.value === FieldType.number && type.semantic !== SemanticType.time;
-}
-
 /**
  * Return a copy of the DataFrame with all rules applied
  */
@@ -104,7 +99,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
       const config: FieldConfig = { ...field.config } || {};
-      const isNumberField = isSimpleNumber(field.type);
+      const isNumberField = isSimpleNumberField(field.type);
       if (isNumberField) {
         setFieldConfigDefaults(config, source.defaults);
       }

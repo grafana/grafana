@@ -1,4 +1,4 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, MutableDataFrame, SemanticType } from '@grafana/data';
 import { LokiLegacyStreamResult, LokiStreamResult } from './types';
 import * as ResultTransformer from './result_transformer';
 
@@ -83,7 +83,7 @@ describe('loki result transformer', () => {
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
       dataFrames.forEach(frame => {
         expect(
-          frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
+          frame.fields.filter(field => field.name === 'test' && field.type.value === 'string').length
         ).toBeGreaterThanOrEqual(1);
       });
     });
@@ -120,7 +120,7 @@ describe('loki result transformer', () => {
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
       dataFrames.forEach(frame => {
         expect(
-          frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
+          frame.fields.filter(field => field.name === 'test' && field.type.value === 'string').length
         ).toBeGreaterThanOrEqual(1);
       });
     });
@@ -129,7 +129,7 @@ describe('loki result transformer', () => {
   describe('appendResponseToBufferedData', () => {
     it('appends response', () => {
       const data = new MutableDataFrame();
-      data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
+      data.addField({ name: 'ts', type: SemanticType.time, config: { title: 'Time' } });
       data.addField({ name: 'line', type: FieldType.string });
       data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'id', type: FieldType.string });

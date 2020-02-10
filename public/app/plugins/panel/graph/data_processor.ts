@@ -1,6 +1,13 @@
 import _ from 'lodash';
 import { colors } from '@grafana/ui';
-import { getColorFromHexRgbOrName, TimeRange, FieldType, Field, DataFrame, getTimeField } from '@grafana/data';
+import {
+  getColorFromHexRgbOrName,
+  TimeRange,
+  Field,
+  DataFrame,
+  getTimeField,
+  isSimpleNumberField,
+} from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 
@@ -30,7 +37,7 @@ export class DataProcessor {
       const seriesName = series.name ? series.name : series.refId;
       for (let j = 0; j < series.fields.length; j++) {
         const field = series.fields[j];
-        if (field.type !== FieldType.number) {
+        if (!isSimpleNumberField(field.type)) {
           continue;
         }
 

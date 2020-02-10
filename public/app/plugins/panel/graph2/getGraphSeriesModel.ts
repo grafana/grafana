@@ -17,6 +17,7 @@ import {
   DEFAULT_DATE_TIME_FORMAT,
   FieldColor,
   FieldColorMode,
+  isSimpleNumberField,
 } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';
@@ -49,7 +50,7 @@ export const getGraphSeriesModel = (
     }
 
     for (const field of series.fields) {
-      if (field.type !== FieldType.number) {
+      if (!isSimpleNumberField(field.type)) {
         continue;
       }
       // Storing index of series field for future inspection

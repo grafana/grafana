@@ -55,7 +55,9 @@ export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataF
       ...series.fields,
       {
         name: 'LogLevel',
-        type: FieldType.string,
+        type: {
+          value: FieldType.string,
+        },
         values: levels,
         config: {},
       },

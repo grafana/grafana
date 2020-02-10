@@ -25,6 +25,9 @@ import {
   getFlotPairs,
   TimeZone,
   getDisplayProcessor,
+  SemanticType,
+  getTimeField,
+  Field,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -183,7 +186,10 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
 }
 
 function isLogsData(series: DataFrame) {
-  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+  return (
+    series.fields.some(f => f.type.semantic === SemanticType.time) && // Time column
+    series.fields.some(f => f.type.value === FieldType.string)
+  ); // and a string column
 }
 
 /**
@@ -247,10 +253,10 @@ const logTimeFormat = 'YYYY-MM-DD HH:mm:ss';
 interface LogFields {
   series: DataFrame;
 
-  timeField: FieldWithIndex;
+  timeField: Field;
   stringField: FieldWithIndex;
-  logLevelField?: FieldWithIndex;
-  idField?: FieldWithIndex;
+  logLevelField?: Field;
+  idField?: Field;
 }
 
 /**
@@ -273,9 +279,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     if (stringField.labels) {
       allLabels.push(stringField.labels);
     }
+    const { timeField } = getTimeField(series);
     return {
       series,
-      timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+      timeField,
       stringField,
       logLevelField: fieldCache.getFieldByName('level'),
       idField: getIdField(fieldCache),

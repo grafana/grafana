@@ -13,6 +13,7 @@ import {
   FieldConfig,
   DataFrameView,
   dateTime,
+  SemanticType,
 } from '@grafana/data';
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
@@ -107,10 +108,20 @@ function constructDataFrame(
   const dataFrame = {
     refId,
     fields: [
-      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
-      { name: 'id', type: FieldType.string, config: {}, values: uids },
-      { name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' }, values: timesNs }, // Time
+      {
+        name: 'ts',
+        type: { semantic: SemanticType.time, value: FieldType.number },
+        config: { title: 'Time' },
+        values: times,
+      }, // Time
+      { name: 'line', type: { value: FieldType.string }, config: {}, values: lines, labels }, // Line
+      { name: 'id', type: { value: FieldType.string }, config: {}, values: uids },
+      {
+        name: 'tsNs',
+        type: { semantic: SemanticType.time, value: FieldType.string },
+        config: { title: 'Time ns' },
+        values: timesNs,
+      }, // Time
     ],
     length: times.length,
   };
@@ -141,7 +152,7 @@ export function appendLegacyResponseToBufferedData(response: LokiLegacyStreamRes
 
   let baseLabels: Labels = {};
   for (const f of data.fields) {
-    if (f.type === FieldType.string) {
+    if (f.type.value === FieldType.string) {
       if (f.labels) {
         baseLabels = f.labels;
       }
@@ -175,7 +186,7 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
   let baseLabels: Labels = {};
   for (const f of data.fields) {
-    if (f.type === FieldType.string) {
+    if (f.type.value === FieldType.string) {
       if (f.labels) {
         baseLabels = f.labels;
       }
@@ -264,9 +275,9 @@ export function lokiResultsToTableModel(
   const sortedLabels = [...metricLabels.values()].sort();
   const table = new TableModel();
   table.columns = [
-    { text: 'Time', type: FieldType.time },
+    { text: 'Time', type: SemanticType.time },
     ...sortedLabels.map(label => ({ text: label, filterable: true })),
-    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.time },
+    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: SemanticType.time },
   ];
 
   // Populate rows, set value to empty string when label not present.

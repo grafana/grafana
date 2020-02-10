@@ -17,7 +17,7 @@ import { GraphSeriesValue } from '../types/graph';
 import { GrafanaTheme } from '../types/theme';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
-import { getTimeField } from '../dataframe/processDataFrame';
+import { getTimeField, isSimpleNumberField } from '../dataframe/processDataFrame';
 import { applyFieldOverrides } from './fieldOverrides';
 
 export interface FieldDisplayOptions extends FieldConfigSource {
@@ -43,7 +43,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 
   let fieldCount = 0;
   for (const field of data[0].fields) {
-    if (field.type === FieldType.number) {
+    if (isSimpleNumberField(field.type)) {
       fieldCount++;
     }
   }
@@ -109,7 +109,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         const field = series.fields[i];
 
         // Show all number fields
-        if (field.type !== FieldType.number) {
+        if (isSimpleNumberField(field.type)) {
           continue;
         }
         const config = field.config; // already set by the prepare task
@@ -245,7 +245,9 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
 
   const displayProcessor = getDisplayProcessor({
     field: {
-      type: FieldType.other,
+      type: {
+        value: FieldType.other,
+      },
       config: defaults,
     },
     theme: options.theme,

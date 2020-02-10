@@ -138,7 +138,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
         origin: VariableOrigin.Fields,
       });
       keys[f.name] = true;
-      if (!numeric && f.type === FieldType.number) {
+      if (!numeric && f.type.value === FieldType.number) {
         numeric = f;
       }
       if (!title && f.config.title && f.config.title !== f.name) {

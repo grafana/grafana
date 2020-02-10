@@ -96,7 +96,9 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
           link = getLinksFromLogsField(
             {
               name: '',
-              type: FieldType.string,
+              type: {
+                value: FieldType.string,
+              },
               values: new ArrayVector([value]),
               config: {
                 links: [{ title: '', url: field.url }],

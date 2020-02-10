@@ -23,6 +23,7 @@ import {
   getColorFromHexRgbOrName,
   PanelEvents,
   formattedValueToString,
+  SemanticType,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
@@ -227,7 +228,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       if (r) {
         calc = r.id;
         // With strings, don't accidentally use a math function
-        if (calcField.type === FieldType.string) {
+        if (calcField.type.value === FieldType.string) {
           const avoid = [ReducerID.mean, ReducerID.sum];
           if (avoid.includes(calc)) {
             calc = panel.valueName = ReducerID.first;
@@ -727,7 +728,7 @@ function getDistinctNames(data: DataFrame[]): DistinctFieldsInfo {
   for (const frame of data) {
     const info: FrameInfo = { frame };
     for (const field of frame.fields) {
-      if (field.type === FieldType.time) {
+      if (field.type.semantic === SemanticType.time) {
         if (!info.firstTimeField) {
           info.firstTimeField = field;
         }

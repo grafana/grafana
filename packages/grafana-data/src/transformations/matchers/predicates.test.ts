@@ -8,11 +8,11 @@ const matchesNumberConfig: MatcherConfig = {
   id: FieldMatcherID.byType,
   options: FieldType.number,
 };
-const matchesTimeConfig: MatcherConfig = {
+const matchesStringConfig: MatcherConfig = {
   id: FieldMatcherID.byType,
-  options: FieldType.time,
+  options: FieldType.string,
 };
-const both = [matchesNumberConfig, matchesTimeConfig];
+const both = [matchesNumberConfig, matchesStringConfig];
 
 describe('Check Predicates', () => {
   it('can not match both', () => {
@@ -25,14 +25,16 @@ describe('Check Predicates', () => {
   it('match either time or number', () => {
     const matches = fieldMatchers.get(MatcherID.anyMatch).get(both);
     for (const field of simpleSeriesWithTypes.fields) {
-      expect(matches(field)).toBe(field.type === FieldType.number || field.type === FieldType.time);
+      const ft = field.type.value;
+      expect(matches(field)).toBe(ft === FieldType.number || ft === FieldType.string);
     }
   });
 
   it('match not time', () => {
-    const matches = fieldMatchers.get(MatcherID.invertMatch).get(matchesTimeConfig);
+    const matches = fieldMatchers.get(MatcherID.invertMatch).get(matchesStringConfig);
     for (const field of simpleSeriesWithTypes.fields) {
-      expect(matches(field)).toBe(field.type !== FieldType.time);
+      const ft = field.type.value;
+      expect(matches(field)).toBe(ft !== FieldType.string);
     }
   });
 });

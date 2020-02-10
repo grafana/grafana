@@ -37,7 +37,9 @@ describe('getLinksFromLogsField', () => {
   it('interpolates link from field', () => {
     const field: Field = {
       name: 'test field',
-      type: FieldType.number,
+      type: {
+        value: FieldType.number,
+      },
       config: {
         links: [
           {
@@ -61,7 +63,9 @@ describe('getLinksFromLogsField', () => {
   it('handles zero links', () => {
     const field: Field = {
       name: 'test field',
-      type: FieldType.number,
+      type: {
+        value: FieldType.number,
+      },
       config: {},
       values: new ArrayVector([1, 2, 3]),
     };

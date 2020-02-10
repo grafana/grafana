@@ -9,6 +9,7 @@ import {
   CSVReader,
   Field,
   LoadingState,
+  SemanticType,
 } from '@grafana/data';
 
 import { TestDataQuery, StreamingQuery } from './types';
@@ -51,8 +52,8 @@ export function runSignalStream(
     });
     data.refId = target.refId;
     data.name = target.alias || 'Signal ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time });
-    data.addField({ name: 'value', type: FieldType.number });
+    data.addField({ name: 'time', type: { semantic: SemanticType.time, value: FieldType.number } });
+    data.addField({ name: 'value', type: { value: FieldType.number } });
 
     const { spread, speed, bands, noise } = query;
 
@@ -128,8 +129,8 @@ export function runLogsStream(
     });
     data.refId = target.refId;
     data.name = target.alias || 'Logs ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time });
-    data.addField({ name: 'line', type: FieldType.string });
+    data.addField({ name: 'time', type: { semantic: SemanticType.time, value: FieldType.number } });
+    data.addField({ name: 'line', type: { value: FieldType.string } });
 
     const { speed } = query;
 

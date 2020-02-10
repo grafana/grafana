@@ -16,6 +16,7 @@ import {
   DataFrameDTO,
   SemanticType,
   Vector,
+  TypeInfo,
 } from '../types/index';
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { ArrayVector } from '../vector/ArrayVector';
@@ -454,6 +455,13 @@ export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?
   }
   return {};
 };
+
+/**
+ * Check for numbers that do not represent a time
+ */
+export function isSimpleNumberField(type: TypeInfo) {
+  return type.value === FieldType.number && type.semantic !== SemanticType.time;
+}
 
 /**
  * Wrapper to get an array from each field value

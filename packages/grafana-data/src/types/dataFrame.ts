@@ -55,7 +55,7 @@ export enum MetricType {
   counter = 'counter',
   gauge = 'gauge',
   histogram = 'histogram',
-  summary = 'summary ',
+  summary = 'summary',
 }
 
 export enum SemanticType {

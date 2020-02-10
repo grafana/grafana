@@ -7,6 +7,7 @@ import {
   getColorFromHexRgbOrName,
   GrafanaThemeType,
   Field,
+  SemanticType,
 } from '@grafana/data';
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData } from './utils';
 
@@ -29,7 +30,7 @@ const mockResult = (
 // A and B series have the same x-axis range and the datapoints are x-axis aligned
 const aSeries = toDataFrame({
   fields: [
-    { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+    { name: 'time', type: SemanticType.time, values: [100, 200, 300] },
     {
       name: 'value',
       type: FieldType.number,
@@ -40,7 +41,7 @@ const aSeries = toDataFrame({
 });
 const bSeries = toDataFrame({
   fields: [
-    { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+    { name: 'time', type: SemanticType.time, values: [100, 200, 300] },
     {
       name: 'value',
       type: FieldType.number,
@@ -52,7 +53,7 @@ const bSeries = toDataFrame({
 // C-series has the same x-axis range as A and B but is missing the middle point
 const cSeries = toDataFrame({
   fields: [
-    { name: 'time', type: FieldType.time, values: [100, 300] },
+    { name: 'time', type: SemanticType.time, values: [100, 300] },
     {
       name: 'value',
       type: FieldType.number,

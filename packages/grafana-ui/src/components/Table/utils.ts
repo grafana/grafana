@@ -35,7 +35,7 @@ export function getTextAlign(field: Field): TextAlignProperty {
     }
   }
 
-  if (field.type === FieldType.number) {
+  if (field.type.value === FieldType.number) {
     return 'right';
   }
 

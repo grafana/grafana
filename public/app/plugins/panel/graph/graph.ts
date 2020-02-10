@@ -265,7 +265,12 @@ class GraphElement {
           links,
         };
         const fieldDisplay = getDisplayProcessor({
-          field: { config: fieldConfig, type: FieldType.number },
+          field: {
+            config: fieldConfig,
+            type: {
+              value: FieldType.number,
+            },
+          },
           theme: getCurrentTheme(),
         })(field.values.get(item.dataIndex));
         linksSupplier = links.length
