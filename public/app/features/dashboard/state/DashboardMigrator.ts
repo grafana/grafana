@@ -9,7 +9,7 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink } from '@grafana/data';
+import { DataLink, DataLinkBuiltInVars } from '@grafana/data';
 
 // Constants
 import {
@@ -20,7 +20,6 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { DataLinkBuiltInVars } from '@grafana/ui';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;

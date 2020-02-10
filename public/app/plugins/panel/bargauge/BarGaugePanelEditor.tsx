@@ -20,13 +20,11 @@ import {
   FieldConfig,
   DataLink,
   PanelEditorProps,
+  getDataLinksVariableSuggestions,
+  getCalculationValueDataLinksVariableSuggestions,
 } from '@grafana/data';
 import { BarGaugeOptions, displayModes } from './types';
 import { orientationOptions } from '../gauge/types';
-import {
-  getDataLinksVariableSuggestions,
-  getCalculationValueDataLinksVariableSuggestions,
-} from 'app/features/panel/panellinks/link_srv';
 import { config } from 'app/core/config';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {

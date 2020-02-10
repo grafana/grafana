@@ -1,5 +1,5 @@
 import { GraphCtrl } from '../module';
-import { dateTime } from '@grafana/data';
+import { dateTime, initialiseVariableSuggestions } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 
 jest.mock('../graph', () => ({}));
@@ -44,6 +44,9 @@ describe('GraphCtrl', () => {
     };
     ctx.ctrl.annotationsPromise = Promise.resolve({});
     ctx.ctrl.updateTimeRange();
+    initialiseVariableSuggestions({
+      variables: [],
+    });
   });
 
   describe('when time series are outside range', () => {

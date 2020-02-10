@@ -17,13 +17,11 @@ import {
   ValueMapping,
   FieldConfig,
   DataLink,
+  getCalculationValueDataLinksVariableSuggestions,
+  getDataLinksVariableSuggestions,
 } from '@grafana/data';
 
 import { GaugeOptions } from './types';
-import {
-  getCalculationValueDataLinksVariableSuggestions,
-  getDataLinksVariableSuggestions,
-} from 'app/features/panel/panellinks/link_srv';
 import { config } from 'app/core/config';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
