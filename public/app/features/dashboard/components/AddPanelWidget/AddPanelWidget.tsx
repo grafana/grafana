@@ -3,28 +3,36 @@ import React from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
 import { e2e } from '@grafana/e2e';
+import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
 import config from 'app/core/config';
 import store from 'app/core/store';
 // Store
 import { store as reduxStore } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
+import { addPanelToDashboard } from 'app/features/dashboard/state/reducers';
 // Types
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
-export interface Props {
+export interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
 }
+
+export interface DispatchProps {
+  addPanelToDashboard: typeof addPanelToDashboard;
+}
+
+export type Props = OwnProps & DispatchProps;
 
 export interface State {
   copiedPanelPlugins: any[];
 }
 
-export class AddPanelWidget extends React.Component<Props, State> {
+export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.handleCloseAddPanel = this.handleCloseAddPanel.bind(this);
@@ -188,3 +196,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
     );
   }
 }
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanelToDashboard };
+
+export const AddPanelWidget = connect(null, mapDispatchToProps)(AddPanelWidgetUnconnected);

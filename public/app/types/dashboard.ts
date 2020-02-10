@@ -1,11 +1,7 @@
 import { DashboardAcl } from './acl';
 import { DataQuery } from '@grafana/data';
-
-export interface MutableDashboard {
-  title: string;
-  meta: DashboardMeta;
-  destroy: () => void;
-}
+import { AngularComponent } from '@grafana/runtime';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 export interface DashboardDTO {
   redirectUri?: string;
@@ -65,18 +61,24 @@ export interface DashboardInitError {
 
 export const KIOSK_MODE_TV = 'tv';
 export type KioskUrlValue = 'tv' | '1' | true;
-export type GetMutableDashboardModelFn = () => MutableDashboard | null;
+export type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface QueriesToUpdateOnDashboardLoad {
   panelId: number;
   queries: DataQuery[];
 }
 
+export interface PanelState {
+  pluginId: string;
+  angularPanel?: AngularComponent;
+}
+
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
-  initError?: DashboardInitError;
+  initError: DashboardInitError | null;
   permissions: DashboardAcl[] | null;
   modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
+  panels: { [id: string]: PanelState };
 }
