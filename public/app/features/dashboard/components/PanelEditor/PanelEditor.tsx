@@ -1,4 +1,4 @@
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { PureComponent } from 'react';
 import {
   GrafanaTheme,
   FieldConfigSource,
@@ -8,6 +8,7 @@ import {
   PanelEvents,
   SelectableValue,
   TimeRange,
+  DataLink,
 } from '@grafana/data';
 import {
   stylesFactory,
@@ -20,7 +21,6 @@ import {
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -36,6 +36,7 @@ import { DisplayMode, displayModes } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { LocationState, CoreEvents } from 'app/types';
+import { calculatePanelSize } from './utils';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
@@ -405,28 +406,6 @@ export class PanelEditor extends PureComponent<Props, State> {
       </div>
     );
   }
-}
-
-function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
-  if (mode === DisplayMode.Fill) {
-    return { width, height };
-  }
-  const colWidth = (window.innerWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
-  const pWidth = colWidth * panel.gridPos.w;
-  const pHeight = GRID_CELL_HEIGHT * panel.gridPos.h;
-  const scale = Math.min(width / pWidth, height / pHeight);
-
-  if (mode === DisplayMode.Exact && pWidth <= width && pHeight <= height) {
-    return {
-      width: pWidth,
-      height: pHeight,
-    };
-  }
-
-  return {
-    width: pWidth * scale,
-    height: pHeight * scale,
-  };
 }
 
 const mapStateToProps = (state: StoreState) => ({

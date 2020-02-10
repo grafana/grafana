@@ -1,4 +1,10 @@
-import { FieldConfigEditorRegistry, Registry, FieldPropertyEditorItem, ThresholdsConfig } from '@grafana/data';
+import {
+  FieldConfigEditorRegistry,
+  Registry,
+  FieldPropertyEditorItem,
+  ThresholdsConfig,
+  DataLink,
+} from '@grafana/data';
 import { StringValueEditor, StringOverrideEditor, stringOverrideProcessor, StringFieldConfigSettings } from './string';
 import { NumberValueEditor, NumberOverrideEditor, numberOverrideProcessor, NumberFieldConfigSettings } from './number';
 import { UnitValueEditor, UnitOverrideEditor } from './units';
@@ -8,6 +14,7 @@ import {
   thresholdsOverrideProcessor,
   ThresholdsFieldConfigSettings,
 } from './thresholds';
+import { DataLinksValueEditor, DataLinksOverrideEditor, dataLinksOverrideProcessor } from './links';
 
 const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
   id: 'title', // Match field properties
@@ -110,8 +117,20 @@ const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
   },
 };
 
+const links: FieldPropertyEditorItem<DataLink[], StringFieldConfigSettings> = {
+  id: 'links', // Match field properties
+  name: 'DataLinks',
+  description: 'Manage date links',
+  editor: DataLinksValueEditor,
+  override: DataLinksOverrideEditor,
+  process: dataLinksOverrideProcessor,
+  settings: {
+    placeholder: '-',
+  },
+};
+
 export const standardFieldConfigEditorRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(
   () => {
-    return [title, unit, min, max, decimals, thresholds, noValue];
+    return [title, unit, min, max, decimals, thresholds, noValue, links];
   }
 );

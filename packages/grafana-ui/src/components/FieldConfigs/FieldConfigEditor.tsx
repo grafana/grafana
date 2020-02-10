@@ -89,12 +89,20 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   };
 
   renderEditor(item: FieldPropertyEditorItem, custom: boolean) {
+    const { data } = this.props;
     const config = this.props.config.defaults;
     const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
 
     return (
       <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
-        <item.editor item={item} value={value} onChange={v => this.setDefaultValue(item.id, v, custom)} />
+        <item.editor
+          item={item}
+          value={value}
+          onChange={v => this.setDefaultValue(item.id, v, custom)}
+          context={{
+            data,
+          }}
+        />
       </Forms.Field>
     );
   }
@@ -169,7 +177,9 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
                               this.onDynamicConfigValueChange(i, j, value);
                             }}
                             item={item}
-                            context={{} as any}
+                            context={{
+                              data,
+                            }}
                           />
                         </Forms.Field>
                       );
