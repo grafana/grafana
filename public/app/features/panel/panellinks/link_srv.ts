@@ -6,6 +6,7 @@ import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
 import { DataLink, KeyValue, deprecationWarning, LinkModel, ScopedVars, DataLinkBuiltInVars } from '@grafana/data';
+import locationUtil from 'app/core/utils/location_util';
 
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
@@ -16,7 +17,7 @@ export class LinkSrv implements LinkService {
   constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
   getLinkUrl(link: any) {
-    const url = this.templateSrv.replace(link.url || '');
+    let url = locationUtil.assureBaseUrl(this.templateSrv.replace(link.url || ''));
     const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
@@ -29,7 +30,8 @@ export class LinkSrv implements LinkService {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    return appendQueryToUrl(url, toUrlParams(params));
+    url = appendQueryToUrl(url, toUrlParams(params));
+    return getConfig().disableSanitizeHtml ? url : sanitizeUrl(url);
   }
 
   getAnchorInfo(link: any) {
@@ -66,7 +68,7 @@ export class LinkSrv implements LinkService {
     }
 
     const info: LinkModel<T> = {
-      href: href.replace(/\s|\n/g, ''),
+      href: locationUtil.assureBaseUrl(href.replace(/\s|\n/g, '')),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,

@@ -4,6 +4,7 @@ import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
+import locationUtil from 'app/core/utils/location_util';
 
 import {
   DataFrame,
@@ -656,7 +657,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           window.location.href = linkInfo.href;
         } else {
           $timeout(() => {
-            $location.url(linkInfo.href);
+            $location.url(locationUtil.stripBaseFromUrl(linkInfo.href));
           });
         }
 
