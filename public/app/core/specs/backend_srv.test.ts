@@ -161,6 +161,57 @@ describe('backendSrv', () => {
       });
     });
 
+    describe('when called with the same requestId twice', () => {
+      it('then it should cancel the first call and the first call should be unsubscribed', async () => {
+        const url = '/api/dashboard/';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+        const unsubscribe = jest.fn();
+        const slowData = { message: 'Slow Request' };
+        const slowFetch = new Observable(subscriber => {
+          subscriber.next({
+            ok: true,
+            status: 200,
+            statusText: 'Ok',
+            text: () => Promise.resolve(JSON.stringify(slowData)),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            redirected: false,
+            type: 'basic',
+            url,
+          });
+          return unsubscribe;
+        }).pipe(delay(10000));
+        const fastData = { message: 'Fast Request' };
+        const fastFetch = of({
+          ok: true,
+          status: 200,
+          statusText: 'Ok',
+          text: () => Promise.resolve(JSON.stringify(fastData)),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          redirected: false,
+          type: 'basic',
+          url,
+        });
+        fromFetchMock.mockImplementationOnce(() => slowFetch);
+        fromFetchMock.mockImplementation(() => fastFetch);
+        const options = {
+          url,
+          method: 'GET',
+          requestId: 'A',
+        };
+        const slowRequest = backendSrv.request(options);
+        const fastResponse = await backendSrv.request(options);
+        expect(fastResponse).toEqual({ message: 'Fast Request' });
+
+        const result = await slowRequest;
+        expect(result).toEqual([]);
+        expect(unsubscribe).toHaveBeenCalledTimes(1);
+      });
+    });
+
     describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
       it('then it should retry', async () => {
         jest.useFakeTimers();
@@ -404,9 +455,9 @@ describe('backendSrv', () => {
           status: 200,
           statusText: 'Ok',
           type: 'basic',
-          url,
+          url: '/api/dashboard/',
           request: {
-            url,
+            url: '/api/dashboard/',
             method: 'GET',
             body: undefined,
             headers: {
@@ -416,21 +467,20 @@ describe('backendSrv', () => {
           },
         });
 
-        await slowRequest.catch(error => {
-          expect(error).toEqual({
-            cancelled: true,
-            status: -1,
-            statusText: 'Request was aborted',
-            request: {
-              url,
-              method: 'GET',
-              body: undefined,
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json, text/plain, */*',
-              },
+        const result = await slowRequest;
+        expect(result).toEqual({
+          data: [],
+          status: -1,
+          statusText: 'Request was aborted',
+          request: {
+            url: '/api/dashboard/',
+            method: 'GET',
+            body: undefined,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json, text/plain, */*',
             },
-          });
+          },
         });
         expect(unsubscribe).toHaveBeenCalledTimes(1);
       });
