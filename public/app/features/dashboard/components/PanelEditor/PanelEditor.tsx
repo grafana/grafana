@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { GrafanaTheme, FieldConfigSource, PanelData, PanelPlugin, SelectableValue, TimeRange } from '@grafana/data';
+import { GrafanaTheme, FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import {
   stylesFactory,
   Forms,
@@ -25,7 +25,7 @@ import { PanelTitle } from './PanelTitle';
 import { DisplayMode, displayModes } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { LocationState, CoreEvents } from 'app/types';
+import { LocationState } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp } from './state/actions';
 import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/reducers';
@@ -60,22 +60,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   querySubscription: Unsubscribable;
 
   componentDidMount() {
-    this.props.initPanelEditor(this.props.sourcePanel);
-    this.props.dashboard.on(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
+    this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
   }
 
   componentWillUnmount() {
     this.props.panelEditorCleanUp();
-    this.props.dashboard.off(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated);
   }
-
-  onTimeRangeUpdated = (timeRange: TimeRange) => {
-    const { panel } = this.props;
-
-    if (panel) {
-      panel.refresh();
-    }
-  };
 
   onPanelExit = () => {
     this.props.updateLocation({

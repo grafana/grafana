@@ -1,11 +1,11 @@
-import { PanelModel } from '../../../state/PanelModel';
+import { PanelModel, DashboardModel } from '../../../state';
 import { PanelData } from '@grafana/data';
 import { ThunkResult } from 'app/types';
 import { setEditorPanelData, updateEditorInitState } from './reducers';
 
-export function initPanelEditor(sourcePanel: PanelModel): ThunkResult<void> {
+export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
-    const panel = sourcePanel.getEditClone();
+    const panel = dashboard.initPanelEditor(sourcePanel);
 
     const queryRunner = panel.getQueryRunner();
     const querySubscription = queryRunner.getData().subscribe({
@@ -31,6 +31,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       dashboard.updatePanel(getPanel());
     }
 
+    dashboard.exitPanelEditor();
     querySubscription.unsubscribe();
   };
 }
