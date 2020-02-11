@@ -1,6 +1,7 @@
 import { DataFrame, Field, FieldType } from '../types/dataFrame';
 import { KeyValue } from '../types/data';
 import { chain } from 'lodash';
+import { VariableSuggestionsScope } from '../types';
 
 export enum VariableOrigin {
   Series = 'series',
@@ -201,21 +202,33 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
   return suggestions;
 };
 
-export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+export const getDataLinksVariableSuggestions = (
+  dataFrames: DataFrame[],
+  scope?: VariableSuggestionsScope
+): VariableSuggestion[] => {
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
-  return [
-    ...seriesVars,
-    ...getFieldVars(dataFrames),
-    ...valueVars,
-    valueTimeVar,
-    ...getDataFrameVars(dataFrames),
-    ...getPanelLinksVariableSuggestions(),
-  ];
+  const includeValueVars = scope === VariableSuggestionsScope.Values;
+
+  return includeValueVars
+    ? [
+        ...seriesVars,
+        ...getFieldVars(dataFrames),
+        ...valueVars,
+        valueTimeVar,
+        ...getDataFrameVars(dataFrames),
+        ...getPanelLinksVariableSuggestions(),
+      ]
+    : [
+        ...seriesVars,
+        ...getFieldVars(dataFrames),
+        ...getDataFrameVars(dataFrames),
+        ...getPanelLinksVariableSuggestions(),
+      ];
 };
 
 export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {

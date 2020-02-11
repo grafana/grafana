@@ -6,6 +6,8 @@ import {
   DataFrame,
   FieldPropertyEditorItem,
   DynamicConfigValue,
+  getDataLinksVariableSuggestions,
+  VariableSuggestionsScope,
 } from '@grafana/data';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import Forms from '../Forms';
@@ -101,6 +103,7 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
           onChange={v => this.setDefaultValue(item.id, v, custom)}
           context={{
             data,
+            getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
           }}
         />
       </Forms.Field>
@@ -179,6 +182,8 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
                             item={item}
                             context={{
                               data,
+                              getSuggestions: (scope?: VariableSuggestionsScope) =>
+                                getDataLinksVariableSuggestions(data, scope),
                             }}
                           />
                         </Forms.Field>

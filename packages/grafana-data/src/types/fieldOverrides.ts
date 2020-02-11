@@ -2,6 +2,11 @@ import { ComponentType } from 'react';
 import { MatcherConfig, FieldConfig, Field, DataFrame } from '../types';
 import { Registry, RegistryItem } from '../utils';
 import { InterpolateFunction } from './panel';
+import { VariableSuggestion } from '../links/variableSuggestions';
+
+export enum VariableSuggestionsScope {
+  Values = 'values',
+}
 
 export interface DynamicConfigValue {
   prop: string;
@@ -33,6 +38,7 @@ export interface FieldOverrideContext {
   data: DataFrame[];
   field?: Field;
   replaceVariables?: InterpolateFunction;
+  getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
 }
 
 export interface FieldOverrideEditorProps<TValue, TSettings> {

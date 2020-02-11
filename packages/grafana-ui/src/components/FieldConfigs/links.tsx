@@ -4,7 +4,7 @@ import {
   DataLink,
   FieldOverrideEditorProps,
   DataFrame,
-  getDataLinksVariableSuggestions,
+  VariableSuggestion,
 } from '@grafana/data';
 import React, { FC, useState } from 'react';
 import { css, cx } from 'emotion';
@@ -17,7 +17,7 @@ export interface DataLinksFieldConfigSettings {}
 
 export const dataLinksOverrideProcessor = (
   value: any,
-  _context: FieldOverrideContext,
+  context: FieldOverrideContext,
   _settings: DataLinksFieldConfigSettings
 ) => {
   return value as DataLink[];
@@ -54,6 +54,7 @@ export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], D
             link={l}
             onChange={onDataLinkChange}
             data={context.data}
+            suggestions={context.getSuggestions ? context.getSuggestions() : []}
           />
         );
       })}
@@ -106,6 +107,7 @@ export const DataLinksOverrideEditor: React.FC<FieldOverrideEditorProps<DataLink
               link={l}
               onChange={onDataLinkChange}
               data={context.data}
+              suggestions={context.getSuggestions ? context.getSuggestions() : []}
             />
           );
         })}
@@ -122,9 +124,10 @@ interface DataLinksListItemProps {
   link: DataLink;
   data: DataFrame[];
   onChange: (index: number, link: DataLink) => void;
+  suggestions: VariableSuggestion[];
 }
 
-const DataLinksListItem: FC<DataLinksListItemProps> = ({ index, link, data, onChange }) => {
+const DataLinksListItem: FC<DataLinksListItemProps> = ({ index, link, data, onChange, suggestions }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const style = () => {
@@ -169,6 +172,7 @@ const DataLinksListItem: FC<DataLinksListItemProps> = ({ index, link, data, onCh
             data={data}
             onChange={onChange}
             onClose={() => setIsEditing(false)}
+            suggestions={suggestions}
           />
         </Modal>
       )}
@@ -180,11 +184,19 @@ interface DataLinkEditorModalContentProps {
   link: DataLink;
   index: number;
   data: DataFrame[];
+  suggestions: VariableSuggestion[];
   onChange: (index: number, ink: DataLink) => void;
   onClose: () => void;
 }
 
-const DataLinkEditorModalContent: FC<DataLinkEditorModalContentProps> = ({ link, index, data, onChange, onClose }) => {
+const DataLinkEditorModalContent: FC<DataLinkEditorModalContentProps> = ({
+  link,
+  index,
+  data,
+  suggestions,
+  onChange,
+  onClose,
+}) => {
   const [dirtyLink, setDirtyLink] = useState(link);
 
   return (
@@ -193,7 +205,7 @@ const DataLinkEditorModalContent: FC<DataLinkEditorModalContentProps> = ({ link,
         value={dirtyLink}
         index={index}
         isLast={false}
-        suggestions={getDataLinksVariableSuggestions(data)}
+        suggestions={suggestions}
         onChange={(index, link) => {
           setDirtyLink(link);
         }}
