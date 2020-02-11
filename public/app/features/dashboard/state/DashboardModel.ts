@@ -13,6 +13,9 @@ import { DashboardMigrator } from './DashboardMigrator';
 import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
+import { getVariables } from 'app/features/templating/state/selectors';
+import { getState } from 'app/store/store';
+import { VariableHide } from 'app/features/templating/variable';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -650,6 +653,14 @@ export class DashboardModel {
   updateSubmenuVisibility() {
     this.meta.submenuEnabled = (() => {
       if (this.links.length > 0) {
+        return true;
+      }
+
+      const visibleVariblesInRedux = getVariables(getState()).filter(
+        variable => variable.hide !== VariableHide.hideVariable
+      );
+
+      if (visibleVariblesInRedux.length > 0) {
         return true;
       }
 

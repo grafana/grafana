@@ -19,7 +19,7 @@ import {
   dashboardInitSlow,
 } from './reducers';
 // Types
-import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, CoreEvents } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery } from '@grafana/data';
 import { initDashboardTemplating, processVariables } from '../../templating/state/actions';

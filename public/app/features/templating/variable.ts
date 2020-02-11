@@ -96,13 +96,6 @@ export interface AdHocVariableModel extends VariableModel {
   filters: AdHocVariableFilter[];
 }
 
-export interface CustomVariableModel extends VariableWithMultiSupport {}
-
-export interface DataSourceVariableModel extends VariableWithMultiSupport {
-  refresh: VariableRefresh;
-  regex: string;
-}
-
 export interface IntervalVariableModel extends VariableWithOptions {
   auto: boolean;
   auto_min: string;
@@ -110,11 +103,16 @@ export interface IntervalVariableModel extends VariableWithOptions {
   refresh: VariableRefresh;
 }
 
-export interface QueryVariableModel extends VariableWithMultiSupport {
-  datasource: string | null;
-  definition: string;
+export interface CustomVariableModel extends VariableWithMultiSupport {}
+
+export interface DataSourceVariableModel extends VariableWithMultiSupport {
   refresh: VariableRefresh;
   regex: string;
+}
+
+export interface QueryVariableModel extends DataSourceVariableModel {
+  datasource: string | null;
+  definition: string;
   sort: VariableSort;
   tags: VariableTag[];
   tagsQuery: string;
@@ -139,8 +137,8 @@ export interface VariableWithOptions extends VariableModel {
 }
 
 export interface VariableModel {
-  uuid?: string; // only exists for variables in state
-  global?: boolean; // only exists for variables in state
+  uuid?: string; // only exists for variables in redux state
+  global?: boolean; // only exists for variables in redux state
   type: VariableType;
   name: string;
   label: string | null;
