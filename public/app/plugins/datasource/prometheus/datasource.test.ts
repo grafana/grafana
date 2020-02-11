@@ -1456,7 +1456,7 @@ describe('PrometheusDatasource', () => {
 
     it('should use overridden ranges, not dashboard ranges', async () => {
       const expectedRangeSecond = 3600;
-      const expectedRangeString = '1h';
+      const expectedRangeString = '3600s';
       const query = {
         range: {
           from: time({}),
