@@ -4,7 +4,6 @@ import { css } from 'emotion';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
 import { useTheme, Icon } from '../../index';
 import { stylesFactory } from '../../themes';
-import { dateTime, DateTime, dateTimeAsMoment } from '@grafana/data';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 
