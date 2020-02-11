@@ -18,7 +18,7 @@ Grafana supports three types of links: Dashboard Links, Panel Links, and Data Li
 
 ## Which link should you use?
 
-Start by figuring out how you're currently navigating between dashboards. If you're often jumping between a set dashboards and struggling to find the same context in each, links can help you optimize your workflow. 
+Start by figuring out how you're currently navigating between dashboards. If you're often jumping between a set of dashboards and struggling to find the same context in each, links can help optimize your workflow. 
 
 The next step is to figure out which link type is right for your workflow. Even though all the link types in Grafana are used to create shortcuts to other dashboards or external websites, they work in different contexts.
 
@@ -46,8 +46,8 @@ Add a links to other dashboards at the top of your current dashboard.
 1. Select link options:
    - **With tags** – Enter tags to limit the linked dashboards to only the ones with the tags you enter. Otherwise, Grafana includes links to all other dashboards.
    - **As dropdown** – If you are linking to lots of dashboards, then you probably want to select this option and add an optional title to the dropdown. Otherwise, Grafana displays the dashboard links side by side across the top of your dashboard.
-   - **Time range** – ?What does this do? How do you select this? Time range to display when you open a linked dashboard?
-   - **Variable values** – ?What does this do? Variables for which dashboard, current or linked?
+   - **Time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
+   - **Variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. **Example:** https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1h
    - **Open in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
 1. Click **Add**.
 
@@ -63,8 +63,8 @@ Add a link to a URL at the top of your current dashboard. You can link to any av
    - **Title** – Enter the title you want the link to display.
    - **Tooltip** – Enter the tooltip you want the link to display when the user hovers their mouse over it.
    - **Icon** – Choose the icon you want displayed with the link.
-   - **Time range** – ?What does this do? How do you select this? Time range to display when you open a linked dashboard?
-   - **Variable values** – ?What does this do? Variables for which dashboard, current or linked?
+   - **Time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
+   - **Variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. **Example:** https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1h
    - **Open in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
 1. Click **Add**. 
 
