@@ -24,6 +24,11 @@ export interface VariableEditorProps<
   dataSources: DataSourceSelectItem[];
 }
 
+export interface VariablePickerProps<Model extends VariableModel = VariableModel, PickerState extends {} = {}> {
+  variable: Model;
+  picker: PickerState;
+}
+
 export const initialVariableEditorState: VariableEditorState = {
   name: '',
   type: 'query',

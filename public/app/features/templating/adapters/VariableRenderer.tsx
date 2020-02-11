@@ -6,6 +6,7 @@ import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
 import { variableAdapters } from './index';
 import { VariableEditor } from '../editor/VariableEditor';
 import { VariableState } from '../state/types';
+import { VariablePicker } from '../picker/VariablePicker';
 
 export interface VariableRendererProps extends VariableIdentifier {
   componentType: 'picker' | 'editor';
@@ -47,12 +48,7 @@ export class VariableRenderer extends PureComponent<VariableRendererProps, Varia
     }
 
     if (componentType === 'picker') {
-      const ComponentToRender = variableAdapters.get(type).picker;
-      if (!ComponentToRender) {
-        return null;
-      }
-
-      return <ComponentToRender {...this.state} />;
+      return <VariablePicker {...this.state} />;
     }
 
     return <VariableEditor {...this.state} />;
