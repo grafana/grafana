@@ -4,7 +4,6 @@ import {
   DataLink,
   FieldOverrideEditorProps,
   DataFrame,
-  VariableSuggestion,
 } from '@grafana/data';
 import React, { FC, useState } from 'react';
 import { css, cx } from 'emotion';
@@ -12,6 +11,7 @@ import Forms from '../Forms';
 import { Modal } from '../Modal/Modal';
 import { DataLinkEditor } from '../DataLinks/DataLinkEditor';
 import cloneDeep from 'lodash/cloneDeep';
+import { VariableSuggestion } from '@grafana/data';
 
 export interface DataLinksFieldConfigSettings {}
 

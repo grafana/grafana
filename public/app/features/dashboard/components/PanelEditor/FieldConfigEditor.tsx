@@ -6,15 +6,16 @@ import {
   DataFrame,
   FieldPropertyEditorItem,
   DynamicConfigValue,
-  getDataLinksVariableSuggestions,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import Forms from '../Forms';
-import { fieldMatchersUI } from '../MatchersUI/fieldMatchersUI';
-import { ControlledCollapse } from '../Collapse/Collapse';
-import { ValuePicker } from '../ValuePicker/ValuePicker';
-
+import {
+  standardFieldConfigEditorRegistry,
+  Forms,
+  fieldMatchersUI,
+  ControlledCollapse,
+  ValuePicker,
+} from '@grafana/ui';
+import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 interface Props {
   config: FieldConfigSource;
   custom?: FieldConfigEditorRegistry; // custom fields

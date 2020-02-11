@@ -9,14 +9,7 @@ import {
   SelectableValue,
   TimeRange,
 } from '@grafana/data';
-import {
-  stylesFactory,
-  Forms,
-  FieldConfigEditor,
-  CustomScrollbar,
-  selectThemeVariant,
-  ControlledCollapse,
-} from '@grafana/ui';
+import { stylesFactory, Forms, CustomScrollbar, selectThemeVariant, ControlledCollapse } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -36,6 +29,7 @@ import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { LocationState, CoreEvents } from 'app/types';
 import { calculatePanelSize } from './utils';
+import { FieldConfigEditor } from './FieldConfigEditor';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = selectThemeVariant(
