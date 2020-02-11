@@ -1,5 +1,5 @@
 import { LinkSrv } from '../link_srv';
-import { DataLinkBuiltInVars, initialiseVariableSuggestions } from '@grafana/data';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -70,8 +70,6 @@ describe('linkSrv', () => {
         },
       },
     ]);
-
-    initialiseVariableSuggestions(_templateSrv);
 
     linkSrv = new LinkSrv(_templateSrv, timeSrv);
   }

@@ -20,13 +20,15 @@ import {
   DataLink,
   PanelEditorProps,
   FieldDisplayOptions,
-  getDataLinksVariableSuggestions,
-  getCalculationValueDataLinksVariableSuggestions,
 } from '@grafana/data';
 
 import { StatPanelOptions, colorModes, graphModes, justifyModes } from './types';
 import { orientationOptions } from '../gauge/types';
 
+import {
+  getDataLinksVariableSuggestions,
+  getCalculationValueDataLinksVariableSuggestions,
+} from 'app/features/panel/panellinks/link_srv';
 import { config } from 'app/core/config';
 
 export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOptions>> {

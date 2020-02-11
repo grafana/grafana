@@ -10,7 +10,6 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { GrafanaRootScope } from './GrafanaCtrl';
-import { initialiseVariableSuggestions } from '@grafana/data';
 
 function WrapInProvider(store: any, Component: any, props: any) {
   return (
@@ -57,8 +56,9 @@ export function reactContainer(
       };
 
       document.body.classList.add('is-react');
+
       ReactDOM.render(WrapInProvider(store, provideTheme(component), props), elem[0]);
-      initialiseVariableSuggestions($injector.get('templateSrv'));
+
       scope.$on('$destroy', () => {
         document.body.classList.remove('is-react');
         ReactDOM.unmountComponentAtNode(elem[0]);

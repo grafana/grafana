@@ -11,18 +11,12 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
+import { VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import {
-  getColorFromHexRgbOrName,
-  PanelEvents,
-  DataFrame,
-  DataLink,
-  DateTimeInput,
-  VariableSuggestion,
-  getDataLinksVariableSuggestions,
-} from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
