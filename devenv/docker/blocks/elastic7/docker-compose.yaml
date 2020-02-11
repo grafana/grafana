@@ -1,0 +1,42 @@
+# You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
+
+  elasticsearch7:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.0.0
+    command: elasticsearch -E "discovery.type=single-node"
+    ports:
+      - "12200:9200"
+      - "12300:9300"
+
+  fake-elastic7-data:
+    image: grafana/fake-data-gen
+    links:
+      - elasticsearch7
+    environment:
+      FD_SERVER: elasticsearch7
+      FD_DATASOURCE: elasticsearch7
+      FD_PORT: 9200
+
+  filebeat7:
+    image: docker.elastic.co/beats/filebeat-oss:7.0.0
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./docker/blocks/elastic7/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log:/var/log:ro
+      - ../data/log:/var/log/grafana:ro
+
+  metricbeat7:
+    image: docker.elastic.co/beats/metricbeat-oss:7.0.0
+    command: metricbeat -e -strict.perms=false
+    user: root
+    volumes:
+      - ./docker/blocks/elastic7/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  kibana7:
+    image: docker.elastic.co/kibana/kibana-oss:7.0.0
+    ports:
+      - "5601:5601"
+    links:
+      - elasticsearch7
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch7:9200

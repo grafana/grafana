@@ -1,0 +1,11 @@
+  mysqltests:
+    build:
+      context: docker/blocks/mysql_tests
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana_tests
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    tmpfs: /var/lib/mysql:rw

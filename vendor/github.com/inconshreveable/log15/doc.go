@@ -23,7 +23,7 @@ To get started, you'll want to import the library:
 Now you're ready to start logging:
 
     func main() {
-        log.Info("Program starting", "args", os.Args())
+        log.Info("Program starting", "args", os.Args)
     }
 
 
@@ -97,7 +97,7 @@ context, CallerFileHandler, CallerFuncHandler and CallerStackHandler. Here's
 an example that adds the source file and line number of each logging call to
 the context.
 
-    h := log.CallerFileHandler(log.StdoutHandler())
+    h := log.CallerFileHandler(log.StdoutHandler)
     log.Root().SetHandler(h)
     ...
     log.Error("open file", "err", err)
@@ -108,7 +108,7 @@ This will output a line that looks like:
 
 Here's an example that logs the call stack rather than just the call site.
 
-    h := log.CallerStackHandler("%+v", log.StdoutHandler())
+    h := log.CallerStackHandler("%+v", log.StdoutHandler)
     log.Root().SetHandler(h)
     ...
     log.Error("open file", "err", err)

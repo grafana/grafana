@@ -17,10 +17,9 @@ post_data=$(cat <<EOF
 EOF
 )
 
-echo ${post_data}
+echo "${post_data}"
 
 curl \
---verbose \
 --header "Accept: application/json" \
 --header "Content-Type: application/json" \
 --header "Authorization: Bearer ${_token}" \

@@ -17,11 +17,13 @@ import (
 // does the pagination between API operations, and Paginator defines the
 // configuration that will be used per page request.
 //
-//     cont := true
-//     for p.Next() && cont {
+//     for p.Next() {
 //         data := p.Page().(*s3.ListObjectsOutput)
 //         // process the page's data
+//         // ...
+//         // break out of loop to stop fetching additional pages
 //     }
+//
 //     return p.Err()
 //
 // See service client API operation Pages methods for examples how the SDK will
@@ -35,8 +37,12 @@ type Pagination struct {
 	// NewRequest should always be built from the same API operations. It is
 	// undefined if different API operations are returned on subsequent calls.
 	NewRequest func() (*Request, error)
+	// EndPageOnSameToken, when enabled, will allow the paginator to stop on
+	// token that are the same as its previous tokens.
+	EndPageOnSameToken bool
 
 	started    bool
+	prevTokens []interface{}
 	nextTokens []interface{}
 
 	err     error
@@ -49,7 +55,15 @@ type Pagination struct {
 //
 // Will always return true if Next has not been called yet.
 func (p *Pagination) HasNextPage() bool {
-	return !(p.started && len(p.nextTokens) == 0)
+	if !p.started {
+		return true
+	}
+
+	hasNextPage := len(p.nextTokens) != 0
+	if p.EndPageOnSameToken {
+		return hasNextPage && !awsutil.DeepEqual(p.nextTokens, p.prevTokens)
+	}
+	return hasNextPage
 }
 
 // Err returns the error Pagination encountered when retrieving the next page.
@@ -96,6 +110,7 @@ func (p *Pagination) Next() bool {
 		return false
 	}
 
+	p.prevTokens = p.nextTokens
 	p.nextTokens = req.nextPageTokens()
 	p.curPage = req.Data
 
@@ -133,7 +148,7 @@ func (r *Request) nextPageTokens() []interface{} {
 				return nil
 			}
 		case bool:
-			if v == false {
+			if !v {
 				return nil
 			}
 		}
@@ -142,13 +157,28 @@ func (r *Request) nextPageTokens() []interface{} {
 	tokens := []interface{}{}
 	tokenAdded := false
 	for _, outToken := range r.Operation.OutputTokens {
-		v, _ := awsutil.ValuesAtPath(r.Data, outToken)
-		if len(v) > 0 {
-			tokens = append(tokens, v[0])
-			tokenAdded = true
-		} else {
+		vs, _ := awsutil.ValuesAtPath(r.Data, outToken)
+		if len(vs) == 0 {
 			tokens = append(tokens, nil)
+			continue
 		}
+		v := vs[0]
+
+		switch tv := v.(type) {
+		case *string:
+			if len(aws.StringValue(tv)) == 0 {
+				tokens = append(tokens, nil)
+				continue
+			}
+		case string:
+			if len(tv) == 0 {
+				tokens = append(tokens, nil)
+				continue
+			}
+		}
+
+		tokenAdded = true
+		tokens = append(tokens, v)
 	}
 	if !tokenAdded {
 		return nil

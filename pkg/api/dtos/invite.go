@@ -6,7 +6,7 @@ type AddInviteForm struct {
 	LoginOrEmail string     `json:"loginOrEmail" binding:"Required"`
 	Name         string     `json:"name"`
 	Role         m.RoleType `json:"role" binding:"Required"`
-	SkipEmails   bool       `json:"skipEmails"`
+	SendEmail    bool       `json:"sendEmail"`
 }
 
 type InviteInfo struct {

@@ -34,7 +34,7 @@ func Getgroups() (gids []int, err error) {
 		return nil, nil
 	}
 
-	// Sanity check group count.  Max is 16 on BSD.
+	// Sanity check group count. Max is 16 on BSD.
 	if n < 0 || n > 1000 {
 		return nil, EINVAL
 	}
@@ -63,15 +63,6 @@ func Setgroups(gids []int) (err error) {
 	return setgroups(len(a), &a[0])
 }
 
-func ReadDirent(fd int, buf []byte) (n int, err error) {
-	// Final argument is (basep *uintptr) and the syscall doesn't take nil.
-	// 64 bits should be enough. (32 bits isn't even on 386). Since the
-	// actual system call is getdirentries64, 64 is a good guess.
-	// TODO(rsc): Can we use a single global basep for all calls?
-	var base = (*uintptr)(unsafe.Pointer(new(uint64)))
-	return Getdirentries(fd, buf, base)
-}
-
 // Wait status is 7 bits at bottom, either 0 (exited),
 // 0x7F (stopped), or a signal number that caused an exit.
 // The 0x80 bit is whether there was a core dump.
@@ -86,6 +77,7 @@ const (
 	shift = 8
 
 	exited  = 0
+	killed  = 9
 	stopped = 0x7F
 )
 
@@ -111,6 +103,8 @@ func (w WaitStatus) Signal() syscall.Signal {
 func (w WaitStatus) CoreDump() bool { return w.Signaled() && w&core != 0 }
 
 func (w WaitStatus) Stopped() bool { return w&mask == stopped && syscall.Signal(w>>shift) != SIGSTOP }
+
+func (w WaitStatus) Killed() bool { return w&mask == killed && syscall.Signal(w>>shift) != SIGKILL }
 
 func (w WaitStatus) Continued() bool { return w&mask == stopped && syscall.Signal(w>>shift) == SIGSTOP }
 
@@ -206,7 +200,7 @@ func (sa *SockaddrDatalink) sockaddr() (unsafe.Pointer, _Socklen, error) {
 	return unsafe.Pointer(&sa.raw), SizeofSockaddrDatalink, nil
 }
 
-func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {
+func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 	switch rsa.Addr.Family {
 	case AF_LINK:
 		pp := (*RawSockaddrDatalink)(unsafe.Pointer(rsa))
@@ -243,7 +237,7 @@ func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {
 				break
 			}
 		}
-		bytes := (*[10000]byte)(unsafe.Pointer(&pp.Path[0]))[0:n]
+		bytes := (*[len(pp.Path)]byte)(unsafe.Pointer(&pp.Path[0]))[0:n]
 		sa.Name = string(bytes)
 		return sa, nil
 
@@ -286,7 +280,7 @@ func Accept(fd int) (nfd int, sa Sockaddr, err error) {
 		Close(nfd)
 		return 0, nil, ECONNABORTED
 	}
-	sa, err = anyToSockaddr(&rsa)
+	sa, err = anyToSockaddr(fd, &rsa)
 	if err != nil {
 		Close(nfd)
 		nfd = 0
@@ -306,50 +300,21 @@ func Getsockname(fd int) (sa Sockaddr, err error) {
 		rsa.Addr.Family = AF_UNIX
 		rsa.Addr.Len = SizeofSockaddrUnix
 	}
-	return anyToSockaddr(&rsa)
+	return anyToSockaddr(fd, &rsa)
 }
 
 //sysnb socketpair(domain int, typ int, proto int, fd *[2]int32) (err error)
 
-func GetsockoptByte(fd, level, opt int) (value byte, err error) {
-	var n byte
-	vallen := _Socklen(1)
-	err = getsockopt(fd, level, opt, unsafe.Pointer(&n), &vallen)
-	return n, err
-}
-
-func GetsockoptInet4Addr(fd, level, opt int) (value [4]byte, err error) {
-	vallen := _Socklen(4)
-	err = getsockopt(fd, level, opt, unsafe.Pointer(&value[0]), &vallen)
-	return value, err
-}
-
-func GetsockoptIPMreq(fd, level, opt int) (*IPMreq, error) {
-	var value IPMreq
-	vallen := _Socklen(SizeofIPMreq)
-	err := getsockopt(fd, level, opt, unsafe.Pointer(&value), &vallen)
-	return &value, err
-}
-
-func GetsockoptIPv6Mreq(fd, level, opt int) (*IPv6Mreq, error) {
-	var value IPv6Mreq
-	vallen := _Socklen(SizeofIPv6Mreq)
-	err := getsockopt(fd, level, opt, unsafe.Pointer(&value), &vallen)
-	return &value, err
-}
-
-func GetsockoptIPv6MTUInfo(fd, level, opt int) (*IPv6MTUInfo, error) {
-	var value IPv6MTUInfo
-	vallen := _Socklen(SizeofIPv6MTUInfo)
-	err := getsockopt(fd, level, opt, unsafe.Pointer(&value), &vallen)
-	return &value, err
-}
-
-func GetsockoptICMPv6Filter(fd, level, opt int) (*ICMPv6Filter, error) {
-	var value ICMPv6Filter
-	vallen := _Socklen(SizeofICMPv6Filter)
-	err := getsockopt(fd, level, opt, unsafe.Pointer(&value), &vallen)
-	return &value, err
+// GetsockoptString returns the string value of the socket option opt for the
+// socket associated with fd at the given socket level.
+func GetsockoptString(fd, level, opt int) (string, error) {
+	buf := make([]byte, 256)
+	vallen := _Socklen(len(buf))
+	err := getsockopt(fd, level, opt, unsafe.Pointer(&buf[0]), &vallen)
+	if err != nil {
+		return "", err
+	}
+	return string(buf[:vallen-1]), nil
 }
 
 //sys   recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Socklen) (n int, err error)
@@ -385,7 +350,7 @@ func Recvmsg(fd int, p, oob []byte, flags int) (n, oobn int, recvflags int, from
 	recvflags = int(msg.Flags)
 	// source address is only specified if the socket is unconnected
 	if rsa.Addr.Family != AF_UNSPEC {
-		from, err = anyToSockaddr(&rsa)
+		from, err = anyToSockaddr(fd, &rsa)
 	}
 	return
 }
@@ -448,8 +413,6 @@ func Kevent(kq int, changes, events []Kevent_t, timeout *Timespec) (n int, err e
 	return kevent(kq, change, len(changes), event, len(events), timeout)
 }
 
-//sys	sysctl(mib []_C_int, old *byte, oldlen *uintptr, new *byte, newlen uintptr) (err error) = SYS___SYSCTL
-
 // sysctlmib translates name to mib number and appends any additional args.
 func sysctlmib(name string, args ...int) ([]_C_int, error) {
 	// Translate name to mib number.
@@ -470,25 +433,11 @@ func Sysctl(name string) (string, error) {
 }
 
 func SysctlArgs(name string, args ...int) (string, error) {
-	mib, err := sysctlmib(name, args...)
+	buf, err := SysctlRaw(name, args...)
 	if err != nil {
 		return "", err
 	}
-
-	// Find size.
-	n := uintptr(0)
-	if err := sysctl(mib, nil, &n, nil, 0); err != nil {
-		return "", err
-	}
-	if n == 0 {
-		return "", nil
-	}
-
-	// Read into buffer of that size.
-	buf := make([]byte, n)
-	if err := sysctl(mib, &buf[0], &n, nil, 0); err != nil {
-		return "", err
-	}
+	n := len(buf)
 
 	// Throw away terminating NUL.
 	if n > 0 && buf[n-1] == '\x00' {
@@ -575,12 +524,23 @@ func Utimes(path string, tv []Timeval) error {
 
 func UtimesNano(path string, ts []Timespec) error {
 	if ts == nil {
+		err := utimensat(AT_FDCWD, path, nil, 0)
+		if err != ENOSYS {
+			return err
+		}
 		return utimes(path, nil)
 	}
-	// TODO: The BSDs can do utimensat with SYS_UTIMENSAT but it
-	// isn't supported by darwin so this uses utimes instead
 	if len(ts) != 2 {
 		return EINVAL
+	}
+	// Darwin setattrlist can set nanosecond timestamps
+	err := setattrlistTimes(path, ts, 0)
+	if err != ENOSYS {
+		return err
+	}
+	err = utimensat(AT_FDCWD, path, (*[2]Timespec)(unsafe.Pointer(&ts[0])), 0)
+	if err != ENOSYS {
+		return err
 	}
 	// Not as efficient as it could be because Timespec and
 	// Timeval have different types in the different OSes
@@ -589,6 +549,20 @@ func UtimesNano(path string, ts []Timespec) error {
 		NsecToTimeval(TimespecToNsec(ts[1])),
 	}
 	return utimes(path, (*[2]Timeval)(unsafe.Pointer(&tv[0])))
+}
+
+func UtimesNanoAt(dirfd int, path string, ts []Timespec, flags int) error {
+	if ts == nil {
+		return utimensat(dirfd, path, nil, flags)
+	}
+	if len(ts) != 2 {
+		return EINVAL
+	}
+	err := setattrlistTimes(path, ts, flags)
+	if err != ENOSYS {
+		return err
+	}
+	return utimensat(dirfd, path, (*[2]Timespec)(unsafe.Pointer(&ts[0])), flags)
 }
 
 //sys	futimes(fd int, timeval *[2]Timeval) (err error)
@@ -605,12 +579,18 @@ func Futimes(fd int, tv []Timeval) error {
 
 //sys	fcntl(fd int, cmd int, arg int) (val int, err error)
 
+//sys   poll(fds *PollFd, nfds int, timeout int) (n int, err error)
+
+func Poll(fds []PollFd, timeout int) (n int, err error) {
+	if len(fds) == 0 {
+		return poll(nil, 0, timeout)
+	}
+	return poll(&fds[0], len(fds), timeout)
+}
+
 // TODO: wrap
 //	Acct(name nil-string) (err error)
 //	Gethostuuid(uuid *byte, timeout *Timespec) (err error)
-//	Madvise(addr *byte, len int, behav int) (err error)
-//	Mprotect(addr *byte, len int, prot int) (err error)
-//	Msync(addr *byte, len int, flags int) (err error)
 //	Ptrace(req int, pid int, addr uintptr, data int) (ret uintptr, err error)
 
 var mapper = &mmapper{
@@ -626,3 +606,11 @@ func Mmap(fd int, offset int64, length int, prot int, flags int) (data []byte, e
 func Munmap(b []byte) (err error) {
 	return mapper.Munmap(b)
 }
+
+//sys	Madvise(b []byte, behav int) (err error)
+//sys	Mlock(b []byte) (err error)
+//sys	Mlockall(flags int) (err error)
+//sys	Mprotect(b []byte, prot int) (err error)
+//sys	Msync(b []byte, flags int) (err error)
+//sys	Munlock(b []byte) (err error)
+//sys	Munlockall() (err error)

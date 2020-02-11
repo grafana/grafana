@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  aria-label="Datasource settings page basic settings"
+  className="gf-form-group"
+>
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form max-width-30"
+      style={
+        Object {
+          "marginRight": "3px",
+        }
+      }
+    >
+      <Component
+        tooltip="The name is used when you select the data source in panels. The Default data source is preselected in new panels."
+      >
+        Name
+      </Component>
+      <Input
+        aria-label="Data source settings page name input field"
+        className="gf-form-input max-width-23"
+        onChange={[Function]}
+        placeholder="Name"
+        required={true}
+        type="text"
+        value="Graphite"
+      />
+    </div>
+    <Switch
+      checked={false}
+      label="Default"
+      onChange={[Function]}
+    />
+  </div>
+</div>
+`;

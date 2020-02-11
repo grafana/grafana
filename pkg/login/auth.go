@@ -3,64 +3,76 @@ package login
 import (
 	"errors"
 
-	"crypto/subtle"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ldap"
 )
 
 var (
-	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
+	ErrInvalidCredentials    = errors.New("Invalid Username or Password")
+	ErrNoEmail               = errors.New("Login provider didn't return an email address")
+	ErrProviderDeniedRequest = errors.New("Login provider denied login request")
+	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
+	ErrTooManyLoginAttempts  = errors.New("Too many consecutive incorrect login attempts for user. Login for user temporarily blocked")
+	ErrPasswordEmpty         = errors.New("No password provided")
+	ErrUserDisabled          = errors.New("User is disabled")
+	ErrAbsoluteRedirectTo    = errors.New("Absolute urls are not allowed for redirect_to cookie value")
+	ErrInvalidRedirectTo     = errors.New("Invalid redirect_to cookie value")
 )
 
-type LoginUserQuery struct {
-	Username string
-	Password string
-	User     *m.User
-}
+var loginLogger = log.New("login")
 
 func Init() {
 	bus.AddHandler("auth", AuthenticateUser)
-	loadLdapConfig()
 }
 
-func AuthenticateUser(query *LoginUserQuery) error {
-	err := loginUsingGrafanaDB(query)
-	if err == nil || err != ErrInvalidCredentials {
+// AuthenticateUser authenticates the user via username & password
+func AuthenticateUser(query *models.LoginUserQuery) error {
+	if err := validateLoginAttempts(query.Username); err != nil {
 		return err
 	}
 
-	if setting.LdapEnabled {
-		for _, server := range LdapCfg.Servers {
-			auther := NewLdapAuthenticator(server)
-			err = auther.Login(query)
-			if err == nil || err != ErrInvalidCredentials {
-				return err
-			}
+	if err := validatePasswordSet(query.Password); err != nil {
+		return err
+	}
+
+	err := loginUsingGrafanaDB(query)
+	if err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled) {
+		return err
+	}
+
+	ldapEnabled, ldapErr := loginUsingLDAP(query)
+	if ldapEnabled {
+		if ldapErr == nil || ldapErr != ldap.ErrInvalidCredentials {
+			return ldapErr
 		}
+
+		if err != ErrUserDisabled || ldapErr != ldap.ErrInvalidCredentials {
+			err = ldapErr
+		}
+	}
+
+	if err == ErrInvalidCredentials || err == ldap.ErrInvalidCredentials {
+		if err := saveInvalidLoginAttempt(query); err != nil {
+			loginLogger.Error("Failed to save invalid login attempt", "err", err)
+		}
+
+		return ErrInvalidCredentials
+	}
+
+	if err == models.ErrUserNotFound {
+		return ErrInvalidCredentials
 	}
 
 	return err
 }
 
-func loginUsingGrafanaDB(query *LoginUserQuery) error {
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: query.Username}
-
-	if err := bus.Dispatch(&userQuery); err != nil {
-		if err == m.ErrUserNotFound {
-			return ErrInvalidCredentials
-		}
-		return err
+func validatePasswordSet(password string) error {
+	if len(password) == 0 {
+		return ErrPasswordEmpty
 	}
 
-	user := userQuery.Result
-
-	passwordHashed := util.EncodePassword(query.Password, user.Salt)
-	if subtle.ConstantTimeCompare([]byte(passwordHashed), []byte(user.Password)) != 1 {
-		return ErrInvalidCredentials
-	}
-
-	query.User = user
 	return nil
 }

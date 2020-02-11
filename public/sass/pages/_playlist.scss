@@ -27,7 +27,6 @@
   margin-bottom: 15px;
 }
 
-
 .playlist-search-field-wrapper {
   input {
     width: 100%;
@@ -50,18 +49,20 @@
   display: block;
   line-height: 28px;
 
-  .search-item:hover, .search-item.selected {
-    background-color: $grafanaListHighlight;
+  .search-item:hover,
+  .search-item.selected {
+    background-color: $list-item-hover-bg;
   }
 
   .selected {
     .search-result-tag {
-      opacity: 0.70;
+      opacity: 0.7;
       color: white;
     }
   }
 
-  .fa-star, .fa-star-o {
+  .fa-star,
+  .fa-star-o {
     padding-left: 13px;
   }
 
@@ -70,7 +71,7 @@
   }
 
   .search-result-link {
-    color: $grafanaListMainLinkColor;
+    color: $list-item-link-color;
     .fa {
       padding-right: 10px;
     }
@@ -80,14 +81,14 @@
     display: block;
     padding: 3px 10px;
     white-space: nowrap;
-    background-color: $grafanaListBackground;
+    background-color: $list-item-bg;
     margin-bottom: 4px;
     .search-result-icon:before {
-      content: "\f009";
+      content: '\f009';
     }
 
     &.search-item-dash-home .search-result-icon:before {
-      content: "\f015";
+      content: '\f015';
     }
   }
 
@@ -103,8 +104,11 @@
 
 .playlist-available-list {
   td {
-    line-height: 2rem;
+    line-height: 28px;
+    max-width: 335px;
     white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .add-dashboard {

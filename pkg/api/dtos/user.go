@@ -31,7 +31,7 @@ type AdminUpdateUserPasswordForm struct {
 }
 
 type AdminUpdateUserPermissionsForm struct {
-	IsGrafanaAdmin bool `json:"isGrafanaAdmin" binding:"Required"`
+	IsGrafanaAdmin bool `json:"isGrafanaAdmin"`
 }
 
 type AdminUserListItem struct {
@@ -49,4 +49,10 @@ type ResetUserPasswordForm struct {
 	Code            string `json:"code"`
 	NewPassword     string `json:"newPassword"`
 	ConfirmPassword string `json:"confirmPassword"`
+}
+
+type UserLookupDTO struct {
+	UserID    int64  `json:"userId"`
+	Login     string `json:"login"`
+	AvatarURL string `json:"avatarUrl"`
 }

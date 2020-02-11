@@ -1,17 +1,19 @@
-<div class="dashlist" ng-repeat="group in ctrl.groups">
-  <div class="dashlist-section" ng-if="group.show">
-    <h6 class="dashlist-section-header" ng-show="ctrl.panel.headings">
-      {{group.header}}
-    </h6>
-    <div class="dashlist-item" ng-repeat="dash in group.list">
-      <a class="dashlist-link dashlist-link-{{dash.type}}" href="dashboard/{{dash.uri}}">
-        <span class="dashlist-title">
-          {{dash.title}}
-        </span>
-        <span class="dashlist-star">
-          <i class="fa" ng-class="{'fa-star': dash.isStarred, 'fa-star-o': dash.isStarred === false}"></i>
-        </span>
-      </a>
+<div>
+  <div class="dashlist" ng-repeat="group in ctrl.groups">
+    <div class="dashlist-section" ng-if="group.show">
+      <h6 class="dashlist-section-header" ng-show="ctrl.panel.headings">
+        {{group.header}}
+      </h6>
+      <div class="dashlist-item" ng-repeat="dash in group.list">
+        <a class="dashlist-link dashlist-link-{{dash.type}}" href="{{dash.url}}">
+          <span class="dashlist-title">
+            {{dash.title}}
+          </span>
+          <span class="dashlist-star" ng-click="ctrl.starDashboard(dash, $event)">
+            <i class="fa" ng-class="{'fa-star': dash.isStarred, 'fa-star-o': dash.isStarred === false}"></i>
+          </span>
+        </a>
+      </div>
     </div>
   </div>
 </div>

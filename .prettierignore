@@ -1,0 +1,9 @@
+.git
+.github
+dist/
+pkg/
+node_modules
+public/vendor/
+vendor/
+data/
+

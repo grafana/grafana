@@ -1,12 +1,19 @@
 package session
 
 import (
+	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
+	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 )
+
+// EnvProviderName provides a name of the provider when config is loaded from environment.
+const EnvProviderName = "EnvConfigCredentials"
 
 // envConfig is a collection of environment values the SDK will read
 // setup config from. All environment values are optional. But some values
@@ -76,8 +83,8 @@ type envConfig struct {
 	//	AWS_CONFIG_FILE=$HOME/my_shared_config
 	SharedConfigFile string
 
-	// Sets the path to a custom Credentials Authroity (CA) Bundle PEM file
-	// that the SDK will use instead of the the system's root CA bundle.
+	// Sets the path to a custom Credentials Authority (CA) Bundle PEM file
+	// that the SDK will use instead of the system's root CA bundle.
 	// Only use this if you want to configure the SDK to use a custom set
 	// of CAs.
 	//
@@ -93,9 +100,69 @@ type envConfig struct {
 	//
 	//  AWS_CA_BUNDLE=$HOME/my_custom_ca_bundle
 	CustomCABundle string
+
+	csmEnabled  string
+	CSMEnabled  *bool
+	CSMPort     string
+	CSMHost     string
+	CSMClientID string
+
+	// Enables endpoint discovery via environment variables.
+	//
+	//	AWS_ENABLE_ENDPOINT_DISCOVERY=true
+	EnableEndpointDiscovery *bool
+	enableEndpointDiscovery string
+
+	// Specifies the WebIdentity token the SDK should use to assume a role
+	// with.
+	//
+	//  AWS_WEB_IDENTITY_TOKEN_FILE=file_path
+	WebIdentityTokenFilePath string
+
+	// Specifies the IAM role arn to use when assuming an role.
+	//
+	//  AWS_ROLE_ARN=role_arn
+	RoleARN string
+
+	// Specifies the IAM role session name to use when assuming a role.
+	//
+	//  AWS_ROLE_SESSION_NAME=session_name
+	RoleSessionName string
+
+	// Specifies the STS Regional Endpoint flag for the SDK to resolve the endpoint
+	// for a service.
+	//
+	// AWS_STS_REGIONAL_ENDPOINTS=regional
+	// This can take value as `regional` or `legacy`
+	STSRegionalEndpoint endpoints.STSRegionalEndpoint
+
+	// Specifies the S3 Regional Endpoint flag for the SDK to resolve the
+	// endpoint for a service.
+	//
+	// AWS_S3_US_EAST_1_REGIONAL_ENDPOINT=regional
+	// This can take value as `regional` or `legacy`
+	S3UsEast1RegionalEndpoint endpoints.S3UsEast1RegionalEndpoint
+
+	// Specifies if the S3 service should allow ARNs to direct the region
+	// the client's requests are sent to.
+	//
+	// AWS_S3_USE_ARN_REGION=true
+	S3UseARNRegion bool
 }
 
 var (
+	csmEnabledEnvKey = []string{
+		"AWS_CSM_ENABLED",
+	}
+	csmHostEnvKey = []string{
+		"AWS_CSM_HOST",
+	}
+	csmPortEnvKey = []string{
+		"AWS_CSM_PORT",
+	}
+	csmClientIDEnvKey = []string{
+		"AWS_CSM_CLIENT_ID",
+	}
 	credAccessEnvKey = []string{
 		"AWS_ACCESS_KEY_ID",
 		"AWS_ACCESS_KEY",
@@ -108,6 +175,10 @@ var (
 		"AWS_SESSION_TOKEN",
 	}
 
+	enableEndpointDiscoveryEnvKey = []string{
+		"AWS_ENABLE_ENDPOINT_DISCOVERY",
+	}
+
 	regionEnvKeys = []string{
 		"AWS_REGION",
 		"AWS_DEFAULT_REGION", // Only read if AWS_SDK_LOAD_CONFIG is also set
@@ -115,6 +186,30 @@ var (
 	profileEnvKeys = []string{
 		"AWS_PROFILE",
 		"AWS_DEFAULT_PROFILE", // Only read if AWS_SDK_LOAD_CONFIG is also set
+	}
+	sharedCredsFileEnvKey = []string{
+		"AWS_SHARED_CREDENTIALS_FILE",
+	}
+	sharedConfigFileEnvKey = []string{
+		"AWS_CONFIG_FILE",
+	}
+	webIdentityTokenFilePathEnvKey = []string{
+		"AWS_WEB_IDENTITY_TOKEN_FILE",
+	}
+	roleARNEnvKey = []string{
+		"AWS_ROLE_ARN",
+	}
+	roleSessionNameEnvKey = []string{
+		"AWS_ROLE_SESSION_NAME",
+	}
+	stsRegionalEndpointKey = []string{
+		"AWS_STS_REGIONAL_ENDPOINTS",
+	}
+	s3UsEast1RegionalEndpoint = []string{
+		"AWS_S3_US_EAST_1_REGIONAL_ENDPOINT",
+	}
+	s3UseARNRegionEnvKey = []string{
+		"AWS_S3_USE_ARN_REGION",
 	}
 )
 
@@ -124,7 +219,7 @@ var (
 // If the environment variable `AWS_SDK_LOAD_CONFIG` is set to a truthy value
 // the shared SDK config will be loaded in addition to the SDK's specific
 // configuration values.
-func loadEnvConfig() envConfig {
+func loadEnvConfig() (envConfig, error) {
 	enableSharedConfig, _ := strconv.ParseBool(os.Getenv("AWS_SDK_LOAD_CONFIG"))
 	return envConfigLoad(enableSharedConfig)
 }
@@ -135,24 +230,42 @@ func loadEnvConfig() envConfig {
 // Loads the shared configuration in addition to the SDK's specific configuration.
 // This will load the same values as `loadEnvConfig` if the `AWS_SDK_LOAD_CONFIG`
 // environment variable is set.
-func loadSharedEnvConfig() envConfig {
+func loadSharedEnvConfig() (envConfig, error) {
 	return envConfigLoad(true)
 }
 
-func envConfigLoad(enableSharedConfig bool) envConfig {
+func envConfigLoad(enableSharedConfig bool) (envConfig, error) {
 	cfg := envConfig{}
 
 	cfg.EnableSharedConfig = enableSharedConfig
 
-	setFromEnvVal(&cfg.Creds.AccessKeyID, credAccessEnvKey)
-	setFromEnvVal(&cfg.Creds.SecretAccessKey, credSecretEnvKey)
-	setFromEnvVal(&cfg.Creds.SessionToken, credSessionEnvKey)
+	// Static environment credentials
+	var creds credentials.Value
+	setFromEnvVal(&creds.AccessKeyID, credAccessEnvKey)
+	setFromEnvVal(&creds.SecretAccessKey, credSecretEnvKey)
+	setFromEnvVal(&creds.SessionToken, credSessionEnvKey)
+	if creds.HasKeys() {
+		// Require logical grouping of credentials
+		creds.ProviderName = EnvProviderName
+		cfg.Creds = creds
+	}
 
-	// Require logical grouping of credentials
-	if len(cfg.Creds.AccessKeyID) == 0 || len(cfg.Creds.SecretAccessKey) == 0 {
-		cfg.Creds = credentials.Value{}
-	} else {
-		cfg.Creds.ProviderName = "EnvConfigCredentials"
+	// Role Metadata
+	setFromEnvVal(&cfg.RoleARN, roleARNEnvKey)
+	setFromEnvVal(&cfg.RoleSessionName, roleSessionNameEnvKey)
+
+	// Web identity environment variables
+	setFromEnvVal(&cfg.WebIdentityTokenFilePath, webIdentityTokenFilePathEnvKey)
+
+	// CSM environment variables
+	setFromEnvVal(&cfg.csmEnabled, csmEnabledEnvKey)
+	setFromEnvVal(&cfg.CSMHost, csmHostEnvKey)
+	setFromEnvVal(&cfg.CSMPort, csmPortEnvKey)
+	setFromEnvVal(&cfg.CSMClientID, csmClientIDEnvKey)
+
+	if len(cfg.csmEnabled) != 0 {
+		v, _ := strconv.ParseBool(cfg.csmEnabled)
+		cfg.CSMEnabled = &v
 	}
 
 	regionKeys := regionEnvKeys
@@ -165,44 +278,68 @@ func envConfigLoad(enableSharedConfig bool) envConfig {
 	setFromEnvVal(&cfg.Region, regionKeys)
 	setFromEnvVal(&cfg.Profile, profileKeys)
 
-	cfg.SharedCredentialsFile = sharedCredentialsFilename()
-	cfg.SharedConfigFile = sharedConfigFilename()
+	// endpoint discovery is in reference to it being enabled.
+	setFromEnvVal(&cfg.enableEndpointDiscovery, enableEndpointDiscoveryEnvKey)
+	if len(cfg.enableEndpointDiscovery) > 0 {
+		cfg.EnableEndpointDiscovery = aws.Bool(cfg.enableEndpointDiscovery != "false")
+	}
+
+	setFromEnvVal(&cfg.SharedCredentialsFile, sharedCredsFileEnvKey)
+	setFromEnvVal(&cfg.SharedConfigFile, sharedConfigFileEnvKey)
+
+	if len(cfg.SharedCredentialsFile) == 0 {
+		cfg.SharedCredentialsFile = defaults.SharedCredentialsFilename()
+	}
+	if len(cfg.SharedConfigFile) == 0 {
+		cfg.SharedConfigFile = defaults.SharedConfigFilename()
+	}
 
 	cfg.CustomCABundle = os.Getenv("AWS_CA_BUNDLE")
 
-	return cfg
+	var err error
+	// STS Regional Endpoint variable
+	for _, k := range stsRegionalEndpointKey {
+		if v := os.Getenv(k); len(v) != 0 {
+			cfg.STSRegionalEndpoint, err = endpoints.GetSTSRegionalEndpoint(v)
+			if err != nil {
+				return cfg, fmt.Errorf("failed to load, %v from env config, %v", k, err)
+			}
+		}
+	}
+
+	// S3 Regional Endpoint variable
+	for _, k := range s3UsEast1RegionalEndpoint {
+		if v := os.Getenv(k); len(v) != 0 {
+			cfg.S3UsEast1RegionalEndpoint, err = endpoints.GetS3UsEast1RegionalEndpoint(v)
+			if err != nil {
+				return cfg, fmt.Errorf("failed to load, %v from env config, %v", k, err)
+			}
+		}
+	}
+
+	var s3UseARNRegion string
+	setFromEnvVal(&s3UseARNRegion, s3UseARNRegionEnvKey)
+	if len(s3UseARNRegion) != 0 {
+		switch {
+		case strings.EqualFold(s3UseARNRegion, "false"):
+			cfg.S3UseARNRegion = false
+		case strings.EqualFold(s3UseARNRegion, "true"):
+			cfg.S3UseARNRegion = true
+		default:
+			return envConfig{}, fmt.Errorf(
+				"invalid value for environment variable, %s=%s, need true or false",
+				s3UseARNRegionEnvKey[0], s3UseARNRegion)
+		}
+	}
+
+	return cfg, nil
 }
 
 func setFromEnvVal(dst *string, keys []string) {
 	for _, k := range keys {
-		if v := os.Getenv(k); len(v) > 0 {
+		if v := os.Getenv(k); len(v) != 0 {
 			*dst = v
 			break
 		}
 	}
-}
-
-func sharedCredentialsFilename() string {
-	if name := os.Getenv("AWS_SHARED_CREDENTIALS_FILE"); len(name) > 0 {
-		return name
-	}
-
-	return filepath.Join(userHomeDir(), ".aws", "credentials")
-}
-
-func sharedConfigFilename() string {
-	if name := os.Getenv("AWS_CONFIG_FILE"); len(name) > 0 {
-		return name
-	}
-
-	return filepath.Join(userHomeDir(), ".aws", "config")
-}
-
-func userHomeDir() string {
-	homeDir := os.Getenv("HOME") // *nix
-	if len(homeDir) == 0 {       // windows
-		homeDir = os.Getenv("USERPROFILE")
-	}
-
-	return homeDir
 }

@@ -1,4 +1,3 @@
-
 .admin-settings-section {
   color: $variable;
   font-weight: bold;
@@ -18,5 +17,11 @@ td.admin-settings-key {
     display: inline-block;
     padding-left: 10px;
     margin-bottom: 5px;
+  }
+}
+
+.admin-list-table {
+  .team-permissions {
+    padding-right: 120px;
   }
 }

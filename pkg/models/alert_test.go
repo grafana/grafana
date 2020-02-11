@@ -35,5 +35,28 @@ func TestAlertingModelTest(t *testing.T) {
 			rule1.Settings = json2
 			So(rule1.ContainsUpdates(rule2), ShouldBeTrue)
 		})
+
+		Convey("Should parse alertRule tags correctly", func() {
+			json2, _ := simplejson.NewJson([]byte(`{
+				"field": "value",
+				"alertRuleTags": {
+					"foo": "bar",
+					"waldo": "fred",
+					"tagMap": { "mapValue": "value" }
+				}
+			}`))
+			rule1.Settings = json2
+			expectedTags := []*Tag{
+				{Id: 0, Key: "foo", Value: "bar"},
+				{Id: 0, Key: "waldo", Value: "fred"},
+				{Id: 0, Key: "tagMap", Value: ""},
+			}
+			actualTags := rule1.GetTagsFromSettings()
+
+			So(len(actualTags), ShouldEqual, len(expectedTags))
+			for _, tag := range expectedTags {
+				So(ContainsTag(actualTags, tag), ShouldBeTrue)
+			}
+		})
 	})
 }

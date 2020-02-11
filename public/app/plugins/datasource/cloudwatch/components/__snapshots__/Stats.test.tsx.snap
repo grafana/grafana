@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stats should render component 1`] = `
+Array [
+  <div
+    className="gf-form"
+    onClick={[Function]}
+  >
+    <a
+      className="gf-form-label query-part"
+    >
+      Average
+    </a>
+  </div>,
+  <div
+    className="gf-form"
+    onClick={[Function]}
+  >
+    <a
+      className="gf-form-label query-part"
+    >
+      Minimum
+    </a>
+  </div>,
+  <div
+    className="gf-form"
+    onClick={[Function]}
+  >
+    <a
+      className="gf-form-label query-part"
+    >
+      <i
+        className="fa fa-plus"
+      />
+    </a>
+  </div>,
+]
+`;

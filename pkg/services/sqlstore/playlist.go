@@ -1,10 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
-
-	"github.com/go-xorm/xorm"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -19,17 +15,16 @@ func init() {
 }
 
 func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
-	var err error
-
 	playlist := m.Playlist{
 		Name:     cmd.Name,
 		Interval: cmd.Interval,
 		OrgId:    cmd.OrgId,
 	}
 
-	_, err = x.Insert(&playlist)
-
-	fmt.Printf("%v", playlist.Id)
+	_, err := x.Insert(&playlist)
+	if err != nil {
+		return err
+	}
 
 	playlistItems := make([]m.PlaylistItem, 0)
 	for _, item := range cmd.Items {
@@ -49,7 +44,6 @@ func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
 }
 
 func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
-	var err error
 	playlist := m.Playlist{
 		Id:       cmd.Id,
 		OrgId:    cmd.OrgId,
@@ -70,7 +64,7 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 		Interval: playlist.Interval,
 	}
 
-	_, err = x.Id(cmd.Id).Cols("id", "name", "interval").Update(&playlist)
+	_, err := x.ID(cmd.Id).Cols("name", "interval").Update(&playlist)
 
 	if err != nil {
 		return err
@@ -85,12 +79,12 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 
 	playlistItems := make([]m.PlaylistItem, 0)
 
-	for _, item := range cmd.Items {
+	for index, item := range cmd.Items {
 		playlistItems = append(playlistItems, m.PlaylistItem{
 			PlaylistId: playlist.Id,
 			Type:       item.Type,
 			Value:      item.Value,
-			Order:      item.Order,
+			Order:      index + 1,
 			Title:      item.Title,
 		})
 	}
@@ -106,7 +100,7 @@ func GetPlaylist(query *m.GetPlaylistByIdQuery) error {
 	}
 
 	playlist := m.Playlist{}
-	_, err := x.Id(query.Id).Get(&playlist)
+	_, err := x.ID(query.Id).Get(&playlist)
 
 	query.Result = &playlist
 
@@ -118,7 +112,7 @@ func DeletePlaylist(cmd *m.DeletePlaylistCommand) error {
 		return m.ErrCommandValidationFailed
 	}
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawPlaylistSql = "DELETE FROM playlist WHERE id = ? and org_id = ?"
 		_, err := sess.Exec(rawPlaylistSql, cmd.Id, cmd.OrgId)
 

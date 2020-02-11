@@ -1,0 +1,47 @@
+<div ng-repeat="section in ctrl.results" class="search-section">
+  <div class="search-section__header pointer" ng-hide="section.hideHeader" ng-class="{'selected': section.selected}" ng-click="ctrl.toggleFolderExpand(section)">
+    <div ng-click="ctrl.toggleSelection(section, $event)" class="center-vh">
+      <gf-form-checkbox
+         ng-show="ctrl.editable"
+         on-change="ctrl.selectionChanged($event)"
+         checked="section.checked"
+         switch-class="gf-form-checkbox--transparent">
+      </gf-form-checkbox>
+    </div>
+    <i class="search-section__header__icon" ng-class="section.icon"></i>
+    <span class="search-section__header__text">{{::section.title}}</span>
+    <a ng-show="section.url" href="{{section.url}}" class="search-section__header__link">
+      <i class="gicon gicon-cog"></i>
+    </a>
+    <i class="fa fa-angle-down search-section__header__toggle" ng-show="section.expanded"></i>
+    <i class="fa fa-angle-right search-section__header__toggle" ng-hide="section.expanded"></i>
+  </div>
+
+  <div class="search-section__header" ng-show="section.hideHeader"></div>
+
+  <div ng-if="section.expanded">
+    <a ng-repeat="item in section.items" class="search-item search-item--indent" ng-class="{'selected': item.selected}" ng-href="{{::item.url}}" aria-label={{ctrl.selectors.dashboards(item.title)}}>
+      <div ng-click="ctrl.toggleSelection(item, $event)" class="center-vh">
+        <gf-form-checkbox
+           ng-show="ctrl.editable"
+           on-change="ctrl.selectionChanged()"
+           checked="item.checked"
+           switch-class="gf-form-checkbox--transparent">
+        </gf-form-checkbox>
+      </div>
+      <span class="search-item__icon">
+        <i class="gicon mini gicon-dashboard-list"></i>
+      </span>
+      <span class="search-item__body" ng-click="ctrl.onItemClick(item)">
+        <div class="search-item__body-title">{{::item.title}}</div>
+        <span class="search-item__body-folder-title">{{::item.folderTitle}}</span>
+      </span>
+      <span class="search-item__tags">
+        <span ng-click="ctrl.selectTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag" class="label label-tag">
+          {{tag}}
+        </span>
+      </span>
+    </a>
+  </div>
+</div>
+

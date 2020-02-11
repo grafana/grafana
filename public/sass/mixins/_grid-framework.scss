@@ -16,7 +16,7 @@
           max-width: 100%;
           min-height: 1px;
           padding-right: ($grid-gutter-width / 2);
-          padding-left:  ($grid-gutter-width / 2);
+          padding-left: ($grid-gutter-width / 2);
         }
       }
 
@@ -29,16 +29,17 @@
       @each $modifier in (pull, push) {
         @for $i from 0 through $columns {
           .#{$modifier}-#{$breakpoint}-#{$i} {
-            @include make-col-modifier($modifier, $i, $columns)
+            @include make-col-modifier($modifier, $i, $columns);
           }
         }
       }
 
       // `$columns - 1` because offsetting by the width of an entire row isn't possible
       @for $i from 0 through ($columns - 1) {
-        @if $breakpoint-counter != 1 or $i != 0 { // Avoid emitting useless .col-xs-offset-0
+        @if $breakpoint-counter != 1 or $i != 0 {
+          // Avoid emitting useless .col-xs-offset-0
           .offset-#{$breakpoint}-#{$i} {
-            @include make-col-modifier(offset, $i, $columns)
+            @include make-col-modifier(offset, $i, $columns);
           }
         }
       }

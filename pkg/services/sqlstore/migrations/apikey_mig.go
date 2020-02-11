@@ -78,4 +78,8 @@ func addApiKeyMigrations(mg *Migrator) {
 		{Name: "key", Type: DB_Varchar, Length: 190, Nullable: false},
 		{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
 	}))
+
+	mg.AddMigration("Add expires to api_key table", NewAddColumnMigration(apiKeyV2, &Column{
+		Name: "expires", Type: DB_BigInt, Nullable: true,
+	}))
 }

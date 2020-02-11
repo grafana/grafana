@@ -1,28 +1,39 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
+import {
+  AdHocVariableFilter,
+  AdHocVariableModel,
+  assignModelProperties,
+  VariableActions,
+  VariableHide,
+  VariableType,
+  variableTypes,
+} from './variable';
 
-export class AdhocVariable implements Variable {
-  filters: any[];
+export class AdhocVariable implements AdHocVariableModel, VariableActions {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
+  skipUrlSync: boolean;
+  filters: AdHocVariableFilter[];
+  datasource: string;
 
-  defaults = {
+  defaults: AdHocVariableModel = {
     type: 'adhoc',
     name: '',
     label: '',
-    hide: 0,
+    hide: VariableHide.dontHide,
+    skipUrlSync: false,
     datasource: null,
     filters: [],
   };
 
-  /** @ngInject **/
-  constructor(private model) {
+  /** @ngInject */
+  constructor(private model: any) {
     assignModelProperties(this, model, this.defaults);
   }
 
-  setValue(option) {
+  setValue(option: any) {
     return Promise.resolve();
   }
 
@@ -35,23 +46,24 @@ export class AdhocVariable implements Variable {
     return Promise.resolve();
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string[] | string[]) {
     if (!_.isArray(urlValue)) {
       urlValue = [urlValue];
     }
 
     this.filters = urlValue.map(item => {
-      var values = item.split('|').map(value => {
+      const values = item.split('|').map(value => {
         return this.unescapeDelimiter(value);
       });
       return {
         key: values[0],
         operator: values[1],
         value: values[2],
+        condition: '',
       };
     });
 
@@ -60,18 +72,20 @@ export class AdhocVariable implements Variable {
 
   getValueForUrl() {
     return this.filters.map(filter => {
-      return [filter.key, filter.operator, filter.value].map(value => {
-        return this.escapeDelimiter(value);
-      }).join('|');
+      return [filter.key, filter.operator, filter.value]
+        .map(value => {
+          return this.escapeDelimiter(value);
+        })
+        .join('|');
     });
   }
 
-  escapeDelimiter(value) {
-    return value.replace('|', '__gfp__');
+  escapeDelimiter(value: string) {
+    return value.replace(/\|/g, '__gfp__');
   }
 
-  unescapeDelimiter(value) {
-    return value.replace('__gfp__', '|');
+  unescapeDelimiter(value: string) {
+    return value.replace(/__gfp__/g, '|');
   }
 
   setFilters(filters: any[]) {

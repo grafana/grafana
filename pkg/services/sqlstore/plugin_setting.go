@@ -26,7 +26,7 @@ func GetPluginSettings(query *m.GetPluginSettingsQuery) error {
 		params = append(params, query.OrgId)
 	}
 
-	sess := x.Sql(sql, params...)
+	sess := x.SQL(sql, params...)
 	query.Result = make([]*m.PluginSettingInfoDTO, 0)
 	return sess.Find(&query.Result)
 }
@@ -36,7 +36,7 @@ func GetPluginSettingById(query *m.GetPluginSettingByIdQuery) error {
 	has, err := x.Get(&pluginSetting)
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrPluginSettingNotFound
 	}
 	query.Result = &pluginSetting
@@ -44,10 +44,13 @@ func GetPluginSettingById(query *m.GetPluginSettingByIdQuery) error {
 }
 
 func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var pluginSetting m.PluginSetting
 
 		exists, err := sess.Where("org_id=? and plugin_id=?", cmd.OrgId, cmd.PluginId).Get(&pluginSetting)
+		if err != nil {
+			return err
+		}
 		sess.UseBool("enabled")
 		sess.UseBool("pinned")
 		if !exists {
@@ -72,34 +75,38 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 
 			_, err = sess.Insert(&pluginSetting)
 			return err
-		} else {
-			for key, data := range cmd.SecureJsonData {
-				pluginSetting.SecureJsonData[key] = util.Encrypt([]byte(data), setting.SecretKey)
-			}
-
-			// add state change event on commit success
-			if pluginSetting.Enabled != cmd.Enabled {
-				sess.events = append(sess.events, &m.PluginStateChangedEvent{
-					PluginId: cmd.PluginId,
-					OrgId:    cmd.OrgId,
-					Enabled:  cmd.Enabled,
-				})
-			}
-
-			pluginSetting.Updated = time.Now()
-			pluginSetting.Enabled = cmd.Enabled
-			pluginSetting.JsonData = cmd.JsonData
-			pluginSetting.Pinned = cmd.Pinned
-			pluginSetting.PluginVersion = cmd.PluginVersion
-
-			_, err = sess.Id(pluginSetting.Id).Update(&pluginSetting)
-			return err
 		}
+		for key, data := range cmd.SecureJsonData {
+			encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
+			if err != nil {
+				return err
+			}
+
+			pluginSetting.SecureJsonData[key] = encryptedData
+		}
+
+		// add state change event on commit success
+		if pluginSetting.Enabled != cmd.Enabled {
+			sess.events = append(sess.events, &m.PluginStateChangedEvent{
+				PluginId: cmd.PluginId,
+				OrgId:    cmd.OrgId,
+				Enabled:  cmd.Enabled,
+			})
+		}
+
+		pluginSetting.Updated = time.Now()
+		pluginSetting.Enabled = cmd.Enabled
+		pluginSetting.JsonData = cmd.JsonData
+		pluginSetting.Pinned = cmd.Pinned
+		pluginSetting.PluginVersion = cmd.PluginVersion
+
+		_, err = sess.ID(pluginSetting.Id).Update(&pluginSetting)
+		return err
 	})
 }
 
 func UpdatePluginSettingVersion(cmd *m.UpdatePluginSettingVersionCmd) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)
 		return err

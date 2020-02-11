@@ -1,0 +1,26 @@
+{
+  "type": "datasource",
+  "name": "Microsoft SQL Server",
+  "id": "mssql",
+  "category": "sql",
+
+  "info": {
+    "description": "Data source for Microsoft SQL Server compatible databases",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/sql_server_logo.svg",
+      "large": "img/sql_server_logo.svg"
+    }
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
+}

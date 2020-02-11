@@ -19,7 +19,7 @@ func ResolveExternalCaller() (file string, line int, name string) {
 			return
 		}
 	}
-	file, line, name = "<unkown file>", -1, "<unknown name>"
+	file, line, name = "<unknown file>", -1, "<unknown name>"
 	return // panic?
 }
 

@@ -53,7 +53,7 @@ func (self *problem) showFailures() {
 			self.out.Println("\nFailures:\n")
 			self.out.Indent()
 		}
-		self.out.Println(failureTemplate, f.File, f.Line, f.Failure)
+		self.out.Println(failureTemplate, f.File, f.Line, f.Failure, f.StackTrace)
 	}
 }
 

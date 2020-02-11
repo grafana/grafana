@@ -1,35 +1,38 @@
-# Building The Docs
+# Building the docs locally
 
-To build the docs locally, you need to have docker installed.  The
-docs are built using a custom [docker](https://www.docker.com/) image
-and the [mkdocs](http://www.mkdocs.org/) tool.
+When you contribute to documentation, it is a good practice to build the docs on your local machine to make sure your changes appear as you expect. This README explains the process for doing that.
 
-**Prepare the Docker Image**:
+## Requirements
 
-Git clone `grafana/grafana.org` repo. Run these commands in the root of that repo. **Note** that you may require ``sudo``
-when running ``make docs-build`` depending on how your system's docker
-service is configured):
+Docker >= 2.1.0.3
 
-```
-$ git clone https://github.com/grafana/grafana.org
-$ cd grafana.org
-$ make docs-build
-```
+## Build the doc site
 
-**Build the Documentation**:
+1. In the command line, make sure you are in the docs folder: `cd docs`.
+2. Run `make docs`. This launches a preview of the docs website at `http://localhost:3002/docs/grafana/latest/` which will refresh automatically when changes to content in the `sources` directory are made.
 
-Now that the docker image has been prepared we can build the
-docs. Switch your working directory back to the directory this file
-(README.md) is in and run (possibly with ``sudo``):
+---
 
-```
-$ make docs
-```
+## Content guidelines
 
-This command will not return control of the shell to the user. Instead
-the command is now running a new docker container built from the image
-we created in the previous step.
+Edit content in the `sources` directory.
 
-Open [localhost:3004](http://localhost:3004) to view the docs.
+### Using `relref` for internal links
 
+Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) any time you are linking to other internal docs pages.
 
+### Edit the side menu
+
+Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Stop and rerun the `make docs` command for changes to take effect.
+
+### Add images
+
+Images are currently hosted in the grafana/website repo.
+
+---
+
+## Deploy changes to grafana.com
+
+When a PR is merged to master with changes in the `docs` directory, those changes are automatically synched to the grafana/website repo on the `docs-grafana` branch.
+
+In order to make those changes live, open a PR in the website repo that merges the `docs-grafana` branch into `master`. Then follow the publishing guidelines in that repo.

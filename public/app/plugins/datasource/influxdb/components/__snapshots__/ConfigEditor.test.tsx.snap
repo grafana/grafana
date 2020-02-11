@@ -1,0 +1,869 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should disable basic auth password input 1`] = `
+<Fragment>
+  <Component
+    dataSourceConfig={
+      Object {
+        "access": "proxy",
+        "basicAuth": false,
+        "basicAuthPassword": "",
+        "basicAuthUser": "",
+        "database": "",
+        "id": 21,
+        "isDefault": false,
+        "jsonData": Object {
+          "httpMode": "POST",
+          "timeInterval": "4",
+        },
+        "name": "InfluxDB-3",
+        "orgId": 1,
+        "password": "",
+        "readOnly": false,
+        "secureJsonFields": Object {},
+        "type": "influxdb",
+        "typeLogoUrl": "",
+        "url": "",
+        "user": "",
+        "version": 1,
+        "withCredentials": false,
+      }
+    }
+    defaultUrl="http://localhost:8086"
+    onChange={[MockFunction]}
+    showAccessOptions={true}
+  />
+  <h3
+    className="page-heading"
+  >
+    InfluxDB Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+        >
+          Database
+        </Component>
+        <div
+          className="width-20"
+        >
+          <Input
+            className="width-20"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+        >
+          User
+        </Component>
+        <div
+          className="width-10"
+        >
+          <Input
+            className="width-20"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <SecretFormField
+          inputWidth={20}
+          label="Password"
+          labelWidth={10}
+          onChange={[Function]}
+          onReset={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+          tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
+          method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
+          will restrict you and return an error if the query is too large."
+        >
+          HTTP Method
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-10"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="POST"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "GET",
+                "value": "GET",
+              },
+              Object {
+                "label": "POST",
+                "value": "POST",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "POST",
+              "value": "POST",
+            }
+          }
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="grafana-info-box"
+    >
+      <h5>
+        Database Access
+      </h5>
+      <p>
+        Setting the database for this datasource does not deny access to other databases. The InfluxDB query syntax allows switching the database in the query. For example:
+        <code>
+          SHOW MEASUREMENTS ON _internal
+        </code>
+         or 
+        <code>
+          SELECT * FROM "_internal".."database" LIMIT 10
+        </code>
+        <br />
+        <br />
+        To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+      </p>
+    </div>
+  </div>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+          tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example 1m if your data is written every minute."
+        >
+          Min time interval
+        </Component>
+        <div
+          className="width-10"
+        >
+          <Input
+            className="width-10"
+            onChange={[Function]}
+            placeholder="10s"
+            value="4"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should hide basic auth fields when switch off 1`] = `
+<Fragment>
+  <Component
+    dataSourceConfig={
+      Object {
+        "access": "proxy",
+        "basicAuth": false,
+        "basicAuthPassword": "",
+        "basicAuthUser": "",
+        "database": "",
+        "id": 21,
+        "isDefault": false,
+        "jsonData": Object {
+          "httpMode": "POST",
+          "timeInterval": "4",
+        },
+        "name": "InfluxDB-3",
+        "orgId": 1,
+        "password": "",
+        "readOnly": false,
+        "secureJsonFields": Object {},
+        "type": "influxdb",
+        "typeLogoUrl": "",
+        "url": "",
+        "user": "",
+        "version": 1,
+        "withCredentials": false,
+      }
+    }
+    defaultUrl="http://localhost:8086"
+    onChange={[MockFunction]}
+    showAccessOptions={true}
+  />
+  <h3
+    className="page-heading"
+  >
+    InfluxDB Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+        >
+          Database
+        </Component>
+        <div
+          className="width-20"
+        >
+          <Input
+            className="width-20"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+        >
+          User
+        </Component>
+        <div
+          className="width-10"
+        >
+          <Input
+            className="width-20"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <SecretFormField
+          inputWidth={20}
+          label="Password"
+          labelWidth={10}
+          onChange={[Function]}
+          onReset={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+          tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
+          method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
+          will restrict you and return an error if the query is too large."
+        >
+          HTTP Method
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-10"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="POST"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "GET",
+                "value": "GET",
+              },
+              Object {
+                "label": "POST",
+                "value": "POST",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "POST",
+              "value": "POST",
+            }
+          }
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="grafana-info-box"
+    >
+      <h5>
+        Database Access
+      </h5>
+      <p>
+        Setting the database for this datasource does not deny access to other databases. The InfluxDB query syntax allows switching the database in the query. For example:
+        <code>
+          SHOW MEASUREMENTS ON _internal
+        </code>
+         or 
+        <code>
+          SELECT * FROM "_internal".."database" LIMIT 10
+        </code>
+        <br />
+        <br />
+        To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+      </p>
+    </div>
+  </div>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+          tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example 1m if your data is written every minute."
+        >
+          Min time interval
+        </Component>
+        <div
+          className="width-10"
+        >
+          <Input
+            className="width-10"
+            onChange={[Function]}
+            placeholder="10s"
+            value="4"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should hide white listed cookies input when browser access chosen 1`] = `
+<Fragment>
+  <Component
+    dataSourceConfig={
+      Object {
+        "access": "proxy",
+        "basicAuth": false,
+        "basicAuthPassword": "",
+        "basicAuthUser": "",
+        "database": "",
+        "id": 21,
+        "isDefault": false,
+        "jsonData": Object {
+          "httpMode": "POST",
+          "timeInterval": "4",
+        },
+        "name": "InfluxDB-3",
+        "orgId": 1,
+        "password": "",
+        "readOnly": false,
+        "secureJsonFields": Object {},
+        "type": "influxdb",
+        "typeLogoUrl": "",
+        "url": "",
+        "user": "",
+        "version": 1,
+        "withCredentials": false,
+      }
+    }
+    defaultUrl="http://localhost:8086"
+    onChange={[MockFunction]}
+    showAccessOptions={true}
+  />
+  <h3
+    className="page-heading"
+  >
+    InfluxDB Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+        >
+          Database
+        </Component>
+        <div
+          className="width-20"
+        >
+          <Input
+            className="width-20"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+        >
+          User
+        </Component>
+        <div
+          className="width-10"
+        >
+          <Input
+            className="width-20"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <SecretFormField
+          inputWidth={20}
+          label="Password"
+          labelWidth={10}
+          onChange={[Function]}
+          onReset={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+          tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
+          method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
+          will restrict you and return an error if the query is too large."
+        >
+          HTTP Method
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-10"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="POST"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "GET",
+                "value": "GET",
+              },
+              Object {
+                "label": "POST",
+                "value": "POST",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "POST",
+              "value": "POST",
+            }
+          }
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="grafana-info-box"
+    >
+      <h5>
+        Database Access
+      </h5>
+      <p>
+        Setting the database for this datasource does not deny access to other databases. The InfluxDB query syntax allows switching the database in the query. For example:
+        <code>
+          SHOW MEASUREMENTS ON _internal
+        </code>
+         or 
+        <code>
+          SELECT * FROM "_internal".."database" LIMIT 10
+        </code>
+        <br />
+        <br />
+        To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+      </p>
+    </div>
+  </div>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+          tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example 1m if your data is written every minute."
+        >
+          Min time interval
+        </Component>
+        <div
+          className="width-10"
+        >
+          <Input
+            className="width-10"
+            onChange={[Function]}
+            placeholder="10s"
+            value="4"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should render component 1`] = `
+<Fragment>
+  <Component
+    dataSourceConfig={
+      Object {
+        "access": "proxy",
+        "basicAuth": false,
+        "basicAuthPassword": "",
+        "basicAuthUser": "",
+        "database": "",
+        "id": 21,
+        "isDefault": false,
+        "jsonData": Object {
+          "httpMode": "POST",
+          "timeInterval": "4",
+        },
+        "name": "InfluxDB-3",
+        "orgId": 1,
+        "password": "",
+        "readOnly": false,
+        "secureJsonFields": Object {},
+        "type": "influxdb",
+        "typeLogoUrl": "",
+        "url": "",
+        "user": "",
+        "version": 1,
+        "withCredentials": false,
+      }
+    }
+    defaultUrl="http://localhost:8086"
+    onChange={[MockFunction]}
+    showAccessOptions={true}
+  />
+  <h3
+    className="page-heading"
+  >
+    InfluxDB Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+        >
+          Database
+        </Component>
+        <div
+          className="width-20"
+        >
+          <Input
+            className="width-20"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+        >
+          User
+        </Component>
+        <div
+          className="width-10"
+        >
+          <Input
+            className="width-20"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <SecretFormField
+          inputWidth={20}
+          label="Password"
+          labelWidth={10}
+          onChange={[Function]}
+          onReset={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+          tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
+          method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
+          will restrict you and return an error if the query is too large."
+        >
+          HTTP Method
+        </Component>
+        <Select
+          allowCustomValue={false}
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="width-10"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          defaultValue="POST"
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={true}
+          maxMenuHeight={300}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "label": "GET",
+                "value": "GET",
+              },
+              Object {
+                "label": "POST",
+                "value": "POST",
+              },
+            ]
+          }
+          tabSelectsValue={true}
+          value={
+            Object {
+              "label": "POST",
+              "value": "POST",
+            }
+          }
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="grafana-info-box"
+    >
+      <h5>
+        Database Access
+      </h5>
+      <p>
+        Setting the database for this datasource does not deny access to other databases. The InfluxDB query syntax allows switching the database in the query. For example:
+        <code>
+          SHOW MEASUREMENTS ON _internal
+        </code>
+         or 
+        <code>
+          SELECT * FROM "_internal".."database" LIMIT 10
+        </code>
+        <br />
+        <br />
+        To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+      </p>
+    </div>
+  </div>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-10"
+          tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example 1m if your data is written every minute."
+        >
+          Min time interval
+        </Component>
+        <div
+          className="width-10"
+        >
+          <Input
+            className="width-10"
+            onChange={[Function]}
+            placeholder="10s"
+            value="4"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;

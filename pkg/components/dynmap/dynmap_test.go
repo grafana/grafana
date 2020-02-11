@@ -1,5 +1,5 @@
 // uses code from https://github.com/antonholmquist/jason/blob/master/jason.go
-// MIT Licence
+// MIT License
 
 package dynmap
 
@@ -21,13 +21,15 @@ func NewAssert(t *testing.T) *Assert {
 }
 
 func (assert *Assert) True(value bool, message string) {
-	if value == false {
+	if !value {
 		log.Panicln("Assert: ", message)
 	}
 }
 
 func TestFirst(t *testing.T) {
 
+	anton := "anton"
+	street42 := "Street 42"
 	assert := NewAssert(t)
 
 	testJSON := `{
@@ -60,6 +62,7 @@ func TestFirst(t *testing.T) {
   }`
 
 	j, err := NewObjectFromBytes([]byte(testJSON))
+	assert.True(err == nil, "failed to create new object from bytes")
 
 	a, err := j.GetObject("address")
 	assert.True(a != nil && err == nil, "failed to create json from string")
@@ -67,19 +70,19 @@ func TestFirst(t *testing.T) {
 	assert.True(err == nil, "failed to create json from string")
 
 	s, err := j.GetString("name")
-	assert.True(s == "anton" && err == nil, "name should be a string")
+	assert.True(s == anton && err == nil, "name should be a string")
 
 	s = j.MustGetString("name", "fallback")
-	assert.True(s == "anton", "must get string")
+	assert.True(s == anton, "must get string")
 
 	s = j.MustGetString("adsasdas", "fallback")
 	assert.True(s == "fallback", "must get string return fallback")
 
 	s, err = j.GetString("name")
-	assert.True(s == "anton" && err == nil, "name shoud match")
+	assert.True(s == anton && err == nil, "name should match")
 
 	s, err = j.GetString("address", "street")
-	assert.True(s == "Street 42" && err == nil, "street shoud match")
+	assert.True(s == street42 && err == nil, "street should match")
 	//log.Println("s: ", s.String())
 
 	_, err = j.GetNumber("age")
@@ -108,24 +111,25 @@ func TestFirst(t *testing.T) {
 	//log.Println("address: ", address)
 
 	s, err = address.GetString("street")
+	assert.True(s == street42 && err == nil, "street mismatching")
 
 	addressAsString, err := j.GetString("address")
 	assert.True(addressAsString == "" && err != nil, "address should not be an string")
 
 	s, err = j.GetString("address", "street")
-	assert.True(s == "Street 42" && err == nil, "street mismatching")
+	assert.True(s == street42 && err == nil, "street mismatching")
 
 	s, err = j.GetString("address", "name2")
 	assert.True(s == "" && err != nil, "nonexistent string fail")
 
 	b, err := j.GetBoolean("true")
-	assert.True(b == true && err == nil, "bool true test")
+	assert.True(b && err == nil, "bool true test")
 
 	b, err = j.GetBoolean("false")
-	assert.True(b == false && err == nil, "bool false test")
+	assert.True(!b && err == nil, "bool false test")
 
 	b, err = j.GetBoolean("invalid_field")
-	assert.True(b == false && err != nil, "bool invalid test")
+	assert.True(!b && err != nil, "bool invalid test")
 
 	list, err := j.GetValueArray("list")
 	assert.True(list != nil && err == nil, "list should be an array")
@@ -148,9 +152,10 @@ func TestFirst(t *testing.T) {
 		//assert.True(element.IsObject() == true, "first fail")
 
 		element, err := elementValue.Object()
+		assert.True(err == nil, "create element fail")
 
 		s, err = element.GetString("street")
-		assert.True(s == "Street 42" && err == nil, "second fail")
+		assert.True(s == street42 && err == nil, "second fail")
 	}
 
 	obj, err := j.GetObject("country")
@@ -232,6 +237,7 @@ func TestSecond(t *testing.T) {
 			assert.True(fromName == "Tom Brady" && err == nil, "fromName mismatch")
 
 			actions, err := dataItem.GetObjectArray("actions")
+			assert.True(err == nil, "get object from array failed")
 
 			for index, action := range actions {
 

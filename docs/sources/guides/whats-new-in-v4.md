@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v4.0"
-description = "Feature & improvement highlights for Grafana v4.0"
+description = "Feature and improvement highlights for Grafana v4.0"
 keywords = ["grafana", "new", "documentation", "4.0"]
 type = "docs"
 [menu.docs]
@@ -55,7 +55,7 @@ of another alert in your conditions, and `Time Of Day`.
 Alerting would not be very useful if there was no way to send notifications when rules trigger and change state. You
 can setup notifications of different types. We currently have `Slack`, `PagerDuty`, `Email` and `Webhook` with more in the
 pipe that will be added during beta period. The notifications can then be added to your alert rules.
-If you have configured an external image store in the grafana.ini config file (s3 and webdav options available)
+If you have configured an external image store in the grafana.ini config file (s3, webdav, and azure_blob options available)
 you can get very rich notifications with an image of the graph and the metric
 values all included in the notification.
 
@@ -89,22 +89,22 @@ dynamically add filters to any log property!
 
 ## UX Improvements
 
-We always try to bring some UX/UI refinements & polish in every release.
+We always try to bring some UX/UI refinements and polish in every release.
 
-### TV-mode & Kiosk mode
+### TV-mode and Kiosk mode
 
 
 <div class="row">
   <div class="medium-6 columns">
     <p>
       Grafana is so often used on wall mounted TVs that we figured a clean TV mode would be
-      really nice. In TV mode the top navbar, row & panel controls will all fade to transparent.
+      really nice. In TV mode the top navbar, row and panel controls will all fade to transparent.
     </p>
 
     <p>
       This happens automatically after one minute of user inactivity but can also be toggled manually
       with the <code>d v</code> sequence shortcut. Any mouse movement or keyboard action will
-      restore navbar & controls.
+      restore navbar and controls.
     </p>
 
     <p>
@@ -122,7 +122,7 @@ We always try to bring some UX/UI refinements & polish in every release.
   </div>
 </div>
 
-### New row menu & add panel experience
+### New row menu and add panel experience
 
 {{< imgbox max-width="50%" img="/img/docs/v4/add_panel.gif" caption="Add Panel flow" >}}
 
@@ -134,7 +134,7 @@ continue work on a `build mode` for a future release.
 The new row menu automatically slides out when you mouse over the edge of the row. You no longer need
 to hover over the small green icon and then click it to expand the row menu.
 
-There are some minor improvements to drag and drop behaviour. Now when dragging a panel from one row
+There are some minor improvements to drag and drop behavior. Now when dragging a panel from one row
 to another you will insert the panel and Grafana will automatically make room for it.
 When you drag a panel within a row you will simply reorder the panels.
 
@@ -143,7 +143,7 @@ required, you can also just click the panel type and it will be inserted at the 
 automatically. Dragging a new panel has an advantage in that you can insert a new panel where ever you want
 not just at the end of the row.
 
-We plan to further improve dashboard building in the future with a more rich grid & layout system.
+We plan to further improve dashboard building in the future with a more rich grid and layout system.
 
 ### Keyboard shortcuts
 
@@ -162,7 +162,7 @@ Some nice navigation shortcuts are:
 
 <div class="clearfix"></div>
 
-## Upgrade & Breaking changes
+## Upgrade and Breaking changes
 
 There are no breaking changes. Old dashboards and features should work the same. Grafana-server will automatically upgrade its db
 schema on restart. It's advisable to do a backup of Grafana's database before updating.
@@ -175,6 +175,6 @@ You can update plugins using grafana-cli
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.
 

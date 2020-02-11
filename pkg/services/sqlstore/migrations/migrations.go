@@ -24,8 +24,16 @@ func AddMigrations(mg *Migrator) {
 	addPreferencesMigrations(mg)
 	addAlertMigrations(mg)
 	addAnnotationMig(mg)
-	addStatsMigrations(mg)
 	addTestDataMigrations(mg)
+	addDashboardVersionMigration(mg)
+	addTeamMigrations(mg)
+	addDashboardAclMigrations(mg)
+	addTagMigration(mg)
+	addLoginAttemptMigrations(mg)
+	addUserAuthMigrations(mg)
+	addServerlockMigrations(mg)
+	addUserAuthTokenMigrations(mg)
+	addCacheMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

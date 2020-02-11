@@ -1,27 +1,15 @@
 {
-    "compilerOptions": {
-        "sourceMap": true,
-        "declaration": true,
-        "outDir": "public_gen",
-        "noImplicitAny": false,
-        "target": "es5",
-        "rootDir": "public/",
-        "module": "system",
-        "noEmitOnError": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "noImplicitReturns":false,
-        "noImplicitThis":false,
-        "noImplicitUseStrict":false,
-        "noUnusedLocals":false,
-        "moduleResolution": "classic"
+  "compilerOptions": {
+    "baseUrl": "public/",
+    "outDir": "public/dist",
+    "paths": {
+      "@grafana/slate-react": ["../node_modules/@types/slate-react"],
+      "app": ["app/"],
+      "sass": ["sass/"]
     },
-    "include": [
-        "public/app/**/*.ts"
-    ],
-    "exclude": [
-        "public/vendor/**/*",
-        "public/**/*.d.ts"
-    ]
-
+    "rootDirs": ["public/"],
+    "typeRoots": ["node_modules/@types", "public/app/types"]
+  },
+  "extends": "@grafana/tsconfig/base.json",
+  "include": ["public/app/**/*.ts*", "public/e2e-test/**/*.ts", "public/test/**/*.ts", "public/vendor/**/*.ts"]
 }

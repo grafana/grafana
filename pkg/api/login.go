@@ -1,25 +1,57 @@
 package api
 
 import (
+	"encoding/hex"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
-	VIEW_INDEX = "index"
+	ViewIndex            = "index"
+	LoginErrorCookieName = "login_error"
 )
 
-func LoginView(c *middleware.Context) {
-	viewData, err := setIndexViewData(c)
+var setIndexViewData = (*HTTPServer).setIndexViewData
+
+var getViewIndex = func() string {
+	return ViewIndex
+}
+
+func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
+	to, err := url.Parse(redirectTo)
+	if err != nil {
+		return login.ErrInvalidRedirectTo
+	}
+	if to.IsAbs() {
+		return login.ErrAbsoluteRedirectTo
+	}
+	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, "/"+hs.Cfg.AppSubUrl) {
+		return login.ErrInvalidRedirectTo
+	}
+	return nil
+}
+
+func (hs *HTTPServer) cookieOptionsFromCfg() middleware.CookieOptions {
+	return middleware.CookieOptions{
+		Path:             hs.Cfg.AppSubUrl + "/",
+		Secure:           hs.Cfg.CookieSecure,
+		SameSiteDisabled: hs.Cfg.CookieSameSiteDisabled,
+		SameSiteMode:     hs.Cfg.CookieSameSiteMode,
+	}
+}
+
+func (hs *HTTPServer) LoginView(c *models.ReqContext) {
+	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
@@ -31,126 +63,181 @@ func LoginView(c *middleware.Context) {
 	}
 
 	viewData.Settings["oauth"] = enabledOAuths
-	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
-	viewData.Settings["loginHint"] = setting.LoginHint
-	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
+	viewData.Settings["samlEnabled"] = hs.License.HasValidLicense() && hs.Cfg.SAMLEnabled
 
-	if loginError, ok := c.Session.Get("loginError").(string); ok {
-		c.Session.Delete("loginError")
+	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
+		//this cookie is only set whenever an OAuth login fails
+		//therefore the loginError should be passed to the view data
+		//and the view should return immediately before attempting
+		//to login again via OAuth and enter to a redirect loop
+		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.cookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
-	}
-
-	if !tryLoginUsingRememberCookie(c) {
-		c.HTML(200, VIEW_INDEX, viewData)
+		c.HTML(200, getViewIndex(), viewData)
 		return
 	}
 
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-		c.Redirect(redirectTo)
+	if tryOAuthAutoLogin(c) {
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/")
-}
+	if c.IsSignedIn {
+		// Assign login token to auth proxy users if enable_login_token = true
+		if setting.AuthProxyEnabled && setting.AuthProxyEnableLoginToken {
+			hs.loginAuthProxyUser(c)
+		}
 
-func tryLoginUsingRememberCookie(c *middleware.Context) bool {
-	// Check auto-login.
-	uname := c.GetCookie(setting.CookieUserName)
-	if len(uname) == 0 {
-		return false
-	}
-
-	isSucceed := false
-	defer func() {
-		if !isSucceed {
-			log.Trace("auto-login cookie cleared: %s", uname)
-			c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
-			c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
+		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+			if err := hs.validateRedirectTo(redirectTo); err != nil {
+				viewData.Settings["loginError"] = err.Error()
+				c.HTML(200, getViewIndex(), viewData)
+				middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
+				return
+			}
+			middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
+			c.Redirect(redirectTo)
 			return
 		}
-	}()
 
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: uname}
-	if err := bus.Dispatch(&userQuery); err != nil {
-		return false
-	}
-
-	user := userQuery.Result
-
-	// validate remember me cookie
-	if val, _ := c.GetSuperSecureCookie(
-		util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName); val != user.Login {
-		return false
-	}
-
-	isSucceed = true
-	loginUserWithUser(user, c)
-	return true
-}
-
-func LoginApiPing(c *middleware.Context) {
-	if !tryLoginUsingRememberCookie(c) {
-		c.JsonApiErr(401, "Unauthorized", nil)
+		c.Redirect(setting.AppSubUrl + "/")
 		return
 	}
 
-	c.JsonOK("Logged in")
+	c.HTML(200, getViewIndex(), viewData)
 }
 
-func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
+func (hs *HTTPServer) loginAuthProxyUser(c *models.ReqContext) {
+	hs.loginUserWithUser(&models.User{
+		Id:    c.SignedInUser.UserId,
+		Email: c.SignedInUser.Email,
+		Login: c.SignedInUser.Login,
+	}, c)
+}
+
+func tryOAuthAutoLogin(c *models.ReqContext) bool {
+	if !setting.OAuthAutoLogin {
+		return false
+	}
+	oauthInfos := setting.OAuthService.OAuthInfos
+	if len(oauthInfos) != 1 {
+		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
+		return false
+	}
+	for key := range setting.OAuthService.OAuthInfos {
+		redirectUrl := setting.AppSubUrl + "/login/" + key
+		log.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+		c.Redirect(redirectUrl, 307)
+		return true
+	}
+	return false
+}
+
+func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) Response {
+	if c.IsSignedIn || c.IsAnonymous {
+		return JSON(200, "Logged in")
+	}
+
+	return Error(401, "Unauthorized", nil)
+}
+
+func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Response {
 	if setting.DisableLoginForm {
-		return ApiError(401, "Login is disabled", nil)
+		return Error(401, "Login is disabled", nil)
 	}
 
-	authQuery := login.LoginUserQuery{
-		Username: cmd.User,
-		Password: cmd.Password,
+	authQuery := &models.LoginUserQuery{
+		ReqContext: c,
+		Username:   cmd.User,
+		Password:   cmd.Password,
+		IpAddress:  c.Req.RemoteAddr,
 	}
 
-	if err := bus.Dispatch(&authQuery); err != nil {
-		if err == login.ErrInvalidCredentials {
-			return ApiError(401, "Invalid username or password", err)
+	if err := bus.Dispatch(authQuery); err != nil {
+		e401 := Error(401, "Invalid username or password", err)
+		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
+			return e401
 		}
 
-		return ApiError(500, "Error while trying to authenticate user", err)
+		// Do not expose disabled status,
+		// just show incorrect user credentials error (see #17947)
+		if err == login.ErrUserDisabled {
+			hs.log.Warn("User is disabled", "user", cmd.User)
+			return e401
+		}
+
+		return Error(500, "Error while trying to authenticate user", err)
 	}
 
 	user := authQuery.User
 
-	loginUserWithUser(user, c)
+	hs.loginUserWithUser(user, c)
 
 	result := map[string]interface{}{
 		"message": "Logged in",
 	}
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		result["redirectUrl"] = redirectTo
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		if err := hs.validateRedirectTo(redirectTo); err == nil {
+			result["redirectUrl"] = redirectTo
+		} else {
+			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
+		}
+		middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
 	}
 
-	metrics.M_Api_Login_Post.Inc(1)
-
-	return Json(200, result)
+	metrics.MApiLoginPost.Inc()
+	return JSON(200, result)
 }
 
-func loginUserWithUser(user *m.User, c *middleware.Context) {
+func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) {
 	if user == nil {
-		log.Error(3, "User login with nil user")
+		hs.log.Error("user login with nil user")
 	}
 
-	days := 86400 * setting.LogInRememberDays
-	if days > 0 {
-		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-		c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, c.RemoteAddr(), c.Req.UserAgent())
+	if err != nil {
+		hs.log.Error("failed to create auth token", "error", err)
 	}
-
-	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
+	hs.log.Info("Successful Login", "User", user.Email)
+	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDays)
 }
 
-func Logout(c *middleware.Context) {
-	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
-	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
-	c.Session.Destory(c)
-	c.Redirect(setting.AppSubUrl + "/login")
+func (hs *HTTPServer) Logout(c *models.ReqContext) {
+	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != models.ErrUserTokenNotFound {
+		hs.log.Error("failed to revoke auth token", "error", err)
+	}
+
+	middleware.WriteSessionCookie(c, "", -1)
+
+	if setting.SignoutRedirectUrl != "" {
+		c.Redirect(setting.SignoutRedirectUrl)
+	} else {
+		hs.log.Info("Successful Logout", "User", c.Email)
+		c.Redirect(setting.AppSubUrl + "/login")
+	}
+}
+
+func tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, bool) {
+	cookie := ctx.GetCookie(cookieName)
+	if cookie == "" {
+		return "", false
+	}
+
+	decoded, err := hex.DecodeString(cookie)
+	if err != nil {
+		return "", false
+	}
+
+	decryptedError, err := util.Decrypt(decoded, setting.SecretKey)
+	return string(decryptedError), err == nil
+}
+
+func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
+	encryptedError, err := util.Encrypt([]byte(value), setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
+	middleware.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.cookieOptionsFromCfg)
+
+	return nil
 }

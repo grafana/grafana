@@ -10,31 +10,13 @@
 //     app := cli.NewApp()
 //     app.Name = "greet"
 //     app.Usage = "say a greeting"
-//     app.Action = func(c *cli.Context) {
+//     app.Action = func(c *cli.Context) error {
 //       println("Greetings")
+//       return nil
 //     }
 //
 //     app.Run(os.Args)
 //   }
 package cli
 
-import (
-	"strings"
-)
-
-type MultiError struct {
-	Errors []error
-}
-
-func NewMultiError(err ...error) MultiError {
-	return MultiError{Errors: err}
-}
-
-func (m MultiError) Error() string {
-	errs := make([]string, len(m.Errors))
-	for i, err := range m.Errors {
-		errs[i] = err.Error()
-	}
-
-	return strings.Join(errs, "\n")
-}
+//go:generate python ./generate-flag-types cli -i flag-types.json -o flag_generated.go

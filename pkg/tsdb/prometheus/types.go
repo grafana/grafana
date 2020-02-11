@@ -8,4 +8,5 @@ type PrometheusQuery struct {
 	LegendFormat string
 	Start        time.Time
 	End          time.Time
+	RefId        string
 }

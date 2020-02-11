@@ -1,0 +1,16 @@
+{
+  "type": "panel",
+  "name": "Logs",
+  "id": "logs",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-logs-panel.svg",
+      "large": "img/icn-logs-panel.svg"
+    }
+  }
+}

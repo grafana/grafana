@@ -13,7 +13,7 @@ weight = 2
 
 > Alerting is only available in Grafana v4.0 and above.
 
-The alert engine publishes some internal metrics about itself. You can read more about how Grafana published [internal metrics](/installation/configuration/#metrics).
+The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics](/installation/configuration/#metrics).
 
 Description | Type | Metric name
 ---------- | ----------- | ----------

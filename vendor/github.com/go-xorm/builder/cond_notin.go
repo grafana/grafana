@@ -20,10 +20,8 @@ func NotIn(col string, values ...interface{}) Cond {
 }
 
 func (condNotIn condNotIn) handleBlank(w Writer) error {
-	if _, err := fmt.Fprintf(w, "%s NOT IN ()", condNotIn.col); err != nil {
-		return err
-	}
-	return nil
+	_, err := fmt.Fprint(w, "0=0")
+	return err
 }
 
 func (condNotIn condNotIn) WriteTo(w Writer) error {

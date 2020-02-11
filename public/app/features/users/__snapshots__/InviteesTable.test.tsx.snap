@@ -1,0 +1,180 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<table
+  className="filter-table form-inline"
+>
+  <thead>
+    <tr>
+      <th>
+        Email
+      </th>
+      <th>
+        Name
+      </th>
+      <th />
+      <th
+        style={
+          Object {
+            "width": "34px",
+          }
+        }
+      />
+    </tr>
+  </thead>
+  <tbody />
+</table>
+`;
+
+exports[`Render should render invitees 1`] = `
+<table
+  className="filter-table form-inline"
+>
+  <thead>
+    <tr>
+      <th>
+        Email
+      </th>
+      <th>
+        Name
+      </th>
+      <th />
+      <th
+        style={
+          Object {
+            "width": "34px",
+          }
+        }
+      />
+    </tr>
+  </thead>
+  <tbody>
+    <Component
+      invitee={
+        Object {
+          "code": "asdfasdfsadf-0",
+          "createdOn": "2018-10-02",
+          "email": "invitee-0@test.com",
+          "emailSent": true,
+          "emailSentOn": "2018-10-02",
+          "id": 0,
+          "invitedByEmail": "admin@grafana.com",
+          "invitedByLogin": "admin",
+          "invitedByName": "admin",
+          "name": "invitee-0",
+          "orgId": 1,
+          "role": "viewer",
+          "status": "not accepted",
+          "url": "localhost/invite/0",
+        }
+      }
+      key="0-0"
+    />
+    <Component
+      invitee={
+        Object {
+          "code": "asdfasdfsadf-1",
+          "createdOn": "2018-10-02",
+          "email": "invitee-1@test.com",
+          "emailSent": true,
+          "emailSentOn": "2018-10-02",
+          "id": 1,
+          "invitedByEmail": "admin@grafana.com",
+          "invitedByLogin": "admin",
+          "invitedByName": "admin",
+          "name": "invitee-1",
+          "orgId": 1,
+          "role": "viewer",
+          "status": "not accepted",
+          "url": "localhost/invite/1",
+        }
+      }
+      key="1-1"
+    />
+    <Component
+      invitee={
+        Object {
+          "code": "asdfasdfsadf-2",
+          "createdOn": "2018-10-02",
+          "email": "invitee-2@test.com",
+          "emailSent": true,
+          "emailSentOn": "2018-10-02",
+          "id": 2,
+          "invitedByEmail": "admin@grafana.com",
+          "invitedByLogin": "admin",
+          "invitedByName": "admin",
+          "name": "invitee-2",
+          "orgId": 1,
+          "role": "viewer",
+          "status": "not accepted",
+          "url": "localhost/invite/2",
+        }
+      }
+      key="2-2"
+    />
+    <Component
+      invitee={
+        Object {
+          "code": "asdfasdfsadf-3",
+          "createdOn": "2018-10-02",
+          "email": "invitee-3@test.com",
+          "emailSent": true,
+          "emailSentOn": "2018-10-02",
+          "id": 3,
+          "invitedByEmail": "admin@grafana.com",
+          "invitedByLogin": "admin",
+          "invitedByName": "admin",
+          "name": "invitee-3",
+          "orgId": 1,
+          "role": "viewer",
+          "status": "not accepted",
+          "url": "localhost/invite/3",
+        }
+      }
+      key="3-3"
+    />
+    <Component
+      invitee={
+        Object {
+          "code": "asdfasdfsadf-4",
+          "createdOn": "2018-10-02",
+          "email": "invitee-4@test.com",
+          "emailSent": true,
+          "emailSentOn": "2018-10-02",
+          "id": 4,
+          "invitedByEmail": "admin@grafana.com",
+          "invitedByLogin": "admin",
+          "invitedByName": "admin",
+          "name": "invitee-4",
+          "orgId": 1,
+          "role": "viewer",
+          "status": "not accepted",
+          "url": "localhost/invite/4",
+        }
+      }
+      key="4-4"
+    />
+    <Component
+      invitee={
+        Object {
+          "code": "asdfasdfsadf-5",
+          "createdOn": "2018-10-02",
+          "email": "invitee-5@test.com",
+          "emailSent": true,
+          "emailSentOn": "2018-10-02",
+          "id": 5,
+          "invitedByEmail": "admin@grafana.com",
+          "invitedByLogin": "admin",
+          "invitedByName": "admin",
+          "name": "invitee-5",
+          "orgId": 1,
+          "role": "viewer",
+          "status": "not accepted",
+          "url": "localhost/invite/5",
+        }
+      }
+      key="5-5"
+    />
+  </tbody>
+</table>
+`;

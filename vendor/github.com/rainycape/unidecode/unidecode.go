@@ -3,6 +3,8 @@
 // approximations.
 package unidecode
 
+//go:generate go run make_table.go
+
 import (
 	"sync"
 	"unicode"

@@ -1,69 +1,130 @@
 package bus
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-type TestQuery struct {
-	Id   int64
+type testQuery struct {
+	ID   int64
 	Resp string
 }
 
-func TestQueryHandlerReturnsError(t *testing.T) {
+func TestDispatch(t *testing.T) {
 	bus := New()
 
-	bus.AddHandler(func(query *TestQuery) error {
+	var invoked bool
+
+	bus.AddHandler(func(query *testQuery) error {
+		invoked = true
+		return nil
+	})
+
+	err := bus.Dispatch(&testQuery{})
+	require.NoError(t, err)
+
+	require.True(t, invoked, "expected handler to be called")
+}
+
+func TestDispatch_NoRegisteredHandler(t *testing.T) {
+	bus := New()
+
+	err := bus.Dispatch(&testQuery{})
+	require.Equal(t, err, ErrHandlerNotFound,
+		"expected bus to return HandlerNotFound since no handler is registered")
+}
+
+func TestDispatch_ContextHandler(t *testing.T) {
+	bus := New()
+
+	var invoked bool
+
+	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
+		invoked = true
+		return nil
+	})
+
+	err := bus.Dispatch(&testQuery{})
+	require.NoError(t, err)
+
+	require.True(t, invoked, "expected handler to be called")
+}
+
+func TestDispatchCtx(t *testing.T) {
+	bus := New()
+
+	var invoked bool
+
+	bus.AddHandlerCtx(func(ctx context.Context, query *testQuery) error {
+		invoked = true
+		return nil
+	})
+
+	err := bus.DispatchCtx(context.Background(), &testQuery{})
+	require.NoError(t, err)
+
+	require.True(t, invoked, "expected handler to be called")
+}
+
+func TestDispatchCtx_NoRegisteredHandler(t *testing.T) {
+	bus := New()
+
+	err := bus.DispatchCtx(context.Background(), &testQuery{})
+	require.Equal(t, err, ErrHandlerNotFound,
+		"expected bus to return HandlerNotFound since no handler is registered")
+}
+
+func TestQuery(t *testing.T) {
+	bus := New()
+
+	want := "hello from handler"
+
+	bus.AddHandler(func(q *testQuery) error {
+		q.Resp = want
+		return nil
+	})
+
+	q := &testQuery{}
+
+	err := bus.Dispatch(q)
+	require.NoError(t, err, "unable to dispatch query")
+
+	require.Equal(t, want, q.Resp)
+}
+
+func TestQuery_HandlerReturnsError(t *testing.T) {
+	bus := New()
+
+	bus.AddHandler(func(query *testQuery) error {
 		return errors.New("handler error")
 	})
 
-	err := bus.Dispatch(&TestQuery{})
-
-	if err == nil {
-		t.Fatal("Send query failed " + err.Error())
-	} else {
-		t.Log("Handler error received ok")
-	}
+	err := bus.Dispatch(&testQuery{})
+	require.Error(t, err, "expected error but got none")
 }
 
-func TestQueryHandlerReturn(t *testing.T) {
+func TestEvent(t *testing.T) {
 	bus := New()
 
-	bus.AddHandler(func(q *TestQuery) error {
-		q.Resp = "hello from handler"
+	var invoked bool
+
+	bus.AddEventListener(func(query *testQuery) error {
+		invoked = true
 		return nil
 	})
 
-	query := &TestQuery{}
-	err := bus.Dispatch(query)
+	err := bus.Publish(&testQuery{})
+	require.NoError(t, err, "unable to publish event")
 
-	if err != nil {
-		t.Fatal("Send query failed " + err.Error())
-	} else if query.Resp != "hello from handler" {
-		t.Fatal("Failed to get response from handler")
-	}
+	require.True(t, invoked)
 }
 
-func TestEventListeners(t *testing.T) {
+func TestEvent_NoRegisteredListener(t *testing.T) {
 	bus := New()
-	count := 0
 
-	bus.AddEventListener(func(query *TestQuery) error {
-		count += 1
-		return nil
-	})
-
-	bus.AddEventListener(func(query *TestQuery) error {
-		count += 10
-		return nil
-	})
-
-	err := bus.Publish(&TestQuery{})
-
-	if err != nil {
-		t.Fatal("Publish event failed " + err.Error())
-	} else if count != 11 {
-		t.Fatal(fmt.Sprintf("Publish event failed, listeners called: %v, expected: %v", count, 11))
-	}
+	err := bus.Publish(&testQuery{})
+	require.NoError(t, err, "unable to publish event")
 }

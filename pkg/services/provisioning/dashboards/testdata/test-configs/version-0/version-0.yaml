@@ -1,0 +1,15 @@
+- name: 'general dashboards'
+  org_id: 2
+  folder: 'developers'
+  folderUid: 'xyz'
+  editable: true
+  disableDeletion: true
+  updateIntervalSeconds: 15
+  type: file
+  options:
+    path: /var/lib/grafana/dashboards
+
+- name: 'default'
+  type: file
+  options:
+    path: /var/lib/grafana/dashboards

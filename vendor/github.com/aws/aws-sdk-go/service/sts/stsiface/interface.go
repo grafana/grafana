@@ -21,7 +21,7 @@ import (
 //
 // The best way to use this interface is so the SDK's service client's calls
 // can be stubbed out for unit testing your code with the SDK without needing
-// to inject custom request handlers into the the SDK's request pipeline.
+// to inject custom request handlers into the SDK's request pipeline.
 //
 //    // myFunc uses an SDK service client to make a request to
 //    // AWS Security Token Service.
@@ -75,6 +75,10 @@ type STSAPI interface {
 	DecodeAuthorizationMessage(*sts.DecodeAuthorizationMessageInput) (*sts.DecodeAuthorizationMessageOutput, error)
 	DecodeAuthorizationMessageWithContext(aws.Context, *sts.DecodeAuthorizationMessageInput, ...request.Option) (*sts.DecodeAuthorizationMessageOutput, error)
 	DecodeAuthorizationMessageRequest(*sts.DecodeAuthorizationMessageInput) (*request.Request, *sts.DecodeAuthorizationMessageOutput)
+
+	GetAccessKeyInfo(*sts.GetAccessKeyInfoInput) (*sts.GetAccessKeyInfoOutput, error)
+	GetAccessKeyInfoWithContext(aws.Context, *sts.GetAccessKeyInfoInput, ...request.Option) (*sts.GetAccessKeyInfoOutput, error)
+	GetAccessKeyInfoRequest(*sts.GetAccessKeyInfoInput) (*request.Request, *sts.GetAccessKeyInfoOutput)
 
 	GetCallerIdentity(*sts.GetCallerIdentityInput) (*sts.GetCallerIdentityOutput, error)
 	GetCallerIdentityWithContext(aws.Context, *sts.GetCallerIdentityInput, ...request.Option) (*sts.GetCallerIdentityOutput, error)

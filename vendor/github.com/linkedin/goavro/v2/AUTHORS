@@ -1,0 +1,38 @@
+Goavro was originally created during the Fall of 2014 at LinkedIn,
+Corp., in New York City, New York, USA.
+
+The following persons, listed in alphabetical order, have participated
+with goavro development by contributing code and test cases.
+
+	Alan Gardner <alanctgardner@gmail.com>
+	Billy Hand <bhand@mediamath.com>
+	Christian Blades <christian.blades@careerbuilder.com>
+	Corey Scott <corey.scott@gmail.com>
+	Darshan Shaligram <scintilla@gmail.com>
+	Dylan Wen <hhkbp2@gmail.com>
+	Enrico Candino <enrico.candino@gmail.com>
+	Fellyn Silliman <fsilliman@linkedin.com>
+	James Crasta <jcrasta@underarmour.com>
+	Jeff Haynie <jhaynie@gmail.com>
+	Joe Roth <joseph_roth@cable.comcast.com>
+	Karrick S. McDermott <kmcdermott@linkedin.com>
+	Kasey Klipsch <kklipsch@mediamath.com>
+	Michael Johnson <mijohnson@linkedin.com>
+	Murray Resinski <murray.resinski@octanner.com>
+	Nicolas Kaiser <nikai@nikai.net>
+	Sebastien Launay <sebastien@opendns.com>
+	Thomas Desrosiers <thomasdesr@gmail.com>
+	kklipsch <junk@klipsch.net>
+	seborama <sebastien.chatal@sainsburys.co.uk>
+
+A big thank you to these persons who provided testing and amazing
+feedback to goavro during its initial implementation:
+
+	Dennis Ordanov <dordanov@linkedin.com>
+	Thomas Desrosiers <thomasdesr@gmail.com>
+
+Also a big thank you is extended to our supervisors who supported our
+efforts to bring goavro to the open source community:
+
+	Greg Leffler <gleffler@linkedin.com>
+	Nick Berry <niberry@linkedin.com>

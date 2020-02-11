@@ -16,6 +16,7 @@
 package macaron
 
 import (
+	"encoding/base64"
 	"log"
 	"net/http"
 	"path"
@@ -35,6 +36,9 @@ type StaticOptions struct {
 	// Expires defines which user-defined function to use for producing a HTTP Expires Header
 	// https://developers.google.com/speed/docs/insights/LeverageBrowserCaching
 	Expires func() string
+	// ETag defines if we should add an ETag header
+	// https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching#validating-cached-responses-with-etags
+	ETag bool
 	// FileSystem is the interface for supporting any implmentation of file system.
 	FileSystem http.FileSystem
 }
@@ -172,8 +176,19 @@ func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
 		ctx.Resp.Header().Set("Expires", opt.Expires())
 	}
 
+	if opt.ETag {
+		tag := GenerateETag(string(fi.Size()), fi.Name(), fi.ModTime().UTC().Format(http.TimeFormat))
+		ctx.Resp.Header().Set("ETag", tag)
+	}
+
 	http.ServeContent(ctx.Resp, ctx.Req.Request, file, fi.ModTime(), f)
 	return true
+}
+
+// GenerateETag generates an ETag based on size, filename and file modification time
+func GenerateETag(fileSize, fileName, modTime string) string {
+	etag := fileSize + fileName + modTime
+	return base64.StdEncoding.EncodeToString([]byte(etag))
 }
 
 // Static returns a middleware handler that serves static files in the given directory.

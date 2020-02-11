@@ -1,5 +1,7 @@
 // Copyright (c) 2015 Klaus Post, released under MIT License. See LICENSE file.
 
+//+build amd64,!gccgo
+
 // func asmCpuid(op uint32) (eax, ebx, ecx, edx uint32)
 TEXT ·asmCpuid(SB), 7, $0
 	XORQ CX, CX

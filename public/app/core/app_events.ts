@@ -1,6 +1,5 @@
-///<reference path="../headers/common.d.ts" />
+import { Emitter } from './utils/emitter';
 
-import {Emitter} from './utils/emitter';
+export const appEvents = new Emitter();
 
-var appEvents = new Emitter();
 export default appEvents;

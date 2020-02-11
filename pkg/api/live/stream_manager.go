@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -44,7 +44,7 @@ func (sm *StreamManager) Serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := newConnection(ws, sm.hub)
+	c := newConnection(ws, sm.hub, sm.log)
 	sm.hub.register <- c
 
 	go c.writePump()

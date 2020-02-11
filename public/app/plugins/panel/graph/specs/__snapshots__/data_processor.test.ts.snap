@@ -1,0 +1,245 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Graph DataProcessor getTimeSeries from LegacyResponseData Should return a new series for each field 1`] = `
+Array [
+  TimeSeries {
+    "alias": "Value",
+    "aliasEscaped": "Value",
+    "bars": Object {
+      "fillColor": "#7EB26D",
+    },
+    "color": "#7EB26D",
+    "dataFrameIndex": 0,
+    "datapoints": Array [
+      Array [
+        1,
+        1001,
+      ],
+      Array [
+        2,
+        1002,
+      ],
+      Array [
+        3,
+        1003,
+      ],
+    ],
+    "fieldIndex": 0,
+    "hasMsResolution": false,
+    "id": "Value",
+    "label": "Value",
+    "legend": true,
+    "stats": Object {},
+    "unit": "watt",
+    "valueFormater": [Function],
+  },
+  TimeSeries {
+    "alias": "table_data v1",
+    "aliasEscaped": "table_data v1",
+    "bars": Object {
+      "fillColor": "#EAB839",
+    },
+    "color": "#EAB839",
+    "dataFrameIndex": 1,
+    "datapoints": Array [
+      Array [
+        0.1,
+        1001,
+      ],
+      Array [
+        0.2,
+        1002,
+      ],
+      Array [
+        0.3,
+        1003,
+      ],
+    ],
+    "fieldIndex": 1,
+    "hasMsResolution": false,
+    "id": "table_data v1",
+    "label": "table_data v1",
+    "legend": true,
+    "stats": Object {},
+    "unit": "ohm",
+    "valueFormater": [Function],
+  },
+  TimeSeries {
+    "alias": "table_data v2",
+    "aliasEscaped": "table_data v2",
+    "bars": Object {
+      "fillColor": "#6ED0E0",
+    },
+    "color": "#6ED0E0",
+    "dataFrameIndex": 1,
+    "datapoints": Array [
+      Array [
+        1.1,
+        1001,
+      ],
+      Array [
+        2.2,
+        1002,
+      ],
+      Array [
+        3.3,
+        1003,
+      ],
+    ],
+    "fieldIndex": 2,
+    "hasMsResolution": false,
+    "id": "table_data v2",
+    "label": "table_data v2",
+    "legend": true,
+    "stats": Object {},
+    "unit": undefined,
+    "valueFormater": [Function],
+  },
+  TimeSeries {
+    "alias": "series v1",
+    "aliasEscaped": "series v1",
+    "bars": Object {
+      "fillColor": "#EF843C",
+    },
+    "color": "#EF843C",
+    "dataFrameIndex": 2,
+    "datapoints": Array [
+      Array [
+        0.1,
+        1001,
+      ],
+      Array [
+        0.2,
+        1002,
+      ],
+      Array [
+        0.3,
+        1003,
+      ],
+    ],
+    "fieldIndex": 0,
+    "hasMsResolution": false,
+    "id": "series v1",
+    "label": "series v1",
+    "legend": true,
+    "stats": Object {},
+    "unit": undefined,
+    "valueFormater": [Function],
+  },
+  TimeSeries {
+    "alias": "series v2",
+    "aliasEscaped": "series v2",
+    "bars": Object {
+      "fillColor": "#E24D42",
+    },
+    "color": "#E24D42",
+    "dataFrameIndex": 2,
+    "datapoints": Array [
+      Array [
+        1.1,
+        1001,
+      ],
+      Array [
+        2.2,
+        1002,
+      ],
+      Array [
+        3.3,
+        1003,
+      ],
+    ],
+    "fieldIndex": 1,
+    "hasMsResolution": false,
+    "id": "series v2",
+    "label": "series v2",
+    "legend": true,
+    "stats": Object {},
+    "unit": undefined,
+    "valueFormater": [Function],
+  },
+]
+`;
+
+exports[`Graph DataProcessor getTimeSeries from LegacyResponseData Should return single histogram 1`] = `
+Array [
+  TimeSeries {
+    "alias": "Count",
+    "aliasEscaped": "Count",
+    "bars": Object {
+      "fillColor": "#7EB26D",
+    },
+    "color": "#7EB26D",
+    "dataFrameIndex": 0,
+    "datapoints": Array [
+      Array [
+        1,
+        1001,
+      ],
+      Array [
+        2,
+        1002,
+      ],
+      Array [
+        3,
+        1003,
+      ],
+      Array [
+        0.1,
+        1001,
+      ],
+      Array [
+        0.2,
+        1002,
+      ],
+      Array [
+        0.3,
+        1003,
+      ],
+      Array [
+        1.1,
+        1001,
+      ],
+      Array [
+        2.2,
+        1002,
+      ],
+      Array [
+        3.3,
+        1003,
+      ],
+      Array [
+        0.1,
+        1001,
+      ],
+      Array [
+        0.2,
+        1002,
+      ],
+      Array [
+        0.3,
+        1003,
+      ],
+      Array [
+        1.1,
+        1001,
+      ],
+      Array [
+        2.2,
+        1002,
+      ],
+      Array [
+        3.3,
+        1003,
+      ],
+    ],
+    "fieldIndex": 0,
+    "hasMsResolution": false,
+    "id": "Value",
+    "label": "Value",
+    "legend": true,
+    "stats": Object {},
+    "unit": "watt",
+    "valueFormater": [Function],
+  },
+]
+`;

@@ -5,14 +5,15 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Migrator struct {
 	x          *xorm.Engine
-	dialect    Dialect
+	Dialect    Dialect
 	migrations []Migration
 	Logger     log.Logger
 }
@@ -31,8 +32,12 @@ func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg.x = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
-	mg.dialect = NewDialect(mg.x.DriverName())
+	mg.Dialect = NewDialect(mg.x)
 	return mg
+}
+
+func (mg *Migrator) MigrationsCount() int {
+	return len(mg.migrations)
 }
 
 func (mg *Migrator) AddMigration(id string, m Migration) {
@@ -82,7 +87,7 @@ func (mg *Migrator) Start() error {
 			continue
 		}
 
-		sql := m.Sql(mg.dialect)
+		sql := m.Sql(mg.Dialect)
 
 		record := MigrationLog{
 			MigrationId: m.Id(),
@@ -90,21 +95,19 @@ func (mg *Migrator) Start() error {
 			Timestamp:   time.Now(),
 		}
 
-		mg.Logger.Debug("Executing", "sql", sql)
-
 		err := mg.inTransaction(func(sess *xorm.Session) error {
-
-			if err := mg.exec(m, sess); err != nil {
+			err := mg.exec(m, sess)
+			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
-				sess.Insert(&record)
+				if _, err := sess.Insert(&record); err != nil {
+					return err
+				}
 				return err
-			} else {
-				record.Success = true
-				sess.Insert(&record)
 			}
-
-			return nil
+			record.Success = true
+			_, err = sess.Insert(&record)
+			return err
 		})
 
 		if err != nil {
@@ -120,15 +123,33 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 
 	condition := m.GetCondition()
 	if condition != nil {
-		sql, args := condition.Sql(mg.dialect)
-		results, err := sess.Query(sql, args...)
-		if err != nil || len(results) == 0 {
-			mg.Logger.Info("Skipping migration condition not fulfilled", "id", m.Id())
-			return sess.Rollback()
+		sql, args := condition.Sql(mg.Dialect)
+
+		if sql != "" {
+			mg.Logger.Debug("Executing migration condition sql", "id", m.Id(), "sql", sql, "args", args)
+			results, err := sess.SQL(sql, args...).Query()
+			if err != nil {
+				mg.Logger.Error("Executing migration condition failed", "id", m.Id(), "error", err)
+				return err
+			}
+
+			if !condition.IsFulfilled(results) {
+				mg.Logger.Warn("Skipping migration: Already executed, but not recorded in migration log", "id", m.Id())
+				return nil
+			}
 		}
 	}
 
-	_, err := sess.Exec(m.Sql(mg.dialect))
+	var err error
+	if codeMigration, ok := m.(CodeMigration); ok {
+		mg.Logger.Debug("Executing code migration", "id", m.Id())
+		err = codeMigration.Exec(sess, mg)
+	} else {
+		sql := m.Sql(mg.Dialect)
+		mg.Logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+		_, err = sess.Exec(sql)
+	}
+
 	if err != nil {
 		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
 		return err
@@ -140,21 +161,22 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 type dbTransactionFunc func(sess *xorm.Session) error
 
 func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
-	var err error
-
 	sess := mg.x.NewSession()
 	defer sess.Close()
 
-	if err = sess.Begin(); err != nil {
+	if err := sess.Begin(); err != nil {
 		return err
 	}
 
-	err = callback(sess)
+	if err := callback(sess); err != nil {
+		if rollErr := sess.Rollback(); err != rollErr {
+			return errutil.Wrapf(err, "Failed to roll back transaction due to error: %s", rollErr)
+		}
 
-	if err != nil {
-		sess.Rollback()
 		return err
-	} else if err = sess.Commit(); err != nil {
+	}
+
+	if err := sess.Commit(); err != nil {
 		return err
 	}
 

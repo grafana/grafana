@@ -22,7 +22,7 @@ var dashboard;
 // All url parameters are available via the ARGS object
 var ARGS;
 
-// Intialize a skeleton with nothing but a rows array and service object
+// Initialize a skeleton with nothing but a rows array and service object
 dashboard = {
   rows : [],
 };
@@ -31,7 +31,7 @@ dashboard = {
 dashboard.title = 'Scripted dash';
 
 // Set default time
-// time can be overriden in the url using from/to parameters, but this is
+// time can be overridden in the url using from/to parameters, but this is
 // handled automatically in grafana core during dashboard initialization
 dashboard.time = {
   from: "now-6h",

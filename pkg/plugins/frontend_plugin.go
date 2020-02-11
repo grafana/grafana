@@ -40,14 +40,14 @@ func getPluginLogoUrl(pluginType, path, baseUrl string) string {
 }
 
 func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
-	appSubPath := strings.Replace(fp.PluginDir, app.PluginDir, "", 1)
+	appSubPath := strings.Replace(strings.Replace(fp.PluginDir, app.PluginDir, "", 1), "\\", "/", -1)
 	fp.IncludedInAppId = app.Id
 	fp.BaseUrl = app.BaseUrl
 
 	if isExternalPlugin(app.PluginDir) {
-		fp.Module = util.JoinUrlFragments("plugins/"+app.Id, appSubPath) + "/module"
+		fp.Module = util.JoinURLFragments("plugins/"+app.Id, appSubPath) + "/module"
 	} else {
-		fp.Module = util.JoinUrlFragments("app/plugins/app/"+app.Id, appSubPath) + "/module"
+		fp.Module = util.JoinURLFragments("app/plugins/app/"+app.Id, appSubPath) + "/module"
 	}
 }
 

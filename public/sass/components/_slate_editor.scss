@@ -1,0 +1,160 @@
+.slate-query-field {
+  font-size: $font-size-base;
+  font-family: $font-family-monospace;
+  height: auto;
+  word-break: break-word;
+}
+
+.slate-query-field__wrapper {
+  position: relative;
+  display: inline-block;
+  padding: $input-padding;
+  min-height: $input-height;
+  width: 100%;
+  cursor: text;
+  line-height: $line-height-base;
+  color: $text-color;
+  background-color: $input-bg;
+  background-image: none;
+  border: $panel-border;
+  border-radius: $border-radius;
+  transition: all 0.3s;
+  line-height: $input-line-height;
+}
+
+.slate-query-field__wrapper--disabled {
+  background-color: inherit;
+}
+
+.slate-typeahead {
+  .typeahead {
+    position: relative;
+    z-index: auto;
+    border-radius: $border-radius;
+    border: $panel-border;
+    max-height: calc(66vh);
+    overflow-y: scroll;
+    max-width: calc(66%);
+    overflow-x: hidden;
+    outline: none;
+    list-style: none;
+    background: $panel-bg;
+    color: $text-color;
+    box-shadow: $typeahead-shadow;
+  }
+
+  .typeahead-group__title {
+    color: $text-color-weak;
+    font-size: $font-size-sm;
+    line-height: $line-height-base;
+    padding: $space-sm;
+  }
+
+  .typeahead-item {
+    height: auto;
+    font-family: $font-family-monospace;
+    padding: $space-sm $space-sm $space-sm $space-md;
+    font-size: $font-size-sm;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    z-index: 1;
+    display: block;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+      background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
+  }
+
+  .typeahead-item__selected {
+    background-color: $typeahead-selected-bg;
+
+    .typeahead-item-hint {
+      font-size: $font-size-xs;
+      color: $text-color;
+      white-space: normal;
+    }
+  }
+
+  .typeahead-match {
+    color: $typeahead-selected-color;
+    border-bottom: 1px solid $typeahead-selected-color;
+    // Undoing mark styling
+    padding: inherit;
+    background: inherit;
+  }
+}
+
+/* SYNTAX */
+
+.slate-query-field {
+  .token.comment,
+  .token.block-comment,
+  .token.prolog,
+  .token.doctype,
+  .token.cdata {
+    color: $text-color-weak;
+  }
+
+  .token.variable,
+  .token.entity {
+    color: $text-color;
+  }
+
+  .token.property,
+  .token.tag,
+  .token.constant,
+  .token.symbol,
+  .token.deleted {
+    color: $query-red;
+  }
+
+  .token.attr-value,
+  .token.selector,
+  .token.string,
+  .token.char,
+  .token.builtin,
+  .token.inserted {
+    color: $query-green;
+  }
+
+  .token.boolean,
+  .token.number,
+  .token.operator,
+  .token.url {
+    color: $query-purple;
+  }
+
+  .token.function,
+  .token.attr-name,
+  .token.function-name,
+  .token.atrule,
+  .token.keyword,
+  .token.class-name {
+    color: $query-keyword;
+  }
+
+  .token.punctuation,
+  .token.regex,
+  .token.important {
+    color: $query-orange;
+  }
+
+  .token.important {
+    font-weight: normal;
+  }
+
+  .token.bold {
+    font-weight: bold;
+  }
+  .token.italic {
+    font-style: italic;
+  }
+
+  .token.entity {
+    cursor: help;
+  }
+
+  .namespace {
+    opacity: 0.7;
+  }
+}

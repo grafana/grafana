@@ -1,36 +1,48 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
+import {
+  assignModelProperties,
+  CustomVariableModel,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  VariableType,
+  variableTypes,
+} from './variable';
+import { VariableSrv } from './variable_srv';
 
-export class CustomVariable implements Variable {
+export class CustomVariable implements CustomVariableModel, VariableActions {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
+  skipUrlSync: boolean;
   query: string;
-  options: any;
+  options: VariableOption[];
   includeAll: boolean;
   multi: boolean;
-  current: any;
+  current: VariableOption;
+  allValue: string;
 
-  defaults = {
+  defaults: CustomVariableModel = {
     type: 'custom',
     name: '',
     label: '',
-    hide: 0,
-    options: [],
-    current: {},
+    hide: VariableHide.dontHide,
+    skipUrlSync: false,
     query: '',
+    options: [],
     includeAll: false,
     multi: false,
+    current: {} as VariableOption,
     allValue: null,
   };
 
-  /** @ngInject **/
-  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
+  /** @ngInject */
+  constructor(private model: any, private variableSrv: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
-  setValue(option) {
+  setValue(option: any) {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
@@ -40,9 +52,10 @@ export class CustomVariable implements Variable {
   }
 
   updateOptions() {
-    // extract options in comma separated string
-    this.options = _.map(this.query.split(/[,]+/), function(text) {
-      return { text: text.trim(), value: text.trim() };
+    // extract options in comma separated string (use backslash to escape wanted commas)
+    this.options = _.map(this.query.match(/(?:\\,|[^,])+/g), text => {
+      text = text.replace(/\\,/g, ',');
+      return { text: text.trim(), value: text.trim(), selected: false };
     });
 
     if (this.includeAll) {
@@ -53,14 +66,14 @@ export class CustomVariable implements Variable {
   }
 
   addAllOption() {
-    this.options.unshift({text: 'All', value: "$__all"});
+    this.options.unshift({ text: 'All', value: '$__all', selected: false });
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string[]) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 
@@ -75,6 +88,6 @@ export class CustomVariable implements Variable {
 variableTypes['custom'] = {
   name: 'Custom',
   ctor: CustomVariable,
-  description: 'Define variable values manually' ,
+  description: 'Define variable values manually',
   supportsMulti: true,
 };

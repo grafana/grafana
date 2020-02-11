@@ -1,0 +1,16 @@
+FROM ubuntu
+
+ARG REPO_CONFIG=grafana.list.oss
+ARG PACKAGE=grafana
+
+COPY sources.list /etc/apt/sources.list
+RUN apt update && \
+    apt install -y curl                \
+                   apt-transport-https \
+                   ca-certificates     \
+                   gnupg               && \
+    curl https://packages.grafana.com/gpg.key | apt-key add -
+
+COPY "./$REPO_CONFIG" /etc/apt/sources.list.d/grafana.list
+RUN apt update && \
+    apt install -y $PACKAGE

@@ -4,11 +4,13 @@ import (
 	"strings"
 
 	"github.com/go-macaron/gzip"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"gopkg.in/macaron.v1"
 )
 
 func Gziper() macaron.Handler {
-	macaronGziper := gzip.Gziper()
+	gziperLogger := log.New("gziper")
+	gziper := gzip.Gziper()
 
 	return func(ctx *macaron.Context) {
 		requestPath := ctx.Req.URL.RequestURI()
@@ -21,6 +23,12 @@ func Gziper() macaron.Handler {
 			return
 		}
 
-		ctx.Invoke(macaronGziper)
+		if strings.HasPrefix(requestPath, "/metrics") {
+			return
+		}
+
+		if _, err := ctx.Invoke(gziper); err != nil {
+			gziperLogger.Error("Invoking gzip handler failed", "err", err)
+		}
 	}
 }

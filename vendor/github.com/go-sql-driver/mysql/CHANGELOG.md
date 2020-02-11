@@ -1,3 +1,62 @@
+## Version 1.4.1 (2018-11-14)
+
+Bugfixes:
+
+ - Fix TIME format for binary columns (#818)
+ - Fix handling of empty auth plugin names (#835)
+ - Fix caching_sha2_password with empty password (#826)
+ - Fix canceled context broke mysqlConn (#862)
+ - Fix OldAuthSwitchRequest support (#870)
+ - Fix Auth Response packet for cleartext password (#887)
+
+## Version 1.4 (2018-06-03)
+
+Changes:
+
+ - Documentation fixes (#530, #535, #567)
+ - Refactoring (#575, #579, #580, #581, #603, #615, #704)
+ - Cache column names (#444)
+ - Sort the DSN parameters in DSNs generated from a config (#637)
+ - Allow native password authentication by default (#644)
+ - Use the default port if it is missing in the DSN (#668)
+ - Removed the `strict` mode (#676)
+ - Do not query `max_allowed_packet` by default (#680)
+ - Dropped support Go 1.6 and lower (#696)
+ - Updated `ConvertValue()` to match the database/sql/driver implementation (#760)
+ - Document the usage of `0000-00-00T00:00:00` as the time.Time zero value (#783)
+ - Improved the compatibility of the authentication system (#807)
+
+New Features:
+
+ - Multi-Results support (#537)
+ - `rejectReadOnly` DSN option (#604)
+ - `context.Context` support (#608, #612, #627, #761)
+ - Transaction isolation level support (#619, #744)
+ - Read-Only transactions support (#618, #634)
+ - `NewConfig` function which initializes a config with default values (#679)
+ - Implemented the `ColumnType` interfaces (#667, #724)
+ - Support for custom string types in `ConvertValue` (#623)
+ - Implemented `NamedValueChecker`, improving support for uint64 with high bit set (#690, #709, #710)
+ - `caching_sha2_password` authentication plugin support (#794, #800, #801, #802)
+ - Implemented `driver.SessionResetter` (#779)
+ - `sha256_password` authentication plugin support (#808)
+
+Bugfixes:
+
+ - Use the DSN hostname as TLS default ServerName if `tls=true` (#564, #718)
+ - Fixed LOAD LOCAL DATA INFILE for empty files (#590)
+ - Removed columns definition cache since it sometimes cached invalid data (#592)
+ - Don't mutate registered TLS configs (#600)
+ - Make RegisterTLSConfig concurrency-safe (#613)
+ - Handle missing auth data in the handshake packet correctly (#646)
+ - Do not retry queries when data was written to avoid data corruption (#302, #736)
+ - Cache the connection pointer for error handling before invalidating it (#678)
+ - Fixed imports for appengine/cloudsql (#700)
+ - Fix sending STMT_LONG_DATA for 0 byte data (#734)
+ - Set correct capacity for []bytes read from length-encoded strings (#766)
+ - Make RegisterDial concurrency-safe (#773)
+
+
 ## Version 1.3 (2016-12-01)
 
 Changes:

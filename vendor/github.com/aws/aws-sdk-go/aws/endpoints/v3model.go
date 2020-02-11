@@ -54,8 +54,9 @@ type partition struct {
 
 func (p partition) Partition() Partition {
 	return Partition{
-		id: p.ID,
-		p:  &p,
+		dnsSuffix: p.DNSSuffix,
+		id:        p.ID,
+		p:         &p,
 	}
 }
 
@@ -74,24 +75,56 @@ func (p partition) canResolveEndpoint(service, region string, strictMatch bool) 
 	return p.RegionRegex.MatchString(region)
 }
 
+func allowLegacyEmptyRegion(service string) bool {
+	legacy := map[string]struct{}{
+		"budgets":       {},
+		"ce":            {},
+		"chime":         {},
+		"cloudfront":    {},
+		"ec2metadata":   {},
+		"iam":           {},
+		"importexport":  {},
+		"organizations": {},
+		"route53":       {},
+		"sts":           {},
+		"support":       {},
+		"waf":           {},
+	}
+
+	_, allowed := legacy[service]
+	return allowed
+}
+
 func (p partition) EndpointFor(service, region string, opts ...func(*Options)) (resolved ResolvedEndpoint, err error) {
 	var opt Options
 	opt.Set(opts...)
 
 	s, hasService := p.Services[service]
-	if !(hasService || opt.ResolveUnknownService) {
+	if len(service) == 0 || !(hasService || opt.ResolveUnknownService) {
 		// Only return error if the resolver will not fallback to creating
 		// endpoint based on service endpoint ID passed in.
 		return resolved, NewUnknownServiceError(p.ID, service, serviceList(p.Services))
 	}
 
+	if len(region) == 0 && allowLegacyEmptyRegion(service) && len(s.PartitionEndpoint) != 0 {
+		region = s.PartitionEndpoint
+	}
+
+	if (service == "sts" && opt.STSRegionalEndpoint != RegionalSTSEndpoint) ||
+		(service == "s3" && opt.S3UsEast1RegionalEndpoint != RegionalS3UsEast1Endpoint) {
+		if _, ok := legacyGlobalRegions[service][region]; ok {
+			region = "aws-global"
+		}
+	}
+
 	e, hasEndpoint := s.endpointForRegion(region)
-	if !hasEndpoint && opt.StrictMatching {
+	if len(region) == 0 || (!hasEndpoint && opt.StrictMatching) {
 		return resolved, NewUnknownEndpointError(p.ID, service, region, endpointList(s.Endpoints))
 	}
 
 	defs := []endpoint{p.Defaults, s.Defaults}
-	return e.resolve(service, region, p.DNSSuffix, defs, opt), nil
+
+	return e.resolve(service, p.ID, region, p.DNSSuffix, defs, opt), nil
 }
 
 func serviceList(ss services) []string {
@@ -200,7 +233,7 @@ func getByPriority(s []string, p []string, def string) string {
 	return s[0]
 }
 
-func (e endpoint) resolve(service, region, dnsSuffix string, defs []endpoint, opts Options) ResolvedEndpoint {
+func (e endpoint) resolve(service, partitionID, region, dnsSuffix string, defs []endpoint, opts Options) ResolvedEndpoint {
 	var merged endpoint
 	for _, def := range defs {
 		merged.mergeIn(def)
@@ -208,11 +241,23 @@ func (e endpoint) resolve(service, region, dnsSuffix string, defs []endpoint, op
 	merged.mergeIn(e)
 	e = merged
 
-	hostname := e.Hostname
+	signingRegion := e.CredentialScope.Region
+	if len(signingRegion) == 0 {
+		signingRegion = region
+	}
 
+	signingName := e.CredentialScope.Service
+	var signingNameDerived bool
+	if len(signingName) == 0 {
+		signingName = service
+		signingNameDerived = true
+	}
+
+	hostname := e.Hostname
 	// Offset the hostname for dualstack if enabled
 	if opts.UseDualStack && e.HasDualStack == boxedTrue {
 		hostname = e.DualStackHostname
+		region = signingRegion
 	}
 
 	u := strings.Replace(hostname, "{service}", service, 1)
@@ -222,20 +267,13 @@ func (e endpoint) resolve(service, region, dnsSuffix string, defs []endpoint, op
 	scheme := getEndpointScheme(e.Protocols, opts.DisableSSL)
 	u = fmt.Sprintf("%s://%s", scheme, u)
 
-	signingRegion := e.CredentialScope.Region
-	if len(signingRegion) == 0 {
-		signingRegion = region
-	}
-	signingName := e.CredentialScope.Service
-	if len(signingName) == 0 {
-		signingName = service
-	}
-
 	return ResolvedEndpoint{
-		URL:           u,
-		SigningRegion: signingRegion,
-		SigningName:   signingName,
-		SigningMethod: getByPriority(e.SignatureVersions, signerPriority, defaultSigner),
+		URL:                u,
+		PartitionID:        partitionID,
+		SigningRegion:      signingRegion,
+		SigningName:        signingName,
+		SigningNameDerived: signingNameDerived,
+		SigningMethod:      getByPriority(e.SignatureVersions, signerPriority, defaultSigner),
 	}
 }
 

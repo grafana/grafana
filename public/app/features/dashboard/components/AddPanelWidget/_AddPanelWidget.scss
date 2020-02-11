@@ -1,0 +1,86 @@
+.add-panel-widget-container {
+  height: 100%;
+}
+
+.add-panel-widget {
+  height: 100%;
+}
+
+.add-panel-widget__header {
+  top: 0;
+  position: absolute;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: move;
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
+
+  .gicon {
+    font-size: 30px;
+    margin-right: $space-md;
+  }
+
+  &:hover {
+    transition: background-color 0.1s ease-in-out;
+    background-color: $panel-header-hover-bg;
+  }
+}
+
+.add-panel-widget__title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semi-bold;
+  margin-right: $space-xl;
+}
+
+.add-panel-widget__link {
+  margin: 0 $space-sm;
+  width: 160px;
+  height: 88px !important;
+  flex-direction: column !important;
+}
+
+.add-panel-widget__icon {
+  margin-bottom: $space-sm;
+
+  .gicon {
+    color: white;
+    height: 44px;
+    width: 53px;
+    position: relative;
+    left: 5px;
+  }
+}
+
+.add-panel-widget__close {
+  margin-left: auto;
+  background-color: transparent;
+  border: 0;
+  font-size: 16px;
+  margin-right: -10px;
+}
+
+.add-panel-widget__create {
+  display: inherit;
+  margin-bottom: $space-lg;
+  // this is to have the big button appear centered
+  margin-top: 55px;
+}
+
+.add-panel-widget__actions {
+  display: inherit;
+}
+
+.add-panel-widget__action {
+  margin: 0 $space-xs;
+}
+
+.add-panel-widget__btn-container {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}

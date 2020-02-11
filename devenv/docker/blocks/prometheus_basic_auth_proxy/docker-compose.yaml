@@ -1,0 +1,6 @@
+# This will proxy all requests for http://localhost:10090 to
+# http://prometheus:9090 (Prometheus inside the docker compose)
+
+  nginxproxy:
+    build: docker/blocks/nginx_proxy
+    network_mode: host

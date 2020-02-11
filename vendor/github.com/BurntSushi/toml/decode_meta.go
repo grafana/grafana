@@ -77,9 +77,8 @@ func (k Key) maybeQuoted(i int) string {
 	}
 	if quote {
 		return "\"" + strings.Replace(k[i], "\"", "\\\"", -1) + "\""
-	} else {
-		return k[i]
 	}
+	return k[i]
 }
 
 func (k Key) add(piece string) Key {

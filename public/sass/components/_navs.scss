@@ -2,7 +2,6 @@
 // Navs
 // --------------------------------------------------
 
-
 // BASE CLASS
 // ----------
 
@@ -51,20 +50,6 @@
 // Make the list-items overlay the bottom border
 .nav-tabs > li {
   margin-bottom: -1px;
-}
-
-// Actual tabs (as links)
-.nav-tabs > li > a {
-  padding: 0.40rem 1rem 0.35rem 1rem;
-  margin-right: $spacer/2;
-  line-height: $line-height-base;
-  border: 1px solid transparent;
-  position: relative;
-
-  &:hover,
-  &:focus {
-    color: $link-hover-color;
-  }
 }
 
 // Active state, and it's :hover/:focus to override normal :hover/:focus

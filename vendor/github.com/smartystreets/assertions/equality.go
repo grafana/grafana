@@ -1,20 +1,22 @@
 package assertions
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"reflect"
 	"strings"
 
-	"github.com/smartystreets/assertions/internal/oglematchers"
 	"github.com/smartystreets/assertions/internal/go-render/render"
+	"github.com/smartystreets/assertions/internal/oglematchers"
 )
 
-// default acceptable delta for ShouldAlmostEqual
-const defaultDelta = 0.0000000001
-
-// ShouldEqual receives exactly two parameters and does an equality check.
+// ShouldEqual receives exactly two parameters and does an equality check
+// using the following semantics:
+// 1. If the expected and actual values implement an Equal method in the form
+// `func (this T) Equal(that T) bool` then call the method. If true, they are equal.
+// 2. The expected and actual values are judged equal or not by oglematchers.Equals.
 func ShouldEqual(actual interface{}, expected ...interface{}) string {
 	if message := need(1, expected); message != success {
 		return message
@@ -24,27 +26,35 @@ func ShouldEqual(actual interface{}, expected ...interface{}) string {
 func shouldEqual(actual, expected interface{}) (message string) {
 	defer func() {
 		if r := recover(); r != nil {
-			message = serializer.serialize(expected, actual, fmt.Sprintf(shouldHaveBeenEqual, expected, actual))
-			return
+			message = serializer.serialize(expected, actual, composeEqualityMismatchMessage(expected, actual))
 		}
 	}()
 
-	if matchError := oglematchers.Equals(expected).Matches(actual); matchError != nil {
-		expectedSyntax := fmt.Sprintf("%v", expected)
-		actualSyntax := fmt.Sprintf("%v", actual)
-		if expectedSyntax == actualSyntax && reflect.TypeOf(expected) != reflect.TypeOf(actual) {
-			message = fmt.Sprintf(shouldHaveBeenEqualTypeMismatch, expected, expected, actual, actual)
-		} else {
-			message = fmt.Sprintf(shouldHaveBeenEqual, expected, actual)
-		}
-		message = serializer.serialize(expected, actual, message)
-		return
+	if spec := newEqualityMethodSpecification(expected, actual); spec.IsSatisfied() && spec.AreEqual() {
+		return success
+	} else if matchError := oglematchers.Equals(expected).Matches(actual); matchError == nil {
+		return success
 	}
 
-	return success
+	return serializer.serialize(expected, actual, composeEqualityMismatchMessage(expected, actual))
+}
+func composeEqualityMismatchMessage(expected, actual interface{}) string {
+	var (
+		renderedExpected = fmt.Sprintf("%v", expected)
+		renderedActual   = fmt.Sprintf("%v", actual)
+	)
+
+	if renderedExpected != renderedActual {
+		return fmt.Sprintf(shouldHaveBeenEqual+composePrettyDiff(renderedExpected, renderedActual), expected, actual)
+	} else if reflect.TypeOf(expected) != reflect.TypeOf(actual) {
+		return fmt.Sprintf(shouldHaveBeenEqualTypeMismatch, expected, expected, actual, actual)
+	} else {
+		return fmt.Sprintf(shouldHaveBeenEqualNoResemblance, renderedExpected)
+	}
 }
 
 // ShouldNotEqual receives exactly two parameters and does an inequality check.
+// See ShouldEqual for details on how equality is determined.
 func ShouldNotEqual(actual interface{}, expected ...interface{}) string {
 	if fail := need(1, expected); fail != success {
 		return fail
@@ -95,7 +105,7 @@ func cleanAlmostEqualInput(actual interface{}, expected ...interface{}) (float64
 		delta, err := getFloat(expected[1])
 
 		if err != nil {
-			return 0.0, 0.0, 0.0, "delta must be a numerical type"
+			return 0.0, 0.0, 0.0, "The delta value " + err.Error()
 		}
 
 		deltaFloat = delta
@@ -104,15 +114,13 @@ func cleanAlmostEqualInput(actual interface{}, expected ...interface{}) (float64
 	}
 
 	actualFloat, err := getFloat(actual)
-
 	if err != nil {
-		return 0.0, 0.0, 0.0, err.Error()
+		return 0.0, 0.0, 0.0, "The actual value " + err.Error()
 	}
 
 	expectedFloat, err := getFloat(expected[0])
-
 	if err != nil {
-		return 0.0, 0.0, 0.0, err.Error()
+		return 0.0, 0.0, 0.0, "The comparison value " + err.Error()
 	}
 
 	return actualFloat, expectedFloat, deltaFloat, ""
@@ -139,8 +147,36 @@ func getFloat(num interface{}) (float64, error) {
 		numKind == reflect.Float64 {
 		return numValue.Float(), nil
 	} else {
-		return 0.0, errors.New("must be a numerical type, but was " + numKind.String())
+		return 0.0, errors.New("must be a numerical type, but was: " + numKind.String())
 	}
+}
+
+// ShouldEqualJSON receives exactly two parameters and does an equality check by marshalling to JSON
+func ShouldEqualJSON(actual interface{}, expected ...interface{}) string {
+	if message := need(1, expected); message != success {
+		return message
+	}
+
+	expectedString, expectedErr := remarshal(expected[0].(string))
+	if expectedErr != nil {
+		return "Expected value not valid JSON: " + expectedErr.Error()
+	}
+
+	actualString, actualErr := remarshal(actual.(string))
+	if actualErr != nil {
+		return "Actual value not valid JSON: " + actualErr.Error()
+	}
+
+	return ShouldEqual(actualString, expectedString)
+}
+func remarshal(value string) (string, error) {
+	var structured interface{}
+	err := json.Unmarshal([]byte(value), &structured)
+	if err != nil {
+		return "", err
+	}
+	canonical, _ := json.Marshal(structured)
+	return string(canonical), nil
 }
 
 // ShouldResemble receives exactly two parameters and does a deep equal check (see reflect.DeepEqual)
@@ -150,8 +186,10 @@ func ShouldResemble(actual interface{}, expected ...interface{}) string {
 	}
 
 	if matchError := oglematchers.DeepEquals(expected[0]).Matches(actual); matchError != nil {
-		return serializer.serializeDetailed(expected[0], actual,
-			fmt.Sprintf(shouldHaveResembled, render.Render(expected[0]), render.Render(actual)))
+		renderedExpected, renderedActual := render.Render(expected[0]), render.Render(actual)
+		message := fmt.Sprintf(shouldHaveResembled, renderedExpected, renderedActual) +
+			composePrettyDiff(renderedExpected, renderedActual)
+		return serializer.serializeDetailed(expected[0], actual, message)
 	}
 
 	return success
@@ -275,6 +313,19 @@ func ShouldBeZeroValue(actual interface{}, expected ...interface{}) string {
 	zeroVal := reflect.Zero(reflect.TypeOf(actual)).Interface()
 	if !reflect.DeepEqual(zeroVal, actual) {
 		return serializer.serialize(zeroVal, actual, fmt.Sprintf(shouldHaveBeenZeroValue, actual))
+	}
+	return success
+}
+
+// ShouldBeZeroValue receives a single parameter and ensures that it is NOT
+// the Go equivalent of the default value, or "zero" value.
+func ShouldNotBeZeroValue(actual interface{}, expected ...interface{}) string {
+	if fail := need(0, expected); fail != success {
+		return fail
+	}
+	zeroVal := reflect.Zero(reflect.TypeOf(actual)).Interface()
+	if reflect.DeepEqual(zeroVal, actual) {
+		return serializer.serialize(zeroVal, actual, fmt.Sprintf(shouldNotHaveBeenZeroValue, actual))
 	}
 	return success
 }

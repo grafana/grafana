@@ -32,13 +32,10 @@ proposed functionality.
 We appreciate any bug reports, but especially ones with self-contained
 (doesn't depend on code outside of xorm), minimal (can't be simplified
 further) test cases. It's especially helpful if you can submit a pull
-request with just the failing test case (you'll probably want to
-pattern it after the tests in
-[base.go](https://github.com/go-xorm/tests/blob/master/base.go) AND
-[benchmark.go](https://github.com/go-xorm/tests/blob/master/benchmark.go).
+request with just the failing test case(you can find some example test file like [session_get_test.go](https://github.com/go-xorm/xorm/blob/master/session_get_test.go)).
 
-If you implements a new database interface, you maybe need to add a <databasename>_test.go file.
-For example, [mysql_test.go](https://github.com/go-xorm/tests/blob/master/mysql/mysql_test.go)
+If you implements a new database interface, you maybe need to add a test_<databasename>.sh file.
+For example, [mysql_test.go](https://github.com/go-xorm/xorm/blob/master/test_mysql.sh)
 
 ### New functionality
 

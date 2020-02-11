@@ -5,7 +5,6 @@
 package builder
 
 import (
-	"bytes"
 	"io"
 )
 
@@ -19,15 +18,15 @@ var _ Writer = NewWriter()
 
 // BytesWriter implments Writer and save SQL in bytes.Buffer
 type BytesWriter struct {
-	writer *bytes.Buffer
-	buffer []byte
+	writer *StringBuilder
 	args   []interface{}
 }
 
 // NewWriter creates a new string writer
 func NewWriter() *BytesWriter {
-	w := &BytesWriter{}
-	w.writer = bytes.NewBuffer(w.buffer)
+	w := &BytesWriter{
+		writer: &StringBuilder{},
+	}
 	return w
 }
 
@@ -72,16 +71,4 @@ func (condEmpty) Or(conds ...Cond) Cond {
 
 func (condEmpty) IsValid() bool {
 	return false
-}
-
-func condToSQL(cond Cond) (string, []interface{}, error) {
-	if cond == nil || !cond.IsValid() {
-		return "", nil, nil
-	}
-
-	w := NewWriter()
-	if err := cond.WriteTo(w); err != nil {
-		return "", nil, err
-	}
-	return w.writer.String(), w.args, nil
 }

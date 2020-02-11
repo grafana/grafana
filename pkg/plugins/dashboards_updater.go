@@ -1,8 +1,6 @@
 package plugins
 
 import (
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -11,10 +9,8 @@ func init() {
 	bus.AddEventListener(handlePluginStateChanged)
 }
 
-func updateAppDashboards() {
-	time.Sleep(time.Second * 5)
-
-	plog.Debug("Looking for App Dashboard Updates")
+func (pm *PluginManager) updateAppDashboards() {
+	pm.log.Debug("Looking for App Dashboard Updates")
 
 	query := m.GetPluginSettingsQuery{OrgId: 0}
 
@@ -38,24 +34,21 @@ func updateAppDashboards() {
 }
 
 func autoUpdateAppDashboard(pluginDashInfo *PluginDashboardInfoDTO, orgId int64) error {
-	if dash, err := loadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path); err != nil {
+	dash, err := loadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path)
+	if err != nil {
 		return err
-	} else {
-		plog.Info("Auto updating App dashboard", "dashboard", dash.Title, "newRev", pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
-		updateCmd := ImportDashboardCommand{
-			OrgId:     orgId,
-			PluginId:  pluginDashInfo.PluginId,
-			Overwrite: true,
-			Dashboard: dash.Data,
-			UserId:    0,
-			Path:      pluginDashInfo.Path,
-		}
-
-		if err := bus.Dispatch(&updateCmd); err != nil {
-			return err
-		}
 	}
-	return nil
+	plog.Info("Auto updating App dashboard", "dashboard", dash.Title, "newRev", pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
+	updateCmd := ImportDashboardCommand{
+		OrgId:     orgId,
+		PluginId:  pluginDashInfo.PluginId,
+		Overwrite: true,
+		Dashboard: dash.Data,
+		User:      &m.SignedInUser{UserId: 0, OrgRole: m.ROLE_ADMIN},
+		Path:      pluginDashInfo.Path,
+	}
+
+	return bus.Dispatch(&updateCmd)
 }
 
 func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
@@ -75,7 +68,7 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 		if dash.Removed {
 			plog.Info("Deleting plugin dashboard", "pluginId", pluginDef.Id, "dashboard", dash.Slug)
 
-			deleteCmd := m.DeleteDashboardCommand{OrgId: orgId, Slug: dash.Slug}
+			deleteCmd := m.DeleteDashboardCommand{OrgId: orgId, Id: dash.DashboardId}
 			if err := bus.Dispatch(&deleteCmd); err != nil {
 				plog.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
 				return
@@ -122,15 +115,14 @@ func handlePluginStateChanged(event *m.PluginStateChangedEvent) error {
 
 		if err := bus.Dispatch(&query); err != nil {
 			return err
-		} else {
-			for _, dash := range query.Result {
-				deleteCmd := m.DeleteDashboardCommand{OrgId: dash.OrgId, Slug: dash.Slug}
+		}
+		for _, dash := range query.Result {
+			deleteCmd := m.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
 
-				plog.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
+			plog.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
 
-				if err := bus.Dispatch(&deleteCmd); err != nil {
-					return err
-				}
+			if err := bus.Dispatch(&deleteCmd); err != nil {
+				return err
 			}
 		}
 	}

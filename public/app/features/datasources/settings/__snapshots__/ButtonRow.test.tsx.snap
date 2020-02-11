@@ -1,0 +1,61 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="gf-form-button-row"
+>
+  <button
+    className="btn btn-success"
+    onClick={[MockFunction]}
+    type="submit"
+  >
+    Test
+  </button>
+  <button
+    aria-label="Data source settings page Delete button"
+    className="btn btn-danger"
+    disabled={true}
+    onClick={[MockFunction]}
+    type="button"
+  >
+    Delete
+  </button>
+  <a
+    className="btn btn-inverse"
+    href="/datasources"
+  >
+    Back
+  </a>
+</div>
+`;
+
+exports[`Render should render with buttons enabled 1`] = `
+<div
+  className="gf-form-button-row"
+>
+  <button
+    aria-label="Data source settings page Save and Test button"
+    className="btn btn-primary"
+    disabled={false}
+    onClick={[Function]}
+    type="submit"
+  >
+    Save & Test
+  </button>
+  <button
+    aria-label="Data source settings page Delete button"
+    className="btn btn-danger"
+    disabled={false}
+    onClick={[MockFunction]}
+    type="button"
+  >
+    Delete
+  </button>
+  <a
+    className="btn btn-inverse"
+    href="/datasources"
+  >
+    Back
+  </a>
+</div>
+`;

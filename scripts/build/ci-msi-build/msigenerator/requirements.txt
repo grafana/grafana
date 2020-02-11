@@ -1,0 +1,3 @@
+Jinja2>=2.10
+MarkupSafe>=1.1.0
+wget>=3.2

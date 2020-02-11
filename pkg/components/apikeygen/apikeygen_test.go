@@ -10,7 +10,8 @@ import (
 func TestApiKeyGen(t *testing.T) {
 
 	Convey("When generating new api key", t, func() {
-		result := New(12, "Cool key")
+		result, err := New(12, "Cool key")
+		So(err, ShouldBeNil)
 
 		So(result.ClientSecret, ShouldNotBeEmpty)
 		So(result.HashedKey, ShouldNotBeEmpty)
@@ -19,7 +20,8 @@ func TestApiKeyGen(t *testing.T) {
 			keyInfo, err := Decode(result.ClientSecret)
 			So(err, ShouldBeNil)
 
-			keyHashed := util.EncodePassword(keyInfo.Key, keyInfo.Name)
+			keyHashed, err := util.EncodePassword(keyInfo.Key, keyInfo.Name)
+			So(err, ShouldBeNil)
 			So(keyHashed, ShouldEqual, result.HashedKey)
 		})
 	})

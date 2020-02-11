@@ -1,26 +1,37 @@
-///<reference path="../../headers/common.d.ts" />
+import {
+  assignModelProperties,
+  ConstantVariableModel,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  VariableType,
+  variableTypes,
+} from './variable';
+import { VariableSrv } from './all';
 
-import _ from 'lodash';
-import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
-
-export class ConstantVariable implements Variable {
+export class ConstantVariable implements ConstantVariableModel, VariableActions {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
+  skipUrlSync: boolean;
   query: string;
-  options: any[];
-  current: any;
+  options: VariableOption[];
+  current: VariableOption;
 
-  defaults = {
+  defaults: ConstantVariableModel = {
     type: 'constant',
     name: '',
-    hide: 2,
+    hide: VariableHide.hideLabel,
     label: '',
     query: '',
-    current: {},
+    current: {} as VariableOption,
     options: [],
+    skipUrlSync: false,
   };
 
-  /** @ngInject **/
-  constructor(private model, private variableSrv) {
+  /** @ngInject */
+  constructor(private model: any, private variableSrv: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -29,32 +40,31 @@ export class ConstantVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
-    this.options = [{text: this.query.trim(), value: this.query.trim()}];
+    this.options = [{ text: this.query.trim(), value: this.query.trim(), selected: false }];
     this.setValue(this.options[0]);
     return Promise.resolve();
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 
   getValueForUrl() {
     return this.current.value;
   }
-
 }
 
 variableTypes['constant'] = {
   name: 'Constant',
   ctor: ConstantVariable,
-  description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share' ,
+  description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
 };

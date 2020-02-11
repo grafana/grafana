@@ -2,7 +2,6 @@ package toml
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -81,7 +80,7 @@ func (p *parser) next() item {
 }
 
 func (p *parser) bug(format string, v ...interface{}) {
-	log.Fatalf("BUG: %s\n\n", fmt.Sprintf(format, v...))
+	panic(fmt.Sprintf("BUG: "+format+"\n\n", v...))
 }
 
 func (p *parser) expect(typ itemType) item {
@@ -179,10 +178,18 @@ func (p *parser) value(it item) (interface{}, tomlType) {
 		}
 		p.bug("Expected boolean value, but got '%s'.", it.val)
 	case itemInteger:
-		num, err := strconv.ParseInt(it.val, 10, 64)
+		if !numUnderscoresOK(it.val) {
+			p.panicf("Invalid integer %q: underscores must be surrounded by digits",
+				it.val)
+		}
+		val := strings.Replace(it.val, "_", "", -1)
+		num, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			// See comment below for floats describing why we make a
-			// distinction between a bug and a user error.
+			// Distinguish integer values. Normally, it'd be a bug if the lexer
+			// provides an invalid integer, but it's possible that the number is
+			// out of range of valid values (which the lexer cannot determine).
+			// So mark the former as a bug but the latter as a legitimate user
+			// error.
 			if e, ok := err.(*strconv.NumError); ok &&
 				e.Err == strconv.ErrRange {
 
@@ -194,29 +201,57 @@ func (p *parser) value(it item) (interface{}, tomlType) {
 		}
 		return num, p.typeOfPrimitive(it)
 	case itemFloat:
-		num, err := strconv.ParseFloat(it.val, 64)
+		parts := strings.FieldsFunc(it.val, func(r rune) bool {
+			switch r {
+			case '.', 'e', 'E':
+				return true
+			}
+			return false
+		})
+		for _, part := range parts {
+			if !numUnderscoresOK(part) {
+				p.panicf("Invalid float %q: underscores must be "+
+					"surrounded by digits", it.val)
+			}
+		}
+		if !numPeriodsOK(it.val) {
+			// As a special case, numbers like '123.' or '1.e2',
+			// which are valid as far as Go/strconv are concerned,
+			// must be rejected because TOML says that a fractional
+			// part consists of '.' followed by 1+ digits.
+			p.panicf("Invalid float %q: '.' must be followed "+
+				"by one or more digits", it.val)
+		}
+		val := strings.Replace(it.val, "_", "", -1)
+		num, err := strconv.ParseFloat(val, 64)
 		if err != nil {
-			// Distinguish float values. Normally, it'd be a bug if the lexer
-			// provides an invalid float, but it's possible that the float is
-			// out of range of valid values (which the lexer cannot determine).
-			// So mark the former as a bug but the latter as a legitimate user
-			// error.
-			//
-			// This is also true for integers.
 			if e, ok := err.(*strconv.NumError); ok &&
 				e.Err == strconv.ErrRange {
 
 				p.panicf("Float '%s' is out of the range of 64-bit "+
 					"IEEE-754 floating-point numbers.", it.val)
 			} else {
-				p.bug("Expected float value, but got '%s'.", it.val)
+				p.panicf("Invalid float value: %q", it.val)
 			}
 		}
 		return num, p.typeOfPrimitive(it)
 	case itemDatetime:
-		t, err := time.Parse("2006-01-02T15:04:05Z", it.val)
-		if err != nil {
-			p.bug("Expected Zulu formatted DateTime, but got '%s'.", it.val)
+		var t time.Time
+		var ok bool
+		var err error
+		for _, format := range []string{
+			"2006-01-02T15:04:05Z07:00",
+			"2006-01-02T15:04:05",
+			"2006-01-02",
+		} {
+			t, err = time.ParseInLocation(format, it.val, time.Local)
+			if err == nil {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			p.panicf("Invalid TOML Datetime: %q.", it.val)
 		}
 		return t, p.typeOfPrimitive(it)
 	case itemArray:
@@ -234,9 +269,73 @@ func (p *parser) value(it item) (interface{}, tomlType) {
 			types = append(types, typ)
 		}
 		return array, p.typeOfArray(types)
+	case itemInlineTableStart:
+		var (
+			hash         = make(map[string]interface{})
+			outerContext = p.context
+			outerKey     = p.currentKey
+		)
+
+		p.context = append(p.context, p.currentKey)
+		p.currentKey = ""
+		for it := p.next(); it.typ != itemInlineTableEnd; it = p.next() {
+			if it.typ != itemKeyStart {
+				p.bug("Expected key start but instead found %q, around line %d",
+					it.val, p.approxLine)
+			}
+			if it.typ == itemCommentStart {
+				p.expect(itemText)
+				continue
+			}
+
+			// retrieve key
+			k := p.next()
+			p.approxLine = k.line
+			kname := p.keyString(k)
+
+			// retrieve value
+			p.currentKey = kname
+			val, typ := p.value(p.next())
+			// make sure we keep metadata up to date
+			p.setType(kname, typ)
+			p.ordered = append(p.ordered, p.context.add(p.currentKey))
+			hash[kname] = val
+		}
+		p.context = outerContext
+		p.currentKey = outerKey
+		return hash, tomlHash
 	}
 	p.bug("Unexpected value type: %s", it.typ)
 	panic("unreachable")
+}
+
+// numUnderscoresOK checks whether each underscore in s is surrounded by
+// characters that are not underscores.
+func numUnderscoresOK(s string) bool {
+	accept := false
+	for _, r := range s {
+		if r == '_' {
+			if !accept {
+				return false
+			}
+			accept = false
+			continue
+		}
+		accept = true
+	}
+	return accept
+}
+
+// numPeriodsOK checks whether every period in s is followed by a digit.
+func numPeriodsOK(s string) bool {
+	period := false
+	for _, r := range s {
+		if period && !isDigit(r) {
+			return false
+		}
+		period = r == '.'
+	}
+	return !period
 }
 
 // establishContext sets the current context of the parser,
@@ -401,7 +500,7 @@ func stripFirstNewline(s string) string {
 	if len(s) == 0 || s[0] != '\n' {
 		return s
 	}
-	return s[1:len(s)]
+	return s[1:]
 }
 
 func stripEscapedWhitespace(s string) string {
@@ -481,12 +580,7 @@ func (p *parser) asciiEscapeToUnicode(bs []byte) rune {
 		p.bug("Could not parse '%s' as a hexadecimal number, but the "+
 			"lexer claims it's OK: %s", s, err)
 	}
-
-	// BUG(burntsushi)
-	// I honestly don't understand how this works. I can't seem
-	// to find a way to make this fail. I figured this would fail on invalid
-	// UTF-8 characters like U+DCFF, but it doesn't.
-	if !utf8.ValidString(string(rune(hex))) {
+	if !utf8.ValidRune(rune(hex)) {
 		p.panicf("Escaped character '\\u%s' is not valid UTF-8.", s)
 	}
 	return rune(hex)

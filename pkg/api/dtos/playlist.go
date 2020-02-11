@@ -5,6 +5,7 @@ type PlaylistDashboard struct {
 	Slug  string `json:"slug"`
 	Title string `json:"title"`
 	Uri   string `json:"uri"`
+	Url   string `json:"url"`
 	Order int    `json:"order"`
 }
 

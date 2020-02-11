@@ -1,0 +1,26 @@
+{
+  "type": "datasource",
+  "name": "PostgreSQL",
+  "id": "postgres",
+  "category": "sql",
+
+  "info": {
+    "description": "Data source for PostgreSQL and compatible databases",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/postgresql_logo.svg",
+      "large": "img/postgresql_logo.svg"
+    }
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
+}

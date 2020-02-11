@@ -3,7 +3,6 @@ package rest
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/private/protocol"
 )
 
 // UnmarshalHandler is a named request handler for unmarshaling rest protocol requests
@@ -57,7 +57,7 @@ func unmarshalBody(r *request.Request, v reflect.Value) {
 						defer r.HTTPResponse.Body.Close()
 						b, err := ioutil.ReadAll(r.HTTPResponse.Body)
 						if err != nil {
-							r.Error = awserr.New("SerializationError", "failed to decode REST response", err)
+							r.Error = awserr.New(request.ErrCodeSerialization, "failed to decode REST response", err)
 						} else {
 							payload.Set(reflect.ValueOf(b))
 						}
@@ -65,7 +65,7 @@ func unmarshalBody(r *request.Request, v reflect.Value) {
 						defer r.HTTPResponse.Body.Close()
 						b, err := ioutil.ReadAll(r.HTTPResponse.Body)
 						if err != nil {
-							r.Error = awserr.New("SerializationError", "failed to decode REST response", err)
+							r.Error = awserr.New(request.ErrCodeSerialization, "failed to decode REST response", err)
 						} else {
 							str := string(b)
 							payload.Set(reflect.ValueOf(&str))
@@ -77,7 +77,7 @@ func unmarshalBody(r *request.Request, v reflect.Value) {
 						case "io.ReadSeeker":
 							b, err := ioutil.ReadAll(r.HTTPResponse.Body)
 							if err != nil {
-								r.Error = awserr.New("SerializationError",
+								r.Error = awserr.New(request.ErrCodeSerialization,
 									"failed to read response body", err)
 								return
 							}
@@ -85,7 +85,7 @@ func unmarshalBody(r *request.Request, v reflect.Value) {
 						default:
 							io.Copy(ioutil.Discard, r.HTTPResponse.Body)
 							defer r.HTTPResponse.Body.Close()
-							r.Error = awserr.New("SerializationError",
+							r.Error = awserr.New(request.ErrCodeSerialization,
 								"failed to decode REST response",
 								fmt.Errorf("unknown payload type %s", payload.Type()))
 						}
@@ -115,14 +115,14 @@ func unmarshalLocationElements(r *request.Request, v reflect.Value) {
 			case "header":
 				err := unmarshalHeader(m, r.HTTPResponse.Header.Get(name), field.Tag)
 				if err != nil {
-					r.Error = awserr.New("SerializationError", "failed to decode REST response", err)
+					r.Error = awserr.New(request.ErrCodeSerialization, "failed to decode REST response", err)
 					break
 				}
 			case "headers":
 				prefix := field.Tag.Get("locationName")
 				err := unmarshalHeaderMap(m, r.HTTPResponse.Header, prefix)
 				if err != nil {
-					r.Error = awserr.New("SerializationError", "failed to decode REST response", err)
+					r.Error = awserr.New(request.ErrCodeSerialization, "failed to decode REST response", err)
 					break
 				}
 			}
@@ -146,6 +146,9 @@ func unmarshalStatusCode(v reflect.Value, statusCode int) {
 }
 
 func unmarshalHeaderMap(r reflect.Value, headers http.Header, prefix string) error {
+	if len(headers) == 0 {
+		return nil
+	}
 	switch r.Interface().(type) {
 	case map[string]*string: // we only support string map value types
 		out := map[string]*string{}
@@ -155,19 +158,28 @@ func unmarshalHeaderMap(r reflect.Value, headers http.Header, prefix string) err
 				out[k[len(prefix):]] = &v[0]
 			}
 		}
-		r.Set(reflect.ValueOf(out))
+		if len(out) != 0 {
+			r.Set(reflect.ValueOf(out))
+		}
+
 	}
 	return nil
 }
 
 func unmarshalHeader(v reflect.Value, header string, tag reflect.StructTag) error {
-	isJSONValue := tag.Get("type") == "jsonvalue"
-	if isJSONValue {
+	switch tag.Get("type") {
+	case "jsonvalue":
 		if len(header) == 0 {
 			return nil
 		}
-	} else if !v.IsValid() || (header == "" && v.Elem().Kind() != reflect.String) {
-		return nil
+	case "blob":
+		if len(header) == 0 {
+			return nil
+		}
+	default:
+		if !v.IsValid() || (header == "" && v.Elem().Kind() != reflect.String) {
+			return nil
+		}
 	}
 
 	switch v.Interface().(type) {
@@ -178,7 +190,7 @@ func unmarshalHeader(v reflect.Value, header string, tag reflect.StructTag) erro
 		if err != nil {
 			return err
 		}
-		v.Set(reflect.ValueOf(&b))
+		v.Set(reflect.ValueOf(b))
 	case *bool:
 		b, err := strconv.ParseBool(header)
 		if err != nil {
@@ -198,23 +210,21 @@ func unmarshalHeader(v reflect.Value, header string, tag reflect.StructTag) erro
 		}
 		v.Set(reflect.ValueOf(&f))
 	case *time.Time:
-		t, err := time.Parse(RFC822, header)
+		format := tag.Get("timestampFormat")
+		if len(format) == 0 {
+			format = protocol.RFC822TimeFormatName
+		}
+		t, err := protocol.ParseTime(format, header)
 		if err != nil {
 			return err
 		}
 		v.Set(reflect.ValueOf(&t))
 	case aws.JSONValue:
-		b := []byte(header)
-		var err error
+		escaping := protocol.NoEscape
 		if tag.Get("location") == "header" {
-			b, err = base64.StdEncoding.DecodeString(header)
-			if err != nil {
-				return err
-			}
+			escaping = protocol.Base64Escape
 		}
-
-		m := aws.JSONValue{}
-		err = json.Unmarshal(b, &m)
+		m, err := protocol.DecodeJSONValue(header, escaping)
 		if err != nil {
 			return err
 		}

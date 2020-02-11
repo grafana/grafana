@@ -1,5 +1,5 @@
 +++
-title = "How To integrate Hubot and Grafana"
+title = "How to integrate Hubot and Grafana"
 type = "docs"
 keywords = ["grafana", "tutorials", "hubot", "slack", "hipchat", "setup", "install", "config"]
 [menu.docs]
@@ -39,9 +39,9 @@ read the official [Getting Started With Hubot](https://hubot.github.com/docs/) g
 ## Install Hubot-Grafana script
 
 In your Hubot project repo install the Grafana plugin using `npm`:
-
-    npm install hubot-grafana --save
-
+```bash
+npm install hubot-grafana --save
+```
 Edit the file external-scripts.json, and add hubot-grafana to the list of plugins.
 
 ```json
@@ -56,25 +56,28 @@ Edit the file external-scripts.json, and add hubot-grafana to the list of plugin
 
 The `hubot-grafana` plugin requires a number of environment variables to be set in order to work properly.
 
-    export HUBOT_GRAFANA_HOST=http://play.grafana.org
-    export HUBOT_GRAFANA_API_KEY=abcd01234deadbeef01234
-    export HUBOT_GRAFANA_S3_BUCKET=mybucket
-    export HUBOT_GRAFANA_S3_ACCESS_KEY_ID=ABCDEF123456XYZ
-    export HUBOT_GRAFANA_S3_SECRET_ACCESS_KEY=aBcD01234dEaDbEef01234
-    export HUBOT_GRAFANA_S3_PREFIX=graphs
-    export HUBOT_GRAFANA_S3_REGION=us-standard
+```bash
+export HUBOT_GRAFANA_HOST=https://play.grafana.org
+export HUBOT_GRAFANA_API_KEY=abcd01234deadbeef01234
+export HUBOT_GRAFANA_S3_BUCKET=mybucket
+export HUBOT_GRAFANA_S3_ACCESS_KEY_ID=ABCDEF123456XYZ
+export HUBOT_GRAFANA_S3_SECRET_ACCESS_KEY=aBcD01234dEaDbEef01234
+export HUBOT_GRAFANA_S3_PREFIX=graphs
+export HUBOT_GRAFANA_S3_REGION=us-standard
+```
 
 ### Grafana server side rendering
 
 The hubot plugin will take advantage of the Grafana server side rendering feature that can
-render any panel on the server using phantomjs. Grafana ships with a phantomjs binary (linux only).
+render any panel on the server using phantomjs. Grafana ships with a phantomjs binary (Linux only).
 
 To verify that this feature works try the `Direct link to rendered image` link in the panel share dialog.
 If you do not get an image when opening this link verify that the required font packages are installed for phantomjs to work.
 
 ### Grafana API Key
 
-<img src="/img/docs/v2/orgdropdown_api_keys.png" style="width: 150px" class="right"></img>
+{{< docs-imagebox img="/img/docs/v2/orgdropdown_api_keys.png" max-width="150px" class="docs-image--right">}}
+
 You need to set the environment variable `HUBOT_GRAFANA_API_KEY` to a Grafana API Key.
 You can add these from the API Keys page which you find in the Organization dropdown.
 
@@ -111,7 +114,9 @@ can create hubot command aliases with the hubot script `hubot-alias`.
 
 Install it:
 
-    npm i --save hubot-alias
+```bash
+npm i --save hubot-alias
+```
 
 Now add `hubot-alias` to the list of plugins in `external-scripts.json` and restart hubot.
 

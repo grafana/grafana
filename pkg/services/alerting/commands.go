@@ -2,54 +2,35 @@ package alerting
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
-
-type UpdateDashboardAlertsCommand struct {
-	UserId    int64
-	OrgId     int64
-	Dashboard *m.Dashboard
-}
-
-type ValidateDashboardAlertsCommand struct {
-	UserId    int64
-	OrgId     int64
-	Dashboard *m.Dashboard
-}
 
 func init() {
 	bus.AddHandler("alerting", updateDashboardAlerts)
 	bus.AddHandler("alerting", validateDashboardAlerts)
 }
 
-func validateDashboardAlerts(cmd *ValidateDashboardAlertsCommand) error {
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
+func validateDashboardAlerts(cmd *models.ValidateDashboardAlertsCommand) error {
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
 
-	if _, err := extractor.GetAlerts(); err != nil {
-		return err
-	}
-
-	return nil
+	return extractor.ValidateAlerts()
 }
 
-func updateDashboardAlerts(cmd *UpdateDashboardAlertsCommand) error {
-	saveAlerts := m.SaveAlertsCommand{
+func updateDashboardAlerts(cmd *models.UpdateDashboardAlertsCommand) error {
+	saveAlerts := models.SaveAlertsCommand{
 		OrgId:       cmd.OrgId,
-		UserId:      cmd.UserId,
+		UserId:      cmd.User.UserId,
 		DashboardId: cmd.Dashboard.Id,
 	}
 
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
 
-	if alerts, err := extractor.GetAlerts(); err != nil {
-		return err
-	} else {
-		saveAlerts.Alerts = alerts
-	}
-
-	if err := bus.Dispatch(&saveAlerts); err != nil {
+	alerts, err := extractor.GetAlerts()
+	if err != nil {
 		return err
 	}
 
-	return nil
+	saveAlerts.Alerts = alerts
+
+	return bus.Dispatch(&saveAlerts)
 }

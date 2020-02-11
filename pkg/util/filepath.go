@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 )
 
-//WalkSkipDir is the Error returned when we want to skip descending into a directory
-var WalkSkipDir = errors.New("skip this directory")
+//ErrWalkSkipDir is the Error returned when we want to skip descending into a directory
+var ErrWalkSkipDir = errors.New("skip this directory")
 
 //WalkFunc is a callback function called for each path as a directory is walked
 //If resolvedPath != "", then we are following symbolic links.
@@ -50,7 +50,7 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 	}
 	err := walkFn(resolvedPath, info, nil)
 	if err != nil {
-		if info.IsDir() && err == WalkSkipDir {
+		if info.IsDir() && err == ErrWalkSkipDir {
 			err = nil
 		}
 		return err
@@ -65,9 +65,8 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 			if _, ok := symlinkPathsFollowed[path2]; ok {
 				errMsg := "Potential SymLink Infinite Loop. Path: %v, Link To: %v"
 				return fmt.Errorf(errMsg, resolvedPath, path2)
-			} else {
-				symlinkPathsFollowed[path2] = true
 			}
+			symlinkPathsFollowed[path2] = true
 		}
 		info2, err := os.Lstat(path2)
 		if err != nil {

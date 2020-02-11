@@ -11,24 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go/private/protocol/query"
 )
 
-// Amazon CloudWatch monitors your Amazon Web Services (AWS) resources and the
-// applications you run on AWS in real-time. You can use CloudWatch to collect
-// and track metrics, which are the variables you want to measure for your resources
-// and applications.
+// CloudWatch provides the API operation methods for making requests to
+// Amazon CloudWatch. See this package's package overview docs
+// for details on the service.
 //
-// CloudWatch alarms send notifications or automatically make changes to the
-// resources you are monitoring based on rules that you define. For example,
-// you can monitor the CPU usage and disk reads and writes of your Amazon Elastic
-// Compute Cloud (Amazon EC2) instances and then use this data to determine
-// whether you should launch additional instances to handle increased load.
-// You can also use this data to stop under-used instances to save money.
-//
-// In addition to monitoring the built-in metrics that come with AWS, you can
-// monitor your own custom metrics. With CloudWatch, you gain system-wide visibility
-// into resource utilization, application performance, and operational health.
-// The service client's operations are safe to be used concurrently.
-// It is not safe to mutate any of the client's properties though.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01
+// CloudWatch methods are safe to use concurrently. It is not safe to
+// modify mutate any of the struct's properties though.
 type CloudWatch struct {
 	*client.Client
 }
@@ -41,8 +29,9 @@ var initRequest func(*request.Request)
 
 // Service information constants
 const (
-	ServiceName = "monitoring" // Service endpoint prefix API calls made to.
-	EndpointsID = ServiceName  // Service ID for Regions and Endpoints metadata.
+	ServiceName = "monitoring" // Name of service.
+	EndpointsID = ServiceName  // ID to lookup a service endpoint with.
+	ServiceID   = "CloudWatch" // ServiceID is a unique identifer of a specific service.
 )
 
 // New creates a new instance of the CloudWatch client with a session.
@@ -50,6 +39,8 @@ const (
 // aws.Config parameter to add your extra config.
 //
 // Example:
+//     mySession := session.Must(session.NewSession())
+//
 //     // Create a CloudWatch client from just a session.
 //     svc := cloudwatch.New(mySession)
 //
@@ -57,18 +48,20 @@ const (
 //     svc := cloudwatch.New(mySession, aws.NewConfig().WithRegion("us-west-2"))
 func New(p client.ConfigProvider, cfgs ...*aws.Config) *CloudWatch {
 	c := p.ClientConfig(EndpointsID, cfgs...)
-	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
+	return newClient(*c.Config, c.Handlers, c.PartitionID, c.Endpoint, c.SigningRegion, c.SigningName)
 }
 
 // newClient creates, initializes and returns a new service client instance.
-func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *CloudWatch {
+func newClient(cfg aws.Config, handlers request.Handlers, partitionID, endpoint, signingRegion, signingName string) *CloudWatch {
 	svc := &CloudWatch{
 		Client: client.New(
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   ServiceName,
+				ServiceID:     ServiceID,
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
+				PartitionID:   partitionID,
 				Endpoint:      endpoint,
 				APIVersion:    "2010-08-01",
 			},

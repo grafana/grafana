@@ -1,0 +1,18 @@
+.gf-table-input-csv {
+  position: relative;
+}
+
+.gf-table-input-csv textarea {
+  height: 100%;
+  width: 100%;
+}
+
+.gf-table-input-csv footer {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  border: 1px solid #222;
+  background: $online;
+  padding: 1px 4px;
+  font-size: 80%;
+}

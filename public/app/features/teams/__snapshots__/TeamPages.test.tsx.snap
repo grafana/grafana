@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  />
+</Page>
+`;
+
+exports[`Render should render group sync page 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  >
+    <Component />
+  </PageContents>
+</Page>
+`;
+
+exports[`Render should render member page if team not empty 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  >
+    <Component
+      members={Array []}
+      syncEnabled={true}
+    />
+  </PageContents>
+</Page>
+`;
+
+exports[`Render should render settings and preferences page 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  >
+    <Component />
+  </PageContents>
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should not render settings page if user is team member 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  />
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render settings page if user is team admin 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  >
+    <Component />
+  </PageContents>
+</Page>
+`;

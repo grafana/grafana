@@ -16,3 +16,9 @@ Tests Implemented:
 TODO:
    Fix all encoding / decoding to conform to ASN1 BER spec
    Implement Tests / Benchmarks
+
+---
+
+The Go gopher was designed by Renee French. (http://reneefrench.blogspot.com/)
+The design is licensed under the Creative Commons 3.0 Attributions license.
+Read this article for more details: http://blog.golang.org/gopher

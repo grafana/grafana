@@ -1,3 +1,0 @@
-#ignore
--timeout=1s
--coverpkg=github.com/smartystreets/assertions,github.com/smartystreets/assertions/internal/oglematchers

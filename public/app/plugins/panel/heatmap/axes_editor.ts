@@ -1,37 +1,41 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import kbn from 'app/core/utils/kbn';
-
 export class AxesEditorCtrl {
   panel: any;
   panelCtrl: any;
   unitFormats: any;
   logScales: any;
   dataFormats: any;
+  yBucketBoundModes: any;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any, uiSegmentSrv: any) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-
     this.unitFormats = kbn.getUnitFormats();
 
     this.logScales = {
-      'linear': 1,
+      linear: 1,
       'log (base 2)': 2,
       'log (base 10)': 10,
       'log (base 32)': 32,
-      'log (base 1024)': 1024
+      'log (base 1024)': 1024,
     };
 
     this.dataFormats = {
-      'Timeseries': 'timeseries',
-      'ES histogram': 'es_histogram'
+      'Time series': 'timeseries',
+      'Time series buckets': 'tsbuckets',
+    };
+
+    this.yBucketBoundModes = {
+      Auto: 'auto',
+      Upper: 'upper',
+      Lower: 'lower',
+      Middle: 'middle',
     };
   }
 
-  setUnitFormat(subItem) {
+  setUnitFormat(subItem: any) {
     this.panel.yAxis.format = subItem.value;
     this.panelCtrl.render();
   }

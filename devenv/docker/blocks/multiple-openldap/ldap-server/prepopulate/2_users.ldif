@@ -1,0 +1,59 @@
+dn: cn=ldap-editor,ou=users,dc=grafana,dc=org
+mail: ldap-editor@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-editor
+cn: ldap-editor
+
+dn: cn=ldap-viewer,ou=users,dc=grafana,dc=org
+mail: ldap-viewer@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-viewer
+cn: ldap-viewer
+
+dn: cn=ldap-carl,ou=users,dc=grafana,dc=org
+mail: ldap-carl@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-carl
+cn: ldap-carl
+
+dn: cn=ldap-daniel,ou=users,dc=grafana,dc=org
+mail: ldap-daniel@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-daniel
+cn: ldap-daniel
+
+dn: cn=ldap-leo,ou=users,dc=grafana,dc=org
+mail: ldap-leo@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-leo
+cn: ldap-leo
+
+dn: cn=ldap-tobias,ou=users,dc=grafana,dc=org
+mail: ldap-tobias@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-tobias
+cn: ldap-tobias

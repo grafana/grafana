@@ -1,12 +1,21 @@
+// Copyright 2019 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package core
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
+	"sync"
+)
+
+var (
+	DefaultCacheSize = 200
 )
 
 func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
@@ -58,189 +67,129 @@ func StructToSlice(query string, st interface{}) (string, []interface{}, error) 
 	return query, args, nil
 }
 
-type DB struct {
-	*sql.DB
-	Mapper IMapper
+type cacheStruct struct {
+	value reflect.Value
+	idx   int
 }
 
+// DB is a wrap of sql.DB with extra contents
+type DB struct {
+	*sql.DB
+	Mapper            IMapper
+	reflectCache      map[reflect.Type]*cacheStruct
+	reflectCacheMutex sync.RWMutex
+}
+
+// Open opens a database
 func Open(driverName, dataSourceName string) (*DB, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
-	return &DB{db, NewCacheMapper(&SnakeMapper{})}, nil
+	return &DB{
+		DB:           db,
+		Mapper:       NewCacheMapper(&SnakeMapper{}),
+		reflectCache: make(map[reflect.Type]*cacheStruct),
+	}, nil
 }
 
+// FromDB creates a DB from a sql.DB
 func FromDB(db *sql.DB) *DB {
-	return &DB{db, NewCacheMapper(&SnakeMapper{})}
+	return &DB{
+		DB:           db,
+		Mapper:       NewCacheMapper(&SnakeMapper{}),
+		reflectCache: make(map[reflect.Type]*cacheStruct),
+	}
 }
 
-func (db *DB) Query(query string, args ...interface{}) (*Rows, error) {
-	rows, err := db.DB.Query(query, args...)
+func (db *DB) reflectNew(typ reflect.Type) reflect.Value {
+	db.reflectCacheMutex.Lock()
+	defer db.reflectCacheMutex.Unlock()
+	cs, ok := db.reflectCache[typ]
+	if !ok || cs.idx+1 > DefaultCacheSize-1 {
+		cs = &cacheStruct{reflect.MakeSlice(reflect.SliceOf(typ), DefaultCacheSize, DefaultCacheSize), 0}
+		db.reflectCache[typ] = cs
+	} else {
+		cs.idx = cs.idx + 1
+	}
+	return cs.value.Index(cs.idx).Addr()
+}
+
+// QueryContext overwrites sql.DB.QueryContext
+func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*Rows, error) {
+	rows, err := db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		if rows != nil {
 			rows.Close()
 		}
 		return nil, err
 	}
-	return &Rows{rows, db.Mapper}, nil
+	return &Rows{rows, db}, nil
 }
 
-func (db *DB) QueryMap(query string, mp interface{}) (*Rows, error) {
+// Query overwrites sql.DB.Query
+func (db *DB) Query(query string, args ...interface{}) (*Rows, error) {
+	return db.QueryContext(context.Background(), query, args...)
+}
+
+func (db *DB) QueryMapContext(ctx context.Context, query string, mp interface{}) (*Rows, error) {
 	query, args, err := MapToSlice(query, mp)
 	if err != nil {
 		return nil, err
 	}
-	return db.Query(query, args...)
+	return db.QueryContext(ctx, query, args...)
 }
 
-func (db *DB) QueryStruct(query string, st interface{}) (*Rows, error) {
+func (db *DB) QueryMap(query string, mp interface{}) (*Rows, error) {
+	return db.QueryMapContext(context.Background(), query, mp)
+}
+
+func (db *DB) QueryStructContext(ctx context.Context, query string, st interface{}) (*Rows, error) {
 	query, args, err := StructToSlice(query, st)
 	if err != nil {
 		return nil, err
 	}
-	return db.Query(query, args...)
+	return db.QueryContext(ctx, query, args...)
 }
 
-func (db *DB) QueryRow(query string, args ...interface{}) *Row {
-	rows, err := db.Query(query, args...)
+func (db *DB) QueryStruct(query string, st interface{}) (*Rows, error) {
+	return db.QueryStructContext(context.Background(), query, st)
+}
+
+func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *Row {
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return &Row{nil, err}
 	}
 	return &Row{rows, nil}
 }
 
-func (db *DB) QueryRowMap(query string, mp interface{}) *Row {
+func (db *DB) QueryRow(query string, args ...interface{}) *Row {
+	return db.QueryRowContext(context.Background(), query, args...)
+}
+
+func (db *DB) QueryRowMapContext(ctx context.Context, query string, mp interface{}) *Row {
 	query, args, err := MapToSlice(query, mp)
 	if err != nil {
 		return &Row{nil, err}
 	}
-	return db.QueryRow(query, args...)
+	return db.QueryRowContext(ctx, query, args...)
 }
 
-func (db *DB) QueryRowStruct(query string, st interface{}) *Row {
+func (db *DB) QueryRowMap(query string, mp interface{}) *Row {
+	return db.QueryRowMapContext(context.Background(), query, mp)
+}
+
+func (db *DB) QueryRowStructContext(ctx context.Context, query string, st interface{}) *Row {
 	query, args, err := StructToSlice(query, st)
 	if err != nil {
 		return &Row{nil, err}
 	}
-	return db.QueryRow(query, args...)
+	return db.QueryRowContext(ctx, query, args...)
 }
 
-type Stmt struct {
-	*sql.Stmt
-	Mapper IMapper
-	names  map[string]int
-}
-
-func (db *DB) Prepare(query string) (*Stmt, error) {
-	names := make(map[string]int)
-	var i int
-	query = re.ReplaceAllStringFunc(query, func(src string) string {
-		names[src[1:]] = i
-		i += 1
-		return "?"
-	})
-
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	return &Stmt{stmt, db.Mapper, names}, nil
-}
-
-func (s *Stmt) ExecMap(mp interface{}) (sql.Result, error) {
-	vv := reflect.ValueOf(mp)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return nil, errors.New("mp should be a map's pointer")
-	}
-
-	args := make([]interface{}, len(s.names))
-	for k, i := range s.names {
-		args[i] = vv.Elem().MapIndex(reflect.ValueOf(k)).Interface()
-	}
-	return s.Stmt.Exec(args...)
-}
-
-func (s *Stmt) ExecStruct(st interface{}) (sql.Result, error) {
-	vv := reflect.ValueOf(st)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
-		return nil, errors.New("mp should be a map's pointer")
-	}
-
-	args := make([]interface{}, len(s.names))
-	for k, i := range s.names {
-		args[i] = vv.Elem().FieldByName(k).Interface()
-	}
-	return s.Stmt.Exec(args...)
-}
-
-func (s *Stmt) Query(args ...interface{}) (*Rows, error) {
-	rows, err := s.Stmt.Query(args...)
-	if err != nil {
-		return nil, err
-	}
-	return &Rows{rows, s.Mapper}, nil
-}
-
-func (s *Stmt) QueryMap(mp interface{}) (*Rows, error) {
-	vv := reflect.ValueOf(mp)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return nil, errors.New("mp should be a map's pointer")
-	}
-
-	args := make([]interface{}, len(s.names))
-	for k, i := range s.names {
-		args[i] = vv.Elem().MapIndex(reflect.ValueOf(k)).Interface()
-	}
-
-	return s.Query(args...)
-}
-
-func (s *Stmt) QueryStruct(st interface{}) (*Rows, error) {
-	vv := reflect.ValueOf(st)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
-		return nil, errors.New("mp should be a map's pointer")
-	}
-
-	args := make([]interface{}, len(s.names))
-	for k, i := range s.names {
-		args[i] = vv.Elem().FieldByName(k).Interface()
-	}
-
-	return s.Query(args...)
-}
-
-func (s *Stmt) QueryRow(args ...interface{}) *Row {
-	rows, err := s.Query(args...)
-	return &Row{rows, err}
-}
-
-func (s *Stmt) QueryRowMap(mp interface{}) *Row {
-	vv := reflect.ValueOf(mp)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return &Row{nil, errors.New("mp should be a map's pointer")}
-	}
-
-	args := make([]interface{}, len(s.names))
-	for k, i := range s.names {
-		args[i] = vv.Elem().MapIndex(reflect.ValueOf(k)).Interface()
-	}
-
-	return s.QueryRow(args...)
-}
-
-func (s *Stmt) QueryRowStruct(st interface{}) *Row {
-	vv := reflect.ValueOf(st)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
-		return &Row{nil, errors.New("st should be a struct's pointer")}
-	}
-
-	args := make([]interface{}, len(s.names))
-	for k, i := range s.names {
-		args[i] = vv.Elem().FieldByName(k).Interface()
-	}
-
-	return s.QueryRow(args...)
+func (db *DB) QueryRowStruct(query string, st interface{}) *Row {
+	return db.QueryRowStructContext(context.Background(), query, st)
 }
 
 var (
@@ -249,120 +198,26 @@ var (
 
 // insert into (name) values (?)
 // insert into (name) values (?name)
-func (db *DB) ExecMap(query string, mp interface{}) (sql.Result, error) {
+func (db *DB) ExecMapContext(ctx context.Context, query string, mp interface{}) (sql.Result, error) {
 	query, args, err := MapToSlice(query, mp)
 	if err != nil {
 		return nil, err
 	}
-	return db.DB.Exec(query, args...)
+	return db.DB.ExecContext(ctx, query, args...)
+}
+
+func (db *DB) ExecMap(query string, mp interface{}) (sql.Result, error) {
+	return db.ExecMapContext(context.Background(), query, mp)
+}
+
+func (db *DB) ExecStructContext(ctx context.Context, query string, st interface{}) (sql.Result, error) {
+	query, args, err := StructToSlice(query, st)
+	if err != nil {
+		return nil, err
+	}
+	return db.DB.ExecContext(ctx, query, args...)
 }
 
 func (db *DB) ExecStruct(query string, st interface{}) (sql.Result, error) {
-	query, args, err := StructToSlice(query, st)
-	if err != nil {
-		return nil, err
-	}
-	return db.DB.Exec(query, args...)
-}
-
-type EmptyScanner struct {
-}
-
-func (EmptyScanner) Scan(src interface{}) error {
-	return nil
-}
-
-type Tx struct {
-	*sql.Tx
-	Mapper IMapper
-}
-
-func (db *DB) Begin() (*Tx, error) {
-	tx, err := db.DB.Begin()
-	if err != nil {
-		return nil, err
-	}
-	return &Tx{tx, db.Mapper}, nil
-}
-
-func (tx *Tx) Prepare(query string) (*Stmt, error) {
-	names := make(map[string]int)
-	var i int
-	query = re.ReplaceAllStringFunc(query, func(src string) string {
-		names[src[1:]] = i
-		i += 1
-		return "?"
-	})
-
-	stmt, err := tx.Tx.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	return &Stmt{stmt, tx.Mapper, names}, nil
-}
-
-func (tx *Tx) Stmt(stmt *Stmt) *Stmt {
-	// TODO:
-	return stmt
-}
-
-func (tx *Tx) ExecMap(query string, mp interface{}) (sql.Result, error) {
-	query, args, err := MapToSlice(query, mp)
-	if err != nil {
-		return nil, err
-	}
-	return tx.Tx.Exec(query, args...)
-}
-
-func (tx *Tx) ExecStruct(query string, st interface{}) (sql.Result, error) {
-	query, args, err := StructToSlice(query, st)
-	if err != nil {
-		return nil, err
-	}
-	return tx.Tx.Exec(query, args...)
-}
-
-func (tx *Tx) Query(query string, args ...interface{}) (*Rows, error) {
-	rows, err := tx.Tx.Query(query, args...)
-	if err != nil {
-		return nil, err
-	}
-	return &Rows{rows, tx.Mapper}, nil
-}
-
-func (tx *Tx) QueryMap(query string, mp interface{}) (*Rows, error) {
-	query, args, err := MapToSlice(query, mp)
-	if err != nil {
-		return nil, err
-	}
-	return tx.Query(query, args...)
-}
-
-func (tx *Tx) QueryStruct(query string, st interface{}) (*Rows, error) {
-	query, args, err := StructToSlice(query, st)
-	if err != nil {
-		return nil, err
-	}
-	return tx.Query(query, args...)
-}
-
-func (tx *Tx) QueryRow(query string, args ...interface{}) *Row {
-	rows, err := tx.Query(query, args...)
-	return &Row{rows, err}
-}
-
-func (tx *Tx) QueryRowMap(query string, mp interface{}) *Row {
-	query, args, err := MapToSlice(query, mp)
-	if err != nil {
-		return &Row{nil, err}
-	}
-	return tx.QueryRow(query, args...)
-}
-
-func (tx *Tx) QueryRowStruct(query string, st interface{}) *Row {
-	query, args, err := StructToSlice(query, st)
-	if err != nil {
-		return &Row{nil, err}
-	}
-	return tx.QueryRow(query, args...)
+	return db.ExecStructContext(context.Background(), query, st)
 }

@@ -1,24 +1,15 @@
-///<reference path="../../app/headers/common.d.ts" />
+const _global = window as any;
+const beforeEach = _global.beforeEach;
+const afterEach = _global.afterEach;
+const before = _global.before;
+const describe = _global.describe;
+const it = _global.it;
+const sinon = _global.sinon;
+const expect = _global.expect;
 
-var _global = <any>(window);
-var beforeEach = _global.beforeEach;
-var before = _global.before;
-var describe = _global.describe;
-var it = _global.it;
-var sinon = _global.sinon;
-var expect = _global.expect;
-
-var angularMocks = {
+const angularMocks = {
   module: _global.module,
   inject: _global.inject,
 };
 
-export {
-  beforeEach,
-  before,
-  describe,
-  it,
-  sinon,
-  expect,
-  angularMocks,
-}
+export { beforeEach, afterEach, before, describe, it, sinon, expect, angularMocks };

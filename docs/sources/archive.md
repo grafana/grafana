@@ -12,10 +12,10 @@ weight = 200
 Here you can find links to older versions of the documentation that might be better suited for your version
 of Grafana.
 
-- [Latest](/)
-- [Version 3.1](/v3.1)
-- [Version 3.0](/v3.0)
-- [Version 2.6](/v2.6)
-- [Version 2.5](/v2.5)
-- [Version 2.1](/v2.1)
-- [Version 2.0](/v2.0)
+- [Latest](/docs/grafana/latest/)
+- [Version 4.5](/docs/grafana/v4.5)
+- [Version 4.4](/docs/grafana/v4.4)
+- [Version 4.3](/docs/grafana/v4.3)
+- [Version 4.2](/docs/grafana/v4.2)
+- [Version 4.1](/docs/grafana/v4.1)
+- [Version 3.1](/docs/grafana/v3.1)

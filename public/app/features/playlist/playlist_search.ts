@@ -1,10 +1,8 @@
-///<reference path="../../headers/common.d.ts" />
+import { IScope, ITimeoutService } from 'angular';
 
-import angular from 'angular';
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from '../../core/core_module';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class PlaylistSearchCtrl {
   query: any;
@@ -13,25 +11,28 @@ export class PlaylistSearchCtrl {
   searchStarted: any;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv) {
-    this.query = {query: '', tag: [], starred: false, limit: 30};
+  constructor(private $scope: IScope, $timeout: ITimeoutService) {
+    this.query = { query: '', tag: [], starred: false, limit: 20 };
 
     $timeout(() => {
       this.query.query = '';
+      this.query.type = 'dash-db';
       this.searchDashboards();
     }, 100);
   }
 
   searchDashboards() {
     this.tagsMode = false;
-    var prom: any = {};
+    const prom: any = {};
 
-    prom.promise = this.backendSrv.search(this.query).then((result) => {
-      return {
-        dashboardResult: result,
-        tagResult: []
-      };
-    });
+    prom.promise = promiseToDigest(this.$scope)(
+      backendSrv.search(this.query).then(result => {
+        return {
+          dashboardResult: result,
+          tagResult: [],
+        };
+      })
+    );
 
     this.searchStarted(prom);
   }
@@ -45,7 +46,7 @@ export class PlaylistSearchCtrl {
     return this.query.query === '' && this.query.starred === false && this.query.tag.length === 0;
   }
 
-  filterByTag(tag, evt) {
+  filterByTag(tag: any, evt: any) {
     this.query.tag.push(tag);
     this.searchDashboards();
     if (evt) {
@@ -55,13 +56,15 @@ export class PlaylistSearchCtrl {
   }
 
   getTags() {
-    var prom: any = {};
-    prom.promise = this.backendSrv.get('/api/dashboards/tags').then((result) => {
-      return {
-        dashboardResult: [],
-        tagResult: result
-      };
-    });
+    const prom: any = {};
+    prom.promise = promiseToDigest(this.$scope)(
+      backendSrv.get('/api/dashboards/tags').then((result: any) => {
+        return {
+          dashboardResult: [],
+          tagResult: result,
+        } as any;
+      })
+    );
 
     this.searchStarted(prom);
   }
@@ -75,7 +78,7 @@ export function playlistSearchDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      searchStarted: '&'
+      searchStarted: '&',
     },
   };
 }

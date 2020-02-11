@@ -1,0 +1,94 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`UserPicker renders correctly 1`] = `
+<div
+  className="user-picker"
+>
+  <div>
+    <div
+      className="gf-form-input gf-form-input--form-dropdown css-at6rp9-SelectContainer"
+      onKeyDown={[Function]}
+    >
+      <div
+        className="gf-form-select-box__control css-ia584n-Control"
+        onMouseDown={[Function]}
+        onTouchEnd={[Function]}
+      >
+        <div
+          className="gf-form-select-box__value-container css-1q9zhbr-ValueContainer"
+        >
+          <div
+            className="gf-form-select-box__placeholder css-d8h0m4-Placeholder"
+          >
+            Select user
+          </div>
+          <div
+            className="css-zz0hea-Input"
+          >
+            <div
+              className="gf-form-select-box__input"
+              style={
+                Object {
+                  "display": "inline-block",
+                }
+              }
+            >
+              <input
+                aria-autocomplete="list"
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect="off"
+                disabled={false}
+                id="react-select-2-input"
+                onBlur={[Function]}
+                onChange={[Function]}
+                onFocus={[Function]}
+                spellCheck="false"
+                style={
+                  Object {
+                    "background": 0,
+                    "border": 0,
+                    "boxSizing": "content-box",
+                    "color": "inherit",
+                    "fontSize": "inherit",
+                    "label": "input",
+                    "opacity": 1,
+                    "outline": 0,
+                    "padding": 0,
+                    "width": "1px",
+                  }
+                }
+                tabIndex="0"
+                type="text"
+                value=""
+              />
+              <div
+                style={
+                  Object {
+                    "height": 0,
+                    "left": 0,
+                    "overflow": "scroll",
+                    "position": "absolute",
+                    "top": 0,
+                    "visibility": "hidden",
+                    "whiteSpace": "pre",
+                  }
+                }
+              >
+                
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          className="gf-form-select-box__indicators css-q46mcr-IndicatorsContainer"
+        >
+          <span
+            className="gf-form-select-box__select-arrow "
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

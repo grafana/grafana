@@ -1,12 +1,17 @@
 package sqlstore
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+const mainOrgName = "Main Org."
 
 func init() {
 	bus.AddHandler("sql", GetOrgById)
@@ -27,6 +32,11 @@ func SearchOrgs(query *m.SearchOrgsQuery) error {
 	if query.Name != "" {
 		sess.Where("name=?", query.Name)
 	}
+
+	if len(query.Ids) > 0 {
+		sess.In("id", query.Ids)
+	}
+
 	sess.Limit(query.Limit, query.Limit*query.Page)
 	sess.Cols("id", "name")
 	err := sess.Find(&query.Result)
@@ -63,7 +73,7 @@ func GetOrgByName(query *m.GetOrgByNameQuery) error {
 	return nil
 }
 
-func isOrgNameTaken(name string, existingId int64, sess *session) (bool, error) {
+func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error) {
 	// check if org name is taken
 	var org m.Org
 	exists, err := sess.Where("name=?", name).Get(&org)
@@ -80,7 +90,7 @@ func isOrgNameTaken(name string, existingId int64, sess *session) (bool, error) 
 }
 
 func CreateOrg(cmd *m.CreateOrgCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, 0, sess); err != nil {
 			return err
@@ -120,7 +130,7 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 }
 
 func UpdateOrg(cmd *m.UpdateOrgCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
@@ -133,7 +143,7 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 			Updated: time.Now(),
 		}
 
-		affectedRows, err := sess.Id(cmd.OrgId).Update(&org)
+		affectedRows, err := sess.ID(cmd.OrgId).Update(&org)
 
 		if err != nil {
 			return err
@@ -154,7 +164,7 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 }
 
 func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		org := m.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
@@ -166,7 +176,7 @@ func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.OrgId).Update(&org); err != nil {
+		if _, err := sess.ID(cmd.OrgId).Update(&org); err != nil {
 			return err
 		}
 
@@ -181,7 +191,7 @@ func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 }
 
 func DeleteOrg(cmd *m.DeleteOrgCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
 			return err
 		} else if len(res) != 1 {
@@ -204,6 +214,63 @@ func DeleteOrg(cmd *m.DeleteOrgCommand) error {
 			if err != nil {
 				return err
 			}
+		}
+
+		return nil
+	})
+}
+
+func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
+	var org m.Org
+
+	if setting.AutoAssignOrg {
+		has, err := sess.Where("id=?", setting.AutoAssignOrgId).Get(&org)
+		if err != nil {
+			return 0, err
+		}
+		if has {
+			return org.Id, nil
+		}
+		if setting.AutoAssignOrgId == 1 {
+			org.Name = mainOrgName
+			org.Id = int64(setting.AutoAssignOrgId)
+		} else {
+			sqlog.Info("Could not create user: organization id %v does not exist",
+				setting.AutoAssignOrgId)
+			return 0, fmt.Errorf("Could not create user: organization id %v does not exist",
+				setting.AutoAssignOrgId)
+		}
+	} else {
+		org.Name = orgName
+	}
+
+	org.Created = time.Now()
+	org.Updated = time.Now()
+
+	if org.Id != 0 {
+		if _, err := sess.InsertId(&org); err != nil {
+			return 0, err
+		}
+	} else {
+		if _, err := sess.InsertOne(&org); err != nil {
+			return 0, err
+		}
+	}
+
+	sess.publishAfterCommit(&events.OrgCreated{
+		Timestamp: org.Created,
+		Id:        org.Id,
+		Name:      org.Name,
+	})
+
+	return org.Id, nil
+}
+
+func createDefaultOrg(ctx context.Context) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
+		_, err := getOrCreateOrg(sess, mainOrgName)
+		if err != nil {
+			return err
 		}
 
 		return nil

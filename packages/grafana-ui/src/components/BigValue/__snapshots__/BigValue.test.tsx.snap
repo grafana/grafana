@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BigValue Render with basic options should render 1`] = `
+<div
+  style={
+    Object {
+      "alignItems": "center",
+      "background": "linear-gradient(120deg, rgb(66, 154, 67), rgb(111, 183, 87))",
+      "borderRadius": "3px",
+      "display": "flex",
+      "flexDirection": "row",
+      "height": "300px",
+      "padding": "12px",
+      "position": "relative",
+      "width": "300px",
+    }
+  }
+>
+  <div
+    style={
+      Object {
+        "alignItems": "center",
+        "display": "flex",
+        "flexDirection": "column",
+        "flexGrow": 1,
+        "justifyContent": "center",
+      }
+    }
+  >
+    <FormattedDisplayValue
+      style={
+        Object {
+          "color": "white",
+          "fontSize": 230,
+          "fontWeight": 500,
+          "lineHeight": 1.2,
+        }
+      }
+      value={
+        Object {
+          "numeric": 25,
+          "text": "25",
+        }
+      }
+    />
+  </div>
+</div>
+`;

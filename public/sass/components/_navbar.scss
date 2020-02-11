@@ -1,102 +1,58 @@
-
 .navbar {
-  display: block;
-  overflow: visible;
   position: relative;
-  z-index: 110;
-}
+  z-index: $zindex-navbar-fixed;
+  height: $navbarHeight;
+  padding: 0 20px 0 60px;
+  display: flex;
+  flex-grow: 1;
+  border-bottom: 1px solid transparent;
+  transition-duration: 350ms;
+  transition-timing-function: ease-in-out;
+  transition-property: box-shadow, border-bottom;
 
-.navbar-inner {
-  min-height: $navbarHeight;
-  padding-right: $spacer;
-  background-color: $navbarBackground;
-  border-bottom: $navbarBorder;
-  @include clearfix();
-}
-
-.navbar .nav {
-  position: relative;
-  left: 0;
-  float: left;
-}
-
-.navbar .nav.pull-right {
-  float: right; // redeclare due to specificity
-  margin-right: 0; // remove margin on float right nav
-}
-
-.navbar .nav > li {
-  float: left;
-}
-
-// Links
-.navbar .nav > li > a {
-  float: none;
-  padding: 17px 13px 13px;
-  color: $navbarLinkColor;
-  text-decoration: none;
-
-  .fa { font-size: 115%; }
-}
-
-// Hover/focus
-.navbar .nav > li > a:focus,
-.navbar .nav > li > a:hover {
-  background-color: $navbarLinkBackgroundHover; // "transparent" is default to differentiate :hover/:focus from .active
-  color: $navbarLinkColorHover;
-  text-decoration: none;
-}
-
-// Active nav items
-.navbar .nav > .active > a,
-.navbar .nav > .active > a:hover,
-.navbar .nav > .active > a:focus {
-  color: $navbarLinkColorActive;
-  text-decoration: none;
-  background-color: $navbarLinkBackgroundActive;
-}
-
-.navbar-brand-btn {
-  display: block;
-  position: relative;
-  float: left;
-  margin: 0;
-  border-right: 1px solid $tight-form-border;
-  background-color: $navbarButtonBackground;
-  padding: 0.4rem 1.0rem 0.4rem 1rem;
-
-  .fa-caret-down {
-    font-size: 70%;
+  @include media-breakpoint-up(md) {
+    padding-left: $dashboard-padding;
+    margin-left: 0;
   }
-  .fa-chevron-left{
+}
+
+@mixin navbar-alt-look() {
+  background: $page-header-bg;
+  box-shadow: $search-shadow;
+  border-bottom: $navbarBorder;
+}
+
+.dashboard-page--settings-open {
+  .navbar {
+    @include navbar-alt-look();
+  }
+
+  .navbar-buttons--tv,
+  .navbar-button--add-panel,
+  .navbar-button--star,
+  .navbar-button--save,
+  .navbar-button--share,
+  .navbar-button--settings,
+  .navbar-page-btn .fa-caret-down,
+  .refresh-picker,
+  .time-picker {
     display: none;
   }
 
-  &:hover {
-    background: $navbarButtonBackgroundHighlight;
+  .navbar-buttons--close {
+    display: flex;
+  }
+}
+
+.panel-in-fullscreen,
+.panel-in-fullscreen.view-mode--tv {
+  .navbar {
+    padding-left: $navbar-padding;
   }
 
-  img {
-    width: 30px;
-    position: relative;
-    top: -1px;
-  }
-
-  .navbar-brand-btn-background {
-    display: inline-block;
-    border: 1px solid $body-bg;
-    padding: 4px;
-    border-radius: 50%;
-    background: $iconContainerBackground;
-    width: 40px;
-    height: 40px;
-  }
-
-  .icon-gf-grafana_wordmark {
-    font-size: 21px;
-    position: relative;
-    top: 4px;
-    padding-left: 5px;
+  .navbar-button--add-panel,
+  .navbar-button--star,
+  .navbar-button--tv {
     display: none;
   }
 }
@@ -105,58 +61,179 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  float: left;
   display: block;
   margin: 0;
-  font-size: 1.4em;
-  border-right: 1px solid $tight-form-border;
-  color: darken($link-color, 5%);
-  background-color: $navbarButtonBackground;
+  color: $headings-color;
   font-size: $font-size-lg;
-  padding: 1rem 1rem 0.7rem 1rem;
+  min-height: $navbarHeight;
+  line-height: $navbarHeight;
 
-  &:hover {
-    background: $navbarButtonBackgroundHighlight;
-    color: $link-color;
-  }
-
-  .fa-caret-down {
-    font-size: 60%;
-    padding-left: 0.2rem;
-  }
-
-  .icon-gf {
+  .gicon {
+    top: -2px;
     position: relative;
-    top: 2px;
-    font-size: 20px;
+    font-size: 17px;
     line-height: 8px;
-  }
+    opacity: 0.75;
+    margin-right: 10px;
+    display: none;
 
-  > img {
-    max-width: 27px;
-    max-height: 27px;
+    @include media-breakpoint-up(md) {
+      display: inline-block;
+    }
   }
 }
 
-.sidemenu-pinned {
-  .navbar-brand-btn {
-    background-color: $page-bg;
-    width: $side-menu-width;
+.navbar-page-btn__folder {
+  color: $text-color-weak;
+  display: none;
 
-    .icon-gf-grafana_wordmark  {
-      display: inline-block;
+  @include media-breakpoint-up(lg) {
+    display: inline-block;
+  }
+}
+
+// element is needed here to override font-awesome specificity
+i.navbar-page-btn__folder-icon {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+  padding: 0 $space-sm;
+  position: relative;
+  top: -1px;
+}
+
+// element is needed here to override font-awesome specificity
+i.navbar-page-btn__search {
+  font-size: $font-size-xs;
+  padding: 0 $space-xs;
+}
+
+.navbar-buttons {
+  // height: $navbarHeight;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: 10px;
+
+  &--close {
+    display: none;
+    margin-right: 0;
+  }
+
+  &--zoom {
+    margin-right: 0;
+  }
+}
+
+.navbar__spacer {
+  flex-grow: 1;
+}
+
+.navbar-button {
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
+
+  display: flex;
+  align-items: center;
+  font-weight: $btn-font-weight;
+  padding: 6px $space-sm;
+  line-height: 18px;
+  color: $text-muted;
+  border: 1px solid $navbar-button-border;
+  margin-left: $space-xs;
+  white-space: nowrap;
+
+  .gicon {
+    font-size: 16px;
+  }
+
+  .fa {
+    font-size: 16px;
+  }
+
+  &--add-panel {
+    padding: 2px 10px;
+
+    .gicon {
+      font-size: 22px;
     }
+  }
 
-    .fa-caret-down {
+  &--refresh {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  &--attached {
+    margin-left: 0;
+    border-radius: 0 2px 2px 0;
+  }
+
+  &--settings {
+    .gicon {
+      filter: $navbar-btn-gicon-brightness;
+    }
+    &:hover {
+      .gicon {
+        filter: brightness(0.8);
+      }
+    }
+  }
+
+  &--tight {
+    padding: 7px 4px;
+
+    .fa {
+      font-size: 14px;
+      position: relative;
+      top: 1px;
+    }
+  }
+
+  &--secondary {
+    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  }
+
+  @include media-breakpoint-down(lg) {
+    .btn-title {
+      margin-left: $space-xs;
       display: none;
     }
-
-    &:hover .fa-chevron-left {
-      display: inline-block;
-      color: $text-color-weak;
-      position: relative;
-      left: 1.3rem;
-    }
   }
 }
 
+.navbar-edit {
+  display: flex;
+  height: $navbarHeight;
+  align-items: center;
+  padding-right: 13px;
+}
+
+.navbar-edit__back-btn {
+  background: transparent;
+  border: 2px solid $text-color;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  transition: transform 0.1s ease 0.1s;
+  color: $text-color;
+
+  i {
+    font-size: $font-size-lg;
+    position: relative;
+    top: 1px;
+    right: 1px;
+  }
+
+  &:hover {
+    color: $text-color-strong;
+    border-color: $text-color-strong;
+  }
+}
+
+.navbar-settings-title {
+  display: block;
+  margin: 0;
+  color: $headings-color;
+  font-size: $font-size-lg;
+  min-height: $navbarHeight;
+  line-height: $navbarHeight;
+}

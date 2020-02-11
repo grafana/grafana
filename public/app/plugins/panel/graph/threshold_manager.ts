@@ -1,8 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import 'jquery.flot';
+import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
+import { getColorFromHexRgbOrName } from '@grafana/data';
+import { CoreEvents } from 'app/types';
+import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 export class ThresholdManager {
   plot: any;
@@ -12,10 +13,10 @@ export class ThresholdManager {
   needsCleanup: boolean;
   hasSecondYAxis: any;
 
-  constructor(private panelCtrl) {}
+  constructor(private panelCtrl: PanelCtrl) {}
 
-  getHandleHtml(handleIndex, model, valueStr) {
-    var stateClass = model.colorMode;
+  getHandleHtml(handleIndex: any, model: { colorMode: string }, valueStr: any) {
+    let stateClass = model.colorMode;
     if (model.colorMode === 'custom') {
       stateClass = 'critical';
     }
@@ -29,94 +30,90 @@ export class ThresholdManager {
         <span class="alert-handle-value">${valueStr}<i class="alert-handle-grip"></i></span>
       </div>
     </div>`;
-
   }
 
-  initDragging(evt) {
-    var handleElem = $(evt.currentTarget).parents(".alert-handle-wrapper");
-    var handleIndex = $(evt.currentTarget).data("handleIndex");
+  initDragging(evt: any) {
+    const handleElem = $(evt.currentTarget).parents('.alert-handle-wrapper');
+    const handleIndex = $(evt.currentTarget).data('handleIndex');
 
-    var isMoving = false;
-    var lastY = null;
-    var posTop;
-    var plot = this.plot;
-    var panelCtrl = this.panelCtrl;
-    var model = this.thresholds[handleIndex];
+    let lastY: number | null = null;
+    let posTop: number;
+    const plot = this.plot;
+    const panelCtrl = this.panelCtrl;
+    const model = this.thresholds[handleIndex];
 
-    function dragging(evt) {
+    function dragging(evt: any) {
       if (lastY === null) {
         lastY = evt.clientY;
       } else {
-        var diff = evt.clientY - lastY;
+        const diff = evt.clientY - lastY;
         posTop = posTop + diff;
         lastY = evt.clientY;
-        handleElem.css({top: posTop + diff});
+        handleElem.css({ top: posTop + diff });
       }
     }
 
     function stopped() {
-      isMoving = false;
       // calculate graph level
-      var graphValue = plot.c2p({left: 0, top: posTop}).y;
-      graphValue = parseInt(graphValue.toFixed(0));
+      let graphValue = plot.c2p({ left: 0, top: posTop }).y;
+      graphValue = parseInt(graphValue.toFixed(0), 10);
       model.value = graphValue;
 
-      var valueCanvasPos = plot.p2c({x: 0, y: graphValue});
-
-      handleElem.off("mousemove", dragging);
-      handleElem.off("mouseup", dragging);
-      handleElem.off("mouseleave", dragging);
+      handleElem.off('mousemove', dragging);
+      document.removeEventListener('mouseup', stopped);
 
       // trigger digest and render
-      panelCtrl.$scope.$apply(function() {
+      panelCtrl.$scope.$apply(() => {
         panelCtrl.render();
-        panelCtrl.events.emit('threshold-changed', {threshold: model, handleIndex: handleIndex});
+        panelCtrl.events.emit(CoreEvents.thresholdChanged, {
+          threshold: model,
+          handleIndex: handleIndex,
+        });
       });
     }
 
-    isMoving = true;
     lastY = null;
     posTop = handleElem.position().top;
 
-    handleElem.on("mousemove", dragging);
-    handleElem.on("mouseup", stopped);
-    handleElem.on("mouseleave", stopped);
+    handleElem.on('mousemove', dragging);
+    document.addEventListener('mouseup', stopped);
   }
 
   cleanUp() {
-    this.placeholder.find(".alert-handle-wrapper").remove();
+    this.placeholder.find('.alert-handle-wrapper').remove();
     this.needsCleanup = false;
   }
 
-  renderHandle(handleIndex, defaultHandleTopPos) {
-    var model = this.thresholds[handleIndex];
-    var value = model.value;
-    var valueStr = value;
-    var handleTopPos = 0;
+  renderHandle(handleIndex: number, defaultHandleTopPos: number) {
+    const model = this.thresholds[handleIndex];
+    const value = model.value;
+    let valueStr = value;
+    let handleTopPos = 0;
 
     // handle no value
     if (!_.isNumber(value)) {
       valueStr = '';
       handleTopPos = defaultHandleTopPos;
     } else {
-      var valueCanvasPos = this.plot.p2c({x: 0, y: value});
+      const valueCanvasPos = this.plot.p2c({ x: 0, y: value });
       handleTopPos = Math.round(Math.min(Math.max(valueCanvasPos.top, 0), this.height) - 6);
     }
 
-    var handleElem = $(this.getHandleHtml(handleIndex, model, valueStr));
+    const handleElem = $(this.getHandleHtml(handleIndex, model, valueStr));
     this.placeholder.append(handleElem);
 
     handleElem.toggleClass('alert-handle-wrapper--no-value', valueStr === '');
-    handleElem.css({top: handleTopPos});
+    handleElem.css({ top: handleTopPos });
   }
 
   shouldDrawHandles() {
+    // @ts-ignore
     return !this.hasSecondYAxis && this.panelCtrl.editingThresholds && this.panelCtrl.panel.thresholds.length > 0;
   }
 
-  prepare(elem, data) {
+  prepare(elem: JQuery, data: any[]) {
     this.hasSecondYAxis = false;
-    for (var i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
       if (data[i].yaxis > 1) {
         this.hasSecondYAxis = true;
         break;
@@ -124,14 +121,14 @@ export class ThresholdManager {
     }
 
     if (this.shouldDrawHandles()) {
-      var thresholdMargin = this.panelCtrl.panel.thresholds.length > 1 ? '220px' : '110px';
+      const thresholdMargin = this.panelCtrl.panel.thresholds.length > 1 ? '220px' : '110px';
       elem.css('margin-right', thresholdMargin);
     } else if (this.needsCleanup) {
       elem.css('margin-right', '0');
     }
   }
 
-  draw(plot) {
+  draw(plot: any) {
     this.thresholds = this.panelCtrl.panel.thresholds;
     this.plot = plot;
     this.placeholder = plot.getPlaceholder();
@@ -150,7 +147,7 @@ export class ThresholdManager {
       this.renderHandle(0, 10);
     }
     if (this.thresholds.length > 1) {
-      this.renderHandle(1, this.height-30);
+      this.renderHandle(1, this.height - 30);
     }
 
     this.placeholder.off('mousedown', '.alert-handle');
@@ -158,14 +155,14 @@ export class ThresholdManager {
     this.needsCleanup = true;
   }
 
-  addFlotOptions(options, panel) {
+  addFlotOptions(options: any, panel: any) {
     if (!panel.thresholds || panel.thresholds.length === 0) {
       return;
     }
 
-    var gtLimit = Infinity;
-    var ltLimit = -Infinity;
-    var i, threshold, other;
+    let gtLimit = Infinity;
+    let ltLimit = -Infinity;
+    let i, threshold, other;
 
     for (i = 0; i < panel.thresholds.length; i++) {
       threshold = panel.thresholds[i];
@@ -173,13 +170,13 @@ export class ThresholdManager {
         continue;
       }
 
-      var limit;
+      let limit;
       switch (threshold.op) {
         case 'gt': {
           limit = gtLimit;
           // if next threshold is less then op and greater value, then use that as limit
-          if (panel.thresholds.length > i+1) {
-            other = panel.thresholds[i+1];
+          if (panel.thresholds.length > i + 1) {
+            other = panel.thresholds[i + 1];
             if (other.value > threshold.value) {
               limit = other.value;
               ltLimit = limit;
@@ -190,8 +187,8 @@ export class ThresholdManager {
         case 'lt': {
           limit = ltLimit;
           // if next threshold is less then op and greater value, then use that as limit
-          if (panel.thresholds.length > i+1) {
-            other = panel.thresholds[i+1];
+          if (panel.thresholds.length > i + 1) {
+            other = panel.thresholds[i + 1];
             if (other.value < threshold.value) {
               limit = other.value;
               gtLimit = limit;
@@ -201,7 +198,8 @@ export class ThresholdManager {
         }
       }
 
-      var fillColor, lineColor;
+      let fillColor, lineColor;
+
       switch (threshold.colorMode) {
         case 'critical': {
           fillColor = 'rgba(234, 112, 112, 0.12)';
@@ -227,13 +225,31 @@ export class ThresholdManager {
 
       // fill
       if (threshold.fill) {
-        options.grid.markings.push({yaxis: {from: threshold.value, to: limit}, color: fillColor});
+        if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
+          options.grid.markings.push({
+            y2axis: { from: threshold.value, to: limit },
+            color: getColorFromHexRgbOrName(fillColor),
+          });
+        } else {
+          options.grid.markings.push({
+            yaxis: { from: threshold.value, to: limit },
+            color: getColorFromHexRgbOrName(fillColor),
+          });
+        }
       }
       if (threshold.line) {
-        options.grid.markings.push({yaxis: {from: threshold.value, to: threshold.value}, color: lineColor});
+        if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
+          options.grid.markings.push({
+            y2axis: { from: threshold.value, to: threshold.value },
+            color: getColorFromHexRgbOrName(lineColor),
+          });
+        } else {
+          options.grid.markings.push({
+            yaxis: { from: threshold.value, to: threshold.value },
+            color: getColorFromHexRgbOrName(lineColor),
+          });
+        }
       }
     }
   }
-
 }
-

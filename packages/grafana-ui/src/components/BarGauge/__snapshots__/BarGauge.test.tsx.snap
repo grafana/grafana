@@ -1,0 +1,83 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BarGauge Render with basic options should render 1`] = `
+<div
+  style={
+    Object {
+      "display": "flex",
+      "flexDirection": "column",
+      "overflow": "hidden",
+      "width": "100%",
+    }
+  }
+>
+  <div
+    style={
+      Object {
+        "alignItems": "stretch",
+        "display": "flex",
+        "flexDirection": "row-reverse",
+        "flexGrow": 1,
+        "justifyContent": "flex-end",
+      }
+    }
+  >
+    <FormattedDisplayValue
+      className="bar-gauge__value"
+      style={
+        Object {
+          "alignItems": "center",
+          "color": "#73BF69",
+          "display": "flex",
+          "fontSize": 140,
+          "height": "300px",
+          "justifyContent": "flex-end",
+          "lineHeight": 1,
+          "paddingLeft": "10px",
+          "paddingRight": "10px",
+          "width": 22,
+        }
+      }
+      value={
+        Object {
+          "color": "#73BF69",
+          "numeric": 25,
+          "prefix": undefined,
+          "suffix": undefined,
+          "text": "25",
+          "threshold": Object {
+            "color": "green",
+            "value": -Infinity,
+          },
+        }
+      }
+    />
+    <div
+      style={
+        Object {
+          "background": "rgba(255,255,255, 0.07)",
+          "borderRadius": "3px",
+          "display": "flex",
+          "flexGrow": 1,
+          "left": "-3px",
+          "position": "relative",
+        }
+      }
+    />
+    <div
+      style={
+        Object {
+          "background": "rgba(115, 191, 105, 0.35)",
+          "borderRadius": "3px",
+          "borderRight": "2px solid #73BF69",
+          "height": "300px",
+          "position": "relative",
+          "transition": "width 1s",
+          "width": "60px",
+          "zIndex": 1,
+        }
+      }
+    />
+  </div>
+</div>
+`;

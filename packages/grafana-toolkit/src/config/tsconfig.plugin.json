@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "alwaysStrict": true
+  },
+  "extends": "@grafana/tsconfig"
+}

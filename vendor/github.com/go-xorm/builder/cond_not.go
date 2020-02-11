@@ -21,6 +21,18 @@ func (not Not) WriteTo(w Writer) error {
 		if _, err := fmt.Fprint(w, "("); err != nil {
 			return err
 		}
+	case Eq:
+		if len(not[0].(Eq)) > 1 {
+			if _, err := fmt.Fprint(w, "("); err != nil {
+				return err
+			}
+		}
+	case Neq:
+		if len(not[0].(Neq)) > 1 {
+			if _, err := fmt.Fprint(w, "("); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err := not[0].WriteTo(w); err != nil {
@@ -31,6 +43,18 @@ func (not Not) WriteTo(w Writer) error {
 	case condAnd, condOr:
 		if _, err := fmt.Fprint(w, ")"); err != nil {
 			return err
+		}
+	case Eq:
+		if len(not[0].(Eq)) > 1 {
+			if _, err := fmt.Fprint(w, ")"); err != nil {
+				return err
+			}
+		}
+	case Neq:
+		if len(not[0].(Neq)) > 1 {
+			if _, err := fmt.Fprint(w, ")"); err != nil {
+				return err
+			}
 		}
 	}
 

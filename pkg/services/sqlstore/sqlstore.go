@@ -1,211 +1,410 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/go-sql-driver/mysql"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
+	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 )
-
-type DatabaseConfig struct {
-	Type, Host, Name, User, Pwd, Path, SslMode string
-	CaCertPath                                 string
-	ClientKeyPath                              string
-	ClientCertPath                             string
-	ServerCertName                             string
-	MaxOpenConn                                int
-	MaxIdleConn                                int
-}
 
 var (
 	x       *xorm.Engine
 	dialect migrator.Dialect
 
-	HasEngine bool
-
-	DbCfg DatabaseConfig
-
-	UseSQLite3 bool
-	sqlog      log.Logger = log.New("sqlstore")
+	sqlog log.Logger = log.New("sqlstore")
 )
 
-func EnsureAdminUser() {
-	statsQuery := m.GetSystemStatsQuery{}
+const ContextSessionName = "db-session"
 
-	if err := bus.Dispatch(&statsQuery); err != nil {
-		log.Fatal(3, "Could not determine if admin user exists: %v", err)
-		return
-	}
+func init() {
+	// This change will make xorm use an empty default schema for postgres and
+	// by that mimic the functionality of how it was functioning before
+	// xorm's changes above.
+	xorm.DefaultPostgresSchema = ""
 
-	if statsQuery.Result.UserCount > 0 {
-		return
-	}
-
-	cmd := m.CreateUserCommand{}
-	cmd.Login = setting.AdminUser
-	cmd.Email = setting.AdminUser + "@localhost"
-	cmd.Password = setting.AdminPassword
-	cmd.IsAdmin = true
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		log.Error(3, "Failed to create default admin user", err)
-		return
-	}
-
-	log.Info("Created default admin user: %v", setting.AdminUser)
+	registry.Register(&registry.Descriptor{
+		Name:         "SqlStore",
+		Instance:     &SqlStore{},
+		InitPriority: registry.High,
+	})
 }
 
-func NewEngine() {
-	x, err := getEngine()
+type SqlStore struct {
+	Cfg          *setting.Cfg             `inject:""`
+	Bus          bus.Bus                  `inject:""`
+	CacheService *localcache.CacheService `inject:""`
 
-	if err != nil {
-		sqlog.Crit("Fail to connect to database", "error", err)
-		os.Exit(1)
-	}
-
-	err = SetEngine(x)
-
-	if err != nil {
-		sqlog.Error("Fail to initialize orm engine", "error", err)
-		os.Exit(1)
-	}
+	dbCfg                       DatabaseConfig
+	engine                      *xorm.Engine
+	log                         log.Logger
+	Dialect                     migrator.Dialect
+	skipEnsureDefaultOrgAndUser bool
 }
 
-func SetEngine(engine *xorm.Engine) (err error) {
+func (ss *SqlStore) Init() error {
+	ss.log = log.New("sqlstore")
+	ss.readConfig()
+
+	engine, err := ss.getEngine()
+
+	if err != nil {
+		return fmt.Errorf("Fail to connect to database: %v", err)
+	}
+
+	ss.engine = engine
+	ss.Dialect = migrator.NewDialect(ss.engine)
+
+	// temporarily still set global var
 	x = engine
-	dialect = migrator.NewDialect(x.DriverName())
+	dialect = ss.Dialect
 
 	migrator := migrator.NewMigrator(x)
 	migrations.AddMigrations(migrator)
 
+	for _, descriptor := range registry.GetServices() {
+		sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
+		if ok {
+			sc.AddMigration(migrator)
+		}
+	}
+
 	if err := migrator.Start(); err != nil {
-		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
+		return fmt.Errorf("Migration failed err: %v", err)
 	}
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
-	return nil
+	ss.Bus.SetTransactionManager(ss)
+
+	// Register handlers
+	ss.addUserQueryAndCommandHandlers()
+
+	if ss.skipEnsureDefaultOrgAndUser {
+		return nil
+	}
+
+	return ss.ensureMainOrgAndAdminUser()
 }
 
-func getEngine() (*xorm.Engine, error) {
-	LoadConfig()
+func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
+	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+		systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
+		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		if err != nil {
+			return fmt.Errorf("Could not determine if admin user exists: %v", err)
+		}
 
-	cnnstr := ""
-	switch DbCfg.Type {
-	case "mysql":
+		if systemUserCountQuery.Result.Count > 0 {
+			return nil
+		}
+
+		// ensure admin user
+		if !ss.Cfg.DisableInitAdminCreation {
+			cmd := m.CreateUserCommand{}
+			cmd.Login = setting.AdminUser
+			cmd.Email = setting.AdminUser + "@localhost"
+			cmd.Password = setting.AdminPassword
+			cmd.IsAdmin = true
+
+			if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+				return fmt.Errorf("Failed to create admin user: %v", err)
+			}
+
+			ss.log.Info("Created default admin", "user", setting.AdminUser)
+			return nil
+		}
+
+		// ensure default org if default admin user is disabled
+		if err := createDefaultOrg(ctx); err != nil {
+			return errutil.Wrap("Failed to create default organization", err)
+		}
+
+		ss.log.Info("Created default organization")
+		return nil
+	})
+
+	return err
+}
+
+func (ss *SqlStore) buildExtraConnectionString(sep rune) string {
+	if ss.dbCfg.UrlQueryParams == nil {
+		return ""
+	}
+
+	var sb strings.Builder
+	for key, values := range ss.dbCfg.UrlQueryParams {
+		for _, value := range values {
+			sb.WriteRune(sep)
+			sb.WriteString(key)
+			sb.WriteRune('=')
+			sb.WriteString(value)
+		}
+	}
+	return sb.String()
+}
+
+func (ss *SqlStore) buildConnectionString() (string, error) {
+	cnnstr := ss.dbCfg.ConnectionString
+
+	// special case used by integration tests
+	if cnnstr != "" {
+		return cnnstr, nil
+	}
+
+	switch ss.dbCfg.Type {
+	case migrator.MYSQL:
 		protocol := "tcp"
-		if strings.HasPrefix(DbCfg.Host, "/") {
+		if strings.HasPrefix(ss.dbCfg.Host, "/") {
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4",
-			DbCfg.User, DbCfg.Pwd, protocol, DbCfg.Host, DbCfg.Name)
+		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+			ss.dbCfg.User, ss.dbCfg.Pwd, protocol, ss.dbCfg.Host, ss.dbCfg.Name)
 
-		if DbCfg.SslMode == "true" || DbCfg.SslMode == "skip-verify" {
-			tlsCert, err := makeCert("custom", DbCfg)
+		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "skip-verify" {
+			tlsCert, err := makeCert(ss.dbCfg)
 			if err != nil {
-				return nil, err
+				return "", err
 			}
-			mysql.RegisterTLSConfig("custom", tlsCert)
+			if err := mysql.RegisterTLSConfig("custom", tlsCert); err != nil {
+				return "", err
+			}
+
 			cnnstr += "&tls=custom"
 		}
-	case "postgres":
-		var host, port = "127.0.0.1", "5432"
-		fields := strings.Split(DbCfg.Host, ":")
-		if len(fields) > 0 && len(strings.TrimSpace(fields[0])) > 0 {
-			host = fields[0]
+
+		cnnstr += ss.buildExtraConnectionString('&')
+	case migrator.POSTGRES:
+		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
+		if err != nil {
+			return "", errutil.Wrapf(err, "Invalid host specifier '%s'", ss.dbCfg.Host)
 		}
-		if len(fields) > 1 && len(strings.TrimSpace(fields[1])) > 0 {
-			port = fields[1]
+
+		if ss.dbCfg.Pwd == "" {
+			ss.dbCfg.Pwd = "''"
 		}
-		if DbCfg.Pwd == "" {
-			DbCfg.Pwd = "''"
+		if ss.dbCfg.User == "" {
+			ss.dbCfg.User = "''"
 		}
-		if DbCfg.User == "" {
-			DbCfg.User = "''"
+		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", ss.dbCfg.User, ss.dbCfg.Pwd, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
+
+		cnnstr += ss.buildExtraConnectionString(' ')
+	case migrator.SQLITE:
+		// special case for tests
+		if !filepath.IsAbs(ss.dbCfg.Path) {
+			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
 		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode, DbCfg.ClientCertPath, DbCfg.ClientKeyPath, DbCfg.CaCertPath)
-	case "sqlite3":
-		if !filepath.IsAbs(DbCfg.Path) {
-			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)
+		if err := os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm); err != nil {
+			return "", err
 		}
-		os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm)
-		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc&_loc=Local"
+
+		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
+		cnnstr += ss.buildExtraConnectionString('&')
 	default:
-		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
+		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
 	}
 
-	sqlog.Info("Initializing DB", "dbtype", DbCfg.Type)
-	engine, err := xorm.NewEngine(DbCfg.Type, cnnstr)
+	return cnnstr, nil
+}
+
+func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
+	connectionString, err := ss.buildConnectionString()
+
 	if err != nil {
 		return nil, err
-	} else {
-		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
-		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
-		// engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
-		// engine.ShowSQL = true
-		// engine.ShowInfo = true
 	}
+
+	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
+	engine, err := xorm.NewEngine(ss.dbCfg.Type, connectionString)
+	if err != nil {
+		return nil, err
+	}
+
+	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
+	engine.SetMaxIdleConns(ss.dbCfg.MaxIdleConn)
+	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
+
+	// configure sql logging
+	debugSql := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
+	if !debugSql {
+		engine.SetLogger(&xorm.DiscardLogger{})
+	} else {
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		engine.ShowSQL(true)
+		engine.ShowExecTime(true)
+	}
+
 	return engine, nil
 }
 
-func LoadConfig() {
-	sec := setting.Cfg.Section("database")
+func (ss *SqlStore) readConfig() {
+	sec := ss.Cfg.Raw.Section("database")
 
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
 		dbURL, _ := url.Parse(cfgURL)
-		DbCfg.Type = dbURL.Scheme
-		DbCfg.Host = dbURL.Host
+		ss.dbCfg.Type = dbURL.Scheme
+		ss.dbCfg.Host = dbURL.Host
 
 		pathSplit := strings.Split(dbURL.Path, "/")
 		if len(pathSplit) > 1 {
-			DbCfg.Name = pathSplit[1]
+			ss.dbCfg.Name = pathSplit[1]
 		}
 
 		userInfo := dbURL.User
 		if userInfo != nil {
-			DbCfg.User = userInfo.Username()
-			DbCfg.Pwd, _ = userInfo.Password()
+			ss.dbCfg.User = userInfo.Username()
+			ss.dbCfg.Pwd, _ = userInfo.Password()
 		}
+
+		ss.dbCfg.UrlQueryParams = dbURL.Query()
 	} else {
-		DbCfg.Type = sec.Key("type").String()
-		DbCfg.Host = sec.Key("host").String()
-		DbCfg.Name = sec.Key("name").String()
-		DbCfg.User = sec.Key("user").String()
-		DbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
-		DbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
-		if len(DbCfg.Pwd) == 0 {
-			DbCfg.Pwd = sec.Key("password").String()
+		ss.dbCfg.Type = sec.Key("type").String()
+		ss.dbCfg.Host = sec.Key("host").String()
+		ss.dbCfg.Name = sec.Key("name").String()
+		ss.dbCfg.User = sec.Key("user").String()
+		ss.dbCfg.ConnectionString = sec.Key("connection_string").String()
+		ss.dbCfg.Pwd = sec.Key("password").String()
+	}
+
+	ss.dbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
+	ss.dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
+	ss.dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
+
+	ss.dbCfg.SslMode = sec.Key("ssl_mode").String()
+	ss.dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
+	ss.dbCfg.ClientKeyPath = sec.Key("client_key_path").String()
+	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
+	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
+	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+
+	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+}
+
+// Interface of arguments for testing db
+type ITestDB interface {
+	Helper()
+	Fatalf(format string, args ...interface{})
+}
+
+// InitTestDB initiliaze test DB
+func InitTestDB(t ITestDB) *SqlStore {
+	t.Helper()
+	sqlstore := &SqlStore{}
+	sqlstore.Bus = bus.New()
+	sqlstore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
+	sqlstore.skipEnsureDefaultOrgAndUser = true
+
+	dbType := migrator.SQLITE
+
+	// environment variable present for test db?
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		dbType = db
+	}
+
+	// set test db config
+	sqlstore.Cfg = setting.NewCfg()
+	sec, err := sqlstore.Cfg.Raw.NewSection("database")
+	if err != nil {
+		t.Fatalf("Failed to create section: %s", err)
+	}
+	if _, err := sec.NewKey("type", dbType); err != nil {
+		t.Fatalf("Failed to create key: %s", err)
+	}
+
+	switch dbType {
+	case "mysql":
+		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Mysql.ConnStr); err != nil {
+			t.Fatalf("Failed to create key: %s", err)
+		}
+	case "postgres":
+		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Postgres.ConnStr); err != nil {
+			t.Fatalf("Failed to create key: %s", err)
+		}
+	default:
+		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Sqlite3.ConnStr); err != nil {
+			t.Fatalf("Failed to create key: %s", err)
 		}
 	}
 
-	if DbCfg.Type == "sqlite3" {
-		UseSQLite3 = true
-		// only allow one connection as sqlite3 has multi threading issues that casue table locks
-		// DbCfg.MaxIdleConn = 1
-		// DbCfg.MaxOpenConn = 1
+	// need to get engine to clean db before we init
+	engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
+	if err != nil {
+		t.Fatalf("Failed to init test database: %v", err)
 	}
-	DbCfg.SslMode = sec.Key("ssl_mode").String()
-	DbCfg.CaCertPath = sec.Key("ca_cert_path").String()
-	DbCfg.ClientKeyPath = sec.Key("client_key_path").String()
-	DbCfg.ClientCertPath = sec.Key("client_cert_path").String()
-	DbCfg.ServerCertName = sec.Key("server_cert_name").String()
-	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+
+	sqlstore.Dialect = migrator.NewDialect(engine)
+
+	// temp global var until we get rid of global vars
+	dialect = sqlstore.Dialect
+
+	if err := dialect.CleanDB(); err != nil {
+		t.Fatalf("Failed to clean test db %v", err)
+	}
+
+	if err := sqlstore.Init(); err != nil {
+		t.Fatalf("Failed to init test database: %v", err)
+	}
+
+	sqlstore.engine.DatabaseTZ = time.UTC
+	sqlstore.engine.TZLocation = time.UTC
+
+	return sqlstore
+}
+
+func IsTestDbMySql() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.MYSQL
+	}
+
+	return false
+}
+
+func IsTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.POSTGRES
+	}
+
+	return false
+}
+
+type DatabaseConfig struct {
+	Type             string
+	Host             string
+	Name             string
+	User             string
+	Pwd              string
+	Path             string
+	SslMode          string
+	CaCertPath       string
+	ClientKeyPath    string
+	ClientCertPath   string
+	ServerCertName   string
+	ConnectionString string
+	MaxOpenConn      int
+	MaxIdleConn      int
+	ConnMaxLifetime  int
+	CacheMode        string
+	UrlQueryParams   map[string][]string
 }

@@ -1,8 +1,6 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from 'app/core/core_module';
+// @ts-ignore
 import Drop from 'tether-drop';
 
 export function infoPopover() {
@@ -10,11 +8,11 @@ export function infoPopover() {
     restrict: 'E',
     template: '<i class="fa fa-info-circle"></i>',
     transclude: true,
-    link: function(scope, elem, attrs, ctrl, transclude) {
-      var offset = attrs.offset || '0 -10px';
-      var position = attrs.position || 'right middle';
-      var classes = 'drop-help drop-hide-out-of-bounds';
-      var openOn = 'hover';
+    link: (scope: any, elem: any, attrs: any, ctrl: any, transclude: any) => {
+      const offset = attrs.offset || '0 -10px';
+      const position = attrs.position || 'right middle';
+      let classes = 'drop-help drop-hide-out-of-bounds';
+      const openOn = 'hover';
 
       elem.addClass('gf-form-help-icon');
 
@@ -26,13 +24,15 @@ export function infoPopover() {
         elem.addClass('gf-form-help-icon--' + attrs.mode);
       }
 
-      transclude(function(clone, newScope) {
-        var content = document.createElement("div");
-        _.each(clone, (node) => {
+      transclude((clone: any, newScope: any) => {
+        const content = document.createElement('div');
+        content.className = 'markdown-html';
+
+        _.each(clone, node => {
           content.appendChild(node);
         });
 
-        var drop = new Drop({
+        const dropOptions = {
           target: elem[0],
           content: content,
           position: position,
@@ -42,22 +42,26 @@ export function infoPopover() {
           tetherOptions: {
             offset: offset,
             constraints: [
-                {
-                  to: 'window',
-                  attachment: 'together',
-                  pin: true
-                }
-              ],
-          }
-        });
+              {
+                to: 'window',
+                attachment: 'together',
+                pin: true,
+              },
+            ],
+          },
+        };
 
-        var unbind = scope.$on('$destroy', function() {
-          drop.destroy();
-          unbind();
-        });
+        // Create drop in next digest after directive content is rendered.
+        scope.$applyAsync(() => {
+          const drop = new Drop(dropOptions);
 
+          const unbind = scope.$on('$destroy', () => {
+            drop.destroy();
+            unbind();
+          });
+        });
       });
-    }
+    },
   };
 }
 

@@ -18,14 +18,14 @@ func TestGraphiteFunctions(t *testing.T) {
 		Convey("formatting time range for now-1m", func() {
 
 			timeRange := formatTimeRange("now-1m")
-			So(timeRange, ShouldEqual, "now-1min")
+			So(timeRange, ShouldEqual, "-1min")
 
 		})
 
 		Convey("formatting time range for now-1M", func() {
 
 			timeRange := formatTimeRange("now-1M")
-			So(timeRange, ShouldEqual, "now-1mon")
+			So(timeRange, ShouldEqual, "-1mon")
 
 		})
 

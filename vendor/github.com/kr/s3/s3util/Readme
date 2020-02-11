@@ -1,4 +1,0 @@
-Package s3util provides streaming transfers to and from Amazon S3.
-
-Full documentation:
-http://godoc.org/github.com/kr/s3/s3util

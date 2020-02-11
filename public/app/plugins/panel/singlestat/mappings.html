@@ -6,23 +6,23 @@
         </span>
         <div class="gf-form-select-wrapper">
           <select class="gf-form-input" ng-model="ctrl.panel.mappingType"
-                                                        ng-options="f.value as f.name for f in ctrl.panel.mappingTypes" ng-change="ctrl.render()"></select>
+                                                        ng-options="f.value as f.name for f in ctrl.panel.mappingTypes" ng-change="ctrl.refresh()"></select>
         </div>
     </div>
   </div>
 </div>
 <div class="editor-row" ng-if="ctrl.panel.mappingType==1">
-  <h5 class="page-heading">Set value mappings</h5>
+  <h5 class="section-heading">Set value mappings</h5>
   <div class="gf-form-group">
     <div class="gf-form" ng-repeat="map in ctrl.panel.valueMaps">
       <span class="gf-form-label">
         <i class="fa fa-remove pointer" ng-click="ctrl.removeValueMap(map)"></i>
       </span>
-      <input type="text" ng-model="map.value" placeholder="value" class="gf-form-input max-width-6" ng-blur="ctrl.render()">
+      <input type="text" ng-model="map.value" placeholder="value" class="gf-form-input max-width-6" ng-blur="ctrl.refresh()">
       <span class="gf-form-label">
         <i class="fa fa-arrow-right"></i>
       </span>
-      <input type="text" placeholder="text" ng-model="map.text" class="gf-form-input max-width-8" ng-blur="ctrl.render()">
+      <input type="text" placeholder="text" ng-model="map.text" class="gf-form-input max-width-8" ng-blur="ctrl.refresh()">
     </div>
 
     <div class="gf-form-button-row">
@@ -34,18 +34,18 @@
   </div>
 </div>
 <div class="editor-row" ng-if="ctrl.panel.mappingType==2">
-  <h5 class="page-heading">Set range mappings</h5>
+  <h5 class="section-heading">Set range mappings</h5>
   <div class="gf-form-group">
     <div class="gf-form" ng-repeat="rangeMap in ctrl.panel.rangeMaps">
         <span class="gf-form-label">
           <i class="fa fa-remove pointer" ng-click="ctrl.removeRangeMap(rangeMap)"></i>
         </span>
         <span class="gf-form-label">From</span>
-        <input type="text" ng-model="rangeMap.from" class="gf-form-input max-width-6" ng-blur="ctrl.render()">
+        <input type="text" ng-model="rangeMap.from" class="gf-form-input max-width-6" ng-blur="ctrl.refresh()">
         <span class="gf-form-label">To</span>
-        <input type="text" ng-model="rangeMap.to" class="gf-form-input max-width-6" ng-blur="ctrl.render()">
+        <input type="text" ng-model="rangeMap.to" class="gf-form-input max-width-6" ng-blur="ctrl.refresh()">
         <span class="gf-form-label">Text</span>
-        <input type="text" ng-model="rangeMap.text" class="gf-form-input max-width-8" ng-blur="ctrl.render()">
+        <input type="text" ng-model="rangeMap.text" class="gf-form-input max-width-8" ng-blur="ctrl.refresh()">
     </div>
 
     <div class="gf-form-button-row">

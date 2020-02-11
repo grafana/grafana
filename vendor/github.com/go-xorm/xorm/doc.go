@@ -8,7 +8,7 @@ Package xorm is a simple and powerful ORM for Go.
 
 Installation
 
-Make sure you have installed Go 1.1+ and then:
+Make sure you have installed Go 1.6+ and then:
 
     go get github.com/go-xorm/xorm
 
@@ -51,10 +51,14 @@ There are 8 major ORM methods and many helpful methods to use to operate databas
     // INSERT INTO struct1 () values ()
     // INSERT INTO struct2 () values (),(),()
 
-2. Query one record from database
+2. Query one record or one variable from database
 
     has, err := engine.Get(&user)
     // SELECT * FROM user LIMIT 1
+
+    var id int64
+    has, err := engine.Table("user").Where("name = ?", name).Get(&id)
+    // SELECT id FROM user WHERE name = ? LIMIT 1
 
 3. Query multiple records from database
 
@@ -86,7 +90,7 @@ another is Rows
 
 5. Update one or more records
 
-    affected, err := engine.Id(...).Update(&user)
+    affected, err := engine.ID(...).Update(&user)
     // UPDATE user SET ...
 
 6. Delete one or more records, Delete MUST has condition
@@ -98,6 +102,9 @@ another is Rows
 
     counts, err := engine.Count(&user)
     // SELECT count(*) AS total FROM user
+
+    counts, err := engine.SQL("select count(*) FROM user").Count()
+    // select count(*) FROM user
 
 8. Sum records
 

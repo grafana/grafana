@@ -3,16 +3,20 @@ package api
 import (
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/rendering"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
-func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
+// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
+func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
 	if c.OrgId != 0 {
@@ -23,7 +27,20 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			return nil, err
 		}
 
-		orgDataSources = query.Result
+		dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+			User:        c.SignedInUser,
+			Datasources: query.Result,
+		}
+
+		if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err != bus.ErrHandlerNotFound {
+				return nil, err
+			}
+
+			orgDataSources = query.Result
+		} else {
+			orgDataSources = dsFilterQuery.Result
+		}
 	}
 
 	datasources := make(map[string]interface{})
@@ -32,6 +49,14 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
+	}
+
+	pluginsToPreload := []string{}
+
+	for _, app := range enabledPlugins.Apps {
+		if app.Preload {
+			pluginsToPreload = append(pluginsToPreload, app.Module)
+		}
 	}
 
 	for _, ds := range orgDataSources {
@@ -54,19 +79,26 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			continue
 		}
 
+		if meta.Preload {
+			pluginsToPreload = append(pluginsToPreload, meta.Module)
+		}
+
 		dsMap["meta"] = meta
 
 		if ds.IsDefault {
 			defaultDatasource = ds.Name
 		}
 
-		if ds.JsonData != nil {
-			dsMap["jsonData"] = ds.JsonData
+		jsonData := ds.JsonData
+		if jsonData == nil {
+			jsonData = simplejson.New()
 		}
+
+		dsMap["jsonData"] = jsonData
 
 		if ds.Access == m.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
 			}
 			if ds.WithCredentials {
 				dsMap["withCredentials"] = ds.WithCredentials
@@ -74,29 +106,24 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
+				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == m.DS_INFLUXDB {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
-				dsMap["database"] = ds.Database
+				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url
 			}
 		}
 
-		if ds.Type == m.DS_ES {
-			dsMap["index"] = ds.Database
-		}
-
-		if ds.Type == m.DS_INFLUXDB {
+		if (ds.Type == m.DS_INFLUXDB) || (ds.Type == m.DS_ES) {
 			dsMap["database"] = ds.Database
 		}
 
 		if ds.Type == m.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
-			dsMap["directUrl"] = ds.Url
+			jsonData.Set("directUrl", ds.Url)
 		}
 
 		datasources[ds.Name] = dsMap
@@ -119,37 +146,70 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
+		if panel.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+			continue
+		}
+
+		if panel.Preload {
+			pluginsToPreload = append(pluginsToPreload, panel.Module)
+		}
+
 		panels[panel.Id] = map[string]interface{}{
-			"module":       panel.Module,
-			"baseUrl":      panel.BaseUrl,
-			"name":         panel.Name,
-			"id":           panel.Id,
-			"info":         panel.Info,
-			"hideFromList": panel.HideFromList,
-			"sort":         getPanelSort(panel.Id),
+			"module":        panel.Module,
+			"baseUrl":       panel.BaseUrl,
+			"name":          panel.Name,
+			"id":            panel.Id,
+			"info":          panel.Info,
+			"hideFromList":  panel.HideFromList,
+			"sort":          getPanelSort(panel.Id),
+			"skipDataQuery": panel.SkipDataQuery,
+			"state":         panel.State,
 		}
 	}
 
 	jsonObj := map[string]interface{}{
-		"defaultDatasource":  defaultDatasource,
-		"datasources":        datasources,
-		"panels":             panels,
-		"appSubUrl":          setting.AppSubUrl,
-		"allowOrgCreate":     (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":   setting.AuthProxyEnabled,
-		"ldapEnabled":        setting.LdapEnabled,
-		"alertingEnabled":    setting.AlertingEnabled,
-		"googleAnalyticsId":  setting.GoogleAnalyticsId,
-		"disableLoginForm":   setting.DisableLoginForm,
-		"disableSignoutMenu": setting.DisableSignoutMenu,
+		"defaultDatasource":          defaultDatasource,
+		"datasources":                datasources,
+		"panels":                     panels,
+		"appSubUrl":                  setting.AppSubUrl,
+		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":           setting.AuthProxyEnabled,
+		"ldapEnabled":                setting.LDAPEnabled,
+		"alertingEnabled":            setting.AlertingEnabled,
+		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
+		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":        setting.AlertingMinInterval,
+		"exploreEnabled":             setting.ExploreEnabled,
+		"googleAnalyticsId":          setting.GoogleAnalyticsId,
+		"disableLoginForm":           setting.DisableLoginForm,
+		"disableUserSignUp":          !setting.AllowUserSignUp,
+		"loginHint":                  setting.LoginHint,
+		"passwordHint":               setting.PasswordHint,
+		"externalUserMngInfo":        setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
+		"viewersCanEdit":             setting.ViewersCanEdit,
+		"editorsCanAdmin":            hs.Cfg.EditorsCanAdmin,
+		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
+		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
 			"buildstamp":    setting.BuildStamp,
+			"edition":       hs.License.Edition(),
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
+			"isEnterprise":  hs.License.HasValidLicense(),
 		},
+		"licenseInfo": map[string]interface{}{
+			"hasLicense": hs.License.HasLicense(),
+			"expiry":     hs.License.Expiry(),
+			"stateInfo":  hs.License.StateInfo(),
+			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
+		},
+		"featureToggles":    hs.Cfg.FeatureToggles,
+		"phantomJSRenderer": rendering.IsPhantomJSEnabled,
 	}
 
 	return jsonObj, nil
@@ -160,22 +220,32 @@ func getPanelSort(id string) int {
 	switch id {
 	case "graph":
 		sort = 1
-	case "singlestat":
+	case "stat":
 		sort = 2
-	case "table":
+	case "gauge":
 		sort = 3
-	case "text":
+	case "bargauge":
 		sort = 4
-	case "alertlist":
+	case "table":
 		sort = 5
-	case "dashlist":
+	case "singlestat":
 		sort = 6
+	case "text":
+		sort = 7
+	case "heatmap":
+		sort = 8
+	case "alertlist":
+		sort = 9
+	case "dashlist":
+		sort = 10
+	case "news":
+		sort = 10
 	}
 	return sort
 }
 
-func GetFrontendSettings(c *middleware.Context) {
-	settings, err := getFrontendSettingsMap(c)
+func (hs *HTTPServer) GetFrontendSettings(c *m.ReqContext) {
+	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)
 		return

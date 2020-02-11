@@ -4,7 +4,7 @@ files via reflection. There is also support for delaying decoding with
 the Primitive type, and querying the set of keys in a TOML document with the
 MetaData type.
 
-The specification implemented: https://github.com/mojombo/toml
+The specification implemented: https://github.com/toml-lang/toml
 
 The sub-command github.com/BurntSushi/toml/cmd/tomlv can be used to verify
 whether a file is a valid TOML document. It can also be used to print the

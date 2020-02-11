@@ -63,9 +63,9 @@ type QuotaSettings struct {
 	Global  *GlobalQuota
 }
 
-func readQuotaSettings() {
+func (cfg *Cfg) readQuotaSettings() {
 	// set global defaults.
-	quota := Cfg.Section("quota")
+	quota := cfg.Raw.Section("quota")
 	Quota.Enabled = quota.Key("enabled").MustBool(false)
 
 	// per ORG Limits

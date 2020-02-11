@@ -3,3 +3,4 @@ ini.sublime-project
 ini.sublime-workspace
 testdata/conf_reflect.ini
 .idea
+/.vscode

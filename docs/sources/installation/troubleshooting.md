@@ -11,48 +11,90 @@ weight = 8
 
 # Troubleshooting
 
-This page is dedicated to helping you solve any problem you have getting
-Grafana to work. Please review it before opening a new [GitHub
-issue](https://github.com/grafana/grafana/issues/new) or asking a
-question in the `#grafana` IRC channel on freenode.
+This page lists some useful tools to help troubleshoot common Grafana issues.
 
-## General connection issues
+## Visualization and query issues
 
-When setting up Grafana for the first time you might experience issues
-with Grafana being unable to query Graphite, OpenTSDB or InfluxDB.  You
-might not be able to get metric name completion or the graph might show
-an error like this:
+{{< imgbox max-width="40%" img="/img/docs/v45/query_inspector.png" caption="Query Inspector" >}}
 
-![](/img/docs/v1/graph_timestore_error.png)
+The most common problems are related to the query and response from your data source. Even if it looks
+like a bug or visualization issue in Grafana, it is almost always a problem with the data source query or
+the data source response.
 
-For some types of errors, the `View details` link will show you error
-details. For many types of HTTP connection errors, however, there is very
-little information. The best way to troubleshoot these issues is use
-the [Chrome developer tools](https://developer.chrome.com/devtools/index).
-By pressing `F12` you can bring up the chrome dev tools.
+To check this you should use query inspector, which was added in Grafana 4.5. The query inspector shows query requests and responses. Refer to the data source page for more information.
 
-![](/img/docs/v1/toubleshooting_chrome_dev_tools.png)
+For more on the query inspector read the Grafana Community article [Using Grafana’s Query Inspector to troubleshoot issues](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630). For older versions of Grafana, refer to the [How troubleshoot metric query issue](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50/2) article.
 
-There are two important tabs in the Chrome developer tools: `Network`
-and `Console`. The `Console` tab will show you Javascript errors and
-HTTP request errors. In the Network tab you will be able to identify the
-request that failed and review request and response parameters. This
-information will be of great help in finding the cause of the error.
+## Logging
 
-If you are unable to solve the issue, even after reading the remainder
-of this troubleshooting guide, you should open a [GitHub support
-issue](https://github.com/grafana/grafana/issues).  Before you do that
-please search the existing closed or open issues. Also if you need to
-create a support issue, screen shots and or text information about the
-chrome console error, request and response information from the
-`Network` tab in Chrome developer tools are of great help.
+If you encounter an error or problem, then you can check the Grafana server log. Usually located at `/var/log/grafana/grafana.log` on Unix systems or in `<grafana_install_dir>/data/log` on other platforms and manual installs.
 
-### Inspecting Grafana metric requests
+You can enable more logging by changing log level in the Grafana configuration file.
 
-![](/img/docs/v1/toubleshooting_chrome_dev_tools_network.png)
+## Diagnostics
 
-After opening the Chrome developer tools for the first time the
-`Network` tab is empty. You will need to refresh the page to get
-requests to show.  For some type of errors, especially CORS-related,
-there might not be a response at all.
+The `grafana-server` process can be instructed to enable certain diagnostics when it starts. This can be helpful
+when investigating certain performance problems. It's *not* recommended to have these enabled per default.
 
+### Profiling
+
+The `grafana-server` can be started with the arguments `-profile` to enable profiling and  `-profile-port` to override
+the default HTTP port (`6060`) where the pprof debugging endpoints will be available, e.g.
+
+```bash
+./grafana-server -profile -profile-port=8080
+```
+
+Note that `pprof` debugging endpoints are served on a different port than the Grafana HTTP server.
+
+You can configure or override profiling settings using environment variables:
+
+```bash
+export GF_DIAGNOSTICS_PROFILING_ENABLED=true
+export GF_DIAGNOSTICS_PROFILING_PORT=8080
+```
+
+Refer to [Go command pprof](https://golang.org/cmd/pprof/) for more information about how to collect and analyze profiling data.
+
+### Server side image rendering (RPM-based Linux)
+
+Server side image (png) rendering is a feature that is optional but very useful when sharing visualizations, for example in alert notifications.
+
+If the image is missing text make sure you have font packages installed.
+
+```bash
+sudo yum install fontconfig
+sudo yum install freetype*
+sudo yum install urw-fonts
+```
+
+### Tracing
+
+The `grafana-server` can be started with the arguments `-tracing` to enable tracing and `-tracing-file` to override the default trace file (`trace.out`) where trace result is written to. For example:
+
+```bash
+./grafana-server -tracing -tracing-file=/tmp/trace.out
+```
+
+You can configure or override profiling settings using environment variables:
+
+```bash
+export GF_DIAGNOSTICS_TRACING_ENABLED=true
+export GF_DIAGNOSTICS_TRACING_FILE=/tmp/trace.out
+```
+
+View the trace in a web browser (Go required to be installed):
+
+```bash
+go tool trace <trace file>
+2019/11/24 22:20:42 Parsing trace...
+2019/11/24 22:20:42 Splitting trace...
+2019/11/24 22:20:42 Opening browser. Trace viewer is listening on http://127.0.0.1:39735
+```
+
+See [Go command trace](https://golang.org/cmd/trace/) for more information about how to analyze trace files.
+
+## FAQs
+
+Check out the [FAQ section](https://community.grafana.com/c/howto/faq) on the Grafana Community page for answers to frequently
+asked questions.
