@@ -219,7 +219,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
                 ...data,
                 ...queryResult.series.map(({ name, points }: any) => {
                   const dataFrame = toDataFrame({
-                    target: name,
+                    target: this.templateSrv.replace(name),
                     datapoints: points,
                     refId: queryRequest.refId,
                     meta: queryResult.meta,
