@@ -6,13 +6,16 @@ import {
   DataFrame,
   FieldPropertyEditorItem,
   DynamicConfigValue,
+  VariableSuggestionsScope,
 } from '@grafana/data';
-import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import Forms from '../Forms';
-import { fieldMatchersUI } from '../MatchersUI/fieldMatchersUI';
-import { ControlledCollapse } from '../Collapse/Collapse';
-import { ValuePicker } from '../ValuePicker/ValuePicker';
-
+import {
+  standardFieldConfigEditorRegistry,
+  Forms,
+  fieldMatchersUI,
+  ControlledCollapse,
+  ValuePicker,
+} from '@grafana/ui';
+import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 interface Props {
   config: FieldConfigSource;
   custom?: FieldConfigEditorRegistry; // custom fields
@@ -89,12 +92,21 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   };
 
   renderEditor(item: FieldPropertyEditorItem, custom: boolean) {
+    const { data } = this.props;
     const config = this.props.config.defaults;
     const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
 
     return (
       <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
-        <item.editor item={item} value={value} onChange={v => this.setDefaultValue(item.id, v, custom)} />
+        <item.editor
+          item={item}
+          value={value}
+          onChange={v => this.setDefaultValue(item.id, v, custom)}
+          context={{
+            data,
+            getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+          }}
+        />
       </Forms.Field>
     );
   }
@@ -169,7 +181,11 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
                               this.onDynamicConfigValueChange(i, j, value);
                             }}
                             item={item}
-                            context={{} as any}
+                            context={{
+                              data,
+                              getSuggestions: (scope?: VariableSuggestionsScope) =>
+                                getDataLinksVariableSuggestions(data, scope),
+                            }}
                           />
                         </Forms.Field>
                       );

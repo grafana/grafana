@@ -95,7 +95,6 @@ export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
-export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
@@ -118,7 +117,6 @@ export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
 
 // TODO: namespace!!
-export { FieldConfigEditor } from './FieldConfigs/FieldConfigEditor';
 export {
   StringValueEditor,
   StringOverrideEditor,
@@ -135,3 +133,5 @@ export {
 // Next-gen forms
 export { default as Forms } from './Forms';
 export { ValuePicker } from './ValuePicker/ValuePicker';
+export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
+export { standardFieldConfigEditorRegistry } from './FieldConfigs/standardFieldConfigEditorRegistry';

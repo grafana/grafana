@@ -6,7 +6,7 @@ import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
 import locationUtil from 'app/core/utils/location_util';
-import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 import {
   DataLink,
   KeyValue,
@@ -16,6 +16,9 @@ import {
   ScopedVars,
   FieldType,
   Field,
+  VariableSuggestion,
+  VariableOrigin,
+  VariableSuggestionsScope,
 } from '@grafana/data';
 
 const timeRangeVars = [
@@ -180,21 +183,33 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
   return suggestions;
 };
 
-export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+export const getDataLinksVariableSuggestions = (
+  dataFrames: DataFrame[],
+  scope?: VariableSuggestionsScope
+): VariableSuggestion[] => {
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
-  return [
-    ...seriesVars,
-    ...getFieldVars(dataFrames),
-    ...valueVars,
-    valueTimeVar,
-    ...getDataFrameVars(dataFrames),
-    ...getPanelLinksVariableSuggestions(),
-  ];
+  const includeValueVars = scope === VariableSuggestionsScope.Values;
+
+  return includeValueVars
+    ? [
+        ...seriesVars,
+        ...getFieldVars(dataFrames),
+        ...valueVars,
+        valueTimeVar,
+        ...getDataFrameVars(dataFrames),
+        ...getPanelLinksVariableSuggestions(),
+      ]
+    : [
+        ...seriesVars,
+        ...getFieldVars(dataFrames),
+        ...getDataFrameVars(dataFrames),
+        ...getPanelLinksVariableSuggestions(),
+      ];
 };
 
 export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
