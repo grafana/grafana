@@ -90,7 +90,6 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
-  hideAlertThreshold: false,
 };
 
 export class PanelModel {
