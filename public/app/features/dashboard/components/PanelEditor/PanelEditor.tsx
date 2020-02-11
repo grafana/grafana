@@ -23,6 +23,7 @@ import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp } from './state/actions';
 import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/reducers';
 import { FieldConfigEditor } from './FieldConfigEditor';
+import { PanelModelDiffView } from './PanelModelDiffView';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -172,16 +173,20 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               }
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
-                  <div style={calculatePanelSize(mode, width, height, panel)}>
-                    <DashboardPanel
-                      dashboard={dashboard}
-                      panel={panel}
-                      isEditing={false}
-                      isInEditMode
-                      isFullscreen={false}
-                      isInView={true}
-                    />
-                  </div>
+                  {mode === DisplayMode.JSON ? (
+                    <PanelModelDiffView sourcePanel={this.props.sourcePanel} panel={panel} />
+                  ) : (
+                    <div style={calculatePanelSize(mode, width, height, panel)}>
+                      <DashboardPanel
+                        dashboard={dashboard}
+                        panel={panel}
+                        isEditing={false}
+                        isInEditMode
+                        isFullscreen={false}
+                        isInView={true}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             }}

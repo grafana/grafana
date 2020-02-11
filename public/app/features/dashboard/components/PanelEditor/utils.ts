@@ -4,7 +4,7 @@ import { DisplayMode } from './types';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
-  if (mode === DisplayMode.Fill) {
+  if (mode === DisplayMode.Fill || mode === DisplayMode.JSON) {
     return { width, height };
   }
   const colWidth = (window.innerWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
