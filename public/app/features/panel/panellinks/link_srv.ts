@@ -268,7 +268,7 @@ export class LinkSrv implements LinkService {
     }
 
     const info: LinkModel<T> = {
-      href: locationUtil.assureBaseUrl(href.replace(/\s|\n/g, '')),
+      href: locationUtil.assureBaseUrl(href),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,

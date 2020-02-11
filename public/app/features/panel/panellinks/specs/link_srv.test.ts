@@ -142,6 +142,23 @@ describe('linkSrv', () => {
         ).href
       ).toEqual('/d/1?time=1000000001');
     });
+    it('should not trim white space from data links', () => {
+      expect(
+        linkSrv.getDataLinkUIModel(
+          {
+            title: 'White space',
+            url: 'www.google.com?query=some query',
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href
+      ).toEqual('www.google.com?query=some query');
+    });
   });
 
   describe('sanitization', () => {
