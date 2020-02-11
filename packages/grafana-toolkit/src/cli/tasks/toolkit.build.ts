@@ -58,7 +58,7 @@ const copyFiles = () => {
     'src/config/prettier.plugin.rc.js',
     'src/config/tsconfig.plugin.json',
     'src/config/tsconfig.plugin.local.json',
-    'src/config/tslint.plugin.json',
+    'src/config/eslint.plugin.json',
     'src/config/styles.mock.js',
 
     // plugin test file

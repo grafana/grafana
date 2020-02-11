@@ -6,7 +6,7 @@ import React, { PureComponent } from 'react';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
 // @ts-ignore
-import Creatable from '@torkelo/react-select';
+import Creatable from '@torkelo/react-select/creatable';
 // @ts-ignore
 import { CreatableProps } from 'react-select';
 // @ts-ignore

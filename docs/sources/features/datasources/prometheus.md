@@ -111,7 +111,7 @@ Query: query_result(topk(5, sum(rate(http_requests_total[$__range])) by (instanc
 Regex: /"([^"]+)"/
 ```
 
-Populate a variable with the instances having a certain state over the time range shown in the dashboard, using the more precise `$__range_s`:
+Populate a variable with the instances having a certain state over the time range shown in the dashboard, using `$__range_s`:
 
 ```
 Query: query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
