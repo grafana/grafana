@@ -19,6 +19,7 @@ import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -94,7 +95,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
   const env = {
     replaceVariables: options.replaceVariables,
-    standard: options.standard,
+    // standard: options.standard,
     custom: options.custom,
   };
 
@@ -186,7 +187,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 }
 
 interface FieldOverrideEnv extends FieldOverrideContext {
-  standard?: FieldConfigEditorRegistry;
   custom?: FieldConfigEditorRegistry;
 }
 
@@ -222,7 +222,7 @@ function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig, env?: 
       if (key === 'custom') {
         // TODO? iterate through the sub elements?
       } else {
-        const item = env?.standard?.getIfExists(key);
+        const item = standardFieldConfigEditorRegistry.getIfExists(key);
         if (item) {
           const val = item.process((props as any)[key], env!, item.settings);
           if (val !== undefined && val !== null) {

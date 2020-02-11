@@ -2,6 +2,8 @@ import { configure } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import 'jquery';
 import $ from 'jquery';
+import { standardFieldConfigEditorRegistry } from '@grafana/data';
+import { initialiseStandardFieldConfigEditors } from '../app/features/dashboard/components/PanelEditor/utils';
 
 const global = window as any;
 global.$ = global.jQuery = $;
@@ -44,8 +46,6 @@ const localStorageMock = (() => {
 
 global.localStorage = localStorageMock;
 
-HTMLCanvasElement.prototype.getContext = jest.fn() as any;
-
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', err => {
     throw err;
@@ -53,3 +53,4 @@ const throwUnhandledRejections = () => {
 };
 
 throwUnhandledRejections();
+standardFieldConfigEditorRegistry.setInit(initialiseStandardFieldConfigEditors);
