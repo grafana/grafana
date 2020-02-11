@@ -19,7 +19,7 @@ export namespace PanelEvents {
   export const dataReceived = eventFactory<DataQueryResponseData[]>('data-received');
   export const dataSnapshotLoad = eventFactory<DataQueryResponseData[]>('data-snapshot-load');
   export const editModeInitialized = eventFactory('init-edit-mode');
-  export const initPanelActions = eventFactory<MenuElement[]>('init-panel-actions');
+  export const initPanelActions = eventFactory<AngularPanelMenuItem[]>('init-panel-actions');
   export const panelChangeView = eventFactory<PanelChangeViewPayload>('panel-change-view');
   export const panelInitialized = eventFactory('panel-initialized');
   export const panelSizeChanged = eventFactory('panel-size-changed');
