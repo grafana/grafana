@@ -46,18 +46,19 @@ export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], D
 
   return (
     <>
-      {value.map((l, i) => {
-        return (
-          <DataLinksListItem
-            key={`${l.title}/${i}`}
-            index={i}
-            link={l}
-            onChange={onDataLinkChange}
-            data={context.data}
-            suggestions={context.getSuggestions ? context.getSuggestions() : []}
-          />
-        );
-      })}
+      {value &&
+        value.map((l, i) => {
+          return (
+            <DataLinksListItem
+              key={`${l.title}/${i}`}
+              index={i}
+              link={l}
+              onChange={onDataLinkChange}
+              data={context.data}
+              suggestions={context.getSuggestions ? context.getSuggestions() : []}
+            />
+          );
+        })}
 
       <Forms.Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
         Create data link
