@@ -337,6 +337,17 @@ const updateEditorIsValid = (state: QueryVariableState): QueryVariableState => {
   };
 };
 
+const updateTags = (state: QueryVariableState): QueryVariableState => {
+  const { picker, variable } = state;
+  return {
+    ...state,
+    picker: {
+      ...picker,
+      tags: [...variable.tags],
+    },
+  };
+};
+
 // I stumbled upon the error described here https://github.com/immerjs/immer/issues/430
 // So reverting to a "normal" reducer
 export const queryVariableReducer = (
@@ -550,7 +561,14 @@ export const queryVariableReducer = (
       },
     };
 
-    return appyStateChanges(newState, updateOptions, updateSelectedValues, updateSelectedTags, updateLinkText);
+    return appyStateChanges(
+      newState,
+      updateOptions,
+      updateSelectedValues,
+      updateTags,
+      updateSelectedTags,
+      updateLinkText
+    );
   }
 
   if (hideQueryVariableDropDown.match(action)) {

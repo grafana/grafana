@@ -71,8 +71,8 @@ export class QueryVariablePicker extends PureComponent<Props> {
       showDropDown,
       selectedValues,
       highlightIndex,
-      tags,
       options,
+      tags,
     } = this.props.picker;
 
     if (!this.props.variable) {
