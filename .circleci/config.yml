@@ -708,6 +708,11 @@ jobs:
             docker tag "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu" \
               "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
             docker push "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
+
+            # Publish dev image
+            docker tag "grafana/grafana-enterprise:master-ubuntu" \
+              "grafana/grafana-enterprise-dev:master-${CIRCLE_SHA1}-new-pipeline"
+            docker push "grafana/grafana-enterprise-dev:master-${CIRCLE_SHA1}-new-pipeline"
       - run:
           name: Publish Docker manifest
           command: |
