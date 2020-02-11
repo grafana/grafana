@@ -2,7 +2,7 @@ import locationUtil from 'app/core/utils/location_util';
 
 jest.mock('app/core/config', () => {
   return {
-    appSubUrl: '/subUrl',
+    getConfig: () => ({ appSubUrl: '/subUrl' }),
   };
 });
 
