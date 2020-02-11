@@ -1,6 +1,6 @@
 import React, { MouseEvent, PureComponent } from 'react';
 import debounce from 'lodash/debounce';
-import { ClickOutsideWrapper } from '@grafana/ui';
+import { ClickOutsideWrapper, getTagColorsFromName } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import { QueryVariableModel, VariableOption } from '../variable';
@@ -90,9 +90,10 @@ export class QueryVariablePicker extends PureComponent<Props> {
           >
             {linkText}
             {selectedTags.map(tag => {
+              const { color, borderColor } = getTagColorsFromName(tag.text.toString());
               return (
                 <span bs-tooltip="tag.valuesText" data-placement="bottom" key={`${tag.text}`}>
-                  {/*<span className="label-tag" tag-color-from-name="tag.text">*/}
+                  <span className="label-tag" style={{ backgroundColor: color, borderColor }} />
                   <span className="label-tag">
                     &nbsp;&nbsp;<i className="fa fa-tag"></i>&nbsp; {tag.text}
                   </span>
@@ -175,6 +176,8 @@ export class QueryVariablePicker extends PureComponent<Props> {
                   <div className="variable-options-column">
                     <div className="variable-options-column-header text-center">Tags</div>
                     {tags.map((tag, index) => {
+                      const { color, borderColor } = getTagColorsFromName(tag.text.toString());
+
                       return (
                         <a
                           key={`${tag.text}`}
@@ -184,10 +187,7 @@ export class QueryVariablePicker extends PureComponent<Props> {
                           // ng-click="vm.selectTag(tag, $event)"
                         >
                           <span className="fa fa-fw variable-option-icon"></span>
-                          <span
-                            className="label-tag"
-                            // tag-color-from-name="tag.text"
-                          >
+                          <span className="label-tag" style={{ backgroundColor: color, borderColor }}>
                             {tag.text}&nbsp;&nbsp;<i className="fa fa-tag"></i>&nbsp;
                           </span>
                         </a>
