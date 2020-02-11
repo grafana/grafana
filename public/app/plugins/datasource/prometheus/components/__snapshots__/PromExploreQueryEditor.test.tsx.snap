@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PromExploreQueryEditor should render component 1`] = `
+<PromQueryField
+  ExtraFieldElement={
+    <PromExploreExtraField
+      hasTooltip={true}
+      label="Step"
+      onChangeFunc={[Function]}
+      onKeyDownFunc={[Function]}
+      tooltipContent="Needs to be a valid time unit string, for example 5s, 1m, 3h, 1d, 1y"
+      value="1s"
+    />
+  }
+  data={
+    Object {
+      "request": Object {
+        "app": "Grafana",
+        "dashboardId": 1,
+        "interval": "1s",
+        "panelId": 1,
+        "range": Object {
+          "from": "2020-01-01T00:00:00.000Z",
+          "raw": Object {
+            "from": "2020-01-01T00:00:00.000Z",
+            "to": "2020-01-02T00:00:00.000Z",
+          },
+          "to": "2020-01-02T00:00:00.000Z",
+        },
+        "requestId": "1",
+        "scopedVars": Object {},
+        "startTime": 0,
+        "targets": Array [],
+        "timezone": "GMT",
+      },
+      "series": Array [],
+      "state": "NotStarted",
+      "timeRange": Object {
+        "from": "2020-01-01T00:00:00.000Z",
+        "raw": Object {
+          "from": "2020-01-01T00:00:00.000Z",
+          "to": "2020-01-02T00:00:00.000Z",
+        },
+        "to": "2020-01-02T00:00:00.000Z",
+      },
+    }
+  }
+  datasource={Object {}}
+  history={Array []}
+  onChange={[MockFunction]}
+  onRunQuery={[MockFunction]}
+  query={
+    Object {
+      "expr": "",
+      "interval": "1s",
+      "refId": "A",
+    }
+  }
+/>
+`;

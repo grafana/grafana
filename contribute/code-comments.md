@@ -1,30 +1,31 @@
 # Guidelines for code comments in grafana-* packages
 
+This document aims to give you some recommendation on how to add code comments to the exported code in the grafana packages.
+
 ## Table of Contents
 
-1. [Package description](#package-description)
-1. [Stability of APIs](#stability-of-apis)
-1. [Deprecation of APIs](#deprecation-of-apis)
-1. [Examples for reference](#examples)
+1. [Add package description](#add-package-description)
+1. [Set stability of an API](#set-stability-of-an-api)
+1. [Deprecate an API](#deprecate-an-api)
+1. [Specify parameters](#specify-parameters)
+1. [Set return values](#set-return-values)
 ____
 
- ## Package description
+ ## Add package description
 
-Each package will have an overview explaining the overall responsibility and usage of the package. 
+Each package has an overview explaining the overall responsibility and usage of the package. 
 
-This can be documented with the [`@packageDocumentation`](https://api-extractor.com/pages/tsdoc/tag_packagedocumentation/) tag.
-
-**Do:**
+You can document this description with [`@packageDocumentation`](https://api-extractor.com/pages/tsdoc/tag_packagedocumentation/) tag.
 
 Add this tag to the `<packageRoot>/src/index.ts` entry file to have one place for the package description.
 
-## Stability of APIs
+## Set stability of an API
 
 All `exported` apis from the package should have a release tag to indicate its stability.
 
 - [`@alpha`](https://api-extractor.com/pages/tsdoc/tag_alpha/) - early draft of api and will probably change.
 - [`@beta`](https://api-extractor.com/pages/tsdoc/tag_beta/) - close to being stable but might change.
-- [`@public`](https://api-extractor.com/pages/tsdoc/tag_public/) - ready to use in production.
+- [`@public`](https://api-extractor.com/pages/tsdoc/tag_public/) - ready for useage in production.
 - [`@internal`](https://api-extractor.com/pages/tsdoc/tag_internal/) - for internal use only.
 
 ### Main stability of APIs
@@ -124,78 +125,85 @@ export class DataFrameFactory {
 }
 ```
 
-## Deprecation of APIs
-If you want to mark an API as deprecated to signal that this API will be removed in the future. You can easily do this by adding the [`@deprecated`](https://api-extractor.com/pages/tsdoc/tag_deprecated/) tag.
+## Deprecate an API
+If you want to mark an API as deprecated to signal that this API will be removed in the future, then add the [`@deprecated`](https://api-extractor.com/pages/tsdoc/tag_deprecated/) tag.
 
-If applicable add a reason why the API is deprecated directly after the `@deprecated tag`
+If applicable add a reason why the API is deprecated directly after the `@deprecated tag`.
 
-### Deprecate the whole API
+## Specify parameters
+If you want to specify the possible parameters that can be passed to an API, then add the [`@param`](https://api-extractor.com/pages/tsdoc/tag_param/) tag.
 
-Add the [`@deprecated`](https://api-extractor.com/pages/tsdoc/tag_deprecated/) tag directly above the `release tag`.
+This attribute can be skipped if the type provided by `typescript` and the function comment or the function name is enough to explain what the parameters are.
 
 **Do:**
+
 ```typescript
 /**
- * Will help to create DataFrame objects and handle 
- * the heavy lifting of creating a complex object.
+ * Will help to create a resource resovler depending
+ * on the current execution context.
  * 
- * @example
- * ```typescript
- * const dataFrame = factory.create();
- * ```
- * @deprecated DataFrame object is replaced by DataFrameView so please use the DataFrameViewFactory instead.
+ * @param context - The current execution context.
+ * @returns FileResolver if executed on the server otherwise a HttpResolver.
  * @public
  **/
-export class DataFrameFactory {
-    create(): DataFrame { }
-    createMany(): DataFrame[] {}
+export const factory = (context: Context): IResolver => {
+    if (context.isServer) {
+        return new FileResolver();
+    }
+    return new HttpResolver();
 }
 ```
 
-**Don't:**
+**Don't**
+
 ```typescript
 /**
- * Will help to create DataFrame objects and handle 
- * the heavy lifting of creating a complex object.
+ * Will compare two numbers to see if they are equal to each others.
  * 
- * @example
- * ```typescript
- * const dataFrame = factory.create();
- * ```
+ * @param x - The first number
+ * @param y - The second number
  * @public
- * @deprecated DataFrame object is replaced by DataFrameView so please use the DataFrameViewFactory instead.
  **/
-export class DataFrameFactory {
-    create(): DataFrame { }
-    createMany(): DataFrame[] {}
+export const isEqual = (x: number, y: number): boolean => {
+    return x === y;
 }
 ```
 
-### Deprecate parts of the API
 
-Add the [`@deprecated`](https://api-extractor.com/pages/tsdoc/tag_deprecated/) tag directly above the `release tag` if applicable otherwise add it at the bottom of the comment.
+## Set return values
+If you want to specify the return value from a function you can use the [`@returns`](https://api-extractor.com/pages/tsdoc/tag_returns/) tag.
+
+This attribute can be skipped if the type provided by `typescript` and the function comment or the function name is enough to explain what the function returns.
 
 **Do:**
+
 ```typescript
 /**
- * Will help to create DataFrame objects and handle 
- * the heavy lifting of creating a complex object.
+ * Will help to create a resource resovler depending
+ * on the current execution context.
  * 
- * @example
- * ```typescript
- * const dataFrame = factory.create();
- * ```
- * 
+ * @param context - The current execution context.
+ * @returns FileResolver if executed on the server otherwise a HttpResolver.
  * @public
  **/
-export class DataFrameFactory {
-    create(): DataFrame { }
+export const factory = (context: Context): IResolver => {
+    if (context.isServer) {
+        return new FileResolver();
+    }
+    return new HttpResolver();
+}
+```
 
-    /**
-     * Creates multiple `DataFrame` objects
-     * 
-     * @deprecated
-     **/
-    createMany(): DataFrame[] {}
+**Don't**
+
+```typescript
+/**
+ * Will compare two numbers to see if they are equal to each others.
+ * 
+ * @returns true if values are equal
+ * @public
+ **/
+export const isEqual = (x: number, y: number): boolean => {
+    return x === y;
 }
 ```

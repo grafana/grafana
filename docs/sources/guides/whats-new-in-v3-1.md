@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v3.1"
+title = "What's new in Grafana v3.1"
 description = "Feature and improvement highlights for Grafana v3.1"
-keywords = ["grafana", "new", "documentation", "3.1"]
+keywords = ["grafana", "new", "documentation", "3.1", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 3.1"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = 5
 +++
 
-# What's New in Grafana v3.1
+# What's new in Grafana v3.1
 
 ## Dashboard Export and Import
 
@@ -59,6 +59,4 @@ Switched logging framework to log15 to enable key value per logging and filterin
 
 ## CHANGELOG
 
-For a detailed list and link to github issues for everything included
-in the 3.1 release please view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
-file.
+For a detailed list and link to github issues for everything included in the 3.1 release please view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file.

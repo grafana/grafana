@@ -60,8 +60,6 @@
       name: Datasource
   - name: Grafana CLI
     link: /administration/cli/
-  - name: Image Rendering
-    link: /administration/image_rendering/
   - name: Internal metrics
     link: /administration/metrics/
   - name: Provisioning
@@ -170,6 +168,8 @@
       name: Metrics
     - link: /alerting/notifications/
       name: Notifications
+  - name: Image rendering
+    link: /administration/image_rendering/
   - name: Keyboard Shortcuts
     link: /features/shortcuts/
   - name: Reporting

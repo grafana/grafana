@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.0"
+title = "What's new in Grafana v5.0"
 description = "Feature and improvement highlights for Grafana v5.0"
-keywords = ["grafana", "new", "documentation", "5.0"]
+keywords = ["grafana", "new", "documentation", "5.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.0"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -6
 +++
 
-# What's New in Grafana v5.0
+# What's new in Grafana v5.0
 
 This is the most substantial update that Grafana has ever seen. This article will detail the major new features and enhancements.
 
@@ -148,5 +148,3 @@ much easier to manage, collaborate and navigate between dashboards.
 ### API changes
 New uid-based routes in the dashboard API have been introduced to retrieve and delete dashboards.
 The corresponding slug-based routes have been deprecated and will be removed in a future release.
-
-

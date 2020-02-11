@@ -1,5 +1,6 @@
 import { eventFactory } from './utils';
 import { DataQueryError, DataQueryResponseData } from './datasource';
+import { AngularPanelMenuItem } from './panel';
 
 /* tslint:disable:no-namespace */
 export namespace PanelEvents {
@@ -9,18 +10,6 @@ export namespace PanelEvents {
     edit?: boolean;
     panelId?: number;
     toggle?: boolean;
-  }
-
-  /**
-   * Testing out comments within a namespace asdkfalsdfmka mklasmfd lk
-   *
-   * @public
-   */
-  export interface MenuElement {
-    text: string;
-    click: string;
-    role?: string;
-    shortcut?: string;
   }
 
   /** Events */

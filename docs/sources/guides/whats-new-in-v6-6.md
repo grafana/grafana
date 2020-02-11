@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.6"
+title = "What's new in Grafana v6.6"
 description = "Feature and improvement highlights for Grafana v6.6"
-keywords = ["grafana", "new", "documentation", "6.6"]
+keywords = ["grafana", "new", "documentation", "6.6", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.6"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -16
 +++
 
-# What's New in Grafana v6.6
+# What's new in Grafana v6.6
 
-For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Highlights
 
@@ -218,4 +218,3 @@ backendSrv.get(‘http://your.url/api’).then(result => {
     this.$scope.$digest();
 });
 ```
-
