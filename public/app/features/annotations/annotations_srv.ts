@@ -89,7 +89,7 @@ export class AnnotationsSrv {
       {
         dashboardId: options.dashboard.id,
       },
-      `annotation-srv-get-alert-states-${options.dashboard.id}`
+      `get-alert-states-${options.dashboard.id}`
     );
 
     return this.alertStatesPromise;
