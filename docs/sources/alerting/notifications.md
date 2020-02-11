@@ -75,20 +75,22 @@ able to access the image.
 
 {{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
-To set up slack you need to configure an incoming webhook url at slack. You can follow their guide on how
-to do that [here](https://api.slack.com/incoming-webhooks). If you want to include screenshots of the firing alerts
-in the Slack messages you have to configure either the [external image destination](#external-image-store) in Grafana,
-or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token provided
-(https://api.slack.com/bot-users), which starts with "xoxb".
+To set up Slack, you need to configure an incoming Slack webhook URL. You can follow 
+[their guide](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the 
+firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store) 
+in Grafana, or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token 
+provided (https://api.slack.com/bot-users), which starts with "xoxb".
 
 Setting | Description
 ---------- | -----------
-Url | Slack incoming webhook url.
+Url | Slack incoming webhook URL.
 Username | Set the username for the bot's message.
 Recipient | Allows you to override the Slack recipient.
 Icon emoji | Provide an emoji to use as the icon for the bot's message. Ex :smile:
 Icon URL | Provide a url to an image to use as the icon for the bot's message.
-Mention | make it possible to include a mention in the Slack notification sent by Grafana. Ex @here or @channel
+Mention Users | Optionally mention one or more users in the Slack notification sent by Grafana. You have to refer to users, comma-separated, via their corresponding Slack IDs (which you can find by clicking the overflow button on each user's Slack profile).
+Mention Groups | Optionally mention one or more groups in the Slack notification sent by Grafana. You have to refer to groups, comma-separated, via their corresponding Slack IDs (which you can get from each group's Slack profile URL).
+Mention Channel | Optionally mention either all channel members or just active ones.
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
