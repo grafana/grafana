@@ -114,9 +114,9 @@ export class PanelInspector extends PureComponent<Props, State> {
     const requestTime = lastResult?.request.endTime - lastResult?.request.startTime;
     const queries = targets.length;
     const temp: { [key: string]: { count: number } } = {};
-    for (let { dataSource } of targets) {
-      temp[dataSource] = {
-        count: temp[dataSource] ? temp[dataSource].count + 1 : 1,
+    for (let { datasource } of targets) {
+      temp[datasource] = {
+        count: temp[datasource] ? temp[datasource].count + 1 : 1,
       };
     }
     const dataSources = Object.values(temp).filter(t => t.count >= 1).length;
