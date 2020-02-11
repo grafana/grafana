@@ -82,6 +82,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   pluginVersion: true,
   queryRunner: true,
   transformations: true,
+  hideAlertThreshold: true,
 };
 
 const defaults: any = {
@@ -89,6 +90,7 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
+  hideAlertThreshold: false,
 };
 
 export class PanelModel {
@@ -138,6 +140,7 @@ export class PanelModel {
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean };
+  hideAlertThreshold: boolean;
   plugin?: PanelPlugin;
   angularPanel?: AngularComponent;
 

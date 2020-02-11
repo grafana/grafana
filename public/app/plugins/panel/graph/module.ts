@@ -173,6 +173,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   onInitPanelActions(actions: any[]) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
     actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
+    actions.push({ text: 'Toggle alert threshold', click: 'ctrl.toggleAlertThreshold()' });
   }
 
   issueQueries(datasource: any) {
@@ -323,6 +324,11 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
+    this.render();
+  }
+
+  toggleAlertThreshold() {
+    this.panel.hideAlertThreshold = !this.panel.hideAlertThreshold;
     this.render();
   }
 

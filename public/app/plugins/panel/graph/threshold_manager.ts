@@ -156,7 +156,7 @@ export class ThresholdManager {
   }
 
   addFlotOptions(options: any, panel: any) {
-    if (!panel.thresholds || panel.thresholds.length === 0) {
+    if (!panel.thresholds || panel.thresholds.length === 0 || panel.hideAlertThreshold) {
       return;
     }
 
