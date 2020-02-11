@@ -5,6 +5,8 @@ import { PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
 import { DisplayMode } from '../types';
 
 export interface PanelEditorStateNew {
+  /* These are functions as they are mutaded later on and redux toolkit will Object.freeze state so
+   * we need to store these using functions instead */
   getSourcePanel: () => PanelModel;
   getPanel: () => PanelModel;
   getData: () => PanelData;
