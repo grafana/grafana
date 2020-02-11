@@ -138,6 +138,9 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
       if (field.config) {
         column.metadata.set('config', JSON.stringify(field.config));
       }
+      if (field.type) {
+        column.metadata.set('type', JSON.stringify(field.type));
+      }
       return column;
     })
   );
