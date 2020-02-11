@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { DataFrame } from '@grafana/data';
-import { useSortBy, useTable, useBlockLayout, Cell } from 'react-table';
+import { useSortBy, useTable, useBlockLayout, Cell, useFlexLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import useMeasure from 'react-use/lib/useMeasure';
 import { getColumns, getTableRows } from './utils';
@@ -20,14 +20,23 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
   const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
+  const defaultColumn = React.useMemo(
+    () => ({
+      minWidth: 200,
+      width: '100%',
+    }),
+    []
+  );
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
       columns: useMemo(() => getColumns(data, width), [data]),
       data: useMemo(() => getTableRows(data), [data]),
+      defaultColumn,
     },
     useSortBy,
-    useBlockLayout
+    useBlockLayout,
+    useFlexLayout
   );
 
   const RenderRow = React.useCallback(
@@ -55,7 +64,11 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
     <div {...getTableProps()} className={tableStyles.table}>
       <div>
         {headerGroups.map((headerGroup: any) => (
-          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
+          <div
+            className={tableStyles.thead}
+            {...headerGroup.getHeaderGroupProps({ style: { width: '100%', minWidth: '200px' } })}
+            ref={ref}
+          >
             {headerGroup.headers.map((column: any) => renderHeaderCell(column, tableStyles.headerCell))}
           </div>
         ))}
