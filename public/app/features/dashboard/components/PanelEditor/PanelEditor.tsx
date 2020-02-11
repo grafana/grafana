@@ -15,7 +15,7 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { updateLocation } from '../../../../core/reducers/location';
 import { Unsubscribable } from 'rxjs';
 import { PanelTitle } from './PanelTitle';
-import { DisplayMode, displayModes } from './types';
+import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { LocationState } from 'app/types';
@@ -23,6 +23,7 @@ import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp } from './state/actions';
 import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/reducers';
 import { FieldConfigEditor } from './FieldConfigEditor';
+import { getPanelEditorTabs } from './state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -37,6 +38,7 @@ interface ConnectedProps {
   mode: DisplayMode;
   isPanelOptionsVisible: boolean;
   initDone: boolean;
+  tabs: PanelEditorTab[];
 }
 
 interface DispatchProps {
@@ -74,6 +76,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       query: { editPanel: null },
       partial: true,
     });
+  };
+
+  onChangeTab = (tab: PanelEditorTab) => {
+    this.props.updateLocation({ query: { tab: tab.id }, partial: true });
   };
 
   onFieldConfigsChange = (fieldOptions: FieldConfigSource) => {
@@ -135,7 +141,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onDragFinished = () => {
     document.body.style.cursor = 'auto';
-    console.log('TODO, save splitter settings');
+  };
+
+  onDragStarted = () => {
+    document.body.style.cursor = 'row-resize';
   };
 
   onPanelTitleChange = (title: string) => {
@@ -152,16 +161,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderHorizontalSplit(styles: any) {
-    const { dashboard, panel, mode } = this.props;
+    const { dashboard, panel, mode, tabs } = this.props;
 
     return (
       <SplitPane
         split="horizontal"
         minSize={50}
-        primary="second"
-        defaultSize="40%"
+        primary="first"
+        defaultSize="45%"
+        pane2Style={{ minHeight: 0 }}
         resizerClassName={styles.resizerH}
-        onDragStarted={() => (document.body.style.cursor = 'row-resize')}
+        onDragStarted={this.onDragStarted}
         onDragFinished={this.onDragFinished}
       >
         <div className={styles.panelWrapper}>
@@ -188,7 +198,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           </AutoSizer>
         </div>
         <div className={styles.noScrollPaneContent}>
-          <PanelEditorTabs panel={panel} dashboard={dashboard} />
+          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
         </div>
       </SplitPane>
     );
@@ -212,16 +222,29 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
           </div>
           <div className={styles.toolbarLeft}>
-            <Forms.Select
-              value={displayModes.find(v => v.value === mode)}
-              options={displayModes}
-              onChange={this.onDiplayModeChange}
-            />
-            <Forms.Button icon="fa fa-cog" variant="secondary" onClick={this.onTogglePanelOptions} />
-            <Forms.Button variant="destructive" onClick={this.onDiscard}>
-              Discard
-            </Forms.Button>
-
+            <div className={styles.toolbarItem}>
+              <Forms.Button
+                className={styles.toolbarItem}
+                icon="fa fa-remove"
+                variant="destructive"
+                onClick={this.onDiscard}
+              />
+            </div>
+            <div className={styles.toolbarItem}>
+              <Forms.Select
+                value={displayModes.find(v => v.value === mode)}
+                options={displayModes}
+                onChange={this.onDiplayModeChange}
+              />
+            </div>
+            <div className={styles.toolbarItem}>
+              <Forms.Button
+                className={styles.toolbarItem}
+                icon="fa fa-sliders"
+                variant="secondary"
+                onClick={this.onTogglePanelOptions}
+              />
+            </div>
             <div>
               <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
             </div>
@@ -259,15 +282,20 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => ({
-  location: state.location,
-  plugin: state.plugins.panels[props.sourcePanel.type],
-  panel: state.panelEditorNew.getPanel(),
-  mode: state.panelEditorNew.mode,
-  isPanelOptionsVisible: state.panelEditorNew.isPanelOptionsVisible,
-  data: state.panelEditorNew.getData(),
-  initDone: state.panelEditorNew.initDone,
-});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  const plugin = state.plugins.panels[props.sourcePanel.type];
+
+  return {
+    location: state.location,
+    plugin: plugin,
+    panel: state.panelEditorNew.getPanel(),
+    mode: state.panelEditorNew.mode,
+    isPanelOptionsVisible: state.panelEditorNew.isPanelOptionsVisible,
+    data: state.panelEditorNew.getData(),
+    initDone: state.panelEditorNew.initDone,
+    tabs: getPanelEditorTabs(state.location, plugin),
+  };
+};
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   updateLocation,
@@ -314,6 +342,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${theme.colors.pageBg};
     `,
     panelWrapper: css`
+      padding: ${theme.spacing.sm};
+      padding-bottom: 2px;
       width: 100%;
       height: 100%;
     `,
@@ -327,12 +357,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       resizer,
       css`
         cursor: row-resize;
+        position: relative;
+        top: 45px;
+        z-index: 1;
+        background: transparent;
       `
     ),
     noScrollPaneContent: css`
       height: 100%;
       width: 100%;
-      overflow: hidden;
     `,
     toolbar: css`
       padding: ${theme.spacing.sm};
@@ -347,6 +380,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     toolbarLeft: css`
       display: flex;
       align-items: center;
+    `,
+    toolbarItem: css`
+      margin-right: ${theme.spacing.sm};
     `,
     centeringContainer: css`
       display: flex;
