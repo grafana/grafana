@@ -16,7 +16,7 @@ export interface RadioButtonProps {
 
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize) => {
   const { fontSize, height } = getPropertiesForButtonSize(theme, size);
-  const horPadding = theme.spacing[size] ?? theme.spacing.md;
+  const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
   const c = theme.colors;
 
   const textColor = stv({ light: c.gray33, dark: c.gray70 }, theme.type);
@@ -35,7 +35,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   const fakeBold = `0 0 0.65px ${textColorHover}, 0 0 0.65px ${textColorHover}`;
 
   return {
-    toggle: css`
+    radio: css`
       position: absolute;
       top: 0;
       left: -100vw;
@@ -65,13 +65,14 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         text-shadow: ${fakeBold};
       }
     `,
-    'radio-label': css`
+    radioLabel: css`
       display: inline-block;
       position: relative;
       font-size: ${fontSize};
       min-height: ${fontSize};
       color: ${textColor};
-      padding: calc((${height} - ${fontSize}) / 2) ${horPadding} calc((${height} - ${fontSize}) / 2) ${horPadding};
+      padding: calc((${height} - ${fontSize}) / 2) ${horizontalPadding} calc((${height} - ${fontSize}) / 2)
+        ${horizontalPadding};
       line-height: 1;
       margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
@@ -107,14 +108,14 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
     <>
       <input
         type="radio"
-        className={cx(styles.toggle)}
+        className={cx(styles.radio)}
         onChange={onChange}
         disabled={disabled}
         id={id}
         checked={active}
         name={name}
       />
-      <label className={cx(styles['radio-label'])} htmlFor={id}>
+      <label className={cx(styles.radioLabel)} htmlFor={id}>
         {children}
       </label>
     </>

@@ -12,7 +12,7 @@ const getRadioButtonGroupStyles = () => {
       flex-wrap: nowrap;
       position: relative;
     `,
-    'radio-group': css`
+    radioGroup: css`
       display: flex;
       flex-direction: row;
       flex-wrap: nowrap;
@@ -62,7 +62,7 @@ export function RadioButtonGroup<T>({
   const styles = getRadioButtonGroupStyles();
 
   return (
-    <div className={styles['radio-group']}>
+    <div className={styles.radioGroup}>
       {options.map((o, i) => {
         const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
         return (
