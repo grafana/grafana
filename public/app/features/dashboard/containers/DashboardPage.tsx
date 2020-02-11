@@ -12,7 +12,7 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
-import PanelEditor from '../components/PanelEditor/PanelEditor';
+import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
 
 // Redux

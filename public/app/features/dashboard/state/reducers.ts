@@ -8,6 +8,7 @@ import {
 } from 'app/types';
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
+import { panelEditorReducerNew } from '../components/PanelEditor/state/reducers';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 
@@ -106,4 +107,5 @@ export const dashboardReducer = dashbardSlice.reducer;
 export default {
   dashboard: dashboardReducer,
   panelEditor: panelEditorReducer,
+  panelEditorNew: panelEditorReducerNew,
 };

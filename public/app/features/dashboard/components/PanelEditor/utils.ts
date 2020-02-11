@@ -1,7 +1,7 @@
 import { CSSProperties } from 'react';
 import { PanelModel } from '../../state/PanelModel';
-import { GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, GRID_CELL_HEIGHT } from 'app/core/constants';
 import { DisplayMode } from './types';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
   if (mode === DisplayMode.Fill) {
