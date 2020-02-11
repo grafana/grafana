@@ -59,6 +59,6 @@ sync_cron = "0 0 1 * * *" # This is default value (At 1 am every day)
 active_sync_enabled = true # enabled by default
 ```
 
-### Single Blind Exception
+### Not compatible with Single Bind
 
 Single Bind configuration (as in the [Single Bind Example]({{< relref "ldap.md#single-bind-example">}})) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.
