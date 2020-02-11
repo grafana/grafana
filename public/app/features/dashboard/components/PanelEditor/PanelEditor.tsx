@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { GrafanaTheme, FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { stylesFactory, Forms, CustomScrollbar, selectThemeVariant, ControlledCollapse } from '@grafana/ui';
+import { stylesFactory, Forms, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -23,6 +23,7 @@ import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp } from './state/actions';
 import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/reducers';
 import { FieldConfigEditor } from './FieldConfigEditor';
+import { OptionsGroup } from './OptionsGroup';
 import { getPanelEditorTabs } from './state/selectors';
 
 interface OwnProps {
@@ -250,7 +251,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             </div>
           </div>
         </div>
-        <div className={styles.panes}>
+        <div className={styles.editorBody}>
           {isPanelOptionsVisible ? (
             <SplitPane
               split="vertical"
@@ -262,14 +263,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               onDragFinished={this.onDragFinished}
             >
               {this.renderHorizontalSplit(styles)}
-              <div className={styles.noScrollPaneContent}>
+              <div className={styles.panelOptionsPane}>
                 <CustomScrollbar>
-                  <div style={{ padding: '10px' }}>
-                    {this.renderFieldOptions()}
-                    <ControlledCollapse label="Visualization Settings" collapsible>
-                      {this.renderVisSettings()}
-                    </ControlledCollapse>
-                  </div>
+                  {this.renderFieldOptions()}
+                  <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
                 </CustomScrollbar>
               </div>
             </SplitPane>
@@ -312,20 +309,27 @@ export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEdi
  * Styles
  */
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const handleColor = selectThemeVariant(
+  const handleColor = theme.colors.blueLight;
+  const panelOptionsPaneBg = selectThemeVariant(
     {
-      dark: theme.colors.dark9,
-      light: theme.colors.gray6,
+      dark: theme.colors.inputBlack,
+      light: theme.colors.white,
     },
     theme.type
   );
 
   const resizer = css`
-    padding: 3px;
     font-style: italic;
-    background: ${theme.colors.panelBg};
+    background: transparent;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-color: transparent;
+    border-style: solid;
+
     &:hover {
-      background: ${handleColor};
+      border-color: ${handleColor};
     }
   `;
 
@@ -344,6 +348,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     panelWrapper: css`
       padding: ${theme.spacing.sm};
       padding-bottom: 2px;
+      padding-top: 0px;
       width: 100%;
       height: 100%;
     `,
@@ -351,21 +356,31 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       resizer,
       css`
         cursor: col-resize;
+        width: 8px;
+        border-right-width: 1px;
       `
     ),
     resizerH: cx(
       resizer,
       css`
+        height: 8px;
         cursor: row-resize;
         position: relative;
         top: 45px;
         z-index: 1;
-        background: transparent;
+        border-top-width: 1px;
       `
     ),
     noScrollPaneContent: css`
       height: 100%;
       width: 100%;
+    `,
+    panelOptionsPane: css`
+      height: 100%;
+      width: 100%;
+      background: ${panelOptionsPaneBg};
+      border-top: 1px solid ${theme.colors.formInputBg};
+      border-left: 1px solid ${theme.colors.formInputBg};
     `,
     toolbar: css`
       padding: ${theme.spacing.sm};
@@ -373,7 +388,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       justify-content: space-between;
     `,
-    panes: css`
+    editorBody: css`
       height: calc(100% - 48px);
       position: relative;
     `,

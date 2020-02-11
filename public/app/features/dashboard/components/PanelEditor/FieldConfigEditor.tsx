@@ -8,21 +8,16 @@ import {
   DynamicConfigValue,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import {
-  standardFieldConfigEditorRegistry,
-  Forms,
-  fieldMatchersUI,
-  ControlledCollapse,
-  ValuePicker,
-} from '@grafana/ui';
+import { standardFieldConfigEditorRegistry, Forms, fieldMatchersUI, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
+import { OptionsGroup } from './OptionsGroup';
+
 interface Props {
   config: FieldConfigSource;
   custom?: FieldConfigEditorRegistry; // custom fields
   include?: string[]; // Ordered list of which fields should be shown/included
   onChange: (config: FieldConfigSource) => void;
-
-  // Helpful for IntelliSense
+  /* Helpful for IntelliSense */
   data: DataFrame[];
 }
 
@@ -33,6 +28,7 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   private setDefaultValue = (name: string, value: any, custom: boolean) => {
     const defaults = { ...this.props.config.defaults };
     const remove = value === undefined || value === null || '';
+
     if (custom) {
       if (defaults.custom) {
         if (remove) {
@@ -236,17 +232,14 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   render() {
     return (
       <div>
-        <ControlledCollapse label="Standard Field Configuration" collapsible>
-          {this.renderStandardConfigs()}
-        </ControlledCollapse>
-        {this.props.custom && (
-          <ControlledCollapse label="Standard Field Configuration">{this.renderCustomConfigs()}</ControlledCollapse>
-        )}
+        <OptionsGroup title="Field configuration">{this.renderStandardConfigs()}</OptionsGroup>
 
-        <ControlledCollapse label="Field Overrides" collapsible>
+        {this.props.custom && <OptionsGroup title="Visualization options">{this.renderCustomConfigs()}</OptionsGroup>}
+
+        <OptionsGroup title="Field Overrides">
           {this.renderOverrides()}
           {this.renderAddOverride()}
-        </ControlledCollapse>
+        </OptionsGroup>
       </div>
     );
   }
