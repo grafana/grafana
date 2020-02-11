@@ -5,7 +5,7 @@ export interface AppEvent<T> {
   payload?: T;
 }
 
-/* tslint:disable:no-namespace */
+/* eslint-disable no-namespace */
 export namespace AppEvents {
   export type AlertPayload = [string, string?];
 
