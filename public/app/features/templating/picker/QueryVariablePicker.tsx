@@ -32,16 +32,14 @@ export class QueryVariablePicker extends PureComponent<Props> {
     dispatch(showQueryVariableDropDown(toVariablePayload(this.props.variable)));
   };
 
-  selectValue = (option: VariableOption, event: MouseEvent<HTMLAnchorElement>, commitChange = false) => {
+  selectValue = (option: VariableOption) => (event: MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
     event.preventDefault();
     if (!option) {
       return;
     }
 
-    dispatch(
-      selectVariableOption(toVariablePayload(this.props.variable, { option, forceSelect: commitChange, event }))
-    );
+    dispatch(selectVariableOption(toVariablePayload(this.props.variable, { option, forceSelect: false, event })));
   };
 
   commitChanges = () => {
@@ -154,12 +152,7 @@ export class QueryVariablePicker extends PureComponent<Props> {
                       : 'variable-option pointer';
                     const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
                     return (
-                      <a
-                        key={`${option.value}`}
-                        className={highlightClass}
-                        onClick={event => this.selectValue(option, event)}
-                        // ng-click="vm.selectValue(option, $event)"
-                      >
+                      <a key={`${option.value}`} className={highlightClass} onClick={this.selectValue(option)}>
                         <span className="variable-option-icon"></span>
                         <span
                           aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemValueDropDownOptionTexts(

@@ -10,7 +10,7 @@ import {
   validateVariableSelectionState,
   VariablePayload,
 } from './actions';
-import { QueryVariableModel, VariableRefresh } from '../variable';
+import { QueryVariableModel, VariableRefresh, VariableTag } from '../variable';
 import { ThunkResult, VariableQueryProps } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
@@ -41,12 +41,20 @@ export const queryVariableEditorLoaded = createAction<VariablePayload<ComponentT
   'templating/queryVariableEditorLoaded'
 );
 
+interface TagWithValues {
+  tag: VariableTag;
+  values: string[];
+}
+
+export const selectVariableTag = createAction<VariablePayload<TagWithValues>>('templating/selectVariableTag');
+
 export const queryVariableActions: Record<string, ActionCreatorWithPayload<VariablePayload<any>>> = {
   [showQueryVariableDropDown.type]: showQueryVariableDropDown,
   [hideQueryVariableDropDown.type]: hideQueryVariableDropDown,
   [selectVariableOption.type]: selectVariableOption,
   [queryVariableDatasourceLoaded.type]: queryVariableDatasourceLoaded,
   [queryVariableEditorLoaded.type]: queryVariableEditorLoaded,
+  [selectVariableTag.type]: selectVariableTag,
 };
 
 export const updateQueryVariableOptions = (
@@ -112,3 +120,33 @@ export const changeQueryVariableDataSource = (variable: QueryVariableModel, name
     }
   };
 };
+
+export const selectTag = (uuid: string, tag: VariableTag): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    try {
+      const variable = getVariable<QueryVariableModel>(uuid, getState());
+
+      if (tag.values) {
+        return dispatch(selectVariableTag(toVariablePayload(variable, { tag, values: tag.values })));
+      }
+
+      const datasource = await getDatasourceSrv().get(variable.datasource ?? '');
+      const query = variable.tagValuesQuery.replace('$tag', tag.text.toString());
+      const result = await metricFindQuery(datasource, query, variable);
+      const values = result?.map((value: any) => value.text);
+      return dispatch(selectVariableTag(toVariablePayload(variable, { tag, values })));
+    } catch (error) {
+      return console.error(error);
+    }
+  };
+};
+
+function metricFindQuery(datasource: any, query: string, variable: QueryVariableModel, searchFilter?: string) {
+  const options: any = { range: undefined, variable, searchFilter };
+
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+    options.range = getTimeSrv().timeRange();
+  }
+
+  return datasource.metricFindQuery(query, options);
+}
