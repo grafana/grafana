@@ -1,4 +1,4 @@
-/* tslint:disable:no-namespace */
+/* eslint-disable no-namespace */
 export namespace DOMUtil {
   // Node.closest() polyfill
   if ('Element' in window && !Element.prototype.closest) {
