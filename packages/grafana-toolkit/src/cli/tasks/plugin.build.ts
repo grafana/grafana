@@ -63,6 +63,17 @@ const getTypescriptSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+
 const getStylesSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+(scss|css)'));
 
 export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
+  try {
+    // Show a warning if the tslint file exists
+    await fs.access(resolvePath(process.cwd(), 'tslint.json'));
+    console.log('--------------------------------------------------------------');
+    console.log('NOTE: @grafana/toolkit has migrated to use eslint');
+    console.log('Update your configs to use .eslintrc rather than tslint.json');
+    console.log('--------------------------------------------------------------');
+  } catch {
+    // OK: tslint does not exist
+  }
+
   // @todo should remove this because the config file could be in a parent dir or within package.json
   const configFile = await globby(resolvePath(process.cwd(), '.eslintrc?(.cjs|.js|.json|.yaml|.yml)')).then(
     filePaths => {

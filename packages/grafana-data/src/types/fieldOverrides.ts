@@ -1,6 +1,6 @@
-import { MatcherConfig, FieldConfig, Field, DataFrame } from '../types';
-import { Registry, RegistryItem } from '../utils';
 import { ComponentType } from 'react';
+import { MatcherConfig, FieldConfig, Field, DataFrame, VariableSuggestion, VariableSuggestionsScope } from '../types';
+import { Registry, RegistryItem } from '../utils';
 import { InterpolateFunction } from './panel';
 
 export interface DynamicConfigValue {
@@ -25,18 +25,20 @@ export interface FieldConfigSource {
 export interface FieldConfigEditorProps<TValue, TSettings> {
   item: FieldPropertyEditorItem<TValue, TSettings>; // The property info
   value: TValue;
+  context: FieldOverrideContext;
   onChange: (value?: TValue) => void;
 }
 
 export interface FieldOverrideContext {
-  field: Field;
-  data: DataFrame;
-  replaceVariables: InterpolateFunction;
+  data: DataFrame[];
+  field?: Field;
+  replaceVariables?: InterpolateFunction;
+  getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
 }
 
 export interface FieldOverrideEditorProps<TValue, TSettings> {
   item: FieldPropertyEditorItem<TValue, TSettings>;
-  value: any;
+  value: TValue;
   context: FieldOverrideContext;
   onChange: (value?: any) => void;
 }

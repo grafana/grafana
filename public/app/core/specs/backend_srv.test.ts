@@ -161,6 +161,57 @@ describe('backendSrv', () => {
       });
     });
 
+    describe('when called with the same requestId twice', () => {
+      it('then it should cancel the first call and the first call should be unsubscribed', async () => {
+        const url = '/api/dashboard/';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+        const unsubscribe = jest.fn();
+        const slowData = { message: 'Slow Request' };
+        const slowFetch = new Observable(subscriber => {
+          subscriber.next({
+            ok: true,
+            status: 200,
+            statusText: 'Ok',
+            text: () => Promise.resolve(JSON.stringify(slowData)),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            redirected: false,
+            type: 'basic',
+            url,
+          });
+          return unsubscribe;
+        }).pipe(delay(10000));
+        const fastData = { message: 'Fast Request' };
+        const fastFetch = of({
+          ok: true,
+          status: 200,
+          statusText: 'Ok',
+          text: () => Promise.resolve(JSON.stringify(fastData)),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          redirected: false,
+          type: 'basic',
+          url,
+        });
+        fromFetchMock.mockImplementationOnce(() => slowFetch);
+        fromFetchMock.mockImplementation(() => fastFetch);
+        const options = {
+          url,
+          method: 'GET',
+          requestId: 'A',
+        };
+        const slowRequest = backendSrv.request(options);
+        const fastResponse = await backendSrv.request(options);
+        expect(fastResponse).toEqual({ message: 'Fast Request' });
+
+        const result = await slowRequest;
+        expect(result).toEqual([]);
+        expect(unsubscribe).toHaveBeenCalledTimes(1);
+      });
+    });
+
     describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
       it('then it should retry', async () => {
         jest.useFakeTimers();
@@ -404,9 +455,9 @@ describe('backendSrv', () => {
           status: 200,
           statusText: 'Ok',
           type: 'basic',
-          url,
+          url: '/api/dashboard/',
           request: {
-            url,
+            url: '/api/dashboard/',
             method: 'GET',
             body: undefined,
             headers: {
@@ -416,8 +467,21 @@ describe('backendSrv', () => {
           },
         });
 
-        const slowResponse = await slowRequest;
-        expect(slowResponse).toEqual(undefined);
+        const result = await slowRequest;
+        expect(result).toEqual({
+          data: [],
+          status: -1,
+          statusText: 'Request was aborted',
+          request: {
+            url: '/api/dashboard/',
+            method: 'GET',
+            body: undefined,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json, text/plain, */*',
+            },
+          },
+        });
         expect(unsubscribe).toHaveBeenCalledTimes(1);
       });
     });
@@ -476,31 +540,6 @@ describe('backendSrv', () => {
           expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
           expect(logoutMock).not.toHaveBeenCalled();
           expectDataSourceRequestCallChain({ url, method: 'GET', retry: 0 });
-        });
-      });
-    });
-
-    describe('when making a HTTP_REQUEST_CANCELED call', () => {
-      it('then it should throw cancelled error', async () => {
-        const { backendSrv, appEventsMock, logoutMock, expectDataSourceRequestCallChain } = getTestContext({
-          ok: false,
-          status: -1,
-          statusText: 'HTTP_REQUEST_CANCELED',
-          data: { message: 'HTTP_REQUEST_CANCELED' },
-        });
-        const url = '/api/dashboard/';
-        await backendSrv.datasourceRequest({ url, method: 'GET' }).catch(error => {
-          expect(error).toEqual({
-            err: {
-              status: -1,
-              statusText: 'HTTP_REQUEST_CANCELED',
-              data: { message: 'HTTP_REQUEST_CANCELED' },
-            },
-            cancelled: true,
-          });
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
-          expect(logoutMock).not.toHaveBeenCalled();
-          expectDataSourceRequestCallChain({ url, method: 'GET' });
         });
       });
     });

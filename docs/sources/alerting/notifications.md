@@ -134,7 +134,8 @@ Example json body:
     "tag name":"tag value"
   },
   "title":"[Alerting] Panel Title alert"
-}```
+}
+```
 
 - **state** - The possible values for alert state are: `ok`, `paused`, `alerting`, `pending`, `no_data`.
 
@@ -203,7 +204,8 @@ Webhook | `webhook` | yes, external only | yes
 
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure image rendering [here]({{< relref "../administration/image_rendering/" >}}).
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure 
+[image rendering]({{< relref "../administration/image_rendering/" >}}).
 
 Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
@@ -225,4 +227,4 @@ It currently supports only the Prometheus Alertmanager notifier.
 # Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
-This url is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.
+This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.

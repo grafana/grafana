@@ -2,23 +2,23 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import AutoSizer from 'react-virtualized-auto-sizer';
-
-// Utils & Services
-import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 
 // Components
-import { AddPanelWidget } from '../components/AddPanelWidget';
-import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelResizer } from './PanelResizer';
 import { PanelChromeAngular } from './PanelChromeAngular';
 
+// Actions
+import { initDashboardPanel } from '../state/actions';
+
 // Types
 import { PanelModel, DashboardModel } from '../state';
-import { PanelPluginMeta, PanelPlugin } from '@grafana/data';
+import { StoreState } from 'app/types';
+import { PanelPlugin } from '@grafana/data';
 
-export interface Props {
+export interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
@@ -27,12 +27,21 @@ export interface Props {
   isInView: boolean;
 }
 
+export interface ConnectedProps {
+  plugin?: PanelPlugin;
+}
+
+export interface DispatchProps {
+  initDashboardPanel: typeof initDashboardPanel;
+}
+
+export type Props = OwnProps & ConnectedProps & DispatchProps;
+
 export interface State {
-  plugin: PanelPlugin;
   isLazy: boolean;
 }
 
-export class DashboardPanel extends PureComponent<Props, State> {
+export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   element: HTMLElement;
   specialPanels: { [key: string]: Function } = {};
 
@@ -40,56 +49,15 @@ export class DashboardPanel extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      plugin: null,
       isLazy: !props.isInView,
     };
-
-    this.specialPanels['row'] = this.renderRow.bind(this);
-    this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
-  }
-
-  isSpecial(pluginId: string) {
-    return this.specialPanels[pluginId];
-  }
-
-  renderRow() {
-    return <DashboardRow panel={this.props.panel} dashboard={this.props.dashboard} />;
-  }
-
-  renderAddPanel() {
-    return <AddPanelWidget panel={this.props.panel} dashboard={this.props.dashboard} />;
-  }
-
-  onPluginTypeChange = (plugin: PanelPluginMeta) => {
-    this.loadPlugin(plugin.id);
-  };
-
-  async loadPlugin(pluginId: string) {
-    if (this.isSpecial(pluginId)) {
-      return;
-    }
-
-    const { panel } = this.props;
-
-    // handle plugin loading & changing of plugin type
-    if (!this.state.plugin || this.state.plugin.meta.id !== pluginId) {
-      const plugin = await importPanelPlugin(pluginId);
-
-      if (panel.type !== pluginId) {
-        panel.changePlugin(plugin);
-      } else {
-        panel.pluginLoaded(plugin);
-      }
-
-      this.setState({ plugin });
-    }
   }
 
   componentDidMount() {
-    this.loadPlugin(this.props.panel.type);
+    this.props.initDashboardPanel(this.props.panel);
   }
 
-  componentDidUpdate(prevProps: Props, prevState: State) {
+  componentDidUpdate() {
     if (this.state.isLazy && this.props.isInView) {
       this.setState({ isLazy: false });
     }
@@ -104,8 +72,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderPanel() {
-    const { dashboard, panel, isFullscreen, isInView, isInEditMode } = this.props;
-    const { plugin } = this.state;
+    const { dashboard, panel, isFullscreen, isInView, isInEditMode, plugin } = this.props;
 
     return (
       <AutoSizer>
@@ -146,12 +113,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, isLazy } = this.state;
-
-    if (this.isSpecial(panel.type)) {
-      return this.specialPanels[panel.type]();
-    }
+    const { panel, dashboard, isFullscreen, isEditing, plugin } = this.props;
+    const { isLazy } = this.state;
 
     // if we have not loaded plugin exports yet, wait
     if (!plugin) {
@@ -190,15 +153,18 @@ export class DashboardPanel extends PureComponent<Props, State> {
             </div>
           )}
         />
-        {panel.isEditing && (
-          <PanelEditor
-            panel={panel}
-            plugin={plugin}
-            dashboard={dashboard}
-            onPluginTypeChange={this.onPluginTypeChange}
-          />
-        )}
+        {panel.isEditing && <PanelEditor panel={panel} plugin={plugin} dashboard={dashboard} />}
       </div>
     );
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  return {
+    plugin: state.plugins.panels[props.panel.type],
+  };
+};
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { initDashboardPanel };
+
+export const DashboardPanel = connect(mapStateToProps, mapDispatchToProps)(DashboardPanelUnconnected);

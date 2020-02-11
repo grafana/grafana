@@ -23,6 +23,8 @@ import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '..
 import { PluginPackageDetails, PluginBuildReport, TestResultsInfo } from '../../plugins/types';
 import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
+import { manifestTask } from './manifest';
+import { execTask } from '../utils/execTask';
 
 export interface PluginCIOptions {
   backend?: boolean;
@@ -161,6 +163,9 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
       throw new Error('Error writing: ' + pluginJsonFile);
     }
   });
+
+  // Write a manifest.txt file in the dist folder
+  await execTask(manifestTask)({ folder: distContentDir });
 
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';

@@ -3,13 +3,14 @@ import {
   DashboardInitPhase,
   DashboardState,
   DashboardAclDTO,
-  MutableDashboard,
   DashboardInitError,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
+import { panelEditorReducerNew } from '../components/PanelEditor/state/reducers';
 import { DashboardModel } from './DashboardModel';
+import { PanelModel } from './PanelModel';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
@@ -17,6 +18,8 @@ export const initialState: DashboardState = {
   getModel: () => null,
   permissions: [],
   modifiedQueries: null,
+  panels: {},
+  initError: null,
 };
 
 const dashbardSlice = createSlice({
@@ -35,10 +38,16 @@ const dashbardSlice = createSlice({
     dashboardInitSlow: (state, action: PayloadAction) => {
       state.isInitSlow = true;
     },
-    dashboardInitCompleted: (state, action: PayloadAction<MutableDashboard>) => {
+    dashboardInitCompleted: (state, action: PayloadAction<DashboardModel>) => {
       state.getModel = () => action.payload;
       state.initPhase = DashboardInitPhase.Completed;
       state.isInitSlow = false;
+
+      for (const panel of action.payload.panels) {
+        state.panels[panel.id] = {
+          pluginId: panel.type,
+        };
+      }
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
       state.initPhase = DashboardInitPhase.Failed;
@@ -49,7 +58,7 @@ const dashbardSlice = createSlice({
     },
     cleanUpDashboard: (state, action: PayloadAction) => {
       if (state.getModel()) {
-        state.getModel().destroy();
+        state.getModel()!.destroy();
         state.getModel = () => null;
       }
 
@@ -63,8 +72,21 @@ const dashbardSlice = createSlice({
     clearDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction) => {
       state.modifiedQueries = null;
     },
+    dashboardPanelTypeChanged: (state, action: PayloadAction<DashboardPanelTypeChangedPayload>) => {
+      state.panels[action.payload.panelId] = { pluginId: action.payload.pluginId };
+    },
+    addPanelToDashboard: (state, action: PayloadAction<AddPanelPayload>) => {},
   },
 });
+
+export interface DashboardPanelTypeChangedPayload {
+  panelId: number;
+  pluginId: string;
+}
+
+export interface AddPanelPayload {
+  panel: PanelModel;
+}
 
 export const {
   loadDashboardPermissions,
@@ -76,6 +98,8 @@ export const {
   cleanUpDashboard,
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
+  dashboardPanelTypeChanged,
+  addPanelToDashboard,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;
@@ -83,4 +107,5 @@ export const dashboardReducer = dashbardSlice.reducer;
 export default {
   dashboard: dashboardReducer,
   panelEditor: panelEditorReducer,
+  panelEditorNew: panelEditorReducerNew,
 };

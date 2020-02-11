@@ -7,6 +7,7 @@ import { EditorTab, allTabs } from './types';
 import { DashboardModel } from '../../state';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { PanelModel } from '../../state/PanelModel';
+import { AlertTab } from 'app/features/alerting/AlertTab';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -57,7 +58,7 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
               return (
                 <div style={{ width, height }}>
                   {activeTab === EditorTab.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
-                  {activeTab === EditorTab.Alerts && <div>TODO: Show Alerts</div>}
+                  {activeTab === EditorTab.Alerts && <AlertTab panel={panel} dashboard={dashboard} />}
                   {activeTab === EditorTab.Transform && <div>TODO: Show Transform</div>}
                 </div>
               );

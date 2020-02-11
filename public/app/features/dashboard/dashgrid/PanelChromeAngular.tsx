@@ -115,8 +115,6 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
       this.cleanUpAngularPanel();
       this.loadAngularPanel();
     }
-
-    this.loadAngularPanel();
   }
 
   loadAngularPanel() {
