@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
-import { cleanUpDashboard } from '../state/actions';
+import { cleanUpDashboard } from '../state/reducers';
 import {
   mockToolkitActionCreator,
   mockToolkitActionCreatorWithoutPayload,
@@ -215,7 +215,7 @@ describe('DashboardPage', () => {
     it('should set scrollTop to 0', () => {
       expect(ctx.wrapper).not.toBe(null);
       expect(ctx.wrapper?.state()).not.toBe(null);
-      expect(ctx.wrapper?.state().scrollTop).toBe(0);
+      expect(ctx.wrapper?.state().updateScrollTop).toBe(0);
     });
 
     it('should add panel widget to dashboard panels', () => {
@@ -271,7 +271,9 @@ describe('DashboardPage', () => {
           edit: false,
         },
       },
-      dashboard: {},
+      dashboard: {
+        getModel: () => null as DashboardModel,
+      },
     } as any);
 
     expect(props.urlFullscreen).toBe(true);
@@ -287,7 +289,9 @@ describe('DashboardPage', () => {
           edit: 'true',
         },
       },
-      dashboard: {},
+      dashboard: {
+        getModel: () => null as DashboardModel,
+      },
     } as any);
 
     expect(props.urlFullscreen).toBe(false);

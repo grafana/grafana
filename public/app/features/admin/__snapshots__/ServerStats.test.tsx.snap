@@ -199,7 +199,6 @@ exports[`ServerStats Should render table with stats 1`] = `
               <li>
                 <a
                   rel="noopener"
-                  target="_blank"
                 >
                   <i />
                    
@@ -209,7 +208,6 @@ exports[`ServerStats Should render table with stats 1`] = `
               <li>
                 <a
                   rel="noopener"
-                  target="_blank"
                 >
                   <i />
                    
