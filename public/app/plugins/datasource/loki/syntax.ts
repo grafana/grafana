@@ -69,8 +69,7 @@ export const FUNCTIONS = [...AGGREGATION_OPERATORS, ...RANGE_VEC_FUNCTIONS];
 
 const tokenizer: Grammar = {
   comment: {
-    pattern: /(^|[^\n"a-zA-Z])#.*/,
-    lookbehind: true,
+    pattern: /#.*/,
   },
   'context-aggregation': {
     pattern: /((without|by)\s*)\([^)]*\)/, // by ()
@@ -85,8 +84,11 @@ const tokenizer: Grammar = {
   },
   'context-labels': {
     pattern: /\{[^}]*(?=})/,
-    lookbehind: true,
+    greedy: true,
     inside: {
+      comment: {
+        pattern: /#.*/,
+      },
       'label-key': {
         pattern: /[a-z_]\w*(?=\s*(=|!=|=~|!~))/,
         alias: 'attr-name',
