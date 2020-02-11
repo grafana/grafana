@@ -1,13 +1,6 @@
 import React, { PureComponent } from 'react';
 import { GrafanaTheme, FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import {
-  stylesFactory,
-  Forms,
-  FieldConfigEditor,
-  CustomScrollbar,
-  selectThemeVariant,
-  ControlledCollapse,
-} from '@grafana/ui';
+import { stylesFactory, Forms, CustomScrollbar, selectThemeVariant, ControlledCollapse } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -29,6 +22,7 @@ import { LocationState } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp } from './state/actions';
 import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/reducers';
+import { FieldConfigEditor } from './FieldConfigEditor';
 
 interface OwnProps {
   dashboard: DashboardModel;

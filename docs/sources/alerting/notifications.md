@@ -134,7 +134,8 @@ Example json body:
     "tag name":"tag value"
   },
   "title":"[Alerting] Panel Title alert"
-}```
+}
+```
 
 - **state** - The possible values for alert state are: `ok`, `paused`, `alerting`, `pending`, `no_data`.
 
