@@ -21,7 +21,8 @@ export const simple = () => {
       disabled={disabled}
       size={size}
       active={active}
-      onClick={() => {
+      id="standalone"
+      onChange={() => {
         setActive(!active);
       }}
     >
