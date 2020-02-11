@@ -653,21 +653,19 @@ jobs:
             docker push "grafana/grafana-enterprise:master-new-pipeline"
             docker tag "grafana/grafana-enterprise-arm32v7-linux:master" \
               "grafana/grafana-enterprise-arm32v7-linux:master-new-pipeline"
-            # Disabling pushing of these architectures since we lack permission (why?)
-            #docker push "grafana/grafana-enterprise-arm32v7-linux:master-new-pipeline"
+            docker push "grafana/grafana-enterprise-arm32v7-linux:master-new-pipeline"
             docker tag "grafana/grafana-enterprise-arm64v8-linux:master" \
               "grafana/grafana-enterprise-arm64v8-linux:master-new-pipeline"
-            #docker push "grafana/grafana-enterprise-arm64v8-linux:master-new-pipeline"
+            docker push "grafana/grafana-enterprise-arm64v8-linux:master-new-pipeline"
       - run:
           name: Publish Docker manifest
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
-            # Disabling pushing of the manifest since we lack permission (why?)
-            #docker manifest create "grafana/grafana-enterprise:master-new-pipeline" \
-              #"grafana/grafana-enterprise:master-new-pipeline" \
-              #"grafana/grafana-enterprise-arm32v7-linux:master-new-pipeline" \
-              #"grafana/grafana-enterprise-arm64v8-linux:master-new-pipeline"
-            #docker manifest push "grafana/grafana-enterprise:master-new-pipeline"
+            docker manifest create "grafana/grafana-enterprise:master-new-pipeline" \
+              "grafana/grafana-enterprise:master-new-pipeline" \
+              "grafana/grafana-enterprise-arm32v7-linux:master-new-pipeline" \
+              "grafana/grafana-enterprise-arm64v8-linux:master-new-pipeline"
+            docker manifest push "grafana/grafana-enterprise:master-new-pipeline"
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -705,21 +703,19 @@ jobs:
             docker push "grafana/grafana-enterprise:master-ubuntu-new-pipeline"
             docker tag "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu" \
               "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu-new-pipeline"
-            # Disabling pushing of these architectures since we lack permission (why?)
-            #docker push "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu-new-pipeline"
+            docker push "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu-new-pipeline"
             docker tag "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu" \
               "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
-            #docker push "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
+            docker push "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
       - run:
           name: Publish Docker manifest
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
-            # Disabling pushing of the manifest since we lack permission (why?)
-            #docker manifest create "grafana/grafana-enterprise:master-ubuntu-new-pipeline" \
-              #"grafana/grafana-enterprise:master-ubuntu-new-pipeline" \
-              #"grafana/grafana-enterprise-arm32v7-linux:master-ubuntu-new-pipeline" \
-              #"grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
-            #docker manifest push "grafana/grafana-enterprise:master-ubuntu-new-pipeline"
+            docker manifest create "grafana/grafana-enterprise:master-ubuntu-new-pipeline" \
+              "grafana/grafana-enterprise:master-ubuntu-new-pipeline" \
+              "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu-new-pipeline" \
+              "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu-new-pipeline"
+            docker manifest push "grafana/grafana-enterprise:master-ubuntu-new-pipeline"
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
