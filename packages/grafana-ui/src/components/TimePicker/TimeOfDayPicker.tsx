@@ -4,12 +4,15 @@ import { css } from 'emotion';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
 import { useTheme, Icon } from '../../index';
 import { stylesFactory } from '../../themes';
+import { inputSizes } from '../Forms/commonStyles';
+import { FormInputSize } from '../Forms/types';
 
 interface Props {
   onChange: (value: DateTime) => void;
   value: DateTime;
   showHour?: boolean;
   minuteStep?: number;
+  size?: FormInputSize;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -40,13 +43,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onChange, value }) => {
+export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onChange, value, size = 'auto' }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-
   return (
     <div>
       <RcTimePicker
+        className={inputSizes()[size]}
         popupClassName={styles.picker}
         defaultValue={dateTimeAsMoment()}
         onChange={(value: any) => onChange(dateTime(value))}
