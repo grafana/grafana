@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v4.0"
+title = "What's new in Grafana v4.0"
 description = "Feature and improvement highlights for Grafana v4.0"
-keywords = ["grafana", "new", "documentation", "4.0"]
+keywords = ["grafana", "new", "documentation", "4.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 4.0"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = 4
 +++
 
-# What's New in Grafana v4.0
+# What's new in Grafana v4.0
 
 As usual this release contains a ton of minor new features, fixes and improved UX. But on top of the usual new goodies
 is a core new feature: Alerting! Read on below for a detailed description of what's new in v4.0.
@@ -92,7 +92,6 @@ dynamically add filters to any log property!
 We always try to bring some UX/UI refinements and polish in every release.
 
 ### TV-mode and Kiosk mode
-
 
 <div class="row">
   <div class="medium-6 columns">
@@ -177,4 +176,3 @@ You can update plugins using grafana-cli
 
 Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.
-

@@ -38,7 +38,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   isInView: true,
-  isNewEdit: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -132,7 +131,6 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   isInView: boolean;
-  isNewEdit: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -357,15 +355,14 @@ export class PanelModel {
 
   getEditClone() {
     const clone = new PanelModel(this.getSaveModel());
-    clone.queryRunner = new PanelQueryRunner();
+    const sourceQueryRunner = this.getQueryRunner();
 
-    // This will send the last result to the new runner
-    this.getQueryRunner()
+    // pipe last result to new clone query runner
+    sourceQueryRunner
       .getData()
       .pipe(take(1))
-      .subscribe(val => clone.queryRunner.pipeDataToSubject(val));
+      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
 
-    clone.isNewEdit = true;
     return clone;
   }
 

@@ -4,10 +4,10 @@ import React, { FC } from 'react';
 import Prism from 'prismjs';
 // Components
 import { css } from 'emotion';
-import { DataLink } from '@grafana/data';
+import { DataLink, VariableSuggestion } from '@grafana/data';
 import { Button } from '../index';
 import { DataLinkEditor } from './DataLinkEditor';
-import { VariableSuggestion } from './DataLinkSuggestions';
+
 import { useTheme } from '../../themes/ThemeContext';
 
 interface DataLinksEditorProps {

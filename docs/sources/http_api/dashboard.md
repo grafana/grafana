@@ -55,7 +55,7 @@ JSON Body schema:
 
 - **dashboard** – The complete dashboard model, id = null to create a new dashboard.
 - **dashboard.id** – id = null to create a new dashboard.
-- **dashboard.uid** – Optional [unique identifier](/http_api/dashboard/#identifier-id-vs-unique-identifier-uid) when creating a dashboard. uid = null will generate a new uid.
+- **dashboard.uid** – Optional unique identifier when creating a dashboard. uid = null will generate a new uid.
 - **folderId** – The id of the folder to save the dashboard in.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
