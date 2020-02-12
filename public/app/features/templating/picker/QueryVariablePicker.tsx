@@ -3,7 +3,7 @@ import debounce from 'lodash/debounce';
 import { ClickOutsideWrapper, getTagColorsFromName } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
-import { QueryVariableModel, VariableOption } from '../variable';
+import { QueryVariableModel, VariableOption, VariableTag } from '../variable';
 import { dispatch } from '../../../store/store';
 import { toVariablePayload } from '../state/actions';
 import { QueryVariablePickerState } from '../state/queryVariableReducer';
@@ -12,6 +12,7 @@ import {
   hideQueryVariableDropDown,
   selectVariableOption,
   showQueryVariableDropDown,
+  selectVariableTag,
 } from '../state/queryVariableActions';
 import { VariablePickerProps } from '../state/types';
 
@@ -30,6 +31,13 @@ export class QueryVariablePicker extends PureComponent<Props> {
     event.stopPropagation();
     event.preventDefault();
     dispatch(showQueryVariableDropDown(toVariablePayload(this.props.variable)));
+  };
+
+  selectTag = (tag: VariableTag) => (event: MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const { uuid } = this.props.variable;
+    dispatch(selectVariableTag(uuid, tag));
   };
 
   selectValue = (option: VariableOption) => (event: MouseEvent<HTMLAnchorElement>) => {
@@ -177,7 +185,7 @@ export class QueryVariablePicker extends PureComponent<Props> {
                           className={`${
                             tag.selected ? 'variable-option-tag pointer selected' : 'variable-option-tag pointer'
                           }`}
-                          // ng-click="vm.selectTag(tag, $event)"
+                          onClick={this.selectTag(tag)}
                         >
                           <span className="fa fa-fw variable-option-icon"></span>
                           <span className="label-tag" style={{ backgroundColor: color, borderColor }}>

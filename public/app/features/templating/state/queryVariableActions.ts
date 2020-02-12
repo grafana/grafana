@@ -46,7 +46,7 @@ interface TagWithValues {
   values: string[];
 }
 
-export const selectVariableTag = createAction<VariablePayload<TagWithValues>>('templating/selectVariableTag');
+export const selectVariableTagWithValues = createAction<VariablePayload<TagWithValues>>('templating/selectVariableTag');
 
 export const queryVariableActions: Record<string, ActionCreatorWithPayload<VariablePayload<any>>> = {
   [showQueryVariableDropDown.type]: showQueryVariableDropDown,
@@ -54,7 +54,7 @@ export const queryVariableActions: Record<string, ActionCreatorWithPayload<Varia
   [selectVariableOption.type]: selectVariableOption,
   [queryVariableDatasourceLoaded.type]: queryVariableDatasourceLoaded,
   [queryVariableEditorLoaded.type]: queryVariableEditorLoaded,
-  [selectVariableTag.type]: selectVariableTag,
+  [selectVariableTagWithValues.type]: selectVariableTagWithValues,
 };
 
 export const updateQueryVariableOptions = (
@@ -121,20 +121,20 @@ export const changeQueryVariableDataSource = (variable: QueryVariableModel, name
   };
 };
 
-export const selectTag = (uuid: string, tag: VariableTag): ThunkResult<void> => {
+export const selectVariableTag = (uuid: string, tag: VariableTag): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
       const variable = getVariable<QueryVariableModel>(uuid, getState());
 
       if (tag.values) {
-        return dispatch(selectVariableTag(toVariablePayload(variable, { tag, values: tag.values })));
+        return dispatch(selectVariableTagWithValues(toVariablePayload(variable, { tag, values: tag.values })));
       }
 
       const datasource = await getDatasourceSrv().get(variable.datasource ?? '');
       const query = variable.tagValuesQuery.replace('$tag', tag.text.toString());
       const result = await metricFindQuery(datasource, query, variable);
-      const values = result?.map((value: any) => value.text);
-      return dispatch(selectVariableTag(toVariablePayload(variable, { tag, values })));
+      const values = result?.map((value: any) => value.text) || [];
+      return dispatch(selectVariableTagWithValues(toVariablePayload(variable, { tag, values })));
     } catch (error) {
       return console.error(error);
     }

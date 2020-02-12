@@ -32,6 +32,7 @@ import {
   queryVariableEditorLoaded,
   selectVariableOption,
   showQueryVariableDropDown,
+  selectVariableTagWithValues,
 } from './queryVariableActions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
@@ -638,6 +639,30 @@ export const queryVariableReducer = (
     };
 
     return appyStateChanges(newState, updateEditorErrors, updateEditorIsValid);
+  }
+
+  if (selectVariableTagWithValues.match(action)) {
+    const { tag, values } = action.payload.data;
+
+    const newState = {
+      ...state,
+      variable: {
+        ...state.variable,
+        tags: state.variable.tags.map(current => {
+          if (current.text !== tag.text) {
+            return { ...current };
+          }
+
+          return {
+            ...current,
+            selected: true,
+            values: values,
+          };
+        }),
+      },
+    };
+
+    return appyStateChanges(newState, updateTags);
   }
 
   return state;
