@@ -257,7 +257,7 @@
     "react-transition-group": "4.3.0",
     "react-use": "13.24.0",
     "react-virtualized-auto-sizer": "1.0.2",
-    "react-window": "1.7.1",
+    "react-window": "1.8.5",
     "redux": "4.0.4",
     "redux-logger": "3.0.6",
     "redux-thunk": "2.3.0",
