@@ -82,7 +82,7 @@
     "eslint-plugin-prettier": "3.1.2",
     "eslint-plugin-react": "7.18.3",
     "expect-puppeteer": "4.1.1",
-    "expect.js": "0.2.0",
+    "expect.js": "0.3.1",
     "expose-loader": "0.7.5",
     "file-loader": "3.0.1",
     "fork-ts-checker-webpack-plugin": "1.0.0",
