@@ -93,12 +93,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     }
   }
 
-  const env = {
-    replaceVariables: options.replaceVariables,
-    // standard: options.standard,
-    custom: options.custom,
-  };
-
   return options.data.map((frame, index) => {
     let name = frame.name;
     if (!name) {
@@ -107,17 +101,24 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
     const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
-      const e2 = { ...env, data: frame, field };
+      const context = {
+        field,
+        data: options.data!,
+        dataFrameIndex: index,
+        replaceVariables: options.replaceVariables,
+        custom: options.custom,
+      };
+
       const config: FieldConfig = { ...field.config } || {};
       if (field.type === FieldType.number) {
-        setFieldConfigDefaults(config, source.defaults, e2);
+        setFieldConfigDefaults(config, source.defaults, context);
       }
 
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field)) {
           for (const prop of rule.properties) {
-            setDynamicConfigValue(config, prop, e2);
+            setDynamicConfigValue(config, prop, context);
           }
         }
       }

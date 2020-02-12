@@ -30,8 +30,9 @@ export interface FieldConfigEditorProps<TValue, TSettings> {
 }
 
 export interface FieldOverrideContext {
-  data: DataFrame[];
   field?: Field;
+  data: DataFrame[]; // All results
+  dataFrameIndex?: number; // The index for the selected field frame
   replaceVariables?: InterpolateFunction;
   getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
 }

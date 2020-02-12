@@ -7,8 +7,9 @@ import {
   FieldPropertyEditorItem,
   DynamicConfigValue,
   VariableSuggestionsScope,
+  standardFieldConfigEditorRegistry,
 } from '@grafana/data';
-import { standardFieldConfigEditorRegistry, Forms, fieldMatchersUI, ValuePicker } from '@grafana/ui';
+import { Forms, fieldMatchersUI, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OptionsGroup } from './OptionsGroup';
 

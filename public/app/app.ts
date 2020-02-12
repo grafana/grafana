@@ -40,8 +40,7 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { StandardFieldConfigEditors } from '@grafana/ui';
-import { initialiseStandardFieldConfigEditors } from './features/dashboard/components/PanelEditor/utils';
+import { getStandardFieldConfigs } from './features/dashboard/components/PanelEditor/utils';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -84,7 +83,7 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
-    standardFieldConfigEditorRegistry.setInit(initialiseStandardFieldConfigEditors);
+    standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
 
     app.config(
       (
