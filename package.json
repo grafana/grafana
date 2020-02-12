@@ -145,7 +145,7 @@
     "webpack": "4.41.5",
     "webpack-bundle-analyzer": "3.3.2",
     "webpack-cleanup-plugin": "0.5.1",
-    "webpack-cli": "3.2.3",
+    "webpack-cli": "3.3.10",
     "webpack-dev-server": "3.2.1",
     "webpack-merge": "4.2.1",
     "zone.js": "0.7.8"
