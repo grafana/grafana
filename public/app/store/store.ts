@@ -23,5 +23,5 @@ export function dispatch(action: any) {
     return;
   }
 
-  store.dispatch(action);
+  return store.dispatch(action);
 }

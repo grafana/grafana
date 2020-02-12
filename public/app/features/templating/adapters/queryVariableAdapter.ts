@@ -28,11 +28,8 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
         resolve();
       });
     },
-    updateOptions: (variable, searchFilter, notifyAngular) => {
-      return new Promise(async resolve => {
-        await dispatch(updateQueryVariableOptions(variable, searchFilter, notifyAngular));
-        resolve();
-      });
+    updateOptions: async (variable, searchFilter, notifyAngular) => {
+      await dispatch(updateQueryVariableOptions(variable, searchFilter, notifyAngular));
     },
     getSaveModel: variable => {
       // remove options
