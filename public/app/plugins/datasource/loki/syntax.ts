@@ -92,6 +92,7 @@ const tokenizer: Grammar = {
       'label-key': {
         pattern: /[a-z_]\w*(?=\s*(=|!=|=~|!~))/,
         alias: 'attr-name',
+        greedy: true,
       },
       'label-value': {
         pattern: /"(?:\\.|[^\\"])*"/,

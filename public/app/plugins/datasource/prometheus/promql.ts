@@ -392,6 +392,7 @@ const tokenizer = {
   },
   'context-labels': {
     pattern: /\{[^}]*(?=})/,
+    greedy: true,
     inside: {
       comment: {
         pattern: /#.*/,
