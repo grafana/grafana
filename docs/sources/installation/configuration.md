@@ -415,7 +415,7 @@ organization to be created for that new user.
 
 Set this value to automatically add new users to the provided org.
 This requires `auto_assign_org` to be set to `true`. Please make sure
-that this organization should be pre-existing.
+that this organization already exists.
 
 ### auto_assign_org_role
 
