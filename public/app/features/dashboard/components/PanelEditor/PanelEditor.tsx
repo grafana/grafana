@@ -340,7 +340,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${theme.colors.inputBlack};
     `,
     panelWrapper: css`
-      padding: ${theme.spacing.sm} 2px 2px ${theme.spacing.sm};
+      padding: 0 2px 2px ${theme.spacing.sm};
       width: 100%;
       height: 100%;
     `,
@@ -358,7 +358,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         height: 8px;
         cursor: row-resize;
         position: relative;
-        top: 45px;
+        top: 49px;
         z-index: 1;
         border-top-width: 1px;
       `
