@@ -20,18 +20,11 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
   const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
-  const defaultColumn = React.useMemo(
-    () => ({
-      width: '100%',
-    }),
-    []
-  );
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
       columns: useMemo(() => getColumns(data, width), [data]),
       data: useMemo(() => getTableRows(data), [data]),
-      defaultColumn,
     },
     useSortBy,
     useBlockLayout
