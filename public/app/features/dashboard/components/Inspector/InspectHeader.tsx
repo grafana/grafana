@@ -20,7 +20,7 @@ interface Props {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     header: css`
-      background-color: ${theme.colors.formInputBg};
+      background: ${theme.background.pageHeader};
       z-index: 1;
       flex-grow: 0;
       padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
