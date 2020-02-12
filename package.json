@@ -135,7 +135,7 @@
     "rxjs-spy": "^7.5.1",
     "sass-lint": "1.12.1",
     "sass-loader": "7.1.0",
-    "sinon": "1.17.6",
+    "sinon": "8.1.1",
     "style-loader": "0.23.1",
     "terser-webpack-plugin": "1.2.3",
     "ts-jest": "24.1.0",
