@@ -71,7 +71,7 @@
     "clean-webpack-plugin": "2.0.0",
     "css-loader": "2.1.1",
     "enzyme": "3.9.0",
-    "enzyme-adapter-react-16": "1.11.2",
+    "enzyme-adapter-react-16": "1.15.2",
     "enzyme-to-json": "3.3.5",
     "es6-promise": "3.3.1",
     "es6-shim": "0.35.5",
