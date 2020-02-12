@@ -1,5 +1,5 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiLegacyStreamResult, LokiStreamResult } from './types';
+import { FieldType, MutableDataFrame, CircularDataFrame } from '@grafana/data';
+import { LokiLegacyStreamResult, LokiStreamResult, LokiTailResponse } from './types';
 import * as ResultTransformer from './result_transformer';
 
 const legacyStreamResult: LokiLegacyStreamResult[] = [
@@ -127,7 +127,7 @@ describe('loki result transformer', () => {
   });
 
   describe('appendResponseToBufferedData', () => {
-    it('appends response', () => {
+    it('should append response', () => {
       const data = new MutableDataFrame();
       data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
       data.addField({ name: 'line', type: FieldType.string });
@@ -140,6 +140,42 @@ describe('loki result transformer', () => {
         line: "foo: [32m'bar'[39m",
         labels: { foo: 'bar' },
         id: '2764544e18dbc3fcbeee21a573e8cd1b',
+      });
+    });
+
+    it('should return a dataframe with ts in iso format', () => {
+      const tailResponse: LokiTailResponse = {
+        streams: [
+          {
+            stream: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
+            values: [
+              [
+                '1581519914265798400',
+                't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
+              ],
+            ],
+          },
+        ],
+      };
+
+      const data = new CircularDataFrame({ capacity: 1 });
+      data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
+      data.addField({ name: 'tsNs', type: FieldType.time, config: { title: 'Time ns' } });
+      data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
+      data.addField({ name: 'labels', type: FieldType.other });
+      data.addField({ name: 'id', type: FieldType.string });
+
+      ResultTransformer.appendResponseToBufferedData(tailResponse, data);
+      expect(data.get(0)).toEqual({
+        ts: '2020-02-12T15:05:14.265Z',
+        tsNs: '1581519914265798400',
+        line:
+          't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
+        labels: { filename: '/var/log/grafana/grafana.log' },
+        id: '19e8e093d70122b3b53cb6e24efd6e2d',
       });
     });
   });
