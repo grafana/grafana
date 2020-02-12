@@ -68,7 +68,7 @@
     "babel-jest": "24.8.0",
     "babel-loader": "8.0.5",
     "babel-plugin-angularjs-annotate": "0.10.0",
-    "clean-webpack-plugin": "2.0.0",
+    "clean-webpack-plugin": "3.0.0",
     "css-loader": "2.1.1",
     "enzyme": "3.9.0",
     "enzyme-adapter-react-16": "1.11.2",
