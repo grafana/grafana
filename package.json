@@ -225,7 +225,7 @@
     "d3": "5.15.0",
     "d3-scale-chromatic": "1.5.0",
     "emotion": "10.0.27",
-    "eventemitter3": "2.0.3",
+    "eventemitter3": "4.0.0",
     "fast-text-encoding": "^1.0.0",
     "file-saver": "1.3.8",
     "hoist-non-react-statics": "3.3.0",
