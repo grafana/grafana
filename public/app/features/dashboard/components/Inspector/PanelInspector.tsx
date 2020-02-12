@@ -281,7 +281,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   drawerHeader = () => {
-    const { tab, last } = this.state;
+    const { tab, last, stats } = this.state;
     const error = last?.error;
     const tabs = [];
     if (last && last?.series?.length > 0) {
@@ -299,6 +299,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       <InspectHeader
         tabs={tabs}
         tab={tab}
+        stats={stats}
         onSelectTab={this.onSelectTab}
         onClose={this.onDismiss}
         panel={this.props.panel}

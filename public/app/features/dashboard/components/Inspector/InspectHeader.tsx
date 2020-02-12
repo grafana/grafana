@@ -8,6 +8,7 @@ import { PanelModel } from '../../state';
 interface Props {
   tab: InspectTab;
   tabs: Array<{ label: string; value: InspectTab }>;
+  stats: { requestTime: number; queries: number; dataSources: number };
   panel: PanelModel;
 
   onSelectTab: (tab: SelectableValue<InspectTab>) => void;
@@ -50,9 +51,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const InspectHeader: FC<Props> = ({ tab, tabs, onSelectTab, onClose, onToggleExpand, panel }) => {
+export const InspectHeader: FC<Props> = ({ tab, tabs, onSelectTab, onClose, onToggleExpand, panel, stats }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const statsString = `${stats.queries} queries - ${stats.dataSources} data sources - ${stats.requestTime}ms`;
+
   return (
     <div className={styles.header}>
       <div className={styles.actions}>
@@ -65,7 +68,7 @@ export const InspectHeader: FC<Props> = ({ tab, tabs, onSelectTab, onClose, onTo
       </div>
       <div className={styles.titleWrapper}>
         <div className={styles.title}>{panel.title}</div>
-        <div>and subtitle</div>
+        <div>{statsString}</div>
       </div>
       <TabsBar>
         {tabs.map((t, index) => {
