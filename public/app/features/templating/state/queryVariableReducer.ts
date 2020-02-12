@@ -674,7 +674,7 @@ export const queryVariableReducer = (
       },
     };
 
-    return appyStateChanges(newState, updateTags);
+    return appyStateChanges(newState, updateTags, updateOptions);
   }
 
   return state;
