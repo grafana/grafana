@@ -1,4 +1,4 @@
-import { containsVariable, QueryVariableModel } from '../variable';
+import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
 import { queryVariableReducer, QueryVariableState } from '../state/queryVariableReducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
@@ -33,6 +33,15 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
         await dispatch(updateQueryVariableOptions(variable, searchFilter, notifyAngular));
         resolve();
       });
+    },
+    getSaveModel: variable => {
+      // remove options
+      if (variable.refresh !== VariableRefresh.never) {
+        variable.options = [];
+      }
+
+      const { index, uuid, initLock, global, ...rest } = variable;
+      return rest;
     },
   };
 };
