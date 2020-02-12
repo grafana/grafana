@@ -37,6 +37,8 @@ export const selectVariableOption = createAction<VariablePayload<SelectVariableO
   'templating/selectVariableOption'
 );
 
+export const toggleAllVariableOptions = createAction<VariablePayload<undefined>>('templating/toggleAllOptions');
+
 export const queryVariableDatasourceLoaded = createAction<VariablePayload<DataSourceApi>>(
   'templating/queryVariableDatasourceLoaded'
 );
@@ -55,6 +57,7 @@ export const queryVariableActions: Record<string, ActionCreatorWithPayload<Varia
   [queryVariableEditorLoaded.type]: queryVariableEditorLoaded,
   [toggleVariableTag.type]: toggleVariableTag,
   [changeQueryVariableHighlightIndex.type]: changeQueryVariableHighlightIndex,
+  [toggleAllVariableOptions.type]: toggleAllVariableOptions,
 };
 
 export const updateQueryVariableOptions = (

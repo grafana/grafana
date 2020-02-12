@@ -15,6 +15,7 @@ import {
   toggleTag,
   changeQueryVariableHighlightIndex,
   selectVariableOptionByHighlightIndex,
+  toggleAllVariableOptions,
 } from '../state/queryVariableActions';
 import { VariablePickerProps } from '../state/types';
 
@@ -42,6 +43,12 @@ export class QueryVariablePicker extends PureComponent<Props> {
     event.stopPropagation();
     event.preventDefault();
     dispatch(showQueryVariableDropDown(toVariablePayload(this.props.variable)));
+  };
+
+  selectAll = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+    dispatch(toggleAllVariableOptions(toVariablePayload(this.props.variable)));
   };
 
   toggleTag = (tag: VariableTag) => (event: MouseEvent<HTMLAnchorElement>) => {
@@ -185,6 +192,7 @@ export class QueryVariablePicker extends PureComponent<Props> {
                           ? 'variable-options-column-header many-selected'
                           : 'variable-options-column-header'
                       }`}
+                      onClick={this.selectAll}
                       // bs-tooltip="'Clear selections'"
                       data-placement="top"
                       // ng-click="vm.clearSelections()"

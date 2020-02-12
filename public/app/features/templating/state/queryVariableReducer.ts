@@ -34,6 +34,7 @@ import {
   showQueryVariableDropDown,
   toggleVariableTag,
   changeQueryVariableHighlightIndex,
+  toggleAllVariableOptions,
 } from './queryVariableActions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
@@ -694,6 +695,31 @@ export const queryVariableReducer = (
         highlightIndex: nextIndex,
       },
     };
+  }
+
+  if (toggleAllVariableOptions.match(action)) {
+    const { options } = state.variable;
+    const selected = !options.find(option => option.selected);
+
+    const newState = {
+      ...state,
+      variable: {
+        ...state.variable,
+        options: options.map(option => ({
+          ...option,
+          selected,
+        })),
+      },
+    };
+
+    return appyStateChanges(
+      newState,
+      updateOptions,
+      updateSelectedValues,
+      updateSelectedTags,
+      updateCurrent,
+      updateLinkText
+    );
   }
 
   return state;
