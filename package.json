@@ -106,7 +106,7 @@
     "html-webpack-plugin": "3.2.0",
     "husky": "1.3.1",
     "jest": "25.1.0",
-    "jest-canvas-mock": "2.1.2",
+    "jest-canvas-mock": "2.2.0",
     "jest-date-mock": "1.0.7",
     "lerna": "^3.15.0",
     "lint-staged": "8.1.5",
