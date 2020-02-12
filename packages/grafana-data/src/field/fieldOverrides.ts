@@ -256,7 +256,7 @@ const processFieldConfigValue = (
   const currentConfig = destination[key];
   if (currentConfig === null || currentConfig === undefined) {
     const item = registry.getIfExists(key);
-    if (item && item.shouldApply(context.field)) {
+    if (item && item.shouldApply(context.field!)) {
       const val = item.process(source[key], context, item.settings);
       if (val !== undefined && val !== null) {
         destination[key] = val;

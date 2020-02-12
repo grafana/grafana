@@ -101,7 +101,6 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
           onChange={v => this.setDefaultValue(item.id, v, custom)}
           context={{
             data,
-            // field:
             getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
           }}
         />
