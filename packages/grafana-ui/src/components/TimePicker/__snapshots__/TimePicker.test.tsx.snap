@@ -41,7 +41,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
           <i
             className="fa fa-clock-o fa-fw"
           />
-          <Component
+          <Memo()
             onChange={[Function]}
             onMoveBackward={[Function]}
             onMoveForward={[Function]}
@@ -348,7 +348,7 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
           <i
             className="fa fa-clock-o fa-fw"
           />
-          <Component
+          <Memo()
             onChange={[Function]}
             onMoveBackward={[Function]}
             onMoveForward={[Function]}
