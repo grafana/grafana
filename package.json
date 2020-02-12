@@ -268,7 +268,7 @@
     "search-query-parser": "1.5.4",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
-    "tether": "1.4.5",
+    "tether": "1.4.7",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
