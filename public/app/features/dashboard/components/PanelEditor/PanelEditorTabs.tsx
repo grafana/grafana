@@ -1,7 +1,8 @@
 import React from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
-import { TabsBar, Tab, stylesFactory, TabContent } from '@grafana/ui';
+import { TabsBar, Tab, stylesFactory, TabContent, TransformationsEditor } from '@grafana/ui';
+import { DataTransformerConfig, LoadingState } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { DashboardModel } from '../../state';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
@@ -13,15 +14,20 @@ interface PanelEditorTabsProps {
   dashboard: DashboardModel;
   tabs: PanelEditorTab[];
   onChangeTab: (tab: PanelEditorTab) => void;
+  data: PanelData;
 }
 
-export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboard, tabs, onChangeTab }) => {
+export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboard, tabs, data, onChangeTab }) => {
   const styles = getPanelEditorTabsStyles();
   const activeTab = tabs.find(item => item.active);
 
   if (tabs.length === 0) {
     return null;
   }
+
+  const onTransformersChange = (transformers: DataTransformerConfig[]) => {
+    panel.setTransformations(transformers);
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -33,7 +39,13 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
       <TabContent className={styles.tabContent}>
         {activeTab.id === PanelEditorTabId.Queries && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
-        {activeTab.id === PanelEditorTabId.Transform && <div>TODO: Show Transform</div>}
+        {activeTab.id === PanelEditorTabId.Transform && data.state !== LoadingState.NotStarted && (
+          <TransformationsEditor
+            transformations={panel.transformations || []}
+            onChange={onTransformersChange}
+            dataFrames={data.series}
+          />
+        )}
       </TabContent>
     </div>
   );

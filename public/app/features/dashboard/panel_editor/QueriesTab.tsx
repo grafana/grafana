@@ -219,11 +219,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
-  onTransformersChange = (transformers: DataTransformerConfig[]) => {
-    this.props.panel.setTransformations(transformers);
-    this.forceUpdate();
-  };
-
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     this.setState({ scrollTop: target.scrollTop });
@@ -268,8 +263,6 @@ export class QueriesTab extends PureComponent<Props, State> {
       render: this.renderHelp,
     };
 
-    const enableTransformations = config.featureToggles.transformations;
-
     return (
       <EditorTabBody
         heading="Query"
@@ -278,33 +271,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         setScrollTop={this.setScrollTop}
         scrollTop={scrollTop}
       >
-        <>
-          {this.renderQueryBody()}
-
-          {enableTransformations && (
-            <PanelOptionsGroup
-              title={
-                <>
-                  Query results
-                  <AlphaNotice
-                    state={PluginState.alpha}
-                    className={css`
-                      margin-left: 16px;
-                    `}
-                  />
-                </>
-              }
-            >
-              {this.state.data.state !== LoadingState.NotStarted && (
-                <TransformationsEditor
-                  transformations={this.props.panel.transformations || []}
-                  onChange={this.onTransformersChange}
-                  dataFrames={data.series}
-                />
-              )}
-            </PanelOptionsGroup>
-          )}
-        </>
+        <>{this.renderQueryBody()}</>
       </EditorTabBody>
     );
   }

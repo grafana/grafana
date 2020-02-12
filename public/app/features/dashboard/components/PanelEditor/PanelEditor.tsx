@@ -162,7 +162,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderHorizontalSplit(styles: any) {
-    const { dashboard, panel, mode, tabs } = this.props;
+    const { dashboard, panel, mode, tabs, data } = this.props;
 
     return (
       <SplitPane
@@ -199,7 +199,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           </AutoSizer>
         </div>
         <div className={styles.noScrollPaneContent}>
-          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
+          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
         </div>
       </SplitPane>
     );
