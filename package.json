@@ -46,7 +46,7 @@
     "@types/react": "16.8.16",
     "@types/react-dom": "16.8.4",
     "@types/react-grid-layout": "0.16.7",
-    "@types/react-redux": "7.1.2",
+    "@types/react-redux": "7.1.7",
     "@types/react-select": "3.0.8",
     "@types/react-test-renderer": "16.9.0",
     "@types/react-transition-group": "2.0.16",
