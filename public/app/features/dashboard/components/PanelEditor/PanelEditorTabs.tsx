@@ -57,6 +57,12 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
+      background: ${theme.colors.pageBg};
+      border-right: 1px solid ${theme.colors.pageHeaderBorder};
+
+      .toolbar {
+        background: transparent;
+      }
     `,
   };
 });

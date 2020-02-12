@@ -310,13 +310,6 @@ export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEdi
  */
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = theme.colors.blueLight;
-  const panelOptionsPaneBg = selectThemeVariant(
-    {
-      dark: theme.colors.inputBlack,
-      light: theme.colors.white,
-    },
-    theme.type
-  );
 
   const resizer = css`
     font-style: italic;
@@ -327,6 +320,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     border-left: 0;
     border-color: transparent;
     border-style: solid;
+    transition: 0.2s border-color ease-in-out;
 
     &:hover {
       border-color: ${handleColor};
@@ -343,12 +337,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.inputBlack};
     `,
     panelWrapper: css`
-      padding: ${theme.spacing.sm};
-      padding-bottom: 2px;
-      padding-top: 0px;
+      padding: ${theme.spacing.sm} 2px 2px ${theme.spacing.sm};
       width: 100%;
       height: 100%;
     `,
@@ -378,18 +370,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     panelOptionsPane: css`
       height: 100%;
       width: 100%;
-      background: ${panelOptionsPaneBg};
-      border-top: 1px solid ${theme.colors.formInputBg};
-      border-left: 1px solid ${theme.colors.formInputBg};
+      background: ${theme.colors.pageBg};
+      border-top: 1px solid ${theme.colors.pageHeaderBorder};
+      border-left: 1px solid ${theme.colors.pageHeaderBorder};
     `,
     toolbar: css`
       padding: ${theme.spacing.sm};
-      height: 48px;
+      height: 55px;
       display: flex;
       justify-content: space-between;
     `,
     editorBody: css`
-      height: calc(100% - 48px);
+      height: calc(100% - 55px);
       position: relative;
     `,
     toolbarLeft: css`
