@@ -2,7 +2,7 @@ import React from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 import { TabsBar, Tab, stylesFactory, TabContent, TransformationsEditor } from '@grafana/ui';
-import { DataTransformerConfig, LoadingState } from '@grafana/data';
+import { DataTransformerConfig, LoadingState, PanelData } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { DashboardModel } from '../../state';
 import { QueriesTab } from '../../panel_editor/QueriesTab';

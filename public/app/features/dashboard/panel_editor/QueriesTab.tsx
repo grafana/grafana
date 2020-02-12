@@ -1,13 +1,12 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
-import { css } from 'emotion';
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup, TransformationsEditor, AlphaNotice } from '@grafana/ui';
+import { PanelOptionsGroup } from '@grafana/ui';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -16,15 +15,7 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import {
-  LoadingState,
-  DataTransformerConfig,
-  DefaultTimeRange,
-  DataSourceSelectItem,
-  DataQuery,
-  PanelData,
-  PluginState,
-} from '@grafana/data';
+import { LoadingState, DefaultTimeRange, DataSourceSelectItem, DataQuery, PanelData } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
@@ -251,7 +242,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   render() {
-    const { scrollTop, data } = this.state;
+    const { scrollTop } = this.state;
     const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
       render: this.renderQueryInspector,
