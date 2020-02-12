@@ -48,7 +48,7 @@ const pluginsSlice = createSlice({
       state.getSourcePanel = () => action.payload.sourcePanel;
       state.querySubscription = action.payload.querySubscription;
       state.initDone = true;
-      state.isOpen = false;
+      state.isOpen = true;
     },
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;
@@ -63,7 +63,7 @@ const pluginsSlice = createSlice({
       state.shouldDiscardChanges = action.payload;
     },
     closeCompleted: state => {
-      state.isOpen = true;
+      state.isOpen = false;
       state.initDone = false;
     },
   },
