@@ -662,13 +662,14 @@ export const queryVariableReducer = (
           };
         }),
         options: state.variable.options.map(option => {
-          if (values.indexOf(option.value) !== -1) {
-            return {
-              ...option,
-              selected,
-            };
+          if (values.indexOf(option.value) === -1) {
+            return option;
           }
-          return option;
+
+          return {
+            ...option,
+            selected,
+          };
         }),
       },
     };
