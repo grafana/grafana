@@ -1,14 +1,14 @@
-import { FieldPropertyEditorItem, ThresholdsConfig, DataLink } from '@grafana/data';
-import { StringValueEditor, StringOverrideEditor, stringOverrideProcessor, StringFieldConfigSettings } from './string';
-import { NumberValueEditor, NumberOverrideEditor, numberOverrideProcessor, NumberFieldConfigSettings } from './number';
-import { UnitValueEditor, UnitOverrideEditor } from './units';
+import { DataLink, FieldPropertyEditorItem, FieldType, ThresholdsConfig } from '@grafana/data';
+import { StringFieldConfigSettings, StringOverrideEditor, stringOverrideProcessor, StringValueEditor } from './string';
+import { NumberFieldConfigSettings, NumberOverrideEditor, numberOverrideProcessor, NumberValueEditor } from './number';
+import { UnitOverrideEditor, UnitValueEditor } from './units';
 import {
-  ThresholdsValueEditor,
+  ThresholdsFieldConfigSettings,
   ThresholdsOverrideEditor,
   thresholdsOverrideProcessor,
-  ThresholdsFieldConfigSettings,
+  ThresholdsValueEditor,
 } from './thresholds';
-import { DataLinksValueEditor, DataLinksOverrideEditor, dataLinksOverrideProcessor } from './links';
+import { DataLinksOverrideEditor, dataLinksOverrideProcessor, DataLinksValueEditor } from './links';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace StandardFieldConfigEditors {
@@ -23,6 +23,7 @@ export namespace StandardFieldConfigEditors {
     settings: {
       placeholder: 'auto',
     },
+    shouldApply: field => field.type === FieldType.string,
   };
 
   export const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
@@ -37,6 +38,8 @@ export namespace StandardFieldConfigEditors {
     settings: {
       placeholder: 'none',
     },
+
+    shouldApply: field => field.type === FieldType.number,
   };
 
   export const min: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
@@ -51,6 +54,7 @@ export namespace StandardFieldConfigEditors {
     settings: {
       placeholder: 'auto',
     },
+    shouldApply: field => field.type === FieldType.number,
   };
 
   export const max: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
@@ -65,6 +69,8 @@ export namespace StandardFieldConfigEditors {
     settings: {
       placeholder: 'auto',
     },
+
+    shouldApply: field => field.type === FieldType.number,
   };
 
   export const decimals: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
@@ -82,6 +88,8 @@ export namespace StandardFieldConfigEditors {
       max: 15,
       integer: true,
     },
+
+    shouldApply: field => field.type === FieldType.number,
   };
 
   export const thresholds: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
@@ -96,6 +104,8 @@ export namespace StandardFieldConfigEditors {
     settings: {
       // ??
     },
+
+    shouldApply: field => !!field.config.thresholds,
   };
 
   export const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
@@ -110,6 +120,8 @@ export namespace StandardFieldConfigEditors {
     settings: {
       placeholder: '-',
     },
+    // ??? any field with no value
+    shouldApply: () => true,
   };
 
   export const links: FieldPropertyEditorItem<DataLink[], StringFieldConfigSettings> = {
@@ -122,5 +134,6 @@ export namespace StandardFieldConfigEditors {
     settings: {
       placeholder: '-',
     },
+    shouldApply: field => !!field.config.links,
   };
 }

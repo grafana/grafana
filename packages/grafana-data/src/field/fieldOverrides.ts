@@ -101,6 +101,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
     const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
+      const config: FieldConfig = { ...field.config } || {};
+
       const context = {
         field,
         data: options.data!,
@@ -109,10 +111,9 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         custom: options.custom,
       };
 
-      const config: FieldConfig = { ...field.config } || {};
-      if (field.type === FieldType.number) {
-        setFieldConfigDefaults(config, source.defaults, context);
-      }
+      // Anything in the field config that's not set by the datasource
+      // will be filled in by panel's field configuration
+      setFieldConfigDefaults(config, source.defaults, context);
 
       // Find any matching rules and then override
       for (const rule of override) {
@@ -187,7 +188,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   });
 }
 
-interface FieldOverrideEnv extends FieldOverrideContext {
+export interface FieldOverrideEnv extends FieldOverrideContext {
   custom?: FieldConfigEditorRegistry;
 }
 
@@ -216,26 +217,53 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, e
   }
 }
 
-function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig, env?: FieldOverrideEnv) {
-  if (props) {
-    const keys = Object.keys(props);
+// config -> from DS
+// defaults -> from Panel config
+export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
+  if (defaults) {
+    const keys = Object.keys(defaults);
+
     for (const key of keys) {
       if (key === 'custom') {
-        // TODO? iterate through the sub elements?
-      } else {
-        const item = standardFieldConfigEditorRegistry.getIfExists(key);
-        if (item) {
-          const val = item.process((props as any)[key], env!, item.settings);
-          if (val !== undefined && val !== null) {
-            (config as any)[key] = val;
-          }
+        if (!context.custom) {
+          continue;
         }
+        if (!config.custom) {
+          config.custom = {};
+        }
+        const customKeys = Object.keys(defaults.custom!);
+
+        for (const customKey of customKeys) {
+          console.log(customKey);
+          processFieldConfigValue(config.custom!, defaults.custom!, customKey, context.custom, context);
+        }
+      } else {
+        // when config from ds exists for a given field -> use it
+        processFieldConfigValue(config, defaults, key, standardFieldConfigEditorRegistry, context);
       }
     }
   }
-
   validateFieldConfig(config);
 }
+
+const processFieldConfigValue = (
+  destination: Record<string, any>, // it's mutable
+  source: Record<string, any>,
+  key: string,
+  registry: FieldConfigEditorRegistry,
+  context: FieldOverrideContext
+) => {
+  const currentConfig = destination[key];
+  if (currentConfig === null || currentConfig === undefined) {
+    const item = registry.getIfExists(key);
+    if (item && item.shouldApply(context.field)) {
+      const val = item.process(source[key], context, item.settings);
+      if (val !== undefined && val !== null) {
+        destination[key] = val;
+      }
+    }
+  }
+};
 
 /**
  * This checks that all options on FieldConfig make sense.  It mutates any value that needs
