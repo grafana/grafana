@@ -35,7 +35,7 @@ export enum InspectTab {
 
 interface State {
   // The last raw response
-  last?: PanelData;
+  last: PanelData;
 
   // Data frem the last response
   data: DataFrame[];
@@ -84,6 +84,7 @@ export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      last: {} as PanelData,
       data: [],
       selected: 0,
       tab: props.selectedTab || InspectTab.Data,
@@ -107,18 +108,23 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     // Find the first DataSource wanting to show custom metadata
     let metaDS: DataSourceApi;
-    const data = lastResult?.series;
-    const error = lastResult?.error;
+    const data = lastResult.series;
+    const error = lastResult.error;
 
-    const targets = lastResult?.request.targets;
-    const requestTime = lastResult?.request.endTime - lastResult?.request.startTime;
-    const queries = targets.length;
+    const targets = lastResult.request?.targets;
+    const requestTime = lastResult.request?.endTime ? lastResult.request?.endTime - lastResult.request.startTime : -1;
+    const queries = targets ? targets.length : 0;
     const temp: { [key: string]: { count: number } } = {};
-    for (let { datasource } of targets) {
-      temp[datasource] = {
-        count: temp[datasource] ? temp[datasource].count + 1 : 1,
-      };
+    if (targets) {
+      for (let { datasource } of targets) {
+        if (datasource) {
+          temp[datasource] = {
+            count: temp[datasource] ? temp[datasource].count++ : 1,
+          };
+        }
+      }
     }
+
     const dataSources = Object.values(temp).filter(t => t.count >= 1).length;
 
     if (data) {
