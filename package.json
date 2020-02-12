@@ -134,7 +134,7 @@
     "rimraf": "2.6.3",
     "rxjs-spy": "^7.5.1",
     "sass-lint": "1.12.1",
-    "sass-loader": "7.1.0",
+    "sass-loader": "8.0.2",
     "sinon": "1.17.6",
     "style-loader": "0.23.1",
     "terser-webpack-plugin": "2.3.4",
