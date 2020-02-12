@@ -32,8 +32,7 @@ import {
   queryVariableEditorLoaded,
   selectVariableOption,
   showQueryVariableDropDown,
-  selectVariableTagWithValues,
-  deselectVariableTag,
+  toggleVariableTag,
 } from './queryVariableActions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
@@ -350,21 +349,6 @@ const updateTags = (state: QueryVariableState): QueryVariableState => {
   };
 };
 
-const updateTag = (tag: VariableTag) => (state: QueryVariableState): QueryVariableState => {
-  return {
-    ...state,
-    variable: {
-      ...state.variable,
-      tags: state.variable.tags.map(current => {
-        if (current.text !== tag.text) {
-          return { ...current };
-        }
-        return { ...current, ...tag };
-      }),
-    },
-  };
-};
-
 // I stumbled upon the error described here https://github.com/immerjs/immer/issues/430
 // So reverting to a "normal" reducer
 export const queryVariableReducer = (
@@ -657,24 +641,36 @@ export const queryVariableReducer = (
     return appyStateChanges(newState, updateEditorErrors, updateEditorIsValid);
   }
 
-  if (selectVariableTagWithValues.match(action)) {
-    const { tag, values } = action.payload.data;
-    const newTag: VariableTag = {
-      ...tag,
-      selected: true,
-      values: values,
+  if (toggleVariableTag.match(action)) {
+    const tag = action.payload.data;
+    const values = tag.values || [];
+    // tag.values = values;
+    // tag.valuesText = values.join(' + ');
+    // each(this.options, option => {
+    //   if (indexOf(tag.values, option.value) !== -1) {
+    //     option.selected = tag.selected;
+    //   }
+    // });
+
+    const newState = {
+      ...state,
+      variable: {
+        ...state.variable,
+        tags: state.variable.tags.map(current => {
+          if (current.text !== tag.text) {
+            return { ...current };
+          }
+          return {
+            ...current,
+            selected: !tag.selected,
+            valuesText: values.join(' + '),
+            values: values,
+          };
+        }),
+      },
     };
 
-    return appyStateChanges(state, updateTag(newTag), updateTags);
-  }
-
-  if (deselectVariableTag.match(action)) {
-    const newTag: VariableTag = {
-      ...action.payload.data,
-      selected: false,
-    };
-
-    return appyStateChanges(state, updateTag(newTag), updateTags);
+    return appyStateChanges(newState, updateTags);
   }
 
   return state;

@@ -21,12 +21,6 @@ import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { ComponentType } from 'react';
 import { getVariable } from './selectors';
 
-// TODO: move to a better place
-interface TagWithValues {
-  tag: VariableTag;
-  values: string[];
-}
-
 export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(
   'templating/showQueryVariableDropDown'
 );
@@ -47,8 +41,7 @@ export const queryVariableEditorLoaded = createAction<VariablePayload<ComponentT
   'templating/queryVariableEditorLoaded'
 );
 
-export const selectVariableTagWithValues = createAction<VariablePayload<TagWithValues>>('templating/selectVariableTag');
-export const deselectVariableTag = createAction<VariablePayload<VariableTag>>('templating/deselectVariableTag');
+export const toggleVariableTag = createAction<VariablePayload<VariableTag>>('templating/toggleVariableTag');
 
 export const queryVariableActions: Record<string, ActionCreatorWithPayload<VariablePayload<any>>> = {
   [showQueryVariableDropDown.type]: showQueryVariableDropDown,
@@ -56,8 +49,7 @@ export const queryVariableActions: Record<string, ActionCreatorWithPayload<Varia
   [selectVariableOption.type]: selectVariableOption,
   [queryVariableDatasourceLoaded.type]: queryVariableDatasourceLoaded,
   [queryVariableEditorLoaded.type]: queryVariableEditorLoaded,
-  [selectVariableTagWithValues.type]: selectVariableTagWithValues,
-  [deselectVariableTag.type]: deselectVariableTag,
+  [toggleVariableTag.type]: toggleVariableTag,
 };
 
 export const updateQueryVariableOptions = (
@@ -124,20 +116,20 @@ export const changeQueryVariableDataSource = (variable: QueryVariableModel, name
   };
 };
 
-export const selectVariableTag = (uuid: string, tag: VariableTag): ThunkResult<void> => {
+export const toggleTag = (uuid: string, tag: VariableTag): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
       const variable = getVariable<QueryVariableModel>(uuid, getState());
 
       if (tag.values) {
-        return dispatch(selectVariableTagWithValues(toVariablePayload(variable, { tag, values: tag.values })));
+        return dispatch(toggleVariableTag(toVariablePayload(variable, tag)));
       }
 
       const datasource = await getDatasourceSrv().get(variable.datasource ?? '');
       const query = variable.tagValuesQuery.replace('$tag', tag.text.toString());
       const result = await metricFindQuery(datasource, query, variable);
       const values = result?.map((value: any) => value.text) || [];
-      return dispatch(selectVariableTagWithValues(toVariablePayload(variable, { tag, values })));
+      return dispatch(toggleVariableTag(toVariablePayload(variable, { ...tag, values })));
     } catch (error) {
       return console.error(error);
     }
