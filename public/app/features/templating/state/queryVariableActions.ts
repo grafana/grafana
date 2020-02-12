@@ -29,6 +29,10 @@ export const hideQueryVariableDropDown = createAction<VariablePayload<undefined>
   'templating/hideQueryVariableDropDown'
 );
 
+export const changeQueryVariableHighlightIndex = createAction<VariablePayload<number>>(
+  'templating/changeQueryVariableHighlightIndex'
+);
+
 export const selectVariableOption = createAction<VariablePayload<SelectVariableOption>>(
   'templating/selectVariableOption'
 );
@@ -50,6 +54,7 @@ export const queryVariableActions: Record<string, ActionCreatorWithPayload<Varia
   [queryVariableDatasourceLoaded.type]: queryVariableDatasourceLoaded,
   [queryVariableEditorLoaded.type]: queryVariableEditorLoaded,
   [toggleVariableTag.type]: toggleVariableTag,
+  [changeQueryVariableHighlightIndex.type]: changeQueryVariableHighlightIndex,
 };
 
 export const updateQueryVariableOptions = (
@@ -112,6 +117,20 @@ export const changeQueryVariableDataSource = (variable: QueryVariableModel, name
       dispatch(queryVariableEditorLoaded(toVariablePayload(variable, VariableQueryEditor)));
     } catch (err) {
       console.error(err);
+    }
+  };
+};
+
+export const selectVariableOptionByHighlightIndex = (uuid: string, index: number): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    try {
+      const variable = getVariable<QueryVariableModel>(uuid, getState());
+      const option = variable.options[index];
+      const event: React.MouseEvent<HTMLAnchorElement> = null;
+      const data = { option, forceSelect: false, event };
+      dispatch(selectVariableOption(toVariablePayload(variable, data)));
+    } catch (error) {
+      console.error(error);
     }
   };
 };

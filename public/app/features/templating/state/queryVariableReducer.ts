@@ -33,6 +33,7 @@ import {
   selectVariableOption,
   showQueryVariableDropDown,
   toggleVariableTag,
+  changeQueryVariableHighlightIndex,
 } from './queryVariableActions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
@@ -506,7 +507,7 @@ export const queryVariableReducer = (
           selected = false;
         } else if (!multi) {
           selected = false;
-        } else if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        } else if (event && (event.ctrlKey || event.metaKey || event.shiftKey)) {
           selected = false;
         }
         return {
@@ -675,6 +676,24 @@ export const queryVariableReducer = (
     };
 
     return appyStateChanges(newState, updateTags, updateOptions);
+  }
+
+  if (changeQueryVariableHighlightIndex.match(action)) {
+    let nextIndex = state.picker.highlightIndex + action.payload.data;
+
+    if (nextIndex < 0) {
+      nextIndex = 0;
+    } else if (nextIndex > state.picker.options.length) {
+      nextIndex = state.picker.options.length;
+    }
+
+    return {
+      ...state,
+      picker: {
+        ...state.picker,
+        highlightIndex: nextIndex,
+      },
+    };
   }
 
   return state;
