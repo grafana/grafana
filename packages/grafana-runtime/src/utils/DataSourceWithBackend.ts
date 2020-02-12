@@ -71,7 +71,7 @@ export class DataSourceWithBackend<
   }
 
   /**
-   * This makes the arrow libary loading async.
+   * This makes the arrow library loading async.
    */
   async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
     const { resultsToDataFrames } = await import(
