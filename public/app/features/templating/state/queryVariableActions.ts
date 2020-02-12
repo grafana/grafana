@@ -21,6 +21,12 @@ import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { ComponentType } from 'react';
 import { getVariable } from './selectors';
 
+// TODO: move to a better place
+interface TagWithValues {
+  tag: VariableTag;
+  values: string[];
+}
+
 export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(
   'templating/showQueryVariableDropDown'
 );
@@ -41,12 +47,8 @@ export const queryVariableEditorLoaded = createAction<VariablePayload<ComponentT
   'templating/queryVariableEditorLoaded'
 );
 
-interface TagWithValues {
-  tag: VariableTag;
-  values: string[];
-}
-
 export const selectVariableTagWithValues = createAction<VariablePayload<TagWithValues>>('templating/selectVariableTag');
+export const deselectVariableTag = createAction<VariablePayload<VariableTag>>('templating/deselectVariableTag');
 
 export const queryVariableActions: Record<string, ActionCreatorWithPayload<VariablePayload<any>>> = {
   [showQueryVariableDropDown.type]: showQueryVariableDropDown,
@@ -55,6 +57,7 @@ export const queryVariableActions: Record<string, ActionCreatorWithPayload<Varia
   [queryVariableDatasourceLoaded.type]: queryVariableDatasourceLoaded,
   [queryVariableEditorLoaded.type]: queryVariableEditorLoaded,
   [selectVariableTagWithValues.type]: selectVariableTagWithValues,
+  [deselectVariableTag.type]: deselectVariableTag,
 };
 
 export const updateQueryVariableOptions = (

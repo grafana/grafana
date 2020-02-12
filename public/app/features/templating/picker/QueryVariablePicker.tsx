@@ -13,6 +13,7 @@ import {
   selectVariableOption,
   showQueryVariableDropDown,
   selectVariableTag,
+  deselectVariableTag,
 } from '../state/queryVariableActions';
 import { VariablePickerProps } from '../state/types';
 
@@ -38,6 +39,12 @@ export class QueryVariablePicker extends PureComponent<Props> {
     event.preventDefault();
     const { uuid } = this.props.variable;
     dispatch(selectVariableTag(uuid, tag));
+  };
+
+  deselectTag = (tag: VariableTag) => (event: MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+    dispatch(deselectVariableTag(toVariablePayload(this.props.variable, tag)));
   };
 
   selectValue = (option: VariableOption) => (event: MouseEvent<HTMLAnchorElement>) => {
@@ -185,7 +192,7 @@ export class QueryVariablePicker extends PureComponent<Props> {
                           className={`${
                             tag.selected ? 'variable-option-tag pointer selected' : 'variable-option-tag pointer'
                           }`}
-                          onClick={this.selectTag(tag)}
+                          onClick={tag.selected ? this.deselectTag(tag) : this.selectTag(tag)}
                         >
                           <span className="fa fa-fw variable-option-icon"></span>
                           <span className="label-tag" style={{ backgroundColor: color, borderColor }}>
