@@ -137,7 +137,7 @@
     "sass-loader": "7.1.0",
     "sinon": "1.17.6",
     "style-loader": "0.23.1",
-    "terser-webpack-plugin": "1.2.3",
+    "terser-webpack-plugin": "2.3.4",
     "ts-jest": "24.1.0",
     "ts-node": "8.5.0",
     "tslib": "1.10.0",
