@@ -304,6 +304,7 @@ export class PanelInspector extends PureComponent<Props, State> {
         onClose={this.onDismiss}
         panel={this.props.panel}
         onToggleExpand={this.onToggleExpand}
+        isExpanded={this.state.drawerWidth === '100%'}
       />
     );
   };

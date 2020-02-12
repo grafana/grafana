@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
+import { Icon, stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { InspectTab } from './PanelInspector';
 import { PanelModel } from '../../state';
@@ -10,6 +10,7 @@ interface Props {
   tabs: Array<{ label: string; value: InspectTab }>;
   stats: { requestTime: number; queries: number; dataSources: number };
   panel: PanelModel;
+  isExpanded: boolean;
 
   onSelectTab: (tab: SelectableValue<InspectTab>) => void;
   onClose: () => void;
@@ -45,29 +46,37 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     titleWrapper: css`
       margin-bottom: ${theme.spacing.lg};
     `,
-    title: css`
-      font-size: ${theme.typography.size.lg};
-    `,
   };
 });
 
-export const InspectHeader: FC<Props> = ({ tab, tabs, onSelectTab, onClose, onToggleExpand, panel, stats }) => {
+export const InspectHeader: FC<Props> = ({
+  tab,
+  tabs,
+  onSelectTab,
+  onClose,
+  onToggleExpand,
+  panel,
+  stats,
+  isExpanded,
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const statsString = `${stats.queries} queries - ${stats.dataSources} data sources - ${stats.requestTime}ms`;
+  const statsString = `${stats.queries} ${stats.queries === 1 ? 'query' : 'queries'} - ${stats.dataSources} ${
+    stats.dataSources === 1 ? 'data source' : 'data sources'
+  } - ${stats.requestTime}ms`;
 
   return (
     <div className={styles.header}>
       <div className={styles.actions}>
         <div className={styles.expand} onClick={onToggleExpand}>
-          {'<--'}
+          <Icon name={isExpanded ? 'chevron-right' : 'chevron-left'} />
         </div>
         <div className={styles.close} onClick={onClose}>
           <i className="fa fa-close" />
         </div>
       </div>
       <div className={styles.titleWrapper}>
-        <div className={styles.title}>{panel.title}</div>
+        <h3>{panel.title}</h3>
         <div>{statsString}</div>
       </div>
       <TabsBar>
