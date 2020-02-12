@@ -48,7 +48,7 @@
     "@types/react-grid-layout": "0.16.7",
     "@types/react-redux": "7.1.2",
     "@types/react-select": "3.0.8",
-    "@types/react-test-renderer": "16.9.0",
+    "@types/react-test-renderer": "16.9.2",
     "@types/react-transition-group": "2.0.16",
     "@types/react-window": "1.7.0",
     "@types/redux-logger": "3.0.7",
