@@ -98,6 +98,7 @@ export interface Props {
   isEditing: boolean;
   isFullscreen: boolean;
   scrollTop: number;
+  isNewEditorOpen?: boolean;
 }
 
 export class DashboardGrid extends PureComponent<Props> {
