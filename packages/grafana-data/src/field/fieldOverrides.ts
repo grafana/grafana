@@ -119,10 +119,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       for (const rule of override) {
         if (rule.match(field)) {
           for (const prop of rule.properties) {
+            // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);
           }
         }
       }
+
+      // console.log(config)
 
       // Try harder to set a real value that is not 'other'
       let type = field.type;
@@ -192,27 +195,32 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
   custom?: FieldConfigEditorRegistry;
 }
 
-function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, env: FieldOverrideEnv) {
-  const reg = value.custom ? env.custom : env.custom;
+function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+  const reg = value.custom ? context.custom : standardFieldConfigEditorRegistry;
+
   const item = reg?.getIfExists(value.prop);
-  if (item) {
-    const val = item.process(value.value, env, item.settings);
-    const remove = val === undefined || val === null;
-    if (remove) {
-      if (value.custom) {
-        delete (config?.custom as any)[value.prop];
-      } else {
-        delete (config as any)[value.prop];
-      }
+  if (!item || !item.shouldApply(context.field!)) {
+    return;
+  }
+
+  const val = item.process(value.value, context, item.settings);
+
+  const remove = val === undefined || val === null;
+
+  if (remove) {
+    if (value.custom) {
+      delete (config?.custom as any)[value.prop];
     } else {
-      if (value.custom) {
-        if (!config.custom) {
-          config.custom = {};
-        }
-        config.custom[value.prop] = val;
-      } else {
-        (config as any)[value.prop] = val;
+      delete (config as any)[value.prop];
+    }
+  } else {
+    if (value.custom) {
+      if (!config.custom) {
+        config.custom = {};
       }
+      config.custom[value.prop] = val;
+    } else {
+      (config as any)[value.prop] = val;
     }
   }
 }

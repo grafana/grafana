@@ -63,12 +63,14 @@ describe('setFieldConfigDefaults', () => {
     // we mutate dsFieldConfig
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 
-    expect(dsFieldConfig).toEqual({
-      decimals: 2,
-      min: 0,
-      max: 100,
-      unit: 'km',
-    });
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      Object {
+        "decimals": 2,
+        "max": 100,
+        "min": 0,
+        "unit": "km",
+      }
+    `);
   });
 
   it('applies field config defaults for custom properties', () => {
@@ -95,11 +97,13 @@ describe('setFieldConfigDefaults', () => {
     // we mutate dsFieldConfig
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 
-    expect(dsFieldConfig).toEqual({
-      custom: {
-        property1: 10,
-        property2: 10,
-      },
-    });
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      Object {
+        "custom": Object {
+          "property1": 10,
+          "property2": 10,
+        },
+      }
+    `);
   });
 });

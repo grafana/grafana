@@ -23,7 +23,7 @@ export namespace StandardFieldConfigEditors {
     settings: {
       placeholder: 'auto',
     },
-    shouldApply: field => field.type === FieldType.string,
+    shouldApply: field => field.type !== FieldType.time,
   };
 
   export const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
@@ -105,7 +105,7 @@ export namespace StandardFieldConfigEditors {
       // ??
     },
 
-    shouldApply: field => !!field.config.thresholds,
+    shouldApply: field => field.type === FieldType.number,
   };
 
   export const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
@@ -134,6 +134,6 @@ export namespace StandardFieldConfigEditors {
     settings: {
       placeholder: '-',
     },
-    shouldApply: field => !!field.config.links,
+    shouldApply: () => true,
   };
 }
