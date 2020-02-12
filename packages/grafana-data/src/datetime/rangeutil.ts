@@ -6,7 +6,7 @@ import { RawTimeRange } from '../types/time';
 import { dateMath } from './datemath';
 import { isDateTime, DateTime } from './moment_wrapper';
 
-/* eslint-disable no-namespace */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace rangeUtil {
   const spans: { [key: string]: { display: string; section?: number } } = {
     s: { display: 'second' },

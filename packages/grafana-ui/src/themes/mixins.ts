@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 
-/* eslint-disable no-namespace */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace styleMixins {
   export function cardChrome(theme: GrafanaTheme): string {
     if (theme.isDark) {

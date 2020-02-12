@@ -33,19 +33,19 @@ interface RegistrySelectInfo {
 export class Registry<T extends RegistryItem> {
   private ordered: T[] = [];
   private byId = new Map<string, T>();
-  private initalized = false;
+  private initialized = false;
 
   constructor(private init?: () => T[]) {}
 
   getIfExists(id: string | undefined): T | undefined {
-    if (!this.initalized) {
+    if (!this.initialized) {
       if (this.init) {
         for (const ext of this.init()) {
           this.register(ext);
         }
       }
       this.sort();
-      this.initalized = true;
+      this.initialized = true;
     }
     if (id) {
       return this.byId.get(id);
@@ -62,7 +62,7 @@ export class Registry<T extends RegistryItem> {
   }
 
   selectOptions(current?: string[], filter?: (ext: T) => boolean): RegistrySelectInfo {
-    if (!this.initalized) {
+    if (!this.initialized) {
       this.getIfExists('xxx'); // will trigger init
     }
 
@@ -114,7 +114,7 @@ export class Registry<T extends RegistryItem> {
       }
       return found;
     }
-    if (!this.initalized) {
+    if (!this.initialized) {
       this.getIfExists('xxx'); // will trigger init
     }
     return [...this.ordered]; // copy of everythign just in case
@@ -135,7 +135,7 @@ export class Registry<T extends RegistryItem> {
       }
     }
 
-    if (this.initalized) {
+    if (this.initialized) {
       this.sort();
     }
   }
