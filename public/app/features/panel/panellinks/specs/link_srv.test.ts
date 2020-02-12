@@ -159,6 +159,23 @@ describe('linkSrv', () => {
         ).href
       ).toEqual('www.google.com?query=some query');
     });
+    it('should remove new lines from data link', () => {
+      expect(
+        linkSrv.getDataLinkUIModel(
+          {
+            title: 'New line',
+            url: 'www.google.com?query=some\nquery',
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href
+      ).toEqual('www.google.com?query=somequery');
+    });
   });
 
   describe('sanitization', () => {
