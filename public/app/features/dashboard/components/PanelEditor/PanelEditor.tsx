@@ -310,6 +310,7 @@ export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEdi
  */
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const handleColor = theme.colors.blueLight;
+  const background = selectThemeVariant({ light: theme.colors.white, dark: theme.colors.inputBlack }, theme.type);
 
   const resizer = css`
     font-style: italic;
@@ -337,7 +338,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${theme.colors.inputBlack};
+      background: ${background};
     `,
     panelWrapper: css`
       padding: 0 2px 2px ${theme.spacing.sm};

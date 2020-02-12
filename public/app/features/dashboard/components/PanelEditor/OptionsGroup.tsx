@@ -28,16 +28,17 @@ export const OptionsGroup: FC<Props> = ({ title, children }) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.colors.formInputBg};
+      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
     `,
     toggle: css`
       font-size: ${theme.typography.size.lg};
     `,
     header: css`
       display: flex;
+      cursor: pointer;
       justify-content: space-between;
       align-items: center;
-      padding: ${theme.spacing.md};
+      padding: ${theme.spacing.sm} ${theme.spacing.md};
       font-weight: ${theme.typography.weight.semibold};
     `,
     body: css`
