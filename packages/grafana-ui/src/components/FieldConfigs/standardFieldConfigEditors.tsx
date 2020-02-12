@@ -22,6 +22,7 @@ export namespace StandardFieldConfigEditors {
     process: stringOverrideProcessor,
     settings: {
       placeholder: 'auto',
+      expandTemplateVars: true,
     },
     shouldApply: field => field.type !== FieldType.time,
   };
