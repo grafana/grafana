@@ -141,7 +141,7 @@
     "ts-jest": "24.1.0",
     "ts-node": "8.5.0",
     "tslib": "1.10.0",
-    "typescript": "3.7.2",
+    "typescript": "3.7.5",
     "webpack": "4.29.6",
     "webpack-bundle-analyzer": "3.3.2",
     "webpack-cleanup-plugin": "0.5.1",
