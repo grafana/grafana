@@ -273,7 +273,7 @@
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
     "whatwg-fetch": "3.0.0",
-    "xss": "1.0.3"
+    "xss": "1.0.6"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"
