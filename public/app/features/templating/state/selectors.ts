@@ -23,7 +23,7 @@ export const getVariable = <T extends VariableModel = VariableModel>(
 };
 
 export const getVariables = (state: StoreState = getState()): VariableModel[] => {
-  return Object.values(state.templating.variables).map(state => ({ ...state.variable }));
+  return Object.values(state.templating.variables).map(state => state.variable);
 };
 
 export const getAllVariables = (angularVariables: VariableModel[], state: StoreState = getState()): VariableModel[] => {

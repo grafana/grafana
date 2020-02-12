@@ -15,6 +15,7 @@ export interface VariableAdapter<Model extends VariableModel, State extends Vari
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
   updateOptions: (variable: Model, searchFilter?: string, notifyAngular?: boolean) => Promise<void>;
   getSaveModel: (variable: Model) => Partial<Model>;
+  getValueForUrl: (variable: Model) => string | string[];
   picker: ComponentType<VariablePickerProps>;
   editor: ComponentType<VariableEditorProps>;
   reducer: Reducer<State, PayloadAction<VariablePayload<any>>>;
