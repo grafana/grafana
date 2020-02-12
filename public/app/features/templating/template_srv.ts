@@ -1,8 +1,11 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { variableRegex } from 'app/features/templating/variable';
+import { VariableActions, VariableModel, variableRegex } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
+import { getAllVariables } from './state/selectors';
+import { getState } from '../../store/store';
+import { variableAdapters } from './adapters';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -354,7 +357,7 @@ export class TemplateSrv {
   }
 
   fillVariableValuesForUrl(params: any, scopedVars?: ScopedVars) {
-    _.each(this.variables, variable => {
+    _.each(getAllVariables(this.variables, getState()), (variable: VariableModel & VariableActions) => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -364,7 +367,11 @@ export class TemplateSrv {
         if (variable.skipUrlSync) {
           return;
         }
-        params['var-' + variable.name] = variable.getValueForUrl();
+        if (variableAdapters.contains(variable.type)) {
+          params['var-' + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable);
+        } else {
+          params['var-' + variable.name] = variable.getValueForUrl();
+        }
       }
     });
   }
