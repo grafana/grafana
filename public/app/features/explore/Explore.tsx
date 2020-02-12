@@ -1,7 +1,7 @@
 // Libraries
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
@@ -9,7 +9,7 @@ import memoizeOne from 'memoize-one';
 // Services & Utils
 import store from 'app/core/store';
 // Components
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -57,15 +57,15 @@ import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 
-const getStyles = memoizeOne(() => {
+const getStyles = stylesFactory(() => {
   return {
     logsMain: css`
       label: logsMain;
       // Is needed for some transition animations to work.
       position: relative;
     `,
-    exploreAddButton: css`
-      margin-top: 1em;
+    button: css`
+      margin: 1em 4px 0 0;
     `,
   };
 });
@@ -108,6 +108,10 @@ interface ExploreProps {
   addQueryRow: typeof addQueryRow;
 }
 
+interface ExploreState {
+  isQueryHistoryVisible: boolean;
+}
+
 /**
  * Explore provides an area for quick query iteration for a given datasource.
  * Once a datasource is selected it populates the query section at the top.
@@ -132,13 +136,16 @@ interface ExploreProps {
  * The result viewers determine some of the query options sent to the datasource, e.g.,
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
-export class Explore extends React.PureComponent<ExploreProps> {
+export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
   exploreEvents: Emitter;
 
   constructor(props: ExploreProps) {
     super(props);
     this.exploreEvents = new Emitter();
+    this.state = {
+      isQueryHistoryVisible: false,
+    };
   }
 
   componentDidMount() {
@@ -237,6 +244,14 @@ export class Explore extends React.PureComponent<ExploreProps> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  toggleIsQueryHistoryVisible = () => {
+    this.setState(state => {
+      return {
+        isQueryHistoryVisible: !state.isQueryHistoryVisible,
+      };
+    });
+  };
+
   refreshExplore = () => {
     const { exploreId, update } = this.props;
 
@@ -286,12 +301,23 @@ export class Explore extends React.PureComponent<ExploreProps> {
             <div className="gf-form">
               <button
                 aria-label="Add row button"
-                className={`gf-form-label gf-form-label--btn ${styles.exploreAddButton}`}
+                className={`gf-form-label gf-form-label--btn ${styles.button}`}
                 onClick={this.onClickAddQueryRowButton}
                 disabled={isLive}
               >
                 <i className={'fa fa-fw fa-plus icon-margin-right'} />
                 <span className="btn-title">{'\xA0' + 'Add query'}</span>
+              </button>
+              <button
+                aria-label="Query history button"
+                className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
+                  ['explore-active-button']: this.state.isQueryHistoryVisible,
+                })}
+                onClick={this.toggleIsQueryHistoryVisible}
+                disabled={isLive}
+              >
+                <i className={'fa fa-fw fa-history icon-margin-right '} />
+                <span className="btn-title">{'\xA0' + 'Query history'}</span>
               </button>
             </div>
             <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
