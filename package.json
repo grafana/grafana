@@ -111,7 +111,7 @@
     "lerna": "^3.15.0",
     "lint-staged": "8.1.5",
     "load-grunt-tasks": "3.5.2",
-    "mini-css-extract-plugin": "0.5.0",
+    "mini-css-extract-plugin": "0.9.0",
     "mocha": "4.1.0",
     "module-alias": "2.2.0",
     "monaco-editor": "0.15.6",
