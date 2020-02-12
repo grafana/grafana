@@ -15,6 +15,8 @@ export interface Props {
   inline?: boolean;
   /** Either a number in px or a string with unit postfix */
   width?: number | string;
+  height?: number | string;
+  placement?: 'left' | 'top' | 'right' | 'bottom' | undefined;
 
   /** Set to true if the component rendered within in drawer content has its own scroll */
   scrollableContent?: boolean;
@@ -77,6 +79,8 @@ export const Drawer: FC<Props> = ({
   scrollableContent = false,
   title,
   width = '40%',
+  height = '100%',
+  placement = 'right',
 }) => {
   const theme = useTheme();
   const drawerStyles = getStyles(theme, scrollableContent);
@@ -88,18 +92,21 @@ export const Drawer: FC<Props> = ({
       open={true}
       onClose={onClose}
       maskClosable={closeOnMaskClick}
-      placement="right"
+      placement={placement}
       width={width}
+      height={height}
       getContainer={inline ? false : 'body'}
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
       className={drawerStyles.drawer}
     >
-      <div className={drawerStyles.titleWrapper}>
-        <div>{title}</div>
-        <div className={drawerStyles.close} onClick={onClose}>
-          <i className="fa fa-close" />
+      {title && (
+        <div className={drawerStyles.titleWrapper}>
+          <div>{title}</div>
+          <div className={drawerStyles.close} onClick={onClose}>
+            <i className="fa fa-close" />
+          </div>
         </div>
-      </div>
+      )}
       <div className={drawerStyles.content}>
         {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
       </div>

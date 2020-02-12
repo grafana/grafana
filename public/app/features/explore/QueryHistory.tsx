@@ -30,7 +30,7 @@ import { config } from 'app/core/config';
 
 interface Props {
   dashboard: DashboardModel;
-  panel: PanelModel;
+  panel: any;
   selectedTab: InspectTab;
 }
 
@@ -85,7 +85,7 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-export class PanelInspector extends PureComponent<Props, State> {
+export class QueryHistory extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -262,8 +262,8 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel } = this.props;
-    console.log('this.props', this.props);
+    const { panel, width } = this.props;
+    console.log('panel', panel);
     const { last, tab } = this.state;
     const styles = getStyles();
 
@@ -286,7 +286,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
 
     return (
-      <Drawer title={panel.title} onClose={this.onDismiss}>
+      <Drawer onClose={this.onDismiss} placement="bottom" height="60%" width="100%" inline={true}>
         <TabsBar>
           {tabs.map((t, index) => {
             return (
