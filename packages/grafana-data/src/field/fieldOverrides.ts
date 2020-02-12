@@ -13,6 +13,7 @@ import {
   TimeZone,
   FieldConfigEditorRegistry,
   FieldOverrideContext,
+  ScopedVars,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -68,6 +69,7 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
  * Return a copy of the DataFrame with all rules applied
  */
 export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFrame[] {
+  const scopedVars: ScopedVars = {};
   if (!options.data) {
     return [];
   }
@@ -98,11 +100,18 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     if (!name) {
       name = `Series[${index}]`;
     }
+    scopedVars['__series'] = { text: 'Series', value: { name } };
 
-    const fields: Field[] = frame.fields.map(field => {
+    const fields: Field[] = frame.fields.map((field, fieldIndex) => {
       // Config is mutable within this scope
-      const config: FieldConfig = { ...field.config } || {};
+      let fieldName = field.name;
+      if (!fieldName) {
+        fieldName = `Field[${fieldIndex}]`;
+      }
 
+      scopedVars['__field'] = { text: 'Field', value: { name: fieldName } };
+
+      const config: FieldConfig = { ...field.config, scopedVars } || {};
       const context = {
         field,
         data: options.data!,
@@ -242,7 +251,6 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
         const customKeys = Object.keys(defaults.custom!);
 
         for (const customKey of customKeys) {
-          console.log(customKey);
           processFieldConfigValue(config.custom!, defaults.custom!, customKey, context.custom, context);
         }
       } else {
