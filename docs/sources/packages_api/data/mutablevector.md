@@ -27,7 +27,7 @@ import { MutableVector } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [add](#add-property) | <code>(value: T) =&gt; void</code> | Adds the value to the vector |
-|  [reverse](#reverse-property) | <code>() =&gt; void</code> | modifies the vector so it is now the oposite order |
+|  [reverse](#reverse-property) | <code>() =&gt; void</code> | modifies the vector so it is now the opposite order |
 
 ### add property
 
@@ -41,7 +41,7 @@ add: (value: T) => void;
 
 ### reverse property
 
-modifies the vector so it is now the oposite order
+modifies the vector so it is now the opposite order
 
 <b>Signature</b>
 

@@ -12,7 +12,7 @@ draft = true
 
 ### parseFlags() function
 
-Converts any mode modifers in the text to the Javascript equivalent flag
+Converts any mode modifiers in the text to the Javascript equivalent flag
 
 <b>Signature</b>
 

@@ -12,7 +12,7 @@ draft = true
 
 ### PanelTypeChangedHandler type
 
-Called before a panel is initalized
+Called before a panel is initialized
 
 <b>Signature</b>
 

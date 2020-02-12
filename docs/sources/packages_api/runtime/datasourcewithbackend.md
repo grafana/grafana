@@ -32,7 +32,7 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 |  --- | --- | --- |
 |  [query(request)](#query-method) |  | Ideally final -- any other implementation would be wrong! |
 |  [testDatasource()](#testdatasource-method) |  |  |
-|  [toDataQueryResponse(rsp)](#todataqueryresponse-method) |  | This makes the arrow libary loading async. |
+|  [toDataQueryResponse(rsp)](#todataqueryresponse-method) |  | This makes the arrow library loading async. |
 
 ### constructor(instanceSettings)
 
@@ -81,7 +81,7 @@ testDatasource(): Promise<{}>;
 
 ### toDataQueryResponse method
 
-This makes the arrow libary loading async.
+This makes the arrow library loading async.
 
 <b>Signature</b>
 

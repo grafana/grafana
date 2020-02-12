@@ -104,7 +104,7 @@ draft = true
 |  [guessFieldTypeForField(field)](./guessfieldtypeforfield/) | Looks at the data to guess the column type. This ignores any existing setting |
 |  [guessFieldTypeFromValue(v)](./guessfieldtypefromvalue/) | Given a value this will guess the best column type<!-- -->TODO: better Date/Time support! Look for standard date strings? |
 |  [locale(value, decimals)](./locale/) |  |
-|  [parseFlags(text)](./parseflags/) | Converts any mode modifers in the text to the Javascript equivalent flag |
+|  [parseFlags(text)](./parseflags/) | Converts any mode modifiers in the text to the Javascript equivalent flag |
 |  [parseLabels(labels)](./parselabels/) | Returns a map of label keys to value from an input selector string.<!-- -->Example: <code>parseLabels('{job=&quot;foo&quot;, instance=&quot;bar&quot;}) // {job: &quot;foo&quot;, instance: &quot;bar&quot;}</code> |
 |  [readCSV(csv, options)](./readcsv/) |  |
 |  [reduceField(options)](./reducefield/) |  |
@@ -371,7 +371,7 @@ draft = true
 |  [NavIndex](./navindex/) |  |
 |  [Omit](./omit/) |  |
 |  [PanelMigrationHandler](./panelmigrationhandler/) | Called when a panel is first loaded with current panel model |
-|  [PanelTypeChangedHandler](./paneltypechangedhandler/) | Called before a panel is initalized |
+|  [PanelTypeChangedHandler](./paneltypechangedhandler/) | Called before a panel is initialized |
 |  [ScaleCalculator](./scalecalculator/) |  |
 |  [Subtract](./subtract/) |  |
 |  [TimeFragment](./timefragment/) |  |

@@ -26,7 +26,7 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [basicAuth](#basicauth-property) | <code>string</code> | This is the full Authorization header if basic auth is ennabled. Only available here when access is Browser (direct), when acess is Server (proxy) The basic auth header, username &amp; password is never exposted to browser/Frontend so this will be emtpy then. |
+|  [basicAuth](#basicauth-property) | <code>string</code> | This is the full Authorization header if basic auth is ennabled. Only available here when access is Browser (direct), when access is Server (proxy) The basic auth header, username &amp; password is never exposted to browser/Frontend so this will be empty then. |
 |  [database](#database-property) | <code>string</code> |  |
 |  [id](#id-property) | <code>number</code> |  |
 |  [jsonData](#jsondata-property) | <code>T</code> |  |
@@ -40,7 +40,7 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 
 ### basicAuth property
 
-This is the full Authorization header if basic auth is ennabled. Only available here when access is Browser (direct), when acess is Server (proxy) The basic auth header, username &amp; password is never exposted to browser/Frontend so this will be emtpy then.
+This is the full Authorization header if basic auth is ennabled. Only available here when access is Browser (direct), when access is Server (proxy) The basic auth header, username &amp; password is never exposted to browser/Frontend so this will be empty then.
 
 <b>Signature</b>
 

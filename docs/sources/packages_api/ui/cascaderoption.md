@@ -24,7 +24,7 @@ import { CascaderOption } from '@grafana/ui';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [children](#children-property) | <code>CascaderOption[]</code> | Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compability. |
+|  [children](#children-property) | <code>CascaderOption[]</code> | Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compatibility. |
 |  [disabled](#disabled-property) | <code>boolean</code> |  |
 |  [items](#items-property) | <code>CascaderOption[]</code> | Items will be just flattened into the main list of items recursively. |
 |  [label](#label-property) | <code>string</code> |  |
@@ -33,7 +33,7 @@ import { CascaderOption } from '@grafana/ui';
 
 ### children property
 
-Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compability.
+Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compatibility.
 
 <b>Signature</b>
 
