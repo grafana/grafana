@@ -20,6 +20,8 @@ func init() {
 	registry.RegisterService(&RenderingService{})
 }
 
+var IsPhantomJSEnabled = false
+
 type RenderingService struct {
 	log             log.Logger
 	pluginInfo      *plugins.RendererPlugin
@@ -66,8 +68,10 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.log = rs.log.New("renderer", "phantomJS")
 		rs.log.Info("Backend rendering via phantomJS")
 		rs.log.Warn("phantomJS is deprecated and will be removed in a future release. " +
-			"You should consider migrating from phantomJS to grafana-image-renderer plugin.")
+			"You should consider migrating from phantomJS to grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 		rs.renderAction = rs.renderViaPhantomJS
+		IsPhantomJSEnabled = true
 		<-ctx.Done()
 		return nil
 	}

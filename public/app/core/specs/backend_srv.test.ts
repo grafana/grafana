@@ -1,4 +1,4 @@
-import { BackendSrv, getBackendSrv } from '../services/backend_srv';
+import { BackendSrv, getBackendSrv, parseInitFromOptions, parseUrlFromOptions } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { Observable, of } from 'rxjs';
@@ -14,16 +14,25 @@ const getTestContext = (overides?: object) => {
     statusText: 'Ok',
     isSignedIn: true,
     orgId: 1337,
+    redirected: false,
+    type: 'basic',
+    url: 'http://localhost:3000/api/some-mock',
+    headers: { 'Content-Type': 'application/json' },
   };
   const props = { ...defaults, ...overides };
   const textMock = jest.fn().mockResolvedValue(JSON.stringify(props.data));
   const fromFetchMock = jest.fn().mockImplementation(() => {
-    return of({
+    const mockedResponse = {
       ok: props.ok,
       status: props.status,
       statusText: props.statusText,
       text: textMock,
-    });
+      redirected: false,
+      type: 'basic',
+      url: 'http://localhost:3000/api/some-mock',
+      headers: { 'Content-Type': 'application/json' },
+    };
+    return of(mockedResponse);
   });
   const appEventsMock: Emitter = ({
     emit: jest.fn(),
@@ -38,8 +47,6 @@ const getTestContext = (overides?: object) => {
   const logoutMock = jest.fn();
   const parseRequestOptionsMock = jest.fn().mockImplementation(options => options);
   const parseDataSourceRequestOptionsMock = jest.fn().mockImplementation(options => options);
-  const parseUrlFromOptionsMock = jest.fn().mockImplementation(() => 'parseUrlFromOptionsMock');
-  const parseInitFromOptionsMock = jest.fn().mockImplementation(() => 'parseInitFromOptionsMock');
 
   const backendSrv = new BackendSrv({
     fromFetch: fromFetchMock,
@@ -50,16 +57,9 @@ const getTestContext = (overides?: object) => {
 
   backendSrv['parseRequestOptions'] = parseRequestOptionsMock;
   backendSrv['parseDataSourceRequestOptions'] = parseDataSourceRequestOptionsMock;
-  backendSrv['parseUrlFromOptions'] = parseUrlFromOptionsMock;
-  backendSrv['parseInitFromOptions'] = parseInitFromOptionsMock;
 
   const expectCallChain = (options: any) => {
-    expect(parseUrlFromOptionsMock).toHaveBeenCalledTimes(1);
-    expect(parseUrlFromOptionsMock).toHaveBeenCalledWith(options);
-    expect(parseInitFromOptionsMock).toHaveBeenCalledTimes(1);
-    expect(parseInitFromOptionsMock).toHaveBeenCalledWith(options);
     expect(fromFetchMock).toHaveBeenCalledTimes(1);
-    expect(fromFetchMock).toHaveBeenCalledWith('parseUrlFromOptionsMock', 'parseInitFromOptionsMock');
   };
 
   const expectRequestCallChain = (options: any) => {
@@ -83,8 +83,6 @@ const getTestContext = (overides?: object) => {
     logoutMock,
     parseRequestOptionsMock,
     parseDataSourceRequestOptionsMock,
-    parseUrlFromOptionsMock,
-    parseInitFromOptionsMock,
     expectRequestCallChain,
     expectDataSourceRequestCallChain,
   };
@@ -135,40 +133,6 @@ describe('backendSrv', () => {
     );
   });
 
-  describe('parseUrlFromOptions', () => {
-    it.each`
-      params                                                      | url                | expected
-      ${undefined}                                                | ${'api/dashboard'} | ${'api/dashboard'}
-      ${{ key: 'value' }}                                         | ${'api/dashboard'} | ${'api/dashboard?key=value'}
-      ${{ key: undefined }}                                       | ${'api/dashboard'} | ${'api/dashboard'}
-      ${{ firstKey: 'first value', secondValue: 'second value' }} | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value&secondValue=second%20value'}
-      ${{ firstKey: 'first value', secondValue: undefined }}      | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value'}
-      ${{ id: [1, 2, 3] }}                                        | ${'api/dashboard'} | ${'api/dashboard?id=1&id=2&id=3'}
-      ${{ id: [] }}                                               | ${'api/dashboard'} | ${'api/dashboard'}
-    `(
-      "when called with params: '$params' and url: '$url' then result should be '$expected'",
-      ({ params, url, expected }) => {
-        expect(getBackendSrv()['parseUrlFromOptions']({ params, url })).toEqual(expected);
-      }
-    );
-  });
-
-  describe('parseInitFromOptions', () => {
-    it.each`
-      method       | headers                  | data                               | expected
-      ${undefined} | ${undefined}             | ${undefined}                       | ${{ method: undefined, headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-      ${'GET'}     | ${undefined}             | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
-      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${{ data: { test: 'Some data' } }} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
-      ${'GET'}     | ${{ Auth: 'Some Auth' }} | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '"some data"' }}
-    `(
-      "when called with method: '$method', headers: '$headers' and data: '$data' then result should be '$expected'",
-      ({ method, headers, data, expected }) => {
-        expect(getBackendSrv()['parseInitFromOptions']({ method, headers, data, url: '' })).toEqual(expected);
-      }
-    );
-  });
-
   describe('request', () => {
     describe('when making a successful call and conditions for showSuccessAlert are not favorable', () => {
       it('then it should return correct result and not emit anything', async () => {
@@ -200,30 +164,34 @@ describe('backendSrv', () => {
     describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
       it('then it should retry', async () => {
         jest.useFakeTimers();
+        const url = '/api/dashboard/';
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
           statusText: 'UnAuthorized',
           data: { message: 'UnAuthorized' },
+          url,
         });
         backendSrv.loginPing = jest
           .fn()
           .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
-        const url = '/api/dashboard/';
-        // it would be better if we could simulate that after the call to loginPing everything is successful but as
-        // our fromFetchMock returns ok:false the second time this retries it will still be ok:false going into the
-        // mergeMap in toFailureStream
-        await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(error => {
-          expect(error.status).toBe(401);
-          expect(error.statusText).toBe('UnAuthorized');
-          expect(error.data).toEqual({ message: 'UnAuthorized' });
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
-          expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-          expect(logoutMock).toHaveBeenCalledTimes(1);
-          expectRequestCallChain({ url, method: 'GET', retry: 0 });
-          jest.advanceTimersByTime(50);
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
-        });
+        await backendSrv
+          .request({ url, method: 'GET', retry: 0 })
+          .catch(error => {
+            expect(error.status).toBe(401);
+            expect(error.statusText).toBe('UnAuthorized');
+            expect(error.data).toEqual({ message: 'UnAuthorized' });
+            expect(appEventsMock.emit).not.toHaveBeenCalled();
+            expect(logoutMock).not.toHaveBeenCalled();
+            expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+            expectRequestCallChain({ url, method: 'GET', retry: 0 });
+            jest.advanceTimersByTime(50);
+          })
+          .catch(error => {
+            expect(error).toEqual({ message: 'UnAuthorized' });
+            expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+            expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
+          });
       });
     });
 
@@ -320,32 +288,73 @@ describe('backendSrv', () => {
   describe('datasourceRequest', () => {
     describe('when making a successful call and silent is true', () => {
       it('then it should not emit message', async () => {
-        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext();
-        const url = 'http://www.some.url.com/';
-        const result = await backendSrv.datasourceRequest({ url, silent: true });
-        expect(result).toEqual({ data: { test: 'hello world' } });
+        const url = 'http://localhost:3000/api/some-mock';
+        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
+        const result = await backendSrv.datasourceRequest({ url, method: 'GET', silent: true });
+        expect(result).toEqual({
+          data: { test: 'hello world' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: {
+            url,
+            method: 'GET',
+            body: undefined,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json, text/plain, */*',
+            },
+          },
+        });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
-        expectDataSourceRequestCallChain({ url, silent: true });
+        expectDataSourceRequestCallChain({ url, method: 'GET', silent: true });
       });
     });
 
     describe('when making a successful call and silent is not defined', () => {
       it('then it should not emit message', async () => {
-        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext();
-        const url = 'http://www.some.url.com/';
-        const result = await backendSrv.datasourceRequest({ url });
-        expect(result).toEqual({ data: { test: 'hello world' } });
-        expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
-        expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.dsRequestResponse, {
+        const url = 'http://localhost:3000/api/some-mock';
+        const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
+        const result = await backendSrv.datasourceRequest({ url, method: 'GET' });
+        const expectedResult = {
           data: { test: 'hello world' },
-        });
-        expectDataSourceRequestCallChain({ url });
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: {
+            url,
+            method: 'GET',
+            body: undefined as any,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json, text/plain, */*',
+            },
+          },
+        };
+
+        expect(result).toEqual(expectedResult);
+        expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+        expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.dsRequestResponse, expectedResult);
+        expectDataSourceRequestCallChain({ url, method: 'GET' });
       });
     });
 
     describe('when called with the same requestId twice', () => {
       it('then it should cancel the first call and the first call should be unsubscribed', async () => {
-        const { backendSrv, fromFetchMock } = getTestContext();
+        const url = '/api/dashboard/';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
         const unsubscribe = jest.fn();
         const slowData = { message: 'Slow Request' };
         const slowFetch = new Observable(subscriber => {
@@ -354,6 +363,12 @@ describe('backendSrv', () => {
             status: 200,
             statusText: 'Ok',
             text: () => Promise.resolve(JSON.stringify(slowData)),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            redirected: false,
+            type: 'basic',
+            url,
           });
           return unsubscribe;
         }).pipe(delay(10000));
@@ -363,16 +378,43 @@ describe('backendSrv', () => {
           status: 200,
           statusText: 'Ok',
           text: () => Promise.resolve(JSON.stringify(fastData)),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          redirected: false,
+          type: 'basic',
+          url,
         });
         fromFetchMock.mockImplementationOnce(() => slowFetch);
         fromFetchMock.mockImplementation(() => fastFetch);
         const options = {
-          url: '/api/dashboard/',
+          url,
+          method: 'GET',
           requestId: 'A',
         };
         const slowRequest = backendSrv.datasourceRequest(options);
         const fastResponse = await backendSrv.datasourceRequest(options);
-        expect(fastResponse).toEqual({ data: { message: 'Fast Request' } });
+        expect(fastResponse).toEqual({
+          data: { message: 'Fast Request' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: 'Ok',
+          type: 'basic',
+          url,
+          request: {
+            url,
+            method: 'GET',
+            body: undefined,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json, text/plain, */*',
+            },
+          },
+        });
 
         const slowResponse = await slowRequest;
         expect(slowResponse).toEqual(undefined);
@@ -392,16 +434,18 @@ describe('backendSrv', () => {
           .fn()
           .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
         const url = '/api/dashboard/';
-        // it would be better if we could simulate that after the call to loginPing everything is successful but as
-        // our fromFetchMock returns ok:false the second time this retries it will still be ok:false going into the
-        // mergeMap in toFailureStream
         await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch(error => {
           expect(error.status).toBe(401);
           expect(error.statusText).toBe('UnAuthorized');
           expect(error.data).toEqual({ message: 'UnAuthorized' });
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
+          expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+          expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.dsRequestError, {
+            data: { message: 'UnAuthorized' },
+            status: 401,
+            statusText: 'UnAuthorized',
+          });
           expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-          expect(logoutMock).toHaveBeenCalledTimes(1);
+          expect(logoutMock).not.toHaveBeenCalled();
           expectDataSourceRequestCallChain({ url, method: 'GET', retry: 0 });
         });
       });
@@ -529,4 +573,44 @@ describe('backendSrv', () => {
       });
     });
   });
+});
+
+describe('parseUrlFromOptions', () => {
+  it.each`
+    params                                                      | url                | expected
+    ${undefined}                                                | ${'api/dashboard'} | ${'api/dashboard'}
+    ${{ key: 'value' }}                                         | ${'api/dashboard'} | ${'api/dashboard?key=value'}
+    ${{ key: undefined }}                                       | ${'api/dashboard'} | ${'api/dashboard'}
+    ${{ firstKey: 'first value', secondValue: 'second value' }} | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value&secondValue=second%20value'}
+    ${{ firstKey: 'first value', secondValue: undefined }}      | ${'api/dashboard'} | ${'api/dashboard?firstKey=first%20value'}
+    ${{ id: [1, 2, 3] }}                                        | ${'api/dashboard'} | ${'api/dashboard?id=1&id=2&id=3'}
+    ${{ id: [] }}                                               | ${'api/dashboard'} | ${'api/dashboard'}
+  `(
+    "when called with params: '$params' and url: '$url' then result should be '$expected'",
+    ({ params, url, expected }) => {
+      expect(parseUrlFromOptions({ params, url })).toEqual(expected);
+    }
+  );
+});
+
+describe('parseInitFromOptions', () => {
+  it.each`
+    method       | headers                                                                       | data                               | expected
+    ${undefined} | ${undefined}                                                                  | ${undefined}                       | ${{ method: undefined, headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
+    ${'GET'}     | ${undefined}                                                                  | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
+    ${'GET'}     | ${undefined}                                                                  | ${null}                            | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: null }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${{ data: { test: 'Some data' } }} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
+    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${undefined}                       | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
+    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${{ data: 'Some data' }}           | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: new URLSearchParams({ data: 'Some data' }) }}
+    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${'some data'}                     | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
+    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+  `(
+    "when called with method: '$method', headers: '$headers' and data: '$data' then result should be '$expected'",
+    ({ method, headers, data, expected }) => {
+      expect(parseInitFromOptions({ method, headers, data, url: '' })).toEqual(expected);
+    }
+  );
 });

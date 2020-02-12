@@ -6,6 +6,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataFrame,
+  ScopedVars,
 } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
@@ -263,14 +264,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[]): ElasticsearchQuery[] {
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query, {}, 'lucene'),
+          query: this.templateSrv.replace(query.query, scopedVars, 'lucene'),
         };
         return expandedQuery;
       });

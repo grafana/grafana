@@ -188,9 +188,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
         remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
       })
       .then(() => this.onUpdateLanguage())
-      .catch(({ isCanceled }) => {
-        if (isCanceled) {
-          console.warn('PromQueryField has unmounted, language provider intialization was canceled');
+      .catch(err => {
+        if (!err.isCanceled) {
+          throw err;
         }
       });
   };

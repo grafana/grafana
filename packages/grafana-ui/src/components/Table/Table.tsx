@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { DataFrame } from '@grafana/data';
 import { useSortBy, useTable, useBlockLayout, Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
+import useMeasure from 'react-use/lib/useMeasure';
 import { getColumns, getTableRows } from './utils';
 import { useTheme } from '../../themes';
 import { TableFilterActionCallback } from './types';
@@ -17,6 +18,7 @@ export interface Props {
 
 export const Table = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
+  const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
@@ -53,12 +55,17 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
     <div {...getTableProps()} className={tableStyles.table}>
       <div>
         {headerGroups.map((headerGroup: any) => (
-          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
+          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
             {headerGroup.headers.map((column: any) => renderHeaderCell(column, tableStyles.headerCell))}
           </div>
         ))}
       </div>
-      <FixedSizeList height={height} itemCount={rows.length} itemSize={tableStyles.rowHeight} width={width}>
+      <FixedSizeList
+        height={height - headerRowMeasurements.height}
+        itemCount={rows.length}
+        itemSize={tableStyles.rowHeight}
+        width={width}
+      >
         {RenderRow}
       </FixedSizeList>
     </div>

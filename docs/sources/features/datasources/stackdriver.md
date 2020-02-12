@@ -131,6 +131,12 @@ It is also possible to choose fixed time intervals to group by, like `1h` or `1d
 
 Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
 
+#### Metadata labels
+
+Resource metadata labels contains information to uniquely identify a resource in Google cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels. 
+
+User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
+
 ### Alias Patterns
 
 The Alias By field allows you to control the format of the legend keys. The default is to show the metric name and labels. This can be long and hard to read. Using the following patterns in the alias field, you can format the legend key the way you want it.
@@ -151,6 +157,8 @@ In the Group By dropdown, you can see a list of metric and resource labels for a
 | ------------------------ | -------------------------------- | -------------------------------- | ---------------- |
 | `{{metric.label.xxx}}`   | returns the metric label value   | `{{metric.label.instance_name}}` | `grafana-1-prod` |
 | `{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}`        | `us-east1-b`     |
+| `{{metadata.system_labels.xxx}}` | returns the meta data system label value | `{{metadata.system_labels.name}}` | `grafana`        |
+| `{{metadata.user_labels.xxx}}`   | returns the meta data user label value   | `{{metadata.user_labels.tag}}`    | `production`     |
 
 Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
 

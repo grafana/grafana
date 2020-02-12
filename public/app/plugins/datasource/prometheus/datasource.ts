@@ -18,6 +18,7 @@ import {
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  ScopedVars,
 } from '@grafana/data';
 import { from, merge, Observable, of, forkJoin } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
@@ -608,14 +609,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       : { status: 'error', message: response.error };
   }
 
-  interpolateVariablesInQueries(queries: PromQuery[]): PromQuery[] {
+  interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          expr: templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+          expr: templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
         };
         return expandedQuery;
       });

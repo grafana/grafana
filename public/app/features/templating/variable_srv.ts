@@ -11,9 +11,10 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 // Types
-import { TimeRange } from '@grafana/data';
+import { TimeRange, AppEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
+import { appEvents, contextSrv } from 'app/core/core';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -54,6 +55,24 @@ export class VariableSrv {
       )
       .then(() => {
         this.templateSrv.updateIndex();
+        this.templateSrv.setGlobalVariable('__dashboard', {
+          value: {
+            name: dashboard.title,
+            uid: dashboard.uid,
+            toString: function() {
+              return this.uid;
+            },
+          },
+        });
+        this.templateSrv.setGlobalVariable('__org', {
+          value: {
+            name: contextSrv.user.orgName,
+            id: contextSrv.user.id,
+            toString: function() {
+              return this.id;
+            },
+          },
+        });
       });
   }
 
@@ -71,9 +90,14 @@ export class VariableSrv {
         });
       });
 
-    return this.$q.all(promises).then(() => {
-      this.dashboard.startRefresh();
-    });
+    return this.$q
+      .all(promises)
+      .then(() => {
+        this.dashboard.startRefresh();
+      })
+      .catch(e => {
+        appEvents.emit(AppEvents.alertError, ['Template variable service failed', e.message]);
+      });
   }
 
   processVariable(variable: any, queryParams: any) {

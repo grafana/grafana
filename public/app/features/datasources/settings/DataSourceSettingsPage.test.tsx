@@ -24,6 +24,8 @@ const setup = (propOverrides?: object) => {
     loadDataSource: jest.fn(),
     setDataSourceName,
     updateDataSource: jest.fn(),
+    initDataSourceSettings: jest.fn(),
+    testDataSource: jest.fn(),
     setIsDefault,
     dataSourceLoaded,
     query: {},

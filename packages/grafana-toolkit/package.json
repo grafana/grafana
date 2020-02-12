@@ -26,8 +26,8 @@
   },
   "main": "src/index.ts",
   "dependencies": {
-    "@babel/core": "7.6.4",
-    "@babel/preset-env": "7.6.3",
+    "@babel/core": "7.8.3",
+    "@babel/preset-env": "7.8.3",
     "@grafana/data": "6.7.0-pre",
     "@grafana/ui": "6.7.0-pre",
     "@types/command-exists": "^1.2.0",
@@ -62,6 +62,7 @@
     "html-webpack-plugin": "^3.2.0",
     "inquirer": "^6.3.1",
     "jest": "24.8.0",
+    "jest-canvas-mock": "2.1.2",
     "jest-cli": "^24.8.0",
     "jest-coverage-badges": "^1.1.2",
     "jest-junit": "^6.4.0",
