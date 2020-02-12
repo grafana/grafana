@@ -17984,14 +17984,7 @@ pirates@^4.0.0, pirates@^4.0.1:
   dependencies:
     node-modules-regexp "^1.0.0"
 
-pixelmatch@4.0.2:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/pixelmatch/-/pixelmatch-4.0.2.tgz#8f47dcec5011b477b67db03c243bc1f3085e8854"
-  integrity sha1-j0fc7FARtHe2fbA8JDvB8wheiFQ=
-  dependencies:
-    pngjs "^3.0.0"
-
-pixelmatch@^5.0.2:
+pixelmatch@5.1.0, pixelmatch@^5.0.2:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/pixelmatch/-/pixelmatch-5.1.0.tgz#b640f0e5a03a09f235a4b818ef3b9b98d9d0b911"
   integrity sha512-HqtgvuWN12tBzKJf7jYsc38Ha28Q2NYpmBL9WostEGgDHJqbTLkjydZXL1ZHM02ZnB+Dkwlxo87HBY38kMiD6A==
@@ -18067,7 +18060,7 @@ pngjs@2.3.1:
   resolved "https://registry.yarnpkg.com/pngjs/-/pngjs-2.3.1.tgz#11d1e12b9cb64d63e30c143a330f4c1f567da85f"
   integrity sha1-EdHhK5y2TWPjDBQ6Mw9MH1Z9qF8=
 
-pngjs@3.4.0, pngjs@^3.0.0, pngjs@^3.4.0:
+pngjs@3.4.0, pngjs@^3.4.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/pngjs/-/pngjs-3.4.0.tgz#99ca7d725965fb655814eaf65f38f12bbdbf555f"
   integrity sha512-NCrCHhWmnQklfH4MtJMRjZ2a8c80qXeMlQMv2uVp9ISJMTt562SbGd6n2oq0PaPgKm7Z6pL9E2UlLIhC+SHL3w==
