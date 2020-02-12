@@ -77,26 +77,6 @@ export class QueryVariablePicker extends PureComponent<Props> {
       dispatch(selectVariableOptionByHighlightIndex(uuid, highlightIndex));
       return this.commitChanges();
     }
-
-    // if (evt.keyCode === 27) {
-    //   this.hide();
-    // }
-    // if (evt.keyCode === 40) {
-    //   this.moveHighlight(1);
-    // }
-    // if (evt.keyCode === 38) {
-    //   this.moveHighlight(-1);
-    // }
-    // if (evt.keyCode === 13) {
-    //   if (this.search.options.length === 0) {
-    //     this.commitChanges();
-    //   } else {
-    //     this.selectValue(this.search.options[this.highlightIndex], {}, true);
-    //   }
-    // }
-    // if (evt.keyCode === 32) {
-    //   this.selectValue(this.search.options[this.highlightIndex], {}, false);
-    // }
   };
 
   selectValue = (option: VariableOption) => (event: MouseEvent<HTMLAnchorElement>) => {
