@@ -644,13 +644,7 @@ export const queryVariableReducer = (
   if (toggleVariableTag.match(action)) {
     const tag = action.payload.data;
     const values = tag.values || [];
-    // tag.values = values;
-    // tag.valuesText = values.join(' + ');
-    // each(this.options, option => {
-    //   if (indexOf(tag.values, option.value) !== -1) {
-    //     option.selected = tag.selected;
-    //   }
-    // });
+    const selected = !tag.selected;
 
     const newState = {
       ...state,
@@ -662,10 +656,19 @@ export const queryVariableReducer = (
           }
           return {
             ...current,
-            selected: !tag.selected,
+            selected,
             valuesText: values.join(' + '),
-            values: values,
+            values,
           };
+        }),
+        options: state.variable.options.map(option => {
+          if (values.indexOf(option.value) !== -1) {
+            return {
+              ...option,
+              selected,
+            };
+          }
+          return option;
         }),
       },
     };
