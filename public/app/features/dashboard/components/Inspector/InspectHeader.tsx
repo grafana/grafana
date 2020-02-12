@@ -63,7 +63,7 @@ export const InspectHeader: FC<Props> = ({
   const styles = getStyles(theme);
   const statsString = `${stats.queries} ${stats.queries === 1 ? 'query' : 'queries'} - ${stats.dataSources} ${
     stats.dataSources === 1 ? 'data source' : 'data sources'
-  } - ${stats.requestTime}ms`;
+  } - ${isNaN(stats.requestTime) ? 'N/A' : stats.requestTime}ms`;
 
   return (
     <div className={styles.header}>
