@@ -5,7 +5,7 @@ export interface AppEvent<T> {
   payload?: T;
 }
 
-/* eslint-disable no-namespace */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace AppEvents {
   export type AlertPayload = [string, string?];
 

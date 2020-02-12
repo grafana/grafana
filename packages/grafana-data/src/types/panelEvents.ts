@@ -2,7 +2,7 @@ import { eventFactory } from './utils';
 import { DataQueryError, DataQueryResponseData } from './datasource';
 import { AngularPanelMenuItem } from './panel';
 
-/* eslint-disable no-namespace */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace PanelEvents {
   /** Payloads */
   export interface PanelChangeViewPayload {

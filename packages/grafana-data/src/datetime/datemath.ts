@@ -5,7 +5,7 @@ import { TimeZone } from '../types/index';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
-/* eslint-disable no-namespace */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace dateMath {
   export function isMathString(text: string | DateTime | Date): boolean {
     if (!text) {
