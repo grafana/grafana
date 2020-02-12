@@ -1,7 +1,7 @@
 import { PanelModel, DashboardModel } from '../../../state';
 import { PanelData } from '@grafana/data';
 import { ThunkResult } from 'app/types';
-import { setEditorPanelData, updateEditorInitState } from './reducers';
+import { setEditorPanelData, updateEditorInitState, closeCompleted } from './reducers';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
@@ -33,5 +33,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
     dashboard.exitPanelEditor();
     querySubscription.unsubscribe();
+
+    dispatch(closeCompleted());
   };
 }
