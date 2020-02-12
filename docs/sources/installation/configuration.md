@@ -147,7 +147,7 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http`,`https`,`h2` or `socket`
 
-> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+> **Note.** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
 ### socket
 Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
@@ -166,7 +166,7 @@ This is the full URL used to access Grafana from a web browser. This is
 important if you use Google or GitHub OAuth authentication (for the
 callback URL to be correct).
 
-> **Note** This setting is also important if you have a reverse proxy
+> **Note.** This setting is also important if you have a reverse proxy
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
@@ -182,7 +182,7 @@ By enabling this setting and using a subpath in `root_url` above, e.g.
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS
-files). Default to `public` which is why the Grafana binary needs to be
+files). Defaults to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
 ### enable_gzip
@@ -415,7 +415,7 @@ organization to be created for that new user.
 
 Set this value to automatically add new users to the provided org.
 This requires `auto_assign_org` to be set to `true`. Please make sure
-that this organization does already exists.
+that this organization should be pre-existing.
 
 ### auto_assign_org_role
 
