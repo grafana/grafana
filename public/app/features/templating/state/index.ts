@@ -21,6 +21,7 @@ import {
 } from './actions';
 import { variableAdapters } from '../adapters';
 import { emptyUuid, initialVariableEditorState, VariableState } from './types';
+import { cleanUpDashboard } from '../../dashboard/state/reducers';
 
 export interface TemplatingState {
   variables: Record<string, VariableState>;
@@ -293,6 +294,23 @@ export const updateTemplatingState = (
 // I stumbled upon the error described here https://github.com/immerjs/immer/issues/430
 // So reverting to a "normal" reducer
 export const templatingReducer = (state: TemplatingState = initialState, action: AnyAction): TemplatingState => {
+  if (cleanUpDashboard.match(action)) {
+    const globalVariables = Object.values(state.variables).filter(v => v.variable.global);
+    if (!globalVariables) {
+      return initialState;
+    }
+
+    const variables = globalVariables.reduce((allVariables, state) => {
+      allVariables[state.variable.uuid] = state;
+      return allVariables;
+    }, {} as Record<string, VariableState>);
+
+    return {
+      ...state,
+      variables,
+    };
+  }
+
   // filter out all action creators that are not registered as variable action creator
   const actionCreator = variableActions[action.type];
   if (!actionCreator) {
