@@ -354,7 +354,12 @@ export class PanelModel {
   }
 
   getEditClone() {
-    const clone = new PanelModel(this.getSaveModel());
+    const sourceModel = this.getSaveModel();
+
+    // super unique id
+    sourceModel.id = 23763571993;
+
+    const clone = new PanelModel(sourceModel);
     const sourceQueryRunner = this.getQueryRunner();
 
     // pipe last result to new clone query runner

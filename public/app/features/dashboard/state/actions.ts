@@ -3,7 +3,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
-import { loadDashboardPermissions, dashboardPanelTypeChanged } from './reducers';
+import { loadDashboardPermissions, panelModelAndPluginReady } from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 // Types
@@ -122,6 +122,9 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
     if (!panel.plugin) {
       panel.pluginLoaded(plugin);
     }
+
+    console.log('panelModelAndPluginReady', panel.id);
+    dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin }));
   };
 }
 
@@ -139,6 +142,7 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
     }
 
     panel.changePlugin(plugin);
-    dispatch(dashboardPanelTypeChanged({ panelId: panel.id, pluginId }));
+
+    dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin }));
   };
 }

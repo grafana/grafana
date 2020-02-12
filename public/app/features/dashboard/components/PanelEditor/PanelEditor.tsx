@@ -25,6 +25,7 @@ import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/re
 import { FieldConfigEditor } from './FieldConfigEditor';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelEditorTabs } from './state/selectors';
+import { getPanelStateById } from '../../state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -281,7 +282,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   const panel = state.panelEditorNew.getPanel();
-  const plugin = state.plugins.panels[panel.type];
+  const { plugin } = getPanelStateById(state.dashboard, panel.id);
 
   return {
     location: state.location,
