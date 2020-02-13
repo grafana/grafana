@@ -25,7 +25,7 @@ installation.
    * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
 1. Click **Windows**.
 
-You can either use the Windows installer or you can install a standalone Windows binary.
+You can either use the [Windows installer](https://grafana.com/grafana/download?platform=windows) or you can install a standalone [Windows binary](https://grafana.com/grafana/download?platform=windows).
 
 ## Install with Windows installer (recommended)
 
