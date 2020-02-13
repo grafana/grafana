@@ -1,6 +1,9 @@
 <aside class="dashboard-settings__aside">
-  <a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}"
-    ng-repeat="section in ctrl.sections" aria-label={{ctrl.selectors.sectionItems}}>
+  <a href="{{::section.url}}"
+     class="dashboard-settings__nav-item"
+     ng-class="{active: ctrl.viewId === section.id}"
+     ng-repeat="section in ctrl.sections"
+     aria-label="{{ctrl.selectors.sectionItems(section.title)}}">
     <i class="{{::section.icon}}"></i>
     {{::section.title}}
   </a>
