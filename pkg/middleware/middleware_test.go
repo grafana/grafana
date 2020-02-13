@@ -598,7 +598,6 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 }
 
 func TestTokenRotationAtEndOfRequest(t *testing.T) {
-	rr := httptest.NewRecorder()
 	reqContext, rr := initTokenRotationTest(context.Background())
 
 	uts := &auth.FakeUserAuthTokenService{
