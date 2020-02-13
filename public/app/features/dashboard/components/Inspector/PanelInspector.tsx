@@ -110,6 +110,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     // Find the first DataSource wanting to show custom metadata
     let metaDS: DataSourceApi;
+    console.log(lastResult);
     const data = lastResult?.series;
     const error = lastResult?.error;
 

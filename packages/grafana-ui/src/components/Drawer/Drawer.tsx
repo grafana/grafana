@@ -95,8 +95,8 @@ export const Drawer: FC<Props> = ({
       placement={placement}
       width={width}
       height={height}
-      getContainer={inline ? false : 'body'}
-      style={{ position: `${inline && 'absolute'}` } as CSSProperties}
+      getContainer={inline ? 'body' : 'body'}
+      style={{ position: `${inline && 'relative'}` } as CSSProperties}
       className={drawerStyles.drawer}
     >
       {title && (

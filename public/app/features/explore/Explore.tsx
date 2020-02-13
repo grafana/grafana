@@ -291,9 +291,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const styles = getStyles();
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
-    const panel = {
-      title: 'hello',
-    };
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -378,7 +375,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      {this.state.isQueryHistoryVisible && <QueryHistory panel={panel} width="100%" />}
+                      {this.state.isQueryHistoryVisible && <QueryHistory />}
                     </ErrorBoundaryAlert>
                   </main>
                 );
