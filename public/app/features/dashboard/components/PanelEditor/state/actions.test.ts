@@ -54,6 +54,7 @@ describe('panelEditor actions', () => {
       expect(dispatchedActions.length).toBe(1);
       expect(dispatchedActions[0].type).toBe(closeCompleted.type);
       expect(sourcePanel.getOptions()).toEqual({ prop: true });
+      expect(sourcePanel.id).toEqual(12);
     });
   });
 });

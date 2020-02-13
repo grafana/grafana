@@ -88,6 +88,7 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
+  options: {},
 };
 
 export class PanelModel {
@@ -179,7 +180,6 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
-
     this.render();
   }
 

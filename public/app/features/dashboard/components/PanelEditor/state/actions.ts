@@ -29,8 +29,13 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
     if (!shouldDiscardChanges) {
       const panel = getPanel();
+      const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
-      sourcePanel.restoreModel(panel.getSaveModel());
+
+      // restore the source panel id before we update source panel
+      modifiedSaveModel.id = sourcePanel.id;
+
+      sourcePanel.restoreModel(modifiedSaveModel);
       sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
     }
 
