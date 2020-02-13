@@ -1,13 +1,14 @@
 package social
 
 import (
-	"golang.org/x/oauth2"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 	"net/http"
 	"reflect"
 	"testing"
 	"time"
+
+	"golang.org/x/oauth2"
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
@@ -44,7 +45,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Viewer",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -81,7 +82,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Viewer",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -100,7 +101,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Admin",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -119,7 +120,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Admin",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -138,7 +139,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Viewer",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 
@@ -158,7 +159,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Editor",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -177,7 +178,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Admin",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 	}
