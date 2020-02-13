@@ -116,8 +116,6 @@ func hasRole(roles []string, role models.RoleType) bool {
 
 func extractGroups(claims azureClaims) []string {
 	groups := make([]string, 0)
-	for _, groupId := range claims.Groups {
-		groups = append(groups, groupId)
-	}
+	groups = append(groups, claims.Groups...)
 	return groups
 }
