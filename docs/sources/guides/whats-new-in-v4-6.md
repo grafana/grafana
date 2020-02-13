@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v4.6"
+title = "What's new in Grafana v4.6"
 description = "Feature and improvement highlights for Grafana v4.6"
-keywords = ["grafana", "new", "documentation", "4.6"]
+keywords = ["grafana", "new", "documentation", "4.6", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 4.6"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -5
 +++
 
-# What's New in Grafana v4.6
+# What's new in Grafana v4.6
 
 Grafana v4.6 brings many enhancements to Annotations, Cloudwatch and Prometheus. It also adds support for Postgres as metric and table data source!
 
@@ -72,4 +72,3 @@ This makes exploring and filtering Prometheus data much easier.
 
 ### Tech
 * **Go**: Grafana is now built using golang 1.9
-

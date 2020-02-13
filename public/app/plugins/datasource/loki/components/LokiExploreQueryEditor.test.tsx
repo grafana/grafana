@@ -1,11 +1,11 @@
 import React from 'react';
-import { shallow, mount } from 'enzyme';
+import { mount, shallow } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import LokiExploreQueryEditor from './LokiExploreQueryEditor';
 import { LokiExploreExtraField } from './LokiExploreExtraField';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
-import { ExploreMode, PanelData, LoadingState, dateTime } from '@grafana/data';
+import { ExploreMode, LoadingState, PanelData, toUtc } from '@grafana/data';
 import { makeMockLokiDatasource } from '../mocks';
 import LokiLanguageProvider from '../language_provider';
 
@@ -24,11 +24,11 @@ const setup = (renderMethod: any, propOverrides?: object) => {
       interval: '1s',
       panelId: 1,
       range: {
-        from: dateTime('2020-01-01', 'YYYY-MM-DD'),
-        to: dateTime('2020-01-02', 'YYYY-MM-DD'),
+        from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+        to: toUtc('2020-01-02', 'YYYY-MM-DD'),
         raw: {
-          from: dateTime('2020-01-01', 'YYYY-MM-DD'),
-          to: dateTime('2020-01-02', 'YYYY-MM-DD'),
+          from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+          to: toUtc('2020-01-02', 'YYYY-MM-DD'),
         },
       },
       scopedVars: {},
@@ -38,11 +38,11 @@ const setup = (renderMethod: any, propOverrides?: object) => {
       startTime: 0,
     },
     timeRange: {
-      from: dateTime('2020-01-01', 'YYYY-MM-DD'),
-      to: dateTime('2020-01-02', 'YYYY-MM-DD'),
+      from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+      to: toUtc('2020-01-02', 'YYYY-MM-DD'),
       raw: {
-        from: dateTime('2020-01-01', 'YYYY-MM-DD'),
-        to: dateTime('2020-01-02', 'YYYY-MM-DD'),
+        from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+        to: toUtc('2020-01-02', 'YYYY-MM-DD'),
       },
     },
   };

@@ -45,6 +45,7 @@ export class DashboardModel {
   links: any;
   gnetId: any;
   panels: PanelModel[];
+  panelInEdit?: PanelModel;
 
   // ------------------
   // not persisted
@@ -62,6 +63,7 @@ export class DashboardModel {
     templating: true, // needs special handling
     originalTime: true,
     originalTemplating: true,
+    panelInEdit: true,
   };
 
   constructor(data: any, meta?: DashboardMeta) {
@@ -221,6 +223,11 @@ export class DashboardModel {
   startRefresh() {
     this.events.emit(PanelEvents.refresh);
 
+    if (this.panelInEdit) {
+      this.panelInEdit.refresh();
+      return;
+    }
+
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
         panel.refresh();
@@ -239,13 +246,28 @@ export class DashboardModel {
   panelInitialized(panel: PanelModel) {
     panel.initialized();
 
+    // refresh new panels unless we are in fullscreen / edit mode
     if (!this.otherPanelInFullscreen(panel)) {
+      panel.refresh();
+    }
+
+    // refresh if panel is in edit mode and there is no last result
+    if (this.panelInEdit === panel && !this.panelInEdit.getQueryRunner().getLastResult()) {
       panel.refresh();
     }
   }
 
   otherPanelInFullscreen(panel: PanelModel) {
-    return this.meta.fullscreen && !panel.fullscreen;
+    return (this.meta.fullscreen && !panel.fullscreen) || this.panelInEdit;
+  }
+
+  initPanelEditor(sourcePanel: PanelModel): PanelModel {
+    this.panelInEdit = sourcePanel.getEditClone();
+    return this.panelInEdit;
+  }
+
+  exitPanelEditor() {
+    this.panelInEdit = undefined;
   }
 
   private ensureListExist(data: any) {
@@ -947,4 +969,16 @@ export class DashboardModel {
       panel.render();
     }
   }
+
+  updatePanel = (panelModel: PanelModel) => {
+    let index = 0;
+    for (const panel of this.panels) {
+      if (panel.id === panelModel.id) {
+        this.panels[index].restoreModel(panelModel.getSaveModel());
+        this.panels[index].getQueryRunner().pipeDataToSubject(panelModel.getQueryRunner().getLastResult());
+        break;
+      }
+      index++;
+    }
+  };
 }

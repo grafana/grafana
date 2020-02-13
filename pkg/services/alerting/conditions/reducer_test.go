@@ -1,6 +1,7 @@
 package conditions
 
 import (
+	"math"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -180,6 +181,21 @@ func TestSimpleReducer(t *testing.T) {
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
 
 			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+		})
+
+		Convey("min should work with NaNs", func() {
+			result := testReducer("min", math.NaN(), math.NaN(), math.NaN())
+			So(result, ShouldEqual, float64(0))
+		})
+
+		Convey("isValid should treat NaN as invalid", func() {
+			result := isValid(null.FloatFrom(math.NaN()))
+			So(result, ShouldBeFalse)
+		})
+
+		Convey("isValid should treat invalid null.Float as invalid", func() {
+			result := isValid(null.FloatFromPtr(nil))
+			So(result, ShouldBeFalse)
 		})
 	})
 }

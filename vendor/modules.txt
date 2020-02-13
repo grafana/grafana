@@ -396,9 +396,10 @@ gopkg.in/redis.v5/internal/consistenthash
 gopkg.in/redis.v5/internal/hashtag
 gopkg.in/redis.v5/internal/pool
 gopkg.in/redis.v5/internal/proto
-# gopkg.in/square/go-jose.v2 v2.3.0
+# gopkg.in/square/go-jose.v2 v2.4.1
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher
 gopkg.in/square/go-jose.v2/json
+gopkg.in/square/go-jose.v2/jwt
 # gopkg.in/yaml.v2 v2.2.5
 gopkg.in/yaml.v2

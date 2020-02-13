@@ -1,6 +1,7 @@
 # 6.7.0 (unreleased)
 
 ## Breaking changes
+* **Slack**: Removed _Mention_ setting and instead introduce _Mention Users_, _Mention Groups_, and _Mention Channel_. The first two settings require user and group IDs, respectively. This change was necessary because the way of mentioning via the Slack API [changed](https://api.slack.com/changelog/2017-09-the-one-about-usernames) and mentions in Slack notifications no longer worked.
 
 ### Notice about changes in backendSrv for plugin authors
 

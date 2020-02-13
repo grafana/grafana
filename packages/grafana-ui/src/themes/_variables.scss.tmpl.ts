@@ -1,4 +1,4 @@
-/* tslint:disable:max-line-length */
+/* eslint-disable max-len */
 
 import { GrafanaThemeCommons } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
@@ -217,6 +217,11 @@ $external-services: (
   google: (
     bgColor: #e84d3c,
     borderColor: #b83e31,
+    icon: '',
+  ),
+  azuread: (
+    bgColor: #2f2f2f,
+    borderColor: #2f2f2f,
     icon: '',
   ),
   grafanacom: (

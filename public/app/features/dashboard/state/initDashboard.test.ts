@@ -3,7 +3,7 @@ import thunk from 'redux-thunk';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { DashboardRouteInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './actions';
+import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 import { updateLocation } from '../../../core/actions';
 
 jest.mock('app/core/services/backend_srv');
@@ -108,12 +108,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         location: {
           query: {},
         },
-        dashboard: {
-          modifiedQueries: {
-            panelId: undefined,
-            queries: undefined,
-          },
-        },
+        dashboard: {},
         user: {},
         explore: {
           left: {

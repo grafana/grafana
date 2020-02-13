@@ -14,7 +14,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     menu: css`
       background: ${bgColor};
       box-shadow: 0px 4px 4px ${menuShadowColor};
-      position: absolute;
+      position: relative;
       min-width: 100%;
     `,
     option: css`
@@ -25,6 +25,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: row;
       white-space: nowrap;
       cursor: pointer;
+      border-left: 2px solid transparent;
       &:hover {
         background: ${optionBgHover};
       }

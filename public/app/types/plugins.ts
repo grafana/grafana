@@ -1,4 +1,5 @@
 import { PluginMeta } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 
 export interface PluginDashboard {
   dashboardId: number;
@@ -16,6 +17,10 @@ export interface PluginDashboard {
   title: string;
 }
 
+export interface PanelPluginsIndex {
+  [id: string]: PanelPlugin;
+}
+
 export interface PluginsState {
   plugins: PluginMeta[];
   searchQuery: string;
@@ -23,6 +28,7 @@ export interface PluginsState {
   hasFetched: boolean;
   dashboards: PluginDashboard[];
   isLoadingPluginDashboards: boolean;
+  panels: PanelPluginsIndex;
 }
 
 export interface VariableQueryProps {
