@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -17,7 +18,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -26,7 +27,7 @@ import (
 )
 
 var (
-	logger = log.New("data-proxy-log")
+	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
 )
 
@@ -57,6 +58,18 @@ type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+type logWrapper struct {
+	logger glog.Logger
+}
+
+// Write writes log messages as bytes from proxy
+func (lw *logWrapper) Write(p []byte) (n int, err error) {
+	withoutNewline := strings.TrimSuffix(string(p), "\n")
+	lw.logger.Error(withoutNewline)
+	return len(p), nil
+}
+
+// NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
 	targetURL, _ := url.Parse(ds.Url)
 
@@ -86,6 +99,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	reverseProxy := &httputil.ReverseProxy{
 		Director:      proxy.getDirector(),
 		FlushInterval: time.Millisecond * 200,
+		ErrorLog:      log.New(&logWrapper{logger: glog.New("reverseProxy")}, "", 0),
 	}
 
 	transport, err := proxy.ds.GetHttpTransport()
