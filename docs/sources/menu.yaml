@@ -85,7 +85,7 @@
   - name: Panels
     link: /features/panels/
     children:
-      - link: /features/panels/panels/
+    - link: /features/panels/panels/
       name: Overview
     - link: /features/panels/graph/
       name: Graph
