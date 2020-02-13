@@ -8,7 +8,6 @@ import './components/DashLinks';
 import './components/DashExportModal';
 import './components/DashNav';
 import './components/ExportDataModal';
-import './components/FolderPicker';
 import './components/VersionHistory';
 import './components/DashboardSettings';
 import './components/SubMenu';

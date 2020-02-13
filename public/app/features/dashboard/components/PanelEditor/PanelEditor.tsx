@@ -25,6 +25,7 @@ import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/re
 import { FieldConfigEditor } from './FieldConfigEditor';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelEditorTabs } from './state/selectors';
+import { getPanelStateById } from '../../state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -285,7 +286,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   const panel = state.panelEditorNew.getPanel();
-  const plugin = state.plugins.panels[panel.type];
+  const { plugin } = getPanelStateById(state.dashboard, panel.id);
 
   return {
     location: state.location,
@@ -344,9 +345,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 0;
       bottom: 0;
       background: ${background};
+      padding: ${theme.spacing.sm};
     `,
     panelWrapper: css`
-      padding: 0 2px 2px ${theme.spacing.sm};
       width: 100%;
       height: 100%;
     `,
@@ -377,13 +378,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       width: 100%;
       background: ${theme.colors.pageBg};
-      border-top: 1px solid ${theme.colors.pageHeaderBorder};
-      border-left: 1px solid ${theme.colors.pageHeaderBorder};
+      border: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: none;
     `,
     toolbar: css`
-      padding: ${theme.spacing.sm};
-      height: 55px;
       display: flex;
+      padding-bottom: ${theme.spacing.sm};
       justify-content: space-between;
     `,
     editorBody: css`

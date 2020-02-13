@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const OptionsGroup: FC<Props> = ({ title, children }) => {
-  const [isExpanded, toggleExpand] = useState(false);
+  const [isExpanded, toggleExpand] = useState(true);
   const theme = useTheme();
   const styles = getStyles(theme);
 
