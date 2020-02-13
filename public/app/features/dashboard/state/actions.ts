@@ -123,7 +123,6 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
       panel.pluginLoaded(plugin);
     }
 
-    console.log('panelModelAndPluginReady', panel.id);
     dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin }));
   };
 }
