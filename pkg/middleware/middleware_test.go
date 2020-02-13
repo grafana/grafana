@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
 	"github.com/grafana/grafana/pkg/models"
@@ -571,3 +573,89 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		fn(sc)
 	})
 }
+
+func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	reqContext, _ := initTokenRotationTest(ctx)
+
+	tryRotateCallCount := 0
+	uts := &auth.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+			tryRotateCallCount++
+			return false, nil
+		},
+	}
+
+	token := &models.UserToken{AuthToken: "oldtoken"}
+
+	fn := rotateEndOfRequestFunc(reqContext, uts, token)
+	cancel()
+	fn(reqContext.Resp)
+
+	if tryRotateCallCount > 0 {
+		t.Fatal("could not call tryrotate")
+	}
+}
+
+func TestTokenRotationAtEndOfRequest(t *testing.T) {
+	rr := httptest.NewRecorder()
+	reqContext, rr := initTokenRotationTest(context.Background())
+
+	uts := &auth.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+			newToken, _ := util.RandomHex(16)
+			token.AuthToken = newToken
+			return true, nil
+		},
+	}
+
+	token := &models.UserToken{AuthToken: "oldtoken"}
+
+	rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
+
+	foundLoginCookie := false
+	for _, c := range rr.Result().Cookies() {
+		if c.Name == "login_token" {
+			foundLoginCookie = true
+
+			if c.Value == token.AuthToken {
+				t.Fatal("auth token is still the same")
+			}
+		}
+	}
+
+	if !foundLoginCookie {
+		t.Fatal("could not find cookie")
+	}
+}
+
+func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder) {
+	setting.LoginCookieName = "login_token"
+	setting.LoginMaxLifetimeDays = 7
+
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequestWithContext(ctx, "", "", nil)
+	reqContext := &models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{
+				Request: req,
+			},
+		},
+		Logger: log.New("testlogger"),
+	}
+
+	mw := mockWriter{rr}
+	reqContext.Resp = mw
+
+	return reqContext, rr
+}
+
+type mockWriter struct {
+	*httptest.ResponseRecorder
+}
+
+func (mw mockWriter) Flush()                    {}
+func (mw mockWriter) Status() int               { return 0 }
+func (mw mockWriter) Size() int                 { return 0 }
+func (mw mockWriter) Written() bool             { return false }
+func (mw mockWriter) Before(macaron.BeforeFunc) {}

@@ -229,10 +229,15 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 
 	// Rotate the token just before we write response headers to ensure there is no delay between
 	// the new token being generated and the client receiving it.
-	ctx.Resp.Before(func(w macaron.ResponseWriter) {
-		// if the request is cancelled by the client we
-		// should not try to rotate the token since the
-		// client would not accept any result.
+	ctx.Resp.Before(rotateEndOfRequestFunc(ctx, authTokenService, token))
+
+	return true
+}
+
+func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.UserTokenService, token *models.UserToken) macaron.BeforeFunc {
+	return func(w macaron.ResponseWriter) {
+		// if the request is cancelled by the client we should not try
+		// to rotate the token since the client would not accept any result.
 		if ctx.Context.Req.Context().Err() == context.Canceled {
 			return
 		}
@@ -246,9 +251,7 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 		if rotated {
 			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
 		}
-	})
-
-	return true
+	}
 }
 
 func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays int) {
