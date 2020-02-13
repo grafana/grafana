@@ -24,7 +24,7 @@ export const templatingReducer = (
     }
 
     const variables = globalVariables.reduce((allVariables, state) => {
-      allVariables[state.variable.uuid] = state;
+      allVariables[state.variable.uuid!] = state;
       return allVariables;
     }, {} as Record<string, VariableState>);
 

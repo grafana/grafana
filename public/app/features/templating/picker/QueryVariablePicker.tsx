@@ -9,13 +9,13 @@ import { toVariablePayload } from '../state/actions';
 import { QueryVariablePickerState } from '../state/queryVariableReducer';
 import { variableAdapters } from '../adapters';
 import {
+  changeQueryVariableHighlightIndex,
   hideQueryVariableDropDown,
   selectVariableOption,
-  showQueryVariableDropDown,
-  toggleTag,
-  changeQueryVariableHighlightIndex,
   selectVariableOptionByHighlightIndex,
+  showQueryVariableDropDown,
   toggleAllVariableOptions,
+  toggleTag,
 } from '../state/queryVariableActions';
 import { VariablePickerProps } from '../state/types';
 
@@ -55,7 +55,7 @@ export class QueryVariablePicker extends PureComponent<Props> {
     event.stopPropagation();
     event.preventDefault();
     const { uuid } = this.props.variable;
-    dispatch(toggleTag(uuid, tag));
+    dispatch(toggleTag(uuid!, tag));
   };
 
   onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -77,11 +77,11 @@ export class QueryVariablePicker extends PureComponent<Props> {
     const { highlightIndex } = this.props.picker;
 
     if (event.keyCode === NavigationKeys.select) {
-      return dispatch(selectVariableOptionByHighlightIndex(uuid, highlightIndex));
+      return dispatch(selectVariableOptionByHighlightIndex(uuid!, highlightIndex));
     }
 
     if (event.keyCode === NavigationKeys.selectAndClose) {
-      dispatch(selectVariableOptionByHighlightIndex(uuid, highlightIndex));
+      dispatch(selectVariableOptionByHighlightIndex(uuid!, highlightIndex));
       return this.commitChanges();
     }
   };

@@ -1,4 +1,7 @@
-import { ActionCreatorWithPayload, createAction } from '@reduxjs/toolkit';
+import { ComponentType, MouseEvent } from 'react';
+import { createAction } from '@reduxjs/toolkit';
+import { AppEvents, DataSourceApi, DataSourcePluginMeta } from '@grafana/data';
+
 import {
   SelectVariableOption,
   toVariablePayload,
@@ -15,10 +18,8 @@ import { ThunkResult, VariableQueryProps } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
-import { AppEvents, DataSourceApi, DataSourcePluginMeta } from '@grafana/data';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
-import { ComponentType } from 'react';
 import { getVariable } from './selectors';
 
 export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(
@@ -48,17 +49,6 @@ export const queryVariableEditorLoaded = createAction<VariablePayload<ComponentT
 );
 
 export const toggleVariableTag = createAction<VariablePayload<VariableTag>>('templating/toggleVariableTag');
-
-export const queryVariableActions: Record<string, ActionCreatorWithPayload<VariablePayload<any>>> = {
-  [showQueryVariableDropDown.type]: showQueryVariableDropDown,
-  [hideQueryVariableDropDown.type]: hideQueryVariableDropDown,
-  [selectVariableOption.type]: selectVariableOption,
-  [queryVariableDatasourceLoaded.type]: queryVariableDatasourceLoaded,
-  [queryVariableEditorLoaded.type]: queryVariableEditorLoaded,
-  [toggleVariableTag.type]: toggleVariableTag,
-  [changeQueryVariableHighlightIndex.type]: changeQueryVariableHighlightIndex,
-  [toggleAllVariableOptions.type]: toggleAllVariableOptions,
-};
 
 export const updateQueryVariableOptions = (
   variable: QueryVariableModel,
@@ -130,7 +120,7 @@ export const selectVariableOptionByHighlightIndex = (uuid: string, index: number
     try {
       const variable = getVariable<QueryVariableModel>(uuid, getState());
       const option = variable.options[index];
-      const event: React.MouseEvent<HTMLAnchorElement> = null;
+      const event = (null as unknown) as MouseEvent<HTMLAnchorElement>;
       const data = { option, forceSelect: false, event };
       dispatch(selectVariableOption(toVariablePayload(variable, data)));
     } catch (error) {
