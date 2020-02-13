@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { GrafanaTheme, FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { stylesFactory, Forms, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
+import { stylesFactory, Forms, CustomScrollbar, selectThemeVariant, Icon } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -218,7 +218,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
             <button className="navbar-edit__back-btn" onClick={this.onPanelExit}>
-              <i className="fa fa-arrow-left"></i>
+              <Icon name="arrow-left" />
             </button>
             <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
           </div>
@@ -264,7 +264,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             >
               {this.renderHorizontalSplit(styles)}
               <div className={styles.panelOptionsPane}>
-                <CustomScrollbar>
+                <CustomScrollbar
+                  className={css`
+                    height: 100% !important;
+                  `}
+                >
                   {this.renderFieldOptions()}
                   <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
                 </CustomScrollbar>
