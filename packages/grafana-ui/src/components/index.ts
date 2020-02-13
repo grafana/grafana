@@ -134,4 +134,4 @@ export {
 export { default as Forms } from './Forms';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
-export { StandardFieldConfigEditors } from './FieldConfigs/standardFieldConfigEditors';
+export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';

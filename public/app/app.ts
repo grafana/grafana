@@ -40,7 +40,7 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getStandardFieldConfigs } from './features/dashboard/components/PanelEditor/utils';
+import { getStandardFieldConfigs } from '@grafana/ui';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore

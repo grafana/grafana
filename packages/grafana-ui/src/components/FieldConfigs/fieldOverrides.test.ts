@@ -9,11 +9,18 @@ import {
   MutableDataFrame,
   DataFrame,
   toDataFrame,
+  standardFieldConfigEditorRegistry,
+  FieldType,
 } from '@grafana/data';
-import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+
 import { getTheme } from '../../themes';
+import { getStandardFieldConfigs } from './standardFieldConfigEditors';
 
 describe('FieldOverrides', () => {
+  beforeAll(() => {
+    standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+  });
+
   const f0 = new MutableDataFrame();
   f0.add({ title: 'AAA', value: 100, value2: 1234 }, true);
   f0.add({ title: 'BBB', value: -20 }, true);
@@ -53,7 +60,7 @@ describe('FieldOverrides', () => {
     };
 
     const f: DataFrame = toDataFrame({
-      fields: [{ name: 'x', config: field, values: [] }],
+      fields: [{ type: FieldType.number, name: 'x', config: field, values: [] }],
     });
     const processed = applyFieldOverrides({
       data: [f],

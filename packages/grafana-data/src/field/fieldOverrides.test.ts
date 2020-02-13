@@ -8,6 +8,7 @@ import {
   FieldType,
 } from '../types';
 import { Registry } from '../utils';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 const property1 = {
   id: 'property1', // Match field properties
@@ -21,8 +22,20 @@ const property2 = {
   shouldApply: () => true,
 } as any;
 
+const unit = {
+  id: 'unit', // Match field properties
+  process: (value: any) => value,
+  shouldApply: () => true,
+} as any;
+
 export const customFieldRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(() => {
   return [property1, property2];
+});
+
+// For the need of this test  we need to mock the standard registry
+// as we cannot imporrt from grafana/ui
+standardFieldConfigEditorRegistry.setInit(() => {
+  return [unit];
 });
 
 describe('Global MinMax', () => {
@@ -60,6 +73,7 @@ describe('setFieldConfigDefaults', () => {
       dataFrameIndex: 0,
     };
 
+    console.log(standardFieldConfigEditorRegistry);
     // we mutate dsFieldConfig
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 

@@ -2,8 +2,6 @@ import { configure } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import 'jquery';
 import $ from 'jquery';
-import { standardFieldConfigEditorRegistry } from '@grafana/data';
-import { getStandardFieldConfigs } from '../app/features/dashboard/components/PanelEditor/utils';
 
 const global = window as any;
 global.$ = global.jQuery = $;
@@ -53,4 +51,3 @@ const throwUnhandledRejections = () => {
 };
 
 throwUnhandledRejections();
-standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);

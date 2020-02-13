@@ -2,7 +2,6 @@ import { CSSProperties } from 'react';
 import { PanelModel } from '../../state/PanelModel';
 import { DisplayMode } from './types';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
-import { StandardFieldConfigEditors } from '@grafana/ui';
 
 export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
   if (mode === DisplayMode.Fill) {
@@ -25,15 +24,3 @@ export function calculatePanelSize(mode: DisplayMode, width: number, height: num
     height: pHeight * scale,
   };
 }
-
-export const getStandardFieldConfigs = () => {
-  return [
-    StandardFieldConfigEditors.decimals,
-    StandardFieldConfigEditors.max,
-    StandardFieldConfigEditors.min,
-    StandardFieldConfigEditors.noValue,
-    StandardFieldConfigEditors.thresholds,
-    StandardFieldConfigEditors.title,
-    StandardFieldConfigEditors.unit,
-  ];
-};
