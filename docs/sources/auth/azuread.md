@@ -1,6 +1,6 @@
 +++
-title = "Azure AD OAuth2 Authentication"
-description = "Grafana OAuthentication Guide "
+title = "Azure AD OAuth2 authentication"
+description = "Grafana Azure AD OAuth Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
 type = "docs"
 [menu.docs]
@@ -10,15 +10,13 @@ parent = "authentication"
 weight = 3
 +++
 
-# Azure AD OAuth2 Authentication
+# Azure AD OAuth2 authentication
 
-The Azure AD authentication provides the possibility to use an Azure Active Directory tenant as an identity provider for Grafana.
+The Azure AD authentication provides the possibility to use an Azure Active Directory tenant as an identity provider for Grafana. By using Azure AD Application Roles it is also possible to assign Users and Groups to Grafana roles from the Azure Portal.
 
-By using Azure AD Application Roles it is also possible to assign Users and Groups to Grafana roles from the Azure Portal.
+## Create the Azure AD application
 
 To enable the Azure AD OAuth2 you must register your application with Azure AD.
-
-# Create Azure AD application
 
 1. Log in to [Azure Portal](https://portal.azure.com) and click **Azure Active Directory** in the side menu.
 
@@ -91,6 +89,8 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 1. Click Overview and then on **Managed application in local directory** to show the Enterprise Application details.
 
 1. Click on **Users and groups** and add Users/Groups to the Grafana roles by using **Add User**.
+
+## Enable Azure AD Oauth in Grafana
 
 1. Add the following to the [Grafana configuration file]({{< relref "../installation/configuration.md#config-file-locations" >}}):
 
