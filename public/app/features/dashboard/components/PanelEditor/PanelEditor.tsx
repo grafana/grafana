@@ -340,9 +340,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 0;
       bottom: 0;
       background: ${background};
+      padding: ${theme.spacing.sm};
     `,
     panelWrapper: css`
-      padding: 0 2px 2px ${theme.spacing.sm};
       width: 100%;
       height: 100%;
     `,
@@ -373,13 +373,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       width: 100%;
       background: ${theme.colors.pageBg};
-      border-top: 1px solid ${theme.colors.pageHeaderBorder};
-      border-left: 1px solid ${theme.colors.pageHeaderBorder};
+      border: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: none;
     `,
     toolbar: css`
-      padding: ${theme.spacing.sm};
-      height: 55px;
       display: flex;
+      padding-bottom: ${theme.spacing.sm};
       justify-content: space-between;
     `,
     editorBody: css`
