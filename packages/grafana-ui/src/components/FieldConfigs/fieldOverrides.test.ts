@@ -111,6 +111,7 @@ describe('FieldOverrides', () => {
       fieldOptions: src as FieldDisplayOptions, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       theme: (undefined as any) as GrafanaTheme,
+      autoMinMax: true,
     })[0];
     const valueColumn = data.fields[1];
     const config = valueColumn.config;
