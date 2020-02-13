@@ -29,7 +29,7 @@ You can either use the Windows installer or you can install a standalone Windows
 
 ## Install with Windows installer (recommended)
 
-1. Click [**Download the installer**](https://grafana.com/grafana/download?platform=windows).
+1. Click **Download the [installer](https://grafana.com/grafana/download?platform=windows)**.
 1. Open and run the installer. 
 
 To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../guides/getting_started/" >}}).
