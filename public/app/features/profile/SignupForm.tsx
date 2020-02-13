@@ -2,9 +2,6 @@ import React, { FC } from 'react';
 import { Forms } from '@grafana/ui';
 import { css } from 'emotion';
 
-import { connect } from 'react-redux';
-import { StoreState } from 'app/types';
-import { hot } from 'react-hot-loader';
 import { getConfig } from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
 
@@ -17,17 +14,12 @@ interface SignupFormModel {
   name?: string;
 }
 interface Props {
-  routeParams: {
-    email?: string;
-    orgName?: string;
-    username?: string;
-    code?: string;
-    name?: string;
-  };
-  /*Exist mostly for testing purposes*/
-
+  email?: string;
+  orgName?: string;
+  username?: string;
+  code?: string;
+  name?: string;
   verifyEmailEnabled?: boolean;
-  /*Exist mostly for testing purposes*/
   autoAssignOrg?: boolean;
 }
 
@@ -59,13 +51,12 @@ export const SignupForm: FC<Props> = props => {
     window.location.href = getConfig().appSubUrl + '/';
   };
 
-  const routeParams = props.routeParams || {};
   const defaultValues = {
-    orgName: routeParams.email,
-    email: routeParams.email,
-    username: routeParams.email,
-    code: routeParams.code,
-    name: routeParams.name,
+    orgName: props.orgName,
+    email: props.email,
+    username: props.email,
+    code: props.code,
+    name: props.name,
   };
 
   return (
@@ -127,9 +118,3 @@ export const SignupForm: FC<Props> = props => {
     </Forms.Form>
   );
 };
-
-const mapStateToProps = (state: StoreState) => ({
-  routeParams: state.location.routeParams,
-});
-
-export default hot(module)(connect(mapStateToProps)(SignupForm));

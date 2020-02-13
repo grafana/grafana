@@ -1,7 +1,10 @@
 import React, { FC } from 'react';
-import SignupForm from './SignupForm';
+import { SignupForm } from './SignupForm';
 import Page from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
+import { connect } from 'react-redux';
+import { hot } from 'react-hot-loader';
+import { StoreState } from 'app/types';
 
 const navModel = {
   main: {
@@ -14,7 +17,15 @@ const navModel = {
     text: '',
   },
 };
-export const SignupPage: FC = () => {
+
+interface Props {
+  email?: string;
+  orgName?: string;
+  username?: string;
+  code?: string;
+  name?: string;
+}
+export const SignupPage: FC<Props> = props => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -23,8 +34,18 @@ export const SignupPage: FC = () => {
           We just need a couple of more bits of
           <br /> information to finish creating your account.
         </div>
-        <SignupForm verifyEmailEnabled={getConfig().verifyEmailEnabled} autoAssignOrg={getConfig().autoAssignOrg} />
+        <SignupForm
+          {...props}
+          verifyEmailEnabled={getConfig().verifyEmailEnabled}
+          autoAssignOrg={getConfig().autoAssignOrg}
+        />
       </Page.Contents>
     </Page>
   );
 };
+
+const mapStateToProps = (state: StoreState) => ({
+  ...state.location.routeParams,
+});
+
+export default hot(module)(connect(mapStateToProps)(SignupPage));

@@ -7,7 +7,7 @@ import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
-import { SignupPage } from 'app/features/profile/SignupPage';
+import SignupPage from 'app/features/profile/SignupPage';
 
 import config from 'app/core/config';
 import { ILocationProvider, route } from 'angular';
