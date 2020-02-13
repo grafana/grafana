@@ -55,29 +55,7 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *Check
 	}
 }
 
-type PluginInstance struct {
-	ID       int64
-	Name     string
-	Type     string
-	URL      string
-	JSONData json.RawMessage
-}
-
-// InstanceSettings plugin instance settings.
-type InstanceSettings struct {
-	JSONData                json.RawMessage
-	DecryptedSecureJSONData map[string]string
-	Updated                 time.Time
-}
-
-// AppInstanceSettings app plugin instance settings.
-type AppInstanceSettings struct {
-	*InstanceSettings
-}
-
-// DataSourceInstanceSettings data source plugin instance settings.
-type DataSourceInstanceSettings struct {
-	*InstanceSettings
+type DataSourceConfig struct {
 	ID               int64
 	Name             string
 	URL              string
@@ -88,11 +66,13 @@ type DataSourceInstanceSettings struct {
 }
 
 type PluginConfig struct {
-	OrgID              int64
-	PluginID           string
-	PluginType         string
-	AppSettings        *AppInstanceSettings
-	DataSourceSettings *DataSourceInstanceSettings
+	OrgID                   int64
+	PluginID                string
+	PluginType              string
+	JSONData                json.RawMessage
+	DecryptedSecureJSONData map[string]string
+	Updated                 time.Time
+	DataSourceConfig        *DataSourceConfig
 }
 
 type CallResourceRequest struct {

@@ -122,9 +122,15 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
 
+	datasourceID := int64(0)
+
+	if req.Config.DatasourceConfig != nil {
+		datasourceID = req.Config.DatasourceConfig.Id
+	}
+
 	getDsInfo := &models.GetDataSourceByIdQuery{
 		OrgId: req.Config.OrgId,
-		Id:    req.Config.DatasourceId,
+		Id:    datasourceID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {

@@ -283,15 +283,13 @@ func (hs *HTTPServer) CallDatasourceResource(c *m.ReqContext) Response {
 
 	req := backendplugin.CallResourceRequest{
 		Config: backendplugin.PluginConfig{
-			OrgID:      c.OrgId,
-			PluginID:   plugin.Id,
-			PluginType: plugin.Type,
-			DataSourceSettings: &backendplugin.DataSourceInstanceSettings{
-				InstanceSettings: &backendplugin.InstanceSettings{
-					JSONData:                jsonDataBytes,
-					DecryptedSecureJSONData: ds.DecryptedValues(),
-					Updated:                 ds.Updated,
-				},
+			OrgID:                   c.OrgId,
+			PluginID:                plugin.Id,
+			PluginType:              plugin.Type,
+			JSONData:                jsonDataBytes,
+			DecryptedSecureJSONData: ds.DecryptedValues(),
+			Updated:                 ds.Updated,
+			DataSourceConfig: &backendplugin.DataSourceConfig{
 				ID:               ds.Id,
 				Name:             ds.Name,
 				URL:              ds.Url,

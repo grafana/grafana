@@ -207,9 +207,12 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 
 	protoReq := &pluginv2.CallResource_Request{
 		Config: &pluginv2.PluginConfig{
-			OrgId:      req.Config.OrgID,
-			PluginId:   req.Config.PluginID,
-			PluginType: req.Config.PluginType,
+			OrgId:                   req.Config.OrgID,
+			PluginId:                req.Config.PluginID,
+			PluginType:              req.Config.PluginType,
+			JsonData:                req.Config.JSONData,
+			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
+			UpdatedMS:               req.Config.Updated.UnixNano() / int64(time.Millisecond),
 		},
 		Path:    req.Path,
 		Method:  req.Method,
@@ -218,23 +221,16 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		Body:    req.Body,
 	}
 
-	if req.Config.AppSettings != nil {
-		protoReq.Config.UpdatedMS = req.Config.AppSettings.Updated.UnixNano() / int64(time.Millisecond)
-		protoReq.Config.JsonData = req.Config.AppSettings.JSONData
-		protoReq.Config.DecryptedSecureJsonData = req.Config.AppSettings.DecryptedSecureJSONData
-	}
-
-	if req.Config.DataSourceSettings != nil {
-		protoReq.Config.DatasourceId = req.Config.DataSourceSettings.ID
-		protoReq.Config.DatasourceName = req.Config.DataSourceSettings.Name
-		protoReq.Config.DatasourceUrl = req.Config.DataSourceSettings.URL
-		protoReq.Config.DatasourceDatabase = req.Config.DataSourceSettings.Database
-		protoReq.Config.DatasourceUser = req.Config.DataSourceSettings.User
-		protoReq.Config.DatasourceBasicAuthEnabled = req.Config.DataSourceSettings.BasicAuthEnabled
-		protoReq.Config.DatasourceBasicAuthUser = req.Config.DataSourceSettings.BasicAuthUser
-		protoReq.Config.UpdatedMS = req.Config.DataSourceSettings.Updated.UnixNano() / int64(time.Millisecond)
-		protoReq.Config.JsonData = req.Config.DataSourceSettings.JSONData
-		protoReq.Config.DecryptedSecureJsonData = req.Config.DataSourceSettings.DecryptedSecureJSONData
+	if req.Config.DataSourceConfig != nil {
+		protoReq.Config.DatasourceConfig = &pluginv2.DataSourceConfig{
+			Id:               req.Config.DataSourceConfig.ID,
+			Name:             req.Config.DataSourceConfig.Name,
+			Url:              req.Config.DataSourceConfig.URL,
+			Database:         req.Config.DataSourceConfig.Database,
+			User:             req.Config.DataSourceConfig.User,
+			BasicAuthEnabled: req.Config.DataSourceConfig.BasicAuthEnabled,
+			BasicAuthUser:    req.Config.DataSourceConfig.BasicAuthUser,
+		}
 	}
 
 	protoResp, err := p.core.CallResource(ctx, protoReq)
