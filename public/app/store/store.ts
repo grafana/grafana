@@ -9,7 +9,7 @@ export function setStore(newStore: Store<StoreState>) {
 }
 
 export function getState(): StoreState {
-  if (!store) {
+  if (!store || !store.getState) {
     return ({
       templating: initialTemplatingState,
     } as any) as StoreState; // used by tests
@@ -19,7 +19,7 @@ export function getState(): StoreState {
 }
 
 export function dispatch(action: any) {
-  if (!store) {
+  if (!store || !store.getState) {
     return;
   }
 
