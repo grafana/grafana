@@ -124,11 +124,7 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 
 	getDsInfo := &models.GetDataSourceByIdQuery{
 		OrgId: req.Config.OrgId,
-	}
-
-	ds := req.Config.GetDataSource()
-	if ds != nil {
-		getDsInfo.Id = ds.Id
+		Id:    req.Config.DatasourceId,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {

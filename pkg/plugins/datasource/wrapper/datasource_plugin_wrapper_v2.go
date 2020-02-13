@@ -32,23 +32,19 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 
 	pbQuery := &pluginv2.DataQueryRequest{
 		Config: &pluginv2.PluginConfig{
-			OrgId:      ds.OrgId,
-			PluginId:   tw.pluginId,
-			PluginType: tw.pluginType,
-			InstanceSettings: &pluginv2.PluginConfig_DataSource{
-				DataSource: &pluginv2.PluginConfig_DataSourceInstanceSettings{
-					Id:                      ds.Id,
-					Name:                    ds.Name,
-					Url:                     ds.Url,
-					Database:                ds.Database,
-					User:                    ds.User,
-					BasicAuthEnabled:        ds.BasicAuth,
-					BasicAuthUser:           ds.BasicAuthUser,
-					UpdatedMS:               ds.Updated.UnixNano() / int64(time.Millisecond),
-					JsonData:                jsonDataBytes,
-					DecryptedSecureJsonData: ds.DecryptedValues(),
-				},
-			},
+			OrgId:                      ds.OrgId,
+			PluginId:                   tw.pluginId,
+			PluginType:                 tw.pluginType,
+			DatasourceId:               ds.Id,
+			DatasourceName:             ds.Name,
+			DatasourceUrl:              ds.Url,
+			DatasourceDatabase:         ds.Database,
+			DatasourceUser:             ds.User,
+			DatasourceBasicAuthEnabled: ds.BasicAuth,
+			DatasourceBasicAuthUser:    ds.BasicAuthUser,
+			UpdatedMS:                  ds.Updated.UnixNano() / int64(time.Millisecond),
+			JsonData:                   jsonDataBytes,
+			DecryptedSecureJsonData:    ds.DecryptedValues(),
 		},
 		Queries: []*pluginv2.DataQuery{},
 	}

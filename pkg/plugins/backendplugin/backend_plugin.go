@@ -219,30 +219,22 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 	}
 
 	if req.Config.AppSettings != nil {
-		protoReq.Config.InstanceSettings = &pluginv2.PluginConfig_App{
-			App: &pluginv2.PluginConfig_AppInstanceSettings{
-				UpdatedMS:               req.Config.AppSettings.Updated.UnixNano() / int64(time.Millisecond),
-				JsonData:                req.Config.AppSettings.JSONData,
-				DecryptedSecureJsonData: req.Config.AppSettings.DecryptedSecureJSONData,
-			},
-		}
+		protoReq.Config.UpdatedMS = req.Config.AppSettings.Updated.UnixNano() / int64(time.Millisecond)
+		protoReq.Config.JsonData = req.Config.AppSettings.JSONData
+		protoReq.Config.DecryptedSecureJsonData = req.Config.AppSettings.DecryptedSecureJSONData
 	}
 
 	if req.Config.DataSourceSettings != nil {
-		protoReq.Config.InstanceSettings = &pluginv2.PluginConfig_DataSource{
-			DataSource: &pluginv2.PluginConfig_DataSourceInstanceSettings{
-				Id:                      req.Config.DataSourceSettings.ID,
-				Name:                    req.Config.DataSourceSettings.Name,
-				Url:                     req.Config.DataSourceSettings.URL,
-				Database:                req.Config.DataSourceSettings.Database,
-				User:                    req.Config.DataSourceSettings.User,
-				BasicAuthEnabled:        req.Config.DataSourceSettings.BasicAuthEnabled,
-				BasicAuthUser:           req.Config.DataSourceSettings.BasicAuthUser,
-				UpdatedMS:               req.Config.DataSourceSettings.Updated.UnixNano() / int64(time.Millisecond),
-				JsonData:                req.Config.DataSourceSettings.JSONData,
-				DecryptedSecureJsonData: req.Config.DataSourceSettings.DecryptedSecureJSONData,
-			},
-		}
+		protoReq.Config.DatasourceId = req.Config.DataSourceSettings.ID
+		protoReq.Config.DatasourceName = req.Config.DataSourceSettings.Name
+		protoReq.Config.DatasourceUrl = req.Config.DataSourceSettings.URL
+		protoReq.Config.DatasourceDatabase = req.Config.DataSourceSettings.Database
+		protoReq.Config.DatasourceUser = req.Config.DataSourceSettings.User
+		protoReq.Config.DatasourceBasicAuthEnabled = req.Config.DataSourceSettings.BasicAuthEnabled
+		protoReq.Config.DatasourceBasicAuthUser = req.Config.DataSourceSettings.BasicAuthUser
+		protoReq.Config.UpdatedMS = req.Config.DataSourceSettings.Updated.UnixNano() / int64(time.Millisecond)
+		protoReq.Config.JsonData = req.Config.DataSourceSettings.JSONData
+		protoReq.Config.DecryptedSecureJsonData = req.Config.DataSourceSettings.DecryptedSecureJSONData
 	}
 
 	protoResp, err := p.core.CallResource(ctx, protoReq)
