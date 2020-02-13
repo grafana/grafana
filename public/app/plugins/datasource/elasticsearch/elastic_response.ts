@@ -475,7 +475,7 @@ type Doc = {
  * docs have to have the same keys).
  * @param hits
  */
-const flattenHits = (hits: Doc[]): { docs: Record<string, any>[]; propNames: string[] } => {
+const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames: string[] } => {
   const docs: any[] = [];
   // We keep a list of all props so that we can create all the fields in the dataFrame, this can lead
   // to wide sparse dataframes in case the scheme is different per document.
