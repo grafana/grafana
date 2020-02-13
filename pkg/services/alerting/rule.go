@@ -175,7 +175,7 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 func translateNotificationIDToUID(id int64, orgID int64) (string, error) {
 	notificationDto, err := getAlertNotificationByIDAndOrgID(id, orgID)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to translate Notification Id to Uid for [ OrgId: %v, Id: %v ]", orgID, id))
+		logger.Debug("Failed to translate Notification Id to Uid", "orgID", orgID, "Id", id)
 		return "", err
 	}
 
