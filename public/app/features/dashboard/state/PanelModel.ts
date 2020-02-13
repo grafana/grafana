@@ -356,7 +356,7 @@ export class PanelModel {
   getEditClone() {
     const sourceModel = this.getSaveModel();
 
-    // super unique id
+    // Temporary id for the clone, restored later in redux action when changes are saved
     sourceModel.id = 23763571993;
 
     const clone = new PanelModel(sourceModel);
