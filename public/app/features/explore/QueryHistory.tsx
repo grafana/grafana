@@ -2,8 +2,11 @@ import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { TabsBar, Tab, TabContent, stylesFactory } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { QueryHistorySettings } from './QueryHistorySettings';
 
-interface Props {}
+interface QueryHistoryProps {
+  width: any;
+}
 
 export enum Tabs {
   QueryHistory = 'Query history',
@@ -11,7 +14,7 @@ export enum Tabs {
   Settings = 'Settings',
 }
 
-interface State {
+interface QueryHistoryState {
   // The Selected Tab
   activeTab: Tabs;
 }
@@ -27,8 +30,7 @@ const getStyles = stylesFactory(() => {
     drawer: css`
       position: fixed;
       bottom: 0;
-      height: 40%;
-      width: 100%;
+      height: 400px;
       background-color: white;
       border: solid 1px #dde4ed;
       padding-left: 10px;
@@ -37,8 +39,8 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-export class QueryHistory extends PureComponent<Props, State> {
-  constructor(props: Props) {
+export class QueryHistory extends PureComponent<QueryHistoryProps, QueryHistoryState> {
+  constructor(props: QueryHistoryProps) {
     super(props);
     this.state = {
       activeTab: Tabs.QueryHistory,
@@ -51,15 +53,21 @@ export class QueryHistory extends PureComponent<Props, State> {
 
   render() {
     const { activeTab } = this.state;
+    const { width } = this.props;
     const styles = getStyles();
 
     const tabs = [];
     tabs.push({ label: 'Query history', value: Tabs.QueryHistory, content: 'Query history', icon: 'fa fa-history' });
     tabs.push({ label: 'Starred', value: Tabs.Starred, content: 'Starred', icon: 'fa fa-star' });
-    tabs.push({ label: 'Settings', value: Tabs.Settings, content: 'Settings', icon: 'gicon gicon-preferences' });
+    tabs.push({
+      label: 'Settings',
+      value: Tabs.Settings,
+      content: <QueryHistorySettings />,
+      icon: 'gicon gicon-preferences',
+    });
 
     return (
-      <div className={styles.drawer}>
+      <div className={styles.drawer} style={{ width }}>
         <TabsBar hideBorder={true}>
           {tabs.map((t, index) => {
             return (

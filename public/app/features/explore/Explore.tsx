@@ -68,6 +68,9 @@ const getStyles = stylesFactory(() => {
     button: css`
       margin: 1em 4px 0 0;
     `,
+    cheatSheetAlign: css`
+      margin-right: 1px;
+    `,
   };
 });
 
@@ -332,7 +335,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                   <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
-                        <div className="grafana-info-box grafana-info-box--max-lg">
+                        <div className={`grafana-info-box grafana-info-box--max-lg ${styles.cheatSheetAlign}`}>
                           <StartPage
                             onClickExample={this.onClickExample}
                             datasource={datasourceInstance}
@@ -375,7 +378,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      {this.state.isQueryHistoryVisible && <QueryHistory />}
+                      {this.state.isQueryHistoryVisible && <QueryHistory width={width} />}
                     </ErrorBoundaryAlert>
                   </main>
                 );
