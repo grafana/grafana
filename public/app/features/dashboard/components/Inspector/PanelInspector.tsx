@@ -114,18 +114,8 @@ export class PanelInspector extends PureComponent<Props, State> {
     const targets = lastResult.request?.targets;
     const requestTime = lastResult.request?.endTime ? lastResult.request?.endTime - lastResult.request.startTime : -1;
     const queries = targets ? targets.length : 0;
-    const temp: { [key: string]: { count: number } } = {};
-    if (targets) {
-      for (let { datasource } of targets) {
-        if (datasource) {
-          temp[datasource] = {
-            count: temp[datasource] ? temp[datasource].count++ : 1,
-          };
-        }
-      }
-    }
 
-    const dataSources = Object.values(temp).filter(t => t.count >= 1).length;
+    const dataSources = new Set(targets.map(t => t.datasource)).size;
 
     if (data) {
       for (const frame of data) {
@@ -316,15 +306,9 @@ export class PanelInspector extends PureComponent<Props, State> {
   };
 
   render() {
-    const { panel } = this.props;
     const { last, tab, drawerWidth } = this.state;
     const styles = getStyles();
-
     const error = last?.error;
-    if (!panel) {
-      this.onDismiss(); // Try to close the component
-      return null;
-    }
 
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
