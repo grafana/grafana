@@ -9,7 +9,7 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
-import { getVariable, getVariables } from './state/selectors';
+import { getAllVariables, getVariable, getVariables } from './state/selectors';
 import { variableAdapters } from './adapters';
 import { CoreEvents } from '../../types';
 import { VariableIdentifier } from './state/actions';
@@ -355,18 +355,9 @@ export class VariableEditorCtrl {
 
   onVariableMovedToState(args: VariableMovedToState) {
     this.variableSrv.removeVariable(this.$scope.current);
-    const variablesInState = getVariables().map(variable => ({ ...variable }));
-    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
-    for (let index = 0; index < this.$scope.variables.length; index++) {
-      const variable = this.$scope.variables[index];
-      if (variable.index === args.index) {
-        const variable = { ...getVariable(args.uuid) };
-        this.$scope.current = variable;
-        this.$scope.variables[index] = variable;
-        this.$scope.validate();
-        break;
-      }
-    }
+    this.$scope.variables = getAllVariables(this.variableSrv.variables);
+    this.$scope.current = { ...getVariable(args.uuid) };
+    this.$scope.validate();
   }
 
   onVariableMovedToAngular(args: MoveVariableType) {

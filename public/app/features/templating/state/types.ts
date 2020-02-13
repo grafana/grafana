@@ -1,5 +1,6 @@
 import { VariableModel, VariableType } from '../variable';
 import { DataSourceSelectItem } from '@grafana/data';
+import { TemplatingState } from './index';
 
 export const emptyUuid = '00000000-0000-0000-0000-000000000000';
 
@@ -46,3 +47,7 @@ export interface VariableState<
   editor: EditorState;
   variable: ModelState;
 }
+
+export const getInstanceState = <State extends VariableState = VariableState>(state: TemplatingState, uuid: string) => {
+  return state.variables[uuid] as State;
+};

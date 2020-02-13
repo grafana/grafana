@@ -1,5 +1,5 @@
 import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
-import { ALL_VARIABLE_TEXT, queryVariableReducer, QueryVariableState } from '../state/queryVariableReducer';
+import { ALL_VARIABLE_TEXT, queryVariableSlice } from '../state/queryVariableReducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from './index';
@@ -7,26 +7,20 @@ import { QueryVariablePicker } from '../picker/QueryVariablePicker';
 import { QueryVariableEditor } from '../editor/QueryVariableEditor';
 import { updateQueryVariableOptions } from '../state/queryVariableActions';
 
-export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel, QueryVariableState> => {
+export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
     description: 'Variable values are fetched from a datasource query',
-    reducer: queryVariableReducer,
+    reducer: queryVariableSlice.reducer,
     picker: QueryVariablePicker,
     editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
     },
     setValue: async (variable, option) => {
-      return new Promise(async resolve => {
-        await dispatch(setOptionAsCurrent(variable, option));
-        resolve();
-      });
+      await dispatch(setOptionAsCurrent(variable, option));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      return new Promise(async resolve => {
-        await dispatch(setOptionFromUrl(variable, urlValue));
-        resolve();
-      });
+      await dispatch(setOptionFromUrl(variable, urlValue));
     },
     updateOptions: async (variable, searchFilter, notifyAngular) => {
       await dispatch(updateQueryVariableOptions(variable, searchFilter, notifyAngular));

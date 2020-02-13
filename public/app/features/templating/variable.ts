@@ -72,6 +72,7 @@ export interface VariableTag {
   selected: boolean;
   text: string | string[];
   values?: any[];
+  valuesText?: string;
 }
 
 export interface VariableOption {

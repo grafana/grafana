@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
-import { VariableIdentifier, VariablePayload } from '../state/actions';
+import { VariableIdentifier } from '../state/actions';
 import { subscribeToVariableChanges } from '../subscribeToVariableStateChanges';
 import { variableAdapters } from './index';
 import { VariableEditor } from '../editor/VariableEditor';
@@ -18,23 +18,16 @@ export class VariableRenderer extends PureComponent<VariableRendererProps, Varia
     super(props);
 
     // editing a new variable
-    if (!props.uuid) {
-      const initialState = variableAdapters
-        .get(props.type)
-        .reducer((undefined as unknown) as VariableState, { type: '', payload: {} as VariablePayload<any> });
-      this.state = initialState;
-    } else {
-      this.subscription = subscribeToVariableChanges<VariableState>(props).subscribe({
-        next: state => {
-          if (this.state) {
-            this.setState({ ...state });
-            return;
-          }
+    this.subscription = subscribeToVariableChanges<VariableState>(props).subscribe({
+      next: state => {
+        if (this.state) {
+          this.setState({ ...state });
+          return;
+        }
 
-          this.state = state;
-        },
-      });
-    }
+        this.state = state;
+      },
+    });
   }
 
   componentWillUnmount(): void {

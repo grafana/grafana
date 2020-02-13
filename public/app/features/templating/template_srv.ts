@@ -1,6 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { VariableActions, VariableModel, variableRegex } from 'app/features/templating/variable';
+import { VariableActions, VariableModel, variableRegex, VariableWithOptions } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
 import { getAllVariables } from './state/selectors';
@@ -44,7 +44,7 @@ export class TemplateSrv {
   updateIndex() {
     const existsOrEmpty = (value: any) => value || value === '';
 
-    this.index = this.variables.reduce((acc, currentValue) => {
+    this.index = getAllVariables(this.variables, getState()).reduce((acc: any, currentValue: VariableWithOptions) => {
       if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
         acc[currentValue.name] = currentValue;
       }

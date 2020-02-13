@@ -5,7 +5,7 @@ import { e2e } from '@grafana/e2e';
 import { VariableSrv } from 'app/features/templating/all';
 import { CoreEvents } from '../../../../types';
 import { VariableModel } from '../../../templating/variable';
-import { getVariable, getVariables } from '../../../templating/state/selectors';
+import { getAllVariables, getVariable, getVariables } from '../../../templating/state/selectors';
 import { variableAdapters } from '../../../templating/adapters';
 import { MoveVariableType, VariableMovedToState } from '../../../../types/events';
 
@@ -71,8 +71,8 @@ export class SubMenuCtrl {
 
   onVariableMovedToState(args: VariableMovedToState) {
     for (let index = 0; index < this.variables.length; index++) {
-      const variable = this.variables[index];
-      if (variable.index === args.index) {
+      const angularVariable = this.variables[index];
+      if (angularVariable.index === args.index) {
         const variable = { ...getVariable(args.uuid) };
         this.variables[index] = variable;
         break;
@@ -91,26 +91,25 @@ export class SubMenuCtrl {
   }
 
   onVariableDuplicateVariableSucceeded(args: VariableMovedToState) {
-    this.variables.push({ ...getVariable(args.uuid ?? '') });
+    this.variables = getAllVariables(this.variableSrv.variables);
   }
 
   onVariableRemoveVariableInAngularSucceeded(args: { name: string }) {
-    this.variables = this.variables.filter(v => v.name !== args.name);
+    this.variables = getAllVariables(this.variableSrv.variables);
   }
 
   onVariableRemoveVariableSucceeded(args: { uuid: string }) {
-    this.variables = this.variables.filter(v => v.uuid !== args.uuid);
+    this.variables = getAllVariables(this.variableSrv.variables);
   }
 
   onVariableChangeOrderSucceeded() {
-    const variablesInState = getVariables().map(variable => ({ ...variable }));
-    this.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+    this.variables = getAllVariables(this.variableSrv.variables);
   }
 
   onVariableNewVariableSucceeded() {}
 
   onVariableStoreNewVariableSucceeded(args: { uuid: string }) {
-    this.variables.push({ ...getVariable(args.uuid) });
+    this.variables = getAllVariables(this.variableSrv.variables);
   }
 }
 

@@ -1,14 +1,13 @@
 import { ComponentType } from 'react';
 import { Reducer } from 'redux';
-import { PayloadAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from '../variable';
-import { VariablePayload } from '../state/actions';
 import { createQueryVariableAdapter } from './queryVariableAdapter';
-import { VariableEditorProps, VariablePickerProps, VariableState } from '../state/types';
+import { VariableEditorProps, VariablePickerProps } from '../state/types';
+import { TemplatingState } from '../state';
 
-export interface VariableAdapter<Model extends VariableModel, State extends VariableState> {
+export interface VariableAdapter<Model extends VariableModel> {
   description: string;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
   setValue: (variable: Model, option: VariableOption) => Promise<void>;
@@ -18,10 +17,10 @@ export interface VariableAdapter<Model extends VariableModel, State extends Vari
   getValueForUrl: (variable: Model) => string | string[];
   picker: ComponentType<VariablePickerProps>;
   editor: ComponentType<VariableEditorProps>;
-  reducer: Reducer<State, PayloadAction<VariablePayload<any>>>;
+  reducer: Reducer<TemplatingState>;
 }
 
-const allVariableAdapters: Record<VariableType, VariableAdapter<any, any> | null> = {
+const allVariableAdapters: Record<VariableType, VariableAdapter<any> | null> = {
   query: null,
   textbox: null,
   constant: null,
@@ -33,13 +32,13 @@ const allVariableAdapters: Record<VariableType, VariableAdapter<any, any> | null
 
 export interface VariableAdapters {
   contains: (type: VariableType) => boolean;
-  get: (type: VariableType) => VariableAdapter<any, any>;
-  set: (type: VariableType, adapter: VariableAdapter<any, any>) => void;
+  get: (type: VariableType) => VariableAdapter<any>;
+  set: (type: VariableType, adapter: VariableAdapter<any>) => void;
 }
 
 export const variableAdapters: VariableAdapters = {
   contains: (type: VariableType): boolean => !!allVariableAdapters[type],
-  get: (type: VariableType): VariableAdapter<any, any> => {
+  get: (type: VariableType): VariableAdapter<any> => {
     if (allVariableAdapters[type] !== null) {
       // @ts-ignore
       // Suppressing strict null check in this case we know that this is an instance otherwise we throw
@@ -50,7 +49,7 @@ export const variableAdapters: VariableAdapters = {
 
     throw new Error(`There is no adapter for type:${type}`);
   },
-  set: (type: VariableType, adapter: VariableAdapter<any, any>): void => {
+  set: (type: VariableType, adapter: VariableAdapter<any>): void => {
     allVariableAdapters[type] = adapter;
   },
 };

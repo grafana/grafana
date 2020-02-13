@@ -1,7 +1,7 @@
 import { StoreState } from '../../../types';
 import { VariableActions, VariableModel } from '../variable';
 import { getState } from '../../../store/store';
-import { VariableState } from './types';
+import { emptyUuid, VariableState } from './types';
 import { variableAdapters } from '../adapters';
 
 export const getVariableState = <T extends VariableState = VariableState>(
@@ -23,7 +23,9 @@ export const getVariable = <T extends VariableModel = VariableModel>(
 };
 
 export const getVariables = (state: StoreState = getState()): VariableModel[] => {
-  return Object.values(state.templating.variables).map(state => state.variable);
+  return Object.values(state.templating.variables)
+    .filter(state => state.variable.uuid! !== emptyUuid)
+    .map(state => ({ ...state.variable }));
 };
 
 export const getAllVariables = (angularVariables: VariableModel[], state: StoreState = getState()): VariableModel[] => {

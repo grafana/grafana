@@ -70,7 +70,7 @@ export const updateQueryVariableOptions = (
     try {
       dispatch(updateVariableStarting(toVariablePayload(variable)));
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-      const queryOptions: any = { range: undefined, variableInState, searchFilter };
+      const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
       if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
         queryOptions.range = getTimeSrv().timeRange();
       }
@@ -92,6 +92,7 @@ export const updateQueryVariableOptions = (
         updateVariableCompleted(toVariablePayload(variableInState, { notifyAngular: notifyAngular ?? false }))
       );
     } catch (err) {
+      console.error(err);
       if (err.data && err.data.message) {
         err.message = err.data.message;
       }

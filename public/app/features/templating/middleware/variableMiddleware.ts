@@ -15,9 +15,7 @@ import {
   storeNewVariable,
   toVariablePayload,
   updateVariableCompleted,
-  VariablePayload,
 } from '../state/actions';
-import { variableAdapters } from '../adapters';
 import {
   MoveVariableType,
   VariableChangeOrderStart,
@@ -27,7 +25,8 @@ import {
 } from '../../../types/events';
 import templateSrv from '../template_srv';
 import { getVariable } from '../state/selectors';
-import { emptyUuid, VariableState } from '../state/types';
+import { emptyUuid } from '../state/types';
+import { VariableModel } from '../variable';
 
 let dashboardEvents: Emitter | null = null;
 
@@ -37,17 +36,13 @@ const onVariableTypeInAngularUpdated = (store: MiddlewareAPI<Dispatch, StoreStat
   index,
   type,
 }: MoveVariableType) => {
-  const initialState = variableAdapters
-    .get(type)
-    .reducer((undefined as unknown) as VariableState, { type: '', payload: {} as VariablePayload<any> });
   const model = {
-    ...initialState.variable,
     name,
     type,
     label,
     index,
   };
-  store.dispatch(addVariable(toVariablePayload(model, { global: false, index, model })));
+  store.dispatch(addVariable(toVariablePayload(model as VariableModel, { global: false, index, model })));
 };
 
 const onVariableDuplicateStart = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
@@ -116,7 +111,8 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
   }
 
   if (changeVariableNameSucceeded.match(action)) {
-    const oldName = getVariable(action.payload.uuid, store.getState()).name;
+    const oldVariable = { ...getVariable(action.payload.uuid, store.getState()) };
+    const oldName = oldVariable.name;
     const result = next(action);
     if (action.payload.uuid === emptyUuid) {
       return result;
@@ -125,7 +121,8 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
       type: action.payload.type,
       uuid: action.payload.uuid,
     });
-    templateSrv.variableInitialized(getVariable(action.payload.uuid, store.getState()));
+    const newVariable = { ...getVariable(action.payload.uuid, store.getState()) };
+    templateSrv.variableInitialized(newVariable);
     templateSrv.variableRemoved(oldName);
     return result;
   }
@@ -134,15 +131,17 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     const result = next(action);
     const uuid = action.payload.uuid;
     const index = action.payload.data.index;
+    const variable = { ...getVariable(uuid, store.getState()) };
     dashboardEvents?.emit(CoreEvents.variableMovedToState, { index, uuid });
-    templateSrv.variableInitialized(getVariable(uuid, store.getState()));
+    templateSrv.variableInitialized(variable);
     return result;
   }
 
   if (setCurrentVariableValue.match(action)) {
     const result = next(action);
     const uuid = action.payload.uuid;
-    templateSrv.variableInitialized(getVariable(uuid, store.getState()));
+    const variable = { ...getVariable(uuid, store.getState()) };
+    templateSrv.variableInitialized(variable);
     return result;
   }
 

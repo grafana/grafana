@@ -1,7 +1,7 @@
 import castArray from 'lodash/castArray';
 import { MouseEvent } from 'react';
 import { v4 } from 'uuid';
-import { ActionCreatorWithPayload, createAction, PrepareAction } from '@reduxjs/toolkit';
+import { createAction, PrepareAction } from '@reduxjs/toolkit';
 import { UrlQueryValue } from '@grafana/runtime';
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
@@ -21,7 +21,6 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
 import { MoveVariableType, VariableNewVariableStart } from '../../../types/events';
-import { queryVariableActions } from './queryVariableActions';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -151,32 +150,6 @@ export const changeVariableProp = createAction<VariablePayload<{ propName: strin
   'templating/changeVariableProp'
 );
 
-export const variableActions: Record<string, ActionCreatorWithPayload<VariablePayload<any>>> = {
-  [addVariable.type]: addVariable,
-  [duplicateVariable.type]: duplicateVariable,
-  [removeVariable.type]: removeVariable,
-  [newVariable.type]: newVariable,
-  [storeNewVariable.type]: storeNewVariable,
-  [changeVariableOrder.type]: changeVariableOrder,
-  [setInitLock.type]: setInitLock,
-  [resolveInitLock.type]: resolveInitLock,
-  [removeInitLock.type]: removeInitLock,
-  [setCurrentVariableValue.type]: setCurrentVariableValue,
-  [updateVariableOptions.type]: updateVariableOptions,
-  [updateVariableStarting.type]: updateVariableStarting,
-  [updateVariableCompleted.type]: updateVariableCompleted,
-  [updateVariableFailed.type]: updateVariableFailed,
-  [updateVariableTags.type]: updateVariableTags,
-  [changeVariableNameSucceeded.type]: changeVariableNameSucceeded,
-  [changeVariableNameFailed.type]: changeVariableNameFailed,
-  [variableEditorMounted.type]: variableEditorMounted,
-  [variableEditorUnMounted.type]: variableEditorUnMounted,
-  [changeVariableLabel.type]: changeVariableLabel,
-  [changeVariableHide.type]: changeVariableHide,
-  [changeVariableProp.type]: changeVariableProp,
-  ...queryVariableActions,
-};
-
 export const toVariablePayload = <T extends any = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
   return { type: variable.type, uuid: variable.uuid ?? '', data: data as T };
 };
@@ -199,8 +172,10 @@ export const processVariables = (): ThunkResult<void> => {
     const queryParams = getState().location.query;
     const dependencies: Array<Promise<any>> = [];
 
-    for (let index = 0; index < getVariables(getState()).length; index++) {
-      await dispatch(setInitLock(toVariablePayload(getVariables(getState())[index])));
+    const variablesBeforeInitLock = getVariables(getState());
+    for (let index = 0; index < variablesBeforeInitLock.length; index++) {
+      const variable = variablesBeforeInitLock[index];
+      await dispatch(setInitLock(toVariablePayload(variable)));
     }
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
@@ -304,7 +279,7 @@ export const selectOptionsForCurrentValue = (variable: VariableWithOptions): Var
   const selected: VariableOption[] = [];
 
   for (i = 0; i < variable.options.length; i++) {
-    option = variable.options[i];
+    option = { ...variable.options[i] };
     option.selected = false;
     if (Array.isArray(variable.current.value)) {
       for (y = 0; y < variable.current.value.length; y++) {
