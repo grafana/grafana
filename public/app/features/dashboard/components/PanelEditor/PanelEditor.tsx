@@ -280,7 +280,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const plugin = state.plugins.panels[props.sourcePanel.type];
+  const panel = state.panelEditorNew.getPanel();
+  const plugin = state.plugins.panels[panel.type];
 
   return {
     location: state.location,
