@@ -197,7 +197,7 @@ Data link allows adding dynamic links to the visualization. Those links can link
 
 {{< docs-imagebox img="/img/docs/data_link.png"  max-width= "800px" >}}
 
-Data link is defined by title, url and a setting whether or not it should be opened in a new window.
+Data link is defined by title, URL and a setting whether or not it should be opened in a new window.
 
 **Title** is a human readable label for the link that will be displayed in the UI. The link itself is accessible in the graph's context menu when user **clicks on a single data point**:
 

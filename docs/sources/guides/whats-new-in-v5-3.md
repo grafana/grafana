@@ -51,7 +51,7 @@ We've improved the TV and kiosk mode to make it easier to use. There's now an ic
 2. In the second view mode, the top bar is completely hidden so that only the dashboard itself is shown.
 3. Hit the escape key to go back to the default view mode.
 
-When switching view modes, the url will be updated to reflect the view mode selected. This allows a dashboard to be opened with a
+When switching view modes, the URL will be updated to reflect the view mode selected. This allows a dashboard to be opened with a
 certain view mode enabled. Additionally, this also enables [playlists](/reference/playlist) to be started with a certain view mode enabled.
 
 <div class="clearfix"></div>
