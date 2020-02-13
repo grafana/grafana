@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { startTask } from './tasks/core.start';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
+import { manifestTask } from './tasks/manifest';
 import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
@@ -211,6 +212,14 @@ export const run = (includeInternalScripts = false) => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
       });
+    });
+
+  // Test the manifest creation
+  program
+    .command('manifest')
+    .description('create a manifest file in the cwd')
+    .action(async cmd => {
+      await execTask(manifestTask)({ folder: process.cwd() });
     });
 
   program.on('command:*', () => {

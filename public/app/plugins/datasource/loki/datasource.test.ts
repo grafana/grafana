@@ -1,11 +1,18 @@
 import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResultType, LokiResponse, LokiLegacyStreamResponse } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime, TimeRange, FieldCache } from '@grafana/data';
+import {
+  AnnotationQueryRequest,
+  DataSourceApi,
+  DataFrame,
+  dateTime,
+  TimeRange,
+  ExploreMode,
+  FieldCache,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import { makeMockLokiDatasource } from './mocks';
-import { ExploreMode } from 'app/types';
 import { of } from 'rxjs';
 import omit from 'lodash/omit';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -478,7 +485,7 @@ function makeLimitTest(instanceSettings: any, datasourceRequestMock: any, templa
     const ds = new LokiDatasource(settings, templateSrvMock);
     datasourceRequestMock.mockImplementation(() => Promise.resolve(testResp));
 
-    const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
+    const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B', maxLines: maxDataPoints }] });
     if (Number.isFinite(maxDataPoints)) {
       options.maxDataPoints = maxDataPoints;
     } else {

@@ -32,7 +32,7 @@ export class Echo implements EchoSrv {
 
   logDebug = (...msg: any) => {
     if (this.config.debug) {
-      // tslint:disable-next-line
+      // eslint-disable-next-line
       // console.debug('ECHO:', ...msg);
     }
   };

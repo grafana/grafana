@@ -8,12 +8,15 @@ export type RadioButtonSize = 'sm' | 'md';
 export interface RadioButtonProps {
   size?: RadioButtonSize;
   disabled?: boolean;
+  name?: string;
   active: boolean;
-  onClick: () => void;
+  id: string;
+  onChange: () => void;
 }
 
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize) => {
-  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
+  const { fontSize, height } = getPropertiesForButtonSize(theme, size);
+  const horizontalPadding = theme.spacing[size] ?? theme.spacing.md;
   const c = theme.colors;
 
   const textColor = stv({ light: c.gray33, dark: c.gray70 }, theme.type);
@@ -32,133 +35,58 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   const fakeBold = `0 0 0.65px ${textColorHover}, 0 0 0.65px ${textColorHover}`;
 
   return {
-    button: css`
-      cursor: pointer;
-      position: relative;
-      z-index: 0;
-      background: ${bg};
-      border: ${border};
-      color: ${textColor};
-      font-size: ${fontSize};
-      padding: ${padding};
-      height: ${height};
-      border-left: 0;
+    radio: css`
+      position: absolute;
+      top: 0;
+      left: -100vw;
+      opacity: 0;
+      z-index: -1000;
 
-      /* This pseudo element is responsible for rendering the lines between buttons when they are groupped */
-      &:before {
-        content: '';
-        position: absolute;
-        top: -1px;
-        left: -1px;
-        width: 1px;
-        height: calc(100% + 2px);
-      }
-
-      &:hover {
-        border: ${borderHover};
-        border-left: 0;
-        &:before {
-          /* renders line between elements */
-          background: ${borderColorHover};
-        }
-        &:first-child {
-          border-left: ${borderHover};
-        }
-        &:last-child {
-          border-right: ${borderHover};
-        }
-        &:first-child:before {
-          /* Don't render divider line on first element*/
-          display: none;
-        }
-      }
-
-      &:not(:disabled):hover {
-        color: ${textColorHover};
-        /* The text shadow imitates font-weight:bold;
-         * Using font weight on hover makes the button size slighlty change which looks like a glitch
-         * */
+      &:checked + label {
+        border: ${borderActive};
+        color: ${textColorActive};
         text-shadow: ${fakeBold};
+        background: ${bgActive};
+        z-index: 3;
       }
 
-      &:focus {
-        z-index: 1;
+      &:focus + label {
         ${getFocusCss(theme)};
-        &:before {
-          background: ${borderColor};
-        }
-        &:hover {
-          &:before {
-            background: ${borderColorHover};
-          }
-        }
+        z-index: 3;
       }
 
-      &:disabled {
+      &:disabled + label {
+        cursor: default;
         background: ${bgDisabled};
         color: ${textColor};
       }
 
-      &:first-child {
-        border-top-left-radius: ${theme.border.radius.sm};
-        border-bottom-left-radius: ${theme.border.radius.sm};
-        border-left: ${border};
-      }
-      &:last-child {
-        border-top-right-radius: ${theme.border.radius.sm};
-        border-bottom-right-radius: ${theme.border.radius.sm};
-        border-right: ${border};
+      &:enabled + label:hover {
+        text-shadow: ${fakeBold};
       }
     `,
+    radioLabel: css`
+      display: inline-block;
+      position: relative;
+      font-size: ${fontSize};
+      min-height: ${fontSize};
+      color: ${textColor};
+      padding: calc((${height} - ${fontSize}) / 2) ${horizontalPadding} calc((${height} - ${fontSize}) / 2)
+        ${horizontalPadding};
+      line-height: 1;
+      margin-left: -1px;
+      border-radius: ${theme.border.radius.sm};
+      border: ${border};
+      background: ${bg};
+      cursor: pointer;
+      z-index: 1;
 
-    buttonActive: css`
-      background: ${bgActive};
-      border: ${borderActive};
-      border-left: 0;
-      color: ${textColorActive};
-      text-shadow: ${fakeBold};
+      user-select: none;
 
       &:hover {
-        border: ${borderActive};
-        border-left: none;
-      }
-
-      &:focus {
-        &:before {
-          background: ${borderColorActive};
-        }
-        &:hover:before {
-          background: ${borderColorActive};
-        }
-      }
-
-      &:before,
-      &:hover:before {
-        background: ${borderColorActive};
-      }
-
-      &:first-child,
-      &:first-child:hover {
-        border-left: ${borderActive};
-      }
-      &:last-child,
-      &:last-child:hover {
-        border-right: ${borderActive};
-      }
-
-      &:first-child {
-        &:before {
-          display: none;
-        }
-      }
-
-      & + button:hover {
-        &:before {
-          display: none;
-        }
-      }
-      &:focus {
-        border-color: ${borderActive};
+        color: ${textColorHover};
+        border: ${borderHover};
+        z-index: 2;
       }
     `,
   };
@@ -169,20 +97,28 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   active = false,
   disabled = false,
   size = 'md',
-  onClick,
+  onChange,
+  id,
+  name = undefined,
 }) => {
   const theme = useTheme();
   const styles = getRadioButtonStyles(theme, size);
 
   return (
-    <button
-      type="button"
-      className={cx(styles.button, active && styles.buttonActive)}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {children}
-    </button>
+    <>
+      <input
+        type="radio"
+        className={cx(styles.radio)}
+        onChange={onChange}
+        disabled={disabled}
+        id={id}
+        checked={active}
+        name={name}
+      />
+      <label className={cx(styles.radioLabel)} htmlFor={id}>
+        {children}
+      </label>
+    </>
   );
 };
 

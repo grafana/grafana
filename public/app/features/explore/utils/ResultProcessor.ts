@@ -6,8 +6,9 @@ import {
   TimeZone,
   toDataFrame,
   getDisplayProcessor,
+  ExploreMode,
 } from '@grafana/data';
-import { ExploreItemState, ExploreMode } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';

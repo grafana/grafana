@@ -5,7 +5,7 @@ import { Switch } from './Switch';
 import mdx from './Switch.mdx';
 
 export default {
-  title: 'UI/Forms/Switch',
+  title: 'Forms/Switch',
   component: Switch,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {

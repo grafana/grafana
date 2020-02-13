@@ -6,6 +6,10 @@ import classNames from 'classnames';
 // @ts-ignore
 import sizeMe from 'react-sizeme';
 
+// Components
+import { AddPanelWidget } from '../components/AddPanelWidget';
+import { DashboardRow } from '../components/DashboardRow';
+
 // Types
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
@@ -94,6 +98,7 @@ export interface Props {
   isEditing: boolean;
   isFullscreen: boolean;
   scrollTop: number;
+  isNewEditorOpen?: boolean;
 }
 
 export class DashboardGrid extends PureComponent<Props> {
@@ -102,6 +107,7 @@ export class DashboardGrid extends PureComponent<Props> {
 
   componentDidMount() {
     const { dashboard } = this.props;
+
     dashboard.on(panelAdded, this.triggerForceUpdate);
     dashboard.on(panelRemoved, this.triggerForceUpdate);
     dashboard.on(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
@@ -173,7 +179,6 @@ export class DashboardGrid extends PureComponent<Props> {
     for (const panel of this.props.dashboard.panels) {
       panel.resizeDone();
     }
-    this.forceUpdate();
   };
 
   onViewModeChanged = () => {
@@ -241,10 +246,12 @@ export class DashboardGrid extends PureComponent<Props> {
 
   renderPanels() {
     const panelElements = [];
+
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
       const id = panel.id.toString();
       panel.isInView = this.isInView(panel);
+
       panelElements.push(
         <div
           key={id}
@@ -254,18 +261,32 @@ export class DashboardGrid extends PureComponent<Props> {
             this.panelRef[id] = elem;
           }}
         >
-          <DashboardPanel
-            panel={panel}
-            dashboard={this.props.dashboard}
-            isEditing={panel.isEditing}
-            isFullscreen={panel.fullscreen}
-            isInView={panel.isInView}
-          />
+          {this.renderPanel(panel)}
         </div>
       );
     }
 
     return panelElements;
+  }
+
+  renderPanel(panel: PanelModel) {
+    if (panel.type === 'row') {
+      return <DashboardRow panel={panel} dashboard={this.props.dashboard} />;
+    }
+
+    if (panel.type === 'add-panel') {
+      return <AddPanelWidget panel={panel} dashboard={this.props.dashboard} />;
+    }
+
+    return (
+      <DashboardPanel
+        panel={panel}
+        dashboard={this.props.dashboard}
+        isEditing={panel.isEditing}
+        isFullscreen={panel.fullscreen}
+        isInView={panel.isInView}
+      />
+    );
   }
 
   render() {

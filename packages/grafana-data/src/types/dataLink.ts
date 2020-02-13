@@ -52,3 +52,23 @@ export interface LinkModel<T> {
 export interface LinkModelSupplier<T extends object> {
   getLinks(scopedVars?: any): Array<LinkModel<T>>;
 }
+
+export enum VariableOrigin {
+  Series = 'series',
+  Field = 'field',
+  Fields = 'fields',
+  Value = 'value',
+  BuiltIn = 'built-in',
+  Template = 'template',
+}
+
+export interface VariableSuggestion {
+  value: string;
+  label: string;
+  documentation?: string;
+  origin: VariableOrigin;
+}
+
+export enum VariableSuggestionsScope {
+  Values = 'values',
+}

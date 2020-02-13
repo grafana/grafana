@@ -22,9 +22,9 @@ const template = `
 				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required aria-label="Save dashboard title field">
 			</div>
       <folder-picker initial-folder-id="ctrl.folderId"
-                       on-change="ctrl.onFolderChange($folder)"
-                       enter-folder-creation="ctrl.onEnterFolderCreation()"
-                       exit-folder-creation="ctrl.onExitFolderCreation()"
+                       on-change="ctrl.onFolderChange"
+                       enter-folder-creation="ctrl.onEnterFolderCreation"
+                       exit-folder-creation="ctrl.onExitFolderCreation"
                        enable-create-new="true"
                        label-class="width-8"
                        dashboard-id="ctrl.clone.id">
@@ -97,17 +97,17 @@ export class SaveDashboardAsModalCtrl {
     }
   }
 
-  onFolderChange(folder: { id: any }) {
+  onFolderChange = (folder: { id: any }) => {
     this.folderId = folder.id;
-  }
+  };
 
-  onEnterFolderCreation() {
+  onEnterFolderCreation = () => {
     this.isValidFolderSelection = false;
-  }
+  };
 
-  onExitFolderCreation() {
+  onExitFolderCreation = () => {
     this.isValidFolderSelection = true;
-  }
+  };
 }
 
 export function saveDashboardAsDirective() {
