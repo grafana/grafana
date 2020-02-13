@@ -1,5 +1,6 @@
-import { ActionReducerMapBuilder, PayloadAction } from '@reduxjs/toolkit';
-import { TemplatingState } from './index';
+import { createReducer } from '@reduxjs/toolkit';
+import cloneDeep from 'lodash/cloneDeep';
+
 import {
   changeVariableHide,
   changeVariableLabel,
@@ -14,30 +15,13 @@ import {
   variableEditorMounted,
   variableEditorUnMounted,
 } from './actions';
-import cloneDeep from 'lodash/cloneDeep';
 import { VariableModel } from '../variable';
-import { emptyUuid, initialVariableEditorState, VariableState } from './types';
-import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
+import { emptyUuid, initialVariableEditorState } from './types';
+import { initialTemplatingState } from './index';
+import { variableAdapters } from '../adapters';
 
-export const getSharedReducers = (
-  builder: ActionReducerMapBuilder<TemplatingState>,
-  initialState: VariableState
-): void => {
+export const sharedTemplatingReducer = createReducer(initialTemplatingState, builder =>
   builder
-    .addCase(cleanUpDashboard, (state, action: PayloadAction) => {
-      const globalVariables = Object.values(state.variables).filter(v => v.variable.global);
-      if (!globalVariables) {
-        state.variables = {};
-        return;
-      }
-
-      const variables = globalVariables.reduce((allVariables, state) => {
-        allVariables[state.variable.uuid] = state;
-        return allVariables;
-      }, {} as Record<string, VariableState>);
-
-      state.variables = variables;
-    })
     .addCase(removeVariable, (state, action) => {
       delete state.variables[action.payload.uuid!];
     })
@@ -83,7 +67,7 @@ export const getSharedReducers = (
       const uuid = action.payload.data.newUuid;
       const index = action.payload.data.variablesInAngular + Object.keys(state.variables).length;
       const name = `copy_of_${original.name}`;
-      state.variables[uuid!] = cloneDeep(initialState);
+      state.variables[uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
       state.variables[uuid!].variable = original;
       state.variables[uuid!].variable.uuid = uuid;
       state.variables[uuid!].variable.name = name;
@@ -104,15 +88,15 @@ export const getSharedReducers = (
     })
     .addCase(newVariable, (state, action) => {
       delete state.variables[emptyUuid];
-      state.variables[emptyUuid] = cloneDeep(initialState);
+      state.variables[emptyUuid] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
       state.variables[emptyUuid].variable.index =
         action.payload.data.variablesInAngular + Object.keys(state.variables).length;
     })
     .addCase(storeNewVariable, (state, action) => {
       const uuid = action.payload.uuid!;
       const emptyVariable: VariableModel = cloneDeep<VariableModel>(state.variables[emptyUuid].variable);
-      state.variables[uuid!] = cloneDeep(initialState);
+      state.variables[uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
       state.variables[uuid!].variable = emptyVariable;
       state.variables[uuid!].variable.uuid = uuid;
-    });
-};
+    })
+);

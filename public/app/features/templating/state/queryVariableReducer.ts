@@ -1,4 +1,4 @@
-import { ActionReducerMapBuilder, createSlice } from '@reduxjs/toolkit';
+import { createReducer } from '@reduxjs/toolkit';
 import _ from 'lodash';
 import { DataSourceApi, stringToJsRegex } from '@grafana/data';
 
@@ -37,8 +37,7 @@ import {
 } from './queryVariableActions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
-import { initialTemplatingState, TemplatingState } from './index';
-import { getSharedReducers } from './getSharedReducers';
+import { initialTemplatingState } from './index';
 import cloneDeep from 'lodash/cloneDeep';
 
 export type MutateStateFunc<S extends VariableState> = (state: S) => S;
@@ -128,13 +127,185 @@ export const ALL_VARIABLE_VALUE = '$__all';
 export const NONE_VARIABLE_TEXT = 'None';
 export const NONE_VARIABLE_VALUE = '';
 
-export const registerTypeReducers = (
-  builder: ActionReducerMapBuilder<TemplatingState>,
-  initialState: QueryVariableState
-): void => {
+const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
+  if (sortOrder === VariableSort.disabled) {
+    return options;
+  }
+
+  const sortType = Math.ceil(sortOrder / 2);
+  const reverseSort = sortOrder % 2 === 0;
+
+  if (sortType === 1) {
+    options = _.sortBy(options, 'text');
+  } else if (sortType === 2) {
+    options = _.sortBy(options, opt => {
+      const matches = opt.text.match(/.*?(\d+).*/);
+      if (!matches || matches.length < 2) {
+        return -1;
+      } else {
+        return parseInt(matches[1], 10);
+      }
+    });
+  } else if (sortType === 3) {
+    options = _.sortBy(options, opt => {
+      return _.toLower(opt.text);
+    });
+  }
+
+  if (reverseSort) {
+    options = options.reverse();
+  }
+
+  return options;
+};
+
+const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
+  let regex, i, matches;
+  let options: VariableOption[] = [];
+
+  if (variableRegEx) {
+    regex = stringToJsRegex(templateSrv.replace(variableRegEx, {}, 'regex'));
+  }
+  for (i = 0; i < metricNames.length; i++) {
+    const item = metricNames[i];
+    let text = item.text === undefined || item.text === null ? item.value : item.text;
+
+    let value = item.value === undefined || item.value === null ? item.text : item.value;
+
+    if (_.isNumber(value)) {
+      value = value.toString();
+    }
+
+    if (_.isNumber(text)) {
+      text = text.toString();
+    }
+
+    if (regex) {
+      matches = regex.exec(value);
+      if (!matches) {
+        continue;
+      }
+      if (matches.length > 1) {
+        value = matches[1];
+        text = matches[1];
+      }
+    }
+
+    options.push({ text: text, value: value, selected: false });
+  }
+
+  options = _.uniqBy(options, 'value');
+  return sortVariableValues(options, sort);
+};
+
+const updateLinkText = (state: QueryVariableState): QueryVariableState => {
+  const { current, options } = state.variable;
+
+  if (!current.tags || current.tags.length === 0) {
+    state.picker.linkText = current.text;
+    return state;
+  }
+
+  // filer out values that are in selected tags
+  const selectedAndNotInTag = options.filter(option => {
+    if (!option.selected) {
+      return false;
+    }
+
+    if (!current || !current.tags || !current.tags.length) {
+      return false;
+    }
+
+    for (let i = 0; i < current.tags.length; i++) {
+      const tag = current.tags[i];
+      const foundIndex = tag?.values?.findIndex(v => v === option.value);
+      if (foundIndex && foundIndex !== -1) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // convert values to text
+  const currentTexts = selectedAndNotInTag.map(s => s.text);
+
+  // join texts
+  const newLinkText = currentTexts.join(' + ');
+  state.picker.linkText = newLinkText.length > 0 ? `${newLinkText} + ` : newLinkText;
+  return state;
+};
+
+const updateSelectedValues = (state: QueryVariableState): QueryVariableState => {
+  state.picker.selectedValues = state.variable.options.filter(o => o.selected);
+  return state;
+};
+
+const updateSelectedTags = (state: QueryVariableState): QueryVariableState => {
+  state.picker.selectedTags = state.variable.tags.filter(t => t.selected);
+  return state;
+};
+
+const updateOptions = (state: QueryVariableState): QueryVariableState => {
+  state.picker.options = state.variable.options.slice(0, Math.min(state.variable.options.length, 1000));
+  return state;
+};
+
+const updateCurrent = (state: QueryVariableState): QueryVariableState => {
+  const { searchOptions, searchQuery, selectedValues, selectedTags } = state.picker;
+
+  state.variable.current.value = selectedValues.map(v => v.value) as string[];
+  state.variable.current.text = selectedValues.map(v => v.text).join(' + ');
+  state.variable.current.tags = selectedTags;
+
+  if (!state.variable.multi) {
+    state.variable.current.value = selectedValues[0].value;
+  }
+
+  // if we have a search query and no options use that
+  if (searchOptions.length === 0 && searchQuery && searchQuery.length > 0) {
+    state.variable.current = { text: searchQuery, value: searchQuery, selected: false };
+  }
+
+  return state;
+};
+
+const updateOldVariableText = (state: QueryVariableState): QueryVariableState => {
+  state.picker.oldVariableText = state.variable.current.text;
+  return state;
+};
+
+const updateEditorErrors = (state: QueryVariableState): QueryVariableState => {
+  let errorText = null;
+  if (
+    typeof state.variable.query === 'string' &&
+    state.variable.query.match(new RegExp('\\$' + state.variable.name + '(/| |$)'))
+  ) {
+    errorText = 'Query cannot contain a reference to itself. Variable: $' + state.variable.name;
+  }
+
+  if (!errorText) {
+    delete state.editor.errors.query;
+    return state;
+  }
+
+  state.editor.errors.query = errorText;
+  return state;
+};
+
+const updateEditorIsValid = (state: QueryVariableState): QueryVariableState => {
+  state.editor.isValid = Object.keys(state.editor.errors).length === 0;
+  return state;
+};
+
+const updateTags = (state: QueryVariableState): QueryVariableState => {
+  state.picker.tags = state.variable.tags;
+  return state;
+};
+
+export const queryVariableReducer = createReducer(initialTemplatingState, builder =>
   builder
     .addCase(addVariable, (state, action) => {
-      state.variables[action.payload.uuid!] = cloneDeep(initialState);
+      state.variables[action.payload.uuid!] = cloneDeep(initialQueryVariableState);
       state.variables[action.payload.uuid!].variable = {
         ...state.variables[action.payload.uuid!].variable,
         ...action.payload.data.model,
@@ -369,190 +540,5 @@ export const registerTypeReducers = (
         updateCurrent,
         updateLinkText
       );
-    });
-};
-
-export const queryVariableSlice = createSlice({
-  name: 'templating',
-  initialState: initialTemplatingState,
-  reducers: {},
-  extraReducers: builder => {
-    registerTypeReducers(builder, initialQueryVariableState);
-    getSharedReducers(builder, initialQueryVariableState);
-  },
-});
-
-const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
-  if (sortOrder === VariableSort.disabled) {
-    return options;
-  }
-
-  const sortType = Math.ceil(sortOrder / 2);
-  const reverseSort = sortOrder % 2 === 0;
-
-  if (sortType === 1) {
-    options = _.sortBy(options, 'text');
-  } else if (sortType === 2) {
-    options = _.sortBy(options, opt => {
-      const matches = opt.text.match(/.*?(\d+).*/);
-      if (!matches || matches.length < 2) {
-        return -1;
-      } else {
-        return parseInt(matches[1], 10);
-      }
-    });
-  } else if (sortType === 3) {
-    options = _.sortBy(options, opt => {
-      return _.toLower(opt.text);
-    });
-  }
-
-  if (reverseSort) {
-    options = options.reverse();
-  }
-
-  return options;
-};
-
-const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
-  let regex, i, matches;
-  let options: VariableOption[] = [];
-
-  if (variableRegEx) {
-    regex = stringToJsRegex(templateSrv.replace(variableRegEx, {}, 'regex'));
-  }
-  for (i = 0; i < metricNames.length; i++) {
-    const item = metricNames[i];
-    let text = item.text === undefined || item.text === null ? item.value : item.text;
-
-    let value = item.value === undefined || item.value === null ? item.text : item.value;
-
-    if (_.isNumber(value)) {
-      value = value.toString();
-    }
-
-    if (_.isNumber(text)) {
-      text = text.toString();
-    }
-
-    if (regex) {
-      matches = regex.exec(value);
-      if (!matches) {
-        continue;
-      }
-      if (matches.length > 1) {
-        value = matches[1];
-        text = matches[1];
-      }
-    }
-
-    options.push({ text: text, value: value, selected: false });
-  }
-
-  options = _.uniqBy(options, 'value');
-  return sortVariableValues(options, sort);
-};
-
-const updateLinkText = (state: QueryVariableState): QueryVariableState => {
-  const { current, options } = state.variable;
-
-  if (!current.tags || current.tags.length === 0) {
-    state.picker.linkText = current.text;
-    return state;
-  }
-
-  // filer out values that are in selected tags
-  const selectedAndNotInTag = options.filter(option => {
-    if (!option.selected) {
-      return false;
-    }
-
-    if (!current || !current.tags || !current.tags.length) {
-      return false;
-    }
-
-    for (let i = 0; i < current.tags.length; i++) {
-      const tag = current.tags[i];
-      const foundIndex = tag?.values?.findIndex(v => v === option.value);
-      if (foundIndex && foundIndex !== -1) {
-        return false;
-      }
-    }
-    return true;
-  });
-
-  // convert values to text
-  const currentTexts = selectedAndNotInTag.map(s => s.text);
-
-  // join texts
-  const newLinkText = currentTexts.join(' + ');
-  state.picker.linkText = newLinkText.length > 0 ? `${newLinkText} + ` : newLinkText;
-  return state;
-};
-
-const updateSelectedValues = (state: QueryVariableState): QueryVariableState => {
-  state.picker.selectedValues = state.variable.options.filter(o => o.selected);
-  return state;
-};
-
-const updateSelectedTags = (state: QueryVariableState): QueryVariableState => {
-  state.picker.selectedTags = state.variable.tags.filter(t => t.selected);
-  return state;
-};
-
-const updateOptions = (state: QueryVariableState): QueryVariableState => {
-  state.picker.options = state.variable.options.slice(0, Math.min(state.variable.options.length, 1000));
-  return state;
-};
-
-const updateCurrent = (state: QueryVariableState): QueryVariableState => {
-  const { searchOptions, searchQuery, selectedValues, selectedTags } = state.picker;
-
-  state.variable.current.value = selectedValues.map(v => v.value) as string[];
-  state.variable.current.text = selectedValues.map(v => v.text).join(' + ');
-  state.variable.current.tags = selectedTags;
-
-  if (!state.variable.multi) {
-    state.variable.current.value = selectedValues[0].value;
-  }
-
-  // if we have a search query and no options use that
-  if (searchOptions.length === 0 && searchQuery && searchQuery.length > 0) {
-    state.variable.current = { text: searchQuery, value: searchQuery, selected: false };
-  }
-
-  return state;
-};
-
-const updateOldVariableText = (state: QueryVariableState): QueryVariableState => {
-  state.picker.oldVariableText = state.variable.current.text;
-  return state;
-};
-
-const updateEditorErrors = (state: QueryVariableState): QueryVariableState => {
-  let errorText = null;
-  if (
-    typeof state.variable.query === 'string' &&
-    state.variable.query.match(new RegExp('\\$' + state.variable.name + '(/| |$)'))
-  ) {
-    errorText = 'Query cannot contain a reference to itself. Variable: $' + state.variable.name;
-  }
-
-  if (!errorText) {
-    delete state.editor.errors.query;
-    return state;
-  }
-
-  state.editor.errors.query = errorText;
-  return state;
-};
-
-const updateEditorIsValid = (state: QueryVariableState): QueryVariableState => {
-  state.editor.isValid = Object.keys(state.editor.errors).length === 0;
-  return state;
-};
-
-const updateTags = (state: QueryVariableState): QueryVariableState => {
-  state.picker.tags = state.variable.tags;
-  return state;
-};
+    })
+);

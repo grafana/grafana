@@ -1,5 +1,5 @@
 import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
-import { ALL_VARIABLE_TEXT, queryVariableSlice } from '../state/queryVariableReducer';
+import { ALL_VARIABLE_TEXT, initialQueryVariableState, queryVariableReducer } from '../state/queryVariableReducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from './index';
@@ -10,7 +10,8 @@ import { updateQueryVariableOptions } from '../state/queryVariableActions';
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
     description: 'Variable values are fetched from a datasource query',
-    reducer: queryVariableSlice.reducer,
+    initialState: initialQueryVariableState,
+    reducer: queryVariableReducer,
     picker: QueryVariablePicker,
     editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {

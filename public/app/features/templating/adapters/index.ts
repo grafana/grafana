@@ -4,11 +4,12 @@ import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from '../variable';
 import { createQueryVariableAdapter } from './queryVariableAdapter';
-import { VariableEditorProps, VariablePickerProps } from '../state/types';
+import { VariableEditorProps, VariablePickerProps, VariableState } from '../state/types';
 import { TemplatingState } from '../state';
 
 export interface VariableAdapter<Model extends VariableModel> {
   description: string;
+  initialState: VariableState;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
   setValue: (variable: Model, option: VariableOption) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
