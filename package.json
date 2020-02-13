@@ -148,7 +148,7 @@
     "webpack-cli": "3.2.3",
     "webpack-dev-server": "3.2.1",
     "webpack-merge": "4.2.1",
-    "zone.js": "0.10.2"
+    "zone.js": "0.7.8"
   },
   "scripts": {
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
