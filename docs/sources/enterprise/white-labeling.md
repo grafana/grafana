@@ -12,7 +12,7 @@ weight = 5
 
 # White labeling
 
-> Only available in Grafana Enterprise v6.6+. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Only available in Grafana Enterprise v6.6+.
 
 {{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
 
