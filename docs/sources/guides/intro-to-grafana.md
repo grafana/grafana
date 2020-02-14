@@ -19,9 +19,11 @@ Intro to Grafana
 - Difference between open source and enterprise
 - General process
   - Install
-  - Connect data sources
+  - Add data sources
   - Add dashboards and panels
   - Run queries
+  - Explore
+  - Plugins
   - Share visualizations
   - Create playlists
   - Alerts
@@ -29,14 +31,3 @@ Intro to Grafana
 
 
 
-Log in for the first time
-
-Add a data source
-
-Create dashboards, add panels
-
-Explore!
-
-Plugins
-
-Configure and Provision
