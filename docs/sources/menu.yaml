@@ -1,8 +1,10 @@
 - name: Getting Started
   link: /guides/
   children:
-  - name: Getting Started
+  - name: Getting started
     link: /guides/getting_started/
+  - name: Intro to time series
+    link: /guides/timeseries/
   - name: Glossary
     link: /guides/glossary/
 - name: Installation
