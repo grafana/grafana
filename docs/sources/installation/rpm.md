@@ -13,6 +13,8 @@ weight = 300
 
 # Install on RPM-based Linux (CentOS, Fedora, OpenSuse, Red Hat)
 
+[Download the latest stable package for Linux.](https://grafana.com/grafana/download?platform=linux)
+
 This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your RPM-based Linux system, and the installation package details.
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
