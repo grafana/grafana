@@ -8,12 +8,29 @@ aliases = ["/docs/grafana/latest/guides/gettingstarted"]
 name = "Getting started"
 identifier = "getting_started_guide"
 parent = "guides"
-weight = 1
+weight = 100
 +++
 
 # Getting started
 
-This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running. If not please read the [installation guide]({{< relref "../installation/" >}}).
+This guide will help you get started and acquainted with Grafana.
+
+Getting Started
+1. Install
+2. Login. 3000, admin/admin
+3. Change password. Record your credentials!
+4. Add TestData DB data source. (Make sure TestData is available by default.)
+Next...Import Streaming Example data source? Might not be ready for primetime.
+5. Got to Create > Dashboard
+6. Add Query. This creates a graph.
+7. Save dashboard.
+
+Next steps, regular users vs developers vs admins
+- Add Prometheus (or other) data sources
+- Import dashboards/plugins
+- Configure Grafana
+- Add users
+- Share dashboard/panel
 
 ## Log in for the first time
 
