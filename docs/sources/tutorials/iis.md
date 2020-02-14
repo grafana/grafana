@@ -63,7 +63,7 @@ Finally, navigate to `http://localhost:8080/grafana` (replace `http://localhost:
 
 ### 404 error
 
-When navigating to the grafana URL (`http://localhost:8080/grafana` in the example above) and a `HTTP Error 404.0 - Not Found` error is returned then either:
+When navigating to the Grafana URL (`http://localhost:8080/grafana` in the example above) and a `HTTP Error 404.0 - Not Found` error is returned then either:
 
 - the pattern for the Inbound Rule is incorrect. Edit the rule, click on the `Test pattern...` button, test the part of the URL after `http://localhost:8080/` and make sure it matches. For `grafana/login` the test should return 3 capture groups: {R:0}: `grafana` {R:1}: `/` and {R:2}: `login`.
 - The `root_url` setting in the Grafana config file does not match the parent URL with subpath.
