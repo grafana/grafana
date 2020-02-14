@@ -12,6 +12,8 @@ weight = 600
 
 # Run Grafana Docker image
 
+[Download the latest stable package for Docker image.](https://grafana.com/grafana/download?platform=docker)
+
 You can install and run Grafana using the official Docker container. The official Grafana Docker image comes in two variants: Alpine and Ubuntu.
 
 This page also contains important information about [migrating from earlier Docker container versions](#migrate-from-previous-docker-containers-versions).
