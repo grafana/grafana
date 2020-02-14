@@ -56,7 +56,12 @@ module.exports = merge(common, {
                     modules: false,
                   },
                 ],
-                '@babel/preset-typescript',
+                [
+                  '@babel/preset-typescript',
+                  {
+                    allowNamespaces: true,
+                  },
+                ],
                 '@babel/preset-react',
               ],
             },
@@ -66,7 +71,7 @@ module.exports = merge(common, {
             options: {
               emitError: true,
               emitWarning: true,
-            }
+            },
           },
         ],
       },
