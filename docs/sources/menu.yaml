@@ -235,16 +235,16 @@
     link: /enterprise/reporting/
   - name: Data source permissions
     link: /enterprise/datasource_permissions/
-    name: Enhanced LDAP
-  - link: /enterprise/enhanced_ldap/
-    name: SAML authentication
-  - link: /enterprise/saml/
-    name: Team sync
-  - link: /enterprise/team-sync/
-    name: White labeling
-  - link: /enterprise/white-labeling/
-    name: License expiration
-  - link: /enterprise/license-expiration/
+  - name: Enhanced LDAP
+    link: /enterprise/enhanced_ldap/
+  - name: SAML authentication
+    link: /enterprise/saml/
+  - name: Team sync
+    link: /enterprise/team-sync/
+  - name: White labeling
+    link: /enterprise/white-labeling/
+  - name: License expiration
+    link: /enterprise/license-expiration/
 - name: Tutorials
   link: /tutorials/
   children:
