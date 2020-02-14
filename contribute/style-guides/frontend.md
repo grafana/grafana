@@ -34,6 +34,7 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
     - variables
     - state
     - properties
+    - Emotion class names
 - Use `ALL_CAPS` for constants
 
 
