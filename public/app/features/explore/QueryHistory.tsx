@@ -17,7 +17,16 @@ export enum Tabs {
 interface QueryHistoryState {
   // The Selected Tab
   activeTab: Tabs;
+  activeHistoryTimeSpan: string;
+  activeStarredTab: boolean;
+  showHistoryForActiveDatasource: boolean;
+  hiddenSessions: boolean;
 }
+
+export type Option = {
+  value: string;
+  label: string;
+};
 
 const getStyles = stylesFactory(() => {
   return {
@@ -26,6 +35,9 @@ const getStyles = stylesFactory(() => {
       background-color: #f7f8fa;
       margin-left: -10px;
       border-top: solid 1px #dde4ed;
+      overflow-y: scroll;
+      width: 100%;
+      padding: 20px;
     `,
     drawer: css`
       position: fixed;
@@ -44,15 +56,50 @@ export class QueryHistory extends PureComponent<QueryHistoryProps, QueryHistoryS
     super(props);
     this.state = {
       activeTab: Tabs.QueryHistory,
+      activeHistoryTimeSpan: '2 days',
+      activeStarredTab: false,
+      showHistoryForActiveDatasource: true,
+      hiddenSessions: true,
     };
   }
+
+  onChangeActiveHistoryTimeSpan(option: Option) {
+    this.setState({ activeHistoryTimeSpan: option.value });
+  }
+
+  onChangeActiveStarredTab = () =>
+    this.setState(state => {
+      return {
+        activeStarredTab: !state.activeStarredTab,
+      };
+    });
+
+  onChangeShowHistoryForActiveDatasource = () =>
+    this.setState(state => {
+      return {
+        showHistoryForActiveDatasource: !state.showHistoryForActiveDatasource,
+      };
+    });
+
+  onChangeHideSessions = () =>
+    this.setState(state => {
+      return {
+        hiddenSessions: !state.hiddenSessions,
+      };
+    });
 
   onSelectTab = (item: SelectableValue<Tabs>) => {
     this.setState({ activeTab: item.value });
   };
 
   render() {
-    const { activeTab } = this.state;
+    const {
+      activeTab,
+      activeHistoryTimeSpan,
+      activeStarredTab,
+      showHistoryForActiveDatasource,
+      hiddenSessions,
+    } = this.state;
     const { width } = this.props;
     const styles = getStyles();
 
@@ -62,7 +109,18 @@ export class QueryHistory extends PureComponent<QueryHistoryProps, QueryHistoryS
     tabs.push({
       label: 'Settings',
       value: Tabs.Settings,
-      content: <QueryHistorySettings />,
+      content: (
+        <QueryHistorySettings
+          activeHistoryTimeSpan={activeHistoryTimeSpan}
+          activeStarredTab={activeStarredTab}
+          showHistoryForActiveDatasource={showHistoryForActiveDatasource}
+          hiddenSessions={hiddenSessions}
+          onChangeActiveHistoryTimeSpan={this.onChangeActiveHistoryTimeSpan}
+          onChangeActiveStarredTab={this.onChangeActiveStarredTab}
+          onChangeHideSessions={this.onChangeHideSessions}
+          onChangeShowHistoryForActiveDatasource={this.onChangeShowHistoryForActiveDatasource}
+        />
+      ),
       icon: 'gicon gicon-preferences',
     });
 
