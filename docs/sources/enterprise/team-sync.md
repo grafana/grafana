@@ -12,6 +12,8 @@ weight = 5
 
 # Team sync
 
+> Only available in Grafana Enterprise.
+
 {{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
 With the Team Sync it's possible to setup synchronization between your auth providers teams and teams in Grafana. This enables LDAP or GitHub OAuth users which are members
@@ -40,6 +42,6 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 ### Supported Providers
 
 * [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
-* [GitHub OAuth]({{< relref "github.md#team-sync-enterprise-only" >}})
-* [GitLab OAuth]({{< relref "gitlab.md#team-sync-enterprise-only" >}})
-* [Auth Proxy]({{< relref "auth-proxy.md#team-sync-enterprise-only">}})
+* [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
+* [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
+* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})

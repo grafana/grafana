@@ -12,6 +12,8 @@ weight = 3
 
 # Enhanced LDAP integration
 
+> Only available in Grafana Enterprise.
+
 The enhanced LDAP integration adds additional functionality on top of the existing [LDAP integration]({{< relref "../auth/ldap.md" >}}).
 
 ## LDAP Group Synchronization for Teams
@@ -36,7 +38,7 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 In the open source version of Grafana, user data from LDAP will be synchronized only during the login process when authenticating using LDAP.
 
-With this feature you can configure Grafana to actively sync users with LDAP server(s) in the background. Role and team membership will be updated, removed users will be disabled and logged out. Only users that have logged into Grafana at least once will be synchronized.
+With this feature you can configure Grafana to actively sync users with LDAP servers in the background. Role and team membership will be updated, removed users will be disabled and logged out. Only users that have logged into Grafana at least once will be synchronized.
 
 ```bash
 [auth.ldap]
@@ -51,7 +53,7 @@ With this feature you can configure Grafana to actively sync users with LDAP ser
 sync_cron = "0 0 1 * * *" # This is default value (At 1 am every day)
 # This cron expression format uses 6 space-separated fields (including seconds), for example
 # sync_cron = "* */10 * * * *"
-# This will run the LDAP Synchronization every 10th minute, which is also the minimal interval between the grafana sync times i.e. you cannot set it for every 9th minute
+# This will run the LDAP Synchronization every 10th minute, which is also the minimal interval between the Grafana sync times i.e. you cannot set it for every 9th minute
 
 # You can also disable active LDAP synchronization
 active_sync_enabled = true # enabled by default
@@ -59,4 +61,4 @@ active_sync_enabled = true # enabled by default
 
 ### Not compatible with Single Bind
 
-Single Bind configuration (as in the [Single Bind Example]({{< relref "ldap.md#single-bind-example">}})) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.
+Single Bind configuration (as in the [Single Bind Example]({{< relref "../auth/ldap.md#single-bind-example">}})) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.

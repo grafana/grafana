@@ -11,7 +11,7 @@ weight = 8
 
 # Reporting
 
-> Only available in Grafana v6.4+
+> Only available in Grafana Enterprise v6.4+.
 
 Reporting allows you to generate PDFs from any of your Dashboards and have them sent out to interested parties on a schedule.
 

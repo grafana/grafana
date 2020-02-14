@@ -12,7 +12,7 @@ weight = 5
 
 # SAML authentication
 
-> Only available in Grafana v6.3+
+> Only available in Grafana Enterprise v6.3+.
 
 The SAML authentication integration allows your Grafana users to log in by using an external SAML Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
