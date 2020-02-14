@@ -13,8 +13,8 @@ export interface DashboardSearchHit {
   type: DashboardSearchHitType;
   tags: string[];
   isStarred: boolean;
-  folderId: number;
-  folderUid: string;
-  folderTitle: string;
-  folderUrl: string;
+  folderId?: number;
+  folderUid?: string;
+  folderTitle?: string;
+  folderUrl?: string;
 }

@@ -271,6 +271,7 @@ describe('DashboardPage', () => {
           edit: false,
         },
       },
+      panelEditorNew: {},
       dashboard: {
         getModel: () => null as DashboardModel,
       },
@@ -289,6 +290,7 @@ describe('DashboardPage', () => {
           edit: 'true',
         },
       },
+      panelEditorNew: {},
       dashboard: {
         getModel: () => null as DashboardModel,
       },

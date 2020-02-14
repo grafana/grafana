@@ -15,6 +15,7 @@ export interface PanelEditorStateNew {
   querySubscription?: Unsubscribable;
   initDone: boolean;
   shouldDiscardChanges: boolean;
+  isOpen: boolean;
 }
 
 export const initialState: PanelEditorStateNew = {
@@ -29,6 +30,7 @@ export const initialState: PanelEditorStateNew = {
   mode: DisplayMode.Fill,
   initDone: false,
   shouldDiscardChanges: false,
+  isOpen: false,
 };
 
 interface InitEditorPayload {
@@ -46,6 +48,7 @@ const pluginsSlice = createSlice({
       state.getSourcePanel = () => action.payload.sourcePanel;
       state.querySubscription = action.payload.querySubscription;
       state.initDone = true;
+      state.isOpen = true;
     },
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;
@@ -59,6 +62,10 @@ const pluginsSlice = createSlice({
     setDiscardChanges: (state, action: PayloadAction<boolean>) => {
       state.shouldDiscardChanges = action.payload;
     },
+    closeCompleted: state => {
+      state.isOpen = false;
+      state.initDone = false;
+    },
   },
 });
 
@@ -68,6 +75,7 @@ export const {
   toggleOptionsView,
   setDisplayMode,
   setDiscardChanges,
+  closeCompleted,
 } = pluginsSlice.actions;
 
 export const panelEditorReducerNew = pluginsSlice.reducer;
