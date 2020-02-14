@@ -4579,6 +4579,11 @@
   resolved "https://registry.yarnpkg.com/@types/classnames/-/classnames-2.2.7.tgz#fb68cc9be8487e6ea5b13700e759bfbab7e0fefd"
   integrity sha512-rzOhiQ55WzAiFgXRtitP/ZUT8iVNyllEpylJ5zHzR4vArUvMB39GTk+Zon/uAM0JxEFAWnwsxC2gH8s+tZ3Myg==
 
+"@types/classnames@2.2.9":
+  version "2.2.9"
+  resolved "https://registry.yarnpkg.com/@types/classnames/-/classnames-2.2.9.tgz#d868b6febb02666330410fe7f58f3c4b8258be7b"
+  integrity sha512-MNl+rT5UmZeilaPxAVs6YaPC2m6aA8rofviZbhbxpPpl61uKodfdQVsBtgJGTqGizEf02oW3tsVe7FYB8kK14A==
+
 "@types/clean-css@*":
   version "4.2.1"
   resolved "https://registry.yarnpkg.com/@types/clean-css/-/clean-css-4.2.1.tgz#cb0134241ec5e6ede1b5344bc829668fd9871a8d"
@@ -5070,6 +5075,13 @@
   resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-1.10.35.tgz#4e5c2b1e5b3bf0b863efb8c5e70081f52e6c9518"
   integrity sha512-SVtqEcudm7yjkTwoRA1gC6CNMhGDdMx4Pg8BPdiqI7bXXdCn1BPmtxgeWYQOgDxrq53/5YTlhq5ULxBEAlWIBg==
 
+"@types/jquery@3.3.32":
+  version "3.3.32"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.32.tgz#93e27fdc45dd38ee07f2f0acf34b59c1ccee036f"
+  integrity sha512-UKoof2mnV/X1/Ix2g+V2Ny5sgHjV8nK/UJbiYxuo4zPwzGyFlZ/mp4KaePb2VqQrqJctmcDQNA57buU84/2uIw==
+  dependencies:
+    "@types/sizzle" "*"
+
 "@types/json-schema@*":
   version "7.0.3"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.3.tgz#bdfd69d61e464dcc81b25159c270d75a73c1a636"
@@ -5084,6 +5096,11 @@
   version "4.14.123"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.123.tgz#39be5d211478c8dd3bdae98ee75bb7efe4abfe4d"
   integrity sha512-pQvPkc4Nltyx7G1Ww45OjVqUsJP4UsZm+GWJpigXgkikZqJgRm4c48g027o6tdgubWHwFRF15iFd+Y4Pmqv6+Q==
+
+"@types/lodash@4.14.149":
+  version "4.14.149"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.149.tgz#1342d63d948c6062838fbf961012f74d4e638440"
+  integrity sha512-ijGqzZt/b7BfzcK9vTrS6MFljQRPn5BFWOx8oE0GYxribu6uV+aA9zZuXI1zc/etK9E8nrgdoF2+LgUw7+9tJQ==
 
 "@types/lru-cache@^5.1.0":
   version "5.1.0"
@@ -5161,10 +5178,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/pngjs@3.3.2":
-  version "3.3.2"
-  resolved "https://registry.yarnpkg.com/@types/pngjs/-/pngjs-3.3.2.tgz#8ed3bd655ab3a92ea32ada7a21f618e63b93b1d4"
-  integrity sha512-/SBsv93rVnjByzcau24rBwb+N7BHFp2LateaXz1e7m7M0Wzck/ymXTNdWVrCtkuMbwTHAnfdc3X/I/5szsTEAA==
+"@types/pngjs@3.4.1":
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/@types/pngjs/-/pngjs-3.4.1.tgz#2da41c25e4eb4c4e4c703cb306f7561311ac3a0c"
+  integrity sha512-cMBddD0y1zHkyT2nHNvQh1VQZyAnQc+i2I3GhY74CMyCEbGBfQ2fmDUuIwcsw6saVj4EdoJ/PAXZYOXRO368MA==
   dependencies:
     "@types/node" "*"
 
@@ -5438,7 +5455,7 @@
   resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-7.5.0.tgz#f5a10c27175465a0b001b68d8b9f761582967cc6"
   integrity sha512-NyzhuSBy97B/zE58cDw4NyGvByQbAHNP9069KVSgnXt/sc0T6MFRh0InKAeBVHJWdSXG1S3+PxgVIgKo9mTHbw==
 
-"@types/sizzle@2.3.2":
+"@types/sizzle@*", "@types/sizzle@2.3.2":
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/@types/sizzle/-/sizzle-2.3.2.tgz#a811b8c18e2babab7d542b3365887ae2e4d9de47"
   integrity sha512-7EJYyKTL7tFR8+gDbB6Wwz/arpGa0Mywk1TJbNzKzHtzbwVmY4HR9WqS5VV7dsBUKQmPNr192jHr/VpBluj/hg==
