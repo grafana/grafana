@@ -13,19 +13,33 @@ weight = 100
 
 # Getting started
 
-This guide will help you get started and acquainted with Grafana.
+This guide will help you get started and acquainted with Grafana. For a more in-depth explanation of Grafana process and capabilities, refer to [Introduction to Grafana]({{< relref "intro-to-grafana.md" >}}).
 
-Getting Started
-1. Install
-2. Login. 3000, admin/admin
-3. Change password. Record your credentials!
-4. Add TestData DB data source. (Make sure TestData is available by default.)
+## 1. Install Grafana
+
+## 2. Log in for the first time 
+3000, admin/admin
+Change password. Record your credentials!
+
+## 3. Add TestData DB data source
+
 Next...Import Streaming Example data source? Might not be ready for primetime.
-5. Got to Create > Dashboard
-6. Add Query. This creates a graph.
-7. Save dashboard.
 
-Next steps, regular users vs developers vs admins
+## 4. Create a dashboard
+1. Got to Create > Dashboard
+1. Add Query. This creates a graph.
+1. Save dashboard.
+
+Now you have a dashboard and are displaying results. Feel free to experiment with what you have built, skip down to explore Next Steps, or keep going to see what else you can do with Grafana.
+
+## 4. Import a dashboard
+
+## 5. Create a playlist
+
+
+
+## Next steps
+, regular users vs developers vs admins
 - Add Prometheus (or other) data sources
 - Import dashboards/plugins
 - Configure Grafana
