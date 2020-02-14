@@ -235,9 +235,12 @@ export class PanelInspector extends PureComponent<Props, State> {
               if (width === 0) {
                 return null;
               }
+              const minWidth = 150 * processed[selected].fields.length;
+              const tableWidth = minWidth > width ? minWidth : width;
+
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={processed[selected]} />
+                  <Table width={tableWidth} height={height} data={processed[selected]} />
                 </div>
               );
             }}

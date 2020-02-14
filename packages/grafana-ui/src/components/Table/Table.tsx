@@ -23,7 +23,7 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data, width), [data]),
+      columns: useMemo(() => getColumns(data, width), [data, width]),
       data: useMemo(() => getTableRows(data), [data]),
     },
     useSortBy,
