@@ -54,3 +54,13 @@ You can change the following elements:
 ;footer_links_guides_text = Guides
 ;footer_links_guides_url = http://your.guides.site
 ```
+
+
+ENV Variables:
+```
+- GF_WHITE_LABELING_FOOTER_LINKS=support guides
+- GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_TEXT=Support
+- GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_URL=http://your.support.site
+- GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_TEXT=Guides
+- GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_URL=http://your.guides.site 
+```
