@@ -73,8 +73,6 @@
   children:
   - name: Getting Started
     link: /guides/getting_started/
-  - name: Basic Concepts
-    link: /guides/basic_concepts/
   - name: Glossary
     link: /guides/glossary/
   - name: Screencasts
@@ -85,6 +83,8 @@
   - name: Panels
     link: /features/panels/
     children:
+    - link: /features/panels/panels/
+      name: Overview
     - link: /features/panels/graph/
       name: Graph
     - link: /features/panels/logs/
@@ -104,6 +104,8 @@
   - name: Dashboard Features
     link: /features/dashboard/
     children:
+    - link: /features/dashboard/dashboards/
+      name: Overview
     - link: /reference/templating/
       name: Variables
     - link: /reference/annotations/
