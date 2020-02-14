@@ -3,6 +3,7 @@ import { css } from 'emotion';
 import { TabsBar, Tab, TabContent, stylesFactory } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { QueryHistorySettings } from './QueryHistorySettings';
+import { QueryHistoryQueries } from './QueryHistoryQueries';
 
 interface QueryHistoryProps {
   width: any;
@@ -21,11 +22,13 @@ interface QueryHistoryState {
   activeStarredTab: boolean;
   showHistoryForActiveDatasource: boolean;
   hiddenSessions: boolean;
+  datasources: Option[] | null;
 }
 
 export type Option = {
   value: string;
   label: string;
+  imgUrl?: string;
 };
 
 const getStyles = stylesFactory(() => {
@@ -37,12 +40,12 @@ const getStyles = stylesFactory(() => {
       border-top: solid 1px #dde4ed;
       overflow-y: scroll;
       width: 100%;
-      padding: 20px;
+      padding: 10px;
     `,
     drawer: css`
       position: fixed;
       bottom: 0;
-      height: 400px;
+      height: 600px;
       background-color: white;
       border: solid 1px #dde4ed;
       padding-left: 10px;
@@ -60,12 +63,11 @@ export class QueryHistory extends PureComponent<QueryHistoryProps, QueryHistoryS
       activeStarredTab: false,
       showHistoryForActiveDatasource: true,
       hiddenSessions: true,
+      datasources: null,
     };
   }
 
-  onChangeActiveHistoryTimeSpan(option: Option) {
-    this.setState({ activeHistoryTimeSpan: option.value });
-  }
+  onChangeActiveHistoryTimeSpan = (option: Option) => this.setState({ activeHistoryTimeSpan: option.value });
 
   onChangeActiveStarredTab = () =>
     this.setState(state => {
@@ -81,12 +83,17 @@ export class QueryHistory extends PureComponent<QueryHistoryProps, QueryHistoryS
       };
     });
 
-  onChangeHideSessions = () =>
+  onChangeHideSessions = () => {
     this.setState(state => {
       return {
         hiddenSessions: !state.hiddenSessions,
       };
     });
+  };
+
+  onSelectDatasources = (datasources: Option[] | null) => {
+    this.setState({ datasources });
+  };
 
   onSelectTab = (item: SelectableValue<Tabs>) => {
     this.setState({ activeTab: item.value });
@@ -99,12 +106,18 @@ export class QueryHistory extends PureComponent<QueryHistoryProps, QueryHistoryS
       activeStarredTab,
       showHistoryForActiveDatasource,
       hiddenSessions,
+      datasources,
     } = this.state;
     const { width } = this.props;
     const styles = getStyles();
 
     const tabs = [];
-    tabs.push({ label: 'Query history', value: Tabs.QueryHistory, content: 'Query history', icon: 'fa fa-history' });
+    tabs.push({
+      label: 'Query history',
+      value: Tabs.QueryHistory,
+      content: <QueryHistoryQueries datasources={datasources} onSelectDatasources={this.onSelectDatasources} />,
+      icon: 'fa fa-history',
+    });
     tabs.push({ label: 'Starred', value: Tabs.Starred, content: 'Starred', icon: 'fa fa-star' });
     tabs.push({
       label: 'Settings',
