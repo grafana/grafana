@@ -10,7 +10,7 @@ weight = 500
 
 # Install on macOS
 
-This page provides instructions to help you install Grafana on macOS. 
+This page provides instructions to help you [install Grafana on macOS](https://grafana.com/grafana/download?platform=mac). 
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
