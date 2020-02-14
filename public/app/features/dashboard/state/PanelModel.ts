@@ -88,6 +88,7 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
+  options: {},
 };
 
 export class PanelModel {
@@ -179,7 +180,6 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
-
     this.render();
   }
 
@@ -354,7 +354,12 @@ export class PanelModel {
   }
 
   getEditClone() {
-    const clone = new PanelModel(this.getSaveModel());
+    const sourceModel = this.getSaveModel();
+
+    // Temporary id for the clone, restored later in redux action when changes are saved
+    sourceModel.id = 23763571993;
+
+    const clone = new PanelModel(sourceModel);
     const sourceQueryRunner = this.getQueryRunner();
 
     // pipe last result to new clone query runner

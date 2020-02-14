@@ -7,8 +7,9 @@ import {
   FieldPropertyEditorItem,
   DynamicConfigValue,
   VariableSuggestionsScope,
+  standardFieldConfigEditorRegistry,
 } from '@grafana/data';
-import { standardFieldConfigEditorRegistry, Forms, fieldMatchersUI, ValuePicker } from '@grafana/ui';
+import { Forms, fieldMatchersUI, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OptionsGroup } from './OptionsGroup';
 
@@ -151,6 +152,7 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
       <div>
         {config.overrides.map((o, i) => {
           const matcherUi = fieldMatchersUI.get(o.matcher.id);
+          // TODO:  apply matcher to retrieve fields
           return (
             <div key={`${o.matcher.id}/${i}`} style={{ border: `2px solid red`, marginBottom: '10px' }}>
               <Forms.Field label={matcherUi.name} description={matcherUi.description}>
