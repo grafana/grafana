@@ -559,7 +559,7 @@ export class BackendSrv implements BackendService {
       })),
       catchError(err => {
         if (!err.cancelled) {
-          throwError(err);
+          return throwError(err);
         }
 
         if (resultType === CancellationType.dataSourceRequest) {

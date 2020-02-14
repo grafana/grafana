@@ -19,10 +19,6 @@ type SocialGitlab struct {
 	allowSignup    bool
 }
 
-var (
-	ErrMissingGroupMembership = &Error{"User not a member of one of the required groups"}
-)
-
 func (s *SocialGitlab) Type() int {
 	return int(models.GITLAB)
 }
