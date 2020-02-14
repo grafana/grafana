@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -38,7 +39,7 @@ func init() {
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Override default channel or user, use #channel-name or @username
+          Override default channel or user, use #channel-name, @username or user/channel ID
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
@@ -118,13 +119,14 @@ func init() {
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify #channel-name or @username in Recipient for this to work
+          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify Recipient for this to work
         </info-popover>
       </div>
     `,
 	})
-
 }
+
+var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
@@ -133,7 +135,10 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
-	recipient := model.Settings.Get("recipient").MustString()
+	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
+	if recipient != "" && !reRecipient.MatchString(recipient) {
+		return nil, alerting.ValidationError{Reason: fmt.Sprintf("Recipient on invalid format: %q", recipient)}
+	}
 	username := model.Settings.Get("username").MustString()
 	iconEmoji := model.Settings.Get("icon_emoji").MustString()
 	iconURL := model.Settings.Get("icon_url").MustString()
@@ -144,7 +149,9 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
-		return nil, fmt.Errorf(fmt.Sprintf("invalid value for mentionChannel: %q", mentionChannel))
+		return nil, alerting.ValidationError{
+			Reason: fmt.Sprintf("Invalid value for mentionChannel: %q", mentionChannel),
+		}
 	}
 	mentionUsers := []string{}
 	for _, u := range strings.Split(mentionUsersStr, ",") {
