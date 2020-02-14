@@ -7,27 +7,80 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
 - [Frontend Style Guide](#frontend-style-guide)
   - [Table of Contents](#table-of-contents)
   - [Basic rules](#basic-rules)
-  - [Organization](#organization)
-  - [Props](#props)
+  - [Naming](#naming)
+  - [Files and directories naming](#files-and-directories-naming)
+  - [Code organization](#code-organization)
+    - [Exports](#exports)
+  - [Comments](#comments)
+  - [React](#react)
+    - [Props](#props)
   - [State management](#state-management)
 
 ## Basic rules
 
 - Try to keep files small and focused.
 - Break large components up into sub-components.
+- Use spaces for for indentation
 
-## Organization
+### Naming
+- Use `PascalCase` for
+    - class names
+    - interfaces
+    - types
+    - enums
+- Use `camelCase`
+    - functions
+    - methods
+    - variables
+    - state
+    - properties
+- Use `ALL_CAPS` for constants
 
-- Components and types that needs to be used by external plugins needs to go into @grafana/ui
-- Components should get their own folder under features/xxx/components
-  - Sub components can live in that component folders, so small component do not need their own folder
-  - Place test next to their component file (same dir)
-  - Component sass should live in the same folder as component code
-- State logic & domain models should live in features/xxx/state
-- Containers (pages) can live in feature root features/xxx
-  - up for debate?
 
-## Props
+### Files and directories naming
+
+Name files according to the primary export:
+- when primary export is a class or React component, use PascalCase
+- when primary export is a function, use camelCase
+    
+For files exporting multiple utility functions use the name that describes the reponsibility of grouped utils. For example, file exporting math utilities should be named `math.ts`
+
+- Use `constants.ts` for files exporting constants
+- Use `actions.ts` for files exporting Redux actions
+- Use `reducers.ts` Redux reducers
+- Use `*.test.ts(x)` for test files
+
+### Code organisation
+Organise your code in a directory that encloses feature code:
+- Put Redux state and domain logic code in `state` directory (i.e. `features/my-feature/state/actions.ts`)
+- Put React components in `components` directory (i.e. `features/my-feature/components/ButtonPeopleDreamOf.tsx`)
+- Put test files next to the test subject
+- Put containers(pages) in feature root (i.e. `features/my-feature/DashboardPage.tsx`)
+- Sub components can live in that component folders, so small component do not need their own folder
+- Component's SASS styles should live in the same folder as component code
+
+For code that needs to be used by external plugin:
+- Put components and types in `@grafana/ui`
+- Put data models and data utilities in `@grafana/data`
+- Put runtime services interfaces in `@grafana/runtime`
+
+#### Exports
+- Use named exports for all code you want to export from a file. 
+- Use declaration exports (i.e. `export const foo = ... `)
+- Export only the code that is meant to be used outside the module
+
+### Comments
+- Use (TSDoc)[https://github.com/microsoft/tsdoc] comments to document your code
+- Use (react-docgen)[https://github.com/reactjs/react-docgen] comments (`/** ... */`) for props documentation
+- Use inline comments for comments inside functions, classes etc.
+
+### Linting
+Linting is performed using (@grafana/eslint-config)[https://github.com/grafana/eslint-config-grafana]
+
+
+ 
+## React 
+### Props
 
 - Name callback props and handlers with an "on" prefix.
 
