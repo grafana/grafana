@@ -54,6 +54,7 @@ export class GrafanaBootConfig {
   loginHint: any;
   passwordHint: any;
   loginError: any;
+  navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
@@ -98,6 +99,7 @@ export class GrafanaBootConfig {
 const bootData = (window as any).grafanaBootData || {
   settings: {},
   user: {},
+  navTree: [],
 };
 
 const options = bootData.settings;

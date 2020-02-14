@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { GrafanaTheme, FieldConfigSource, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { stylesFactory, Forms, CustomScrollbar, selectThemeVariant } from '@grafana/ui';
+import { stylesFactory, Forms, CustomScrollbar, selectThemeVariant, Icon } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -25,6 +25,7 @@ import { setDisplayMode, toggleOptionsView, setDiscardChanges } from './state/re
 import { FieldConfigEditor } from './FieldConfigEditor';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelEditorTabs } from './state/selectors';
+import { getPanelStateById } from '../../state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -218,7 +219,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
             <button className="navbar-edit__back-btn" onClick={this.onPanelExit}>
-              <i className="fa fa-arrow-left"></i>
+              <Icon name="arrow-left" />
             </button>
             <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
           </div>
@@ -264,7 +265,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             >
               {this.renderHorizontalSplit(styles)}
               <div className={styles.panelOptionsPane}>
-                <CustomScrollbar>
+                <CustomScrollbar
+                  className={css`
+                    height: 100% !important;
+                  `}
+                >
                   {this.renderFieldOptions()}
                   <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
                 </CustomScrollbar>
@@ -281,7 +286,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   const panel = state.panelEditorNew.getPanel();
-  const plugin = state.plugins.panels[panel.type];
+  const { plugin } = getPanelStateById(state.dashboard, panel.id);
 
   return {
     location: state.location,
@@ -340,9 +345,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 0;
       bottom: 0;
       background: ${background};
+      padding: ${theme.spacing.sm};
     `,
     panelWrapper: css`
-      padding: 0 2px 2px ${theme.spacing.sm};
       width: 100%;
       height: 100%;
     `,
@@ -373,13 +378,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       width: 100%;
       background: ${theme.colors.pageBg};
-      border-top: 1px solid ${theme.colors.pageHeaderBorder};
-      border-left: 1px solid ${theme.colors.pageHeaderBorder};
+      border: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: none;
     `,
     toolbar: css`
-      padding: ${theme.spacing.sm};
-      height: 55px;
       display: flex;
+      padding-bottom: ${theme.spacing.sm};
       justify-content: space-between;
     `,
     editorBody: css`
