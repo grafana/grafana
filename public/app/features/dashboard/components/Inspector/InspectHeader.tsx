@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { Icon, stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
+import { Icon, selectThemeVariant, stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { InspectTab } from './PanelInspector';
 import { PanelModel } from '../../state';
@@ -61,9 +61,10 @@ export const InspectHeader: FC<Props> = ({
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const headerBackground = selectThemeVariant({ dark: theme.colors.gray15, light: theme.colors.white }, theme.type);
   return {
     header: css`
-      background-color: ${theme.colors.formInputBg};
+      background-color: ${headerBackground};
       z-index: 1;
       flex-grow: 0;
       padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
