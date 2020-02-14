@@ -127,7 +127,6 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
           <ThresholdsEditor
             onChange={this.onThresholdsChanged}
             thresholds={defaults.thresholds}
-            theme={config.theme}
             showAlphaUI={config.featureToggles.newEdit}
           />
         </PanelOptionsGrid>

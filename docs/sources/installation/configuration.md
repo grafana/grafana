@@ -28,7 +28,7 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
 ### Docker
-Refer to [Configure a Grafana Docker image](configure-docker.md) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.

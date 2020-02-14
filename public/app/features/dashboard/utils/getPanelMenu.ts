@@ -3,7 +3,6 @@ import { store } from 'app/store/store';
 import config from 'app/core/config';
 import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
-
 import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -11,8 +10,9 @@ import { contextSrv } from '../../../core/services/context_srv';
 import { navigateToExplore } from '../../explore/state/actions';
 import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
+import { PanelCtrl } from '../../panel/panel_ctrl';
 
-export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
+export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     store.dispatch(
@@ -123,7 +123,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     shortcut: 'p s',
   });
 
-  if (contextSrv.hasAccessToExplore() && panel.datasource) {
+  if (contextSrv.hasAccessToExplore() && !panel.plugin.meta.skipDataQuery) {
     menu.push({
       text: 'Explore',
       iconClassName: 'gicon gicon-explore',
@@ -170,6 +170,29 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     onClick: onEditPanelJson,
   });
 
+  // add old angular panel options
+  if (panel.angularPanel) {
+    const scope = panel.angularPanel.getScope();
+    const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
+    const angularMenuItems = panelCtrl.getExtendedMenu();
+
+    for (const item of angularMenuItems) {
+      const reactItem: PanelMenuItem = {
+        text: item.text,
+        href: item.href,
+        shortcut: item.shortcut,
+      };
+
+      if (item.click) {
+        reactItem.onClick = () => {
+          scope.$eval(item.click, { ctrl: panelCtrl });
+        };
+      }
+
+      subMenu.push(reactItem);
+    }
+  }
+
   menu.push({
     type: 'submenu',
     text: 'More...',
@@ -190,4 +213,4 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   }
 
   return menu;
-};
+}

@@ -62,11 +62,11 @@ module.exports = merge(common, {
             },
           },
           {
-            loader: 'tslint-loader',
+            loader: 'eslint-loader',
             options: {
-              emitErrors: true,
-              typeCheck: false,
-            },
+              emitError: true,
+              emitWarning: true,
+            }
           },
         ],
       },
@@ -90,6 +90,7 @@ module.exports = merge(common, {
   plugins: [
     new ForkTsCheckerWebpackPlugin({
       checkSyntacticErrors: true,
+      memoryLimit: 4096,
     }),
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[hash].css',

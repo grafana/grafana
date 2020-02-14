@@ -24,8 +24,8 @@ describe('FieldOverrides', () => {
       {
         matcher: { id: FieldMatcherID.numeric },
         properties: [
-          { path: 'decimals', value: 1 }, // Numeric
-          { path: 'title', value: 'Kittens' }, // Text
+          { prop: 'decimals', value: 1 }, // Numeric
+          { prop: 'title', value: 'Kittens' }, // Text
         ],
       },
     ],

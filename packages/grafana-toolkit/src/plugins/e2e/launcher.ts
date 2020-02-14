@@ -14,7 +14,6 @@ export async function runEndToEndTests(outputDirectory: string, results: TestRes
     verbose: false,
     moduleDirectories: ['node_modules'], // add the plugin somehow?
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-    setupFiles: [],
     setupFilesAfterEnv: [
       'expect-puppeteer', // Setup Puppeteer
       '<rootDir>/' + setupPath + ext, // Loads Chromimum

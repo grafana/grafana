@@ -35,6 +35,7 @@ export interface Props {
   plugin: PanelPlugin;
   isFullscreen: boolean;
   isInView: boolean;
+  isInEditMode?: boolean;
   width: number;
   height: number;
 }
@@ -69,7 +70,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, isInEditMode } = this.props;
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
     dashboard.panelInitialized(this.props.panel);
@@ -84,8 +85,19 @@ export class PanelChrome extends PureComponent<Props, State> {
         },
         isFirstLoad: false,
       });
-    } else if (!this.wantsQueryExecution) {
-      this.setState({ isFirstLoad: false });
+    } else {
+      if (isInEditMode) {
+        this.querySubscription = panel
+          .getQueryRunner()
+          .getData()
+          .subscribe({
+            next: data => this.onDataUpdate(data),
+          });
+      }
+
+      if (!this.wantsQueryExecution) {
+        this.setState({ isFirstLoad: false });
+      }
     }
   }
 
@@ -161,7 +173,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
-
     if (!isInView) {
       console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
@@ -232,6 +243,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
+  panelHasLastResult = () => {
+    return !!this.props.panel.getQueryRunner().getLastResult();
+  };
+
   get wantsQueryExecution() {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
@@ -257,7 +272,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
-      return this.renderLoadingState();
+      return null;
     }
 
     const PanelComponent = plugin.panel;
@@ -275,7 +290,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     return (
       <>
-        {loading === LoadingState.Loading && this.renderLoadingState()}
         <div className={panelContentClassNames}>
           <PanelComponent
             id={panel.id}
@@ -293,14 +307,6 @@ export class PanelChrome extends PureComponent<Props, State> {
           />
         </div>
       </>
-    );
-  }
-
-  private renderLoadingState(): JSX.Element {
-    return (
-      <div className="panel-loading">
-        <i className="fa fa-spinner fa-spin" />
-      </div>
     );
   }
 
@@ -345,6 +351,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
+          isLoading={data.state === LoadingState.Loading}
         />
         <ErrorBoundary>
           {({ error, errorInfo }) => {

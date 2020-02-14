@@ -16,7 +16,7 @@ import Forms from './index';
 import mdx from './Form.mdx';
 
 export default {
-  title: 'UI/Forms/Test forms',
+  title: 'Forms/Test forms',
   decorators: [withStoryContainer, withCenteredStory],
   parameters: {
     docs: {

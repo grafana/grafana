@@ -990,14 +990,14 @@ describe('PrometheusDatasource', () => {
       expect(res.url).toBe(urlExpected);
     });
 
-    it('step should never go below 1', async () => {
+    it('step should be fractional for sub second intervals', async () => {
       const query = {
         // 6 minute range
         range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
         targets: [{ expr: 'test' }],
         interval: '100ms',
       };
-      const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=1';
+      const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=0.1';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1456,7 +1456,7 @@ describe('PrometheusDatasource', () => {
 
     it('should use overridden ranges, not dashboard ranges', async () => {
       const expectedRangeSecond = 3600;
-      const expectedRangeString = '1h';
+      const expectedRangeString = '3600s';
       const query = {
         range: {
           from: time({}),

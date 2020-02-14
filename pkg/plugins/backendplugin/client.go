@@ -115,12 +115,8 @@ type CorePlugin interface {
 	DatasourcePlugin
 }
 
-type TransformCallBack interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
-}
-
 type TransformPlugin interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callback TransformCallBack) (*pluginv2.DataQueryResponse, error)
+	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callback plugin.TransformCallBack) (*pluginv2.DataQueryResponse, error)
 }
 
 // LegacyClient client for communicating with a plugin using the old plugin protocol.
