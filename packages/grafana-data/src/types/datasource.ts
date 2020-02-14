@@ -33,15 +33,16 @@ export type DataSourceOptionsType<DSType extends DataSourceApi<any, any>> = DSTy
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
-  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
+  TSecureOptions = {}
 > extends GrafanaPlugin<DataSourcePluginMeta<TOptions>> {
-  components: DataSourcePluginComponents<DSType, TQuery, TOptions> = {};
+  components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
 
   constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
     super();
   }
 
-  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
+  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>) {
     this.components.ConfigEditor = editor;
     return this;
   }
@@ -131,7 +132,8 @@ interface PluginMetaQueryOptions {
 export interface DataSourcePluginComponents<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TSecureOptions = {}
 > {
   QueryCtrl?: any;
   AnnotationsQueryCtrl?: any;
@@ -141,7 +143,7 @@ export interface DataSourcePluginComponents<
   ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentType<ExploreStartPageProps>;
-  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
+  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
 }
 
@@ -276,7 +278,7 @@ export abstract class DataSourceApi<
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
 
-  interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }
 
 export interface MetadataInspectorProps<
@@ -310,6 +312,11 @@ export enum DataSourceStatus {
   Disconnected,
 }
 
+export enum ExploreMode {
+  Logs = 'Logs',
+  Metrics = 'Metrics',
+}
+
 export interface ExploreQueryFieldProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -318,11 +325,12 @@ export interface ExploreQueryFieldProps<
   history: any[];
   onBlur?: () => void;
   absoluteRange?: AbsoluteTimeRange;
+  exploreMode?: ExploreMode;
 }
 
 export interface ExploreStartPageProps {
   datasource?: DataSourceApi;
-  exploreMode: 'Logs' | 'Metrics';
+  exploreMode: ExploreMode;
   onClickExample: (query: DataQuery) => void;
 }
 
@@ -382,6 +390,11 @@ export interface DataQuery {
   datasource?: string | null;
 
   metric?: any;
+
+  /**
+   * For limiting result lines.
+   */
+  maxLines?: number;
 }
 
 export interface DataQueryError {
@@ -412,7 +425,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   app: CoreApp | string;
 
   cacheTimeout?: string;
-  exploreMode?: 'Logs' | 'Metrics';
+  exploreMode?: ExploreMode;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
 

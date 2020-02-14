@@ -542,8 +542,11 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsd
 	startValue := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := query.Model.Get("spread").MustFloat64(1)
 	noise := query.Model.Get("noise").MustFloat64(0)
-	min, hasMin := query.Model.Get("min").Float64()
-	max, hasMax := query.Model.Get("max").Float64()
+
+	min, err := query.Model.Get("min").Float64()
+	hasMin := err == nil
+	max, err := query.Model.Get("max").Float64()
+	hasMax := err == nil
 
 	points := make(tsdb.TimeSeriesPoints, 0)
 	walker := startValue
@@ -551,12 +554,12 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, index int) *tsd
 	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
 		nextValue := walker + (rand.Float64() * noise)
 
-		if hasMin == nil && nextValue < min {
+		if hasMin && nextValue < min {
 			nextValue = min
 			walker = min
 		}
 
-		if hasMax == nil && nextValue > max {
+		if hasMax && nextValue > max {
 			nextValue = max
 			walker = max
 		}

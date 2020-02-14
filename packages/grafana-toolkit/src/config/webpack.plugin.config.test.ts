@@ -3,9 +3,9 @@ import fs from 'fs';
 import * as webpackConfig from './webpack.plugin.config';
 
 jest.mock('./webpack/loaders', () => ({
-  getFileLoaders: () => [],
-  getStylesheetEntries: () => [],
-  getStyleLoaders: () => [],
+  getFileLoaders: (): Array<{}> => [],
+  getStylesheetEntries: () => ({}),
+  getStyleLoaders: (): Array<{}> => [],
 }));
 
 const modulePathsMock = [

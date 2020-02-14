@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "6.4.0-pre",
+  "version": "6.7.0-pre",
   "description": "Grafana End to End Test Library",
   "keywords": [
     "grafana",
@@ -15,7 +15,7 @@
   },
   "main": "src/index.ts",
   "scripts": {
-    "tslint": "tslint -c tslint.json --project tsconfig.json",
+    "lint": "eslint cypress/ src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",
+    "@grafana/tsconfig": "^1.0.0-rc1",
     "blink-diff": "1.0.13",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",

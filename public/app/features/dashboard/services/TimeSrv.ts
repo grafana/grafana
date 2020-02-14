@@ -19,6 +19,8 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { appEvents } from '../../../core/core';
+import { CoreEvents } from '../../../types';
 
 import { config } from 'app/core/config';
 
@@ -42,8 +44,8 @@ export class TimeSrv {
     // default time
     this.time = DefaultTimeRange.raw;
 
-    $rootScope.$on('zoom-out', this.zoomOut.bind(this));
-    $rootScope.$on('shift-time', this.shiftTime.bind(this));
+    appEvents.on(CoreEvents.zoomOut, this.zoomOut.bind(this));
+    appEvents.on(CoreEvents.shiftTime, this.shiftTime.bind(this));
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
 
     document.addEventListener('visibilitychange', () => {
@@ -286,14 +288,14 @@ export class TimeSrv {
     };
   }
 
-  zoomOut(e: any, factor: number) {
+  zoomOut(factor: number) {
     const range = this.timeRange();
     const { from, to } = getZoomedTimeRange(range, factor);
 
     this.setTime({ from: toUtc(from), to: toUtc(to) });
   }
 
-  shiftTime(e: any, direction: number) {
+  shiftTime(direction: number) {
     const range = this.timeRange();
     const { from, to } = getShiftedTimeRange(direction, range);
 

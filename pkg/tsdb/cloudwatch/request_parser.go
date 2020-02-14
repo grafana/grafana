@@ -68,8 +68,15 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	var period int
 	if strings.ToLower(p) == "auto" || p == "" {
 		deltaInSeconds := endTime.Sub(startTime).Seconds()
-		periods := []int{60, 300, 900, 3600, 21600}
-		period = closest(periods, int(math.Ceil(deltaInSeconds/2000)))
+		periods := []int{60, 300, 900, 3600, 21600, 86400}
+		datapoints := int(math.Ceil(deltaInSeconds / 2000))
+		period = periods[len(periods)-1]
+		for _, value := range periods {
+			if datapoints <= value {
+				period = value
+				break
+			}
+		}
 	} else {
 		if regexp.MustCompile(`^\d+$`).Match([]byte(p)) {
 			period, err = strconv.Atoi(p)
@@ -157,26 +164,4 @@ func sortDimensions(dimensions map[string][]string) map[string][]string {
 		sortedDimensions[k] = dimensions[k]
 	}
 	return sortedDimensions
-}
-
-func closest(array []int, num int) int {
-	minDiff := array[len(array)-1]
-	var closest int
-	if num <= array[0] {
-		return array[0]
-	}
-
-	if num >= array[len(array)-1] {
-		return array[len(array)-1]
-	}
-
-	for _, value := range array {
-		var m = int(math.Abs(float64(num - value)))
-		if m <= minDiff {
-			minDiff = m
-			closest = value
-		}
-	}
-
-	return closest
 }

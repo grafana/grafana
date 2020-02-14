@@ -133,7 +133,6 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
           <ThresholdsEditor
             onChange={this.onThresholdsChanged}
             thresholds={defaults.thresholds}
-            theme={config.theme}
             showAlphaUI={config.featureToggles.newEdit}
           />
         </PanelOptionsGrid>

@@ -1,4 +1,11 @@
-# 6.4.0 (unreleased)
+# 6.6.0 (unreleased)
+
+# 6.6.0-beta1 (2020-01-20)
+
+### Features / Enhancements
+* **grafana/toolkit**: Add option to override webpack config. [#20872](https://github.com/grafana/grafana/pull/20872), [@sebimarkgraf](https://github.com/sebimarkgraf)
+
+# 6.4.0 (2019-10-01)
 
 # 6.4.0-beta2 (2019-09-25)
 

@@ -16,7 +16,7 @@ Grafana already has a strong community of contributors and plugin developers. By
 
 ## Short version
 
-1. [Setup grafana](http://docs.grafana.org/project/building_from_source/)
+1. [Set up Grafana](https://github.com/grafana/grafana/blob/master/contribute/developer-guide.md)
 2. Clone an example plugin into ```/var/lib/grafana/plugins```  or `data/plugins` (relative to grafana git repo if you're running development version from source dir)
 3. Use one of our example plugins as starting point
 
@@ -96,7 +96,7 @@ export {
 
 There are three ways that you can start developing a Grafana plugin.
 
-1. Setup a Grafana development environment. [(described here)](http://docs.grafana.org/project/building_from_source/) and place your plugin in the ```data/plugins``` folder.
+1. Set up a Grafana development environment. [(described here)](https://github.com/grafana/grafana/blob/master/contribute/developer-guide.md) and place your plugin in the ```data/plugins``` folder.
 2. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/installation/configuration). By default this is `/var/lib/grafana/plugins` on Linux systems.
 3. Place your plugin directory anywhere you like and specify it grafana.ini.
 

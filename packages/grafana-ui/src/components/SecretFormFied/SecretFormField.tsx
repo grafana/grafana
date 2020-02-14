@@ -1,11 +1,12 @@
 import omit from 'lodash/omit';
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { FormField } from '../FormField/FormField';
+import { css, cx } from 'emotion';
 
-interface Props extends InputHTMLAttributes<HTMLInputElement> {
+interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
   // component (or do something else if required).
-  onReset: () => void;
+  onReset: (event: React.SyntheticEvent<HTMLButtonElement>) => void;
   isConfigured: boolean;
 
   label?: string;
@@ -15,12 +16,18 @@ interface Props extends InputHTMLAttributes<HTMLInputElement> {
   placeholder?: string;
 }
 
-const defaultProps = {
-  inputWidth: 12,
-  placeholder: 'Password',
-  label: 'Password',
+const getSecretFormFieldStyles = () => {
+  return {
+    noRadiusInput: css`
+      border-bottom-right-radius: 0 !important;
+      border-top-right-radius: 0 !important;
+    `,
+    noRadiusButton: css`
+      border-bottom-left-radius: 0 !important;
+      border-top-left-radius: 0 !important;
+    `,
+  };
 };
-
 /**
  * Form field that has 2 states configured and not configured. If configured it will not show its contents and adds
  * a reset button that will clear the input and makes it accessible. In non configured state it behaves like normal
@@ -28,14 +35,15 @@ const defaultProps = {
  * to the user (like datasource passwords).
  */
 export const SecretFormField: FunctionComponent<Props> = ({
-  label,
+  label = 'Password',
   labelWidth,
-  inputWidth,
+  inputWidth = 12,
   onReset,
   isConfigured,
-  placeholder,
+  placeholder = 'Password',
   ...inputProps
 }: Props) => {
+  const styles = getSecretFormFieldStyles();
   return (
     <FormField
       label={label!}
@@ -45,12 +53,16 @@ export const SecretFormField: FunctionComponent<Props> = ({
           <>
             <input
               type="text"
-              className={`gf-form-input width-${inputWidth! - 2}`}
+              className={cx(`gf-form-input width-${inputWidth! - 2}`, styles.noRadiusInput)}
               disabled={true}
               value="configured"
               {...omit(inputProps, 'value')}
             />
-            <button className="btn btn-secondary gf-form-btn" onClick={onReset}>
+            <button
+              className={cx('btn btn-secondary gf-form-btn', styles.noRadiusButton)}
+              onClick={onReset}
+              style={{ height: '100%' }}
+            >
               reset
             </button>
           </>
@@ -67,5 +79,4 @@ export const SecretFormField: FunctionComponent<Props> = ({
   );
 };
 
-SecretFormField.defaultProps = defaultProps;
 SecretFormField.displayName = 'SecretFormField';

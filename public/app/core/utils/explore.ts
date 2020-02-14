@@ -21,6 +21,7 @@ import {
   TimeRange,
   TimeZone,
   toUtc,
+  ExploreMode,
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
@@ -28,7 +29,7 @@ import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreMode, ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -88,11 +89,12 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
     const range = timeSrv.timeRangeForUrl();
     let state: Partial<ExploreUrlState> = { range };
     if (exploreDatasource.interpolateVariablesInQueries) {
+      const scopedVars = panel.scopedVars || {};
       state = {
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets),
+        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars),
       };
     } else {
       state = {
@@ -473,11 +475,11 @@ export const getRefIds = (value: any): string[] => {
 };
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timestamp < b.timestamp) {
+  if (a.timeEpochMs < b.timeEpochMs) {
     return -1;
   }
 
-  if (a.timestamp > b.timestamp) {
+  if (a.timeEpochMs > b.timeEpochMs) {
     return 1;
   }
 
@@ -485,11 +487,11 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timestamp > b.timestamp) {
+  if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
   }
 
-  if (a.timestamp < b.timestamp) {
+  if (a.timeEpochMs < b.timeEpochMs) {
     return 1;
   }
 

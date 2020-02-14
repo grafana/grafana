@@ -43,7 +43,7 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
 
     // TODO: Enable backend request when we have metrics API
     // if (this.options.url) {
-    // getBackendSrv().post(this.options.url, result);
+    // backendSrv.post(this.options.url, result);
     // }
   };
 }

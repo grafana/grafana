@@ -16,6 +16,7 @@ import {
   QueryFixAction,
   RawTimeRange,
   TimeRange,
+  ExploreMode,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -40,7 +41,7 @@ import {
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
 
-import { ExploreId, ExploreMode, ExploreUIState, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
   changeModeAction,
@@ -428,9 +429,11 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     const queryOptions: QueryOptions = {
       minInterval,
-      // This is used for logs streaming for buffer size, with undefined it falls back to datasource config if it
-      // supports that.
-      maxDataPoints: mode === ExploreMode.Logs ? undefined : containerWidth,
+      // maxDataPoints is used in:
+      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
+      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
+      // Influx - used to correctly display logs in graph
+      maxDataPoints: mode === ExploreMode.Logs && datasourceInstance.name === 'Loki' ? undefined : containerWidth,
       liveStreaming: live,
       showingGraph,
       showingTable,
