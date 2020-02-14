@@ -108,7 +108,6 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
     const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
     url = renderUrl('/explore', { left: exploreState });
   }
-  const finalUrl = config.appSubUrl + url;
   return url;
 }
 
