@@ -39,7 +39,7 @@ func init() {
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Override default channel or user, use #channel-name, @username or user/channel ID
+          Override default channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
