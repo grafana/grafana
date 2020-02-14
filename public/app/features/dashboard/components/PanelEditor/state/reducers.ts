@@ -18,7 +18,7 @@ export interface PanelEditorUIState {
   isPanelOptionsVisible: boolean;
   // annotating as number or string since size can be expressed as static value or percentage
   rightPaneSize: number | string;
-  // annotating as number of string as size can be expressed as static value or percentagef
+  // annotating as number or string since size can be expressed as static value or percentage
   topPaneSize: number | string;
   mode: DisplayMode;
 }
