@@ -52,6 +52,10 @@ export interface FieldConfig {
   // Panel Specific Values
   custom?: Record<string, any>;
 
+  /**
+   * Local cache for field specific scoped vars. Unlike other values, this property should
+   * not be set from the datasource.
+   */
   scopedVars?: ScopedVars;
 }
 
