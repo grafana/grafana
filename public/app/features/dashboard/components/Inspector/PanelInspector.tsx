@@ -3,19 +3,10 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
 
+import { InspectHeader } from './InspectHeader';
+
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import {
-  JSONFormatter,
-  Drawer,
-  Select,
-  Table,
-  TabsBar,
-  Tab,
-  TabContent,
-  Forms,
-  stylesFactory,
-  CustomScrollbar,
-} from '@grafana/ui';
+import { JSONFormatter, Drawer, Select, Table, TabContent, Forms, stylesFactory, CustomScrollbar } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,
@@ -44,7 +35,7 @@ export enum InspectTab {
 
 interface State {
   // The last raw response
-  last?: PanelData;
+  last: PanelData;
 
   // Data frem the last response
   data: DataFrame[];
@@ -57,6 +48,10 @@ interface State {
 
   // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
+
+  stats: { requestTime: number; queries: number; dataSources: number };
+
+  drawerWidth: string;
 }
 
 const getStyles = stylesFactory(() => {
@@ -89,9 +84,12 @@ export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      last: {} as PanelData,
       data: [],
       selected: 0,
       tab: props.selectedTab || InspectTab.Data,
+      drawerWidth: '40%',
+      stats: { requestTime: 0, queries: 0, dataSources: 0 },
     };
   }
 
@@ -110,8 +108,14 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     // Find the first DataSource wanting to show custom metadata
     let metaDS: DataSourceApi;
-    const data = lastResult?.series;
-    const error = lastResult?.error;
+    const data = lastResult.series;
+    const error = lastResult.error;
+
+    const targets = lastResult.request?.targets;
+    const requestTime = lastResult.request?.endTime ? lastResult.request?.endTime - lastResult.request.startTime : -1;
+    const queries = targets ? targets.length : 0;
+
+    const dataSources = new Set(targets.map(t => t.datasource)).size;
 
     if (data) {
       for (const frame of data) {
@@ -132,6 +136,11 @@ export class PanelInspector extends PureComponent<Props, State> {
       data,
       metaDS,
       tab: error ? InspectTab.Error : prevState.tab,
+      stats: {
+        requestTime,
+        queries,
+        dataSources,
+      },
     }));
   }
 
@@ -140,6 +149,12 @@ export class PanelInspector extends PureComponent<Props, State> {
       query: { inspect: null, tab: null },
       partial: true,
     });
+  };
+
+  onToggleExpand = () => {
+    this.setState(prevState => ({
+      drawerWidth: prevState.drawerWidth === '100%' ? '40%' : '100%',
+    }));
   };
 
   onSelectTab = (item: SelectableValue<InspectTab>) => {
@@ -261,17 +276,9 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 
-  render() {
-    const { panel } = this.props;
-    const { last, tab } = this.state;
-    const styles = getStyles();
-
+  drawerHeader = () => {
+    const { tab, last, stats } = this.state;
     const error = last?.error;
-    if (!panel) {
-      this.onDismiss(); // Try to close the component
-      return null;
-    }
-
     const tabs = [];
     if (last && last?.series?.length > 0) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
@@ -285,19 +292,26 @@ export class PanelInspector extends PureComponent<Props, State> {
     tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
 
     return (
-      <Drawer title={panel.title} onClose={this.onDismiss}>
-        <TabsBar>
-          {tabs.map((t, index) => {
-            return (
-              <Tab
-                key={`${t.value}-${index}`}
-                label={t.label}
-                active={t.value === tab}
-                onChangeTab={() => this.onSelectTab(t)}
-              />
-            );
-          })}
-        </TabsBar>
+      <InspectHeader
+        tabs={tabs}
+        tab={tab}
+        stats={stats}
+        onSelectTab={this.onSelectTab}
+        onClose={this.onDismiss}
+        panel={this.props.panel}
+        onToggleExpand={this.onToggleExpand}
+        isExpanded={this.state.drawerWidth === '100%'}
+      />
+    );
+  };
+
+  render() {
+    const { last, tab, drawerWidth } = this.state;
+    const styles = getStyles();
+    const error = last?.error;
+
+    return (
+      <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
         <TabContent className={styles.tabContent}>
           {tab === InspectTab.Data ? (
             this.renderDataTab()

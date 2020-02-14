@@ -1,5 +1,4 @@
-import { FieldConfig } from '@grafana/data';
-import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { FieldConfig, standardFieldConfigEditorRegistry } from '@grafana/data';
 
 describe('standardFieldConfigEditorRegistry', () => {
   const dummyConfig: FieldConfig = {

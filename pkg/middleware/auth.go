@@ -47,7 +47,7 @@ func notAuthorized(c *m.ReqContext) {
 		return
 	}
 
-	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, newCookieOptions)
+	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(c.Req.RequestURI), 0, newCookieOptions)
 
 	c.Redirect(setting.AppSubUrl + "/login")
 }
