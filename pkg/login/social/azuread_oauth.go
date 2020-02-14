@@ -15,6 +15,7 @@ import (
 type SocialAzureAD struct {
 	*SocialBase
 	allowedDomains []string
+	allowedGroups  []string
 	allowSignup    bool
 }
 
@@ -64,6 +65,9 @@ func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUse
 	role := extractRole(claims)
 
 	groups := extractGroups(claims)
+	if !s.IsGroupMember(groups) {
+		return nil, ErrMissingGroupMembership
+	}
 
 	return &BasicUserInfo{
 		Id:     claims.ID,
@@ -73,6 +77,22 @@ func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUse
 		Role:   string(role),
 		Groups: groups,
 	}, nil
+}
+
+func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
+	if len(s.allowedGroups) == 0 {
+		return true
+	}
+
+	for _, allowedGroup := range s.allowedGroups {
+		for _, group := range groups {
+			if group == allowedGroup {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func extractEmail(claims azureClaims) string {
