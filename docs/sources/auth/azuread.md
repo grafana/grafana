@@ -128,7 +128,7 @@ allowed_domains = mycompany.com mycompany.org
 
 ### Team Sync (Enterprise only)
 
->  Only available in Grafana Enterprise v6.3+
+>  Only available in Grafana Enterprise v6.7+
 
 With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
 the correct teams. 
