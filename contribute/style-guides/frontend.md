@@ -36,7 +36,7 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
     - properties
     - Emotion class names
 - Use `ALL_CAPS` for constants
-
+- Use (BEM)[http://getbem.com/] convention for SASS styles (*SASS styles are deprecated, ideally migrate to Emotion whenever you need to modify SASS styles*)
 
 ### Files and directories naming
 
