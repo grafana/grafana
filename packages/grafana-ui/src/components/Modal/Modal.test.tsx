@@ -9,10 +9,10 @@ describe('Modal', () => {
 
   it('renders nothing by default or when isOpen is false', () => {
     const wrapper = mount(<Modal title={'Some Title'} />);
-    expect(wrapper.html()).toBe(null);
+    expect(wrapper.html()).toBe('');
 
     wrapper.setProps({ ...wrapper.props(), isOpen: false });
-    expect(wrapper.html()).toBe(null);
+    expect(wrapper.html()).toBe('');
   });
 
   it('renders correct contents', () => {

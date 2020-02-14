@@ -4,6 +4,7 @@ import {
   DashboardState,
   DashboardAclDTO,
   DashboardInitError,
+  PanelState,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';
 import { processAclItems } from 'app/core/utils/acl';
@@ -11,6 +12,7 @@ import { panelEditorReducer } from '../panel_editor/state/reducers';
 import { panelEditorReducerNew } from '../components/PanelEditor/state/reducers';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
+import { PanelPlugin } from '@grafana/data';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
@@ -72,16 +74,24 @@ const dashbardSlice = createSlice({
     clearDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction) => {
       state.modifiedQueries = null;
     },
-    dashboardPanelTypeChanged: (state, action: PayloadAction<DashboardPanelTypeChangedPayload>) => {
-      state.panels[action.payload.panelId] = { pluginId: action.payload.pluginId };
+    panelModelAndPluginReady: (state: DashboardState, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
+      updatePanelState(state, action.payload.panelId, { plugin: action.payload.plugin });
     },
     addPanelToDashboard: (state, action: PayloadAction<AddPanelPayload>) => {},
   },
 });
 
-export interface DashboardPanelTypeChangedPayload {
+export function updatePanelState(state: DashboardState, panelId: number, ps: Partial<PanelState>) {
+  if (!state.panels[panelId]) {
+    state.panels[panelId] = ps as PanelState;
+  } else {
+    Object.assign(state.panels[panelId], ps);
+  }
+}
+
+export interface PanelModelAndPluginReadyPayload {
   panelId: number;
-  pluginId: string;
+  plugin: PanelPlugin;
 }
 
 export interface AddPanelPayload {
@@ -98,7 +108,7 @@ export const {
   cleanUpDashboard,
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
-  dashboardPanelTypeChanged,
+  panelModelAndPluginReady,
   addPanelToDashboard,
 } = dashbardSlice.actions;
 

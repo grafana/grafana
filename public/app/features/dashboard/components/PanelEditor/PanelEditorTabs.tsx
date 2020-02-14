@@ -8,6 +8,7 @@ import { DashboardModel } from '../../state';
 import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { PanelModel } from '../../state/PanelModel';
 import { AlertTab } from 'app/features/alerting/AlertTab';
+import { VisualizationTab } from './VisualizationTab';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -39,6 +40,7 @@ export const PanelEditorTabs: React.FC<PanelEditorTabsProps> = ({ panel, dashboa
       <TabContent className={styles.tabContent}>
         {activeTab.id === PanelEditorTabId.Queries && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Visualization && <VisualizationTab panel={panel} />}
         {activeTab.id === PanelEditorTabId.Transform && data.state !== LoadingState.NotStarted && (
           <TransformationsEditor
             transformations={panel.transformations || []}
@@ -60,9 +62,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-direction: column;
       height: 100%;
     `,
-    tabBar: css`
-      padding: 0 ${theme.spacing.sm};
-    `,
+    tabBar: css``,
     tabContent: css`
       padding: 0;
       display: flex;
@@ -71,6 +71,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       min-height: 0;
       background: ${theme.colors.pageBg};
       border-right: 1px solid ${theme.colors.pageHeaderBorder};
+      border-left: 1px solid ${theme.colors.pageHeaderBorder};
 
       .toolbar {
         background: transparent;

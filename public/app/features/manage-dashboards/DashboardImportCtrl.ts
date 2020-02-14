@@ -163,18 +163,18 @@ export class DashboardImportCtrl {
     );
   }
 
-  onFolderChange(folder: any) {
+  onFolderChange = (folder: any) => {
     this.folderId = folder.id;
     this.titleChanged();
-  }
+  };
 
-  onEnterFolderCreation() {
+  onEnterFolderCreation = () => {
     this.inputsValid = false;
-  }
+  };
 
-  onExitFolderCreation() {
+  onExitFolderCreation = () => {
     this.inputValueChanged();
-  }
+  };
 
   isValid() {
     return this.inputsValid && this.folderId !== null;
