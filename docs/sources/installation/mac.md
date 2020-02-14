@@ -40,6 +40,10 @@ Start Grafana using Homebrew services:
 brew services start grafana
 ```
 
+## 3. Sign in and start using Grafana 
+
+Grafana is available in your browser at [http://localhost:3000](http://localhost:3000).  Use login `admin` and password `admin` the first time you login
+
 ## Upgrade with Homebrew
 
 To upgrade Grafana, use the reinstall command:
