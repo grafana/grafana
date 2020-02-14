@@ -109,7 +109,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
     url = renderUrl('/explore', { left: exploreState });
   }
   const finalUrl = config.appSubUrl + url;
-  return finalUrl;
+  return url;
 }
 
 export function buildQueryTransaction(
