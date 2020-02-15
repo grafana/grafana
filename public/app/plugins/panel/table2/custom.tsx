@@ -20,6 +20,7 @@ const columWidth: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
     min: 20,
     max: 300,
   },
+  shouldApply: () => true,
 };
 
 export const tableFieldRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(() => {

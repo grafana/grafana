@@ -63,7 +63,12 @@ module.exports = (env = {}) =>
                       modules: false,
                     },
                   ],
-                  '@babel/preset-typescript',
+                  [
+                    '@babel/preset-typescript',
+                    {
+                      allowNamespaces: true,
+                    },
+                  ],
                   '@babel/preset-react',
                 ],
               },
