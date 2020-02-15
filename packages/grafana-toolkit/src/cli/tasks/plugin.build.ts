@@ -66,6 +66,7 @@ export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
   try {
     // Show a warning if the tslint file exists
     await fs.access(resolvePath(process.cwd(), 'tslint.json'));
+    console.log('\n');
     console.log('--------------------------------------------------------------');
     console.log('NOTE: @grafana/toolkit has migrated to use eslint');
     console.log('Update your configs to use .eslintrc rather than tslint.json');
