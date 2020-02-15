@@ -570,36 +570,58 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return [];
     }
 
+    const step = Math.floor(query.step) * 1000;
+
     response?.data?.data?.result?.forEach(series => {
       const tags = Object.entries(series.metric)
         .filter(([k]) => splitKeys.includes(k))
         .map(([_k, v]: [string, string]) => v);
 
-      const dupCheck: Record<number, boolean> = {};
-      for (const value of series.values) {
-        const valueIsTrue = value[1] === '1'; // e.g. ALERTS
-        if (valueIsTrue || annotation.useValueForTime) {
-          const event: AnnotationEvent = {
+      var event: AnnotationEvent = null;
+      var valuesFilteredArray = series.values
+        .forEach((value: any[]) => {
+          var timestampValue = -1;
+          // rewrite timeseries to a common format
+          if (annotation.useValueForTime) {
+            timestampValue = Math.floor(parseFloat(value[1]));
+            value[1] = 1;
+          } else {
+            timestampValue = Math.floor(parseFloat(value[0])) * 1000;
+          }
+          value[0] = timestampValue;
+        })
+        .filter((value: Record<number, string>) => parseFloat(value[1]) >= 1)
+        .map(function(value: number[]) {
+          return value[0];
+        });
+
+      valuesFilteredArray.forEach((element: number) => {
+        if (event == null) {
+          event = {
+            time: element,
+            timeEnd: element,
             annotation,
             title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
             tags,
             text: self.resultTransformer.renderTemplate(textFormat, series.metric),
           };
-
-          if (annotation.useValueForTime) {
-            const timestampValue = Math.floor(parseFloat(value[1]));
-            if (dupCheck[timestampValue]) {
-              continue;
-            }
-            dupCheck[timestampValue] = true;
-            event.time = timestampValue;
-          } else {
-            event.time = Math.floor(parseFloat(value[0])) * 1000;
-          }
-
+        } else if (event.timeEnd + step >= element) {
+          event.timeEnd = element;
+        } else {
           eventList.push(event);
+          event = {
+            time: element,
+            timeEnd: element,
+            annotation,
+            title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
+            tags,
+            text: self.resultTransformer.renderTemplate(textFormat, series.metric),
+          };
         }
-      }
+      });
+      // finish up last point
+      event.timeEnd = valuesFilteredArray[valuesFilteredArray.length - 1];
+      eventList.push(event);
     });
 
     return eventList;

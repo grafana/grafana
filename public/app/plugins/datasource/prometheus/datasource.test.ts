@@ -1581,6 +1581,84 @@ describe('PrometheusDatasource for POST', () => {
       expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
     });
   });
+
+  describe('When querying prometheus for annotations, return region annotations for sectors', () => {
+    let results: any;
+    const options: any = {
+      annotation: {
+        expr: 'ALERTS{alertstate="firing"}',
+        tagKeys: 'job',
+        titleFormat: '{{alertname}}',
+        textFormat: '{{instance}}',
+      },
+      range: {
+        from: time({ seconds: 63 }),
+        to: time({ seconds: 900 }),
+      },
+    };
+
+    var expectedResults = [
+      {
+        time: 120000,
+        timeEnd: 180000,
+      },
+      {
+        time: 300000,
+        timeEnd: 420000,
+      },
+      {
+        time: 540000,
+        timeEnd: 540000,
+      },
+    ];
+
+    beforeEach(async () => {
+      const response = {
+        status: 'success',
+        data: {
+          data: {
+            resultType: 'matrix',
+            result: [
+              {
+                metric: { __name__: 'test', job: 'testjob' },
+                values: [
+                  [2 * 60, '1'],
+                  [3 * 60, '1'],
+                  // gap
+                  [5 * 60, '1'],
+                  [6 * 60, '1'],
+                  [7 * 60, '1'],
+                  [8 * 60, '0'], // false --> create new block
+                  [9 * 60, '1'],
+                ],
+              },
+            ],
+          },
+        },
+      };
+      options.annotation.useValueForTime = false;
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
+
+      await ds.annotationQuery(options).then((data: any) => {
+        results = data;
+      });
+    });
+
+    it('should return 3 annotation', () => {
+      expect(results.length).toEqual(3);
+    });
+
+    it('check if time range is fitting', () => {
+      expect(results[0].time).toEqual(expectedResults[0].time);
+      expect(results[0].timeEnd).toEqual(expectedResults[0].timeEnd);
+
+      expect(results[1].time).toEqual(expectedResults[1].time);
+      expect(results[1].timeEnd).toEqual(expectedResults[1].timeEnd);
+
+      expect(results[2].time).toEqual(expectedResults[2].time);
+      expect(results[2].timeEnd).toEqual(expectedResults[2].timeEnd);
+    });
+  });
 });
 
 const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp) => {
