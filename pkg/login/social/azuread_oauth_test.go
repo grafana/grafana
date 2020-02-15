@@ -1,19 +1,21 @@
 package social
 
 import (
-	"golang.org/x/oauth2"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 	"net/http"
 	"reflect"
 	"testing"
 	"time"
+
+	"golang.org/x/oauth2"
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
 		SocialBase     *SocialBase
 		allowedDomains []string
+		allowedGroups  []string
 		allowSignup    bool
 	}
 	type args struct {
@@ -44,7 +46,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Viewer",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -81,7 +83,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Viewer",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -100,7 +102,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Admin",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -119,7 +121,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Admin",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -138,7 +140,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Viewer",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 
@@ -158,7 +160,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Editor",
-				Groups:  nil,
+				Groups:  []string{},
 			},
 		},
 		{
@@ -177,7 +179,46 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Login:   "me@example.com",
 				Company: "",
 				Role:    "Admin",
-				Groups:  nil,
+				Groups:  []string{},
+			},
+		},
+		{
+			name: "Error if user is not a member of allowed_groups",
+			fields: fields{
+				allowedGroups: []string{"dead-beef"},
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"foo", "bar"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Error if user is a member of allowed_groups",
+			fields: fields{
+				allowedGroups: []string{"foo", "bar"},
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"foo"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:      "1234",
+				Name:    "My Name",
+				Email:   "me@example.com",
+				Login:   "me@example.com",
+				Company: "",
+				Role:    "Viewer",
+				Groups:  []string{"foo"},
 			},
 		},
 	}
@@ -186,6 +227,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			s := &SocialAzureAD{
 				SocialBase:     tt.fields.SocialBase,
 				allowedDomains: tt.fields.allowedDomains,
+				allowedGroups:  tt.fields.allowedGroups,
 				allowSignup:    tt.fields.allowSignup,
 			}
 
