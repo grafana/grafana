@@ -1,11 +1,12 @@
 import React, { PureComponent, ChangeEvent } from 'react';
+import { css } from 'emotion';
 import { Threshold, sortThresholds, ThresholdsConfig, ThresholdsMode, SelectableValue } from '@grafana/data';
 import { colors } from '../../utils';
-import { getColorFromHexRgbOrName } from '@grafana/data';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { Input } from '../Input/Input';
+import { Input } from '../Forms/Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { css } from 'emotion';
+import { stylesFactory } from '../../themes';
+import { Icon } from '../Icon/Icon';
 import Select from '../Select/Select';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -149,76 +150,94 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     }
   };
 
-  renderInput = (threshold: ThresholdWithKey) => {
+  renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles) {
     const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
-    return (
-      <div className="thresholds-row-input-inner">
-        <span className="thresholds-row-input-inner-arrow" />
-        <div className="thresholds-row-input-inner-color">
-          {threshold.color && (
-            <div className="thresholds-row-input-inner-color-colorpicker">
-              <ColorPicker
-                color={threshold.color}
-                onChange={color => this.onChangeThresholdColor(threshold, color)}
-                enableNamedColors={true}
-              />
-            </div>
-          )}
-        </div>
-        {!isFinite(threshold.value) ? (
-          <div className="thresholds-row-input-inner-value">
-            <Input type="text" value="Base" readOnly />
-          </div>
-        ) : (
-          <>
-            <div className="thresholds-row-input-inner-value">
-              <Input
-                type="number"
-                step="0.0001"
-                onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
-                value={threshold.value}
-                onBlur={this.onBlur}
-              />
-            </div>
-            {isPercent && (
-              <div className={css(`margin-left:-20px; margin-top:5px;`)}>
-                <i className="fa fa-percent" />
+
+    if (!isFinite(threshold.value)) {
+      return (
+        <Input
+          type="text"
+          value={'Base'}
+          disabled
+          prefix={
+            threshold.color && (
+              <div className="thresholds-row-input-inner-color-colorpicker">
+                <ColorPicker
+                  color={threshold.color}
+                  onChange={color => this.onChangeThresholdColor(threshold, color)}
+                  enableNamedColors={true}
+                />
               </div>
-            )}
-            <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
-              <i className="fa fa-times" />
-            </div>
-          </>
-        )}
+            )
+          }
+        />
+      );
+    }
+
+    return (
+      <div className="thresholds-row-input-inner-value">
+        <Input
+          type="number"
+          step="0.0001"
+          onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
+          value={threshold.value}
+          onBlur={this.onBlur}
+          prefix={
+            threshold.color && (
+              <div className="thresholds-row-input-inner-color-colorpicker">
+                <ColorPicker
+                  color={threshold.color}
+                  onChange={color => this.onChangeThresholdColor(threshold, color)}
+                  enableNamedColors={true}
+                />
+              </div>
+            )
+          }
+          suffix={<Icon name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
+        />
       </div>
     );
-  };
+
+    /* {isPercent && ( */
+    /*               <div className={css(`margin-left:-20px; margin-top:5px;`)}> */
+    /*                 <i className="fa fa-percent" /> */
+    /*               </div> */
+    /*             )} */
+  }
 
   render() {
+    const { thresholds } = this.props;
     const { steps } = this.state;
-    const t = this.props.thresholds;
+
     return (
       <ThemeContext.Consumer>
-        {theme => (
-          <>
-            <div className="thresholds">
-              {steps
-                .slice(0)
-                .reverse()
-                .map(threshold => {
-                  return (
-                    <div className="thresholds-row" key={`${threshold.key}`}>
-                      <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
-                    </div>
-                  );
-                })}
-            </div>
+        {theme => {
+          const styles = getStyles(theme);
+          return (
+            <>
+              <div className={styles.thresholds}>
+                {steps
+                  .slice(0)
+                  .reverse()
+                  .map(threshold => {
+                    return (
+                      <div className={styles.item} key={`${threshold.key}`}>
+                        {this.renderInput(threshold, styles)}
+                      </div>
+                    );
+                  })}
+              </div>
 
-            <div>
-              <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
-            </div>
-          </>
-        )}
+              <div>
+                <Select
+                  options={modes}
+                  value={modes.filter(m => m.value === thresholds.mode)}
+                  onChange={this.onModeChanged}
+                />
+              </div>
+            </>
+          );
+        }}
       </ThemeContext.Consumer>
     );
   }
@@ -254,3 +273,22 @@ export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: Thresh
     }),
   };
 }
+
+interface ThresholdStyles {
+  thresholds: string;
+  item: string;
+}
+
+const getStyles = stylesFactory(
+  (theme: GrafanaTheme): ThresholdStyles => {
+    return {
+      thresholds: css`
+        display: flex;
+        flex-direction: column;
+      `,
+      item: css`
+        margin-bottom: ${theme.spacing.sm};
+      `,
+    };
+  }
+);
