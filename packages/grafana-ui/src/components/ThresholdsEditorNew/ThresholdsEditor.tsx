@@ -101,6 +101,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       steps[0].value = -Infinity;
     }
 
+    sortThresholds(steps);
     this.setState({ steps });
   };
 
@@ -181,7 +182,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             {isPercent && <div className={styles.percentIcon}>%</div>}
           </div>
         }
-        suffix={<Icon name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
+        suffix={<Icon className={styles.trashIcon} name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
       />
     );
   }
@@ -265,6 +266,7 @@ interface ThresholdStyles {
   addButton: string;
   percentIcon: string;
   inputPrefix: string;
+  trashIcon: string;
 }
 
 const getStyles = stylesFactory(
@@ -295,6 +297,14 @@ const getStyles = stylesFactory(
       inputPrefix: css`
         display: flex;
         align-items: center;
+      `,
+      trashIcon: css`
+        color: ${theme.colors.textWeak};
+        cursor: pointer;
+
+        &:hover {
+          color: ${theme.colors.text};
+        }
       `,
     };
   }
