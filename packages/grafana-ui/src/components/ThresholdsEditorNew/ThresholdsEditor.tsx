@@ -215,7 +215,9 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
               </div>
 
               <Field label="Threshold mode">
-                <RadioButtonGroup size="md" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
+                <FullWidthButtonContainer>
+                  <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
+                </FullWidthButtonContainer>
               </Field>
             </>
           );

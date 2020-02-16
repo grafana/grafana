@@ -16,9 +16,18 @@ const getStyles = stylesFactory(() => {
   return css`
     display: flex;
 
-    > button {
+    button {
       flex-grow: 1;
       justify-content: center;
+    }
+
+    > * {
+      flex-grow: 1;
+    }
+
+    label {
+      flex-grow: 1;
+      text-align: center;
     }
   `;
 });
