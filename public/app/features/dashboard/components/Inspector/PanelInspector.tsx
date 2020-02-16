@@ -16,6 +16,7 @@ import {
   toCSV,
   DataQueryError,
   PanelData,
+  DataQuery,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 
@@ -106,22 +107,25 @@ export class PanelInspector extends PureComponent<Props, State> {
       return;
     }
 
-    // Find the first DataSource wanting to show custom metadata
     let metaDS: DataSourceApi;
     const data = lastResult.series;
     const error = lastResult.error;
 
-    const targets = lastResult.request?.targets;
+    const targets = lastResult.request?.targets || [];
     const requestTime = lastResult.request?.endTime ? lastResult.request?.endTime - lastResult.request.startTime : -1;
-    const queries = targets ? targets.length : 0;
-
     const dataSources = new Set(targets.map(t => t.datasource)).size;
 
-    if (data) {
+    // Find the first DataSource wanting to show custom metadata
+    if (data && targets.length) {
+      const queries: Record<string, DataQuery> = {};
+      for (const target of targets) {
+        queries[target.refId] = target;
+      }
+
       for (const frame of data) {
-        const key = frame.meta?.datasource;
-        if (key) {
-          const dataSource = await getDataSourceSrv().get(key);
+        const q = queries[frame.refId];
+        if (q && frame.meta.custom) {
+          const dataSource = await getDataSourceSrv().get(q.datasource);
           if (dataSource && dataSource.components?.MetadataInspector) {
             metaDS = dataSource;
             break;
@@ -138,7 +142,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       tab: error ? InspectTab.Error : prevState.tab,
       stats: {
         requestTime,
-        queries,
+        queries: targets.length,
         dataSources,
       },
     }));
