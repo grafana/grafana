@@ -1,13 +1,21 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { css } from 'emotion';
-import { Threshold, sortThresholds, ThresholdsConfig, ThresholdsMode, SelectableValue } from '@grafana/data';
+import {
+  Threshold,
+  sortThresholds,
+  ThresholdsConfig,
+  ThresholdsMode,
+  SelectableValue,
+  GrafanaTheme,
+} from '@grafana/data';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { Input } from '../Forms/Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
-import Select from '../Select/Select';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Field } from '../Forms/Field';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -141,13 +149,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     this.props.onChange(thresholdsWithoutKey(this.props.thresholds, this.state.steps));
   };
 
-  onModeChanged = (item: SelectableValue<ThresholdsMode>) => {
-    if (item.value) {
-      this.props.onChange({
-        ...this.props.thresholds,
-        mode: item.value,
-      });
-    }
+  onModeChanged = (value: ThresholdsMode) => {
+    this.props.onChange({
+      ...this.props.thresholds,
+      mode: value,
+    });
   };
 
   renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles) {
@@ -228,13 +234,9 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                   })}
               </div>
 
-              <div>
-                <Select
-                  options={modes}
-                  value={modes.filter(m => m.value === thresholds.mode)}
-                  onChange={this.onModeChanged}
-                />
-              </div>
+              <Field label="Threshold mode">
+                <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
+              </Field>
             </>
           );
         }}

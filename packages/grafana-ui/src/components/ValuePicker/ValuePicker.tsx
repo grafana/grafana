@@ -20,7 +20,7 @@ export function ValuePicker<T>({ label, icon, options, onChange }: ValuePickerPr
   return (
     <>
       {!isPicking && (
-        <Button icon={`fa fa-${icon || 'plus'}`} onClick={() => setIsPicking(true)}>
+        <Button size="sm" icon={`fa fa-${icon || 'plus'}`} onClick={() => setIsPicking(true)}>
           {label}
         </Button>
       )}
