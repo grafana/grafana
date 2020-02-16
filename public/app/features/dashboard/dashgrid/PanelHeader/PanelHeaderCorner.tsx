@@ -90,14 +90,15 @@ export class PanelHeaderCorner extends Component<Props> {
   }
 
   render() {
+    const { error } = this.props;
     const infoMode: InfoMode | undefined = this.getInfoMode();
 
     if (!infoMode) {
       return null;
     }
 
-    if (infoMode === InfoMode.Error) {
-      return this.renderCornerType(infoMode, this.props.error, this.onClickError);
+    if (infoMode === InfoMode.Error && error) {
+      return this.renderCornerType(infoMode, error, this.onClickError);
     }
 
     if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
