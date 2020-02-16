@@ -1,11 +1,9 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ThresholdsEditor } from './ThresholdsEditor';
 import { ThresholdsMode, ThresholdsConfig } from '@grafana/data';
 
-const ThresholdsEditorStories = storiesOf('Panel/ThresholdsEditorNew', module);
 const thresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
   steps: [
@@ -15,10 +13,19 @@ const thresholds: ThresholdsConfig = {
   ],
 };
 
-ThresholdsEditorStories.add('default', () => {
-  return <ThresholdsEditor thresholds={{} as ThresholdsConfig} onChange={action('Thresholds changed')} />;
-});
+export default {
+  title: 'Panel/ThresholdsEditorNew',
+  component: ThresholdsEditor,
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {},
+  },
+};
 
-ThresholdsEditorStories.add('with thresholds', () => {
+export const Default = () => {
+  return <ThresholdsEditor thresholds={{} as ThresholdsConfig} onChange={action('Thresholds changed')} />;
+};
+
+export const WithThreshold = () => {
   return <ThresholdsEditor thresholds={thresholds} onChange={action('Thresholds changed')} />;
-});
+};

@@ -196,7 +196,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         {theme => {
           const styles = getStyles(theme);
           return (
-            <>
+            <div className={styles.wrapper}>
               <FullWidthButtonContainer className={styles.addButton}>
                 <Button size="sm" icon="fa fa-plus" onClick={() => this.onAddThreshold()}>
                   Add threshold
@@ -220,7 +220,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                   <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
                 </FullWidthButtonContainer>
               </Field>
-            </>
+            </div>
           );
         }}
       </ThemeContext.Consumer>
@@ -260,6 +260,7 @@ export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: Thresh
 }
 
 interface ThresholdStyles {
+  wrapper: string;
   thresholds: string;
   item: string;
   colorPicker: string;
@@ -272,6 +273,11 @@ interface ThresholdStyles {
 const getStyles = stylesFactory(
   (theme: GrafanaTheme): ThresholdStyles => {
     return {
+      wrapper: css`
+        display: flex;
+        flex-direction: column;
+        margin-bottom: -${theme.spacing.formSpacingBase * 2}px;
+      `,
       thresholds: css`
         display: flex;
         flex-direction: column;
