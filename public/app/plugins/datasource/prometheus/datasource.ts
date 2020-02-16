@@ -577,24 +577,24 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         .filter(([k]) => splitKeys.includes(k))
         .map(([_k, v]: [string, string]) => v);
 
-      var event: AnnotationEvent = null;
-      var valuesFilteredArray = series.values
-        .forEach((value: any[]) => {
-          var timestampValue = -1;
-          // rewrite timeseries to a common format
-          if (annotation.useValueForTime) {
-            timestampValue = Math.floor(parseFloat(value[1]));
-            value[1] = 1;
-          } else {
-            timestampValue = Math.floor(parseFloat(value[0])) * 1000;
-          }
-          value[0] = timestampValue;
-        })
-        .filter((value: Record<number, string>) => parseFloat(value[1]) >= 1)
-        .map(function(value: number[]) {
-          return value[0];
-        });
+      series.values.forEach((value: any[]) => {
+        var timestampValue = -1;
+        // rewrite timeseries to a common format
+        if (annotation.useValueForTime) {
+          timestampValue = Math.floor(parseFloat(value[1]));
+          value[1] = true;
+        } else {
+          timestampValue = Math.floor(parseFloat(value[0])) * 1000;
+        }
+        value[0] = timestampValue;
+      });
 
+      var valuesFiltered = series.values.filter((value: Record<number, string>) => parseFloat(value[1]) >= 1);
+      var valuesFilteredArray = valuesFiltered.map(function(value: number[]) {
+        return value[0];
+      });
+
+      var event: AnnotationEvent = null;
       valuesFilteredArray.forEach((element: number) => {
         if (event == null) {
           event = {
