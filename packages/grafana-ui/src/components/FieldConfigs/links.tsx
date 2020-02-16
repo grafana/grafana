@@ -63,7 +63,7 @@ export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], D
 
       <FullWidthButtonContainer>
         <Forms.Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
-          Create data link
+          Add data link
         </Forms.Button>
       </FullWidthButtonContainer>
     </>
