@@ -92,7 +92,7 @@ const decimals: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
 const thresholds: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
   id: 'thresholds', // Match field properties
   name: 'Thresholds',
-  description: 'Manage Thresholds',
+  description: 'Define color and state via thresholds',
 
   editor: ThresholdsValueEditor,
   override: ThresholdsOverrideEditor,

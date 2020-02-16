@@ -3,6 +3,7 @@ import { IconType } from '../Icon/types';
 import { SelectableValue } from '@grafana/data';
 import { Button } from '../Forms/Button';
 import { Select } from '../Forms/Select/Select';
+import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 interface ValuePickerProps<T> {
   /** Label to display on the picker button */
@@ -20,9 +21,11 @@ export function ValuePicker<T>({ label, icon, options, onChange }: ValuePickerPr
   return (
     <>
       {!isPicking && (
-        <Button size="sm" icon={`fa fa-${icon || 'plus'}`} onClick={() => setIsPicking(true)}>
-          {label}
-        </Button>
+        <FullWidthButtonContainer>
+          <Button size="sm" icon={`fa fa-${icon || 'plus'}`} onClick={() => setIsPicking(true)}>
+            {label}
+          </Button>
+        </FullWidthButtonContainer>
       )}
 
       {isPicking && (

@@ -16,6 +16,8 @@ import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Field } from '../Forms/Field';
+import { Button } from '../Forms/Button';
+import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -45,57 +47,42 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     this.state = { steps };
   }
 
-  onAddThresholdAfter = (threshold: ThresholdWithKey) => {
+  onAddThreshold = () => {
     const { steps } = this.state;
 
-    const maxValue = 100;
-    const minValue = 0;
+    let nextValue = 0;
 
-    let prev: ThresholdWithKey | undefined = undefined;
-    let next: ThresholdWithKey | undefined = undefined;
-    for (const t of steps) {
-      if (prev && prev.key === threshold.key) {
-        next = t;
-        break;
-      }
-      prev = t;
+    if (steps.length > 1) {
+      nextValue = steps[steps.length - 1].value + 10;
     }
 
-    const prevValue = prev && isFinite(prev.value) ? prev.value : minValue;
-    const nextValue = next && isFinite(next.value) ? next.value : maxValue;
-
     const color = colors.filter(c => !steps.some(t => t.color === c))[1];
+
     const add = {
-      value: prevValue + (nextValue - prevValue) / 2.0,
+      value: nextValue,
       color: color,
       key: counter++,
     };
+
     const newThresholds = [...steps, add];
     sortThresholds(newThresholds);
 
-    this.setState(
-      {
-        steps: newThresholds,
-      },
-      () => this.onChange()
-    );
+    this.setState({ steps: newThresholds }, this.onChange);
   };
 
   onRemoveThreshold = (threshold: ThresholdWithKey) => {
     const { steps } = this.state;
+
     if (!steps.length) {
       return;
     }
+
     // Don't remove index 0
     if (threshold.key === steps[0].key) {
       return;
     }
-    this.setState(
-      {
-        steps: steps.filter(t => t.key !== threshold.key),
-      },
-      () => this.onChange()
-    );
+
+    this.setState({ steps: steps.filter(t => t.key !== threshold.key) }, this.onChange);
   };
 
   onChangeThresholdValue = (event: ChangeEvent<HTMLInputElement>, threshold: ThresholdWithKey) => {
@@ -109,9 +96,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       }
       return t;
     });
+
     if (steps.length) {
       steps[0].value = -Infinity;
     }
+
     this.setState({ steps });
   };
 
@@ -126,23 +115,13 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       return t;
     });
 
-    this.setState(
-      {
-        steps: newThresholds,
-      },
-      () => this.onChange()
-    );
+    this.setState({ steps: newThresholds }, this.onChange);
   };
 
   onBlur = () => {
     const steps = [...this.state.steps];
     sortThresholds(steps);
-    this.setState(
-      {
-        steps,
-      },
-      () => this.onChange()
-    );
+    this.setState({ steps }, this.onChange);
   };
 
   onChange = () => {
@@ -167,7 +146,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           disabled
           prefix={
             threshold.color && (
-              <div className="thresholds-row-input-inner-color-colorpicker">
+              <div className={styles.colorPicker}>
                 <ColorPicker
                   color={threshold.color}
                   onChange={color => this.onChangeThresholdColor(threshold, color)}
@@ -181,27 +160,25 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     }
 
     return (
-      <div className="thresholds-row-input-inner-value">
-        <Input
-          type="number"
-          step="0.0001"
-          onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
-          value={threshold.value}
-          onBlur={this.onBlur}
-          prefix={
-            threshold.color && (
-              <div className="thresholds-row-input-inner-color-colorpicker">
-                <ColorPicker
-                  color={threshold.color}
-                  onChange={color => this.onChangeThresholdColor(threshold, color)}
-                  enableNamedColors={true}
-                />
-              </div>
-            )
-          }
-          suffix={<Icon name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
-        />
-      </div>
+      <Input
+        type="number"
+        step="0.0001"
+        onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
+        value={threshold.value}
+        onBlur={this.onBlur}
+        prefix={
+          threshold.color && (
+            <div className={styles.colorPicker}>
+              <ColorPicker
+                color={threshold.color}
+                onChange={color => this.onChangeThresholdColor(threshold, color)}
+                enableNamedColors={true}
+              />
+            </div>
+          )
+        }
+        suffix={<Icon name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
+      />
     );
 
     /* {isPercent && ( */
@@ -221,6 +198,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           const styles = getStyles(theme);
           return (
             <>
+              <FullWidthButtonContainer className={styles.addButton}>
+                <Button size="sm" icon="fa fa-plus" onClick={() => this.onAddThreshold()}>
+                  Add threshold
+                </Button>
+              </FullWidthButtonContainer>
               <div className={styles.thresholds}>
                 {steps
                   .slice(0)
@@ -235,7 +217,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
               </div>
 
               <Field label="Threshold mode">
-                <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
+                <RadioButtonGroup size="md" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
               </Field>
             </>
           );
@@ -279,6 +261,8 @@ export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: Thresh
 interface ThresholdStyles {
   thresholds: string;
   item: string;
+  colorPicker: string;
+  addButton: string;
 }
 
 const getStyles = stylesFactory(
@@ -287,8 +271,19 @@ const getStyles = stylesFactory(
       thresholds: css`
         display: flex;
         flex-direction: column;
+        margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
       `,
       item: css`
+        margin-bottom: ${theme.spacing.sm};
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      `,
+      colorPicker: css`
+        padding: 0 ${theme.spacing.sm};
+      `,
+      addButton: css`
         margin-bottom: ${theme.spacing.sm};
       `,
     };

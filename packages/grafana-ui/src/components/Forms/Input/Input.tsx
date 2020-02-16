@@ -65,6 +65,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
             border-color: ${invalid ? colors.redBase : colors.formInputBorder};
           }
 
+          // only show number buttons on hover
           input[type='number'] {
             -moz-appearance: number-input;
             -webkit-appearance: number-input;
