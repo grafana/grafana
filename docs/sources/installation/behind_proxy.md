@@ -146,7 +146,7 @@ Create an Inbound Rule for the parent website (localhost:8080 in this example) i
 
 - pattern: `grafana(/)?(.*)`
 - check the `Ignore case` checkbox
-- rewrite url set to `http://localhost:3000/{R:2}`
+- rewrite URL set to `http://localhost:3000/{R:2}`
 - check the `Append query string` checkbox
 - check the `Stop processing of subsequent rules` checkbox
 
@@ -163,4 +163,4 @@ This is the rewrite rule that is generated in the `web.config`:
   </rewrite>
 ```
 
-See the [tutorial on IIS Url Rewrites](http://docs.grafana.org/tutorials/iis/) for more in-depth instructions.
+See the [tutorial on IIS URL Rewrites](http://docs.grafana.org/tutorials/iis/) for more in-depth instructions.

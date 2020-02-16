@@ -129,10 +129,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     this.props.onChange(thresholdsWithoutKey(this.props.thresholds, this.state.steps));
   };
 
-  onModeChanged = (value: ThresholdsMode) => {
+  onModeChanged = (value?: ThresholdsMode) => {
     this.props.onChange({
       ...this.props.thresholds,
-      mode: value,
+      mode: value!,
     });
   };
 

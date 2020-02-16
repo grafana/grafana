@@ -3,6 +3,25 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PanelModel } from '../../../state/PanelModel';
 import { PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
 import { DisplayMode } from '../types';
+import store from '../../../../../core/store';
+
+export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
+
+export const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
+  isPanelOptionsVisible: true,
+  rightPaneSize: 350,
+  topPaneSize: '45%',
+  mode: DisplayMode.Fill,
+};
+
+export interface PanelEditorUIState {
+  isPanelOptionsVisible: boolean;
+  // annotating as number or string since size can be expressed as static value or percentage
+  rightPaneSize: number | string;
+  // annotating as number or string since size can be expressed as static value or percentage
+  topPaneSize: number | string;
+  mode: DisplayMode;
+}
 
 export interface PanelEditorStateNew {
   /* These are functions as they are mutaded later on and redux toolkit will Object.freeze state so
@@ -10,12 +29,11 @@ export interface PanelEditorStateNew {
   getSourcePanel: () => PanelModel;
   getPanel: () => PanelModel;
   getData: () => PanelData;
-  mode: DisplayMode;
-  isPanelOptionsVisible: boolean;
   querySubscription?: Unsubscribable;
   initDone: boolean;
   shouldDiscardChanges: boolean;
   isOpen: boolean;
+  ui: PanelEditorUIState;
 }
 
 export const initialState: PanelEditorStateNew = {
@@ -26,11 +44,13 @@ export const initialState: PanelEditorStateNew = {
     series: [],
     timeRange: DefaultTimeRange,
   }),
-  isPanelOptionsVisible: true,
-  mode: DisplayMode.Fill,
   initDone: false,
   shouldDiscardChanges: false,
   isOpen: false,
+  ui: {
+    ...DEFAULT_PANEL_EDITOR_UI_STATE,
+    ...store.getObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, DEFAULT_PANEL_EDITOR_UI_STATE),
+  },
 };
 
 interface InitEditorPayload {
@@ -53,14 +73,11 @@ const pluginsSlice = createSlice({
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;
     },
-    toggleOptionsView: state => {
-      state.isPanelOptionsVisible = !state.isPanelOptionsVisible;
-    },
-    setDisplayMode: (state, action: PayloadAction<DisplayMode>) => {
-      state.mode = action.payload;
-    },
     setDiscardChanges: (state, action: PayloadAction<boolean>) => {
       state.shouldDiscardChanges = action.payload;
+    },
+    setPanelEditorUIState: (state, action: PayloadAction<Partial<PanelEditorUIState>>) => {
+      state.ui = { ...state.ui, ...action.payload };
     },
     closeCompleted: state => {
       state.isOpen = false;
@@ -72,10 +89,9 @@ const pluginsSlice = createSlice({
 export const {
   updateEditorInitState,
   setEditorPanelData,
-  toggleOptionsView,
-  setDisplayMode,
   setDiscardChanges,
   closeCompleted,
+  setPanelEditorUIState,
 } = pluginsSlice.actions;
 
 export const panelEditorReducerNew = pluginsSlice.reducer;
