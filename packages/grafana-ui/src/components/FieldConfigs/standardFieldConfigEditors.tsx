@@ -141,12 +141,12 @@ export namespace StandardFieldConfigEditors {
 
 export const getStandardFieldConfigs = () => {
   return [
-    StandardFieldConfigEditors.decimals,
-    StandardFieldConfigEditors.max,
+    StandardFieldConfigEditors.unit,
     StandardFieldConfigEditors.min,
-    StandardFieldConfigEditors.noValue,
+    StandardFieldConfigEditors.max,
+    StandardFieldConfigEditors.decimals,
     StandardFieldConfigEditors.thresholds,
     StandardFieldConfigEditors.title,
-    StandardFieldConfigEditors.unit,
+    StandardFieldConfigEditors.noValue,
   ];
 };
