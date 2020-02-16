@@ -163,29 +163,27 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       <Input
         type="number"
         step="0.0001"
+        key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
         value={threshold.value}
         onBlur={this.onBlur}
         prefix={
-          threshold.color && (
-            <div className={styles.colorPicker}>
-              <ColorPicker
-                color={threshold.color}
-                onChange={color => this.onChangeThresholdColor(threshold, color)}
-                enableNamedColors={true}
-              />
-            </div>
-          )
+          <div className={styles.inputPrefix}>
+            {threshold.color && (
+              <div className={styles.colorPicker}>
+                <ColorPicker
+                  color={threshold.color}
+                  onChange={color => this.onChangeThresholdColor(threshold, color)}
+                  enableNamedColors={true}
+                />
+              </div>
+            )}
+            {isPercent && <div className={styles.percentIcon}>%</div>}
+          </div>
         }
         suffix={<Icon name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
       />
     );
-
-    /* {isPercent && ( */
-    /*               <div className={css(`margin-left:-20px; margin-top:5px;`)}> */
-    /*                 <i className="fa fa-percent" /> */
-    /*               </div> */
-    /*             )} */
   }
 
   render() {
@@ -263,6 +261,8 @@ interface ThresholdStyles {
   item: string;
   colorPicker: string;
   addButton: string;
+  percentIcon: string;
+  inputPrefix: string;
 }
 
 const getStyles = stylesFactory(
@@ -285,6 +285,14 @@ const getStyles = stylesFactory(
       `,
       addButton: css`
         margin-bottom: ${theme.spacing.sm};
+      `,
+      percentIcon: css`
+        font-size: ${theme.typography.size.sm};
+        color: ${theme.colors.textWeak};
+      `,
+      inputPrefix: css`
+        display: flex;
+        align-items: center;
       `,
     };
   }
