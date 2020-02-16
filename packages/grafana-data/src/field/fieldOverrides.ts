@@ -185,6 +185,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         config,
         type,
       };
+
       // and set the display processor using it
       f.display = getDisplayProcessor({
         field: f,
