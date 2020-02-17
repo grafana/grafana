@@ -29,29 +29,29 @@ export class BridgeSrv {
   }
 
   init() {
-    this.$rootScope.$on('$routeUpdate', (evt, data) => {
-      const angularUrl = this.$location.url();
-      const state = store.getState();
-      if (state.location.url !== angularUrl) {
-        store.dispatch(
-          updateLocation({
-            path: this.$location.path(),
-            query: this.$location.search(),
-            routeParams: this.$route.current.params,
-          })
-        );
-      }
-    });
-
-    this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
-      store.dispatch(
-        updateLocation({
-          path: this.$location.path(),
-          query: this.$location.search(),
-          routeParams: this.$route.current.params,
-        })
-      );
-    });
+    // this.$rootScope.$on('$routeUpdate', (evt, data) => {
+    //   const angularUrl = this.$location.url();
+    //   const state = store.getState();
+    //   if (state.location.url !== angularUrl) {
+    //     store.dispatch(
+    //       updateLocation({
+    //         path: this.$location.path(),
+    //         query: this.$location.search(),
+    //         routeParams: this.$route.current.params,
+    //       })
+    //     );
+    //   }
+    // });
+    //
+    // this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
+    //   store.dispatch(
+    //     updateLocation({
+    //       path: this.$location.path(),
+    //       query: this.$location.search(),
+    //       routeParams: this.$route.current.params,
+    //     })
+    //   );
+    // });
 
     // Listen for changes in redux location -> update angular location
     // store.subscribe(() => {

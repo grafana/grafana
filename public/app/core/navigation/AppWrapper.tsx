@@ -4,7 +4,6 @@ import { GrafanaApp } from '../../app';
 import angular from 'angular';
 import { each, extend } from 'lodash';
 
-// import { appEvents } from '../core';
 import locationService from '../navigation/LocationService';
 import { routes, RouteDescriptor } from '../../routes/routes';
 import AngularRoute from './AngularRoute';
@@ -14,6 +13,7 @@ import { Provider } from 'react-redux';
 import { store } from '../../store/store';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { contextSrv } from '../services/context_srv';
+import { SideMenu } from '../components/sidemenu/SideMenu';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -73,19 +73,20 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
         />
       );
     }
-
     return (
       <Route
         exact
         path={route.path}
-        key={`${route.path}/${index}`}
-        render={routeProps => {
-          return React.createElement(route.component(), {
+        key={`${route.path}`}
+        render={props => {
+          return React.createElement(route.component, {
             $injector: this.state.ngInjector,
-            routeInfo: route.routeInfo,
             $rootScope: $rootScope,
-            $scope: $rootScope.$new(),
             $contextSrv: contextSrv,
+            routeInfo: route.routeInfo,
+            query: locationService().getUrlSearchParams(),
+            // route: props.match,
+            ...props,
           });
         }}
       />
@@ -97,8 +98,8 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
   }
 
   render() {
-    const appSeed = `<grafana-app class="grafana-app" ng-cloak>
-    <sidemenu class="sidemenu"></sidemenu>
+    const appSeed = `<grafana-app ng-cloak>
+<!--    <sidemenu class="sidemenu"></sidemenu>-->
     <app-notifications-list class="page-alert-list"></app-notifications-list>
     <dashboard-search></dashboard-search>
 
@@ -112,17 +113,20 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
         <ErrorBoundaryAlert style="page">
           <ConfigContext.Provider value={config}>
             <ThemeProvider>
-              <Router history={locationService().getHistory()}>
-                <>
-                  <div
-                    ref={this.container}
-                    dangerouslySetInnerHTML={{
-                      __html: appSeed,
-                    }}
-                  />
-                  {this.state.ngInjector && this.container && this.renderRoutes()}
-                </>
-              </Router>
+              <div className="grafana-app">
+                <Router history={locationService().getHistory()}>
+                  <>
+                    <SideMenu />
+                    <div
+                      ref={this.container}
+                      dangerouslySetInnerHTML={{
+                        __html: appSeed,
+                      }}
+                    />
+                    <div className="main-view">{this.state.ngInjector && this.container && this.renderRoutes()}</div>
+                  </>
+                </Router>
+              </div>
             </ThemeProvider>
           </ConfigContext.Provider>
         </ErrorBoundaryAlert>

@@ -40,7 +40,6 @@ export class DashboardLoaderSrv {
 
   loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
     let promise;
-
     if (type === 'script') {
       promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot') {
@@ -52,7 +51,6 @@ export class DashboardLoaderSrv {
         .getDashboardByUid(uid)
         .then((result: any) => {
           if (result.meta.isFolder) {
-            debugger;
             this.$rootScope.appEvent(AppEvents.alertError, ['Dashboard not found']);
             throw new Error('Dashboard not found');
           }
@@ -148,5 +146,3 @@ export class DashboardLoaderSrv {
     return { data: scriptResult };
   }
 }
-
-angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);

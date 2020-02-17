@@ -89,7 +89,7 @@ class NgController extends React.Component<NgControllerProps, { $scope: any }> {
     const $scope = scope.$new();
 
     const templateToRender = (await $http.get(routeDescriptor.templateUrl)).data;
-    const ctrl = $controller(routeDescriptor.controller, { $scope: scope.$new() });
+    const ctrl = $controller(routeDescriptor.controller, { $scope });
     this.$angularComponent = getAngularLoader().load(
       mountContainer.querySelector('#ngRoot'),
       { ctrl },

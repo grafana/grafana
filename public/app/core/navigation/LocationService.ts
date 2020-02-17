@@ -1,7 +1,7 @@
-import createBrowserHistory from 'history/createBrowserHistory';
-import { History } from 'history';
+import { createBrowserHistory, History, Location, LocationState } from 'history';
 import parseKeyValue, { isString, isNumber, isObject, forEach, isUndefined } from './utils/parseKeyValue';
 import { queryString } from './utils/queryString';
+
 let locationServiceInstance: LocationService;
 
 class LocationService {
@@ -9,7 +9,35 @@ class LocationService {
 
   constructor() {
     this.history = createBrowserHistory();
+    // this.history.listen(() => {
+    //   debugger;
+    // })
   }
+
+  getUrlSearchParams = () => {
+    return new URLSearchParams(this.history.location.search);
+  };
+
+  partial = (query: Record<string, any>, replace?: boolean) => {
+    const currentLocation = this.history.location;
+    const params = this.getUrlSearchParams();
+
+    for (const key of Object.keys(query)) {
+      params.append(key, query[key]);
+    }
+
+    const locationUpdate: Location<LocationState> = {
+      ...currentLocation,
+      search: params.toString(),
+    };
+
+    if (replace) {
+      console.log('replace');
+      this.history.replace(locationUpdate);
+    } else {
+      this.history.push(locationUpdate);
+    }
+  };
 
   absUrl() {
     // TODO
@@ -113,11 +141,11 @@ class LocationService {
     }
   }
 
-  replace(url: string) {
-    if (url) {
-      this.history.replace(url);
-    }
-  }
+  // replace(url: string) {
+  //   if (url) {
+  //     this.history.replace(url);
+  //   }
+  // }
 
   getHistory() {
     return this.history;

@@ -5,7 +5,7 @@ import { ErrorLoadingChunk } from './ErrorLoadingChunk';
 
 export const loadComponentHandler = (props: { error: Error; pastDelay: boolean }) => {
   const { error, pastDelay } = props;
-
+  console.log('LoadComHandle');
   if (error) {
     return <ErrorLoadingChunk error={error} />;
   }
@@ -17,11 +17,13 @@ export const loadComponentHandler = (props: { error: Error; pastDelay: boolean }
   return null;
 };
 
-export const SafeDynamicImport = (importStatement: Promise<any>) => ({ ...props }) => {
+export const SafeDynamicImport = (importStatement: Promise<any>) => {
   const LoadableComponent = Loadable({
     loader: () => importStatement,
     loading: loadComponentHandler,
   });
 
-  return <LoadableComponent {...props} />;
+  return ({ ...props }) => {
+    return <LoadableComponent {...props} />;
+  };
 };

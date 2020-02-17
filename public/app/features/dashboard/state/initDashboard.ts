@@ -25,6 +25,7 @@ import {
 import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery } from '@grafana/data';
+import locationService from '../../../core/navigation/LocationService';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -86,12 +87,10 @@ async function fetchDashboard(
 
         const loaderSrv: DashboardLoaderSrv = args.$injector.get('dashboardLoaderSrv');
         const dashDTO: DashboardDTO = await loaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
-
         if (args.fixUrl && dashDTO.meta.url) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
-          const currentPath = getState().location.path;
-
+          const currentPath = locationService().path();
           if (dashboardUrl !== currentPath) {
             // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
             dispatch(updateLocation({ path: dashboardUrl, partial: true, replace: true }));
@@ -126,7 +125,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
     // set fetching state
     dispatch(dashboardInitFetching());
-
     // Detect slow loading / initializing and set state flag
     // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
     setTimeout(() => {
@@ -158,8 +156,13 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // add missing orgId query param
     const storeState = getState();
-    if (!storeState.location.query.orgId) {
-      dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
+    if (
+      !locationService()
+        .getUrlSearchParams()
+        .has('orgId')
+    ) {
+      locationService().partial({ orgId: storeState.user.orgId }, true);
+      // dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
     }
 
     // init services
@@ -169,7 +172,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     const keybindingSrv: KeybindingSrv = args.$injector.get('keybindingSrv');
     const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
     const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
-    // debugger;
+
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
@@ -198,7 +201,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       }
 
       // init unsaved changes tracking
-      // ROUTER: FIX
+      // TODO[Router]: FIX
       // unsavedChangesSrv.init(dashboard, args.$scope);
       // keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
     } catch (err) {

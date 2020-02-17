@@ -47,6 +47,7 @@ import { LoadDashboardCtrl, NewDashboardCtrl } from './routes/dashboard_loaders'
 import { configureStore } from './store/configureStore';
 import DashboardImportCtrl from './features/manage-dashboards/DashboardImportCtrl';
 import { getStandardFieldConfigs } from '@grafana/ui';
+import { DashboardLoaderSrv } from './features/dashboard/services/DashboardLoaderSrv';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -157,6 +158,8 @@ export class GrafanaApp {
     coreModule.controller('LoadDashboardCtrl', LoadDashboardCtrl);
     coreModule.controller('DashboardImportCtrl', DashboardImportCtrl);
     coreModule.controller('NewDashboardCtrl', NewDashboardCtrl);
+    angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
+
     registerAngularDirectives();
     bridgeReactAngularRouting();
 

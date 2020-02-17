@@ -1,3 +1,4 @@
+import React from 'react';
 import './dashboard_loaders';
 import './ReactContainer';
 // Pages
@@ -13,9 +14,19 @@ import SignupPage from 'app/features/profile/SignupPage';
 import { DashboardRouteInfo } from 'app/types';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-
+import { ContextSrv } from '../core/services/context_srv';
+import { RouteComponentProps } from 'react-router-dom';
 const importDashboardPage = () =>
   SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
+
+export interface GrafanaRoute<T> extends RouteComponentProps<T> {
+  // TODO
+  $injector: any;
+  $rootScope: any;
+  $contextSrv: ContextSrv;
+  query: URLSearchParams;
+  routeInfo?: string;
+}
 
 export interface RouteDescriptor {
   path: string;
@@ -23,7 +34,7 @@ export interface RouteDescriptor {
   pageClass?: string;
   routeInfo?: string;
   reloadOnSearch?: boolean;
-  component?: () => any;
+  component?: React.ComponentType<GrafanaRoute<any>>;
   controller?: any;
   controllerAs?: string;
   redirectTo?: string;
@@ -34,14 +45,18 @@ export const routes: RouteDescriptor[] = [
     pageClass: 'page-dashboard',
     routeInfo: DashboardRouteInfo.Home,
     reloadOnSearch: false,
-    component: importDashboardPage,
+    component: SafeDynamicImport(
+      import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+    ),
   },
   {
     path: '/d/:uid/:slug',
     pageClass: 'page-dashboard',
     routeInfo: DashboardRouteInfo.Normal,
     reloadOnSearch: false,
-    component: importDashboardPage,
+    component: SafeDynamicImport(
+      import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+    ),
   },
   {
     path: '/d/:uid',

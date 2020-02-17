@@ -1,7 +1,6 @@
 import React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { GrafanaLegacyRouteDescriptor } from './GrafanaRoute';
-import jQuery from 'jquery';
 
 interface NgControllerProps extends RouteComponentProps<any>, GrafanaLegacyRouteDescriptor {
   injector: any;
@@ -23,16 +22,15 @@ class NgController extends React.Component<NgControllerProps, {}> {
   updateUrl() {
     const { match, location, injector } = this.props;
     const $route = injector.get('$route');
-    debugger;
-
     $route.updateRoute(match, location);
   }
 
   componentDidUpdate(prevProps: NgControllerProps) {
     const {
       location: { search },
-      reloadOnSearch /*injector, mountContainer*/,
+      reloadOnSearch,
     } = this.props;
+
     if ((search !== prevProps.location.search && reloadOnSearch) || location.href !== prevProps.location.href) {
       this.destroyControllerInstance();
       this.mountController();

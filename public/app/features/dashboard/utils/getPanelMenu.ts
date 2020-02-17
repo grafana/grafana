@@ -11,6 +11,7 @@ import { navigateToExplore } from '../../explore/state/actions';
 import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
+import locationService from '../../../core/navigation/LocationService';
 
 export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
@@ -43,14 +44,16 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
 
   const onNewEditPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    store.dispatch(
-      updateLocation({
-        query: {
-          editPanel: panel.id,
-        },
-        partial: true,
-      })
-    );
+    locationService().partial({
+      editPanel: panel.id,
+    });
+    // store.dispatch(
+    //   updateLocation({
+    //     query: {
+    //     },
+    //     partial: true,
+    //   })
+    // );
   };
 
   const onSharePanel = (event: React.MouseEvent<any>) => {

@@ -29,22 +29,26 @@ import {
 } from 'app/types';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
+import { GrafanaRoute } from '../../../routes/routes';
+import { match } from 'assert';
 
-export interface Props {
-  urlUid?: string;
-  urlSlug?: string;
-  urlType?: string;
-  editview?: string;
-  urlPanelId?: string;
-  urlFolderId?: string;
-  urlEditPanel?: string;
-  inspectPanelId?: string;
-  $scope: any;
-  $injector: any;
+interface DashboardPageRouteProps {
+  uid: string;
+  slug: string;
+  type: string;
+  editview: string;
+  panelId: string;
+  editPanel: string;
+  folderId: string;
+  fullscreen: boolean;
+  edit: boolean;
+  inspectPanelId: string;
+  inspectTab: string;
+}
+
+export interface Props extends GrafanaRoute<DashboardPageRouteProps> {
   routeInfo: DashboardRouteInfo;
-  urlEdit: boolean;
-  urlFullscreen: boolean;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   dashboard: DashboardModel | null;
@@ -53,7 +57,6 @@ export interface Props {
   cleanUpDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
-  inspectTab?: InspectTab;
   isNewEditorOpen?: boolean;
 }
 
@@ -80,14 +83,19 @@ export class DashboardPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    this.props.initDashboard({
+    const {
+      match: { params },
+      initDashboard,
+    } = this.props;
+    console.log('DashboardPage did mount');
+    initDashboard({
       $injector: this.props.$injector,
       // $scope: this.props.$scope,
       $scope: {},
-      urlSlug: this.props.urlSlug,
-      urlUid: this.props.urlUid,
-      urlType: this.props.urlType,
-      urlFolderId: this.props.urlFolderId,
+      urlSlug: params.slug,
+      urlUid: params.uid,
+      urlType: params.type,
+      urlFolderId: params.folderId,
       routeInfo: this.props.routeInfo,
       fixUrl: true,
     });
@@ -101,7 +109,15 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId, urlUid } = this.props;
+    const {
+      dashboard,
+      match: { params },
+    } = this.props;
+
+    console.log(prevProps.match.params.uid, params.uid);
+    if (prevProps.match.params.uid !== params.uid) {
+      console.log('Reinitialising dashboard');
+    }
 
     if (!dashboard) {
       return;
@@ -114,12 +130,12 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
     // Can remove this condition after we switch to react router
-    if (prevProps.urlUid !== urlUid) {
+    if (prevProps.match.params.uid !== params.uid) {
       return;
     }
 
     // handle animation states when opening dashboard settings
-    if (!prevProps.editview && editview) {
+    if (!prevProps.match.params.editview && params.editview) {
       this.setState({ isSettingsOpening: true });
       setTimeout(() => {
         this.setState({ isSettingsOpening: false });
@@ -127,9 +143,9 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     // Sync url state with model
-    if (urlFullscreen !== dashboard.meta.fullscreen || urlEdit !== dashboard.meta.isEditing) {
-      if (urlPanelId && !isNaN(parseInt(urlPanelId, 10))) {
-        this.onEnterFullscreen(dashboard, urlPanelId);
+    if (params.fullscreen !== dashboard.meta.fullscreen || params.edit !== dashboard.meta.isEditing) {
+      if (params.panelId && !isNaN(parseInt(params.panelId, 10))) {
+        this.onEnterFullscreen(dashboard, params.panelId);
       } else {
         this.onLeaveFullscreen(dashboard);
       }
@@ -137,24 +153,25 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   onEnterFullscreen(dashboard: DashboardModel, urlPanelId: string) {
-    const { urlEdit, urlFullscreen } = this.props;
+    const {
+      match: { params },
+    } = this.props;
 
     const panelId = parseInt(urlPanelId!, 10);
-    dashboard;
     // need to expand parent row if this panel is inside a row
     dashboard.expandParentRowFor(panelId);
 
     const panel = dashboard.getPanelById(panelId);
 
     if (panel) {
-      dashboard.setViewMode(panel, urlFullscreen, urlEdit);
+      dashboard.setViewMode(panel, params.fullscreen, params.edit);
       this.setState({
-        isEditing: urlEdit && dashboard.meta.canEdit === true,
-        isFullscreen: urlFullscreen,
+        isEditing: params.edit && dashboard.meta.canEdit === true,
+        isFullscreen: params.fullscreen,
         fullscreenPanel: panel,
         rememberScrollTop: this.state.scrollTop,
       });
-      this.setPanelFullscreenClass(urlFullscreen);
+      this.setPanelFullscreenClass(params.fullscreen);
     } else {
       this.handleFullscreenPanelNotFound(urlPanelId);
     }
@@ -191,6 +208,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     // Panel not found
     this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
     // Clear url state
+    // TODO
     this.props.updateLocation({
       query: {
         edit: null,
@@ -201,9 +219,9 @@ export class DashboardPage extends PureComponent<Props, State> {
     });
   }
 
-  setPanelFullscreenClass(isFullscreen: boolean) {
+  setPanelFullscreenClass = (isFullscreen: boolean) => {
     $('body').toggleClass('panel-in-fullscreen', isFullscreen);
-  }
+  };
 
   setScrollTop = (e: MouseEvent<HTMLElement>): void => {
     const target = e.target as HTMLElement;
@@ -255,14 +273,12 @@ export class DashboardPage extends PureComponent<Props, State> {
   render() {
     const {
       dashboard,
-      editview,
       $injector,
       isInitSlow,
       initError,
-      inspectPanelId,
-      urlEditPanel,
-      inspectTab,
       isNewEditorOpen,
+      match: { params },
+      query,
     } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
@@ -275,7 +291,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     const classes = classNames({
       'dashboard-page--settings-opening': isSettingsOpening,
-      'dashboard-page--settings-open': !isSettingsOpening && editview,
+      'dashboard-page--settings-open': !isSettingsOpening && params.editview,
     });
 
     const gridWrapperClasses = classNames({
@@ -284,10 +300,14 @@ export class DashboardPage extends PureComponent<Props, State> {
     });
 
     // Find the panel to inspect
-    const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
+    const inspectPanel = query.has('inspectPanelId')
+      ? dashboard.getPanelById(parseInt(query.get(inspectPanelId), 10))
+      : null;
     // find panel being edited
-    const editPanel = urlEditPanel ? dashboard.getPanelById(parseInt(urlEditPanel, 10)) : null;
 
+    const editPanel = query.has('editPanel') ? dashboard.getPanelById(parseInt(query.get('editPanel'), 10)) : null;
+
+    console.log(editPanel);
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
 
@@ -297,7 +317,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           dashboard={dashboard}
           isEditing={isEditing}
           isFullscreen={isFullscreen}
-          editview={editview}
+          editview={params.editview}
           $injector={$injector}
           onAddPanel={this.onAddPanel}
         />
@@ -309,7 +329,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
-            {editview && <DashboardSettings dashboard={dashboard} />}
+            {params.editview && <DashboardSettings dashboard={dashboard} />}
 
             {initError && this.renderInitFailedState()}
 
@@ -326,7 +346,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={inspectTab} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={params.inspectTab} />}
         {editPanel && (
           <Portal>
             <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />
@@ -338,21 +358,10 @@ export class DashboardPage extends PureComponent<Props, State> {
 }
 
 export const mapStateToProps = (state: StoreState) => ({
-  urlUid: state.location.routeParams.uid,
-  urlSlug: state.location.routeParams.slug,
-  urlType: state.location.routeParams.type,
-  editview: state.location.query.editview,
-  urlPanelId: state.location.query.panelId,
-  urlEditPanel: state.location.query.editPanel,
-  urlFolderId: state.location.query.folderId,
-  urlFullscreen: !!state.location.query.fullscreen,
-  urlEdit: !!state.location.query.edit,
-  inspectPanelId: state.location.query.inspect,
   initPhase: state.dashboard.initPhase,
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel() as DashboardModel,
-  inspectTab: state.location.query.tab,
   isNewEditorOpen: state.panelEditorNew.isOpen,
 });
 
