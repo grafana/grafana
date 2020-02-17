@@ -992,16 +992,4 @@ export class DashboardModel {
       panel.render();
     }
   }
-
-  updatePanel = (panelModel: PanelModel) => {
-    let index = 0;
-    for (const panel of this.panels) {
-      if (panel.id === panelModel.id) {
-        this.panels[index].restoreModel(panelModel.getSaveModel());
-        this.panels[index].getQueryRunner().pipeDataToSubject(panelModel.getQueryRunner().getLastResult());
-        break;
-      }
-      index++;
-    }
-  };
 }

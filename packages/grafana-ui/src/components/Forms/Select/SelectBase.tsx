@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { SelectableValue, deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
@@ -24,7 +24,6 @@ import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
-import { RefForwardingPortal } from '../../Portal/Portal';
 
 type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
@@ -178,12 +177,10 @@ export function SelectBase<T>({
   components,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
-  const portalRef = useRef<HTMLDivElement>();
   const styles = getSelectStyles(theme);
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
-
   let selectedValue = [];
   if (isMulti && loadOptions) {
     selectedValue = value as any;
@@ -197,6 +194,9 @@ export function SelectBase<T>({
           return v === o.value || o.value === v.value;
         })[0];
       });
+    } else if (loadOptions) {
+      const hasValue = defaultValue || value;
+      selectedValue = hasValue ? [hasValue] : [];
     } else {
       selectedValue = options.filter(o => o.value === value || o === value);
     }
@@ -236,7 +236,6 @@ export function SelectBase<T>({
     renderControl,
     captureMenuScroll: false,
     blurInputOnSelect: true,
-    menuPortalTarget: portalRef.current,
     menuPlacement: 'auto',
   };
 
@@ -347,6 +346,7 @@ export function SelectBase<T>({
             width,
             position,
             marginBottom: !!bottom ? '10px' : '0',
+            zIndex: 9999,
           }),
         }}
         className={widthClass}
@@ -354,7 +354,6 @@ export function SelectBase<T>({
         {...creatableProps}
         {...asyncSelectProps}
       />
-      <RefForwardingPortal ref={portalRef as any} />
     </>
   );
 }

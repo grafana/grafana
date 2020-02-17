@@ -1,7 +1,15 @@
 import { PanelModel, DashboardModel } from '../../../state';
 import { PanelData } from '@grafana/data';
 import { ThunkResult } from 'app/types';
-import { setEditorPanelData, updateEditorInitState } from './reducers';
+import {
+  setEditorPanelData,
+  updateEditorInitState,
+  closeCompleted,
+  PanelEditorUIState,
+  setPanelEditorUIState,
+  PANEL_EDITOR_UI_STATE_STORAGE_KEY,
+} from './reducers';
+import store from '../../../../../core/store';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
@@ -25,13 +33,31 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
 export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, querySubscription, shouldDiscardChanges } = getStore().panelEditorNew;
+    const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditorNew;
 
     if (!shouldDiscardChanges) {
-      dashboard.updatePanel(getPanel());
+      const panel = getPanel();
+      const modifiedSaveModel = panel.getSaveModel();
+      const sourcePanel = getSourcePanel();
+
+      // restore the source panel id before we update source panel
+      modifiedSaveModel.id = sourcePanel.id;
+
+      sourcePanel.restoreModel(modifiedSaveModel);
+      sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
     }
 
     dashboard.exitPanelEditor();
     querySubscription.unsubscribe();
+
+    dispatch(closeCompleted());
+  };
+}
+
+export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const nextState = { ...getStore().panelEditorNew.ui, ...uiState };
+    dispatch(setPanelEditorUIState(nextState));
+    store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
   };
 }

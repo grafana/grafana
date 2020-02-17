@@ -5,7 +5,7 @@ import { ReducerID } from '../transformations/fieldReducer';
 import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
 import { MappingType, FieldConfig } from '../types';
-import { setFieldConfigDefaults } from './fieldOverrides';
+import { validateFieldConfig } from './fieldOverrides';
 
 describe('FieldDisplay', () => {
   it('show first numeric values', () => {
@@ -78,7 +78,7 @@ describe('FieldDisplay', () => {
         ],
       },
     };
-    setFieldConfigDefaults(config);
+    validateFieldConfig(config);
     expect(config.thresholds!.steps.length).toEqual(2);
     expect(config.thresholds!.steps[0].value).toBe(-Infinity);
   });
