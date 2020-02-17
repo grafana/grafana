@@ -291,9 +291,6 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
 });
 
 function inputToValue(from: string, to: string): Date[] {
-  console.log('FROM', from);
-  console.log('TO', to);
-
   const fromAsDateTime = stringToDateTimeType(from);
   const toAsDateTime = stringToDateTimeType(to);
   const fromAsDate = fromAsDateTime.isValid() ? fromAsDateTime.toDate() : new Date();
