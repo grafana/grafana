@@ -84,7 +84,6 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
     title: css`
       color: ${theme.colors.text}
       background-color: ${colors.background};
-      line-height: 21px;
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
 
@@ -129,6 +128,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__tile--now {
         margin-bottom: 4px;
         background-color: inherit;
+        height: 26px;
       }
 
       .react-calendar__navigation__label,
@@ -158,7 +158,8 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
           background-color: ${theme.colors.blue77};
           border-radius: 100px;
           display: block;
-          padding: 2px 7px 3px;
+          padding-top: 2px;
+          height: 26px;
         }
       }
 
