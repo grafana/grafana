@@ -25,7 +25,7 @@ import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import { setLocale, setMarkdownOptions, AppEvents } from '@grafana/data';
+import { AppEvents, setLocale, setMarkdownOptions, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
 import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
@@ -46,6 +46,7 @@ import AppWrapper from './core/navigation/AppWrapper';
 import { LoadDashboardCtrl, NewDashboardCtrl } from './routes/dashboard_loaders';
 import { configureStore } from './store/configureStore';
 import DashboardImportCtrl from './features/manage-dashboards/DashboardImportCtrl';
+import { getStandardFieldConfigs } from '@grafana/ui';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -89,6 +90,8 @@ export class GrafanaApp {
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
     configureStore();
+    standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+
     app.config(
       (
         $locationProvider: angular.ILocationProvider,

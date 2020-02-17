@@ -36,9 +36,8 @@ export class DashboardImportCtrl {
     private $scope: IScope,
     private validationSrv: ValidationSrv,
     navModelSrv: NavModelSrv,
-    private $location: ILocationService
-  ) // $routeParams: any
-  {
+    private $location: ILocationService // $routeParams: any
+  ) {
     this.navModel = navModelSrv.getNav('create', 'import');
     debugger;
     this.step = 1;
@@ -163,18 +162,18 @@ export class DashboardImportCtrl {
     );
   }
 
-  onFolderChange(folder: any) {
+  onFolderChange = (folder: any) => {
     this.folderId = folder.id;
     this.titleChanged();
-  }
+  };
 
-  onEnterFolderCreation() {
+  onEnterFolderCreation = () => {
     this.inputsValid = false;
-  }
+  };
 
-  onExitFolderCreation() {
+  onExitFolderCreation = () => {
     this.inputValueChanged();
-  }
+  };
 
   isValid() {
     return this.inputsValid && this.folderId !== null;

@@ -5,7 +5,8 @@ import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
-import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
+import locationUtil from 'app/core/utils/location_util';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 import {
   DataLink,
   KeyValue,
@@ -15,6 +16,9 @@ import {
   ScopedVars,
   FieldType,
   Field,
+  VariableSuggestion,
+  VariableOrigin,
+  VariableSuggestionsScope,
 } from '@grafana/data';
 
 const timeRangeVars = [
@@ -179,21 +183,33 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
   return suggestions;
 };
 
-export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+export const getDataLinksVariableSuggestions = (
+  dataFrames: DataFrame[],
+  scope?: VariableSuggestionsScope
+): VariableSuggestion[] => {
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
-  return [
-    ...seriesVars,
-    ...getFieldVars(dataFrames),
-    ...valueVars,
-    valueTimeVar,
-    ...getDataFrameVars(dataFrames),
-    ...getPanelLinksVariableSuggestions(),
-  ];
+  const includeValueVars = scope === VariableSuggestionsScope.Values;
+
+  return includeValueVars
+    ? [
+        ...seriesVars,
+        ...getFieldVars(dataFrames),
+        ...valueVars,
+        valueTimeVar,
+        ...getDataFrameVars(dataFrames),
+        ...getPanelLinksVariableSuggestions(),
+      ]
+    : [
+        ...seriesVars,
+        ...getFieldVars(dataFrames),
+        ...getDataFrameVars(dataFrames),
+        ...getPanelLinksVariableSuggestions(),
+      ];
 };
 
 export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
@@ -216,7 +232,7 @@ export class LinkSrv implements LinkService {
   constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
   getLinkUrl(link: any) {
-    const url = this.templateSrv.replace(link.url || '');
+    let url = locationUtil.assureBaseUrl(this.templateSrv.replace(link.url || ''));
     const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
@@ -229,7 +245,8 @@ export class LinkSrv implements LinkService {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    return appendQueryToUrl(url, toUrlParams(params));
+    url = appendQueryToUrl(url, toUrlParams(params));
+    return getConfig().disableSanitizeHtml ? url : sanitizeUrl(url);
   }
 
   getAnchorInfo(link: any) {
@@ -266,7 +283,7 @@ export class LinkSrv implements LinkService {
     }
 
     const info: LinkModel<T> = {
-      href: href.replace(/\s|\n/g, ''),
+      href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,

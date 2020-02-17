@@ -84,18 +84,18 @@ export {
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
-export { Collapse } from './Collapse/Collapse';
+export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { LogLabels } from './Logs/LogLabels';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
+export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
-export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
@@ -117,5 +117,22 @@ export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
 
+// TODO: namespace!!
+export {
+  StringValueEditor,
+  StringOverrideEditor,
+  stringOverrideProcessor,
+  StringFieldConfigSettings,
+} from './FieldConfigs/string';
+export {
+  NumberValueEditor,
+  NumberOverrideEditor,
+  numberOverrideProcessor,
+  NumberFieldConfigSettings,
+} from './FieldConfigs/number';
+
 // Next-gen forms
 export { default as Forms } from './Forms';
+export { ValuePicker } from './ValuePicker/ValuePicker';
+export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
+export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';

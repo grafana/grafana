@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v4.6"
+title = "What's new in Grafana v4.6"
 description = "Feature and improvement highlights for Grafana v4.6"
-keywords = ["grafana", "new", "documentation", "4.6"]
+keywords = ["grafana", "new", "documentation", "4.6", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 4.6"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -5
 +++
 
-# What's New in Grafana v4.6
+# What's new in Grafana v4.6
 
 Grafana v4.6 brings many enhancements to Annotations, Cloudwatch and Prometheus. It also adds support for Postgres as metric and table data source!
 
@@ -48,7 +48,7 @@ This makes exploring and filtering Prometheus data much easier.
 * **Graph**: Add support for local formatting in axis. [#1395](https://github.com/grafana/grafana/issues/1395), thx [@m0nhawk](https://github.com/m0nhawk)
 * **Jaeger**: Add support for open tracing using jaeger in Grafana. [#9213](https://github.com/grafana/grafana/pull/9213)
 * **Unit types**: New date and time unit types added, useful in singlestat to show dates and times. [#3678](https://github.com/grafana/grafana/issues/3678), [#6710](https://github.com/grafana/grafana/issues/6710), [#2764](https://github.com/grafana/grafana/issues/2764)
-* **CLI**: Make it possible to install plugins from any url [#5873](https://github.com/grafana/grafana/issues/5873)
+* **CLI**: Make it possible to install plugins from any URL [#5873](https://github.com/grafana/grafana/issues/5873)
 * **Prometheus**: Add support for instant queries [#5765](https://github.com/grafana/grafana/issues/5765), thx [@mtanda](https://github.com/mtanda)
 * **Cloudwatch**: Add support for alerting using the cloudwatch data source [#8050](https://github.com/grafana/grafana/pull/8050), thx [@mtanda](https://github.com/mtanda)
 * **Pagerduty**: Include triggering series in pagerduty notification [#8479](https://github.com/grafana/grafana/issues/8479), thx [@rickymoorhouse](https://github.com/rickymoorhouse)
@@ -72,4 +72,3 @@ This makes exploring and filtering Prometheus data much easier.
 
 ### Tech
 * **Go**: Grafana is now built using golang 1.9
-

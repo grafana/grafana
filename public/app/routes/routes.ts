@@ -6,7 +6,9 @@ import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
+import SignupPage from 'app/features/profile/SignupPage';
 // import config from 'app/core/config';
+// import { ILocationProvider, route } from 'angular';
 // Types
 import { DashboardRouteInfo } from 'app/types';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
@@ -180,7 +182,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/org',
-
     component: () =>
       SafeDynamicImport(import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')),
   },
@@ -191,7 +192,6 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/org/users',
-
     component: () =>
       SafeDynamicImport(import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage')),
   },
@@ -320,8 +320,7 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/signup',
-    templateUrl: 'public/app/partials/signup_step2.html',
-    controller: 'SignUpCtrl',
+    component: () => SignupPage,
     pageClass: 'sidemenu-hidden',
   },
   {

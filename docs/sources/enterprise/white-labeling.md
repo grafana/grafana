@@ -12,7 +12,7 @@ weight = 5
 
 # White labeling
 
-> Only available in Grafana Enterprise v6.6+. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Only available in Grafana Enterprise v6.6+.
 
 {{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
 
@@ -31,20 +31,20 @@ You can change the following elements:
 ```ini
 # Enterprise only
 [white_labeling]
-# Set to complete url to override login logo
+# Set to complete URL to override login logo
 ;login_logo =
 
 # Set to complete css background expression to override login background
 # example: login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg)
 ;login_background =
 
-# Set to complete url to override menu logo
+# Set to complete URL to override menu logo
 ;menu_logo =
 
-# Set to complete url to override fav icon (icon shown in browser tab)
+# Set to complete URL to override fav icon (icon shown in browser tab)
 ;fav_icon =
 
-# Set to complete url to override apple/ios icon
+# Set to complete URL to override apple/ios icon
 ;apple_touch_icon =
 
 # Below is an example for how to replace the default footer & help links with 2 custom links
