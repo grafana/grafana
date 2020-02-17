@@ -148,5 +148,6 @@ export const getStandardFieldConfigs = () => {
     StandardFieldConfigEditors.thresholds,
     StandardFieldConfigEditors.title,
     StandardFieldConfigEditors.noValue,
+    StandardFieldConfigEditors.links,
   ];
 };
