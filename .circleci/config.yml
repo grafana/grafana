@@ -568,7 +568,7 @@ jobs:
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
             docker manifest create "grafana/grafana:master" \
-	      "grafana/grafana:master" \
+              "grafana/grafana:master" \
               "grafana/grafana-arm32v7-linux:master" \
               "grafana/grafana-arm64v8-linux:master"
             docker manifest push "grafana/grafana:master"
