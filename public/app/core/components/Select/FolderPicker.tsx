@@ -14,6 +14,7 @@ export interface Props {
   dashboardId?: any;
   initialTitle?: string;
   initialFolderId?: number;
+  useInNextGenForms?: boolean;
 }
 
 interface State {
@@ -45,6 +46,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
+    useInNextGenForms: false,
   };
 
   componentDidMount = async () => {
@@ -142,13 +144,13 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder, validationError, hasValidationError } = this.state;
-    const { enableCreateNew } = this.props;
+    const { enableCreateNew, useInNextGenForms } = this.props;
 
     return (
       <>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <label className="gf-form-label width-7">Folder</label>
+            {!useInNextGenForms && <label className="gf-form-label width-7">Folder</label>}
             <Forms.AsyncSelect
               loadingMessage="Loading folders..."
               defaultOptions
