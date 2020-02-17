@@ -236,6 +236,12 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 
 func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.UserTokenService, token *models.UserToken) macaron.BeforeFunc {
 	return func(w macaron.ResponseWriter) {
+		ctx.Logger.Info("rotateEndOfRequestFunc - begin")
+		// if response have already been written, skip.
+		if w.Written() {
+			return
+		}
+
 		// if the request is cancelled by the client we should not try
 		// to rotate the token since the client would not accept any result.
 		if ctx.Context.Req.Context().Err() == context.Canceled {
@@ -273,6 +279,11 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 func AddDefaultResponseHeaders() macaron.Handler {
 	return func(ctx *macaron.Context) {
 		ctx.Resp.Before(func(w macaron.ResponseWriter) {
+			// if response have already been written, skip.
+			if w.Written() {
+				return
+			}
+
 			if !strings.HasPrefix(ctx.Req.URL.Path, "/api/datasources/proxy/") {
 				AddNoCacheHeaders(ctx.Resp)
 			}
