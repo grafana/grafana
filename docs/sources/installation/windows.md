@@ -10,13 +10,12 @@ weight = 400
 
 # Install on Windows
 
-[Download the latest stable package for Windows.](https://grafana.com/grafana/download?platform=windows)
-
 You can either download the Windows installer package or a standalone Windows binary file.
 
 Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
+1. Navigate [Download Grafana](https://grafana.com/grafana/download?platform=windows).
 1. Select a Grafana version you want to install. 
    * The most recent Grafana version is selected by default.
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
@@ -47,6 +46,7 @@ To run Grafana, open your browser and go to the Grafana port (http://localhost:3
 To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../guides/getting_started/" >}}).
 
 > **Note:** The default Grafana port is `3000`. This port might require extra permissions on Windows. If it does not appear in the default port, you can try changing to a different port.
-> 1. Go into the `conf` directory and copy `sample.ini` to `custom.ini`. **Note:** You should edit `custom.ini`, never `defaults.ini`.
-> 1.  Edit `custom.ini` and uncomment the `http_port` configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar. That port should not require extra Windows privileges.
+>
+> 1. Go into the `conf` directory and copy `sample.ini` to `custom.ini`.  **Note:** You should edit `custom.ini`, never `defaults.ini`.
+> 1. Edit `custom.ini` and uncomment the `http_port` configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar. That port should not require extra Windows privileges.
 > Read more about the [configuration options]({{< relref "configuration.md" >}}).

@@ -67,6 +67,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
   onMoveBack = () => {
     appEvents.emit(CoreEvents.shiftTime, -1);
   };
+
   onMoveForward = () => {
     appEvents.emit(CoreEvents.shiftTime, 1);
   };

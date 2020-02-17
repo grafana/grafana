@@ -6,6 +6,7 @@ import { DataLink } from './dataLink';
 import { Vector } from './vector';
 import { FieldCalcs } from '../transformations/fieldReducer';
 import { FieldColor } from './fieldColor';
+import { ScopedVars } from './ScopedVars';
 
 export enum FieldType {
   time = 'time', // or date
@@ -50,6 +51,8 @@ export interface FieldConfig {
 
   // Panel Specific Values
   custom?: Record<string, any>;
+
+  scopedVars?: ScopedVars;
 }
 
 export interface Field<T = any, V = Vector<T>> {

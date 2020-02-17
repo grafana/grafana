@@ -1,3 +1,12 @@
+- name: Getting started
+  link: /guides/
+  children:
+  - name: Getting started
+    link: /guides/getting_started/
+  - name: Intro to time series
+    link: /guides/timeseries/
+  - name: Glossary
+    link: /guides/glossary/
 - name: Installation
   link: /installation/
   children:
@@ -39,6 +48,8 @@
       name: Generic OAuth
     - link: /auth/google/
       name: Google
+    - link: /auth/azuread/
+      name: Azure AD
     - link: /auth/github/
       name: GitHub
     - link: /auth/gitlab/
@@ -60,31 +71,20 @@
       name: Datasource
   - name: Grafana CLI
     link: /administration/cli/
-  - name: Image Rendering
-    link: /administration/image_rendering/
   - name: Internal metrics
     link: /administration/metrics/
   - name: Provisioning
     link: /administration/provisioning/
   - name: Troubleshooting
     link: /installation/troubleshooting/
-- name: Getting Started
-  link: /guides/
-  children:
-  - name: Getting Started
-    link: /guides/getting_started/
-  - name: Basic Concepts
-    link: /guides/basic_concepts/
-  - name: Glossary
-    link: /guides/glossary/
-  - name: Screencasts
-    link: /tutorials/screencasts/
 - name: Features
   link: /features/
   children:
   - name: Panels
     link: /features/panels/
     children:
+    - link: /features/panels/panels/
+      name: Overview
     - link: /features/panels/graph/
       name: Graph
     - link: /features/panels/logs/
@@ -104,6 +104,8 @@
   - name: Dashboard Features
     link: /features/dashboard/
     children:
+    - link: /features/dashboard/dashboards/
+      name: Overview
     - link: /reference/templating/
       name: Variables
     - link: /reference/annotations/
@@ -170,10 +172,14 @@
       name: Metrics
     - link: /alerting/notifications/
       name: Notifications
+  - name: Image rendering
+    link: /administration/image_rendering/
   - name: Keyboard Shortcuts
     link: /features/shortcuts/
   - name: Reporting
     link: /features/reporting/
+  - name: Navigation links
+    link: /features/navigation-links/
 - name: What's New In Grafana
   link: /whatsnew/
   children:
@@ -228,38 +234,38 @@
   - name: Overview
     link: /enterprise/
   - name: Reporting
-    link: /features/reporting/
+    link: /enterprise/reporting/
   - name: Data source permissions
-    link: /permissions/datasource_permissions/
-  - link: /auth/enhanced_ldap/
-    name: Enhanced LDAP
-  - link: /auth/saml/
-    name: SAML
-  - link: /auth/team-sync/
-    name: Team Sync
-  - link: /enterprise/white-labeling/
-    name: White labeling
-  - link: /enterprise/license-expiration/
-    name: License expiration
+    link: /enterprise/datasource_permissions/
+  - name: Enhanced LDAP
+    link: /enterprise/enhanced_ldap/
+  - name: SAML authentication
+    link: /enterprise/saml/
+  - name: Team sync
+    link: /enterprise/team-sync/
+  - name: White labeling
+    link: /enterprise/white-labeling/
+  - name: License expiration
+    link: /enterprise/license-expiration/
 - name: Tutorials
   link: /tutorials/
   children:
-  - name: Running Grafana behind a reverse proxy
+  - name: Run Grafana behind a reverse proxy
     link: /installation/behind_proxy/
   - name: 'API Tutorial: How To Create API Tokens And Dashboards For A Specific Organization'
     link: /tutorials/api_org_token_howto/
-  - name: Grafana with IIS Reverse Proxy on Windows
+  - name: Run Grafana with IIS Reverse Proxy on Windows
     link: /tutorials/iis/
-  - name: How To integrate Hubot and Grafana
+  - name: Integrate Hubot and Grafana
     link: /tutorials/hubot_howto/
-  - name: Setup Grafana for High availability
+  - name: Set up Grafana for High availability
     link: /tutorials/ha_setup/
 - name: Plugins
   link: /plugins/
   children:
-  - name: Install Plugins
+  - name: Install plugins
     link: /plugins/installation/
-  - name: Develop Plugins
+  - name: Develop plugins
     link: /plugins/developing/
     children:
     - link: /plugins/developing/development/
@@ -287,6 +293,8 @@
 - name: HTTP API
   link: /http_api/
   children:
+  - name: API Authentication
+    link: /http_api/auth/
   - name: Admin
     link: /http_api/admin/
   - name: Alerting
@@ -295,8 +303,6 @@
     link: /http_api/alerting_notification_channels/
   - name: Annotations
     link: /http_api/annotations/
-  - name: Authentication HTTP API
-    link: /http_api/auth/
   - name: Dashboard
     link: /http_api/dashboard/
   - name: Dashboard Permissions

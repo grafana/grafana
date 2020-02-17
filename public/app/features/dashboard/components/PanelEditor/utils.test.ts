@@ -1,5 +1,4 @@
-import { FieldConfig } from '@grafana/data';
-import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { FieldConfig, standardFieldConfigEditorRegistry } from '@grafana/data';
 
 describe('standardFieldConfigEditorRegistry', () => {
   const dummyConfig: FieldConfig = {
@@ -10,6 +9,7 @@ describe('standardFieldConfigEditorRegistry', () => {
     thresholds: {} as any,
     noValue: 'no value',
     unit: 'km/s',
+    links: {} as any,
   };
 
   it('make sure all fields have a valid name', () => {

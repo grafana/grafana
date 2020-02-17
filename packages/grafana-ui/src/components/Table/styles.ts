@@ -35,6 +35,7 @@ export const getTableStyles = stylesFactory(
         border-spacing: 0;
       `,
       thead: css`
+        label: thead;
         overflow-y: auto;
         overflow-x: hidden;
         background: ${headerBg};
@@ -46,6 +47,7 @@ export const getTableStyles = stylesFactory(
         color: ${colors.blue};
       `,
       row: css`
+        label: row;
         border-bottom: 2px solid ${colors.bodyBg};
       `,
       tableCell: css`

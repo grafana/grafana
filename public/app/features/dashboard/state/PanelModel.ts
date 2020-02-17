@@ -38,7 +38,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   isInView: true,
-  isNewEdit: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -89,6 +88,7 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
+  options: {},
 };
 
 export class PanelModel {
@@ -132,7 +132,6 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   isInView: boolean;
-  isNewEdit: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -181,7 +180,6 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
-
     this.render();
   }
 
@@ -356,16 +354,20 @@ export class PanelModel {
   }
 
   getEditClone() {
-    const clone = new PanelModel(this.getSaveModel());
-    clone.queryRunner = new PanelQueryRunner();
+    const sourceModel = this.getSaveModel();
 
-    // This will send the last result to the new runner
-    this.getQueryRunner()
+    // Temporary id for the clone, restored later in redux action when changes are saved
+    sourceModel.id = 23763571993;
+
+    const clone = new PanelModel(sourceModel);
+    const sourceQueryRunner = this.getQueryRunner();
+
+    // pipe last result to new clone query runner
+    sourceQueryRunner
       .getData()
       .pipe(take(1))
-      .subscribe(val => clone.queryRunner.pipeDataToSubject(val));
+      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
 
-    clone.isNewEdit = true;
     return clone;
   }
 

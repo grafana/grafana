@@ -193,7 +193,7 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      data.values.ts.add(ts.substr(0, ts.length - 6));
+      data.values.ts.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
       data.values.tsNs.add(ts);
       data.values.line.add(line);
       data.values.labels.add(unique);

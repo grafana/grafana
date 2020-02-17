@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.2"
+title = "What's new in Grafana v6.2"
 description = "Feature and improvement highlights for Grafana v6.2"
-keywords = ["grafana", "new", "documentation", "6.2"]
+keywords = ["grafana", "new", "documentation", "6.2", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.2"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -13
 +++
 
-# What's New in Grafana v6.2
+# What's new in Grafana v6.2
 
-For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 If you use a password for your data sources please read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2).
 
