@@ -1,5 +1,5 @@
 import React, { useState, FC } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, Icon, stylesFactory } from '@grafana/ui';
 
@@ -16,7 +16,7 @@ export const OptionsGroup: FC<Props> = ({ title, children }) => {
     <div className={styles.box}>
       <div className={styles.header} onClick={() => toggleExpand(!isExpanded)}>
         {title}
-        <div className={styles.toggle}>
+        <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
           <Icon name={isExpanded ? 'chevron-down' : 'chevron-left'} />
         </div>
       </div>
@@ -31,6 +31,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
     `,
     toggle: css`
+      color: ${theme.colors.textWeak};
       font-size: ${theme.typography.size.lg};
     `,
     header: css`
@@ -40,9 +41,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       padding: ${theme.spacing.sm} ${theme.spacing.md};
       font-weight: ${theme.typography.weight.semibold};
+
+      &:hover {
+        .editor-options-group-toggle {
+          color: ${theme.colors.text};
+        }
+      }
     `,
     body: css`
-      padding: ${theme.spacing.md};
+      padding: 0 ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.md};
     `,
   };
 });
