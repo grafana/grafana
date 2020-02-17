@@ -9,6 +9,7 @@ import {
   VariableRefresh,
   VariableSort,
   VariableTag,
+  VariableWithOptions,
 } from '../variable';
 import {
   addVariable,
@@ -127,6 +128,41 @@ export const ALL_VARIABLE_VALUE = '$__all';
 export const NONE_VARIABLE_TEXT = 'None';
 export const NONE_VARIABLE_VALUE = '';
 
+export const getLinkText = (variable: VariableWithOptions) => {
+  const { current, options } = variable;
+
+  if (!current.tags || current.tags.length === 0) {
+    return current.text;
+  }
+
+  // filer out values that are in selected tags
+  const selectedAndNotInTag = options.filter(option => {
+    if (!option.selected) {
+      return false;
+    }
+
+    if (!current || !current.tags || !current.tags.length) {
+      return false;
+    }
+
+    for (let i = 0; i < current.tags.length; i++) {
+      const tag = current.tags[i];
+      const foundIndex = tag?.values?.findIndex(v => v === option.value);
+      if (foundIndex && foundIndex !== -1) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // convert values to text
+  const currentTexts = selectedAndNotInTag.map(s => s.text);
+
+  // join texts
+  const newLinkText = currentTexts.join(' + ');
+  return newLinkText.length > 0 ? `${newLinkText} + ` : newLinkText;
+};
+
 const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortOrder === VariableSort.disabled) {
     return options;
@@ -198,50 +234,8 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
   return sortVariableValues(options, sort);
 };
 
-const updateLinkText = (state: QueryVariableState): QueryVariableState => {
-  const { current, options } = state.variable;
-
-  if (!current.tags || current.tags.length === 0) {
-    state.picker.linkText = current.text;
-    return state;
-  }
-
-  // filer out values that are in selected tags
-  const selectedAndNotInTag = options.filter(option => {
-    if (!option.selected) {
-      return false;
-    }
-
-    if (!current || !current.tags || !current.tags.length) {
-      return false;
-    }
-
-    for (let i = 0; i < current.tags.length; i++) {
-      const tag = current.tags[i];
-      const foundIndex = tag?.values?.findIndex(v => v === option.value);
-      if (foundIndex && foundIndex !== -1) {
-        return false;
-      }
-    }
-    return true;
-  });
-
-  // convert values to text
-  const currentTexts = selectedAndNotInTag.map(s => s.text);
-
-  // join texts
-  const newLinkText = currentTexts.join(' + ');
-  state.picker.linkText = newLinkText.length > 0 ? `${newLinkText} + ` : newLinkText;
-  return state;
-};
-
 const updateSelectedValues = (state: QueryVariableState): QueryVariableState => {
   state.picker.selectedValues = state.variable.options.filter(o => o.selected);
-  return state;
-};
-
-const updateSelectedTags = (state: QueryVariableState): QueryVariableState => {
-  state.picker.selectedTags = state.variable.tags.filter(t => t.selected);
   return state;
 };
 
@@ -367,14 +361,7 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
         return option;
       });
 
-      applyStateChanges(
-        instanceState,
-        updateOptions,
-        updateSelectedValues,
-        updateSelectedTags,
-        updateLinkText,
-        updateOldVariableText
-      );
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateOldVariableText);
     })
     .addCase(setInitLock, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
@@ -415,14 +402,7 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
 
       instanceState.variable.options = newOptions;
 
-      applyStateChanges(
-        instanceState,
-        updateOptions,
-        updateSelectedValues,
-        updateSelectedTags,
-        updateCurrent,
-        updateLinkText
-      );
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
     })
     .addCase(showQueryVariableDropDown, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
@@ -441,20 +421,13 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       instanceState.picker.searchQuery = searchQuery;
       instanceState.picker.showDropDown = showDropDown;
 
-      applyStateChanges(
-        instanceState,
-        updateOptions,
-        updateSelectedValues,
-        updateTags,
-        updateSelectedTags,
-        updateLinkText
-      );
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateTags);
     })
     .addCase(hideQueryVariableDropDown, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       instanceState.picker.showDropDown = false;
 
-      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateSelectedTags, updateLinkText);
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues);
     })
     .addCase(changeVariableNameSucceeded, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
@@ -532,13 +505,6 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
         selected,
       }));
 
-      applyStateChanges(
-        instanceState,
-        updateOptions,
-        updateSelectedValues,
-        updateSelectedTags,
-        updateCurrent,
-        updateLinkText
-      );
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
     })
 );

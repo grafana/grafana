@@ -5,7 +5,7 @@ import { e2e } from '@grafana/e2e';
 import { QueryVariableModel } from '../variable';
 import { dispatch } from '../../../store/store';
 import { toVariablePayload } from '../state/actions';
-import { QueryVariablePickerState } from '../state/queryVariableReducer';
+import { getLinkText, QueryVariablePickerState } from '../state/queryVariableReducer';
 import { showQueryVariableDropDown } from '../state/queryVariableActions';
 import { VariablePickerProps } from '../state/types';
 
@@ -19,11 +19,12 @@ export class VariableOptionsLinkText extends PureComponent<Props> {
   };
 
   render() {
-    const { linkText, selectedTags } = this.props.picker;
-
     if (!this.props.variable) {
       return <div>Couldn't load variable</div>;
     }
+
+    const linkText = getLinkText(this.props.variable);
+    const selectedTags = this.props.variable.tags.filter(t => t.selected);
 
     return (
       <a
