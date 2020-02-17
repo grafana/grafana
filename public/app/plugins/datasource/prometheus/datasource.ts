@@ -582,7 +582,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         // rewrite timeseries to a common format
         if (annotation.useValueForTime) {
           timestampValue = Math.floor(parseFloat(value[1]));
-          value[1] = true;
+          value[1] = 1;
         } else {
           timestampValue = Math.floor(parseFloat(value[0])) * 1000;
         }
