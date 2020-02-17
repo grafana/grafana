@@ -110,7 +110,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <FieldConfigEditor
         config={fieldOptions}
-        custom={plugin.customFieldConfigs}
+        plugin={plugin}
         onChange={this.onFieldConfigsChange}
         data={data.series}
       />
