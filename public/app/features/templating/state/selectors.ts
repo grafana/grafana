@@ -1,10 +1,10 @@
 import { StoreState } from '../../../types';
 import { VariableActions, VariableModel } from '../variable';
 import { getState } from '../../../store/store';
-import { emptyUuid, VariableState } from './types';
+import { emptyUuid } from './types';
 import { variableAdapters } from '../adapters';
 
-export const getVariableState = <T extends VariableState = VariableState>(
+export const getVariable = <T extends VariableModel = VariableModel>(
   uuid: string,
   state: StoreState = getState()
 ): T => {
@@ -12,14 +12,7 @@ export const getVariableState = <T extends VariableState = VariableState>(
     throw new Error(`Couldn't find variable with uuid:${uuid}`);
   }
 
-  return state.templating.variables[uuid] as T;
-};
-
-export const getVariable = <T extends VariableModel = VariableModel>(
-  uuid: string,
-  state: StoreState = getState()
-): T => {
-  return getVariableState(uuid, state).variable as T;
+  return state.templating.variables[uuid].variable as T;
 };
 
 export const getVariables = (state: StoreState = getState()): VariableModel[] => {
