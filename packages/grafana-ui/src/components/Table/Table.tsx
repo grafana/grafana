@@ -13,17 +13,22 @@ export interface Props {
   data: DataFrame;
   width: number;
   height: number;
+  /** pixels in number */
+  columnMinWidth?: number;
   onCellClick?: TableFilterActionCallback;
 }
 
-export const Table = ({ data, height, onCellClick, width }: Props) => {
+export const Table = ({ data, height, onCellClick, width, columnMinWidth }: Props) => {
   const theme = useTheme();
   const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
 
+  const minWidth = columnMinWidth && columnMinWidth * data.fields.length;
+  const tableWidth = minWidth && minWidth > width ? minWidth : width;
+
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data, width), [data, width]),
+      columns: useMemo(() => getColumns(data, tableWidth), [data, tableWidth]),
       data: useMemo(() => getTableRows(data), [data]),
     },
     useSortBy,
@@ -64,7 +69,7 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
         height={height - headerRowMeasurements.height}
         itemCount={rows.length}
         itemSize={tableStyles.rowHeight}
-        width={width}
+        width={tableWidth}
       >
         {RenderRow}
       </FixedSizeList>
