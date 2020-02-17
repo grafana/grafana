@@ -43,11 +43,7 @@ export class VariableOptionsDropDown extends PureComponent<Props> {
   };
 
   commitChanges = () => {
-    const { queryHasSearchFilter, oldVariableText } = this.props.picker;
-
-    if (queryHasSearchFilter) {
-      // this.updateLazyLoadedOptions();
-    }
+    const { oldVariableText } = this.props.picker;
 
     if (this.props.variable.current.text !== oldVariableText) {
       variableAdapters.get(this.props.variable.type).setValue(this.props.variable, this.props.variable.current);

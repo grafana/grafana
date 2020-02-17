@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { ChangeEvent, PureComponent } from 'react';
 import debounce from 'lodash/debounce';
 import { ClickOutsideWrapper } from '@grafana/ui';
 
@@ -9,7 +9,9 @@ import { QueryVariablePickerState } from '../state/queryVariableReducer';
 import { variableAdapters } from '../adapters';
 import {
   changeQueryVariableHighlightIndex,
+  changeQueryVariableSearchQuery,
   hideQueryVariableDropDown,
+  searchQueryChanged,
   selectVariableOptionByHighlightIndex,
 } from '../state/queryVariableActions';
 import { VariablePickerProps } from '../state/types';
@@ -25,13 +27,9 @@ enum NavigationKeys {
 }
 
 export class VariableOptionsInput extends PureComponent<Props> {
-  private readonly debouncedOnQueryChanged: Function;
-
   constructor(props: Props) {
     super(props);
-    this.debouncedOnQueryChanged = debounce((searchQuery: string) => {
-      this.onQueryChanged(searchQuery);
-    }, 200);
+    this.debouncedOnChangeQuery = debounce(this.debouncedOnChangeQuery, 200);
   }
 
   onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -63,19 +61,24 @@ export class VariableOptionsInput extends PureComponent<Props> {
   };
 
   commitChanges = () => {
-    const { queryHasSearchFilter, oldVariableText } = this.props.picker;
-
-    if (queryHasSearchFilter) {
-      // this.updateLazyLoadedOptions();
-    }
+    const { oldVariableText } = this.props.picker;
 
     if (this.props.variable.current.text !== oldVariableText) {
       variableAdapters.get(this.props.variable.type).setValue(this.props.variable, this.props.variable.current);
     }
+
     dispatch(hideQueryVariableDropDown(toVariablePayload(this.props.variable)));
   };
 
-  onQueryChanged = (searchQuery: string) => {};
+  debouncedOnChangeQuery = (searchQuery: string) => {
+    dispatch(searchQueryChanged(this.props.variable.uuid, searchQuery));
+  };
+
+  onQueryChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    const searchQuery = event.target.value;
+    dispatch(changeQueryVariableSearchQuery(toVariablePayload(this.props.variable, searchQuery)));
+    this.debouncedOnChangeQuery(searchQuery);
+  };
 
   onCloseDropDown = () => {
     this.commitChanges();
@@ -100,10 +103,8 @@ export class VariableOptionsInput extends PureComponent<Props> {
           type="text"
           className="gf-form-input"
           value={searchQuery ?? ''}
-          onChange={event => this.debouncedOnQueryChanged(event.target.value)}
+          onChange={this.onQueryChanged}
           onKeyDown={this.onKeyDown}
-          // ng-model="vm.search.query"
-          // ng-change="vm.debouncedQueryChanged()"
         />
       </ClickOutsideWrapper>
     );

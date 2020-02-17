@@ -21,6 +21,8 @@ import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { getVariable } from './selectors';
+import { getQueryHasSearchFilter } from './queryVariableReducer';
+import { variableAdapters } from '../adapters';
 
 export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(
   'templating/showQueryVariableDropDown'
@@ -49,6 +51,10 @@ export const queryVariableEditorLoaded = createAction<VariablePayload<ComponentT
 );
 
 export const toggleVariableTag = createAction<VariablePayload<VariableTag>>('templating/toggleVariableTag');
+
+export const changeQueryVariableSearchQuery = createAction<VariablePayload<string>>(
+  'templating/changeQueryVariableSearchQuery'
+);
 
 export const updateQueryVariableOptions = (
   variable: QueryVariableModel,
@@ -147,6 +153,17 @@ export const toggleTag = (uuid: string, tag: VariableTag): ThunkResult<void> => 
       return console.error(error);
     }
   };
+};
+
+export const searchQueryChanged = (uuid: string, searchQuery: string): ThunkResult<void> => async (
+  dispatch,
+  getState
+) => {
+  const variable = getVariable<QueryVariableModel>(uuid, getState());
+  if (getQueryHasSearchFilter(variable)) {
+    await variableAdapters.get(variable.type).updateOptions(variable, searchQuery, false);
+  }
+  dispatch(changeQueryVariableSearchQuery(toVariablePayload(variable, searchQuery)));
 };
 
 function metricFindQuery(datasource: any, query: string, variable: QueryVariableModel, searchFilter?: string) {

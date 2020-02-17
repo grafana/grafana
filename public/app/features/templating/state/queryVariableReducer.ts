@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { DataSourceApi, stringToJsRegex } from '@grafana/data';
 
 import {
+  containsSearchFilter,
   QueryVariableModel,
   VariableHide,
   VariableOption,
@@ -28,6 +29,7 @@ import { Deferred } from '../deferred';
 import { emptyUuid, getInstanceState, initialVariableEditorState, VariableEditorState, VariableState } from './types';
 import {
   changeQueryVariableHighlightIndex,
+  changeQueryVariableSearchQuery,
   hideQueryVariableDropDown,
   queryVariableDatasourceLoaded,
   queryVariableEditorLoaded,
@@ -50,15 +52,12 @@ export const applyStateChanges = <S extends VariableState>(state: S, ...args: Ar
 
 export interface QueryVariablePickerState {
   showDropDown: boolean;
-  linkText: string | string[] | null;
   selectedValues: VariableOption[];
   selectedTags: VariableTag[];
   searchQuery: string | null;
-  searchOptions: VariableOption[];
   highlightIndex: number;
   tags: VariableTag[];
   options: VariableOption[];
-  queryHasSearchFilter: boolean;
   oldVariableText: string | string[] | null;
 }
 
@@ -72,9 +71,6 @@ export interface QueryVariableState
 
 export const initialQueryVariablePickerState: QueryVariablePickerState = {
   highlightIndex: -1,
-  linkText: null,
-  queryHasSearchFilter: false,
-  searchOptions: [],
   searchQuery: null,
   selectedTags: [],
   selectedValues: [],
@@ -127,6 +123,8 @@ export const ALL_VARIABLE_TEXT = 'All';
 export const ALL_VARIABLE_VALUE = '$__all';
 export const NONE_VARIABLE_TEXT = 'None';
 export const NONE_VARIABLE_VALUE = '';
+
+export const getQueryHasSearchFilter = (variable: QueryVariableModel) => containsSearchFilter(variable.query);
 
 const hideOtherDropDowns = (state: TemplatingState) => {
   // hack that closes drop downs that already are opened
@@ -271,7 +269,7 @@ const updateOptions = (state: QueryVariableState): QueryVariableState => {
 };
 
 const updateCurrent = (state: QueryVariableState): QueryVariableState => {
-  const { searchOptions, searchQuery, selectedValues, selectedTags } = state.picker;
+  const { options, searchQuery, selectedValues, selectedTags } = state.picker;
 
   state.variable.current.value = selectedValues.map(v => v.value) as string[];
   state.variable.current.text = selectedValues.map(v => v.text).join(' + ');
@@ -282,7 +280,7 @@ const updateCurrent = (state: QueryVariableState): QueryVariableState => {
   }
 
   // if we have a search query and no options use that
-  if (searchOptions.length === 0 && searchQuery && searchQuery.length > 0) {
+  if (options.length === 0 && searchQuery && searchQuery.length > 0) {
     state.variable.current = { text: searchQuery, value: searchQuery, selected: false };
   }
 
@@ -436,12 +434,11 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       const oldVariableText = instanceState.picker.oldVariableText || instanceState.variable.current.text;
       const highlightIndex = -1;
       const showDropDown = true;
+      const queryHasSearchFilter = getQueryHasSearchFilter(instanceState.variable);
       // new behaviour, if this is a query that uses searchfilter it might be a nicer
       // user experience to show the last typed search query in the input field
       const searchQuery =
-        instanceState.picker.queryHasSearchFilter && instanceState.picker.searchQuery
-          ? instanceState.picker.searchQuery
-          : '';
+        queryHasSearchFilter && instanceState.picker.searchQuery ? instanceState.picker.searchQuery : '';
 
       instanceState.picker.oldVariableText = oldVariableText;
       instanceState.picker.highlightIndex = highlightIndex;
@@ -533,5 +530,23 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       }));
 
       applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
+    })
+    .addCase(changeQueryVariableSearchQuery, (state, action) => {
+      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
+      instanceState.picker.searchQuery = action.payload.data;
+      instanceState.picker.highlightIndex = 0;
+      instanceState.picker.options = instanceState.variable.options.slice(
+        0,
+        Math.min(instanceState.variable.options.length, 1000)
+      );
+
+      if (!getQueryHasSearchFilter(instanceState.variable)) {
+        instanceState.picker.options = instanceState.picker.options.filter(option => {
+          const text = Array.isArray(option.text) ? option.text.toString() : option.text;
+          return text.toLowerCase().indexOf(action.payload.data.toLowerCase()) !== -1;
+        });
+      }
+
+      applyStateChanges(instanceState, updateSelectedValues, updateCurrent);
     })
 );
