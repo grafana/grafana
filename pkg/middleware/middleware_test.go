@@ -544,7 +544,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 
 		sc := &scenarioContext{}
 
-		viewsPath, _ := filepath.Abs("../../public/views")
+		viewsPath, err := filepath.Abs("../../public/views")
+		require.NoError(t, err)
 
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders())
@@ -577,7 +578,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 
 func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	reqContext, _ := initTokenRotationTest(ctx)
+	reqContext, _, err := initTokenRotationTest(ctx)
+	require.NoError(t, err)
 
 	tryRotateCallCount := 0
 	uts := &auth.FakeUserAuthTokenService{
@@ -597,11 +599,13 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 }
 
 func TestTokenRotationAtEndOfRequest(t *testing.T) {
-	reqContext, rr := initTokenRotationTest(context.Background())
+	reqContext, rr, err := initTokenRotationTest(context.Background())
+	require.NoError(t, err)
 
 	uts := &auth.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
-			newToken, _ := util.RandomHex(16)
+			newToken, err := util.RandomHex(16)
+			require.NoError(t, err)
 			token.AuthToken = newToken
 			return true, nil
 		},
@@ -623,12 +627,15 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	assert.True(t, foundLoginCookie, "Could not find cookie")
 }
 
-func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder) {
+func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder, error) {
 	setting.LoginCookieName = "login_token"
 	setting.LoginMaxLifetimeDays = 7
 
 	rr := httptest.NewRecorder()
-	req, _ := http.NewRequestWithContext(ctx, "", "", nil)
+	req, err := http.NewRequestWithContext(ctx, "", "", nil)
+	if err != nil {
+		return nil, nil, err
+	}
 	reqContext := &models.ReqContext{
 		Context: &macaron.Context{
 			Req: macaron.Request{
@@ -641,7 +648,7 @@ func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.R
 	mw := mockWriter{rr}
 	reqContext.Resp = mw
 
-	return reqContext, rr
+	return reqContext, rr, nil
 }
 
 type mockWriter struct {
