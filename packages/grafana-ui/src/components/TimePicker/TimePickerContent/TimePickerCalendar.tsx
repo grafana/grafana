@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { css, cx } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
@@ -248,9 +248,15 @@ const Header = memo<Props>(({ onClose }) => {
 });
 
 const Body = memo<Props>(props => {
+  const [value, setValue] = useState<Date[]>();
   const theme = useTheme();
   const styles = getBodyStyles(theme);
-  const { from, to, onChange } = props;
+  const { onChange } = props;
+
+  useEffect(() => {
+    const { from, to } = props;
+    setValue(inputToValue(from, to));
+  }, []);
 
   return (
     <Calendar
@@ -259,7 +265,7 @@ const Body = memo<Props>(props => {
       prev2Label={null}
       className={styles.body}
       tileClassName={styles.title}
-      value={inputToValue(from, to)}
+      value={value}
       nextLabel={<span className="fa fa-angle-right" />}
       prevLabel={<span className="fa fa-angle-left" />}
       onChange={value => valueToInput(value, onChange)}
@@ -285,6 +291,9 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
 });
 
 function inputToValue(from: string, to: string): Date[] {
+  console.log('FROM', from);
+  console.log('TO', to);
+
   const fromAsDateTime = stringToDateTimeType(from);
   const toAsDateTime = stringToDateTimeType(to);
   const fromAsDate = fromAsDateTime.isValid() ? fromAsDateTime.toDate() : new Date();
