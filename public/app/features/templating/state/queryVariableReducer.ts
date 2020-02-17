@@ -38,7 +38,7 @@ import {
 } from './queryVariableActions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
-import { initialTemplatingState } from './index';
+import { initialTemplatingState, TemplatingState } from './index';
 import cloneDeep from 'lodash/cloneDeep';
 
 export type MutateStateFunc<S extends VariableState> = (state: S) => S;
@@ -127,6 +127,32 @@ export const ALL_VARIABLE_TEXT = 'All';
 export const ALL_VARIABLE_VALUE = '$__all';
 export const NONE_VARIABLE_TEXT = 'None';
 export const NONE_VARIABLE_VALUE = '';
+
+const hideOtherDropDowns = (state: TemplatingState) => {
+  // hack that closes drop downs that already are opened
+  // could be solved by moving picker state to
+  // 1. A separate picker state slice under templating in Redux
+  //  PROS:
+  //    - smaller state tree
+  //    - no need for this hack since there's only one picker state
+  //  CONS:
+  //    - state for a variable is no longer in one place but spread out under variables.variable and templating[type].picker templating[type].editor
+  //    - picker state will also need addressing like type and uuid to filter out picker state
+  // 2. Use local React state instead
+  //  PROS:
+  //    - no state tree
+  //    - no need for this hack
+  //  CONS:
+  //    - lot's of code and logic that has to move into component
+  //    - harder to test component, easier to test reducer
+  const openedDropDowns = Object.values(state.variables).filter(
+    s => (s.picker as QueryVariablePickerState).showDropDown
+  );
+  openedDropDowns.map(state => {
+    state.picker = initialQueryVariablePickerState;
+    return state;
+  });
+};
 
 export const getLinkText = (variable: VariableWithOptions) => {
   const { current, options } = variable;
@@ -405,6 +431,7 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
     })
     .addCase(showQueryVariableDropDown, (state, action) => {
+      hideOtherDropDowns(state);
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       const oldVariableText = instanceState.picker.oldVariableText || instanceState.variable.current.text;
       const highlightIndex = -1;
