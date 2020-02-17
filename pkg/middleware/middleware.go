@@ -236,7 +236,6 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 
 func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.UserTokenService, token *models.UserToken) macaron.BeforeFunc {
 	return func(w macaron.ResponseWriter) {
-		ctx.Logger.Info("rotateEndOfRequestFunc - begin")
 		// if response have already been written, skip.
 		if w.Written() {
 			return
