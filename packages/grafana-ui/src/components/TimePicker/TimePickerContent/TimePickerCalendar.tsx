@@ -203,6 +203,8 @@ interface Props {
   isFullscreen: boolean;
 }
 
+const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
+
 export const TimePickerCalendar = memo<Props>(props => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -215,7 +217,7 @@ export const TimePickerCalendar = memo<Props>(props => {
   if (isFullscreen) {
     return (
       <ClickOutsideWrapper onClick={props.onClose}>
-        <div className={styles.container}>
+        <div className={styles.container} onClick={stopPropagation}>
           <Body {...props} />
         </div>
       </ClickOutsideWrapper>
@@ -224,14 +226,14 @@ export const TimePickerCalendar = memo<Props>(props => {
 
   return (
     <Portal>
-      <div className={styles.modal} onClick={event => event.stopPropagation()}>
+      <div className={styles.modal} onClick={stopPropagation}>
         <div className={styles.content}>
           <Header {...props} />
           <Body {...props} />
           <Footer {...props} />
         </div>
       </div>
-      <div className={styles.backdrop} onClick={event => event.stopPropagation()} />
+      <div className={styles.backdrop} onClick={stopPropagation} />
     </Portal>
   );
 });
