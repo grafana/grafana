@@ -13,6 +13,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -592,9 +593,7 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	cancel()
 	fn(reqContext.Resp)
 
-	if tryRotateCallCount > 0 {
-		t.Fatal("could not call tryrotate")
-	}
+	assert.Equal(t, 0, tryRotateCallCount, "Token rotation was attempted")
 }
 
 func TestTokenRotationAtEndOfRequest(t *testing.T) {
@@ -617,15 +616,11 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
 
-			if c.Value == token.AuthToken {
-				t.Fatal("auth token is still the same")
-			}
+			require.NotEqual(t, token.AuthToken, c.Value, "Auth token is still the same")
 		}
 	}
 
-	if !foundLoginCookie {
-		t.Fatal("could not find cookie")
-	}
+	assert.True(t, foundLoginCookie, "Could not find cookie")
 }
 
 func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder) {
