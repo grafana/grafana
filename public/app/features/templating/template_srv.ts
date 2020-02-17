@@ -322,7 +322,7 @@ export class TemplateSrv {
     return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
   }
 
-  replaceWithText(target: string, scopedVars: ScopedVars) {
+  replaceWithText(target: string, scopedVars?: ScopedVars) {
     if (!target) {
       return target;
     }

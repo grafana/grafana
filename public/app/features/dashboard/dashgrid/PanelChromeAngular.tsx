@@ -37,7 +37,7 @@ interface AngularScopeProps {
 }
 
 export class PanelChromeAngular extends PureComponent<Props, State> {
-  element?: HTMLElement;
+  element: HTMLElement | null = null;
   timeSrv: TimeSrv = getTimeSrv();
   scopeProps?: AngularScopeProps;
   querySubscription: Unsubscribable;
@@ -85,7 +85,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   };
 
   onPanelDataUpdate(data: PanelData) {
-    let errorMessage: string | null = null;
+    let errorMessage: string | undefined;
 
     if (data.state === LoadingState.Error) {
       const { error } = data;
@@ -104,7 +104,6 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
-      this.querySubscription = null;
     }
 
     this.props.panel.events.off(PanelEvents.render, this.onPanelRenderEvent);
@@ -192,7 +191,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={data.request ? data.request.timeInfo : null}
+          timeInfo={data.request ? data.request.timeInfo : undefined}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
