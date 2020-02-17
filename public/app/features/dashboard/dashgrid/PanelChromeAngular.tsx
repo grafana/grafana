@@ -110,9 +110,19 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    if (prevProps.plugin !== this.props.plugin) {
+    const { plugin, height, width, panel } = this.props;
+
+    if (prevProps.plugin !== plugin) {
       this.cleanUpAngularPanel();
       this.loadAngularPanel();
+    }
+
+    if (prevProps.width !== width || prevProps.height !== height) {
+      if (this.scopeProps) {
+        this.scopeProps.size.height = height;
+        this.scopeProps.size.width = width;
+        panel.events.emit(PanelEvents.panelSizeChanged);
+      }
     }
   }
 
@@ -121,8 +131,6 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
 
     // if we have no element or already have loaded the panel return
     if (!this.element || panel.angularPanel) {
-      this.scopeProps.size.height = height;
-      this.scopeProps.size.width = width;
       return;
     }
 
