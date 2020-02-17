@@ -6,6 +6,7 @@ import { backendSrv } from '../services/backend_srv';
 
 jest.mock('app/core/store', () => {
   return {
+    getObject: jest.fn(),
     getBool: jest.fn(),
     set: jest.fn(),
   };

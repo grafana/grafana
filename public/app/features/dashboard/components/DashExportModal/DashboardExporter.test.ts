@@ -1,15 +1,16 @@
-jest.mock('app/core/store', () => {
-  return {
-    getBool: jest.fn(),
-  };
-});
-
 import _ from 'lodash';
 import config from 'app/core/config';
 import { DashboardExporter } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelPluginMeta } from '@grafana/data';
+
+jest.mock('app/core/store', () => {
+  return {
+    getObject: jest.fn(),
+    getBool: jest.fn(),
+  };
+});
 
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
