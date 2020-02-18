@@ -2,11 +2,12 @@ import castArray from 'lodash/castArray';
 import { MouseEvent } from 'react';
 import { v4 } from 'uuid';
 import { createAction, PrepareAction } from '@reduxjs/toolkit';
-import { UrlQueryValue } from '@grafana/runtime';
+import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
 import {
   QueryVariableModel,
+  VariableActions,
   VariableHide,
   VariableModel,
   VariableOption,
@@ -21,6 +22,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
 import { MoveVariableType, VariableNewVariableStart } from '../../../types/events';
+import { processVariableDependencies } from '../helpers';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -167,50 +169,49 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
-export const processVariables = (): ThunkResult<void> => {
+export const processVariable = (
+  variable: VariableModel & VariableActions,
+  angularVariables: Array<VariableModel & VariableActions>,
+  queryParams: UrlQueryMap
+): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    await processVariableDependencies(variable, angularVariables);
+
+    const urlValue = queryParams['var-' + variable.name];
+    if (urlValue !== void 0) {
+      await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
+    }
+
+    if (variable.hasOwnProperty('refresh')) {
+      const refreshableVariable = variable as QueryVariableModel & VariableActions;
+      if (
+        refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
+        refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
+      ) {
+        await variableAdapters.get(variable.type).updateOptions(refreshableVariable);
+      }
+    }
+
+    await dispatch(resolveInitLock(toVariablePayload(variable)));
+  };
+};
+
+export const processVariables = (angularVariables: Array<VariableModel & VariableActions>): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const queryParams = getState().location.query;
-    const dependencies: Array<Promise<any>> = [];
+    const promises = getVariables(getState()).map(
+      async (variable: VariableModel & VariableActions) =>
+        await dispatch(processVariable(variable, angularVariables, queryParams))
+    );
 
-    const variablesBeforeInitLock = getVariables(getState());
-    for (let index = 0; index < variablesBeforeInitLock.length; index++) {
-      const variable = variablesBeforeInitLock[index];
-      await dispatch(setInitLock(toVariablePayload(variable)));
-    }
-
-    for (let index = 0; index < getVariables(getState()).length; index++) {
-      const variable = getVariables(getState())[index];
-      for (const otherVariable of getVariables(getState())) {
-        if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
-          if (!otherVariable.initLock) {
-            throw new Error(`No initLock defined for other variable:${otherVariable.name}`);
-          }
-          dependencies.push(otherVariable.initLock.promise);
-        }
-      }
-
-      await Promise.all(dependencies);
-
-      const urlValue = queryParams['var-' + variable.name];
-      if (urlValue !== void 0) {
-        await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
-      }
-
-      if (variable.hasOwnProperty('refresh')) {
-        const refreshableVariable = variable as QueryVariableModel;
-        if (
-          refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
-          refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
-        ) {
-          await variableAdapters.get(variable.type).updateOptions(refreshableVariable);
-        }
-      }
-
-      await dispatch(resolveInitLock(toVariablePayload(variable)));
-    }
+    await Promise.all(promises);
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
       await dispatch(removeInitLock(toVariablePayload(getVariables(getState())[index])));
+    }
+
+    for (let index = 0; index < angularVariables.length; index++) {
+      delete angularVariables[index].initLock;
     }
   };
 };

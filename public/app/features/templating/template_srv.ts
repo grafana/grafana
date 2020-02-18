@@ -44,8 +44,12 @@ export class TemplateSrv {
   updateIndex() {
     const existsOrEmpty = (value: any) => value || value === '';
 
-    this.index = getAllVariables(this.variables, getState()).reduce((acc: any, currentValue: VariableWithOptions) => {
-      if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
+    this.index = getAllVariables(this.variables, getState()).reduce((acc: any, currentValue) => {
+      const variableWithOptions = currentValue as VariableWithOptions & VariableActions;
+      if (
+        variableWithOptions.current &&
+        (variableWithOptions.current.isNone || existsOrEmpty(variableWithOptions.current.value))
+      ) {
         acc[currentValue.name] = currentValue;
       }
       return acc;

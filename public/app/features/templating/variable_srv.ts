@@ -14,6 +14,7 @@ import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
 import { variableAdapters } from './adapters';
 import { appEvents, contextSrv } from 'app/core/core';
+import { processVariableDependencies } from './helpers';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -107,16 +108,8 @@ export class VariableSrv {
   }
 
   processVariable(variable: any, queryParams: any) {
-    const dependencies = [];
-
-    for (const otherVariable of this.variables) {
-      if (variable.dependsOn(otherVariable)) {
-        dependencies.push(otherVariable.initLock.promise);
-      }
-    }
-
     return this.$q
-      .all(dependencies)
+      .all(processVariableDependencies(variable, this.variables))
       .then(() => {
         const urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
@@ -131,7 +124,6 @@ export class VariableSrv {
       })
       .finally(() => {
         this.templateSrv.variableInitialized(variable);
-        delete variable.initLock;
       });
   }
 

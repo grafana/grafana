@@ -180,8 +180,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // the rest of the dashboard can load
     try {
       await dispatch(initDashboardTemplating(dashboard.templating.list));
-      await dispatch(processVariables());
       await variableSrv.init(dashboard);
+      await dispatch(processVariables(variableSrv.variables));
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
       console.log(err);

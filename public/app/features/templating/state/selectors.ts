@@ -21,15 +21,19 @@ export const getVariables = (state: StoreState = getState()): VariableModel[] =>
     .map(state => ({ ...state.variable }));
 };
 
-export const getAllVariables = (angularVariables: VariableModel[], state: StoreState = getState()): VariableModel[] => {
-  return angularVariables.concat(getVariables(state)).sort((a, b) => a.index - b.index);
+export const getAllVariables = (
+  angularVariables: Array<VariableModel & VariableActions>,
+  state: StoreState = getState()
+) => {
+  const reduxVariables = getVariables(state) as Array<VariableModel & VariableActions>;
+  return angularVariables.concat(reduxVariables).sort((a, b) => a.index - b.index);
 };
 
 export const getAllVariablesJSON = (
-  angularVariables: VariableModel[],
+  angularVariables: Array<VariableModel & VariableActions>,
   state: StoreState = getState()
 ): Array<Partial<VariableModel>> => {
-  return getAllVariables(angularVariables, state).map((variable: VariableModel & VariableActions) => {
+  return getAllVariables(angularVariables, state).map(variable => {
     if (variableAdapters.contains(variable.type)) {
       return variableAdapters.get(variable.type).getSaveModel(variable);
     }

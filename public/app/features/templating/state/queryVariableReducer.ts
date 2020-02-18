@@ -331,6 +331,7 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       state.variables[action.payload.uuid!].variable.uuid = action.payload.uuid;
       state.variables[action.payload.uuid!].variable.index = action.payload.data.index;
       state.variables[action.payload.uuid!].variable.global = action.payload.data.global;
+      state.variables[action.payload.uuid!].variable.initLock = new Deferred();
     })
     .addCase(updateVariableOptions, (state, action) => {
       const results = action.payload.data;

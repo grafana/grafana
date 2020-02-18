@@ -85,7 +85,7 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
   };
 
   onRefreshChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    this.props.onPropChange('refresh', event.target.value);
+    this.props.onPropChange('refresh', parseInt(event.target.value, 10));
   };
 
   onSortChange = async (event: ChangeEvent<HTMLSelectElement>) => {
