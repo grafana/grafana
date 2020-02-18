@@ -1,11 +1,14 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
-import { NavModel } from '@grafana/data';
+import { AppEvents, NavModel } from '@grafana/data';
 import { Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import ImportDashboardForm from './ImportDashboardForm';
-import { fetchGcomDashboard } from '../state/actions';
+import { DashboardFileUpload } from './DashboardFileUpload';
+import { fetchGcomDashboard, processImportedDashboard } from '../state/actions';
+import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
@@ -14,6 +17,7 @@ interface Props {
   dashboard: any;
 
   fetchGcomDashboard: typeof fetchGcomDashboard;
+  processImportedDashboard: typeof processImportedDashboard;
 }
 
 interface State {
@@ -40,6 +44,27 @@ class DashboardImport extends PureComponent<Props, State> {
 
   onGcomDashboardChange = (event: FormEvent<HTMLInputElement>) => {
     this.setState({ gcomDashboard: event.currentTarget.value });
+  };
+
+  onFileUpload = (event: FormEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files[0];
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      return (e: any) => {
+        let dashboard: any;
+        try {
+          dashboard = JSON.parse(e.target.result);
+        } catch (error) {
+          console.log(error);
+          appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
+          return;
+        }
+        console.log(dashboard);
+        this.props.processImportedDashboard(dashboard);
+      };
+    };
+    reader.readAsText(file);
   };
 
   getGcomDashboard = () => {
@@ -70,8 +95,7 @@ class DashboardImport extends PureComponent<Props, State> {
     return (
       <>
         <div className={styles.option}>
-          <Forms.Legend>Import via .json file</Forms.Legend>
-          <Forms.Button>Upload .json file</Forms.Button>
+          <DashboardFileUpload onFileUpload={this.onFileUpload} />
         </div>
         <div className={styles.option}>
           <Forms.Legend>Import via grafana.com</Forms.Legend>
@@ -114,6 +138,7 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   fetchGcomDashboard,
+  processImportedDashboard,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(DashboardImport);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardImport));
