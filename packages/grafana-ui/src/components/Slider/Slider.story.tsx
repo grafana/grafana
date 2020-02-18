@@ -18,12 +18,22 @@ const getKnobs = () => {
     lengthOfSlider: number('lengthOfSlider', 200),
     orientation: select('orientation', ['horizontal', 'vertical'], 'vertical'),
     reverse: boolean('reverse', true),
+    singleValue: boolean('single value', false),
   };
 };
 
 const SliderWrapper = () => {
-  const { min, max, orientation, reverse, lengthOfSlider } = getKnobs();
-  return <Slider min={min} max={max} orientation={orientation} lengthOfSlider={lengthOfSlider} reverse={reverse} />;
+  const { min, max, orientation, reverse, lengthOfSlider, singleValue } = getKnobs();
+  return (
+    <Slider
+      min={min}
+      max={max}
+      orientation={orientation}
+      lengthOfSlider={lengthOfSlider}
+      value={singleValue ? [10] : undefined}
+      reverse={reverse}
+    />
+  );
 };
 
 export const basic = () => <SliderWrapper />;
