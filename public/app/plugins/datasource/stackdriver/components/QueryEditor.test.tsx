@@ -9,7 +9,8 @@ const props: Props = {
   target: DefaultTarget,
   events: { on: () => {} },
   datasource: {
-    getProjects: () => Promise.resolve('project'),
+    getProjects: () => Promise.resolve([]),
+    getDefaultProject: () => Promise.resolve('projectName'),
     getMetricTypes: () => Promise.resolve([]),
     getLabels: () => Promise.resolve([]),
     variables: [],
