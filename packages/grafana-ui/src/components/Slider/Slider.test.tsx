@@ -1,18 +1,20 @@
 import React from 'react';
 import { Slider, Props } from './Slider';
-import { getTheme } from '../../themes';
 import { mount } from 'enzyme';
 
 const sliderProps: Props = {
-  orientation: 'vertical',
+  orientation: 'horizontal',
   min: 10,
   max: 20,
-  theme: getTheme(),
 };
 
 describe('Slider', () => {
-  it('renders correct html', () => {
+  it('renders without error', () => {
+    mount(<Slider {...sliderProps} />);
+  });
+  it('renders correct contents', () => {
     const wrapper = mount(<Slider {...sliderProps} />);
-    expect(wrapper.html()).toMatchSnapshot();
+    expect(wrapper.html()).toContain('aria-valuemin="10"');
+    expect(wrapper.html()).toContain('aria-valuemax="20"');
   });
 });

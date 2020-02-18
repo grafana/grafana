@@ -16,6 +16,9 @@ $blue: #1f60c4;
 .rc-slider-tooltip-placement-top {
   padding: 0;
 }
+.rc-slider-vertical .rc-slider-handle {
+  margin-top: -10px;
+}
 
 .rc-slider-handle {
   border: solid 2px $blue;

@@ -1,49 +1,51 @@
 import React, { FunctionComponent } from 'react';
 import { Range, createSliderWithTooltip } from 'rc-slider';
 import { css } from 'emotion';
-import { stylesFactory, withTheme } from '../../themes';
+import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { Themeable } from '../../types';
+import { useTheme } from '../../themes/ThemeContext';
 
-export interface Props extends Themeable {
+export interface Props {
   min: number;
   max: number;
   orientation: 'horizontal' | 'vertical';
   reverse?: boolean;
-  size?: string;
-  formatTooltipResult?: (value: any) => number | string;
-  onChange?: (value: any) => void;
+  lengthOfSlider?: number;
+  formatTooltipResult?: (value: number) => number | string;
+  onChange?: (values: number[]) => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, orientation: 'horizontal' | 'vertical', size: string) => {
-  const container =
-    orientation === 'horizontal'
-      ? css`
-          width: ${size};
-          margin: 20px;
-        `
-      : css`
-          height: ${size};
-          margin: 20px;
-        `;
-  return {
-    container: container,
-  };
-});
+const getStyles = stylesFactory(
+  (theme: GrafanaTheme, orientation: 'horizontal' | 'vertical', lengthOfSlider: number | undefined) => {
+    const length = lengthOfSlider || 200;
+    const container =
+      orientation === 'horizontal'
+        ? css`
+            width: ${length}px;
+            margin: ${theme.spacing.lg};
+          `
+        : css`
+            height: ${length}px;
+            margin: ${theme.spacing.lg};
+          `;
+    return {
+      container: container,
+    };
+  }
+);
 
-const UnThemedSlider: FunctionComponent<Props> = ({
-  theme,
+export const Slider: FunctionComponent<Props> = ({
   min,
   max,
   onChange,
   orientation,
-  size,
+  lengthOfSlider,
   reverse,
   formatTooltipResult,
 }) => {
-  const toltipSize = size || '200px';
+  const theme = useTheme();
   const isHorizontal = orientation === 'horizontal';
-  const styles = getStyles(theme, orientation, toltipSize);
+  const styles = getStyles(theme, orientation, lengthOfSlider);
   const RangeWithTooltip = createSliderWithTooltip(Range);
   return (
     <div className={styles.container}>
@@ -52,7 +54,7 @@ const UnThemedSlider: FunctionComponent<Props> = ({
         min={min}
         max={max}
         defaultValue={[min, max]}
-        tipFormatter={(value: string | number) => (formatTooltipResult ? formatTooltipResult(value) : value)}
+        tipFormatter={(value: number) => (formatTooltipResult ? formatTooltipResult(value) : value)}
         onChange={onChange}
         vertical={!isHorizontal}
         reverse={reverse}
@@ -61,5 +63,4 @@ const UnThemedSlider: FunctionComponent<Props> = ({
   );
 };
 
-export const Slider = withTheme(UnThemedSlider);
 Slider.displayName = 'Slider';
