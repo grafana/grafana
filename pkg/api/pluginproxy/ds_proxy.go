@@ -99,7 +99,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	reverseProxy := &httputil.ReverseProxy{
 		Director:      proxy.getDirector(),
 		FlushInterval: time.Millisecond * 200,
-		ErrorLog:      log.New(&logWrapper{logger: glog.New("reverseProxy")}, "", 0),
+		ErrorLog:      log.New(&logWrapper{logger: logger}, "", 0),
 	}
 
 	transport, err := proxy.ds.GetHttpTransport()
