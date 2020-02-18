@@ -121,7 +121,7 @@ func Recovery() macaron.Handler {
 				stack := stack(3)
 				panicLogger.Error("Request error", "error", err, "stack", string(stack))
 
-				// if response have already been written, skip.
+				// if response has already been written, skip.
 				if c.Written() {
 					return
 				}

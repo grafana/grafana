@@ -236,7 +236,7 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 
 func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.UserTokenService, token *models.UserToken) macaron.BeforeFunc {
 	return func(w macaron.ResponseWriter) {
-		// if response have already been written, skip.
+		// if response has already been written, skip.
 		if w.Written() {
 			return
 		}
@@ -278,7 +278,7 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 func AddDefaultResponseHeaders() macaron.Handler {
 	return func(ctx *macaron.Context) {
 		ctx.Resp.Before(func(w macaron.ResponseWriter) {
-			// if response have already been written, skip.
+			// if response has already been written, skip.
 			if w.Written() {
 				return
 			}
