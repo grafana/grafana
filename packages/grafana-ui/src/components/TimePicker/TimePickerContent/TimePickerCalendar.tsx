@@ -250,14 +250,12 @@ const Header = memo<Props>(({ onClose }) => {
   );
 });
 
-const Body = memo<Props>(props => {
+const Body = memo<Props>(({ onChange, from, to }) => {
   const [value, setValue] = useState<Date[]>();
   const theme = useTheme();
   const styles = getBodyStyles(theme);
-  const { onChange } = props;
 
   useEffect(() => {
-    const { from, to } = props;
     setValue(inputToValue(from, to));
   }, []);
 
