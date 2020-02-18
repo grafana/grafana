@@ -109,13 +109,13 @@ export class FolderPicker extends PureComponent<Props, State> {
     const options = await this.getOptions('');
 
     let folder: SelectableValue<number> = { value: -1 };
-    if (initialFolderId || (initialFolderId && initialFolderId > -1)) {
+    if (initialFolderId !== undefined && initialFolderId > -1) {
       folder = options.find(option => option.value === initialFolderId) || { value: -1 };
     } else if (enableReset && initialTitle && initialFolderId === undefined) {
       folder = resetFolder;
     }
 
-    if (!folder) {
+    if (folder.value === -1) {
       if (contextSrv.isEditor) {
         folder = rootFolder;
       } else {

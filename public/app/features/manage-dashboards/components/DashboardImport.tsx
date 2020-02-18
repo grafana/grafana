@@ -1,23 +1,22 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
-import { dateTime, NavModel } from '@grafana/data';
+import { AppEvents, NavModel } from '@grafana/data';
 import { Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { resetDashboard, fetchGcomDashboard, changeDashboardTitle } from '../state/actions';
+import ImportDashboardForm from './ImportDashboardForm';
+import { DashboardFileUpload } from './DashboardFileUpload';
+import { fetchGcomDashboard, processImportedDashboard } from '../state/actions';
+import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
-import { FolderPicker } from '../../../core/components/Select/FolderPicker';
 
 interface Props {
   navModel: NavModel;
   dashboard: any;
-  inputs: any[];
-
   fetchGcomDashboard: typeof fetchGcomDashboard;
-  resetDashboard: typeof resetDashboard;
-  changeDashboardTitle: typeof changeDashboardTitle;
+  processImportedDashboard: typeof processImportedDashboard;
 }
 
 interface State {
@@ -46,6 +45,27 @@ class DashboardImport extends PureComponent<Props, State> {
     this.setState({ gcomDashboard: event.currentTarget.value });
   };
 
+  onFileUpload = (event: FormEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files[0];
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      return (e: any) => {
+        let dashboard: any;
+        try {
+          dashboard = JSON.parse(e.target.result);
+        } catch (error) {
+          console.log(error);
+          appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
+          return;
+        }
+        console.log(dashboard);
+        this.props.processImportedDashboard(dashboard);
+      };
+    };
+    reader.readAsText(file);
+  };
+
   getGcomDashboard = () => {
     const { gcomDashboard } = this.state;
 
@@ -63,20 +83,10 @@ class DashboardImport extends PureComponent<Props, State> {
       });
     }
 
-    this.props.fetchGcomDashboard(dashboardId);
+    if (dashboardId) {
+      this.props.fetchGcomDashboard(dashboardId);
+    }
   };
-
-  onSubmit = () => {};
-
-  onCancel = () => {
-    this.props.resetDashboard();
-  };
-
-  onTitleChange = (event: FormEvent<HTMLInputElement>) => {
-    this.props.changeDashboardTitle(event.currentTarget.value);
-  };
-
-  onFolderChange = ($folder: { title: string; id: number }) => {};
 
   renderImportForm() {
     const styles = importStyles();
@@ -84,8 +94,7 @@ class DashboardImport extends PureComponent<Props, State> {
     return (
       <>
         <div className={styles.option}>
-          <Forms.Legend>Import via .json file</Forms.Legend>
-          <Forms.Button>Upload .json file</Forms.Button>
+          <DashboardFileUpload onFileUpload={this.onFileUpload} />
         </div>
         <div className={styles.option}>
           <Forms.Legend>Import via grafana.com</Forms.Legend>
@@ -109,98 +118,11 @@ class DashboardImport extends PureComponent<Props, State> {
     );
   }
 
-  renderSaveForm() {
-    const { dashboard, inputs } = this.props;
-    return (
-      <>
-        {dashboard.json.gnetId && (
-          <>
-            <div>
-              <Forms.Legend>
-                Importing Dashboard from{' '}
-                <a
-                  href={`https://grafana.com/dashboards/${dashboard.json.gnetId}`}
-                  className="external-link"
-                  target="_blank"
-                >
-                  Grafana.com
-                </a>
-              </Forms.Legend>
-            </div>
-            <table className="filter-table form-inline">
-              <tbody>
-                <tr>
-                  <td>Published by</td>
-                  <td>{dashboard.orgName}</td>
-                </tr>
-                <tr>
-                  <td>Updated on</td>
-                  <td>{dateTime(dashboard.updatedAt).format()}</td>
-                </tr>
-              </tbody>
-            </table>
-          </>
-        )}
-        <Forms.Form onSubmit={this.onSubmit}>
-          {({ register, control, errors }) => {
-            return (
-              <>
-                <Forms.Legend className="section-heading">Options</Forms.Legend>
-                <Forms.Field label="Name">
-                  <Forms.Input
-                    size="md"
-                    type="text"
-                    className="gf-form-input"
-                    value={dashboard.json.title}
-                    onChange={this.onTitleChange}
-                  />
-                </Forms.Field>
-                <Forms.Field label="Folder">
-                  <FolderPicker onChange={this.onFolderChange} useInNextGenForms={true} />
-                </Forms.Field>
-                <Forms.Field
-                  label="Unique identifier (uid)"
-                  description="The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
-                The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will not break any
-                bookmarked links to that dashboard."
-                >
-                  <Forms.Input size="md" value="Value set" disabled addonAfter={<Forms.Button>Clear</Forms.Button>} />
-                </Forms.Field>
-                {inputs.map((input: any, index: number) => {
-                  if (input.type === 'datasource') {
-                    return (
-                      <Forms.Field label={input.label} key={`${input.label}-${index}`}>
-                        <DataSourcePicker
-                          datasources={input.options}
-                          onChange={() => console.log('something changed')}
-                          current={input.options[0]}
-                        />
-                      </Forms.Field>
-                    );
-                  }
-                  return null;
-                })}
-                <div>
-                  <Forms.Button type="submit" variant="primary" onClick={this.onSubmit}>
-                    Import
-                  </Forms.Button>
-                  <Forms.Button type="reset" variant="secondary" onClick={this.onCancel}>
-                    Cancel
-                  </Forms.Button>
-                </div>
-              </>
-            );
-          }}
-        </Forms.Form>
-      </>
-    );
-  }
-
   render() {
     const { dashboard, navModel } = this.props;
     return (
       <Page navModel={navModel}>
-        <Page.Contents>{dashboard.json ? this.renderSaveForm() : this.renderImportForm()}</Page.Contents>
+        <Page.Contents>{dashboard.json ? <ImportDashboardForm /> : this.renderImportForm()}</Page.Contents>
       </Page>
     );
   }
@@ -210,14 +132,13 @@ const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, 'import', null, true),
     dashboard: state.importDashboard.dashboard,
-    inputs: state.importDashboard.inputs,
   };
 };
 
 const mapDispatchToProps = {
   fetchGcomDashboard,
-  resetDashboard,
-  changeDashboardTitle,
+
+  processImportedDashboard,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(DashboardImport);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardImport));

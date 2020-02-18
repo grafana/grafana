@@ -11,7 +11,7 @@ const importDashboardSlice = createSlice({
   name: 'manageDashboards',
   initialState: initialImportDashboardState,
   reducers: {
-    setGcomDashboard: (state, action: PayloadAction<any>): ImportDashboardState => {
+    setDashboard: (state, action: PayloadAction<any>): ImportDashboardState => {
       return {
         ...state,
         dashboard: action.payload,
@@ -49,7 +49,7 @@ const importDashboardSlice = createSlice({
 export const {
   clearDashboard,
   setInputs,
-  setGcomDashboard,
+  setDashboard,
   setGcomError,
   dashboardTitleChange,
 } = importDashboardSlice.actions;
