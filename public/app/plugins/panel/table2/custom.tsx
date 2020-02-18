@@ -13,7 +13,7 @@ import {
 export const tableFieldRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(() => {
   const columWidth: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
     id: 'width', // Match field properties
-    name: 'Column Width',
+    name: 'Column width',
     description: 'column width (for table)',
 
     editor: NumberValueEditor,
@@ -31,8 +31,8 @@ export const tableFieldRegistry: FieldConfigEditorRegistry = new Registry<FieldP
 
   const cellDisplayMode: FieldPropertyEditorItem<string, StringSelectFieldConfigSettings> = {
     id: 'displayMode', // Match field properties
-    name: 'Display mode',
-    description: 'Cell display mode',
+    name: 'Cell display mode',
+    description: 'Color value, background, show as gauge, etc',
 
     editor: StringSelectValueEditor,
     override: StringSelectOverrideEditor,
