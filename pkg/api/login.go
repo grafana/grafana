@@ -35,7 +35,7 @@ func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
 	if to.IsAbs() {
 		return login.ErrAbsoluteRedirectTo
 	}
-	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, "/"+hs.Cfg.AppSubUrl) {
+	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
 		return login.ErrInvalidRedirectTo
 	}
 	return nil
