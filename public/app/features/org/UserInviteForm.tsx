@@ -4,6 +4,11 @@ import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
 import { css } from 'emotion';
 import { getBackendSrv } from '@grafana/runtime';
+import { updateLocation } from 'app/core/actions';
+import { connect } from 'react-redux';
+import { hot } from 'react-hot-loader';
+import { appEvents } from 'app/core/core';
+import { AppEvents } from '@grafana/data';
 
 const roles = [
   { label: 'Viewer', value: OrgRole.Viewer },
@@ -23,16 +28,18 @@ interface FormModel {
   email: string;
 }
 
-export const UserInviteForm: FC = () => {
+interface Props {
+  updateLocation: typeof updateLocation;
+}
+
+export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
   const onSubmit = async (formData: FormModel) => {
-    console.log(formData);
-    // Make request
     try {
       await getBackendSrv().post('/api/org/invites', formData);
     } catch (err) {
-      throw err;
+      appEvents.emit(AppEvents.alertError, ['Failed to send invite', err.message]);
     }
-    console.log('redirecting');
+    updateLocation({ path: 'org/users/' });
   };
   const defaultValues: FormModel = {
     name: '',
@@ -70,3 +77,9 @@ export const UserInviteForm: FC = () => {
     </Forms.Form>
   );
 };
+
+const mapDispatchToProps = {
+  updateLocation,
+};
+
+export default hot(module)(connect(null, mapDispatchToProps)(UserInviteForm));
