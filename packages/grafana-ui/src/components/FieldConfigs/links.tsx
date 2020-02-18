@@ -36,12 +36,13 @@ export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], D
   };
 
   const onDataLinkAdd = () => {
-    const links = cloneDeep(value);
+    const links = cloneDeep(value) || [];
 
     links.push({
       title: '',
       url: '',
     });
+
     onChange(links);
   };
 
