@@ -46,10 +46,11 @@ class DashboardImport extends PureComponent<Props, State> {
   };
 
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
+    const { processImportedDashboard } = this.props;
     const file = event.currentTarget.files[0];
 
     const reader = new FileReader();
-    reader.onload = () => {
+    const readerOnLoad = () => {
       return (e: any) => {
         let dashboard: any;
         try {
@@ -60,9 +61,10 @@ class DashboardImport extends PureComponent<Props, State> {
           return;
         }
         console.log(dashboard);
-        this.props.processImportedDashboard(dashboard);
+        processImportedDashboard(dashboard);
       };
     };
+    reader.onload = readerOnLoad();
     reader.readAsText(file);
   };
 
