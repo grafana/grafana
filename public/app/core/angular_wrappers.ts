@@ -24,8 +24,10 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { UserInviteForm } from 'app/features/org/UserInviteForm';
 
 export function registerAngularDirectives() {
+  react2AngularDirective('userInviteForm', UserInviteForm, []);
   react2AngularDirective('footer', Footer, []);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
