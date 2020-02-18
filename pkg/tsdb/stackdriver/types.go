@@ -44,8 +44,8 @@ type (
 				Labels map[string]string `json:"labels"`
 			} `json:"resource"`
 			MetaData   map[string]map[string]interface{} `json:"metadata"`
-			MetricKind string `json:"metricKind"`
-			ValueType  string `json:"valueType"`
+			MetricKind string                            `json:"metricKind"`
+			ValueType  string                            `json:"valueType"`
 			Points     []struct {
 				Interval struct {
 					StartTime time.Time `json:"startTime"`
