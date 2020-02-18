@@ -54,7 +54,12 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
         return (
           <>
             <Forms.Field label="Email or Username">
-              <Forms.Input size="md" name="loginOrEmail" placeholder="email@example.com" ref={register} />
+              <Forms.Input
+                size="md"
+                name="loginOrEmail"
+                placeholder="email@example.com"
+                ref={register({ required: true })}
+              />
             </Forms.Field>
             <Forms.Field label="Name">
               <Forms.Input size="md" name="name" placeholder="(optional)" ref={register} />
