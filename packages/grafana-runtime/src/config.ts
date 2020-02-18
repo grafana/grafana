@@ -49,6 +49,8 @@ export class GrafanaBootConfig {
   exploreEnabled = false;
   ldapEnabled = false;
   samlEnabled = false;
+  autoAssignOrg = true;
+  verifyEmailEnabled = false;
   oauth: any;
   disableUserSignUp = false;
   loginHint: any;
