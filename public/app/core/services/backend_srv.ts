@@ -1,6 +1,6 @@
 import omitBy from 'lodash/omitBy';
-import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
+import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, throwError } from 'rxjs';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
@@ -49,6 +49,11 @@ interface ErrorResponse<T extends ErrorResponseProps = any> {
   cancelled?: boolean;
 }
 
+enum CancellationType {
+  request,
+  dataSourceRequest,
+}
+
 function serializeParams(data: Record<string, any>): string {
   return Object.keys(data)
     .map(key => {
@@ -90,8 +95,8 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async get(url: string, params?: any) {
-    return await this.request({ method: 'GET', url, params });
+  async get(url: string, params?: any, requestId?: string) {
+    return await this.request({ method: 'GET', url, params, requestId });
   }
 
   async delete(url: string) {
@@ -150,6 +155,13 @@ export class BackendSrv implements BackendService {
   };
 
   async request(options: BackendSrvRequest): Promise<any> {
+    // A requestId is a unique identifier for a particular query.
+    // Every observable below has a takeUntil that subscribes to this.inFlightRequests and
+    // will cancel/unsubscribe that observable when a new datasourceRequest with the same requestId is made
+    if (options.requestId) {
+      this.inFlightRequests.next(options.requestId);
+    }
+
     options = this.parseRequestOptions(options, this.dependencies.contextSrv.user?.orgId);
 
     const fromFetchStream = this.getFromFetchStream(options);
@@ -170,15 +182,11 @@ export class BackendSrv implements BackendService {
     return merge(successStream, failureStream)
       .pipe(
         catchError((err: ErrorResponse) => {
-          if (err.status === 401) {
-            this.dependencies.logout();
-            return throwError(err);
-          }
-
           // this setTimeout hack enables any caller catching this err to set isHandled to true
           setTimeout(() => this.requestErrorHandler(err), 50);
           return throwError(err);
-        })
+        }),
+        this.handleStreamCancellation(options, CancellationType.request)
       )
       .toPromise();
   }
@@ -202,7 +210,7 @@ export class BackendSrv implements BackendService {
     );
 
     const fromFetchStream = this.getFromFetchStream(options);
-    const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
+    const failureStream = fromFetchStream.pipe(this.toDataSourceRequestFailureStream(options));
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
@@ -219,18 +227,6 @@ export class BackendSrv implements BackendService {
     return merge(successStream, failureStream)
       .pipe(
         catchError((err: ErrorResponse) => {
-          if (err.status === this.HTTP_REQUEST_CANCELED) {
-            return throwError({
-              err,
-              cancelled: true,
-            });
-          }
-
-          if (err.status === 401) {
-            this.dependencies.logout();
-            return throwError(err);
-          }
-
           // populate error obj on Internal Error
           if (typeof err.data === 'string' && err.status === 500) {
             err.data = {
@@ -250,20 +246,7 @@ export class BackendSrv implements BackendService {
 
           return throwError(err);
         }),
-        takeUntil(
-          this.inFlightRequests.pipe(
-            filter(requestId => {
-              let cancelRequest = false;
-              if (options && options.requestId && options.requestId === requestId) {
-                // when a new requestId is started it will be published to inFlightRequests
-                // if a previous long running request that hasn't finished yet has the same requestId
-                // we need to cancel that request
-                cancelRequest = true;
-              }
-              return cancelRequest;
-            })
-          )
-        )
+        this.handleStreamCancellation(options, CancellationType.dataSourceRequest)
       )
       .toPromise();
   }
@@ -498,13 +481,98 @@ export class BackendSrv implements BackendService {
             const firstAttempt = i === 0 && options.retry === 0;
 
             if (error.status === 401 && this.dependencies.contextSrv.user.isSignedIn && firstAttempt) {
-              return from(this.loginPing());
+              return from(this.loginPing()).pipe(
+                catchError(err => {
+                  if (err.status === 401) {
+                    this.dependencies.logout();
+                    return throwError(err);
+                  }
+                  return throwError(err);
+                })
+              );
             }
 
             return throwError(error);
           })
         )
       )
+    );
+
+  private toDataSourceRequestFailureStream = (
+    options: BackendSrvRequest
+  ): MonoTypeOperatorFunction<FetchResponse> => inputStream =>
+    inputStream.pipe(
+      filter(response => response.ok === false),
+      mergeMap(response => {
+        const { status, statusText, data } = response;
+        const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+        return throwError(fetchErrorResponse);
+      }),
+      retryWhen((attempts: Observable<any>) =>
+        attempts.pipe(
+          mergeMap((error, i) => {
+            const requestIsLocal = !options.url.match(/^http/);
+            const firstAttempt = i === 0 && options.retry === 0;
+
+            // First retry, if loginPing returns 401 this retry sequence will abort with throwError and user is logged out
+            if (requestIsLocal && firstAttempt && error.status === 401) {
+              return from(this.loginPing()).pipe(
+                catchError(err => {
+                  if (err.status === 401) {
+                    this.dependencies.logout();
+                    return throwError(err);
+                  }
+                  return throwError(err);
+                })
+              );
+            }
+
+            return throwError(error);
+          })
+        )
+      )
+    );
+
+  private handleStreamCancellation = (
+    options: BackendSrvRequest,
+    resultType: CancellationType
+  ): MonoTypeOperatorFunction<FetchResponse | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
+    inputStream.pipe(
+      takeUntil(
+        this.inFlightRequests.pipe(
+          filter(requestId => {
+            let cancelRequest = false;
+            if (options && options.requestId && options.requestId === requestId) {
+              // when a new requestId is started it will be published to inFlightRequests
+              // if a previous long running request that hasn't finished yet has the same requestId
+              // we need to cancel that request
+              cancelRequest = true;
+            }
+            return cancelRequest;
+          })
+        )
+      ),
+      // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
+      // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
+      throwIfEmpty(() => ({
+        cancelled: true,
+      })),
+      catchError(err => {
+        if (!err.cancelled) {
+          return throwError(err);
+        }
+
+        if (resultType === CancellationType.dataSourceRequest) {
+          return of({
+            data: [],
+            status: this.HTTP_REQUEST_CANCELED,
+            statusText: 'Request was aborted',
+            request: { url: parseUrlFromOptions(options), ...parseInitFromOptions(options) },
+          });
+        }
+
+        return of([]);
+      })
     );
 }
 

@@ -100,7 +100,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
       const series = data[s]; // Name is already set
-      scopedVars['__series'] = { text: 'Series', value: { name: series.name } };
 
       const { timeField } = getTimeField(series);
       const view = new DataFrameView(series);
@@ -113,13 +112,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           continue;
         }
         const config = field.config; // already set by the prepare task
-
-        let name = field.name;
-        if (!name) {
-          name = `Field[${s}]`;
-        }
-
-        scopedVars['__field'] = { text: 'Field', value: { name } };
 
         const display =
           field.display ??
@@ -145,9 +137,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                 };
               }
             }
-
             const displayValue = display(field.values.get(j));
-            displayValue.title = replaceVariables(title, scopedVars);
+            displayValue.title = replaceVariables(title, {
+              ...field.config.scopedVars, // series and field scoped vars
+              ...scopedVars,
+            });
+
             values.push({
               name,
               field: config,
@@ -180,7 +175,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           for (const calc of calcs) {
             scopedVars[VAR_CALC] = { value: calc, text: calc };
             const displayValue = display(results[calc]);
-            displayValue.title = replaceVariables(title, scopedVars);
+            displayValue.title = replaceVariables(title, {
+              ...field.config.scopedVars, // series and field scoped vars
+              ...scopedVars,
+            });
             values.push({
               name: calc,
               field: config,

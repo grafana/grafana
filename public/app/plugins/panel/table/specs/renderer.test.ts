@@ -317,12 +317,9 @@ describe('when rendering table', () => {
     it('link should render as', () => {
       const html = renderer.renderCell(7, 0, 'host1');
       const expectedHtml = `
-        <td class="table-panel-cell-link">
-          <a href="/dashboard?param=host1&param_1=1230&param_2=40"
-            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.com" data-placement="right">
-            host1
-          </a>
-        </td>
+        <td class="table-panel-cell-link"><a href="/dashboard?param=host1&param_1=1230&param_2=40"
+            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.com"
+			data-placement="right">host1</a></td>
       `;
       expect(normalize(html)).toBe(normalize(expectedHtml));
     });

@@ -128,36 +128,33 @@ function checkOppositeSides(yLeft: AxisSide, yRight: AxisSide) {
   return (yLeft.min >= 0 && yRight.max <= 0) || (yLeft.max <= 0 && yRight.min >= 0);
 }
 
-function getRate(yLeft: AxisSide, yRight: AxisSide) {
-  let rateLeft, rateRight, rate;
+function getRate(yLeft: AxisSide, yRight: AxisSide): number {
   if (checkTwoCross(yLeft, yRight)) {
-    rateLeft = yRight.min ? yLeft.min / yRight.min : 0;
-    rateRight = yRight.max ? yLeft.max / yRight.max : 0;
-  } else {
-    if (checkOneSide(yLeft, yRight)) {
-      const absLeftMin = Math.abs(yLeft.min);
-      const absLeftMax = Math.abs(yLeft.max);
-      const absRightMin = Math.abs(yRight.min);
-      const absRightMax = Math.abs(yRight.max);
-      const upLeft = _.max([absLeftMin, absLeftMax]);
-      const downLeft = _.min([absLeftMin, absLeftMax]);
-      const upRight = _.max([absRightMin, absRightMax]);
-      const downRight = _.min([absRightMin, absRightMax]);
+    const rateLeft = yRight.min ? yLeft.min / yRight.min : 0;
+    const rateRight = yRight.max ? yLeft.max / yRight.max : 0;
 
-      rateLeft = downLeft ? upLeft / downLeft : upLeft;
-      rateRight = downRight ? upRight / downRight : upRight;
-    } else {
-      if (yLeft.min > 0 || yRight.min > 0) {
-        rateLeft = yLeft.max / yRight.max;
-        rateRight = 0;
-      } else {
-        rateLeft = 0;
-        rateRight = yLeft.min / yRight.min;
-      }
-    }
+    return rateLeft > rateRight ? rateLeft : rateRight;
   }
 
-  rate = rateLeft > rateRight ? rateLeft : rateRight;
+  if (checkOneSide(yLeft, yRight)) {
+    const absLeftMin = Math.abs(yLeft.min);
+    const absLeftMax = Math.abs(yLeft.max);
+    const absRightMin = Math.abs(yRight.min);
+    const absRightMax = Math.abs(yRight.max);
+    const upLeft = _.max([absLeftMin, absLeftMax]);
+    const downLeft = _.min([absLeftMin, absLeftMax]);
+    const upRight = _.max([absRightMin, absRightMax]);
+    const downRight = _.min([absRightMin, absRightMax]);
 
-  return rate;
+    const rateLeft = downLeft ? upLeft / downLeft : upLeft;
+    const rateRight = downRight ? upRight / downRight : upRight;
+
+    return rateLeft > rateRight ? rateLeft : rateRight;
+  }
+
+  if (yLeft.min > 0 || yRight.min > 0) {
+    return yLeft.max / yRight.max;
+  } else {
+    return yLeft.min / yRight.min;
+  }
 }

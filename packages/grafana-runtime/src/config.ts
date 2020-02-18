@@ -49,11 +49,14 @@ export class GrafanaBootConfig {
   exploreEnabled = false;
   ldapEnabled = false;
   samlEnabled = false;
+  autoAssignOrg = true;
+  verifyEmailEnabled = false;
   oauth: any;
   disableUserSignUp = false;
   loginHint: any;
   passwordHint: any;
   loginError: any;
+  navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
@@ -67,6 +70,7 @@ export class GrafanaBootConfig {
     meta: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
+  phantomJSRenderer = false;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
@@ -97,6 +101,7 @@ export class GrafanaBootConfig {
 const bootData = (window as any).grafanaBootData || {
   settings: {},
   user: {},
+  navTree: [],
 };
 
 const options = bootData.settings;

@@ -305,26 +305,23 @@ export class TableRenderer {
 
       cellClasses.push('table-panel-cell-link');
 
-      columnHtml += `
-        <a href="${sanitizedCellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${cellStyle}>
-          ${value}
-        </a>
-      `;
+      columnHtml += `<a href="${sanitizedCellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${cellStyle}>`;
+      columnHtml += `${value}`;
+      columnHtml += `</a>`;
     } else {
       columnHtml += value;
     }
 
     if (column.filterable) {
       cellClasses.push('table-panel-cell-filterable');
-      columnHtml += `
-        <a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter out value" data-placement="bottom"
-           data-row="${rowIndex}" data-column="${columnIndex}" data-operator="!=">
-          <i class="fa fa-search-minus"></i>
-        </a>
-        <a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter for value" data-placement="bottom"
-           data-row="${rowIndex}" data-column="${columnIndex}" data-operator="=">
-          <i class="fa fa-search-plus"></i>
-        </a>`;
+      columnHtml += `<a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter out value" data-placement="bottom"
+           data-row="${rowIndex}" data-column="${columnIndex}" data-operator="!=">`;
+      columnHtml += `<i class="fa fa-search-minus"></i>`;
+      columnHtml += `</a>`;
+      columnHtml += `<a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter for value" data-placement="bottom"
+           data-row="${rowIndex}" data-column="${columnIndex}" data-operator="=">`;
+      columnHtml += `<i class="fa fa-search-plus"></i>`;
+      columnHtml += `</a>`;
     }
 
     if (cellClasses.length) {

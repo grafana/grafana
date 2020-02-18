@@ -6,12 +6,11 @@ import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { isTableData } from '@grafana/data';
+import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
-class TablePanelCtrl extends MetricsPanelCtrl {
+export class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   pageIndex: number;
@@ -280,4 +279,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 }
 
-export { TablePanelCtrl, TablePanelCtrl as PanelCtrl };
+export const plugin = new PanelPlugin(null);
+plugin.angularPanelCtrl = TablePanelCtrl;
+plugin.setNoPadding();

@@ -1,20 +1,30 @@
 import React, { FC, ReactNode, PureComponent } from 'react';
+import classNames from 'classnames';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 interface ToggleButtonGroupProps {
   label?: string;
   children: JSX.Element[];
   transparent?: boolean;
+  width?: number;
 }
 
 export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
   render() {
-    const { children, label, transparent } = this.props;
+    const { children, label, transparent, width } = this.props;
+    const labelClasses = classNames('gf-form-label', {
+      'gf-form-label--transparent': transparent,
+      [`width-${width}`]: width,
+    });
+    const buttonGroupClasses = classNames('toggle-button-group', {
+      'toggle-button-group--transparent': transparent,
+      'toggle-button-group--padded': width, // Add extra padding to compensate for buttons border
+    });
 
     return (
       <div className="gf-form gf-form--align-center">
-        {label && <label className={`gf-form-label ${transparent ? 'gf-form-label--transparent' : ''}`}>{label}</label>}
-        <div className={`toggle-button-group ${transparent ? 'toggle-button-group--transparent' : ''}`}>{children}</div>
+        {label && <label className={labelClasses}>{label}</label>}
+        <div className={buttonGroupClasses}>{children}</div>
       </div>
     );
   }
