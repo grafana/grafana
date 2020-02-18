@@ -75,6 +75,11 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *m.ReqContext) {
+		if setting.AppSubUrl == c.Req.RequestURI {
+			c.Redirect(setting.AppSubUrl + "/")
+			return
+		}
+
 		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
 			notAuthorized(c)
 			return
