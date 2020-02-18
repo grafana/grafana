@@ -4,12 +4,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/licensing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -157,10 +158,26 @@ func TestLoginViewRedirect(t *testing.T) {
 			status: 302,
 		},
 		{
-			desc:      "grafana relative url with subpath",
+			desc:      "grafana relative url with subpath without leading slash",
 			url:       "/grafana/profile",
 			appURL:    "http://localhost:3000",
 			appSubURL: "grafana",
+			status:    200,
+			err:       login.ErrInvalidRedirectTo,
+		},
+		{
+			desc:      "grafana invalid relative url starting with the subpath",
+			url:       "/grafanablah",
+			appURL:    "http://localhost:3000",
+			appSubURL: "/grafana",
+			status:    200,
+			err:       login.ErrInvalidRedirectTo,
+		},
+		{
+			desc:      "grafana relative url with subpath with leading slash",
+			url:       "/grafana/profile",
+			appURL:    "http://localhost:3000",
+			appSubURL: "/grafana",
 			status:    302,
 		},
 		{
@@ -276,10 +293,24 @@ func TestLoginPostRedirect(t *testing.T) {
 			appURL: "https://localhost:3000",
 		},
 		{
-			desc:      "grafana relative url with subpath",
+			desc:      "grafana relative url with subpath with leading slash",
+			url:       "/grafana/profile",
+			appURL:    "https://localhost:3000",
+			appSubURL: "/grafana",
+		},
+		{
+			desc:      "grafana invalid relative url starting with subpath",
+			url:       "/grafanablah",
+			appURL:    "https://localhost:3000",
+			appSubURL: "/grafana",
+			err:       login.ErrInvalidRedirectTo,
+		},
+		{
+			desc:      "grafana relative url with subpath without leading slash",
 			url:       "/grafana/profile",
 			appURL:    "https://localhost:3000",
 			appSubURL: "grafana",
+			err:       login.ErrInvalidRedirectTo,
 		},
 		{
 			desc:      "relative url with missing subpath",
