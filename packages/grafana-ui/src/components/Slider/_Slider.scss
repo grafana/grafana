@@ -50,3 +50,8 @@ $blue: #1f60c4;
 .rc-slider-track {
   background-color: $blue;
 }
+
+.rc-slider-rail {
+  background-color: $input-border-color;
+  border: 1px solid $input-border-color;
+}
