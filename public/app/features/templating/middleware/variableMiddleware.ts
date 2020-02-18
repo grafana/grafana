@@ -15,6 +15,7 @@ import {
   storeNewVariable,
   toVariablePayload,
   updateVariableCompleted,
+  updateVariableIndexes,
 } from '../state/actions';
 import {
   MoveVariableType,
@@ -57,7 +58,9 @@ const onVariableRemoveStart = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
   uuid,
   type,
 }: VariableRemoveVariable) => {
+  const variable = getVariable(uuid, store.getState());
   store.dispatch(removeVariable({ uuid, type, data: { notifyAngular: true } }));
+  store.dispatch(updateVariableIndexes(variable.index) as any);
 };
 
 const onVariableChangeOrderStart = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
@@ -85,6 +88,14 @@ const onVariableNewVariableStart = (store: MiddlewareAPI<Dispatch, StoreState>) 
   store.dispatch(newVariable({ uuid: emptyUuid, type: 'query', data: { variablesInAngular } }));
 };
 
+const onVariableRemoveVariableInAngularSucceeded = (store: MiddlewareAPI<Dispatch, StoreState>) => ({
+  removeIndex,
+}: {
+  removeIndex: number;
+}) => {
+  store.dispatch(updateVariableIndexes(removeIndex) as any);
+};
+
 export const variableMiddleware: Middleware<{}, StoreState> = (store: MiddlewareAPI<Dispatch, StoreState>) => (
   next: Dispatch
 ) => (action: AnyAction) => {
@@ -96,6 +107,10 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     dashboardEvents.on(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));
     dashboardEvents.on(CoreEvents.variableChangeOrderStart, onVariableChangeOrderStart(store));
     dashboardEvents.on(CoreEvents.variableNewVariableStart, onVariableNewVariableStart(store));
+    dashboardEvents.on(
+      CoreEvents.variableRemoveVariableInAngularSucceeded,
+      onVariableRemoveVariableInAngularSucceeded(store)
+    );
     return result;
   }
 
@@ -106,6 +121,10 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     dashboardEvents?.off(CoreEvents.variableRemoveVariableStart, onVariableRemoveStart(store));
     dashboardEvents?.off(CoreEvents.variableChangeOrderStart, onVariableChangeOrderStart(store));
     dashboardEvents?.off(CoreEvents.variableNewVariableStart, onVariableNewVariableStart(store));
+    dashboardEvents?.off(
+      CoreEvents.variableRemoveVariableInAngularSucceeded,
+      onVariableRemoveVariableInAngularSucceeded(store)
+    );
     dashboardEvents = null;
     return result;
   }
@@ -164,14 +183,14 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     const { newUuid } = action.payload.data;
     const result = next(action);
     const variable = getVariable(newUuid, store.getState());
-    dashboardEvents?.emit(CoreEvents.variableDuplicateVariableSucceeded, { uuid: variable.uuid ?? '' });
+    dashboardEvents?.emit(CoreEvents.variableDuplicateVariableSucceeded, { uuid: variable.uuid! });
     return result;
   }
 
   if (removeVariable.match(action)) {
     const result = next(action);
     if (action.payload.data.notifyAngular) {
-      dashboardEvents?.emit(CoreEvents.variableRemoveVariableSucceeded, { uuid: action.payload.uuid ?? '' });
+      dashboardEvents?.emit(CoreEvents.variableRemoveVariableSucceeded, { uuid: action.payload.uuid! });
     }
     return result;
   }
@@ -184,7 +203,13 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
 
   if (storeNewVariable.match(action)) {
     const result = next(action);
-    dashboardEvents?.emit(CoreEvents.variableStoreNewVariableSucceeded, { uuid: action.payload.uuid ?? '' });
+    dashboardEvents?.emit(CoreEvents.variableStoreNewVariableSucceeded, { uuid: action.payload.uuid! });
+    return result;
+  }
+
+  if (changeVariableOrder.match(action)) {
+    const result = next(action);
+    dashboardEvents?.emit(CoreEvents.variableChangeOrderSucceeded, { uuid: action.payload.uuid! });
     return result;
   }
 

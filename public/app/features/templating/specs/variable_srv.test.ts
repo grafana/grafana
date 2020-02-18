@@ -630,6 +630,38 @@ describe('VariableSrv', function(this: any) {
       expect(setValueMock).toHaveBeenCalledWith({ text: ['none', 'none2'], value: ['none', 'none2'] });
     });
   });
+
+  describe('updateIndexes', () => {
+    describe('when removing element with index before all others', () => {
+      it('then all variables should have correct indexes', () => {
+        const variableSrv = new VariableSrv({} as any, {} as any, {} as any, {} as any, {} as any);
+        variableSrv.variables = [{ index: 2 }, { index: 4 }, { index: 6 }, { index: 8 }]; // angular variables, 0,3,5,9 are in Redux
+        variableSrv.updateIndexes(1);
+
+        expect(variableSrv.variables).toEqual([{ index: 1 }, { index: 3 }, { index: 5 }, { index: 7 }]);
+      });
+    });
+
+    describe('when removing element with index in the middle of others', () => {
+      it('then all variables should have correct indexes', () => {
+        const variableSrv = new VariableSrv({} as any, {} as any, {} as any, {} as any, {} as any);
+        variableSrv.variables = [{ index: 2 }, { index: 4 }, { index: 6 }, { index: 8 }]; // angular variables, 0,3,5,9 are in Redux
+        variableSrv.updateIndexes(5);
+
+        expect(variableSrv.variables).toEqual([{ index: 2 }, { index: 4 }, { index: 5 }, { index: 7 }]);
+      });
+    });
+
+    describe('when removing element with index after all others', () => {
+      it('then all variables should have correct indexes', () => {
+        const variableSrv = new VariableSrv({} as any, {} as any, {} as any, {} as any, {} as any);
+        variableSrv.variables = [{ index: 2 }, { index: 4 }, { index: 6 }, { index: 8 }]; // angular variables, 0,3,5,9 are in Redux
+        variableSrv.updateIndexes(9);
+
+        expect(variableSrv.variables).toEqual([{ index: 2 }, { index: 4 }, { index: 6 }, { index: 8 }]);
+      });
+    });
+  });
 });
 
 function setupSetFromUrlTest(ctx: any, model = {}) {

@@ -405,9 +405,8 @@ export class VariableEditorCtrl {
     }
   }
 
-  onVariableDuplicateVariableSucceeded(args: VariableMovedToState) {
-    const variablesInState = getVariables().map(variable => ({ ...variable }));
-    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+  onVariableDuplicateVariableSucceeded() {
+    this.$scope.variables = getAllVariables(this.variableSrv.variables);
   }
 
   onVariableNewVariableSucceeded() {
@@ -415,19 +414,16 @@ export class VariableEditorCtrl {
     this.$scope.current = variable;
   }
 
-  onVariableRemoveVariableInAngularSucceeded(args: { name: string }) {
-    const variablesInState = getVariables().map(variable => ({ ...variable }));
-    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+  onVariableRemoveVariableInAngularSucceeded() {
+    this.$scope.variables = getAllVariables(this.variableSrv.variables);
   }
 
-  onVariableRemoveVariableSucceeded(args: { uuid: string }) {
-    const variablesInState = getVariables().map(variable => ({ ...variable }));
-    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+  onVariableRemoveVariableSucceeded() {
+    this.$scope.variables = getAllVariables(this.variableSrv.variables);
   }
 
   onVariableChangeOrderSucceeded() {
-    const variablesInState = getVariables().map(variable => ({ ...variable }));
-    this.$scope.variables = this.variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+    this.$scope.variables = getAllVariables(this.variableSrv.variables);
   }
 
   onVariableStoreNewVariableSucceeded(args: { uuid: string }) {

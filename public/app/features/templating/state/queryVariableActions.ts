@@ -101,14 +101,15 @@ export const updateQueryVariableOptions = (
   };
 };
 
-export const initQueryVariableEditor = (variable: QueryVariableModel): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    dispatch(changeQueryVariableDataSource(variable, variable.datasource));
-  };
+export const initQueryVariableEditor = (variable: QueryVariableModel): ThunkResult<void> => async dispatch => {
+  if (!variable.datasource) {
+    return;
+  }
+  dispatch(changeQueryVariableDataSource(variable, variable.datasource));
 };
 
 export const changeQueryVariableDataSource = (variable: QueryVariableModel, name: string | null): ThunkResult<void> => {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     try {
       const dataSource = await getDatasourceSrv().get(name ?? '');
       const dsPlugin = await importDataSourcePlugin(dataSource.meta ?? ({} as DataSourcePluginMeta));

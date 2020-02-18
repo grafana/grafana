@@ -23,7 +23,7 @@ const assertDefaultsForNewVariable = () => {
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
     e2e()
       .get('option:selected')
-      .should('not.exist');
+      .should('have.text', '');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput().should('not.exist');
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect().within(select => {
@@ -70,7 +70,7 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
-    .select(`string:${dataSourceName}`)
+    .select(`${dataSourceName}`)
     .blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
     .within(input => {

@@ -35,22 +35,26 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
     <div className="section gf-form-group">
       <h5 className="section-heading">Selection Options</h5>
       <div className="section">
-        <Switch
-          label="Multi-value"
-          labelClass="width-10"
-          checked={props.variable.multi}
-          onChange={onMultiChanged}
-          tooltip={'Enables multiple values to be selected at the same time'}
-          aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsMultiSwitch}
-        />
-        <Switch
-          label="Include All option"
-          labelClass="width-10"
-          checked={props.variable.includeAll}
-          onChange={onIncludeAllChanged}
-          tooltip={'Enables multiple values to be selected at the same time'}
+        <div aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsMultiSwitch}>
+          <Switch
+            label="Multi-value"
+            labelClass="width-10"
+            checked={props.variable.multi}
+            onChange={onMultiChanged}
+            tooltip={'Enables multiple values to be selected at the same time'}
+          />
+        </div>
+        <div
           aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.selectionOptionsIncludeAllSwitch}
-        />
+        >
+          <Switch
+            label="Include All option"
+            labelClass="width-10"
+            checked={props.variable.includeAll}
+            onChange={onIncludeAllChanged}
+            tooltip={'Enables multiple values to be selected at the same time'}
+          />
+        </div>
       </div>
       {props.variable.includeAll && (
         <div className="gf-form">

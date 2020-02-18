@@ -166,7 +166,7 @@ export interface VariableRemoveVariable {
 }
 export const variableRemoveVariableStart = eventFactory<VariableRemoveVariable>('variable-remove-variable-start');
 export const variableRemoveVariableSucceeded = eventFactory<{ uuid: string }>('variable-remove-variable-succeeded');
-export const variableRemoveVariableInAngularSucceeded = eventFactory<{ name: string }>(
+export const variableRemoveVariableInAngularSucceeded = eventFactory<{ removeIndex: number }>(
   'variable-remove-variable-in-angular-succeeded'
 );
 export interface VariableChangeOrderStart {

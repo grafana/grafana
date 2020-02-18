@@ -155,12 +155,21 @@ export class VariableSrv {
   }
 
   removeVariable(variable: any) {
-    const name = variable.name;
+    const removeIndex = variable.index;
     const index = _.indexOf(this.variables, variable);
     this.variables.splice(index, 1);
+    this.updateIndexes(removeIndex);
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
-    this.dashboard.events.emit(CoreEvents.variableRemoveVariableInAngularSucceeded, { name });
+    this.dashboard.events.emit(CoreEvents.variableRemoveVariableInAngularSucceeded, { removeIndex });
+  }
+
+  updateIndexes(removeIndex: number) {
+    for (let i = 0; i < this.variables.length; i++) {
+      if (this.variables[i].index > removeIndex) {
+        this.variables[i].index = this.variables[i].index - 1;
+      }
+    }
   }
 
   changeOrder(fromIndex: number, toIndex: number) {

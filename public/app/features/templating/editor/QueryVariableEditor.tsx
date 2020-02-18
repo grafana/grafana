@@ -159,7 +159,7 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
             </div>
           </div>
 
-          {VariableQueryEditor && (
+          {VariableQueryEditor && this.props.editor.dataSource && (
             <VariableQueryEditor
               datasource={this.props.editor.dataSource}
               query={this.props.variable.query}
@@ -232,15 +232,18 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
 
         <div className="gf-form-group">
           <h5>Value groups/tags (Experimental feature)</h5>
-          <Switch
-            label="Enabled"
-            label-class="width-10"
-            checked={this.props.variable.useTags}
-            onChange={this.onUseTagsChange}
+          <div
             aria-label={
               e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.valueGroupsTagsEnabledSwitch
             }
-          />
+          >
+            <Switch
+              label="Enabled"
+              label-class="width-10"
+              checked={this.props.variable.useTags}
+              onChange={this.onUseTagsChange}
+            />
+          </div>
           {this.props.variable.useTags && (
             <>
               <div className="gf-form last">

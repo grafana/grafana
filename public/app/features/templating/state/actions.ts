@@ -506,3 +506,15 @@ export const onEditorAdd = (variable: VariableModel): ThunkResult<void> => {
     await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
   };
 };
+
+export const updateVariableIndexes = (removeIndex: number): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const variables = getVariables(getState());
+    for (let index = 0; index < variables.length; index++) {
+      const variable = variables[index];
+      if (variable.index > removeIndex) {
+        dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'index', propValue: variable.index - 1 })));
+      }
+    }
+  };
+};

@@ -7,7 +7,7 @@ import { CoreEvents } from '../../../../types';
 import { VariableModel } from '../../../templating/variable';
 import { getAllVariables, getVariable, getVariables } from '../../../templating/state/selectors';
 import { variableAdapters } from '../../../templating/adapters';
-import { MoveVariableType, VariableMovedToState } from '../../../../types/events';
+import { VariableMovedToState } from '../../../../types/events';
 
 export class SubMenuCtrl {
   annotations: any;
@@ -80,25 +80,19 @@ export class SubMenuCtrl {
     }
   }
 
-  onVariableMovedToAngularSucceeded(args: MoveVariableType) {
-    const variable = this.variableSrv.variables.find(v => v.index === args.index && v.name === args.name);
-    for (let index = 0; index < this.variables.length; index++) {
-      if (index === variable.index) {
-        this.variables[index] = variable;
-        break;
-      }
-    }
-  }
-
-  onVariableDuplicateVariableSucceeded(args: VariableMovedToState) {
+  onVariableMovedToAngularSucceeded() {
     this.variables = getAllVariables(this.variableSrv.variables);
   }
 
-  onVariableRemoveVariableInAngularSucceeded(args: { name: string }) {
+  onVariableDuplicateVariableSucceeded() {
     this.variables = getAllVariables(this.variableSrv.variables);
   }
 
-  onVariableRemoveVariableSucceeded(args: { uuid: string }) {
+  onVariableRemoveVariableInAngularSucceeded() {
+    this.variables = getAllVariables(this.variableSrv.variables);
+  }
+
+  onVariableRemoveVariableSucceeded() {
     this.variables = getAllVariables(this.variableSrv.variables);
   }
 
@@ -108,7 +102,7 @@ export class SubMenuCtrl {
 
   onVariableNewVariableSucceeded() {}
 
-  onVariableStoreNewVariableSucceeded(args: { uuid: string }) {
+  onVariableStoreNewVariableSucceeded() {
     this.variables = getAllVariables(this.variableSrv.variables);
   }
 }

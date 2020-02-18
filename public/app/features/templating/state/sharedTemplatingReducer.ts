@@ -88,9 +88,9 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
     })
     .addCase(newVariable, (state, action) => {
       delete state.variables[emptyUuid];
+      const index = action.payload.data.variablesInAngular + Object.keys(state.variables).length;
       state.variables[emptyUuid] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
-      state.variables[emptyUuid].variable.index =
-        action.payload.data.variablesInAngular + Object.keys(state.variables).length;
+      state.variables[emptyUuid].variable.index = index;
     })
     .addCase(storeNewVariable, (state, action) => {
       const uuid = action.payload.uuid!;
