@@ -7,7 +7,6 @@ const sliderProps: Props = {
   orientation: 'vertical',
   min: 10,
   max: 20,
-  onChange: () => {},
   theme: getTheme(),
 };
 

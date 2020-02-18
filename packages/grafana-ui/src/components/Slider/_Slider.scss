@@ -1,0 +1,53 @@
+@import '../../node_modules/rc-slider/assets/index.css';
+
+$blue: #1f60c4;
+
+.rc-slider-tooltip-inner {
+  color: $text-color;
+  background-color: transparent;
+  border-radius: none;
+  box-shadow: none;
+}
+
+.rc-slider-tooltip-placement-top .rc-slider-tooltip-arrow {
+  display: none;
+}
+
+.rc-slider-tooltip-placement-top {
+  padding: 0;
+}
+
+.rc-slider-handle {
+  border: solid 2px $blue;
+  background-color: $blue;
+}
+
+.rc-slider-handle:hover {
+  border-color: $blue;
+}
+
+.rc-slider-handle:focus {
+  border-color: $blue;
+  box-shadow: none;
+}
+
+.rc-slider-handle:active {
+  border-color: $blue;
+  box-shadow: none;
+}
+
+.rc-slider-handle-click-focused:focus {
+  border-color: $blue;
+}
+
+.rc-slider-dot-active {
+  border-color: $blue;
+}
+
+.rc-slider-track {
+  background-color: $blue;
+}
+.rc-slider-rail {
+  background-color: $input-bg;
+  border: 1px solid $input-border-color;
+}

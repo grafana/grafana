@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Slider } from './Slider';
-import { select, number } from '@storybook/addon-knobs';
+import { select, number, boolean } from '@storybook/addon-knobs';
 
 const getStory = (title: string, component: any) => ({
   title,
@@ -17,12 +17,13 @@ const getKnobs = () => {
     min: number('min', 0),
     max: number('max', 100),
     orientation: select('orientation', ['horizontal', 'vertical'], 'vertical'),
+    reverse: boolean('reverse', true),
   };
 };
 
 const SliderWrapper = () => {
-  const { min, max, orientation } = getKnobs();
-  return <Slider min={min} max={max} orientation={orientation} />;
+  const { min, max, orientation, reverse } = getKnobs();
+  return <Slider min={min} max={max} orientation={orientation} reverse={reverse} />;
 };
 
 export const basic = () => <SliderWrapper />;
