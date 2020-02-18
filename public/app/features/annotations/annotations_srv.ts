@@ -1,21 +1,19 @@
 // Libaries
 import flattenDeep from 'lodash/flattenDeep';
 import cloneDeep from 'lodash/cloneDeep';
-
 // Components
 import './editor_ctrl';
 import coreModule from 'app/core/core_module';
-
 // Utils & Services
 import { dedupAnnotations } from './events_processing';
 import _ from 'lodash';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { DataSourceApi, PanelEvents, AnnotationEvent, AppEvents, PanelModel, TimeRange } from '@grafana/data';
+import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, PanelModel, TimeRange } from '@grafana/data';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { TemplateSrv } from '../templating/template_srv';
 import { appEvents } from 'app/core/core';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
 export class AnnotationsSrv {
@@ -109,9 +107,14 @@ export class AnnotationsSrv {
       return this.alertStatesPromise;
     }
 
-    this.alertStatesPromise = getBackendSrv().get('/api/alerts/states-for-dashboard', {
-      dashboardId: options.dashboard.id,
-    });
+    this.alertStatesPromise = getBackendSrv().get(
+      '/api/alerts/states-for-dashboard',
+      {
+        dashboardId: options.dashboard.id,
+      },
+      `get-alert-states-${options.dashboard.id}`
+    );
+
     return this.alertStatesPromise;
   }
 

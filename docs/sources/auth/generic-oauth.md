@@ -105,7 +105,7 @@ allowed_organizations =
     then:
 3.  Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
 
-    Your OneLogin Domain will match the url you use to access OneLogin.
+    Your OneLogin Domain will match the URL you use to access OneLogin.
 
     Configure Grafana as follows:
 

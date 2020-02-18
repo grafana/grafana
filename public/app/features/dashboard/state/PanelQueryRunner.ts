@@ -169,6 +169,11 @@ export class PanelQueryRunner {
     });
   }
 
+  pipeDataToSubject = (data: PanelData) => {
+    this.subject.next(data);
+    this.lastResult = data;
+  };
+
   setTransformations(transformations?: DataTransformerConfig[]) {
     this.transformations = transformations;
   }
@@ -185,6 +190,10 @@ export class PanelQueryRunner {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
+  }
+
+  getLastResult(): PanelData {
+    return this.lastResult;
   }
 }
 

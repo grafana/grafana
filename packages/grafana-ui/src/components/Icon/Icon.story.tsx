@@ -8,7 +8,7 @@ import { useTheme, selectThemeVariant } from '../../themes';
 import mdx from './Icon.mdx';
 
 export default {
-  title: 'UI/Icon',
+  title: 'General/Icon',
   component: Icon,
   decorators: [withCenteredStory],
   parameters: {

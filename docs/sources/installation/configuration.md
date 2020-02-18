@@ -1,6 +1,6 @@
 +++
 title = "Configuration"
-description = "Configuration Docs"
+description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
 type = "docs"
 [menu.docs]
@@ -14,26 +14,26 @@ weight = 1
 
 Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
-> **Note.** You must restart Grafana for any configuration changes to take effect.
+> **Note:** You must restart Grafana for any configuration changes to take effect.
 
 ## Config file locations
 
-Do not change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
+*Do not* change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-**Linux**
-
+### Linux
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
-**Windows**
+### Docker
+Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
+### Windows
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-**macOS**
-
+### MacOS
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
@@ -48,16 +48,15 @@ Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` 
 
 A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
 
-## Using environment variables
+## Configure with environment variables
 
-All options in the configuration file (listed below) can be overridden using environment variables using the syntax:
+All options in the configuration file can be overridden using environment variables using the syntax:
 
 ```bash
 GF_<SectionName>_<KeyName>
 ```
 
-Where the section name is the text within the brackets. Everything
-should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
+Where the section name is the text within the brackets. Everything should be uppercase, `.` should be replaced by `_`. For example, if you have these configuration settings:
 
 ```bash
 # default section
@@ -70,15 +69,15 @@ admin_user = admin
 client_secret = 0ldS3cretKey
 ```
 
-Then you can override them using:
+You can override them on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
+export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 ```
 
-<hr />
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
 
 ## instance_name
 
@@ -130,8 +129,7 @@ The IP address to bind to. If empty will bind to all interfaces
 
 ### http_port
 
-The port to bind to, defaults to `3000`. To use port 80 you need to
-either give the Grafana binary permission for example:
+The port to bind to, defaults to `3000`. To use port 80 you need to either give the Grafana binary permission for example:
 
 ```bash
 $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
@@ -149,20 +147,18 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http`,`https`,`h2` or `socket`
 
-> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
 ### socket
 Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you
-use GitHub or Google OAuth.
+This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
 
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain.
-Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -170,15 +166,14 @@ This is the full URL used to access Grafana from a web browser. This is
 important if you use Google or GitHub OAuth authentication (for the
 callback URL to be correct).
 
-> **Note** This setting is also important if you have a reverse proxy
+> **Note:** This setting is also important if you have a reverse proxy
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
 > Available in 6.3 and above
 
-Serve Grafana from subpath specified in `root_url` setting. By
-default it is set to `false` for compatibility reasons.
+Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
 By enabling this setting and using a subpath in `root_url` above, e.g.
 `root_url = http://localhost:3000/grafana`, Grafana will be accessible on
@@ -187,7 +182,7 @@ By enabling this setting and using a subpath in `root_url` above, e.g.
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS
-files). Default to `public` which is why the Grafana binary needs to be
+files). Defaults to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
 ### enable_gzip
@@ -420,7 +415,7 @@ organization to be created for that new user.
 
 Set this value to automatically add new users to the provided org.
 This requires `auto_assign_org` to be set to `true`. Please make sure
-that this organization does already exists.
+that this organization already exists.
 
 ### auto_assign_org_role
 
@@ -720,10 +715,10 @@ Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 ## [external_image_storage.webdav]
 
 ### url
-Url to where Grafana will send PUT request with images
+URL to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. Url to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the url, leaving any query string unchanged.
+Optional parameter. URL to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the URL, leaving any query string unchanged.
 
 ### username
 basic auth username
