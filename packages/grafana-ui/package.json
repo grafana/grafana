@@ -18,8 +18,8 @@
   "scripts": {
     "lint": "eslint .storybook/ src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "storybook": "start-storybook -p 9001 -c .storybook",
-    "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
+    "storybook": "start-storybook -p 9001 -c .storybook -s .storybook/static",
+    "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s .storybook/static",
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=ui"
@@ -47,7 +47,7 @@
     "rc-drawer": "3.0.2",
     "rc-time-picker": "^3.7.2",
     "react": "16.12.0",
-    "react-calendar": "2.18.1",
+    "react-calendar": "2.19.2",
     "react-color": "2.17.0",
     "react-custom-scrollbars": "4.2.1",
     "react-dom": "16.12.0",
@@ -92,6 +92,7 @@
     "rollup-plugin-terser": "4.0.4",
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
+    "storybook-dark-mode": "0.3.0",
     "ts-loader": "6.2.1",
     "typescript": "3.7.2"
   },

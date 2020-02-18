@@ -7,6 +7,8 @@ import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
+import SignupPage from 'app/features/profile/SignupPage';
+
 import config from 'app/core/config';
 import { ILocationProvider, route } from 'angular';
 // Types
@@ -351,8 +353,10 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'sidemenu-hidden',
     })
     .when('/signup', {
-      templateUrl: 'public/app/partials/signup_step2.html',
-      controller: 'SignUpCtrl',
+      template: '<react-container/>',
+      resolve: {
+        component: () => SignupPage,
+      },
       pageClass: 'sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {

@@ -1,12 +1,12 @@
 import React from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
-  FieldConfigEditorRegistry,
   FieldConfigSource,
   DataFrame,
   FieldPropertyEditorItem,
   VariableSuggestionsScope,
   standardFieldConfigEditorRegistry,
+  PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
 import { Forms, fieldMatchersUI, ValuePicker } from '@grafana/ui';
@@ -15,8 +15,8 @@ import { OptionsGroup } from './OptionsGroup';
 import { OverrideEditor } from './OverrideEditor';
 
 interface Props {
+  plugin: PanelPlugin;
   config: FieldConfigSource;
-  custom?: FieldConfigEditorRegistry; // custom fields
   include?: string[]; // Ordered list of which fields should be shown/included
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
@@ -113,15 +113,19 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   }
 
   renderCustomConfigs() {
-    const { custom } = this.props;
-    if (!custom) {
+    const { plugin } = this.props;
+
+    if (!plugin.customFieldConfigs) {
       return null;
     }
-    return custom.list().map(f => this.renderEditor(f, true));
+
+    return plugin.customFieldConfigs.list().map(f => this.renderEditor(f, true));
   }
 
   renderOverrides() {
-    const { config, data, custom } = this.props;
+    const { config, data, plugin } = this.props;
+    const { customFieldConfigs } = plugin;
+
     if (config.overrides.length === 0) {
       return null;
     }
@@ -133,9 +137,9 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
       custom: false,
     }));
 
-    if (custom) {
+    if (customFieldConfigs) {
       configPropertiesOptions = configPropertiesOptions.concat(
-        custom.list().map(i => ({
+        customFieldConfigs.list().map(i => ({
           label: i.name,
           value: i.id,
           description: i.description,
@@ -156,7 +160,7 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
               onChange={value => this.onOverrideChange(i, value)}
               onRemove={() => this.onOverrideRemove(i)}
               configPropertiesOptions={configPropertiesOptions}
-              customPropertiesRegistry={custom}
+              customPropertiesRegistry={customFieldConfigs}
             />
           );
         })}
@@ -178,13 +182,17 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
   };
 
   render() {
+    const { plugin } = this.props;
+
     return (
       <div>
-        <OptionsGroup title="Field configuration">{this.renderStandardConfigs()}</OptionsGroup>
+        {plugin.customFieldConfigs && (
+          <OptionsGroup title={`${plugin.meta.name} options`}>{this.renderCustomConfigs()}</OptionsGroup>
+        )}
 
-        {this.props.custom && <OptionsGroup title="Visualization options">{this.renderCustomConfigs()}</OptionsGroup>}
+        <OptionsGroup title="Field defaults">{this.renderStandardConfigs()}</OptionsGroup>
 
-        <OptionsGroup title="Field Overrides">
+        <OptionsGroup title="Field overrides">
           {this.renderOverrides()}
           {this.renderAddOverride()}
         </OptionsGroup>
