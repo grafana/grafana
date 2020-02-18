@@ -17,7 +17,11 @@ This make is much easier to verify functionally since the data can be shared ver
 
 ## Enable
 
-The `TestData DB` data source is not enabled by default. To enable it, first navigate to the *Data Source* section of the configuration menu. Click the *Add Data Source*, search for and select `TestData DB`. Finally, click *Save & Test* to enable it.
+The `TestData DB` data source is not enabled by default. To enable it, first navigate to the "Data Source" section of the configuration menu. 
+
+1. Click the **Add Data Source**
+2. Search for and select `TestData DB`
+3. Finally, click **Save & Test** to enable it
 
 ## Create mock data.
 
@@ -34,7 +38,7 @@ Once you provided the numbers `TestData DB` will distribute them evenly based on
 
 ## Dashboards
 
-`TestData DB` also contains some dashboards with example. Click on *Configuration* > *Data Sources* > *TestData DB* > *Dashboards*, then import the "Simple Streaming Example" dashboard.
+`TestData DB` also contains some dashboards with example. Click on **Configuration** > **Data Sources** > **TestData DB** > **Dashboards**, then import the "Simple Streaming Example" dashboard.
 
 ### Commit updates to the dashboards
 
