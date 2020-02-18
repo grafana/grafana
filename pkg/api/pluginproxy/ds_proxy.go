@@ -65,7 +65,7 @@ type logWrapper struct {
 // Write writes log messages as bytes from proxy
 func (lw *logWrapper) Write(p []byte) (n int, err error) {
 	withoutNewline := strings.TrimSuffix(string(p), "\n")
-	lw.logger.Error(withoutNewline)
+	lw.logger.Error("Data proxy error", "error", withoutNewline)
 	return len(p), nil
 }
 
@@ -96,10 +96,12 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
+	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login, "path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
+
 	reverseProxy := &httputil.ReverseProxy{
 		Director:      proxy.getDirector(),
 		FlushInterval: time.Millisecond * 200,
-		ErrorLog:      log.New(&logWrapper{logger: logger}, "", 0),
+		ErrorLog:      log.New(&logWrapper{logger: proxyErrorLogger}, "", 0),
 	}
 
 	transport, err := proxy.ds.GetHttpTransport()
