@@ -130,6 +130,12 @@ export {
   numberOverrideProcessor,
   NumberFieldConfigSettings,
 } from './FieldConfigs/number';
+export {
+  stringSelectOverrideProcessor,
+  StringSelectValueEditor,
+  StringSelectOverrideEditor,
+  StringSelectFieldConfigSettings,
+} from './FieldConfigs/select';
 
 // Next-gen forms
 export { default as Forms } from './Forms';
