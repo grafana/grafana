@@ -63,7 +63,9 @@ class DashboardImport extends PureComponent<Props, State> {
       });
     }
 
-    this.props.fetchGcomDashboard(dashboardId);
+    if (dashboardId) {
+      this.props.fetchGcomDashboard(dashboardId);
+    }
   };
 
   onSubmit = () => {};
@@ -147,16 +149,10 @@ class DashboardImport extends PureComponent<Props, State> {
               <>
                 <Forms.Legend className="section-heading">Options</Forms.Legend>
                 <Forms.Field label="Name">
-                  <Forms.Input
-                    size="md"
-                    type="text"
-                    className="gf-form-input"
-                    value={dashboard.json.title}
-                    onChange={this.onTitleChange}
-                  />
+                  <Forms.Input size="md" type="text" value={dashboard.json.title} onChange={this.onTitleChange} />
                 </Forms.Field>
                 <Forms.Field label="Folder">
-                  <FolderPicker onChange={this.onFolderChange} useInNextGenForms={true} />
+                  <FolderPicker onChange={this.onFolderChange} useInNextGenForms={true} initialFolderId={0} />
                 </Forms.Field>
                 <Forms.Field
                   label="Unique identifier (uid)"
@@ -164,7 +160,13 @@ class DashboardImport extends PureComponent<Props, State> {
                 The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will not break any
                 bookmarked links to that dashboard."
                 >
-                  <Forms.Input size="md" value="Value set" disabled addonAfter={<Forms.Button>Clear</Forms.Button>} />
+                  <Forms.Input
+                    size="md"
+                    value="Value set"
+                    onChange={() => console.log('change')}
+                    disabled
+                    addonAfter={<Forms.Button>Clear</Forms.Button>}
+                  />
                 </Forms.Field>
                 {inputs.map((input: any, index: number) => {
                   if (input.type === 'datasource') {

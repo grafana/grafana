@@ -154,7 +154,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onBlur={onBlur}
               openMenuOnFocus={openMenuOnFocus}
               maxMenuHeight={maxMenuHeight}
-              noOptionsMessage={() => noOptionsMessage}
+              noOptionsMessage={noOptionsMessage}
               isMulti={isMulti}
               backspaceRemovesValue={backspaceRemovesValue}
               menuIsOpen={isOpen}
