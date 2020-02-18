@@ -26,6 +26,7 @@ import { FieldConfigEditor } from './FieldConfigEditor';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
+import locationService from '../../../../core/navigation/LocationService';
 
 enum Pane {
   Right,
@@ -77,10 +78,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onDiscard = () => {
     this.props.setDiscardChanges(true);
-    this.props.updateLocation({
-      query: { editPanel: null },
-      partial: true,
-    });
+    locationService().partial({ editPanel: null });
+    // this.props.updateLocation({
+    //   query: { editPanel: null },
+    //   partial: true,
+    // });
   };
 
   onChangeTab = (tab: PanelEditorTab) => {

@@ -130,7 +130,7 @@ export class LdapPage extends PureComponent<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'ldap'),
-  username: state.location.routeParams.user,
+  // username: state.location.routeParams.user,
   ldapConnectionInfo: state.ldap.connectionInfo,
   ldapUser: state.ldap.user,
   ldapSyncInfo: state.ldap.syncInfo,

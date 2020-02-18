@@ -3,7 +3,6 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getRouteParamsId } from 'app/core/selectors/location';
 import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
 import { UserProfile } from './UserProfile';
@@ -27,10 +26,10 @@ import {
   syncLdapUser,
 } from './state/actions';
 import { UserOrgs } from './UserOrgs';
+import { GrafanaRoute } from '../../core/navigation/types';
 
-interface Props {
+interface Props extends GrafanaRoute<{ userId: string }> {
   navModel: NavModel;
-  userId: number;
   user: UserDTO;
   orgs: UserOrg[];
   sessions: UserSession[];
@@ -63,8 +62,11 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { userId, loadAdminUserPage } = this.props;
-    loadAdminUserPage(userId);
+    const {
+      match: { params },
+      loadAdminUserPage,
+    } = this.props;
+    loadAdminUserPage(parseInt(params.userId, 10));
   }
 
   onUserUpdate = (user: UserDTO) => {
@@ -72,8 +74,11 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   onPasswordChange = (password: string) => {
-    const { userId, setUserPassword } = this.props;
-    setUserPassword(userId, password);
+    const {
+      match: { params },
+      setUserPassword,
+    } = this.props;
+    setUserPassword(parseInt(params.userId, 10), password);
   };
 
   onUserDelete = (userId: number) => {
@@ -89,18 +94,27 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   onGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
-    const { userId, updateUserPermissions } = this.props;
-    updateUserPermissions(userId, isGrafanaAdmin);
+    const {
+      match: { params },
+      updateUserPermissions,
+    } = this.props;
+    updateUserPermissions(parseInt(params.userId, 10), isGrafanaAdmin);
   };
 
   onOrgRemove = (orgId: number) => {
-    const { userId, deleteOrgUser } = this.props;
-    deleteOrgUser(userId, orgId);
+    const {
+      match: { params },
+      deleteOrgUser,
+    } = this.props;
+    deleteOrgUser(parseInt(params.userId, 10), orgId);
   };
 
   onOrgRoleChange = (orgId: number, newRole: string) => {
-    const { userId, updateOrgUserRole } = this.props;
-    updateOrgUserRole(userId, orgId, newRole);
+    const {
+      match: { params },
+      updateOrgUserRole,
+    } = this.props;
+    updateOrgUserRole(parseInt(params.userId, 10), orgId, newRole);
   };
 
   onOrgAdd = (orgId: number, role: string) => {
@@ -109,18 +123,27 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   onSessionRevoke = (tokenId: number) => {
-    const { userId, revokeSession } = this.props;
-    revokeSession(tokenId, userId);
+    const {
+      match: { params },
+      revokeSession,
+    } = this.props;
+    revokeSession(tokenId, parseInt(params.userId, 10));
   };
 
   onAllSessionsRevoke = () => {
-    const { userId, revokeAllSessions } = this.props;
-    revokeAllSessions(userId);
+    const {
+      match: { params },
+      revokeAllSessions,
+    } = this.props;
+    revokeAllSessions(parseInt(params.userId, 10));
   };
 
   onUserSync = () => {
-    const { userId, syncLdapUser } = this.props;
-    syncLdapUser(userId);
+    const {
+      match: { params },
+      syncLdapUser,
+    } = this.props;
+    syncLdapUser(parseInt(params.userId, 10));
   };
 
   render() {
@@ -171,7 +194,6 @@ export class UserAdminPage extends PureComponent<Props, State> {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  userId: getRouteParamsId(state.location),
   navModel: getNavModel(state.navIndex, 'global-users'),
   user: state.userAdmin.user,
   sessions: state.userAdmin.sessions,

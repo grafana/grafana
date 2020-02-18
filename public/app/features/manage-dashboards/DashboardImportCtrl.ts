@@ -39,7 +39,6 @@ export class DashboardImportCtrl {
     private $location: ILocationService // $routeParams: any
   ) {
     this.navModel = navModelSrv.getNav('create', 'import');
-    debugger;
     this.step = 1;
     this.nameExists = false;
     this.uidExists = false;
@@ -48,6 +47,7 @@ export class DashboardImportCtrl {
     // this.folderId = $routeParams.folderId ? Number($routeParams.folderId) || 0 : null;
     this.initialFolderTitle = 'Select a folder';
 
+    // TODO[Router]
     // check gnetId in url
     // if ($routeParams.gnetId) {
     // this.gnetUrl = $routeParams/.gnetId;

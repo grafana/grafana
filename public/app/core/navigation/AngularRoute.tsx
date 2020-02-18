@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Route } from 'react-router-dom';
 import NgController from './NgController';
-import { RouteDescriptor } from '../../routes/routes';
+import { RouteDescriptor } from './types';
 
 interface AngularRouteProps extends RouteDescriptor {
   injector: {};

@@ -1,17 +1,14 @@
-import { createBrowserHistory, History, Location, LocationState } from 'history';
+import { createBrowserHistory, History, Location, LocationState, LocationDescriptorObject } from 'history';
 import parseKeyValue, { isString, isNumber, isObject, forEach, isUndefined } from './utils/parseKeyValue';
 import { queryString } from './utils/queryString';
 
 let locationServiceInstance: LocationService;
 
-class LocationService {
+export class LocationService {
   private history: History;
 
-  constructor() {
-    this.history = createBrowserHistory();
-    // this.history.listen(() => {
-    //   debugger;
-    // })
+  constructor(history?: History<any>) {
+    this.history = history || createBrowserHistory();
   }
 
   getUrlSearchParams = () => {
@@ -23,7 +20,19 @@ class LocationService {
     const params = this.getUrlSearchParams();
 
     for (const key of Object.keys(query)) {
-      params.append(key, query[key]);
+      if (params.has(key)) {
+        // removing params with null | undefined
+        if (query[key] === null || query[key] === undefined) {
+          params.delete(key);
+        } else {
+          params.set(key, query[key]);
+        }
+      } else {
+        // ignoring params with null | undefined values
+        if (query[key] !== null && query[key] !== undefined) {
+          params.append(key, query[key]);
+        }
+      }
     }
 
     const locationUpdate: Location<LocationState> = {
@@ -32,11 +41,18 @@ class LocationService {
     };
 
     if (replace) {
-      console.log('replace');
       this.history.replace(locationUpdate);
     } else {
       this.history.push(locationUpdate);
     }
+  };
+
+  push = (location: LocationDescriptorObject) => {
+    this.history.push(location);
+  };
+
+  replace = (location: LocationDescriptorObject) => {
+    this.history.replace(location);
   };
 
   absUrl() {
@@ -159,6 +175,14 @@ const locationService = () => {
 
   locationServiceInstance = new LocationService();
   return locationServiceInstance;
+};
+
+export const getLocationService = () => {
+  return locationService();
+};
+
+export const setLocationService = (service: LocationService) => {
+  locationServiceInstance = service;
 };
 
 //TODO refactor calls to locationService().X() to plain function calls -> X() that would use locationService underneath

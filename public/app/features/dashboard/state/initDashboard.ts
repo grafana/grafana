@@ -201,7 +201,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       }
 
       // init unsaved changes tracking
-      // TODO[Router]: FIX
+      // TODO[Router]: Enable change tracer and keybindings
       // unsavedChangesSrv.init(dashboard, args.$scope);
       // keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
     } catch (err) {

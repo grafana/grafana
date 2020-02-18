@@ -78,11 +78,12 @@ import {
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
+import { getLocationService } from '../../../core/navigation/LocationService';
+import { updateLocation } from '../../../core/reducers/location';
 
 /**
  * Updates UI state and save it to the URL
@@ -540,7 +541,10 @@ export const stateSave = (): ThunkResult<void> => {
 
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
     }
-
+    // console.log(new URLSearchParams(urlStates).toString());
+    // getLocationService().replace({
+    //   search: new URLSearchParams(urlStates).toString()
+    // });
     dispatch(updateLocation({ query: urlStates, replace }));
     if (replace) {
       dispatch(setUrlReplacedAction({ exploreId: ExploreId.left }));
@@ -635,7 +639,12 @@ export function splitOpen(): ThunkResult<void> {
   return (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState = getState().explore[ExploreId.left];
-    const queryState = getState().location.query[ExploreId.left] as string;
+
+    // const queryState = getState().location.query[ExploreId.left] as string;
+    const queryState = getLocationService()
+      .getUrlSearchParams()
+      .get(ExploreId.left) as string;
+
     const urlState = parseUrlState(queryState);
     const itemState: ExploreItemState = {
       ...leftState,
@@ -809,7 +818,12 @@ export const navigateToExplore = (
       return;
     }
 
-    const query = {}; // strips any angular query param
-    dispatch(updateLocation({ path, query }));
+    // TODO[Router]: remove as query is striped with search: ''
+    // const query = {}; // strips any angular query param
+    getLocationService().push({
+      pathname: path,
+      search: '',
+    });
+    // dispatch(updateLocation({ path, query }));
   };
 };

@@ -2,9 +2,7 @@ import React, { FC } from 'react';
 import { SignupForm } from './SignupForm';
 import Page from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
-import { StoreState } from 'app/types';
+import { GrafanaRoute } from '../../core/navigation/types';
 
 const navModel = {
   main: {
@@ -18,13 +16,18 @@ const navModel = {
   },
 };
 
-interface Props {
-  email?: string;
-  orgName?: string;
-  username?: string;
-  code?: string;
-  name?: string;
-}
+interface Props
+  extends GrafanaRoute<
+    void,
+    {
+      email?: string;
+      orgName?: string;
+      username?: string;
+      code?: string;
+      name?: string;
+    }
+  > {}
+
 export const SignupPage: FC<Props> = props => {
   return (
     <Page navModel={navModel}>
@@ -35,7 +38,7 @@ export const SignupPage: FC<Props> = props => {
           <br /> information to finish creating your account.
         </div>
         <SignupForm
-          {...props}
+          {...props.query}
           verifyEmailEnabled={getConfig().verifyEmailEnabled}
           autoAssignOrg={getConfig().autoAssignOrg}
         />
@@ -44,8 +47,8 @@ export const SignupPage: FC<Props> = props => {
   );
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  ...state.location.routeParams,
-});
+// const mapStateToProps = (state: StoreState) => ({
+//   ...state.location.routeParams,
+// });
 
-export default hot(module)(connect(mapStateToProps)(SignupPage));
+// export default hot(module)(connect(mapStateToProps)(SignupPage));

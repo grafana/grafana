@@ -25,13 +25,22 @@ import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import { AppEvents, setLocale, setMarkdownOptions, standardFieldConfigEditorRegistry } from '@grafana/data';
+
+// TODO[Router]
+import { /*AppEvents,*/ setLocale, setMarkdownOptions, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
-import { checkBrowserCompatibility } from 'app/core/utils/browser';
+
+// TODO[Router]
+// import { checkBrowserCompatibility } from 'app/core/utils/browser';
+
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
-import { registerAngularDirectives, appEvents } from 'app/core/core';
+// TODO[Router]
+import { registerAngularDirectives /*, appEvents*/ } from 'app/core/core';
+
+// TODO[Router]
 // import { setupAngularRoutes } from 'app/routes/routes';
+
 import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
@@ -43,7 +52,6 @@ import bridgeReactAngularRouting from './core/navigation/bridgeAngularReactRouti
 import ReactDOM from 'react-dom';
 import React from 'react';
 import AppWrapper from './core/navigation/AppWrapper';
-import { LoadDashboardCtrl, NewDashboardCtrl } from './routes/dashboard_loaders';
 import { configureStore } from './store/configureStore';
 import DashboardImportCtrl from './features/manage-dashboards/DashboardImportCtrl';
 import { getStandardFieldConfigs } from '@grafana/ui';
@@ -155,9 +163,7 @@ export class GrafanaApp {
 
     // register react angular wrappers
     // coreModule.config(setupAngularRoutes);
-    coreModule.controller('LoadDashboardCtrl', LoadDashboardCtrl);
     coreModule.controller('DashboardImportCtrl', DashboardImportCtrl);
-    coreModule.controller('NewDashboardCtrl', NewDashboardCtrl);
     angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
 
     registerAngularDirectives();

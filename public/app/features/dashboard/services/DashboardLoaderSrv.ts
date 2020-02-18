@@ -1,4 +1,4 @@
-import angular from 'angular';
+// import angular from 'angular';
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import _ from 'lodash';
 import $ from 'jquery';

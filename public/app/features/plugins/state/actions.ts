@@ -6,9 +6,7 @@ import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 
 export function loadPlugins(): ThunkResult<void> {
   return async dispatch => {
-    debugger;
     const result = await getBackendSrv().get('api/plugins', { embedded: 0 });
-    debugger;
     dispatch(pluginsLoaded(result));
   };
 }

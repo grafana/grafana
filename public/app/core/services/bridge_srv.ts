@@ -1,14 +1,15 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { store } from 'app/store/store';
+// import { store } from 'app/store/store';
 import locationUtil from 'app/core/utils/location_util';
-import { updateLocation } from 'app/core/actions';
+// import { updateLocation } from 'app/core/actions';
 import { ITimeoutService, ILocationService, IWindowService } from 'angular';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { UrlQueryMap } from '@grafana/runtime';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+// import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariableSrv } from 'app/features/templating/all';
+import { getLocationService } from '../navigation/LocationService';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
@@ -69,6 +70,7 @@ export class BridgeSrv {
     //     console.log('store updating angular $location.url', url);
     //   }
 
+    //TODO[Router]
     //   // Check for template variable changes on a dashboard
     //   if (state.location.path === this.lastPath) {
     //     const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
@@ -86,6 +88,7 @@ export class BridgeSrv {
     // });
 
     appEvents.on(CoreEvents.locationChange, payload => {
+      console.log('LOCATION CHANGE');
       const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);
       if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
         this.$window.location.href = payload.href;
@@ -94,7 +97,8 @@ export class BridgeSrv {
 
       this.$timeout(() => {
         // A hack to use timeout when we're changing things (in this case the url) from outside of Angular.
-        this.$location.url(urlWithoutBase);
+        getLocationService().path(urlWithoutBase);
+        // this.$location.url(urlWithoutBase);
       });
     });
   }

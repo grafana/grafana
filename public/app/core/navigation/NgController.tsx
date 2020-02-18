@@ -1,8 +1,7 @@
 import React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-// import jQuery from 'jquery';
 import { getAngularLoader } from '@grafana/runtime';
-import { RouteDescriptor } from '../../routes/routes';
+import { RouteDescriptor } from './types';
 
 interface NgControllerProps extends RouteComponentProps<any>, RouteDescriptor {
   injector: any;
@@ -20,25 +19,13 @@ class NgController extends React.Component<NgControllerProps, { $scope: any }> {
     super(props);
     this.mounted = false;
   }
-  componentWillReceiveProps() {
-    console.log('component will receive');
-  }
-
-  updateUrl() {
-    const { match, location, injector } = this.props;
-    const $route = injector.get('$route');
-    debugger;
-
-    // $route.updateRoute(match, location);
-  }
 
   componentDidUpdate(prevProps: NgControllerProps) {
-    // console.log('updating', prevProps, this.props)
     const {
       location: { search },
       reloadOnSearch /*injector, mountContainer*/,
     } = this.props;
-    if ((search !== prevProps.location.search && reloadOnSearch) || location.href !== prevProps.location.href) {
+    if ((search !== prevProps.location.search && reloadOnSearch) || location.pathname !== prevProps.location.pathname) {
       this.destroyControllerInstance();
       this.mountController();
     } else {
@@ -63,12 +50,9 @@ class NgController extends React.Component<NgControllerProps, { $scope: any }> {
   }
 
   async mountController() {
-    // This is basically a revrite on ngView directive
-    // TODO: handle resolve prop on ng route
     const { injector, mountContainer, controller, templateUrl, pageClass, routeInfo } = this.props;
 
     // Let's get access to injector's services
-    // const $route = injector.get('$route');
     const $http = injector.get('$http');
     const $controller = injector.get('$controller');
     // We are retrieving rootScope here as Grafana routes are directly under rootScope
@@ -80,12 +64,8 @@ class NgController extends React.Component<NgControllerProps, { $scope: any }> {
       reloadOnSearch: false,
       routeInfo,
     };
-    // let templateToRender = routeDescriptor.templte;
 
     // This object is an answer to Angular's https://docs.angularjs.org/api/ngRoute/service/$route#current
-    // Best thing is to get rid of it and store these data in e.g. Redux store
-    // let routeLocals = {};
-    // this.childScope = ;
     const $scope = scope.$new();
 
     const templateToRender = (await $http.get(routeDescriptor.templateUrl)).data;
@@ -100,13 +80,10 @@ class NgController extends React.Component<NgControllerProps, { $scope: any }> {
 
     this.setBodyClass();
     this.mounted = true;
-    // this.setStat e({$scope})
   }
 
   destroyControllerInstance() {
-    // this.state.$scope.$destroy();
     this.ctrl = null;
-    // debugger
     this.$angularComponent.destroy();
   }
 

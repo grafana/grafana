@@ -18,7 +18,7 @@ import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/reducers';
-import { notifyApp, updateLocation } from 'app/core/actions';
+import { notifyApp /*, updateLocation*/ } from 'app/core/actions';
 // Types
 import {
   AppNotificationSeverity,
@@ -30,13 +30,16 @@ import {
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
-import { GrafanaRoute } from '../../../routes/routes';
-import { match } from 'assert';
+import { GrafanaRoute } from '../../../core/navigation/types';
+import locationService from '../../../core/navigation/LocationService';
 
 interface DashboardPageRouteProps {
   uid: string;
   slug: string;
   type: string;
+}
+
+interface DashboardPageQueryProps {
   editview: string;
   panelId: string;
   editPanel: string;
@@ -47,7 +50,7 @@ interface DashboardPageRouteProps {
   inspectTab: string;
 }
 
-export interface Props extends GrafanaRoute<DashboardPageRouteProps> {
+export interface Props extends GrafanaRoute<DashboardPageRouteProps, DashboardPageQueryProps> {
   routeInfo: DashboardRouteInfo;
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
@@ -56,7 +59,7 @@ export interface Props extends GrafanaRoute<DashboardPageRouteProps> {
   initDashboard: typeof initDashboard;
   cleanUpDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
-  updateLocation: typeof updateLocation;
+  // updateLocation: typeof updateLocation;
   isNewEditorOpen?: boolean;
 }
 
@@ -85,6 +88,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   async componentDidMount() {
     const {
       match: { params },
+      query,
       initDashboard,
     } = this.props;
     console.log('DashboardPage did mount');
@@ -95,7 +99,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       urlSlug: params.slug,
       urlUid: params.uid,
       urlType: params.type,
-      urlFolderId: params.folderId,
+      urlFolderId: query.folderId,
       routeInfo: this.props.routeInfo,
       fixUrl: true,
     });
@@ -112,9 +116,11 @@ export class DashboardPage extends PureComponent<Props, State> {
     const {
       dashboard,
       match: { params },
+      query,
     } = this.props;
 
     console.log(prevProps.match.params.uid, params.uid);
+    //TODO[Router]
     if (prevProps.match.params.uid !== params.uid) {
       console.log('Reinitialising dashboard');
     }
@@ -135,7 +141,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     // handle animation states when opening dashboard settings
-    if (!prevProps.match.params.editview && params.editview) {
+    if (!prevProps.query.editview && query.editview) {
       this.setState({ isSettingsOpening: true });
       setTimeout(() => {
         this.setState({ isSettingsOpening: false });
@@ -143,9 +149,9 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     // Sync url state with model
-    if (params.fullscreen !== dashboard.meta.fullscreen || params.edit !== dashboard.meta.isEditing) {
-      if (params.panelId && !isNaN(parseInt(params.panelId, 10))) {
-        this.onEnterFullscreen(dashboard, params.panelId);
+    if (query.fullscreen !== dashboard.meta.fullscreen || query.edit !== dashboard.meta.isEditing) {
+      if (query.panelId && !isNaN(parseInt(query.panelId, 10))) {
+        this.onEnterFullscreen(dashboard, query.panelId);
       } else {
         this.onLeaveFullscreen(dashboard);
       }
@@ -153,9 +159,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   onEnterFullscreen(dashboard: DashboardModel, urlPanelId: string) {
-    const {
-      match: { params },
-    } = this.props;
+    const { query } = this.props;
 
     const panelId = parseInt(urlPanelId!, 10);
     // need to expand parent row if this panel is inside a row
@@ -164,14 +168,15 @@ export class DashboardPage extends PureComponent<Props, State> {
     const panel = dashboard.getPanelById(panelId);
 
     if (panel) {
-      dashboard.setViewMode(panel, params.fullscreen, params.edit);
+      dashboard.setViewMode(panel, query.fullscreen, query.edit);
+
       this.setState({
-        isEditing: params.edit && dashboard.meta.canEdit === true,
-        isFullscreen: params.fullscreen,
+        isEditing: query.edit && dashboard.meta.canEdit === true,
+        isFullscreen: query.fullscreen,
         fullscreenPanel: panel,
         rememberScrollTop: this.state.scrollTop,
       });
-      this.setPanelFullscreenClass(params.fullscreen);
+      this.setPanelFullscreenClass(query.fullscreen);
     } else {
       this.handleFullscreenPanelNotFound(urlPanelId);
     }
@@ -208,15 +213,20 @@ export class DashboardPage extends PureComponent<Props, State> {
     // Panel not found
     this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
     // Clear url state
-    // TODO
-    this.props.updateLocation({
-      query: {
-        edit: null,
-        fullscreen: null,
-        panelId: null,
-      },
-      partial: true,
+    locationService().partial({
+      edit: null,
+      fullscreen: null,
+      panelId: null,
     });
+    // TODO
+    // this.props.updateLocation({
+    //   query: {
+    //     edit: null,
+    //     fullscreen: null,
+    //     panelId: null,
+    //   },
+    //   partial: true,
+    // });
   }
 
   setPanelFullscreenClass = (isFullscreen: boolean) => {
@@ -271,15 +281,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const {
-      dashboard,
-      $injector,
-      isInitSlow,
-      initError,
-      isNewEditorOpen,
-      match: { params },
-      query,
-    } = this.props;
+    const { dashboard, $injector, isInitSlow, initError, isNewEditorOpen, query } = this.props;
+
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
@@ -291,7 +294,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     const classes = classNames({
       'dashboard-page--settings-opening': isSettingsOpening,
-      'dashboard-page--settings-open': !isSettingsOpening && params.editview,
+      'dashboard-page--settings-open': !isSettingsOpening && query.editview,
     });
 
     const gridWrapperClasses = classNames({
@@ -300,12 +303,10 @@ export class DashboardPage extends PureComponent<Props, State> {
     });
 
     // Find the panel to inspect
-    const inspectPanel = query.has('inspectPanelId')
-      ? dashboard.getPanelById(parseInt(query.get(inspectPanelId), 10))
-      : null;
+    const inspectPanel = query.inspectPanelId ? dashboard.getPanelById(parseInt(query.inspectPanelId, 10)) : null;
     // find panel being edited
 
-    const editPanel = query.has('editPanel') ? dashboard.getPanelById(parseInt(query.get('editPanel'), 10)) : null;
+    const editPanel = query.editPanel ? dashboard.getPanelById(parseInt(query.editPanel, 10)) : null;
 
     console.log(editPanel);
     // Only trigger render when the scroll has moved by 25
@@ -317,7 +318,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           dashboard={dashboard}
           isEditing={isEditing}
           isFullscreen={isFullscreen}
-          editview={params.editview}
+          editview={query.editview}
           $injector={$injector}
           onAddPanel={this.onAddPanel}
         />
@@ -329,7 +330,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
-            {params.editview && <DashboardSettings dashboard={dashboard} />}
+            {query.editview && <DashboardSettings dashboard={dashboard} />}
 
             {initError && this.renderInitFailedState()}
 
@@ -346,7 +347,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={params.inspectTab} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} selectedTab={query.inspectTab} />}
         {editPanel && (
           <Portal>
             <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />
@@ -369,7 +370,7 @@ const mapDispatchToProps = {
   initDashboard,
   cleanUpDashboard,
   notifyApp,
-  updateLocation,
+  // updateLocation,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

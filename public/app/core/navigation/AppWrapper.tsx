@@ -4,8 +4,8 @@ import { GrafanaApp } from '../../app';
 import angular from 'angular';
 import { each, extend } from 'lodash';
 
-import locationService from '../navigation/LocationService';
-import { routes, RouteDescriptor } from '../../routes/routes';
+import { getLocationService } from '../navigation/LocationService';
+import { routes } from '../../routes/routes';
 import AngularRoute from './AngularRoute';
 import { ThemeProvider, ConfigContext } from '../utils/ConfigProvider';
 import { config } from '@grafana/runtime';
@@ -14,6 +14,7 @@ import { store } from '../../store/store';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { contextSrv } from '../services/context_srv';
 import { SideMenu } from '../components/sidemenu/SideMenu';
+import { RouteDescriptor } from './types';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -21,6 +22,24 @@ interface AppWrapperProps {
 interface AppWrapperState {
   ngInjector: any;
 }
+
+//TODO[Router]: move to usitls
+const prepareQueryObject = (locationQuery: string) => {
+  const params: Array<[string, string | boolean]> = [];
+  new URLSearchParams(locationQuery).forEach((v, k) => params.push([k, parseValue(v)]));
+  return Object.fromEntries(new Map(params));
+};
+
+//TODO[Router]: move to usitls
+const parseValue = (value: string) => {
+  if (value === 'true') {
+    return true;
+  }
+  if (value === 'false') {
+    return false;
+  }
+  return value;
+};
 
 export default class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
@@ -84,7 +103,8 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
             $rootScope: $rootScope,
             $contextSrv: contextSrv,
             routeInfo: route.routeInfo,
-            query: locationService().getUrlSearchParams(),
+            // @ts-ignore
+            query: prepareQueryObject(props.location.search),
             // route: props.match,
             ...props,
           });
@@ -98,15 +118,8 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
   }
 
   render() {
-    const appSeed = `<grafana-app ng-cloak>
-<!--    <sidemenu class="sidemenu"></sidemenu>-->
-    <app-notifications-list class="page-alert-list"></app-notifications-list>
-    <dashboard-search></dashboard-search>
-
-    <div class="main-view">
-      <div ng-view class="scroll-canvas"><div id="ngRoot"></div></div>
-    </div>
-  </grafana-app>`;
+    // @ts-ignore
+    const appSeed = `<grafana-app ng-cloak><app-notifications-list class="page-alert-list"></app-notifications-list><dashboard-search></dashboard-search><div ng-view class="scroll-canvas"><div id="ngRoot"></div></div></grafana-app>`;
 
     return (
       <Provider store={store}>
@@ -114,16 +127,19 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
           <ConfigContext.Provider value={config}>
             <ThemeProvider>
               <div className="grafana-app">
-                <Router history={locationService().getHistory()}>
+                <Router history={getLocationService().getHistory()}>
                   <>
                     <SideMenu />
-                    <div
-                      ref={this.container}
-                      dangerouslySetInnerHTML={{
-                        __html: appSeed,
-                      }}
-                    />
-                    <div className="main-view">{this.state.ngInjector && this.container && this.renderRoutes()}</div>
+
+                    <div className="main-view">
+                      <div
+                        ref={this.container}
+                        dangerouslySetInnerHTML={{
+                          __html: appSeed,
+                        }}
+                      />
+                      {this.state.ngInjector && this.container && this.renderRoutes()}
+                    </div>
                   </>
                 </Router>
               </div>

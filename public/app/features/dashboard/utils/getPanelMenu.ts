@@ -1,7 +1,7 @@
-import { updateLocation } from 'app/core/actions';
+// import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import config from 'app/core/config';
-import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
 import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -11,40 +11,50 @@ import { navigateToExplore } from '../../explore/state/actions';
 import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
-import locationService from '../../../core/navigation/LocationService';
+
+//TODO[Router]: move to grafana/runtime
+import { getLocationService } from '../../../core/navigation/LocationService';
 
 export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    store.dispatch(
-      updateLocation({
-        query: {
-          panelId: panel.id,
-          edit: null,
-          fullscreen: true,
-        },
-        partial: true,
-      })
-    );
+    getLocationService().partial({
+      panelId: panel.id,
+      edit: null,
+      fullscreen: true,
+    });
+    // store.dispatch(
+    //   updateLocation({
+    //     query: {
+    //
+    //     },
+    //     partial: true,
+    //   })
+    // );
   };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    store.dispatch(
-      updateLocation({
-        query: {
-          panelId: panel.id,
-          edit: true,
-          fullscreen: true,
-        },
-        partial: true,
-      })
-    );
+    getLocationService().partial({
+      panelId: panel.id,
+      edit: true,
+      fullscreen: true,
+    });
+    // store.dispatch(
+    //   updateLocation({
+    //     query: {
+    //       panelId: panel.id,
+    //       edit: true,
+    //       fullscreen: true,
+    //     },
+    //     partial: true,
+    //   })
+    // );
   };
 
   const onNewEditPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    locationService().partial({
+    getLocationService().partial({
       editPanel: panel.id,
     });
     // store.dispatch(
@@ -63,12 +73,15 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
 
   const onInspectPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    getLocationSrv().update({
-      partial: true,
-      query: {
-        inspect: panel.id,
-      },
+    getLocationService().partial({
+      inspect: panel.id,
     });
+    // getLocationSrv().update({
+    //   partial: true,
+    //   query: {
+    //     inspect: panel.id,
+    //   },
+    // });
   };
 
   const onMore = (event: React.MouseEvent<any>) => {
