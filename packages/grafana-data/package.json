@@ -20,6 +20,11 @@
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=data"
   },
+  "dependencies": {
+    "apache-arrow": "0.15.1",
+    "lodash": "4.17.15",
+    "rxjs": "6.5.4"
+  },
   "devDependencies": {
     "@grafana/eslint-config": "^1.0.0-rc1",
     "@grafana/tsconfig": "^1.0.0-rc1",
@@ -31,8 +36,6 @@
     "@types/pretty-format": "20.0.1",
     "@types/react": "16.8.16",
     "@types/sinon": "^7.0.11",
-    "apache-arrow": "0.15.1",
-    "lodash": "4.17.15",
     "pretty-format": "24.9.0",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",
@@ -41,7 +44,6 @@
     "rollup-plugin-terser": "4.0.4",
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
-    "rxjs": "6.5.4",
     "sinon": "1.17.6",
     "typescript": "3.7.2"
   }

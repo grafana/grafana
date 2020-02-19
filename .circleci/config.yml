@@ -101,6 +101,10 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run:
+          name: Increase node memory
+          command: |
+            export NODE_OPTIONS=--max_old_space_size=4096
+      - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - run:
@@ -511,11 +515,11 @@ jobs:
             pushd packaging/docker
             docker build -t "grafana/grafana-enterprise:master-ubuntu" --no-cache=true -f ubuntu.Dockerfile .
             docker build -t "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu" \
-              --build-arg BASE_IMAGE=arm32v7/ubuntu:18.10 \
+              --build-arg BASE_IMAGE=arm32v7/ubuntu:19.10 \
               --build-arg GRAFANA_TGZ=grafana-latest.linux-armv7.tar.gz \
               --no-cache=true -f ubuntu.Dockerfile .
             docker build -t "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu" \
-              --build-arg BASE_IMAGE=arm64v8/ubuntu:18.10 \
+              --build-arg BASE_IMAGE=arm64v8/ubuntu:19.10 \
               --build-arg GRAFANA_TGZ=grafana-latest.linux-arm64.tar.gz \
               --no-cache=true -f ubuntu.Dockerfile .
             popd
@@ -1168,6 +1172,10 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
+      - run:
+          name: Increase node memory
+          command: |
+            export NODE_OPTIONS=--max_old_space_size=4096
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
@@ -1890,8 +1898,14 @@ jobs:
             tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
             sudo mv trivy /usr/local/bin
       - run:
-          name: Scan the latest grafana master image with trivy
-          command: trivy --exit-code 1 --quiet --auto-refresh --clear-cache grafana/grafana:master
+          name: Clear trivy cache
+          command: trivy --clear-cache
+      - run:
+          name: Scan the latest grafana master alpine image with trivy
+          command: trivy --exit-code 1 grafana/grafana:master
+      - run:
+          name: Scan the latest grafana master ubuntu image with trivy
+          command: trivy --exit-code 1 grafana/grafana:master-ubuntu
       - save_cache:
           key: vulnerability-db
           paths:

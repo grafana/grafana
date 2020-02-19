@@ -27,14 +27,14 @@ COPY packages packages
 RUN yarn install --pure-lockfile
 
 COPY Gruntfile.js tsconfig.json .eslintrc .browserslistrc ./
-COPY public public 
+COPY public public
 COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-FROM ubuntu:18.10
+FROM ubuntu:19.10
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 EXPOSE 3000
