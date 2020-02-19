@@ -87,12 +87,18 @@
       name: Overview
     - link: /features/panels/graph/
       name: Graph
+    - link: /features/panels/table_panel/
+      name: Table
+    - link: /features/panels/stat/
+      name: Stat
+    - link: /features/panels/gauge/
+      name: Gauge
+    - link: /features/panels/bar_gauge/
+      name: Bar gauge
     - link: /features/panels/logs/
       name: Logs
     - link: /features/panels/singlestat/
       name: Singlestat
-    - link: /features/panels/table_panel/
-      name: Table
     - link: /features/panels/heatmap/
       name: Heatmap
     - link: /features/panels/alertlist/
