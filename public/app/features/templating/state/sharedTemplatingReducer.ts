@@ -18,7 +18,7 @@ import {
 import { VariableModel } from '../variable';
 import { emptyUuid, initialVariableEditorState } from './types';
 import { initialTemplatingState } from './index';
-import { variableAdapters } from '../adapters';
+import { getInitialState } from '../locator';
 
 export const sharedTemplatingReducer = createReducer(initialTemplatingState, builder =>
   builder
@@ -67,7 +67,7 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       const uuid = action.payload.data.newUuid;
       const index = action.payload.data.variablesInAngular + Object.keys(state.variables).length;
       const name = `copy_of_${original.name}`;
-      state.variables[uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
+      state.variables[uuid!] = cloneDeep(getInitialState(action.payload.type));
       state.variables[uuid!].variable = original;
       state.variables[uuid!].variable.uuid = uuid;
       state.variables[uuid!].variable.name = name;
@@ -89,13 +89,13 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
     .addCase(newVariable, (state, action) => {
       delete state.variables[emptyUuid];
       const index = action.payload.data.variablesInAngular + Object.keys(state.variables).length;
-      state.variables[emptyUuid] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
+      state.variables[emptyUuid] = cloneDeep(getInitialState(action.payload.type));
       state.variables[emptyUuid].variable.index = index;
     })
     .addCase(storeNewVariable, (state, action) => {
       const uuid = action.payload.uuid!;
       const emptyVariable: VariableModel = cloneDeep<VariableModel>(state.variables[emptyUuid].variable);
-      state.variables[uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
+      state.variables[uuid!] = cloneDeep(getInitialState(action.payload.type));
       state.variables[uuid!].variable = emptyVariable;
       state.variables[uuid!].variable.uuid = uuid;
     })

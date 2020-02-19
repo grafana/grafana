@@ -35,8 +35,18 @@ export const getAllVariablesJSON = (
 ): Array<Partial<VariableModel>> => {
   return getAllVariables(angularVariables, state).map(variable => {
     if (variableAdapters.contains(variable.type)) {
-      return variableAdapters.get(variable.type).getSaveModel(variable);
+      return getSaveModel(variable);
     }
     return variable.getSaveModel ? variable.getSaveModel() : variable;
   });
+};
+
+const getSaveModel = (model: VariableModel & VariableActions) => {
+  const { index, uuid, initLock, global, ...rest } = model;
+  // remove options
+  // if (model.refresh !== VariableRefresh.never) {
+  //   return { ...rest, options: [] };
+  // }
+
+  return rest;
 };

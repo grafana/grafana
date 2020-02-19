@@ -22,7 +22,6 @@ import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { getVariable } from './selectors';
 import { getQueryHasSearchFilter } from './queryVariableReducer';
-import { variableAdapters } from '../adapters';
 
 export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(
   'templating/showQueryVariableDropDown'
@@ -62,6 +61,9 @@ export const updateQueryVariableOptions = (
   notifyAngular?: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
+    if (!variable.uuid) {
+      throw new Error(JSON.stringify(variable));
+    }
     const variableInState = getVariable<QueryVariableModel>(variable.uuid ?? '');
     try {
       dispatch(updateVariableStarting(toVariablePayload(variable)));
@@ -162,7 +164,7 @@ export const searchQueryChanged = (uuid: string, searchQuery: string): ThunkResu
 ) => {
   const variable = getVariable<QueryVariableModel>(uuid, getState());
   if (getQueryHasSearchFilter(variable)) {
-    await variableAdapters.get(variable.type).updateOptions(variable, searchQuery, false);
+    await dispatch(updateQueryVariableOptions(variable, searchQuery, false));
   }
   dispatch(changeQueryVariableSearchQuery(toVariablePayload(variable, searchQuery)));
 };

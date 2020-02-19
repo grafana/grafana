@@ -14,7 +14,7 @@ import {
   variableEditorInit,
   variableEditorUnMounted,
 } from '../state/actions';
-import { variableAdapters } from '../adapters';
+import { getEditor } from '../locator';
 import { emptyUuid, VariableState } from '../state/types';
 import { VariableHide, VariableType } from '../variable';
 import { FormLabel } from '@grafana/ui';
@@ -81,10 +81,12 @@ export class VariableEditor extends PureComponent<VariableState> {
   };
 
   render() {
-    const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
+    const EditorToRender = getEditor(this.props.variable.type);
+
     if (!EditorToRender) {
       return null;
     }
+
     const newVariable = this.props.variable.uuid && this.props.variable.uuid === emptyUuid;
 
     return (
@@ -107,7 +109,7 @@ export class VariableEditor extends PureComponent<VariableState> {
                 />
               </div>
               <div className="gf-form max-width-19">
-                <FormLabel width={6} tooltip={variableAdapters.get(this.props.variable.type).description}>
+                <FormLabel width={6} tooltip={'variableAdapters.get(this.props.variable.type).description'}>
                   Type
                 </FormLabel>
                 <div className="gf-form-select-wrapper max-width-17">

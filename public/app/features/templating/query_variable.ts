@@ -10,7 +10,6 @@ import {
   VariableSort,
   VariableTag,
   VariableType,
-  variableTypes,
 } from './variable';
 import { DataSourceApi, stringToJsRegex } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
@@ -247,9 +246,9 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
   }
 }
 // @ts-ignore
-variableTypes['query'] = {
-  name: 'Query',
-  ctor: QueryVariable,
-  description: 'Variable values are fetched from a datasource query',
-  supportsMulti: true,
-};
+// variableTypes['query'] = {
+//   name: 'Query',
+//   ctor: QueryVariable,
+//   description: 'Variable values are fetched from a datasource query',
+//   supportsMulti: true,
+// };

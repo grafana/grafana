@@ -2,12 +2,11 @@ import castArray from 'lodash/castArray';
 import { MouseEvent } from 'react';
 import { v4 } from 'uuid';
 import { createAction, PrepareAction } from '@reduxjs/toolkit';
-import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
+import { UrlQueryValue } from '@grafana/runtime';
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
 import {
   QueryVariableModel,
-  VariableActions,
   VariableHide,
   VariableModel,
   VariableOption,
@@ -22,7 +21,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
 import { MoveVariableType, VariableNewVariableStart } from '../../../types/events';
-import { processVariableDependencies } from '../helpers';
+// import { processVariableDependencies } from '../helpers';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -169,52 +168,77 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
-export const processVariable = (
-  variable: VariableModel & VariableActions,
-  angularVariables: Array<VariableModel & VariableActions>,
-  queryParams: UrlQueryMap
+// export const setValue = (model: VariableModel): ThunkResult<void> => {
+//   return async (dispatch, getState) => {
+//     if (isQuery(model)) {
+//       await dispatch(setOptionAsCurrent(model));
+//     }
+//   };
+// };
+
+export const updateOptions = (
+  model: VariableModel,
+  searchFilter?: string,
+  notifyAngular?: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    await processVariableDependencies(variable, angularVariables);
-
-    const urlValue = queryParams['var-' + variable.name];
-    if (urlValue !== void 0) {
-      await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
-    }
-
-    if (variable.hasOwnProperty('refresh')) {
-      const refreshableVariable = variable as QueryVariableModel & VariableActions;
-      if (
-        refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
-        refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
-      ) {
-        await variableAdapters.get(variable.type).updateOptions(refreshableVariable);
-      }
-    }
-
-    await dispatch(resolveInitLock(toVariablePayload(variable)));
-  };
-};
-
-export const processVariables = (angularVariables: Array<VariableModel & VariableActions>): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const queryParams = getState().location.query;
-    const promises = getVariables(getState()).map(
-      async (variable: VariableModel & VariableActions) =>
-        await dispatch(processVariable(variable, angularVariables, queryParams))
-    );
-
-    await Promise.all(promises);
-
-    for (let index = 0; index < getVariables(getState()).length; index++) {
-      await dispatch(removeInitLock(toVariablePayload(getVariables(getState())[index])));
-    }
-
-    for (let index = 0; index < angularVariables.length; index++) {
-      delete angularVariables[index].initLock;
+    if (isQuery(model)) {
+      const { updateQueryVariableOptions } = require('./queryVariableActions');
+      await dispatch(updateQueryVariableOptions(model, searchFilter, notifyAngular));
     }
   };
 };
+
+function isQuery(model: VariableModel): model is QueryVariableModel {
+  return (model as QueryVariableModel)?.type === 'query';
+}
+
+// export const processVariable = (
+//   variable: VariableModel & VariableActions,
+//   angularVariables: Array<VariableModel & VariableActions>,
+//   queryParams: UrlQueryMap
+// ): ThunkResult<void> => {
+//   return async (dispatch, getState) => {
+//     await processVariableDependencies(variable, angularVariables);
+
+//     const urlValue = queryParams['var-' + variable.name];
+//     if (urlValue !== void 0) {
+//       await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
+//     }
+
+//     if (variable.hasOwnProperty('refresh')) {
+//       const refreshableVariable = variable as QueryVariableModel & VariableActions;
+//       if (
+//         refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
+//         refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
+//       ) {
+//         await dispatch(updateOptions(refreshableVariable));
+//       }
+//     }
+
+//     await dispatch(resolveInitLock(toVariablePayload(variable)));
+//   };
+// };
+
+// export const processVariables = (angularVariables: Array<VariableModel & VariableActions>): ThunkResult<void> => {
+//   return async (dispatch, getState) => {
+//     const queryParams = getState().location.query;
+//     const promises = getVariables(getState()).map(
+//       async (variable: VariableModel & VariableActions) =>
+//         await dispatch(processVariable(variable, angularVariables, queryParams))
+//     );
+
+//     await Promise.all(promises);
+
+//     for (let index = 0; index < getVariables(getState()).length; index++) {
+//       await dispatch(removeInitLock(toVariablePayload(getVariables(getState())[index])));
+//     }
+
+//     for (let index = 0; index < angularVariables.length; index++) {
+//       delete angularVariables[index].initLock;
+//     }
+//   };
+// };
 
 export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValue): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -227,7 +251,7 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
     }
 
     // updates options
-    await variableAdapters.get(variable.type).updateOptions(variable);
+    await dispatch(updateOptions(variable));
 
     // get variable from state
     const variableFromState = getVariable<VariableWithOptions>(variable.uuid ?? '', getState());
@@ -271,7 +295,7 @@ export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValu
       option = { text: castArray(option.text), value: castArray(option.value), selected: false };
     }
 
-    await variableAdapters.get(variable.type).setValue(variableFromState, option);
+    await dispatch(setOptionAsCurrent(variableFromState, option));
   };
 };
 
@@ -305,7 +329,9 @@ export const validateVariableSelectionState = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variableInState = getVariable<VariableWithOptions>(variable.uuid ?? '', getState());
-    const setValue = variableAdapters.get(variableInState.type).setValue;
+    const setValue = (model: VariableWithOptions, option: VariableOption) =>
+      dispatch(setOptionAsCurrent(model, option));
+
     if (!variableInState.current) {
       return setValue(variableInState, {} as VariableOption);
     }
@@ -375,9 +401,9 @@ const createGraph = (variables: VariableModel[]) => {
         return;
       }
 
-      if (variableAdapters.get(v1.type).dependsOn(v1, v2)) {
-        g.link(v1.name, v2.name);
-      }
+      // if (variableAdapters.get(v1.type).dependsOn(v1, v2)) {
+      //   g.link(v1.name, v2.name);
+      // }
     });
   });
 
@@ -402,7 +428,14 @@ export const variableUpdated = (variable: VariableModel, emitChangeEvents?: any)
         if (!variable) {
           return Promise.resolve();
         }
-        return variableAdapters.get(variable.type).updateOptions(variable);
+        return new Promise(async (resolve, reject) => {
+          try {
+            await dispatch(updateOptions(variable));
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        });
       });
     }
 
@@ -496,7 +529,7 @@ export const variableEditorInit = (variable: VariableModel): ThunkResult<void> =
 export const onEditorUpdate = (variable: VariableModel): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variableInState = getVariable(variable.uuid ?? '', getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
+    await dispatch(updateOptions(variableInState, undefined, true));
   };
 };
 
@@ -504,7 +537,7 @@ export const onEditorAdd = (variable: VariableModel): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variableInState = { ...getVariable(variable.uuid ?? '', getState()) };
     dispatch(storeNewVariable(toVariablePayload(variableInState)));
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
+    await dispatch(updateOptions(variableInState, undefined, true));
   };
 };
 

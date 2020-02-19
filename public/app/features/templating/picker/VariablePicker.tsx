@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { VariableState } from '../state/types';
 import { VariableHide } from '../variable';
 import { e2e } from '@grafana/e2e';
-import { variableAdapters } from '../adapters';
+import { getPicker } from '../locator';
 
 export class VariablePicker extends PureComponent<VariableState> {
   render() {
@@ -12,7 +12,7 @@ export class VariablePicker extends PureComponent<VariableState> {
 
     const { hide, label, name } = this.props.variable;
     const labelOrName = label || name;
-    const PickerToRender = variableAdapters.get(this.props.variable.type).picker;
+    const PickerToRender = getPicker(this.props.variable.type);
 
     return (
       <div className="gf-form">

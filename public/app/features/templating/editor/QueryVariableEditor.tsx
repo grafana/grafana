@@ -8,8 +8,11 @@ import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSup
 import { VariableEditorProps } from '../state/types';
 import { QueryVariableEditorState } from '../state/queryVariableReducer';
 import { dispatch } from '../../../store/store';
-import { changeQueryVariableDataSource, initQueryVariableEditor } from '../state/queryVariableActions';
-import { variableAdapters } from '../adapters';
+import {
+  changeQueryVariableDataSource,
+  initQueryVariableEditor,
+  updateQueryVariableOptions,
+} from '../state/queryVariableActions';
 
 export interface Props extends VariableEditorProps<QueryVariableModel, QueryVariableEditorState> {}
 export interface State {
@@ -44,7 +47,9 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
     return value ?? '';
   };
 
-  runQuery = async () => await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+  runQuery = async () => {
+    await dispatch(updateQueryVariableOptions(this.props.variable));
+  };
 
   onDataSourceChange = (event: ChangeEvent<HTMLSelectElement>) => {
     this.props.onPropChange('query', '');

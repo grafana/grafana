@@ -12,9 +12,8 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { AppEvents, TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
-import { variableAdapters } from './adapters';
 import { appEvents, contextSrv } from 'app/core/core';
-import { processVariableDependencies } from './helpers';
+import { getFactory } from './locator';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -40,12 +39,10 @@ export class VariableSrv {
     );
 
     // create working class models representing variables
-    const allVariables = dashboard.templating.list.map((model: VariableModel, index) =>
+    this.variables = dashboard.templating.list.map((model: VariableModel, index) =>
       this.createVariableFromModel(model, index)
     );
-    this.variables = dashboard.templating.list = allVariables.filter(
-      (m: VariableModel) => !variableAdapters.contains(m.type)
-    );
+
     this.templateSrv.init(this.variables, this.timeSrv.timeRange());
 
     // init variables
@@ -108,8 +105,16 @@ export class VariableSrv {
   }
 
   processVariable(variable: any, queryParams: any) {
+    const dependencies = [];
+
+    for (const otherVariable of this.variables) {
+      if (variable.dependsOn(otherVariable)) {
+        dependencies.push(otherVariable.initLock.promise);
+      }
+    }
+
     return this.$q
-      .all(processVariableDependencies(variable, this.variables))
+      .all(dependencies)
       .then(() => {
         const urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
@@ -124,20 +129,25 @@ export class VariableSrv {
       })
       .finally(() => {
         this.templateSrv.variableInitialized(variable);
+        delete variable.initLock;
       });
   }
 
   createVariableFromModel(model: any, index: number) {
+    const factory = getFactory(model.type);
+    if (factory !== null) {
+      return factory({ ...model, index });
+    }
     // @ts-ignore
     const ctor = variableTypes[model.type].ctor;
+
     if (!ctor) {
       throw {
         message: 'Unable to find variable constructor for ' + model.type,
       };
     }
 
-    const variable = this.$injector.instantiate(ctor, { model: { ...model, index } });
-    return variable;
+    return this.$injector.instantiate(ctor, { model: { ...model, index } });
   }
 
   addVariable(variable: any) {
