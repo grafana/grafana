@@ -12,7 +12,7 @@ weight = 5
 
 # GitLab OAuth2 Authentication
 
-To enable the GitLab OAuth2 you must register an application in GitLab. GitLab will generate a client ID and secret key for you to use.
+To enable the GitLab OAuth2 you must register your application in GitLab. GitLab will generate a client ID and secret key for you to use.
 
 ## Create GitLab OAuth keys
 
@@ -73,7 +73,7 @@ who can authenticate on GitLab will be able to login on your Grafana instance;
 if you use the public `gitlab.com`, it means anyone in the world would be able
 to login on your Grafana instance.
 
-You can can however limit access to only members of a given group or list of
+You can however limit access to only members of a given group or list of
 groups by setting the `allowed_groups` option.
 
 ### allowed_groups
