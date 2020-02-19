@@ -12,7 +12,7 @@ import (
 
 func TestAlertNotificationSQLAccess(t *testing.T) {
 	Convey("Testing Alert notification sql access", t, func() {
-		InitTestDB(t)
+		ss := InitTestDB(t)
 
 		Convey("Alert notification state", func() {
 			var alertID int64 = 7
@@ -319,6 +319,42 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				err := GetAllAlertNotifications(query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 4)
+			})
+		})
+
+		Convey("Notification Uid by Id Caching", func() {
+			ss.CacheService.Flush()
+
+			notification := &models.CreateAlertNotificationCommand{Uid: "aNotificationUid", OrgId: 1, Name: "aNotificationUid"}
+			err := CreateAlertNotificationCommand(notification)
+			So(err, ShouldBeNil)
+
+			byUidQuery := &models.GetAlertNotificationsWithUidQuery{
+				Uid:   notification.Uid,
+				OrgId: notification.OrgId,
+			}
+
+			notificationByUidErr := GetAlertNotificationsWithUid(byUidQuery)
+			So(notificationByUidErr, ShouldBeNil)
+
+			Convey("Can cache notification Uid", func() {
+				byIdQuery := &models.GetAlertNotificationUidQuery{
+					Id:    byUidQuery.Result.Id,
+					OrgId: byUidQuery.Result.OrgId,
+				}
+
+				cacheKey := newAlertNotificationUidCacheKey(byIdQuery.OrgId, byIdQuery.Id)
+
+				resultBeforeCaching, foundBeforeCaching := ss.CacheService.Get(cacheKey)
+				So(foundBeforeCaching, ShouldBeFalse)
+				So(resultBeforeCaching, ShouldBeNil)
+
+				notificationByIdErr := ss.GetAlertNotificationUidWithId(byIdQuery)
+				So(notificationByIdErr, ShouldBeNil)
+
+				resultAfterCaching, foundAfterCaching := ss.CacheService.Get(cacheKey)
+				So(foundAfterCaching, ShouldBeTrue)
+				So(resultAfterCaching, ShouldEqual, notification.Uid)
 			})
 		})
 	})

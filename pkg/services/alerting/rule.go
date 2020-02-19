@@ -173,27 +173,27 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 }
 
 func translateNotificationIDToUID(id int64, orgID int64) (string, error) {
-	notificationDto, err := getAlertNotificationByIDAndOrgID(id, orgID)
+	notificationUid, err := getAlertNotificationUidByIDAndOrgID(id, orgID)
 	if err != nil {
 		logger.Debug("Failed to translate Notification Id to Uid", "orgID", orgID, "Id", id)
 		return "", err
 	}
 
-	return notificationDto.Uid, nil
+	return notificationUid, nil
 }
 
-func getAlertNotificationByIDAndOrgID(notificationID int64, orgID int64) (*models.AlertNotification, error) {
-	query := &models.GetAlertNotificationsQuery{
+func getAlertNotificationUidByIDAndOrgID(notificationID int64, orgID int64) (string, error) {
+	query := &models.GetAlertNotificationUidQuery{
 		OrgId: orgID,
 		Id:    notificationID,
 	}
 
 	if err := bus.Dispatch(query); err != nil {
-		return nil, err
+		return "", err
 	}
 
-	if query.Result == nil {
-		return nil, fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] doesn't exists", notificationID, orgID)
+	if query.Result == "" {
+		return "", fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] doesn't exists", notificationID, orgID)
 	}
 
 	return query.Result, nil
