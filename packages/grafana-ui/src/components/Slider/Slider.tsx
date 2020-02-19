@@ -9,7 +9,7 @@ export interface Props {
   min: number;
   max: number;
   orientation: 'horizontal' | 'vertical';
-  // Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed.
+  /** Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed. */
   value?: number[];
   reverse?: boolean;
   lengthOfSlider?: number;
