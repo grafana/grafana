@@ -1729,8 +1729,14 @@ jobs:
             tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
             sudo mv trivy /usr/local/bin
       - run:
-          name: Scan the latest grafana master image with trivy
-          command: trivy --exit-code 1 --quiet --auto-refresh --clear-cache grafana/grafana:master
+          name: Clear trivy cache
+          command: trivy --clear-cache
+      - run:
+          name: Scan the latest grafana master alpine image with trivy
+          command: trivy --exit-code 1 grafana/grafana:master
+      - run:
+          name: Scan the latest grafana master ubuntu image with trivy
+          command: trivy --exit-code 1 grafana/grafana:master-ubuntu
       - save_cache:
           key: vulnerability-db
           paths:
