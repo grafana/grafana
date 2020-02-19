@@ -2,23 +2,26 @@ import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory, withTheme, Themeable, Forms } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { Option } from './QueryHistory';
 
 interface QueryHistorySettingsProps extends Themeable {
-  activeHistoryTimeSpan: string;
+  activeTimeSpan: string;
   activeStarredTab: boolean;
-  showHistoryForActiveDatasource: boolean;
+  showActiveDatasourceHistory: boolean;
   hiddenSessions: boolean;
-  onChangeActiveHistoryTimeSpan: (option: Option) => void;
-  onChangeActiveStarredTab: () => void;
-  onChangeShowHistoryForActiveDatasource: () => void;
-  onChangeHideSessions: () => void;
+  onChangeActiveTimeSpan: (option: { label: string; value: string }) => void;
+  toggleActiveStarredTab: () => void;
+  toggleShowActiveDatasourceHistory: () => void;
+  toggleHideSessions: () => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
+      padding-left: ${theme.spacing.sm};
       font-size: ${theme.typography.size.sm};
+      .space-between {
+        margin-bottom: ${theme.spacing.lg};
+      }
     `,
     input: css`
       max-width: 200px;
@@ -33,7 +36,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const selectOptions = [
+const timeSpanOptions = [
   { value: '2 days', label: '2 days' },
   { value: '5 days', label: '5 days' },
   { value: '1 week', label: '1 week' },
@@ -42,50 +45,48 @@ const selectOptions = [
 function UnThemedQueryHistorySettings(props: QueryHistorySettingsProps) {
   const {
     theme,
-    activeHistoryTimeSpan,
+    activeTimeSpan,
     activeStarredTab,
-    showHistoryForActiveDatasource,
+    showActiveDatasourceHistory,
     hiddenSessions,
-    onChangeActiveHistoryTimeSpan,
-    onChangeActiveStarredTab,
-    onChangeShowHistoryForActiveDatasource,
-    onChangeHideSessions,
+    onChangeActiveTimeSpan,
+    toggleActiveStarredTab,
+    toggleShowActiveDatasourceHistory,
+    toggleHideSessions,
   } = props;
   const styles = getStyles(theme);
-  const selectedOption = selectOptions.find(v => v.value === activeHistoryTimeSpan);
+  const selectedOption = timeSpanOptions.find(v => v.value === activeTimeSpan);
 
   return (
     <div className={styles.container}>
       <Forms.Field
         label="History time span"
         description="Select the period of time for which Grafana will save your query history"
+        className="space-between"
       >
         <div className={styles.input}>
           <Forms.Select
             value={selectedOption}
-            options={selectOptions}
-            onChange={onChangeActiveHistoryTimeSpan}
+            options={timeSpanOptions}
+            onChange={onChangeActiveTimeSpan}
           ></Forms.Select>
         </div>
       </Forms.Field>
-      <Forms.Field label="Default active tab" description=" ">
+      <Forms.Field label="Default active tab" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={activeStarredTab} onChange={onChangeActiveStarredTab}></Forms.Switch>
+          <Forms.Switch value={activeStarredTab} onChange={toggleActiveStarredTab}></Forms.Switch>
           <div className={styles.label}>Change the default active tab from “Query history” to “Starred”</div>
         </div>
       </Forms.Field>
-      <Forms.Field label="Datasource behaviour" description=" ">
+      <Forms.Field label="Datasource behaviour" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch
-            value={showHistoryForActiveDatasource}
-            onChange={onChangeShowHistoryForActiveDatasource}
-          ></Forms.Switch>
+          <Forms.Switch value={showActiveDatasourceHistory} onChange={toggleShowActiveDatasourceHistory}></Forms.Switch>
           <div className={styles.label}>Only show queries for datasource currently active in Explore</div>
         </div>
       </Forms.Field>
-      <Forms.Field label="Query list options" description=" ">
+      <Forms.Field label="Query list options" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={hiddenSessions} onChange={onChangeHideSessions}></Forms.Switch>
+          <Forms.Switch value={hiddenSessions} onChange={toggleHideSessions}></Forms.Switch>
           <div className={styles.label}>Hide sessions by default</div>
         </div>
       </Forms.Field>

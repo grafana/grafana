@@ -13,7 +13,7 @@ import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
-import { QueryHistory } from './QueryHistory';
+import { QueryHistory } from './QueryHistory/QueryHistory';
 // Actions
 import {
   changeSize,
