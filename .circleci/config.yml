@@ -101,6 +101,10 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run:
+          name: Increase node momory
+          command: |
+            export NODE_OPTIONS=--max_old_space_size=4096
+      - run:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - run:
@@ -1168,6 +1172,10 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
+      - run:
+        name: Increase node momory
+        command: |
+          export NODE_OPTIONS=--max_old_space_size=4096
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
