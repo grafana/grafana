@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"runtime"
 
 	"gopkg.in/macaron.v1"
@@ -102,8 +103,6 @@ func Recovery() macaron.Handler {
 	return func(c *macaron.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				stack := stack(3)
-
 				panicLogger := log.Root
 				// try to get request logger
 				if ctx, ok := c.Data["ctx"]; ok {
@@ -111,7 +110,21 @@ func Recovery() macaron.Handler {
 					panicLogger = ctxTyped.Logger
 				}
 
+				// http.ErrAbortHandler is suppressed by default in the http package
+				// and used as a signal for aborting requests. Suppresses stacktrace
+				// since it doesn't add any important information.
+				if err == http.ErrAbortHandler {
+					panicLogger.Error("Request error", "error", err)
+					return
+				}
+
+				stack := stack(3)
 				panicLogger.Error("Request error", "error", err, "stack", string(stack))
+
+				// if response has already been written, skip.
+				if c.Written() {
+					return
+				}
 
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
