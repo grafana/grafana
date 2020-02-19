@@ -26,19 +26,7 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
 
   getUserOrgs = async () => {
     const orgs: UserOrgDTO[] = await getBackendSrv().get('/api/user/orgs');
-    this.setState({
-      orgs: orgs.sort((a, b) => {
-        const Aname = a.name.toUpperCase(); // To ignore upper/lower case
-        const Bname = b.name.toUpperCase(); // To ignore upper/lower case
-        if (Aname > Bname) {
-            return 1;
-        }
-        if (Aname < Bname) {
-            return -1;
-        }
-        return 0;
-        }),
-    });
+    this.setState({ orgs });
   };
 
   setCurrentOrg = async (org: UserOrgDTO) => {
