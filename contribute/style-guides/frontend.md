@@ -79,7 +79,7 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
    }
 
    // good
-   enum buttonVariant {
+   enum ButtonVariant {
     //...
    }
    ```
