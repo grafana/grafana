@@ -37,7 +37,7 @@ interface AngularScopeProps {
 }
 
 export class PanelChromeAngular extends PureComponent<Props, State> {
-  element?: HTMLElement;
+  element: HTMLElement | null = null;
   timeSrv: TimeSrv = getTimeSrv();
   scopeProps?: AngularScopeProps;
   querySubscription: Unsubscribable;
@@ -85,7 +85,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   };
 
   onPanelDataUpdate(data: PanelData) {
-    let errorMessage: string | null = null;
+    let errorMessage: string | undefined;
 
     if (data.state === LoadingState.Error) {
       const { error } = data;
@@ -104,16 +104,25 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
-      this.querySubscription = null;
     }
 
     this.props.panel.events.off(PanelEvents.render, this.onPanelRenderEvent);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    if (prevProps.plugin !== this.props.plugin) {
+    const { plugin, height, width, panel } = this.props;
+
+    if (prevProps.plugin !== plugin) {
       this.cleanUpAngularPanel();
       this.loadAngularPanel();
+    }
+
+    if (prevProps.width !== width || prevProps.height !== height) {
+      if (this.scopeProps) {
+        this.scopeProps.size.height = height;
+        this.scopeProps.size.width = width;
+        panel.events.emit(PanelEvents.panelSizeChanged);
+      }
     }
   }
 
@@ -122,8 +131,6 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
 
     // if we have no element or already have loaded the panel return
     if (!this.element || panel.angularPanel) {
-      this.scopeProps.size.height = height;
-      this.scopeProps.size.width = width;
       return;
     }
 
@@ -192,7 +199,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={data.request ? data.request.timeInfo : null}
+          timeInfo={data.request ? data.request.timeInfo : undefined}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}

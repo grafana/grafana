@@ -12,6 +12,7 @@ import { Modal } from '../Modal/Modal';
 import { DataLinkEditor } from '../DataLinks/DataLinkEditor';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableSuggestion } from '@grafana/data';
+import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 export interface DataLinksFieldConfigSettings {}
 
@@ -35,12 +36,13 @@ export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], D
   };
 
   const onDataLinkAdd = () => {
-    const links = cloneDeep(value);
+    const links = cloneDeep(value) || [];
 
     links.push({
       title: '',
       url: '',
     });
+
     onChange(links);
   };
 
@@ -60,9 +62,11 @@ export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], D
           );
         })}
 
-      <Forms.Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
-        Create data link
-      </Forms.Button>
+      <FullWidthButtonContainer>
+        <Forms.Button size="sm" icon="fa fa-plus" onClick={onDataLinkAdd}>
+          Add data link
+        </Forms.Button>
+      </FullWidthButtonContainer>
     </>
   );
 };
