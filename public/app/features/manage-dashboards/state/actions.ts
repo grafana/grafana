@@ -23,7 +23,7 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
   };
 }
 
-export function importedDashboardJson(dashboard: any): ThunkResult<void> {
+export function importDashboardJson(dashboard: any): ThunkResult<void> {
   return async dispatch => {
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));

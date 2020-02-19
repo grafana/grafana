@@ -7,7 +7,7 @@ import { Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import ImportDashboardForm from './ImportDashboardForm';
 import { DashboardFileUpload } from './DashboardFileUpload';
-import { fetchGcomDashboard, importedDashboardJson } from '../state/actions';
+import { fetchGcomDashboard, importDashboardJson } from '../state/actions';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
@@ -16,7 +16,7 @@ interface Props {
   navModel: NavModel;
   isLoaded: boolean;
   fetchGcomDashboard: typeof fetchGcomDashboard;
-  importedDashboardJson: typeof importedDashboardJson;
+  importDashboardJson: typeof importDashboardJson;
 }
 
 interface State {
@@ -46,8 +46,12 @@ class DashboardImport extends PureComponent<Props, State> {
     this.setState({ gcomDashboard: event.currentTarget.value });
   };
 
+  onDashboardJsonChange = (event: FormEvent<HTMLTextAreaElement>) => {
+    this.setState({ dashboardJson: event.currentTarget.value });
+  };
+
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
-    const { importedDashboardJson } = this.props;
+    const { importDashboardJson } = this.props;
     const file = event.currentTarget.files[0];
 
     const reader = new FileReader();
@@ -61,11 +65,28 @@ class DashboardImport extends PureComponent<Props, State> {
           appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
           return;
         }
-        importedDashboardJson(dashboard);
+        importDashboardJson(dashboard);
       };
     };
     reader.onload = readerOnLoad();
     reader.readAsText(file);
+  };
+
+  onDashboardJsonLoad = () => {
+    const { dashboardJson } = this.state;
+    const { importDashboardJson } = this.props;
+
+    if (!dashboardJson) {
+      return;
+    }
+    let dashboard: any;
+    try {
+      dashboard = JSON.parse(dashboardJson);
+      importDashboardJson(dashboard);
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
+      return;
+    }
   };
 
   getGcomDashboard = () => {
@@ -112,9 +133,9 @@ class DashboardImport extends PureComponent<Props, State> {
         <div className={styles.option}>
           <Forms.Legend>Import via panel json</Forms.Legend>
           <Forms.Field>
-            <Forms.TextArea rows={10} />
+            <Forms.TextArea rows={10} onChange={this.onDashboardJsonChange} />
           </Forms.Field>
-          <Forms.Button>Load</Forms.Button>
+          <Forms.Button onClick={this.onDashboardJsonLoad}>Load</Forms.Button>
         </div>
       </>
     );
@@ -139,8 +160,7 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   fetchGcomDashboard,
-
-  importedDashboardJson: importedDashboardJson,
+  importDashboardJson,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardImport));
