@@ -317,7 +317,7 @@ func GetUserOrgList(query *models.GetUserOrgListQuery) error {
 	sess.Join("INNER", "org", "org_user.org_id=org.id")
 	sess.Where("org_user.user_id=?", query.UserId)
 	sess.Cols("org.name", "org_user.role", "org_user.org_id")
-        sess.OrderBy("LOWER(org.name),org.name")
+	sess.OrderBy("LOWER(org.name),org.name")
 	err := sess.Find(&query.Result)
 	return err
 }
