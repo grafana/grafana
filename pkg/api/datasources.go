@@ -255,70 +255,43 @@ func GetDataSourceIdByName(c *m.ReqContext) Response {
 }
 
 // /api/datasources/:id/resources/*
-func (hs *HTTPServer) CallDatasourceResource(c *m.ReqContext) Response {
+func (hs *HTTPServer) CallDatasourceResource(c *m.ReqContext) {
 	datasourceID := c.ParamsInt64(":id")
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if err == m.ErrDataSourceAccessDenied {
-			return Error(403, "Access denied to datasource", err)
+			c.JsonApiErr(403, "Access denied to datasource", err)
+			return
 		}
-		return Error(500, "Unable to load datasource meta data", err)
+		c.JsonApiErr(500, "Unable to load datasource meta data", err)
+		return
 	}
 
 	// find plugin
 	plugin, ok := plugins.DataSources[ds.Type]
 	if !ok {
-		return Error(500, "Unable to find datasource plugin", err)
+		c.JsonApiErr(500, "Unable to find datasource plugin", err)
+		return
 	}
 
-	body, err := c.Req.Body().Bytes()
-	if err != nil {
-		return Error(500, "Failed to read request body", err)
-	}
-
-	jsonDataBytes, err := ds.JsonData.MarshalJSON()
-	if err != nil {
-		return Error(500, "Failed to marshal JSON data to bytes", err)
-	}
-
-	req := backendplugin.CallResourceRequest{
-		Config: backendplugin.PluginConfig{
-			OrgID:                   c.OrgId,
-			PluginID:                plugin.Id,
-			PluginType:              plugin.Type,
-			JSONData:                jsonDataBytes,
-			DecryptedSecureJSONData: ds.DecryptedValues(),
-			Updated:                 ds.Updated,
-			DataSourceConfig: &backendplugin.DataSourceConfig{
-				ID:               ds.Id,
-				Name:             ds.Name,
-				URL:              ds.Url,
-				Database:         ds.Database,
-				User:             ds.User,
-				BasicAuthEnabled: ds.BasicAuth,
-				BasicAuthUser:    ds.BasicAuthUser,
-			},
+	config := backendplugin.PluginConfig{
+		OrgID:                   c.OrgId,
+		PluginID:                plugin.Id,
+		PluginType:              plugin.Type,
+		JSONData:                ds.JsonData,
+		DecryptedSecureJSONData: ds.DecryptedValues(),
+		Updated:                 ds.Updated,
+		DataSourceConfig: &backendplugin.DataSourceConfig{
+			ID:               ds.Id,
+			Name:             ds.Name,
+			URL:              ds.Url,
+			Database:         ds.Database,
+			User:             ds.User,
+			BasicAuthEnabled: ds.BasicAuth,
+			BasicAuthUser:    ds.BasicAuthUser,
 		},
-		Path:    c.Params("*"),
-		Method:  c.Req.Method,
-		URL:     c.Req.URL.String(),
-		Headers: c.Req.Header.Clone(),
-		Body:    body,
 	}
-	resp, err := hs.BackendPluginManager.CallResource(c.Req.Context(), req)
-	if err != nil {
-		return Error(500, "Failed to call datasource resource", err)
-	}
-
-	if resp.Status >= 400 {
-		return Error(resp.Status, "", nil)
-	}
-
-	return &NormalResponse{
-		body:   resp.Body,
-		status: resp.Status,
-		header: resp.Headers,
-	}
+	hs.BackendPluginManager.CallResource(config, c, c.Params("*"))
 }
 
 func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
