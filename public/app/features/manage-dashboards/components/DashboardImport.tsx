@@ -7,16 +7,16 @@ import { Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import ImportDashboardForm from './ImportDashboardForm';
 import { DashboardFileUpload } from './DashboardFileUpload';
-import { fetchGcomDashboard, processImportedDashboard } from '../state/actions';
+import { fetchGcomDashboard, importedDashboardJson } from '../state/actions';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
 interface Props {
   navModel: NavModel;
-  dashboard: any;
+  isLoaded: boolean;
   fetchGcomDashboard: typeof fetchGcomDashboard;
-  processImportedDashboard: typeof processImportedDashboard;
+  importedDashboardJson: typeof importedDashboardJson;
 }
 
 interface State {
@@ -35,10 +35,11 @@ const importStyles = stylesFactory(() => {
 });
 
 class DashboardImport extends PureComponent<Props, State> {
-  static state = {
+  state: State = {
     gcomDashboard: '',
     dashboardJson: '',
     dashboardFile: '',
+    gcomError: '',
   };
 
   onGcomDashboardChange = (event: FormEvent<HTMLInputElement>) => {
@@ -46,7 +47,7 @@ class DashboardImport extends PureComponent<Props, State> {
   };
 
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
-    const { processImportedDashboard } = this.props;
+    const { importedDashboardJson } = this.props;
     const file = event.currentTarget.files[0];
 
     const reader = new FileReader();
@@ -60,8 +61,7 @@ class DashboardImport extends PureComponent<Props, State> {
           appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
           return;
         }
-        console.log(dashboard);
-        processImportedDashboard(dashboard);
+        importedDashboardJson(dashboard);
       };
     };
     reader.onload = readerOnLoad();
@@ -121,10 +121,10 @@ class DashboardImport extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, navModel } = this.props;
+    const { isLoaded, navModel } = this.props;
     return (
       <Page navModel={navModel}>
-        <Page.Contents>{dashboard.json ? <ImportDashboardForm /> : this.renderImportForm()}</Page.Contents>
+        <Page.Contents>{isLoaded ? <ImportDashboardForm /> : this.renderImportForm()}</Page.Contents>
       </Page>
     );
   }
@@ -133,14 +133,14 @@ class DashboardImport extends PureComponent<Props, State> {
 const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, 'import', null, true),
-    dashboard: state.importDashboard.dashboard,
+    isLoaded: state.importDashboard.isLoaded,
   };
 };
 
 const mapDispatchToProps = {
   fetchGcomDashboard,
 
-  processImportedDashboard,
+  importedDashboardJson: importedDashboardJson,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardImport));

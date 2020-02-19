@@ -5,11 +5,13 @@ import { dateTime } from '@grafana/data';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { changeDashboardTitle, resetDashboard } from '../state/actions';
-import { StoreState } from '../../../types';
+import { DashboardSource, StoreState } from '../../../types';
 
 interface Props {
   dashboard: any;
   inputs: any[];
+  source: DashboardSource;
+  meta?: any;
 
   resetDashboard: typeof resetDashboard;
   changeDashboardTitle: typeof changeDashboardTitle;
@@ -29,17 +31,17 @@ class ImportDashboardForm extends PureComponent<Props> {
   onFolderChange = ($folder: { title: string; id: number }) => {};
 
   render() {
-    const { dashboard, inputs } = this.props;
+    const { dashboard, inputs, meta, source } = this.props;
 
     return (
       <>
-        {dashboard.json.gnetId && (
+        {source === DashboardSource.Gcom && (
           <>
             <div>
               <Forms.Legend>
                 Importing Dashboard from{' '}
                 <a
-                  href={`https://grafana.com/dashboards/${dashboard.json.gnetId}`}
+                  href={`https://grafana.com/dashboards/${dashboard.gnetId}`}
                   className="external-link"
                   target="_blank"
                 >
@@ -51,11 +53,11 @@ class ImportDashboardForm extends PureComponent<Props> {
               <tbody>
                 <tr>
                   <td>Published by</td>
-                  <td>{dashboard.orgName}</td>
+                  <td>{meta.orgName}</td>
                 </tr>
                 <tr>
                   <td>Updated on</td>
-                  <td>{dateTime(dashboard.updatedAt).format()}</td>
+                  <td>{dateTime(meta.updatedAt).format()}</td>
                 </tr>
               </tbody>
             </table>
@@ -67,7 +69,7 @@ class ImportDashboardForm extends PureComponent<Props> {
               <>
                 <Forms.Legend className="section-heading">Options</Forms.Legend>
                 <Forms.Field label="Name">
-                  <Forms.Input size="md" type="text" value={dashboard.json.title} onChange={this.onTitleChange} />
+                  <Forms.Input size="md" type="text" value={dashboard.title} onChange={this.onTitleChange} />
                 </Forms.Field>
                 <Forms.Field label="Folder">
                   <FolderPicker onChange={this.onFolderChange} useInNextGenForms={true} initialFolderId={0} />
@@ -118,8 +120,15 @@ class ImportDashboardForm extends PureComponent<Props> {
 }
 
 const mapStateToProps = (state: StoreState) => {
+  const source = state.importDashboard.source;
+
   return {
-    dashboard: state.importDashboard.dashboard,
+    dashboard:
+      source === DashboardSource.Gcom
+        ? state.importDashboard.gcomDashboard.dashboard
+        : state.importDashboard.jsonDashboard,
+    meta: state.importDashboard.gcomDashboard.meta,
+    source,
     inputs: state.importDashboard.inputs,
   };
 };

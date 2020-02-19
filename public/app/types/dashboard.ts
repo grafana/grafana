@@ -82,8 +82,16 @@ export interface DashboardState {
   panels: { [id: string]: PanelState };
 }
 
+export enum DashboardSource {
+  Gcom = 0,
+  Json = 1,
+}
+
 export interface ImportDashboardState {
-  dashboard: any;
+  gcomDashboard: any;
+  jsonDashboard: any;
+  source: DashboardSource;
   inputs: any[];
   gcomError: string;
+  isLoaded: boolean;
 }

@@ -1,47 +1,59 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
-import { dashboardTitleChange, clearDashboard, setInputs, setDashboard, setGcomError } from './reducers';
+import {
+  dashboardTitleChange,
+  clearDashboard,
+  setInputs,
+  setGcomDashboard,
+  setJsonDashboard,
+  setGcomError,
+} from './reducers';
 import { ThunkResult } from 'app/types';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async dispatch => {
-    const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
-    dispatch(processImportedDashboard(dashboard));
+    try {
+      const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
+      dispatch(setGcomDashboard(dashboard));
+      dispatch(processInputs(dashboard.json));
+    } catch (error) {
+      dispatch(setGcomError(error.data.message || error));
+    }
   };
 }
 
-export function processImportedDashboard(dashboard: any): ThunkResult<void> {
+export function importedDashboardJson(dashboard: any): ThunkResult<void> {
   return async dispatch => {
-    try {
-      // store reference to grafana.com
-      dispatch(setDashboard(dashboard));
+    dispatch(setJsonDashboard(dashboard));
+    dispatch(processInputs(dashboard));
+  };
+}
 
-      if (dashboard.json && dashboard.json.__inputs) {
-        const inputs: any[] = [];
-        dashboard.json.__inputs.forEach((input: any) => {
-          const inputModel: any = {
-            name: input.name,
-            label: input.label,
-            info: input.description,
-            value: input.value,
-            type: input.type,
-            pluginId: input.pluginId,
-            options: [],
-          };
+function processInputs(dashboardJson: any): ThunkResult<void> {
+  return dispatch => {
+    if (dashboardJson && dashboardJson.__inputs) {
+      const inputs: any[] = [];
+      dashboardJson.__inputs.forEach((input: any) => {
+        const inputModel: any = {
+          name: input.name,
+          label: input.label,
+          info: input.description,
+          value: input.value,
+          type: input.type,
+          pluginId: input.pluginId,
+          options: [],
+        };
 
-          if (input.type === 'datasource') {
-            getDataSourceOptions(input, inputModel);
-          } else if (!inputModel.info) {
-            inputModel.info = 'Specify a string constant';
-          }
+        if (input.type === 'datasource') {
+          getDataSourceOptions(input, inputModel);
+        } else if (!inputModel.info) {
+          inputModel.info = 'Specify a string constant';
+        }
 
-          inputs.push(inputModel);
-        });
-        dispatch(setInputs(inputs));
-      }
-    } catch (error) {
-      dispatch(setGcomError(error.data.message || error));
+        inputs.push(inputModel);
+      });
+      dispatch(setInputs(inputs));
     }
   };
 }
