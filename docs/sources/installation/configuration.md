@@ -504,8 +504,8 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 ### min_refresh_interval
 
-Setting this will disable users to set the refresh interval of a dashboard to less than the given interval.
-The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d).
+When set, this will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is not set/unrestricted.
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
 ## [dashboards.json]
 
