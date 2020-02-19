@@ -101,7 +101,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Increase node momory
+          name: Increase node memory
           command: |
             export NODE_OPTIONS=--max_old_space_size=4096
       - run:
