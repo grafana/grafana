@@ -14,6 +14,7 @@ import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
+import { getLocationService } from '../../../../core/navigation/LocationService';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -74,10 +75,13 @@ export class DashNav extends PureComponent<Props> {
   };
 
   onOpenSettings = () => {
-    this.props.updateLocation({
-      query: { editview: 'settings' },
-      partial: true,
+    getLocationService().partial({
+      editview: 'settings',
     });
+    // this.props.updateLocation({
+    //   query: { editview: 'settings' },
+    //   partial: true,
+    // });
   };
 
   onStarDashboard = () => {

@@ -1,14 +1,24 @@
 import { createBrowserHistory, History, Location, LocationState, LocationDescriptorObject } from 'history';
 import parseKeyValue, { isString, isNumber, isObject, forEach, isUndefined } from './utils/parseKeyValue';
 import { queryString } from './utils/queryString';
+import locationUtil from '../utils/location_util';
 
 let locationServiceInstance: LocationService;
 
 export class LocationService {
   private history: History;
+  private fullPageReloadRoutes = ['/logout'];
 
   constructor(history?: History<any>) {
     this.history = history || createBrowserHistory();
+
+    this.history.listen(location => {
+      const urlWithoutBase = locationUtil.stripBaseFromUrl(location.pathname);
+      if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
+        window.location.href = location.pathname;
+        return;
+      }
+    });
   }
 
   getUrlSearchParams = () => {

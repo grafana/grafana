@@ -19,6 +19,7 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { config } from 'app/core/config';
+import { getLocationService } from '../../../../core/navigation/LocationService';
 
 interface Props {
   dashboard: DashboardModel;

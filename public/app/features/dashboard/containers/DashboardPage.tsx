@@ -1,25 +1,19 @@
-// Libraries
 import $ from 'jquery';
 import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-// Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
-// Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
-
-// Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/reducers';
-import { notifyApp /*, updateLocation*/ } from 'app/core/actions';
-// Types
+import { notifyApp } from 'app/core/actions';
 import {
   AppNotificationSeverity,
   DashboardInitError,
@@ -27,7 +21,6 @@ import {
   DashboardRouteInfo,
   StoreState,
 } from 'app/types';
-
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { GrafanaRoute } from '../../../core/navigation/types';
@@ -46,7 +39,7 @@ interface DashboardPageQueryProps {
   folderId: string;
   fullscreen: boolean;
   edit: boolean;
-  inspectPanelId: string;
+  inspect: string;
   inspectTab: string;
 }
 
@@ -117,12 +110,26 @@ export class DashboardPage extends PureComponent<Props, State> {
       dashboard,
       match: { params },
       query,
+      initDashboard,
     } = this.props;
 
-    console.log(prevProps.match.params.uid, params.uid);
-    //TODO[Router]
+    // react-router can reuse this component for re-rendering dashboard page route
+    // When passed route match changes, we need to re-initialise the dashboard page
     if (prevProps.match.params.uid !== params.uid) {
-      console.log('Reinitialising dashboard');
+      this.props.cleanUpDashboard();
+      this.setPanelFullscreenClass(false);
+      initDashboard({
+        $injector: this.props.$injector,
+        // $scope: this.props.$scope,
+        $scope: {},
+        urlSlug: params.slug,
+        urlUid: params.uid,
+        urlType: params.type,
+        urlFolderId: query.folderId,
+        routeInfo: this.props.routeInfo,
+        fixUrl: true,
+      });
+      return;
     }
 
     if (!dashboard) {
@@ -132,12 +139,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     // if we just got dashboard update title
     if (!prevProps.dashboard) {
       document.title = dashboard.title + ' - Grafana';
-    }
-
-    // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
-    // Can remove this condition after we switch to react router
-    if (prevProps.match.params.uid !== params.uid) {
-      return;
     }
 
     // handle animation states when opening dashboard settings
@@ -212,21 +213,13 @@ export class DashboardPage extends PureComponent<Props, State> {
   handleFullscreenPanelNotFound(urlPanelId: string) {
     // Panel not found
     this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
+
     // Clear url state
     locationService().partial({
       edit: null,
       fullscreen: null,
       panelId: null,
     });
-    // TODO
-    // this.props.updateLocation({
-    //   query: {
-    //     edit: null,
-    //     fullscreen: null,
-    //     panelId: null,
-    //   },
-    //   partial: true,
-    // });
   }
 
   setPanelFullscreenClass = (isFullscreen: boolean) => {
@@ -303,12 +296,11 @@ export class DashboardPage extends PureComponent<Props, State> {
     });
 
     // Find the panel to inspect
-    const inspectPanel = query.inspectPanelId ? dashboard.getPanelById(parseInt(query.inspectPanelId, 10)) : null;
+    const inspectPanel = query.inspect ? dashboard.getPanelById(parseInt(query.inspect, 10)) : null;
     // find panel being edited
 
     const editPanel = query.editPanel ? dashboard.getPanelById(parseInt(query.editPanel, 10)) : null;
 
-    console.log(editPanel);
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
 
@@ -370,7 +362,6 @@ const mapDispatchToProps = {
   initDashboard,
   cleanUpDashboard,
   notifyApp,
-  // updateLocation,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));
