@@ -223,7 +223,7 @@ allowed_organizations =
 
 ## JMESPath examples
 
-To easily configure a proper JMESPath expression you can test/evaluate expression with a custom payload at http://jmespath.org/.
+To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
 
 ### Role mapping
 
