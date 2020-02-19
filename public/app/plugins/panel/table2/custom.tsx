@@ -4,10 +4,10 @@ import {
   NumberOverrideEditor,
   numberOverrideProcessor,
   NumberFieldConfigSettings,
-  stringSelectOverrideProcessor,
-  StringSelectValueEditor,
-  StringSelectOverrideEditor,
-  StringSelectFieldConfigSettings,
+  selectOverrideProcessor,
+  SelectValueEditor,
+  SelectOverrideEditor,
+  SelectFieldConfigSettings,
 } from '@grafana/ui';
 
 export const tableFieldRegistry: FieldConfigEditorRegistry = new Registry<FieldPropertyEditorItem>(() => {
@@ -29,14 +29,14 @@ export const tableFieldRegistry: FieldConfigEditorRegistry = new Registry<FieldP
     shouldApply: () => true,
   };
 
-  const cellDisplayMode: FieldPropertyEditorItem<string, StringSelectFieldConfigSettings> = {
+  const cellDisplayMode: FieldPropertyEditorItem<string, SelectFieldConfigSettings<string>> = {
     id: 'displayMode', // Match field properties
     name: 'Cell display mode',
     description: 'Color value, background, show as gauge, etc',
 
-    editor: StringSelectValueEditor,
-    override: StringSelectOverrideEditor,
-    process: stringSelectOverrideProcessor,
+    editor: SelectValueEditor,
+    override: SelectOverrideEditor,
+    process: selectOverrideProcessor,
 
     settings: {
       options: [

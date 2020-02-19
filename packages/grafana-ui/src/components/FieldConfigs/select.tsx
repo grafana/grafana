@@ -3,19 +3,19 @@ import React, { FC } from 'react';
 import { FieldOverrideContext, FieldOverrideEditorProps, FieldConfigEditorProps, SelectableValue } from '@grafana/data';
 import Forms from '../Forms';
 
-export interface StringSelectFieldConfigSettings {
-  options: Array<SelectableValue<string>>;
+export interface SelectFieldConfigSettings<T> {
+  options: Array<SelectableValue<T>>;
 }
 
-export const stringSelectOverrideProcessor = (
+export const selectOverrideProcessor = (
   value: any,
   context: FieldOverrideContext,
-  settings: StringSelectFieldConfigSettings
+  settings: SelectFieldConfigSettings<any>
 ) => {
-  return String(value);
+  return value;
 };
 
-export const StringSelectValueEditor: FC<FieldConfigEditorProps<string, StringSelectFieldConfigSettings>> = ({
+export const SelectValueEditor: FC<FieldConfigEditorProps<string, SelectFieldConfigSettings<any>>> = ({
   item,
   value,
   onChange,
@@ -23,7 +23,7 @@ export const StringSelectValueEditor: FC<FieldConfigEditorProps<string, StringSe
   return <Forms.Select value={value || ''} onChange={e => onChange(e.value)} options={item.settings.options} />;
 };
 
-export const StringSelectOverrideEditor: FC<FieldOverrideEditorProps<string, StringSelectFieldConfigSettings>> = ({
+export const SelectOverrideEditor: FC<FieldOverrideEditorProps<string, SelectFieldConfigSettings<any>>> = ({
   item,
   value,
   onChange,

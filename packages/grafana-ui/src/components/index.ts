@@ -131,10 +131,10 @@ export {
   NumberFieldConfigSettings,
 } from './FieldConfigs/number';
 export {
-  stringSelectOverrideProcessor,
-  StringSelectValueEditor,
-  StringSelectOverrideEditor,
-  StringSelectFieldConfigSettings,
+  selectOverrideProcessor,
+  SelectValueEditor,
+  SelectOverrideEditor,
+  SelectFieldConfigSettings,
 } from './FieldConfigs/select';
 
 // Next-gen forms
