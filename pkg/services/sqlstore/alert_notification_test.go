@@ -356,6 +356,19 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				So(foundAfterCaching, ShouldBeTrue)
 				So(resultAfterCaching, ShouldEqual, notification.Uid)
 			})
+
+			Convey("Retrieves from cache when exists", func() {
+				query := &models.GetAlertNotificationUidQuery{
+					Id:    999,
+					OrgId: 100,
+				}
+				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
+				ss.CacheService.Set(cacheKey, "a-cached-uid", -1)
+
+				err := ss.GetAlertNotificationUidWithId(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldEqual, "a-cached-uid")
+			})
 		})
 	})
 }
