@@ -1,6 +1,8 @@
 @import '../../node_modules/rc-slider/assets/index.css';
 
-$blue: #1f60c4;
+.rc-slider-tooltip {
+  cursor: grab;
+}
 
 .rc-slider-tooltip-inner {
   color: $text-color;
@@ -21,34 +23,34 @@ $blue: #1f60c4;
 }
 
 .rc-slider-handle {
-  border: solid 2px $blue;
-  background-color: $blue;
+  border: solid 2px $blue-shade;
+  background-color: $blue-shade;
 }
 
 .rc-slider-handle:hover {
-  border-color: $blue;
+  border-color: $blue-shade;
 }
 
 .rc-slider-handle:focus {
-  border-color: $blue;
+  border-color: $blue-shade;
   box-shadow: none;
 }
 
 .rc-slider-handle:active {
-  border-color: $blue;
+  border-color: $blue-shade;
   box-shadow: none;
 }
 
 .rc-slider-handle-click-focused:focus {
-  border-color: $blue;
+  border-color: $blue-shade;
 }
 
 .rc-slider-dot-active {
-  border-color: $blue;
+  border-color: $blue-shade;
 }
 
 .rc-slider-track {
-  background-color: $blue;
+  background-color: $blue-shade;
 }
 
 .rc-slider-rail {

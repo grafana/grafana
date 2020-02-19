@@ -3,7 +3,6 @@ import { Slider, Props } from './Slider';
 import { mount } from 'enzyme';
 
 const sliderProps: Props = {
-  orientation: 'horizontal',
   min: 10,
   max: 20,
 };
