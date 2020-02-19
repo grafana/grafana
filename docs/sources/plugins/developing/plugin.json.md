@@ -26,8 +26,8 @@ The plugin.json file is mandatory for all plugins. When Grafana starts it will s
 | info.description            | Description of plugin. Used for search on grafana.com                                                                         |
 | info.keywords               | Array of plugin keywords. Used for search on grafana.com                                                                      |
 | info.links                  | An array of link objects to be displayed on this plugin's project page in the form `{name: 'foo', url: 'http://example.com'}` |
-| info.logos.small            | Link to small project logo                                                                                                    |
-| info.logos.large            | Link to large project logos                                                                                                   |
+| info.logos.small            | Link to the "small" version of the plugin logo, which must be an SVG image. "Large" and "small" logos can be the same image. |
+| info.logos.large            | Link to the "large" version of the plugin logo, which must be an SVG image. "Large" and "small" logos can be the same image. |
 | info.screenshots            | An array of screenshot objects in the form `{name: 'bar', path: 'img/screenshot.png'}`                                        |
 | info.updated                | Date when this plugin was built. Use `%TODAY%` for Grafana to autopopulate this value.                                        |
 | info.version                | Project version of this commit. Use `%VERSION%` for Grafana to autopopulate this value.                                      |
