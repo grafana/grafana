@@ -6,6 +6,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataFrame,
+  ScopedVars,
 } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
@@ -263,14 +264,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[]): ElasticsearchQuery[] {
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query, {}, 'lucene'),
+          query: this.templateSrv.replace(query.query, scopedVars, 'lucene'),
         };
         return expandedQuery;
       });
@@ -367,8 +368,12 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       return Promise.resolve({ data: [] });
     }
 
-    payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf().toString());
-    payload = payload.replace(/\$timeTo/g, options.range.to.valueOf().toString());
+    // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
+    // it as an integer not as string with digits. This is because elastic will convert the string only if the time
+    // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
+    // and then sending string will error out.
+    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
+    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
     const url = this.getMultiSearchUrl();

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
 import { getBackendSrv } from '@grafana/runtime';
+import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
@@ -43,14 +44,17 @@ export class MssqlDatasource {
     return quotedValues.join(',');
   }
 
-  interpolateVariablesInQueries(queries: MssqlQueryForInterpolation[]): MssqlQueryForInterpolation[] {
+  interpolateVariablesInQueries(
+    queries: MssqlQueryForInterpolation[],
+    scopedVars: ScopedVars
+  ): MssqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+          rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
         };
         return expandedQuery;
       });

@@ -125,7 +125,7 @@ Sets the path for the Grafana install/home path, defaults to working directory. 
  
 **Example:**
 ```bash
-grafana-cli admin reset-admin-password --homepath "c:\Program Files\grafana" mynewpassword
+grafana-cli --homepath "c:\Program Files\grafana" admin reset-admin-password mynewpassword
 ```
 
 ### Override config file         

@@ -1,12 +1,15 @@
 import React, { useMemo } from 'react';
-import { DataFrame } from '@grafana/data';
+import { DataFrame, Field } from '@grafana/data';
 import { useSortBy, useTable, useBlockLayout, Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
+import useMeasure from 'react-use/lib/useMeasure';
 import { getColumns, getTableRows } from './utils';
 import { useTheme } from '../../themes';
 import { TableFilterActionCallback } from './types';
 import { getTableStyles } from './styles';
 import { TableCell } from './TableCell';
+import { Icon } from '../Icon/Icon';
+import { getTextAlign } from './utils';
 
 export interface Props {
   data: DataFrame;
@@ -17,6 +20,7 @@ export interface Props {
 
 export const Table = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
+  const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
@@ -53,29 +57,37 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
     <div {...getTableProps()} className={tableStyles.table}>
       <div>
         {headerGroups.map((headerGroup: any) => (
-          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map((column: any) => renderHeaderCell(column, tableStyles.headerCell))}
+          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
+            {headerGroup.headers.map((column: any) =>
+              renderHeaderCell(column, tableStyles.headerCell, data.fields[column.index])
+            )}
           </div>
         ))}
       </div>
-      <FixedSizeList height={height} itemCount={rows.length} itemSize={tableStyles.rowHeight} width={width}>
+      <FixedSizeList
+        height={height - headerRowMeasurements.height}
+        itemCount={rows.length}
+        itemSize={tableStyles.rowHeight}
+        width={width}
+      >
         {RenderRow}
       </FixedSizeList>
     </div>
   );
 };
 
-function renderHeaderCell(column: any, className: string) {
+function renderHeaderCell(column: any, className: string, field: Field) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
+  const fieldTextAlign = getTextAlign(field);
 
-  if (column.textAlign) {
-    headerProps.style.textAlign = column.textAlign;
+  if (fieldTextAlign) {
+    headerProps.style.textAlign = fieldTextAlign;
   }
 
   return (
     <div className={className} {...headerProps}>
       {column.render('Header')}
-      <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
+      {column.isSorted && (column.isSortedDesc ? <Icon name="caret-down" /> : <Icon name="caret-up" />)}
     </div>
   );
 }

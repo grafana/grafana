@@ -23,7 +23,7 @@ amet.`
   };
 };
 
-const ModalStories = storiesOf('UI/Modal', module);
+const ModalStories = storiesOf('General/Modal', module);
 
 ModalStories.addDecorator(withCenteredStory);
 

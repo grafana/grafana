@@ -1,6 +1,7 @@
-import { dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TemplateSrv } from '../../../../features/templating/template_srv';
+import templateSrv from 'app/features/templating/template_srv';
 import { GrafanaDatasource } from '../datasource';
 
 jest.mock('@grafana/runtime', () => ({
@@ -17,7 +18,6 @@ describe('grafana data source', () => {
 
   describe('when executing an annotations query', () => {
     let calledBackendSrvParams: any;
-    let templateSrvStub: any;
     let ds: GrafanaDatasource;
     beforeEach(() => {
       getMock.mockImplementation((url: string, options: any) => {
@@ -25,8 +25,7 @@ describe('grafana data source', () => {
         return Promise.resolve([]);
       });
 
-      templateSrvStub = new TemplateSrv();
-      templateSrvStub.init([
+      templateSrv.init([
         { type: 'query', name: 'var', current: { value: 'replaced' } },
         { type: 'query', name: 'var2', current: { value: ['replaced', 'replaced2'] } },
         { type: 'query', name: 'var3', current: { value: ['replaced3', 'replaced4'] } },
@@ -34,7 +33,7 @@ describe('grafana data source', () => {
         { type: 'query', name: 'var5', current: { value: ['replaced?3', 'replaced?4'] } },
       ]);
 
-      ds = new GrafanaDatasource(templateSrvStub as any);
+      ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
     });
 
     describe('with tags that have template variables', () => {

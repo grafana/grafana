@@ -1,6 +1,6 @@
 import omitBy from 'lodash/omitBy';
-import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
+import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, throwError } from 'rxjs';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
@@ -13,6 +13,7 @@ import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
 import { ContextSrv, contextSrv } from './context_srv';
 import { coreModule } from 'app/core/core_module';
 import { Emitter } from '../utils/emitter';
+import { DataSourceResponse } from '../../types/events';
 
 export interface DatasourceRequestOptions {
   retry?: number;
@@ -34,18 +35,11 @@ interface ErrorResponseProps extends FetchResponseProps {
   error?: string | any;
 }
 
-export interface FetchResponse<T extends FetchResponseProps = any> {
-  status: number;
-  statusText: string;
-  ok: boolean;
-  data: T;
-}
+export interface FetchResponse<T extends FetchResponseProps = any> extends DataSourceResponse<T> {}
 
 interface SuccessResponse extends FetchResponseProps, Record<any, any> {}
 
-interface DataSourceSuccessResponse<T extends {} = any> {
-  data: T;
-}
+interface DataSourceSuccessResponse<T extends {} = any> extends FetchResponse<T> {}
 
 interface ErrorResponse<T extends ErrorResponseProps = any> {
   status: number;
@@ -53,6 +47,11 @@ interface ErrorResponse<T extends ErrorResponseProps = any> {
   isHandled?: boolean;
   data: T | string;
   cancelled?: boolean;
+}
+
+enum CancellationType {
+  request,
+  dataSourceRequest,
 }
 
 function serializeParams(data: Record<string, any>): string {
@@ -96,8 +95,8 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async get(url: string, params?: any) {
-    return await this.request({ method: 'GET', url, params });
+  async get(url: string, params?: any, requestId?: string) {
+    return await this.request({ method: 'GET', url, params, requestId });
   }
 
   async delete(url: string) {
@@ -156,6 +155,13 @@ export class BackendSrv implements BackendService {
   };
 
   async request(options: BackendSrvRequest): Promise<any> {
+    // A requestId is a unique identifier for a particular query.
+    // Every observable below has a takeUntil that subscribes to this.inFlightRequests and
+    // will cancel/unsubscribe that observable when a new datasourceRequest with the same requestId is made
+    if (options.requestId) {
+      this.inFlightRequests.next(options.requestId);
+    }
+
     options = this.parseRequestOptions(options, this.dependencies.contextSrv.user?.orgId);
 
     const fromFetchStream = this.getFromFetchStream(options);
@@ -176,15 +182,11 @@ export class BackendSrv implements BackendService {
     return merge(successStream, failureStream)
       .pipe(
         catchError((err: ErrorResponse) => {
-          if (err.status === 401) {
-            this.dependencies.logout();
-            return throwError(err);
-          }
-
           // this setTimeout hack enables any caller catching this err to set isHandled to true
           setTimeout(() => this.requestErrorHandler(err), 50);
           return throwError(err);
-        })
+        }),
+        this.handleStreamCancellation(options, CancellationType.request)
       )
       .toPromise();
   }
@@ -208,12 +210,11 @@ export class BackendSrv implements BackendService {
     );
 
     const fromFetchStream = this.getFromFetchStream(options);
-    const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
+    const failureStream = fromFetchStream.pipe(this.toDataSourceRequestFailureStream(options));
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
-        const { data } = response;
-        const fetchSuccessResponse: DataSourceSuccessResponse = { data };
+        const fetchSuccessResponse: DataSourceSuccessResponse = { ...response };
         return fetchSuccessResponse;
       }),
       tap(res => {
@@ -226,18 +227,6 @@ export class BackendSrv implements BackendService {
     return merge(successStream, failureStream)
       .pipe(
         catchError((err: ErrorResponse) => {
-          if (err.status === this.HTTP_REQUEST_CANCELED) {
-            return throwError({
-              err,
-              cancelled: true,
-            });
-          }
-
-          if (err.status === 401) {
-            this.dependencies.logout();
-            return throwError(err);
-          }
-
           // populate error obj on Internal Error
           if (typeof err.data === 'string' && err.status === 500) {
             err.data = {
@@ -257,20 +246,7 @@ export class BackendSrv implements BackendService {
 
           return throwError(err);
         }),
-        takeUntil(
-          this.inFlightRequests.pipe(
-            filter(requestId => {
-              let cancelRequest = false;
-              if (options && options.requestId && options.requestId === requestId) {
-                // when a new requestId is started it will be published to inFlightRequests
-                // if a previous long running request that hasn't finished yet has the same requestId
-                // we need to cancel that request
-                cancelRequest = true;
-              }
-              return cancelRequest;
-            })
-          )
-        )
+        this.handleStreamCancellation(options, CancellationType.dataSourceRequest)
       )
       .toPromise();
   }
@@ -461,28 +437,12 @@ export class BackendSrv implements BackendService {
     return options;
   };
 
-  private parseUrlFromOptions = (options: BackendSrvRequest): string => {
-    const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
-    const serializedParams = serializeParams(cleanParams);
-    return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
-  };
-
-  private parseInitFromOptions = (options: BackendSrvRequest): RequestInit => ({
-    method: options.method,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json, text/plain, */*',
-      ...options.headers,
-    },
-    body: typeof options.data === 'string' ? options.data : JSON.stringify(options.data),
-  });
-
   private getFromFetchStream = (options: BackendSrvRequest) => {
-    const url = this.parseUrlFromOptions(options);
-    const init = this.parseInitFromOptions(options);
+    const url = parseUrlFromOptions(options);
+    const init = parseInitFromOptions(options);
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async response => {
-        const { status, statusText, ok } = response;
+        const { status, statusText, ok, headers, url, type, redirected } = response;
         const textData = await response.text(); // this could be just a string, prometheus requests for instance
         let data;
         try {
@@ -490,7 +450,17 @@ export class BackendSrv implements BackendService {
         } catch {
           data = textData;
         }
-        const fetchResponse: FetchResponse = { status, statusText, ok, data };
+        const fetchResponse: FetchResponse = {
+          status,
+          statusText,
+          ok,
+          data,
+          headers,
+          url,
+          type,
+          redirected,
+          request: { url, ...init },
+        };
         return fetchResponse;
       }),
       share() // sharing this so we can split into success and failure and then merge back
@@ -511,7 +481,15 @@ export class BackendSrv implements BackendService {
             const firstAttempt = i === 0 && options.retry === 0;
 
             if (error.status === 401 && this.dependencies.contextSrv.user.isSignedIn && firstAttempt) {
-              return from(this.loginPing());
+              return from(this.loginPing()).pipe(
+                catchError(err => {
+                  if (err.status === 401) {
+                    this.dependencies.logout();
+                    return throwError(err);
+                  }
+                  return throwError(err);
+                })
+              );
             }
 
             return throwError(error);
@@ -519,9 +497,119 @@ export class BackendSrv implements BackendService {
         )
       )
     );
+
+  private toDataSourceRequestFailureStream = (
+    options: BackendSrvRequest
+  ): MonoTypeOperatorFunction<FetchResponse> => inputStream =>
+    inputStream.pipe(
+      filter(response => response.ok === false),
+      mergeMap(response => {
+        const { status, statusText, data } = response;
+        const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+        return throwError(fetchErrorResponse);
+      }),
+      retryWhen((attempts: Observable<any>) =>
+        attempts.pipe(
+          mergeMap((error, i) => {
+            const requestIsLocal = !options.url.match(/^http/);
+            const firstAttempt = i === 0 && options.retry === 0;
+
+            // First retry, if loginPing returns 401 this retry sequence will abort with throwError and user is logged out
+            if (requestIsLocal && firstAttempt && error.status === 401) {
+              return from(this.loginPing()).pipe(
+                catchError(err => {
+                  if (err.status === 401) {
+                    this.dependencies.logout();
+                    return throwError(err);
+                  }
+                  return throwError(err);
+                })
+              );
+            }
+
+            return throwError(error);
+          })
+        )
+      )
+    );
+
+  private handleStreamCancellation = (
+    options: BackendSrvRequest,
+    resultType: CancellationType
+  ): MonoTypeOperatorFunction<FetchResponse | DataSourceSuccessResponse | SuccessResponse> => inputStream =>
+    inputStream.pipe(
+      takeUntil(
+        this.inFlightRequests.pipe(
+          filter(requestId => {
+            let cancelRequest = false;
+            if (options && options.requestId && options.requestId === requestId) {
+              // when a new requestId is started it will be published to inFlightRequests
+              // if a previous long running request that hasn't finished yet has the same requestId
+              // we need to cancel that request
+              cancelRequest = true;
+            }
+            return cancelRequest;
+          })
+        )
+      ),
+      // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
+      // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
+      throwIfEmpty(() => ({
+        cancelled: true,
+      })),
+      catchError(err => {
+        if (!err.cancelled) {
+          return throwError(err);
+        }
+
+        if (resultType === CancellationType.dataSourceRequest) {
+          return of({
+            data: [],
+            status: this.HTTP_REQUEST_CANCELED,
+            statusText: 'Request was aborted',
+            request: { url: parseUrlFromOptions(options), ...parseInitFromOptions(options) },
+          });
+        }
+
+        return of([]);
+      })
+    );
 }
 
 coreModule.factory('backendSrv', () => backendSrv);
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
+
+export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
+  const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
+  const serializedParams = serializeParams(cleanParams);
+  return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
+};
+
+export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
+  const method = options.method;
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json, text/plain, */*',
+    ...options.headers,
+  };
+  const body = parseBody({ ...options, headers });
+  return {
+    method,
+    headers,
+    body,
+  };
+};
+
+const parseBody = (options: BackendSrvRequest) => {
+  if (!options.data || typeof options.data === 'string') {
+    return options.data;
+  }
+
+  if (options.headers['Content-Type'] === 'application/json') {
+    return JSON.stringify(options.data);
+  }
+
+  return new URLSearchParams(options.data);
+};

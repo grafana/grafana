@@ -13,8 +13,9 @@ import {
   PanelData,
   QueryFixAction,
   TimeRange,
+  ExploreMode,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreUIState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUIState } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;

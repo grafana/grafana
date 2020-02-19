@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { Plugin } from 'slate';
 import {
@@ -110,6 +110,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
 
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
   history: Array<HistoryItem<PromQuery>>;
+  ExtraFieldElement?: ReactNode;
 }
 
 interface PromQueryFieldState {
@@ -188,9 +189,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
         remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
       })
       .then(() => this.onUpdateLanguage())
-      .catch(({ isCanceled }) => {
-        if (isCanceled) {
-          console.warn('PromQueryField has unmounted, language provider intialization was canceled');
+      .catch(err => {
+        if (!err.isCanceled) {
+          throw err;
         }
       });
   };
@@ -291,7 +292,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { data, query, children } = this.props;
+    const { data, query, ExtraFieldElement } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, metricsOptions);
@@ -321,7 +322,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {children}
+          {ExtraFieldElement}
         </div>
         {showError ? (
           <div className="query-row-break">

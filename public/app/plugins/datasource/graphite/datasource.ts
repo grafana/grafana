@@ -124,7 +124,6 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       // Metrictank metadata
       if (s.meta) {
         frame.meta = {
-          datasource: this.name,
           custom: {
             request: result.data.meta, // info for the whole request
             info: s.meta, // Array of metadata
@@ -148,14 +147,14 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return tags;
   }
 
-  interpolateVariablesInQueries(queries: GraphiteQuery[]): GraphiteQuery[] {
+  interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          target: this.templateSrv.replace(query.target),
+          target: this.templateSrv.replace(query.target, scopedVars),
         };
         return expandedQuery;
       });

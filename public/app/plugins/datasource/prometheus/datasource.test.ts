@@ -7,11 +7,11 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import {
-  DataSourceInstanceSettings,
-  DataQueryResponseData,
-  DataQueryRequest,
-  dateTime,
   CoreApp,
+  DataQueryRequest,
+  DataQueryResponseData,
+  DataSourceInstanceSettings,
+  dateTime,
   LoadingState,
 } from '@grafana/data';
 import { PromOptions, PromQuery } from './types';
@@ -735,7 +735,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('When performing annotationQuery', () => {
+  describe('annotationQuery', () => {
     let results: any;
     const options: any = {
       annotation: {
@@ -835,6 +835,23 @@ describe('PrometheusDatasource', () => {
         expect(req.url).toContain('step=60');
       });
 
+      it('should use default step for short range when annotation step is empty string', () => {
+        const query = {
+          ...options,
+          annotation: {
+            ...options.annotation,
+            step: '',
+          },
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ seconds: 123 }),
+          },
+        };
+        ds.annotationQuery(query);
+        const req = datasourceRequestMock.mock.calls[0][0];
+        expect(req.url).toContain('step=60');
+      });
+
       it('should use custom step for short range', () => {
         const annotation = {
           ...options.annotation,
@@ -887,6 +904,99 @@ describe('PrometheusDatasource', () => {
         const step = 236;
         expect(req.url).toContain(`step=${step}`);
       });
+    });
+
+    describe('region annotations for sectors', () => {
+      const options: any = {
+        annotation: {
+          expr: 'ALERTS{alertstate="firing"}',
+          tagKeys: 'job',
+          titleFormat: '{{alertname}}',
+          textFormat: '{{instance}}',
+        },
+        range: {
+          from: time({ seconds: 63 }),
+          to: time({ seconds: 900 }),
+        },
+      };
+
+      async function runAnnotationQuery(resultValues: Array<[number, string]>) {
+        const response = {
+          status: 'success',
+          data: {
+            data: {
+              resultType: 'matrix',
+              result: [
+                {
+                  metric: { __name__: 'test', job: 'testjob' },
+                  values: resultValues,
+                },
+              ],
+            },
+          },
+        };
+
+        options.annotation.useValueForTime = false;
+        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
+
+        return ds.annotationQuery(options);
+      }
+
+      it('should handle gaps and inactive values', async () => {
+        const results = await runAnnotationQuery([
+          [2 * 60, '1'],
+          [3 * 60, '1'],
+          // gap
+          [5 * 60, '1'],
+          [6 * 60, '1'],
+          [7 * 60, '1'],
+          [8 * 60, '0'], // false --> create new block
+          [9 * 60, '1'],
+        ]);
+        expect(results.map(result => [result.time, result.timeEnd])).toEqual([
+          [120000, 180000],
+          [300000, 420000],
+          [540000, 540000],
+        ]);
+      });
+
+      it('should handle single region', async () => {
+        const results = await runAnnotationQuery([
+          [2 * 60, '1'],
+          [3 * 60, '1'],
+        ]);
+        expect(results.map(result => [result.time, result.timeEnd])).toEqual([[120000, 180000]]);
+      });
+
+      it('should handle 0 active regions', async () => {
+        const results = await runAnnotationQuery([
+          [2 * 60, '0'],
+          [3 * 60, '0'],
+          [5 * 60, '0'],
+        ]);
+        expect(results.length).toBe(0);
+      });
+
+      it('should handle single active value', async () => {
+        const results = await runAnnotationQuery([[2 * 60, '1']]);
+        expect(results.map(result => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
+      });
+    });
+  });
+
+  describe('createAnnotationQueryOptions', () => {
+    it.each`
+      options                                | expected
+      ${{}}                                  | ${{ interval: '60s' }}
+      ${{ annotation: {} }}                  | ${{ annotation: {}, interval: '60s' }}
+      ${{ annotation: { step: undefined } }} | ${{ annotation: { step: undefined }, interval: '60s' }}
+      ${{ annotation: { step: null } }}      | ${{ annotation: { step: null }, interval: '60s' }}
+      ${{ annotation: { step: '' } }}        | ${{ annotation: { step: '' }, interval: '60s' }}
+      ${{ annotation: { step: 0 } }}         | ${{ annotation: { step: 0 }, interval: '60s' }}
+      ${{ annotation: { step: 5 } }}         | ${{ annotation: { step: 5 }, interval: '60s' }}
+      ${{ annotation: { step: '5m' } }}      | ${{ annotation: { step: '5m' }, interval: '5m' }}
+    `("when called with options: '$options'", ({ options, expected }) => {
+      expect(ds.createAnnotationQueryOptions(options)).toEqual(expected);
     });
   });
 
@@ -957,14 +1067,14 @@ describe('PrometheusDatasource', () => {
       expect(res.url).toBe(urlExpected);
     });
 
-    it('step should never go below 1', async () => {
+    it('step should be fractional for sub second intervals', async () => {
       const query = {
         // 6 minute range
         range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
         targets: [{ expr: 'test' }],
         interval: '100ms',
       };
-      const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=1';
+      const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=0.1';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1426,7 +1536,7 @@ describe('PrometheusDatasource', () => {
 
     it('should use overridden ranges, not dashboard ranges', async () => {
       const expectedRangeSecond = 3600;
-      const expectedRangeString = '1h';
+      const expectedRangeString = '3600s';
       const query = {
         range: {
           from: time({}),

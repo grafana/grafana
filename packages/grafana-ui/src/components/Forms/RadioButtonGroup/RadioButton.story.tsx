@@ -3,7 +3,7 @@ import { RadioButton, RadioButtonSize } from './RadioButton';
 import { boolean, select } from '@storybook/addon-knobs';
 
 export default {
-  title: 'UI/Forms/RadioButton',
+  title: 'Forms/RadioButton',
   component: RadioButton,
 };
 
@@ -21,7 +21,8 @@ export const simple = () => {
       disabled={disabled}
       size={size}
       active={active}
-      onClick={() => {
+      id="standalone"
+      onChange={() => {
         setActive(!active);
       }}
     >

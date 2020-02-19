@@ -1,10 +1,14 @@
 import _ from 'lodash';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { getBackendSrv } from '@grafana/runtime';
+import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
-class GrafanaDatasource {
+import templateSrv from 'app/features/templating/template_srv';
+
+class GrafanaDatasource extends DataSourceApi<any> {
   /** @ngInject */
-  constructor(private templateSrv: TemplateSrv) {}
+  constructor(instanceSettings: DataSourceInstanceSettings) {
+    super(instanceSettings);
+  }
 
   query(options: any) {
     return getBackendSrv()
@@ -33,7 +37,7 @@ class GrafanaDatasource {
   }
 
   metricFindQuery(options: any) {
-    return Promise.resolve({ data: [] });
+    return Promise.resolve([]);
   }
 
   annotationQuery(options: any) {
@@ -61,11 +65,20 @@ class GrafanaDatasource {
       }
       let tags: string[] = [];
       for (const t of params.tags) {
-        tags = tags.concat(this.templateSrv.replace(t, {}, 'list'));
+        tags = tags.concat(templateSrv.replace(t, {}, 'list'));
       }
       params.tags = tags;
     }
-    return getBackendSrv().get('/api/annotations', params);
+
+    return getBackendSrv().get(
+      '/api/annotations',
+      params,
+      `grafana-data-source-annotations-${options.annotation.name}-${options.dashboard?.id}`
+    );
+  }
+
+  testDatasource() {
+    return Promise.resolve();
   }
 }
 
