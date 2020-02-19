@@ -31,6 +31,7 @@ export function ShareModalCtrl(
     $scope.panel = $scope.model && $scope.model.panel ? $scope.model.panel : $scope.panel; // React pass panel and dashboard in the "model" property
     $scope.dashboard = $scope.model && $scope.model.dashboard ? $scope.model.dashboard : $scope.dashboard; // ^
     $scope.modeSharePanel = $scope.panel ? true : false;
+    $scope.showLinkToPDF = config.licenseInfo.hasLicense;
 
     $scope.tabs = [{ title: 'Link', src: 'shareLink.html' }];
 
@@ -104,6 +105,15 @@ export function ShareModalCtrl(
     );
     $scope.imageUrl = $scope.imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
     $scope.imageUrl += '&width=1000&height=500' + $scope.getLocalTimeZone();
+
+    if ($scope.showLinkToPDF) {
+      const dashboardId = $scope.dashboard.id;
+      let rootPath = window.location.origin + config.appSubUrl;
+      if (rootPath.endsWith('/')) {
+        rootPath.slice(0, -1);
+      }
+      $scope.pdfUrl = `${rootPath}/api/reports/render/pdf/${dashboardId}`;
+    }
   };
 
   // This function will try to return the proper full name of the local timezone
