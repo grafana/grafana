@@ -87,3 +87,21 @@ export function appendQueryToUrl(url: string, stringToAppend: string) {
 
   return url;
 }
+
+/**
+ * Return search part (as object) of current url
+ */
+export function getUrlSearchParams() {
+  const search = window.location.search.substring(1);
+  const searchParamsSegments = search.split('&');
+  const params: any = {};
+  for (const p of searchParamsSegments) {
+    const keyValuePair = p.split('=');
+    if (keyValuePair.length > 1) {
+      const key = decodeURIComponent(keyValuePair[0]);
+      const value = decodeURIComponent(keyValuePair[1]);
+      params[key] = value;
+    }
+  }
+  return params;
+}

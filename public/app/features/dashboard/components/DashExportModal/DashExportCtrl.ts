@@ -4,7 +4,6 @@ import { saveAs } from 'file-saver';
 import coreModule from 'app/core/core_module';
 import { DashboardExporter } from './DashboardExporter';
 import { DashboardSrv } from '../../services/DashboardSrv';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
@@ -15,13 +14,8 @@ export class DashExportCtrl {
   shareExternally: boolean;
 
   /** @ngInject */
-  constructor(
-    private dashboardSrv: DashboardSrv,
-    datasourceSrv: DatasourceSrv,
-    private $scope: any,
-    private $rootScope: GrafanaRootScope
-  ) {
-    this.exporter = new DashboardExporter(datasourceSrv);
+  constructor(private dashboardSrv: DashboardSrv, private $scope: any, private $rootScope: GrafanaRootScope) {
+    this.exporter = new DashboardExporter();
 
     this.dash = this.dashboardSrv.getCurrent();
   }
