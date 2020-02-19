@@ -231,7 +231,9 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 	}
 
 	c.WriteHeader(res.Status)
-	c.Write(res.Body)
+	if _, err := c.Write(res.Body); err != nil {
+		p.logger.Error("Failed to write resource response", "error", err)
+	}
 }
 
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *BackendPlugin) error {
