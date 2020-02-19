@@ -44,7 +44,6 @@ func getOrgIdForNewUser(sess *DBSession, cmd *models.CreateUserCommand) (int64, 
 	if len(orgName) == 0 {
 		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
 	}
-
 	return getOrCreateOrg(sess, orgName)
 }
 
