@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ubuntu:18.10
+ARG BASE_IMAGE=ubuntu:19.10
 FROM ${BASE_IMAGE} AS grafana-builder
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
