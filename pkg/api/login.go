@@ -35,6 +35,8 @@ func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
 	if to.IsAbs() {
 		return login.ErrAbsoluteRedirectTo
 	}
+	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
+	// will send the user to the wrong location
 	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
 		return login.ErrInvalidRedirectTo
 	}
