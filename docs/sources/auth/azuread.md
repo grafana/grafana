@@ -113,7 +113,7 @@ allowed_groups =
 ### Configure allowed groups and domains
 
 To limit access to authenticated users that are members of one or more groups, set `allowed_groups`
-to a comma- or space-separated list of group Object Ids. Object Id for a specific group can be found on the Azure portal: go to Azure Active Directory -> Groups. For instance, if you want to
+to a comma or space- separated list of group Object Ids. Object Id for a specific group can be found on the Azure portal: go to Azure Active Directory -> Groups. For instance, if you want to
 only give access to members of the group `example` which has Id `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, set
 
 ```ini
