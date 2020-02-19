@@ -108,10 +108,11 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		}
 	}
 
-	if err := ls.Bus.Dispatch(&models.SyncTeamsCommand{
+	err := ls.Bus.Dispatch(&models.SyncTeamsCommand{
 		User:         cmd.Result,
 		ExternalUser: extUser,
-	}); err != nil && err != bus.ErrHandlerNotFound {
+	})
+	if err != nil && err != bus.ErrHandlerNotFound {
 		return err
 	}
 
