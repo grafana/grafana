@@ -7,13 +7,32 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
 )
 
+var (
+	httpRequestsInFlight prometheus.Gauge
+)
+
+func init() {
+	httpRequestsInFlight = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "http_request_in_flight",
+			Help: "A gauge of requests currently being served by Grafana.",
+		},
+	)
+
+	prometheus.MustRegister(httpRequestsInFlight)
+}
+
+// RequestMetrics is a middleware handler that instruments the request
 func RequestMetrics(handler string) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		rw := res.(macaron.ResponseWriter)
 		now := time.Now()
+		httpRequestsInFlight.Inc()
+		defer httpRequestsInFlight.Dec()
 		c.Next()
 
 		status := rw.Status()
