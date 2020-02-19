@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/ui",
-  "version": "6.6.1",
+  "version": "6.6.2",
   "description": "Grafana Components Library",
   "keywords": [
     "grafana",
@@ -25,7 +25,7 @@
     "build": "grafana-toolkit package:build --scope=ui"
   },
   "dependencies": {
-    "@grafana/data": "6.6.1",
+    "@grafana/data": "6.6.2",
     "@grafana/slate-react": "0.22.9-grafana",
     "@torkelo/react-select": "2.1.1",
     "@types/react-color": "2.17.0",
