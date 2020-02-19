@@ -49,6 +49,9 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	queryType := queryContext.Queries[0].Model.Get("type").MustString("")
 	var err error
 
+	plog.Info("calling normalised API")
+	plog.Info(prettyPrint(queryContext))
+
 	switch queryType {
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
@@ -59,6 +62,9 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	default:
 		result, err = e.executeTimeSeriesQuery(ctx, queryContext)
 	}
+
+	plog.Info("normalised API result")
+	plog.Info(prettyPrint(result))
 
 	return result, err
 }

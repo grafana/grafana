@@ -11,7 +11,7 @@ import (
 )
 
 func TestCloudWatchResponseParser(t *testing.T) {
-	Convey("TestCloudWatchResponseParser", t, func() {
+	FocusConvey("TestCloudWatchResponseParser", t, func() {
 		Convey("can expand dimension value using exact match", func() {
 			timestamp := time.Unix(0, 0)
 			resp := map[string]*cloudwatch.MetricDataResult{
@@ -123,7 +123,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			}
 			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
 
-			log.Println("")
 			log.Println("series")
 			log.Println(prettyPrint(series))
 
@@ -131,7 +130,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)
-			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
+			So(timeSeries.Name, ShouldEqual, "lb1 Expand")
 			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
 
 			timeSeries2 := (*series)[1]
@@ -199,7 +198,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
 		})
 
-		Convey("can expand dimension value using wildcard", func() {
+		FocusConvey("can expand dimension value using wildcard", func() {
 			timestamp := time.Unix(0, 0)
 			resp := map[string]*cloudwatch.MetricDataResult{
 				"lb3": {
@@ -234,6 +233,9 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				},
 			}
 
+			log.Println("resp")
+			log.Println(prettyPrint(resp))
+
 			query := &cloudWatchQuery{
 				RefId:      "refId1",
 				Region:     "us-east-1",
@@ -247,7 +249,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
+			log.Println("query")
+			log.Println(prettyPrint(query))
+
 			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
+
+			log.Println("series")
+			log.Println(prettyPrint(series))
 
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)

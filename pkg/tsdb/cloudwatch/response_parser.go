@@ -4,6 +4,7 @@ import (
 	"fmt"
 	// "sort"
 	"encoding/json"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -77,8 +78,14 @@ func calculateLabels(queryDimensions map[string][]string, alias string, label st
 	plog.Info("dimensionsMatch")
 	plog.Info(prettyPrint(dimensionsMatch))
 
+	log.Println("dimensionsMatch")
+	log.Println(prettyPrint(dimensionsMatch))
+
 	plog.Info("queryDimensions")
 	plog.Info(prettyPrint(queryDimensions))
+
+	log.Println("queryDimensions")
+	log.Println(prettyPrint(queryDimensions))
 
 	//dimensionsMatch is an array of arrays, the second item in each array is the extracted value (the dimension name)
 	dimensions := make([]string, 0)
@@ -89,25 +96,27 @@ func calculateLabels(queryDimensions map[string][]string, alias string, label st
 	plog.Info("dimensions")
 	plog.Info(prettyPrint(dimensions))
 
+	log.Println("dimensions")
+	log.Println(prettyPrint(dimensions))
+
 	aliasTags := make([]map[string]string, 0)
 	aliasCount := 1
 
 	for d := range dimensions {
+
+		log.Println("building up length of cartesian join")
+		log.Println(prettyPrint(queryDimensions[dimensions[d]]))
+
 		aliasCount = aliasCount * len(queryDimensions[dimensions[d]])
 	}
 
 	plog.Info("aliasCount")
 	plog.Info(prettyPrint(aliasCount))
 
-	for i := 0; i < aliasCount; i++ {
-		// singleAliasTags := make([]string, 0)
-		// var tagArray []string
+	log.Println("aliasCount")
+	log.Println(prettyPrint(aliasCount))
 
-		// if len(aliasTags) >= i {
-		// 	tagArray = aliasTags[i]
-		// } else {
-		// 	tagArray = make([]string, 0)
-		// }
+	for i := 0; i < aliasCount; i++ {
 
 		tagArray := make(map[string]string, 0)
 
@@ -119,11 +128,21 @@ func calculateLabels(queryDimensions map[string][]string, alias string, label st
 			plog.Info(dimensions[d])
 			plog.Info(prettyPrint(dimensionIndex))
 			plog.Info(dimensionValue)
+
+			log.Println("modulo")
+			log.Println(dimensions[d])
+			log.Println(prettyPrint(dimensionIndex))
+			log.Println(dimensionValue)
+
+			// if (dimensionValue)
 			tagArray[dimensions[d]] = dimensionValue
 		}
 
 		plog.Info("tagArray")
 		plog.Info(prettyPrint(tagArray))
+
+		log.Println("tagArray")
+		log.Println(prettyPrint(tagArray))
 
 		aliasTags = append(aliasTags, tagArray)
 
@@ -137,6 +156,10 @@ func calculateLabels(queryDimensions map[string][]string, alias string, label st
 
 	plog.Info("aliasTags")
 	plog.Info(prettyPrint(aliasTags))
+
+	log.Println("aliasTags")
+	log.Println(prettyPrint(aliasTags))
+
 	// tags := make(map[string]map[string])
 
 	// labels := make([]string, 0)
@@ -154,8 +177,17 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	plog.Info(prettyPrint(metricDataResults))
 	plog.Info(prettyPrint(query))
 
+	log.Println("parseGetMetricDataTimeSeries")
+	log.Println(prettyPrint(metricDataResults))
+	log.Println(prettyPrint(query))
+
 	result := tsdb.TimeSeriesSlice{}
 	partialData := false
+
+	//If we don't have any matching data coming back from
+	if len(metricDataResults) == 0 {
+		log.Println("parseGetMetricDataTimeSeries is zero")
+	}
 	// metricDataResultLabels := make([]string, 0)
 	// for k := range metricDataResults {
 	// 	metricDataResultLabels = append(metricDataResultLabels, k)
@@ -166,6 +198,9 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 
 	plog.Info("metricDataResultLabels")
 	plog.Info(prettyPrint(metricDataResultLabels))
+
+	log.Println("metricDataResultLabels")
+	log.Println(prettyPrint(metricDataResultLabels))
 
 	// calculatedLabels := calculateLabels(query.Dimensions, query.Alias)
 
@@ -210,7 +245,12 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 		var label string
 
 		for _, l := range labels {
+			log.Println("looking for label")
+			log.Println(l)
 			metricDataResultInner, hasMetricsInner := metricDataResults[l]
+
+			log.Println(hasMetricsInner)
+			log.Println(prettyPrint(metricDataResultInner))
 			if hasMetricsInner {
 				hasMetrics = true
 				metricDataResult = metricDataResultInner
@@ -267,6 +307,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 		plog.Info(prettyPrint(series))
 
 		if hasMetrics {
+			plog.Info("hasMetrics")
 			for j, t := range metricDataResult.Timestamps {
 				if j > 0 {
 					expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
@@ -277,7 +318,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
 			}
 		} else {
-			plog.Info("No timestamps")
+			plog.Info("hasMetrics false")
 			// series.Points := []
 		}
 		result = append(result, &series)
