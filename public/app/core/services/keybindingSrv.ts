@@ -13,7 +13,7 @@ import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { getLocationSrv } from '@grafana/runtime';
+import { getLocationService, getLocationSrv } from '@grafana/runtime';
 import { DashboardModel } from '../../features/dashboard/state';
 
 export class KeybindingSrv {
@@ -24,7 +24,7 @@ export class KeybindingSrv {
   /** @ngInject */
   constructor(
     private $rootScope: GrafanaRootScope,
-    private $location: ILocationService,
+    // private $location: ILocationService,
     private $timeout: ITimeoutService,
     private datasourceSrv: any,
     private timeSrv: any,
@@ -44,7 +44,7 @@ export class KeybindingSrv {
   }
 
   setupGlobal() {
-    if (!(this.$location.path() === '/login')) {
+    if (!(getLocationService().getCurrentLocation().pathname === '/login')) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
@@ -87,15 +87,17 @@ export class KeybindingSrv {
   }
 
   openAlerting() {
-    this.$location.url('/alerting');
+    // this.$location.url('/alerting');
   }
 
   goToHome() {
-    this.$location.url('/');
+    getLocationService().pushPath('/');
+    // this.$location.url('/');
   }
 
   goToProfile() {
-    this.$location.url('/profile');
+    getLocationService().pushPath('/profile');
+    // this.$location.url('/profile');
   }
 
   showHelpModal() {
@@ -117,25 +119,30 @@ export class KeybindingSrv {
     }
 
     // close settings view
-    const search = this.$location.search();
-    if (search.editview) {
-      delete search.editview;
-      this.$location.search(search);
+    // const search = this.$location.search();
+    const search = getLocationService().getUrlSearchParams();
+    if (search.has('editview')) {
+      // delete search.editview;
+      // this.$location.search(search);
+      getLocationService().partial({ editview: null });
       return;
     }
 
-    if (search.editPanel) {
-      delete search.editPanel;
-      this.$location.search(search);
+    if (search.has('editPanel')) {
+      getLocationService().partial({ editPanel: null });
+      // delete search.editPanel;
+      // this.$location.search(search);
       return;
     }
 
-    if (search.fullscreen) {
+    if (search.has('fullscreen')) {
+      // TODO[Router]: fix $location in DashboardSrv
       appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
       return;
     }
 
-    if (search.kiosk) {
+    if (search.has('kiosk')) {
+      // TODO[Router]: fix $location in DashboardSrv
       this.$rootScope.appEvent(CoreEvents.toggleKioskMode, { exit: true });
     }
   }
@@ -171,8 +178,9 @@ export class KeybindingSrv {
   }
 
   showDashEditView() {
-    const search = _.extend(this.$location.search(), { editview: 'settings' });
-    this.$location.search(search);
+    // const search = _.extend(this.$location.search(), { editview: 'settings' });
+    // this.$location.search(search);
+    getLocationService().partial({ editview: 'settings' });
   }
 
   setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
@@ -241,7 +249,10 @@ export class KeybindingSrv {
           const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
 
           if (urlWithoutBase) {
-            this.$timeout(() => this.$location.url(urlWithoutBase));
+            this.$timeout(() => {
+              // this.$location.url(urlWithoutBase)
+              getLocationService().pushPath(urlWithoutBase);
+            });
           }
         }
       });
@@ -313,7 +324,8 @@ export class KeybindingSrv {
     });
 
     this.bind('d n', () => {
-      this.$location.url('/dashboard/new');
+      // this.$location.url('/dashboard/new');
+      getLocationService().pushPath('/dashboard/new');
     });
 
     this.bind('d r', () => {

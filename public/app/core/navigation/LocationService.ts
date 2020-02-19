@@ -70,6 +70,12 @@ export class LocationService implements LocationServiceAPI {
     return this.history.location;
   };
 
+  pushPath = (path: History.Path) => {
+    this.history.push(path);
+  };
+  replacePath = (path: History.Path) => {
+    this.history.replace(path);
+  };
   // url(url?: string): string | void {
   //   const { location } = this.history;
   //   if (!url) {

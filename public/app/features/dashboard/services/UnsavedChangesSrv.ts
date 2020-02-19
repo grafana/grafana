@@ -8,7 +8,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 export function unsavedChangesSrv(
   this: any,
   $rootScope: GrafanaRootScope,
-  $location: ILocationService,
+  // $location: ILocationService,
   $timeout: any,
   contextSrv: ContextSrv,
   dashboardSrv: DashboardSrv,

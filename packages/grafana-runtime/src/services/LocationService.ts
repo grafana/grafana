@@ -6,6 +6,8 @@ export interface LocationService {
   push: (location: LocationDescriptorObject) => void;
   replace: (location: LocationDescriptorObject) => void;
   getCurrentLocation: () => LocationDescriptorObject;
+  pushPath: (path: History.Path) => void;
+  replacePath: (path: History.Path) => void;
   getHistory: () => History;
 }
 
