@@ -9,6 +9,7 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { appEvents } from 'app/core/core';
 import { AppEvents } from '@grafana/data';
+import { assureBaseUrl } from 'app/core/utils/location_util';
 
 const roles = [
   { label: 'Viewer', value: OrgRole.Viewer },
@@ -50,10 +51,14 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
 
   return (
     <Forms.Form defaultValues={defaultValues} onSubmit={onSubmit}>
-      {({ register, control }) => {
+      {({ register, control, errors }) => {
         return (
           <>
-            <Forms.Field label="Email or Username">
+            <Forms.Field
+              invalid={!!errors.loginOrEmail}
+              error={!!errors.loginOrEmail && 'Email or Username is required'}
+              label="Email or Username"
+            >
               <Forms.Input
                 size="md"
                 name="loginOrEmail"
@@ -61,18 +66,18 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
                 ref={register({ required: true })}
               />
             </Forms.Field>
-            <Forms.Field label="Name">
+            <Forms.Field invalid={!!errors.name} label="Name">
               <Forms.Input size="md" name="name" placeholder="(optional)" ref={register} />
             </Forms.Field>
-            <Forms.Field label="Role">
+            <Forms.Field invalid={!!errors.role} label="Role">
               <Forms.InputControl as={Forms.RadioButtonGroup} control={control} options={roles} name="role" />
             </Forms.Field>
-            <Forms.Field label="Send invite email">
+            <Forms.Field invalid={!!errors.sendEmail} label="Send invite email">
               <Forms.Switch name="sendEmail" ref={register} />
             </Forms.Field>
             <Forms.Button type="submit">Submit</Forms.Button>
             <span className={buttonSpacing}>
-              <Forms.LinkButton href={getConfig().appSubUrl + '/org/users'} variant="secondary">
+              <Forms.LinkButton href={assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
                 Back
               </Forms.LinkButton>
             </span>
