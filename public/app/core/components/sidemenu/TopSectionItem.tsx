@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import SideMenuDropDown from './SideMenuDropDown';
-import locationService from '../../navigation/LocationService';
+import { getLocationService } from '@grafana/runtime';
 
 export interface Props {
   link: any;
@@ -12,7 +12,8 @@ const TopSectionItem: FC<Props> = props => {
     <div className="sidemenu-item dropdown">
       <a
         className="sidemenu-link"
-        onClick={() => locationService().path(link.url)}
+        /*TODO[Router]: Verify*/
+        onClick={() => getLocationService().push({ pathname: link.url })}
         // href={link.url} target={link.target}
       >
         <span className="icon-circle sidemenu-icon">

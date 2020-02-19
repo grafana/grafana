@@ -14,7 +14,7 @@ import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
-import { getLocationService } from '../../../../core/navigation/LocationService';
+import { getLocationService } from '@grafana/runtime';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -52,15 +52,24 @@ export class DashNav extends PureComponent<Props> {
 
   onClose = () => {
     if (this.props.editview) {
-      this.props.updateLocation({
-        query: { editview: null },
-        partial: true,
+      getLocationService().partial({
+        editview: null,
       });
+      // this.props.updateLocation({
+      //   query: { editview: null },
+      //   partial: true,
+      // });
     } else {
-      this.props.updateLocation({
-        query: { panelId: null, edit: null, fullscreen: null, tab: null },
-        partial: true,
+      getLocationService().partial({
+        panelId: null,
+        edit: null,
+        fullscreen: null,
+        tab: null,
       });
+      // this.props.updateLocation({
+      //   query: { panelId: null, edit: null, fullscreen: null, tab: null },
+      //   partial: true,
+      // });
     }
   };
 

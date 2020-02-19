@@ -22,7 +22,7 @@ describe('DashboardImportCtrl', () => {
       validateNewDashboardName: jest.fn().mockReturnValue(Promise.resolve()),
     };
 
-    ctx.ctrl = new DashboardImportCtrl($scope, validationSrv, navModelSrv, {} as any, {} as any);
+    ctx.ctrl = new DashboardImportCtrl($scope, validationSrv, navModelSrv, {} as any);
 
     jest.clearAllMocks();
   });

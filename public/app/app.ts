@@ -41,7 +41,7 @@ import { registerAngularDirectives /*, appEvents*/ } from 'app/core/core';
 // TODO[Router]
 // import { setupAngularRoutes } from 'app/routes/routes';
 
-import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv, setLocationService } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -56,6 +56,7 @@ import { configureStore } from './store/configureStore';
 import DashboardImportCtrl from './features/manage-dashboards/DashboardImportCtrl';
 import { getStandardFieldConfigs } from '@grafana/ui';
 import { DashboardLoaderSrv } from './features/dashboard/services/DashboardLoaderSrv';
+import { LocationService } from './core/navigation/LocationService';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -77,6 +78,7 @@ export class GrafanaApp {
 
   constructor() {
     addClassIfNoOverlayScrollbar('no-overlay-scrollbar');
+    this.initServices();
     this.preBootModules = [];
     this.registerFunctions = {};
     this.ngModuleDependencies = [];
@@ -147,7 +149,6 @@ export class GrafanaApp {
 
     this.ngModuleDependencies = [
       'grafana.core',
-      // 'ngRoute',
       'ngSanitize',
       '$strap.directives',
       'ang-drag-drop',
@@ -162,7 +163,6 @@ export class GrafanaApp {
     });
 
     // register react angular wrappers
-    // coreModule.config(setupAngularRoutes);
     coreModule.controller('DashboardImportCtrl', DashboardImportCtrl);
     angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
 
@@ -196,6 +196,7 @@ export class GrafanaApp {
     for (const modulePath of config.pluginsToPreload) {
       promises.push(importPluginModule(modulePath));
     }
+
     Promise.all(promises).then(() => {
       ReactDOM.render(
         React.createElement(AppWrapper, {
@@ -227,6 +228,10 @@ export class GrafanaApp {
       reportPerformance('dcl', Math.round(performance.now()));
     });
   }
+
+  initServices = () => {
+    setLocationService(new LocationService());
+  };
 }
 
 export default new GrafanaApp();

@@ -1,8 +1,8 @@
 // import { coreModule } from '../../core';
-import locationService from './LocationService';
 import { RouteProvider } from './RouteProvider';
 import { RouteParamsProvider } from './RouteParamsProvider';
 import { coreModule } from '../core';
+import { getLocationService } from '@grafana/runtime';
 
 const registerInterceptedLinkDirective = () => {
   coreModule.directive('a', () => {
@@ -17,7 +17,7 @@ const registerInterceptedLinkDirective = () => {
             $event.stopPropagation();
 
             // TODO: refactor to one method insted of chain
-            locationService()
+            getLocationService()
               .getHistory()
               .push(elm.attr('href'));
             return false;
@@ -57,7 +57,7 @@ const interceptAngularLocation = () => {
       $provide.decorator('$location', [
         '$delegate',
         ($delegate: any) => {
-          $delegate = locationService();
+          $delegate = getLocationService();
           return $delegate;
         },
       ]);

@@ -4,11 +4,10 @@ import { GrafanaApp } from '../../app';
 import angular from 'angular';
 import { each, extend } from 'lodash';
 
-import { getLocationService } from '../navigation/LocationService';
 import { routes } from '../../routes/routes';
 import AngularRoute from './AngularRoute';
 import { ThemeProvider, ConfigContext } from '../utils/ConfigProvider';
-import { config } from '@grafana/runtime';
+import { config, getLocationService } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from '../../store/store';
 import { ErrorBoundaryAlert } from '@grafana/ui';

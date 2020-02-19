@@ -3,6 +3,8 @@ import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
+import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
+import { getLocationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
@@ -10,7 +12,6 @@ import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/reducers';
 import { notifyApp } from 'app/core/actions';
@@ -24,7 +25,6 @@ import {
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { GrafanaRoute } from '../../../core/navigation/types';
-import locationService from '../../../core/navigation/LocationService';
 
 interface DashboardPageRouteProps {
   uid: string;
@@ -215,7 +215,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
 
     // Clear url state
-    locationService().partial({
+    getLocationService().partial({
       edit: null,
       fullscreen: null,
       panelId: null,

@@ -1,4 +1,5 @@
-import { setLocationService, LocationService, getLocationService } from './LocationService';
+import { LocationService } from './LocationService';
+import { setLocationService, getLocationService } from '@grafana/runtime';
 import createMemoryHistory from 'history/createMemoryHistory';
 
 describe('LocationService', () => {

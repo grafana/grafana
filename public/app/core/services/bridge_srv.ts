@@ -6,10 +6,9 @@ import locationUtil from 'app/core/utils/location_util';
 import { ITimeoutService, ILocationService, IWindowService } from 'angular';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { UrlQueryMap } from '@grafana/runtime';
+import { UrlQueryMap, getLocationService } from '@grafana/runtime';
 // import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariableSrv } from 'app/features/templating/all';
-import { getLocationService } from '../navigation/LocationService';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {

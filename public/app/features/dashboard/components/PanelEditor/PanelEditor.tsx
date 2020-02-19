@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { CustomScrollbar, Forms, Icon, selectThemeVariant, stylesFactory } from '@grafana/ui';
+import { getLocationService } from '@grafana/runtime';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -26,7 +27,6 @@ import { FieldConfigEditor } from './FieldConfigEditor';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
-import locationService from '../../../../core/navigation/LocationService';
 
 enum Pane {
   Right,
@@ -70,15 +70,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   onPanelExit = () => {
-    this.props.updateLocation({
-      query: { editPanel: null },
-      partial: true,
-    });
+    getLocationService().partial({ editPanel: null });
+    // this.props.updateLocation({
+    //   query: { editPanel: null },
+    //   partial: true,
+    // });
   };
 
   onDiscard = () => {
     this.props.setDiscardChanges(true);
-    locationService().partial({ editPanel: null });
+    getLocationService().partial({ editPanel: null });
     // this.props.updateLocation({
     //   query: { editPanel: null },
     //   partial: true,

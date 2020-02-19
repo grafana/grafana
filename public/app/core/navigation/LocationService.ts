@@ -2,11 +2,12 @@ import { createBrowserHistory, History, Location, LocationState, LocationDescrip
 import parseKeyValue, { isString, isNumber, isObject, forEach, isUndefined } from './utils/parseKeyValue';
 import { queryString } from './utils/queryString';
 import locationUtil from '../utils/location_util';
+//TODO[Router] replace with LocationSrv
+import { LocationService as LocationServiceAPI } from '@grafana/runtime';
 
-let locationServiceInstance: LocationService;
-
-export class LocationService {
-  private history: History;
+//TODO[Router] replace with LocationSrv
+export class LocationService implements LocationServiceAPI {
+  private readonly history: History;
   private fullPageReloadRoutes = ['/logout'];
 
   constructor(history?: History<any>) {
@@ -65,46 +66,46 @@ export class LocationService {
     this.history.replace(location);
   };
 
-  absUrl() {
-    // TODO
-  }
+  getCurrentLocation = () => {
+    return this.history.location;
+  };
 
-  url(url?: string): string | void {
-    const { location } = this.history;
-    if (!url) {
-      return `${location.pathname}${location.search}${location.hash}`;
-    }
-    this.history.push(url);
-  }
+  // url(url?: string): string | void {
+  //   const { location } = this.history;
+  //   if (!url) {
+  //     return `${location.pathname}${location.search}${location.hash}`;
+  //   }
+  //   this.history.push(url);
+  // }
 
-  path(path?: string): string | void {
-    const { location } = this.history;
-    if (!path) {
-      return `${location.pathname}`;
-    } else {
-      let newPath = `${path}${location.search}${location.hash}`;
-      if (!path.startsWith('/')) {
-        newPath = '/' + newPath;
-      }
+  // path(path?: string): string | void {
+  //   const { location } = this.history;
+  //   if (!path) {
+  //     return `${location.pathname}`;
+  //   } else {
+  //     let newPath = `${path}${location.search}${location.hash}`;
+  //     if (!path.startsWith('/')) {
+  //       newPath = '/' + newPath;
+  //     }
+  //
+  //     this.history.push(newPath);
+  //   }
+  // }
 
-      this.history.push(newPath);
-    }
-  }
+  // pathReplace(path: string): string | void {
+  //   const { location } = this.history;
+  //
+  //   let newPath = `${path}${location.search}${location.hash}`;
+  //   if (!path.startsWith('/')) {
+  //     newPath = '/' + newPath;
+  //   }
+  //
+  //   this.history.replace(newPath);
+  // }
 
-  pathReplace(path: string): string | void {
-    const { location } = this.history;
-
-    let newPath = `${path}${location.search}${location.hash}`;
-    if (!path.startsWith('/')) {
-      newPath = '/' + newPath;
-    }
-
-    this.history.replace(newPath);
-  }
-
-  hash() {
-    return this.history.location.hash;
-  }
+  // hash() {
+  //   return this.history.location.hash;
+  // }
 
   search(search: any, paramValue: any): any {
     // This is a makover of original Angular's implementation.
@@ -167,33 +168,7 @@ export class LocationService {
     }
   }
 
-  // replace(url: string) {
-  //   if (url) {
-  //     this.history.replace(url);
-  //   }
-  // }
-
   getHistory() {
     return this.history;
   }
 }
-
-const locationService = () => {
-  if (locationServiceInstance) {
-    return locationServiceInstance;
-  }
-
-  locationServiceInstance = new LocationService();
-  return locationServiceInstance;
-};
-
-export const getLocationService = () => {
-  return locationService();
-};
-
-export const setLocationService = (service: LocationService) => {
-  locationServiceInstance = service;
-};
-
-//TODO refactor calls to locationService().X() to plain function calls -> X() that would use locationService underneath
-export default locationService;

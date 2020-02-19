@@ -7,7 +7,7 @@ import { InspectHeader } from './InspectHeader';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { JSONFormatter, Drawer, Select, Table, TabContent, Forms, stylesFactory, CustomScrollbar } from '@grafana/ui';
-import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getLocationService } from '@grafana/runtime';
 import {
   DataFrame,
   DataSourceApi,
@@ -19,7 +19,6 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { config } from 'app/core/config';
-import { getLocationService } from '../../../../core/navigation/LocationService';
 
 interface Props {
   dashboard: DashboardModel;
@@ -150,10 +149,11 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   onDismiss = () => {
-    getLocationSrv().update({
-      query: { inspect: null, tab: null },
-      partial: true,
-    });
+    getLocationService().partial({ inspect: null, tab: null });
+    // getLocationSrv().update({
+    //   query: { inspect: null, tab: null },
+    //   partial: true,
+    // });
   };
 
   onToggleExpand = () => {

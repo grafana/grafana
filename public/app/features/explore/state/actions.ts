@@ -82,7 +82,7 @@ import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
-import { getLocationService } from '../../../core/navigation/LocationService';
+import { getLocationService } from '@grafana/runtime';
 import { updateLocation } from '../../../core/reducers/location';
 
 /**

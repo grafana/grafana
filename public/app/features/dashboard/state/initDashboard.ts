@@ -25,7 +25,7 @@ import {
 import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery } from '@grafana/data';
-import locationService from '../../../core/navigation/LocationService';
+import { getLocationService } from '@grafana/runtime';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -68,6 +68,7 @@ async function fetchDashboard(
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
+
           dispatch(updateLocation({ path: newUrl, replace: true }));
           return null;
         }
@@ -90,7 +91,7 @@ async function fetchDashboard(
         if (args.fixUrl && dashDTO.meta.url) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
-          const currentPath = locationService().path();
+          const currentPath = getLocationService().getCurrentLocation().pathname;
           if (dashboardUrl !== currentPath) {
             // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
             dispatch(updateLocation({ path: dashboardUrl, partial: true, replace: true }));
@@ -157,11 +158,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // add missing orgId query param
     const storeState = getState();
     if (
-      !locationService()
+      !getLocationService()
         .getUrlSearchParams()
         .has('orgId')
     ) {
-      locationService().partial({ orgId: storeState.user.orgId }, true);
+      getLocationService().partial({ orgId: storeState.user.orgId }, true);
       // dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
     }
 

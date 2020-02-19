@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { getLocationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
@@ -15,10 +15,12 @@ import { TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
+
 // import { configureStore } from 'app/store/configureStore';
+// import { store } from '../store/store';
+// import { updateLocation } from 'app/core/actions';
 
 import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
-import { updateLocation } from 'app/core/actions';
 
 // Types
 import { KioskUrlValue, CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
@@ -29,9 +31,9 @@ import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
-import { AppEvent, AppEvents } from '@grafana/data';
+import { AppEvent, AppEvents, deprecationWarning } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { store } from '../store/store';
+import { toUrlParams } from '../core/utils/url';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -61,7 +63,13 @@ export class GrafanaCtrl {
 
     setLocationSrv({
       update: (opt: LocationUpdate) => {
-        store.dispatch(updateLocation(opt));
+        deprecationWarning('GrafanaCtrl', 'locationSrv.update', 'getLocationService()');
+        const method = opt.replace ? getLocationService().replace : getLocationService().push;
+        method({
+          pathname: opt.path,
+          search: toUrlParams(opt.query),
+        });
+        // store.dispatch(updateLocation(opt));
       },
     });
 

@@ -1,7 +1,7 @@
 // import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import config from 'app/core/config';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getLocationService } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
 import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -11,9 +11,6 @@ import { navigateToExplore } from '../../explore/state/actions';
 import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
-
-//TODO[Router]: move to grafana/runtime
-import { getLocationService } from '../../../core/navigation/LocationService';
 
 export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
