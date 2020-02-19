@@ -204,7 +204,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       // init unsaved changes tracking
       // TODO[Router]: Enable change tracer
       // unsavedChangesSrv.init(dashboard, args.$scope);
-      keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
+      // keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
       console.log(err);

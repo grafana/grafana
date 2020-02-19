@@ -20,21 +20,29 @@ import {
   testDataSource,
 } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getRouteParamsId } from 'app/core/selectors/location';
+// import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
 import { CoreEvents, StoreState } from 'app/types/';
-import { UrlQueryMap } from '@grafana/runtime';
+// import { getLocationService, UrlQueryMap } from '@grafana/runtime';
 import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
+import { GrafanaRoute } from '../../../core/navigation/types';
 
-export interface Props {
+interface DatasourcePageRouteParams {
+  id: string;
+}
+interface DatasourcePageQueryParams {
+  page?: string;
+}
+
+export interface Props extends GrafanaRoute<DatasourcePageRouteParams, DatasourcePageQueryParams> {
   navModel: NavModel;
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
-  pageId: number;
+  // pageId: number;
   deleteDataSource: typeof deleteDataSource;
   loadDataSource: typeof loadDataSource;
   setDataSourceName: typeof setDataSourceName;
@@ -44,8 +52,8 @@ export interface Props {
   initDataSourceSettings: typeof initDataSourceSettings;
   testDataSource: typeof testDataSource;
   plugin?: GenericDataSourcePlugin;
-  query: UrlQueryMap;
-  page?: string;
+  // query: UrlQueryMap;
+  // page?: string;
   testingStatus?: {
     message?: string;
     status?: string;
@@ -55,8 +63,11 @@ export interface Props {
 
 export class DataSourceSettingsPage extends PureComponent<Props> {
   componentDidMount() {
-    const { initDataSourceSettings, pageId } = this.props;
-    initDataSourceSettings(pageId);
+    const {
+      initDataSourceSettings,
+      match: { params },
+    } = this.props;
+    initDataSourceSettings(parseInt(params.id, 10));
   }
 
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
@@ -232,7 +243,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   }
 
   render() {
-    const { navModel, page, loadError } = this.props;
+    const { navModel, query, loadError } = this.props;
 
     if (loadError) {
       return this.renderLoadError(loadError);
@@ -241,17 +252,21 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
-          {this.hasDataSource && <div>{page ? this.renderConfigPageBody(page) : this.renderSettings()}</div>}
+          {this.hasDataSource && (
+            <div>{query.page ? this.renderConfigPageBody(query.page) : this.renderSettings()}</div>
+          )}
         </Page.Contents>
       </Page>
     );
   }
 }
 
-function mapStateToProps(state: StoreState) {
-  const pageId = getRouteParamsId(state.location);
+function mapStateToProps(state: StoreState, ownProps: Props) {
+  // const pageId = getRouteParamsId(state.location);
+  const pageId = ownProps.match.params.id;
   const dataSource = getDataSource(state.dataSources, pageId);
-  const page = state.location.query.page as string;
+  // const page = state.location.query.page as string;
+  const page = ownProps.query.page;
   const { plugin, loadError, testingStatus } = state.dataSourceSettings;
 
   return {
@@ -262,9 +277,9 @@ function mapStateToProps(state: StoreState) {
     ),
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
-    pageId: pageId,
-    query: state.location.query,
-    page,
+    // pageId: pageId,
+    // query: state.location.query,
+    // page,
     plugin,
     loadError,
     testingStatus,

@@ -9,7 +9,7 @@ export interface GrafanaRoute<T, Q = any> extends RouteComponentProps<T> {
   $contextSrv: ContextSrv;
 
   // Object representing current query string
-  query: Record<keyof Q, any>;
+  query: Partial<Record<keyof Q, any>>;
   // String describing current route
   routeInfo?: string;
 }
