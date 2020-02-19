@@ -11,7 +11,7 @@ type Spacing = 'xs' | 'sm' | 'md' | 'lg';
 type Justify = 'flex-start' | 'flex-end' | 'space-between';
 
 export interface LayoutProps {
-  children: Array<React.ReactNode>;
+  children: React.ReactNode[];
   orientation?: Orientation;
   spacing?: Spacing;
   justify?: Justify;
