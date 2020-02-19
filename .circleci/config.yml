@@ -1173,9 +1173,9 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Increase node momory
-        command: |
-          export NODE_OPTIONS=--max_old_space_size=4096
+          name: Increase node momory
+          command: |
+            export NODE_OPTIONS=--max_old_space_size=4096
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
