@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
-import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme } from '../../themes';
 
 enum Orientation {
   Horizontal,
