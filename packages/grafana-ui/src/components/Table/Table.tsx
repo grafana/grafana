@@ -13,7 +13,7 @@ export interface Props {
   data: DataFrame;
   width: number;
   height: number;
-  /** pixels in number */
+  /** Minimal column width specified in pixels */
   columnMinWidth?: number;
   onCellClick?: TableFilterActionCallback;
 }
