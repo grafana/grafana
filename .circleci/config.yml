@@ -655,13 +655,8 @@ jobs:
           name: Publish Docker images
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker tag "grafana/grafana-enterprise:master" "grafana/grafana-enterprise:master"
             docker push "grafana/grafana-enterprise:master"
-            docker tag "grafana/grafana-enterprise-arm32v7-linux:master" \
-              "grafana/grafana-enterprise-arm32v7-linux:master"
             docker push "grafana/grafana-enterprise-arm32v7-linux:master"
-            docker tag "grafana/grafana-enterprise-arm64v8-linux:master" \
-              "grafana/grafana-enterprise-arm64v8-linux:master"
             docker push "grafana/grafana-enterprise-arm64v8-linux:master"
       - run:
           name: Publish Docker manifest
@@ -704,14 +699,8 @@ jobs:
           name: Publish Docker images
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker tag "grafana/grafana-enterprise:master-ubuntu" \
-              "grafana/grafana-enterprise:master-ubuntu"
             docker push "grafana/grafana-enterprise:master-ubuntu"
-            docker tag "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu" \
-              "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu"
             docker push "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu"
-            docker tag "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu" \
-              "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu"
             docker push "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu"
 
             # Publish dev image
