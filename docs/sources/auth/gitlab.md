@@ -73,7 +73,7 @@ who can authenticate on GitLab will be able to login on your Grafana instance;
 if you use the public `gitlab.com`, it means anyone in the world would be able
 to login on your Grafana instance.
 
-You can however limit access to only members of a given group or list of
+You can limit access to only members of a given group or list of
 groups by setting the `allowed_groups` option.
 
 ### allowed_groups
@@ -126,4 +126,3 @@ the correct teams.
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 
 [Learn more about Team Sync]({{< relref "team-sync.md" >}})
-
