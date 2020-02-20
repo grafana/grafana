@@ -625,6 +625,7 @@ describe('ElasticDatasource', function(this: any) {
             timeField: '@time',
           },
         } as DataSourceInstanceSettings<ElasticsearchOptions>,
+        backendSrv as BackendSrv,
         templateSrv as TemplateSrv,
         timeSrv as TimeSrv
       );
