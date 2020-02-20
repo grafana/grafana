@@ -34,7 +34,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => 
         margin: ${theme.spacing.sm} ${theme.spacing.lg} ${theme.spacing.sm} ${theme.spacing.sm};
       `;
   return {
-    container: container,
+    container,
   };
 });
 
