@@ -118,7 +118,6 @@
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.0.1",
     "node-sass": "4.13.1",
-    "npm": "6.13.7",
     "optimize-css-assets-webpack-plugin": "5.0.1",
     "phantomjs-prebuilt": "2.1.16",
     "pixelmatch": "4.0.2",
