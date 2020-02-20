@@ -24,7 +24,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
   const tableStyles = getTableStyles(theme);
 
   const minWidth = columnMinWidth && columnMinWidth * data.fields.length;
-  const tableWidth = minWidth && minWidth > width ? minWidth : widthgit;
+  const tableWidth = minWidth && minWidth > width ? minWidth : width;
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
