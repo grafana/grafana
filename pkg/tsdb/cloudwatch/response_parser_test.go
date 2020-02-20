@@ -1,6 +1,8 @@
 package cloudwatch
 
 import (
+	"encoding/json"
+	"log"
 	"testing"
 	"time"
 
@@ -10,9 +12,14 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func prettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
+}
+
 func TestCloudWatchResponseParser(t *testing.T) {
-	Convey("TestCloudWatchResponseParser", t, func() {
-		Convey("can expand dimension value using exact match", func() {
+	FocusConvey("TestCloudWatchResponseParser", t, func() {
+		FocusConvey("can expand dimension value using exact match", func() {
 			timestamp := time.Unix(0, 0)
 			resp := map[string]*cloudwatch.MetricDataResult{
 				"lb1": {
@@ -63,14 +70,19 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
 
+			log.Println("series")
+			log.Println(prettyPrint(series))
+
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)
 			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
 			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+			So(timeSeries.Points, ShouldHaveLength, 3)
 
 			timeSeries2 := (*series)[1]
 			So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
 			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+			So(timeSeries.Points, ShouldHaveLength, 3)
 		})
 
 		Convey("can expand dimension value using substring", func() {
@@ -131,6 +143,87 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			timeSeries2 := (*series)[1]
 			So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
 			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+		})
+
+		Convey("can expand alias when there's no data returned", func() {
+			resp := map[string]*cloudwatch.MetricDataResult{}
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1", "lb2"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{LoadBalancer}} Expanded",
+			}
+			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
+
+			log.Println("series")
+			log.Println(prettyPrint(series))
+
+			timeSeries := (*series)[0]
+			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
+			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+
+			timeSeries2 := (*series)[1]
+			So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
+			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+
+		})
+
+		Convey("can expand alias when there's partial data returned", func() {
+			timestamp := time.Unix(0, 0)
+			resp := map[string]*cloudwatch.MetricDataResult{
+				"lb1": {
+					Id:    aws.String("id1"),
+					Label: aws.String("lb1"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			}
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1", "lb2"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{LoadBalancer}} Expanded",
+			}
+			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
+
+			log.Println("series")
+			log.Println(prettyPrint(series))
+
+			timeSeries := (*series)[0]
+			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
+			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+
+			// timeSeries2 := (*series)[1]
+			// So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
+			// So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+
 		})
 
 		Convey("can expand dimension value using wildcard", func() {

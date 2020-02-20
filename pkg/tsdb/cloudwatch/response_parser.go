@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -71,6 +72,11 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	}
 	sort.Strings(metricDataResultLabels)
 
+	log.Println("metricDataResultLabels")
+	log.Println(prettyPrint(metricDataResultLabels))
+
+	// if (len())
+
 	for _, label := range metricDataResultLabels {
 		metricDataResult := metricDataResults[label]
 		if *metricDataResult.StatusCode != "Complete" {
@@ -110,6 +116,9 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 		}
 
 		series.Name = formatAlias(query, query.Stats, series.Tags, label)
+
+		log.Println("metricDataResult")
+		log.Println(prettyPrint(metricDataResult))
 
 		for j, t := range metricDataResult.Timestamps {
 			if j > 0 {
