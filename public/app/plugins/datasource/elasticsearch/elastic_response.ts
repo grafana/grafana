@@ -479,7 +479,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
   const docs: any[] = [];
   // We keep a list of all props so that we can create all the fields in the dataFrame, this can lead
   // to wide sparse dataframes in case the scheme is different per document.
-  let propNames: string[] = [];
+  const propNames: string[] = [];
 
   for (const hit of hits) {
     const flattened = hit._source ? flatten(hit._source, null) : {};
