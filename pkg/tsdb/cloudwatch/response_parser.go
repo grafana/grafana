@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"sort"
@@ -8,10 +9,25 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
+
+func prettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
 
 func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
@@ -67,18 +83,70 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	result := tsdb.TimeSeriesSlice{}
 	partialData := false
 	metricDataResultLabels := make([]string, 0)
-	for k := range metricDataResults {
-		metricDataResultLabels = append(metricDataResultLabels, k)
+
+	// contains(s, s1)
+
+	log.Println("metricDataResults")
+	log.Println(len(metricDataResults))
+	log.Println(prettyPrint(metricDataResults))
+
+	log.Println("query")
+	log.Println(prettyPrint(query))
+
+	if requestAzs, ok := query.Dimensions["AvailabilityZone"]; ok {
+		//do something here
+
+		log.Println("AvailabilityZone len")
+		log.Println(len(requestAzs))
+
+		if len(requestAzs) > len(metricDataResults) {
+			// Data is missing, add empty metrics...
+			// TODO - does this only apply to AZs? Or other dimensions?
+
+			for k := range requestAzs {
+				requestAz := requestAzs[k]
+				metricDataResultLabels = append(metricDataResultLabels, requestAz)
+				if _, ok := metricDataResults[requestAz]; !ok {
+					log.Println("AvailabilityZone not found in results")
+					log.Println(requestAz)
+
+					metricDataResults[requestAz] = &cloudwatch.MetricDataResult{
+						//TODO : we need to use the same id val as that in the existing items. What do we do if results are empty?
+						Id:         aws.String("id1"),
+						Label:      aws.String(requestAz),
+						Timestamps: []*time.Time{},
+						Values:     []*float64{},
+						StatusCode: aws.String("Complete"),
+					}
+				}
+			}
+
+		}
+	} else {
+
+		for k := range metricDataResults {
+			metricDataResultLabels = append(metricDataResultLabels, k)
+		}
 	}
+
+	log.Println("modified metricDataResults")
+	log.Println(len(metricDataResults))
+	log.Println(prettyPrint(metricDataResults))
+
 	sort.Strings(metricDataResultLabels)
 
 	log.Println("metricDataResultLabels")
 	log.Println(prettyPrint(metricDataResultLabels))
-
 	// if (len())
 
 	for _, label := range metricDataResultLabels {
+
 		metricDataResult := metricDataResults[label]
+
+		log.Println("iterating labels")
+		log.Println(label)
+		log.Println(prettyPrint(metricDataResult))
+
 		if *metricDataResult.StatusCode != "Complete" {
 			partialData = true
 		}
@@ -129,6 +197,10 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 			}
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
 		}
+
+		log.Println("return series")
+		log.Println(prettyPrint(series))
+
 		result = append(result, &series)
 	}
 	return &result, partialData, nil
