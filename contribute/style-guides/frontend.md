@@ -166,7 +166,7 @@ _SASS styles are deprecated, ideally migrate to Emotion whenever you need to mod
 Name files according to the primary export:
 
 - When the primary export is a class or React component, use PascalCase.
-- when primary export is a function, use camelCase
+- When the primary export is a function, use camelCase.
 
 For files exporting multiple utility functions, use the name that describes the responsibility of grouped utilities. For example, a file exporting math utilities should be named `math.ts`.
 
