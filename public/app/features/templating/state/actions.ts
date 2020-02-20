@@ -76,25 +76,20 @@ export interface SelectVariableOption {
 
 export const addVariable = createAction<PrepareAction<VariablePayload<AddVariable>>>(
   'templating/addVariable',
-  (payload: VariablePayload<AddVariable>) => {
+  (payload: VariablePayload) => {
     return {
-      payload: {
-        ...payload,
-        uuid: v4(),
-      },
+      payload,
     };
   }
 );
+
 export const removeVariable = createAction<VariablePayload<{ notifyAngular: boolean }>>('templating/removeVariable');
 export const newVariable = createAction<VariablePayload<VariableNewVariableStart>>('templating/newVariable');
 export const storeNewVariable = createAction<PrepareAction<VariablePayload>>(
   'templating/storeNewVariable',
   (payload: VariablePayload) => {
     return {
-      payload: {
-        ...payload,
-        uuid: v4(),
-      },
+      payload,
     };
   }
 );
@@ -162,6 +157,10 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
       if (!variableAdapters.contains(model.type)) {
         continue;
       }
+
+      // temp - would prefer to do this in the adapter.
+      model.uuid = v4();
+      model.index = index;
 
       dispatch(addVariable(toVariablePayload(model, { global: false, index, model })));
     }

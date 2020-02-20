@@ -64,7 +64,9 @@ export const updateQueryVariableOptions = (
     if (!variable.uuid) {
       throw new Error(JSON.stringify(variable));
     }
+
     const variableInState = getVariable<QueryVariableModel>(variable.uuid ?? '');
+
     try {
       dispatch(updateVariableStarting(toVariablePayload(variable)));
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');

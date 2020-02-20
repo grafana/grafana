@@ -3,8 +3,6 @@ import _ from 'lodash';
 import { VariableActions, VariableModel, variableRegex, VariableWithOptions } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
-import { getAllVariables } from './state/selectors';
-import { getState } from '../../store/store';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -43,7 +41,7 @@ export class TemplateSrv {
   updateIndex() {
     const existsOrEmpty = (value: any) => value || value === '';
 
-    this.index = getAllVariables(this.variables, getState()).reduce((acc: any, currentValue) => {
+    this.index = this.variables.reduce((acc: any, currentValue) => {
       const variableWithOptions = currentValue as VariableWithOptions & VariableActions;
       if (
         variableWithOptions.current &&
@@ -360,7 +358,7 @@ export class TemplateSrv {
   }
 
   fillVariableValuesForUrl(params: any, scopedVars?: ScopedVars) {
-    _.each(getAllVariables(this.variables, getState()), (variable: VariableModel & VariableActions) => {
+    _.each(this.variables, (variable: VariableModel & VariableActions) => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -384,6 +382,12 @@ export class TemplateSrv {
       }
     });
     return value.join(',');
+  }
+
+  syncVariableFromRedux(variable: any) {
+    const current = this.index[variable.name];
+    const ctor = current.constructor;
+    this.index[variable.name] = new ctor(variable);
   }
 }
 

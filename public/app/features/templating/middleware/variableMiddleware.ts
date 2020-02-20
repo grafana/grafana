@@ -28,6 +28,7 @@ import templateSrv from '../template_srv';
 import { getVariable } from '../state/selectors';
 import { emptyUuid } from '../state/types';
 import { VariableModel } from '../variable';
+import { hideQueryVariableDropDown } from '../state/queryVariableActions';
 
 let dashboardEvents: Emitter | null = null;
 
@@ -146,21 +147,30 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
     return result;
   }
 
-  if (addVariable.match(action)) {
-    const result = next(action);
-    const uuid = action.payload.uuid;
-    const index = action.payload.data.index;
-    const variable = { ...getVariable(uuid, store.getState()) };
-    dashboardEvents?.emit(CoreEvents.variableMovedToState, { index, uuid });
-    templateSrv.variableInitialized(variable);
-    return result;
-  }
+  // if (addVariable.match(action)) {
+  //   const result = next(action);
+  //   const uuid = action.payload.uuid;
+  //   const index = action.payload.data.index;
+  //   console.log(`middleware: adding ${uuid}`);
+  //   const variable = { ...getVariable(uuid, store.getState()) };
+  //   dashboardEvents?.emit(CoreEvents.variableMovedToState, { index, uuid });
+  //   templateSrv.variableInitialized(variable);
+  //   return result;
+  // }
 
   if (setCurrentVariableValue.match(action)) {
     const result = next(action);
     const uuid = action.payload.uuid;
     const variable = { ...getVariable(uuid, store.getState()) };
-    templateSrv.variableInitialized(variable);
+    templateSrv.syncVariableFromRedux(variable);
+    return result;
+  }
+
+  if (hideQueryVariableDropDown.match(action)) {
+    const result = next(action);
+    const uuid = action.payload.uuid;
+    const variable = { ...getVariable(uuid, store.getState()) };
+    dashboardEvents?.emit('testing_to_update_variable', { variable });
     return result;
   }
 
@@ -196,6 +206,7 @@ export const variableMiddleware: Middleware<{}, StoreState> = (store: Middleware
   }
 
   if (newVariable.match(action)) {
+    console.log(`middleware: new ${action.payload.uuid}`);
     const result = next(action);
     dashboardEvents?.emit(CoreEvents.variableNewVariableSucceeded);
     return result;

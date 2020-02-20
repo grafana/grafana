@@ -37,9 +37,12 @@ export class VariableSrv {
       CoreEvents.templateVariableValueUpdated,
       this.updateUrlParamsWithCurrentVariables.bind(this)
     );
+    this.dashboard.events.on('testing_to_update_variable', (payload: any) =>
+      this.variableUpdated(payload.variable, true)
+    );
 
     // create working class models representing variables
-    this.variables = dashboard.templating.list.map((model: VariableModel, index) =>
+    this.variables = dashboard.templating.list = dashboard.templating.list.map((model: VariableModel, index) =>
       this.createVariableFromModel(model, index)
     );
 
@@ -197,13 +200,15 @@ export class VariableSrv {
   }
 
   variableUpdated(variable: any, emitChangeEvents?: any) {
+    console.log('updated', variable);
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
-    if (variable.initLock) {
-      return this.$q.when();
-    }
+    // if (variable.initLock) {
+    //   return this.$q.when();
+    // }
 
     const g = this.createGraph();
     const node = g.getNode(variable.name);
+
     let promises = [];
     if (node) {
       promises = node.getOptimizedInputEdges().map(e => {

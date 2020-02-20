@@ -36,6 +36,7 @@ export class VariableRenderer extends PureComponent<VariableRendererProps, Varia
 
   render() {
     const { type, componentType } = this.props;
+
     if (!variableAdapters.contains(type)) {
       return null;
     }
