@@ -168,7 +168,7 @@ Name files according to the primary export:
 - when primary export is a class or React component, use PascalCase
 - when primary export is a function, use camelCase
 
-For files exporting multiple utility functions use the name that describes the reponsibility of grouped utils. For example, file exporting math utilities should be named `math.ts`
+For files exporting multiple utility functions, use the name that describes the responsibility of grouped utilities. For example, a file exporting math utilities should be named `math.ts`.
 
 - Use `constants.ts` for files exporting constants
 - Use `actions.ts` for files exporting Redux actions
