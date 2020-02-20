@@ -88,8 +88,8 @@ export enum DashboardSource {
 }
 
 export interface ImportDashboardState {
-  gcomDashboard: any;
-  jsonDashboard: any;
+  meta: { updatedAt: string; orgName: string };
+  dashboard: any;
   source: DashboardSource;
   inputs: any[];
   gcomError: string;

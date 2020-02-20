@@ -10,6 +10,8 @@ import {
   setGcomError,
 } from './reducers';
 import { ThunkResult } from 'app/types';
+import { updateLocation } from '../../../core/actions';
+import locationUtil from '../../../core/utils/location_util';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async dispatch => {
@@ -67,6 +69,31 @@ export function changeDashboardTitle(title: string): ThunkResult<void> {
 export function resetDashboard(): ThunkResult<void> {
   return dispatch => {
     dispatch(clearDashboard());
+  };
+}
+
+export function saveDashboard(folderId: number): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const dashboard = getState().importDashboard.dashboard;
+    const inputs = getState().importDashboard.inputs;
+
+    const inputsToPersist = inputs.map(input => {
+      return {
+        name: input.name,
+        type: input.type,
+        pluginId: input.pluginId,
+        value: input.value,
+      };
+    });
+
+    const result = await getBackendSrv().post('api/dashboards/import', {
+      dashboard,
+      folderId,
+      inputs: inputsToPersist,
+      overwrite: true,
+    });
+    const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
+    dispatch(updateLocation({ path: dashboardUrl }));
   };
 }
 

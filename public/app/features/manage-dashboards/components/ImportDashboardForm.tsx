@@ -4,7 +4,7 @@ import { Forms } from '@grafana/ui';
 import { dateTime } from '@grafana/data';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { changeDashboardTitle, resetDashboard } from '../state/actions';
+import { changeDashboardTitle, resetDashboard, saveDashboard } from '../state/actions';
 import { DashboardSource, StoreState } from '../../../types';
 
 interface Props {
@@ -15,10 +15,21 @@ interface Props {
 
   resetDashboard: typeof resetDashboard;
   changeDashboardTitle: typeof changeDashboardTitle;
+  saveDashboard: typeof saveDashboard;
 }
 
-class ImportDashboardForm extends PureComponent<Props> {
-  onSubmit = () => {};
+interface State {
+  folderId: number;
+}
+
+class ImportDashboardForm extends PureComponent<Props, State> {
+  state: State = {
+    folderId: 0,
+  };
+
+  onSubmit = () => {
+    this.props.saveDashboard(this.state.folderId);
+  };
 
   onCancel = () => {
     this.props.resetDashboard();
@@ -28,7 +39,9 @@ class ImportDashboardForm extends PureComponent<Props> {
     this.props.changeDashboardTitle(event.currentTarget.value);
   };
 
-  onFolderChange = ($folder: { title: string; id: number }) => {};
+  onFolderChange = ($folder: { title: string; id: number }) => {
+    this.setState({ folderId: $folder.id });
+  };
 
   render() {
     const { dashboard, inputs, meta, source } = this.props;
@@ -123,11 +136,8 @@ const mapStateToProps = (state: StoreState) => {
   const source = state.importDashboard.source;
 
   return {
-    dashboard:
-      source === DashboardSource.Gcom
-        ? state.importDashboard.gcomDashboard.dashboard
-        : state.importDashboard.jsonDashboard,
-    meta: state.importDashboard.gcomDashboard.meta,
+    dashboard: state.importDashboard.dashboard,
+    meta: state.importDashboard.meta,
     source,
     inputs: state.importDashboard.inputs,
   };
@@ -136,6 +146,7 @@ const mapStateToProps = (state: StoreState) => {
 const mapDispatchToProps = {
   changeDashboardTitle,
   resetDashboard,
+  saveDashboard,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(ImportDashboardForm);

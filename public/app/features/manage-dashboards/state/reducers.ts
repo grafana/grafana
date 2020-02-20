@@ -2,8 +2,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DashboardSource, ImportDashboardState } from '../../../types';
 
 const initialImportDashboardState: ImportDashboardState = {
-  gcomDashboard: { dashboard: {}, meta: { updatedAt: '', orgName: '' } },
-  jsonDashboard: {},
+  meta: { updatedAt: '', orgName: '' },
+  dashboard: {},
   source: DashboardSource.Json,
   inputs: [],
   gcomError: '',
@@ -17,10 +17,8 @@ const importDashboardSlice = createSlice({
     setGcomDashboard: (state, action: PayloadAction<any>): ImportDashboardState => {
       return {
         ...state,
-        gcomDashboard: {
-          dashboard: action.payload.json,
-          meta: { updatedAt: action.payload.updatedAt, orgName: action.payload.orgName },
-        },
+        dashboard: action.payload.json,
+        meta: { updatedAt: action.payload.updatedAt, orgName: action.payload.orgName },
         source: DashboardSource.Gcom,
         isLoaded: true,
       };
@@ -28,7 +26,7 @@ const importDashboardSlice = createSlice({
     setJsonDashboard: (state, action: PayloadAction<any>): ImportDashboardState => {
       return {
         ...state,
-        jsonDashboard: action.payload,
+        dashboard: action.payload,
         source: DashboardSource.Json,
         isLoaded: true,
       };
@@ -36,32 +34,18 @@ const importDashboardSlice = createSlice({
     clearDashboard: (state): ImportDashboardState => {
       return {
         ...state,
-        gcomDashboard: {},
-        jsonDashboard: {},
+        dashboard: {},
         isLoaded: false,
       };
     },
     dashboardTitleChange: (state, action: PayloadAction<string>): ImportDashboardState => {
-      if (state.source === DashboardSource.Gcom) {
-        return {
-          ...state,
-          gcomDashboard: {
-            ...state.gcomDashboard,
-            json: {
-              ...state.gcomDashboard.json,
-              title: action.payload,
-            },
-          },
-        };
-      } else {
-        return {
-          ...state,
-          jsonDashboard: {
-            ...state.jsonDashboard,
-            title: action.payload,
-          },
-        };
-      }
+      return {
+        ...state,
+        dashboard: {
+          ...state.dashboard,
+          title: action.payload,
+        },
+      };
     },
     setGcomError: (state, action: PayloadAction<string>): ImportDashboardState => ({
       ...state,
