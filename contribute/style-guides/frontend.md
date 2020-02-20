@@ -177,7 +177,7 @@ For files exporting multiple utility functions, use the name that describes the 
 
 ### Code organization
 
-Organise your code in a directory that encloses feature code:
+Organize your code in a directory that encloses feature code:
 
 - Put Redux state and domain logic code in `state` directory (i.e. `features/my-feature/state/actions.ts`)
 - Put React components in `components` directory (i.e. `features/my-feature/components/ButtonPeopleDreamOf.tsx`)
