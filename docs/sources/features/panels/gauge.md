@@ -26,7 +26,7 @@ The Gauge is a single value panel that can repeat a gauge for every series, colu
 
 ## Field
 
-* `Title` - When multiple stats are shown this field controls the title in each stat. By default this the series name
+* `Title` - When multiple stats are shown this field controls the title in each stat. By default this is the series name
  and field name. You can use expressions like `${__series.name}` or `${__field.name}` to use only series name or field
  name in title or `${__cell_2}` to refer to other fields (2 being field/column with index 2).
 * `Min` - The minimum value, leave blank for auto calculation based on all series & fields. Used by Graph to set y-axis min.
