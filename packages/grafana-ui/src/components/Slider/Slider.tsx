@@ -4,24 +4,18 @@ import { css } from 'emotion';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes/ThemeContext';
-
-export enum SliderOrientation {
-  horizontal = 'horizontal',
-  vertical = 'vertical',
-}
+import { Orientation } from '../../types/orientation';
 
 export interface Props {
   min: number;
   max: number;
-  orientation?: SliderOrientation;
+  orientation?: Orientation;
   /** Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed. */
   value?: number[];
   reverse?: boolean;
   formatTooltipResult?: (value: number) => number | string;
   onChange?: (values: number[]) => void;
 }
-
-const defaultProps = { orientation: SliderOrientation.horizontal };
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
   const container = isHorizontal
@@ -42,12 +36,12 @@ export const Slider: FunctionComponent<Props> = ({
   min,
   max,
   onChange,
-  orientation,
+  orientation = 'horizontal',
   reverse,
   formatTooltipResult,
   value,
 }) => {
-  const isHorizontal = orientation === SliderOrientation.horizontal;
+  const isHorizontal = orientation === 'horizontal';
   const theme = useTheme();
   const styles = getStyles(theme, isHorizontal);
   const RangeWithTooltip = createSliderWithTooltip(Range);
@@ -68,4 +62,3 @@ export const Slider: FunctionComponent<Props> = ({
 };
 
 Slider.displayName = 'Slider';
-Slider.defaultProps = defaultProps;
