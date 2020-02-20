@@ -126,6 +126,33 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
+  build-release-publisher:
+    description: "Build release-publisher"
+    executor: grafana-build
+    steps:
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: Test and build Grafana.com release publisher
+          command: |
+            cd scripts/build/release_publisher
+            go test .
+            go build -o release_publisher .
+      - persist_to_workspace:
+          root: .
+          paths:
+            - scripts/build/release_publisher/release_publisher
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
   shellcheck-grabpl:
     machine: true
     steps:
@@ -329,7 +356,7 @@ jobs:
             cp -r /tmp/workspace/oss/dist .
             rm -f dist/*latest*
             cd dist
-            ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
+            /tmp/workspace/scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   publish-enterprise-master:
     executor: grafana-publish
@@ -356,7 +383,7 @@ jobs:
             cp -r /tmp/workspace/enterprise/dist .
             rm -f dist/*latest*
             cd dist
-            ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
+            /tmp/workspace/scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   docker-oss-master:
     executor: docker
@@ -1874,6 +1901,8 @@ workflows:
           edition: enterprise
           requires:
             - install-grabpl
+      - build-release-publisher:
+          filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
           requires:
@@ -1963,6 +1992,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
             - end-to-end-tests
+            - build-release-publisher
       - docker-oss-master:
           filters: *filter-only-master
           requires:
@@ -1979,6 +2009,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
             - end-to-end-tests
+            - build-release-publisher
       - docker-enterprise-master:
           filters: *filter-only-master
           requires:
