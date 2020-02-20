@@ -12,7 +12,7 @@ weight = 5
 
 # GitLab OAuth2 Authentication
 
-To enable the GitLab OAuth2 you must register your application in GitLab. GitLab will generate a client ID and secret key for you to use.
+To enable GitLab OAuth2 you must register the application in GitLab. GitLab will generate a client ID and secret key for you to use.
 
 ## Create GitLab OAuth keys
 
