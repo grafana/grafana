@@ -26,15 +26,15 @@ background or value color using thresholds.
   * If your query returns multiple series or you have set **Show** to `All values` then the visualization
     will repeat for every series or row. This orientation option will control in what direction it will repeat.
 ** Color
-  * `Value`: Color the value and graph area only
-  * `Background`: Color the background
+  * `Value` - Color the value and graph area only
+  * `Background` - Color the background
 ** Graph
-  * `None`: Disable the graph / sparkline
-  * `Area graph`: Show area graph below value. This requires that your query returns a time column.
+  * `None` - Disable the graph / sparkline
+  * `Area graph` - Show area graph below value. This requires that your query returns a time column.
 ** Justify
-  * `Auto`: If only a single value is shown (no repeat) the value is centered. If multiple series or rows the value is
+  * `Auto` - If only a single value is shown (no repeat) the value is centered. If multiple series or rows the value is
   * left aligned.
-  * `Center`: Force center alignment.
+  * `Center` - Force center alignment.
 
 
 ### Auto layout
@@ -57,10 +57,22 @@ Example of value color mode:
 * `Title` - When multiple stats are shown this field controls the title in each stat. By default this the series name
  and field name. You can use expressions like `${__series.name}` or `${__field.name}` to use only series name or field
  name in title or `${__cell_2}` to refer to other fields (2 being field/column with index 2).
-* `Min` minimum value, leave blank for auto calculation based on all series & fields. Used by Graph to set y-axis min.
-* `Max` maximum value, leave blank for auto calculation based on all series & fields. Used by Graph to set y-axis max.
+* `Min` - The minimum value, leave blank for auto calculation based on all series & fields. Used by Graph to set y-axis min.
+* `Max` - The maximum value, leave blank for auto calculation based on all series & fields. Used by Graph to set y-axis max.
+* `Decimals` - Number of decimals to render value with. Leave empty for Grafana to automatically figure out the best
+ number of decimals to use.
+
+### Thresholds
+
+Define thresholds that will define the color of either the value or the background depending on your `Color` display option. The
+thresholds are automatically sorted from lowerst value to highest. The `Base` value represents minus infinity.
 
 
+### Value mappings
 
+Map a number or a range of numbers to a text value.
 
+### Data links
+
+Data links allow you add dynamic URL links to your visualizations, [read more on data links]({{< relref "../../reference/datalinks.md" >}}).
 
