@@ -166,7 +166,7 @@ export class ResultTransformer {
       if (aliasData[g1]) {
         return aliasData[g1];
       }
-      return g1;
+      return '';
     });
   }
 
