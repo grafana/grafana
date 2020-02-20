@@ -1,5 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Button renders correct html 1`] = `"<button class=\\"css-1kiu3dy-button\\" type=\\"button\\"><span class=\\"css-1beih13\\"><span class=\\"css-xhe2zh\\"><i class=\\"fa fa-plus\\"></i></span><span>Click me</span></span></button>"`;
+exports[`Button renders correct html 1`] = `"<button class=\\"css-1kiu3dy-button\\" type=\\"button\\"><span class=\\"css-1beih13\\"><span class=\\"css-1rgbe4\\"><i class=\\"fa fa-plus\\"></i></span><span>Click me</span></span></button>"`;
 
-exports[`LinkButton renders correct html 1`] = `"<a class=\\"css-1kiu3dy-button\\"><span class=\\"css-1beih13\\"><span class=\\"css-xhe2zh\\"><i class=\\"fa fa-plus\\"></i></span><span>Click me</span></span></a>"`;
+exports[`LinkButton renders correct html 1`] = `"<a class=\\"css-1kiu3dy-button\\"><span class=\\"css-1beih13\\"><span class=\\"css-1rgbe4\\"><i class=\\"fa fa-plus\\"></i></span><span>Click me</span></span></a>"`;

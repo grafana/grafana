@@ -715,10 +715,10 @@ Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 ## [external_image_storage.webdav]
 
 ### url
-Url to where Grafana will send PUT request with images
+URL to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. Url to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the url, leaving any query string unchanged.
+Optional parameter. URL to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the URL, leaving any query string unchanged.
 
 ### username
 basic auth username
