@@ -1,3 +1,4 @@
+import { Controller as InputControl } from 'react-hook-form';
 import { getFormStyles } from './getFormStyles';
 import { Label } from './Label';
 import { Input } from './Input/Input';
@@ -8,7 +9,7 @@ import { Form } from './Form';
 import { Field } from './Field';
 import { Button, LinkButton } from './Button';
 import { Switch } from './Switch';
-import { Controller as InputControl } from 'react-hook-form';
+import { TextArea } from './TextArea/TextArea';
 
 const Forms = {
   RadioButtonGroup,
@@ -24,6 +25,7 @@ const Forms = {
   ButtonSelect,
   InputControl,
   AsyncSelect,
+  TextArea,
 };
 
 export default Forms;
