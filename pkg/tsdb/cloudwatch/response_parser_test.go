@@ -1,8 +1,6 @@
 package cloudwatch
 
 import (
-	"encoding/json"
-	"log"
 	"testing"
 	"time"
 
@@ -11,11 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	. "github.com/smartystreets/goconvey/convey"
 )
-
-func prettyPrint(i interface{}) string {
-	s, _ := json.MarshalIndent(i, "", "\t")
-	return string(s)
-}
 
 func TestCloudWatchResponseParser(t *testing.T) {
 	Convey("TestCloudWatchResponseParser", t, func() {
@@ -69,9 +62,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			}
 			series, partialData, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
-
-			log.Println("series")
-			log.Println(prettyPrint(series))
 
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)

@@ -1,9 +1,7 @@
 package cloudwatch
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,11 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
-
-func prettyPrint(i interface{}) string {
-	s, _ := json.MarshalIndent(i, "", "\t")
-	return string(s)
-}
 
 func contains(s []string, e string) bool {
 	for _, a := range s {
@@ -84,20 +77,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	partialData := false
 	metricDataResultLabels := make([]string, 0)
 
-	// contains(s, s1)
-
-	log.Println("metricDataResults")
-	log.Println(len(metricDataResults))
-	log.Println(prettyPrint(metricDataResults))
-
-	log.Println("query")
-	log.Println(prettyPrint(query))
-
 	if requestAzs, ok := query.Dimensions["AvailabilityZone"]; ok {
-		//do something here
-
-		log.Println("AvailabilityZone len")
-		log.Println(len(requestAzs))
 
 		if len(requestAzs) > len(metricDataResults) {
 			// Data is missing, add empty metrics...
@@ -107,9 +87,6 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 				requestAz := requestAzs[k]
 				metricDataResultLabels = append(metricDataResultLabels, requestAz)
 				if _, ok := metricDataResults[requestAz]; !ok {
-					log.Println("AvailabilityZone not found in results")
-					log.Println(requestAz)
-
 					metricDataResults[requestAz] = &cloudwatch.MetricDataResult{
 						//TODO : we need to use the same id val as that in the existing items. What do we do if results are empty?
 						Id:         aws.String("id1"),
@@ -129,23 +106,11 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 		}
 	}
 
-	log.Println("modified metricDataResults")
-	log.Println(len(metricDataResults))
-	log.Println(prettyPrint(metricDataResults))
-
 	sort.Strings(metricDataResultLabels)
-
-	log.Println("metricDataResultLabels")
-	log.Println(prettyPrint(metricDataResultLabels))
-	// if (len())
 
 	for _, label := range metricDataResultLabels {
 
 		metricDataResult := metricDataResults[label]
-
-		log.Println("iterating labels")
-		log.Println(label)
-		log.Println(prettyPrint(metricDataResult))
 
 		if *metricDataResult.StatusCode != "Complete" {
 			partialData = true
@@ -185,9 +150,6 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 
 		series.Name = formatAlias(query, query.Stats, series.Tags, label)
 
-		log.Println("metricDataResult")
-		log.Println(prettyPrint(metricDataResult))
-
 		for j, t := range metricDataResult.Timestamps {
 			if j > 0 {
 				expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
@@ -197,9 +159,6 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 			}
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
 		}
-
-		log.Println("return series")
-		log.Println(prettyPrint(series))
 
 		result = append(result, &series)
 	}
