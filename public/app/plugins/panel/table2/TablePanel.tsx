@@ -6,6 +6,7 @@ import { Table } from '@grafana/ui';
 import { PanelProps, applyFieldOverrides } from '@grafana/data';
 import { Options } from './types';
 import { config } from 'app/core/config';
+import { tableFieldRegistry } from './custom';
 
 interface Props extends PanelProps<Options> {}
 
@@ -28,6 +29,7 @@ export class TablePanel extends Component<Props> {
       fieldOptions: options.fieldOptions,
       theme: config.theme,
       replaceVariables,
+      custom: tableFieldRegistry,
     })[0];
 
     return <Table height={height - paddingBottom} width={width} data={dataProcessed} />;

@@ -71,8 +71,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     this.props.dashboard.setPanelFocus(0);
   };
 
-  renderPanel() {
-    const { dashboard, panel, isFullscreen, isInView, isInEditMode, plugin } = this.props;
+  renderPanel(plugin: PanelPlugin) {
+    const { dashboard, panel, isFullscreen, isInView, isInEditMode } = this.props;
 
     return (
       <AutoSizer>
@@ -149,7 +149,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {this.renderPanel()}
+              {this.renderPanel(plugin)}
             </div>
           )}
         />

@@ -1,10 +1,16 @@
-import { FieldOverrideEnv, findNumericFieldMinMax, setFieldConfigDefaults } from './fieldOverrides';
+import {
+  FieldOverrideEnv,
+  findNumericFieldMinMax,
+  setFieldConfigDefaults,
+  applyFieldOverrides,
+} from './fieldOverrides';
 import { MutableDataFrame } from '../dataframe';
 import {
   FieldConfig,
   FieldConfigEditorRegistry,
   FieldOverrideContext,
   FieldPropertyEditorItem,
+  GrafanaTheme,
   FieldType,
 } from '../types';
 import { Registry } from '../utils';
@@ -52,6 +58,65 @@ describe('Global MinMax', () => {
   });
 });
 
+describe('applyFieldOverrides', () => {
+  describe('given multiple data frames', () => {
+    const f0 = new MutableDataFrame({
+      name: 'A',
+      fields: [{ name: 'message', type: FieldType.string, values: [10, 20] }],
+    });
+    const f1 = new MutableDataFrame({
+      name: 'B',
+      fields: [{ name: 'info', type: FieldType.string, values: [10, 20] }],
+    });
+
+    it('should add scopedVars to fields', () => {
+      const withOverrides = applyFieldOverrides({
+        data: [f0, f1],
+        fieldOptions: {
+          defaults: {},
+          overrides: [],
+        },
+        replaceVariables: (value: any) => value,
+        theme: {} as GrafanaTheme,
+      });
+
+      expect(withOverrides[0].fields[0].config.scopedVars).toMatchInlineSnapshot(`
+        Object {
+          "__field": Object {
+            "text": "Field",
+            "value": Object {
+              "name": "message",
+            },
+          },
+          "__series": Object {
+            "text": "Series",
+            "value": Object {
+              "name": "A",
+            },
+          },
+        }
+      `);
+
+      expect(withOverrides[1].fields[0].config.scopedVars).toMatchInlineSnapshot(`
+        Object {
+          "__field": Object {
+            "text": "Field",
+            "value": Object {
+              "name": "info",
+            },
+          },
+          "__series": Object {
+            "text": "Series",
+            "value": Object {
+              "name": "B",
+            },
+          },
+        }
+      `);
+    });
+  });
+});
+
 describe('setFieldConfigDefaults', () => {
   it('applies field config defaults', () => {
     const dsFieldConfig: FieldConfig = {
@@ -73,7 +138,6 @@ describe('setFieldConfigDefaults', () => {
       dataFrameIndex: 0,
     };
 
-    console.log(standardFieldConfigEditorRegistry);
     // we mutate dsFieldConfig
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 

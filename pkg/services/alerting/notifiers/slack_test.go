@@ -15,15 +15,16 @@ func TestSlackNotifier(t *testing.T) {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
 				model := &models.AlertNotification{
 					Name:     "ops",
 					Type:     "slack",
 					Settings: settingsJSON,
 				}
 
-				_, err := NewSlackNotifier(model)
-				So(err, ShouldNotBeNil)
+				_, err = NewSlackNotifier(model)
+				So(err, ShouldBeError, "Alert validation error: Could not find url property in settings")
 			})
 
 			//nolint:goconst
@@ -71,7 +72,8 @@ func TestSlackNotifier(t *testing.T) {
                       "token": "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX"
                     }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
 				model := &models.AlertNotification{
 					Name:     "ops",
 					Type:     "slack",
@@ -93,6 +95,88 @@ func TestSlackNotifier(t *testing.T) {
 				So(slackNotifier.MentionGroups, ShouldResemble, []string{"group1", "group2"})
 				So(slackNotifier.MentionChannel, ShouldEqual, "here")
 				So(slackNotifier.Token, ShouldEqual, "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
+			})
+
+			Convey("with channel recipient with spaces should return an error", func() {
+				json := `
+                    {
+                      "url": "http://google.com",
+                      "recipient": "#open tsdb"
+                    }`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+				model := &models.AlertNotification{
+					Name:     "ops",
+					Type:     "slack",
+					Settings: settingsJSON,
+				}
+
+				_, err = NewSlackNotifier(model)
+
+				So(err, ShouldBeError, "Alert validation error: Recipient on invalid format: \"#open tsdb\"")
+			})
+
+			Convey("with user recipient with spaces should return an error", func() {
+				json := `
+                    {
+                      "url": "http://google.com",
+                      "recipient": "@user name"
+                    }`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+				model := &models.AlertNotification{
+					Name:     "ops",
+					Type:     "slack",
+					Settings: settingsJSON,
+				}
+
+				_, err = NewSlackNotifier(model)
+
+				So(err, ShouldBeError, "Alert validation error: Recipient on invalid format: \"@user name\"")
+			})
+
+			Convey("with user recipient with uppercase letters should return an error", func() {
+				json := `
+                    {
+                      "url": "http://google.com",
+                      "recipient": "@User"
+                    }`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+				model := &models.AlertNotification{
+					Name:     "ops",
+					Type:     "slack",
+					Settings: settingsJSON,
+				}
+
+				_, err = NewSlackNotifier(model)
+
+				So(err, ShouldBeError, "Alert validation error: Recipient on invalid format: \"@User\"")
+			})
+
+			Convey("with Slack ID for recipient should work", func() {
+				json := `
+                    {
+                      "url": "http://google.com",
+                      "recipient": "1ABCDE"
+                    }`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+				model := &models.AlertNotification{
+					Name:     "ops",
+					Type:     "slack",
+					Settings: settingsJSON,
+				}
+
+				not, err := NewSlackNotifier(model)
+				So(err, ShouldBeNil)
+				slackNotifier := not.(*SlackNotifier)
+
+				So(slackNotifier.Recipient, ShouldEqual, "1ABCDE")
 			})
 		})
 	})

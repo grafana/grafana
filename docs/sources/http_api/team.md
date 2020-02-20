@@ -34,7 +34,7 @@ Default value for the `perpage` parameter is `1000` and for the `page` parameter
 
 The `totalCount` field in the response can be used for pagination of the teams list E.g. if `totalCount` is equal to 100 teams and the `perpage` parameter is set to 10 then there are 10 pages of teams.
 
-The `query` parameter is optional and it will return results where the query value is contained in the `name` field. Query values with spaces need to be url encoded e.g. `query=my%20team`.
+The `query` parameter is optional and it will return results where the query value is contained in the `name` field. Query values with spaces need to be URL encoded e.g. `query=my%20team`.
 
 ### Using the name parameter
 
