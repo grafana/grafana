@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
-import { Forms } from '@grafana/ui';
+import { Forms, HorizontalGroup } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
-import { css } from 'emotion';
 import { getBackendSrv } from '@grafana/runtime';
 import { updateLocation } from 'app/core/actions';
 import { connect } from 'react-redux';
@@ -16,10 +15,6 @@ const roles = [
   { label: 'Editor', value: OrgRole.Editor },
   { label: 'Admin', value: OrgRole.Admin },
 ];
-
-const buttonSpacing = css`
-  margin-left: 15px;
-`;
 
 interface FormModel {
   role: OrgRole;
@@ -75,12 +70,12 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
             <Forms.Field invalid={!!errors.sendEmail} label="Send invite email">
               <Forms.Switch name="sendEmail" ref={register} />
             </Forms.Field>
-            <Forms.Button type="submit">Submit</Forms.Button>
-            <span className={buttonSpacing}>
+            <HorizontalGroup>
+              <Forms.Button type="submit">Submit</Forms.Button>
               <Forms.LinkButton href={assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
                 Back
               </Forms.LinkButton>
-            </span>
+            </HorizontalGroup>
           </>
         );
       }}
