@@ -1,7 +1,9 @@
 package cloudwatch
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,6 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
+
+func prettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
+}
 
 func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
@@ -71,6 +78,11 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	}
 	sort.Strings(metricDataResultLabels)
 
+	log.Println("metricDataResultLabels")
+	log.Println(prettyPrint(metricDataResultLabels))
+
+	// if (len())
+
 	for _, label := range metricDataResultLabels {
 		metricDataResult := metricDataResults[label]
 		if *metricDataResult.StatusCode != "Complete" {
@@ -110,6 +122,9 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 		}
 
 		series.Name = formatAlias(query, query.Stats, series.Tags, label)
+
+		log.Println("metricDataResult")
+		log.Println(prettyPrint(metricDataResult))
 
 		for j, t := range metricDataResult.Timestamps {
 			if j > 0 {
