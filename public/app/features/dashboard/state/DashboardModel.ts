@@ -233,6 +233,8 @@ export class DashboardModel {
         panel.refresh();
       }
     }
+
+    console.log('asdfasdfasd');
   }
 
   render() {

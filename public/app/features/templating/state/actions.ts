@@ -238,9 +238,10 @@ function isQuery(model: VariableModel): model is QueryVariableModel {
 //     }
 //   };
 // };
-
 export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValue): ThunkResult<void> => {
   return async (dispatch, getState) => {
+    return; // something below here is causing looop when updating variable.
+
     if (!variable.hasOwnProperty('refresh')) {
       return Promise.resolve();
     }

@@ -37,9 +37,10 @@ export class VariableSrv {
       CoreEvents.templateVariableValueUpdated,
       this.updateUrlParamsWithCurrentVariables.bind(this)
     );
-    this.dashboard.events.on('testing_to_update_variable', (payload: any) =>
-      this.variableUpdated(payload.variable, true)
-    );
+    this.dashboard.events.on('testing_to_update_variable', (payload: any) => {
+      console.log('asdfasdf');
+      this.variableUpdated(payload.variable, true);
+    });
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map((model: VariableModel, index) =>
@@ -196,19 +197,19 @@ export class VariableSrv {
   }
 
   updateOptions(variable: any) {
+    console.log('updateOptions:', variable.name);
     return variable.updateOptions();
   }
 
   variableUpdated(variable: any, emitChangeEvents?: any) {
     console.log('updated', variable);
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
-    // if (variable.initLock) {
-    //   return this.$q.when();
-    // }
+    if (variable.initLock) {
+      return this.$q.when();
+    }
 
     const g = this.createGraph();
     const node = g.getNode(variable.name);
-
     let promises = [];
     if (node) {
       promises = node.getOptimizedInputEdges().map(e => {
@@ -332,12 +333,8 @@ export class VariableSrv {
           defaultText = urlValue.reduce((acc, item) => {
             const t: any = _.find(variable.options, { value: item });
             if (t) {
-              // @ts-ignore according to strict null errors this can never happen
-              // TODO: investigate this further or refactor code
               acc.push(t.text);
             } else {
-              // @ts-ignore according to strict null errors this can never happen
-              // TODO: investigate this further or refactor code
               acc.push(item);
             }
 

@@ -43,6 +43,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   }
 
   setValue(option: any) {
+    console.log('setValue');
     this.variableSrv.setOptionAsCurrent(this, option);
   }
 
@@ -57,6 +58,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   }
 
   setValueFromUrl(urlValue: string) {
+    console.log('setValueFromUrl');
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 
