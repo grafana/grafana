@@ -182,7 +182,7 @@ Organize your code in a directory that encloses feature code:
 - Put Redux state and domain logic code in `state` directory (i.e. `features/my-feature/state/actions.ts`)
 - Put React components in `components` directory (i.e. `features/my-feature/components/ButtonPeopleDreamOf.tsx`)
 - Put test files next to the test subject
-- Put containers(pages) in feature root (i.e. `features/my-feature/DashboardPage.tsx`)
+- Put containers (pages) in feature root (i.e. `features/my-feature/DashboardPage.tsx`).
 - Sub components can live in that component folders, so small component do not need their own folder
 - Component's SASS styles should live in the same folder as component code
 
