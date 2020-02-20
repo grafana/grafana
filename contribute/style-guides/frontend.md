@@ -172,7 +172,7 @@ const CONSTANT_VALUE = "This string won't change";
 
 _SASS styles are deprecated. Please migrate to Emotion whenever you need to modify SASS styles._
 
-### Files and directories naming conventions
+### File and directory naming conventions
 
 Name files according to the primary export:
 
