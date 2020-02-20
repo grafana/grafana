@@ -164,6 +164,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
     this.onDataLinksChange = this.onDataLinksChange.bind(this);
+    this.annotationsPromise = Promise.resolve({ annotations: [] });
   }
 
   onInitEditMode() {

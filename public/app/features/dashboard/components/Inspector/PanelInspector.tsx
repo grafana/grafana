@@ -16,6 +16,7 @@ import {
   toCSV,
   DataQueryError,
   PanelData,
+  DataQuery,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 
@@ -54,32 +55,6 @@ interface State {
   drawerWidth: string;
 }
 
-const getStyles = stylesFactory(() => {
-  return {
-    toolbar: css`
-      display: flex;
-      margin: 8px 0;
-      justify-content: flex-end;
-      align-items: center;
-    `,
-    dataFrameSelect: css`
-      flex-grow: 2;
-    `,
-    downloadCsv: css`
-      margin-left: 16px;
-    `,
-    tabContent: css`
-      height: calc(100% - 32px);
-    `,
-    dataTabContent: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-    `,
-  };
-});
-
 export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -95,33 +70,41 @@ export class PanelInspector extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const { panel } = this.props;
+
     if (!panel) {
       this.onDismiss(); // Try to close the component
       return;
     }
 
     const lastResult = panel.getQueryRunner().getLastResult();
+
     if (!lastResult) {
       this.onDismiss(); // Usually opened from refresh?
       return;
     }
 
-    // Find the first DataSource wanting to show custom metadata
     let metaDS: DataSourceApi;
     const data = lastResult.series;
     const error = lastResult.error;
 
-    const targets = lastResult.request?.targets;
+    const targets = lastResult.request?.targets || [];
     const requestTime = lastResult.request?.endTime ? lastResult.request?.endTime - lastResult.request.startTime : -1;
-    const queries = targets ? targets.length : 0;
-
     const dataSources = new Set(targets.map(t => t.datasource)).size;
 
-    if (data) {
+    // Find the first DataSource wanting to show custom metadata
+    if (data && targets.length) {
+      const queries: Record<string, DataQuery> = {};
+
+      for (const target of targets) {
+        queries[target.refId] = target;
+      }
+
       for (const frame of data) {
-        const key = frame.meta?.datasource;
-        if (key) {
-          const dataSource = await getDataSourceSrv().get(key);
+        const q = queries[frame.refId];
+
+        if (q && frame.meta && frame.meta.custom) {
+          const dataSource = await getDataSourceSrv().get(q.datasource);
+
           if (dataSource && dataSource.components?.MetadataInspector) {
             metaDS = dataSource;
             break;
@@ -138,7 +121,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       tab: error ? InspectTab.Error : prevState.tab,
       stats: {
         requestTime,
-        queries,
+        queries: targets.length,
         dataSources,
       },
     }));
@@ -194,6 +177,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     if (!data || !data.length) {
       return <div>No Data</div>;
     }
+
     const choices = data.map((frame, index) => {
       return {
         value: index,
@@ -280,15 +264,19 @@ export class PanelInspector extends PureComponent<Props, State> {
     const { tab, last, stats } = this.state;
     const error = last?.error;
     const tabs = [];
+
     if (last && last?.series?.length > 0) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
     }
+
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
     }
+
     if (error && error.message) {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
+
     tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
 
     return (
@@ -337,3 +325,29 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  return {
+    toolbar: css`
+      display: flex;
+      margin: 8px 0;
+      justify-content: flex-end;
+      align-items: center;
+    `,
+    dataFrameSelect: css`
+      flex-grow: 2;
+    `,
+    downloadCsv: css`
+      margin-left: 16px;
+    `,
+    tabContent: css`
+      height: calc(100% - 32px);
+    `,
+    dataTabContent: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    `,
+  };
+});

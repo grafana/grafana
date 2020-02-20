@@ -10,7 +10,7 @@ import { constants as fsConstants, promises as fs } from 'fs';
 import { CLIEngine } from 'eslint';
 import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
 
-const { copyFile } = fs;
+const { access, copyFile } = fs;
 const { COPYFILE_EXCL } = fsConstants;
 const rimraf = promisify(rimrafCallback);
 
@@ -62,10 +62,11 @@ const getTypescriptSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+
 // @ts-ignore
 const getStylesSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+(scss|css)'));
 
-export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
+export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix } = {}) => {
   try {
     // Show a warning if the tslint file exists
-    await fs.access(resolvePath(process.cwd(), 'tslint.json'));
+    await access(resolvePath(process.cwd(), 'tslint.json'));
+    console.log('\n');
     console.log('--------------------------------------------------------------');
     console.log('NOTE: @grafana/toolkit has migrated to use eslint');
     console.log('Update your configs to use .eslintrc rather than tslint.json');
@@ -90,7 +91,13 @@ export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
     fix,
   });
 
-  const { errorCount, results, warningCount } = cli.executeOnFiles(await getTypescriptSources());
+  const report = cli.executeOnFiles(await getTypescriptSources());
+
+  if (fix) {
+    CLIEngine.outputFixes(report);
+  }
+
+  const { errorCount, results, warningCount } = report;
 
   if (errorCount > 0 || warningCount > 0) {
     const formatter = cli.getFormatter();

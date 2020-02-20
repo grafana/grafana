@@ -12,7 +12,7 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
   return isDivider ? (
     <li className="divider" />
   ) : (
-    <li className={isSubMenu ? 'dropdown-submenu' : null}>
+    <li className={isSubMenu ? 'dropdown-submenu' : undefined}>
       <a onClick={props.onClick} href={props.href}>
         {props.iconClassName && <i className={props.iconClassName} />}
         <span

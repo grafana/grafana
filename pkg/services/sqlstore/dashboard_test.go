@@ -88,6 +88,15 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(query.Result.IsFolder, ShouldBeFalse)
 			})
 
+			Convey("Shouldn't be able to get a dashboard with just an OrgID", func() {
+				query := m.GetDashboardQuery{
+					OrgId: 1,
+				}
+
+				err := GetDashboard(&query)
+				So(err, ShouldEqual, m.ErrDashboardIdentifierNotSet)
+			})
+
 			Convey("Should be able to delete dashboard", func() {
 				dash := insertTestDashboard("delete me", 1, 0, false, "delete this")
 
