@@ -175,7 +175,7 @@ For files exporting multiple utility functions, use the name that describes the 
 - Use `reducers.ts` Redux reducers
 - Use `*.test.ts(x)` for test files
 
-### Code organisation
+### Code organization
 
 Organise your code in a directory that encloses feature code:
 
