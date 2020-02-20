@@ -4,12 +4,15 @@ import { TabsBar, Tab, TabContent, stylesFactory, withTheme, Themeable } from '@
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
 import { QueryHistorySettings } from './QueryHistorySettings';
 import { QueryHistoryQueries } from './QueryHistoryQueries';
+import { Resizable } from 're-resizable';
 
 export enum Tabs {
   QueryHistory = 'Query history',
   Starred = 'Starred',
   Settings = 'Settings',
 }
+
+export type SortingValue = 'Time ascending' | 'Time descending' | 'Datasource A-Z' | 'Datasource Z-A';
 
 export type DataSourceOption = {
   value: string;
@@ -18,7 +21,8 @@ export type DataSourceOption = {
 };
 
 interface QueryHistoryProps extends Themeable {
-  width: any;
+  width: number;
+  isVisible: boolean;
 }
 
 interface QueryHistoryState {
@@ -27,8 +31,8 @@ interface QueryHistoryState {
   activeStarredTab: boolean;
   showActiveDatasourceHistory: boolean;
   hiddenSessions: boolean;
-  datasources: DataSourceOption[] | null;
-  height: number;
+  datasourceFilters: DataSourceOption[] | null;
+  sortingValue: SortingValue;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -45,13 +49,36 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border-top: solid 1px ${borderColor};
       overflow-y: scroll;
     `,
-    drawer: css`
-      position: fixed;
+    drawerActive: css`
+      position: fixed !important;
       bottom: 0;
       background-color: ${tabBarBg};
       border: solid 1px ${borderColor};
       padding-left: ${theme.spacing.sm};
       padding-top: ${theme.spacing.xs};
+      opacity: 1;
+      transition: transform 0.3s ease-in;
+    `,
+    drawerNotActive: css`
+      opacity: 0;
+      transform: translateY(150px);
+      position: fixed !important;
+      bottom: 0;
+    `,
+    handle: css`
+      background-color: ${borderColor};
+      height: 10px;
+      width: 202px;
+      border-radius: 10px;
+      position: absolute;
+      top: -5px;
+      left: calc(50% - 101px);
+      padding: ${theme.spacing.xs};
+      cursor: grab;
+      hr {
+        border-top: 2px dotted ${theme.colors.gray70};
+        margin: 0;
+      }
     `,
   };
 });
@@ -65,13 +92,15 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
       activeStarredTab: false,
       showActiveDatasourceHistory: true,
       hiddenSessions: true,
-      datasources: null,
-      height: 400,
+      datasourceFilters: null,
+      sortingValue: 'Time ascending',
     };
   }
 
   onChangeActiveTimeSpan = (historyTimeSpan: { label: string; value: string }) =>
     this.setState({ activeTimeSpan: historyTimeSpan.value });
+
+  onChangeSortingValue = (sortingValue: SortingValue) => this.setState({ sortingValue });
 
   toggleActiveStarredTab = () =>
     this.setState(state => {
@@ -95,8 +124,8 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
     });
   };
 
-  onSelectDatasources = (datasources: DataSourceOption[] | null) => {
-    this.setState({ datasources });
+  onSelectDatasourceFilters = (datasources: DataSourceOption[] | null) => {
+    this.setState({ datasourceFilters: datasources });
   };
 
   onSelectTab = (item: SelectableValue<Tabs>) => {
@@ -110,10 +139,10 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
       activeStarredTab,
       showActiveDatasourceHistory,
       hiddenSessions,
-      datasources,
-      height,
+      datasourceFilters,
+      sortingValue,
     } = this.state;
-    const { width, theme } = this.props;
+    const { theme, isVisible, width } = this.props;
     const styles = getStyles(theme);
 
     const tabs = [];
@@ -122,30 +151,31 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
       value: Tabs.QueryHistory,
       content: (
         <QueryHistoryQueries
-          datasources={datasources}
-          onSelectDatasources={this.onSelectDatasources}
+          datasourceFilters={datasourceFilters}
+          onSelectDatasourceFilters={this.onSelectDatasourceFilters}
           queries={testData}
+          onlyStarred={false}
+          onChangeSortingValue={this.onChangeSortingValue}
+          sortingValue={sortingValue}
         />
       ),
       icon: 'fa fa-history',
     });
+
     tabs.push({
       label: 'Starred',
       value: Tabs.Starred,
       content: (
-        <QueryHistorySettings
-          activeTimeSpan={activeTimeSpan}
-          activeStarredTab={activeStarredTab}
-          showActiveDatasourceHistory={showActiveDatasourceHistory}
-          hiddenSessions={hiddenSessions}
-          onChangeActiveTimeSpan={this.onChangeActiveTimeSpan}
-          toggleActiveStarredTab={this.toggleActiveStarredTab}
-          toggleHideSessions={this.toggleHideSessions}
-          toggleShowActiveDatasourceHistory={this.toggleShowActiveDatasourceHistory}
+        <QueryHistoryQueries
+          queries={testData}
+          onlyStarred={true}
+          onChangeSortingValue={this.onChangeSortingValue}
+          sortingValue={sortingValue}
         />
       ),
       icon: 'fa fa-star',
     });
+
     tabs.push({
       label: 'Settings',
       value: Tabs.Settings,
@@ -163,9 +193,27 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
       ),
       icon: 'gicon gicon-preferences',
     });
-
     return (
-      <div className={styles.drawer} style={{ width, height }}>
+      <Resizable
+        defaultSize={{ width, height: '300px' }}
+        className={`${isVisible ? styles.drawerActive : styles.drawerNotActive} `}
+        enable={{
+          top: true,
+          right: false,
+          bottom: false,
+          left: false,
+          topRight: false,
+          bottomRight: false,
+          bottomLeft: false,
+          topLeft: false,
+        }}
+        maxHeight="100vh"
+        maxWidth={`${width}px`}
+        minWidth={`${width}px`}
+      >
+        <div className={styles.handle}>
+          <hr />
+        </div>
         <TabsBar hideBorder={true}>
           {tabs.map(t => (
             <Tab
@@ -184,7 +232,7 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
               <div key={t.label}>{t.content}</div>
             ))}
         </TabContent>
-      </div>
+      </Resizable>
     );
   }
 }
@@ -194,21 +242,22 @@ QueryHistory.displayName = 'QueryHistory';
 
 const testData = [
   {
-    timestamp: 1,
-    datasourceName: 'Prometheus1',
+    timestamp: 3,
+    datasourceName: 'Loki_test',
     datasourceType: 'Prometheus',
-    starred: true,
-    comment: 'This is interesting',
+    starred: false,
+    comment: 'This is interesting1',
     queries: [
       `rate( prometheus_remote_storage_samples_in_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – ignoring(queue) group_right(instance) rate(prometheus_remote_ storage_succeeded_samples_total {((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – rate(prometheus_remote_storage_ dropped_samples_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m])}`,
       `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
       `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
     ],
     sessionName: 'Custom name for this session',
+    uid: 3,
   },
   {
-    timestamp: 1,
-    datasourceName: 'Prometheus1',
+    timestamp: 2,
+    datasourceName: 'Prometheus',
     datasourceType: 'Prometheus',
     starred: true,
     comment: '',
@@ -217,19 +266,21 @@ const testData = [
       `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
       `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
     ],
-    sessionName: 'Custom name for this session',
+    sessionName: 'Custom name for this session2',
+    uid: 2,
   },
   {
     timestamp: 1,
-    datasourceName: 'Prometheus1',
+    datasourceName: 'Loki',
     datasourceType: 'Prometheus',
     starred: true,
-    comment: 'This is interesting',
+    comment: 'This is interesting3',
     queries: [
       `rate( prometheus_remote_storage_samples_in_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – ignoring(queue) group_right(instance) rate(prometheus_remote_ storage_succeeded_samples_total {((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – rate(prometheus_remote_storage_ dropped_samples_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m])}`,
       `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
       `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
     ],
     sessionName: 'Custom name for this session',
+    uid: 1,
   },
 ];

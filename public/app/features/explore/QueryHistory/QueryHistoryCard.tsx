@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { Query } from './QueryHistoryQueries';
@@ -20,6 +20,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background-color: ${cardColor};
       border-radius: ${theme.border.radius};
       display: flex;
+      .starred {
+        color: ${theme.colors.blue77};
+      }
     `,
     queryCardLeft: css``,
     queryCardRight: css`
@@ -51,18 +54,30 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 export const QueryHistoryCard: FunctionComponent<Props> = ({ query }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+
+  const copyQueryToClipboard = () => {
+    const el = document.createElement('textarea');
+    el.value = query.queries.join('\n\n');
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  };
+
   return (
     <div className={styles.queryCard}>
       <div className={styles.queryCardLeft}>
-        {query.queries.map(q => (
-          <div className={styles.queryRow}>{q}</div>
+        {query.queries.map((q, index) => (
+          <div key={`${q}0${index}`} className={styles.queryRow}>
+            {q}
+          </div>
         ))}
         {query.comment && <div>{query.comment}</div>}
       </div>
       <div className={styles.queryCardRight}>
-        <i className="fa fa-fw fa-copy"></i>
+        <i className="fa fa-fw fa-copy" onClick={copyQueryToClipboard}></i>
         <i className="fa fa-fw fa-link" style={{ fontWeight: 'normal' }}></i>
-        <i className="fa fa-fw fa-star-o"></i>
+        <i className={cx('fa fa-fw', query.starred ? 'fa-star starred' : 'fa-star-o')}></i>
       </div>
     </div>
   );

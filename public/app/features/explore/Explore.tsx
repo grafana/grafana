@@ -378,7 +378,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      {this.state.isQueryHistoryVisible && <QueryHistory width={width} />}
+                      <QueryHistory width={width} isVisible={this.state.isQueryHistoryVisible} />
                     </ErrorBoundaryAlert>
                   </main>
                 );

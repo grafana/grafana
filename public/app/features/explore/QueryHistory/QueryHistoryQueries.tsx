@@ -3,16 +3,20 @@ import { css } from 'emotion';
 import { stylesFactory, withTheme, Themeable, Select } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { getExploreDatasources } from '../state/selectors';
-import { DataSourceOption } from './QueryHistory';
+import { DataSourceOption, SortingValue } from './QueryHistory';
 import { QueryHistoryCard } from './QueryHistoryCard';
 
 interface QueryHistoryQueriesProps extends Themeable {
-  onSelectDatasources: (datasources: DataSourceOption[] | null) => void;
-  datasources: DataSourceOption[] | null;
   queries: Query[];
+  sortingValue: SortingValue;
+  onlyStarred: boolean;
+  onChangeSortingValue: (sortingValue: SortingValue) => void;
+  datasourceFilters?: DataSourceOption[] | null;
+  onSelectDatasourceFilters?: (datasources: DataSourceOption[] | null) => void;
 }
 
 export type Query = {
+  uid: number;
   timestamp: number;
   datasourceName: string;
   datasourceType: string;
@@ -20,16 +24,18 @@ export type Query = {
   comment: string;
   queries: string[];
   sessionName: string;
+  timeRange?: string;
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, onlyStarred: boolean) => {
   const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+  const cardWidth = onlyStarred ? '100%' : '100% - 134px';
   return {
     container: css`
       display: flex;
     `,
     containerContent: css`
-      width: calc(100% - 134px);
+      width: calc(${cardWidth});
     `,
     containerSlider: css`
       width: 125px;
@@ -62,7 +68,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const sortingValues = [
+const sortingOptions = [
   { label: 'Time ascending', value: 'Time ascending' },
   { label: 'Time descending', value: 'Time descending' },
   { label: 'Datasource A-Z', value: 'Datasource A-Z' },
@@ -70,8 +76,16 @@ const sortingValues = [
 ];
 
 function UnThemedQueryHistoryQueries(props: QueryHistoryQueriesProps) {
-  const { theme, datasources, onSelectDatasources, queries } = props;
-  const styles = getStyles(theme);
+  const {
+    theme,
+    datasourceFilters,
+    onSelectDatasourceFilters,
+    queries,
+    onlyStarred,
+    onChangeSortingValue,
+    sortingValue,
+  } = props;
+  const styles = getStyles(theme, onlyStarred);
   const exploreDatasources = getExploreDatasources().map(d => {
     return { value: d.value, label: d.value, imgUrl: d.meta.info.logos.small };
   });
@@ -86,27 +100,64 @@ function UnThemedQueryHistoryQueries(props: QueryHistoryQueriesProps) {
     );
   };
 
+  const sortQueries = (array: Query[], sortingValue: SortingValue) => {
+    let sortFunc;
+
+    if (sortingValue === 'Time ascending') {
+      sortFunc = (a: Query, b: Query) => (a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0);
+    }
+    if (sortingValue === 'Time descending') {
+      sortFunc = (a: Query, b: Query) => (a.timestamp < b.timestamp ? 1 : a.timestamp > b.timestamp ? -1 : 0);
+    }
+
+    if (sortingValue === 'Datasource A-Z') {
+      sortFunc = (a: Query, b: Query) =>
+        a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0;
+    }
+
+    if (sortingValue === 'Datasource Z-A') {
+      sortFunc = (a: Query, b: Query) =>
+        a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0;
+    }
+
+    return array.sort(sortFunc);
+  };
+
+  const listOfFilteredDatasources = datasourceFilters && datasourceFilters.map(d => d.value);
+
+  const displayedQueries: Query[] = onlyStarred ? queries.filter(q => q.starred === true) : queries;
+  const sortedQueries = sortQueries(displayedQueries, sortingValue);
+  const queriesToDisplay = datasourceFilters
+    ? sortedQueries.filter(q => listOfFilteredDatasources.includes(q.datasourceName))
+    : sortedQueries;
+
   return (
     <div className={styles.container}>
-      <div className={styles.containerSlider}></div>
+      {!onlyStarred && <div className={styles.containerSlider}></div>}
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
-          <div className={styles.multiselect}>
-            <Select
-              isMulti={true}
-              options={exploreDatasources}
-              value={datasources}
-              placeholder="Filter queries for specific datasources(s)"
-              onChange={onSelectDatasources}
-            />
-          </div>
+          {!onlyStarred && (
+            <div className={styles.multiselect}>
+              <Select
+                isMulti={true}
+                options={exploreDatasources}
+                value={datasourceFilters}
+                placeholder="Filter queries for specific datasources(s)"
+                onChange={onSelectDatasourceFilters}
+              />
+            </div>
+          )}
           <div className={styles.sort}>
-            <Select options={sortingValues} placeholder="Sort queries by" />
+            <Select
+              options={sortingOptions}
+              placeholder="Sort queries by"
+              onChange={e => onChangeSortingValue(e.value as SortingValue)}
+            />
           </div>
         </div>
         {sessionName('January 3rd, 29 queries', 'Custom title')}
-        {queries.map(q => (
-          <QueryHistoryCard query={q} />
+        {queriesToDisplay.map(q => (
+          <QueryHistoryCard query={q} key={q.uid} />
         ))}
       </div>
     </div>
