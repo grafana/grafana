@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { FC, memo, useMemo } from 'react';
 import { DataFrame } from '@grafana/data';
 import { useSortBy, useTable, useBlockLayout, Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
@@ -18,13 +18,13 @@ export interface Props {
   onCellClick?: TableFilterActionCallback;
 }
 
-export const Table = ({ data, height, onCellClick, width, columnMinWidth }: Props) => {
+export const Table: FC<Props> = memo(({ data, height, onCellClick, width, columnMinWidth }) => {
   const theme = useTheme();
   const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
 
   const minWidth = columnMinWidth && columnMinWidth * data.fields.length;
-  const tableWidth = minWidth && minWidth > width ? minWidth : width;
+  const tableWidth = minWidth && minWidth > width ? minWidth : widthgit;
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
@@ -75,7 +75,7 @@ export const Table = ({ data, height, onCellClick, width, columnMinWidth }: Prop
       </FixedSizeList>
     </div>
   );
-};
+});
 
 function renderHeaderCell(column: any, className: string) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
