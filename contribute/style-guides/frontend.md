@@ -158,9 +158,19 @@ const getStyles  = = () => ({
 
 #### Use `ALL_CAPS` for constants.
 
+```typescript
+// bad
+const constantValue = "This string won't change";
+// bad
+const constant_value = "This string won't change";
+
+// good
+const CONSTANT_VALUE = "This string won't change";
+```
+
 #### Use [BEM](http://getbem.com/) convention for SASS styles.
 
-_SASS styles are deprecated, ideally migrate to Emotion whenever you need to modify SASS styles._
+_SASS styles are deprecated. Please migrate to Emotion whenever you need to modify SASS styles._
 
 ### Files and directories naming conventions
 
