@@ -12,11 +12,12 @@ interface AppendedVectorInfo<T> {
  * RAM -- rather than allocate a new array the size of all previous arrays, this just
  * points the correct index to their original array values
  */
-export class AppendedVectors<T = any> implements Vector<T> {
+export class AppendedVectors<T = any> extends Vector<T> {
   length = 0;
   source: Array<AppendedVectorInfo<T>> = [];
 
   constructor(startAt = 0) {
+    super();
     this.length = startAt;
   }
 

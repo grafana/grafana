@@ -1,9 +1,10 @@
 import { MutableVector } from '../types/vector';
 
-export class ArrayVector<T = any> implements MutableVector<T> {
+export class ArrayVector<T = any> extends MutableVector<T> {
   buffer: T[];
 
   constructor(buffer?: T[]) {
+    super();
     this.buffer = buffer ? buffer : [];
   }
 

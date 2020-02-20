@@ -14,4 +14,19 @@ describe('ConstantVector', () => {
       expect(v.get(i)).toEqual(value);
     }
   });
+
+  it('should be iterable', () => {
+    const value = 3.5;
+    const vec = new ConstantVector(value, 7);
+
+    let i = 0;
+    for (const val of vec) {
+      if (i > 10) {
+        break;
+      }
+
+      expect(val).toEqual(value);
+      i += 1;
+    }
+  });
 });

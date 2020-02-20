@@ -18,6 +18,13 @@ describe('dataFrameView', () => {
       { name: 'value', type: FieldType.number, values: [1, 2, 3] },
     ],
   };
+
+  const expected = [
+    { time: 100, name: 'a', value: 1 },
+    { time: 200, name: 'b', value: 2 },
+    { time: 300, name: 'c', value: 3 },
+  ];
+
   const ext = new MutableDataFrame(frame);
   const vector = new DataFrameView<MySpecialObject>(ext);
 
@@ -29,6 +36,23 @@ describe('dataFrameView', () => {
     expect(first.name).toEqual('a');
     expect(first.value).toEqual(1);
     expect(first.more).toBeUndefined();
+  });
+
+  it('should be iterable', () => {
+    // Spread
+    const spreadedVals = [...vector];
+    expect(spreadedVals).toEqual(expected);
+
+    // for...of
+    let i = 0;
+    for (const entry of vector) {
+      expect(entry.time).toEqual(expected[i].time);
+      expect(entry.name).toEqual(expected[i].name);
+      expect(entry.value).toEqual(expected[i].value);
+      expect(entry.more).toBeUndefined();
+
+      i++;
+    }
   });
 
   it('Should support the spread operator', () => {

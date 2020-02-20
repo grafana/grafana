@@ -1,35 +1,42 @@
-export interface Vector<T = any> {
-  length: number;
+export abstract class Vector<T = any> {
+  // Default iterator, but can be overridden
+  *[Symbol.iterator](): IterableIterator<T> {
+    for (let i = 0; i < this.length; i++) {
+      yield this.get(i);
+    }
+  }
+
+  abstract length: number;
 
   /**
    * Access the value by index (Like an array)
    */
-  get(index: number): T;
+  abstract get(index: number): T;
 
   /**
-   * Get the resutls as an array.
+   * Get the results as an array.
    */
-  toArray(): T[];
+  abstract toArray(): T[];
 }
 
 /**
  * Apache arrow vectors are Read/Write
  */
-export interface ReadWriteVector<T = any> extends Vector<T> {
-  set: (index: number, value: T) => void;
+export abstract class ReadWriteVector<T = any> extends Vector<T> {
+  abstract set(index: number, value: T): void;
 }
 
 /**
  * Vector with standard manipulation functions
  */
-export interface MutableVector<T = any> extends ReadWriteVector<T> {
+export abstract class MutableVector<T = any> extends ReadWriteVector<T> {
   /**
    * Adds the value to the vector
    */
-  add: (value: T) => void;
+  abstract add(value: T): void;
 
   /**
-   * modifies the vector so it is now the oposite order
+   * modifies the vector so it is now the opposite order
    */
-  reverse: () => void;
+  abstract reverse(): void;
 }

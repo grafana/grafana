@@ -1,8 +1,10 @@
 import { Vector } from '../types/vector';
 import { vectorToArray } from './vectorToArray';
 
-export class ScaledVector implements Vector<number> {
-  constructor(private source: Vector<number>, private scale: number) {}
+export class ScaledVector extends Vector<number> {
+  constructor(private source: Vector<number>, private scale: number) {
+    super();
+  }
 
   get length(): number {
     return this.source.length;

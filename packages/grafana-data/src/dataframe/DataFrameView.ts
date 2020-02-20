@@ -21,11 +21,12 @@ import { DisplayProcessor } from '../types';
  *   const second = { ... view.get(1) };
  *   const third = { ... view.get(2) };
  */
-export class DataFrameView<T = any> implements Vector<T> {
+export class DataFrameView<T = any> extends Vector<T> {
   private index = 0;
   private obj: T;
 
   constructor(private data: DataFrame) {
+    super();
     const obj = ({} as unknown) as T;
 
     for (let i = 0; i < data.fields.length; i++) {
@@ -46,6 +47,12 @@ export class DataFrameView<T = any> implements Vector<T> {
     }
 
     this.obj = obj;
+  }
+
+  *[Symbol.iterator]() {
+    for (let i = 0; i < this.data.length; i++) {
+      yield { ...this.get(i) };
+    }
   }
 
   get dataFrame() {

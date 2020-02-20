@@ -4,8 +4,10 @@ import { vectorToArray } from './vectorToArray';
 /**
  * Values are returned in the order defined by the input parameter
  */
-export class SortedVector<T = any> implements Vector<T> {
-  constructor(private source: Vector<T>, private order: number[]) {}
+export class SortedVector<T = any> extends Vector<T> {
+  constructor(private source: Vector<T>, private order: number[]) {
+    super();
+  }
 
   get length(): number {
     return this.source.length;

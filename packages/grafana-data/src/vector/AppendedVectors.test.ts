@@ -20,4 +20,20 @@ describe('Check Appending Vector', () => {
     appended.append(new ArrayVector(['x', 'y', 'z']));
     expect(appended.toArray()).toEqual([1, 2, undefined, undefined, undefined, undefined, 'x', 'y', 'z']);
   });
+
+  it('should be iterable', () => {
+    const appended = new AppendedVectors();
+    appended.append(new ArrayVector([1, 2, 3]));
+    appended.append(new ArrayVector([4, 5, 6]));
+    appended.append(new ArrayVector([7, 8, 9]));
+    const expected = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    expect([...appended]).toEqual(expected);
+
+    let i = 0;
+    for (const val of appended) {
+      expect(val).toEqual(expected[i]);
+      i++;
+    }
+  });
 });

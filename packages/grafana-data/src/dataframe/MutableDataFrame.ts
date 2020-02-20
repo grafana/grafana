@@ -14,7 +14,7 @@ type MutableVectorCreator = (buffer?: any[]) => MutableVector;
 
 export const MISSING_VALUE: any = null;
 
-export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
+export class MutableDataFrame<T = any> extends MutableVector<T> implements DataFrame {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
@@ -26,6 +26,8 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
   private creator: MutableVectorCreator;
 
   constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
+    super();
+
     // This creates the underlying storage buffers
     this.creator = creator
       ? creator

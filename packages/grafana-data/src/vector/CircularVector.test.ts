@@ -22,6 +22,21 @@ describe('Check Circular Vector', () => {
     expect(v.toArray()).toEqual([6, 7, 8]);
   });
 
+  it('should be iterable', () => {
+    const buffer = [1, 2, 3];
+    const vec = new CircularVector({ buffer }); // tail is default option
+
+    let i = 0;
+    for (const val of vec) {
+      if (i > 10) {
+        break;
+      }
+
+      expect(val).toEqual(buffer[i % 3]);
+      i += 1;
+    }
+  });
+
   it('should grow buffer until it hits capacity (append)', () => {
     const v = new CircularVector({ capacity: 3 }); // tail is default option
     expect(v.toArray()).toEqual([]);

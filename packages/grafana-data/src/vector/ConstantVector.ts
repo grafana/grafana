@@ -1,7 +1,9 @@
 import { Vector } from '../types/vector';
 
-export class ConstantVector<T = any> implements Vector<T> {
-  constructor(private value: T, private len: number) {}
+export class ConstantVector<T = any> extends Vector<T> {
+  constructor(private value: T, private len: number) {
+    super();
+  }
 
   get length() {
     return this.len;

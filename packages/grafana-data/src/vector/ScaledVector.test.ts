@@ -12,4 +12,16 @@ describe('ScaledVector', () => {
       expect(v.get(i)).toEqual(source.get(i) * scale);
     }
   });
+
+  it('should be iterable', () => {
+    const source = new ArrayVector([1, 2, 3, 4]);
+    const scale = 2.456;
+    const vec = new ScaledVector(source, scale);
+
+    let i = 0;
+    for (const val of vec) {
+      expect(val).toEqual(source.get(i) * scale);
+      i++;
+    }
+  });
 });

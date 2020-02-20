@@ -11,16 +11,17 @@ interface CircularOptions<T> {
  * Circular vector uses a single buffer to capture a stream of values
  * overwriting the oldest value on add.
  *
- * This supports addting to the 'head' or 'tail' and will grow the buffer
+ * This supports adding to the 'head' or 'tail' and will grow the buffer
  * to match a configured capacity.
  */
-export class CircularVector<T = any> implements MutableVector<T> {
+export class CircularVector<T = any> extends MutableVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;
   private tail: boolean;
 
   constructor(options: CircularOptions<T>) {
+    super();
     this.buffer = options.buffer || [];
     this.capacity = this.buffer.length;
     this.tail = 'head' !== options.append;
