@@ -23,10 +23,16 @@ import {
   setInitLock,
   updateVariableOptions,
   updateVariableTags,
-} from './actions';
+} from '../state/actions';
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
-import { emptyUuid, getInstanceState, initialVariableEditorState, VariableEditorState, VariableState } from './types';
+import {
+  emptyUuid,
+  getInstanceState,
+  initialVariableEditorState,
+  VariableEditorState,
+  VariableState,
+} from '../state/types';
 import {
   changeQueryVariableHighlightIndex,
   changeQueryVariableSearchQuery,
@@ -37,10 +43,10 @@ import {
   showQueryVariableDropDown,
   toggleAllVariableOptions,
   toggleVariableTag,
-} from './queryVariableActions';
+} from './actions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
-import { initialTemplatingState, TemplatingState } from './index';
+import { initialTemplatingState, TemplatingState } from '../state';
 import cloneDeep from 'lodash/cloneDeep';
 
 export type MutateStateFunc<S extends VariableState> = (state: S) => S;

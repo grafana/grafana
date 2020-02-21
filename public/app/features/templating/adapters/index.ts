@@ -3,7 +3,7 @@ import { Reducer } from 'redux';
 import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from '../variable';
-import { createQueryVariableAdapter } from './queryVariableAdapter';
+import { createQueryVariableAdapter } from '../query/adapter';
 import { VariableEditorProps, VariablePickerProps, VariableState } from '../state/types';
 import { TemplatingState } from '../state';
 

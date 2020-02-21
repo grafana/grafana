@@ -1,11 +1,11 @@
 import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
-import { ALL_VARIABLE_TEXT, initialQueryVariableState, queryVariableReducer } from '../state/queryVariableReducer';
+import { ALL_VARIABLE_TEXT, initialQueryVariableState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
-import { VariableAdapter } from './index';
-import { QueryVariablePicker } from '../picker/QueryVariablePicker';
-import { QueryVariableEditor } from '../editor/QueryVariableEditor';
-import { updateQueryVariableOptions } from '../state/queryVariableActions';
+import { VariableAdapter } from '../adapters';
+import { QueryVariablePicker } from './QueryVariablePicker';
+import { QueryVariableEditor } from './QueryVariableEditor';
+import { updateQueryVariableOptions } from './actions';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {

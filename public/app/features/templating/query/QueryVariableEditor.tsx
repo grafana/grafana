@@ -3,12 +3,12 @@ import { e2e } from '@grafana/e2e';
 import { FormLabel, Switch } from '@grafana/ui';
 
 import templateSrv from '../template_srv';
-import { SelectionOptionsEditor } from './SelectionOptionsEditor';
+import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../variable';
 import { VariableEditorProps } from '../state/types';
-import { QueryVariableEditorState } from '../state/queryVariableReducer';
+import { QueryVariableEditorState } from './reducer';
 import { dispatch } from '../../../store/store';
-import { changeQueryVariableDataSource, initQueryVariableEditor } from '../state/queryVariableActions';
+import { changeQueryVariableDataSource, initQueryVariableEditor } from './actions';
 import { variableAdapters } from '../adapters';
 
 export interface Props extends VariableEditorProps<QueryVariableModel, QueryVariableEditorState> {}

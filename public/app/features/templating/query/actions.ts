@@ -12,7 +12,7 @@ import {
   updateVariableTags,
   validateVariableSelectionState,
   VariablePayload,
-} from './actions';
+} from '../state/actions';
 import { QueryVariableModel, VariableRefresh, VariableTag } from '../variable';
 import { ThunkResult, VariableQueryProps } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
@@ -20,8 +20,8 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
-import { getVariable } from './selectors';
-import { getQueryHasSearchFilter } from './queryVariableReducer';
+import { getVariable } from '../state/selectors';
+import { getQueryHasSearchFilter } from './reducer';
 import { variableAdapters } from '../adapters';
 
 export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(

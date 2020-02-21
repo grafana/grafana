@@ -5,14 +5,9 @@ import { e2e } from '@grafana/e2e';
 import { QueryVariableModel, VariableOption, VariableTag } from '../variable';
 import { dispatch } from '../../../store/store';
 import { toVariablePayload } from '../state/actions';
-import { QueryVariablePickerState } from '../state/queryVariableReducer';
+import { QueryVariablePickerState } from '../query/reducer';
 import { variableAdapters } from '../adapters';
-import {
-  hideQueryVariableDropDown,
-  selectVariableOption,
-  toggleAllVariableOptions,
-  toggleTag,
-} from '../state/queryVariableActions';
+import { hideQueryVariableDropDown, selectVariableOption, toggleAllVariableOptions, toggleTag } from '../query/actions';
 import { VariablePickerProps } from '../state/types';
 
 export interface Props extends VariablePickerProps<QueryVariableModel, QueryVariablePickerState> {}
