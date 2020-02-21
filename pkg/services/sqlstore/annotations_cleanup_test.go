@@ -51,7 +51,7 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 	annotationsToWrite := 10
 
 	InitTestDB(t)
-	savedDash := insertNewTestDashboard(t,"test dash 111", 1, 0, false, "this-is-fun")
+	savedDash := insertNewTestDashboard(t, "test dash 111", 1, 0, false, "this-is-fun")
 
 	expiredCreated := (time.Now().Unix() - int64(daysToKeepAnnotations*86400))
 	err := inTransaction(func(sess *DBSession) error {
@@ -67,8 +67,6 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-
-
 	err = deleteExpiredAnnotations(&models.DeleteExpiredAnnotationsCommand{DaysToKeep: daysToKeepAnnotations})
 	assert.Nil(t, err)
 
@@ -80,8 +78,6 @@ func TestDeleteExpiredAnnotations(t *testing.T) {
 
 	assert.Equal(t, len(items), 1)
 	assert.ElementsMatch(t, items[0].Tags, []string{"outage", "error", "type:outage", "server:server-1"}, "Can read tags")
-
-
 
 	err = deleteExpiredAnnotations(&models.DeleteExpiredAnnotationsCommand{DaysToKeep: daysToKeepAnnotations})
 	assert.Nil(t, err)
@@ -101,7 +97,7 @@ func TestDeleteExpiredAnnotationsMax(t *testing.T) {
 	repo := SqlAnnotationRepo{}
 
 	InitTestDB(t)
-	savedDash := insertNewTestDashboard(t,"test dash 111", 1, 0, false, "this-is-fun")
+	savedDash := insertNewTestDashboard(t, "test dash 111", 1, 0, false, "this-is-fun")
 
 	numAnnotations := MAX_EXPIRED_ANNOTATIONS_TO_DELETE + 10
 	err := inTransaction(func(sess *DBSession) error {
@@ -127,7 +123,7 @@ func TestDeleteExpiredAnnotationsMax(t *testing.T) {
 	assert.Equal(t, len(items), numAnnotations-MAX_EXPIRED_ANNOTATIONS_TO_DELETE)
 }
 
-func insertNewTestDashboard(t *testing.T,title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+func insertNewTestDashboard(t *testing.T, title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
