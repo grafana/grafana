@@ -1,36 +1,14 @@
-// Libaries
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
+import { StoreState } from '../../../../types';
 
-// Utils & Services
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-
-// Types
-import { DashboardModel } from '../../state/DashboardModel';
-
-export interface Props {
-  dashboard: DashboardModel | null;
-}
-
-export class SubMenu extends PureComponent<Props> {
-  element: HTMLElement;
-  angularCmp: AngularComponent;
-
-  componentDidMount() {
-    const loader = getAngularLoader();
-
-    const template = '<dashboard-submenu dashboard="dashboard" />';
-    const scopeProps = { dashboard: this.props.dashboard };
-
-    this.angularCmp = loader.load(this.element, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.angularCmp) {
-      this.angularCmp.destroy();
-    }
-  }
-
+class UnConnectedSubMenu extends PureComponent {
   render() {
-    return <div ref={element => (this.element = element)} />;
+    return <div>New SubMenu</div>;
   }
 }
+
+const mapStateToProps = (state: StoreState) => state.templating.variables;
+
+export const SubMenu = connect(mapStateToProps)(UnConnectedSubMenu);
+SubMenu.displayName = 'SubMenu';
