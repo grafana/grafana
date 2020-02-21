@@ -11,9 +11,10 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
-import { config, UrlQueryValue } from '@grafana/runtime';
+import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { VariableModel } from '../../templating/variable';
+import { getConfig } from '../../../core/config';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -192,12 +193,10 @@ export class DashboardModel {
     copy: any,
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
-    if (config.featureToggles.newVariables) {
+    if (getConfig().featureToggles.newVariables) {
       this.updateTemplatingSaveModel(copy, defaults);
     }
-    if (!config.featureToggles.newVariables) {
-      this.updateAngularTemplatingSaveModel(copy, defaults);
-    }
+    this.updateAngularTemplatingSaveModel(copy, defaults);
   }
 
   private updateAngularTemplatingSaveModel(
@@ -1020,7 +1019,7 @@ export class DashboardModel {
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {
-    if (!config.featureToggles.newVariables) {
+    if (!getConfig().featureToggles.newVariables) {
       return _.find(this.templating.list, { name: panel.repeat } as any);
     }
 
@@ -1032,7 +1031,7 @@ export class DashboardModel {
   }
 
   private hasVariables() {
-    if (!config.featureToggles.newVariables) {
+    if (!getConfig().featureToggles.newVariables) {
       return this.templating.list.length > 0;
     }
 

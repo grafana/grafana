@@ -29,7 +29,7 @@ import {
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
-import { config } from '../../../core/config';
+import { getConfig } from '../../../core/config';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 
 export interface Props {
@@ -314,8 +314,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {!config.featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
-              {config.featureToggles.newVariables && <SubMenu />}
+              {!getConfig().featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
+              {getConfig().featureToggles.newVariables && <SubMenu />}
               <DashboardGrid
                 dashboard={dashboard}
                 isEditing={isEditing}

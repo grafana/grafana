@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { CoreEvents, AppEventConsumer } from 'app/types';
+import { AppEventConsumer, CoreEvents } from 'app/types';
 
 export class ChangeTracker {
   current: any;
