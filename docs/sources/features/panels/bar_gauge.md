@@ -17,17 +17,17 @@ thresholds control the bar & value color.
 ## Display options
 
 * Show
-  * `Calculation` - Calculate a show a single value like min or max based on all rows
-  * `All values` - Render a seperate stat for every row
+  * `Calculation` - Show a calculated value like min or max based on all rows.
+  * `All values` - Show a separate stat for every row.
 * Calc
   * Specify calculation / reducer function. Since this panel is designed to only show a single value Grafana needs to
-  * know how to reduce a fields many values to a single value.
+    know how to reduce a fields many values to a single value.
 * Orientation
-  * `Horizontal` - The bar will streth horizontally from left to right
-  * `Vertical` - The bar will streth vertically from top to bottom
+  * `Horizontal` - The bar will stretch horizontally from left to right.
+  * `Vertical` - The bar will stretch vertically from top to bottom.
 * Mode
   * `Gradient` - The threshold levels define a gradient.
-  * `Retro LCD` - The gauge is split up in small cells that are lit or unlit
+  * `Retro LCD` - The gauge is split up in small cells that are lit or unlit.
   * `Basic` - Single color based on the matching threshold.
 
 Retro LCD example:
@@ -46,8 +46,8 @@ Retro LCD example:
 
 ### Thresholds
 
-Define thresholds that will define the color of either the value or the background depending on your `Color` display option. The
-thresholds are automatically sorted from lowerst value to highest. The `Base` value represents minus infinity.
+Define thresholds that will set the color of either the value or the background depending on your `Color` display option. The
+thresholds are automatically sorted from lowest value to highest. The `Base` value represents minus infinity.
 
 
 ### Value mappings

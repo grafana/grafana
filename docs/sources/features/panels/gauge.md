@@ -16,11 +16,11 @@ The Gauge is a single value panel that can repeat a gauge for every series, colu
 ## Display options
 
 * Show
-  * `Calculation` - Calculate a show a single value like min or max based on all rows
-  * `All values` - Render a seperate stat for every row
+  * `Calculation` - Show a calculated value like min or max based on all rows.
+  * `All values` - Show a separate stat for every row.
 * Calc
   * Specify calculation / reducer function. Since this panel is designed to only show a single value Grafana needs to
-  * know how to reduce a fields many values to a single value.
+    know how to reduce a fields many values to a single value.
 ** Labels - Controls if thresholds values are shown.
 ** Markers - Controls if a thresholds band is shown outside the inner gauge value band.
 
@@ -36,7 +36,7 @@ The Gauge is a single value panel that can repeat a gauge for every series, colu
 
 ### Thresholds
 
-Define thresholds that will define the color of either the value or the background depending on your `Color` display option. The
+Define thresholds that will set the color of either the value or the background depending on your `Color` display option. The
 thresholds are automatically sorted from lowerst value to highest. The `Base` value represents minus infinity.
 
 
