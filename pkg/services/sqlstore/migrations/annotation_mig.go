@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"xorm.io/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"xorm.io/xorm"
 )
 
 func addAnnotationMig(mg *Migrator) {
