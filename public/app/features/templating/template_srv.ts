@@ -386,8 +386,7 @@ export class TemplateSrv {
 
   syncVariableFromRedux(variable: any) {
     const current = this.index[variable.name];
-    const ctor = current.constructor;
-    this.index[variable.name] = new ctor(variable);
+    this.index[variable.name] = Object.assign(current, variable);
   }
 }
 

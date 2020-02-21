@@ -16,6 +16,7 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { variableTypes } from './variable';
 
 function getNoneOption(): VariableOption {
   return { text: 'None', value: '', isNone: true, selected: false };
@@ -246,9 +247,9 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
   }
 }
 // @ts-ignore
-// variableTypes['query'] = {
-//   name: 'Query',
-//   ctor: QueryVariable,
-//   description: 'Variable values are fetched from a datasource query',
-//   supportsMulti: true,
-// };
+variableTypes['query'] = {
+  name: 'Query',
+  ctor: QueryVariable,
+  description: 'Variable values are fetched from a datasource query',
+  supportsMulti: true,
+};

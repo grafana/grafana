@@ -11,9 +11,10 @@ import {
 } from '../variable';
 import { ALL_VARIABLE_TEXT } from '../state/queryVariableReducer';
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
+import { setOptionAsCurrent, setOptionFromUrl, toVariablePayload, addVariable } from '../state/actions';
 import { updateQueryVariableOptions } from '../state/queryVariableActions';
 import { Deferred } from '../deferred';
+import { v4 } from 'uuid';
 
 export class QueryVariableAdapter implements QueryVariableModel, VariableActions {
   type: VariableType;
@@ -64,8 +65,10 @@ export class QueryVariableAdapter implements QueryVariableModel, VariableActions
     this.allValue = model.allValue;
     this.index = model.index;
     this.initLock = model.initLock;
-    this.uuid = model.uuid;
+    this.uuid = model.uuid = model.uuid ?? v4();
     this.global = model.global;
+
+    dispatch(addVariable(toVariablePayload(model, { global: false, index: model.index, model })));
   }
 
   dependsOn(variable: QueryVariableModel) {
