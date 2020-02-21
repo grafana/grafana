@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
 import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
@@ -30,7 +30,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   _seriesRefLetters: string;
 
   /** @ngInject */
-  constructor(instanceSettings: any, private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {
+  constructor(instanceSettings: any, private templateSrv: TemplateSrv) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
@@ -103,7 +103,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
   }
 
-  convertResponseToDataFrames(result: any): DataQueryResponse {
+  convertResponseToDataFrames = (result: any): DataQueryResponse => {
     const data: DataFrame[] = [];
     if (!result || !result.data) {
       return { data };
@@ -124,14 +124,16 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       // Metrictank metadata
       if (s.meta) {
         frame.meta = {
-          metrictank: s.meta, // array of metadata
-          metrictankReq: result.data.meta, // info on the request
+          custom: {
+            request: result.data.meta, // info for the whole request
+            info: s.meta, // Array of metadata
+          },
         };
       }
       data.push(frame);
     }
     return { data };
-  }
+  };
 
   parseTags(tagString: string) {
     let tags: string[] = [];
@@ -145,14 +147,14 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return tags;
   }
 
-  interpolateVariablesInQueries(queries: GraphiteQuery[]): GraphiteQuery[] {
+  interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          target: this.templateSrv.replace(query.target),
+          target: this.templateSrv.replace(query.target, scopedVars),
         };
         return expandedQuery;
       });
@@ -568,7 +570,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     options.url = this.url + options.url;
     options.inspect = { type: 'graphite' };
 
-    return this.backendSrv.datasourceRequest(options);
+    return getBackendSrv().datasourceRequest(options);
   }
 
   buildGraphiteParams(options: any, scopedVars: ScopedVars): string[] {

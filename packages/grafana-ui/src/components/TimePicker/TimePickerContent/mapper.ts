@@ -10,7 +10,6 @@ import {
   TIME_FORMAT,
 } from '@grafana/data';
 import { stringToDateTimeType } from '../time';
-import { isMathString } from '@grafana/data/src/datetime/datemath';
 
 export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): TimeRange => {
   return {
@@ -41,7 +40,7 @@ export const mapStringsToTimeRange = (from: string, to: string, roundup?: boolea
   const fromDate = stringToDateTimeType(from, roundup, timeZone);
   const toDate = stringToDateTimeType(to, roundup, timeZone);
 
-  if (isMathString(from) || isMathString(to)) {
+  if (dateMath.isMathString(from) || dateMath.isMathString(to)) {
     return {
       from: fromDate,
       to: toDate,

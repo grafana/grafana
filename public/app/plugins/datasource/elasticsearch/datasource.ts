@@ -6,13 +6,14 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataFrame,
+  ScopedVars,
 } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/data';
 import * as queryDef from './query_def';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
@@ -36,7 +37,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
@@ -86,7 +86,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       };
     }
 
-    return this.backendSrv.datasourceRequest(options);
+    return getBackendSrv().datasourceRequest(options);
   }
 
   private get(url: string) {
@@ -123,7 +123,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       });
   }
 
-  annotationQuery(options: any) {
+  annotationQuery(options: any): Promise<any> {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
@@ -264,14 +264,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[]): ElasticsearchQuery[] {
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query, {}, 'lucene'),
+          query: this.templateSrv.replace(query.query, scopedVars, 'lucene'),
         };
         return expandedQuery;
       });
@@ -344,7 +344,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         target.metrics = [queryDef.defaultMetricAgg()];
         // Setting this for metrics queries that are typed as logs
         target.isLogsQuery = true;
-        queryObj = this.queryBuilder.getLogsQuery(target, queryString);
+        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
       } else {
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
@@ -368,8 +368,12 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       return Promise.resolve({ data: [] });
     }
 
-    payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf().toString());
-    payload = payload.replace(/\$timeTo/g, options.range.to.valueOf().toString());
+    // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
+    // it as an integer not as string with digits. This is because elastic will convert the string only if the time
+    // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
+    // and then sending string will error out.
+    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
+    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
     const url = this.getMultiSearchUrl();
@@ -511,20 +515,20 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   metricFindQuery(query: any) {
     query = angular.fromJson(query);
-    if (!query) {
-      return Promise.resolve([]);
+    if (query) {
+      if (query.find === 'fields') {
+        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+        return this.getFields(query);
+      }
+
+      if (query.find === 'terms') {
+        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+        query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
+        return this.getTerms(query);
+      }
     }
 
-    if (query.find === 'fields') {
-      query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-      return this.getFields(query);
-    }
-
-    if (query.find === 'terms') {
-      query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-      query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
-      return this.getTerms(query);
-    }
+    return Promise.resolve([]);
   }
 
   getTagKeys() {

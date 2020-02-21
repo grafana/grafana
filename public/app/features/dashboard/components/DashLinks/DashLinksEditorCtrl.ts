@@ -26,7 +26,7 @@ export class DashLinksEditorCtrl {
     buttonTitle: 'Add Dashboard Link',
     infoBox: {
       __html: `<p>
-      Dashboard Links allow you to place links to other dashboards and web sites directly in below the dashboard
+      Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard
       header.
     </p>`,
     },

@@ -1,5 +1,4 @@
-import { combineReducers } from 'redux';
-import { ActionOf } from '../redux';
+import { AnyAction, combineReducers } from 'redux';
 import { CleanUp, cleanUpAction } from '../actions/cleanUp';
 import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -33,8 +32,8 @@ const rootReducers = {
 
 const addedReducers = {};
 
-export const addReducer = (addedReducer: any) => {
-  Object.assign(addedReducers, ...addedReducer);
+export const addReducer = (newReducers: any) => {
+  Object.assign(addedReducers, newReducers);
 };
 
 export const createRootReducer = () => {
@@ -43,7 +42,7 @@ export const createRootReducer = () => {
     ...addedReducers,
   });
 
-  return (state: any, action: ActionOf<any>): any => {
+  return (state: any, action: AnyAction): any => {
     if (action.type !== cleanUpAction.type) {
       return appReducer(state, action);
     }
@@ -58,13 +57,18 @@ export const createRootReducer = () => {
 
 export const recursiveCleanState = (state: any, stateSlice: any): boolean => {
   for (const stateKey in state) {
-    if (state[stateKey] === stateSlice) {
+    if (!state.hasOwnProperty(stateKey)) {
+      continue;
+    }
+
+    const slice = state[stateKey];
+    if (slice === stateSlice) {
       state[stateKey] = undefined;
       return true;
     }
 
-    if (typeof state[stateKey] === 'object') {
-      const cleaned = recursiveCleanState(state[stateKey], stateSlice);
+    if (typeof slice === 'object') {
+      const cleaned = recursiveCleanState(slice, stateSlice);
       if (cleaned) {
         return true;
       }

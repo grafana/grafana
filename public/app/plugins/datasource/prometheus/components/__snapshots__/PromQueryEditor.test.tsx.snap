@@ -38,6 +38,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         onChange={[Function]}
         placeholder="legend format"
         type="text"
+        value=""
       />
     </div>
     <div
@@ -62,7 +63,9 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         className="gf-form-input width-8"
         onBlur={[Function]}
         onChange={[Function]}
+        placeholder=""
         type="text"
+        value=""
       />
     </div>
     <div
@@ -205,6 +208,8 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           query={
             Object {
               "expr": "",
+              "interval": "",
+              "legendFormat": "",
               "refId": "A",
             }
           }

@@ -7,7 +7,7 @@ import { UseState } from '../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { Select } from './Select';
 
-const SelectStories = storiesOf('UI/Select/Select', module);
+const SelectStories = storiesOf('General/Select/Select', module);
 
 SelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
 
@@ -24,7 +24,7 @@ SelectStories.add('default', () => {
       {(value, updateValue) => {
         return (
           <Select
-            value={value}
+            placeholder="Choose..."
             options={options}
             onChange={value => {
               action('onChanged fired')(value);
@@ -39,7 +39,8 @@ SelectStories.add('default', () => {
 
 SelectStories.add('With allowCustomValue', () => {
   const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
-  const value = object<SelectableValue<string>>('Selected Value:', intialState);
+  // @ts-ignore
+  const value = object<SelectableValue<string>>('Selected Value:', null);
   const options = object<Array<SelectableValue<string>>>('Options:', [
     intialState,
     { label: 'Another label', value: 'Another value' },
@@ -50,7 +51,8 @@ SelectStories.add('With allowCustomValue', () => {
       {(value, updateValue) => {
         return (
           <Select
-            value={value}
+            // value={value}
+            placeholder="Choose..."
             options={options}
             allowCustomValue={true}
             onChange={value => {

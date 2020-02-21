@@ -1,8 +1,12 @@
+import fs from 'fs';
+import path from 'path';
+
 import { resultsToDataFrames, grafanaDataFrameToArrowTable, arrowTableToDataFrame } from './ArrowDataFrame';
 import { toDataFrameDTO, toDataFrame } from './processDataFrame';
 import { FieldType } from '../types';
+import { Table } from 'apache-arrow';
 
-/* tslint:disable */
+/* eslint-disable */
 const resp = {
   results: {
     '': {
@@ -17,7 +21,7 @@ const resp = {
     },
   },
 };
-/* tslint:enable */
+/* eslint-enable */
 
 describe('GEL Utils', () => {
   test('should parse output with dataframe', () => {
@@ -58,5 +62,13 @@ describe('Read/Write arrow Table to DataFrame', () => {
     const before = JSON.stringify(toDataFrameDTO(frame), null, 2);
     const after = JSON.stringify(toDataFrameDTO(arrowTableToDataFrame(table)), null, 2);
     expect(after).toEqual(before);
+  });
+
+  test('should parse output with dataframe', () => {
+    const fullpath = path.resolve(__dirname, './__snapshots__/all_types.golden.arrow');
+    const arrow = fs.readFileSync(fullpath);
+    const table = Table.from([arrow]);
+    const frame = arrowTableToDataFrame(table);
+    expect(toDataFrameDTO(frame)).toMatchSnapshot();
   });
 });

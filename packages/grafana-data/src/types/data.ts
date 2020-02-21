@@ -19,6 +19,9 @@ export interface QueryResultMeta {
 
   // Used in Explore to show limit applied to search result
   limit?: number;
+
+  // DatasSource Specific Values
+  custom?: Record<string, any>;
 }
 
 export interface QueryResultBase {

@@ -13,7 +13,7 @@ export enum PluginType {
   renderer = 'renderer',
 }
 
-export interface PluginMeta<T extends {} = KeyValue> {
+export interface PluginMeta<T extends KeyValue = {}> {
   id: string;
   name: string;
   type: PluginType;
@@ -108,12 +108,12 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export interface PluginConfigPageProps<T extends GrafanaPlugin> {
-  plugin: T;
+export interface PluginConfigPageProps<T extends PluginMeta> {
+  plugin: GrafanaPlugin<T>;
   query: KeyValue; // The URL query parameters
 }
 
-export interface PluginConfigPage<T extends GrafanaPlugin> {
+export interface PluginConfigPage<T extends PluginMeta> {
   title: string; // Display
   icon?: string;
   id: string; // Unique, in URL
@@ -123,7 +123,7 @@ export interface PluginConfigPage<T extends GrafanaPlugin> {
 
 export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // Meta is filled in by the plugin loading system
-  meta?: T;
+  meta: T;
 
   // This is set if the plugin system had errors loading the plugin
   loadError?: boolean;
@@ -132,14 +132,18 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   angularConfigCtrl?: any;
 
   // Show configuration tabs on the plugin page
-  configPages?: Array<PluginConfigPage<GrafanaPlugin>>;
+  configPages?: Array<PluginConfigPage<T>>;
 
   // Tabs on the plugin page
-  addConfigPage(tab: PluginConfigPage<GrafanaPlugin>) {
+  addConfigPage(tab: PluginConfigPage<T>) {
     if (!this.configPages) {
       this.configPages = [];
     }
     this.configPages.push(tab);
     return this;
+  }
+
+  constructor() {
+    this.meta = {} as T;
   }
 }

@@ -1,4 +1,5 @@
 import { LokiExpression } from './types';
+import escapeRegExp from 'lodash/escapeRegExp';
 
 const selectorRegexp = /(?:^|\s){[^{]*}/g;
 export function parseQuery(input: string): LokiExpression {
@@ -45,6 +46,7 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       break;
     }
     // Drop terms for negative filters
+    const filterOperator = expression.substr(filterStart, 2);
     const skip = expression.substr(filterStart).search(/!=|!~/) === 0;
     expression = expression.substr(filterStart + 2);
     if (skip) {
@@ -65,7 +67,8 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
 
     if (quotedTerm) {
       const unwrappedFilterTerm = quotedTerm[1];
-      results.push(unwrappedFilterTerm);
+      const regexOperator = filterOperator === '|~';
+      results.push(regexOperator ? unwrappedFilterTerm : escapeRegExp(unwrappedFilterTerm));
     } else {
       return null;
     }

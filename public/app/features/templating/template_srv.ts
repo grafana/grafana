@@ -195,6 +195,15 @@ export class TemplateSrv {
     this.grafanaVariables[name] = value;
   }
 
+  setGlobalVariable(name: string, variable: any) {
+    this.index = {
+      ...this.index,
+      [name]: {
+        current: variable,
+      },
+    };
+  }
+
   getVariableName(expression: string) {
     this.regex.lastIndex = 0;
     const match = this.regex.exec(expression);
@@ -295,6 +304,15 @@ export class TemplateSrv {
         }
       }
 
+      if (fieldPath) {
+        const fieldValue = this.getVariableValue(variableName, fieldPath, {
+          [variableName]: { value: value, text: '' },
+        });
+        if (fieldValue !== null && fieldValue !== undefined) {
+          return this.formatValue(fieldValue, fmt, variable);
+        }
+      }
+
       const res = this.formatValue(value, fmt, variable);
       return res;
     });
@@ -304,7 +322,7 @@ export class TemplateSrv {
     return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
   }
 
-  replaceWithText(target: string, scopedVars: ScopedVars) {
+  replaceWithText(target: string, scopedVars?: ScopedVars) {
     if (!target) {
       return target;
     }

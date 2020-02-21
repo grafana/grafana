@@ -86,6 +86,46 @@ func TestAdminApiEndpoint(t *testing.T) {
 		})
 	})
 
+	Convey("When a server admin attempts to enable/disable a nonexistent user", t, func() {
+		var userId int64
+		isDisabled := false
+		bus.AddHandler("test", func(cmd *m.GetAuthInfoQuery) error {
+			return m.ErrUserNotFound
+		})
+
+		bus.AddHandler("test", func(cmd *m.DisableUserCommand) error {
+			userId = cmd.UserId
+			isDisabled = cmd.IsDisabled
+			return m.ErrUserNotFound
+		})
+
+		adminDisableUserScenario("Should return user not found on a POST request", "enable", "/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
+			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+			So(sc.resp.Code, ShouldEqual, 404)
+			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+			So(err, ShouldBeNil)
+
+			So(respJSON.Get("message").MustString(), ShouldEqual, "User not found")
+
+			So(userId, ShouldEqual, 42)
+			So(isDisabled, ShouldEqual, false)
+		})
+
+		adminDisableUserScenario("Should return user not found on a POST request", "disable", "/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
+			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+			So(sc.resp.Code, ShouldEqual, 404)
+			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+			So(err, ShouldBeNil)
+
+			So(respJSON.Get("message").MustString(), ShouldEqual, "User not found")
+
+			So(userId, ShouldEqual, 42)
+			So(isDisabled, ShouldEqual, true)
+		})
+	})
+
 	Convey("When a server admin attempts to disable/enable external user", t, func() {
 		userId := int64(0)
 		bus.AddHandler("test", func(cmd *m.GetAuthInfoQuery) error {
@@ -111,6 +151,26 @@ func TestAdminApiEndpoint(t *testing.T) {
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			So(err, ShouldBeNil)
 			So(respJSON.Get("message").MustString(), ShouldEqual, "Could not enable external user")
+
+			So(userId, ShouldEqual, 42)
+		})
+	})
+
+	Convey("When a server admin attempts to delete a nonexistent user", t, func() {
+		var userId int64
+		bus.AddHandler("test", func(cmd *m.DeleteUserCommand) error {
+			userId = cmd.UserId
+			return m.ErrUserNotFound
+		})
+
+		adminDeleteUserScenario("Should return user not found error", "/api/admin/users/42", "/api/admin/users/:id", func(sc *scenarioContext) {
+			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+
+			So(sc.resp.Code, ShouldEqual, 404)
+
+			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+			So(err, ShouldBeNil)
+			So(respJSON.Get("message").MustString(), ShouldEqual, "User not found")
 
 			So(userId, ShouldEqual, 42)
 		})
@@ -242,6 +302,24 @@ func adminDisableUserScenario(desc string, action string, url string, routePatte
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+func adminDeleteUserScenario(desc string, url string, routePattern string, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) {
+			sc.context = c
+			sc.context.UserId = TestUserID
+
+			AdminDeleteUser(c)
+		})
+
+		sc.m.Delete(routePattern, sc.defaultHandler)
 
 		fn(sc)
 	})

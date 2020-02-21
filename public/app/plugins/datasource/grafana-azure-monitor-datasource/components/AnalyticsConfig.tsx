@@ -10,30 +10,31 @@ export interface Props {
   workspaces: SelectableValue[];
   makeSameAs: () => void;
   onUpdateOptions: (options: AzureDataSourceSettings) => void;
-  onUpdateOption: (key: string, val: any, secure: boolean) => void;
+  onUpdateOption: (key: string, val: any) => void;
+  onUpdateSecureOption: (key: string, val: any) => void;
   onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: (type?: string) => void;
   onLoadWorkspaces: (type?: string) => void;
 }
 export class AnalyticsConfig extends PureComponent<Props> {
   onLogAnalyticsTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('logAnalyticsTenantId', event.target.value, false);
+    this.props.onUpdateOption('logAnalyticsTenantId', event.target.value);
   };
 
   onLogAnalyticsClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('logAnalyticsClientId', event.target.value, false);
+    this.props.onUpdateOption('logAnalyticsClientId', event.target.value);
   };
 
   onLogAnalyticsClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateOption('logAnalyticsClientSecret', event.target.value, true);
+    this.props.onUpdateSecureOption('logAnalyticsClientSecret', event.target.value);
   };
 
   onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
-    this.props.onUpdateOption('logAnalyticsSubscriptionId', logAnalyticsSubscription.value, false);
+    this.props.onUpdateOption('logAnalyticsSubscriptionId', logAnalyticsSubscription.value);
   };
 
   onWorkspaceSelectChange = (logAnalyticsDefaultWorkspace: SelectableValue<string>) => {
-    this.props.onUpdateOption('logAnalyticsDefaultWorkspace', logAnalyticsDefaultWorkspace.value, false);
+    this.props.onUpdateOption('logAnalyticsDefaultWorkspace', logAnalyticsDefaultWorkspace.value);
   };
 
   onAzureLogAnalyticsSameAsChange = () => {
@@ -58,7 +59,7 @@ export class AnalyticsConfig extends PureComponent<Props> {
         },
       });
     } else {
-      this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs, false);
+      this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs);
     }
 
     // init popover to warn secret needs to be re-entered
