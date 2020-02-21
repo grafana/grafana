@@ -110,7 +110,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     return (
       <FieldConfigEditor
         config={fieldOptions}
-        custom={plugin.customFieldConfigs}
+        plugin={plugin}
         onChange={this.onFieldConfigsChange}
         data={data.series}
       />
@@ -279,11 +279,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             >
               {this.renderHorizontalSplit(styles)}
               <div className={styles.panelOptionsPane}>
-                <CustomScrollbar
-                  className={css`
-                    height: 100% !important;
-                  `}
-                >
+                <CustomScrollbar>
                   {this.renderFieldOptions()}
                   <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
                 </CustomScrollbar>
@@ -403,6 +399,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       position: relative;
     `,
     toolbarLeft: css`
+      padding-left: ${theme.spacing.sm};
       display: flex;
       align-items: center;
     `,

@@ -25,7 +25,6 @@ export { SecretFormField } from './SecretFormFied/SecretFormField';
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
-
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
@@ -130,9 +129,16 @@ export {
   numberOverrideProcessor,
   NumberFieldConfigSettings,
 } from './FieldConfigs/number';
+export {
+  selectOverrideProcessor,
+  SelectValueEditor,
+  SelectOverrideEditor,
+  SelectFieldConfigSettings,
+} from './FieldConfigs/select';
 
 // Next-gen forms
 export { default as Forms } from './Forms';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';
+export { HorizontalGroup, VerticalGroup } from './Layout/Layout';

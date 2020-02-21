@@ -48,6 +48,12 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     this.events.on(PanelEvents.refresh, this.onMetricsPanelRefresh.bind(this));
     this.events.on(PanelEvents.panelTeardown, this.onPanelTearDown.bind(this));
+    this.events.on(PanelEvents.componentDidMount, this.onMetricsPanelMounted.bind(this));
+  }
+
+  private onMetricsPanelMounted() {
+    const queryRunner = this.panel.getQueryRunner();
+    this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
   }
 
   private onPanelTearDown() {
@@ -173,10 +179,6 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     const panel = this.panel as PanelModel;
     const queryRunner = panel.getQueryRunner();
-
-    if (!this.querySubscription) {
-      this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
-    }
 
     return queryRunner.run({
       datasource: panel.datasource,

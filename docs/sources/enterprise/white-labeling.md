@@ -16,7 +16,7 @@ weight = 5
 
 {{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
 
-This release adds new white labeling options to the `grafana.ini` file (can also be set via ENV variables).
+Grafana Enterprise has white labeling options in the `grafana.ini` file (can also be set via ENV variables).
 
 You can change the following elements:
 
@@ -26,7 +26,7 @@ You can change the following elements:
 - Footer & Help menu links
 - Fav icon (shown in browser tab)
 
-> You will have to host your logo and other images used by the white labeling feature separately
+> You will have to host your logo and other images used by the white labeling feature separately.
 
 ```ini
 # Enterprise only
@@ -53,4 +53,14 @@ You can change the following elements:
 ;footer_links_support_url = http://your.support.site
 ;footer_links_guides_text = Guides
 ;footer_links_guides_url = http://your.guides.site
+```
+
+
+ENV Variables:
+```
+- GF_WHITE_LABELING_FOOTER_LINKS=support guides
+- GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_TEXT=Support
+- GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_URL=http://your.support.site
+- GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_TEXT=Guides
+- GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_URL=http://your.guides.site 
 ```

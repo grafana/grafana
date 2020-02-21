@@ -6,9 +6,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -17,10 +19,19 @@ import (
 )
 
 func init() {
+	remotecache.Register(&RenderUser{})
 	registry.RegisterService(&RenderingService{})
 }
 
 var IsPhantomJSEnabled = false
+
+const renderKeyPrefix = "render-%s"
+
+type RenderUser struct {
+	OrgID   int64
+	UserID  int64
+	OrgRole string
+}
 
 type RenderingService struct {
 	log             log.Logger
@@ -29,7 +40,8 @@ type RenderingService struct {
 	domain          string
 	inProgressCount int
 
-	Cfg *setting.Cfg `inject:""`
+	Cfg                *setting.Cfg             `inject:""`
+	RemoteCacheService *remotecache.RemoteCache `inject:""`
 }
 
 func (rs *RenderingService) Init() error {
@@ -103,17 +115,38 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 		}, nil
 	}
 
-	defer func() {
-		rs.inProgressCount -= 1
-	}()
-
-	rs.inProgressCount += 1
-
 	if rs.renderAction != nil {
 		rs.log.Info("Rendering", "path", opts.Path)
-		return rs.renderAction(ctx, opts)
+		renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+		if err != nil {
+			return nil, err
+		}
+
+		defer rs.deleteRenderKey(renderKey)
+
+		defer func() {
+			rs.inProgressCount--
+		}()
+
+		rs.inProgressCount++
+		return rs.renderAction(ctx, renderKey, opts)
 	}
 	return nil, fmt.Errorf("No renderer found")
+}
+
+func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
+	val, err := rs.RemoteCacheService.Get(fmt.Sprintf(renderKeyPrefix, key))
+	if err != nil {
+		rs.log.Error("Failed to get render key from cache", "error", err)
+	}
+
+	if val != nil {
+		if user, ok := val.(*RenderUser); ok {
+			return user, true
+		}
+	}
+
+	return nil, false
 }
 
 func (rs *RenderingService) getFilePathForNewImage() (string, error) {
@@ -152,6 +185,27 @@ func (rs *RenderingService) getURL(path string) string {
 	return fmt.Sprintf("%s://%s:%s/%s&render=1", protocol, rs.domain, setting.HttpPort, path)
 }
 
-func (rs *RenderingService) getRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
-	return middleware.AddRenderAuthKey(orgId, userId, orgRole)
+func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
+	key, err := util.GetRandomString(32)
+	if err != nil {
+		return "", err
+	}
+
+	err = rs.RemoteCacheService.Set(fmt.Sprintf(renderKeyPrefix, key), &RenderUser{
+		OrgID:   orgId,
+		UserID:  userId,
+		OrgRole: string(orgRole),
+	}, 5*time.Minute)
+	if err != nil {
+		return "", err
+	}
+
+	return key, nil
+}
+
+func (rs *RenderingService) deleteRenderKey(key string) {
+	err := rs.RemoteCacheService.Delete(fmt.Sprintf(renderKeyPrefix, key))
+	if err != nil {
+		rs.log.Error("Failed to delete render key", "error", err)
+	}
 }
