@@ -93,7 +93,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const range = this.timeSrv.timeRange();
     const indexList = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
     if (_.isArray(indexList) && indexList.length) {
-      return this.requestAllIndices(indexList, indexList.length - 1, url).then((results: any) => {
+      return this.requestAllIndices(indexList, url).then((results: any) => {
         results.data.$$config = results.config;
         return results.data;
       });
@@ -105,13 +105,18 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
   }
 
-  private requestAllIndices(indexList: string[], index: number, url: string): Promise<any> {
-    return this.request('GET', indexList[index] + url).catch(err => {
-      if (index === 0) {
-        throw err;
+  private async requestAllIndices(indexList: string[], url: string): Promise<any> {
+    const maxTraversals = 7; // do not go beyond one week
+    const listLen = indexList.length;
+    for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
+      try {
+        return await this.request('GET', indexList[listLen - i - 1] + url);
+      } catch (err) {
+        if (err.status !== 404 || i === maxTraversals - 1) {
+          throw err;
+        }
       }
-      return this.requestAllIndices(indexList, index - 1, url);
-    });
+    }
   }
 
   private post(url: string, data: any) {
