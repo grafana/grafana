@@ -232,7 +232,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
             <button className="navbar-edit__back-btn" onClick={this.onPanelExit}>
-              <Icon name="arrow-left" />
+              <i className="gicon gicon-arrow-left-circle" />
             </button>
             <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
           </div>

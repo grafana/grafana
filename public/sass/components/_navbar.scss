@@ -209,18 +209,16 @@ i.navbar-page-btn__search {
 
 .navbar-edit__back-btn {
   background: transparent;
-  border: 2px solid $text-color;
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  transition: transform 0.1s ease 0.1s;
+  border: none;
+  width: 45px;
+  height: 45px;
   color: $text-color;
 
   i {
-    font-size: $font-size-lg;
+    font-size: 35px;
     position: relative;
-    top: 1px;
-    right: 1px;
+    top: -1px;
+    right: -1px;
   }
 
   &:hover {

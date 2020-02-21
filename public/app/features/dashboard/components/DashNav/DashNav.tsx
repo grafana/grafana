@@ -162,7 +162,7 @@ export class DashNav extends PureComponent<Props> {
             onClick={this.onClose}
             aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow}
           >
-            <i className="fa fa-arrow-left" />
+            <i className="gicon gicon-arrow-left-circle" />
           </button>
         </Tooltip>
       </div>
