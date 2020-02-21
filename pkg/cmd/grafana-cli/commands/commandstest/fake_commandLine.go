@@ -1,8 +1,8 @@
 package commandstest
 
 import (
-	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/urfave/cli/v2"
 )
 
 type FakeFlagger struct {
@@ -12,7 +12,7 @@ type FakeFlagger struct {
 type FakeCommandLine struct {
 	LocalFlags, GlobalFlags *FakeFlagger
 	HelpShown, VersionShown bool
-	CliArgs                 []string
+	CliArgs                 cli.Args
 	Client                  utils.ApiClient
 }
 
@@ -63,10 +63,6 @@ func (fcli *FakeCommandLine) Bool(key string) bool {
 	return fcli.LocalFlags.Bool(key)
 }
 
-func (fcli *FakeCommandLine) GlobalString(key string) string {
-	return fcli.GlobalFlags.String(key)
-}
-
 func (fcli *FakeCommandLine) Generic(name string) interface{} {
 	return fcli.LocalFlags.Data[name]
 }
@@ -98,17 +94,54 @@ func (fcli *FakeCommandLine) ShowVersion() {
 }
 
 func (fcli *FakeCommandLine) RepoDirectory() string {
-	return fcli.GlobalString("repo")
+	return fcli.String("repo")
 }
 
 func (fcli *FakeCommandLine) PluginDirectory() string {
-	return fcli.GlobalString("pluginsDir")
+	return fcli.String("pluginsDir")
 }
 
 func (fcli *FakeCommandLine) PluginURL() string {
-	return fcli.GlobalString("pluginUrl")
+	return fcli.String("pluginUrl")
 }
 
 func (fcli *FakeCommandLine) ApiClient() utils.ApiClient {
 	return fcli.Client
+}
+
+type FakeArgs []string
+
+func (a FakeArgs) Get(n int) string {
+	if len(a) > n {
+		return a[n]
+	}
+	return ""
+}
+
+func (a FakeArgs) First() string {
+	return a.Get(0)
+}
+
+func (a FakeArgs) Tail() []string {
+	if len(a) >= 2 {
+		tail := []string(a[1:])
+		ret := make([]string, len(tail))
+		copy(ret, tail)
+		return ret
+	}
+	return []string{}
+}
+
+func (a FakeArgs) Len() int {
+	return len(a)
+}
+
+func (a FakeArgs) Present() bool {
+	return len(a) > 0
+}
+
+func (a FakeArgs) Slice() []string {
+	ret := make([]string, len(a))
+	copy(ret, a)
+	return ret
 }

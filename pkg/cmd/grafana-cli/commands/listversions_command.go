@@ -23,7 +23,7 @@ func listversionsCommand(c utils.CommandLine) error {
 
 	pluginToList := c.Args().First()
 
-	plugin, err := c.ApiClient().GetPlugin(pluginToList, c.GlobalString("repo"))
+	plugin, err := c.ApiClient().GetPlugin(pluginToList, c.String("repo"))
 	if err != nil {
 		return err
 	}

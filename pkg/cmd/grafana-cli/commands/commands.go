@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/codegangsta/cli"
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
@@ -12,23 +12,24 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/urfave/cli/v2"
 )
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) {
-	return func(context *cli.Context) {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) error {
+	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		debug := cmd.GlobalBool("debug")
+		debug := cmd.Bool("debug")
 
 		cfg := setting.NewCfg()
 
-		configOptions := strings.Split(cmd.GlobalString("configOverrides"), " ")
+		configOptions := strings.Split(cmd.String("configOverrides"), " ")
+		// Here we have to translate cmd.Args() to a list of strings
 		if err := cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.ConfigFile(),
 			HomePath: cmd.HomePath(),
-			Args:     append(configOptions, cmd.Args()...), // tailing arguments have precedence over the options string
+			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
 		}); err != nil {
-			logger.Errorf("\n%s: Failed to load configuration", color.RedString("Error"))
-			os.Exit(1)
+			return fmt.Errorf("\n%s: Failed to load configuration", color.RedString("Error"))
 		}
 
 		if debug {
@@ -39,30 +40,24 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
 		if err := engine.Init(); err != nil {
-			logger.Errorf("\n%s: Failed to initialize SQL engine", color.RedString("Error"))
-			os.Exit(1)
+			return fmt.Errorf("\n%s: Failed to initialize SQL engine", color.RedString("Error"))
 		}
 
 		if err := command(cmd, engine); err != nil {
-			logger.Errorf("\n%s: ", color.RedString("Error"))
-			logger.Errorf("%s\n\n", err)
-
-			if err := cmd.ShowHelp(); err != nil {
-				logger.Errorf("\n%s: Failed to show help: %s %s\n\n", color.RedString("Error"),
-					color.RedString("✗"), err)
-			}
+			return err
 			os.Exit(1)
 		}
 
 		logger.Info("\n\n")
+		return nil
 	}
 }
 
-func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) {
-	return func(context *cli.Context) {
-
+func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
+	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 		if err := command(cmd); err != nil {
+			// TODO: Figure out if it's still necessary to print on error
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
 
@@ -70,14 +65,16 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 				logger.Errorf("\n%s: Failed to show help: %s %s\n\n", color.RedString("Error"),
 					color.RedString("✗"), err)
 			}
-			os.Exit(1)
+
+			return err
 		}
 
 		logger.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
+		return nil
 	}
 }
 
-var pluginCommands = []cli.Command{
+var pluginCommands = []*cli.Command{
 	{
 		Name:   "install",
 		Usage:  "install <plugin id> <plugin version (optional)>",
@@ -112,7 +109,7 @@ var pluginCommands = []cli.Command{
 	},
 }
 
-var adminCommands = []cli.Command{
+var adminCommands = []*cli.Command{
 	{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
@@ -121,7 +118,7 @@ var adminCommands = []cli.Command{
 	{
 		Name:  "data-migration",
 		Usage: "Runs a script that migrates or cleanups data in your db",
-		Subcommands: []cli.Command{
+		Subcommands: []*cli.Command{
 			{
 				Name:   "encrypt-datasource-passwords",
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
@@ -131,7 +128,7 @@ var adminCommands = []cli.Command{
 	},
 }
 
-var Commands = []cli.Command{
+var Commands = []*cli.Command{
 	{
 		Name:        "plugins",
 		Usage:       "Manage plugins for grafana",

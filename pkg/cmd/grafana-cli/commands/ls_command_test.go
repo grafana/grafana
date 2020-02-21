@@ -16,7 +16,7 @@ func TestMissingPath(t *testing.T) {
 
 		Convey("Missing path", func() {
 			commandLine := &commandstest.FakeCommandLine{
-				CliArgs: []string{"ls"},
+				CliArgs: commandstest.FakeArgs([]string{"ls"}),
 				GlobalFlags: &commandstest.FakeFlagger{
 					Data: map[string]interface{}{
 						"path": "",
@@ -33,7 +33,7 @@ func TestMissingPath(t *testing.T) {
 
 		Convey("Path is not a directory", func() {
 			commandLine := &commandstest.FakeCommandLine{
-				CliArgs: []string{"ls"},
+				CliArgs: commandstest.FakeArgs([]string{"ls"}),
 				GlobalFlags: &commandstest.FakeFlagger{
 					Data: map[string]interface{}{
 						"path": "/var/lib/grafana/plugins",
@@ -53,7 +53,7 @@ func TestMissingPath(t *testing.T) {
 
 		Convey("can override validateLsCommand", func() {
 			commandLine := &commandstest.FakeCommandLine{
-				CliArgs: []string{"ls"},
+				CliArgs: commandstest.FakeArgs([]string{"ls"}),
 				GlobalFlags: &commandstest.FakeFlagger{
 					Data: map[string]interface{}{
 						"path": "/var/lib/grafana/plugins",
@@ -73,7 +73,7 @@ func TestMissingPath(t *testing.T) {
 
 		Convey("Validate that validateLsCommand is reset", func() {
 			commandLine := &commandstest.FakeCommandLine{
-				CliArgs: []string{"ls"},
+				CliArgs: commandstest.FakeArgs([]string{"ls"}),
 				GlobalFlags: &commandstest.FakeFlagger{
 					Data: map[string]interface{}{
 						"path": "/var/lib/grafana/plugins",

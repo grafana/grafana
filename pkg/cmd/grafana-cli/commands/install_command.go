@@ -92,7 +92,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 			version = v.Version
 		}
 		downloadURL = fmt.Sprintf("%s/%s/versions/%s/download",
-			c.GlobalString("repo"),
+			c.String("repo"),
 			pluginName,
 			version,
 		)
