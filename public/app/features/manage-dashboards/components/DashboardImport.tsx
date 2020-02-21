@@ -112,6 +112,7 @@ class DashboardImport extends PureComponent<Props, State> {
   };
 
   renderImportForm() {
+    const { gcomDashboard, dashboardJson } = this.state;
     const styles = importStyles();
 
     return (
@@ -126,7 +127,11 @@ class DashboardImport extends PureComponent<Props, State> {
               size="md"
               placeholder="Grafana.com dashboard url or id"
               onChange={this.onGcomDashboardChange}
-              addonAfter={<Forms.Button onClick={this.getGcomDashboard}>Load</Forms.Button>}
+              addonAfter={
+                <Forms.Button disabled={gcomDashboard === ''} onClick={this.getGcomDashboard}>
+                  Load
+                </Forms.Button>
+              }
             />
           </Forms.Field>
         </div>
@@ -135,7 +140,9 @@ class DashboardImport extends PureComponent<Props, State> {
           <Forms.Field>
             <Forms.TextArea rows={10} onChange={this.onDashboardJsonChange} />
           </Forms.Field>
-          <Forms.Button onClick={this.onDashboardJsonLoad}>Load</Forms.Button>
+          <Forms.Button disabled={dashboardJson === ''} onClick={this.onDashboardJsonLoad}>
+            Load
+          </Forms.Button>
         </div>
       </>
     );

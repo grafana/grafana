@@ -20,11 +20,13 @@ interface Props {
 
 interface State {
   folderId: number;
+  uidReset: boolean;
 }
 
 class ImportDashboardForm extends PureComponent<Props, State> {
   state: State = {
     folderId: 0,
+    uidReset: false,
   };
 
   onSubmit = () => {
@@ -43,8 +45,15 @@ class ImportDashboardForm extends PureComponent<Props, State> {
     this.setState({ folderId: $folder.id });
   };
 
+  onUidChange = (event: FormEvent<HTMLInputElement>) => {};
+
+  onUidReset = () => {
+    this.setState({ uidReset: true });
+  };
+
   render() {
     const { dashboard, inputs, meta, source } = this.props;
+    const { uidReset } = this.state;
 
     return (
       <>
@@ -95,10 +104,10 @@ class ImportDashboardForm extends PureComponent<Props, State> {
                 >
                   <Forms.Input
                     size="md"
-                    value="Value set"
-                    onChange={() => console.log('change')}
-                    disabled
-                    addonAfter={<Forms.Button>Clear</Forms.Button>}
+                    value={uidReset ? dashboard.uid : 'Value set'}
+                    onChange={this.onUidChange}
+                    disabled={!uidReset}
+                    addonAfter={<Forms.Button onClick={this.onUidReset}>Clear</Forms.Button>}
                   />
                 </Forms.Field>
                 {inputs.map((input: any, index: number) => {
