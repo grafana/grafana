@@ -28,7 +28,6 @@ export class DatasourceVariable implements DataSourceVariableModel, VariableActi
   includeAll: boolean;
   refresh: VariableRefresh;
   skipUrlSync: boolean;
-  index: number;
 
   defaults: DataSourceVariableModel = {
     type: 'datasource',
@@ -43,7 +42,6 @@ export class DatasourceVariable implements DataSourceVariableModel, VariableActi
     includeAll: false,
     refresh: 1,
     skipUrlSync: false,
-    index: -1,
   };
 
   /** @ngInject */

@@ -116,7 +116,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             queries: [],
           },
         },
-        templating: { variables: {} },
       },
       setup: (fn: () => void) => {
         setupFn = fn;

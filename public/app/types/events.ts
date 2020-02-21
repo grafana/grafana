@@ -1,7 +1,5 @@
 import { DataFrame, eventFactory, TimeRange } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { VariableIdentifier } from '../features/templating/state/actions';
-import { VariableType } from '../features/templating/variable';
 
 /**
  * Event Payloads
@@ -133,56 +131,6 @@ export const repeatsProcessed = eventFactory('repeats-processed');
 export const rowExpanded = eventFactory('row-expanded');
 export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
-export const variableNameInStateUpdated = eventFactory<VariableIdentifier>('variable-name-in-state-updated');
-export interface MoveVariableType {
-  name: string;
-  label: string;
-  index: number;
-  type: VariableType;
-}
-export const variableTypeInAngularUpdated = eventFactory<MoveVariableType>('variable-type-in-angular-updated');
-export interface VariableMovedToState {
-  uuid: string;
-  index: number;
-}
-export const variableMovedToState = eventFactory<VariableMovedToState>('variable-moved-to-state');
-export const variableMovedToAngular = eventFactory<MoveVariableType>('variable-moved-to-angular');
-export const variableMovedToAngularSucceeded = eventFactory<MoveVariableType>('variable-moved-to-angular-succeeded');
-export const variableEditorChangeMode = eventFactory<string>('variable-editor-change-mode');
-export interface VariableDuplicateVariableStart {
-  uuid: string;
-  type: VariableType;
-  variablesInAngular: number;
-}
-export const variableDuplicateVariableStart = eventFactory<VariableDuplicateVariableStart>(
-  'variable-duplicate-variable-start'
-);
-export const variableDuplicateVariableSucceeded = eventFactory<{ uuid: string }>(
-  'variable-duplicate-variable-succeeded'
-);
-export interface VariableRemoveVariable {
-  uuid: string;
-  type: VariableType;
-}
-export const variableRemoveVariableStart = eventFactory<VariableRemoveVariable>('variable-remove-variable-start');
-export const variableRemoveVariableSucceeded = eventFactory<{ uuid: string }>('variable-remove-variable-succeeded');
-export const variableRemoveVariableInAngularSucceeded = eventFactory<{ removeIndex: number }>(
-  'variable-remove-variable-in-angular-succeeded'
-);
-export interface VariableChangeOrderStart {
-  fromIndex: number;
-  toIndex: number;
-}
-export const variableChangeOrderStart = eventFactory<VariableChangeOrderStart>('variable-change-order-start');
-export const variableChangeOrderSucceeded = eventFactory('variable-change-order-succeeded');
-export interface VariableNewVariableStart {
-  variablesInAngular: number;
-}
-export const variableNewVariableStart = eventFactory<VariableNewVariableStart>('variable-new-variable-start');
-export const variableNewVariableSucceeded = eventFactory('variable-new-variable-succeeded');
-export const variableStoreNewVariableSucceeded = eventFactory<{ uuid: string }>(
-  'variable-store-new-variable-succeeded'
-);
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');

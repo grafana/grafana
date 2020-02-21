@@ -1,20 +1,20 @@
 // Libaries
-import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
+import angular, { IQService, ILocationService, auto, IPromise } from 'angular';
 import _ from 'lodash';
+
 // Utils & Services
 import coreModule from 'app/core/core_module';
-import { VariableModel, variableTypes } from './variable';
+import { variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+
 // Types
-import { AppEvents, TimeRange } from '@grafana/data';
+import { TimeRange, AppEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
-import { variableAdapters } from './adapters';
 import { appEvents, contextSrv } from 'app/core/core';
-import { processVariableDependencies } from './helpers';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -27,9 +27,7 @@ export class VariableSrv {
     private $injector: auto.IInjectorService,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
-  ) {
-    this.createVariableFromModel = this.createVariableFromModel.bind(this);
-  }
+  ) {}
 
   init(dashboard: DashboardModel) {
     this.dashboard = dashboard;
@@ -40,12 +38,7 @@ export class VariableSrv {
     );
 
     // create working class models representing variables
-    const allVariables = dashboard.templating.list.map((model: VariableModel, index) =>
-      this.createVariableFromModel(model, index)
-    );
-    this.variables = dashboard.templating.list = allVariables.filter(
-      (m: VariableModel) => !variableAdapters.contains(m.type)
-    );
+    this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
     this.templateSrv.init(this.variables, this.timeSrv.timeRange());
 
     // init variables
@@ -108,8 +101,16 @@ export class VariableSrv {
   }
 
   processVariable(variable: any, queryParams: any) {
+    const dependencies = [];
+
+    for (const otherVariable of this.variables) {
+      if (variable.dependsOn(otherVariable)) {
+        dependencies.push(otherVariable.initLock.promise);
+      }
+    }
+
     return this.$q
-      .all(processVariableDependencies(variable, this.variables))
+      .all(dependencies)
       .then(() => {
         const urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
@@ -124,10 +125,11 @@ export class VariableSrv {
       })
       .finally(() => {
         this.templateSrv.variableInitialized(variable);
+        delete variable.initLock;
       });
   }
 
-  createVariableFromModel(model: any, index: number) {
+  createVariableFromModel(model: any) {
     // @ts-ignore
     const ctor = variableTypes[model.type].ctor;
     if (!ctor) {
@@ -136,7 +138,7 @@ export class VariableSrv {
       };
     }
 
-    const variable = this.$injector.instantiate(ctor, { model: { ...model, index } });
+    const variable = this.$injector.instantiate(ctor, { model: model });
     return variable;
   }
 
@@ -147,39 +149,10 @@ export class VariableSrv {
   }
 
   removeVariable(variable: any) {
-    const removeIndex = variable.index;
     const index = _.indexOf(this.variables, variable);
     this.variables.splice(index, 1);
-    this.updateIndexes(removeIndex);
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
-    this.dashboard.events.emit(CoreEvents.variableRemoveVariableInAngularSucceeded, { removeIndex });
-  }
-
-  updateIndexes(removeIndex: number) {
-    for (let i = 0; i < this.variables.length; i++) {
-      if (this.variables[i].index > removeIndex) {
-        this.variables[i].index = this.variables[i].index - 1;
-      }
-    }
-  }
-
-  changeOrder(fromIndex: number, toIndex: number) {
-    const fromVariable: VariableModel = this.variables.find((v: VariableModel) => v.index === fromIndex);
-    const toVariable: VariableModel = this.variables.find((v: VariableModel) => v.index === toIndex);
-    if (!fromVariable || !toVariable) {
-      this.dashboard.events.emit(CoreEvents.variableChangeOrderStart, { fromIndex, toIndex });
-    }
-
-    if (fromVariable) {
-      fromVariable.index = toIndex;
-    }
-
-    if (toVariable) {
-      toVariable.index = fromIndex;
-    }
-
-    this.dashboard.events.emit(CoreEvents.variableChangeOrderSucceeded);
   }
 
   updateOptions(variable: any) {
@@ -317,12 +290,8 @@ export class VariableSrv {
           defaultText = urlValue.reduce((acc, item) => {
             const t: any = _.find(variable.options, { value: item });
             if (t) {
-              // @ts-ignore according to strict null errors this can never happen
-              // TODO: investigate this further or refactor code
               acc.push(t.text);
             } else {
-              // @ts-ignore according to strict null errors this can never happen
-              // TODO: investigate this further or refactor code
               acc.push(item);
             }
 
@@ -397,14 +366,11 @@ export class VariableSrv {
       datasource: options.datasource,
     } as any);
     if (!variable) {
-      variable = this.createVariableFromModel(
-        {
-          name: 'Filters',
-          type: 'adhoc',
-          datasource: options.datasource,
-        },
-        this.variables.length
-      );
+      variable = this.createVariableFromModel({
+        name: 'Filters',
+        type: 'adhoc',
+        datasource: options.datasource,
+      });
       this.addVariable(variable);
     }
 

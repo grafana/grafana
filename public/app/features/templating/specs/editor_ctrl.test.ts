@@ -12,9 +12,6 @@ jest.mock('app/core/app_events', () => {
 
 describe('VariableEditorCtrl', () => {
   const scope = {
-    current: {
-      type: 'mock',
-    },
     runQuery: () => {
       return Promise.resolve({});
     },
@@ -23,11 +20,6 @@ describe('VariableEditorCtrl', () => {
   describe('When running a variable query and the data source returns an error', () => {
     beforeEach(() => {
       const variableSrv: any = {
-        dashboard: {
-          events: {
-            on: jest.fn(),
-          },
-        },
         updateOptions: () => {
           return Promise.reject({
             data: { message: 'error' },

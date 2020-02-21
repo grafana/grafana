@@ -21,7 +21,6 @@ import { variableAdapters } from '../adapters';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
-import { MoveVariableType, VariableNewVariableStart } from '../../../types/events';
 import { processVariableDependencies } from '../helpers';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
@@ -87,7 +86,6 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
   }
 );
 export const removeVariable = createAction<VariablePayload<{ notifyAngular: boolean }>>('templating/removeVariable');
-export const newVariable = createAction<VariablePayload<VariableNewVariableStart>>('templating/newVariable');
 export const storeNewVariable = createAction<PrepareAction<VariablePayload>>(
   'templating/storeNewVariable',
   (payload: VariablePayload) => {
@@ -143,9 +141,7 @@ export const changeVariableNameSucceeded = createAction<VariablePayload<string>>
 export const changeVariableNameFailed = createAction<VariablePayload<{ newName: string; errorText: string }>>(
   'templating/changeVariableNameFailed'
 );
-export const moveVariableTypeToAngular = createAction<VariablePayload<MoveVariableType>>(
-  'templating/moveVariableTypeToAngular'
-);
+
 export const changeVariableLabel = createAction<VariablePayload<string>>('templating/changeVariableLabel');
 export const changeVariableHide = createAction<VariablePayload<VariableHide>>('templating/changeVariableHide');
 export const changeVariableProp = createAction<VariablePayload<{ propName: string; propValue: any }>>(
@@ -449,37 +445,7 @@ export const changeVariableName = (variable: VariableModel, newName: string): Th
 };
 
 export const changeVariableType = (variable: VariableModel, newType: VariableType): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const currentIsAdapted = variableAdapters.contains(variable.type);
-    const newIsAdapted = variableAdapters.contains(newType);
-
-    // existing type is adapted but new type is not
-    if (currentIsAdapted && !newIsAdapted) {
-      const { name, label, index } = variable;
-      dispatch(removeVariable(toVariablePayload(variable, { notifyAngular: false })));
-      dispatch(
-        moveVariableTypeToAngular(toVariablePayload(variable, { name, label: label ?? '', index, type: newType }))
-      );
-    }
-
-    // existing type is not adapted but new type is
-    if (!currentIsAdapted && newIsAdapted) {
-      // handled by middleware
-      throw new Error('Not supported');
-    }
-
-    // existing type and new type are not adapted
-    if (!currentIsAdapted && !newIsAdapted) {
-      // Let Angular handle this
-      throw new Error('Not supported');
-    }
-
-    // existing type and new type are adapted
-    if (currentIsAdapted && newIsAdapted) {
-      // implement this when we have more then 1 type using adapters
-      throw new Error('Not implemented yet');
-    }
-  };
+  return (dispatch, getState) => {};
 };
 
 export const variableEditorInit = (variable: VariableModel): ThunkResult<void> => {

@@ -3,65 +3,16 @@ import { AppEvents } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
 
 import coreModule from 'app/core/core_module';
-import { VariableModel, VariableType, variableTypes } from './variable';
+import { variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
-import { getAllVariables, getVariable, getVariables } from './state/selectors';
-import { variableAdapters } from './adapters';
-import { CoreEvents } from '../../types';
-import { VariableIdentifier } from './state/actions';
-import { MoveVariableType, VariableMovedToState } from '../../types/events';
-import { emptyUuid } from './state/types';
 
 export class VariableEditorCtrl {
   /** @ngInject */
-  constructor(
-    private $scope: any,
-    datasourceSrv: DatasourceSrv,
-    private variableSrv: VariableSrv,
-    templateSrv: TemplateSrv
-  ) {
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableNameInStateUpdated,
-      this.onVariableNameInStateUpdated.bind(this)
-    );
-    this.variableSrv.dashboard.events.on(CoreEvents.variableMovedToState, this.onVariableMovedToState.bind(this));
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableMovedToAngular,
-      this.onVariableMovedToAngular.bind(this),
-      $scope
-    );
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableEditorChangeMode,
-      this.onVariableEditorChangeMode.bind(this)
-    );
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableDuplicateVariableSucceeded,
-      this.onVariableDuplicateVariableSucceeded.bind(this)
-    );
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableRemoveVariableInAngularSucceeded,
-      this.onVariableRemoveVariableInAngularSucceeded.bind(this)
-    );
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableRemoveVariableSucceeded,
-      this.onVariableRemoveVariableSucceeded.bind(this)
-    );
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableChangeOrderSucceeded,
-      this.onVariableChangeOrderSucceeded.bind(this)
-    );
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableNewVariableSucceeded,
-      this.onVariableNewVariableSucceeded.bind(this)
-    );
-    this.variableSrv.dashboard.events.on(
-      CoreEvents.variableStoreNewVariableSucceeded,
-      this.onVariableStoreNewVariableSucceeded.bind(this)
-    );
+  constructor($scope: any, datasourceSrv: DatasourceSrv, variableSrv: VariableSrv, templateSrv: TemplateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
@@ -117,8 +68,8 @@ export class VariableEditorCtrl {
 
     $scope.init = () => {
       $scope.mode = 'list';
-      const variablesInState = getVariables().map(variable => ({ ...variable }));
-      $scope.variables = variableSrv.variables.concat(variablesInState).sort((a, b) => a.index - b.index);
+
+      $scope.variables = variableSrv.variables;
       $scope.reset();
 
       $scope.$watch('mode', (val: string) => {
@@ -129,11 +80,6 @@ export class VariableEditorCtrl {
     };
 
     $scope.setMode = (mode: any) => {
-      if (mode === 'new') {
-        variableSrv.dashboard.events.emit(CoreEvents.variableNewVariableStart, {
-          variablesInAngular: variableSrv.variables.length,
-        });
-      }
       $scope.mode = mode;
     };
 
@@ -142,9 +88,6 @@ export class VariableEditorCtrl {
     };
 
     $scope.add = () => {
-      if (variableAdapters.contains($scope.current.type as VariableType)) {
-        return;
-      }
       if ($scope.isValid()) {
         variableSrv.addVariable($scope.current);
         $scope.update();
@@ -201,9 +144,6 @@ export class VariableEditorCtrl {
 
     $scope.runQuery = () => {
       $scope.optionsLimit = 20;
-      if (variableAdapters.contains($scope.current.type as VariableType)) {
-        return;
-      }
       return variableSrv.updateOptions($scope.current).catch((err: { data: { message: any }; message: string }) => {
         if (err.data && err.data.message) {
           err.message = err.data.message;
@@ -233,21 +173,11 @@ export class VariableEditorCtrl {
       );
     };
 
-    $scope.duplicate = (variable: { getSaveModel: () => void; name: string; type: VariableType }) => {
-      if (variableAdapters.contains(variable.type)) {
-        const model: VariableModel = (variable as unknown) as VariableModel;
-        this.variableSrv.dashboard.events.emit(CoreEvents.variableDuplicateVariableStart, {
-          uuid: model.uuid,
-          type: model.type,
-          variablesInAngular: this.variableSrv.variables.length,
-        });
-        return;
-      }
+    $scope.duplicate = (variable: { getSaveModel: () => void; name: string }) => {
       const clone = _.cloneDeep(variable.getSaveModel());
-      $scope.current = variableSrv.createVariableFromModel(clone, $scope.variables.length);
+      $scope.current = variableSrv.createVariableFromModel(clone);
       $scope.current.name = 'copy_of_' + variable.name;
       variableSrv.addVariable($scope.current);
-      $scope.variables.push($scope.current);
     };
 
     $scope.update = () => {
@@ -263,11 +193,8 @@ export class VariableEditorCtrl {
     };
 
     $scope.reset = () => {
-      if (variableAdapters.contains('query')) {
-        return;
-      }
       $scope.currentIsNew = true;
-      $scope.current = variableSrv.createVariableFromModel({ type: 'query' }, $scope.variables.length);
+      $scope.current = variableSrv.createVariableFromModel({ type: 'query' });
 
       // this is done here in case a new data source type variable was added
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), ds => {
@@ -283,18 +210,10 @@ export class VariableEditorCtrl {
     };
 
     $scope.typeChanged = function() {
-      if (variableAdapters.contains($scope.current.type as VariableType)) {
-        const { name, label, index, type } = $scope.current;
-        variableSrv.dashboard.events.emit(CoreEvents.variableTypeInAngularUpdated, { name, label, index, type });
-        return;
-      }
       const old = $scope.current;
-      $scope.current = variableSrv.createVariableFromModel(
-        {
-          type: $scope.current.type,
-        },
-        old.index
-      );
+      $scope.current = variableSrv.createVariableFromModel({
+        type: $scope.current.type,
+      });
       $scope.current.name = old.name;
       $scope.current.label = old.label;
 
@@ -306,14 +225,7 @@ export class VariableEditorCtrl {
       $scope.validate();
     };
 
-    $scope.removeVariable = (variable: VariableModel) => {
-      if (variableAdapters.contains(variable.type)) {
-        this.variableSrv.dashboard.events.emit(CoreEvents.variableRemoveVariableStart, {
-          uuid: variable.uuid ?? '',
-          type: variable.type,
-        });
-        return;
-      }
+    $scope.removeVariable = (variable: any) => {
       variableSrv.removeVariable(variable);
     };
 
@@ -329,107 +241,6 @@ export class VariableEditorCtrl {
         })
       );
     };
-
-    $scope.usesAdapter = () => {
-      return variableAdapters.contains($scope.current.type);
-    };
-
-    $scope.moveUp = (index: number) => {
-      variableSrv.changeOrder(index, index - 1);
-    };
-
-    $scope.moveDown = (index: number) => {
-      variableSrv.changeOrder(index, index + 1);
-    };
-  }
-
-  onVariableNameInStateUpdated(args: VariableIdentifier) {
-    for (let index = 0; index < this.$scope.variables.length; index++) {
-      const variable = this.$scope.variables[index];
-      if (variable.uuid && variable.uuid === args.uuid) {
-        this.$scope.variables[index].name = getVariable(args.uuid).name;
-        break;
-      }
-    }
-  }
-
-  onVariableMovedToState(args: VariableMovedToState) {
-    this.variableSrv.removeVariable(this.$scope.current);
-    this.$scope.variables = getAllVariables(this.variableSrv.variables);
-    this.$scope.current = { ...getVariable(args.uuid) };
-    this.$scope.validate();
-  }
-
-  onVariableMovedToAngular(args: MoveVariableType) {
-    if (this.$scope.mode === 'new') {
-      const angularVariable = this.variableSrv.createVariableFromModel(
-        {
-          type: args.type,
-        },
-        args.index
-      );
-      this.$scope.current = angularVariable;
-      this.$scope.current.name = args.name;
-      this.$scope.current.label = args.label;
-      this.$scope.validate();
-      this.$scope.$digest();
-      return;
-    }
-
-    for (let index = 0; index < this.$scope.variables.length; index++) {
-      const variable = this.$scope.variables[index];
-      if (variable.index === args.index) {
-        const angularVariable = this.variableSrv.createVariableFromModel(
-          {
-            type: args.type,
-          },
-          args.index
-        );
-        this.variableSrv.addVariable(angularVariable);
-        this.$scope.current = angularVariable;
-        this.$scope.current.name = args.name;
-        this.$scope.current.label = args.label;
-        this.$scope.variables[index] = this.$scope.current;
-        this.$scope.validate();
-        this.$scope.$digest();
-        this.variableSrv.dashboard.events.emit(CoreEvents.variableMovedToAngularSucceeded, args);
-        break;
-      }
-    }
-  }
-
-  onVariableEditorChangeMode(mode: string) {
-    if (this.$scope.mode !== mode) {
-      this.$scope.mode = mode;
-      this.$scope.$digest();
-    }
-  }
-
-  onVariableDuplicateVariableSucceeded() {
-    this.$scope.variables = getAllVariables(this.variableSrv.variables);
-  }
-
-  onVariableNewVariableSucceeded() {
-    const variable = { ...getVariable(emptyUuid) };
-    this.$scope.current = variable;
-  }
-
-  onVariableRemoveVariableInAngularSucceeded() {
-    this.$scope.variables = getAllVariables(this.variableSrv.variables);
-  }
-
-  onVariableRemoveVariableSucceeded() {
-    this.$scope.variables = getAllVariables(this.variableSrv.variables);
-  }
-
-  onVariableChangeOrderSucceeded() {
-    this.$scope.variables = getAllVariables(this.variableSrv.variables);
-  }
-
-  onVariableStoreNewVariableSucceeded(args: { uuid: string }) {
-    const variable = { ...getVariable(args.uuid) };
-    this.$scope.variables.push(variable);
-    this.$scope.current = variable;
   }
 }
 

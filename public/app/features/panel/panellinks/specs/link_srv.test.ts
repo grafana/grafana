@@ -1,11 +1,15 @@
-import { advanceTo } from 'jest-date-mock';
-import { DataLinkBuiltInVars } from '@grafana/ui';
-
 import { LinkSrv } from '../link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
+import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { advanceTo } from 'jest-date-mock';
 import { updateConfig } from '../../../../core/config';
 
+jest.mock('angular', () => {
+  const AngularJSMock = require('test/mocks/angular');
+  return new AngularJSMock();
+});
 jest.mock('app/core/core', () => ({
   appEvents: {
     on: () => {},
@@ -50,7 +54,7 @@ describe('linkSrv', () => {
     const _templateSrv = new TemplateSrv();
     _templateSrv.init([
       {
-        type: 'custom',
+        type: 'query',
         name: 'test1',
         current: { value: 'val1' },
         getValueForUrl: function() {
@@ -58,7 +62,7 @@ describe('linkSrv', () => {
         },
       },
       {
-        type: 'custom',
+        type: 'query',
         name: 'test2',
         current: { value: 'val2' },
         getValueForUrl: function() {

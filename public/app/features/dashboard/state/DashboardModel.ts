@@ -13,9 +13,6 @@ import { DashboardMigrator } from './DashboardMigrator';
 import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
-import { getAllVariables, getAllVariablesJSON, getVariables } from 'app/features/templating/state/selectors';
-import { getState } from 'app/store/store';
-import { VariableHide } from 'app/features/templating/variable';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -172,7 +169,9 @@ export class DashboardModel {
 
     // get variable save models
     copy.templating = {
-      list: getAllVariablesJSON(this.templating.list, getState()),
+      list: _.map(this.templating.list, (variable: any) =>
+        variable.getSaveModel ? variable.getSaveModel() : variable
+      ),
     };
 
     if (!defaults.saveVariables) {
@@ -674,14 +673,6 @@ export class DashboardModel {
         return true;
       }
 
-      const visibleVariblesInRedux = getVariables(getState()).filter(
-        variable => variable.hide !== VariableHide.hideVariable
-      );
-
-      if (visibleVariblesInRedux.length > 0) {
-        return true;
-      }
-
       const visibleVars = _.filter(this.templating.list, (variable: any) => variable.hide !== 2);
       if (visibleVars.length > 0) {
         return true;
@@ -886,20 +877,7 @@ export class DashboardModel {
   }
 
   resetOriginalVariables() {
-    const variablesInState = getVariables(getState());
-    if (variablesInState.length === 0) {
-      this.originalTemplating = _.map(this.templating.list, (variable: any) => {
-        return {
-          name: variable.name,
-          type: variable.type,
-          current: _.cloneDeep(variable.current),
-          filters: _.cloneDeep(variable.filters),
-        };
-      });
-      return;
-    }
-
-    this.originalTemplating = getAllVariables(this.templating.list, getState()).map((variable: any) => {
+    this.originalTemplating = _.map(this.templating.list, (variable: any) => {
       return {
         name: variable.name,
         type: variable.type,
@@ -910,12 +888,11 @@ export class DashboardModel {
   }
 
   hasVariableValuesChanged() {
-    const allVariables = getAllVariables(this.templating.list, getState());
-    if (allVariables.length !== this.originalTemplating.length) {
+    if (this.templating.list.length !== this.originalTemplating.length) {
       return false;
     }
 
-    const updated = _.map(allVariables, (variable: any) => {
+    const updated = _.map(this.templating.list, (variable: any) => {
       return {
         name: variable.name,
         type: variable.type,

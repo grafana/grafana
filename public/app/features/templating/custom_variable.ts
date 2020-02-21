@@ -21,8 +21,7 @@ export class CustomVariable implements CustomVariableModel, VariableActions {
   includeAll: boolean;
   multi: boolean;
   current: VariableOption;
-  allValue: string | null;
-  index: number;
+  allValue: string;
 
   defaults: CustomVariableModel = {
     type: 'custom',
@@ -36,7 +35,6 @@ export class CustomVariable implements CustomVariableModel, VariableActions {
     multi: false,
     current: {} as VariableOption,
     allValue: null,
-    index: -1,
   };
 
   /** @ngInject */

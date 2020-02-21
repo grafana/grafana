@@ -145,7 +145,7 @@ export interface VariableModel {
   label: string | null;
   hide: VariableHide;
   skipUrlSync: boolean;
-  index: number;
+  index?: number;
   initLock?: Deferred | null;
 }
 

@@ -6,7 +6,6 @@ import {
   changeVariableLabel,
   changeVariableOrder,
   duplicateVariable,
-  newVariable,
   removeVariable,
   storeNewVariable,
   updateVariableCompleted,
@@ -85,12 +84,6 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       if (toVariable) {
         state.variables[toVariable.uuid!].variable.index = action.payload.data.fromIndex;
       }
-    })
-    .addCase(newVariable, (state, action) => {
-      delete state.variables[emptyUuid];
-      const index = action.payload.data.variablesInAngular + Object.keys(state.variables).length;
-      state.variables[emptyUuid] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
-      state.variables[emptyUuid].variable.index = index;
     })
     .addCase(storeNewVariable, (state, action) => {
       const uuid = action.payload.uuid!;

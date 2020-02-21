@@ -18,7 +18,6 @@ export class TextBoxVariable implements TextBoxVariableModel, VariableActions {
   query: string;
   current: VariableOption;
   options: VariableOption[];
-  index: number;
 
   defaults: TextBoxVariableModel = {
     type: 'textbox',
@@ -29,7 +28,6 @@ export class TextBoxVariable implements TextBoxVariableModel, VariableActions {
     current: {} as VariableOption,
     options: [],
     skipUrlSync: false,
-    index: -1,
   };
 
   /** @ngInject */

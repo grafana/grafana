@@ -27,7 +27,6 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
   query: string;
   refresh: VariableRefresh;
   current: VariableOption;
-  index: number;
 
   defaults: IntervalVariableModel = {
     type: 'interval',
@@ -42,7 +41,6 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
     query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
     refresh: VariableRefresh.onTimeRangeChanged,
     current: {} as VariableOption,
-    index: -1,
   };
 
   /** @ngInject */
