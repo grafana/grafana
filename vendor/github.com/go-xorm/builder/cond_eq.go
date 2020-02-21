@@ -101,7 +101,7 @@ func (eq Eq) IsValid() bool {
 
 // sortedKeys returns all keys of this Eq sorted with sort.Strings.
 // It is used internally for consistent ordering when generating
-// SQL, see https://github.com/go-xorm/builder/issues/10
+// SQL, see https://xorm.io/builder/issues/10
 func (eq Eq) sortedKeys() []string {
 	keys := make([]string, 0, len(eq))
 	for key := range eq {

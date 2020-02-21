@@ -107,12 +107,12 @@ github.com/go-macaron/session
 github.com/go-sql-driver/mysql
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
-# github.com/go-xorm/builder v0.3.2
-github.com/go-xorm/builder
-# github.com/go-xorm/core v0.6.2
-github.com/go-xorm/core
-# github.com/go-xorm/xorm v0.7.1
-github.com/go-xorm/xorm
+# xorm.io/builder v0.3.2
+xorm.io/builder
+# xorm.io/core v0.6.2
+xorm.io/core
+# xorm.io/xorm v0.7.1
+xorm.io/xorm
 # github.com/gobwas/glob v0.2.3
 github.com/gobwas/glob
 github.com/gobwas/glob/compiler

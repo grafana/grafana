@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xorm/core"
+	"xorm.io/core"
 )
 
 type tagContext struct {

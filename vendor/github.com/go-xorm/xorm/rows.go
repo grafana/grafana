@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/go-xorm/core"
+	"xorm.io/core"
 )
 
 // Rows rows wrapper a rows to

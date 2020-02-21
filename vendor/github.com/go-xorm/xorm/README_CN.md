@@ -1,11 +1,11 @@
 # xorm
 
-[English](https://github.com/go-xorm/xorm/blob/master/README.md)
+[English](https://xorm.io/xorm/blob/master/README.md)
 
 xorm是一个简单而强大的Go语言ORM库. 通过它可以使数据库操作非常简便。
 
 [![CircleCI](https://circleci.com/gh/go-xorm/xorm.svg?style=shield)](https://circleci.com/gh/go-xorm/xorm) [![codecov](https://codecov.io/gh/go-xorm/xorm/branch/master/graph/badge.svg)](https://codecov.io/gh/go-xorm/xorm)
-[![](https://goreportcard.com/badge/github.com/go-xorm/xorm)](https://goreportcard.com/report/github.com/go-xorm/xorm)
+[![](https://goreportcard.com/badge/xorm.io/xorm)](https://goreportcard.com/report/xorm.io/xorm)
 [![Join the chat at https://img.shields.io/discord/323460943201959939.svg](https://img.shields.io/discord/323460943201959939.svg)](https://discord.gg/HuR2CF3)
 
 ## 特性
@@ -56,15 +56,15 @@ xorm是一个简单而强大的Go语言ORM库. 通过它可以使数据库操作
 
 ## 安装
 
-	go get github.com/go-xorm/xorm
+	go get xorm.io/xorm
 
 ## 文档
 
 * [操作指南](http://xorm.io/docs)
 
-* [GoWalker代码文档](http://gowalker.org/github.com/go-xorm/xorm)
+* [GoWalker代码文档](http://gowalker.org/xorm.io/xorm)
 
-* [Godoc代码文档](http://godoc.org/github.com/go-xorm/xorm)
+* [Godoc代码文档](http://godoc.org/xorm.io/xorm)
 
 # 快速开始
 
@@ -414,7 +414,7 @@ res, err := engine.Transaction(func(sess *xorm.Session) (interface{}, error) {
 
 ## 贡献
 
-如果您也想为Xorm贡献您的力量，请查看 [CONTRIBUTING](https://github.com/go-xorm/xorm/blob/master/CONTRIBUTING.md)。您也可以加入QQ群  技术帮助和讨论。
+如果您也想为Xorm贡献您的力量，请查看 [CONTRIBUTING](https://xorm.io/xorm/blob/master/CONTRIBUTING.md)。您也可以加入QQ群  技术帮助和讨论。
 群一：280360085 （已满）
 群二：795010183
 
@@ -492,7 +492,7 @@ res, err := engine.Transaction(func(sess *xorm.Session) (interface{}, error) {
     * `Iterate` 支持 `BufferSize` 
     * 修正部分Bug
 
-[更多更新日志...](https://github.com/go-xorm/manual-zh-CN/tree/master/chapter-16)
+[更多更新日志...](https://xorm.io/manual-zh-CN/tree/master/chapter-16)
 
 ## LICENSE
 

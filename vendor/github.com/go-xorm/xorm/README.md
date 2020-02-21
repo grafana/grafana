@@ -1,11 +1,11 @@
 # xorm
 
-[中文](https://github.com/go-xorm/xorm/blob/master/README_CN.md)
+[中文](https://xorm.io/xorm/blob/master/README_CN.md)
 
 Xorm is a simple and powerful ORM for Go.
 
 [![CircleCI](https://circleci.com/gh/go-xorm/xorm.svg?style=shield)](https://circleci.com/gh/go-xorm/xorm) [![codecov](https://codecov.io/gh/go-xorm/xorm/branch/master/graph/badge.svg)](https://codecov.io/gh/go-xorm/xorm)
-[![](https://goreportcard.com/badge/github.com/go-xorm/xorm)](https://goreportcard.com/report/github.com/go-xorm/xorm) 
+[![](https://goreportcard.com/badge/xorm.io/xorm)](https://goreportcard.com/report/xorm.io/xorm) 
 [![Join the chat at https://img.shields.io/discord/323460943201959939.svg](https://img.shields.io/discord/323460943201959939.svg)](https://discord.gg/HuR2CF3)
 
 ## Features
@@ -22,13 +22,13 @@ Xorm is a simple and powerful ORM for Go.
 
 * Query Cache speed up
 
-* Database Reverse support, See [Xorm Tool README](https://github.com/go-xorm/cmd/blob/master/README.md)
+* Database Reverse support, See [Xorm Tool README](https://xorm.io/cmd/blob/master/README.md)
 
 * Simple cascade loading support
 
 * Optimistic Locking support
 
-* SQL Builder support via [github.com/go-xorm/builder](https://github.com/go-xorm/builder)
+* SQL Builder support via [xorm.io/builder](https://xorm.io/builder)
 
 * Automatical Read/Write seperatelly
 
@@ -56,13 +56,13 @@ Drivers for Go's sql package which currently support database/sql includes:
 
 ## Installation
 
-	go get github.com/go-xorm/xorm
+	go get xorm.io/xorm
 
 ## Documents
 
 * [Manual](http://xorm.io/docs)
 
-* [GoDoc](http://godoc.org/github.com/go-xorm/xorm)
+* [GoDoc](http://godoc.org/xorm.io/xorm)
 
 ## Quick Start
 
@@ -412,7 +412,7 @@ res, err := engine.Transaction(func(sess *xorm.Session) (interface{}, error) {
 
 ## Contributing
 
-If you want to pull request, please see [CONTRIBUTING](https://github.com/go-xorm/xorm/blob/master/CONTRIBUTING.md). And we also provide [Xorm on Google Groups](https://groups.google.com/forum/#!forum/xorm) to discuss.
+If you want to pull request, please see [CONTRIBUTING](https://xorm.io/xorm/blob/master/CONTRIBUTING.md). And we also provide [Xorm on Google Groups](https://groups.google.com/forum/#!forum/xorm) to discuss.
 
 ## Credits
 
@@ -453,7 +453,7 @@ Support this project by becoming a sponsor. Your logo will show up here with a l
     * BufferSize on Iterate
     * fix some other bugs.
 
-[More changes ...](https://github.com/go-xorm/manual-en-US/tree/master/chapter-16)
+[More changes ...](https://xorm.io/manual-en-US/tree/master/chapter-16)
 
 ## Cases
 

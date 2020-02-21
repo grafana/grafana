@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"

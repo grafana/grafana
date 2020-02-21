@@ -3,7 +3,7 @@ package migrations
 import (
 	"testing"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 

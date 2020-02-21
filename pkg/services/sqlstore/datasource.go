@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"

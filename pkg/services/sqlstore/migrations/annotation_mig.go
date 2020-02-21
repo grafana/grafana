@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 

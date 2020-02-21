@@ -3,7 +3,7 @@ package migrator
 import (
 	"fmt"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 	"github.com/mattn/go-sqlite3"
 )
 

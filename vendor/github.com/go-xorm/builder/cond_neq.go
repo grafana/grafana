@@ -83,7 +83,7 @@ func (neq Neq) IsValid() bool {
 
 // sortedKeys returns all keys of this Neq sorted with sort.Strings.
 // It is used internally for consistent ordering when generating
-// SQL, see https://github.com/go-xorm/builder/issues/10
+// SQL, see https://xorm.io/builder/issues/10
 func (neq Neq) sortedKeys() []string {
 	keys := make([]string, 0, len(neq))
 	for key := range neq {

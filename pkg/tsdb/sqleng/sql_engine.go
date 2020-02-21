@@ -19,8 +19,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/null"
 
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
+	"xorm.io/core"
+	"xorm.io/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
