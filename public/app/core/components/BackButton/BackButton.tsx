@@ -16,7 +16,7 @@ export const BackButton: React.FC<Props> = props => {
   );
 };
 
-BackButton.displayName = 'Icon';
+BackButton.displayName = 'BackButton';
 
 const getIconStyles = stylesFactory(() => {
   return {
