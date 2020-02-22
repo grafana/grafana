@@ -34,7 +34,26 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2px;
+      position: relative;
+
+      &:before {
+        content: '';
+        display: block;
+        opacity: 1;
+        position: absolute;
+        transition-duration: 0.2s;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: -1;
+        bottom: -10px;
+        left: -10px;
+        right: -10px;
+        top: -10px;
+        background: none;
+        border-radius: 50%;
+        box-sizing: border-box;
+        transform: scale(0);
+        transition-property: transform, opacity;
+      }
 
       .gicon {
         opacity: 0.9;
@@ -42,8 +61,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       &:hover {
-        border-radius: 50%;
-        background: ${hoverColor};
+        &:before {
+          background-color: ${hoverColor};
+          border: none;
+          box-shadow: none;
+          opacity: 1;
+          transform: scale(0.8);
+        }
 
         .gicon {
           opacity: 1;
