@@ -9,6 +9,7 @@ import {
   setPanelEditorUIState,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
 } from './reducers';
+import { cleanUpEditPanel } from '../../../state/reducers';
 import store from '../../../../../core/store';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
@@ -50,6 +51,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
     dashboard.exitPanelEditor();
     querySubscription.unsubscribe();
 
+    dispatch(cleanUpEditPanel());
     dispatch(closeCompleted());
   };
 }
