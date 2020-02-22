@@ -57,7 +57,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
       .gicon {
         opacity: 0.9;
-        font-size: 28px;
+        font-size: 26px;
       }
 
       &:hover {
