@@ -1,16 +1,18 @@
 import React, { ButtonHTMLAttributes } from 'react';
 import { css } from 'emotion';
-import { stylesFactory } from '@grafana/ui';
-import { Tooltip } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme, Tooltip, selectThemeVariant } from '@grafana/ui';
 
 export type Props = ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const BackButton: React.FC<Props> = props => {
-  const styles = getIconStyles();
+  const theme = useTheme();
+  const styles = getStyles(theme);
+
   return (
     <Tooltip content="Go back (Esc)" placement="bottom">
       <button className={styles.wrapper} {...props}>
-        <i className="gicon gicon-arrow-left-circle" />
+        <i className="gicon gicon-arrow-left" />
       </button>
     </Tooltip>
   );
@@ -18,7 +20,9 @@ export const BackButton: React.FC<Props> = props => {
 
 BackButton.displayName = 'BackButton';
 
-const getIconStyles = stylesFactory(() => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const hoverColor = selectThemeVariant({ dark: theme.colors.gray25, light: theme.colors.gray85 }, theme.type);
+
   return {
     wrapper: css`
       background: transparent;
@@ -30,13 +34,17 @@ const getIconStyles = stylesFactory(() => {
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 2px;
 
       .gicon {
         opacity: 0.9;
-        font-size: 35px;
+        font-size: 28px;
       }
 
       &:hover {
+        border-radius: 50%;
+        background: ${hoverColor};
+
         .gicon {
           opacity: 1;
           transition: opacity 0.2s ease-in-out;
