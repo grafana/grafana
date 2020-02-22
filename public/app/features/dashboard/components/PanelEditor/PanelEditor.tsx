@@ -175,8 +175,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
-  renderHorizontalSplit(styles: any) {
+  renderHorizontalSplit() {
     const { dashboard, panel, tabs, data, uiState } = this.props;
+    const styles = getStyles(config.theme);
 
     return (
       <SplitPane
@@ -190,38 +191,106 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragStarted={this.onDragStarted}
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
-        <div className={styles.panelWrapper}>
-          <AutoSizer>
-            {({ width, height }) => {
-              if (width < 3 || height < 3) {
-                return null;
-              }
-              return (
-                <div className={styles.centeringContainer} style={{ width, height }}>
-                  <div style={calculatePanelSize(uiState.mode, width, height, panel)}>
-                    <DashboardPanel
-                      dashboard={dashboard}
-                      panel={panel}
-                      isEditing={false}
-                      isInEditMode
-                      isFullscreen={false}
-                      isInView={true}
-                    />
+        <div className={styles.toolbarAndPanelWrapper}>
+          {this.renderToolbar()}
+          <div className={styles.panelWrapper}>
+            <AutoSizer>
+              {({ width, height }) => {
+                if (width < 3 || height < 3) {
+                  return null;
+                }
+                return (
+                  <div className={styles.centeringContainer} style={{ width, height }}>
+                    <div style={calculatePanelSize(uiState.mode, width, height, panel)}>
+                      <DashboardPanel
+                        dashboard={dashboard}
+                        panel={panel}
+                        isEditing={false}
+                        isInEditMode
+                        isFullscreen={false}
+                        isInView={true}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            }}
-          </AutoSizer>
+                );
+              }}
+            </AutoSizer>
+          </div>
         </div>
-        <div className={styles.noScrollPaneContent}>
+        <div className={styles.tabsWrapper}>
           <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
         </div>
       </SplitPane>
     );
   }
 
+  renderToolbar() {
+    const { dashboard, location, uiState, panel } = this.props;
+    const styles = getStyles(config.theme);
+
+    return (
+      <div className={styles.toolbar}>
+        <div className={styles.toolbarLeft}>
+          <BackButton onClick={this.onPanelExit} />
+          <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
+        </div>
+        <div className={styles.toolbarLeft}>
+          <div className={styles.toolbarItem}>
+            <Forms.Button className={styles.toolbarItem} variant="secondary" onClick={this.onDiscard}>
+              Discard changes
+            </Forms.Button>
+          </div>
+          <div className={styles.toolbarItem}>
+            <Forms.Select
+              value={displayModes.find(v => v.value === uiState.mode)}
+              options={displayModes}
+              onChange={this.onDiplayModeChange}
+            />
+          </div>
+          <div className={styles.toolbarItem}>
+            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+          </div>
+          <div className={styles.toolbarItem}>
+            <Forms.Button
+              className={styles.toolbarItem}
+              icon="fa fa-sliders"
+              variant="secondary"
+              onClick={this.onTogglePanelOptions}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderWithOptionsPane() {
+    const { uiState } = this.props;
+    const styles = getStyles(config.theme);
+
+    return (
+      <SplitPane
+        split="vertical"
+        minSize={100}
+        primary="second"
+        /* Use persisted state for default size */
+        defaultSize={uiState.rightPaneSize}
+        resizerClassName={styles.resizerV}
+        onDragStarted={() => (document.body.style.cursor = 'col-resize')}
+        onDragFinished={size => this.onDragFinished(Pane.Right, size)}
+      >
+        {this.renderHorizontalSplit()}
+        <div className={styles.panelOptionsPane}>
+          <CustomScrollbar>
+            {this.renderFieldOptions()}
+            <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
+          </CustomScrollbar>
+        </div>
+      </SplitPane>
+    );
+  }
+
   render() {
-    const { dashboard, location, panel, uiState, initDone } = this.props;
+    const { initDone, uiState } = this.props;
     const styles = getStyles(config.theme);
 
     if (!initDone) {
@@ -230,63 +299,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper}>
-        <div className={styles.toolbar}>
-          <div className={styles.toolbarLeft}>
-            <BackButton onClick={this.onPanelExit} />
-            <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
-          </div>
-          <div className={styles.toolbarLeft}>
-            <div className={styles.toolbarItem}>
-              <Forms.Button
-                className={styles.toolbarItem}
-                icon="fa fa-remove"
-                variant="destructive"
-                onClick={this.onDiscard}
-              />
-            </div>
-            <div className={styles.toolbarItem}>
-              <Forms.Select
-                value={displayModes.find(v => v.value === uiState.mode)}
-                options={displayModes}
-                onChange={this.onDiplayModeChange}
-              />
-            </div>
-            <div className={styles.toolbarItem}>
-              <Forms.Button
-                className={styles.toolbarItem}
-                icon="fa fa-sliders"
-                variant="secondary"
-                onClick={this.onTogglePanelOptions}
-              />
-            </div>
-            <div>
-              <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
-            </div>
-          </div>
-        </div>
         <div className={styles.editorBody}>
-          {uiState.isPanelOptionsVisible ? (
-            <SplitPane
-              split="vertical"
-              minSize={100}
-              primary="second"
-              /* Use persisted state for default size */
-              defaultSize={uiState.rightPaneSize}
-              resizerClassName={styles.resizerV}
-              onDragStarted={() => (document.body.style.cursor = 'col-resize')}
-              onDragFinished={size => this.onDragFinished(Pane.Right, size)}
-            >
-              {this.renderHorizontalSplit(styles)}
-              <div className={styles.panelOptionsPane}>
-                <CustomScrollbar>
-                  {this.renderFieldOptions()}
-                  <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
-                </CustomScrollbar>
-              </div>
-            </SplitPane>
-          ) : (
-            this.renderHorizontalSplit(styles)
-          )}
+          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane() : this.renderHorizontalSplit()}
         </div>
       </div>
     );
@@ -352,11 +366,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 0;
       bottom: 0;
       background: ${background};
-      padding: ${theme.spacing.sm};
+    `,
+    toolbarAndPanelWrapper: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
     `,
     panelWrapper: css`
       width: 100%;
-      height: 100%;
+      flex: 1 1 0;
+      min-height: 0;
+      padding-left: ${theme.spacing.sm};
     `,
     resizerV: cx(
       resizer,
@@ -377,7 +398,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         border-top-width: 1px;
       `
     ),
-    noScrollPaneContent: css`
+    tabsWrapper: css`
       height: 100%;
       width: 100%;
     `,
@@ -385,12 +406,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       width: 100%;
       background: ${theme.colors.pageBg};
-      border: 1px solid ${theme.colors.pageHeaderBorder};
       border-bottom: none;
     `,
     toolbar: css`
       display: flex;
-      padding-bottom: ${theme.spacing.sm};
+      padding: ${theme.spacing.sm};
+      padding-right: 0;
       justify-content: space-between;
     `,
     editorBody: css`
@@ -404,6 +425,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     toolbarItem: css`
       margin-right: ${theme.spacing.sm};
+
+      &:last-child {
+        margin-right: 0;
+      }
     `,
     centeringContainer: css`
       display: flex;

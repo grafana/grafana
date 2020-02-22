@@ -24,7 +24,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     container: css`
       position: relative;
       display: flex;
-      padding: 2px 2px;
     `,
   };
 });
