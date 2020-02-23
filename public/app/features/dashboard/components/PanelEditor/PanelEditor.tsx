@@ -299,9 +299,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper}>
-        <div className={styles.editorBody}>
-          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane() : this.renderHorizontalSplit()}
-        </div>
+        {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane() : this.renderHorizontalSplit()}
       </div>
     );
   }
@@ -413,10 +411,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.sm};
       padding-right: 0;
       justify-content: space-between;
-    `,
-    editorBody: css`
-      height: calc(100% - 55px);
-      position: relative;
     `,
     toolbarLeft: css`
       padding-left: ${theme.spacing.sm};

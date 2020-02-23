@@ -21,7 +21,7 @@ export const BackButton: React.FC<Props> = props => {
 BackButton.displayName = 'BackButton';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const hoverColor = selectThemeVariant({ dark: theme.colors.gray25, light: theme.colors.gray85 }, theme.type);
+  const hoverColor = selectThemeVariant({ dark: theme.colors.gray15, light: theme.colors.gray85 }, theme.type);
 
   return {
     wrapper: css`
