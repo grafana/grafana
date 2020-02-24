@@ -6,10 +6,12 @@ import { sharedTemplatingReducer } from './sharedTemplatingReducer';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
 
 export interface TemplatingState {
+  uuidInEditor: string | null;
   variables: Record<string, VariableState>;
 }
 
 export const initialTemplatingState: TemplatingState = {
+  uuidInEditor: null,
   variables: {},
 };
 

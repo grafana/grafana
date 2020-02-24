@@ -2,6 +2,8 @@ import { createReducer } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 
 import {
+  changeToEditorEditMode,
+  changeToEditorListMode,
   changeVariableHide,
   changeVariableLabel,
   changeVariableOrder,
@@ -91,5 +93,18 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       state.variables[uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
       state.variables[uuid!].variable = emptyVariable;
       state.variables[uuid!].variable.uuid = uuid;
+      state.uuidInEditor = null;
+      delete state.variables[emptyUuid];
+    })
+    .addCase(changeToEditorEditMode, (state, action) => {
+      if (action.payload.uuid === emptyUuid) {
+        state.variables[emptyUuid] = cloneDeep(variableAdapters.get('query').initialState);
+        state.variables[emptyUuid].variable.uuid = emptyUuid;
+        state.variables[emptyUuid].variable.index = Object.values(state.variables).length;
+      }
+      state.uuidInEditor = action.payload.uuid;
+    })
+    .addCase(changeToEditorListMode, (state, action) => {
+      state.uuidInEditor = null;
     })
 );

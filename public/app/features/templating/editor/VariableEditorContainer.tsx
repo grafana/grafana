@@ -1,13 +1,17 @@
-import React, { PureComponent } from 'react';
-import { VariableState } from '../state/types';
+import React, { MouseEvent, PureComponent } from 'react';
+import { emptyUuid, VariableState } from '../state/types';
 import { StoreState } from '../../../types';
 import { Observable, Subscriber, Subscription } from 'rxjs';
-import { store } from '../../../store/store';
+import { dispatch, store } from '../../../store/store';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
+import { VariableEditor } from './VariableEditor';
+import { changeToEditorEditMode, changeToEditorListMode, toVariablePayload } from '../state/actions';
+import { VariableModel } from '../variable';
 
 export interface State {
+  uuidInEditor: string | null;
   variableStates: VariableState[];
 }
 
@@ -41,7 +45,10 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
       });
   }
 
-  stateSelector = (state: StoreState) => ({ variableStates: Object.values(state.templating.variables) });
+  stateSelector = (state: StoreState) => ({
+    variableStates: Object.values(state.templating.variables),
+    uuidInEditor: state.templating.uuidInEditor,
+  });
 
   componentWillUnmount(): void {
     if (this.subscription) {
@@ -49,50 +56,78 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
     }
   }
 
+  onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    dispatch(changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel)));
+  };
+
+  onChangeToEditMode = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    dispatch(changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel)));
+  };
+
+  onChangeToAddMode = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    dispatch(changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel)));
+  };
+
   render() {
+    const variableStateToEdit =
+      this.state.variableStates.find(s => s.variable.uuid === this.state.uuidInEditor) ?? null;
     return (
       <div>
         <div className="page-action-bar">
           <h3 className="dashboard-settings__header">
             <a
-              // ng-click="setMode('list')"
+              onClick={this.onChangeToListMode}
               aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.headerLink}
             >
               Variables
             </a>
-            <span
-            // ng-show="mode === 'new'"
-            >
-              <i
-                className="fa fa-fw fa-chevron-right"
-                aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.modeLabelNew}
-              />
-              New
-            </span>
-            <span
-            // ng-show="mode === 'edit'"
-            >
-              <i
-                className="fa fa-fw fa-chevron-right"
-                aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.modeLabelEdit}
-              />
-              Edit
-            </span>
+            {this.state.uuidInEditor === emptyUuid && (
+              <span>
+                <i
+                  className="fa fa-fw fa-chevron-right"
+                  aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.modeLabelNew}
+                />
+                New
+              </span>
+            )}
+            {this.state.uuidInEditor && this.state.uuidInEditor !== emptyUuid && (
+              <span>
+                <i
+                  className="fa fa-fw fa-chevron-right"
+                  aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.modeLabelEdit}
+                />
+                Edit
+              </span>
+            )}
           </h3>
 
           <div className="page-action-bar__spacer" />
-          <a
-            type="button"
-            className="btn btn-primary"
-            // ng-click="setMode('new');"
-            // ng-if="variables.length > 0"
-            // ng-hide="mode === 'edit' || mode === 'new'"
-            aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.newButton}
-          >
-            New
-          </a>
+          {this.state.variableStates.length > 0 && variableStateToEdit === null && (
+            <a
+              type="button"
+              className="btn btn-primary"
+              onClick={this.onChangeToAddMode}
+              // ng-click="setMode('new');"
+              // ng-if="variables.length > 0"
+              // ng-hide="mode === 'edit' || mode === 'new'"
+              aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.newButton}
+            >
+              New
+            </a>
+          )}
         </div>
-        <VariableEditorList variableStates={this.state.variableStates} />
+
+        {!variableStateToEdit && <VariableEditorList variableStates={this.state.variableStates} />}
+        {variableStateToEdit && (
+          <VariableEditor
+            picker={variableStateToEdit.picker}
+            editor={variableStateToEdit.editor}
+            variable={variableStateToEdit.variable}
+          />
+        )}
       </div>
     );
   }
