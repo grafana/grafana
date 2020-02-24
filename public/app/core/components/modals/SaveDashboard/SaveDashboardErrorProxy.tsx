@@ -61,6 +61,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
 
 const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ onClose, dashboard }) => {
   const theme = useTheme();
+  const { onDashboardSave } = useDashboardSave(dashboard);
   const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     modal: css`
       width: 500px;
@@ -89,15 +90,11 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
         <div className={styles.modalText}>
           Your changes will be lost when you update the plugin. Use Save As to create custom version.
         </div>
-        <HorizontalGroup>
-          <Button variant="danger" onClick={() => {}}>
-            Overwrite
-          </Button>
+        <HorizontalGroup justify="center">
           <ModalsController>
             {({ showModal, hideModal }) => {
               return (
                 <Button
-                  variant="danger"
                   onClick={() => {
                     showModal(SaveDashboardAsModal, {
                       dashboard,
@@ -110,6 +107,16 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
               );
             }}
           </ModalsController>
+
+          <Button
+            variant="danger"
+            onClick={async () => {
+              await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
+              onClose();
+            }}
+          >
+            Overwrite
+          </Button>
 
           <Button variant="inverse" onClick={onClose}>
             Cancel

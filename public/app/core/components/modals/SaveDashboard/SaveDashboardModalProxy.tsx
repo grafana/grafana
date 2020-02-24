@@ -5,7 +5,7 @@ import { SaveDashboardAsModal } from './SaveDashboardAsModal';
 import { SaveDashboardModalProps } from './types';
 import { SaveDashboardModal } from './SaveDashboardModal';
 
-export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ dashboard, onClose }) => {
+export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ dashboard, onClose, onSaveSuccess }) => {
   const isProvisioned = dashboard.meta.provisioned;
   const isNew = dashboard.title === NEW_DASHBOARD_DEFAULT_TITLE;
   const isChanged = dashboard.version > 0;
@@ -13,6 +13,7 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ das
   const modalProps = {
     dashboard,
     onClose,
+    onSaveSuccess,
   };
   return (
     <>

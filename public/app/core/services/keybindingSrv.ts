@@ -183,7 +183,7 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      scope.appEvent(CoreEvents.saveDashboard);
+      // TODO: Show save dashboards ....
     });
 
     this.bind('t z', () => {

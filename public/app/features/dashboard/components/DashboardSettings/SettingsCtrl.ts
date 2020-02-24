@@ -149,14 +149,6 @@ export class SettingsCtrl {
     }
   }
 
-  openSaveAsModal() {
-    this.dashboardSrv.showSaveAsModal();
-  }
-
-  saveDashboard() {
-    this.dashboardSrv.saveDashboard();
-  }
-
   saveDashboardJson() {
     this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
       this.$route.reload();

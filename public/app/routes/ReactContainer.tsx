@@ -11,7 +11,7 @@ import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
 import { GrafanaRootScope } from './GrafanaCtrl';
 
-function WrapInProvider(store: any, Component: any, props: any) {
+export function WrapInProvider(store: any, Component: any, props: any) {
   return (
     <Provider store={store}>
       <ErrorBoundaryAlert style="page">
@@ -21,7 +21,7 @@ function WrapInProvider(store: any, Component: any, props: any) {
   );
 }
 
-const provideModalsContext = (component: any) => {
+export const provideModalsContext = (component: any) => {
   return (props: any) => (
     <ModalsProvider>
       <>

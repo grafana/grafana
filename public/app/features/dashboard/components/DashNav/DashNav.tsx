@@ -30,21 +30,14 @@ export interface StateProps {
   location: any;
 }
 
-export interface State {
-  showSaveModal: boolean;
-}
-
 type Props = StateProps & OwnProps;
 
-export class DashNav extends PureComponent<Props, State> {
+export class DashNav extends PureComponent<Props> {
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
     super(props);
     this.playlistSrv = this.props.$injector.get('playlistSrv');
-    this.state = {
-      showSaveModal: false,
-    };
   }
 
   onDahboardNameClick = () => {
@@ -73,19 +66,6 @@ export class DashNav extends PureComponent<Props, State> {
 
   onToggleTVMode = () => {
     appEvents.emit(CoreEvents.toggleKioskMode);
-  };
-
-  onSave = () => {
-    const { $injector } = this.props;
-    const dashboardSrv = $injector.get('dashboardSrv');
-
-    dashboardSrv.saveDashboard();
-  };
-
-  onSaveClick = () => {
-    this.setState({
-      showSaveModal: true,
-    });
   };
 
   onOpenSettings = () => {
@@ -298,8 +278,6 @@ export class DashNav extends PureComponent<Props, State> {
             <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
           </div>
         )}
-
-        {/*{this.state.showSaveModal && this.renderSaveDashboardModal()}*/}
       </div>
     );
   }

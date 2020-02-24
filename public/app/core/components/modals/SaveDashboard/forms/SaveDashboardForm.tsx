@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Forms, HorizontalGroup } from '@grafana/ui';
 import { SaveDashboardFormProps } from '../types';
+import { e2e } from '@grafana/e2e';
 
 interface SaveDashboardFormDTO {
   message: string;
@@ -51,7 +52,9 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
             )}
 
             <HorizontalGroup>
-              <Forms.Button type="submit">Save</Forms.Button>
+              <Forms.Button type="submit" aria-label={e2e.pages.SaveDashboardModal.selectors.save}>
+                Save
+              </Forms.Button>
               <Forms.Button variant="secondary" onClick={onCancel}>
                 Cancel
               </Forms.Button>

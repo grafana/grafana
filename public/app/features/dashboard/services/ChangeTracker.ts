@@ -170,17 +170,11 @@ export class ChangeTracker {
     });
   }
 
-  saveChanges() {
-    const self = this;
-    const cancel = this.$rootScope.$on('dashboard-saved', () => {
-      cancel();
-      this.$timeout(() => {
-        self.gotoNext();
-      });
+  onSaveSuccess = () => {
+    this.$timeout(() => {
+      this.gotoNext();
     });
-
-    this.$rootScope.appEvent(CoreEvents.saveDashboard);
-  }
+  };
 
   gotoNext() {
     const baseLen = this.$location.absUrl().length - this.$location.url().length;
