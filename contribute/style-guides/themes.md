@@ -4,11 +4,11 @@
 
 **Themes are implemented in Typescript.** That's because our goal is to share variables between Grafana TypeScript and [Sass](https://sass-lang.com/) code. Theme definitions are located in the following files:
 
-- [grafana/packages/grafana-ui/src/themes/dark.ts](../../packages/grafana-ui/src/themes/dark.ts)
-- [grafana/packages/grafana-ui/src/themes/default.ts](../../packages/grafana-ui/src/themes/default.ts)
-- [grafana/packages/grafana-ui/src/themes/light.ts](../../packages/grafana-ui/src/themes/light.ts)
+- [packages/grafana-ui/src/themes/dark.ts](../../packages/grafana-ui/src/themes/dark.ts)
+- [packages/grafana-ui/src/themes/default.ts](../../packages/grafana-ui/src/themes/default.ts)
+- [packages/grafana-ui/src/themes/light.ts](../../packages/grafana-ui/src/themes/light.ts)
 
-`default.ts` file holds common variables like typography and spacing definitions, while `[light|dark].ts` primarily specify colors used in themes.
+The `default.ts` file holds common variables like typography and spacing definitions, while `[light|dark].ts` primarily specify colors used in themes.
 
 ## Usage
 
@@ -81,7 +81,7 @@ describe('MyComponent', () => {
 
 ### Using themes in [Storybook](https://storybook.js.org/)
 
-All stories are wrapped with `ThemeContext.Provider` using global decorator. To render `Themeable` component that's not wrapped by `withTheme` HOC you either create a new component in your story:
+All stories are wrapped with `ThemeContext.Provider` using a global decorator. To render a `Themeable` component that isn't wrapped by `withTheme` HOC you either create a new component in your story:
 
 ```tsx
 // Foo.story.tsx
@@ -104,7 +104,7 @@ BarStories.add('Story' () => {
 
 ### Using themes in Angular code
 
-There should be very few cases where theme would be used in an Angular context. For this purpose, there is a function available that retrieves current theme:
+There should be very few cases where a theme would be used in an Angular context. For this purpose, there is a function available that retrieves the current theme:
 
 ```ts
 import { getCurrentTheme } from app/core/utils/ConfigProvider
@@ -120,7 +120,7 @@ Angular components should be migrated to React, or if that's not possible at the
 
 `[_variables|_variables.dark|_variables.light].generated.scss` files are the ones that are referenced in the main Sass files for Sass variables to be available. **These files are automatically generated and should never be modified by hand!**
 
-#### If you need to modify *Sass variable value* you need to modify corresponding Typescript file that is a source of the variables:
+#### If you need to modify a *Sass variable value* you need to modify the corresponding Typescript file that is the source of the variables:
 - `_variables.generated.scss` - modify `grafana-ui/src/themes/default.ts`
 - `_variables.light.generated.scss` - modify `grafana-ui/src/themes/light.ts`
 - `_variables.dark.generated.scss` - modify `grafana-ui/src/themes/dark.ts`
@@ -135,7 +135,7 @@ Angular components should be migrated to React, or if that's not possible at the
 
 ### You must ensure `ThemeContext` provider is available in a React tree
 
-By default all react2angular directives have `ThemeContext.Provider` ensured. But, there are cases where we create another React tree via `ReactDOM.render`. This happens in case of graph legend rendering and `ReactContainer` directive. In such cases theme consumption will fail. To make sure theme context is available in such cases, you need to wrap your rendered component with ThemeContext.Provider using `provideTheme` function:
+By default all react2angular directives have `ThemeContext.Provider` ensured. But, there are cases where we create another React tree via `ReactDOM.render`. This happens in the case of graph legend rendering and the `ReactContainer` directive. In such cases theme consumption will fail. To make sure theme context is available in such cases, you need to wrap your rendered component with ThemeContext.Provider using the `provideTheme` function:
 
 ```ts
 // graph.ts
