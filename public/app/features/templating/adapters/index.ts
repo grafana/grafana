@@ -12,7 +12,7 @@ export interface VariableAdapter<Model extends VariableModel> {
   label: string;
   initialState: VariableState;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
-  setValue: (variable: Model, option: VariableOption) => Promise<void>;
+  setValue: (variable: Model, option: VariableOption, emitChanges?: boolean) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
   getSaveModel: (variable: Model) => Partial<Model>;

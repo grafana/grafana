@@ -18,8 +18,8 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
     },
-    setValue: async (variable, option) => {
-      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option));
+    setValue: async (variable, option, emitChanges = false) => {
+      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));

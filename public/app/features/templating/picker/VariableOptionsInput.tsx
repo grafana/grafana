@@ -64,7 +64,7 @@ export class VariableOptionsInput extends PureComponent<Props> {
     const { oldVariableText } = this.props.picker;
 
     if (this.props.variable.current.text !== oldVariableText) {
-      variableAdapters.get(this.props.variable.type).setValue(this.props.variable, this.props.variable.current);
+      variableAdapters.get(this.props.variable.type).setValue(this.props.variable, this.props.variable.current, true);
     }
 
     dispatch(hideQueryVariableDropDown(toVariablePayload(this.props.variable)));

@@ -19,6 +19,7 @@ import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
+import { updateLocation } from 'app/core/actions';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -356,12 +357,15 @@ export const validateVariableSelectionState = (
   };
 };
 
-export const setOptionAsCurrent = (identifier: VariableIdentifier, current: VariableOption): ThunkResult<void> => {
+export const setOptionAsCurrent = (
+  identifier: VariableIdentifier,
+  current: VariableOption,
+  emitChanges: boolean
+): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier.uuid!, getState());
     dispatch(setCurrentVariableValue(toVariablePayload(variable, current)));
-    //const selected = selectOptionsForCurrentValue(variableInState);
-    return dispatch(variableUpdated(toVariableIdentifier(variable)));
+    return dispatch(variableUpdated(toVariableIdentifier(variable), emitChanges));
   };
 };
 
@@ -387,7 +391,7 @@ const createGraph = (variables: VariableModel[]) => {
   return g;
 };
 
-export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents?: any): ThunkResult<void> => {
+export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
     const variable = getVariable(identifier.uuid!, getState());
@@ -412,8 +416,10 @@ export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
-        //     this.dashboard.templateVariableValueUpdated();
-        //     this.dashboard.startRefresh();
+        const dashboard = getState().dashboard.getModel();
+        dashboard.processRepeats();
+        dispatch(updateLocation({ query: getQueryWithVariables(getState) }));
+        dashboard.startRefresh();
       }
     });
   };
@@ -481,4 +487,29 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
     dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));
     dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
   };
+};
+
+const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
+  const queryParams = getState().location.query;
+
+  Object.keys(queryParams).forEach(key => {
+    if (key.indexOf('var-') === 0) {
+      // TODO: currently we are storing angular references in location redux
+      // so we need to mutate that state for this to properly work. Should be
+      // changed when we have a pure state in redux for location.
+      delete queryParams[key];
+    }
+  });
+
+  const variables = getVariables(getState());
+
+  variables.forEach(variable => {
+    if (variable.skipUrlSync) {
+      return;
+    }
+    const adapter = variableAdapters.get(variable.type);
+    queryParams['var-' + variable.name] = adapter.getValueForUrl(variable);
+  });
+
+  return queryParams;
 };

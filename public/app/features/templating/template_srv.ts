@@ -5,6 +5,7 @@ import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
 import { getVariableWithName } from './state/selectors';
 import { getState } from '../../store/store';
+import { getConfig } from 'app/core/config';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -383,7 +384,7 @@ export class TemplateSrv {
       return;
     }
 
-    if (!this.index[name]) {
+    if (getConfig().featureToggles.newVariables && !this.index[name]) {
       return getVariableWithName(name, getState());
     }
 
