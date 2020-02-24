@@ -14,76 +14,63 @@ func TestMissingPath(t *testing.T) {
 	Convey("ls command", t, func() {
 		validateLsCommand = org
 
-		Convey("Missing path", func() {
-			commandLine := &commandstest.FakeCommandLine{
-				CliArgs: commandstest.FakeArgs([]string{"ls"}),
-				GlobalFlags: &commandstest.FakeFlagger{
-					Data: map[string]interface{}{
-						"path": "",
-					},
-				},
+		Convey("Missing path flag", func() {
+			cmd := Command{
+				Client: nil,
 			}
+			c, err := commandstest.NewCliContext([]string{"ls"})
+			So(err, ShouldBeNil)
 			s.IoHelper = &commandstest.FakeIoUtil{}
 
 			Convey("should return error", func() {
-				err := lsCommand(commandLine)
-				So(err, ShouldNotBeNil)
+				err := cmd.lsCommand(c)
+				So(err, ShouldBeError, "missing path flag")
 			})
 		})
 
 		Convey("Path is not a directory", func() {
-			commandLine := &commandstest.FakeCommandLine{
-				CliArgs: commandstest.FakeArgs([]string{"ls"}),
-				GlobalFlags: &commandstest.FakeFlagger{
-					Data: map[string]interface{}{
-						"path": "/var/lib/grafana/plugins",
-					},
-				},
-			}
-
+			c, err := commandstest.NewCliContext([]string{"ls", "--path", "/var/lib/grafana/plugins"})
+			So(err, ShouldBeNil)
 			s.IoHelper = &commandstest.FakeIoUtil{
 				FakeIsDirectory: false,
 			}
+			cmd := Command{
+				Client: nil,
+			}
 
 			Convey("should return error", func() {
-				err := lsCommand(commandLine)
+				err := cmd.lsCommand(c)
 				So(err, ShouldNotBeNil)
 			})
 		})
 
 		Convey("can override validateLsCommand", func() {
-			commandLine := &commandstest.FakeCommandLine{
-				CliArgs: commandstest.FakeArgs([]string{"ls"}),
-				GlobalFlags: &commandstest.FakeFlagger{
-					Data: map[string]interface{}{
-						"path": "/var/lib/grafana/plugins",
-					},
-				},
-			}
+			c, err := commandstest.NewCliContext([]string{"ls", "--path", "/var/lib/grafana/plugins"})
+			So(err, ShouldBeNil)
 
 			validateLsCommand = func(pluginDir string) error {
-				return errors.New("dummie error")
+				return errors.New("dummy error")
 			}
 
 			Convey("should return error", func() {
-				err := lsCommand(commandLine)
-				So(err.Error(), ShouldEqual, "dummie error")
+				cmd := Command{
+					Client: nil,
+				}
+				err := cmd.lsCommand(c)
+				So(err.Error(), ShouldEqual, "dummy error")
 			})
 		})
 
 		Convey("Validate that validateLsCommand is reset", func() {
-			commandLine := &commandstest.FakeCommandLine{
-				CliArgs: commandstest.FakeArgs([]string{"ls"}),
-				GlobalFlags: &commandstest.FakeFlagger{
-					Data: map[string]interface{}{
-						"path": "/var/lib/grafana/plugins",
-					},
-				},
+			c, err := commandstest.NewCliContext([]string{"ls", "--path", "/var/lib/grafana/plugins"})
+			So(err, ShouldBeNil)
+			cmd := Command{
+				Client: nil,
 			}
 
 			Convey("should return error", func() {
-				err := lsCommand(commandLine)
-				So(err.Error(), ShouldNotEqual, "dummie error")
+				err := cmd.lsCommand(c)
+				So(err.Error(), ShouldNotEqual, "dummy error")
 			})
 		})
 	})

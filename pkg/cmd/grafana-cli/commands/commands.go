@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -74,38 +75,47 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 	}
 }
 
+// Command contains command state.
+type Command struct {
+	Client utils.ApiClient
+}
+
+var cmd Command = Command{
+	Client: &services.GrafanaComClient{},
+}
+
 var pluginCommands = []*cli.Command{
 	{
 		Name:   "install",
 		Usage:  "install <plugin id> <plugin version (optional)>",
-		Action: runPluginCommand(installCommand),
+		Action: runPluginCommand(cmd.installCommand),
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
-		Action: runPluginCommand(listRemoteCommand),
+		Action: runPluginCommand(cmd.listRemoteCommand),
 	}, {
 		Name:   "list-versions",
 		Usage:  "list-versions <plugin id>",
-		Action: runPluginCommand(listversionsCommand),
+		Action: runPluginCommand(cmd.listVersionsCommand),
 	}, {
 		Name:    "update",
 		Usage:   "update <plugin id>",
 		Aliases: []string{"upgrade"},
-		Action:  runPluginCommand(upgradeCommand),
+		Action:  runPluginCommand(cmd.upgradeCommand),
 	}, {
 		Name:    "update-all",
 		Aliases: []string{"upgrade-all"},
 		Usage:   "update all your installed plugins",
-		Action:  runPluginCommand(upgradeAllCommand),
+		Action:  runPluginCommand(cmd.upgradeAllCommand),
 	}, {
 		Name:   "ls",
 		Usage:  "list all installed plugins",
-		Action: runPluginCommand(lsCommand),
+		Action: runPluginCommand(cmd.lsCommand),
 	}, {
 		Name:    "uninstall",
 		Aliases: []string{"remove"},
 		Usage:   "uninstall <plugin id>",
-		Action:  runPluginCommand(removeCommand),
+		Action:  runPluginCommand(cmd.removeCommand),
 	},
 }
 

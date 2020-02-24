@@ -11,7 +11,7 @@ import (
 
 var removePlugin func(pluginPath, id string) error = services.RemoveInstalledPlugin
 
-func removeCommand(c utils.CommandLine) error {
+func (cmd Command) removeCommand(c utils.CommandLine) error {
 	pluginPath := c.PluginDirectory()
 
 	plugin := c.Args().First()

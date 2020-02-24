@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/urfave/cli/v2"
 )
 
@@ -23,7 +22,6 @@ type CommandLine interface {
 	PluginDirectory() string
 	RepoDirectory() string
 	PluginURL() string
-	ApiClient() ApiClient
 }
 
 type ApiClient interface {
@@ -66,8 +64,4 @@ func (c *ContextCommandLine) PluginURL() string {
 
 func (c *ContextCommandLine) OptionsString() string {
 	return c.String("configOverrides")
-}
-
-func (c *ContextCommandLine) ApiClient() ApiClient {
-	return &services.GrafanaComClient{}
 }

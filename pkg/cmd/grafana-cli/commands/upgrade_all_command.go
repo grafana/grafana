@@ -22,12 +22,12 @@ func shouldUpgrade(installed string, remote *m.Plugin) bool {
 	return installedVersion.LessThan(latestVersion)
 }
 
-func upgradeAllCommand(c utils.CommandLine) error {
+func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 	pluginsDir := c.PluginDirectory()
 
 	localPlugins := s.GetLocalPlugins(pluginsDir)
 
-	remotePlugins, err := c.ApiClient().ListAllPlugins(c.String("repo"))
+	remotePlugins, err := cmd.Client.ListAllPlugins(c.String("repo"))
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func upgradeAllCommand(c utils.CommandLine) error {
 			return err
 		}
 
-		err = InstallPlugin(p.Id, "", c)
+		err = InstallPlugin(p.Id, "", c, cmd.Client)
 		if err != nil {
 			return err
 		}

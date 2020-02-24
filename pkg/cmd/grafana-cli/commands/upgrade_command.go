@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func upgradeCommand(c utils.CommandLine) error {
+func (cmd Command) upgradeCommand(c utils.CommandLine) error {
 	pluginsDir := c.PluginDirectory()
 	pluginName := c.Args().First()
 
@@ -18,8 +18,7 @@ func upgradeCommand(c utils.CommandLine) error {
 		return err
 	}
 
-	plugin, err2 := c.ApiClient().GetPlugin(pluginName, c.RepoDirectory())
-
+	plugin, err2 := cmd.Client.GetPlugin(pluginName, c.RepoDirectory())
 	if err2 != nil {
 		return err2
 	}
@@ -29,7 +28,7 @@ func upgradeCommand(c utils.CommandLine) error {
 			return errutil.Wrapf(err, "Failed to remove plugin '%s'", pluginName)
 		}
 
-		return InstallPlugin(pluginName, "", c)
+		return InstallPlugin(pluginName, "", c, cmd.Client)
 	}
 
 	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), pluginName)

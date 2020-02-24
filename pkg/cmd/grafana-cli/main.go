@@ -66,14 +66,14 @@ func main() {
 				Usage: "Path to config file",
 			},
 		},
+		Commands:        commands.Commands,
+		CommandNotFound: cmdNotFound,
 	}
 
 	app.Before = func(c *cli.Context) error {
 		services.Init(version, c.Bool("insecure"))
 		return nil
 	}
-	app.Commands = commands.Commands
-	app.CommandNotFound = cmdNotFound
 
 	if err := app.Run(os.Args); err != nil {
 		logger.Errorf("%s", err)

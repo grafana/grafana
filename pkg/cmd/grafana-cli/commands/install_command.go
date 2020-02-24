@@ -50,7 +50,7 @@ func validateInput(c utils.CommandLine, pluginFolder string) error {
 	return nil
 }
 
-func installCommand(c utils.CommandLine) error {
+func (cmd Command) installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
@@ -59,12 +59,12 @@ func installCommand(c utils.CommandLine) error {
 	pluginToInstall := c.Args().First()
 	version := c.Args().Get(1)
 
-	return InstallPlugin(pluginToInstall, version, c)
+	return InstallPlugin(pluginToInstall, version, c, cmd.Client)
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugins directory.
-func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
+func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils.ApiClient) error {
 	pluginFolder := c.PluginDirectory()
 	downloadURL := c.PluginURL()
 	isInternal := false
@@ -78,7 +78,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := c.ApiClient().GetPlugin(pluginName, c.RepoDirectory())
+		plugin, err := client.GetPlugin(pluginName, c.RepoDirectory())
 		if err != nil {
 			return err
 		}
@@ -115,7 +115,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	}
 	defer os.Remove(tmpFile.Name())
 
-	err = c.ApiClient().DownloadFile(pluginName, tmpFile, downloadURL, checksum)
+	err = client.DownloadFile(pluginName, tmpFile, downloadURL, checksum)
 	if err != nil {
 		tmpFile.Close()
 		return errutil.Wrap("Failed to download plugin archive", err)
@@ -134,7 +134,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
-		if err := InstallPlugin(v.Id, "", c); err != nil {
+		if err := InstallPlugin(v.Id, "", c, client); err != nil {
 			return errutil.Wrapf(err, "Failed to install plugin '%s'", v.Id)
 		}
 
