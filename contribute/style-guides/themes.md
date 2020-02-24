@@ -85,7 +85,9 @@ describe('MyComponent', () => {
 
 ### Using themes in [Storybook](https://storybook.js.org/)
 
-All stories are wrapped with `ThemeContext.Provider` using a global decorator. To render a `Themeable` component that isn't wrapped by `withTheme` HOC, create a new component in your story.
+All stories are wrapped with `ThemeContext.Provider` using a global decorator. To render a `Themeable` component that isn't wrapped by a `withTheme` HOC, either create a new component in your story, or use the `renderComponentWithTheme` helper.
+
+#### Create a new component:
 
 ```tsx
 // Foo.story.tsx
@@ -96,7 +98,7 @@ FooStories.add('Story' () => {
 });
 ```
 
-or use `renderComponentWithTheme` helper:
+#### Use `renderComponentWithTheme` helper:
 
 ```tsx
 // Bar.story.tsx
