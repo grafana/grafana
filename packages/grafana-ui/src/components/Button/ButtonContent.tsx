@@ -14,6 +14,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 
   icon: css`
+    position: relative;
+    top: 1px;
     & + * {
       margin-left: ${theme.spacing.sm};
     }

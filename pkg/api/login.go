@@ -35,7 +35,9 @@ func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
 	if to.IsAbs() {
 		return login.ErrAbsoluteRedirectTo
 	}
-	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, "/"+hs.Cfg.AppSubUrl) {
+	// when using a subUrl, the redirect_to should have a relative or absolute path that includes the subUrl, otherwise the redirect
+	// will send the user to the wrong location
+	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl) && !strings.HasPrefix(to.Path, "/"+hs.Cfg.AppSubUrl) {
 		return login.ErrInvalidRedirectTo
 	}
 	return nil
@@ -177,6 +179,11 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		if err := hs.validateRedirectTo(redirectTo); err == nil {
+			// remove subpath if it exists at the beginning of the redirect_to
+			// LoginCtrl.tsx is already prepending the redirectUrl with the subpath
+			if setting.AppSubUrl != "" && strings.Index(redirectTo, setting.AppSubUrl) == 0 {
+				redirectTo = strings.Replace(redirectTo, setting.AppSubUrl, "", 1)
+			}
 			result["redirectUrl"] = redirectTo
 		} else {
 			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)

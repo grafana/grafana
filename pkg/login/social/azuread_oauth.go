@@ -15,6 +15,7 @@ import (
 type SocialAzureAD struct {
 	*SocialBase
 	allowedDomains []string
+	allowedGroups  []string
 	allowSignup    bool
 }
 
@@ -22,6 +23,7 @@ type azureClaims struct {
 	Email             string   `json:"email"`
 	PreferredUsername string   `json:"preferred_username"`
 	Roles             []string `json:"roles"`
+	Groups            []string `json:"groups"`
 	Name              string   `json:"name"`
 	ID                string   `json:"oid"`
 }
@@ -62,13 +64,35 @@ func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUse
 
 	role := extractRole(claims)
 
+	groups := extractGroups(claims)
+	if !s.IsGroupMember(groups) {
+		return nil, ErrMissingGroupMembership
+	}
+
 	return &BasicUserInfo{
-		Id:    claims.ID,
-		Name:  claims.Name,
-		Email: email,
-		Login: email,
-		Role:  string(role),
+		Id:     claims.ID,
+		Name:   claims.Name,
+		Email:  email,
+		Login:  email,
+		Role:   string(role),
+		Groups: groups,
 	}, nil
+}
+
+func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
+	if len(s.allowedGroups) == 0 {
+		return true
+	}
+
+	for _, allowedGroup := range s.allowedGroups {
+		for _, group := range groups {
+			if group == allowedGroup {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func extractEmail(claims azureClaims) string {
@@ -108,4 +132,10 @@ func hasRole(roles []string, role models.RoleType) bool {
 		}
 	}
 	return false
+}
+
+func extractGroups(claims azureClaims) []string {
+	groups := make([]string, 0)
+	groups = append(groups, claims.Groups...)
+	return groups
 }

@@ -160,6 +160,7 @@ func NewOAuthService() {
 					log:    logger,
 				},
 				allowedDomains: info.AllowedDomains,
+				allowedGroups:  util.SplitString(sec.Key("allowed_groups").String()),
 				allowSignup:    info.AllowSignup,
 			}
 		}
