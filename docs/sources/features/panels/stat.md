@@ -23,9 +23,8 @@ background or value color using thresholds.
   * Specify calculation / reducer function. Since this panel is designed to only show a single value Grafana needs to
     know how to reduce a fields many values to a single value.
 * Orientation
-  * If your query returns multiple series or you have set **Show** to `All values` then the visualization
-    will repeat for every series or row. This orientation option will control in what direction it will repeat.
-** Color
+  * If your query returns multiple series or you have set **Show** to `All values` then the visualization will repeat for every series or row. This orientation option will control in what direction it will repeat.
+* Color
   * `Value` - Color the value and graph area only.
   * `Background` - Color the background.
 ** Graph
