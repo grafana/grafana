@@ -5,7 +5,7 @@ import { e2e } from '@grafana/e2e';
 
 import { appEvents, contextSrv, coreModule } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
-import config from 'app/core/config';
+import config, { getConfig } from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
@@ -26,6 +26,7 @@ export class SettingsCtrl {
   sections: any[];
   hasUnsavedFolderChange: boolean;
   selectors: typeof e2e.pages.Dashboard.Settings.General.selectors;
+  useAngularTemplating: boolean;
 
   /** @ngInject */
   constructor(
@@ -58,6 +59,7 @@ export class SettingsCtrl {
     this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
     this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
     this.selectors = e2e.pages.Dashboard.Settings.General.selectors;
+    this.useAngularTemplating = getConfig().featureToggles.newVariables === false;
   }
 
   buildSectionList() {
