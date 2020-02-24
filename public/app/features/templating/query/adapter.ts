@@ -1,7 +1,7 @@
 import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
 import { ALL_VARIABLE_TEXT, initialQueryVariableState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
+import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { QueryVariablePicker } from './QueryVariablePicker';
 import { QueryVariableEditor } from './QueryVariableEditor';
@@ -19,13 +19,13 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
       return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
     },
     setValue: async (variable, option) => {
-      await dispatch(setOptionAsCurrent(variable, option));
+      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(setOptionFromUrl(variable, urlValue));
+      await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable, searchFilter, notifyAngular) => {
-      await dispatch(updateQueryVariableOptions(variable, searchFilter, notifyAngular));
+      await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter, notifyAngular));
     },
     getSaveModel: variable => {
       const { index, uuid, initLock, global, ...rest } = variable;

@@ -10,6 +10,7 @@ import {
   changeVariableType,
   onEditorAdd,
   onEditorUpdate,
+  toVariableIdentifier,
   toVariablePayload,
   variableEditorInit,
   variableEditorUnMounted,
@@ -24,7 +25,7 @@ import { VariableValuesPreview } from './VariableValuesPreview';
 
 export class VariableEditorEditor extends PureComponent<VariableState> {
   componentDidMount(): void {
-    dispatch(variableEditorInit(this.props.variable));
+    dispatch(variableEditorInit(toVariableIdentifier(this.props.variable)));
   }
 
   componentDidUpdate(prevProps: Readonly<VariableState>, prevState: Readonly<{}>, snapshot?: any): void {
@@ -41,12 +42,12 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
 
   onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
-    dispatch(changeVariableName(this.props.variable, event.target.value));
+    dispatch(changeVariableName(toVariableIdentifier(this.props.variable), event.target.value));
   };
 
   onTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
     event.preventDefault();
-    dispatch(changeVariableType(this.props.variable, event.target.value as VariableType));
+    dispatch(changeVariableType(toVariableIdentifier(this.props.variable), event.target.value as VariableType));
   };
 
   onLabelChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -72,11 +73,11 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
     }
 
     if (this.props.variable.uuid !== emptyUuid) {
-      await dispatch(onEditorUpdate(this.props.variable));
+      await dispatch(onEditorUpdate(toVariableIdentifier(this.props.variable)));
     }
 
     if (this.props.variable.uuid === emptyUuid) {
-      await dispatch(onEditorAdd(this.props.variable));
+      await dispatch(onEditorAdd(toVariableIdentifier(this.props.variable)));
     }
   };
 
@@ -185,7 +186,6 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
               <button
                 type="submit"
                 className="btn btn-primary"
-                // onClick={this.onUpdateClicked}
                 aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.updateButton}
               >
                 Update
@@ -195,7 +195,6 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
               <button
                 type="submit"
                 className="btn btn-primary"
-                // onClick={this.onAddClicked}
                 aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.addButton}
               >
                 Add

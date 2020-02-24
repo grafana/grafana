@@ -10,6 +10,7 @@ import { QueryVariableEditorState } from './reducer';
 import { dispatch } from '../../../store/store';
 import { changeQueryVariableDataSource, initQueryVariableEditor } from './actions';
 import { variableAdapters } from '../adapters';
+import { toVariableIdentifier } from '../state/actions';
 
 export interface Props extends VariableEditorProps<QueryVariableModel, QueryVariableEditorState> {}
 export interface State {
@@ -26,12 +27,14 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
   };
 
   componentDidMount(): void {
-    dispatch(initQueryVariableEditor(this.props.variable));
+    dispatch(initQueryVariableEditor(toVariableIdentifier(this.props.variable)));
   }
 
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (prevProps.variable.datasource !== this.props.variable.datasource) {
-      dispatch(changeQueryVariableDataSource(this.props.variable, this.props.variable.datasource));
+      dispatch(
+        changeQueryVariableDataSource(toVariableIdentifier(this.props.variable), this.props.variable.datasource)
+      );
     }
   }
 

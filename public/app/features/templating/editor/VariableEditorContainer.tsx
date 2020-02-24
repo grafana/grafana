@@ -25,7 +25,6 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
   constructor(props: {}) {
     super(props);
 
-    // editing a new variable
     this.subscription = new Observable((observer: Subscriber<State>) => {
       const unsubscribeFromStore = store.subscribe(() => observer.next(this.stateSelector(store.getState())));
       observer.next(this.stateSelector(store.getState()));
@@ -70,8 +69,10 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
     dispatch(changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel)));
   };
 
-  onEditVariable = (args: VariableIdentifier) => {
-    dispatch(changeToEditorEditMode(toVariablePayload({ uuid: args.uuid, type: args.type } as VariableModel)));
+  onEditVariable = (identifier: VariableIdentifier) => {
+    dispatch(
+      changeToEditorEditMode(toVariablePayload({ uuid: identifier.uuid, type: identifier.type } as VariableModel))
+    );
   };
 
   onChangeToAddMode = (event: MouseEvent<HTMLAnchorElement>) => {

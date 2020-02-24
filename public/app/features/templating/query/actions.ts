@@ -1,9 +1,10 @@
 import { ComponentType, MouseEvent } from 'react';
 import { createAction } from '@reduxjs/toolkit';
-import { AppEvents, DataSourceApi, DataSourcePluginMeta } from '@grafana/data';
+import { AppEvents, DataSourceApi } from '@grafana/data';
 
 import {
   SelectVariableOption,
+  toVariableIdentifier,
   toVariablePayload,
   updateVariableCompleted,
   updateVariableFailed,
@@ -11,6 +12,7 @@ import {
   updateVariableStarting,
   updateVariableTags,
   validateVariableSelectionState,
+  VariableIdentifier,
   VariablePayload,
 } from '../state/actions';
 import { QueryVariableModel, VariableRefresh, VariableTag } from '../variable';
@@ -24,13 +26,9 @@ import { getVariable } from '../state/selectors';
 import { getQueryHasSearchFilter } from './reducer';
 import { variableAdapters } from '../adapters';
 
-export const showQueryVariableDropDown = createAction<VariablePayload<undefined>>(
-  'templating/showQueryVariableDropDown'
-);
+export const showQueryVariableDropDown = createAction<VariablePayload>('templating/showQueryVariableDropDown');
 
-export const hideQueryVariableDropDown = createAction<VariablePayload<undefined>>(
-  'templating/hideQueryVariableDropDown'
-);
+export const hideQueryVariableDropDown = createAction<VariablePayload>('templating/hideQueryVariableDropDown');
 
 export const changeQueryVariableHighlightIndex = createAction<VariablePayload<number>>(
   'templating/changeQueryVariableHighlightIndex'
@@ -40,7 +38,7 @@ export const selectVariableOption = createAction<VariablePayload<SelectVariableO
   'templating/selectVariableOption'
 );
 
-export const toggleAllVariableOptions = createAction<VariablePayload<undefined>>('templating/toggleAllOptions');
+export const toggleAllVariableOptions = createAction<VariablePayload>('templating/toggleAllOptions');
 
 export const queryVariableDatasourceLoaded = createAction<VariablePayload<DataSourceApi>>(
   'templating/queryVariableDatasourceLoaded'
@@ -57,17 +55,17 @@ export const changeQueryVariableSearchQuery = createAction<VariablePayload<strin
 );
 
 export const updateQueryVariableOptions = (
-  variable: QueryVariableModel,
+  args: VariableIdentifier,
   searchFilter?: string,
   notifyAngular?: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(variable.uuid ?? '');
+    const variableInState = getVariable<QueryVariableModel>(args.uuid!, getState());
     try {
-      dispatch(updateVariableStarting(toVariablePayload(variable)));
+      dispatch(updateVariableStarting(toVariablePayload(variableInState)));
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
       const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
-      if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+      if (variableInState.refresh === VariableRefresh.onTimeRangeChanged) {
         queryOptions.range = getTimeSrv().timeRange();
       }
 
@@ -78,12 +76,12 @@ export const updateQueryVariableOptions = (
       const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
       await dispatch(updateVariableOptions(toVariablePayload(variableInState, results)));
 
-      if (variable.useTags) {
+      if (variableInState.useTags) {
         const tagResults = await dataSource.metricFindQuery(variableInState.tagsQuery, queryOptions);
         await dispatch(updateVariableTags(toVariablePayload(variableInState, tagResults)));
       }
 
-      await dispatch(validateVariableSelectionState(variableInState));
+      await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
       await dispatch(
         updateVariableCompleted(toVariablePayload(variableInState, { notifyAngular: notifyAngular ?? false }))
       );
@@ -101,18 +99,26 @@ export const updateQueryVariableOptions = (
   };
 };
 
-export const initQueryVariableEditor = (variable: QueryVariableModel): ThunkResult<void> => async dispatch => {
+export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkResult<void> => async (
+  dispatch,
+  getState
+) => {
+  const variable = getVariable<QueryVariableModel>(identifier.uuid!, getState());
   if (!variable.datasource) {
     return;
   }
-  dispatch(changeQueryVariableDataSource(variable, variable.datasource));
+  dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
 };
 
-export const changeQueryVariableDataSource = (variable: QueryVariableModel, name: string | null): ThunkResult<void> => {
-  return async dispatch => {
+export const changeQueryVariableDataSource = (
+  identifier: VariableIdentifier,
+  name: string | null
+): ThunkResult<void> => {
+  return async (dispatch, getState) => {
     try {
+      const variable = getVariable(identifier.uuid, getState());
       const dataSource = await getDatasourceSrv().get(name ?? '');
-      const dsPlugin = await importDataSourcePlugin(dataSource.meta ?? ({} as DataSourcePluginMeta));
+      const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
       const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? DefaultVariableQueryEditor;
       dispatch(queryVariableDatasourceLoaded(toVariablePayload(variable, dataSource)));
       dispatch(queryVariableEditorLoaded(toVariablePayload(variable, VariableQueryEditor)));
