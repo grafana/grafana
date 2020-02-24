@@ -148,7 +148,6 @@ export class SettingsCtrl {
       this.viewId = '404';
     }
   }
-
   saveDashboardJson() {
     this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
       this.$route.reload();
