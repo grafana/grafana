@@ -129,7 +129,7 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 		"org_user.role",
 		"user.last_seen_at",
 	)
-	sess.OrderBy("LOWER(user.login),user.login,LOWER(user.email),user.email")
+	sess.OrderBy("LOWER(user.login), user.login, LOWER(user.email), user.email")
 
 	if err := sess.Find(&query.Result); err != nil {
 		return err
