@@ -41,7 +41,7 @@ function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
 
       if (link.asDropdown) {
         template +=
-          '<ul class="dropdown-menu" role="menu">' +
+          '<ul class="dropdown-menu pull-right" role="menu">' +
           '<li ng-repeat="dash in link.searchHits">' +
           '<a href="{{dash.url}}" target="{{dash.target}}">{{dash.title}}</a>' +
           '</li>' +

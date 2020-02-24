@@ -1,7 +1,16 @@
 import { PanelModel, DashboardModel } from '../../../state';
 import { PanelData } from '@grafana/data';
 import { ThunkResult } from 'app/types';
-import { setEditorPanelData, updateEditorInitState, closeCompleted } from './reducers';
+import {
+  setEditorPanelData,
+  updateEditorInitState,
+  closeCompleted,
+  PanelEditorUIState,
+  setPanelEditorUIState,
+  PANEL_EDITOR_UI_STATE_STORAGE_KEY,
+} from './reducers';
+import { cleanUpEditPanel } from '../../../state/reducers';
+import store from '../../../../../core/store';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return dispatch => {
@@ -42,6 +51,15 @@ export function panelEditorCleanUp(): ThunkResult<void> {
     dashboard.exitPanelEditor();
     querySubscription.unsubscribe();
 
+    dispatch(cleanUpEditPanel());
     dispatch(closeCompleted());
+  };
+}
+
+export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const nextState = { ...getStore().panelEditorNew.ui, ...uiState };
+    dispatch(setPanelEditorUIState(nextState));
+    store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
   };
 }

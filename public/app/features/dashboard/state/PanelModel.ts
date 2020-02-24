@@ -14,6 +14,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
+import { EDIT_PANEL_ID } from 'app/core/constants';
 
 import config from 'app/core/config';
 
@@ -357,7 +358,7 @@ export class PanelModel {
     const sourceModel = this.getSaveModel();
 
     // Temporary id for the clone, restored later in redux action when changes are saved
-    sourceModel.id = 23763571993;
+    sourceModel.id = EDIT_PANEL_ID;
 
     const clone = new PanelModel(sourceModel);
     const sourceQueryRunner = this.getQueryRunner();
