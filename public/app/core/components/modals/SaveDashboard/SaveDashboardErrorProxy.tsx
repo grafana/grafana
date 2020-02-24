@@ -1,5 +1,5 @@
 import { DashboardModel } from '../../../../features/dashboard/state';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, ConfirmModal, HorizontalGroup, Modal, ModalsController, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
@@ -15,6 +15,12 @@ interface SaveDashboardErrorProxyProps {
 
 export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = ({ dashboard, error, onClose }) => {
   const { onDashboardSave } = useDashboardSave(dashboard);
+
+  useEffect(() => {
+    if (error.data) {
+      error.isHandled = true;
+    }
+  }, []);
 
   return (
     <>
