@@ -1,5 +1,5 @@
 import { ILocationService } from 'angular';
-import { AppEvents, PanelEvents } from '@grafana/data';
+import { PanelEvents } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
 import { appEvents } from 'app/core/app_events';
@@ -9,13 +9,6 @@ import { CoreEvents, DashboardMeta } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { promiseToDigest } from '../../../core/utils/promiseToDigest';
-
-interface DashboardSaveOptions {
-  folderId?: number;
-  overwrite?: boolean;
-  message?: string;
-  makeEditable?: boolean;
-}
 
 export class DashboardSrv {
   dashboard: DashboardModel;
