@@ -1,5 +1,5 @@
 import React, { FC, memo, useMemo } from 'react';
-import { DataFrame } from '@grafana/data';
+import { DataFrame, Field } from '@grafana/data';
 import { useSortBy, useTable, useBlockLayout, Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import useMeasure from 'react-use/lib/useMeasure';
