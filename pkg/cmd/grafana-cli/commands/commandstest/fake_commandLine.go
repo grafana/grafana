@@ -7,13 +7,16 @@ import (
 )
 
 // NewCliContext creates a new CLI context with a certain set of command line arguments.
-func NewCliContext(args []string) (*utils.ContextCommandLine, error) {
+func NewCliContext(flags map[string]string) (*utils.ContextCommandLine, error) {
 	app := cli.App{
 		Name: "Test",
 	}
 	flagSet := flag.NewFlagSet("Test", 0)
-	if err := flagSet.Parse(args); err != nil {
-		return nil, err
+	for flag, value := range flags {
+		flagSet.String(flag, "", "")
+		if err := flagSet.Set(flag, value); err != nil {
+			return nil, err
+		}
 	}
 
 	return &utils.ContextCommandLine{

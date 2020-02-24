@@ -46,7 +46,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	assert.Nil(t, err)
 
 	//run migration
-	c, err := commandstest.NewCliContext([]string{})
+	c, err := commandstest.NewCliContext(map[string]string{})
 	require.Nil(t, err)
 	err = EncryptDatasourcePaswords(c, sqlstore)
 	assert.Nil(t, err)

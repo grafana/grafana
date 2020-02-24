@@ -18,7 +18,7 @@ func TestMissingPath(t *testing.T) {
 			cmd := Command{
 				Client: nil,
 			}
-			c, err := commandstest.NewCliContext([]string{"ls"})
+			c, err := commandstest.NewCliContext(map[string]string{})
 			So(err, ShouldBeNil)
 			s.IoHelper = &commandstest.FakeIoUtil{}
 
@@ -29,7 +29,7 @@ func TestMissingPath(t *testing.T) {
 		})
 
 		Convey("Path is not a directory", func() {
-			c, err := commandstest.NewCliContext([]string{"ls", "--path", "/var/lib/grafana/plugins"})
+			c, err := commandstest.NewCliContext(map[string]string{"path": "/var/lib/grafana/plugins"})
 			So(err, ShouldBeNil)
 			s.IoHelper = &commandstest.FakeIoUtil{
 				FakeIsDirectory: false,
@@ -45,7 +45,7 @@ func TestMissingPath(t *testing.T) {
 		})
 
 		Convey("can override validateLsCommand", func() {
-			c, err := commandstest.NewCliContext([]string{"ls", "--path", "/var/lib/grafana/plugins"})
+			c, err := commandstest.NewCliContext(map[string]string{"path": "/var/lib/grafana/plugins"})
 			So(err, ShouldBeNil)
 
 			validateLsCommand = func(pluginDir string) error {
@@ -62,7 +62,7 @@ func TestMissingPath(t *testing.T) {
 		})
 
 		Convey("Validate that validateLsCommand is reset", func() {
-			c, err := commandstest.NewCliContext([]string{"ls", "--path", "/var/lib/grafana/plugins"})
+			c, err := commandstest.NewCliContext(map[string]string{"path": "/var/lib/grafana/plugins"})
 			So(err, ShouldBeNil)
 			cmd := Command{
 				Client: nil,

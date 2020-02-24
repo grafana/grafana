@@ -105,9 +105,9 @@ func TestExtractFiles(t *testing.T) {
 }
 
 func TestInstallPluginCommand(t *testing.T) {
-	pluginDir, cleanUp := setupFakePluginsDir(t)
+	pluginsDir, cleanUp := setupFakePluginsDir(t)
 	defer cleanUp()
-	c, err := commandstest.NewCliContext([]string{"install", "--pluginsDir", pluginDir})
+	c, err := commandstest.NewCliContext(map[string]string{"pluginsDir": pluginsDir})
 	require.NoError(t, err)
 
 	client := &commandstest.FakeGrafanaComClient{
