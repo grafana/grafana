@@ -1,4 +1,4 @@
-import React, { FC, HTMLProps } from 'react';
+import React, { HTMLProps } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme } from '../../../themes';
@@ -11,6 +11,17 @@ export interface Props extends Omit<HTMLProps<HTMLTextAreaElement>, 'size'> {
   /** Choose a predefined size */
   size?: FormInputSize;
 }
+
+export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>(({ invalid, size = 'auto', ...props }, ref) => {
+  const theme = useTheme();
+  const styles = getTextAreaStyle(theme, invalid);
+
+  return (
+    <div className={inputSizes()[size]}>
+      <textarea className={styles.textarea} {...props} ref={ref} />
+    </div>
+  );
+});
 
 const getTextAreaStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
   return {
@@ -25,14 +36,3 @@ const getTextAreaStyle = stylesFactory((theme: GrafanaTheme, invalid = false) =>
     ),
   };
 });
-
-export const TextArea: FC<Props> = ({ invalid, size = 'auto', ...props }) => {
-  const theme = useTheme();
-  const styles = getTextAreaStyle(theme, invalid);
-
-  return (
-    <div className={inputSizes()[size]}>
-      <textarea className={styles.textarea} {...props} />
-    </div>
-  );
-};
