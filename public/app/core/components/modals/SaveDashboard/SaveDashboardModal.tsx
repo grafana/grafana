@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal } from '@grafana/ui';
+import { css } from 'emotion';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { useDashboardSave } from './useDashboardSave';
@@ -11,7 +12,15 @@ export const SaveDashboardModal: React.FC<SaveDashboardModalProps> = ({ dashboar
     <>
       {state.error && <SaveDashboardErrorProxy error={state.error} dashboard={dashboard} onClose={onClose} />}
       {!state.error && (
-        <Modal isOpen={true} title="Save dashboard" icon="copy" onDismiss={onClose}>
+        <Modal
+          isOpen={true}
+          title="Save dashboard"
+          icon="copy"
+          onDismiss={onClose}
+          className={css`
+            width: 500px;
+          `}
+        >
           <SaveDashboardForm
             dashboard={dashboard}
             onCancel={onClose}

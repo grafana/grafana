@@ -70,12 +70,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
       {({ register, control, errors }) => (
         <>
           <Forms.Field label="Dashboard name" invalid={!!errors.title} error="Dashboard name is required">
-            <Forms.Input
-              size="md"
-              name="title"
-              ref={register({ required: true })}
-              aria-label="Save dashboard title field"
-            />
+            <Forms.Input name="title" ref={register({ required: true })} aria-label="Save dashboard title field" />
           </Forms.Field>
           <Forms.Field label="Folder">
             <Forms.InputControl
@@ -86,6 +81,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
               initialFolderId={dashboard.meta.folderId}
               initialTitle={dashboard.meta.folderTitle}
               enableCreateNew
+              useNewForms
             />
           </Forms.Field>
           <Forms.Field label="Copy tags">

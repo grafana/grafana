@@ -4,6 +4,7 @@ import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
+import { css } from 'emotion';
 
 export const SaveDashboardAsModal: React.FC<SaveDashboardModalProps & {
   isNew?: boolean;
@@ -14,7 +15,15 @@ export const SaveDashboardAsModal: React.FC<SaveDashboardModalProps & {
     <>
       {state.error && <SaveDashboardErrorProxy error={state.error} dashboard={dashboard} onClose={onClose} />}
       {!state.error && (
-        <Modal isOpen={true} title="Save dashboard as..." icon="copy" onDismiss={onClose}>
+        <Modal
+          isOpen={true}
+          title="Save dashboard as..."
+          icon="copy"
+          onDismiss={onClose}
+          className={css`
+            width: 500px;
+          `}
+        >
           <SaveDashboardAsForm
             dashboard={dashboard}
             onCancel={onClose}

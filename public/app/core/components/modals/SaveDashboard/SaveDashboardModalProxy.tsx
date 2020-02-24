@@ -15,6 +15,7 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ das
     onClose,
     onSaveSuccess,
   };
+
   return (
     <>
       {isChanged && !isProvisioned && <SaveDashboardModal {...modalProps} />}
