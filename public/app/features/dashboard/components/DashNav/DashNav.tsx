@@ -8,12 +8,13 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, ModalsController } from '@grafana/ui';
 // State
 import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
+import { SaveDashboardModalProxy } from '../../../../core/components/modals/SaveDashboard/SaveDashboardModal';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -29,14 +30,21 @@ export interface StateProps {
   location: any;
 }
 
+export interface State {
+  showSaveModal: boolean;
+}
+
 type Props = StateProps & OwnProps;
 
-export class DashNav extends PureComponent<Props> {
+export class DashNav extends PureComponent<Props, State> {
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
     super(props);
     this.playlistSrv = this.props.$injector.get('playlistSrv');
+    this.state = {
+      showSaveModal: false,
+    };
   }
 
   onDahboardNameClick = () => {
@@ -70,7 +78,14 @@ export class DashNav extends PureComponent<Props> {
   onSave = () => {
     const { $injector } = this.props;
     const dashboardSrv = $injector.get('dashboardSrv');
+
     dashboardSrv.saveDashboard();
+  };
+
+  onSaveClick = () => {
+    this.setState({
+      showSaveModal: true,
+    });
   };
 
   onOpenSettings = () => {
@@ -231,7 +246,23 @@ export class DashNav extends PureComponent<Props> {
           )}
 
           {canSave && (
-            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
+            <ModalsController>
+              {({ showModal, hideModal }) => {
+                return (
+                  <DashNavButton
+                    tooltip="Save dashboard"
+                    classSuffix="save"
+                    icon="fa fa-save"
+                    onClick={() => {
+                      showModal(SaveDashboardModalProxy, {
+                        dashboard,
+                        onClose: hideModal,
+                      });
+                    }}
+                  />
+                );
+              }}
+            </ModalsController>
           )}
 
           {snapshotUrl && (
@@ -267,6 +298,8 @@ export class DashNav extends PureComponent<Props> {
             <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
           </div>
         )}
+
+        {/*{this.state.showSaveModal && this.renderSaveDashboardModal()}*/}
       </div>
     );
   }

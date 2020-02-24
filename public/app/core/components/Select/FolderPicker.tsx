@@ -2,9 +2,9 @@ import React, { PureComponent } from 'react';
 import { Forms } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { debounce } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/core';
 import appEvents from '../../app_events';
+import { getBackendSrv } from '../../services/backend_srv';
+import { contextSrv } from '../../services/context_srv';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -107,9 +107,10 @@ export class FolderPicker extends PureComponent<Props, State> {
     const options = await this.getOptions('');
 
     let folder: SelectableValue<number> = { value: -1 };
-    if (initialFolderId || (initialFolderId && initialFolderId > -1)) {
+
+    if (initialFolderId !== undefined && initialFolderId > -1) {
       folder = options.find(option => option.value === initialFolderId) || { value: -1 };
-    } else if (enableReset && initialTitle && initialFolderId === undefined) {
+    } else if (enableReset && initialTitle) {
       folder = resetFolder;
     }
 

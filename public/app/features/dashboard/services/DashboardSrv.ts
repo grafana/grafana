@@ -210,10 +210,10 @@ export class DashboardSrv {
   }
 
   showSaveAsModal() {
-    this.$rootScope.appEvent(CoreEvents.showModal, {
-      templateHtml: '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
-      modalClass: 'modal--narrow',
-    });
+    // this.$rootScope.appEvent(CoreEvents.showModal, {
+    //   templateHtml: '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
+    //   modalClass: 'modal--narrow',
+    // });
   }
 
   showSaveModal() {
