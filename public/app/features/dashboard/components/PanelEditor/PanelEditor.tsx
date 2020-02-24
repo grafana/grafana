@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { CustomScrollbar, Forms, selectThemeVariant, stylesFactory } from '@grafana/ui';
+import { CustomScrollbar, Forms, selectThemeVariant, stylesFactory, TabsBar, Tab, TabContent } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -175,9 +175,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
-  renderHorizontalSplit() {
+  renderHorizontalSplit(styles: any) {
     const { dashboard, panel, tabs, data, uiState } = this.props;
-    const styles = getStyles(config.theme);
 
     return (
       <SplitPane
@@ -263,9 +262,24 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderWithOptionsPane() {
+  renderOptionsPane(styles: any) {
+    return (
+      <div className={styles.panelOptionsPane}>
+        <TabsBar>
+          <Tab label="Visualization options" active={true} />
+        </TabsBar>
+        <TabContent className={styles.panelOptionsPaneTabContent}>
+          <CustomScrollbar>
+            {this.renderFieldOptions()}
+            <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
+          </CustomScrollbar>
+        </TabContent>
+      </div>
+    );
+  }
+
+  renderWithOptionsPane(styles: any) {
     const { uiState } = this.props;
-    const styles = getStyles(config.theme);
 
     return (
       <SplitPane
@@ -278,13 +292,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragStarted={() => (document.body.style.cursor = 'col-resize')}
         onDragFinished={size => this.onDragFinished(Pane.Right, size)}
       >
-        {this.renderHorizontalSplit()}
-        <div className={styles.panelOptionsPane}>
-          <CustomScrollbar>
-            {this.renderFieldOptions()}
-            <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
-          </CustomScrollbar>
-        </div>
+        {this.renderHorizontalSplit(styles)}
+        {this.renderOptionsPane(styles)}
       </SplitPane>
     );
   }
@@ -299,7 +308,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper}>
-        {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane() : this.renderHorizontalSplit()}
+        {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
       </div>
     );
   }
@@ -403,8 +412,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     panelOptionsPane: css`
       height: 100%;
       width: 100%;
+      padding-top: 6px;
+    `,
+    panelOptionsPaneTabContent: css`
+      height: 100%;
+      width: 100%;
+      padding: 0;
       background: ${theme.colors.pageBg};
-      border-bottom: none;
     `,
     toolbar: css`
       display: flex;
