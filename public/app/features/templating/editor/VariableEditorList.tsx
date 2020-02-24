@@ -1,20 +1,26 @@
-import React, { PureComponent } from 'react';
+import React, { MouseEvent, PureComponent } from 'react';
 import { VariableState } from '../state/types';
 import { e2e } from '@grafana/e2e';
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
 import { QueryVariableModel } from '../variable';
+import { VariableIdentifier } from '../state/actions';
 
 export interface Props {
   variableStates: VariableState[];
+  onAddClick: (event: MouseEvent<HTMLAnchorElement>) => void;
+  onEditClick: (args: VariableIdentifier) => void;
 }
 
 export class VariableEditorList extends PureComponent<Props> {
+  onEditClick = (event: MouseEvent, args: VariableIdentifier) => {
+    event.preventDefault();
+    this.props.onEditClick(args);
+  };
+
   render() {
     return (
       <div>
-        <div
-        // ng-if="mode === 'list'"
-        >
+        <div>
           {this.props.variableStates.length === 0 && (
             <div>
               <EmptyListCTA
@@ -27,22 +33,15 @@ export class VariableEditorList extends PureComponent<Props> {
                     or sensor names in your metric queries you can use variables in their place. Variables are shown as
                     dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
                     being displayed in your dashboard. Check out the
-                    <a className="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
+                    <a class="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
                       Templating documentation
                     </a>
                     for more information.
                   </p>`,
                 }}
                 infoBoxTitle="What do variables do?"
+                onClick={this.props.onAddClick}
               />
-              {/*<empty-list-cta*/}
-              {/*  on-click="setNewMode"*/}
-              {/*  title="emptyListCta.title"*/}
-              {/*  infoBox="emptyListCta.infoBox"*/}
-              {/*  infoBoxTitle="emptyListCta.infoBoxTitle"*/}
-              {/*  buttonTitle="emptyListCta.buttonTitle"*/}
-              {/*  buttonIcon="emptyListCta.buttonIcon"*/}
-              {/*/>*/}
             </div>
           )}
 
@@ -63,13 +62,10 @@ export class VariableEditorList extends PureComponent<Props> {
                   {this.props.variableStates.map((state, index) => {
                     const variable = state.variable as QueryVariableModel;
                     return (
-                      <tr
-                        key={variable.name}
-                        // ng-repeat="variable in variables"
-                      >
+                      <tr key={variable.name}>
                         <td style={{ width: '1%' }}>
                           <span
-                            // ng-click="edit(variable)"
+                            onClick={event => this.onEditClick(event, { type: variable.type, uuid: variable.uuid })}
                             className="pointer template-variable"
                             aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowNameFields(
                               variable.name
@@ -80,7 +76,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td
                           style={{ maxWidth: '200px' }}
-                          // ng-click="edit(variable)"
+                          onClick={event => this.onEditClick(event, { type: variable.type, uuid: variable.uuid })}
                           className="pointer max-width"
                           aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowDefinitionFields(
                             variable.name

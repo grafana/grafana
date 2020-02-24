@@ -22,7 +22,7 @@ import { appEvents } from '../../../core/core';
 import { AppEvents } from '@grafana/data';
 import { VariableValuesPreview } from './VariableValuesPreview';
 
-export class VariableEditor extends PureComponent<VariableState> {
+export class VariableEditorEditor extends PureComponent<VariableState> {
   componentDidMount(): void {
     dispatch(variableEditorInit(this.props.variable));
   }

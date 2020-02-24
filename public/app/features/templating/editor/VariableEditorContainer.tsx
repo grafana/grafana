@@ -6,8 +6,13 @@ import { dispatch, store } from '../../../store/store';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
-import { VariableEditor } from './VariableEditor';
-import { changeToEditorEditMode, changeToEditorListMode, toVariablePayload } from '../state/actions';
+import { VariableEditorEditor } from './VariableEditorEditor';
+import {
+  changeToEditorEditMode,
+  changeToEditorListMode,
+  toVariablePayload,
+  VariableIdentifier,
+} from '../state/actions';
 import { VariableModel } from '../variable';
 
 export interface State {
@@ -50,6 +55,10 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
     uuidInEditor: state.templating.uuidInEditor,
   });
 
+  componentDidMount(): void {
+    dispatch(changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel)));
+  }
+
   componentWillUnmount(): void {
     if (this.subscription) {
       this.subscription.unsubscribe();
@@ -61,9 +70,8 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
     dispatch(changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel)));
   };
 
-  onChangeToEditMode = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    dispatch(changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel)));
+  onEditVariable = (args: VariableIdentifier) => {
+    dispatch(changeToEditorEditMode(toVariablePayload({ uuid: args.uuid, type: args.type } as VariableModel)));
   };
 
   onChangeToAddMode = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -110,9 +118,6 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
               type="button"
               className="btn btn-primary"
               onClick={this.onChangeToAddMode}
-              // ng-click="setMode('new');"
-              // ng-if="variables.length > 0"
-              // ng-hide="mode === 'edit' || mode === 'new'"
               aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.newButton}
             >
               New
@@ -120,9 +125,15 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
           )}
         </div>
 
-        {!variableStateToEdit && <VariableEditorList variableStates={this.state.variableStates} />}
+        {!variableStateToEdit && (
+          <VariableEditorList
+            variableStates={this.state.variableStates}
+            onAddClick={this.onChangeToAddMode}
+            onEditClick={this.onEditVariable}
+          />
+        )}
         {variableStateToEdit && (
-          <VariableEditor
+          <VariableEditorEditor
             picker={variableStateToEdit.picker}
             editor={variableStateToEdit.editor}
             variable={variableStateToEdit.variable}
