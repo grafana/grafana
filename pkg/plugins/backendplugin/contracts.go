@@ -3,6 +3,7 @@ package backendplugin
 import (
 	"encoding/json"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 )
@@ -54,18 +55,24 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *Check
 	}
 }
 
-type PluginInstance struct {
-	ID       int64
-	Name     string
-	Type     string
-	URL      string
-	JSONData json.RawMessage
+type DataSourceConfig struct {
+	ID               int64
+	Name             string
+	URL              string
+	User             string
+	Database         string
+	BasicAuthEnabled bool
+	BasicAuthUser    string
 }
 
 type PluginConfig struct {
-	PluginID string
-	OrgID    int64
-	Instance *PluginInstance
+	OrgID                   int64
+	PluginID                string
+	PluginType              string
+	JSONData                json.RawMessage
+	DecryptedSecureJSONData map[string]string
+	Updated                 time.Time
+	DataSourceConfig        *DataSourceConfig
 }
 
 type CallResourceRequest struct {

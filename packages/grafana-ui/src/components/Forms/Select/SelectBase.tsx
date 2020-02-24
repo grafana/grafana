@@ -11,7 +11,7 @@ import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable
 
 import { Icon } from '../../Icon/Icon';
 import { css, cx } from 'emotion';
-import { inputSizes } from '../commonStyles';
+import { inputSizesPixels } from '../commonStyles';
 import { FormInputSize } from '../types';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
@@ -235,7 +235,6 @@ export function SelectBase<T>({
     menuShouldScrollIntoView: false,
     renderControl,
     captureMenuScroll: false,
-    blurInputOnSelect: true,
     menuPlacement: 'auto',
   };
 
@@ -287,20 +286,6 @@ export function SelectBase<T>({
               {props.children}
             </div>
           ),
-          SelectContainer: (props: any) => (
-            <div
-              {...props.innerProps}
-              className={cx(
-                css(props.getStyles('container', props)),
-                css`
-                  position: relative;
-                `,
-                inputSizes()[size]
-              )}
-            >
-              {props.children}
-            </div>
-          ),
           IndicatorsContainer: IndicatorsContainer,
           IndicatorSeparator: () => <></>,
           Control: CustomControl,
@@ -347,6 +332,10 @@ export function SelectBase<T>({
             position,
             marginBottom: !!bottom ? '10px' : '0',
             zIndex: 9999,
+          }),
+          container: () => ({
+            position: 'relative',
+            width: inputSizesPixels(size),
           }),
         }}
         className={widthClass}

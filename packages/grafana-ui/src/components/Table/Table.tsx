@@ -8,6 +8,8 @@ import { useTheme } from '../../themes';
 import { TableFilterActionCallback } from './types';
 import { getTableStyles } from './styles';
 import { TableCell } from './TableCell';
+import { Icon } from '../Icon/Icon';
+import { getTextAlign } from './utils';
 
 export interface Props {
   data: DataFrame;
@@ -61,7 +63,9 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
       <div>
         {headerGroups.map((headerGroup: any) => (
           <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
-            {headerGroup.headers.map((column: any) => renderHeaderCell(column, tableStyles.headerCell))}
+            {headerGroup.headers.map((column: any) =>
+              renderHeaderCell(column, tableStyles.headerCell, data.fields[column.index])
+            )}
           </div>
         ))}
       </div>
@@ -77,17 +81,18 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
   );
 });
 
-function renderHeaderCell(column: any, className: string) {
+function renderHeaderCell(column: any, className: string, field: Field) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
+  const fieldTextAlign = getTextAlign(field);
 
-  if (column.textAlign) {
-    headerProps.style.textAlign = column.textAlign;
+  if (fieldTextAlign) {
+    headerProps.style.textAlign = fieldTextAlign;
   }
 
   return (
     <div className={className} {...headerProps}>
       {column.render('Header')}
-      <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
+      {column.isSorted && (column.isSortedDesc ? <Icon name="caret-down" /> : <Icon name="caret-up" />)}
     </div>
   );
 }

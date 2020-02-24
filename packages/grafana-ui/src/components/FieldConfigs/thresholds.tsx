@@ -7,7 +7,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
-import { ThresholdsEditor } from '../ThresholdsEditor/ThresholdsEditor';
+import { ThresholdsEditor } from '../ThresholdsEditorNew/ThresholdsEditor';
 
 export interface ThresholdsFieldConfigSettings {
   // Anything?
@@ -42,7 +42,7 @@ export class ThresholdsValueEditor extends React.PureComponent<
       };
     }
 
-    return <ThresholdsEditor showAlphaUI={true} thresholds={value} onChange={onChange} />;
+    return <ThresholdsEditor thresholds={value} onChange={onChange} />;
   }
 }
 

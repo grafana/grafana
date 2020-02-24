@@ -129,21 +129,26 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
   let title: Field = undefined;
   const suggestions: VariableSuggestion[] = [];
   const keys: KeyValue<true> = {};
+
   for (const df of dataFrames) {
     for (const f of df.fields) {
       if (keys[f.name]) {
         continue;
       }
+
       suggestions.push({
         value: `__data.fields[${f.name}]`,
         label: `${f.name}`,
         documentation: `Formatted value for ${f.name} on the same row`,
         origin: VariableOrigin.Fields,
       });
+
       keys[f.name] = true;
+
       if (!numeric && f.type === FieldType.number) {
         numeric = f;
       }
+
       if (!title && f.config.title && f.config.title !== f.name) {
         title = f;
       }
@@ -158,6 +163,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
       origin: VariableOrigin.Fields,
     });
   }
+
   if (numeric) {
     suggestions.push({
       value: `__data.fields[${numeric.name}].numeric`,
@@ -172,6 +178,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
       origin: VariableOrigin.Fields,
     });
   }
+
   if (title) {
     suggestions.push({
       value: `__data.fields[${title.config.title}]`,
@@ -180,6 +187,7 @@ const getDataFrameVars = (dataFrames: DataFrame[]) => {
       origin: VariableOrigin.Fields,
     });
   }
+
   return suggestions;
 };
 
@@ -264,6 +272,7 @@ export class LinkSrv implements LinkService {
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
     let href = link.url;
+
     if (link.onBuildUrl) {
       href = link.onBuildUrl({
         origin,
@@ -272,6 +281,7 @@ export class LinkSrv implements LinkService {
     }
 
     let onClick: (e: any) => void = undefined;
+
     if (link.onClick) {
       onClick = (e: any) => {
         link.onClick({
@@ -289,9 +299,11 @@ export class LinkSrv implements LinkService {
       origin,
       onClick,
     };
+
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
     const variablesQuery = toUrlParams(params);
+
     info.href = this.templateSrv.replace(info.href, {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
@@ -303,7 +315,9 @@ export class LinkSrv implements LinkService {
         value: variablesQuery,
       },
     });
+
     info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
+
     return info;
   };
 
