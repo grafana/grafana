@@ -470,6 +470,8 @@ export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void
   return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.uuid!, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
+    dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));
+    dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
   };
 };
 
@@ -478,5 +480,7 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
     const variableInState = getVariable(identifier.uuid!, getState());
     dispatch(storeNewVariable(toVariablePayload(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
+    dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));
+    dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
   };
 };
