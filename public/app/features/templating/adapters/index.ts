@@ -9,6 +9,7 @@ import { TemplatingState } from '../state';
 
 export interface VariableAdapter<Model extends VariableModel> {
   description: string;
+  label: string;
   initialState: VariableState;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
   setValue: (variable: Model, option: VariableOption) => Promise<void>;
@@ -35,6 +36,7 @@ export interface VariableAdapters {
   contains: (type: VariableType) => boolean;
   get: (type: VariableType) => VariableAdapter<any>;
   set: (type: VariableType, adapter: VariableAdapter<any>) => void;
+  registeredTypes: () => Array<{ type: VariableType; label: string }>;
 }
 
 export const variableAdapters: VariableAdapters = {
@@ -52,6 +54,11 @@ export const variableAdapters: VariableAdapters = {
   },
   set: (type: VariableType, adapter: VariableAdapter<any>): void => {
     allVariableAdapters[type] = adapter;
+  },
+  registeredTypes: (): Array<{ type: VariableType; label: string }> => {
+    return Object.keys(allVariableAdapters)
+      .filter((key: VariableType) => allVariableAdapters[key] !== null)
+      .map((key: VariableType) => ({ type: key, label: allVariableAdapters[key].label }));
   },
 };
 

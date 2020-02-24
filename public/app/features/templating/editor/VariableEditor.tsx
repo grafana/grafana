@@ -117,27 +117,11 @@ export class VariableEditor extends PureComponent<VariableState> {
                     onChange={this.onTypeChange}
                     aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalTypeSelect}
                   >
-                    <option label="Interval" value="interval">
-                      Interval
-                    </option>
-                    <option label="Query" value="query">
-                      Query
-                    </option>
-                    <option label="Datasource" value="datasource">
-                      Datasource
-                    </option>
-                    <option label="Custom" value="custom">
-                      Custom
-                    </option>
-                    <option label="Constant" value="constant">
-                      Constant
-                    </option>
-                    <option label="Ad hoc filters" value="adhoc">
-                      Ad hoc filters
-                    </option>
-                    <option label="Text box" value="textbox">
-                      Text box
-                    </option>
+                    {variableAdapters.registeredTypes().map(item => (
+                      <option key={item.type} label={item.label} value={item.type}>
+                        {item.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

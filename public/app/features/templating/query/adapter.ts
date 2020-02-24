@@ -10,6 +10,7 @@ import { updateQueryVariableOptions } from './actions';
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
     description: 'Variable values are fetched from a datasource query',
+    label: 'Query',
     initialState: initialQueryVariableState,
     reducer: queryVariableReducer,
     picker: QueryVariablePicker,
