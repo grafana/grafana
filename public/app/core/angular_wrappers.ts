@@ -24,7 +24,7 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { VariableEditorList } from '../features/templating/editor/VariableEditorList';
+import { VariableEditorContainer } from '../features/templating/editor/VariableEditorContainer';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -152,5 +152,5 @@ export function registerAngularDirectives() {
     ['onLoad', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('variableEditorList', VariableEditorList, []);
+  react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
 }
