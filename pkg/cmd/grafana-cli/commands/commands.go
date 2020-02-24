@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"os"
 	"strings"
 
 	"fmt"
@@ -46,7 +45,6 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 
 		if err := command(cmd, engine); err != nil {
 			return err
-			os.Exit(1)
 		}
 
 		logger.Info("\n\n")
