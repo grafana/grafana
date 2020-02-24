@@ -12,7 +12,11 @@ The `default.ts` file holds common variables like typography and spacing definit
 
 ## Usage
 
+This section provides usage guidelines.
+
 ### Using themes in React components
+
+Here's how to use Grafana themes in React components.
 
 #### Using `ThemeContext` directly
 
@@ -114,6 +118,8 @@ Angular components should be migrated to React, or if that's not possible at the
 
 ## FAQ
 
+This section provides insight into frequently-asked questions.
+
 ### How can I modify Sass variable files?
 
 > For the following to apply you need to run `yarn dev` task.
@@ -132,6 +138,8 @@ Angular components should be migrated to React, or if that's not possible at the
 
 
 ## Limitations
+
+This section describes limitations with Grafana's theming system.
 
 ### You must ensure `ThemeContext` provider is available in a React tree
 
