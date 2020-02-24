@@ -54,11 +54,7 @@ export const changeQueryVariableSearchQuery = createAction<VariablePayload<strin
   'templating/changeQueryVariableSearchQuery'
 );
 
-export const updateQueryVariableOptions = (
-  args: VariableIdentifier,
-  searchFilter?: string,
-  notifyAngular?: boolean
-): ThunkResult<void> => {
+export const updateQueryVariableOptions = (args: VariableIdentifier, searchFilter?: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variableInState = getVariable<QueryVariableModel>(args.uuid!, getState());
     try {
@@ -82,9 +78,7 @@ export const updateQueryVariableOptions = (
       }
 
       await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
-      await dispatch(
-        updateVariableCompleted(toVariablePayload(variableInState, { notifyAngular: notifyAngular ?? false }))
-      );
+      await dispatch(updateVariableCompleted(toVariablePayload(variableInState)));
     } catch (err) {
       console.error(err);
       if (err.data && err.data.message) {
@@ -168,7 +162,7 @@ export const searchQueryChanged = (uuid: string, searchQuery: string): ThunkResu
 ) => {
   const variable = getVariable<QueryVariableModel>(uuid, getState());
   if (getQueryHasSearchFilter(variable)) {
-    await variableAdapters.get(variable.type).updateOptions(variable, searchQuery, false);
+    await variableAdapters.get(variable.type).updateOptions(variable, searchQuery);
   }
   dispatch(changeQueryVariableSearchQuery(toVariablePayload(variable, searchQuery)));
 };

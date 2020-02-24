@@ -82,7 +82,7 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
     };
   }
 );
-export const removeVariable = createAction<VariablePayload<{ notifyAngular: boolean }>>('templating/removeVariable');
+export const removeVariable = createAction<VariablePayload>('templating/removeVariable');
 export const storeNewVariable = createAction<PrepareAction<VariablePayload>>(
   'templating/storeNewVariable',
   (payload: VariablePayload) => {
@@ -125,9 +125,7 @@ export const setCurrentVariableValue = createAction<VariablePayload<VariableOpti
 );
 export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
 export const updateVariableStarting = createAction<VariablePayload>('templating/updateVariableStarting');
-export const updateVariableCompleted = createAction<VariablePayload<{ notifyAngular: boolean }>>(
-  'templating/updateVariableCompleted'
-);
+export const updateVariableCompleted = createAction<VariablePayload>('templating/updateVariableCompleted');
 export const updateVariableFailed = createAction<VariablePayload<Error>>('templating/updateVariableFailed');
 export const updateVariableTags = createAction<VariablePayload<any[]>>('templating/updateVariableTags');
 export const variableEditorMounted = createAction<VariablePayload<DataSourceSelectItem[]>>(
@@ -469,7 +467,7 @@ export const variableEditorInit = (identifier: VariableIdentifier): ThunkResult<
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.uuid!, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
+    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));
     dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
   };
@@ -479,7 +477,7 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
   return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.uuid!, getState());
     dispatch(storeNewVariable(toVariablePayload(variableInState)));
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
+    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));
     dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
   };

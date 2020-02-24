@@ -24,8 +24,8 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async (variable, searchFilter, notifyAngular) => {
-      await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter, notifyAngular));
+    updateOptions: async (variable, searchFilter) => {
+      await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter));
     },
     getSaveModel: variable => {
       const { index, uuid, initLock, global, ...rest } = variable;
