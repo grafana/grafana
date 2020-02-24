@@ -65,6 +65,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => 
         border: 1px solid ${trackColor};
       }
     `,
+    /** Global component from @emotion/core doesn't accept computed classname string returned from css from emotion.
+     * It accepts object containing the computed name and flattened styles returned from css from @emotion/core
+     * */
     tooltip: cssCore`
     body {
       .rc-slider-tooltip {
@@ -106,6 +109,7 @@ export const Slider: FunctionComponent<Props> = ({
   const RangeWithTooltip = createSliderWithTooltip(Range);
   return (
     <div className={cx(styles.container, styles.slider)}>
+      {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
       <RangeWithTooltip
         tipProps={{ visible: true, placement: isHorizontal ? 'top' : 'right' }}
