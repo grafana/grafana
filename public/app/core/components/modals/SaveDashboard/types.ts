@@ -13,3 +13,8 @@ export interface SaveDashboardFormProps {
   onSuccess: () => void;
   onSubmit?: (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
 }
+
+export interface SaveDashboardModalProps {
+  dashboard: DashboardModel;
+  onClose: () => void;
+}
