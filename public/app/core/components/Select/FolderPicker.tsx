@@ -14,12 +14,11 @@ export interface Props {
   dashboardId?: any;
   initialTitle?: string;
   initialFolderId?: number;
+  useNewForms?: boolean;
 }
 
 interface State {
   folder: SelectableValue<number>;
-  validationError: string;
-  hasValidationError: boolean;
 }
 
 export class FolderPicker extends PureComponent<Props, State> {
@@ -30,8 +29,6 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     this.state = {
       folder: {},
-      validationError: '',
-      hasValidationError: false,
     };
 
     this.debouncedSearch = debounce(this.getOptions, 300, {
@@ -72,7 +69,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     return options;
   };
 
-  onFolderChange = async (newFolder: SelectableValue<number>) => {
+  onFolderChange = (newFolder: SelectableValue<number>) => {
     if (!newFolder) {
       newFolder = { value: 0, label: this.props.rootName };
     }
@@ -142,34 +139,39 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { folder, validationError, hasValidationError } = this.state;
-    const { enableCreateNew } = this.props;
+    const { folder } = this.state;
+    const { enableCreateNew, useNewForms } = this.props;
 
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <label className="gf-form-label width-7">Folder</label>
-            <Forms.AsyncSelect
-              loadingMessage="Loading folders..."
-              defaultOptions
-              defaultValue={folder}
-              value={folder}
-              allowCustomValue={enableCreateNew}
-              loadOptions={this.debouncedSearch}
-              onChange={this.onFolderChange}
-              onCreateOption={this.createNewFolder}
-              size="sm"
-            />
-          </div>
-        </div>
-        {hasValidationError && (
+        {useNewForms && (
+          <Forms.AsyncSelect
+            loadingMessage="Loading folders..."
+            defaultOptions
+            defaultValue={folder}
+            value={folder}
+            allowCustomValue={enableCreateNew}
+            loadOptions={this.debouncedSearch}
+            onChange={this.onFolderChange}
+            onCreateOption={this.createNewFolder}
+            size="sm"
+          />
+        )}
+        {!useNewForms && (
           <div className="gf-form-inline">
-            <div className="gf-form gf-form--grow">
-              <label className="gf-form-label text-warning gf-form-label--grow">
-                <i className="fa fa-warning" />
-                {validationError}
-              </label>
+            <div className="gf-form">
+              <label className="gf-form-label width-7">Folder</label>
+              <Forms.AsyncSelect
+                loadingMessage="Loading folders..."
+                defaultOptions
+                defaultValue={folder}
+                value={folder}
+                allowCustomValue={enableCreateNew}
+                loadOptions={this.debouncedSearch}
+                onChange={this.onFolderChange}
+                onCreateOption={this.createNewFolder}
+                size="sm"
+              />
             </div>
           </div>
         )}
