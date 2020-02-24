@@ -81,17 +81,3 @@ export interface DashboardState {
   modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
   panels: { [id: string]: PanelState };
 }
-
-export enum DashboardSource {
-  Gcom = 0,
-  Json = 1,
-}
-
-export interface ImportDashboardState {
-  meta: { updatedAt: string; orgName: string };
-  dashboard: any;
-  source: DashboardSource;
-  inputs: any[];
-  gcomError: string;
-  isLoaded: boolean;
-}

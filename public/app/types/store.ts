@@ -6,7 +6,7 @@ import { LocationState } from './location';
 import { AlertRulesState } from './alerting';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
-import { DashboardState, ImportDashboardState } from './dashboard';
+import { DashboardState } from './dashboard';
 import { DataSourcesState, DataSourceSettingsState } from './datasources';
 import { ExploreState } from './explore';
 import { UsersState, UserState, UserAdminState } from './user';
@@ -18,6 +18,7 @@ import { LdapState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
 import { PanelEditorStateNew } from '../features/dashboard/components/PanelEditor/state/reducers';
 import { ApiKeysState } from './apiKeys';
+import { ImportDashboardState } from '../features/manage-dashboards/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;

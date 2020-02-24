@@ -8,6 +8,8 @@ import {
   setGcomDashboard,
   setJsonDashboard,
   setGcomError,
+  dashboardUidChange,
+  dashboardUidExists,
 } from './reducers';
 import { ThunkResult } from 'app/types';
 import { updateLocation } from '../../../core/actions';
@@ -66,6 +68,18 @@ export function changeDashboardTitle(title: string): ThunkResult<void> {
   };
 }
 
+export function changeDashboardUid(uid: string): ThunkResult<void> {
+  return async dispatch => {
+    const existingDashboard = await getBackendSrv().get(`/api/dashboards/uid/${uid}`);
+
+    if (existingDashboard) {
+      dispatch(dashboardUidExists(existingDashboard));
+    } else {
+      dispatch(dashboardUidChange(uid));
+    }
+  };
+}
+
 export function resetDashboard(): ThunkResult<void> {
   return dispatch => {
     dispatch(clearDashboard());
@@ -77,7 +91,7 @@ export function saveDashboard(folderId: number): ThunkResult<void> {
     const dashboard = getState().importDashboard.dashboard;
     const inputs = getState().importDashboard.inputs;
 
-    const inputsToPersist = inputs.map(input => {
+    const inputsToPersist = inputs.map((input: any) => {
       return {
         name: input.name,
         type: input.type,

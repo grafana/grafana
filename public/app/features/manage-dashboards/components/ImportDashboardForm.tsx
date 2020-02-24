@@ -4,18 +4,22 @@ import { Forms } from '@grafana/ui';
 import { dateTime } from '@grafana/data';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { changeDashboardTitle, resetDashboard, saveDashboard } from '../state/actions';
-import { DashboardSource, StoreState } from '../../../types';
+import { changeDashboardTitle, resetDashboard, saveDashboard, changeDashboardUid } from '../state/actions';
+import { DashboardSource } from '../state/reducers';
+import { StoreState } from '../../../types';
 
 interface Props {
   dashboard: any;
   inputs: any[];
   source: DashboardSource;
+  uidExists: boolean;
+  uidError: string;
   meta?: any;
 
   resetDashboard: typeof resetDashboard;
   changeDashboardTitle: typeof changeDashboardTitle;
   saveDashboard: typeof saveDashboard;
+  changeDashboardUid: typeof changeDashboardUid;
 }
 
 interface State {
@@ -45,14 +49,16 @@ class ImportDashboardForm extends PureComponent<Props, State> {
     this.setState({ folderId: $folder.id });
   };
 
-  onUidChange = (event: FormEvent<HTMLInputElement>) => {};
+  onUidChange = (event: FormEvent<HTMLInputElement>) => {
+    this.props.changeDashboardUid(event.currentTarget.value);
+  };
 
   onUidReset = () => {
     this.setState({ uidReset: true });
   };
 
   render() {
-    const { dashboard, inputs, meta, source } = this.props;
+    const { dashboard, inputs, meta, source, uidExists, uidError } = this.props;
     const { uidReset } = this.state;
 
     return (
@@ -86,7 +92,7 @@ class ImportDashboardForm extends PureComponent<Props, State> {
           </>
         )}
         <Forms.Form onSubmit={this.onSubmit}>
-          {({ register, control, errors }) => {
+          {() => {
             return (
               <>
                 <Forms.Legend className="section-heading">Options</Forms.Legend>
@@ -101,6 +107,8 @@ class ImportDashboardForm extends PureComponent<Props, State> {
                   description="The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
                 The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will not break any
                 bookmarked links to that dashboard."
+                  invalid={uidExists}
+                  error={uidError}
                 >
                   <Forms.Input
                     size="md"
@@ -149,6 +157,8 @@ const mapStateToProps = (state: StoreState) => {
     meta: state.importDashboard.meta,
     source,
     inputs: state.importDashboard.inputs,
+    uidExists: state.importDashboard.uidExists,
+    uidError: state.importDashboard.uidError,
   };
 };
 
@@ -156,6 +166,7 @@ const mapDispatchToProps = {
   changeDashboardTitle,
   resetDashboard,
   saveDashboard,
+  changeDashboardUid,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(ImportDashboardForm);
