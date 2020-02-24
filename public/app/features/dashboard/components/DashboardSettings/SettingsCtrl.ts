@@ -56,7 +56,9 @@ export class SettingsCtrl {
 
     this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
     this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
-    this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
+
+    appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
+
     this.selectors = e2e.pages.Dashboard.Settings.General.selectors;
   }
 

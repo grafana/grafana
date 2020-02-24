@@ -4,6 +4,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents, AppEventConsumer } from 'app/types';
+import { appEvents } from 'app/core/app_events';
 
 export class ChangeTracker {
   current: any;
@@ -32,7 +33,7 @@ export class ChangeTracker {
     this.scope = scope;
 
     // register events
-    scope.onAppEvent(CoreEvents.dashboardSaved, () => {
+    appEvents.on(CoreEvents.dashboardSaved, () => {
       this.original = this.current.getSaveModelClone();
       this.originalPath = $location.path();
     });
