@@ -15,11 +15,17 @@ weight = 100
 
 This guide will help you get started and acquainted with Grafana. For a more in-depth explanation of Grafana process and capabilities, refer to [Introduction to Grafana]({{< relref "intro-to-grafana.md" >}}).
 
-## 1. Install Grafana
+## Install Grafana
 
-## 2. Log in for the first time 
-3000, admin/admin
-Change password. Record your credentials!
+This step varies according to your computer operating system. Refer to the instructions for your OS in the [Installation]({{< relref "../installation/_index.md" >}}) section for instructions.
+
+## Log in for the first time 
+
+1. Open your web browser and go to http://localhost:3000/. `3000` is the default HTTP port that Grafana listens to if you haven’t configured a different port.
+1. On the login page, type `admin` for the username and password.
+1. Change your password. 
+
+> **Note:** We strongly encourage you to follow Grafana best practices and change the default administrator password. Don't forget to record your credentials!
 
 ## 3. Add TestData DB data source
 
@@ -33,6 +39,8 @@ Next...Import Streaming Example data source? Might not be ready for primetime.
 Now you have a dashboard and are displaying results. Feel free to experiment with what you have built, skip down to explore Next Steps, or keep going to see what else you can do with Grafana.
 
 ## 4. Import a dashboard
+
+## Change your user name
 
 ## 5. Create a playlist
 
