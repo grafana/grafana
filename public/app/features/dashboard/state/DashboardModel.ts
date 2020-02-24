@@ -15,6 +15,9 @@ import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { VariableModel } from '../../templating/variable';
 import { getConfig } from '../../../core/config';
+import { getState } from 'app/store/store';
+import { getVariables } from 'app/features/templating/state/selectors';
+import { variableAdapters } from 'app/features/templating/adapters';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -99,7 +102,7 @@ export class DashboardModel {
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
 
-    this.resetOriginalVariables();
+    this.resetOriginalVariables(true);
     this.resetOriginalTime();
 
     this.initMeta(meta);
@@ -232,15 +235,17 @@ export class DashboardModel {
     copy: any,
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
-    // get variable save models
+    const originalVariables = this.variables.list;
+    const currentVariables = getVariables(getState());
+
     copy.variables = {
-      list: _.map(this.variables.list, (variable: any) => (variable.getSaveModel ? variable.getSaveModel() : variable)),
+      list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
     };
 
     if (!defaults.saveVariables) {
       for (let i = 0; i < copy.variables.list.length; i++) {
         const current = copy.variables.list[i];
-        const original: any = _.find(this.originalTemplating, { name: current.name, type: current.type });
+        const original: any = _.find(originalVariables, { name: current.name, type: current.type });
 
         if (!original) {
           continue;
@@ -924,32 +929,23 @@ export class DashboardModel {
     return !_.isEqual(this.time, this.originalTime);
   }
 
-  resetOriginalVariables() {
-    this.originalTemplating = _.map(this.templating.list, (variable: any) => {
-      return {
-        name: variable.name,
-        type: variable.type,
-        current: _.cloneDeep(variable.current),
-        filters: _.cloneDeep(variable.filters),
-      };
-    });
+  resetOriginalVariables(initial = false) {
+    if (!getConfig().featureToggles.newVariables) {
+      this.originalTemplating = this.cloneVariablesFrom(this.templating.list);
+    }
+
+    if (!initial && getConfig().featureToggles.newVariables) {
+      // since we never change the this.variables.list when running with variables
+      // in redux we can use it instead of the originalTemplating.
+      this.variables.list = this.cloneVariablesFrom(getVariables(getState()));
+    }
   }
 
   hasVariableValuesChanged() {
-    if (this.templating.list.length !== this.originalTemplating.length) {
-      return false;
+    if (getConfig().featureToggles.newVariables) {
+      return this.hasVariablesChanged(this.variables.list, getVariables(getState()));
     }
-
-    const updated = _.map(this.templating.list, (variable: any) => {
-      return {
-        name: variable.name,
-        type: variable.type,
-        current: _.cloneDeep(variable.current),
-        filters: _.cloneDeep(variable.filters),
-      };
-    });
-
-    return !_.isEqual(updated, this.originalTemplating);
+    return this.hasVariablesChanged(this.originalTemplating, this.templating.list);
   }
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
@@ -1031,10 +1027,37 @@ export class DashboardModel {
   }
 
   private hasVariables() {
-    if (!getConfig().featureToggles.newVariables) {
-      return this.templating.list.length > 0;
+    if (getConfig().featureToggles.newVariables) {
+      return getVariables(getState()).length > 0;
+    }
+    return this.templating.list.length > 0;
+  }
+
+  private hasVariablesChanged(originalVariables: any[], currentVariables: any[]): boolean {
+    if (originalVariables.length !== currentVariables.length) {
+      return false;
     }
 
-    return this.variables.list.length > 0;
+    const updated = _.map(currentVariables, (variable: any) => {
+      return {
+        name: variable.name,
+        type: variable.type,
+        current: _.cloneDeep(variable.current),
+        filters: _.cloneDeep(variable.filters),
+      };
+    });
+
+    return !_.isEqual(updated, originalVariables);
+  }
+
+  private cloneVariablesFrom(variables: any[]): any[] {
+    return variables.map(variable => {
+      return {
+        name: variable.name,
+        type: variable.type,
+        current: _.cloneDeep(variable.current),
+        filters: _.cloneDeep(variable.filters),
+      };
+    });
   }
 }
