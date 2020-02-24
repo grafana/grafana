@@ -54,6 +54,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
           confirmText="Save & Overwrite"
           onConfirm={async () => {
             await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
+            onClose();
           }}
           onDismiss={onClose}
         />
