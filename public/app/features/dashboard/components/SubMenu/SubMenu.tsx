@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { StoreState } from '../../../../types';
 import { VariableState } from '../../../templating/state/types';
 import { VariablePicker } from '../../../templating/picker/VariablePicker';
+import { e2e } from '@grafana/e2e';
 
 export interface Props {
   variables: Record<string, VariableState>;
@@ -11,12 +12,18 @@ export interface Props {
 class UnConnectedSubMenu extends PureComponent<Props> {
   render() {
     const variables = Object.values(this.props.variables);
+    if (variables.length === 0) {
+      return null;
+    }
+
     return (
-      <>
-        {variables.map(state => (
-          <VariablePicker picker={state.picker} editor={state.editor} variable={state.variable} />
-        ))}
-      </>
+      <div className="submenu-controls">
+        <div className="submenu-item gf-form-inline" aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}>
+          {variables.map(state => (
+            <VariablePicker picker={state.picker} editor={state.editor} variable={state.variable} />
+          ))}
+        </div>
+      </div>
     );
   }
 }

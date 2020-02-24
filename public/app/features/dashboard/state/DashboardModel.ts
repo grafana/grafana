@@ -394,7 +394,7 @@ export class DashboardModel {
   }
 
   cleanUpRepeats() {
-    if (this.isSnapshotFalsy() || !this.hasVariables()) {
+    if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
 
@@ -421,7 +421,7 @@ export class DashboardModel {
   }
 
   processRepeats() {
-    if (this.isSnapshotFalsy() || !this.hasVariables()) {
+    if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
 
@@ -453,7 +453,7 @@ export class DashboardModel {
   }
 
   processRowRepeats(row: PanelModel) {
-    if (this.isSnapshotFalsy() || !this.hasVariables()) {
+    if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
 
@@ -1026,7 +1026,7 @@ export class DashboardModel {
     return _.find(this.variables.list, { name: panel.repeat } as any);
   }
 
-  private isSnapshotFalsy() {
+  private isSnapshotTruthy() {
     return this.snapshot;
   }
 
