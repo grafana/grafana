@@ -56,7 +56,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       .gicon {
-        opacity: 0.9;
         font-size: 26px;
       }
 
@@ -67,11 +66,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           box-shadow: none;
           opacity: 1;
           transform: scale(0.8);
-        }
-
-        .gicon {
-          opacity: 1;
-          transition: opacity 0.2s ease-in-out;
         }
       }
     `,
