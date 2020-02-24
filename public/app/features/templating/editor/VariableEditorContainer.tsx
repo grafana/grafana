@@ -7,12 +7,14 @@ import { VariableEditorEditor } from './VariableEditorEditor';
 import {
   changeToEditorEditMode,
   changeToEditorListMode,
+  changeVariableOrder,
   toVariablePayload,
   VariableIdentifier,
 } from '../state/actions';
 import { VariableModel } from '../variable';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { getVariableStates } from '../state/selectors';
 
 interface OwnProps {}
 
@@ -24,6 +26,7 @@ interface ConnectedProps {
 interface DispatchProps {
   changeToEditorListMode: typeof changeToEditorListMode;
   changeToEditorEditMode: typeof changeToEditorEditMode;
+  changeVariableOrder: typeof changeVariableOrder;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -47,6 +50,12 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   onChangeToAddMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
     this.props.changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel));
+  };
+
+  onChangeVariableOrder = (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => {
+    this.props.changeVariableOrder(
+      toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel, { fromIndex, toIndex })
+    );
   };
 
   render() {
@@ -100,6 +109,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             variableStates={this.props.variableStates}
             onAddClick={this.onChangeToAddMode}
             onEditClick={this.onEditVariable}
+            onChangeVariableOrder={this.onChangeVariableOrder}
           />
         )}
         {variableStateToEdit && (
@@ -115,13 +125,14 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variableStates: Object.values(state.templating.variables),
+  variableStates: getVariableStates(state),
   uuidInEditor: state.templating.uuidInEditor,
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeToEditorListMode,
   changeToEditorEditMode,
+  changeVariableOrder,
 };
 
 export const VariableEditorContainer = connectWithStore(

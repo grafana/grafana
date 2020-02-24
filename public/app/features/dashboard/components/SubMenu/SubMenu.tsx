@@ -4,6 +4,7 @@ import { StoreState } from '../../../../types';
 import { VariableState } from '../../../templating/state/types';
 import { VariablePicker } from '../../../templating/picker/VariablePicker';
 import { e2e } from '@grafana/e2e';
+import { getVariableStates } from '../../../templating/state/selectors';
 
 interface OwnProps {}
 
@@ -39,7 +40,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variableStates: Object.values(state.templating.variables),
+  variableStates: getVariableStates(state),
 });
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);

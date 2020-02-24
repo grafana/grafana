@@ -2,19 +2,30 @@ import React, { MouseEvent, PureComponent } from 'react';
 import { VariableState } from '../state/types';
 import { e2e } from '@grafana/e2e';
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
-import { QueryVariableModel } from '../variable';
-import { VariableIdentifier } from '../state/actions';
+import { QueryVariableModel, VariableModel } from '../variable';
+import { toVariableIdentifier, VariableIdentifier } from '../state/actions';
 
 export interface Props {
   variableStates: VariableState[];
   onAddClick: (event: MouseEvent<HTMLAnchorElement>) => void;
-  onEditClick: (args: VariableIdentifier) => void;
+  onEditClick: (identifier: VariableIdentifier) => void;
+  onChangeVariableOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;
+}
+
+enum MoveType {
+  down = 1,
+  up = -1,
 }
 
 export class VariableEditorList extends PureComponent<Props> {
-  onEditClick = (event: MouseEvent, args: VariableIdentifier) => {
+  onEditClick = (event: MouseEvent, identifier: VariableIdentifier) => {
     event.preventDefault();
-    this.props.onEditClick(args);
+    this.props.onEditClick(identifier);
+  };
+
+  onChangeVariableOrder = (event: MouseEvent, variable: VariableModel, moveType: MoveType) => {
+    event.preventDefault();
+    this.props.onChangeVariableOrder(toVariableIdentifier(variable), variable.index, variable.index + moveType);
   };
 
   render() {
@@ -65,7 +76,7 @@ export class VariableEditorList extends PureComponent<Props> {
                       <tr key={variable.name}>
                         <td style={{ width: '1%' }}>
                           <span
-                            onClick={event => this.onEditClick(event, { type: variable.type, uuid: variable.uuid })}
+                            onClick={event => this.onEditClick(event, toVariableIdentifier(variable))}
                             className="pointer template-variable"
                             aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowNameFields(
                               variable.name
@@ -76,7 +87,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td
                           style={{ maxWidth: '200px' }}
-                          onClick={event => this.onEditClick(event, { type: variable.type, uuid: variable.uuid })}
+                          onClick={event => this.onEditClick(event, toVariableIdentifier(variable))}
                           className="pointer max-width"
                           aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowDefinitionFields(
                             variable.name
@@ -88,8 +99,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         <td style={{ width: '1%' }}>
                           {index > 0 && (
                             <i
-                              // ng-click="_.move(variables,$index,$index-1)"
-                              // ng-hide="$first"
+                              onClick={event => this.onChangeVariableOrder(event, variable, MoveType.up)}
                               className="pointer fa fa-arrow-up"
                               aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowArrowUpButtons(
                                 variable.name
@@ -100,8 +110,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         <td style={{ width: '1%' }}>
                           {index < this.props.variableStates.length - 1 && (
                             <i
-                              // ng-click="_.move(variables,$index,$index+1)"
-                              // ng-hide="$last"
+                              onClick={event => this.onChangeVariableOrder(event, variable, MoveType.down)}
                               className="pointer fa fa-arrow-down"
                               aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowArrowDownButtons(
                                 variable.name
