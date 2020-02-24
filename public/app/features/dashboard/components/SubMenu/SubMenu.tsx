@@ -20,7 +20,12 @@ class UnConnectedSubMenu extends PureComponent<Props> {
       <div className="submenu-controls">
         <div className="submenu-item gf-form-inline" aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}>
           {variables.map(state => (
-            <VariablePicker picker={state.picker} editor={state.editor} variable={state.variable} />
+            <VariablePicker
+              key={state.variable.uuid}
+              picker={state.picker}
+              editor={state.editor}
+              variable={state.variable}
+            />
           ))}
         </div>
       </div>

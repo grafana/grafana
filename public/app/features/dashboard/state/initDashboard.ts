@@ -23,7 +23,7 @@ import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResul
 import { DashboardModel } from './DashboardModel';
 import { DataQuery } from '@grafana/data';
 import { getConfig } from '../../../core/config';
-import { initDashboardTemplating } from '../../templating/state/actions';
+import { initDashboardTemplating, processVariables } from '../../templating/state/actions';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -189,6 +189,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
             ? dashboard.variables.list
             : dashboard.templating.list.filter(v => v.type === 'query');
         await dispatch(initDashboardTemplating(list));
+        await dispatch(processVariables());
       }
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed', err)));

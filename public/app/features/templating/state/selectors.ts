@@ -15,10 +15,14 @@ export const getVariable = <T extends VariableModel = VariableModel>(
   return state.templating.variables[uuid].variable as T;
 };
 
+export const getVariableWithName = (name: string, state: StoreState = getState()) => {
+  return Object.values(state.templating.variables).find(state => state.variable.name === name)?.variable;
+};
+
 export const getVariables = (state: StoreState = getState()): VariableModel[] => {
   return Object.values(state.templating.variables)
     .filter(state => state.variable.uuid! !== emptyUuid)
-    .map(state => ({ ...state.variable }));
+    .map(state => state.variable);
 };
 
 export const getAllVariables = (

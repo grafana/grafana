@@ -15,13 +15,12 @@ import {
   VariableType,
   VariableWithOptions,
 } from '../variable';
-import { ThunkResult } from '../../../types';
+import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
 import { DashboardModel } from '../../dashboard/state';
-import { processVariableDependencies } from '../helpers';
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
@@ -149,7 +148,7 @@ export const changeVariableProp = createAction<VariablePayload<{ propName: strin
 );
 
 export const toVariablePayload = <T extends any = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
-  return { type: variable.type, uuid: variable.uuid ?? '', data: data as T };
+  return { type: variable.type, uuid: variable.uuid!, data: data as T };
 };
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
@@ -165,13 +164,30 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
+export const processVariableDependencies = async (variable: VariableModel, state: StoreState) => {
+  let dependencies: Array<Promise<any>> = [];
+
+  for (const otherVariable of getVariables(state)) {
+    if (variable === otherVariable) {
+      continue;
+    }
+
+    if (variableAdapters.contains(variable.type)) {
+      if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
+        dependencies.push(otherVariable.initLock.promise);
+      }
+    }
+  }
+
+  await Promise.all(dependencies);
+};
+
 export const processVariable = (
   variable: VariableModel & VariableActions,
-  angularVariables: Array<VariableModel & VariableActions>,
   queryParams: UrlQueryMap
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    await processVariableDependencies(variable, angularVariables);
+    await processVariableDependencies(variable, getState());
 
     const urlValue = queryParams['var-' + variable.name];
     if (urlValue !== void 0) {
@@ -192,12 +208,11 @@ export const processVariable = (
   };
 };
 
-export const processVariables = (angularVariables: Array<VariableModel & VariableActions>): ThunkResult<void> => {
+export const processVariables = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const queryParams = getState().location.query;
     const promises = getVariables(getState()).map(
-      async (variable: VariableModel & VariableActions) =>
-        await dispatch(processVariable(variable, angularVariables, queryParams))
+      async (variable: VariableModel & VariableActions) => await dispatch(processVariable(variable, queryParams))
     );
 
     await Promise.all(promises);
@@ -205,28 +220,18 @@ export const processVariables = (angularVariables: Array<VariableModel & Variabl
     for (let index = 0; index < getVariables(getState()).length; index++) {
       await dispatch(removeInitLock(toVariablePayload(getVariables(getState())[index])));
     }
-
-    for (let index = 0; index < angularVariables.length; index++) {
-      delete angularVariables[index].initLock;
-    }
   };
 };
 
 export const setOptionFromUrl = (variable: VariableModel, urlValue: UrlQueryValue): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    if (!variable.hasOwnProperty('refresh')) {
-      return Promise.resolve();
+    if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
+      // updates options
+      await variableAdapters.get(variable.type).updateOptions(variable);
     }
-
-    if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh === VariableRefresh.never) {
-      return Promise.resolve();
-    }
-
-    // updates options
-    await variableAdapters.get(variable.type).updateOptions(variable);
 
     // get variable from state
-    const variableFromState = getVariable<VariableWithOptions>(variable.uuid ?? '', getState());
+    const variableFromState = getVariable<VariableWithOptions>(variable.uuid!, getState());
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -300,7 +305,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(variable.uuid ?? '', getState());
+    const variableInState = getVariable<VariableWithOptions>(variable.uuid!, getState());
     const setValue = variableAdapters.get(variableInState.type).setValue;
     if (!variableInState.current) {
       return setValue(variableInState, {} as VariableOption);
@@ -413,7 +418,7 @@ export const variableUpdated = (variable: VariableModel, emitChangeEvents?: any)
 
 export const changeVariableName = (variable: VariableModel, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable(variable.uuid ?? '', getState());
+    const variableInState = getVariable(variable.uuid!, getState());
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
@@ -461,14 +466,14 @@ export const variableEditorInit = (variable: VariableModel): ThunkResult<void> =
 
 export const onEditorUpdate = (variable: VariableModel): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable(variable.uuid ?? '', getState());
+    const variableInState = getVariable(variable.uuid!, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
   };
 };
 
 export const onEditorAdd = (variable: VariableModel): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = { ...getVariable(variable.uuid ?? '', getState()) };
+    const variableInState = { ...getVariable(variable.uuid!, getState()) };
     dispatch(storeNewVariable(toVariablePayload(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState, undefined, true);
   };
