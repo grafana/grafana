@@ -1,9 +1,6 @@
 import React, { MouseEvent, PureComponent } from 'react';
 import { emptyUuid, VariableState } from '../state/types';
 import { StoreState } from '../../../types';
-import { Observable, Subscriber, Subscription } from 'rxjs';
-import { dispatch, store } from '../../../store/store';
-import { distinctUntilChanged } from 'rxjs/operators';
 import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
@@ -14,75 +11,47 @@ import {
   VariableIdentifier,
 } from '../state/actions';
 import { VariableModel } from '../variable';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 
-export interface State {
+interface OwnProps {}
+
+interface ConnectedProps {
   uuidInEditor: string | null;
   variableStates: VariableState[];
 }
 
-export class VariableEditorContainer extends PureComponent<{}, State> {
-  private readonly subscription: Subscription | null = null;
-  constructor(props: {}) {
-    super(props);
+interface DispatchProps {
+  changeToEditorListMode: typeof changeToEditorListMode;
+  changeToEditorEditMode: typeof changeToEditorEditMode;
+}
 
-    this.subscription = new Observable((observer: Subscriber<State>) => {
-      const unsubscribeFromStore = store.subscribe(() => observer.next(this.stateSelector(store.getState())));
-      observer.next(this.stateSelector(store.getState()));
-      return function unsubscribe() {
-        unsubscribeFromStore();
-      };
-    })
-      .pipe(
-        distinctUntilChanged<State>((previous, current) => {
-          return previous === current;
-        })
-      )
-      .subscribe({
-        next: state => {
-          if (this.state) {
-            this.setState({ ...state });
-            return;
-          }
+type Props = OwnProps & ConnectedProps & DispatchProps;
 
-          this.state = state;
-        },
-      });
-  }
-
-  stateSelector = (state: StoreState) => ({
-    variableStates: Object.values(state.templating.variables),
-    uuidInEditor: state.templating.uuidInEditor,
-  });
-
+class VariableEditorContainerUnconnected extends PureComponent<Props> {
   componentDidMount(): void {
-    dispatch(changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel)));
-  }
-
-  componentWillUnmount(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    this.props.changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel));
   }
 
   onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    dispatch(changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel)));
+    this.props.changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel));
   };
 
   onEditVariable = (identifier: VariableIdentifier) => {
-    dispatch(
-      changeToEditorEditMode(toVariablePayload({ uuid: identifier.uuid, type: identifier.type } as VariableModel))
+    this.props.changeToEditorEditMode(
+      toVariablePayload({ uuid: identifier.uuid, type: identifier.type } as VariableModel)
     );
   };
 
   onChangeToAddMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    dispatch(changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel)));
+    this.props.changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel));
   };
 
   render() {
     const variableStateToEdit =
-      this.state.variableStates.find(s => s.variable.uuid === this.state.uuidInEditor) ?? null;
+      this.props.variableStates.find(s => s.variable.uuid === this.props.uuidInEditor) ?? null;
     return (
       <div>
         <div className="page-action-bar">
@@ -93,7 +62,7 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
             >
               Variables
             </a>
-            {this.state.uuidInEditor === emptyUuid && (
+            {this.props.uuidInEditor === emptyUuid && (
               <span>
                 <i
                   className="fa fa-fw fa-chevron-right"
@@ -102,7 +71,7 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
                 New
               </span>
             )}
-            {this.state.uuidInEditor && this.state.uuidInEditor !== emptyUuid && (
+            {this.props.uuidInEditor && this.props.uuidInEditor !== emptyUuid && (
               <span>
                 <i
                   className="fa fa-fw fa-chevron-right"
@@ -114,7 +83,7 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
           </h3>
 
           <div className="page-action-bar__spacer" />
-          {this.state.variableStates.length > 0 && variableStateToEdit === null && (
+          {this.props.variableStates.length > 0 && variableStateToEdit === null && (
             <a
               type="button"
               className="btn btn-primary"
@@ -128,7 +97,7 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
 
         {!variableStateToEdit && (
           <VariableEditorList
-            variableStates={this.state.variableStates}
+            variableStates={this.props.variableStates}
             onAddClick={this.onChangeToAddMode}
             onEditClick={this.onEditVariable}
           />
@@ -144,3 +113,19 @@ export class VariableEditorContainer extends PureComponent<{}, State> {
     );
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
+  variableStates: Object.values(state.templating.variables),
+  uuidInEditor: state.templating.uuidInEditor,
+});
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  changeToEditorListMode,
+  changeToEditorEditMode,
+};
+
+export const VariableEditorContainer = connectWithStore(
+  VariableEditorContainerUnconnected,
+  mapStateToProps,
+  mapDispatchToProps
+);

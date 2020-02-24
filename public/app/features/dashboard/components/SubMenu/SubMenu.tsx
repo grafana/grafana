@@ -1,15 +1,21 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
 import { VariableState } from '../../../templating/state/types';
 import { VariablePicker } from '../../../templating/picker/VariablePicker';
 import { e2e } from '@grafana/e2e';
 
-export interface Props {
+interface OwnProps {}
+
+interface ConnectedProps {
   variableStates: VariableState[];
 }
 
-class UnConnectedSubMenu extends PureComponent<Props> {
+interface DispatchProps {}
+
+type Props = OwnProps & ConnectedProps & DispatchProps;
+
+class SubMenuUnConnected extends PureComponent<Props> {
   render() {
     if (this.props.variableStates.length === 0) {
       return null;
@@ -32,7 +38,9 @@ class UnConnectedSubMenu extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({ variableStates: Object.values(state.templating.variables) });
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
+  variableStates: Object.values(state.templating.variables),
+});
 
-export const SubMenu = connect(mapStateToProps)(UnConnectedSubMenu);
+export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
 SubMenu.displayName = 'SubMenu';
