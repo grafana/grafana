@@ -183,6 +183,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Groups:     userInfo.Groups,
 	}
 
+	// validate that the role is allowed to login to grafana
+	if !connect.IsRoleAllowed(userInfo.Role) {
+		hs.redirectWithError(ctx, login.ErrRoleNotAllowed)
+		return
+	}
+
 	if userInfo.Role != "" {
 		rt := m.RoleType(userInfo.Role)
 		if rt.IsValid() {

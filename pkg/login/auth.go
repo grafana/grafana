@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
+	ErrRoleNotAllowed        = errors.New("User doesn't have required role")
 	ErrInvalidCredentials    = errors.New("Invalid Username or Password")
 	ErrNoEmail               = errors.New("Login provider didn't return an email address")
 	ErrProviderDeniedRequest = errors.New("Login provider denied login request")

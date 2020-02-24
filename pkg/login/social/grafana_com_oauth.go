@@ -29,6 +29,10 @@ func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }
 
+func (s *SocialGrafanaCom) IsRoleAllowed(role string) bool {
+	return true
+}
+
 func (s *SocialGrafanaCom) IsSignupAllowed() bool {
 	return s.allowSignup
 }

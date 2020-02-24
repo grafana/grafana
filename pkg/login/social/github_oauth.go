@@ -43,6 +43,10 @@ func (s *SocialGithub) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
 
+func (s *SocialGithub) IsRoleAllowed(role string) bool {
+	return true
+}
+
 func (s *SocialGithub) IsSignupAllowed() bool {
 	return s.allowSignup
 }

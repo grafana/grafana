@@ -25,6 +25,7 @@ type SocialGenericOAuth struct {
 	emailAttributeName   string
 	emailAttributePath   string
 	roleAttributePath    string
+	roleRequired         bool
 	teamIds              []int
 }
 
@@ -34,6 +35,21 @@ func (s *SocialGenericOAuth) Type() int {
 
 func (s *SocialGenericOAuth) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
+}
+
+func (s *SocialGenericOAuth) IsRoleAllowed(role string) bool {
+	s.log.Debug("s.roleRequired", "s.roleRequired", s.roleRequired)
+	if !s.roleRequired {
+		return true
+	}
+	switch role {
+	case
+		"Viewer",
+		"Editor",
+		"Admin":
+		return true
+	}
+	return false
 }
 
 func (s *SocialGenericOAuth) IsSignupAllowed() bool {
