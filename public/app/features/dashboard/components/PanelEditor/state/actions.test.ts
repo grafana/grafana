@@ -2,6 +2,7 @@ import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
 import { initialState } from './reducers';
 import { initPanelEditor, panelEditorCleanUp } from './actions';
 import { PanelEditorStateNew, closeCompleted } from './reducers';
+import { cleanUpEditPanel } from '../../../state/reducers';
 import { PanelModel, DashboardModel } from '../../../state';
 
 describe('panelEditor actions', () => {
@@ -51,8 +52,9 @@ describe('panelEditor actions', () => {
         .givenThunk(panelEditorCleanUp)
         .whenThunkIsDispatched();
 
-      expect(dispatchedActions.length).toBe(1);
-      expect(dispatchedActions[0].type).toBe(closeCompleted.type);
+      expect(dispatchedActions.length).toBe(2);
+      expect(dispatchedActions[0].type).toBe(cleanUpEditPanel.type);
+      expect(dispatchedActions[1].type).toBe(closeCompleted.type);
       expect(sourcePanel.getOptions()).toEqual({ prop: true });
       expect(sourcePanel.id).toEqual(12);
     });
