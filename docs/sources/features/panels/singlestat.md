@@ -99,4 +99,3 @@ To fix your singlestat panel:
 The Gauge feature in this panel is deprecated, please use the new [Gauge panel]({{< relref
 "../../features/panels/gauge.md" >}}) instead.
 
-
