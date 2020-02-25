@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
-import { Button, Select, LinkButton, Input } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { Button, Select, LinkButton, Input, ClipboardButton } from '@grafana/ui';
+import { SelectableValue, AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { appEvents } from 'app/core/core';
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -189,6 +190,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     });
   };
 
+  onSnapshotUrlCopy = () => {
+    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
+  };
+
   renderStep1() {
     const { onDismiss } = this.props;
     const {
@@ -264,9 +269,9 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               {snapshotUrl}
             </a>
             <br />
-            <button className="btn btn-inverse" clipboard-button="getSnapshotUrl()">
+            <ClipboardButton variant="inverse" getText={this.getSnapshotUrl} onClipboardCopy={this.onSnapshotUrlCopy}>
               Copy Link
-            </button>
+            </ClipboardButton>
           </div>
         </div>
 

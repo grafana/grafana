@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
-import { Button, Switch, Select } from '@grafana/ui';
-import { SelectableValue, PanelModel } from '@grafana/data';
+import { Switch, Select, ClipboardButton } from '@grafana/ui';
+import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
+import { appEvents } from 'app/core/core';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'current', value: 'current' },
@@ -75,6 +76,14 @@ export class ShareLink extends PureComponent<Props, State> {
     );
   };
 
+  onShareUrlCopy = () => {
+    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
+  };
+
+  getShareUrl = () => {
+    return this.state.shareUrl;
+  };
+
   render() {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme, shareUrl, imageUrl } = this.state;
@@ -114,7 +123,9 @@ export class ShareLink extends PureComponent<Props, State> {
                     <input type="text" className="gf-form-input" defaultValue={shareUrl} />
                   </div>
                   <div className="gf-form">
-                    <Button variant="inverse">Copy</Button>
+                    <ClipboardButton variant="inverse" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
+                      Copy
+                    </ClipboardButton>
                     {/* <button className="btn btn-inverse" clipboard-button="getShareUrl()">Copy</button> */}
                   </div>
                 </div>
