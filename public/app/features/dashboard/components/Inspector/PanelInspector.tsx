@@ -124,7 +124,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
       for (const frame of data) {
         const q = queries[frame.refId];
-        if (q && frame.meta && frame.meta.custom) {
+        if (q && frame.meta.custom) {
           const dataSource = await getDataSourceSrv().get(q.datasource);
           if (dataSource && dataSource.components?.MetadataInspector) {
             metaDS = dataSource;
