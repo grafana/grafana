@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
-import { Button, Switch, Select } from '@grafana/ui';
-import { SelectableValue, PanelModel } from '@grafana/data';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { buildImageUrl, buildShareUrl } from './utils';
+import { Switch, Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { buildIframeHtml } from './utils';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'current', value: 'current' },
@@ -19,33 +19,30 @@ interface State {
   useCurrentTimeRange: boolean;
   includeTemplateVars: boolean;
   selectedTheme: SelectableValue<string>;
-  shareUrl: string;
-  imageUrl: string;
+  iframeHtml: string;
 }
 
-export class ShareLink extends PureComponent<Props, State> {
+export class ShareEmbed extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
       useCurrentTimeRange: true,
       includeTemplateVars: true,
       selectedTheme: themeOptions[0],
-      shareUrl: '',
-      imageUrl: '',
+      iframeHtml: '',
     };
   }
 
   componentDidMount() {
-    this.buildUrl();
+    this.buildIframeHtml();
   }
 
-  buildUrl = () => {
+  buildIframeHtml = () => {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme } = this.state;
 
-    const shareUrl = buildShareUrl(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme.value);
-    const imageUrl = buildImageUrl(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme.value);
-    this.setState({ shareUrl, imageUrl });
+    const iframeHtml = buildIframeHtml(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme.value);
+    this.setState({ iframeHtml });
   };
 
   onUseCurrentTimeRangeChange = () => {
@@ -53,7 +50,7 @@ export class ShareLink extends PureComponent<Props, State> {
       {
         useCurrentTimeRange: !this.state.useCurrentTimeRange,
       },
-      this.buildUrl
+      this.buildIframeHtml
     );
   };
 
@@ -62,7 +59,7 @@ export class ShareLink extends PureComponent<Props, State> {
       {
         includeTemplateVars: !this.state.includeTemplateVars,
       },
-      this.buildUrl
+      this.buildIframeHtml
     );
   };
 
@@ -71,13 +68,12 @@ export class ShareLink extends PureComponent<Props, State> {
       {
         selectedTheme: value,
       },
-      this.buildUrl
+      this.buildIframeHtml
     );
   };
 
   render() {
-    const { panel } = this.props;
-    const { useCurrentTimeRange, includeTemplateVars, selectedTheme, shareUrl, imageUrl } = this.state;
+    const { useCurrentTimeRange, includeTemplateVars, selectedTheme, iframeHtml } = this.state;
 
     return (
       <div className="share-modal-body">
@@ -86,9 +82,6 @@ export class ShareLink extends PureComponent<Props, State> {
             <i className="gicon gicon-link"></i>
           </div>
           <div className="share-modal-content">
-            <p className="share-modal-info-text">
-              Create a direct link to this dashboard or panel, customized with the options below.
-            </p>
             <div className="gf-form-group">
               <Switch
                 labelClass="width-12"
@@ -107,26 +100,17 @@ export class ShareLink extends PureComponent<Props, State> {
                 <Select width={10} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
               </div>
             </div>
-            <div>
-              <div className="gf-form-group">
-                <div className="gf-form-inline">
-                  <div className="gf-form gf-form--grow">
-                    <input type="text" className="gf-form-input" defaultValue={shareUrl} />
-                  </div>
-                  <div className="gf-form">
-                    <Button variant="inverse">Copy</Button>
-                    {/* <button className="btn btn-inverse" clipboard-button="getShareUrl()">Copy</button> */}
-                  </div>
-                </div>
+
+            <p className="share-modal-info-text">
+              The html code below can be pasted and included in another web page. Unless anonymous access is enabled,
+              the user viewing that page need to be signed into grafana for the graph to load.
+            </p>
+
+            <div className="gf-form-group gf-form--grow">
+              <div className="gf-form">
+                <textarea rows={5} data-share-panel-url className="gf-form-input" defaultValue={iframeHtml}></textarea>
               </div>
             </div>
-            {panel && (
-              <div className="gf-form">
-                <a href={imageUrl} target="_blank">
-                  <i className="fa fa-camera"></i> Direct link rendered image
-                </a>
-              </div>
-            )}
           </div>
         </div>
       </div>

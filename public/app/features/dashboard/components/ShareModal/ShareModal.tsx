@@ -6,6 +6,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareExport } from './ShareExport';
+import { ShareEmbed } from './ShareEmbed';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css``,
@@ -45,6 +46,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 
 const shareModalTabs = [
   { label: 'Link', value: 'link' },
+  { label: 'Embed', value: 'embed' },
   { label: 'Snapshot', value: 'snapshot' },
   { label: 'Export', value: 'export' },
 ];
@@ -83,11 +85,16 @@ export class ShareModalUnthemed extends PureComponent<Props, State> {
   };
 
   renderTabsBar() {
+    const { panel } = this.props;
     const { tab } = this.state;
 
     return (
       <TabsBar>
         {shareModalTabs.map((t, index) => {
+          if ((panel && t.value === 'export') || (!panel && t.value === 'embed')) {
+            return null;
+          }
+
           return (
             <Tab
               key={`${t.value}-${index}`}
@@ -126,8 +133,11 @@ export class ShareModalUnthemed extends PureComponent<Props, State> {
         <div className={styles.modalContent}>
           <TabContent>
             {tab === 'link' && <ShareLink dashboard={dashboard} panel={panel} />}
+            {tab === 'embed' && panel && <ShareEmbed dashboard={dashboard} panel={panel} />}
             {tab === 'snapshot' && <ShareSnapshot dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />}
-            {tab === 'export' && <ShareExport dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />}
+            {tab === 'export' && !panel && (
+              <ShareExport dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />
+            )}
           </TabContent>
         </div>
       </Modal>
