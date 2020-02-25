@@ -5,6 +5,15 @@ import { HistoryListCtrl } from './HistoryListCtrl';
 import { compare, restore, versions } from './__mocks__/history';
 import { CoreEvents } from 'app/types';
 
+jest.mock('app/core/app_events', () => {
+  return {
+    appEvents: {
+      emit: jest.fn(),
+      on: jest.fn(),
+    },
+  };
+});
+
 describe('HistoryListCtrl', () => {
   const RESTORE_ID = 4;
 

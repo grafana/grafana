@@ -49,7 +49,7 @@ describe('SaveDashboardAsForm', () => {
     it('renders switches when variables or timerange', () => {
       const container = mount(
         <SaveDashboardForm
-          dashboard={prepareDashboardMock(true, true) as any}
+          dashboard={prepareDashboardMock(true, true, jest.fn(), jest.fn()) as any}
           onCancel={() => {}}
           onSuccess={() => {}}
           onSubmit={async () => {

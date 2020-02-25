@@ -9,6 +9,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
   const dashboardJSON = useMemo(() => {
     const clone = dashboard.getSaveModelClone();
     delete clone.id;
+    return clone;
   }, [dashboard]);
 
   const getClipboardText = useCallback(() => {

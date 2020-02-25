@@ -8,7 +8,7 @@ import { AppEvents, dateTime, DateTimeInput, toUtc } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 
 export class HistoryListCtrl {
   appending: boolean;
