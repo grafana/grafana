@@ -4,7 +4,7 @@ import { css, cx } from 'emotion';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
 import { useTheme, Icon, selectThemeVariant as stv } from '../../index';
 import { stylesFactory } from '../../themes';
-import { inputSizes } from '../Forms/commonStyles';
+import { inputSizes, getFocusCss } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 
 interface Props {
@@ -69,6 +69,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         border-radius: ${borderRadius};
         border-color: ${borderColor};
         height: ${theme.spacing.formInputHeight};
+
+        &:focus {
+          ${getFocusCss(theme)}
+        }
       }
     `,
   };
