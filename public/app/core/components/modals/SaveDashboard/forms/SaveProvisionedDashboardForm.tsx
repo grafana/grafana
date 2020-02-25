@@ -1,10 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { CustomScrollbar, Forms, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
 import { css } from 'emotion';
 import { SaveDashboardFormProps } from '../types';
+import { CopyToClipboard } from '../../../CopyToClipboard/CopyToClipboard';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
   const dashboardJSON = useMemo(() => dashboard.getSaveModelClone(), [dashboard]);
+  const getClipboardText = useCallback(() => {
+    return JSON.stringify(dashboardJSON, null, 2);
+  }, [dashboard]);
   return (
     <>
       <VerticalGroup spacing="lg">
@@ -39,7 +43,9 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           </CustomScrollbar>
         </div>
         <HorizontalGroup>
-          <Forms.Button>Copy JSON to clipboard</Forms.Button>
+          <CopyToClipboard text={getClipboardText} elType={Forms.Button}>
+            Copy JSON to clipboard
+          </CopyToClipboard>
           <Forms.Button>Save JSON file</Forms.Button>
           <Forms.Button variant="secondary" onClick={onCancel}>
             Cancel
