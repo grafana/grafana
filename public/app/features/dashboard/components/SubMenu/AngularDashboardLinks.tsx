@@ -1,9 +1,7 @@
 // Libaries
 import React, { PureComponent } from 'react';
-
 // Utils & Services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-
 // Types
 import { DashboardModel } from '../../state/DashboardModel';
 
@@ -16,10 +14,12 @@ export class AngularDashboardLinks extends PureComponent<Props> {
   angularCmp: AngularComponent;
 
   componentDidMount() {
+    if (!this.hasLinks()) {
+      return;
+    }
+
     const loader = getAngularLoader();
-
     const template = '<dash-links-container dashboard="dashboard" links="links" class="gf-form-inline" />';
-
     const scopeProps = {
       dashboard: this.props.dashboard,
       links: this.props.dashboard.links,
@@ -34,7 +34,12 @@ export class AngularDashboardLinks extends PureComponent<Props> {
     }
   }
 
+  hasLinks = () => this.props.dashboard.links.length > 0;
+
   render() {
+    if (!this.hasLinks()) {
+      return null;
+    }
     return <div ref={element => (this.element = element)} />;
   }
 }
