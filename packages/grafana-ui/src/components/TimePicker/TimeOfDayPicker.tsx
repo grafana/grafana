@@ -16,7 +16,7 @@ interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = stv({ light: theme.colors.white, dark: theme.colors.gray15 }, theme.type);
+  const bgColor = stv({ light: theme.colors.white, dark: theme.colors.formInputBg }, theme.type);
   const menuShadowColor = stv({ light: theme.colors.gray4, dark: theme.colors.black }, theme.type);
   const optionBgHover = stv({ light: theme.colors.gray7, dark: theme.colors.gray10 }, theme.type);
   const borderRadius = theme.border.radius.sm;
