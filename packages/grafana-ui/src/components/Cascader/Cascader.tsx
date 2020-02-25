@@ -209,7 +209,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
-                size={size || 'md'}
                 suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
               />
             </div>

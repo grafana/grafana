@@ -9,6 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+var (
+	ErrMissingGroupMembership = &Error{"User not a member of one of the required groups"}
+)
+
 type HttpGetResponse struct {
 	Body    []byte
 	Headers http.Header
