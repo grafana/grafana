@@ -8,6 +8,7 @@ import { getVariableStates } from '../../../templating/state/selectors';
 import { VariableHide } from '../../../templating/variable';
 import { DashboardModel } from '../../state';
 import { Switch } from '@grafana/ui';
+import { AngularDashboardLinks } from './AngularDashboardLinks';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -83,6 +84,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
             </div>
           );
         })}
+        {this.props.dashboard.links.length === 0 ? null : <AngularDashboardLinks dashboard={this.props.dashboard} />}
       </div>
     );
   }
