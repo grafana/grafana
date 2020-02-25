@@ -10,7 +10,9 @@ import {
   setGcomError,
   dashboardUidChange,
   dashboardUidExists,
+  dashboardNameExists,
 } from './reducers';
+import validationSrv from '../services/ValidationSrv';
 import { ThunkResult } from 'app/types';
 import { updateLocation } from '../../../core/actions';
 import locationUtil from '../../../core/utils/location_util';
@@ -29,8 +31,37 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
 
 export function importDashboardJson(dashboard: any): ThunkResult<void> {
   return async dispatch => {
+    await getBackendSrv()
+      .get(`/api/dashboards/uid/${dashboard.uid}`)
+      .then(result => {
+        dispatch(dashboardUidExists(result));
+      })
+      .catch(error => {
+        error.isHandled = true;
+      });
+
+    dispatch(validateDashboardName(dashboard.title));
+
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));
+  };
+}
+
+function validateDashboardName(dashboardName: string): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const routeParams = getStore().location.routeParams;
+    const folderId = routeParams.folderId ? Number(routeParams.folderId) : 0 || null;
+
+    await validationSrv
+      .validateNewDashboardName(folderId, dashboardName)
+      .then(() => {
+        dispatch(dashboardNameExists({ state: false, error: '' }));
+      })
+      .catch(error => {
+        if (error.type === 'EXISTING') {
+          dispatch(dashboardNameExists({ state: true, error: error.message }));
+        }
+      });
   };
 }
 
@@ -102,9 +133,9 @@ export function saveDashboard(folderId: number): ThunkResult<void> {
 
     const result = await getBackendSrv().post('api/dashboards/import', {
       dashboard,
-      folderId,
-      inputs: inputsToPersist,
       overwrite: true,
+      inputs: inputsToPersist,
+      folderId,
     });
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
     dispatch(updateLocation({ path: dashboardUrl }));

@@ -7,6 +7,7 @@ import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { changeDashboardTitle, resetDashboard, saveDashboard, changeDashboardUid } from '../state/actions';
 import { DashboardSource } from '../state/reducers';
 import { StoreState } from '../../../types';
+import { ButtonVariant } from '@grafana/ui/src/components/Forms/Button';
 
 interface Props {
   dashboard: any;
@@ -14,6 +15,8 @@ interface Props {
   source: DashboardSource;
   uidExists: boolean;
   uidError: string;
+  nameExists: boolean;
+  nameError: string;
   meta?: any;
 
   resetDashboard: typeof resetDashboard;
@@ -58,8 +61,11 @@ class ImportDashboardForm extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, inputs, meta, source, uidExists, uidError } = this.props;
+    const { dashboard, inputs, meta, source, uidExists, uidError, nameExists, nameError } = this.props;
     const { uidReset } = this.state;
+
+    const buttonVariant: ButtonVariant = uidExists || nameExists ? 'destructive' : 'primary';
+    const buttonText = uidExists || nameExists ? 'Import (Overwrite)' : 'Import';
 
     return (
       <>
@@ -96,7 +102,7 @@ class ImportDashboardForm extends PureComponent<Props, State> {
             return (
               <>
                 <Forms.Legend className="section-heading">Options</Forms.Legend>
-                <Forms.Field label="Name">
+                <Forms.Field label="Name" invalid={nameExists} error={nameError}>
                   <Forms.Input size="md" type="text" value={dashboard.title} onChange={this.onTitleChange} />
                 </Forms.Field>
                 <Forms.Field label="Folder">
@@ -133,8 +139,13 @@ class ImportDashboardForm extends PureComponent<Props, State> {
                   return null;
                 })}
                 <div>
-                  <Forms.Button type="submit" variant="primary" onClick={this.onSubmit}>
-                    Import
+                  <Forms.Button
+                    type="submit"
+                    variant={buttonVariant}
+                    onClick={this.onSubmit}
+                    style={{ marginRight: '16px' }}
+                  >
+                    {buttonText}
                   </Forms.Button>
                   <Forms.Button type="reset" variant="secondary" onClick={this.onCancel}>
                     Cancel
@@ -159,6 +170,8 @@ const mapStateToProps = (state: StoreState) => {
     inputs: state.importDashboard.inputs,
     uidExists: state.importDashboard.uidExists,
     uidError: state.importDashboard.uidError,
+    nameExists: state.importDashboard.nameExists,
+    nameError: state.importDashboard.nameError,
   };
 };
 
