@@ -190,31 +190,28 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragStarted={this.onDragStarted}
         onDragFinished={size => this.onDragFinished(Pane.Top, size)}
       >
-        <div className={styles.toolbarAndPanelWrapper}>
-          {this.renderToolbar()}
-          <div className={styles.panelWrapper}>
-            <AutoSizer>
-              {({ width, height }) => {
-                if (width < 3 || height < 3) {
-                  return null;
-                }
-                return (
-                  <div className={styles.centeringContainer} style={{ width, height }}>
-                    <div style={calculatePanelSize(uiState.mode, width, height, panel)}>
-                      <DashboardPanel
-                        dashboard={dashboard}
-                        panel={panel}
-                        isEditing={false}
-                        isInEditMode
-                        isFullscreen={false}
-                        isInView={true}
-                      />
-                    </div>
+        <div className={styles.panelWrapper}>
+          <AutoSizer>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
+              }
+              return (
+                <div className={styles.centeringContainer} style={{ width, height }}>
+                  <div style={calculatePanelSize(uiState.mode, width, height, panel)}>
+                    <DashboardPanel
+                      dashboard={dashboard}
+                      panel={panel}
+                      isEditing={false}
+                      isInEditMode
+                      isFullscreen={false}
+                      isInView={true}
+                    />
                   </div>
-                );
-              }}
-            </AutoSizer>
-          </div>
+                </div>
+              );
+            }}
+          </AutoSizer>
         </div>
         <div className={styles.tabsWrapper}>
           <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} data={data} />
@@ -303,7 +300,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper}>
-        {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+        {this.renderToolbar()}
+        <div className={styles.panesWrapper}>
+          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+        </div>
       </div>
     );
   }
@@ -368,18 +368,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 0;
       bottom: 0;
       background: ${background};
-    `,
-    toolbarAndPanelWrapper: css`
       display: flex;
       flex-direction: column;
-      height: 100%;
+    `,
+    panesWrapper: css`
+      flex: 1 1 0;
+      min-height: 0;
       width: 100%;
+      position: relative;
     `,
     panelWrapper: css`
       width: 100%;
-      flex: 1 1 0;
-      min-height: 0;
       padding-left: ${theme.spacing.sm};
+      height: 100%;
     `,
     resizerV: cx(
       resizer,
@@ -413,7 +414,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     toolbar: css`
       display: flex;
       padding: ${theme.spacing.sm};
-      padding-right: 0;
       justify-content: space-between;
     `,
     toolbarLeft: css`
