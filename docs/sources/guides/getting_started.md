@@ -69,10 +69,10 @@ There is so much you can do in Grafana, it can be hard to know where to begin. Y
 
 All users might want to learn about:
 
-* [Panels]({{< relref "../features/panels/panels.md" >}})
-* [Dashboards]({{< relref "../features/dashboard/dashboards.md" >}})
-* [Keyboard shortcuts]({{< relref "../features/shortcuts.md" >}})
-* [Explore workflow]({{< relref "../features/explore/index.md" >}})
+* [Panels]({{< relref "features/panels/panels.md" >}})
+* [Dashboards]({{< relref "features/dashboard/dashboards.md" >}})
+* [Keyboard shortcuts]({{< relref "features/shortcuts.md" >}})
+* [Explore workflow]({{< relref "features/explore/index.md" >}})
 * [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
 ### Admins
