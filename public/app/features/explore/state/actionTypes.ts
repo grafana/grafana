@@ -78,6 +78,7 @@ export interface LoadDatasourcePendingPayload {
 export interface LoadDatasourceReadyPayload {
   exploreId: ExploreId;
   history: HistoryItem[];
+  queryHistory: any[];
 }
 
 export interface ModifyQueriesPayload {
@@ -327,6 +328,7 @@ export const resetExploreAction = createAction<ResetExplorePayload>('explore/res
 export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
 export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
+export const queryHistoryUpdatedAction = createAction<any>('explore/queryHistoryUpdated');
 
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
 

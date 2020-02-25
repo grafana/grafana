@@ -37,6 +37,7 @@ import {
   serializeStateToUrlParam,
   stopQueryState,
   updateHistory,
+  updateQueryHistory,
 } from 'app/core/utils/explore';
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
@@ -53,6 +54,7 @@ import {
   ChangeSizePayload,
   clearQueriesAction,
   historyUpdatedAction,
+  queryHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -294,6 +296,7 @@ export const loadDatasourceReady = (
 ): PayloadAction<LoadDatasourceReadyPayload> => {
   const historyKey = `grafana.explore.history.${instance.meta.id}`;
   const history = store.getObject(historyKey, []);
+  const queryHistory = store.getObject('grafana.explore.queryHistory');
   // Save last-used datasource
 
   store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.name);
@@ -301,6 +304,7 @@ export const loadDatasourceReady = (
   return loadDatasourceReadyAction({
     exploreId,
     history,
+    queryHistory,
   });
 };
 
@@ -410,6 +414,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       queryResponse,
       querySubscription,
       history,
+      queryHistory,
       mode,
       showingGraph,
       showingTable,
@@ -441,6 +446,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
     };
 
     const datasourceId = datasourceInstance.meta.id;
+    const datasourceName = exploreItemState.requestedDatasourceName;
+    console.log(exploreItemState);
     const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
 
     let firstResponse = true;
@@ -457,7 +464,17 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
+          const nextQueryHistory = updateQueryHistory(
+            queryHistory || [],
+            datasourceId,
+            datasourceName,
+            queries,
+            false,
+            '',
+            ''
+          );
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+          dispatch(queryHistoryUpdatedAction({ exploreId, queryHistory: nextQueryHistory }));
 
           // We save queries to the URL here so that only successfully run queries change the URL.
           dispatch(stateSave());

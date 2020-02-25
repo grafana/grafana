@@ -38,6 +38,7 @@ import {
   clearQueriesAction,
   highlightLogsExpressionAction,
   historyUpdatedAction,
+  queryHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -91,6 +92,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   datasourceLoading: null,
   datasourceMissing: false,
   history: [],
+  queryHistory: [],
   queries: [],
   initialized: false,
   range: {
@@ -315,10 +317,11 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   }
 
   if (loadDatasourceReadyAction.match(action)) {
-    const { history } = action.payload;
+    const { history, queryHistory } = action.payload;
     return {
       ...state,
       history,
+      queryHistory,
       datasourceLoading: false,
       datasourceMissing: false,
       logsHighlighterExpressions: undefined,
@@ -438,6 +441,13 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return {
       ...state,
       history: action.payload.history,
+    };
+  }
+
+  if (queryHistoryUpdatedAction.match(action)) {
+    return {
+      ...state,
+      queryHistory: action.payload.queryHistory,
     };
   }
 

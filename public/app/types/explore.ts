@@ -79,6 +79,8 @@ export interface ExploreItemState {
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
   history: HistoryItem[];
+
+  queryHistory: any[];
   /**
    * Queries for this Explore, e.g., set via URL. Each query will be
    * converted to a query row.

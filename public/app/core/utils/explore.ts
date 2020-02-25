@@ -360,6 +360,33 @@ export function updateHistory<T extends DataQuery = any>(
   return history;
 }
 
+export function updateQueryHistory<T extends DataQuery = any>(
+  queryHistory: any[],
+  datasourceId: string,
+  datasourceName: string,
+  queries: any[],
+  starred: boolean,
+  comment: string,
+  sessionName: string
+): any {
+  const ts = Date.now();
+  const stringifiedQueries = queries.map(q => q.expr);
+
+  let newQueryHistory = [
+    { queries: stringifiedQueries, ts, datasourceId, datasourceName, starred, comment, sessionName },
+    ...queryHistory,
+  ];
+
+  if (newQueryHistory.length > MAX_HISTORY_ITEMS) {
+    newQueryHistory = newQueryHistory.slice(0, MAX_HISTORY_ITEMS);
+  }
+
+  // Combine all queries of a datasource type into one history
+  const queryHistoryKey = `grafana.explore.queryHistory`;
+  store.setObject(queryHistoryKey, newQueryHistory);
+  return newQueryHistory;
+}
+
 export function clearHistory(datasourceId: string) {
   const historyKey = `grafana.explore.history.${datasourceId}`;
   store.delete(historyKey);
