@@ -67,19 +67,20 @@ There is so much you can do in Grafana, it can be hard to know where to begin. Y
 
 ### All users
 
-All users might want to explore the following:
+All users might want to learn about:
 
-* Panels
-* Dashboard features
-* Keyboard shortcuts
-* Explore workflow
-* Plugins
+* [Panels]({{< relref "../features/panels/panels.md" >}})
+* [Dashboards]({{< relref "../features/dashboard/dashboards.md" >}})
+* [Keyboard shortcuts]({{< relref "../features/shortcuts.md" >}})
+* [Explore workflow]({{< relref "../features/explore/index.md" >}})
+* [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
 ### Admins
 
-Administrators might want to explore the following:
+Administrators might want to learn about:
 
-* Grafana configuration
-* Authentication
-* User permissions
-* Provisioning
+* [Grafana configuration]({{< relref "../installation/configuration.md" >}})
+* [Authentication]({{< relref "../auth/overview.md" >}})
+* [User permissions and roles]({{< relref "../permissions/overview.md" >}})
+* [Provisioning]({{< relref "../administration/provisioning.md" >}})
+* [Grafana CLI]({{< relref "../administration/cli.md" >}})
