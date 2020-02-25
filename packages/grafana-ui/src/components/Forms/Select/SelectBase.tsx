@@ -180,7 +180,7 @@ export function SelectBase<T>({
   const styles = getSelectStyles(theme);
   const onChangeWithEmpty = useCallback(
     (value: SelectValue<T>) => {
-      if (isMulti && !Array.isArray(value)) {
+      if (isMulti && (value === undefined || value === null)) {
         return onChange([]);
       }
       onChange(value);
