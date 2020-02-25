@@ -57,6 +57,14 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
     [prepareRow, rows]
   );
 
+  let totalWidth = 0;
+
+  for (const headerGroup of headerGroups) {
+    for (const header of headerGroup.headers) {
+      totalWidth += header.width;
+    }
+  }
+
   return (
     <div {...getTableProps()} className={tableStyles.table}>
       <div>
@@ -72,8 +80,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
         height={height - headerRowMeasurements.height}
         itemCount={rows.length}
         itemSize={tableStyles.rowHeight}
-        width={width}
-        style={{ overflowX: 'initial' }}
+        width={totalWidth ?? width}
       >
         {RenderRow}
       </FixedSizeList>
