@@ -18,7 +18,7 @@ import { appEvents, contextSrv } from 'app/core/core';
 
 export class VariableSrv {
   dashboard: DashboardModel;
-  variables: any[];
+  variables: any[] = [];
 
   /** @ngInject */
   constructor(
