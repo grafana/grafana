@@ -24,7 +24,12 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { SaveDashboardAsButton, SaveDashboardButton } from './components/modals/SaveDashboard/SaveDashboardButton';
+import {
+  SaveDashboardAsButton,
+  SaveDashboardAsButtonConnected,
+  SaveDashboardButton,
+  SaveDashboardButtonConnected,
+} from './components/modals/SaveDashboard/SaveDashboardButton';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -152,11 +157,11 @@ export function registerAngularDirectives() {
     ['onLoad', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('saveDashboardButton', SaveDashboardButton, [
+  react2AngularDirective('saveDashboardButton', SaveDashboardButtonConnected, [
     'dashboard',
     ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButton, [
+  react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
     'dashboard',
     ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
   ]);

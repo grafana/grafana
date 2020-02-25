@@ -6,6 +6,7 @@ import { css } from 'emotion';
 import { SaveDashboardAsModal } from './SaveDashboardAsModal';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
+import { SaveDashboardAsButton } from './SaveDashboardButton';
 
 interface SaveDashboardErrorProxyProps {
   dashboard: DashboardModel;
@@ -98,23 +99,7 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
           Your changes will be lost when you update the plugin. Use Save As to create custom version.
         </div>
         <HorizontalGroup justify="center">
-          <ModalsController>
-            {({ showModal, hideModal }) => {
-              return (
-                <Button
-                  onClick={() => {
-                    showModal(SaveDashboardAsModal, {
-                      dashboard,
-                      onClose: hideModal,
-                    });
-                  }}
-                >
-                  Save as
-                </Button>
-              );
-            }}
-          </ModalsController>
-
+          <SaveDashboardAsButton dashboard={dashboard} />
           <Button
             variant="danger"
             onClick={async () => {

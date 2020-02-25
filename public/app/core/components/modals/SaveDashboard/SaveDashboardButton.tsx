@@ -11,7 +11,7 @@ interface SaveDashboardButtonProps {
   onSaveSuccess?: () => void;
 }
 
-const SaveDashboardButtonUnconnected: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess }) => {
+export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess }) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
@@ -33,7 +33,7 @@ const SaveDashboardButtonUnconnected: React.FC<SaveDashboardButtonProps> = ({ da
   );
 };
 
-const SaveDashboardAsButtonUnconnected: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess }) => {
+export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess }) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
@@ -58,5 +58,5 @@ const SaveDashboardAsButtonUnconnected: React.FC<SaveDashboardButtonProps> = ({ 
 
 // TODO: this is an ugly solution for the save button to have access to Redux and Modals controller
 // When we migrate dashboard settings to Angular it won't be necessary.
-export const SaveDashboardButton = connectWithProvider(provideModalsContext(SaveDashboardButtonUnconnected));
-export const SaveDashboardAsButton = connectWithProvider(provideModalsContext(SaveDashboardAsButtonUnconnected));
+export const SaveDashboardButtonConnected = connectWithProvider(provideModalsContext(SaveDashboardButton));
+export const SaveDashboardAsButtonConnected = connectWithProvider(provideModalsContext(SaveDashboardAsButton));
