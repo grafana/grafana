@@ -109,14 +109,15 @@ export class ShareModalUnthemed extends PureComponent<Props, State> {
   }
 
   renderTitle() {
-    const { theme } = this.props;
+    const { theme, panel } = this.props;
     const styles = getStyles(theme);
+    const title = panel ? 'Share Panel' : 'Share';
 
     return (
       <>
         <h2 className={styles.modalHeaderTitle}>
           <Icon name="share-square-o" className={styles.modalHeaderIcon} />
-          Share
+          {title}
         </h2>
         {this.renderTabsBar()}
       </>

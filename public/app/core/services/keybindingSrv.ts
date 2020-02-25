@@ -15,6 +15,7 @@ import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getLocationSrv } from '@grafana/runtime';
 import { DashboardModel } from '../../features/dashboard/state';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -266,14 +267,14 @@ export class KeybindingSrv {
     // share panel
     this.bind('p s', () => {
       if (dashboard.meta.focusPanelId) {
-        const shareScope: any = scope.$new();
         const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        shareScope.panel = panelInfo.panel;
-        shareScope.dashboard = dashboard;
 
-        appEvents.emit(CoreEvents.showModal, {
-          src: 'public/app/features/dashboard/components/ShareModal/template.html',
-          scope: shareScope,
+        appEvents.emit(CoreEvents.showModalReact, {
+          component: ShareModal,
+          props: {
+            dashboard: dashboard,
+            panel: panelInfo.panel,
+          },
         });
       }
     });
