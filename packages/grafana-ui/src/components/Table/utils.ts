@@ -69,7 +69,6 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
     if (!column.width) {
       column.width = Math.max(sharedWidth, columnMinWidth);
     }
-    console.log('column width', columnMinWidth);
   }
 
   return columns;

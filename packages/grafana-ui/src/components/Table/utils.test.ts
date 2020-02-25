@@ -40,12 +40,13 @@ describe('Table utils', () => {
     });
 
     it('Should distribute width and use field config width', () => {
-      const columns = getColumns(getData(), 1000);
+      const columns = getColumns(getData(), 1000, 120);
 
       expect(columns[0].width).toBe(450);
       expect(columns[1].width).toBe(100);
     });
   });
+
   describe('getTextAlign', () => {
     it('Should use textAlign from custom', () => {
       const data = getData();
