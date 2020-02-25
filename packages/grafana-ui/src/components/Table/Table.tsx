@@ -25,12 +25,9 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
   const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
 
-  const minWidth = columnMinWidth && columnMinWidth * data.fields.length;
-  const tableWidth = minWidth && minWidth > width ? minWidth : width;
-
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data, tableWidth), [data, tableWidth]),
+      columns: useMemo(() => getColumns(data, width, columnMinWidth ?? 150), [data, width, columnMinWidth]),
       data: useMemo(() => getTableRows(data), [data]),
     },
     useSortBy,
@@ -40,6 +37,8 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
   const RenderRow = React.useCallback(
     ({ index, style }) => {
       const row = rows[index];
+      delete style.width;
+      style.minWidth = '100%';
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
@@ -73,7 +72,8 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
         height={height - headerRowMeasurements.height}
         itemCount={rows.length}
         itemSize={tableStyles.rowHeight}
-        width={tableWidth}
+        width={width}
+        style={{ overflowX: 'initial' }}
       >
         {RenderRow}
       </FixedSizeList>
