@@ -23,7 +23,6 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class SubMenuUnConnected extends PureComponent<Props> {
   onAnnotationStateChanged = (updatedAnnotation: any, event?: React.SyntheticEvent<HTMLInputElement>) => {
-    event?.preventDefault();
     for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
       const annotation = this.props.dashboard.annotations.list[index];
       if (annotation.name === updatedAnnotation.name) {
@@ -32,6 +31,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
       }
     }
     this.props.dashboard.startRefresh();
+    this.forceUpdate();
   };
 
   isSubMenuVisible = (visibleVariableStates: VariableState[], visibleAnnotations: any[]) => {
@@ -59,13 +59,12 @@ class SubMenuUnConnected extends PureComponent<Props> {
     return (
       <div className="submenu-controls">
         {visibleVariableStates.map(state => (
-          <div className="submenu-item gf-form-inline" aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}>
-            <VariablePicker
-              key={state.variable.uuid}
-              picker={state.picker}
-              editor={state.editor}
-              variable={state.variable}
-            />
+          <div
+            key={state.variable.uuid}
+            className="submenu-item gf-form-inline"
+            aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}
+          >
+            <VariablePicker picker={state.picker} editor={state.editor} variable={state.variable} />
           </div>
         ))}
         {visibleAnnotations.map(annotation => {
