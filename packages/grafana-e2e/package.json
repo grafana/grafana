@@ -28,7 +28,6 @@
   "devDependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "blink-diff": "1.0.13",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",
     "rollup-plugin-node-resolve": "4.0.1",
@@ -41,6 +40,7 @@
   },
   "types": "src/index.ts",
   "dependencies": {
+    "blink-diff": "1.0.13",
     "cypress": "3.7.0"
   }
 }
