@@ -37,6 +37,13 @@ export class Registry<T extends RegistryItem> {
 
   constructor(private init?: () => T[]) {}
 
+  setInit = (init: () => T[]) => {
+    if (this.initialized) {
+      throw new Error('Registry already initialized');
+    }
+    this.init = init;
+  };
+
   getIfExists(id: string | undefined): T | undefined {
     if (!this.initialized) {
       if (this.init) {

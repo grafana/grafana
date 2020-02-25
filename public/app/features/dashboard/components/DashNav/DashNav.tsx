@@ -8,7 +8,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { Tooltip } from '@grafana/ui';
+import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
 // Types
@@ -156,15 +156,7 @@ export class DashNav extends PureComponent<Props> {
   renderBackButton() {
     return (
       <div className="navbar-edit">
-        <Tooltip content="Go back (Esc)">
-          <button
-            className="navbar-edit__back-btn"
-            onClick={this.onClose}
-            aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow}
-          >
-            <i className="fa fa-arrow-left" />
-          </button>
-        </Tooltip>
+        <BackButton onClick={this.onClose} aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow} />
       </div>
     );
   }

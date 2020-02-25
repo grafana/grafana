@@ -11,6 +11,8 @@ awsconfig
 /public/views/error.html
 /emails/dist
 /reports
+.yarnrc
+.yarn/
 
 # Enterprise emails
 /emails/templates/enterprise_*
