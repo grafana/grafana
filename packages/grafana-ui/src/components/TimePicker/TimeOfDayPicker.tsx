@@ -34,7 +34,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     picker: css`
       .rc-time-picker-panel-select {
         font-size: 14px;
-        box-shadow: 0px 4px 4px ${menuShadowColor};
         background-color: ${bgColor};
         border-color: ${borderColor};
         li {
