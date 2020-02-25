@@ -1031,7 +1031,7 @@ export class DashboardModel {
       return _.find(this.templating.list, { name: panel.repeat } as any);
     }
 
-    return _.find(this.variables.list, { name: panel.repeat } as any);
+    return getVariables().find(variable => variable.name === panel.repeat);
   }
 
   private isSnapshotTruthy() {
