@@ -486,24 +486,21 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
 const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   const queryParams = getState().location.query;
 
-  Object.keys(queryParams).forEach(key => {
-    if (key.indexOf('var-') === 0) {
-      // TODO: currently we are storing angular references in location redux
-      // so we need to mutate that state for this to properly work. Should be
-      // changed when we have a pure state in redux for location.
-      delete queryParams[key];
-    }
-  });
+  const queryParamsNew = Object.keys(queryParams)
+    .filter(key => key.indexOf('var-') === -1)
+    .reduce((obj, key) => {
+      obj[key] = queryParams[key];
+      return obj;
+    }, {} as UrlQueryMap);
 
-  const variables = getVariables(getState());
-
-  variables.forEach(variable => {
+  for (const variable of getVariables(getState())) {
     if (variable.skipUrlSync) {
-      return;
+      continue;
     }
-    const adapter = variableAdapters.get(variable.type);
-    queryParams['var-' + variable.name] = adapter.getValueForUrl(variable);
-  });
 
-  return queryParams;
+    const adapter = variableAdapters.get(variable.type);
+    queryParamsNew['var-' + variable.name] = adapter.getValueForUrl(variable);
+  }
+
+  return queryParamsNew;
 };
