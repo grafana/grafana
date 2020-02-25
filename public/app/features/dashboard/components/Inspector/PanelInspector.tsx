@@ -24,6 +24,7 @@ interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
   selectedTab: InspectTab;
+  noDrawer?: boolean;
 }
 
 export enum InspectTab {
@@ -293,34 +294,50 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   };
 
-  render() {
+  renderBody() {
     const { last, tab, drawerWidth } = this.state;
     const styles = getStyles();
     const error = last?.error;
 
     return (
+      <TabContent className={styles.tabContent}>
+        {tab === InspectTab.Data ? (
+          this.renderDataTab()
+        ) : (
+          <AutoSizer>
+            {({ width, height }) => {
+              if (width === 0) {
+                return null;
+              }
+              return (
+                <div style={{ width, height }}>
+                  {tab === InspectTab.Meta && this.renderMetadataInspector()}
+                  {tab === InspectTab.Issue && this.renderIssueTab()}
+                  {tab === InspectTab.Raw && this.renderRawJsonTab(last)}
+                  {tab === InspectTab.Error && this.renderErrorTab(error)}
+                </div>
+              );
+            }}
+          </AutoSizer>
+        )}
+      </TabContent>
+    );
+  }
+
+  render() {
+    const { drawerWidth } = this.state;
+    if (this.props.noDrawer) {
+      return (
+        <div style={{ width: '100%', height: '100%' }}>
+          {/* <div>{this.drawerHeader()}</div> */}
+          {this.renderBody()}
+        </div>
+      );
+    }
+
+    return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
-        <TabContent className={styles.tabContent}>
-          {tab === InspectTab.Data ? (
-            this.renderDataTab()
-          ) : (
-            <AutoSizer>
-              {({ width, height }) => {
-                if (width === 0) {
-                  return null;
-                }
-                return (
-                  <div style={{ width, height }}>
-                    {tab === InspectTab.Meta && this.renderMetadataInspector()}
-                    {tab === InspectTab.Issue && this.renderIssueTab()}
-                    {tab === InspectTab.Raw && this.renderRawJsonTab(last)}
-                    {tab === InspectTab.Error && this.renderErrorTab(error)}
-                  </div>
-                );
-              }}
-            </AutoSizer>
-          )}
-        </TabContent>
+        {this.renderBody()}
       </Drawer>
     );
   }

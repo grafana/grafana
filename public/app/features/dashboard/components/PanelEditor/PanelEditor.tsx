@@ -27,6 +27,7 @@ import { FieldConfigEditor } from './FieldConfigEditor';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
+import { PanelInspector, InspectTab } from '../Inspector/PanelInspector';
 
 enum Pane {
   Right,
@@ -195,6 +196,20 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             {({ width, height }) => {
               if (width < 3 || height < 3) {
                 return null;
+              }
+              if (uiState.mode === DisplayMode.Inspect) {
+                return (
+                  <div className={styles.fullContainer} style={{ width, height }}>
+                    <PanelInspector dashboard={dashboard} panel={panel} selectedTab={InspectTab.Data} noDrawer />
+                  </div>
+                );
+              }
+              if (uiState.mode === DisplayMode.JSON) {
+                return (
+                  <div className={styles.fullContainer} style={{ width, height }}>
+                    JSON
+                  </div>
+                );
               }
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
@@ -409,6 +424,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       justify-content: center;
       align-items: center;
+    `,
+    fullContainer: css`
+      display: block;
+      border: 1px solid red;
     `,
   };
 });
