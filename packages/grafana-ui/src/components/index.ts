@@ -7,6 +7,7 @@ export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
 export * from './Button/Button';
+export { ClipboardButton } from './Button/ClipboardButton';
 
 // Select
 export { Select, AsyncSelect } from './Select/Select';
