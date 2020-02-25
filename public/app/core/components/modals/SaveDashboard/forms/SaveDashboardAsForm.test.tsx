@@ -1,13 +1,13 @@
 import React from 'react';
-import { mount, shallow } from 'enzyme';
+import { mount } from 'enzyme';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
-import { DashboardModel } from '../../../../../features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { act } from 'react-dom/test-utils';
-import { expect } from '../../../../../../test/lib/common';
 
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]), search: jest.fn().mockResolvedValue([]) }),
 }));
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     user: { orgId: 1 },

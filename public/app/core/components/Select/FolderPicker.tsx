@@ -5,6 +5,7 @@ import { debounce } from 'lodash';
 import appEvents from '../../app_events';
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { DashboardSearchHit } from '../../../types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -56,7 +57,9 @@ export class FolderPicker extends PureComponent<Props, State> {
       permission: 'Edit',
     };
 
-    const searchHits = await getBackendSrv().search(params);
+    // TODO: move search to BackendSrv interface
+    // @ts-ignore
+    const searchHits = (await getBackendSrv().search(params)) as DashboardSearchHit[];
     const options: Array<SelectableValue<number>> = searchHits.map(hit => ({ label: hit.title, value: hit.id }));
     if (contextSrv.isEditor && rootName?.toLowerCase().startsWith(query.toLowerCase())) {
       options.unshift({ label: rootName, value: 0 });
@@ -83,6 +86,7 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   createNewFolder = async (folderName: string) => {
+    // @ts-ignore
     const newFolder = await getBackendSrv().createFolder({ title: folderName });
     let folder = { value: -1, label: 'Not created' };
     if (newFolder.id > -1) {
