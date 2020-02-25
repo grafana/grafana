@@ -5,6 +5,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -76,7 +77,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.Errorf("%s", err)
+		logger.Errorf("%s: %s %s\n", color.RedString("Error"), color.RedString("✗"), err)
 		os.Exit(1)
 	}
 }

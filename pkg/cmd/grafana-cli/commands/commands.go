@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"fmt"
-	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -29,7 +28,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			HomePath: cmd.HomePath(),
 			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
 		}); err != nil {
-			return fmt.Errorf("\n%s: Failed to load configuration", color.RedString("Error"))
+			return fmt.Errorf("failed to load configuration")
 		}
 
 		if debug {
@@ -40,7 +39,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
 		if err := engine.Init(); err != nil {
-			return fmt.Errorf("\n%s: Failed to initialize SQL engine", color.RedString("Error"))
+			return fmt.Errorf("failed to initialize SQL engine")
 		}
 
 		if err := command(cmd, engine); err != nil {
@@ -56,15 +55,6 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 		if err := command(cmd); err != nil {
-			// TODO: Figure out if it's still necessary to print on error
-			logger.Errorf("\n%s: ", color.RedString("Error"))
-			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
-
-			if err := cmd.ShowHelp(); err != nil {
-				logger.Errorf("\n%s: Failed to show help: %s %s\n\n", color.RedString("Error"),
-					color.RedString("✗"), err)
-			}
-
 			return err
 		}
 

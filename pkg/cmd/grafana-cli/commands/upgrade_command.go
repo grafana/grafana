@@ -25,7 +25,7 @@ func (cmd Command) upgradeCommand(c utils.CommandLine) error {
 
 	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
 		if err := s.RemoveInstalledPlugin(pluginsDir, pluginName); err != nil {
-			return errutil.Wrapf(err, "Failed to remove plugin '%s'", pluginName)
+			return errutil.Wrapf(err, "failed to remove plugin '%s'", pluginName)
 		}
 
 		return InstallPlugin(pluginName, "", c, cmd.Client)

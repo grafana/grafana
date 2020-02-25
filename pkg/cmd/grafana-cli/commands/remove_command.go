@@ -16,14 +16,14 @@ func (cmd Command) removeCommand(c utils.CommandLine) error {
 
 	plugin := c.Args().First()
 	if plugin == "" {
-		return errors.New("Missing plugin parameter")
+		return errors.New("missing plugin parameter")
 	}
 
 	err := removePlugin(pluginPath, plugin)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
-			return fmt.Errorf("Plugin does not exist")
+			return fmt.Errorf("plugin does not exist")
 		}
 
 		return err
