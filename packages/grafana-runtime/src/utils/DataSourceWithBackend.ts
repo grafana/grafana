@@ -80,6 +80,20 @@ export class DataSourceWithBackend<
     return { data: resultsToDataFrames(rsp) };
   }
 
+  /**
+   * Make a GET request to the datasource resource path
+   */
+  async getResource(path: string, params?: any): Promise<Record<string, any>> {
+    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params);
+  }
+
+  /**
+   * Send a POST request to the datasource resource path
+   */
+  async postResource(path: string, body?: any): Promise<Record<string, any>> {
+    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
+  }
+
   testDatasource() {
     // TODO, this will call the backend healthcheck endpoint
     return Promise.resolve({});
