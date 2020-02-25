@@ -2,12 +2,11 @@ import React from 'react';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { Aggregations, Metrics, Filters, GroupBys, Alignments, AlignmentPeriods, AliasBy, Help } from './';
+import { Project, Aggregations, Metrics, Filters, GroupBys, Alignments, AlignmentPeriods, AliasBy, Help } from './';
 import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData, toOption } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { PanelEvents, SelectableValue, TimeSeries } from '@grafana/data';
-import { Project } from './Project';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;

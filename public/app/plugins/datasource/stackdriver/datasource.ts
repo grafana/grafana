@@ -180,6 +180,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         view: 'FULL',
         filters: this.interpolateFilters(annotation.target.filters || [], options.scopedVars),
         type: 'annotationQuery',
+        project: this.templateSrv.replace(annotation.target.defaultProject, options.scopedVars || {}),
       },
     ];
 

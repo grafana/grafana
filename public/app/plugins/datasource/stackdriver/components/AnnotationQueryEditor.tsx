@@ -5,7 +5,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
 
 import StackdriverDatasource from '../datasource';
-import { Metrics, Filters, AnnotationsHelp } from './';
+import { Metrics, Filters, AnnotationsHelp, Project } from './';
 import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
 
@@ -50,6 +50,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
     this.setState({
       variableOptionGroup,
       variableOptions: variableOptionGroup.options,
+      defaultProject: datasource.projectName,
       ...target,
     });
 
@@ -95,6 +96,11 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
 
     return (
       <>
+        <Project
+          datasource={datasource}
+          defaultProject={defaultProject}
+          onChange={value => this.onChange('defaultProject', value)}
+        />
         <Metrics
           defaultProject={defaultProject}
           metricType={metricType}
