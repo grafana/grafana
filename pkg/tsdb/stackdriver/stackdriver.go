@@ -80,8 +80,6 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
-	case "ensureDefaultProjectQuery":
-		result, err = e.ensureDefaultProject(ctx, tsdbQuery)
 	case "getProjectsListQuery":
 		result, err = e.getProjectList(ctx, tsdbQuery)
 	case "testDatasource":
@@ -736,6 +734,21 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 		return defaultCredentials.ProjectID, nil
 	}
 	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
+}
+
+func (e *StackdriverExecutor) getProjectList(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: tsdbQuery.Queries[0].RefId}
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
+	}
+	projectsList, err := e.getProjects(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	queryResult.Meta.Set("projectsList", projectsList)
+	result.Results[tsdbQuery.Queries[0].RefId] = queryResult
+	return result, nil
 }
 
 func (e *StackdriverExecutor) getProjects(ctx context.Context) ([]ResourceManagerProjectSelect, error) {

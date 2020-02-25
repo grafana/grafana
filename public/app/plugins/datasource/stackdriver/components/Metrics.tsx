@@ -4,10 +4,8 @@ import _ from 'lodash';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
 import StackdriverDatasource from '../datasource';
-import appEvents from 'app/core/app_events';
 import { Segment } from '@grafana/ui';
 import { MetricDescriptor } from '../types';
-import { CoreEvents } from 'app/types';
 
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
@@ -46,35 +44,13 @@ export class Metrics extends React.Component<Props, State> {
 
   componentDidMount() {
     this.setState({ defaultProject: this.props.defaultProject }, () => {
-      this.getCurrentProject()
-        .then(this.loadMetricDescriptors.bind(this))
-        .then(this.initializeServiceAndMetrics.bind(this));
-    });
-  }
-
-  async getCurrentProject() {
-    return new Promise(async (resolve, reject) => {
-      try {
-        if (!this.state.defaultProject) {
-          const defaultProject = await this.props.datasource.getDefaultProject();
-          this.setState({ defaultProject });
-        }
-        resolve(this.state.defaultProject);
-      } catch (error) {
-        appEvents.emit(CoreEvents.dsRequestError, error);
-        reject();
-      }
+      this.loadMetricDescriptors().then(this.initializeServiceAndMetrics.bind(this));
     });
   }
 
   async loadMetricDescriptors() {
-    if (this.state.defaultProject !== null) {
-      const metricDescriptors = await this.props.datasource.getMetricTypes(this.state.defaultProject);
-      this.setState({ metricDescriptors });
-      return metricDescriptors;
-    } else {
-      return [];
-    }
+    const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.defaultProject);
+    this.setState({ metricDescriptors });
   }
 
   async initializeServiceAndMetrics() {

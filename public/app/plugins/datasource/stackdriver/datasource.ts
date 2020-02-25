@@ -267,32 +267,6 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return message;
   }
 
-  async getDefaultProject() {
-    try {
-      if (this.authenticationType === 'gce' || !this.projectName) {
-        const { data } = await getBackendSrv().datasourceRequest({
-          url: '/api/tsdb/query',
-          method: 'POST',
-          data: {
-            queries: [
-              {
-                refId: 'ensureDefaultProjectQuery',
-                type: 'ensureDefaultProjectQuery',
-                datasourceId: this.id,
-              },
-            ],
-          },
-        });
-        this.projectName = data.results.ensureDefaultProjectQuery.meta.defaultProject;
-        return this.projectName;
-      } else {
-        return this.projectName;
-      }
-    } catch (error) {
-      throw this.formatStackdriverError(error);
-    }
-  }
-
   async getProjects() {
     try {
       const { data } = await getBackendSrv().datasourceRequest({
