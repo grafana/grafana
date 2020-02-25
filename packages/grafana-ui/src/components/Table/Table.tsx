@@ -61,7 +61,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
 
   for (const headerGroup of headerGroups) {
     for (const header of headerGroup.headers) {
-      totalWidth += header.width;
+      totalWidth += header.width as number;
     }
   }
 
@@ -81,6 +81,7 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
         itemCount={rows.length}
         itemSize={tableStyles.rowHeight}
         width={totalWidth ?? width}
+        style={{ overflow: 'hidden auto' }}
       >
         {RenderRow}
       </FixedSizeList>

@@ -222,7 +222,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={processed[selected]} columnMinWidth={150} />
+                  <Table width={width} height={height} data={processed[selected]} />
                 </div>
               );
             }}

@@ -31,7 +31,6 @@ export const getTableStyles = stylesFactory(
       cellHeightInner: bodyFontSize * lineHeight,
       rowHeight: cellHeight + 2,
       table: css`
-        height: 100%;
         width: 100%;
         overflow: auto;
       `,
