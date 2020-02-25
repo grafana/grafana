@@ -212,36 +212,43 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async testDatasource() {
-    let status, message;
-    const defaultErrorMessage = 'Cannot connect to Stackdriver API';
-    try {
-      const projectName = this.projectName;
-      const path = `v3/projects/${projectName}/metricDescriptors`;
-      const response = await this.doRequest(`${this.baseUrl}${path}`);
-      if (response.status === 200) {
-        status = 'success';
-        message = 'Successfully queried the Stackdriver API.';
-      } else {
-        status = 'error';
-        message = response.statusText ? response.statusText : defaultErrorMessage;
-      }
-    } catch (error) {
-      status = 'error';
-      if (_.isString(error)) {
-        message = error;
-      } else {
-        message = 'Stackdriver: ';
-        message += error.statusText ? error.statusText : defaultErrorMessage;
-        if (error.data && error.data.error && error.data.error.code) {
-          message += ': ' + error.data.error.code + '. ' + error.data.error.message;
+    return getBackendSrv()
+      .datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          queries: [
+            {
+              refId: 'testDatasource',
+              type: 'testDatasource',
+              datasourceId: this.id,
+              project: this.projectName,
+            },
+          ],
+        },
+      })
+      .then(({ data }) => {
+        return { status: 'success', message: 'Successfully queried the Stackdriver API.' };
+      })
+      .catch(error => {
+        const defaultErrorMessage = 'Cannot connect to Stackdriver API';
+        const status = 'error';
+        let message = '';
+        if (_.isString(error)) {
+          message = error;
+        } else {
+          message = 'Stackdriver: ';
+          message += error.statusText ? error.statusText : defaultErrorMessage;
+          if (error.data && error.data.error && error.data.error) {
+            message += ': ' + error.data.error;
+          }
         }
-      }
-    } finally {
-      return {
-        status,
-        message,
-      };
-    }
+
+        return {
+          status,
+          message,
+        };
+      });
   }
 
   formatStackdriverError(error: any) {
