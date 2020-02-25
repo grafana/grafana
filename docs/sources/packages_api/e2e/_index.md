@@ -10,6 +10,8 @@ draft = true
 
 ## @grafana/e2e package
 
+A library for writing end-to-end tests for Grafana and its ecosystem.
+
 ## Variables
 
 |  Variable | Description |

@@ -38,6 +38,7 @@ import { FieldConfig } from '@grafana/data';
 |  [min](#min-property) | <code>number &#124; null</code> |  |
 |  [noValue](#novalue-property) | <code>string</code> |  |
 |  [nullValueMode](#nullvaluemode-property) | <code>NullValueMode</code> |  |
+|  [scopedVars](#scopedvars-property) | <code>ScopedVars</code> |  |
 |  [thresholds](#thresholds-property) | <code>ThresholdsConfig</code> |  |
 |  [title](#title-property) | <code>string</code> |  |
 |  [unit](#unit-property) | <code>string</code> |  |
@@ -120,6 +121,14 @@ noValue?: string;
 
 ```typescript
 nullValueMode?: NullValueMode;
+```
+
+### scopedVars property
+
+<b>Signature</b>
+
+```typescript
+scopedVars?: ScopedVars;
 ```
 
 ### thresholds property

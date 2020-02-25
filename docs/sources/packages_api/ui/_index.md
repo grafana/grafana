@@ -10,6 +10,8 @@ draft = true
 
 ## @grafana/ui package
 
+A library containing the different design components of the Grafana ecosystem.
+
 ## Classes
 
 |  Class | Description |
@@ -92,7 +94,7 @@ draft = true
 |  [stylesFactory(stylesCreator)](./stylesfactory/) | Creates memoized version of styles creator |
 |  [SuggestionsPlugin({ onTypeahead, cleanText, onWillApplySuggestion, portalOrigin, })](./suggestionsplugin/) |  |
 |  [useTheme()](./usetheme/) |  |
-|  [ValuePicker({ label, icon, options, onChange })](./valuepicker/) |  |
+|  [ValuePicker({ label, icon, options, onChange, variant })](./valuepicker/) |  |
 
 ## Interfaces
 
@@ -112,6 +114,7 @@ draft = true
 |  [LegendOptions](./legendoptions/) |  |
 |  [LegendRenderOptions](./legendrenderoptions/) |  |
 |  [NumberFieldConfigSettings](./numberfieldconfigsettings/) |  |
+|  [SelectFieldConfigSettings](./selectfieldconfigsettings/) |  |
 |  [SingleStatBaseOptions](./singlestatbaseoptions/) |  |
 |  [StringFieldConfigSettings](./stringfieldconfigsettings/) |  |
 |  [SuggestionsState](./suggestionsstate/) |  |
@@ -161,12 +164,15 @@ draft = true
 |  [FormField](./formfield/) | Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass custom inputEl if required in which case inputWidth and inputProps are ignored. |
 |  [FormLabel](./formlabel/) |  |
 |  [Forms](./forms/) |  |
+|  [FullWidthButtonContainer](./fullwidthbuttoncontainer/) |  |
 |  [getLogRowStyles](./getlogrowstyles/) |  |
+|  [getStandardFieldConfigs](./getstandardfieldconfigs/) |  |
 |  [getTheme](./gettheme/) |  |
 |  [GraphContextMenu](./graphcontextmenu/) |  |
 |  [GraphLegend](./graphlegend/) |  |
 |  [GraphWithLegend](./graphwithlegend/) |  |
 |  [hasValidationEvent](./hasvalidationevent/) |  |
+|  [HorizontalGroup](./horizontalgroup/) |  |
 |  [Icon](./icon/) |  |
 |  [IndicatorsContainer](./indicatorscontainer/) |  |
 |  [LegendList](./legendlist/) |  |
@@ -197,14 +203,16 @@ draft = true
 |  [REGION\_FILL\_ALPHA](./region_fill_alpha/) |  |
 |  [SCHEMA](./schema/) |  |
 |  [SecretFormField](./secretformfield/) | Form field that has 2 states configured and not configured. If configured it will not show its contents and adds a reset button that will clear the input and makes it accessible. In non configured state it behaves like normal form field. This is used for passwords or anything that is encrypted on the server and is later returned encrypted to the user (like datasource passwords). |
+|  [SelectOverrideEditor](./selectoverrideeditor/) |  |
+|  [selectOverrideProcessor](./selectoverrideprocessor/) |  |
 |  [selectThemeVariant](./selectthemevariant/) |  |
+|  [SelectValueEditor](./selectvalueeditor/) |  |
 |  [SeriesColorPicker](./seriescolorpicker/) |  |
 |  [SeriesColorPickerPopover](./seriescolorpickerpopover/) |  |
 |  [SeriesColorPickerPopoverWithTheme](./seriescolorpickerpopoverwiththeme/) |  |
 |  [SeriesIcon](./seriesicon/) |  |
 |  [sortedColors](./sortedcolors/) |  |
 |  [Spinner](./spinner/) |  |
-|  [standardFieldConfigEditorRegistry](./standardfieldconfigeditorregistry/) |  |
 |  [StringOverrideEditor](./stringoverrideeditor/) |  |
 |  [stringOverrideProcessor](./stringoverrideprocessor/) |  |
 |  [StringValueEditor](./stringvalueeditor/) |  |
@@ -220,6 +228,7 @@ draft = true
 |  [TransformationRow](./transformationrow/) |  |
 |  [transformersUIRegistry](./transformersuiregistry/) |  |
 |  [validate](./validate/) |  |
+|  [VerticalGroup](./verticalgroup/) |  |
 |  [withTheme](./withtheme/) |  |
 
 ## Type Aliases

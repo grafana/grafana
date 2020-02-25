@@ -37,6 +37,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 |  [allowOrgCreate](#alloworgcreate-property) |  | <code>boolean</code> |  |
 |  [appSubUrl](#appsuburl-property) |  | <code>string</code> |  |
 |  [authProxyEnabled](#authproxyenabled-property) |  | <code>boolean</code> |  |
+|  [autoAssignOrg](#autoassignorg-property) |  | <code>boolean</code> |  |
 |  [bootData](#bootdata-property) |  | <code>any</code> |  |
 |  [buildInfo](#buildinfo-property) |  | <code>BuildInfo</code> |  |
 |  [datasources](#datasources-property) |  | <code>{</code><br/><code>        [str: string]: DataSourceInstanceSettings;</code><br/><code>    }</code> |  |
@@ -54,6 +55,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 |  [licenseInfo](#licenseinfo-property) |  | <code>LicenseInfo</code> |  |
 |  [loginError](#loginerror-property) |  | <code>any</code> |  |
 |  [loginHint](#loginhint-property) |  | <code>any</code> |  |
+|  [navTree](#navtree-property) |  | <code>any</code> |  |
 |  [newPanelTitle](#newpaneltitle-property) |  | <code>string</code> |  |
 |  [oauth](#oauth-property) |  | <code>any</code> |  |
 |  [panels](#panels-property) |  | <code>{</code><br/><code>        [key: string]: PanelPluginMeta;</code><br/><code>    }</code> |  |
@@ -62,6 +64,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 |  [pluginsToPreload](#pluginstopreload-property) |  | <code>string[]</code> |  |
 |  [samlEnabled](#samlenabled-property) |  | <code>boolean</code> |  |
 |  [theme](#theme-property) |  | <code>GrafanaTheme</code> |  |
+|  [verifyEmailEnabled](#verifyemailenabled-property) |  | <code>boolean</code> |  |
 |  [viewersCanEdit](#viewerscanedit-property) |  | <code>boolean</code> |  |
 |  [windowTitlePrefix](#windowtitleprefix-property) |  | <code>string</code> |  |
 
@@ -134,6 +137,14 @@ appSubUrl: string;
 
 ```typescript
 authProxyEnabled: boolean;
+```
+
+### autoAssignOrg property
+
+<b>Signature</b>
+
+```typescript
+autoAssignOrg: boolean;
 ```
 
 ### bootData property
@@ -274,6 +285,14 @@ loginError: any;
 loginHint: any;
 ```
 
+### navTree property
+
+<b>Signature</b>
+
+```typescript
+navTree: any;
+```
+
 ### newPanelTitle property
 
 <b>Signature</b>
@@ -338,6 +357,14 @@ samlEnabled: boolean;
 
 ```typescript
 theme: GrafanaTheme;
+```
+
+### verifyEmailEnabled property
+
+<b>Signature</b>
+
+```typescript
+verifyEmailEnabled: boolean;
 ```
 
 ### viewersCanEdit property

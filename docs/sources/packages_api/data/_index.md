@@ -10,6 +10,8 @@ draft = true
 
 ## @grafana/data package
 
+A library containing most of the core functionality and data types used in Grafana.
+
 ## Classes
 
 |  Class | Description |
@@ -328,6 +330,7 @@ draft = true
 |  [onUpdateDatasourceSecureJsonDataOption](./onupdatedatasourcesecurejsondataoption/) |  |
 |  [onUpdateDatasourceSecureJsonDataOptionSelect](./onupdatedatasourcesecurejsondataoptionselect/) |  |
 |  [setLocale](./setlocale/) |  |
+|  [standardFieldConfigEditorRegistry](./standardfieldconfigeditorregistry/) |  |
 |  [TIME\_FORMAT](./time_format/) |  |
 |  [toDataFrame](./todataframe/) |  |
 |  [toDuration](./toduration/) |  |

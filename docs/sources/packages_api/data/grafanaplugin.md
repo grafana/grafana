@@ -20,6 +20,12 @@ export declare class GrafanaPlugin<T extends PluginMeta = PluginMeta>
 ```typescript
 import { GrafanaPlugin } from '@grafana/data';
 ```
+<b>Constructors</b>
+
+|  Constructor | Modifiers | Description |
+|  --- | --- | --- |
+|  [constructor()](#constructor-) |  | Constructs a new instance of the <code>GrafanaPlugin</code> class |
+
 <b>Properties</b>
 
 |  Property | Modifiers | Type | Description |
@@ -34,6 +40,16 @@ import { GrafanaPlugin } from '@grafana/data';
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
 |  [addConfigPage(tab)](#addconfigpage-method) |  |  |
+
+### constructor()
+
+Constructs a new instance of the `GrafanaPlugin` class
+
+<b>Signature</b>
+
+```typescript
+constructor();
+```
 
 ### angularConfigCtrl property
 
@@ -64,7 +80,7 @@ loadError?: boolean;
 <b>Signature</b>
 
 ```typescript
-meta?: T;
+meta: T;
 ```
 
 ### addConfigPage method

@@ -25,6 +25,7 @@ import { FieldOverrideContext } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [data](#data-property) | <code>DataFrame[]</code> |  |
+|  [dataFrameIndex](#dataframeindex-property) | <code>number</code> |  |
 |  [field](#field-property) | <code>Field</code> |  |
 |  [getSuggestions](#getsuggestions-property) | <code>(scope?: VariableSuggestionsScope) =&gt; VariableSuggestion[]</code> |  |
 |  [replaceVariables](#replacevariables-property) | <code>InterpolateFunction</code> |  |
@@ -35,6 +36,14 @@ import { FieldOverrideContext } from '@grafana/data';
 
 ```typescript
 data: DataFrame[];
+```
+
+### dataFrameIndex property
+
+<b>Signature</b>
+
+```typescript
+dataFrameIndex?: number;
 ```
 
 ### field property

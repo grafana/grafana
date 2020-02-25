@@ -25,7 +25,6 @@ import { QueryResultMeta } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [custom](#custom-property) | <code>Record&lt;string, any&gt;</code> |  |
-|  [datasource](#datasource-property) | <code>string</code> |  |
 |  [limit](#limit-property) | <code>number</code> |  |
 |  [requestId](#requestid-property) | <code>string</code> |  |
 |  [searchWords](#searchwords-property) | <code>string[]</code> |  |
@@ -36,14 +35,6 @@ import { QueryResultMeta } from '@grafana/data';
 
 ```typescript
 custom?: Record<string, any>;
-```
-
-### datasource property
-
-<b>Signature</b>
-
-```typescript
-datasource?: string;
 ```
 
 ### limit property

@@ -28,6 +28,7 @@ import { FieldPropertyEditorItem } from '@grafana/data';
 |  [override](#override-property) | <code>ComponentType&lt;FieldOverrideEditorProps&lt;TValue, TSettings&gt;&gt;</code> |  |
 |  [process](#process-property) | <code>(value: any, context: FieldOverrideContext, settings: TSettings) =&gt; TValue</code> |  |
 |  [settings](#settings-property) | <code>TSettings</code> |  |
+|  [shouldApply](#shouldapply-property) | <code>(field: Field) =&gt; boolean</code> |  |
 
 ### editor property
 
@@ -59,4 +60,12 @@ process: (value: any, context: FieldOverrideContext, settings: TSettings) => TVa
 
 ```typescript
 settings: TSettings;
+```
+
+### shouldApply property
+
+<b>Signature</b>
+
+```typescript
+shouldApply: (field: Field) => boolean;
 ```

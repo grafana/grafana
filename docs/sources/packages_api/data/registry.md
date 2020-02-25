@@ -26,6 +26,12 @@ import { Registry } from '@grafana/data';
 |  --- | --- | --- |
 |  [constructor(init)](#constructor-init) |  | Constructs a new instance of the <code>Registry</code> class |
 
+<b>Properties</b>
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [setInit](#setinit-property) |  | <code>(init: () =&gt; T[]) =&gt; void</code> |  |
+
 <b>Methods</b>
 
 |  Method | Modifiers | Description |
@@ -50,6 +56,14 @@ constructor(init?: (() => T[]) | undefined);
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  init | <code>(() =&gt; T[]) &#124; undefined</code> |  |
+
+### setInit property
+
+<b>Signature</b>
+
+```typescript
+setInit: (init: () => T[]) => void;
+```
 
 ### get method
 

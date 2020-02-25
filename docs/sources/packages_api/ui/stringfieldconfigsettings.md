@@ -24,8 +24,17 @@ import { StringFieldConfigSettings } from '@grafana/ui';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [expandTemplateVars](#expandtemplatevars-property) | <code>boolean</code> |  |
 |  [maxLength](#maxlength-property) | <code>number</code> |  |
 |  [placeholder](#placeholder-property) | <code>string</code> |  |
+
+### expandTemplateVars property
+
+<b>Signature</b>
+
+```typescript
+expandTemplateVars?: boolean;
+```
 
 ### maxLength property
 
