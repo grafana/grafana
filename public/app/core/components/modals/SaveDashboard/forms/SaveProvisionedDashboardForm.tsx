@@ -6,7 +6,11 @@ import { SaveDashboardFormProps } from '../types';
 import { CopyToClipboard } from '../../../CopyToClipboard/CopyToClipboard';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
-  const dashboardJSON = useMemo(() => dashboard.getSaveModelClone(), [dashboard]);
+  const dashboardJSON = useMemo(() => {
+    const clone = dashboard.getSaveModelClone();
+    delete clone.id;
+  }, [dashboard]);
+
   const getClipboardText = useCallback(() => {
     return JSON.stringify(dashboardJSON, null, 2);
   }, [dashboard]);
