@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -205,13 +206,33 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 	}
 
 	protoReq := &pluginv2.CallResource_Request{
-		Config:  &pluginv2.PluginConfig{},
+		Config: &pluginv2.PluginConfig{
+			OrgId:                   req.Config.OrgID,
+			PluginId:                req.Config.PluginID,
+			PluginType:              req.Config.PluginType,
+			JsonData:                req.Config.JSONData,
+			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
+			UpdatedMS:               req.Config.Updated.UnixNano() / int64(time.Millisecond),
+		},
 		Path:    req.Path,
 		Method:  req.Method,
 		Url:     req.URL,
 		Headers: reqHeaders,
 		Body:    req.Body,
 	}
+
+	if req.Config.DataSourceConfig != nil {
+		protoReq.Config.DatasourceConfig = &pluginv2.DataSourceConfig{
+			Id:               req.Config.DataSourceConfig.ID,
+			Name:             req.Config.DataSourceConfig.Name,
+			Url:              req.Config.DataSourceConfig.URL,
+			Database:         req.Config.DataSourceConfig.Database,
+			User:             req.Config.DataSourceConfig.User,
+			BasicAuthEnabled: req.Config.DataSourceConfig.BasicAuthEnabled,
+			BasicAuthUser:    req.Config.DataSourceConfig.BasicAuthUser,
+		}
+	}
+
 	protoResp, err := p.core.CallResource(ctx, protoReq)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {

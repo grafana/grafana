@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { CustomScrollbar, Forms, Icon, selectThemeVariant, stylesFactory } from '@grafana/ui';
+import { CustomScrollbar, Forms, selectThemeVariant, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -18,6 +18,7 @@ import { PanelTitle } from './PanelTitle';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
+import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { LocationState } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
@@ -231,9 +232,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <div className={styles.wrapper}>
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
-            <button className="navbar-edit__back-btn" onClick={this.onPanelExit}>
-              <Icon name="arrow-left" />
-            </button>
+            <BackButton onClick={this.onPanelExit} />
             <PanelTitle value={panel.title} onChange={this.onPanelTitleChange} />
           </div>
           <div className={styles.toolbarLeft}>
