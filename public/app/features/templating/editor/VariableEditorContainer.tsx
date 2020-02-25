@@ -9,6 +9,7 @@ import {
   changeToEditorListMode,
   changeVariableOrder,
   duplicateVariable,
+  removeVariable,
   toPayload,
   VariableIdentifier,
 } from '../state/actions';
@@ -28,6 +29,7 @@ interface DispatchProps {
   changeToEditorEditMode: typeof changeToEditorEditMode;
   changeVariableOrder: typeof changeVariableOrder;
   duplicateVariable: typeof duplicateVariable;
+  removeVariable: typeof removeVariable;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -57,6 +59,10 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 
   onDuplicateVariable = (identifier: VariableIdentifier) => {
     this.props.duplicateVariable(toPayload(identifier));
+  };
+
+  onRemoveVariable = (identifier: VariableIdentifier) => {
+    this.props.removeVariable(toPayload(identifier));
   };
 
   render() {
@@ -112,6 +118,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             onEditClick={this.onEditVariable}
             onChangeVariableOrder={this.onChangeVariableOrder}
             onDuplicateVariable={this.onDuplicateVariable}
+            onRemoveVariable={this.onRemoveVariable}
           />
         )}
         {variableStateToEdit && (
@@ -136,6 +143,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeToEditorEditMode,
   changeVariableOrder,
   duplicateVariable,
+  removeVariable,
 };
 
 export const VariableEditorContainer = connectWithStore(

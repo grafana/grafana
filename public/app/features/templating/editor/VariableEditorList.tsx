@@ -11,6 +11,7 @@ export interface Props {
   onEditClick: (identifier: VariableIdentifier) => void;
   onChangeVariableOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;
   onDuplicateVariable: (identifier: VariableIdentifier) => void;
+  onRemoveVariable: (identifier: VariableIdentifier) => void;
 }
 
 enum MoveType {
@@ -32,6 +33,11 @@ export class VariableEditorList extends PureComponent<Props> {
   onDuplicateVariable = (event: MouseEvent, identifier: VariableIdentifier) => {
     event.preventDefault();
     this.props.onDuplicateVariable(identifier);
+  };
+
+  onRemoveVariable = (event: MouseEvent, identifier: VariableIdentifier) => {
+    event.preventDefault();
+    this.props.onRemoveVariable(identifier);
   };
 
   render() {
@@ -137,7 +143,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td style={{ width: '1%' }}>
                           <a
-                            // ng-click="removeVariable(variable)"
+                            onClick={event => this.onRemoveVariable(event, toVariableIdentifier(variable))}
                             className="btn btn-danger btn-small"
                             aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowRemoveButtons(
                               variable.name

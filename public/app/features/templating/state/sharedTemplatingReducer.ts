@@ -25,6 +25,10 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
   builder
     .addCase(removeVariable, (state, action) => {
       delete state.variables[action.payload.uuid!];
+      const variableStates = Object.values(state.variables);
+      for (let index = 0; index < variableStates.length; index++) {
+        variableStates[index].variable.index = index;
+      }
     })
     .addCase(variableEditorMounted, (state, action) => {
       state.variables[action.payload.uuid!].editor.name = state.variables[action.payload.uuid].variable.name;
