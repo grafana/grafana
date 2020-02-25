@@ -10,7 +10,6 @@ require (
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 	github.com/bradfitz/gomemcache v0.0.0-20190329173943-551aad21a668
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
-	github.com/codegangsta/cli v1.20.0 // indirect
 	github.com/crewjam/saml v0.0.0-20191031171751-c42136edf9b1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853
