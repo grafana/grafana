@@ -25,7 +25,7 @@ import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import { AppEvents, setLocale, setMarkdownOptions } from '@grafana/data';
+import { AppEvents, setLocale, setMarkdownOptions, standardFieldConfigEditorRegistry } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
 import { checkBrowserCompatibility } from 'app/core/utils/browser';
@@ -40,6 +40,7 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
+import { getStandardFieldConfigs } from '@grafana/ui';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -82,6 +83,7 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
+    standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
 
     app.config(
       (

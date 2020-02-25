@@ -18,8 +18,8 @@ import {
   dashboardInitFailed,
   dashboardInitSlow,
   dashboardInitServices,
-  clearDashboardQueriesToUpdate,
-} from './actions';
+  clearDashboardQueriesToUpdateOnLoad,
+} from './reducers';
 
 // Types
 import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
@@ -130,7 +130,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // Detect slow loading / initializing and set state flag
     // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
     setTimeout(() => {
-      if (getState().dashboard.model === null) {
+      if (getState().dashboard.getModel() === null) {
         dispatch(dashboardInitSlow());
       }
     }, 500);
@@ -173,8 +173,10 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
-    const { panelId, queries } = storeState.dashboard.modifiedQueries;
-    dashboard.meta.fromExplore = !!(panelId && queries);
+    if (storeState.dashboard.modifiedQueries) {
+      const { panelId, queries } = storeState.dashboard.modifiedQueries;
+      dashboard.meta.fromExplore = !!(panelId && queries);
+    }
 
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
@@ -203,7 +205,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       console.log(err);
     }
 
-    if (dashboard.meta.fromExplore) {
+    if (storeState.dashboard.modifiedQueries) {
+      const { panelId, queries } = storeState.dashboard.modifiedQueries;
       updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
     }
 
@@ -255,5 +258,5 @@ function updateQueriesWhenComingFromExplore(
   }
 
   // Clear update state now that we're done
-  dispatch(clearDashboardQueriesToUpdate());
+  dispatch(clearDashboardQueriesToUpdateOnLoad());
 }

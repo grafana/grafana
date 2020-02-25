@@ -1,5 +1,5 @@
 'use strict';
-const {cloneDeep} = require('lodash');
+const { cloneDeep } = require('lodash');
 
 const overrideWebpackConfig = (originalConfig, options) => {
   const config = cloneDeep(originalConfig);

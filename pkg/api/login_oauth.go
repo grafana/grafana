@@ -186,7 +186,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if userInfo.Role != "" {
 		rt := m.RoleType(userInfo.Role)
 		if rt.IsValid() {
-			extUser.OrgRoles[1] = rt
+			var orgID int64
+			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+				orgID = int64(setting.AutoAssignOrgId)
+			} else {
+				orgID = int64(1)
+			}
+			extUser.OrgRoles[orgID] = rt
 		}
 	}
 

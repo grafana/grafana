@@ -140,7 +140,6 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
           <ThresholdsEditor
             onChange={this.onThresholdsChanged}
             thresholds={defaults.thresholds}
-            theme={config.theme}
             showAlphaUI={config.featureToggles.newEdit}
           />
         </PanelOptionsGrid>

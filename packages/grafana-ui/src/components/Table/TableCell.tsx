@@ -17,6 +17,7 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
   const cellProps = cell.getCellProps();
 
   let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
+
   if (filterable && onCellClick) {
     if (cellProps.style) {
       cellProps.style.cursor = 'pointer';
@@ -24,6 +25,7 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
 
     onClick = () => onCellClick(cell.column.Header as string, cell.value);
   }
+
   const fieldTextAlign = getTextAlign(field);
   if (fieldTextAlign && cellProps.style) {
     cellProps.style.textAlign = fieldTextAlign;

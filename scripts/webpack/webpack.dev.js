@@ -63,16 +63,21 @@ module.exports = (env = {}) =>
                       modules: false,
                     },
                   ],
-                  '@babel/preset-typescript',
+                  [
+                    '@babel/preset-typescript',
+                    {
+                      allowNamespaces: true,
+                    },
+                  ],
                   '@babel/preset-react',
                 ],
               },
             },
             {
-              loader: 'tslint-loader',
+              loader: 'eslint-loader',
               options: {
-                emitErrors: true,
-                typeCheck: false,
+                emitError: true,
+                emitWarning: true,
               },
             },
           ],

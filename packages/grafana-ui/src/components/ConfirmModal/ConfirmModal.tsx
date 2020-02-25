@@ -35,13 +35,23 @@ interface Props {
   title: string;
   body: string;
   confirmText: string;
+  dismissText?: string;
   icon?: IconType;
 
   onConfirm(): void;
   onDismiss(): void;
 }
 
-export const ConfirmModal: FC<Props> = ({ isOpen, title, body, confirmText, icon, onConfirm, onDismiss }) => {
+export const ConfirmModal: FC<Props> = ({
+  isOpen,
+  title,
+  body,
+  confirmText,
+  dismissText = 'Cancel',
+  icon,
+  onConfirm,
+  onDismiss,
+}) => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 
@@ -54,7 +64,7 @@ export const ConfirmModal: FC<Props> = ({ isOpen, title, body, confirmText, icon
             {confirmText}
           </Button>
           <Button variant="inverse" onClick={onDismiss}>
-            Cancel
+            {dismissText}
           </Button>
         </div>
       </div>
