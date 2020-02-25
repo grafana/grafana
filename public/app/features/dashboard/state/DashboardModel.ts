@@ -15,7 +15,6 @@ import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { VariableModel } from '../../templating/variable';
 import { getConfig } from '../../../core/config';
-import { getState } from 'app/store/store';
 import { getVariables } from 'app/features/templating/state/selectors';
 import { variableAdapters } from 'app/features/templating/adapters';
 
@@ -236,7 +235,7 @@ export class DashboardModel {
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
     const originalVariables = this.variables.list;
-    const currentVariables = getVariables(getState());
+    const currentVariables = getVariables();
 
     copy.variables = {
       list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
@@ -937,13 +936,13 @@ export class DashboardModel {
     if (!initial && getConfig().featureToggles.newVariables) {
       // since we never change the this.variables.list when running with variables
       // in redux we can use it instead of the originalTemplating.
-      this.variables.list = this.cloneVariablesFrom(getVariables(getState()));
+      this.variables.list = this.cloneVariablesFrom(getVariables());
     }
   }
 
   hasVariableValuesChanged() {
     if (getConfig().featureToggles.newVariables) {
-      return this.hasVariablesChanged(this.variables.list, getVariables(getState()));
+      return this.hasVariablesChanged(this.variables.list, getVariables());
     }
     return this.hasVariablesChanged(this.originalTemplating, this.templating.list);
   }
@@ -1028,7 +1027,7 @@ export class DashboardModel {
 
   private hasVariables() {
     if (getConfig().featureToggles.newVariables) {
-      return getVariables(getState()).length > 0;
+      return getVariables().length > 0;
     }
     return this.templating.list.length > 0;
   }

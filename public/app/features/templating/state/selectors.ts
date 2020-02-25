@@ -1,10 +1,9 @@
 import { cloneDeep } from 'lodash';
 
 import { StoreState } from '../../../types';
-import { VariableActions, VariableModel } from '../variable';
+import { VariableModel } from '../variable';
 import { getState } from '../../../store/store';
 import { emptyUuid, VariableState } from './types';
-import { variableAdapters } from '../adapters';
 
 export const getVariable = <T extends VariableModel = VariableModel>(
   uuid: string,
@@ -27,27 +26,9 @@ export const getVariables = (state: StoreState = getState()): VariableModel[] =>
     .map(state => state.variable);
 };
 
-export const getVariableStates = (state: StoreState = getState()): VariableState[] => {
-  const variableStates = Object.values(state.templating.variables).map(state => cloneDeep(state));
+export const getVariableStates = (state: StoreState = getState(), includeEmptyUuid = false): VariableState[] => {
+  const variableStates = Object.values(state.templating.variables)
+    .filter(state => (includeEmptyUuid ? true : state.variable.uuid !== emptyUuid))
+    .map(state => cloneDeep(state));
   return variableStates.sort((s1, s2) => s1.variable.index - s2.variable.index);
-};
-
-export const getAllVariables = (
-  angularVariables: Array<VariableModel & VariableActions>,
-  state: StoreState = getState()
-) => {
-  const reduxVariables = getVariables(state) as Array<VariableModel & VariableActions>;
-  return angularVariables.concat(reduxVariables).sort((a, b) => a.index - b.index);
-};
-
-export const getAllVariablesJSON = (
-  angularVariables: Array<VariableModel & VariableActions>,
-  state: StoreState = getState()
-): Array<Partial<VariableModel>> => {
-  return getAllVariables(angularVariables, state).map(variable => {
-    if (variableAdapters.contains(variable.type)) {
-      return variableAdapters.get(variable.type).getSaveModel(variable);
-    }
-    return variable.getSaveModel ? variable.getSaveModel() : variable;
-  });
 };

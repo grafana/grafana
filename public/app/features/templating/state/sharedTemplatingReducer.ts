@@ -41,6 +41,7 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
         return;
       }
       state.variables[action.payload.uuid!].editor = { ...initialVariableEditorState };
+      state.uuidInEditor = null;
       if (state.variables[emptyUuid]) {
         delete state.variables[emptyUuid];
       }
@@ -97,8 +98,6 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       state.variables[uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
       state.variables[uuid!].variable = emptyVariable;
       state.variables[uuid!].variable.uuid = uuid;
-      state.uuidInEditor = null;
-      delete state.variables[emptyUuid];
     })
     .addCase(changeToEditorEditMode, (state, action) => {
       if (action.payload.uuid === emptyUuid) {

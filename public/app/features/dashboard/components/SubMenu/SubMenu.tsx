@@ -72,7 +72,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variableStates: getVariableStates(state),
+  variableStates: getVariableStates(state, false),
 });
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);

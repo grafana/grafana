@@ -84,17 +84,7 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
   }
 );
 export const removeVariable = createAction<VariablePayload>('templating/removeVariable');
-export const storeNewVariable = createAction<PrepareAction<VariablePayload>>(
-  'templating/storeNewVariable',
-  (payload: VariablePayload) => {
-    return {
-      payload: {
-        ...payload,
-        uuid: v4(),
-      },
-    };
-  }
-);
+export const storeNewVariable = createAction<VariablePayload>('templating/storeNewVariable');
 export interface DuplicateVariable {
   newUuid: string;
 }
@@ -484,8 +474,9 @@ export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void
 
 export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.uuid!, getState());
-    dispatch(storeNewVariable(toVariablePayload(variableInState)));
+    const uuid = v4();
+    dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, uuid } as VariableModel)));
+    const variableInState = getVariable(uuid, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));
     dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
