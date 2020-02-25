@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import RcTimePicker from 'rc-time-picker';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
-import { useTheme, Icon } from '../../index';
+import { useTheme, Icon, selectThemeVariant as stv } from '../../index';
 import { stylesFactory } from '../../themes';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
@@ -16,6 +16,11 @@ interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const bgColor = stv({ light: theme.colors.white, dark: theme.colors.gray15 }, theme.type);
+  const menuShadowColor = stv({ light: theme.colors.gray4, dark: theme.colors.black }, theme.type);
+  const optionBgHover = stv({ light: theme.colors.gray7, dark: theme.colors.gray10 }, theme.type);
+  const borderRadius = theme.border.radius.sm;
+  const borderColor = theme.colors.formInputBorder;
   return {
     caretWrapper: css`
       position: absolute;
@@ -28,16 +33,42 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     picker: css`
       .rc-time-picker-panel-select {
-        border-color: ${theme.colors.dark6};
         font-size: 14px;
+        box-shadow: 0px 4px 4px ${menuShadowColor};
+        background-color: ${bgColor};
+        border-color: ${borderColor};
         li {
           outline-width: 2px;
           &.rc-time-picker-panel-select-option-selected {
             background-color: inherit;
             border: 1px solid ${theme.colors.orange};
-            border-radius: ${theme.border.radius.sm};
+            border-radius: ${borderRadius};
+          }
+
+          &:hover {
+            background: ${optionBgHover};
           }
         }
+      }
+
+      .rc-time-picker-panel-inner {
+        box-shadow: 0px 4px 4px ${menuShadowColor};
+        background-color: ${bgColor};
+        border-color: ${borderColor};
+        border-radius: ${borderRadius};
+
+        .rc-time-picker-panel-input,
+        .rc-time-picker-panel-input-wrap {
+          background-color: ${bgColor};
+        }
+      }
+    `,
+    input: css`
+      .rc-time-picker-input {
+        background-color: ${bgColor};
+        border-radius: ${borderRadius};
+        border-color: ${borderColor};
+        height: ${theme.spacing.formInputHeight};
       }
     `,
   };
@@ -49,7 +80,7 @@ export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, on
   return (
     <div>
       <RcTimePicker
-        className={inputSizes()[size]}
+        className={cx(inputSizes()[size], styles.input)}
         popupClassName={styles.picker}
         defaultValue={dateTimeAsMoment()}
         onChange={(value: any) => onChange(dateTime(value))}
