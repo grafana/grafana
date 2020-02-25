@@ -11,12 +11,12 @@ import { getIconKnob } from '../../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
 
 export default {
-  title: 'UI/Forms/Select',
+  title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
 };
 
-const generateOptions = () => {
+export const generateOptions = () => {
   const values = [
     'Sharilyn Markowitz',
     'Naomi Striplin',
@@ -237,27 +237,58 @@ export const customizedControl = () => {
         setValue(v);
       }}
       size="md"
-      renderControl={({ isOpen, value, ...otherProps }) => {
-        return <Button {...otherProps}> {isOpen ? 'Open' : 'Closed'}</Button>;
-      }}
+      renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
+        return (
+          <Button {...otherProps} ref={ref}>
+            {' '}
+            {isOpen ? 'Open' : 'Closed'}
+          </Button>
+        );
+      })}
       {...getDynamicProps()}
     />
   );
 };
 
-export const customValueCreation = () => {
+export const autoMenuPlacement = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
     <>
+      <div style={{ height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+        <Select
+          options={generateOptions()}
+          value={value}
+          onChange={v => {
+            setValue(v);
+          }}
+          size="md"
+          {...getDynamicProps()}
+        />
+      </div>
+    </>
+  );
+};
+
+export const customValueCreation = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+  const [customOptions, setCustomOptions] = useState<Array<SelectableValue<string>>>([]);
+  const options = generateOptions();
+  return (
+    <>
       <Select
-        options={generateOptions()}
+        options={[...options, ...customOptions]}
         value={value}
         onChange={v => {
           setValue(v);
         }}
         size="md"
         allowCustomValue
+        onCreateOption={v => {
+          const customValue: SelectableValue<string> = { value: kebabCase(v), label: v };
+          setCustomOptions([...customOptions, customValue]);
+          setValue(customValue);
+        }}
         {...getDynamicProps()}
       />
     </>

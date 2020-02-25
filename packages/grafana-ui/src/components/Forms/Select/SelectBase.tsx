@@ -11,7 +11,7 @@ import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable
 
 import { Icon } from '../../Icon/Icon';
 import { css, cx } from 'emotion';
-import { inputSizes } from '../commonStyles';
+import { inputSizesPixels } from '../commonStyles';
 import { FormInputSize } from '../types';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
@@ -35,6 +35,7 @@ export interface SelectCommonProps<T> {
   value?: SelectValue<T>;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
+  onCreateOption?: (value: string) => void;
   onChange: (value: SelectableValue<T>) => {} | void;
   onInputChange?: (label: string) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
@@ -61,6 +62,7 @@ export interface SelectCommonProps<T> {
   size?: FormInputSize;
   /** item to be rendered in front of the input */
   prefix?: JSX.Element | string | null;
+  /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
 }
 
@@ -140,6 +142,7 @@ export function SelectBase<T>({
   defaultValue,
   inputValue,
   onInputChange,
+  onCreateOption,
   options = [],
   onChange,
   onBlur,
@@ -178,7 +181,6 @@ export function SelectBase<T>({
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
-
   let selectedValue = [];
   if (isMulti && loadOptions) {
     selectedValue = value as any;
@@ -192,6 +194,9 @@ export function SelectBase<T>({
           return v === o.value || o.value === v.value;
         })[0];
       });
+    } else if (loadOptions) {
+      const hasValue = defaultValue || value;
+      selectedValue = hasValue ? [hasValue] : [];
     } else {
       selectedValue = options.filter(o => o.value === value || o === value);
     }
@@ -230,6 +235,7 @@ export function SelectBase<T>({
     menuShouldScrollIntoView: false,
     renderControl,
     captureMenuScroll: false,
+    menuPlacement: 'auto',
   };
 
   // width property is deprecated in favor of size or className
@@ -242,6 +248,7 @@ export function SelectBase<T>({
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
+    creatableProps.onCreateOption = onCreateOption;
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
@@ -254,87 +261,88 @@ export function SelectBase<T>({
   }
 
   return (
-    <ReactSelectComponent
-      components={{
-        MenuList: SelectMenu,
-        Group: SelectOptionGroup,
-        ValueContainer: ValueContainer,
-        Placeholder: (props: any) => (
-          <div
-            {...props.innerProps}
-            className={cx(
-              css(props.getStyles('placeholder', props)),
-              css`
-                display: inline-block;
-                color: hsl(0, 0%, 50%);
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                box-sizing: border-box;
-                line-height: 1;
-              `
-            )}
-          >
-            {props.children}
-          </div>
-        ),
-        SelectContainer: (props: any) => (
-          <div
-            {...props.innerProps}
-            className={cx(
-              css(props.getStyles('container', props)),
-              css`
-                position: relative;
-              `,
-              inputSizes()[size]
-            )}
-          >
-            {props.children}
-          </div>
-        ),
-        IndicatorsContainer: IndicatorsContainer,
-        IndicatorSeparator: () => <></>,
-        Control: CustomControl,
-        Option: SelectMenuOptions,
-        ClearIndicator: (props: any) => {
-          const { clearValue } = props;
-          return (
-            <Icon
-              name="times"
-              onMouseDown={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                clearValue();
-              }}
-            />
-          );
-        },
-        LoadingIndicator: (props: any) => {
-          return <Icon name="spinner" className="fa fa-spin" />;
-        },
-        LoadingMessage: (props: any) => {
-          return <div className={styles.loadingMessage}>{loadingMessage}</div>;
-        },
-        NoOptionsMessage: (props: any) => {
-          return (
-            <div className={styles.loadingMessage} aria-label="No options provided">
-              {noOptionsMessage}
+    <>
+      <ReactSelectComponent
+        components={{
+          MenuList: SelectMenu,
+          Group: SelectOptionGroup,
+          ValueContainer: ValueContainer,
+          Placeholder: (props: any) => (
+            <div
+              {...props.innerProps}
+              className={cx(
+                css(props.getStyles('placeholder', props)),
+                css`
+                  display: inline-block;
+                  color: hsl(0, 0%, 50%);
+                  position: absolute;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  box-sizing: border-box;
+                  line-height: 1;
+                `
+              )}
+            >
+              {props.children}
             </div>
-          );
-        },
-        DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
-        SingleValue: SingleValue,
-        MultiValueContainer: MultiValueContainer,
-        MultiValueRemove: MultiValueRemove,
-        ...components,
-      }}
-      styles={{
-        ...resetSelectStyles(),
-      }}
-      className={widthClass}
-      {...commonSelectProps}
-      {...creatableProps}
-      {...asyncSelectProps}
-    />
+          ),
+          IndicatorsContainer: IndicatorsContainer,
+          IndicatorSeparator: () => <></>,
+          Control: CustomControl,
+          Option: SelectMenuOptions,
+          ClearIndicator: (props: any) => {
+            const { clearValue } = props;
+            return (
+              <Icon
+                name="times"
+                onMouseDown={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  clearValue();
+                }}
+              />
+            );
+          },
+          LoadingIndicator: (props: any) => {
+            return <Icon name="spinner" className="fa fa-spin" />;
+          },
+          LoadingMessage: (props: any) => {
+            return <div className={styles.loadingMessage}>{loadingMessage}</div>;
+          },
+          NoOptionsMessage: (props: any) => {
+            return (
+              <div className={styles.loadingMessage} aria-label="No options provided">
+                {noOptionsMessage}
+              </div>
+            );
+          },
+          DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
+          SingleValue: SingleValue,
+          MultiValueContainer: MultiValueContainer,
+          MultiValueRemove: MultiValueRemove,
+          ...components,
+        }}
+        styles={{
+          ...resetSelectStyles(),
+          //These are required for the menu positioning to function
+          menu: ({ top, bottom, width, position }: any) => ({
+            top,
+            bottom,
+            width,
+            position,
+            marginBottom: !!bottom ? '10px' : '0',
+            zIndex: 9999,
+          }),
+          container: () => ({
+            position: 'relative',
+            width: inputSizesPixels(size),
+          }),
+        }}
+        className={widthClass}
+        {...commonSelectProps}
+        {...creatableProps}
+        {...asyncSelectProps}
+      />
+    </>
   );
 }

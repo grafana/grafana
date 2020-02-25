@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,7 +16,6 @@ import (
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/collector"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -31,7 +32,8 @@ type BackendPlugin struct {
 	client         *plugin.Client
 	logger         log.Logger
 	startFns       PluginStartFuncs
-	diagnostics    backend.DiagnosticsPlugin
+	diagnostics    DiagnosticsPlugin
+	core           CorePlugin
 }
 
 func (p *BackendPlugin) start(ctx context.Context) error {
@@ -61,20 +63,21 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		}
 
 		if rawDiagnostics != nil {
-			if plugin, ok := rawDiagnostics.(backend.DiagnosticsPlugin); ok {
+			if plugin, ok := rawDiagnostics.(DiagnosticsPlugin); ok {
 				p.diagnostics = plugin
 			}
 		}
 
 		client = &Client{}
 		if rawBackend != nil {
-			if plugin, ok := rawBackend.(backend.BackendPlugin); ok {
-				client.BackendPlugin = plugin
+			if plugin, ok := rawBackend.(CorePlugin); ok {
+				p.core = plugin
+				client.DatasourcePlugin = plugin
 			}
 		}
 
 		if rawTransform != nil {
-			if plugin, ok := rawTransform.(backend.TransformPlugin); ok {
+			if plugin, ok := rawTransform.(TransformPlugin); ok {
 				client.TransformPlugin = plugin
 			}
 		}
@@ -192,6 +195,67 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 	}
 
 	return res, nil
+}
+
+func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (*CallResourceResult, error) {
+	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
+
+	reqHeaders := map[string]*pluginv2.CallResource_StringList{}
+	for k, v := range req.Headers {
+		reqHeaders[k] = &pluginv2.CallResource_StringList{Values: v}
+	}
+
+	protoReq := &pluginv2.CallResource_Request{
+		Config: &pluginv2.PluginConfig{
+			OrgId:                   req.Config.OrgID,
+			PluginId:                req.Config.PluginID,
+			PluginType:              req.Config.PluginType,
+			JsonData:                req.Config.JSONData,
+			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
+			UpdatedMS:               req.Config.Updated.UnixNano() / int64(time.Millisecond),
+		},
+		Path:    req.Path,
+		Method:  req.Method,
+		Url:     req.URL,
+		Headers: reqHeaders,
+		Body:    req.Body,
+	}
+
+	if req.Config.DataSourceConfig != nil {
+		protoReq.Config.DatasourceConfig = &pluginv2.DataSourceConfig{
+			Id:               req.Config.DataSourceConfig.ID,
+			Name:             req.Config.DataSourceConfig.Name,
+			Url:              req.Config.DataSourceConfig.URL,
+			Database:         req.Config.DataSourceConfig.Database,
+			User:             req.Config.DataSourceConfig.User,
+			BasicAuthEnabled: req.Config.DataSourceConfig.BasicAuthEnabled,
+			BasicAuthUser:    req.Config.DataSourceConfig.BasicAuthUser,
+		}
+	}
+
+	protoResp, err := p.core.CallResource(ctx, protoReq)
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.Unimplemented {
+				return &CallResourceResult{
+					Status: http.StatusNotImplemented,
+				}, nil
+			}
+		}
+
+		return nil, errutil.Wrap("Failed to call resource", err)
+	}
+
+	respHeaders := map[string][]string{}
+	for key, values := range protoResp.Headers {
+		respHeaders[key] = values.Values
+	}
+
+	return &CallResourceResult{
+		Headers: respHeaders,
+		Body:    protoResp.Body,
+		Status:  int(protoResp.Code),
+	}, nil
 }
 
 // convertMetricFamily converts metric family to prometheus.Metric.

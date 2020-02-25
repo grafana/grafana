@@ -80,7 +80,11 @@ class GrafanaDatasource extends DataSourceApi<any> {
       params.tags = tags;
     }
 
-    return getBackendSrv().get('/api/annotations', params);
+    return getBackendSrv().get(
+      '/api/annotations',
+      params,
+      `grafana-data-source-annotations-${options.annotation.name}-${options.dashboard?.id}`
+    );
   }
 
   testDatasource() {

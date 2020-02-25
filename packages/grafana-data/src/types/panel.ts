@@ -5,6 +5,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { FieldConfigEditorRegistry } from './fieldOverrides';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -72,6 +73,7 @@ export type PanelTypeChangedHandler<TOptions = any> = (
 export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
+  customFieldConfigs?: FieldConfigEditorRegistry;
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -121,11 +123,11 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
     this.onPanelTypeChanged = handler;
     return this;
   }
-}
 
-export interface PanelSize {
-  width: number;
-  height: number;
+  setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
+    this.customFieldConfigs = registry;
+    return this;
+  }
 }
 
 export interface PanelMenuItem {
@@ -134,6 +136,7 @@ export interface PanelMenuItem {
   iconClassName?: string;
   onClick?: (event: React.MouseEvent<any>) => void;
   shortcut?: string;
+  href?: string;
   subMenu?: PanelMenuItem[];
 }
 
