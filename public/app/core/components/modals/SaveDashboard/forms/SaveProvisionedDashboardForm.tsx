@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { CustomScrollbar, Forms, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
 import { css } from 'emotion';
+import { saveAs } from 'file-saver';
 import { SaveDashboardFormProps } from '../types';
 import { CopyToClipboard } from '../../../CopyToClipboard/CopyToClipboard';
 
@@ -9,6 +10,14 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
   const getClipboardText = useCallback(() => {
     return JSON.stringify(dashboardJSON, null, 2);
   }, [dashboard]);
+
+  const saveToFile = useCallback(() => {
+    const blob = new Blob([JSON.stringify(dashboardJSON, null, 2)], {
+      type: 'application/json;charset=utf-8',
+    });
+    saveAs(blob, dashboard.title + '-' + new Date().getTime() + '.json');
+  }, [dashboardJSON]);
+
   return (
     <>
       <VerticalGroup spacing="lg">
@@ -46,7 +55,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           <CopyToClipboard text={getClipboardText} elType={Forms.Button}>
             Copy JSON to clipboard
           </CopyToClipboard>
-          <Forms.Button>Save JSON file</Forms.Button>
+          <Forms.Button onClick={saveToFile}>Save JSON to file</Forms.Button>
           <Forms.Button variant="secondary" onClick={onCancel}>
             Cancel
           </Forms.Button>
