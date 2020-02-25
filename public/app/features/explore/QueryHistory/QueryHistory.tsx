@@ -23,6 +23,8 @@ export type DataSourceOption = {
 interface QueryHistoryProps extends Themeable {
   width: number;
   isVisible: boolean;
+  queryHistory: any[];
+  updateStarredQuery: (ts: number) => void;
 }
 
 interface QueryHistoryState {
@@ -142,7 +144,7 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
       datasourceFilters,
       sortingValue,
     } = this.state;
-    const { theme, isVisible, width } = this.props;
+    const { theme, isVisible, width, queryHistory, updateStarredQuery } = this.props;
     const styles = getStyles(theme);
 
     const tabs = [];
@@ -153,10 +155,11 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
         <QueryHistoryQueries
           datasourceFilters={datasourceFilters}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
-          queries={testData}
+          queries={queryHistory}
           onlyStarred={false}
           onChangeSortingValue={this.onChangeSortingValue}
           sortingValue={sortingValue}
+          updateStarredQuery={updateStarredQuery}
         />
       ),
       icon: 'fa fa-history',
@@ -167,10 +170,11 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
       value: Tabs.Starred,
       content: (
         <QueryHistoryQueries
-          queries={testData}
+          queries={queryHistory}
           onlyStarred={true}
           onChangeSortingValue={this.onChangeSortingValue}
           sortingValue={sortingValue}
+          updateStarredQuery={updateStarredQuery}
         />
       ),
       icon: 'fa fa-star',
@@ -238,49 +242,3 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
 }
 
 export const QueryHistory = withTheme(UnThemedQueryHistory);
-QueryHistory.displayName = 'QueryHistory';
-
-const testData = [
-  {
-    timestamp: 3,
-    datasourceName: 'Loki_test',
-    datasourceType: 'Prometheus',
-    starred: false,
-    comment: 'This is interesting1',
-    queries: [
-      `rate( prometheus_remote_storage_samples_in_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – ignoring(queue) group_right(instance) rate(prometheus_remote_ storage_succeeded_samples_total {((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – rate(prometheus_remote_storage_ dropped_samples_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m])}`,
-      `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
-      `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
-    ],
-    sessionName: 'Custom name for this session',
-    uid: 3,
-  },
-  {
-    timestamp: 2,
-    datasourceName: 'Prometheus',
-    datasourceType: 'Prometheus',
-    starred: true,
-    comment: '',
-    queries: [
-      `rate( prometheus_remote_storage_samples_in_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – ignoring(queue) group_right(instance) rate(prometheus_remote_ storage_succeeded_samples_total {((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – rate(prometheus_remote_storage_ dropped_samples_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m])}`,
-      `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
-      `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
-    ],
-    sessionName: 'Custom name for this session2',
-    uid: 2,
-  },
-  {
-    timestamp: 1,
-    datasourceName: 'Loki',
-    datasourceType: 'Prometheus',
-    starred: true,
-    comment: 'This is interesting3',
-    queries: [
-      `rate( prometheus_remote_storage_samples_in_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – ignoring(queue) group_right(instance) rate(prometheus_remote_ storage_succeeded_samples_total {((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m]) – rate(prometheus_remote_storage_ dropped_samples_total{((cluster = ~'$cluster'), (instance = ~'$instance'))}[5m])}`,
-      `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
-      `prometheus_remote_storage_shards_max{cluster=~"$cluster", instance=~"$instance"}`,
-    ],
-    sessionName: 'Custom name for this session',
-    uid: 1,
-  },
-];

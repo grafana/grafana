@@ -64,6 +64,7 @@ export interface InitializeExplorePayload {
   mode: ExploreMode;
   ui: ExploreUIState;
   originPanelId: number;
+  queryHistory: any[];
 }
 
 export interface LoadDatasourceMissingPayload {
@@ -78,7 +79,6 @@ export interface LoadDatasourcePendingPayload {
 export interface LoadDatasourceReadyPayload {
   exploreId: ExploreId;
   history: HistoryItem[];
-  queryHistory: any[];
 }
 
 export interface ModifyQueriesPayload {
@@ -297,6 +297,8 @@ export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/s
 export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen');
 
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
+
+export const queryHistoryUpdatedAction = createAction<any>('explore/queryHistoryUpdated');
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */
@@ -328,7 +330,6 @@ export const resetExploreAction = createAction<ResetExplorePayload>('explore/res
 export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
 export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
-export const queryHistoryUpdatedAction = createAction<any>('explore/queryHistoryUpdated');
 
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
 

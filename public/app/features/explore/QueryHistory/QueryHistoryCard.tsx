@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -6,6 +6,7 @@ import { Query } from './QueryHistoryQueries';
 
 interface Props {
   query: Query;
+  updateStarredQuery: (ts: number) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -24,7 +25,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         color: ${theme.colors.blue77};
       }
     `,
-    queryCardLeft: css``,
+    queryCardLeft: css`
+      width: 100%;
+      padding-right: 10px;
+    `,
     queryCardRight: css`
       flex: 100px;
       display: flex;
@@ -44,14 +48,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         border-top: none;
         padding: 0 0 4px 0;
       }
-      :last-child {
-        border-top: none;
-      }
     `,
   };
 });
 
-export const QueryHistoryCard: FunctionComponent<Props> = ({ query }) => {
+export const QueryHistoryCard: FunctionComponent<Props> = ({ query, updateStarredQuery }) => {
+  const [starred, updateStared] = useState(query.starred);
+
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -67,17 +70,25 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query }) => {
   return (
     <div className={styles.queryCard}>
       <div className={styles.queryCardLeft}>
-        {query.queries.map((q, index) => (
-          <div key={`${q}0${index}`} className={styles.queryRow}>
-            {q}
-          </div>
-        ))}
+        {query.queries
+          .filter(q => q !== '')
+          .map((q, index) => (
+            <div key={`${q}-${index}`} className={styles.queryRow}>
+              {q}
+            </div>
+          ))}
         {query.comment && <div>{query.comment}</div>}
       </div>
       <div className={styles.queryCardRight}>
         <i className="fa fa-fw fa-copy" onClick={copyQueryToClipboard}></i>
         <i className="fa fa-fw fa-link" style={{ fontWeight: 'normal' }}></i>
-        <i className={cx('fa fa-fw', query.starred ? 'fa-star starred' : 'fa-star-o')}></i>
+        <i
+          className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
+          onClick={() => {
+            updateStarredQuery(query.ts);
+            updateStared(!starred);
+          }}
+        ></i>
       </div>
     </div>
   );

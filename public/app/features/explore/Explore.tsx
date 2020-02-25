@@ -25,6 +25,7 @@ import {
   updateTimeRange,
   toggleGraph,
   addQueryRow,
+  updateStarredQuery,
 } from './state/actions';
 // Types
 import {
@@ -82,6 +83,7 @@ interface ExploreProps {
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
+  updateStarredQuery: typeof updateStarredQuery;
   update: ExploreUpdateState;
   refreshExplore: typeof refreshExplore;
   scanning?: boolean;
@@ -110,6 +112,7 @@ interface ExploreProps {
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
+  queryHistory: any[];
 }
 
 interface ExploreState {
@@ -162,6 +165,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       mode,
       initialUI,
       originPanelId,
+      queryHistory,
     } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
@@ -176,7 +180,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         width,
         this.exploreEvents,
         initialUI,
-        originPanelId
+        originPanelId,
+        queryHistory
       );
     }
   }
@@ -272,6 +277,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
+  onChangeStarred = (ts: number) => {
+    this.props.updateStarredQuery(ts);
+  };
+
   render() {
     const {
       datasourceInstance,
@@ -289,6 +298,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryResponse,
       syncedTimes,
       isLive,
+      queryHistory,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
@@ -378,7 +388,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      <QueryHistory width={width} isVisible={this.state.isQueryHistoryVisible} />
+                      <QueryHistory
+                        width={width}
+                        isVisible={this.state.isQueryHistoryVisible}
+                        queryHistory={queryHistory}
+                        updateStarredQuery={this.onChangeStarred}
+                      />
                     </ErrorBoundaryAlert>
                   </main>
                 );
@@ -396,7 +411,7 @@ const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
-  const { split, syncedTimes } = explore;
+  const { split, syncedTimes, queryHistory } = explore;
   const item: ExploreItemState = explore[exploreId];
   const timeZone = getTimeZone(state.user);
   const {
@@ -466,6 +481,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     originPanelId,
     syncedTimes,
     timeZone,
+    queryHistory,
   };
 }
 
@@ -480,6 +496,7 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   updateTimeRange,
   toggleGraph,
   addQueryRow,
+  updateStarredQuery,
 };
 
 export default hot(module)(

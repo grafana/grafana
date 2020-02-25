@@ -71,11 +71,13 @@ export const mockExploreState = (options: any = {}) => {
   };
   const split: boolean = options.split || false;
   const syncedTimes: boolean = options.syncedTimes || false;
+  const queryHistory: any[] = [];
   const explore: ExploreState = {
     left,
     right,
     syncedTimes,
     split,
+    queryHistory,
   };
 
   const user: UserState = {

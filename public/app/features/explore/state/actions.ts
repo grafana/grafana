@@ -38,6 +38,7 @@ import {
   stopQueryState,
   updateHistory,
   updateQueryHistory,
+  updateStarred,
 } from 'app/core/utils/explore';
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
@@ -266,7 +267,8 @@ export function initializeExplore(
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState,
-  originPanelId: number
+  originPanelId: number,
+  queryHistory: any[]
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
@@ -280,6 +282,7 @@ export function initializeExplore(
         mode,
         ui,
         originPanelId,
+        queryHistory,
       })
     );
     dispatch(updateTime({ exploreId }));
@@ -296,7 +299,6 @@ export const loadDatasourceReady = (
 ): PayloadAction<LoadDatasourceReadyPayload> => {
   const historyKey = `grafana.explore.history.${instance.meta.id}`;
   const history = store.getObject(historyKey, []);
-  const queryHistory = store.getObject('grafana.explore.queryHistory');
   // Save last-used datasource
 
   store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.name);
@@ -304,7 +306,6 @@ export const loadDatasourceReady = (
   return loadDatasourceReadyAction({
     exploreId,
     history,
-    queryHistory,
   });
 };
 
@@ -403,6 +404,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
+    const queryHistory = getState().explore.queryHistory;
     const exploreItemState = getState().explore[exploreId];
     const {
       datasourceInstance,
@@ -414,7 +416,6 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       queryResponse,
       querySubscription,
       history,
-      queryHistory,
       mode,
       showingGraph,
       showingTable,
@@ -447,7 +448,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     const datasourceId = datasourceInstance.meta.id;
     const datasourceName = exploreItemState.requestedDatasourceName;
-    console.log(exploreItemState);
+
     const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
 
     let firstResponse = true;
@@ -474,7 +475,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
             ''
           );
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-          dispatch(queryHistoryUpdatedAction({ exploreId, queryHistory: nextQueryHistory }));
+          dispatch(queryHistoryUpdatedAction({ queryHistory: nextQueryHistory }));
 
           // We save queries to the URL here so that only successfully run queries change the URL.
           dispatch(stateSave());
@@ -498,6 +499,14 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       });
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
+  };
+};
+
+export const updateStarredQuery = (ts: number): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    // Side-effect: Saving queryhistory in localstorage
+    const nextQueryHistory = updateStarred(getState().explore.queryHistory, ts);
+    dispatch(queryHistoryUpdatedAction({ queryHistory: nextQueryHistory }));
   };
 };
 
@@ -752,6 +761,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRangeFromUrl(urlRange, timeZone);
+    const queryHistory = store.getObject('grafana.explore.queryHistory');
 
     // need to refresh datasource
     if (update.datasource) {
@@ -766,7 +776,8 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
           containerWidth,
           eventBridge,
           ui,
-          originPanelId
+          originPanelId,
+          queryHistory
         )
       );
       return;

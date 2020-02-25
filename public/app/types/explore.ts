@@ -44,6 +44,10 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right: ExploreItemState;
+  /**
+   * History of all queries
+   */
+  queryHistory: any[];
 }
 
 export interface ExploreItemState {
@@ -79,8 +83,6 @@ export interface ExploreItemState {
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
   history: HistoryItem[];
-
-  queryHistory: any[];
   /**
    * Queries for this Explore, e.g., set via URL. Each query will be
    * converted to a query row.

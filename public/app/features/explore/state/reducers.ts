@@ -25,6 +25,7 @@ import {
   refreshIntervalToSortOrder,
   sortLogsResult,
   stopQueryState,
+  getQueryHistory,
 } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
@@ -92,7 +93,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   datasourceLoading: null,
   datasourceMissing: false,
   history: [],
-  queryHistory: [],
   queries: [],
   initialized: false,
   range: {
@@ -138,6 +138,7 @@ export const initialExploreState: ExploreState = {
   syncedTimes: false,
   left: initialExploreItemState,
   right: initialExploreItemState,
+  queryHistory: getQueryHistory() || [],
 };
 
 /**
@@ -317,11 +318,10 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   }
 
   if (loadDatasourceReadyAction.match(action)) {
-    const { history, queryHistory } = action.payload;
+    const { history } = action.payload;
     return {
       ...state,
       history,
-      queryHistory,
       datasourceLoading: false,
       datasourceMissing: false,
       logsHighlighterExpressions: undefined,
@@ -441,13 +441,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return {
       ...state,
       history: action.payload.history,
-    };
-  }
-
-  if (queryHistoryUpdatedAction.match(action)) {
-    return {
-      ...state,
-      queryHistory: action.payload.queryHistory,
     };
   }
 
@@ -647,6 +640,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
 
   if (syncTimesAction.match(action)) {
     return { ...state, syncedTimes: action.payload.syncedTimes };
+  }
+
+  if (queryHistoryUpdatedAction.match(action)) {
+    return {
+      ...state,
+      queryHistory: action.payload.queryHistory,
+    };
   }
 
   if (resetExploreAction.match(action)) {

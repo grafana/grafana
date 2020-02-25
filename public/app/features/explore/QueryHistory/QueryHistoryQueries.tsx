@@ -11,13 +11,13 @@ interface QueryHistoryQueriesProps extends Themeable {
   sortingValue: SortingValue;
   onlyStarred: boolean;
   onChangeSortingValue: (sortingValue: SortingValue) => void;
+  updateStarredQuery: (ts: number) => void;
   datasourceFilters?: DataSourceOption[] | null;
   onSelectDatasourceFilters?: (datasources: DataSourceOption[] | null) => void;
 }
 
 export type Query = {
-  uid: number;
-  timestamp: number;
+  ts: number;
   datasourceName: string;
   datasourceType: string;
   starred: boolean;
@@ -84,6 +84,7 @@ function UnThemedQueryHistoryQueries(props: QueryHistoryQueriesProps) {
     onlyStarred,
     onChangeSortingValue,
     sortingValue,
+    updateStarredQuery,
   } = props;
   const styles = getStyles(theme, onlyStarred);
   const exploreDatasources = getExploreDatasources().map(d => {
@@ -104,10 +105,10 @@ function UnThemedQueryHistoryQueries(props: QueryHistoryQueriesProps) {
     let sortFunc;
 
     if (sortingValue === 'Time ascending') {
-      sortFunc = (a: Query, b: Query) => (a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0);
+      sortFunc = (a: Query, b: Query) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
     }
     if (sortingValue === 'Time descending') {
-      sortFunc = (a: Query, b: Query) => (a.timestamp < b.timestamp ? 1 : a.timestamp > b.timestamp ? -1 : 0);
+      sortFunc = (a: Query, b: Query) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
     }
 
     if (sortingValue === 'Datasource A-Z') {
@@ -157,7 +158,7 @@ function UnThemedQueryHistoryQueries(props: QueryHistoryQueriesProps) {
         </div>
         {sessionName('January 3rd, 29 queries', 'Custom title')}
         {queriesToDisplay.map(q => (
-          <QueryHistoryCard query={q} key={q.uid} />
+          <QueryHistoryCard query={q} key={q.ts} updateStarredQuery={updateStarredQuery} />
         ))}
       </div>
     </div>
