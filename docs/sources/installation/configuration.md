@@ -350,7 +350,7 @@ Default is `false`.
 
 ### data_source_proxy_whitelist
 
-Define a whitelist of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces. This feature is currently not available for PostgreSQL, MySQL, and MSSQL data sources.
+Define a whitelist of allowed IP addresses or domains to be used as data source URLs with the Grafana data source proxy. Format: `ip_or_domain:port` separated by spaces. PostgreSQL, MySQL, and MSSQL data sources do not use the proxy and are therefore unaffected by this setting.
 
 ### cookie_secure
 
