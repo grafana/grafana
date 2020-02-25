@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { TimeSrv } from '../../services/TimeSrv';
-import { DashboardModelClone } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
@@ -102,7 +102,7 @@ export class ShareSnapshotCtrl {
       return $scope.snapshotUrl;
     };
 
-    $scope.scrubDashboard = (dash: DashboardModelClone) => {
+    $scope.scrubDashboard = (dash: DashboardModel) => {
       // change title
       dash.title = $scope.snapshot.name;
 

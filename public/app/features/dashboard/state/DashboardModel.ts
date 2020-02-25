@@ -24,8 +24,6 @@ export interface CloneOptions {
   message?: string;
 }
 
-export type DashboardModelClone = DashboardModel & { getVariables: () => any[] };
-
 export class DashboardModel {
   id: any;
   uid: string;
@@ -159,7 +157,7 @@ export class DashboardModel {
   }
 
   // cleans meta data and other non persistent state
-  getSaveModelClone(options?: CloneOptions): DashboardModelClone {
+  getSaveModelClone(options?: CloneOptions): DashboardModel {
     const defaults = _.defaults(options || {}, {
       saveVariables: true,
       saveTimerange: true,
@@ -1020,6 +1018,13 @@ export class DashboardModel {
       panel.render();
     }
   }
+
+  getVariables = () => {
+    if (getConfig().featureToggles.newVariables) {
+      return this.variables.list;
+    }
+    return this.templating.list;
+  };
 
   private getPanelRepeatVariable(panel: PanelModel) {
     if (!getConfig().featureToggles.newVariables) {
