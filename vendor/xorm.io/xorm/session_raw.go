@@ -27,7 +27,9 @@ func (session *Session) queryRows(sqlStr string, args ...interface{}) (*core.Row
 
 	session.queryPreprocess(&sqlStr, args...)
 
-	if session.engine.showSQL {
+	if session.showSQL {
+		session.lastSQL = sqlStr
+		session.lastSQLArgs = args
 		if session.engine.showExecTime {
 			b4ExecTime := time.Now()
 			defer func() {

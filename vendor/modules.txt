@@ -399,7 +399,7 @@ gopkg.in/square/go-jose.v2/jwt
 gopkg.in/yaml.v2
 # xorm.io/builder v0.3.6
 xorm.io/builder
-# xorm.io/core v0.7.2
+# xorm.io/core v0.7.3
 xorm.io/core
-# xorm.io/xorm v0.8.0
+# xorm.io/xorm v0.8.1
 xorm.io/xorm
