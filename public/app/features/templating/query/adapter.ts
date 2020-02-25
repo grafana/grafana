@@ -1,3 +1,5 @@
+import cloneDeep from 'lodash/cloneDeep';
+
 import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
 import { ALL_VARIABLE_TEXT, initialQueryVariableState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
@@ -28,7 +30,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
       await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = variable;
+      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
       // remove options
       if (variable.refresh !== VariableRefresh.never) {
         return { ...rest, options: [] };

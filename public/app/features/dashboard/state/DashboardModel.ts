@@ -187,6 +187,12 @@ export class DashboardModel {
 
     //  sort by keys
     copy = sortByKeys(copy);
+    copy.getVariables = () => {
+      if (getConfig().featureToggles.newVariables) {
+        return copy.variables.list;
+      }
+      return copy.templating.list;
+    };
 
     return copy;
   }
