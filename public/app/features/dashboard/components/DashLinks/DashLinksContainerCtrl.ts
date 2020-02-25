@@ -2,11 +2,12 @@ import angular from 'angular';
 import _ from 'lodash';
 import { iconMap } from './DashLinksEditorCtrl';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };
 
@@ -40,7 +41,7 @@ function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
 
       if (link.asDropdown) {
         template +=
-          '<ul class="dropdown-menu" role="menu">' +
+          '<ul class="dropdown-menu pull-right" role="menu">' +
           '<li ng-repeat="dash in link.searchHits">' +
           '<a href="{{dash.url}}" target="{{dash.target}}">{{dash.title}}</a>' +
           '</li>' +
@@ -94,13 +95,7 @@ function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
 
 export class DashLinksContainerCtrl {
   /** @ngInject */
-  constructor(
-    $scope: any,
-    $rootScope: GrafanaRootScope,
-    backendSrv: BackendSrv,
-    dashboardSrv: DashboardSrv,
-    linkSrv: LinkSrv
-  ) {
+  constructor($scope: any, $rootScope: GrafanaRootScope, dashboardSrv: DashboardSrv, linkSrv: LinkSrv) {
     const currentDashId = dashboardSrv.getCurrent().id;
 
     function buildLinks(linkDef: any) {
@@ -154,26 +149,28 @@ export class DashLinksContainerCtrl {
     }
 
     $scope.searchDashboards = (link: DashboardLink, limit: any) => {
-      return backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
-        return _.reduce(
-          results,
-          (memo, dash) => {
-            // do not add current dashboard
-            if (dash.id !== currentDashId) {
-              memo.push({
-                title: dash.title,
-                url: dash.url,
-                target: link.target === '_self' ? '' : link.target,
-                icon: 'fa fa-th-large',
-                keepTime: link.keepTime,
-                includeVars: link.includeVars,
-              });
-            }
-            return memo;
-          },
-          []
-        );
-      });
+      return promiseToDigest($scope)(
+        backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
+          return _.reduce(
+            results,
+            (memo, dash) => {
+              // do not add current dashboard
+              if (dash.id !== currentDashId) {
+                memo.push({
+                  title: dash.title,
+                  url: dash.url,
+                  target: link.target === '_self' ? '' : link.target,
+                  icon: 'fa fa-th-large',
+                  keepTime: link.keepTime,
+                  includeVars: link.includeVars,
+                });
+              }
+              return memo;
+            },
+            []
+          );
+        })
+      );
     };
 
     $scope.fillDropdown = (link: { searchHits: any }) => {

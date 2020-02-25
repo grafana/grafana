@@ -1,6 +1,6 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { VariableQueryProps } from 'app/types/plugins';
-import SimpleSelect from './SimpleSelect';
+import { SimpleSelect } from './';
 import { getMetricTypes, getLabelKeys, extractServicesFromMetricDescriptors } from '../functions';
 import { MetricFindQueryTypes, VariableQueryData } from '../types';
 

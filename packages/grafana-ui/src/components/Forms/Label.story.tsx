@@ -12,7 +12,7 @@ const getKnobs = () => {
 };
 
 export default {
-  title: 'UI|Forms',
+  title: 'Forms',
   component: Label,
 };
 

@@ -1,37 +1,57 @@
-import { Action, ActionTypes } from './actions';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { PluginMeta, PanelPlugin } from '@grafana/data';
 import { PluginsState } from 'app/types';
-import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
+import { LayoutMode, LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { PluginDashboard } from '../../../types/plugins';
-import { PluginMeta } from '@grafana/data';
 
 export const initialState: PluginsState = {
-  plugins: [] as PluginMeta[],
+  plugins: [],
   searchQuery: '',
   layoutMode: LayoutModes.Grid,
   hasFetched: false,
-  dashboards: [] as PluginDashboard[],
+  dashboards: [],
   isLoadingPluginDashboards: false,
+  panels: {},
 };
 
-export const pluginsReducer = (state = initialState, action: Action): PluginsState => {
-  switch (action.type) {
-    case ActionTypes.LoadPlugins:
-      return { ...state, hasFetched: true, plugins: action.payload };
+const pluginsSlice = createSlice({
+  name: 'plugins',
+  initialState,
+  reducers: {
+    pluginsLoaded: (state, action: PayloadAction<PluginMeta[]>) => {
+      state.hasFetched = true;
+      state.plugins = action.payload;
+    },
+    setPluginsSearchQuery: (state, action: PayloadAction<string>) => {
+      state.searchQuery = action.payload;
+    },
+    setPluginsLayoutMode: (state, action: PayloadAction<LayoutMode>) => {
+      state.layoutMode = action.payload;
+    },
+    pluginDashboardsLoad: (state, action: PayloadAction<undefined>) => {
+      state.isLoadingPluginDashboards = true;
+      state.dashboards = [];
+    },
+    pluginDashboardsLoaded: (state, action: PayloadAction<PluginDashboard[]>) => {
+      state.isLoadingPluginDashboards = false;
+      state.dashboards = action.payload;
+    },
+    panelPluginLoaded: (state, action: PayloadAction<PanelPlugin>) => {
+      state.panels[action.payload.meta!.id] = action.payload;
+    },
+  },
+});
 
-    case ActionTypes.SetPluginsSearchQuery:
-      return { ...state, searchQuery: action.payload };
+export const {
+  pluginsLoaded,
+  pluginDashboardsLoad,
+  pluginDashboardsLoaded,
+  setPluginsLayoutMode,
+  setPluginsSearchQuery,
+  panelPluginLoaded,
+} = pluginsSlice.actions;
 
-    case ActionTypes.SetLayoutMode:
-      return { ...state, layoutMode: action.payload };
-
-    case ActionTypes.LoadPluginDashboards:
-      return { ...state, dashboards: [], isLoadingPluginDashboards: true };
-
-    case ActionTypes.LoadedPluginDashboards:
-      return { ...state, dashboards: action.payload, isLoadingPluginDashboards: false };
-  }
-  return state;
-};
+export const pluginsReducer = pluginsSlice.reducer;
 
 export default {
   plugins: pluginsReducer,

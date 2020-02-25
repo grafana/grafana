@@ -7,22 +7,17 @@ import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    timePickerSynced: css`
-      label: timePickerSynced;
-      border-color: ${theme.colors.orangeDark};
-      background-image: none;
-      background-color: transparent;
-      color: ${theme.colors.orangeDark};
-      &:focus,
-      :hover {
-        color: ${theme.colors.orangeDark};
-        background-image: none;
-        background-color: transparent;
-      }
-    `,
     noRightBorderStyle: css`
       label: noRightBorderStyle;
       border-right: 0;
+    `,
+    /*
+     * Required top-padding, otherwise is fa-link icon in active state
+     * cut off on top due to fontAwesome icon position
+     */
+    topPadding: css`
+      label: topPadding;
+      padding-top: 1px;
     `,
   };
 });
@@ -47,12 +42,12 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
     <Tooltip content={syncTimesTooltip} placement="bottom">
       <button
         className={classNames('btn navbar-button navbar-button--attached', {
-          [`explore-active-button-glow ${styles.timePickerSynced}`]: isSynced,
+          [`explore-active-button`]: isSynced,
         })}
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
         onClick={() => onClick()}
       >
-        <i className={classNames('fa fa-link', isSynced && 'icon-brand-gradient')} />
+        <i className={classNames('fa fa-link', styles.topPadding, isSynced && 'icon-brand-gradient')} />
       </button>
     </Tooltip>
   );

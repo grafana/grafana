@@ -9,7 +9,7 @@ import { PluginMeta } from '@grafana/data';
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs';
-import { getPackageDetails, findImagesInFolder, getGrafanaVersions } from '../../plugins/utils';
+import { getPackageDetails, findImagesInFolder, getGrafanaVersions, readGitLog } from '../../plugins/utils';
 import {
   job,
   getJobFolder,
@@ -23,6 +23,8 @@ import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '..
 import { PluginPackageDetails, PluginBuildReport, TestResultsInfo } from '../../plugins/types';
 import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
+import { manifestTask } from './manifest';
+import { execTask } from '../utils/execTask';
 
 export interface PluginCIOptions {
   backend?: boolean;
@@ -161,6 +163,9 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
       throw new Error('Error writing: ' + pluginJsonFile);
     }
   });
+
+  // Write a manifest.txt file in the dist folder
+  await execTask(manifestTask)({ folder: distContentDir });
 
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
@@ -324,6 +329,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     tests: agregateTestInfo(),
     artifactsBaseURL: await getCircleDownloadBaseURL(),
     grafanaVersion: getGrafanaVersions(),
+    git: await readGitLog(),
   };
   const pr = getPullRequestNumber();
   if (pr) {

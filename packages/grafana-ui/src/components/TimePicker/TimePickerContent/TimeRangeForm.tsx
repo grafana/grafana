@@ -1,10 +1,9 @@
 import React, { FormEvent, useState, useCallback } from 'react';
-import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
+import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime, dateMath } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
-import { isMathString } from '@grafana/data/src/datetime/datemath';
 
 interface Props {
   isFullscreen: boolean;
@@ -116,7 +115,7 @@ function valueAsString(value: DateTime | string): string {
 }
 
 function isValid(value: string, roundup?: boolean, timeZone?: TimeZone): boolean {
-  if (isMathString(value)) {
+  if (dateMath.isMathString(value)) {
     return isValidTimeString(value);
   }
 

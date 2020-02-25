@@ -58,6 +58,7 @@ func init() {
 		"AWS/DMS":               {"CDCChangesDiskSource", "CDCChangesDiskTarget", "CDCChangesMemorySource", "CDCChangesMemoryTarget", "CDCIncomingChanges", "CDCLatencySource", "CDCLatencyTarget", "CDCThroughputBandwidthSource", "CDCThroughputBandwidthTarget", "CDCThroughputRowsSource", "CDCThroughputRowsTarget", "CPUUtilization", "FreeStorageSpace", "FreeableMemory", "FullLoadThroughputBandwidthSource", "FullLoadThroughputBandwidthTarget", "FullLoadThroughputRowsSource", "FullLoadThroughputRowsTarget", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "ReadIOPS", "ReadLatency", "ReadThroughput", "SwapUsage", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 		"AWS/DocDB":             {"BackupRetentionPeriodStorageUsed", "BufferCacheHitRatio", "CPUUtilization", "DatabaseConnections", "DBInstanceReplicaLag", "DBClusterReplicaLagMaximum", "DBClusterReplicaLagMinimum", "DiskQueueDepth", "EngineUptime", "FreeableMemory", "FreeLocalStorage", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "ReadIOPS", "ReadLatency", "ReadThroughput", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 		"AWS/DX":                {"ConnectionBpsEgress", "ConnectionBpsIngress", "ConnectionCRCErrorCount", "ConnectionLightLevelRx", "ConnectionLightLevelTx", "ConnectionPpsEgress", "ConnectionPpsIngress", "ConnectionState"},
+		"AWS/DAX":               {"CPUUtilization", "NetworkPacketsIn", "NetworkPacketsOut", "GetItemRequestCount", "BatchGetItemRequestCount", "BatchWriteItemRequestCount", "DeleteItemRequestCount", "PutItemRequestCount", "UpdateItemRequestCount", "TransactWriteItemsCount", "TransactGetItemsCount", "ItemCacheHits", "ItemCacheMisses", "QueryCacheHits", "QueryCacheMisses", "ScanCacheHits", "ScanCacheMisses", "TotalRequestCount", "ErrorRequestCount", "FaultRequestCount", "FailedRequestCount", "QueryRequestCount", "ScanRequestCount", "ClientConnections", "EstimatedDbSize", "EvictedSize"},
 		"AWS/DynamoDB":          {"ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "OnlineIndexConsumedWriteCapacity", "OnlineIndexPercentageProgress", "OnlineIndexThrottleEvents", "PendingReplicationCount", "ProvisionedReadCapacityUnits", "ProvisionedWriteCapacityUnits", "ReadThrottleEvents", "ReplicationLatency", "ReturnedBytes", "ReturnedItemCount", "ReturnedRecordsCount", "SuccessfulRequestLatency", "SystemErrors", "ThrottledRequests", "TimeToLiveDeletedItemCount", "UserErrors", "WriteThrottleEvents"},
 		"AWS/EBS":               {"BurstBalance", "VolumeConsumedReadWriteOps", "VolumeIdleTime", "VolumeQueueLength", "VolumeReadBytes", "VolumeReadOps", "VolumeThroughputPercentage", "VolumeTotalReadTime", "VolumeTotalWriteTime", "VolumeWriteBytes", "VolumeWriteOps"},
 		"AWS/EC2":               {"CPUCreditBalance", "CPUCreditUsage", "CPUSurplusCreditBalance", "CPUSurplusCreditsCharged", "CPUUtilization", "DiskReadBytes", "DiskReadOps", "DiskWriteBytes", "DiskWriteOps", "EBSByteBalance%", "EBSIOBalance%", "EBSReadBytes", "EBSReadOps", "EBSWriteBytes", "EBSWriteOps", "NetworkIn", "NetworkOut", "NetworkPacketsIn", "NetworkPacketsOut", "StatusCheckFailed", "StatusCheckFailed_Instance", "StatusCheckFailed_System"},
@@ -114,6 +115,7 @@ func init() {
 		"AWS/TransitGateway":    {"BytesIn", "BytesOut", "PacketDropCountBlackhole", "PacketDropCountNoRoute", "PacketsIn", "PacketsOut"},
 		"AWS/Translate":         {"CharacterCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 		"AWS/TrustedAdvisor":    {"GreenChecks", "RedChecks", "RedResources", "ServiceLimitUsage", "YellowChecks", "YellowResources"},
+		"AWS/Usage":             {"CallCount"},
 		"AWS/VPN":               {"TunnelDataIn", "TunnelDataOut", "TunnelState"},
 		"AWS/WorkSpaces":        {"Available", "ConnectionAttempt", "ConnectionFailure", "ConnectionSuccess", "InSessionLatency", "Maintenance", "SessionDisconnect", "SessionLaunchTime", "Stopped", "Unhealthy", "UserConnected"},
 		"ECS/ContainerInsights": {"ContainerInstanceCount", "CpuUtilized", "CpuReserved", "DeploymentCount", "DesiredTaskCount", "MemoryUtilized", "MemoryReserved", "NetworkRxBytes", "NetworkTxBytes", "PendingTaskCount", "RunningTaskCount", "ServiceCount", "StorageReadBytes", "StorageWriteBytes", "TaskCount", "TaskSetCount", "instance_cpu_limit", "instance_cpu_reserved_capacity", "instance_cpu_usage_total", "instance_cpu_utilization", "instance_filesystem_utilization", "instance_memory_limit", "instance_memory_reserved_capacity", "instance_memory_utliization", "instance_memory_working_set", "instance_network_total_bytes", "instance_number_of_running_tasks"},
@@ -140,6 +142,7 @@ func init() {
 		"AWS/DMS":               {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
 		"AWS/DocDB":             {"DBClusterIdentifier"},
 		"AWS/DX":                {"ConnectionId"},
+		"AWS/DAX":               {"Account", "ClusterId", "NodeId"},
 		"AWS/DynamoDB":          {"GlobalSecondaryIndexName", "Operation", "ReceivingRegion", "StreamLabel", "TableName"},
 		"AWS/EBS":               {"VolumeId"},
 		"AWS/EC2":               {"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"},
@@ -196,6 +199,7 @@ func init() {
 		"AWS/TransitGateway":    {"TransitGateway"},
 		"AWS/Translate":         {"LanguagePair", "Operation"},
 		"AWS/TrustedAdvisor":    {},
+		"AWS/Usage":             {"Class", "Resource", "Service", "Type"},
 		"AWS/VPN":               {"TunnelIpAddress", "VpnId"},
 		"AWS/WorkSpaces":        {"DirectoryId", "WorkspaceId"},
 		"ECS/ContainerInsights": {"ClusterName", "ServiceName", "TaskDefinitionFamily", "EC2InstanceId", "ContainerInstanceId"},
@@ -419,6 +423,13 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 				Name:  aws.String(k),
 				Value: aws.String(vv),
 			})
+		} else if vv, ok := v.([]interface{}); ok {
+			for _, v := range vv {
+				dimensions = append(dimensions, &cloudwatch.DimensionFilter{
+					Name:  aws.String(k),
+					Value: aws.String(v.(string)),
+				})
+			}
 		}
 	}
 

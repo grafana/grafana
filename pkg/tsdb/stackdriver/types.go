@@ -41,8 +41,9 @@ type StackdriverResponse struct {
 			Type   string            `json:"type"`
 			Labels map[string]string `json:"labels"`
 		} `json:"resource"`
-		MetricKind string `json:"metricKind"`
-		ValueType  string `json:"valueType"`
+		MetaData   map[string]map[string]interface{} `json:"metadata"`
+		MetricKind string                            `json:"metricKind"`
+		ValueType  string                            `json:"valueType"`
 		Points     []struct {
 			Interval struct {
 				StartTime time.Time `json:"startTime"`

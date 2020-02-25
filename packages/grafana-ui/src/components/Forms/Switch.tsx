@@ -1,79 +1,101 @@
-import React from 'react';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import React, { HTMLProps } from 'react';
 import { css, cx } from 'emotion';
-import { getFocusStyle } from './commonStyles';
+import uniqueId from 'lodash/uniqueId';
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme } from '../../themes';
+import { getFocusCss } from './commonStyles';
 
-export interface SwitchProps {
-  checked?: boolean;
-  disabled?: boolean;
-  onChange?: (e: React.SyntheticEvent<HTMLButtonElement>, checked: boolean) => void;
+export interface SwitchProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
+  value?: boolean;
 }
 
 export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    slider: cx(
-      css`
-        width: 32px;
-        height: 16px;
-        background: ${theme.colors.formSwitchBg};
-        transition: all 0.30s ease;
-        border-radius: 50px;
-        position: relative;
+    switch: css`
+      width: 32px;
+      height: 16px;
+      position: relative;
+
+      input {
+        opacity: 0;
+        left: -100vw;
+        z-index: -1000;
+        position: absolute;
+
+        &:disabled + label {
+          background: ${theme.colors.formSwitchBgDisabled};
+          cursor: not-allowed;
+        }
+
+        &:checked + label {
+          background: ${theme.colors.formSwitchBgActive};
+
+          &:hover {
+            background: ${theme.colors.formSwitchBgActiveHover};
+          }
+
+          &::after {
+            transform: translate3d(18px, -50%, 0);
+          }
+        }
+
+        &:focus + label {
+          ${getFocusCss(theme)};
+        }
+      }
+
+      label {
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
         border: none;
-        display: block;
-        padding: 0;
+        border-radius: 50px;
+        background: ${theme.colors.formSwitchBg};
+        transition: all 0.3s ease;
+
         &:hover {
           background: ${theme.colors.formSwitchBgHover};
         }
-        &:after {
-          content: '';
-          transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+
+        &::after {
           position: absolute;
-          top: 50%;
           display: block;
+          content: '';
           width: 12px;
           height: 12px;
-          background: ${theme.colors.formSwitchDot};
           border-radius: 6px;
+          background: ${theme.colors.formSwitchDot};
+          top: 50%;
           transform: translate3d(2px, -50%, 0);
+          transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
         }
-        &:focus {
-          /* border: 1px solid ${theme.colors.formSwitchDot}; */
-        }
-        &[disabled] {
-          background: ${theme.colors.formSwitchBgDisabled};
-        }
-      `,
-      getFocusStyle(theme)
-    ),
-    sliderActive: css`
-      background: ${theme.colors.formSwitchBgActive};
-      &:hover {
-        background: ${theme.colors.formSwitchBgActiveHover};
       }
-      &:after {
-        transform: translate3d(16px, -50%, 0);
-      }
+    }
     `,
   };
 });
-export const Switch: React.FC<SwitchProps> = ({ checked = false, disabled = false, onChange }) => {
-  const theme = useTheme();
-  const styles = getSwitchStyles(theme);
 
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={!!checked}
-      disabled={disabled}
-      className={cx(styles.slider, checked && styles.sliderActive)}
-      onClick={e => {
-        if (onChange) {
-          onChange(e, !!!checked);
-        }
-      }}
-    />
-  );
-};
+export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
+  ({ value, checked, disabled = false, onChange, ...inputProps }, ref) => {
+    const theme = useTheme();
+    const styles = getSwitchStyles(theme);
+    const switchId = uniqueId('switch-');
+
+    return (
+      <div className={cx(styles.switch)}>
+        <input
+          type="checkbox"
+          disabled={disabled}
+          checked={value}
+          onChange={event => {
+            onChange?.(event);
+          }}
+          id={switchId}
+          {...inputProps}
+          ref={ref}
+        />
+        <label htmlFor={switchId} />
+      </div>
+    );
+  }
+);

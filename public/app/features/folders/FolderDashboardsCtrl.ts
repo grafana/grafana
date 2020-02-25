@@ -1,7 +1,9 @@
+import { ILocationService, IScope } from 'angular';
+
 import { FolderPageLoader } from './services/FolderPageLoader';
 import locationUtil from 'app/core/utils/location_util';
 import { NavModelSrv } from 'app/core/core';
-import { ILocationService } from 'angular';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export default class FolderDashboardsCtrl {
   navModel: any;
@@ -10,23 +12,25 @@ export default class FolderDashboardsCtrl {
 
   /** @ngInject */
   constructor(
-    private backendSrv: any,
     navModelSrv: NavModelSrv,
     private $routeParams: any,
-    $location: ILocationService
+    $location: ILocationService,
+    private $scope: IScope
   ) {
     if (this.$routeParams.uid) {
       this.uid = $routeParams.uid;
 
-      const loader = new FolderPageLoader(this.backendSrv);
+      const loader = new FolderPageLoader();
 
-      loader.load(this, this.uid, 'manage-folder-dashboards').then((folder: any) => {
-        const url = locationUtil.stripBaseFromUrl(folder.url);
+      promiseToDigest(this.$scope)(
+        loader.load(this, this.uid, 'manage-folder-dashboards').then((folder: any) => {
+          const url = locationUtil.stripBaseFromUrl(folder.url);
 
-        if (url !== $location.path()) {
-          $location.path(url).replace();
-        }
-      });
+          if (url !== $location.path()) {
+            $location.path(url).replace();
+          }
+        })
+      );
     }
   }
 }

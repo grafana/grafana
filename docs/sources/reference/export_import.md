@@ -9,7 +9,7 @@ weight = 8
 
 # Export and Import
 
-Grafana Dashboards can easily be exported and imported, either from the UI or from the HTTP API.
+Grafana Dashboards can easily be exported and imported, either from the UI or from the [HTTP API]({{< relref "../http_api/dashboard.md#create-update-dashboard" >}}).
 
 ## Exporting a dashboard
 
@@ -34,7 +34,7 @@ To import a dashboard open dashboard search and then hit the import button.
 {{< docs-imagebox img="/img/docs/v50/import_step1.png" max-width="700px" >}}
 
 From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
-url or paste dashboard json text directly into the text area.
+URL or paste dashboard json text directly into the text area.
 
 {{< docs-imagebox img="/img/docs/v50/import_step2.png"  max-width="700px" >}}
 

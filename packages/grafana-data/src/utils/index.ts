@@ -1,4 +1,5 @@
 export * from './Registry';
+export * from './datasource';
 export * from './deprecationWarning';
 export * from './csv';
 export * from './logs';

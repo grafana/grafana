@@ -33,7 +33,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 21;
+    this.dashboard.schemaVersion = 22;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -484,6 +484,18 @@ export class DashboardMigrator {
             panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
           }
         }
+      });
+    }
+
+    if (oldVersion < 22) {
+      panelUpgrades.push((panel: any) => {
+        if (panel.type !== 'table') {
+          return;
+        }
+
+        _.each(panel.styles, style => {
+          style.align = 'auto';
+        });
       });
     }
 

@@ -1,5 +1,9 @@
-import { reducerFactory } from '../../../../core/redux';
-import { panelEditorCleanUp, panelEditorInitCompleted } from './actions';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+export interface PanelEditorInitCompleted {
+  activeTab: PanelEditorTabIds;
+  tabs: PanelEditorTab[];
+}
 
 export interface PanelEditorTab {
   id: string;
@@ -37,10 +41,11 @@ export const initialState: PanelEditorState = {
   tabs: [],
 };
 
-export const panelEditorReducer = reducerFactory<PanelEditorState>(initialState)
-  .addMapper({
-    filter: panelEditorInitCompleted,
-    mapper: (state, action): PanelEditorState => {
+const panelEditorSlice = createSlice({
+  name: 'panelEditor',
+  initialState,
+  reducers: {
+    panelEditorInitCompleted: (state, action: PayloadAction<PanelEditorInitCompleted>): PanelEditorState => {
       const { activeTab, tabs } = action.payload;
       return {
         ...state,
@@ -48,9 +53,10 @@ export const panelEditorReducer = reducerFactory<PanelEditorState>(initialState)
         tabs,
       };
     },
-  })
-  .addMapper({
-    filter: panelEditorCleanUp,
-    mapper: (): PanelEditorState => initialState,
-  })
-  .create();
+    panelEditorCleanUp: (state, action: PayloadAction<undefined>): PanelEditorState => initialState,
+  },
+});
+
+export const { panelEditorCleanUp, panelEditorInitCompleted } = panelEditorSlice.actions;
+
+export const panelEditorReducer = panelEditorSlice.reducer;

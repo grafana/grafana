@@ -41,6 +41,7 @@ const setup = (propOverrides?: object) => {
     makeSameAs: jest.fn(),
     onUpdateOptions: jest.fn(),
     onUpdateOption: jest.fn(),
+    onUpdateSecureOption: jest.fn(),
     onResetOptionKey: jest.fn(),
     onLoadSubscriptions: jest.fn(),
     onLoadWorkspaces: jest.fn(),

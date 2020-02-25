@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v4.1"
+title = "What's new in Grafana v4.1"
 description = "Feature and improvement highlights for Grafana v4.1"
-keywords = ["grafana", "new", "documentation", "4.1.0"]
+keywords = ["grafana", "new", "documentation", "4.1.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 4.1"
@@ -9,7 +9,6 @@ identifier = "v4.1"
 parent = "whatsnew"
 weight = 3
 +++
-
 
 ## What's new in Grafana v4.1
 - **Graph**: Support for shared tooltip on all graphs as you hover over one graph. [#1578](https://github.com/grafana/grafana/pull/1578), [#6274](https://github.com/grafana/grafana/pull/6274)
@@ -41,7 +40,6 @@ You can set a help text in the general tab on any panel. The help text is using 
 
 Panels with a help text available have a little indicator in the top left corner. You can show the help text by hovering the icon.
 <div class="clearfix"></div>
-
 
 ### Easier Cloudwatch configuration
 

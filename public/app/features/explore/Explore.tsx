@@ -3,7 +3,7 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
 import { connect } from 'react-redux';
-import { AutoSizer } from 'react-virtualized';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 
 // Services & Utils
@@ -31,26 +31,22 @@ import {
   DataSourceApi,
   PanelData,
   RawTimeRange,
+  TimeRange,
   GraphSeriesXY,
   TimeZone,
   AbsoluteTimeRange,
   LoadingState,
+  ExploreMode,
 } from '@grafana/data';
 
-import {
-  ExploreItemState,
-  ExploreUrlState,
-  ExploreId,
-  ExploreUpdateState,
-  ExploreUIState,
-  ExploreMode,
-} from 'app/types/explore';
+import { ExploreItemState, ExploreUrlState, ExploreId, ExploreUpdateState, ExploreUIState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   ensureQueries,
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
   getTimeRangeFromUrl,
+  getTimeRange,
   lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -93,7 +89,7 @@ interface ExploreProps {
   queryKeys: string[];
   initialDatasource: string;
   initialQueries: DataQuery[];
-  initialRange: RawTimeRange;
+  initialRange: TimeRange;
   mode: ExploreMode;
   initialUI: ExploreUIState;
   isLive: boolean;
@@ -394,7 +390,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
-  const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
+  const initialRange = urlRange
+    ? getTimeRangeFromUrlMemoized(urlRange, timeZone)
+    : getTimeRange(timeZone, DEFAULT_RANGE);
 
   let newMode: ExploreMode | undefined;
 
