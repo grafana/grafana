@@ -25,9 +25,7 @@ export class VariableSrv {
     private $injector: auto.IInjectorService,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
-  ) {
-    this.variables = [];
-  }
+  ) {}
 
   init(dashboard: DashboardModel) {
     this.dashboard = dashboard;
