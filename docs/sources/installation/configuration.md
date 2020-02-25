@@ -350,7 +350,7 @@ Default is `false`.
 
 ### data_source_proxy_whitelist
 
-Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces.
+Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces. This feature is currently not available for postgresql, mysql and mssql datasources.
 
 ### cookie_secure
 
