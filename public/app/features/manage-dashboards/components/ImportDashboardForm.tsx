@@ -64,7 +64,7 @@ class ImportDashboardForm extends PureComponent<Props, State> {
     return (
       <>
         {source === DashboardSource.Gcom && (
-          <>
+          <div style={{ marginBottom: '24px' }}>
             <div>
               <Forms.Legend>
                 Importing Dashboard from{' '}
@@ -85,11 +85,11 @@ class ImportDashboardForm extends PureComponent<Props, State> {
                 </tr>
                 <tr>
                   <td>Updated on</td>
-                  <td>{dateTime(meta.updatedAt).format()}</td>
+                  <td>{dateTime(meta.updatedAt).format('YYYY-MM-DD HH:mm:ss')}</td>
                 </tr>
               </tbody>
             </table>
-          </>
+          </div>
         )}
         <Forms.Form onSubmit={this.onSubmit}>
           {() => {
