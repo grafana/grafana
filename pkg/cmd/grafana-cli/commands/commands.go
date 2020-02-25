@@ -3,7 +3,6 @@ package commands
 import (
 	"strings"
 
-	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -11,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/urfave/cli/v2"
 )
 
@@ -22,13 +22,12 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		cfg := setting.NewCfg()
 
 		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		// Here we have to translate cmd.Args() to a list of strings
 		if err := cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.ConfigFile(),
 			HomePath: cmd.HomePath(),
 			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
 		}); err != nil {
-			return fmt.Errorf("failed to load configuration")
+			return errutil.Wrap("failed to load configuration", err)
 		}
 
 		if debug {
@@ -39,7 +38,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
 		if err := engine.Init(); err != nil {
-			return fmt.Errorf("failed to initialize SQL engine")
+			return errutil.Wrap("failed to initialize SQL engine", err)
 		}
 
 		if err := command(cmd, engine); err != nil {
