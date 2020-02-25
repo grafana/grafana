@@ -25,9 +25,7 @@ import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import {
-  SaveDashboardAsButton,
   SaveDashboardAsButtonConnected,
-  SaveDashboardButton,
   SaveDashboardButtonConnected,
 } from './components/modals/SaveDashboard/SaveDashboardButton';
 

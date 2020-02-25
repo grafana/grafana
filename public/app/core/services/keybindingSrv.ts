@@ -15,6 +15,12 @@ import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getLocationSrv } from '@grafana/runtime';
 import { DashboardModel } from '../../features/dashboard/state';
+import ReactDOM from 'react-dom';
+import React from 'react';
+import {
+  SaveDashboardModalProxy,
+  SaveDashboardModalProxyAngular,
+} from '../components/modals/SaveDashboard/SaveDashboardModalProxy';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -175,6 +181,32 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
+  renderSaveDashboardModal = (dashboard: DashboardModel) => {
+    // when saveDashboardModalRoot is in the DOM it means modal is visible
+    if (document.getElementById('saveDashboardModalRoot')) {
+      return;
+    }
+
+    const el = document.createElement('div');
+    el.setAttribute('id', 'saveDashboardModalRoot');
+    document.body.append(el);
+    const reactRoot = document.getElementById('saveDashboardModalRoot');
+
+    return ReactDOM.render(
+      React.createElement(SaveDashboardModalProxyAngular, {
+        component: SaveDashboardModalProxy,
+        props: {
+          dashboard,
+          onClose: () => {
+            ReactDOM.unmountComponentAtNode(reactRoot);
+            reactRoot.remove();
+          },
+        },
+      }),
+      reactRoot
+    );
+  };
+
   setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
@@ -183,7 +215,7 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      // TODO: Show save dashboards ....
+      this.renderSaveDashboardModal(dashboard);
     });
 
     this.bind('t z', () => {

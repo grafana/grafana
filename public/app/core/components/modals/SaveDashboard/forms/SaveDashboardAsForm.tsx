@@ -39,6 +39,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
   dashboard,
   onSubmit,
   onCancel,
+  onSuccess,
 }) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: `${dashboard.title} Copy`,
@@ -58,13 +59,16 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           clone.tags = [];
         }
 
-        await onSubmit(
+        const result = await onSubmit(
           clone,
           {
             folderId: data.$folder.id,
           },
           dashboard
         );
+        if (result.status === 'success') {
+          onSuccess();
+        }
       }}
     >
       {({ register, control, errors }) => (
@@ -88,7 +92,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
             <Forms.Switch name="copyTags" ref={register} />
           </Forms.Field>
           <HorizontalGroup>
-            <Forms.Button type="submit" aria-label="Save dashboard button">
+            <Forms.Button type="submit" aria-label="Save dashboard button" variant="primary-legacy">
               Save
             </Forms.Button>
             <Forms.Button variant="secondary" onClick={onCancel}>

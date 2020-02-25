@@ -7,7 +7,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
 import { CoreEvents, DashboardMeta } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { backendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { promiseToDigest } from '../../../core/utils/promiseToDigest';
 
 export class DashboardSrv {
@@ -79,7 +79,7 @@ export class DashboardSrv {
   };
 
   saveJSONDashboard(json: string) {
-    return this.save(JSON.parse(json), {});
+    return getBackendSrv().saveDashboard(JSON.parse(json), {});
   }
 
   starDashboard(dashboardId: string, isStarred: any) {

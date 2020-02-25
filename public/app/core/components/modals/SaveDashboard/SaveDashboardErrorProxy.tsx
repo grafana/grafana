@@ -1,9 +1,8 @@
 import { DashboardModel } from '../../../../features/dashboard/state';
 import React, { useEffect } from 'react';
-import { Button, ConfirmModal, HorizontalGroup, Modal, ModalsController, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, ConfirmModal, HorizontalGroup, Modal, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
-import { SaveDashboardAsModal } from './SaveDashboardAsModal';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
 import { SaveDashboardAsButton } from './SaveDashboardButton';
@@ -31,7 +30,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
           title="Conflict"
           body={
             <div>
-              Someone else has updated this dashboard <br /> Would you still like to save this dashboard?.
+              Someone else has updated this dashboard <br /> <small>Would you still like to save this dashboard?</small>
             </div>
           }
           confirmText="Save & Overwrite"
@@ -70,36 +69,17 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
 const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ onClose, dashboard }) => {
   const theme = useTheme();
   const { onDashboardSave } = useDashboardSave(dashboard);
-  const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-    modal: css`
-      width: 500px;
-    `,
-    modalContent: css`
-      text-align: center;
-    `,
-    modalText: css`
-      font-size: ${theme.typography.heading.h4};
-      color: ${theme.colors.link};
-      margin-bottom: calc(${theme.spacing.d} * 2);
-      padding-top: ${theme.spacing.d};
-    `,
-    modalButtonRow: css`
-      margin-bottom: 14px;
-      a,
-      button {
-        margin-right: ${theme.spacing.d};
-      }
-    `,
-  }));
-  const styles = getStyles(theme);
+  const styles = getConfirmPluginDashboardSaveModalStyles(theme);
+
   return (
-    <Modal className={styles.modal} title="Plugin Dashboard" icon="copy" isOpen={true} onDismiss={() => {}}>
+    <Modal className={styles.modal} title="Plugin Dashboard" icon="copy" isOpen={true} onDismiss={onClose}>
       <div className={styles.modalContent}>
         <div className={styles.modalText}>
-          Your changes will be lost when you update the plugin. Use Save As to create custom version.
+          Your changes will be lost when you update the plugin.
+          <br /> <small>Use Save As to create custom version.</small>
         </div>
         <HorizontalGroup justify="center">
-          <SaveDashboardAsButton dashboard={dashboard} />
+          <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onClose} variant="primary-legacy" />
           <Button
             variant="danger"
             onClick={async () => {
@@ -109,7 +89,6 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
           >
             Overwrite
           </Button>
-
           <Button variant="inverse" onClick={onClose}>
             Cancel
           </Button>
@@ -118,3 +97,25 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
     </Modal>
   );
 };
+
+const getConfirmPluginDashboardSaveModalStyles = stylesFactory((theme: GrafanaTheme) => ({
+  modal: css`
+    width: 500px;
+  `,
+  modalContent: css`
+    text-align: center;
+  `,
+  modalText: css`
+    font-size: ${theme.typography.heading.h4};
+    color: ${theme.colors.link};
+    margin-bottom: calc(${theme.spacing.d} * 2);
+    padding-top: ${theme.spacing.d};
+  `,
+  modalButtonRow: css`
+    margin-bottom: 14px;
+    a,
+    button {
+      margin-right: ${theme.spacing.d};
+    }
+  `,
+}));

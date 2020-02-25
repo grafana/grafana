@@ -140,7 +140,7 @@ export {
 } from './FieldConfigs/select';
 
 // Next-gen forms
-export { default as Forms } from './Forms';
+export { default as Forms, ButtonVariant } from './Forms';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';

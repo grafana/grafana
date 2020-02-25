@@ -20,13 +20,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-bottom: calc(${theme.spacing.d} * 2);
     padding-top: ${theme.spacing.d};
   `,
-  modalButtonRow: css`
-    margin-bottom: 14px;
-    a,
-    button {
-      margin-right: ${theme.spacing.d};
-    }
-  `,
 }));
 
 const defaultIcon: IconType = 'exclamation-triangle';
@@ -59,7 +52,7 @@ export const ConfirmModal: FC<Props> = ({
     <Modal className={styles.modal} title={title} icon={icon || defaultIcon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalContent}>
         <div className={styles.modalText}>{body}</div>
-        <HorizontalGroup>
+        <HorizontalGroup justify="center">
           <Button variant="danger" onClick={onConfirm}>
             {confirmText}
           </Button>

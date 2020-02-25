@@ -1,5 +1,5 @@
 import { SaveDashboardModalProxy } from './SaveDashboardModalProxy';
-import { ModalsController, Forms } from '@grafana/ui';
+import { ModalsController, Forms, ButtonVariant } from '@grafana/ui';
 import React from 'react';
 import { DashboardModel } from '../../../../features/dashboard/state';
 import { connectWithProvider } from '../../../utils/connectWithReduxStore';
@@ -9,9 +9,10 @@ import { SaveDashboardAsModal } from './SaveDashboardAsModal';
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;
   onSaveSuccess?: () => void;
+  variant?: ButtonVariant;
 }
 
-export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess }) => {
+export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess, variant }) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
@@ -24,6 +25,7 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
                 onClose: hideModal,
               });
             }}
+            variant={variant || 'primary-legacy'}
           >
             Save dashboard
           </Forms.Button>
@@ -33,13 +35,12 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
   );
 };
 
-export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess }) => {
+export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess, variant }) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
         return (
           <Forms.Button
-            variant="secondary"
             onClick={() => {
               showModal(SaveDashboardAsModal, {
                 dashboard,
@@ -47,6 +48,7 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({ dash
                 onClose: hideModal,
               });
             }}
+            variant={variant || 'secondary'}
           >
             Save As...
           </Forms.Button>

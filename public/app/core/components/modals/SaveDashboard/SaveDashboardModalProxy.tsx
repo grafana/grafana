@@ -4,6 +4,8 @@ import { SaveProvisionedDashboard } from './SaveProvisionedDashboard';
 import { SaveDashboardAsModal } from './SaveDashboardAsModal';
 import { SaveDashboardModalProps } from './types';
 import { SaveDashboardModal } from './SaveDashboardModal';
+import { connectWithProvider } from '../../../utils/connectWithReduxStore';
+import { ModalRoot, ModalsProvider } from '@grafana/ui';
 
 export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ dashboard, onClose, onSaveSuccess }) => {
   const isProvisioned = dashboard.meta.provisioned;
@@ -24,3 +26,15 @@ export const SaveDashboardModalProxy: React.FC<SaveDashboardModalProps> = ({ das
     </>
   );
 };
+
+// This component is created to enable rendering save modal from KeybindingsSrv
+// It renders ModalsProvider with default modal applied
+export const SaveDashboardModalProxyAngular = connectWithProvider((props: any) => {
+  return (
+    <>
+      <ModalsProvider {...props}>
+        <ModalRoot />
+      </ModalsProvider>
+    </>
+  );
+});
