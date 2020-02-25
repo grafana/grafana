@@ -8,10 +8,10 @@ import {
   changeToEditorEditMode,
   changeToEditorListMode,
   changeVariableOrder,
-  toVariablePayload,
+  duplicateVariable,
+  toPayload,
   VariableIdentifier,
 } from '../state/actions';
-import { VariableModel } from '../variable';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { getVariableStates } from '../state/selectors';
@@ -27,35 +27,36 @@ interface DispatchProps {
   changeToEditorListMode: typeof changeToEditorListMode;
   changeToEditorEditMode: typeof changeToEditorEditMode;
   changeVariableOrder: typeof changeVariableOrder;
+  duplicateVariable: typeof duplicateVariable;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class VariableEditorContainerUnconnected extends PureComponent<Props> {
   componentDidMount(): void {
-    this.props.changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel));
+    this.props.changeToEditorListMode(toPayload({ uuid: null, type: 'query' }));
   }
 
   onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' } as VariableModel));
+    this.props.changeToEditorListMode(toPayload({ uuid: null, type: 'query' }));
   };
 
   onEditVariable = (identifier: VariableIdentifier) => {
-    this.props.changeToEditorEditMode(
-      toVariablePayload({ uuid: identifier.uuid, type: identifier.type } as VariableModel)
-    );
+    this.props.changeToEditorEditMode(toPayload({ uuid: identifier.uuid, type: identifier.type }));
   };
 
   onChangeToAddMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel));
+    this.props.changeToEditorEditMode(toPayload({ uuid: emptyUuid, type: 'query' }));
   };
 
   onChangeVariableOrder = (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => {
-    this.props.changeVariableOrder(
-      toVariablePayload({ uuid: emptyUuid, type: 'query' } as VariableModel, { fromIndex, toIndex })
-    );
+    this.props.changeVariableOrder(toPayload(identifier, { fromIndex, toIndex }));
+  };
+
+  onDuplicateVariable = (identifier: VariableIdentifier) => {
+    this.props.duplicateVariable(toPayload(identifier));
   };
 
   render() {
@@ -110,6 +111,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             onAddClick={this.onChangeToAddMode}
             onEditClick={this.onEditVariable}
             onChangeVariableOrder={this.onChangeVariableOrder}
+            onDuplicateVariable={this.onDuplicateVariable}
           />
         )}
         {variableStateToEdit && (
@@ -133,6 +135,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeToEditorListMode,
   changeToEditorEditMode,
   changeVariableOrder,
+  duplicateVariable,
 };
 
 export const VariableEditorContainer = connectWithStore(

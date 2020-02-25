@@ -10,6 +10,7 @@ export interface Props {
   onAddClick: (event: MouseEvent<HTMLAnchorElement>) => void;
   onEditClick: (identifier: VariableIdentifier) => void;
   onChangeVariableOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;
+  onDuplicateVariable: (identifier: VariableIdentifier) => void;
 }
 
 enum MoveType {
@@ -26,6 +27,11 @@ export class VariableEditorList extends PureComponent<Props> {
   onChangeVariableOrder = (event: MouseEvent, variable: VariableModel, moveType: MoveType) => {
     event.preventDefault();
     this.props.onChangeVariableOrder(toVariableIdentifier(variable), variable.index, variable.index + moveType);
+  };
+
+  onDuplicateVariable = (event: MouseEvent, identifier: VariableIdentifier) => {
+    event.preventDefault();
+    this.props.onDuplicateVariable(identifier);
   };
 
   render() {
@@ -120,7 +126,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
                         <td style={{ width: '1%' }}>
                           <a
-                            // ng-click="duplicate(variable)"
+                            onClick={event => this.onDuplicateVariable(event, toVariableIdentifier(variable))}
                             className="btn btn-inverse btn-small"
                             aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.tableRowDuplicateButtons(
                               variable.name

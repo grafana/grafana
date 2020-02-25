@@ -97,7 +97,6 @@ export const storeNewVariable = createAction<PrepareAction<VariablePayload>>(
 );
 export interface DuplicateVariable {
   newUuid: string;
-  variablesInAngular: number;
 }
 export const duplicateVariable = createAction<PrepareAction<VariablePayload<DuplicateVariable>>>(
   'templating/duplicateVariable',
@@ -152,6 +151,10 @@ export const toVariableIdentifier = (variable: VariableModel): VariableIdentifie
 
 export const toVariablePayload = <T extends any = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
   return { type: variable.type, uuid: variable.uuid!, data: data as T };
+};
+
+export const toPayload = <T extends any = undefined>(identifier: VariableIdentifier, data?: T): VariablePayload<T> => {
+  return { type: identifier.type, uuid: identifier.uuid!, data: data as T };
 };
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {

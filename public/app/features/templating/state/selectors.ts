@@ -28,9 +28,7 @@ export const getVariables = (state: StoreState = getState()): VariableModel[] =>
 };
 
 export const getVariableStates = (state: StoreState = getState()): VariableState[] => {
-  const variableStates = Object.values(state.templating.variables)
-    .filter(state => state.variable.uuid! !== emptyUuid)
-    .map(state => cloneDeep(state));
+  const variableStates = Object.values(state.templating.variables).map(state => cloneDeep(state));
   return variableStates.sort((s1, s2) => s1.variable.index - s2.variable.index);
 };
 
