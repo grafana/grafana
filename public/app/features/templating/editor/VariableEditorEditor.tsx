@@ -1,4 +1,7 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
+import isEqual from 'lodash/isEqual';
+import { AppEvents } from '@grafana/data';
+import { FormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import { dispatch } from '../../../store/store';
@@ -18,9 +21,7 @@ import {
 import { variableAdapters } from '../adapters';
 import { emptyUuid, VariableState } from '../state/types';
 import { VariableHide, VariableType } from '../variable';
-import { FormLabel } from '@grafana/ui';
 import { appEvents } from '../../../core/core';
-import { AppEvents } from '@grafana/data';
 import { VariableValuesPreview } from './VariableValuesPreview';
 
 export class VariableEditorEditor extends PureComponent<VariableState> {
@@ -29,7 +30,7 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
   }
 
   componentDidUpdate(prevProps: Readonly<VariableState>, prevState: Readonly<{}>, snapshot?: any): void {
-    if (prevProps.editor.errors !== this.props.editor.errors) {
+    if (!isEqual(prevProps.editor.errors, this.props.editor.errors)) {
       Object.values(this.props.editor.errors).forEach(error => {
         appEvents.emit(AppEvents.alertWarning, ['Validation', error]);
       });
