@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Forms, AsyncSelect } from '@grafana/ui';
+import { Forms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { debounce } from 'lodash';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -10,9 +10,6 @@ export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;
   currentDashboardId?: SelectableValue<number>;
   size?: FormInputSize;
-  className?: string;
-  /** Temporary flag that uses the new form styles. */
-  useNewForms?: boolean;
 }
 
 export interface State {
@@ -50,10 +47,10 @@ export class DashboardPicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { size, onSelected, currentDashboardId, useNewForms, className } = this.props;
+    const { size, onSelected, currentDashboardId } = this.props;
     const { isLoading } = this.state;
 
-    return useNewForms ? (
+    return (
       <Forms.AsyncSelect
         size={size}
         isLoading={isLoading}
@@ -65,22 +62,6 @@ export class DashboardPicker extends PureComponent<Props, State> {
         noOptionsMessage={'No dashboards found'}
         value={currentDashboardId}
       />
-    ) : (
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <AsyncSelect
-            className={className}
-            isLoading={isLoading}
-            isClearable={true}
-            defaultOptions={true}
-            loadOptions={this.debouncedSearch}
-            onChange={onSelected}
-            placeholder="Select dashboard"
-            noOptionsMessage={() => 'No dashboards found'}
-            value={currentDashboardId}
-          />
-        </div>
-      </div>
     );
   }
 }
