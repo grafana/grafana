@@ -2,9 +2,9 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { Threshold, sortThresholds, ThresholdsConfig, ThresholdsMode, SelectableValue } from '@grafana/data';
 import { colors } from '../../utils';
 import { getColorFromHexRgbOrName } from '@grafana/data';
+import { ThemeContext } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { Themeable } from '../../types';
 import { css } from 'emotion';
 import Select from '../Select/Select';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
@@ -18,7 +18,7 @@ const modes: Array<SelectableValue<ThresholdsMode>> = [
   },
 ];
 
-export interface Props extends Themeable {
+export interface Props {
   showAlphaUI?: boolean;
   thresholds: ThresholdsConfig;
   onChange: (thresholds: ThresholdsConfig) => void;
@@ -218,37 +218,40 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   render() {
     const { steps } = this.state;
-    const { theme } = this.props;
     const t = this.props.thresholds;
     return (
       <PanelOptionsGroup title="Thresholds">
-        <>
-          <div className="thresholds">
-            {steps
-              .slice(0)
-              .reverse()
-              .map(threshold => {
-                return (
-                  <div className="thresholds-row" key={`${threshold.key}`}>
-                    <div className="thresholds-row-add-button" onClick={() => this.onAddThresholdAfter(threshold)}>
-                      <i className="fa fa-plus" />
-                    </div>
-                    <div
-                      className="thresholds-row-color-indicator"
-                      style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
-                    />
-                    <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
-                  </div>
-                );
-              })}
-          </div>
+        <ThemeContext.Consumer>
+          {theme => (
+            <>
+              <div className="thresholds">
+                {steps
+                  .slice(0)
+                  .reverse()
+                  .map(threshold => {
+                    return (
+                      <div className="thresholds-row" key={`${threshold.key}`}>
+                        <div className="thresholds-row-add-button" onClick={() => this.onAddThresholdAfter(threshold)}>
+                          <i className="fa fa-plus" />
+                        </div>
+                        <div
+                          className="thresholds-row-color-indicator"
+                          style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
+                        />
+                        <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
+                      </div>
+                    );
+                  })}
+              </div>
 
-          {this.props.showAlphaUI && (
-            <div>
-              <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
-            </div>
+              {this.props.showAlphaUI && (
+                <div>
+                  <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
+                </div>
+              )}
+            </>
           )}
-        </>
+        </ThemeContext.Consumer>
       </PanelOptionsGroup>
     );
   }

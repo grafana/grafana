@@ -64,7 +64,7 @@ docker_build () {
   else
     libc=""
     dockerfile="ubuntu.Dockerfile"
-    base_image="${base_arch}ubuntu:18.10"
+    base_image="${base_arch}ubuntu:19.10"
   fi
 
   grafana_tgz="grafana-latest.linux-${arch}${libc}.tar.gz"

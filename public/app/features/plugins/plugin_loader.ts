@@ -1,8 +1,7 @@
 import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
-// tslint:disable:import-blacklist
-import moment from 'moment';
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import angular from 'angular';
 import jquery from 'jquery';
 
@@ -226,21 +225,24 @@ import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/da
 import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 interface PanelCache {
-  [key: string]: PanelPlugin;
+  [key: string]: Promise<PanelPlugin>;
 }
 const panelCache: PanelCache = {};
 
 export function importPanelPlugin(id: string): Promise<PanelPlugin> {
   const loaded = panelCache[id];
+
   if (loaded) {
-    return Promise.resolve(loaded);
+    return loaded;
   }
+
   const meta = config.panels[id];
+
   if (!meta) {
     return Promise.resolve(getPanelPluginNotFound(id));
   }
 
-  return importPluginModule(meta.module)
+  panelCache[id] = importPluginModule(meta.module)
     .then(pluginExports => {
       if (pluginExports.plugin) {
         return pluginExports.plugin as PanelPlugin;
@@ -253,11 +255,13 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
     })
     .then(plugin => {
       plugin.meta = meta;
-      return (panelCache[meta.id] = plugin);
+      return plugin;
     })
     .catch(err => {
       // TODO, maybe a different error plugin
       console.warn('Error loading panel plugin: ' + id, err);
       return getPanelPluginLoadError(meta, err);
     });
+
+  return panelCache[id];
 }
