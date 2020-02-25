@@ -315,7 +315,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
             <div className={gridWrapperClasses}>
               {!getConfig().featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
-              {getConfig().featureToggles.newVariables && <SubMenu />}
+              {getConfig().featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 isEditing={isEditing}

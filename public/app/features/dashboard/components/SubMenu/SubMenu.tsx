@@ -6,8 +6,12 @@ import { VariablePicker } from '../../../templating/picker/VariablePicker';
 import { e2e } from '@grafana/e2e';
 import { getVariableStates } from '../../../templating/state/selectors';
 import { VariableHide } from '../../../templating/variable';
+import { DashboardModel } from '../../state';
+import { Switch } from '@grafana/ui';
 
-interface OwnProps {}
+interface OwnProps {
+  dashboard: DashboardModel;
+}
 
 interface ConnectedProps {
   variableStates: VariableState[];
@@ -18,16 +22,37 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class SubMenuUnConnected extends PureComponent<Props> {
-  render() {
-    if (this.props.variableStates.length === 0) {
-      return null;
+  onAnnotationStateChanged = (updatedAnnotation: any, event?: React.SyntheticEvent<HTMLInputElement>) => {
+    event?.preventDefault();
+    for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
+      const annotation = this.props.dashboard.annotations.list[index];
+      if (annotation.name === updatedAnnotation.name) {
+        annotation.enable = !annotation.enable;
+        break;
+      }
+    }
+    this.props.dashboard.startRefresh();
+  };
+
+  isSubMenuVisible = (visibleVariableStates: VariableState[], visibleAnnotations: any[]) => {
+    if (this.props.dashboard.links.length > 0) {
+      return true;
     }
 
+    if (visibleVariableStates.length > 0) {
+      return true;
+    }
+
+    return visibleAnnotations.length > 0;
+  };
+
+  render() {
+    const visibleAnnotations = this.props.dashboard.annotations.list.filter(annotation => annotation.hide !== true);
     const visibleVariableStates = this.props.variableStates.filter(
       state => state.variable.hide !== VariableHide.hideVariable
     );
 
-    if (visibleVariableStates.length === 0) {
+    if (!this.isSubMenuVisible(visibleVariableStates, visibleAnnotations)) {
       return null;
     }
 
@@ -43,6 +68,21 @@ class SubMenuUnConnected extends PureComponent<Props> {
             />
           </div>
         ))}
+        {visibleAnnotations.map(annotation => {
+          return (
+            <div
+              key={annotation.name}
+              className={annotation.enable ? 'submenu-item' : 'submenu-item annotation-disabled'}
+            >
+              <Switch
+                label={annotation.name}
+                className="gf-form"
+                checked={annotation.enable}
+                onChange={event => this.onAnnotationStateChanged(annotation, event)}
+              />
+            </div>
+          );
+        })}
       </div>
     );
   }
