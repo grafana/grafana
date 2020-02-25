@@ -170,8 +170,8 @@ const mapStateToProps = (state: StoreState) => {
     inputs: state.importDashboard.inputs,
     uidExists: state.importDashboard.uidExists,
     uidError: state.importDashboard.uidError,
-    nameExists: state.importDashboard.nameExists,
-    nameError: state.importDashboard.nameError,
+    nameExists: state.importDashboard.titleExists,
+    nameError: state.importDashboard.titleError,
   };
 };
 

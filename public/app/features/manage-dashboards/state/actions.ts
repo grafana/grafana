@@ -10,7 +10,7 @@ import {
   setGcomError,
   dashboardUidChange,
   dashboardUidExists,
-  dashboardNameExists,
+  dashboardTitleExists,
 } from './reducers';
 import validationSrv from '../services/ValidationSrv';
 import { ThunkResult } from 'app/types';
@@ -40,14 +40,14 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
         error.isHandled = true;
       });
 
-    dispatch(validateDashboardName(dashboard.title));
+    dispatch(validateDashboardTitle(dashboard.title));
 
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));
   };
 }
 
-function validateDashboardName(dashboardName: string): ThunkResult<void> {
+function validateDashboardTitle(dashboardName: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const routeParams = getStore().location.routeParams;
     const folderId = routeParams.folderId ? Number(routeParams.folderId) : 0 || null;
@@ -55,11 +55,11 @@ function validateDashboardName(dashboardName: string): ThunkResult<void> {
     await validationSrv
       .validateNewDashboardName(folderId, dashboardName)
       .then(() => {
-        dispatch(dashboardNameExists({ state: false, error: '' }));
+        dispatch(dashboardTitleExists({ state: false, error: '' }));
       })
       .catch(error => {
         if (error.type === 'EXISTING') {
-          dispatch(dashboardNameExists({ state: true, error: error.message }));
+          dispatch(dashboardTitleExists({ state: true, error: error.message }));
         }
       });
   };
@@ -95,19 +95,24 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
 
 export function changeDashboardTitle(title: string): ThunkResult<void> {
   return dispatch => {
+    dispatch(validateDashboardTitle(title));
     dispatch(dashboardTitleChange(title));
   };
 }
 
 export function changeDashboardUid(uid: string): ThunkResult<void> {
   return async dispatch => {
-    const existingDashboard = await getBackendSrv().get(`/api/dashboards/uid/${uid}`);
+    await getBackendSrv()
+      .get(`/api/dashboards/uid/${uid}`)
+      .then(existingDashboard => {
+        dispatch(dashboardUidExists({ state: true, dashboard: existingDashboard }));
+      })
+      .catch(error => {
+        error.isHandled = true;
+        dispatch(dashboardUidExists({ state: false }));
+      });
 
-    if (existingDashboard) {
-      dispatch(dashboardUidExists(existingDashboard));
-    } else {
-      dispatch(dashboardUidChange(uid));
-    }
+    dispatch(dashboardUidChange(uid));
   };
 }
 

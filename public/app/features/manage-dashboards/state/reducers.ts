@@ -15,8 +15,8 @@ export interface ImportDashboardState {
   isLoaded: boolean;
   uidExists: boolean;
   uidError: string;
-  nameExists: boolean;
-  nameError: string;
+  titleExists: boolean;
+  titleError: string;
 }
 
 const initialImportDashboardState: ImportDashboardState = {
@@ -28,8 +28,8 @@ const initialImportDashboardState: ImportDashboardState = {
   isLoaded: false,
   uidExists: false,
   uidError: '',
-  nameExists: false,
-  nameError: '',
+  titleExists: false,
+  titleError: '',
 };
 
 const importDashboardSlice = createSlice({
@@ -85,18 +85,23 @@ const importDashboardSlice = createSlice({
         uidExists: false,
       };
     },
-    dashboardUidExists: (state, action: PayloadAction<DashboardDTO>): ImportDashboardState => {
+    dashboardUidExists: (
+      state,
+      action: PayloadAction<{ state: boolean; dashboard?: DashboardDTO }>
+    ): ImportDashboardState => {
+      const dashboard = action.payload.dashboard;
+
       return {
         ...state,
-        uidExists: true,
-        uidError: `Dashboard named '${action.payload.dashboard.title}' in folder '${action.payload.meta.folderTitle}' has the same uid`,
+        uidExists: action.payload.state,
+        uidError: `Dashboard named '${dashboard?.dashboard.title}' in folder '${dashboard?.meta.folderTitle}' has the same uid`,
       };
     },
-    dashboardNameExists: (state, action: PayloadAction<{ state: boolean; error: string }>): ImportDashboardState => {
+    dashboardTitleExists: (state, action: PayloadAction<{ state: boolean; error: string }>): ImportDashboardState => {
       return {
         ...state,
-        nameExists: action.payload.state,
-        nameError: action.payload.error,
+        titleExists: action.payload.state,
+        titleError: action.payload.error,
       };
     },
     setGcomError: (state, action: PayloadAction<string>): ImportDashboardState => ({
@@ -119,7 +124,7 @@ export const {
   dashboardTitleChange,
   dashboardUidChange,
   dashboardUidExists,
-  dashboardNameExists,
+  dashboardTitleExists,
 } = importDashboardSlice.actions;
 
 export const importDashboardReducer = importDashboardSlice.reducer;
