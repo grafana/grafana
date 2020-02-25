@@ -5,6 +5,7 @@ import { VariableState } from '../../../templating/state/types';
 import { VariablePicker } from '../../../templating/picker/VariablePicker';
 import { e2e } from '@grafana/e2e';
 import { getVariableStates } from '../../../templating/state/selectors';
+import { VariableHide } from '../../../templating/variable';
 
 interface OwnProps {}
 
@@ -22,9 +23,17 @@ class SubMenuUnConnected extends PureComponent<Props> {
       return null;
     }
 
+    const visibleVariableStates = this.props.variableStates.filter(
+      state => state.variable.hide !== VariableHide.hideVariable
+    );
+
+    if (visibleVariableStates.length === 0) {
+      return null;
+    }
+
     return (
       <div className="submenu-controls">
-        {this.props.variableStates.map(state => (
+        {visibleVariableStates.map(state => (
           <div className="submenu-item gf-form-inline" aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}>
             <VariablePicker
               key={state.variable.uuid}
