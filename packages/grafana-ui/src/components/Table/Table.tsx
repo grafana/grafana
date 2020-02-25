@@ -37,8 +37,6 @@ export const Table: FC<Props> = memo(({ data, height, onCellClick, width, column
   const RenderRow = React.useCallback(
     ({ index, style }) => {
       const row = rows[index];
-      delete style.width;
-      style.minWidth = '100%';
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
