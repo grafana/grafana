@@ -5,6 +5,7 @@ import { DashboardModel } from '../../../../features/dashboard/state';
 import { connectWithProvider } from '../../../utils/connectWithReduxStore';
 import { provideModalsContext } from 'app/routes/ReactContainer';
 import { SaveDashboardAsModal } from './SaveDashboardAsModal';
+import { css } from 'emotion';
 
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;
@@ -41,6 +42,11 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({ dash
       {({ showModal, hideModal }) => {
         return (
           <Forms.Button
+            /* Styles applied here are specific to dashboard settings view */
+            className={css`
+              width: 100%;
+              justify-content: center;
+            `}
             onClick={() => {
               showModal(SaveDashboardAsModal, {
                 dashboard,
