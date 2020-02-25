@@ -1,3 +1,5 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
 import { e2e } from '@grafana/e2e';
 
 import coreModule from 'app/core/core_module';
@@ -7,6 +9,8 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class UtilSrv {
   modalScope: any;
+  reactModalRoot = document.body;
+  reactModalNode = document.createElement('div');
 
   /** @ngInject */
   constructor(private $rootScope: GrafanaRootScope, private $modal: any) {}
@@ -15,7 +19,26 @@ export class UtilSrv {
     appEvents.on(CoreEvents.showModal, this.showModal.bind(this), this.$rootScope);
     appEvents.on(CoreEvents.hideModal, this.hideModal.bind(this), this.$rootScope);
     appEvents.on(CoreEvents.showConfirmModal, this.showConfirmModal.bind(this), this.$rootScope);
+    appEvents.on(CoreEvents.showModalReact, this.showModalReact.bind(this), this.$rootScope);
   }
+
+  showModalReact(options: any) {
+    const { component, props } = options;
+    const modalProps = {
+      ...props,
+      isOpen: true,
+      onDismiss: this.onReactModalDismiss,
+    };
+
+    const elem = React.createElement(component, modalProps);
+    this.reactModalRoot.appendChild(this.reactModalNode);
+    return ReactDOM.render(elem, this.reactModalNode);
+  }
+
+  onReactModalDismiss = () => {
+    ReactDOM.unmountComponentAtNode(this.reactModalNode);
+    this.reactModalRoot.removeChild(this.reactModalNode);
+  };
 
   hideModal() {
     if (this.modalScope && this.modalScope.dismiss) {
