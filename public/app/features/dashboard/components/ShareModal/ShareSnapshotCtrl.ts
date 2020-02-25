@@ -3,10 +3,11 @@ import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { TimeSrv } from '../../services/TimeSrv';
-import { DashboardModel } from '../../state/DashboardModel';
+import { DashboardModelClone } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { VariableRefresh } from '../../../templating/variable';
 
 export class ShareSnapshotCtrl {
   /** @ngInject */
@@ -101,7 +102,7 @@ export class ShareSnapshotCtrl {
       return $scope.snapshotUrl;
     };
 
-    $scope.scrubDashboard = (dash: DashboardModel) => {
+    $scope.scrubDashboard = (dash: DashboardModelClone) => {
       // change title
       dash.title = $scope.snapshot.name;
 
@@ -134,10 +135,10 @@ export class ShareSnapshotCtrl {
         .value();
 
       // remove template queries
-      _.each(dash.templating.list, variable => {
+      _.each(dash.getVariables(), variable => {
         variable.query = '';
         variable.options = variable.current;
-        variable.refresh = false;
+        variable.refresh = VariableRefresh.never;
       });
 
       // snapshot single panel

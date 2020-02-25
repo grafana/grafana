@@ -5,12 +5,13 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
+  DataLink,
   DataQuery,
   DataQueryResponseData,
-  PanelPlugin,
-  PanelEvents,
-  DataLink,
   DataTransformerConfig,
+  eventFactory,
+  PanelEvents,
+  PanelPlugin,
   ScopedVars,
 } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
@@ -18,7 +19,6 @@ import { AngularComponent } from '@grafana/runtime';
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { eventFactory } from '@grafana/data';
 import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
@@ -136,7 +136,7 @@ export class PanelModel {
   events: Emitter;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
-  legend?: { show: boolean };
+  legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
   angularPanel?: AngularComponent;
 

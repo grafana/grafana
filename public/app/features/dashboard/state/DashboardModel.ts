@@ -24,6 +24,8 @@ export interface CloneOptions {
   message?: string;
 }
 
+export type DashboardModelClone = DashboardModel & { getVariables: () => any[] };
+
 export class DashboardModel {
   id: any;
   uid: string;
@@ -157,7 +159,7 @@ export class DashboardModel {
   }
 
   // cleans meta data and other non persistent state
-  getSaveModelClone(options?: CloneOptions) {
+  getSaveModelClone(options?: CloneOptions): DashboardModelClone {
     const defaults = _.defaults(options || {}, {
       saveVariables: true,
       saveTimerange: true,
