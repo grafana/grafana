@@ -49,6 +49,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
     },
     copyTags: false,
   };
+
   return (
     <Forms.Form
       defaultValues={defaultValues}

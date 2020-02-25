@@ -3,8 +3,8 @@ import { Forms } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { debounce } from 'lodash';
 import appEvents from '../../app_events';
-import { getBackendSrv } from '../../services/backend_srv';
-import { contextSrv } from '../../services/context_srv';
+import { getBackendSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
