@@ -56,9 +56,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         border-color: ${borderColor};
         border-radius: ${borderRadius};
 
-        .rc-time-picker-panel-input,
         .rc-time-picker-panel-input-wrap {
-          background-color: ${bgColor};
+          margin-right: 2px;
+
+          &,
+          .rc-time-picker-panel-input {
+            background-color: ${bgColor};
+          }
         }
       }
     `,
