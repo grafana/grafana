@@ -1,5 +1,4 @@
-import { TextAlignProperty } from 'csstype';
-import { ComponentType } from 'react';
+import { CellProps } from 'react-table';
 import { Field } from '@grafana/data';
 import { TableStyles } from './styles';
 
@@ -19,27 +18,13 @@ export enum TableCellDisplayMode {
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
 
-export interface TableColumn {
-  // React table props
-  Header: string;
-  accessor: string | Function;
-  Cell: ComponentType<ReactTableCellProps>;
-  // Grafana additions
-  field: Field;
-  width: number;
-  textAlign: TextAlignProperty;
-}
-
 export interface TableRow {
   [x: string]: any;
 }
 
-export interface ReactTableCellProps {
-  cell: ReactTableCell;
-  column: TableColumn;
-  tableStyles: TableStyles;
-}
+export type TableFilterActionCallback = (key: string, value: string) => void;
 
-export interface ReactTableCell {
-  value: any;
+export interface TableCellProps extends CellProps<any> {
+  tableStyles: TableStyles;
+  field: Field;
 }

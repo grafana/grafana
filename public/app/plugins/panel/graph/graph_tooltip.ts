@@ -172,6 +172,18 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     appEvents.emit(CoreEvents.graphClicked, { pos: pos, panel: panel, item: item });
   });
 
+  elem.bind('plotleave', () => {
+    if (!panel.tooltip.shared) {
+      return;
+    }
+
+    const plot = elem.data().plot;
+    if (plot) {
+      $tooltip.detach();
+      plot.unhighlight();
+    }
+  });
+
   this.clear = (plot: { clearCrosshair: () => void; unhighlight: () => void }) => {
     $tooltip.detach();
     plot.clearCrosshair();

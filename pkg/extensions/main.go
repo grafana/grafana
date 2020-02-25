@@ -6,8 +6,8 @@ import (
 
 	_ "github.com/crewjam/saml"
 	_ "github.com/gobwas/glob"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	_ "github.com/jung-kurt/gofpdf"
 	_ "github.com/linkedin/goavro/v2"
 	_ "github.com/pkg/errors"
@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	registry.RegisterService(&models.OSSLicensingService{})
+	registry.RegisterService(&licensing.OSSLicensingService{})
 }
 
 var IsEnterprise bool = false

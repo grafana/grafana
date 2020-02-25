@@ -8,7 +8,7 @@ import { TooltipContentProps } from '../Chart/Tooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 
 export default {
-  title: 'Visualizations/Graph/Graph',
+  title: 'Visualizations|Graph/Graph',
   component: Graph,
   decorators: [withCenteredStory],
 };

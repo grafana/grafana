@@ -14,9 +14,9 @@ jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
 }));
 
 import { ResultProcessor } from './ResultProcessor';
-import { ExploreItemState, ExploreMode } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, LogRowModel, toDataFrame, FieldType } from '@grafana/data';
+import { TimeSeries, LogRowModel, toDataFrame, FieldType, ExploreMode } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
@@ -187,7 +187,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 300,
               uid: '2',
               uniqueLabels: {},
             },
@@ -205,7 +204,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 200,
               uid: '1',
               uniqueLabels: {},
             },
@@ -223,7 +221,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 100,
               uid: '0',
               uniqueLabels: {},
             },

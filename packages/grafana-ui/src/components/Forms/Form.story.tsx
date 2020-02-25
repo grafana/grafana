@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Legend } from './Legend';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -8,96 +8,131 @@ import { Input } from './Input/Input';
 import { Button } from './Button';
 import { Form } from './Form';
 import { Switch } from './Switch';
-import { Icon } from '../Icon/Icon';
 import { Checkbox } from './Checkbox';
-import { TextArea } from './TextArea/TextArea';
+
+import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
+import { Select } from './Select/Select';
+import Forms from './index';
+import mdx from './Form.mdx';
 
 export default {
-  title: 'UI/Forms/Test forms/Server admin',
+  title: 'Forms/Test forms',
   decorators: [withStoryContainer, withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
-export const users = () => {
-  const [name, setName] = useState();
-  const [email, setEmail] = useState();
-  const [username, setUsername] = useState();
-  const [password, setPassword] = useState();
-  const [disabledUser, setDisabledUser] = useState(false);
-  const [checked, setChecked] = useState(false);
+const selectOptions = [
+  {
+    label: 'Option 1',
+    value: 'option1',
+  },
+  {
+    label: 'Option 2',
+    value: 'option2',
+  },
+  {
+    label: 'Option 3',
+    value: 'option3',
+  },
+];
 
+interface FormDTO {
+  name: string;
+  email: string;
+  username: string;
+  checkbox: boolean;
+  switch: boolean;
+  radio: string;
+  select: string;
+  nested: {
+    path: string;
+  };
+}
+
+const renderForm = (defaultValues?: Partial<FormDTO>) => (
+  <Form
+    defaultValues={defaultValues}
+    onSubmit={(data: FormDTO) => {
+      console.log(data);
+    }}
+  >
+    {({ register, control, errors }) =>
+      (console.log(errors) as any) || (
+        <>
+          <Legend>Edit user</Legend>
+
+          <Field label="Name" invalid={!!errors.name} error="Name is required">
+            <Input name="name" placeholder="Roger Waters" size="md" ref={register({ required: true })} />
+          </Field>
+
+          <Field label="Email" invalid={!!errors.email} error="E-mail is required">
+            <Input
+              id="email"
+              name="email"
+              placeholder="roger.waters@grafana.com"
+              size="md"
+              ref={register({ required: true })}
+            />
+          </Field>
+
+          <Field label="Username">
+            <Input name="username" placeholder="mr.waters" size="md" ref={register} />
+          </Field>
+          <Field label="Nested object">
+            <Input name="nested.path" placeholder="Nested path" size="md" ref={register} />
+          </Field>
+
+          <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
+            <Checkbox name="checkbox" label="Do you consent?" ref={register({ required: true })} />
+          </Field>
+
+          <Field label="Switch">
+            <Switch name="switch" ref={register} />
+          </Field>
+
+          <Field label="RadioButton">
+            <Forms.InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
+          </Field>
+
+          <Field label="RadioButton" invalid={!!errors.select}>
+            <Forms.InputControl
+              name="select"
+              control={control}
+              rules={{
+                required: true,
+              }}
+              options={selectOptions}
+              as={Select}
+            />
+          </Field>
+
+          <Button type="submit">Update</Button>
+        </>
+      )
+    }
+  </Form>
+);
+
+export const basic = () => {
+  return <>{renderForm()}</>;
+};
+
+export const defaultValues = () => {
   return (
     <>
-      <Form>
-        <Legend>Edit user</Legend>
-        <Field label="Name">
-          <Input
-            id="name"
-            placeholder="Roger Waters"
-            value={name}
-            onChange={e => setName(e.currentTarget.value)}
-            size="md"
-          />
-        </Field>
-        <Field label="Email">
-          <Input
-            id="email"
-            type="email"
-            placeholder="roger.waters@grafana.com"
-            value={email}
-            onChange={e => setEmail(e.currentTarget.value)}
-            size="md"
-          />
-        </Field>
-        <Field label="Username">
-          <Input
-            id="username"
-            placeholder="mr.waters"
-            value={username}
-            onChange={e => setUsername(e.currentTarget.value)}
-            size="md"
-          />
-        </Field>
-        <Field label="Disable" description="Added for testing purposes">
-          <Switch checked={disabledUser} onChange={(_e, checked) => setDisabledUser(checked)} />
-        </Field>
-        <Field>
-          <Checkbox
-            label="Skip SLL cert validation"
-            description="Set to true if you want to skip sll cert validation"
-            value={checked}
-            onChange={setChecked}
-          />
-        </Field>
-        <Button>Update</Button>
-      </Form>
-      <Form>
-        <Legend>Change password</Legend>
-        <Field label="Password">
-          <Input
-            id="password>"
-            type="password"
-            placeholder="Be safe..."
-            value={password}
-            onChange={e => setPassword(e.currentTarget.value)}
-            size="md"
-            prefix={<Icon name="lock" />}
-          />
-        </Field>
-        <Button>Update</Button>
-      </Form>
-
-      <Form>
-        <fieldset>
-          <Legend>CERT validation</Legend>
-          <Field
-            label="Path to client cert"
-            description="Authentication against LDAP servers requiring client certificates if not required leave empty "
-          >
-            <TextArea id="clientCert" value={''} size="lg" />
-          </Field>
-        </fieldset>
-        <Button>Update</Button>
-      </Form>
+      {renderForm({
+        name: 'Roger Waters',
+        nested: {
+          path: 'Nested path default value',
+        },
+        radio: 'option2',
+        select: 'option1',
+        switch: true,
+      })}
     </>
   );
 };

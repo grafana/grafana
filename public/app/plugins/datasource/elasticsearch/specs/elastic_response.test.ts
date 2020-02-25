@@ -1,5 +1,6 @@
-import { DataFrameView, KeyValue, MutableDataFrame } from '@grafana/data';
+import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
 import { ElasticResponse } from '../elastic_response';
+import flatten from 'app/core/utils/flatten';
 
 describe('ElasticResponse', () => {
   let targets;
@@ -827,71 +828,76 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple logs query and count', () => {
-    beforeEach(() => {
-      targets = [
+    const targets: any = [
+      {
+        refId: 'A',
+        metrics: [{ type: 'count', id: '1' }],
+        bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
+        context: 'explore',
+        interval: '10s',
+        isLogsQuery: true,
+        key: 'Q-1561369883389-0.7611823271062786-0',
+        liveStreaming: false,
+        maxDataPoints: 1620,
+        query: '',
+        timeField: '@timestamp',
+      },
+    ];
+    const response = {
+      responses: [
         {
-          refId: 'A',
-          metrics: [{ type: 'count', id: '1' }],
-          bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
-          context: 'explore',
-          interval: '10s',
-          isLogsQuery: true,
-          key: 'Q-1561369883389-0.7611823271062786-0',
-          liveStreaming: false,
-          maxDataPoints: 1620,
-          query: '',
-          timeField: '@timestamp',
-        },
-      ];
-      response = {
-        responses: [
-          {
-            aggregations: {
-              '2': {
-                buckets: [
-                  {
-                    doc_count: 10,
-                    key: 1000,
-                  },
-                  {
-                    doc_count: 15,
-                    key: 2000,
-                  },
-                ],
-              },
-            },
-            hits: {
-              hits: [
+          aggregations: {
+            '2': {
+              buckets: [
                 {
-                  _id: 'fdsfs',
-                  _type: '_doc',
-                  _index: 'mock-index',
-                  _source: {
-                    '@timestamp': '2019-06-24T09:51:19.765Z',
-                    host: 'djisaodjsoad',
-                    message: 'hello, i am a message',
-                  },
+                  doc_count: 10,
+                  key: 1000,
                 },
                 {
-                  _id: 'kdospaidopa',
-                  _type: '_doc',
-                  _index: 'mock-index',
-                  _source: {
-                    '@timestamp': '2019-06-24T09:52:19.765Z',
-                    host: 'dsalkdakdop',
-                    message: 'hello, i am also message',
-                  },
+                  doc_count: 15,
+                  key: 2000,
                 },
               ],
             },
           },
-        ],
-      };
-
-      result = new ElasticResponse(targets, response).getLogs();
-    });
+          hits: {
+            hits: [
+              {
+                _id: 'fdsfs',
+                _type: '_doc',
+                _index: 'mock-index',
+                _source: {
+                  '@timestamp': '2019-06-24T09:51:19.765Z',
+                  host: 'djisaodjsoad',
+                  message: 'hello, i am a message',
+                  level: 'debug',
+                  fields: {
+                    lvl: 'debug',
+                  },
+                },
+              },
+              {
+                _id: 'kdospaidopa',
+                _type: '_doc',
+                _index: 'mock-index',
+                _source: {
+                  '@timestamp': '2019-06-24T09:52:19.765Z',
+                  host: 'dsalkdakdop',
+                  message: 'hello, i am also message',
+                  level: 'error',
+                  fields: {
+                    lvl: 'info',
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    };
 
     it('should return histogram aggregation and documents', () => {
+      const result = new ElasticResponse(targets, response).getLogs();
       expect(result.data.length).toBe(2);
       const logResults = result.data[0] as MutableDataFrame;
       const fields = logResults.fields.map(f => {
@@ -911,7 +917,7 @@ describe('ElasticResponse', () => {
         expect(r._id).toEqual(response.responses[0].hits.hits[i]._id);
         expect(r._type).toEqual(response.responses[0].hits.hits[i]._type);
         expect(r._index).toEqual(response.responses[0].hits.hits[i]._index);
-        expect(r._source).toEqual(response.responses[0].hits.hits[i]._source);
+        expect(r._source).toEqual(flatten(response.responses[0].hits.hits[i]._source, null));
       }
 
       // Make a map from the histogram results
@@ -926,6 +932,20 @@ describe('ElasticResponse', () => {
       response.responses[0].aggregations['2'].buckets.forEach((bucket: any) => {
         expect(hist[bucket.key]).toEqual(bucket.doc_count);
       });
+    });
+
+    it('should map levels field', () => {
+      const result = new ElasticResponse(targets, response).getLogs(undefined, 'level');
+      const fieldCache = new FieldCache(result.data[0]);
+      const field = fieldCache.getFieldByName('level');
+      expect(field.values.toArray()).toEqual(['debug', 'error']);
+    });
+
+    it('should re map levels field to new field', () => {
+      const result = new ElasticResponse(targets, response).getLogs(undefined, 'fields.lvl');
+      const fieldCache = new FieldCache(result.data[0]);
+      const field = fieldCache.getFieldByName('level');
+      expect(field.values.toArray()).toEqual(['debug', 'info']);
     });
   });
 });

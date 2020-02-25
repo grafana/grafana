@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -69,7 +70,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		hs.writeCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.Cfg.CookieSameSite)
+		middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.cookieOptionsFromCfg)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -81,8 +82,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	cookieState := ctx.GetCookie(OauthStateCookieName)
 
 	// delete cookie
-	ctx.Resp.Header().Del("Set-Cookie")
-	hs.deleteCookie(ctx.Resp, OauthStateCookieName, hs.Cfg.CookieSameSite)
+	middleware.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.cookieOptionsFromCfg)
 
 	if cookieState == "" {
 		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
@@ -186,7 +186,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if userInfo.Role != "" {
 		rt := m.RoleType(userInfo.Role)
 		if rt.IsValid() {
-			extUser.OrgRoles[1] = rt
+			var orgID int64
+			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+				orgID = int64(setting.AutoAssignOrgId)
+			} else {
+				orgID = int64(1)
+			}
+			extUser.OrgRoles[orgID] = rt
 		}
 	}
 
@@ -217,31 +223,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.cookieOptionsFromCfg)
 		ctx.Redirect(redirectTo)
 		return
 	}
 
 	ctx.Redirect(setting.AppSubUrl + "/")
-}
-
-func (hs *HTTPServer) deleteCookie(w http.ResponseWriter, name string, sameSite http.SameSite) {
-	hs.writeCookie(w, name, "", -1, sameSite)
-}
-
-func (hs *HTTPServer) writeCookie(w http.ResponseWriter, name string, value string, maxAge int, sameSite http.SameSite) {
-	cookie := http.Cookie{
-		Name:     name,
-		MaxAge:   maxAge,
-		Value:    value,
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.CookieSecure,
-	}
-	if sameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = sameSite
-	}
-	http.SetCookie(w, &cookie)
 }
 
 func hashStatecode(code, seed string) string {

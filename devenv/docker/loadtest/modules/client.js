@@ -144,6 +144,7 @@ export const BaseClient = class BaseClient {
       let params = requests[n].params || {};
       params.headers = params.headers || {};
       params.headers['Content-Type'] = 'application/json';
+      params.timeout = 120000;
       this.beforeRequest(params);
       this.onBeforeRequest(params);
       requests[n].params = params;

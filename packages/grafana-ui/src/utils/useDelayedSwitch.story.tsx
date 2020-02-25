@@ -19,7 +19,7 @@ function StoryWrapper() {
   return <div>{valueDelayed ? 'ON' : 'OFF'}</div>;
 }
 
-const story = storiesOf('Utils/useDelayedSwitch', module);
+const story = storiesOf('useDelayedSwitch', module);
 story.addDecorator(withCenteredStory);
 story.add('useDelayedSwitch', () => {
   return <StoryWrapper />;

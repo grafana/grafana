@@ -96,7 +96,7 @@ export class SaveDashboardModalCtrl {
     this.selectors = e2e.pages.SaveDashboardModal.selectors;
   }
 
-  save() {
+  save(): void | Promise<any> {
     if (!this.saveForm.$valid) {
       return;
     }

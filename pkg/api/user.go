@@ -36,6 +36,8 @@ func getUserUserProfile(userID int64) Response {
 		query.Result.IsExternal = true
 	}
 
+	query.Result.AvatarUrl = dtos.GetGravatarUrl(query.Result.Email)
+
 	return JSON(200, query.Result)
 }
 
@@ -339,6 +341,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "GitHub"
 	case "oauth_google":
 		return "Google"
+	case "oauth_azuread":
+		return "AzureAD"
 	case "oauth_gitlab":
 		return "GitLab"
 	case "oauth_grafana_com", "oauth_grafananet":

@@ -71,18 +71,23 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		timeSeries := make(tsdb.TimeSeriesSlice, 0)
 
 		requestExceededMaxLimit := false
+		partialData := false
 		queryMeta := []struct {
 			Expression, ID string
+			Period         int
 		}{}
 
 		for _, response := range responses {
 			timeSeries = append(timeSeries, *response.series...)
 			requestExceededMaxLimit = requestExceededMaxLimit || response.RequestExceededMaxLimit
+			partialData = partialData || response.PartialData
 			queryMeta = append(queryMeta, struct {
 				Expression, ID string
+				Period         int
 			}{
 				Expression: response.Expression,
 				ID:         response.Id,
+				Period:     response.Period,
 			})
 		}
 
@@ -93,6 +98,11 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		if requestExceededMaxLimit {
 			queryResult.ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
 		}
+
+		if partialData {
+			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range"
+		}
+
 		queryResult.Series = append(queryResult.Series, timeSeries...)
 		queryResult.Meta.Set("gmdMeta", queryMeta)
 		results[refID] = queryResult
