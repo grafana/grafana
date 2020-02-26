@@ -135,7 +135,7 @@ export const defaultValues = () => {
     {
       name: 'John Waters',
       nested: {
-        path: 'Some shit',
+        path: 'Nested path default value updated',
       },
       radio: 'option1',
       select: 'option2',
