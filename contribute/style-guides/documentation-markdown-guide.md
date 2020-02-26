@@ -1,11 +1,17 @@
 # Markdown style guide
 
+This guide for Markdown style helps keep contributions consistent across all documentation
+created for Grafana products. Refer to the guide and update its sections as needed when a
+Subject Matter Expert answers a question on Markdown style, or a decision is made about
+how to apply Markdown.
+
 ## Headers
 
-In Markdown, the number of ``#`` symbols creates different heading levels, similar to
-HTML heading levels.
+In Markdown, the number of "#" symbols creates different heading levels, similar to
+HTML heading levels:
 
 **Example**
+
 * \# is \<h1>.
 * \#\# is \<h2>.
 * \#\#\# is \<h3>.
@@ -16,36 +22,25 @@ Start your document with a single ``#`` for the title of the page. Add the sub-h
 
 * Make text **bold** using two asterisks.
 
-**Example** It is ``**important**`` to use Github Flavored Markdown emoji consistently.
+**Example:** It is ``**important**`` to use Github Flavored Markdown emoji consistently.
 
 * Make text ``*emphasized*`` using single `` _underscores_`` or a single asterisk.
 
-**Example** Github Flavored Markdown emoji should _only_ appear in specific cases.
+**Example:** Github Flavored Markdown emoji should _only_ appear in specific cases.
 
 
-## Handling punctuation
-
-When writing and marking up text with bold or emphasis markdown, include any
-punctuation close to the target text within the markdown:
-
-**Example** **TODO:**, not **TODO**:.
-
-**Example** The following emoji are considered _acceptable:_ Radio buttons, tick marks, and heavy plus signs.
-
-**Example** Emoji became popular in the **mid-2000's**
-
-## Links and References
+## Links and references
 
 Create links to other website by wrapping the display text in square brackets, and
 the web URL in curved brackets.
 
 \[text to display](www.website.com)
 
-**Example** For more information on including emoji in Github flavored Markdown, refer to the [webfx page on emoji](https://www.webfx.com/tools/emoji-cheat-sheet/) for a list of emoji.
+**Example:** For more information on including emoji in Github flavored Markdown, refer to the [webfx page on emoji](https://www.webfx.com/tools/emoji-cheat-sheet/) for a list of emoji.
 
-## Blockquotes
+## Block quotes
 
-Include Blockquotes inside text using right facing arrows:
+Include Block quotes inside text using right-facing arrows:
 
 **Example**
 
@@ -53,9 +48,10 @@ Include Blockquotes inside text using right facing arrows:
 > about emoji can be separated into
 > a blockquote.
 
-## Code Blocks
+## Code blocks
 
 Code blocks written with markdown can show off syntax highlighting specific
+
 to different languages. Use three back tics to create a code block:
 
 ```
@@ -69,7 +65,8 @@ function testNum(a) {
 ```
 
 Write the name of the language after the first set of back tics, no spaces,
-to show specific syntax highlighting - for example "\```javascript" produces the following
+
+to show specific syntax highlighting. For example; "\```javascript" produces the following:
 
 ```javascript
 function testNum(a) {
@@ -84,7 +81,6 @@ function testNum(a) {
 
 Construct a table by typing the table headings, and separating them with
 a "|" character. Then, add a second line of dashes ("-") separated by
-another "|" character.
 
 When constructing the table cells, separate each cell data with another
 "|".
@@ -143,5 +139,5 @@ following syntax:
 
 \[comment]: <> (Comment text to display)
 
-The word comment wrapped in "[]" followed by a ":", a space, "<>", and then
-finally the comment itself wrapped in "()".
+The word "comment" wrapped in "[]" followed by a ":", a space, "<>", and then 
+the comment itself wrapped in "()".
