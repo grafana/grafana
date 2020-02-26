@@ -137,18 +137,32 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
         return (
-          <SimpleSelect
-            value={this.state.selectedService}
-            options={this.insertTemplateVariables(this.state.services)}
-            onValueChange={e => this.onServiceChange(e)}
-            label="Service"
-          />
+          <>
+            <SimpleSelect
+              value={this.state.defaultProject}
+              options={this.insertTemplateVariables(this.state.projects)}
+              onValueChange={e => this.onServiceChange(e)}
+              label="Project"
+            />
+            <SimpleSelect
+              value={this.state.selectedService}
+              options={this.insertTemplateVariables(this.state.services)}
+              onValueChange={e => this.onServiceChange(e)}
+              label="Service"
+            />
+          </>
         );
       case MetricFindQueryTypes.LabelKeys:
       case MetricFindQueryTypes.LabelValues:
       case MetricFindQueryTypes.ResourceTypes:
         return (
           <>
+            <SimpleSelect
+              value={this.state.defaultProject}
+              options={this.insertTemplateVariables(this.state.projects)}
+              onValueChange={e => this.onServiceChange(e)}
+              label="Project"
+            />
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
@@ -203,14 +217,6 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
           onValueChange={e => this.onQueryTypeChange(e)}
           label="Query Type"
         />
-        {this.state.selectedQueryType !== MetricFindQueryTypes.Projects && (
-          <SimpleSelect
-            value={this.state.defaultProject}
-            options={this.insertTemplateVariables(this.state.projects)}
-            onValueChange={e => this.onServiceChange(e)}
-            label="Project"
-          />
-        )}
         {this.renderQueryTypeSwitch(this.state.selectedQueryType)}
       </>
     );

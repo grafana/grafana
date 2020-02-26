@@ -2,7 +2,7 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
-import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter } from './types';
+import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter, VariableQueryData } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -210,7 +210,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return results;
   }
 
-  async metricFindQuery(query: string) {
+  async metricFindQuery(query: VariableQueryData) {
     const stackdriverMetricFindQuery = new StackdriverMetricFindQuery(this);
     return stackdriverMetricFindQuery.execute(query);
   }

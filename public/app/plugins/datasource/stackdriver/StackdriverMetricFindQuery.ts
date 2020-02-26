@@ -1,5 +1,5 @@
 import isString from 'lodash/isString';
-import { alignmentPeriods } from './constants';
+import { alignmentPeriods, ValueTypes, MetricKind } from './constants';
 import StackdriverDatasource from './datasource';
 import { MetricFindQueryTypes, VariableQueryData } from './types';
 import {
@@ -95,12 +95,12 @@ export default class StackdriverMetricFindQuery {
     return values.map(this.toFindQueryResult);
   }
 
-  async handleResourceTypeQuery({ selectedMetricType }: VariableQueryData) {
+  async handleResourceTypeQuery({ selectedMetricType, defaultProject }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleResourceTypeQueryQueryType';
-    const labels = await this.datasource.getLabels(selectedMetricType, refId);
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, defaultProject);
     return labels['resource.type'].map(this.toFindQueryResult);
   }
 
@@ -123,7 +123,7 @@ export default class StackdriverMetricFindQuery {
     const { valueType, metricKind } = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
-    return getAggregationOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
+    return getAggregationOptionsByMetric(valueType as ValueTypes, metricKind as MetricKind).map(this.toFindQueryResult);
   }
 
   handleAlignmentPeriodQuery() {
