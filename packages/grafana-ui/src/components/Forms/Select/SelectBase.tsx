@@ -24,7 +24,7 @@ import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue } from './utils';
-import { SelectBaseProps } from './types';
+import { SelectBaseProps, SelectValue } from './types';
 
 const CustomControl = (props: any) => {
   const {
