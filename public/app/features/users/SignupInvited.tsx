@@ -100,8 +100,8 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
               >
                 <Forms.Input
                   size="md"
-                  placeholder="Name (optional)"
-                  name="name"
+                  placeholder="Username"
+                  name="username"
                   ref={register({ required: 'Username is required' })}
                 />
               </Forms.Field>
