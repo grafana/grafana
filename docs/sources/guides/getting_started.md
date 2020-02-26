@@ -23,20 +23,27 @@ There you will see the login page. Default username is admin and default passwor
 
 ## Add a data source
 
-{{< docs-imagebox img="/img/docs/v52/sidemenu-datasource.png" max-width="250px" class="docs-image--right docs-image--no-shadow">}}
+Before you create your first dashboard, you need to add your data source. Following are the list of instructions to create one.
 
-Before you create your first dashboard, you need to add your data source.
+1. Move your cursor to the cog on the side menu which will show you the configuration menu. If the side menu is not visible click the Grafana icon in the upper left corner. Click on **Configuration** > **Data Sources** in the side menu and you'll be taken to the data sources page
+   where you can add add and edit data sources. You can also click the cog.
+{{< docs-imagebox img="/img/docs/v52/sidemenu-datasource.png" max-width="250px" class="docs-image--no-shadow">}}
 
-First move your cursor to the cog on the side menu which will show you the configuration menu. If the side menu is not visible click the Grafana icon in the upper left corner. The first item on the configuration menu is data sources, click on that and you'll be taken to the data sources page where you can add and edit data sources. You can also simply click the cog.
+2. Click **Add data source** and you will come to the settings page of your new data source.
+
+    {{< docs-imagebox img="/img/docs/v52/add-datasource.png" max-width="700px" class="docs-image--no-shadow">}}
+
+3. In the **Name** box, enter a name for this data source. 
+
+    {{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
+
+4. In the **Type**, select the type of data source. See [Supported data sources]({{< relref "../features/datasources/#supported-data-sources/" >}}) for more information and how to configure your data source.
+
+5. Click **Save & Test**.
 
 
-Click Add data source and you will come to the settings page of your new data source.
-
-{{< docs-imagebox img="/img/docs/v52/add-datasource.png" max-width="700px" class="docs-image--no-shadow">}}
-
-First, give the data source a Name and then select which Type of data source you'll want to create, see [Supported data sources]({{< relref "../features/datasources/#supported-data-sources/" >}}) for more information and how to configure your data source.
 
 
-{{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
 
-After you have configured your data source you are ready to save and test.
+
+

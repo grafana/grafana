@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { SelectableValue, deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
@@ -11,7 +11,7 @@ import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable
 
 import { Icon } from '../../Icon/Icon';
 import { css, cx } from 'emotion';
-import { inputSizes } from '../commonStyles';
+import { inputSizesPixels } from '../commonStyles';
 import { FormInputSize } from '../types';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
@@ -178,6 +178,15 @@ export function SelectBase<T>({
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
+  const onChangeWithEmpty = useCallback(
+    (value: SelectValue<T>) => {
+      if (isMulti && (value === undefined || value === null)) {
+        return onChange([]);
+      }
+      onChange(value);
+    },
+    [isMulti]
+  );
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
@@ -229,13 +238,12 @@ export function SelectBase<T>({
     onMenuClose: onCloseMenu,
     tabSelectsValue,
     options,
-    onChange,
+    onChange: onChangeWithEmpty,
     onBlur,
     onKeyDown,
     menuShouldScrollIntoView: false,
     renderControl,
     captureMenuScroll: false,
-    blurInputOnSelect: true,
     menuPlacement: 'auto',
   };
 
@@ -287,20 +295,6 @@ export function SelectBase<T>({
               {props.children}
             </div>
           ),
-          SelectContainer: (props: any) => (
-            <div
-              {...props.innerProps}
-              className={cx(
-                css(props.getStyles('container', props)),
-                css`
-                  position: relative;
-                `,
-                inputSizes()[size]
-              )}
-            >
-              {props.children}
-            </div>
-          ),
           IndicatorsContainer: IndicatorsContainer,
           IndicatorSeparator: () => <></>,
           Control: CustomControl,
@@ -347,6 +341,10 @@ export function SelectBase<T>({
             position,
             marginBottom: !!bottom ? '10px' : '0',
             zIndex: 9999,
+          }),
+          container: () => ({
+            position: 'relative',
+            width: inputSizesPixels(size),
           }),
         }}
         className={widthClass}

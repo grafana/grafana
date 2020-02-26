@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,6 +40,7 @@ var (
 func GetContextHandler(
 	ats models.UserTokenService,
 	remoteCache *remotecache.RemoteCache,
+	renderService rendering.Service,
 ) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &models.ReqContext{
@@ -62,7 +64,7 @@ func GetContextHandler(
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
 		switch {
-		case initContextWithRenderAuth(ctx):
+		case initContextWithRenderAuth(ctx, renderService):
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
 		case initContextWithAuthProxy(remoteCache, ctx, orgId):
