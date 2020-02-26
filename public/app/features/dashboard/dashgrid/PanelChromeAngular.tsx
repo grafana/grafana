@@ -143,7 +143,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   loadAngularPanel() {
-    const { panel, dashboard, height, width, setPanelAngularComponent, angularComponent } = this.props;
+    const { panel, dashboard, height, width, setPanelAngularComponent } = this.props;
 
     // if we have no element or already have loaded the panel return
     if (!this.element) {

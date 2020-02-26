@@ -107,7 +107,7 @@ export interface PanelModelAndPluginReadyPayload {
 
 export interface SetPanelAngularComponentPayload {
   panelId: number;
-  angularComponent: AngularComponent;
+  angularComponent: AngularComponent | null;
 }
 
 export const {

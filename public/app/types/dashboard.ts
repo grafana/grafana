@@ -71,7 +71,7 @@ export interface QueriesToUpdateOnDashboardLoad {
 export interface PanelState {
   pluginId: string;
   plugin?: PanelPlugin;
-  angularComponent?: AngularComponent;
+  angularComponent?: AngularComponent | null;
 }
 
 export interface DashboardState {
