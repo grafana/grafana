@@ -135,14 +135,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       );
     }
 
-    return (
-      <AngularPanelOptions
-        panel={panel}
-        dashboard={dashboard}
-        plugin={plugin}
-        onPanelOptionsChanged={(p: PanelPluginMeta) => {}}
-      />
-    );
+    return <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />;
   }
 
   onDragFinished = (pane: Pane, size: number) => {

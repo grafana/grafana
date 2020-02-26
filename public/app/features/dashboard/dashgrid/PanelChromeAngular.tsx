@@ -32,7 +32,7 @@ interface ConnectedProps {
 }
 
 interface DispatchProps {
-  setPanelAngularComponent: typeof setAngularPanel;
+  setPanelAngularComponent: typeof setPanelAngularComponent;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -143,10 +143,10 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   loadAngularPanel() {
-    const { panel, dashboard, height, width } = this.props;
+    const { panel, dashboard, height, width, setPanelAngularComponent, angularComponent } = this.props;
 
     // if we have no element or already have loaded the panel return
-    if (!this.element || panel.angularPanel) {
+    if (!this.element) {
       return;
     }
 
@@ -159,19 +159,23 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       size: { width, height },
     };
 
-    // compile angular template and get back handle to scope
-    panel.setAngularPanel(loader.load(this.element, this.scopeProps, template));
+    setPanelAngularComponent({
+      panelId: panel.id,
+      angularComponent: loader.load(this.element, this.scopeProps, template),
+    });
 
     // need to to this every time we load an angular as all events are unsubscribed when panel is destroyed
     this.subscribeToRenderEvent();
   }
 
   cleanUpAngularPanel() {
-    const { panel } = this.props;
+    const { angularComponent, setPanelAngularComponent, panel } = this.props;
 
-    if (panel.angularPanel) {
-      panel.setAngularPanel(undefined);
+    if (angularComponent) {
+      angularComponent.destroy();
     }
+
+    setPanelAngularComponent({ panelId: panel.id, angularComponent: null });
   }
 
   hasOverlayHeader() {
@@ -240,4 +244,4 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent };
 
-export const PanelChromeAngular = connect(mapStateToProps, mapDispatchToProps, PanelChromeAngular);
+export const PanelChromeAngular = connect(mapStateToProps, mapDispatchToProps)(PanelChromeAngularUnconnected);

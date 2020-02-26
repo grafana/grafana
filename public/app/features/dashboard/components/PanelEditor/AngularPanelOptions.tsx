@@ -1,22 +1,34 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+
 // Utils & Services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+
 // Types
-import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
-import { angularPanelUpdated } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel, DashboardModel } from '../../state';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { PanelCtrl } from 'app/plugins/sdk';
+import { changePanelPlugin } from '../../state/actions';
+import { StoreState } from 'app/types';
 
 interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  onPluginTypeChange: (newType: PanelPluginMeta) => void;
 }
 
-export class AngularPanelOptions extends PureComponent<Props> {
+interface ConnectedProps {
+  angularPanelComponent: AngularComponent;
+}
+
+interface DispatchProps {
+  changePanelPlugin: typeof changePanelPlugin;
+}
+
+type Props = OwnProps & ConnectedProps & DispatchProps;
+
+export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
   element?: HTMLElement;
   angularOptions: AngularComponent;
 
@@ -26,12 +38,7 @@ export class AngularPanelOptions extends PureComponent<Props> {
 
   componentDidMount() {
     this.loadAngularOptions();
-    this.props.panel.events.on(angularPanelUpdated, this.onAngularPanelUpdated);
   }
-
-  onAngularPanelUpdated = () => {
-    this.forceUpdate();
-  };
 
   componentDidUpdate(prevProps: Props) {
     if (this.props.plugin !== prevProps.plugin) {
@@ -43,7 +50,6 @@ export class AngularPanelOptions extends PureComponent<Props> {
 
   componentWillUnmount() {
     this.cleanUpAngularOptions();
-    this.props.panel.events.off(angularPanelUpdated, this.onAngularPanelUpdated);
   }
 
   cleanUpAngularOptions() {
@@ -54,13 +60,13 @@ export class AngularPanelOptions extends PureComponent<Props> {
   }
 
   loadAngularOptions() {
-    const { panel } = this.props;
+    const { panel, angularPanelComponent, changePanelPlugin } = this.props;
 
-    if (!this.element || !panel.angularPanel || this.angularOptions) {
+    if (!this.element || !angularPanelComponent || this.angularOptions) {
       return;
     }
 
-    const scope = panel.angularPanel.getScope();
+    const scope = angularPanelComponent.getScope();
 
     // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
     if (!scope.$$childHead) {
@@ -72,7 +78,9 @@ export class AngularPanelOptions extends PureComponent<Props> {
 
     const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     panelCtrl.initEditMode();
-    panelCtrl.onPluginTypeChange = this.props.onPluginTypeChange;
+    panelCtrl.onPluginTypeChange = (plugin: PanelPluginMeta) => {
+      changePanelPlugin(panel, plugin.id);
+    };
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
@@ -102,3 +110,13 @@ export class AngularPanelOptions extends PureComponent<Props> {
     return <div ref={elem => (this.element = elem)} />;
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  return {
+    angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+  };
+};
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelPlugin };
+
+export const AngularPanelOptions = connect(mapStateToProps, mapDispatchToProps)(AngularPanelOptionsUnconnected);
