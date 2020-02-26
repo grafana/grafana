@@ -343,6 +343,17 @@
     link: /http_api/team/
   - name: Users
     link: /http_api/user/
+- name: SDK Reference
+  link: /packages_api/
+  children:
+  - name: "@grafana/data"
+    link: /packages_api/data/
+  - name: "@grafana/e2e"
+    link: /packages_api/e2e/
+  - name: "@grafana/runtime"
+    link: /packages_api/runtime/
+  - name: "@grafana/ui"
+    link: /packages_api/ui/
 - name: Developers
   link: /developers/
   children:
