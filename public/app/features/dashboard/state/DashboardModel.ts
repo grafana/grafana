@@ -777,7 +777,8 @@ export class DashboardModel {
           this.panels[panelIndex].gridPos.y += pushDownAmount;
         }
 
-        row.panels = [];
+        // you need to keep the row panel information
+        // row.panels = [];
 
         if (hasRepeat) {
           this.processRowRepeats(row);
@@ -814,7 +815,7 @@ export class DashboardModel {
       const panel = this.panels[index];
 
       // break when encountering another row
-      if (panel.type === 'row') {
+      if (panel.type === 'row' || _.findIndex(this.panels[rowIndex].panels, ['id', panel.id]) === -1) {
         break;
       }
 
