@@ -159,6 +159,7 @@ export class FolderPicker extends PureComponent<Props, State> {
             onChange={this.onFolderChange}
             onCreateOption={this.createNewFolder}
             size="sm"
+            menuPosition="fixed"
           />
         )}
         {!useNewForms && (
