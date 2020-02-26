@@ -3,6 +3,7 @@ package pluginproxy
 import (
 	"context"
 	"encoding/json"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -103,8 +104,8 @@ func TestAccessToken(t *testing.T) {
 	Convey("Plugin with token auth route", t, func() {
 		apiHandler := http.NewServeMux()
 		server := httptest.NewServer(apiHandler)
-
 		defer server.Close()
+
 		pluginRoute := &plugins.AppPluginRoute{
 			Path:   "pathwithtokenauth1",
 			Url:    "",
@@ -138,9 +139,7 @@ func TestAccessToken(t *testing.T) {
 		var authCalls int
 		apiHandler.HandleFunc("/oauth/token", func(w http.ResponseWriter, req *http.Request) {
 			err := json.NewEncoder(w).Encode(token)
-			if err != nil {
-				t.Error(err)
-			}
+			require.NoError(t, err)
 			authCalls++
 		})
 
@@ -152,7 +151,7 @@ func TestAccessToken(t *testing.T) {
 				expectedExpiresOn int64
 			}
 
-			mockTimeNow(time.Now().Unix())
+			mockTimeNow(time.Now())
 			defer resetTimeNow()
 			provider := newAccessTokenProvider(&models.DataSource{}, pluginRoute)
 
@@ -234,7 +233,7 @@ func TestAccessToken(t *testing.T) {
 			// reset the httphandler counter
 			authCalls = 0
 
-			mockTimeNow(time.Now().Unix())
+			mockTimeNow(time.Now())
 			defer resetTimeNow()
 			provider := newAccessTokenProvider(&models.DataSource{}, pluginRoute)
 
@@ -247,7 +246,7 @@ func TestAccessToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(accessToken, ShouldEqual, token["access_token"])
 
-			mockTimeNow(timeNow().Add(3601 * time.Second).Unix())
+			mockTimeNow(timeNow().Add(3601 * time.Second))
 
 			accessToken, err = provider.getAccessToken(templateData)
 			So(err, ShouldBeNil)
@@ -264,10 +263,9 @@ func clearTokenCache() {
 	token = map[string]interface{}{}
 }
 
-func mockTimeNow(timeSeed int64) {
+func mockTimeNow(timeSeed time.Time) {
 	timeNow = func() time.Time {
-		fakeNow := time.Unix(timeSeed, 0)
-		return fakeNow
+		return timeSeed
 	}
 }
 
