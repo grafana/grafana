@@ -27,15 +27,9 @@ This step varies according to your computer operating system. Refer to the instr
 
 > **Note:** We strongly encourage you to follow Grafana best practices and change the default administrator password. Don't forget to record your credentials!
 
-## Add TestData DB data source
-
-1. Click **Add data source**.
-1. Search for or scroll down to TestData DB.
-1. Click **TestData DB** and then click **Save & Test**.
-
 ## Create a dashboard
 
-1. Hover your cursor over the plus (+) sign on the left side of the screen to reveal the **Create** menu, and then click **Dashboard**.
+1. Click **New dashboard**.
 1. Click **Add Query**. Grafana creates a basic graph panel with the Random Walk scenario.
 1. Save your dashboard. Click the **Save dashboard** icon in the top corner of the screen.
 
@@ -45,7 +39,7 @@ This step varies according to your computer operating system. Refer to the instr
 
 {{< docs-imagebox img="/img/docs/v52/sidemenu-datasource.png" max-width="250px" class="docs-image--right docs-image--no-shadow">}}
 
-Before you create your first dashboard, you need to add your data source.
+Before you create your first real dashboard, you need to add your data source.
 
 First move your cursor to the cog on the side menu which will show you the configuration menu. If the side menu is not visible click the Grafana icon in the upper left corner. The first item on the configuration menu is data sources, click on that and you'll be taken to the data sources page where you can add and edit data sources. You can also simply click the cog.
 
