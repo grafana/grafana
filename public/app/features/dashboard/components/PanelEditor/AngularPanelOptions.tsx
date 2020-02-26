@@ -4,8 +4,8 @@ import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 // Utils & Services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 // Types
-import { PanelModel, DashboardModel } from '../state';
-import { angularPanelUpdated } from '../state/PanelModel';
+import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
+import { angularPanelUpdated } from 'app/features/dashboard/state/PanelModel';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { PanelCtrl } from 'app/plugins/sdk';
 
