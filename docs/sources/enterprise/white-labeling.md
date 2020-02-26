@@ -20,6 +20,7 @@ Grafana Enterprise has white labeling options in the `grafana.ini` file (can als
 
 You can change the following elements:
 
+- Application Title
 - Login Background
 - Login Logo
 - Side menu top logo
@@ -31,6 +32,9 @@ You can change the following elements:
 ```ini
 # Enterprise only
 [white_labeling]
+# Set to your company name to override application title
+;app_title =
+
 # Set to complete URL to override login logo
 ;login_logo =
 

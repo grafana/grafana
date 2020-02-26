@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
@@ -105,6 +105,15 @@ export function SelectBase<T>({
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
+  const onChangeWithEmpty = useCallback(
+    (value: SelectValue<T>) => {
+      if (isMulti && (value === undefined || value === null)) {
+        return onChange([]);
+      }
+      onChange(value);
+    },
+    [isMulti]
+  );
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
@@ -156,7 +165,7 @@ export function SelectBase<T>({
     onMenuClose: onCloseMenu,
     tabSelectsValue,
     options,
-    onChange,
+    onChange: onChangeWithEmpty,
     onBlur,
     onKeyDown,
     menuShouldScrollIntoView: false,
