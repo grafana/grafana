@@ -41,7 +41,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
-  restoreModel: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -148,7 +147,7 @@ export class PanelModel {
   }
 
   /** Given a persistened PanelModel restores property values */
-  restoreModel = (model: any) => {
+  restoreModel(model: any) {
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
@@ -159,7 +158,7 @@ export class PanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
-  };
+  }
 
   ensureQueryIds() {
     if (this.targets && _.isArray(this.targets)) {
