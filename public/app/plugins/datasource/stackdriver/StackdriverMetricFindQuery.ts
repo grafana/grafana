@@ -15,8 +15,10 @@ export default class StackdriverMetricFindQuery {
   async execute(query: any) {
     try {
       switch (query.selectedQueryType) {
+        case MetricFindQueryTypes.Projects:
+          return this.handleProjectsQuery();
         case MetricFindQueryTypes.Services:
-          return this.handleServiceQuery();
+          return this.handleServiceQuery(query);
         case MetricFindQueryTypes.MetricTypes:
           return this.handleMetricTypesQuery(query);
         case MetricFindQueryTypes.LabelKeys:
@@ -40,8 +42,17 @@ export default class StackdriverMetricFindQuery {
     }
   }
 
-  async handleServiceQuery() {
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+  async handleProjectsQuery() {
+    const projects = await this.datasource.getProjects();
+    return projects.map((s: any) => ({
+      text: s.label,
+      value: s.value,
+      expandable: true,
+    }));
+  }
+
+  async handleServiceQuery({ defaultProject }: any) {
+    const metricDescriptors = await this.datasource.getMetricTypes(defaultProject);
     const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
       text: s.serviceShortName,
@@ -50,11 +61,11 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleMetricTypesQuery({ selectedService }: any) {
+  async handleMetricTypesQuery({ selectedService, defaultProject }: any) {
     if (!selectedService) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const metricDescriptors = await this.datasource.getMetricTypes(defaultProject);
     return getMetricTypesByService(metricDescriptors, this.datasource.templateSrv.replace(selectedService)).map(
       (s: any) => ({
         text: s.displayName,
@@ -64,20 +75,20 @@ export default class StackdriverMetricFindQuery {
     );
   }
 
-  async handleLabelKeysQuery({ selectedMetricType }: any) {
+  async handleLabelKeysQuery({ selectedMetricType, defaultProject }: any) {
     if (!selectedMetricType) {
       return [];
     }
-    const labelKeys = await getLabelKeys(this.datasource, selectedMetricType);
+    const labelKeys = await getLabelKeys(this.datasource, selectedMetricType, defaultProject);
     return labelKeys.map(this.toFindQueryResult);
   }
 
-  async handleLabelValuesQuery({ selectedMetricType, labelKey }: any) {
+  async handleLabelValuesQuery({ selectedMetricType, labelKey, defaultProject }: any) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleLabelValuesQuery';
-    const labels = await this.datasource.getLabels(selectedMetricType, refId, [labelKey]);
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, defaultProject, [labelKey]);
     const interpolatedKey = this.datasource.templateSrv.replace(labelKey);
     const values = labels.hasOwnProperty(interpolatedKey) ? labels[interpolatedKey] : [];
     return values.map(this.toFindQueryResult);
@@ -92,22 +103,22 @@ export default class StackdriverMetricFindQuery {
     return labels['resource.type'].map(this.toFindQueryResult);
   }
 
-  async handleAlignersQuery({ selectedMetricType }: any) {
+  async handleAlignersQuery({ selectedMetricType, defaultProject }: any) {
     if (!selectedMetricType) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const metricDescriptors = await this.datasource.getMetricTypes(defaultProject);
     const { valueType, metricKind } = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
     return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
-  async handleAggregationQuery({ selectedMetricType }: any) {
+  async handleAggregationQuery({ selectedMetricType, defaultProject }: any) {
     if (!selectedMetricType) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const metricDescriptors = await this.datasource.getMetricTypes(defaultProject);
     const { valueType, metricKind } = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );

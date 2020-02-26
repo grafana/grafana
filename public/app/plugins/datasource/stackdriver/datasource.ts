@@ -259,7 +259,6 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
               refId: 'getGCEDefaultProject',
               type: 'getGCEDefaultProject',
               datasourceId: this.id,
-              project: this.projectName,
             },
           ],
         },

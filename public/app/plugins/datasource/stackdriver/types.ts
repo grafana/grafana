@@ -1,6 +1,7 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export enum MetricFindQueryTypes {
+  Projects = 'projects',
   Services = 'services',
   DefaultProject = 'defaultProject',
   MetricTypes = 'metricTypes',
@@ -13,6 +14,7 @@ export enum MetricFindQueryTypes {
 }
 
 export interface VariableQueryData {
+  defaultProject?: string;
   selectedQueryType: string;
   metricDescriptors: any[];
   selectedService: string;
@@ -21,6 +23,7 @@ export interface VariableQueryData {
   labelKey: string;
   metricTypes: Array<{ value: string; name: string }>;
   services: Array<{ value: string; name: string }>;
+  projects: Array<{ value: string; name: string }>;
 }
 
 export interface StackdriverQuery extends DataQuery {
