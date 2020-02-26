@@ -275,15 +275,28 @@ func (hs *HTTPServer) CallDatasourceResource(c *m.ReqContext) Response {
 	if err != nil {
 		return Error(500, "Failed to read request body", err)
 	}
+
+	jsonDataBytes, err := ds.JsonData.MarshalJSON()
+	if err != nil {
+		return Error(500, "Failed to marshal JSON data to bytes", err)
+	}
+
 	req := backendplugin.CallResourceRequest{
 		Config: backendplugin.PluginConfig{
-			OrgID:    c.OrgId,
-			PluginID: plugin.Id,
-			Instance: &backendplugin.PluginInstance{
-				ID:   ds.Id,
-				Name: ds.Name,
-				Type: ds.Type,
-				URL:  ds.Url,
+			OrgID:                   c.OrgId,
+			PluginID:                plugin.Id,
+			PluginType:              plugin.Type,
+			JSONData:                jsonDataBytes,
+			DecryptedSecureJSONData: ds.DecryptedValues(),
+			Updated:                 ds.Updated,
+			DataSourceConfig: &backendplugin.DataSourceConfig{
+				ID:               ds.Id,
+				Name:             ds.Name,
+				URL:              ds.Url,
+				Database:         ds.Database,
+				User:             ds.User,
+				BasicAuthEnabled: ds.BasicAuth,
+				BasicAuthUser:    ds.BasicAuthUser,
 			},
 		},
 		Path:    c.Params("*"),

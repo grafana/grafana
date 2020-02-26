@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { MatcherConfig, FieldConfig, Field, DataFrame, VariableSuggestion, VariableSuggestionsScope } from '../types';
+import { MatcherConfig, FieldConfig, Field, DataFrame, VariableSuggestionsScope, VariableSuggestion } from '../types';
 import { Registry, RegistryItem } from '../utils';
 import { InterpolateFunction } from './panel';
 
@@ -30,8 +30,9 @@ export interface FieldConfigEditorProps<TValue, TSettings> {
 }
 
 export interface FieldOverrideContext {
-  data: DataFrame[];
   field?: Field;
+  dataFrameIndex?: number; // The index for the selected field frame
+  data: DataFrame[]; // All results
   replaceVariables?: InterpolateFunction;
   getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
 }
@@ -55,6 +56,9 @@ export interface FieldPropertyEditorItem<TValue = any, TSettings = any> extends 
 
   // Configuration options for the particular property
   settings: TSettings;
+
+  // Checks if field should be processed
+  shouldApply: (field: Field) => boolean;
 }
 
 export type FieldConfigEditorRegistry = Registry<FieldPropertyEditorItem>;
