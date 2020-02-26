@@ -9,13 +9,6 @@ import { ShareExport } from './ShareExport';
 import { ShareEmbed } from './ShareEmbed';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  modal: css``,
-  modalHeader: css`
-    background: ${theme.background.pageHeader};
-    box-shadow: ${theme.shadow.pageHeader};
-    border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
-    display: flex;
-  `,
   modalHeaderTitle: css`
     font-size: ${theme.typography.heading.h3};
     padding-top: ${theme.spacing.sm};
@@ -26,20 +19,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     font-size: inherit;
     &:before {
       vertical-align: baseline;
-    }
-  `,
-  modalContent: css``,
-  modalText: css`
-    font-size: ${theme.typography.heading.h4};
-    color: ${theme.colors.link};
-    margin-bottom: calc(${theme.spacing.d} * 2);
-    padding-top: ${theme.spacing.d};
-  `,
-  modalButtonRow: css`
-    margin-bottom: 14px;
-    a,
-    button {
-      margin-right: ${theme.spacing.d};
     }
   `,
 }));
@@ -89,8 +68,9 @@ export class ShareModalUnthemed extends PureComponent<Props, State> {
     const { tab } = this.state;
 
     return (
-      <TabsBar>
+      <TabsBar hideBorder={true}>
         {shareModalTabs.map((t, index) => {
+          // Filter tabs for dashboard/panel share modal
           if ((panel && t.value === 'export') || (!panel && t.value === 'embed')) {
             return null;
           }
@@ -125,22 +105,17 @@ export class ShareModalUnthemed extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isOpen, dashboard, panel, theme } = this.props;
+    const { isOpen, dashboard, panel } = this.props;
     const { tab } = this.state;
-    const styles = getStyles(theme);
 
     return (
-      <Modal className={styles.modal} title={this.renderTitle()} isOpen={isOpen} onDismiss={this.onDismiss}>
-        <div className={styles.modalContent}>
-          <TabContent>
-            {tab === 'link' && <ShareLink dashboard={dashboard} panel={panel} />}
-            {tab === 'embed' && panel && <ShareEmbed dashboard={dashboard} panel={panel} />}
-            {tab === 'snapshot' && <ShareSnapshot dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />}
-            {tab === 'export' && !panel && (
-              <ShareExport dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />
-            )}
-          </TabContent>
-        </div>
+      <Modal title={this.renderTitle()} isOpen={isOpen} onDismiss={this.onDismiss}>
+        <TabContent>
+          {tab === 'link' && <ShareLink dashboard={dashboard} panel={panel} />}
+          {tab === 'embed' && panel && <ShareEmbed dashboard={dashboard} panel={panel} />}
+          {tab === 'snapshot' && <ShareSnapshot dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />}
+          {tab === 'export' && !panel && <ShareExport dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />}
+        </TabContent>
       </Modal>
     );
   }

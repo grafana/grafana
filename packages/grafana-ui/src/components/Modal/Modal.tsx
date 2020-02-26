@@ -5,6 +5,7 @@ import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { IconType } from '../Icon/types';
+import { Themeable } from '../../types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css`
@@ -63,10 +64,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-interface Props {
+interface Props extends Themeable {
   icon?: IconType;
   title: string | JSX.Element;
-  theme: GrafanaTheme;
   className?: string;
 
   isOpen?: boolean;
