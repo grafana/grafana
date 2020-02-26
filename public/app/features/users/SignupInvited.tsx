@@ -1,10 +1,13 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useState } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 import { UrlQueryValue, getBackendSrv } from '@grafana/runtime';
 import { Forms } from '@grafana/ui';
+import { useAsync } from 'react-use';
+import Page from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
 
 interface ConnectedProps {
   code?: UrlQueryValue;
@@ -21,75 +24,106 @@ interface FormModel {
   password?: string;
 }
 
+const navModel = {
+  main: {
+    icon: 'gicon gicon-branding',
+    text: 'Invite',
+    subTitle: 'Register your Grafana account',
+    breadcrumbs: [{ title: 'Login', url: 'login' }],
+  },
+  node: {
+    text: '',
+  },
+};
+
 const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code, updateLocation }) => {
-  let initFormModel: FormModel;
-  let greeting: string;
-  let invitedBy: string;
-  useEffect(() => {
+  const [initFormModel, setInitFormModel] = useState<FormModel>();
+  const [greeting, setGreeting] = useState<string>();
+  const [invitedBy, setInvitedBy] = useState<string>();
+  useAsync(async () => {
     const invite = await getBackendSrv().get('/api/user/invite/' + code);
-    initFormModel = {
+    setInitFormModel({
       email: invite.email,
       name: invite.name,
       username: invite.email,
-    };
+    });
+    console.log(initFormModel);
+
+    setGreeting(invite.name || invite.email || invite.username);
+    setInvitedBy(invite.invitedBy);
   }, []);
 
   const onSubmit = async (formData: FormModel) => {
     getBackendSrv()
       .post('/api/user/invite/complete', { ...formData, inviteCode: code })
       .then(() => {
-        window.location.href = config.appSubUrl + '/';
+        // window.location.href = config.appSubUrl + '/';
+        updateLocation({ path: '/' });
       });
   };
 
   return (
-    <>
-      <Forms.Form defaultValues={formModel} onSubmit={onSubmit}>
-        {({ register, errors }) => (
-          <>
-            <Forms.Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
-              <Forms.Input
-                placeholder="email@example.com"
-                name="email"
-                ref={register({
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^\S+@\S+$/,
-                    message: 'Email is invalid',
-                  },
-                })}
-              />
-            </Forms.Field>
-            <Forms.Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
-              <Forms.Input placeholder="Name (optional)" name="name" ref={register} />
-            </Forms.Field>
-            <Forms.Field
-              invalid={!!errors.username}
-              error={!!errors.username && errors.username.message}
-              label="Username"
-            >
-              <Forms.Input
-                placeholder="Name (optional)"
-                name="name"
-                ref={register({ required: 'Username is required' })}
-              />
-            </Forms.Field>
-            <Forms.Field
-              invalid={!!errors.password}
-              error={!!errors.password && errors.password.message}
-              label="Password"
-            >
-              <Forms.Input
-                type="password"
-                placeholder="Password"
-                name="password"
-                ref={register({ required: 'Password is required' })}
-              />
-            </Forms.Field>
-          </>
-        )}
-      </Forms.Form>
-    </>
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <h3 className="page-sub-heading">Hello {greeting || 'there'}.</h3>
+
+        <div className="modal-tagline p-b-2">
+          <em>{invitedBy || 'Someone'}</em> has invited you to join Grafana and the organization{' '}
+          <span className="highlight-word">{contextSrv.user.orgName}</span>
+          <br />
+          Please complete the following and choose a password to accept your invitation and continue:
+        </div>
+        <Forms.Form defaultValues={initFormModel} onSubmit={onSubmit}>
+          {({ register, errors }) => (
+            <>
+              <Forms.Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
+                <Forms.Input
+                  size="md"
+                  placeholder="email@example.com"
+                  name="email"
+                  ref={register({
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^\S+@\S+$/,
+                      message: 'Email is invalid',
+                    },
+                  })}
+                />
+              </Forms.Field>
+              <Forms.Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
+                <Forms.Input size="md" placeholder="Name (optional)" name="name" ref={register} />
+              </Forms.Field>
+              <Forms.Field
+                invalid={!!errors.username}
+                error={!!errors.username && errors.username.message}
+                label="Username"
+              >
+                <Forms.Input
+                  size="md"
+                  placeholder="Name (optional)"
+                  name="name"
+                  ref={register({ required: 'Username is required' })}
+                />
+              </Forms.Field>
+              <Forms.Field
+                invalid={!!errors.password}
+                error={!!errors.password && errors.password.message}
+                label="Password"
+              >
+                <Forms.Input
+                  size="md"
+                  type="password"
+                  placeholder="Password"
+                  name="password"
+                  ref={register({ required: 'Password is required' })}
+                />
+              </Forms.Field>
+            </>
+          )}
+        </Forms.Form>
+        <Forms.Button type="submit">Sign Up</Forms.Button>
+      </Page.Contents>
+    </Page>
   );
 };
 
@@ -101,6 +135,4 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, {}> = {
   updateLocation,
 };
 
-export const SignupInvitedPage = hot(module)(
-  connect(mapStateToProps, mapDispatchToProps)(SingupInvitedPageUnconnected)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SingupInvitedPageUnconnected));
