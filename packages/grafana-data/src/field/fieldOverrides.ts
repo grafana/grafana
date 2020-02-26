@@ -136,8 +136,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
-      // console.log(config)
-
       // Try harder to set a real value that is not 'other'
       let type = field.type;
       if (!type || type === FieldType.other) {

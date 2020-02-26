@@ -25,6 +25,7 @@ import {
   PanelEvents,
   PanelData,
   PanelPlugin,
+  applyFieldOverrides,
 } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -273,15 +274,21 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     const PanelComponent = plugin.panel;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
-
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
     const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
     const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER;
-
     const panelContentClassNames = classNames({
       'panel-content': true,
       'panel-content--no-padding': plugin.noPadding,
+    });
+    const panelOptions = panel.getOptions();
+    const processedData = applyFieldOverrides({
+      data: data.series,
+      fieldOptions: panelOptions.fieldOptions,
+      theme,
+      replaceVariables: this.replaceVariables,
+      custom: panel.plugin.customFieldConfigs,
     });
 
     return (
@@ -289,10 +296,10 @@ export class PanelChrome extends PureComponent<Props, State> {
         <div className={panelContentClassNames}>
           <PanelComponent
             id={panel.id}
-            data={data}
+            data={{ ...data, series: processedData }}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
-            options={panel.getOptions()}
+            options={panelOptions}
             transparent={panel.transparent}
             width={panelWidth}
             height={innerPanelHeight}
