@@ -15,9 +15,7 @@ func TestMissingPath(t *testing.T) {
 		validateLsCommand = org
 
 		Convey("Missing path flag", func() {
-			cmd := Command{
-				Client: nil,
-			}
+			cmd := Command{}
 			c, err := commandstest.NewCliContext(map[string]string{})
 			So(err, ShouldBeNil)
 			s.IoHelper = &commandstest.FakeIoUtil{}
@@ -34,9 +32,7 @@ func TestMissingPath(t *testing.T) {
 			s.IoHelper = &commandstest.FakeIoUtil{
 				FakeIsDirectory: false,
 			}
-			cmd := Command{
-				Client: nil,
-			}
+			cmd := Command{}
 
 			Convey("should return error", func() {
 				err := cmd.lsCommand(c)
@@ -53,9 +49,7 @@ func TestMissingPath(t *testing.T) {
 			}
 
 			Convey("should return error", func() {
-				cmd := Command{
-					Client: nil,
-				}
+				cmd := Command{}
 				err := cmd.lsCommand(c)
 				So(err.Error(), ShouldEqual, "dummy error")
 			})
@@ -64,9 +58,7 @@ func TestMissingPath(t *testing.T) {
 		Convey("Validate that validateLsCommand is reset", func() {
 			c, err := commandstest.NewCliContext(map[string]string{"path": "/var/lib/grafana/plugins"})
 			So(err, ShouldBeNil)
-			cmd := Command{
-				Client: nil,
-			}
+			cmd := Command{}
 
 			Convey("should return error", func() {
 				err := cmd.lsCommand(c)
