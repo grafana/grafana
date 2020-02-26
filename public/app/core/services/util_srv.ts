@@ -6,6 +6,7 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
 
 export class UtilSrv {
   modalScope: any;
@@ -30,7 +31,7 @@ export class UtilSrv {
       onDismiss: this.onReactModalDismiss,
     };
 
-    const elem = React.createElement(component, modalProps);
+    const elem = React.createElement(provideTheme(component), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
     return ReactDOM.render(elem, this.reactModalNode);
   }
