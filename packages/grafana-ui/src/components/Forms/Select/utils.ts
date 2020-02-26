@@ -4,7 +4,7 @@ import { SelectOptions } from './types';
 /**
  * Normalize the value format to SelectableValue[] | []. Only used for single select
  */
-export const cleanValue = (value: any, options: SelectOptions<string>): SelectableValue[] | [] => {
+export const cleanValue = (value: any, options: SelectOptions): SelectableValue[] | [] => {
   if (Array.isArray(value)) {
     return value.filter(Boolean);
   }
@@ -12,7 +12,10 @@ export const cleanValue = (value: any, options: SelectOptions<string>): Selectab
     return [value];
   }
   if (typeof value === 'string' || typeof value === 'number') {
-    return findSelectedValue(value, options);
+    const selectedValue = findSelectedValue(value, options);
+    if (selectedValue) {
+      return [selectedValue];
+    }
   }
   return [];
 };
@@ -20,19 +23,17 @@ export const cleanValue = (value: any, options: SelectOptions<string>): Selectab
 /**
  * Find the label for a string|number value inside array of options or optgroups
  */
-export const findSelectedValue = (value: string | number, options: SelectOptions): SelectableValue[] | [] => {
-  let found = null;
-
+export const findSelectedValue = (value: string | number, options: SelectOptions): SelectableValue | null => {
   for (const option of options) {
-    if (option.options) {
-      found = findSelectedValue(value, option.options);
-    } else if (option.value === value || option === value) {
-      found = option;
-    }
-
-    if (found) {
-      return [found];
+    if ('options' in option) {
+      let found = findSelectedValue(value, option.options);
+      if (found) {
+        return found;
+      }
+    } else if ('value' in option && option?.value === value) {
+      return option;
     }
   }
-  return [];
+
+  return null;
 };

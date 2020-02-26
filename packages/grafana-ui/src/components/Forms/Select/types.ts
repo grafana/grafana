@@ -83,7 +83,5 @@ export interface SelectableOptGroup<T = any> {
 }
 
 export type SelectOptions<T = any> =
-  | T
   | SelectableValue<T>
-  | T[]
   | Array<SelectableValue<T> | SelectableOptGroup<T> | Array<SelectableOptGroup<T>>>;
