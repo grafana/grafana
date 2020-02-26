@@ -1,14 +1,25 @@
+import _ from 'lodash';
+import config from 'app/core/config';
+import { DashboardExporter } from './DashboardExporter';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelPluginMeta } from '@grafana/data';
+
 jest.mock('app/core/store', () => {
   return {
     getBool: jest.fn(),
   };
 });
 
-import _ from 'lodash';
-import config from 'app/core/config';
-import { DashboardExporter } from './DashboardExporter';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelPluginMeta } from '@grafana/data';
+jest.mock('@grafana/runtime', () => ({
+  getDataSourceSrv: () => ({
+    get: jest.fn(arg => getStub(arg)),
+  }),
+  config: {
+    buildInfo: {},
+    panels: {},
+  },
+  DataSourceWithBackend: jest.fn(),
+}));
 
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
@@ -246,3 +257,7 @@ stubs['-- Grafana --'] = {
     builtIn: true,
   },
 };
+
+function getStub(arg: string) {
+  return Promise.resolve(stubs[arg || 'gfdb']);
+}
