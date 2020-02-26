@@ -11,16 +11,16 @@ export const cleanValue = (value: any, options: SelectOptions<string>): Selectab
   if (typeof value === 'object' && value !== null) {
     return [value];
   }
-  if (typeof value === 'string') {
+  if (typeof value === 'string' || typeof value === 'number') {
     return findSelectedValue(value, options);
   }
   return [];
 };
 
 /**
- * Find the label for a string value inside array of options or optgroups
+ * Find the label for a string|number value inside array of options or optgroups
  */
-export const findSelectedValue = (value: string, options: SelectOptions): SelectableValue[] | [] => {
+export const findSelectedValue = (value: string | number, options: SelectOptions): SelectableValue[] | [] => {
   let found = null;
 
   for (const option of options) {
