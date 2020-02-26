@@ -14,6 +14,7 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
+import { githubPublishTask } from './tasks/plugin.utils';
 import {
   ciBuildPluginTask,
   ciBuildPluginDocsTask,
@@ -211,6 +212,16 @@ export const run = (includeInternalScripts = false) => {
     .action(async cmd => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
+      });
+    });
+
+  program
+    .command('plugin:github-publish')
+    .option('--dryrun', 'Do a dry run only', false)
+    .description('Publish to github ... etc etc etc')
+    .action(async cmd => {
+      await execTask(githubPublishTask)({
+        dryrun: cmd.dryrun,
       });
     });
 
