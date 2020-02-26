@@ -8,6 +8,7 @@ import { Forms } from '@grafana/ui';
 import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
+import { getConfig } from 'app/core/config';
 
 interface ConnectedProps {
   code?: UrlQueryValue;
@@ -36,7 +37,7 @@ const navModel = {
   },
 };
 
-const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code, updateLocation }) => {
+const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code }) => {
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
   const [invitedBy, setInvitedBy] = useState<string>();
@@ -54,12 +55,9 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
   }, []);
 
   const onSubmit = async (formData: FormModel) => {
-    getBackendSrv()
-      .post('/api/user/invite/complete', { ...formData, inviteCode: code })
-      .then(() => {
-        // window.location.href = config.appSubUrl + '/';
-        updateLocation({ path: '/' });
-      });
+    await getBackendSrv().post('/api/user/invite/complete', { ...formData, inviteCode: code });
+    window.location.href = getConfig().appSubUrl + '/';
+    // updateLocation({ path: '/' });
   };
 
   return (
@@ -118,10 +116,11 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                   ref={register({ required: 'Password is required' })}
                 />
               </Forms.Field>
+
+              <Forms.Button type="submit">Sign Up</Forms.Button>
             </>
           )}
         </Forms.Form>
-        <Forms.Button type="submit">Sign Up</Forms.Button>
       </Page.Contents>
     </Page>
   );
