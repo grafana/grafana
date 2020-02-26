@@ -115,10 +115,4 @@ export class StackdriverConfigCtrl {
       });
     }
   }
-
-  async authTypeChanged() {
-    this.$scope.$apply(() => {
-      this.gceError = '';
-    });
-  }
 }

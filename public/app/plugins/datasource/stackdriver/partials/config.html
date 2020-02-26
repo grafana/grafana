@@ -56,6 +56,7 @@
       <div class="gf-form-select-wrapper max-width-24">
         <select
           class="gf-form-input"
+          ng-change="ctrl.gceError = ''"
           ng-model="ctrl.current.jsonData.authenticationType"
           ng-options="f.key as f.value for f in ctrl.authenticationTypes"
         ></select>
