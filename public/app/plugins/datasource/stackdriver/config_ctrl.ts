@@ -3,10 +3,10 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import StackdriverDatasource from './datasource';
 
 export interface JWT {
-  private_key: any;
-  token_uri: any;
-  client_email: any;
-  project_id: any;
+  private_key: string;
+  token_uri: string;
+  client_email: string;
+  project_id: string;
 }
 
 export class StackdriverConfigCtrl {

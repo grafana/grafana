@@ -1,6 +1,7 @@
 import isString from 'lodash/isString';
 import { alignmentPeriods } from './constants';
-import { MetricFindQueryTypes } from './types';
+import StackdriverDatasource from './datasource';
+import { MetricFindQueryTypes, VariableQueryData } from './types';
 import {
   getMetricTypesByService,
   getAlignmentOptionsByMetric,
@@ -10,9 +11,9 @@ import {
 } from './functions';
 
 export default class StackdriverMetricFindQuery {
-  constructor(private datasource: any) {}
+  constructor(private datasource: StackdriverDatasource) {}
 
-  async execute(query: any) {
+  async execute(query: VariableQueryData) {
     try {
       switch (query.selectedQueryType) {
         case MetricFindQueryTypes.Projects:
@@ -51,7 +52,7 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleServiceQuery({ defaultProject }: any) {
+  async handleServiceQuery({ defaultProject }: VariableQueryData) {
     const metricDescriptors = await this.datasource.getMetricTypes(defaultProject);
     const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
@@ -61,7 +62,7 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleMetricTypesQuery({ selectedService, defaultProject }: any) {
+  async handleMetricTypesQuery({ selectedService, defaultProject }: VariableQueryData) {
     if (!selectedService) {
       return [];
     }
@@ -75,7 +76,7 @@ export default class StackdriverMetricFindQuery {
     );
   }
 
-  async handleLabelKeysQuery({ selectedMetricType, defaultProject }: any) {
+  async handleLabelKeysQuery({ selectedMetricType, defaultProject }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
@@ -83,7 +84,7 @@ export default class StackdriverMetricFindQuery {
     return labelKeys.map(this.toFindQueryResult);
   }
 
-  async handleLabelValuesQuery({ selectedMetricType, labelKey, defaultProject }: any) {
+  async handleLabelValuesQuery({ selectedMetricType, labelKey, defaultProject }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
@@ -94,7 +95,7 @@ export default class StackdriverMetricFindQuery {
     return values.map(this.toFindQueryResult);
   }
 
-  async handleResourceTypeQuery({ selectedMetricType }: any) {
+  async handleResourceTypeQuery({ selectedMetricType }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
@@ -103,7 +104,7 @@ export default class StackdriverMetricFindQuery {
     return labels['resource.type'].map(this.toFindQueryResult);
   }
 
-  async handleAlignersQuery({ selectedMetricType, defaultProject }: any) {
+  async handleAlignersQuery({ selectedMetricType, defaultProject }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
@@ -114,7 +115,7 @@ export default class StackdriverMetricFindQuery {
     return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
-  async handleAggregationQuery({ selectedMetricType, defaultProject }: any) {
+  async handleAggregationQuery({ selectedMetricType, defaultProject }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
