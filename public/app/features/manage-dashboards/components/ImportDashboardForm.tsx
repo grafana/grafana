@@ -1,5 +1,5 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { Forms } from '@grafana/ui';
 import { dateTime } from '@grafana/data';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -7,9 +7,10 @@ import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { changeDashboardTitle, resetDashboard, saveDashboard, changeDashboardUid } from '../state/actions';
 import { DashboardSource } from '../state/reducers';
 import { StoreState } from '../../../types';
-import { ButtonVariant } from '@grafana/ui/src/components/Forms/Button';
 
-interface Props {
+interface OwnProps {}
+
+interface ConnectedProps {
   dashboard: any;
   inputs: any[];
   source: DashboardSource;
@@ -18,19 +19,23 @@ interface Props {
   nameExists: boolean;
   nameError: string;
   meta?: any;
+}
 
+interface DispatchProps {
   resetDashboard: typeof resetDashboard;
   changeDashboardTitle: typeof changeDashboardTitle;
   saveDashboard: typeof saveDashboard;
   changeDashboardUid: typeof changeDashboardUid;
 }
 
+type Props = OwnProps & ConnectedProps & DispatchProps;
+
 interface State {
   folderId: number;
   uidReset: boolean;
 }
 
-class ImportDashboardForm extends PureComponent<Props, State> {
+class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
   state: State = {
     folderId: 0,
     uidReset: false,
@@ -64,7 +69,7 @@ class ImportDashboardForm extends PureComponent<Props, State> {
     const { dashboard, inputs, meta, source, uidExists, uidError, nameExists, nameError } = this.props;
     const { uidReset } = this.state;
 
-    const buttonVariant: ButtonVariant = uidExists || nameExists ? 'destructive' : 'primary';
+    const buttonVariant = uidExists || nameExists ? 'destructive' : 'primary';
     const buttonText = uidExists || nameExists ? 'Import (Overwrite)' : 'Import';
 
     return (
@@ -97,13 +102,20 @@ class ImportDashboardForm extends PureComponent<Props, State> {
             </table>
           </div>
         )}
-        <Forms.Form onSubmit={this.onSubmit}>
-          {() => {
+        <Forms.Form onSubmit={this.onSubmit} defaultValues={}>
+          {({ register, errors }) => {
             return (
               <>
                 <Forms.Legend className="section-heading">Options</Forms.Legend>
-                <Forms.Field label="Name" invalid={nameExists} error={nameError}>
-                  <Forms.Input size="md" type="text" value={dashboard.title} onChange={this.onTitleChange} />
+                <Forms.Field label="Name" invalid={nameExists || !!errors.name} error={nameError}>
+                  <Forms.Input
+                    name="name"
+                    size="md"
+                    type="text"
+                    ref={register({ required: true })}
+                    defaultValue={dashboard.title}
+                    onChange={this.onTitleChange}
+                  />
                 </Forms.Field>
                 <Forms.Field label="Folder">
                   <FolderPicker onChange={this.onFolderChange} useInNextGenForms={true} initialFolderId={0} />
@@ -160,26 +172,23 @@ class ImportDashboardForm extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => {
-  const source = state.importDashboard.source;
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => ({
+  dashboard: state.importDashboard.dashboard,
+  meta: state.importDashboard.meta,
+  source: state.importDashboard.source,
+  inputs: state.importDashboard.inputs,
+  uidExists: state.importDashboard.uidExists,
+  uidError: state.importDashboard.uidError,
+  nameExists: state.importDashboard.titleExists,
+  nameError: state.importDashboard.titleError,
+});
 
-  return {
-    dashboard: state.importDashboard.dashboard,
-    meta: state.importDashboard.meta,
-    source,
-    inputs: state.importDashboard.inputs,
-    uidExists: state.importDashboard.uidExists,
-    uidError: state.importDashboard.uidError,
-    nameExists: state.importDashboard.titleExists,
-    nameError: state.importDashboard.titleError,
-  };
-};
-
-const mapDispatchToProps = {
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeDashboardTitle,
   resetDashboard,
   saveDashboard,
   changeDashboardUid,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(ImportDashboardForm);
+export const ImportDashboardForm = connect(mapStateToProps, mapDispatchToProps)(ImportDashboardFormUnConnected);
+ImportDashboardForm.displayName = 'ImportDashboardForm';

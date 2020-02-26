@@ -1,23 +1,29 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
 import { Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import ImportDashboardForm from './ImportDashboardForm';
+import { ImportDashboardForm } from './ImportDashboardForm';
 import { DashboardFileUpload } from './DashboardFileUpload';
 import { fetchGcomDashboard, importDashboardJson } from '../state/actions';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
-interface Props {
+interface OwnProps {}
+
+interface ConnectedProps {
   navModel: NavModel;
   isLoaded: boolean;
+}
+
+interface DispatchProps {
   fetchGcomDashboard: typeof fetchGcomDashboard;
   importDashboardJson: typeof importDashboardJson;
 }
+
+type Props = OwnProps & ConnectedProps & DispatchProps;
 
 interface State {
   gcomDashboard: string;
@@ -34,7 +40,7 @@ const importStyles = stylesFactory(() => {
   };
 });
 
-class DashboardImport extends PureComponent<Props, State> {
+class DashboardImportUnConnected extends PureComponent<Props, State> {
   state: State = {
     gcomDashboard: '',
     dashboardJson: '',
@@ -158,16 +164,16 @@ class DashboardImport extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => {
-  return {
-    navModel: getNavModel(state.navIndex, 'import', null, true),
-    isLoaded: state.importDashboard.isLoaded,
-  };
-};
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => ({
+  navModel: getNavModel(state.navIndex, 'import', null, true),
+  isLoaded: state.importDashboard.isLoaded,
+});
 
-const mapDispatchToProps = {
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
   fetchGcomDashboard,
   importDashboardJson,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardImport));
+export const DashboardImport = connect(mapStateToProps, mapDispatchToProps)(DashboardImportUnConnected);
+export default DashboardImport;
+DashboardImport.displayName = 'DashboardImport';
