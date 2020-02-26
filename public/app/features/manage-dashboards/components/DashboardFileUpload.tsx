@@ -1,28 +1,39 @@
 import React, { FC, FormEvent } from 'react';
-import { Forms, useTheme } from '@grafana/ui';
+import { Forms, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
+import { css } from 'emotion';
 
 interface Props {
   onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
 }
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const buttonFormStyle = Forms.getFormStyles(theme, { variant: 'primary', invalid: false, size: 'md' }).button.button;
+  return {
+    fileUpload: css`
+      display: none;
+    `,
+    button: css`
+      ${buttonFormStyle}
+    `,
+  };
+});
+
 export const DashboardFileUpload: FC<Props> = ({ onFileUpload }) => {
   const theme = useTheme();
-  const buttonFormStyle = Forms.getFormStyles(theme, { variant: 'primary', invalid: false, size: 'md' }).button.button;
+  const style = getStyles(theme);
 
   return (
-    <>
-      <Forms.Legend>Import via .json file</Forms.Legend>
+    <label className={style.button}>
+      Upload .json file
       <input
         type="file"
         id="fileUpload"
-        className="hide"
+        className={style.fileUpload}
         onChange={onFileUpload}
         multiple={false}
         accept="application/json"
       />
-      <Forms.Label htmlFor="fileUpload" className={buttonFormStyle}>
-        Upload .json file
-      </Forms.Label>
-    </>
+    </label>
   );
 };
