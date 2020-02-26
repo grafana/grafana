@@ -45,7 +45,12 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);
-      sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
+
+      // Resend last query result on source panel query runner
+      // But do this after the panel edit editor exit process has completed
+      setTimeout(() => {
+        sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
+      });
     }
 
     dashboard.exitPanelEditor();

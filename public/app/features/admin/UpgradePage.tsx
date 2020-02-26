@@ -85,9 +85,9 @@ const ServiceInfo: React.FC = () => {
       <h4>At your service</h4>
 
       <List>
-        <Item title="Enterprise Plugins" image="/public/img/licensing/plugin_enterprise.svg" />
-        <Item title="Critical SLA: 2 hours" image="/public/img/licensing/sla.svg" />
-        <Item title="Unlimited Expert Support" image="/public/img/licensing/customer_support.svg">
+        <Item title="Enterprise Plugins" image="public/img/licensing/plugin_enterprise.svg" />
+        <Item title="Critical SLA: 2 hours" image="public/img/licensing/sla.svg" />
+        <Item title="Unlimited Expert Support" image="public/img/licensing/customer_support.svg">
           24x7x365 support via
           <List nested={true}>
             <Item title="Email" />
@@ -95,7 +95,7 @@ const ServiceInfo: React.FC = () => {
             <Item title="Phone" />
           </List>
         </Item>
-        <Item title="Hand-in-hand support" image="/public/img/licensing/handinhand_support.svg">
+        <Item title="Hand-in-hand support" image="public/img/licensing/handinhand_support.svg">
           in the upgrade process
         </Item>
       </List>
@@ -167,7 +167,7 @@ interface ItemProps {
 }
 
 const Item: React.FC<ItemProps> = ({ children, title, image }) => {
-  const imageUrl = image ? image : '/public/img/licensing/checkmark.svg';
+  const imageUrl = image ? image : 'public/img/licensing/checkmark.svg';
   const itemStyle = css`
     display: flex;
 
