@@ -22,7 +22,8 @@
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s .storybook/static",
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=ui"
+    "build": "grafana-toolkit package:build --scope=ui",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log"
   },
   "dependencies": {
     "@grafana/data": "6.7.0-pre",

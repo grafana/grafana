@@ -21,7 +21,8 @@
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=e2e",
     "open": "cypress open",
-    "start": "cypress run"
+    "start": "cypress run",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log"
   },
   "devDependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",
