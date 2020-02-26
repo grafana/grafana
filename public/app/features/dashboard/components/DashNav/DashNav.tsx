@@ -32,18 +32,11 @@ export interface StateProps {
 
 type Props = StateProps & OwnProps;
 
-export interface State {
-  showShareModal: boolean;
-}
-
-export class DashNav extends PureComponent<Props, State> {
+export class DashNav extends PureComponent<Props> {
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
     super(props);
-    this.state = {
-      showShareModal: false,
-    };
     this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
@@ -112,20 +105,12 @@ export class DashNav extends PureComponent<Props, State> {
   };
 
   onOpenShare = () => {
-    // const $rootScope = this.props.$injector.get('$rootScope');
-    // const modalScope = $rootScope.$new();
-    // modalScope.tabIndex = 0;
-    // modalScope.dashboard = this.props.dashboard;
-
-    // appEvents.emit(CoreEvents.showModal, {
-    //   src: 'public/app/features/dashboard/components/ShareModal/template.html',
-    //   scope: modalScope,
-    // });
-    this.setState({ showShareModal: true });
-  };
-
-  showShareModal = (show: boolean) => () => {
-    this.setState({ showShareModal: show });
+    appEvents.emit(CoreEvents.showModalReact, {
+      component: ShareModal,
+      props: {
+        dashboard: this.props.dashboard,
+      },
+    });
   };
 
   renderDashboardTitleSearchButton() {
@@ -184,7 +169,6 @@ export class DashNav extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, onAddPanel, location } = this.props;
-    const { showShareModal } = this.state;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -281,8 +265,6 @@ export class DashNav extends PureComponent<Props, State> {
             <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
           </div>
         )}
-
-        <ShareModal isOpen={showShareModal} dashboard={dashboard} onDismiss={this.showShareModal(false)} />
       </div>
     );
   }
