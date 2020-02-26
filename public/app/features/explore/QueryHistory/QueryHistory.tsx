@@ -5,12 +5,20 @@ import { SelectableValue, GrafanaTheme } from '@grafana/data';
 import { QueryHistorySettings } from './QueryHistorySettings';
 import { QueryHistoryQueries } from './QueryHistoryQueries';
 import { Resizable } from 're-resizable';
+import store from 'app/core/store';
 
 export enum Tabs {
   QueryHistory = 'Query history',
   Starred = 'Starred',
   Settings = 'Settings',
 }
+
+const SETTINGS_KEYS = {
+  activeTimeSpan: 'grafana.explore.queryHistory.activeTimeSpan',
+  activeStarredTab: 'grafana.explore.queryHistory.activeStarredTab',
+  showActiveDatasourceHistory: 'grafana.explore.queryHistory.showActiveDatasourceHistory',
+  hiddenSession: 'grafana.explore.queryHistory.hiddenSession',
+};
 
 export type SortingValue = 'Time ascending' | 'Time descending' | 'Datasource A-Z' | 'Datasource Z-A';
 
@@ -29,12 +37,12 @@ interface QueryHistoryProps extends Themeable {
 
 interface QueryHistoryState {
   activeTab: Tabs;
-  activeTimeSpan: string;
-  activeStarredTab: boolean;
-  showActiveDatasourceHistory: boolean;
-  hiddenSessions: boolean;
   datasourceFilters: DataSourceOption[] | null;
   sortingValue: SortingValue;
+  activeTimeSpan: number;
+  activeStarredTab: boolean;
+  showActiveDatasourceHistory: boolean;
+  hiddenSession: boolean;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -90,40 +98,44 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
     super(props);
     this.state = {
       activeTab: Tabs.QueryHistory,
-      activeTimeSpan: '2 days',
-      activeStarredTab: false,
-      showActiveDatasourceHistory: true,
-      hiddenSessions: true,
       datasourceFilters: null,
-      sortingValue: 'Time ascending',
+      sortingValue: 'Time descending',
+      activeTimeSpan: store.getObject(SETTINGS_KEYS.activeTimeSpan, 2),
+      activeStarredTab: store.getBool(SETTINGS_KEYS.activeStarredTab, false),
+      showActiveDatasourceHistory: store.getBool(SETTINGS_KEYS.showActiveDatasourceHistory, false),
+      hiddenSession: store.getBool(SETTINGS_KEYS.hiddenSession, false),
     };
   }
 
-  onChangeActiveTimeSpan = (historyTimeSpan: { label: string; value: string }) =>
-    this.setState({ activeTimeSpan: historyTimeSpan.value });
-
-  onChangeSortingValue = (sortingValue: SortingValue) => this.setState({ sortingValue });
-
-  toggleActiveStarredTab = () =>
-    this.setState(state => {
-      return {
-        activeStarredTab: !state.activeStarredTab,
-      };
+  onChangeActiveTimeSpan = (historyTimeSpan: { label: string; value: number }) => {
+    this.setState({
+      activeTimeSpan: historyTimeSpan.value,
     });
+    store.set(SETTINGS_KEYS.activeTimeSpan, historyTimeSpan.value);
+  };
 
-  toggleShowActiveDatasourceHistory = () =>
-    this.setState(state => {
-      return {
-        showActiveDatasourceHistory: !state.showActiveDatasourceHistory,
-      };
+  toggleActiveStarredTab = () => {
+    const activeStarredTab = !this.state.activeStarredTab;
+    this.setState({
+      activeStarredTab,
     });
+    store.set(SETTINGS_KEYS.activeStarredTab, activeStarredTab);
+  };
+
+  toggleShowActiveDatasourceHistory = () => {
+    const showActiveDatasourceHistory = !this.state.showActiveDatasourceHistory;
+    this.setState({
+      showActiveDatasourceHistory,
+    });
+    store.set(SETTINGS_KEYS.showActiveDatasourceHistory, showActiveDatasourceHistory);
+  };
 
   toggleHideSessions = () => {
-    this.setState(state => {
-      return {
-        hiddenSessions: !state.hiddenSessions,
-      };
+    const hiddenSession = !this.state.hiddenSession;
+    this.setState({
+      hiddenSession,
     });
+    store.set(SETTINGS_KEYS.hiddenSession, hiddenSession);
   };
 
   onSelectDatasourceFilters = (datasources: DataSourceOption[] | null) => {
@@ -134,16 +146,10 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
     this.setState({ activeTab: item.value });
   };
 
+  onChangeSortingValue = (sortingValue: SortingValue) => this.setState({ sortingValue });
+
   render() {
-    const {
-      activeTab,
-      activeTimeSpan,
-      activeStarredTab,
-      showActiveDatasourceHistory,
-      hiddenSessions,
-      datasourceFilters,
-      sortingValue,
-    } = this.state;
+    const { datasourceFilters, sortingValue, activeTab } = this.state;
     const { theme, isVisible, width, queryHistory, updateStarredQuery } = this.props;
     const styles = getStyles(theme);
 
@@ -185,10 +191,10 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
       value: Tabs.Settings,
       content: (
         <QueryHistorySettings
-          activeTimeSpan={activeTimeSpan}
-          activeStarredTab={activeStarredTab}
-          showActiveDatasourceHistory={showActiveDatasourceHistory}
-          hiddenSessions={hiddenSessions}
+          activeTimeSpan={this.state.activeTimeSpan}
+          activeStarredTab={this.state.activeStarredTab}
+          showActiveDatasourceHistory={this.state.showActiveDatasourceHistory}
+          hiddenSessions={this.state.hiddenSession}
           onChangeActiveTimeSpan={this.onChangeActiveTimeSpan}
           toggleActiveStarredTab={this.toggleActiveStarredTab}
           toggleHideSessions={this.toggleHideSessions}

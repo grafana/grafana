@@ -4,11 +4,11 @@ import { stylesFactory, withTheme, Themeable, Forms } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 interface QueryHistorySettingsProps extends Themeable {
-  activeTimeSpan: string;
+  activeTimeSpan: number;
   activeStarredTab: boolean;
   showActiveDatasourceHistory: boolean;
   hiddenSessions: boolean;
-  onChangeActiveTimeSpan: (option: { label: string; value: string }) => void;
+  onChangeActiveTimeSpan: (option: { label: string; value: number }) => void;
   toggleActiveStarredTab: () => void;
   toggleShowActiveDatasourceHistory: () => void;
   toggleHideSessions: () => void;
@@ -37,9 +37,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const timeSpanOptions = [
-  { value: '2 days', label: '2 days' },
-  { value: '5 days', label: '5 days' },
-  { value: '1 week', label: '1 week' },
+  { value: 2, label: '2 days' },
+  { value: 5, label: '5 days' },
+  { value: 1, label: '1 week' },
 ];
 
 function UnThemedQueryHistorySettings(props: QueryHistorySettingsProps) {
