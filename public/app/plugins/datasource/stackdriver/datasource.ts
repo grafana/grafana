@@ -27,7 +27,10 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     super(instanceSettings);
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
-    this.projectName = instanceSettings.jsonData.defaultProject || '';
+    this.projectName =
+      instanceSettings.jsonData.authenticationType === 'gce'
+        ? instanceSettings.jsonData.gceDefaultProject
+        : instanceSettings.jsonData.defaultProject || '';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.metricTypes = [];
   }
@@ -213,6 +216,39 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async testDatasource() {
+    let status, message;
+    const defaultErrorMessage = 'Cannot connect to Stackdriver API';
+    try {
+      const projectName = this.projectName;
+      const path = `v3/projects/${projectName}/metricDescriptors`;
+      const response = await this.doRequest(`${this.baseUrl}${path}`);
+      if (response.status === 200) {
+        status = 'success';
+        message = 'Successfully queried the Stackdriver API.';
+      } else {
+        status = 'error';
+        message = response.statusText ? response.statusText : defaultErrorMessage;
+      }
+    } catch (error) {
+      status = 'error';
+      if (_.isString(error)) {
+        message = error;
+      } else {
+        message = 'Stackdriver: ';
+        message += error.statusText ? error.statusText : defaultErrorMessage;
+        if (error.data && error.data.error && error.data.error.code) {
+          message += ': ' + error.data.error.code + '. ' + error.data.error.message;
+        }
+      }
+    } finally {
+      return {
+        status,
+        message,
+      };
+    }
+  }
+
+  async getGCEDefaultProject() {
     return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
@@ -220,8 +256,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         data: {
           queries: [
             {
-              refId: 'testDatasource',
-              type: 'testDatasource',
+              refId: 'getGCEDefaultProject',
+              type: 'getGCEDefaultProject',
               datasourceId: this.id,
               project: this.projectName,
             },
@@ -229,26 +265,12 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         },
       })
       .then(({ data }) => {
-        return { status: 'success', message: 'Successfully queried the Stackdriver API.' };
+        return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
+          ? data.results.getGCEDefaultProject.meta.defaultProject
+          : '';
       })
-      .catch(error => {
-        const defaultErrorMessage = 'Cannot connect to Stackdriver API';
-        const status = 'error';
-        let message = '';
-        if (_.isString(error)) {
-          message = error;
-        } else {
-          message = 'Stackdriver: ';
-          message += error.statusText ? error.statusText : defaultErrorMessage;
-          if (error.data && error.data.error && error.data.error) {
-            message += ': ' + error.data.error;
-          }
-        }
-
-        return {
-          status,
-          message,
-        };
+      .catch(err => {
+        throw err.data.error;
       });
   }
 

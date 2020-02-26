@@ -43,6 +43,7 @@ export interface StackdriverQuery extends DataQuery {
 
 export interface StackdriverOptions extends DataSourceJsonData {
   defaultProject?: string;
+  gceDefaultProject?: string;
   authenticationType?: string;
 }
 

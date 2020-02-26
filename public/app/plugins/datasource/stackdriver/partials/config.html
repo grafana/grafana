@@ -63,6 +63,19 @@
     </div>
   </div>
 
+  <div class="gf-form-inline" ng-if="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Project</span>
+      <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.gceDefaultProject" />
+    </div>
+
+    <div class="gf-form width-18">
+      <a class="btn btn-secondary gf-form-btn" style="margin-top: 2px;" href="#" ng-click="ctrl.loadGCEDefaultAccount()"
+        >{{ctrl.current.jsonData.gceDefaultProject ? 'Reload project name' : 'Load project name'}}
+      </a>
+    </div>
+  </div>
+
   <div
     ng-if="ctrl.current.jsonData.authenticationType === ctrl.defaultAuthenticationType && !ctrl.current.jsonData.clientEmail && !ctrl.inputDataValid"
   >
@@ -115,7 +128,7 @@
     <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured" />
   </div>
 
-  <div class="gf-form width-18">
+  <div class="gf-form width-18" style="margin-top: 24px;">
     <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()"
       >Reset Service Account Key
     </a>
@@ -132,6 +145,20 @@
   <i class="fa fa-save"></i> Do not forget to save your changes after uploading a file.
 </p>
 
-<p class="gf-form-label" ng-show="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType">
+<p
+  class="gf-form-label"
+  ng-show="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType && !ctrl.current.jsonData.gceDefaultProject"
+>
+  <i class="fa fa-warning"></i> Before saving, load the Project name that is associated with the default service account
+</p>
+
+<div class="gf-form" ng-if="ctrl.gceError">
+  <pre class="gf-form-pre alert alert-error">{{ctrl.gceError}}</pre>
+</div>
+
+<p
+  class="gf-form-label"
+  ng-show="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType && ctrl.current.jsonData.gceDefaultProject"
+>
   <i class="fa fa-save"></i> Verify GCE default service account by clicking Save & Test
 </p>

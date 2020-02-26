@@ -17,7 +17,7 @@ export class Project extends React.Component<Props> {
         <SegmentAsync
           onChange={({ value }) => this.props.onChange(value)}
           loadOptions={() => this.props.datasource.getProjects()}
-          value={defaultProject}
+          value={defaultProject || this.props.datasource.projectName}
           placeholder="Select Project"
         />
         <div className="gf-form gf-form--grow">

@@ -82,8 +82,8 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
 	case "getProjectsListQuery":
 		result, err = e.getProjectList(ctx, tsdbQuery)
-	case "testDatasource":
-		result, err = e.testDatasource(ctx, tsdbQuery)
+	case "getGCEDefaultProject":
+		result, err = e.getGCEDefaultProject(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -92,63 +92,30 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 
 	return result, err
 }
-func (e *StackdriverExecutor) testDatasource(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+
+func (e *StackdriverExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 	refId := tsdbQuery.Queries[0].RefId
-	project := tsdbQuery.Queries[0].Model.Get("project").MustString()
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: refId}
 
-	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
-	if authenticationType == gceAuthentication {
-		gceDefaultProject, err := e.getDefaultProject(ctx)
-		slog.Debug("Stackdriver", "Auth", "Using GCE auth")
-		if err != nil {
-			slog.Debug("Stackdriver", "Auth", "Failed to use GCE auth: ", err)
-			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
-		}
-		slog.Debug("Stackdriver", "Auth", "Successfully use GCE auth: ", gceDefaultProject)
-		e.dsInfo.JsonData.Set("defaultProject", gceDefaultProject)
-		project = gceDefaultProject
-	}
-
-	query := &StackdriverQuery{
-		Project: project,
-	}
-
-	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+project+"/metricDescriptors"))
+	gceDefaultProject, err := e.getDefaultProject(ctx)
 	if err != nil {
-		return nil, err
+		slog.Debug("Stackdriver", "Auth", "Failed to use GCE auth: ", err)
+		return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
 	}
+	slog.Debug("Stackdriver", "Auth", "Successfully use GCE auth: ", gceDefaultProject)
 
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode/100 != 2 {
-		return nil, fmt.Errorf("Could not connect to Stackdriver Metric Descriptors API. StatusCode: %v", res.StatusCode)
-	}
-
-	queryResult.Meta.Set("defaultProject", "janbbanan")
+	queryResult.Meta.Set("defaultProject", "gceDefaultProject")
 	result.Results[refId] = queryResult
 
 	return result, nil
 }
+
 func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
-	}
-
-	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
-	if authenticationType == gceAuthentication {
-		defaultProject, err := e.getDefaultProject(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
-		}
-
-		e.dsInfo.JsonData.Set("defaultProject", defaultProject)
 	}
 
 	queries, err := e.buildQueries(tsdbQuery)
@@ -323,7 +290,6 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
-
 	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+query.Project+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
