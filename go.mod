@@ -83,6 +83,6 @@ require (
 	gopkg.in/redis.v5 v5.2.9
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.5
-	xorm.io/core v0.7.3
-	xorm.io/xorm v0.8.1
+	xorm.io/core v0.7.2
+	xorm.io/xorm v0.8.0
 )

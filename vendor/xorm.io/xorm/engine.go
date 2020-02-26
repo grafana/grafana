@@ -207,46 +207,25 @@ func (engine *Engine) QuoteTo(buf *strings.Builder, value string) {
 		return
 	}
 
-	quoteTo(buf, engine.dialect.Quote(""), value)
-}
+	quotePair := engine.dialect.Quote("")
 
-func quoteTo(buf *strings.Builder, quotePair string, value string) {
-	if len(quotePair) < 2 { // no quote
+	if value[0] == '`' || len(quotePair) < 2 || value[0] == quotePair[0] { // no quote
 		_, _ = buf.WriteString(value)
 		return
-	}
-	
-	prefix, suffix := quotePair[0], quotePair[1]
+	} else {
+		prefix, suffix := quotePair[0], quotePair[1]
 
-	i := 0
-	for i < len(value) {
-		// start of a token; might be already quoted
-		if value[i] == '.' {
-			_ = buf.WriteByte('.')
-			i++
-		} else if value[i] == prefix || value[i] == '`' {
-			// Has quotes; skip/normalize `name` to prefix+name+sufix
-			var ch byte
-			if value[i] == prefix {
-				ch = suffix
+		_ = buf.WriteByte(prefix)
+		for i := 0; i < len(value); i++ {
+			if value[i] == '.' {
+				_ = buf.WriteByte(suffix)
+				_ = buf.WriteByte('.')
+				_ = buf.WriteByte(prefix)
 			} else {
-				ch = '`'
-			}
-			i++
-			_ = buf.WriteByte(prefix)
-			for ; i < len(value) && value[i] != ch; i++ {
 				_ = buf.WriteByte(value[i])
 			}
-			_ = buf.WriteByte(suffix)
-			i++
-		} else {
-			// Requires quotes
-			_ = buf.WriteByte(prefix)
-			for ; i < len(value) && value[i] != '.'; i++ {
-				_ = buf.WriteByte(value[i])
-			}
-			_ = buf.WriteByte(suffix)
 		}
+		_ = buf.WriteByte(suffix)
 	}
 }
 
@@ -351,7 +330,7 @@ func (engine *Engine) Ping() error {
 	return session.Ping()
 }
 
-// logSQL save sql
+// logging sql
 func (engine *Engine) logSQL(sqlStr string, sqlArgs ...interface{}) {
 	if engine.showSQL && !engine.showExecTime {
 		if len(sqlArgs) > 0 {

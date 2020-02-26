@@ -37,7 +37,7 @@ type Column struct {
 	IsDeleted       bool
 	IsCascade       bool
 	IsVersion       bool
-	DefaultIsEmpty  bool // false means column has no default set, but not default value is empty
+	DefaultIsEmpty  bool
 	EnumOptions     map[string]int
 	SetOptions      map[string]int
 	DisableTimeZone bool
@@ -65,7 +65,7 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		IsDeleted:       false,
 		IsCascade:       false,
 		IsVersion:       false,
-		DefaultIsEmpty:  true, // default should be no default
+		DefaultIsEmpty:  false,
 		EnumOptions:     make(map[string]int),
 		Comment:         "",
 	}
