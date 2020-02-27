@@ -454,7 +454,7 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
 	sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
-	sess.OrderBy("LOWER(u.login),u.login,LOWER(u.email),u.email")
+	sess.OrderBy("u.id")
 	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
 	}
