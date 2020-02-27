@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ButtonHTMLAttributes } from 'react';
 import { css } from 'emotion';
 import { ButtonVariant, Forms, ModalsController } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -9,11 +9,21 @@ import { SaveDashboardModalProxy } from './SaveDashboardModalProxy';
 
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;
+  /**
+   * Added for being able to render this component as Angular directive!
+   * TODO[angular-migrations]: Remove when we migrate Dashboard Settings view to React
+   */
+  getDashboard?: () => DashboardModel;
   onSaveSuccess?: () => void;
   variant?: ButtonVariant;
 }
 
-export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess, variant }) => {
+export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({
+  dashboard,
+  onSaveSuccess,
+  variant,
+  getDashboard,
+}) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
@@ -21,7 +31,8 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
           <Forms.Button
             onClick={() => {
               showModal(SaveDashboardModalProxy, {
-                dashboard,
+                // TODO[angular-migrations]: Remove tenary op when we migrate Dashboard Settings view to React
+                dashboard: getDashboard ? getDashboard() : dashboard,
                 onSaveSuccess,
                 onDismiss: hideModal,
               });
@@ -36,7 +47,12 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
   );
 };
 
-export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess, variant }) => {
+export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({
+  dashboard,
+  onSaveSuccess,
+  variant,
+  getDashboard,
+}) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
@@ -49,7 +65,8 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({ dash
             `}
             onClick={() => {
               showModal(SaveDashboardAsModal, {
-                dashboard,
+                // TODO[angular-migrations]: Remove tenary op when we migrate Dashboard Settings view to React
+                dashboard: getDashboard ? getDashboard() : dashboard,
                 onSaveSuccess,
                 onDismiss: hideModal,
               });

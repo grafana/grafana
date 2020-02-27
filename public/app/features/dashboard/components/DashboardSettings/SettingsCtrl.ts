@@ -250,6 +250,10 @@ export class SettingsCtrl {
       url: this.dashboard.meta.folderUrl,
     };
   }
+
+  getDashboard = () => {
+    return this.dashboard;
+  };
 }
 
 export function dashboardSettings() {

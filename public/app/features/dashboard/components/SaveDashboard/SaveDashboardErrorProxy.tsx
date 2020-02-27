@@ -47,8 +47,8 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
           title="Conflict"
           body={
             <div>
-              A dashboard with the same name in selected folder already exists. <br /> Would you still like to save this
-              dashboard?.
+              A dashboard with the same name in selected folder already exists. <br />
+              <small>Would you still like to save this dashboard?</small>
             </div>
           }
           confirmText="Save & Overwrite"

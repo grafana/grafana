@@ -10,10 +10,10 @@
 
   <div class="dashboard-settings__aside-actions">
     <div ng-show="ctrl.canSave">
-      <save-dashboard-button dashboard="dashboard" />
+      <save-dashboard-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save button" />
     </div>
     <div ng-show="ctrl.canSaveAs">
-      <save-dashboard-as-button dashboard="dashboard" />
+      <save-dashboard-as-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save as button" />
     </div>
   </div>
 </aside>
