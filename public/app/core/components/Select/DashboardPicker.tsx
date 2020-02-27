@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
-import { Forms } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 import { debounce } from 'lodash';
+import { SelectableValue } from '@grafana/data';
+import { Forms } from '@grafana/ui';
+import { FormInputSize } from '@grafana/ui/src/components/Forms/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit, DashboardDTO } from 'app/types';
-import { FormInputSize } from '@grafana/ui/src/components/Forms/types';
 
 export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;
