@@ -113,6 +113,9 @@ export const removeInitLock = createAction<VariablePayload>('templating/removeIn
 export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>(
   'templating/setCurrentVariableValue'
 );
+
+export const changeVariableType = createAction<VariablePayload<VariableType>>('templating/changeVariableType');
+export const updateVariableQuery = createAction<VariablePayload<string>>('templating/updateVariableOptions');
 export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
 export const updateVariableStarting = createAction<VariablePayload>('templating/updateVariableStarting');
 export const updateVariableCompleted = createAction<VariablePayload>('templating/updateVariableCompleted');
@@ -449,10 +452,6 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
       dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, newName)));
     }
   };
-};
-
-export const changeVariableType = (identifier: VariableIdentifier, newType: VariableType): ThunkResult<void> => {
-  return (dispatch, getState) => {};
 };
 
 export const variableEditorInit = (identifier: VariableIdentifier): ThunkResult<void> => {

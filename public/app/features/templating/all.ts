@@ -12,6 +12,7 @@ import { AdhocVariable } from './adhoc_variable';
 import { TextBoxVariable } from './TextBoxVariable';
 import { variableAdapters } from './adapters';
 import { createQueryVariableAdapter } from './query/adapter';
+import { createCustomVariableAdapter } from './custom/adapter';
 
 coreModule.factory('templateSrv', () => templateSrv);
 
@@ -27,3 +28,4 @@ export {
 };
 
 variableAdapters.set('query', createQueryVariableAdapter());
+variableAdapters.set('custom', createCustomVariableAdapter());

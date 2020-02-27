@@ -15,9 +15,10 @@ import {
   updateVariableStarting,
   variableEditorMounted,
   variableEditorUnMounted,
+  changeVariableType,
 } from './actions';
 import { VariableModel } from '../variable';
-import { emptyUuid, initialVariableEditorState } from './types';
+import { emptyUuid, initialVariableEditorState, VariableState } from './types';
 import { initialTemplatingState } from './reducers';
 import { variableAdapters } from '../adapters';
 
@@ -105,5 +106,21 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
     })
     .addCase(changeToEditorListMode, (state, action) => {
       state.uuidInEditor = null;
+    })
+    .addCase(changeVariableType, (state, action) => {
+      const { uuid } = action.payload;
+      const initialState = cloneDeep(variableAdapters.get(action.payload.data).initialState);
+      const { label, name, index } = (state.variables[uuid!] as VariableState).variable;
+
+      state.variables[uuid!] = {
+        ...initialState,
+        variable: {
+          ...initialState.variable,
+          uuid,
+          label,
+          name,
+          index,
+        },
+      };
     })
 );

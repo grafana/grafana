@@ -48,7 +48,7 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
 
   onTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
     event.preventDefault();
-    dispatch(changeVariableType(toVariableIdentifier(this.props.variable), event.target.value as VariableType));
+    dispatch(changeVariableType(toVariablePayload(this.props.variable, event.target.value as VariableType)));
   };
 
   onLabelChange = (event: ChangeEvent<HTMLInputElement>) => {
