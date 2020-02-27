@@ -96,7 +96,7 @@ export const duplicateVariable = createAction<PrepareAction<VariablePayload<Dupl
         ...payload,
         data: {
           ...payload.data,
-          newUuid: v4(),
+          newUuid: payload.data.newUuid ?? v4(),
         },
       },
     };

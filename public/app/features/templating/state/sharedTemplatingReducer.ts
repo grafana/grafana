@@ -36,10 +36,6 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       state.variables[action.payload.uuid!].editor.dataSources = action.payload.data;
     })
     .addCase(variableEditorUnMounted, (state, action) => {
-      if (!state.variables[action.payload.uuid!]) {
-        // this could be an unmount event from a variable that doesn't exist any longer
-        return;
-      }
       state.variables[action.payload.uuid!].editor = { ...initialVariableEditorState };
       state.uuidInEditor = null;
       if (state.variables[emptyUuid]) {
@@ -103,7 +99,7 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       if (action.payload.uuid === emptyUuid) {
         state.variables[emptyUuid] = cloneDeep(variableAdapters.get('query').initialState);
         state.variables[emptyUuid].variable.uuid = emptyUuid;
-        state.variables[emptyUuid].variable.index = Object.values(state.variables).length;
+        state.variables[emptyUuid].variable.index = Object.values(state.variables).length - 1;
       }
       state.uuidInEditor = action.payload.uuid;
     })
