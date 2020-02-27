@@ -23,6 +23,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableMode
     picker: CustomVariablePicker,
     editor: CustomVariableEditor,
     dependsOn: (variable, variableToTest) => {
+      // TODO: we might need to change this one
       return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
     },
     setValue: async (variable, option, emitChanges = false) => {
