@@ -31,6 +31,11 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrOrgNotFound {
+			c.JsonApiErr(400, models.ErrOrgNotFound.Error(), nil)
+			return
+		}
+
 		c.JsonApiErr(500, "failed to create user", err)
 		return
 	}
