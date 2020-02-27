@@ -196,7 +196,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, plugin } = this.props;
+    const { dashboard, panel, isFullscreen, plugin, angularComponent } = this.props;
     const { errorMessage, data, alertState } = this.state;
     const { transparent } = panel;
 
@@ -223,6 +223,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
+          angularComponent={angularComponent}
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}

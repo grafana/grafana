@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { DataLink, ScopedVars, PanelMenuItem } from '@grafana/data';
+import { AngularComponent } from '@grafana/runtime';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
@@ -21,6 +22,7 @@ export interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
+  angularComponent?: AngularComponent;
   links?: DataLink[];
   error?: string;
   isFullscreen: boolean;
@@ -67,8 +69,8 @@ export class PanelHeader extends Component<Props, State> {
 
     event.stopPropagation();
 
-    const { dashboard, panel } = this.props;
-    const menuItems = getPanelMenu(dashboard, panel);
+    const { dashboard, panel, angularComponent } = this.props;
+    const menuItems = getPanelMenu(dashboard, panel, angularComponent);
 
     this.setState({
       panelMenuOpen: !this.state.panelMenuOpen,
