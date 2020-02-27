@@ -10,7 +10,7 @@ weight = 9
 
 # Jaeger instrumentation
 
-Grafana supports [jaeger tracing](https://www.jaegertracing.io/).
+Grafana supports [Jaeger tracing](https://www.jaegertracing.io/).
 
 Grafana can emit Jaeger traces for its HTTP API endpoints and propagate Jaeger trace information to data sources. 
 All HTTP endpoints are logged evenly. (annotations, dashboard, tags, etc)
