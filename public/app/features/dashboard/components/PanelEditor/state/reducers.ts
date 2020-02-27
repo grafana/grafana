@@ -15,11 +15,13 @@ export const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
 };
 
 export interface PanelEditorUIState {
+  /* Visualization options pane visibility */
   isPanelOptionsVisible: boolean;
-  // annotating as number or string since size can be expressed as static value or percentage
+  /* Pixels or percentage */
   rightPaneSize: number | string;
-  // annotating as number or string since size can be expressed as static value or percentage
+  /* Pixels or percentage */
   topPaneSize: number | string;
+  /* Visualization size mode */
   mode: DisplayMode;
 }
 

@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=data"
+    "build": "grafana-toolkit package:build --scope=data",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log"
   },
   "dependencies": {
     "apache-arrow": "0.15.1",

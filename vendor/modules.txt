@@ -78,8 +78,8 @@ github.com/bradfitz/gomemcache/memcache
 github.com/cespare/xxhash/v2
 # github.com/cheekybits/genny v1.0.0
 github.com/cheekybits/genny/generic
-# github.com/codegangsta/cli v1.20.0
-github.com/codegangsta/cli
+# github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d
+github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/crewjam/saml v0.0.0-20191031171751-c42136edf9b1
 github.com/crewjam/saml
 github.com/crewjam/saml/logger
@@ -238,8 +238,12 @@ github.com/robfig/cron/v3
 github.com/russellhaering/goxmldsig
 github.com/russellhaering/goxmldsig/etreeutils
 github.com/russellhaering/goxmldsig/types
+# github.com/russross/blackfriday/v2 v2.0.1
+github.com/russross/blackfriday/v2
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
+# github.com/shurcooL/sanitized_anchor_name v1.0.0
+github.com/shurcooL/sanitized_anchor_name
 # github.com/smartystreets/assertions v1.0.1
 github.com/smartystreets/assertions
 github.com/smartystreets/assertions/internal/go-diff/diffmatchpatch
@@ -279,6 +283,8 @@ github.com/uber/jaeger-client-go/zipkin
 github.com/uber/jaeger-lib/metrics
 # github.com/unknwon/com v1.0.1
 github.com/unknwon/com
+# github.com/urfave/cli/v2 v2.1.1
+github.com/urfave/cli/v2
 # github.com/yudai/gojsondiff v1.0.0
 github.com/yudai/gojsondiff
 github.com/yudai/gojsondiff/formatter
