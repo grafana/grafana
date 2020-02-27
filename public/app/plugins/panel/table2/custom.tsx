@@ -52,3 +52,10 @@ export const tableFieldRegistry: FieldConfigEditorRegistry = new Registry<FieldP
 
   return [columWidth, cellDisplayMode];
 });
+
+const r = createCustomRegist
+  .forProperty('width')
+  .useNumber()
+  .withSettings()
+  .forProerty('display')
+  .useSelect();
