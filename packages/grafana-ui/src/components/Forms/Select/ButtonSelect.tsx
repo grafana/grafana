@@ -34,7 +34,6 @@ const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
         padding: 0 15px 0 0;
       `,
       caretWrap: css`
-        padding-left: ${theme.spacing.sm};
         margin-left: ${theme.spacing.sm};
         margin-right: -${theme.spacing.sm};
         height: 100%;
@@ -46,7 +45,7 @@ const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
     return (
       <Button {...buttonProps} ref={ref} icon={buttonIcon}>
         <span className={styles.wrapper}>
-          <span>{children}</span>
+          {!!children && children}
           <span className={styles.caretWrap}>
             <Icon name={caretIcon} />
           </span>
@@ -75,7 +74,6 @@ export function ButtonSelect<T>({
 
   return (
     <SelectBase
-      display="inline-block"
       {...selectProps}
       renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, ref) => {
         return (

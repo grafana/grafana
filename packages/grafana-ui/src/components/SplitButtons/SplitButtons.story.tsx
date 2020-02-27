@@ -46,3 +46,14 @@ export const playControlsExample = () => {
     </SplitButtons>
   );
 };
+
+export const splitButton = () => {
+  return (
+    <SplitButtons>
+      <Button>Apply</Button>
+      <Button>
+        <Icon name="caret-down" />
+      </Button>
+    </SplitButtons>
+  );
+};

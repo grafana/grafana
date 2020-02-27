@@ -3,7 +3,7 @@ import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
 import { getAvailableIcons, IconType } from '../../Icon/types';
-import { select, boolean } from '@storybook/addon-knobs';
+import { select, boolean, text } from '@storybook/addon-knobs';
 import { Icon } from '../../Icon/Icon';
 import { Button } from '../Button';
 import { ButtonSelect } from './ButtonSelect';
@@ -72,6 +72,7 @@ const getKnobs = () => {
   const VISUAL_GROUP = 'Visual options';
   // ---
   const prefix = select('Prefix', prefixSuffixOpts, null, VISUAL_GROUP);
+  const placeholder = text('Placeholder', 'Select all the things...', VISUAL_GROUP);
 
   let prefixEl: any = prefix;
   if (prefix && prefix.match(/icon-/g)) {
@@ -83,6 +84,7 @@ const getKnobs = () => {
     invalid,
     loading,
     prefixEl,
+    placeholder,
   };
 };
 
@@ -93,6 +95,7 @@ const getDynamicProps = () => {
     isLoading: knobs.loading,
     invalid: knobs.invalid,
     prefix: knobs.prefixEl,
+    placeholder: knobs.placeholder,
   };
 };
 
@@ -192,10 +195,9 @@ export const multiSelectAsync = () => {
 };
 export const buttonSelect = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
-  const icon = getIconKnob();
+  // const icon = getIconKnob();
   return (
     <ButtonSelect
-      placeholder="Select all the things..."
       value={value}
       options={generateOptions()}
       onChange={v => {
@@ -203,7 +205,6 @@ export const buttonSelect = () => {
       }}
       size="md"
       allowCustomValue
-      icon={icon}
       {...getDynamicProps()}
     />
   );
