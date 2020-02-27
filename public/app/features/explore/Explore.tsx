@@ -13,7 +13,7 @@ import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
-import { QueryHistory } from './QueryHistory/QueryHistory';
+import QueryHistoryContainer from './QueryHistory/QueryHistoryContainer';
 // Actions
 import {
   changeSize,
@@ -25,7 +25,6 @@ import {
   updateTimeRange,
   toggleGraph,
   addQueryRow,
-  updateStarredQuery,
 } from './state/actions';
 // Types
 import {
@@ -83,7 +82,6 @@ interface ExploreProps {
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
-  updateStarredQuery: typeof updateStarredQuery;
   update: ExploreUpdateState;
   refreshExplore: typeof refreshExplore;
   scanning?: boolean;
@@ -277,10 +275,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
-  onChangeStarred = (ts: number) => {
-    this.props.updateStarredQuery(ts);
-  };
-
   render() {
     const {
       datasourceInstance,
@@ -298,8 +292,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryResponse,
       syncedTimes,
       isLive,
-      queryHistory,
     } = this.props;
+    const { isQueryHistoryVisible } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
@@ -388,12 +382,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      <QueryHistory
-                        width={width}
-                        isVisible={this.state.isQueryHistoryVisible}
-                        queryHistory={queryHistory}
-                        updateStarredQuery={this.onChangeStarred}
-                      />
+                      <QueryHistoryContainer width={width} showQueryHistory={isQueryHistoryVisible} />
                     </ErrorBoundaryAlert>
                   </main>
                 );
@@ -496,7 +485,6 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   updateTimeRange,
   toggleGraph,
   addQueryRow,
-  updateStarredQuery,
 };
 
 export default hot(module)(

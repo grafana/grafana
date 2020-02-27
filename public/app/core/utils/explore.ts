@@ -33,6 +33,7 @@ import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explo
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
+import { QueryHistoryQuery, SortingValue } from '../../features/explore/QueryHistory/QueryHistoryQueries';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -360,7 +361,7 @@ export function updateHistory<T extends DataQuery = any>(
   return history;
 }
 
-export function updateQueryHistory(
+export function addToQueryHistory(
   queryHistory: any[],
   datasourceId: string,
   datasourceName: string,
@@ -587,3 +588,35 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 export function deduplicateLogRowsById(rows: LogRowModel[]) {
   return _.uniqBy(rows, 'uid');
 }
+
+export const sortQueries = (array: QueryHistoryQuery[], sortingValue: SortingValue) => {
+  let sortFunc;
+
+  if (sortingValue === 'Time ascending') {
+    sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
+  }
+  if (sortingValue === 'Time descending') {
+    sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
+  }
+
+  if (sortingValue === 'Datasource A-Z') {
+    sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) =>
+      a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0;
+  }
+
+  if (sortingValue === 'Datasource Z-A') {
+    sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) =>
+      a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0;
+  }
+
+  return array.sort(sortFunc);
+};
+
+export const copyQueryToClipboard = (query: QueryHistoryQuery) => {
+  const el = document.createElement('textarea');
+  el.value = query.queries.join('\n\n');
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+};

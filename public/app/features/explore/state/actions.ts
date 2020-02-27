@@ -37,7 +37,7 @@ import {
   serializeStateToUrlParam,
   stopQueryState,
   updateHistory,
-  updateQueryHistory,
+  addToQueryHistory,
   updateStarred,
 } from 'app/core/utils/explore';
 // Types
@@ -465,7 +465,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
-          const nextQueryHistory = updateQueryHistory(
+          const nextQueryHistory = addToQueryHistory(
             queryHistory || [],
             datasourceId,
             datasourceName,
@@ -502,10 +502,13 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
   };
 };
 
-export const updateStarredQuery = (ts: number): ThunkResult<void> => {
+export const updateQueryHistory = (ts: number, property: string): ThunkResult<void> => {
   return (dispatch, getState) => {
     // Side-effect: Saving queryhistory in localstorage
-    const nextQueryHistory = updateStarred(getState().explore.queryHistory, ts);
+    let nextQueryHistory;
+    if (property === 'starred') {
+      nextQueryHistory = updateStarred(getState().explore.queryHistory, ts);
+    }
     dispatch(queryHistoryUpdatedAction({ queryHistory: nextQueryHistory }));
   };
 };

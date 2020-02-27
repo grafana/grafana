@@ -3,8 +3,7 @@ import { css } from 'emotion';
 import { TabsBar, Tab, TabContent, stylesFactory, withTheme, Themeable } from '@grafana/ui';
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
 import { QueryHistorySettings } from './QueryHistorySettings';
-import { QueryHistoryQueries } from './QueryHistoryQueries';
-import { Resizable } from 're-resizable';
+import { QueryHistoryQueries, SortingValue, DataSourceOption } from './QueryHistoryQueries';
 import store from 'app/core/store';
 
 export enum Tabs {
@@ -13,26 +12,17 @@ export enum Tabs {
   Settings = 'Settings',
 }
 
-const SETTINGS_KEYS = {
+export const SETTINGS_KEYS = {
   activeTimeSpan: 'grafana.explore.queryHistory.activeTimeSpan',
   activeStarredTab: 'grafana.explore.queryHistory.activeStarredTab',
   showActiveDatasourceHistory: 'grafana.explore.queryHistory.showActiveDatasourceHistory',
   hiddenSession: 'grafana.explore.queryHistory.hiddenSession',
 };
 
-export type SortingValue = 'Time ascending' | 'Time descending' | 'Datasource A-Z' | 'Datasource Z-A';
-
-export type DataSourceOption = {
-  value: string;
-  label: string;
-  imgUrl?: string;
-};
-
 interface QueryHistoryProps extends Themeable {
-  width: number;
-  isVisible: boolean;
   queryHistory: any[];
-  updateStarredQuery: (ts: number) => void;
+  onChangeQueryHistoryProperty: (ts: number, property: string) => void;
+  firstTab: Tabs;
 }
 
 interface QueryHistoryState {
@@ -57,38 +47,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-left: -${theme.spacing.sm};
       padding: ${theme.spacing.lg} ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.sm};
       border-top: solid 1px ${borderColor};
-      overflow-y: scroll;
     `,
-    drawerActive: css`
-      position: fixed !important;
-      bottom: 0;
+    container: css`
       background-color: ${tabBarBg};
-      border: solid 1px ${borderColor};
       padding-left: ${theme.spacing.sm};
       padding-top: ${theme.spacing.xs};
-      opacity: 1;
-      transition: transform 0.3s ease-in;
-    `,
-    drawerNotActive: css`
-      opacity: 0;
-      transform: translateY(150px);
-      position: fixed !important;
-      bottom: 0;
-    `,
-    handle: css`
-      background-color: ${borderColor};
-      height: 10px;
-      width: 202px;
-      border-radius: 10px;
-      position: absolute;
-      top: -5px;
-      left: calc(50% - 101px);
-      padding: ${theme.spacing.xs};
-      cursor: grab;
-      hr {
-        border-top: 2px dotted ${theme.colors.gray70};
-        margin: 0;
-      }
+      height: 100%;
+      overflow-y: scroll;
     `,
   };
 });
@@ -97,7 +62,7 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
   constructor(props: QueryHistoryProps) {
     super(props);
     this.state = {
-      activeTab: Tabs.QueryHistory,
+      activeTab: this.props.firstTab,
       datasourceFilters: null,
       sortingValue: 'Time descending',
       activeTimeSpan: store.getObject(SETTINGS_KEYS.activeTimeSpan, 2),
@@ -150,11 +115,10 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
 
   render() {
     const { datasourceFilters, sortingValue, activeTab } = this.state;
-    const { theme, isVisible, width, queryHistory, updateStarredQuery } = this.props;
+    const { theme, queryHistory, onChangeQueryHistoryProperty } = this.props;
     const styles = getStyles(theme);
 
-    const tabs = [];
-    tabs.push({
+    const QueriesTab = {
       label: 'Query history',
       value: Tabs.QueryHistory,
       content: (
@@ -165,13 +129,13 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
           onlyStarred={false}
           onChangeSortingValue={this.onChangeSortingValue}
           sortingValue={sortingValue}
-          updateStarredQuery={updateStarredQuery}
+          onChangeQueryHistoryProperty={onChangeQueryHistoryProperty}
         />
       ),
       icon: 'fa fa-history',
-    });
+    };
 
-    tabs.push({
+    const StarredTab = {
       label: 'Starred',
       value: Tabs.Starred,
       content: (
@@ -180,21 +144,21 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
           onlyStarred={true}
           onChangeSortingValue={this.onChangeSortingValue}
           sortingValue={sortingValue}
-          updateStarredQuery={updateStarredQuery}
+          onChangeQueryHistoryProperty={onChangeQueryHistoryProperty}
         />
       ),
       icon: 'fa fa-star',
-    });
+    };
 
-    tabs.push({
+    const SettingsTab = {
       label: 'Settings',
       value: Tabs.Settings,
       content: (
         <QueryHistorySettings
           activeTimeSpan={this.state.activeTimeSpan}
           activeStarredTab={this.state.activeStarredTab}
-          showActiveDatasourceHistory={this.state.showActiveDatasourceHistory}
           hiddenSessions={this.state.hiddenSession}
+          showActiveDatasourceHistory={this.state.showActiveDatasourceHistory}
           onChangeActiveTimeSpan={this.onChangeActiveTimeSpan}
           toggleActiveStarredTab={this.toggleActiveStarredTab}
           toggleHideSessions={this.toggleHideSessions}
@@ -202,28 +166,21 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
         />
       ),
       icon: 'gicon gicon-preferences',
-    });
+    };
+
+    const tabs = [];
+
+    if (this.state.activeStarredTab) {
+      tabs.push(StarredTab);
+      tabs.push(QueriesTab);
+    } else {
+      tabs.push(QueriesTab);
+      tabs.push(StarredTab);
+    }
+    tabs.push(SettingsTab);
+
     return (
-      <Resizable
-        defaultSize={{ width, height: '300px' }}
-        className={`${isVisible ? styles.drawerActive : styles.drawerNotActive} `}
-        enable={{
-          top: true,
-          right: false,
-          bottom: false,
-          left: false,
-          topRight: false,
-          bottomRight: false,
-          bottomLeft: false,
-          topLeft: false,
-        }}
-        maxHeight="100vh"
-        maxWidth={`${width}px`}
-        minWidth={`${width}px`}
-      >
-        <div className={styles.handle}>
-          <hr />
-        </div>
+      <div className={styles.container}>
         <TabsBar hideBorder={true}>
           {tabs.map(t => (
             <Tab
@@ -242,7 +199,7 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
               <div key={t.label}>{t.content}</div>
             ))}
         </TabContent>
-      </Resizable>
+      </div>
     );
   }
 }

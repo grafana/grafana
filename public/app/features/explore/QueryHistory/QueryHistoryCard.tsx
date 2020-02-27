@@ -2,11 +2,12 @@ import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { Query } from './QueryHistoryQueries';
+import { QueryHistoryQuery } from './QueryHistoryQueries';
+import { copyQueryToClipboard } from '../../../core/utils/explore';
 
 interface Props {
-  query: Query;
-  updateStarredQuery: (ts: number) => void;
+  query: QueryHistoryQuery;
+  onChangeQueryHistoryProperty: (ts: number, property: string) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -14,13 +15,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const cardColor = theme.isLight ? theme.colors.white : theme.colors.dark7;
   return {
     queryCard: css`
+      display: flex;
       border: 1px solid ${bgColor};
       padding: ${theme.spacing.sm};
       margin: ${theme.spacing.sm} 0;
       box-shadow: 0px 2px 2px ${bgColor};
       background-color: ${cardColor};
       border-radius: ${theme.border.radius};
-      display: flex;
       .starred {
         color: ${theme.colors.blue77};
       }
@@ -52,20 +53,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const QueryHistoryCard: FunctionComponent<Props> = ({ query, updateStarredQuery }) => {
+export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQueryHistoryProperty }) => {
   const [starred, updateStared] = useState(query.starred);
 
   const theme = useTheme();
   const styles = getStyles(theme);
-
-  const copyQueryToClipboard = () => {
-    const el = document.createElement('textarea');
-    el.value = query.queries.join('\n\n');
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-  };
 
   return (
     <div className={styles.queryCard}>
@@ -80,12 +72,12 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, updateStarre
         {query.comment && <div>{query.comment}</div>}
       </div>
       <div className={styles.queryCardRight}>
-        <i className="fa fa-fw fa-copy" onClick={copyQueryToClipboard}></i>
+        <i className="fa fa-fw fa-copy" onClick={() => copyQueryToClipboard(query)}></i>
         <i className="fa fa-fw fa-link" style={{ fontWeight: 'normal' }}></i>
         <i
           className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
           onClick={() => {
-            updateStarredQuery(query.ts);
+            onChangeQueryHistoryProperty(query.ts, 'starred');
             updateStared(!starred);
           }}
         ></i>

@@ -1,9 +1,9 @@
 import React from 'react';
 import { css } from 'emotion';
-import { stylesFactory, withTheme, Themeable, Forms } from '@grafana/ui';
+import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
-interface QueryHistorySettingsProps extends Themeable {
+interface QueryHistorySettingsProps {
   activeTimeSpan: number;
   activeStarredTab: boolean;
   showActiveDatasourceHistory: boolean;
@@ -42,9 +42,8 @@ const timeSpanOptions = [
   { value: 1, label: '1 week' },
 ];
 
-function UnThemedQueryHistorySettings(props: QueryHistorySettingsProps) {
+export function QueryHistorySettings(props: QueryHistorySettingsProps) {
   const {
-    theme,
     activeTimeSpan,
     activeStarredTab,
     showActiveDatasourceHistory,
@@ -54,6 +53,7 @@ function UnThemedQueryHistorySettings(props: QueryHistorySettingsProps) {
     toggleShowActiveDatasourceHistory,
     toggleHideSessions,
   } = props;
+  const theme = useTheme();
   const styles = getStyles(theme);
   const selectedOption = timeSpanOptions.find(v => v.value === activeTimeSpan);
 
@@ -93,6 +93,3 @@ function UnThemedQueryHistorySettings(props: QueryHistorySettingsProps) {
     </div>
   );
 }
-
-export const QueryHistorySettings = withTheme(UnThemedQueryHistorySettings);
-QueryHistorySettings.displayName = 'QueryHistorySettings';
