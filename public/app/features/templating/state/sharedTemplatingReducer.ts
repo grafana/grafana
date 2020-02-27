@@ -18,7 +18,7 @@ import {
 } from './actions';
 import { VariableModel } from '../variable';
 import { emptyUuid, initialVariableEditorState } from './types';
-import { initialTemplatingState } from './index';
+import { initialTemplatingState } from './reducers';
 import { variableAdapters } from '../adapters';
 
 export const sharedTemplatingReducer = createReducer(initialTemplatingState, builder =>

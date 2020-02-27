@@ -1,6 +1,6 @@
 import { VariableModel, VariableType } from '../variable';
 import { DataSourceSelectItem } from '@grafana/data';
-import { TemplatingState } from './index';
+import { TemplatingState } from './reducers';
 
 export const emptyUuid = '00000000-0000-0000-0000-000000000000';
 

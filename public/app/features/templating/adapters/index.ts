@@ -4,7 +4,7 @@ import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from '../variable';
 import { VariableEditorProps, VariablePickerProps, VariableState } from '../state/types';
-import { TemplatingState } from '../state';
+import { TemplatingState } from '../state/reducers';
 
 export interface VariableAdapter<Model extends VariableModel> {
   description: string;

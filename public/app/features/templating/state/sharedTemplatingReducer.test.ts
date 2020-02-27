@@ -1,5 +1,5 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { TemplatingState } from './index';
+import { TemplatingState } from './reducers';
 import { sharedTemplatingReducer } from './sharedTemplatingReducer';
 import { VariableHide } from '../variable';
 import { emptyUuid, initialVariableEditorState, VariableEditorState, VariableState } from './types';

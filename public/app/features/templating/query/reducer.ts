@@ -46,7 +46,7 @@ import {
 } from './actions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
-import { initialTemplatingState, TemplatingState } from '../state';
+import { initialTemplatingState, TemplatingState } from '../state/reducers';
 import cloneDeep from 'lodash/cloneDeep';
 
 export type MutateStateFunc<S extends VariableState> = (state: S) => S;
