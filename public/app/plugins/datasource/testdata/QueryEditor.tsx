@@ -29,6 +29,7 @@ export class QueryEditor extends PureComponent<Props> {
   };
 
   async componentDidMount() {
+    console.log('hello!');
     const { query, datasource } = this.props;
 
     query.scenarioId = query.scenarioId || 'random_walk';

@@ -44,14 +44,15 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
     this.scope = $scope;
-    this.panel.datasource = this.panel.datasource || null;
 
-    this.events.on(PanelEvents.refresh, this.onMetricsPanelRefresh.bind(this));
-    this.events.on(PanelEvents.panelTeardown, this.onPanelTearDown.bind(this));
-    this.events.on(PanelEvents.componentDidMount, this.onMetricsPanelMounted.bind(this));
+    $scope.$on(PanelEvents.componentDidMount.name, () => this.onMetricsPanelMounted());
   }
 
   private onMetricsPanelMounted() {
+    this.events.on(PanelEvents.refresh, this.onMetricsPanelRefresh.bind(this));
+    this.events.on(PanelEvents.panelTeardown, this.onPanelTearDown.bind(this));
+    this.panel.datasource = this.panel.datasource || null;
+
     const queryRunner = this.panel.getQueryRunner();
     this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
   }

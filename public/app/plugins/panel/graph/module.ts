@@ -24,11 +24,11 @@ import {
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { auto } from 'angular';
+import angular, { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
 import { CoreEvents } from 'app/types';
 
-class GraphCtrl extends MetricsPanelCtrl {
+class GraphCtrl extends MetricsPanelCtrl implements angular.IComponentController {
   static template = template;
 
   renderError: boolean;
@@ -147,6 +147,13 @@ class GraphCtrl extends MetricsPanelCtrl {
   constructor($scope: any, $injector: auto.IInjectorService, private annotationsSrv: AnnotationsSrv) {
     super($scope, $injector);
 
+    this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
+
+    this.onDataLinksChange = this.onDataLinksChange.bind(this);
+    this.annotationsPromise = Promise.resolve({ annotations: [] });
+  }
+
+  $onInit() {
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
@@ -155,16 +162,13 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.useDataFrames = true;
     this.processor = new DataProcessor(this.panel);
-    this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
+    this.events = this.panel.events;
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
-
-    this.onDataLinksChange = this.onDataLinksChange.bind(this);
-    this.annotationsPromise = Promise.resolve({ annotations: [] });
   }
 
   onInitEditMode() {

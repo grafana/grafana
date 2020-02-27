@@ -4,7 +4,7 @@ import { e2e } from '@grafana/e2e';
 import { VariableSrv } from 'app/features/templating/all';
 import { CoreEvents } from '../../../../types';
 
-export class SubMenuCtrl {
+export class SubMenuCtrl implements angular.IComponentController {
   annotations: any;
   variables: any;
   dashboard: any;
@@ -12,7 +12,9 @@ export class SubMenuCtrl {
   selectors: typeof e2e.pages.Dashboard.SubMenu.selectors;
 
   /** @ngInject */
-  constructor(private variableSrv: VariableSrv, private $location: ILocationService) {
+  constructor(private variableSrv: VariableSrv, private $location: ILocationService) {}
+
+  $onInit() {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;
     this.submenuEnabled = this.dashboard.meta.submenuEnabled;

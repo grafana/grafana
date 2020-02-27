@@ -95,7 +95,8 @@ export class GrafanaApp {
         $provide: angular.auto.IProvideService
       ) => {
         // pre assing bindings before constructor calls
-        $compileProvider.preAssignBindingsEnabled(true);
+        // @depecreated: angular > 1.7.0
+        // $compileProvider.preAssignBindingsEnabled(true);
 
         if (config.buildInfo.env !== 'development') {
           $compileProvider.debugInfoEnabled(false);
