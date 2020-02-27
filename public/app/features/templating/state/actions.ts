@@ -21,12 +21,6 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
 
-export interface AddVariable<T extends VariableModel = VariableModel> {
-  global: boolean; // part of dashboard or global
-  index: number; // the order in variables list
-  model: T;
-}
-
 // process flow queryVariable
 // thunk => processVariables
 //    adapter => setValueFromUrl
@@ -72,13 +66,19 @@ export interface SelectVariableOption {
   event: MouseEvent<HTMLAnchorElement>;
 }
 
+export interface AddVariable<T extends VariableModel = VariableModel> {
+  global: boolean; // part of dashboard or global
+  index: number; // the order in variables list
+  model: T;
+}
+
 export const addVariable = createAction<PrepareAction<VariablePayload<AddVariable>>>(
   'templating/addVariable',
   (payload: VariablePayload<AddVariable>) => {
     return {
       payload: {
         ...payload,
-        uuid: v4(),
+        uuid: payload.uuid ?? v4(), // for testing purposes we allow to pass existing uuid
       },
     };
   }
@@ -96,7 +96,7 @@ export const duplicateVariable = createAction<PrepareAction<VariablePayload<Dupl
         ...payload,
         data: {
           ...payload.data,
-          newUuid: payload.data.newUuid ?? v4(),
+          newUuid: payload.data.newUuid ?? v4(), // for testing purposes we allow to pass existing newUuid
         },
       },
     };

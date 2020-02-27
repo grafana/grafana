@@ -138,8 +138,8 @@ describe('templatingReducer', () => {
         reducer: jest.fn().mockReturnValue(initialState),
         getValueForUrl: jest.fn(),
         getSaveModel: jest.fn(),
-        picker: null,
-        editor: null,
+        picker: null as any,
+        editor: null as any,
         setValue: jest.fn(),
         setValueFromUrl: jest.fn(),
       };
@@ -186,8 +186,8 @@ describe('templatingReducer', () => {
         reducer: jest.fn().mockReturnValue(initialState),
         getValueForUrl: jest.fn(),
         getSaveModel: jest.fn(),
-        picker: null,
-        editor: null,
+        picker: null as any,
+        editor: null as any,
         setValue: jest.fn(),
         setValueFromUrl: jest.fn(),
       };
@@ -230,8 +230,8 @@ describe('templatingReducer', () => {
         reducer: jest.fn().mockReturnValue(initialState),
         getValueForUrl: jest.fn(),
         getSaveModel: jest.fn(),
-        picker: null,
-        editor: null,
+        picker: null as any,
+        editor: null as any,
         setValue: jest.fn(),
         setValueFromUrl: jest.fn(),
       };
