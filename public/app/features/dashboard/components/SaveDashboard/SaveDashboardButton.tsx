@@ -1,4 +1,4 @@
-import React, { ButtonHTMLAttributes } from 'react';
+import React from 'react';
 import { css } from 'emotion';
 import { ButtonVariant, Forms, ModalsController } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
