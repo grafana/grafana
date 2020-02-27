@@ -2,13 +2,11 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import {
-  dashboardTitleChange,
   clearDashboard,
   setInputs,
   setGcomDashboard,
   setJsonDashboard,
   setGcomError,
-  dashboardUidChange,
   dashboardUidExists,
   dashboardTitleExists,
 } from './reducers';
@@ -47,7 +45,7 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
   };
 }
 
-function validateDashboardTitle(dashboardName: string): ThunkResult<void> {
+export function validateDashboardTitle(dashboardName: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const routeParams = getStore().location.routeParams;
     const folderId = routeParams.folderId ? Number(routeParams.folderId) : 0 || null;
@@ -93,14 +91,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
   };
 }
 
-export function changeDashboardTitle(title: string): ThunkResult<void> {
-  return dispatch => {
-    dispatch(validateDashboardTitle(title));
-    dispatch(dashboardTitleChange(title));
-  };
-}
-
-export function changeDashboardUid(uid: string): ThunkResult<void> {
+export function validateUid(uid: string): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv()
       .get(`/api/dashboards/uid/${uid}`)
@@ -111,8 +102,6 @@ export function changeDashboardUid(uid: string): ThunkResult<void> {
         error.isHandled = true;
         dispatch(dashboardUidExists({ state: false }));
       });
-
-    dispatch(dashboardUidChange(uid));
   };
 }
 
@@ -122,7 +111,7 @@ export function resetDashboard(): ThunkResult<void> {
   };
 }
 
-export function saveDashboard(folderId: number): ThunkResult<void> {
+export function saveDashboard(title: string, uid: string, folderId: number): ThunkResult<void> {
   return async (dispatch, getState) => {
     const dashboard = getState().importDashboard.dashboard;
     const inputs = getState().importDashboard.inputs;
@@ -137,7 +126,7 @@ export function saveDashboard(folderId: number): ThunkResult<void> {
     });
 
     const result = await getBackendSrv().post('api/dashboards/import', {
-      dashboard,
+      dashboard: { ...dashboard, title, uid },
       overwrite: true,
       inputs: inputsToPersist,
       folderId,

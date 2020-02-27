@@ -1,31 +1,38 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { Forms } from '@grafana/ui';
+import { Forms, HorizontalGroup } from '@grafana/ui';
 import { dateTime } from '@grafana/data';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { changeDashboardTitle, resetDashboard, saveDashboard, changeDashboardUid } from '../state/actions';
+import { resetDashboard, saveDashboard, validateUid, validateDashboardTitle } from '../state/actions';
 import { DashboardSource } from '../state/reducers';
 import { StoreState } from '../../../types';
+
+interface ImportDashboardDTO {
+  title: string;
+  uid: string;
+  gnetId: string;
+  folderId: number;
+}
 
 interface OwnProps {}
 
 interface ConnectedProps {
-  dashboard: any;
+  dashboard: ImportDashboardDTO;
   inputs: any[];
   source: DashboardSource;
   uidExists: boolean;
   uidError: string;
-  nameExists: boolean;
-  nameError: string;
+  titleExists: boolean;
+  titleErrorMessage: string;
   meta?: any;
 }
 
 interface DispatchProps {
   resetDashboard: typeof resetDashboard;
-  changeDashboardTitle: typeof changeDashboardTitle;
+  validateDashboardTitle: typeof validateDashboardTitle;
   saveDashboard: typeof saveDashboard;
-  changeDashboardUid: typeof changeDashboardUid;
+  validateUid: typeof validateUid;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -41,8 +48,8 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
     uidReset: false,
   };
 
-  onSubmit = () => {
-    this.props.saveDashboard(this.state.folderId);
+  onSubmit = (form: ImportDashboardDTO) => {
+    this.props.saveDashboard(form.title, form.uid, this.state.folderId);
   };
 
   onCancel = () => {
@@ -50,15 +57,11 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
   };
 
   onTitleChange = (event: FormEvent<HTMLInputElement>) => {
-    this.props.changeDashboardTitle(event.currentTarget.value);
+    this.props.validateDashboardTitle(event.currentTarget.value);
   };
 
-  onFolderChange = ($folder: { title: string; id: number }) => {
-    this.setState({ folderId: $folder.id });
-  };
-
-  onUidChange = (event: FormEvent<HTMLInputElement>) => {
-    this.props.changeDashboardUid(event.currentTarget.value);
+  validateUid = (event: FormEvent<HTMLInputElement>) => {
+    this.props.validateUid(event.currentTarget.value);
   };
 
   onUidReset = () => {
@@ -66,11 +69,11 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, inputs, meta, source, uidExists, uidError, nameExists, nameError } = this.props;
+    const { dashboard, inputs, meta, source, uidExists, uidError, titleExists, titleErrorMessage } = this.props;
     const { uidReset } = this.state;
 
-    const buttonVariant = uidExists || nameExists ? 'destructive' : 'primary';
-    const buttonText = uidExists || nameExists ? 'Import (Overwrite)' : 'Import';
+    const buttonVariant = uidExists || titleExists ? 'destructive' : 'primary';
+    const buttonText = uidExists || titleExists ? 'Import (Overwrite)' : 'Import';
 
     return (
       <>
@@ -102,23 +105,30 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
             </table>
           </div>
         )}
-        <Forms.Form onSubmit={this.onSubmit} defaultValues={}>
-          {({ register, errors }) => {
+        <Forms.Form onSubmit={this.onSubmit} defaultValues={dashboard}>
+          {({ register, errors, control }) => {
+            const titleError = (titleExists && titleErrorMessage) || (!!errors.title && 'Title is required');
+
             return (
               <>
-                <Forms.Legend className="section-heading">Options</Forms.Legend>
-                <Forms.Field label="Name" invalid={nameExists || !!errors.name} error={nameError}>
+                <Forms.Legend>Options</Forms.Legend>
+                <Forms.Field label="Name" invalid={titleExists || !!errors.title} error={titleError}>
                   <Forms.Input
-                    name="name"
+                    name="title"
                     size="md"
                     type="text"
                     ref={register({ required: true })}
-                    defaultValue={dashboard.title}
                     onChange={this.onTitleChange}
                   />
                 </Forms.Field>
                 <Forms.Field label="Folder">
-                  <FolderPicker onChange={this.onFolderChange} useInNextGenForms={true} initialFolderId={0} />
+                  <Forms.InputControl
+                    as={FolderPicker}
+                    name="folderId"
+                    useNewForms
+                    initialFolderId={0}
+                    control={control}
+                  />
                 </Forms.Field>
                 <Forms.Field
                   label="Unique identifier (uid)"
@@ -130,10 +140,12 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
                 >
                   <Forms.Input
                     size="md"
-                    value={uidReset ? dashboard.uid : 'Value set'}
-                    onChange={this.onUidChange}
+                    onChange={this.validateUid}
+                    defaultValue={!uidReset && 'Value set'}
                     disabled={!uidReset}
-                    addonAfter={<Forms.Button onClick={this.onUidReset}>Clear</Forms.Button>}
+                    name="uid"
+                    ref={register({ required: true })}
+                    addonAfter={!this.state.uidReset && <Forms.Button onClick={this.onUidReset}>Clear</Forms.Button>}
                   />
                 </Forms.Field>
                 {inputs.map((input: any, index: number) => {
@@ -150,19 +162,14 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
                   }
                   return null;
                 })}
-                <div>
-                  <Forms.Button
-                    type="submit"
-                    variant={buttonVariant}
-                    onClick={this.onSubmit}
-                    style={{ marginRight: '16px' }}
-                  >
+                <HorizontalGroup>
+                  <Forms.Button type="submit" variant={buttonVariant}>
                     {buttonText}
                   </Forms.Button>
                   <Forms.Button type="reset" variant="secondary" onClick={this.onCancel}>
                     Cancel
                   </Forms.Button>
-                </div>
+                </HorizontalGroup>
               </>
             );
           }}
@@ -179,15 +186,15 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   inputs: state.importDashboard.inputs,
   uidExists: state.importDashboard.uidExists,
   uidError: state.importDashboard.uidError,
-  nameExists: state.importDashboard.titleExists,
-  nameError: state.importDashboard.titleError,
+  titleExists: state.importDashboard.titleExists,
+  titleErrorMessage: state.importDashboard.titleErrorMessage,
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  changeDashboardTitle,
+  validateDashboardTitle,
   resetDashboard,
   saveDashboard,
-  changeDashboardUid,
+  validateUid,
 };
 
 export const ImportDashboardForm = connect(mapStateToProps, mapDispatchToProps)(ImportDashboardFormUnConnected);

@@ -16,7 +16,7 @@ export interface ImportDashboardState {
   uidExists: boolean;
   uidError: string;
   titleExists: boolean;
-  titleError: string;
+  titleErrorMessage: string;
 }
 
 const initialImportDashboardState: ImportDashboardState = {
@@ -29,7 +29,7 @@ const initialImportDashboardState: ImportDashboardState = {
   uidExists: false,
   uidError: '',
   titleExists: false,
-  titleError: '',
+  titleErrorMessage: '',
 };
 
 const importDashboardSlice = createSlice({
@@ -66,25 +66,6 @@ const importDashboardSlice = createSlice({
         isLoaded: false,
       };
     },
-    dashboardTitleChange: (state, action: PayloadAction<string>): ImportDashboardState => {
-      return {
-        ...state,
-        dashboard: {
-          ...state.dashboard,
-          title: action.payload,
-        },
-      };
-    },
-    dashboardUidChange: (state, action: PayloadAction<string>): ImportDashboardState => {
-      return {
-        ...state,
-        dashboard: {
-          ...state.dashboard,
-          uid: action.payload,
-        },
-        uidExists: false,
-      };
-    },
     dashboardUidExists: (
       state,
       action: PayloadAction<{ state: boolean; dashboard?: DashboardDTO }>
@@ -101,7 +82,7 @@ const importDashboardSlice = createSlice({
       return {
         ...state,
         titleExists: action.payload.state,
-        titleError: action.payload.error,
+        titleErrorMessage: action.payload.error,
       };
     },
     setGcomError: (state, action: PayloadAction<string>): ImportDashboardState => ({
@@ -121,8 +102,6 @@ export const {
   setGcomDashboard,
   setJsonDashboard,
   setGcomError,
-  dashboardTitleChange,
-  dashboardUidChange,
   dashboardUidExists,
   dashboardTitleExists,
 } = importDashboardSlice.actions;
