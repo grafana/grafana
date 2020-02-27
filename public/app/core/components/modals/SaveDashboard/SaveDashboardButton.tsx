@@ -23,7 +23,7 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
               showModal(SaveDashboardModalProxy, {
                 dashboard,
                 onSaveSuccess,
-                onClose: hideModal,
+                onDismiss: hideModal,
               });
             }}
             variant={variant || 'primary-legacy'}
@@ -51,7 +51,7 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps> = ({ dash
               showModal(SaveDashboardAsModal, {
                 dashboard,
                 onSaveSuccess,
-                onClose: hideModal,
+                onDismiss: hideModal,
               });
             }}
             variant={variant || 'secondary'}

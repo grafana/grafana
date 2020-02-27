@@ -13,13 +13,11 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
-  console.log('hasTimeChanged', hasTimeChanged);
   return (
     <Forms.Form
       onSubmit={async (data: SaveDashboardFormDTO) => {
         const result = await onSubmit(dashboard.getSaveModelClone(data), data, dashboard);
         if (result.status === 'success') {
-          console.log(data);
           if (data.saveVariables) {
             dashboard.resetOriginalVariables();
           }

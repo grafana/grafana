@@ -229,7 +229,7 @@ export class DashNav extends PureComponent<Props> {
                     onClick={() => {
                       showModal(SaveDashboardModalProxy, {
                         dashboard,
-                        onClose: hideModal,
+                        onDismiss: hideModal,
                       });
                     }}
                   />

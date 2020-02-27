@@ -10,10 +10,10 @@ import { SaveDashboardAsButton } from './SaveDashboardButton';
 interface SaveDashboardErrorProxyProps {
   dashboard: DashboardModel;
   error: any;
-  onClose: () => void;
+  onDismiss: () => void;
 }
 
-export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = ({ dashboard, error, onClose }) => {
+export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = ({ dashboard, error, onDismiss }) => {
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
@@ -36,9 +36,9 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
           confirmText="Save & Overwrite"
           onConfirm={async () => {
             await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
-            onClose();
+            onDismiss();
           }}
-          onDismiss={onClose}
+          onDismiss={onDismiss}
         />
       )}
       {error.data && error.data.status === 'name-exists' && (
@@ -54,42 +54,42 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
           confirmText="Save & Overwrite"
           onConfirm={async () => {
             await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
-            onClose();
+            onDismiss();
           }}
-          onDismiss={onClose}
+          onDismiss={onDismiss}
         />
       )}
       {error.data && error.data.status === 'plugin-dashboard' && (
-        <ConfirmPluginDashboardSaveModal dashboard={dashboard} onClose={onClose} />
+        <ConfirmPluginDashboardSaveModal dashboard={dashboard} onDismiss={onDismiss} />
       )}
     </>
   );
 };
 
-const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ onClose, dashboard }) => {
+const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ onDismiss, dashboard }) => {
   const theme = useTheme();
   const { onDashboardSave } = useDashboardSave(dashboard);
   const styles = getConfirmPluginDashboardSaveModalStyles(theme);
 
   return (
-    <Modal className={styles.modal} title="Plugin Dashboard" icon="copy" isOpen={true} onDismiss={onClose}>
+    <Modal className={styles.modal} title="Plugin Dashboard" icon="copy" isOpen={true} onDismiss={onDismiss}>
       <div className={styles.modalContent}>
         <div className={styles.modalText}>
           Your changes will be lost when you update the plugin.
           <br /> <small>Use Save As to create custom version.</small>
         </div>
         <HorizontalGroup justify="center">
-          <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onClose} variant="primary-legacy" />
+          <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} variant="primary-legacy" />
           <Button
             variant="danger"
             onClick={async () => {
               await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
-              onClose();
+              onDismiss();
             }}
           >
             Overwrite
           </Button>
-          <Button variant="inverse" onClick={onClose}>
+          <Button variant="inverse" onClick={onDismiss}>
             Cancel
           </Button>
         </HorizontalGroup>

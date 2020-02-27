@@ -1,5 +1,4 @@
 import React from 'react';
-import { Portal } from '../Portal/Portal';
 
 interface ModalsContextState {
   component: React.ComponentType<any> | null;
@@ -56,11 +55,7 @@ export class ModalsProvider extends React.Component<ModalsProviderProps, ModalsC
 export const ModalRoot = () => (
   <ModalsContext.Consumer>
     {({ component: Component, props }) => {
-      return Component ? (
-        <Portal>
-          <Component {...props} />
-        </Portal>
-      ) : null;
+      return Component ? <Component {...props} /> : null;
     }}
   </ModalsContext.Consumer>
 );

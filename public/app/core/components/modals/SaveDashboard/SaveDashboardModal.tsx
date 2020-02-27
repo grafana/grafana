@@ -6,26 +6,26 @@ import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
 
-export const SaveDashboardModal: React.FC<SaveDashboardModalProps> = ({ dashboard, onClose, onSaveSuccess }) => {
+export const SaveDashboardModal: React.FC<SaveDashboardModalProps> = ({ dashboard, onDismiss, onSaveSuccess }) => {
   const { state, onDashboardSave } = useDashboardSave(dashboard);
   return (
     <>
-      {state.error && <SaveDashboardErrorProxy error={state.error} dashboard={dashboard} onClose={onClose} />}
+      {state.error && <SaveDashboardErrorProxy error={state.error} dashboard={dashboard} onDismiss={onDismiss} />}
       {!state.error && (
         <Modal
           isOpen={true}
           title="Save dashboard"
           icon="copy"
-          onDismiss={onClose}
+          onDismiss={onDismiss}
           className={css`
             width: 500px;
           `}
         >
           <SaveDashboardForm
             dashboard={dashboard}
-            onCancel={onClose}
+            onCancel={onDismiss}
             onSuccess={() => {
-              onClose();
+              onDismiss();
               if (onSaveSuccess) {
                 onSaveSuccess();
               }

@@ -16,6 +16,6 @@ export interface SaveDashboardFormProps {
 
 export interface SaveDashboardModalProps {
   dashboard: DashboardModel;
-  onClose: () => void;
+  onDismiss: () => void;
   onSaveSuccess?: () => void;
 }

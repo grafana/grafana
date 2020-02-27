@@ -8,26 +8,26 @@ import { css } from 'emotion';
 
 export const SaveDashboardAsModal: React.FC<SaveDashboardModalProps & {
   isNew?: boolean;
-}> = ({ dashboard, onClose, isNew }) => {
+}> = ({ dashboard, onDismiss, isNew }) => {
   const { state, onDashboardSave } = useDashboardSave(dashboard);
 
   return (
     <>
-      {state.error && <SaveDashboardErrorProxy error={state.error} dashboard={dashboard} onClose={onClose} />}
+      {state.error && <SaveDashboardErrorProxy error={state.error} dashboard={dashboard} onDismiss={onDismiss} />}
       {!state.error && (
         <Modal
           isOpen={true}
           title="Save dashboard as..."
           icon="copy"
-          onDismiss={onClose}
+          onDismiss={onDismiss}
           className={css`
             width: 500px;
           `}
         >
           <SaveDashboardAsForm
             dashboard={dashboard}
-            onCancel={onClose}
-            onSuccess={onClose}
+            onCancel={onDismiss}
+            onSuccess={onDismiss}
             onSubmit={onDashboardSave}
             isNew={isNew}
           />

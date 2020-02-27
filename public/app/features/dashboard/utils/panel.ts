@@ -20,8 +20,6 @@ import templateSrv from 'app/features/templating/template_srv';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 import { CoreEvents } from 'app/types';
 
-import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
-
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
   if (ask !== false) {
@@ -84,9 +82,9 @@ export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
-  appEvents.emit(CoreEvents.showModalReact, {
-    component: ShareModal,
-    props: {
+  appEvents.emit(CoreEvents.showModal, {
+    src: 'public/app/features/dashboard/components/ShareModal/template.html',
+    model: {
       dashboard: dashboard,
       panel: panel,
     },
