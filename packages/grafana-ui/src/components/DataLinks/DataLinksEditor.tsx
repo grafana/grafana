@@ -11,7 +11,7 @@ import { DataLinkEditor } from './DataLinkEditor';
 import { useTheme } from '../../themes/ThemeContext';
 
 interface DataLinksEditorProps {
-  value: DataLink[];
+  value?: DataLink[];
   onChange: (links: DataLink[], callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   maxLinks?: number;
@@ -28,6 +28,8 @@ export const enableDatalinksPrismSyntax = () => {
 export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, onChange, suggestions, maxLinks }) => {
   const theme = useTheme();
   enableDatalinksPrismSyntax();
+
+  value = value ?? [];
 
   const onAdd = () => {
     onChange(value ? [...value, { url: '', title: '' }] : [{ url: '', title: '' }]);

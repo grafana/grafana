@@ -20,7 +20,7 @@ const modes: Array<SelectableValue<ThresholdsMode>> = [
 
 export interface Props {
   showAlphaUI?: boolean;
-  thresholds: ThresholdsConfig;
+  thresholds?: ThresholdsConfig;
   onChange: (thresholds: ThresholdsConfig) => void;
 }
 
@@ -34,25 +34,11 @@ interface ThresholdWithKey extends Threshold {
 
 let counter = 100;
 
-function toThresholdsWithKey(steps?: Threshold[]): ThresholdWithKey[] {
-  if (!steps || steps.length === 0) {
-    steps = [{ value: -Infinity, color: 'green' }];
-  }
-
-  return steps.map(t => {
-    return {
-      color: t.color,
-      value: t.value === null ? -Infinity : t.value,
-      key: counter++,
-    };
-  });
-}
-
 export class ThresholdsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const steps = toThresholdsWithKey(props.thresholds!.steps);
+    const steps = toThresholdsWithKey(props.thresholds);
     steps[0].value = -Infinity;
 
     this.state = { steps };
@@ -257,8 +243,14 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   }
 }
 
-export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: ThresholdWithKey[]): ThresholdsConfig {
+export function thresholdsWithoutKey(
+  thresholds: ThresholdsConfig | undefined,
+  steps: ThresholdWithKey[]
+): ThresholdsConfig {
+  thresholds = thresholds ?? { steps: [], mode: ThresholdsMode.Absolute };
+
   const mode = thresholds.mode ?? ThresholdsMode.Absolute;
+
   return {
     mode,
     steps: steps.map(t => {
@@ -266,4 +258,22 @@ export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: Thresh
       return rest; // everything except key
     }),
   };
+}
+
+function toThresholdsWithKey(thresholds?: ThresholdsConfig): ThresholdWithKey[] {
+  thresholds = thresholds ?? { steps: [], mode: ThresholdsMode.Absolute };
+
+  let steps: Threshold[] = thresholds.steps || [];
+
+  if (thresholds.steps && thresholds.steps.length === 0) {
+    steps = [{ value: -Infinity, color: 'green' }];
+  }
+
+  return steps.map(t => {
+    return {
+      color: t.color,
+      value: t.value === null ? -Infinity : t.value,
+      key: counter++,
+    };
+  });
 }
