@@ -160,6 +160,8 @@ export function registerAngularDirectives() {
     ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
+    'variant',
+    'useNewForms',
     ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
     ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
   ]);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Forms, HorizontalGroup } from '@grafana/ui';
+import { Forms, HorizontalGroup, Button } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
@@ -93,9 +93,9 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
             <Forms.Switch name="copyTags" ref={register} />
           </Forms.Field>
           <HorizontalGroup>
-            <Forms.Button type="submit" aria-label="Save dashboard button" variant="primary-legacy">
+            <Button type="submit" aria-label="Save dashboard button">
               Save
-            </Forms.Button>
+            </Button>
             <Forms.Button variant="secondary" onClick={onCancel}>
               Cancel
             </Forms.Button>

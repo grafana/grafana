@@ -79,7 +79,7 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
           <br /> <small>Use Save As to create custom version.</small>
         </div>
         <HorizontalGroup justify="center">
-          <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} variant="primary-legacy" />
+          <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} />
           <Button
             variant="danger"
             onClick={async () => {

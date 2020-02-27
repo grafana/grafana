@@ -63,14 +63,6 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
           }
         `,
       };
-    case 'primary-legacy':
-      return {
-        borderColor: 'transparent',
-        background: buttonVariantStyles(theme.colors.greenBase, theme.colors.greenShade, theme.colors.white),
-        variantStyles: css`
-          border: none;
-        `,
-      };
     case 'primary':
     default:
       return {
@@ -134,7 +126,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
 });
 
 // These are different from the standard Button where there are more variants.
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link' | 'primary-legacy';
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 
 // These also needs to be different because the ButtonVariant is different
 type CommonProps = {
@@ -153,14 +145,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ varian
     size: otherProps.size || 'md',
     variant: variant || 'primary',
   });
-  return (
-    <DefaultButton
-      {...otherProps}
-      variant={variant === 'primary-legacy' ? 'primary' : variant}
-      styles={styles}
-      ref={ref}
-    />
-  );
+  return <DefaultButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
 });
 
 type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
@@ -171,12 +156,5 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>((
     size: otherProps.size || 'md',
     variant: variant || 'primary',
   });
-  return (
-    <DefaultLinkButton
-      {...otherProps}
-      variant={variant === 'primary-legacy' ? 'primary' : variant}
-      styles={styles}
-      ref={ref}
-    />
-  );
+  return <DefaultLinkButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
 });
