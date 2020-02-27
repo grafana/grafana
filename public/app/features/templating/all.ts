@@ -10,6 +10,8 @@ import { CustomVariable } from './custom_variable';
 import { ConstantVariable } from './constant_variable';
 import { AdhocVariable } from './adhoc_variable';
 import { TextBoxVariable } from './TextBoxVariable';
+import { variableAdapters } from './adapters';
+import { createQueryVariableAdapter } from './query/adapter';
 
 coreModule.factory('templateSrv', () => templateSrv);
 
@@ -23,3 +25,5 @@ export {
   AdhocVariable,
   TextBoxVariable,
 };
+
+variableAdapters.set('query', createQueryVariableAdapter());
