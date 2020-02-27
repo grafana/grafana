@@ -26,7 +26,7 @@ import {
 import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
-import { QueryRowErrors } from './QueryRowErrors';
+import { ErrorContainer } from './ErrorContainer';
 
 interface PropsFromParent {
   exploreId: ExploreId;
@@ -176,7 +176,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
             onClickRemoveButton={this.onClickRemoveButton}
           />
         </div>
-        <QueryRowErrors queryErrors={queryErrors} />
+        {queryErrors.length > 0 && <ErrorContainer queryError={queryErrors[0]} />}
       </>
     );
   }
