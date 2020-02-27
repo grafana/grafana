@@ -59,4 +59,26 @@ describe('Forms.Select utils', () => {
       expect(findSelectedValue('test5', options)).toEqual({ label: 'Option 5', value: 'test5' });
     });
   });
+
+  describe('cleanValue', () => {
+    it('should return filtered array of values for value of array type', () => {
+      const value = [null, { value: 'test', label: 'Test' }, undefined, undefined];
+      expect(cleanValue(value, options)).toEqual([{ value: 'test', label: 'Test' }]);
+    });
+
+    it('should return array when value is a single object', () => {
+      expect(cleanValue({ value: 'test', label: 'Test' }, options)).toEqual([{ value: 'test', label: 'Test' }]);
+    });
+
+    it('should return correct value when value argument is a string', () => {
+      expect(cleanValue('test1', optGroup)).toEqual([{ label: 'Group 4 - Option 1', value: 'test1' }]);
+      expect(cleanValue(3, options)).toEqual([{ label: 'Option 3', value: 3 }]);
+    });
+    it('should return empty array for null/undefined/empty values', () => {
+      expect(cleanValue([undefined], options)).toEqual([]);
+      expect(cleanValue(undefined, options)).toEqual([]);
+      expect(cleanValue(null, options)).toEqual([]);
+      expect(cleanValue('', options)).toEqual([]);
+    });
+  });
 });
