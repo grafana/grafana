@@ -27,7 +27,7 @@ export class VariableEditorList extends PureComponent<Props> {
 
   onChangeVariableOrder = (event: MouseEvent, variable: VariableModel, moveType: MoveType) => {
     event.preventDefault();
-    this.props.onChangeVariableOrder(toVariableIdentifier(variable), variable.index, variable.index + moveType);
+    this.props.onChangeVariableOrder(toVariableIdentifier(variable), variable.index!, variable.index! + moveType);
   };
 
   onDuplicateVariable = (event: MouseEvent, identifier: VariableIdentifier) => {

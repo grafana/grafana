@@ -22,7 +22,7 @@ export class TemplateSrv {
   private index: any = {};
   private grafanaVariables: any = {};
   private builtIns: any = {};
-  private timeRange: TimeRange = null;
+  private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
   constructor() {

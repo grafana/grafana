@@ -176,7 +176,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
 
     if (variableAdapters.contains(variable.type)) {
       if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
-        dependencies.push(otherVariable.initLock.promise);
+        dependencies.push(otherVariable.initLock!.promise);
       }
     }
   }
@@ -415,9 +415,9 @@ export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         const dashboard = getState().dashboard.getModel();
-        dashboard.processRepeats();
+        dashboard?.processRepeats();
         dispatch(updateLocation({ query: getQueryWithVariables(getState) }));
-        dashboard.startRefresh();
+        dashboard?.startRefresh();
       }
     });
   };

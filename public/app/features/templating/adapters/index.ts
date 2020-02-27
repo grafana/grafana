@@ -55,6 +55,6 @@ export const variableAdapters: VariableAdapters = {
   registeredTypes: (): Array<{ type: VariableType; label: string }> => {
     return Object.keys(allVariableAdapters)
       .filter((key: VariableType) => allVariableAdapters[key] !== null)
-      .map((key: VariableType) => ({ type: key, label: allVariableAdapters[key].label }));
+      .map((key: VariableType) => ({ type: key, label: allVariableAdapters[key]!.label }));
   },
 };

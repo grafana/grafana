@@ -36,12 +36,12 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class VariableEditorContainerUnconnected extends PureComponent<Props> {
   componentDidMount(): void {
-    this.props.changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' }));
+    this.props.changeToEditorListMode(toVariablePayload({ uuid: (null as unknown) as string, type: 'query' }));
   }
 
   onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' }));
+    this.props.changeToEditorListMode(toVariablePayload({ uuid: (null as unknown) as string, type: 'query' }));
   };
 
   onEditVariable = (identifier: VariableIdentifier) => {

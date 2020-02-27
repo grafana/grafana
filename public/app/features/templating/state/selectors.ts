@@ -30,5 +30,5 @@ export const getVariableStates = (state: StoreState = getState(), includeEmptyUu
   const variableStates = Object.values(state.templating.variables)
     .filter(state => (includeEmptyUuid ? true : state.variable.uuid !== emptyUuid))
     .map(state => cloneDeep(state));
-  return variableStates.sort((s1, s2) => s1.variable.index - s2.variable.index);
+  return variableStates.sort((s1, s2) => s1.variable.index! - s2.variable.index!);
 };
