@@ -30,7 +30,7 @@ export const findSelectedValue = (value: string | number, options: SelectOptions
       if (found) {
         return found;
       }
-    } else if ('value' in option && option?.value === value) {
+    } else if ('value' in option && option.value === value) {
       return option;
     }
   }
