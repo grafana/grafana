@@ -21,7 +21,7 @@ import { QueryVariableModel, VariableModel, VariableOption } from '../variable';
 import cloneDeep from 'lodash/cloneDeep';
 import { Deferred } from '../deferred';
 import { MouseEvent } from 'react';
-import { selectVariableOption } from './actions';
+import { selectVariableOption } from '../state/actions';
 
 describe('queryVariableReducer', () => {
   describe('when addVariable is dispatched', () => {

@@ -145,7 +145,14 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
       state.variables[action.payload.uuid!].variable.index = action.payload.data.index;
       state.variables[action.payload.uuid!].variable.global = action.payload.data.global;
       state.variables[action.payload.uuid!].variable.initLock = new Deferred();
-      applyStateChanges(state.variables[action.payload.uuid!], updateQuery, updateOptions);
+
+      applyStateChanges(
+        state.variables[action.payload.uuid!],
+        updateQuery,
+        updateOptions,
+        updateSelectedValues,
+        updateCurrent
+      );
     })
     .addCase(changeVariableNameSucceeded, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
@@ -263,9 +270,14 @@ const updateQuery = (state: CustomVariableState): CustomVariableState => {
     return { text: text.trim(), value: text.trim(), selected: false };
   });
 
+  if (options.length > 0 && options.filter(o => o.selected).length === 0) {
+    options[0].selected = true;
+  }
+
   if (includeAll) {
     options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
   }
+
   state.variable.options = options;
   return state;
 };
