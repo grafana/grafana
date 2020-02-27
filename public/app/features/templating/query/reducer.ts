@@ -20,7 +20,6 @@ import {
   removeInitLock,
   resolveInitLock,
   setCurrentVariableValue,
-  setInitLock,
   updateVariableOptions,
   updateVariableTags,
   showVariableDropDown,
@@ -397,10 +396,6 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       });
 
       applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateOldVariableText);
-    })
-    .addCase(setInitLock, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.variable.initLock = new Deferred();
     })
     .addCase(resolveInitLock, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
