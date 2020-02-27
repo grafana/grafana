@@ -304,6 +304,10 @@ func (s *testRenderService) RenderErrorImage(err error) (*rendering.RenderResult
 	return &rendering.RenderResult{FilePath: "image.png"}, nil
 }
 
+func (s *testRenderService) GetRenderUser(key string) (*rendering.RenderUser, bool) {
+	return nil, false
+}
+
 var _ rendering.Service = &testRenderService{}
 
 type testImageUploader struct {

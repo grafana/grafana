@@ -207,28 +207,6 @@ i.navbar-page-btn__search {
   padding-right: 13px;
 }
 
-.navbar-edit__back-btn {
-  background: transparent;
-  border: 2px solid $text-color;
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  transition: transform 0.1s ease 0.1s;
-  color: $text-color;
-
-  i {
-    font-size: $font-size-lg;
-    position: relative;
-    top: 1px;
-    right: 1px;
-  }
-
-  &:hover {
-    color: $text-color-strong;
-    border-color: $text-color-strong;
-  }
-}
-
 .navbar-settings-title {
   display: block;
   margin: 0;

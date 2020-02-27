@@ -236,9 +236,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/org/users/invite', {
-      templateUrl: 'public/app/features/org/partials/invite.html',
-      controller: 'UserInviteCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container/>',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserInvitePage" */ 'app/features/org/UserInvitePage')),
+      },
     })
     .when('/org/apikeys', {
       template: '<react-container />',
