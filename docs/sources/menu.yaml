@@ -68,7 +68,7 @@
     - link: /permissions/dashboard_folder_permissions/
       name: Dashboard and Folder
     - link: /permissions/datasource_permissions/
-      name: Datasource
+      name: Data source
   - name: Grafana CLI
     link: /administration/cli/
   - name: Internal metrics
@@ -141,6 +141,8 @@
   - name: Data Sources
     link: /features/datasources/
     children:
+    - link: /features/datasources/add_data_source/
+      name: Add data source
     - link: /features/datasources/cloudwatch/
       name: AWS Cloudwatch
     - link: /features/datasources/azuremonitor/

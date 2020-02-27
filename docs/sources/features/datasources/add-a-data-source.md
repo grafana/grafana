@@ -3,7 +3,7 @@ title = "Add a data source"
 type = "docs"
 [menu.docs]
 name = "Add a data source"
-identifier = "datasources"
+identifier = "add_data_source"
 parent = "features"
 weight = 2
 +++
