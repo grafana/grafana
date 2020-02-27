@@ -65,7 +65,11 @@ func TestUserDataAccess(t *testing.T) {
 		})
 
 		Convey("Given an organization", func() {
+			autoAssignOrg := setting.AutoAssignOrg
 			setting.AutoAssignOrg = true
+			defer func() {
+				setting.AutoAssignOrg = autoAssignOrg
+			}()
 
 			orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
 			err := CreateOrg(orgCmd)
@@ -107,8 +111,6 @@ func TestUserDataAccess(t *testing.T) {
 				err := CreateUser(context.Background(), cmd)
 				So(err, ShouldNotBeNil)
 			})
-
-			setting.AutoAssignOrg = false
 		})
 
 		Convey("Given 5 users", func() {
