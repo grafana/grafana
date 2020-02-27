@@ -216,7 +216,7 @@
     "@types/react-loadable": "5.5.2",
     "@types/react-virtualized-auto-sizer": "1.0.0",
     "abortcontroller-polyfill": "1.4.0",
-    "angular": "1.6.9",
+    "angular": "1.7.9",
     "angular-bindonce": "0.3.1",
     "angular-native-dragdrop": "1.2.2",
     "angular-route": "1.6.6",
