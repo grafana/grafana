@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Forms, HorizontalGroup } from '@grafana/ui';
-import { SaveDashboardFormProps } from '../types';
 import { e2e } from '@grafana/e2e';
+import { SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardFormDTO {
   message: string;

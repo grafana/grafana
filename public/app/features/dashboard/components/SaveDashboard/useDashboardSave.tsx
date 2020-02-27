@@ -1,14 +1,14 @@
-import { SaveDashboardOptions } from './types';
-import { DashboardModel } from '../../../../features/dashboard/state';
-import { getBackendSrv } from '../../../services/backend_srv';
-import { useDispatch, useSelector } from 'react-redux';
-import { CoreEvents, StoreState } from '../../../../types';
-import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useEffect } from 'react';
-import appEvents from '../../../app_events';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { AppEvents } from '@grafana/data';
-import locationUtil from '../../../utils/location_util';
-import { updateLocation } from '../../../reducers/location';
+import { useDispatch, useSelector } from 'react-redux';
+import { SaveDashboardOptions } from './types';
+import { CoreEvents, StoreState } from 'app/types';
+import appEvents from 'app/core/app_events';
+import locationUtil from 'app/core/utils/location_util';
+import { updateLocation } from 'app/core/reducers/location';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
   const folderId = options.folderId >= 0 ? options.folderId : dashboard.meta.folderId || saveModel.folderId;

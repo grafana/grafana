@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
-import { CustomScrollbar, Forms, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
 import { css } from 'emotion';
 import { saveAs } from 'file-saver';
+import { CustomScrollbar, Forms, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
+import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { SaveDashboardFormProps } from '../types';
-import { CopyToClipboard } from '../../../CopyToClipboard/CopyToClipboard';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
   const dashboardJSON = useMemo(() => {

@@ -1,8 +1,8 @@
-import { DashboardModel } from '../../../../features/dashboard/state';
 import React, { useEffect } from 'react';
 import { Button, ConfirmModal, HorizontalGroup, Modal, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
 import { SaveDashboardAsButton } from './SaveDashboardButton';

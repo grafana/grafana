@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { DashboardModel } from 'app/features/dashboard/state';
 import { act } from 'react-dom/test-utils';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { SaveDashboardForm } from './SaveDashboardForm';
 
 const prepareDashboardMock = (

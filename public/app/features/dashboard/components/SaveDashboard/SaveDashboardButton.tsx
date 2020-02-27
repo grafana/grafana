@@ -1,11 +1,11 @@
-import { SaveDashboardModalProxy } from './SaveDashboardModalProxy';
-import { ModalsController, Forms, ButtonVariant } from '@grafana/ui';
 import React from 'react';
-import { DashboardModel } from '../../../../features/dashboard/state';
-import { connectWithProvider } from '../../../utils/connectWithReduxStore';
+import { css } from 'emotion';
+import { ButtonVariant, Forms, ModalsController } from '@grafana/ui';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { connectWithProvider } from 'app/core/utils/connectWithReduxStore';
 import { provideModalsContext } from 'app/routes/ReactContainer';
 import { SaveDashboardAsModal } from './SaveDashboardAsModal';
-import { css } from 'emotion';
+import { SaveDashboardModalProxy } from './SaveDashboardModalProxy';
 
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;

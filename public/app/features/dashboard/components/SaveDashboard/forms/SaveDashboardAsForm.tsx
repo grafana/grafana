@@ -1,7 +1,7 @@
 import React from 'react';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { Forms, HorizontalGroup } from '@grafana/ui';
-import { FolderPicker } from '../../../Select/FolderPicker';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
 
 export const NEW_DASHBOARD_DEFAULT_TITLE = 'New dashboard';

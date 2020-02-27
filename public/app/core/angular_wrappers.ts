@@ -27,7 +27,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import {
   SaveDashboardAsButtonConnected,
   SaveDashboardButtonConnected,
-} from './components/modals/SaveDashboard/SaveDashboardButton';
+} from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);

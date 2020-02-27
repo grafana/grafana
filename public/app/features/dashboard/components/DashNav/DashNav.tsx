@@ -15,7 +15,7 @@ import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
-import { SaveDashboardModalProxy } from 'app/core/components/modals/SaveDashboard/SaveDashboardModalProxy';
+import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
 export interface OwnProps {
   dashboard: DashboardModel;

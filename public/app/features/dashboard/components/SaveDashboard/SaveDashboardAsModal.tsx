@@ -1,10 +1,10 @@
 import React from 'react';
+import { css } from 'emotion';
 import { Modal } from '@grafana/ui';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
-import { css } from 'emotion';
 
 export const SaveDashboardAsModal: React.FC<SaveDashboardModalProps & {
   isNew?: boolean;

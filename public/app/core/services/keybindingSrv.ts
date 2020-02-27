@@ -15,13 +15,7 @@ import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getLocationSrv } from '@grafana/runtime';
 import { DashboardModel } from '../../features/dashboard/state';
-import { SaveDashboardModalProxy } from '../components/modals/SaveDashboard/SaveDashboardModalProxy';
-// import ReactDOM from 'react-dom';
-// import React from 'react';
-// import {
-//   SaveDashboardModalProxy,
-//   SaveDashboardModalProxyAngular,
-// } from '../components/modals/SaveDashboard/SaveDashboardModalProxy';
+import { SaveDashboardModalProxy } from '../../features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
 export class KeybindingSrv {
   helpModal: boolean;
