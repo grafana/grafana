@@ -2,12 +2,12 @@ package api
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
-	"math"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
