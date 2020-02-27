@@ -1,9 +1,11 @@
 import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, ExploreMode, AppEvents } from '@grafana/data';
 import { QueryHistoryQuery } from './QueryHistoryQueries';
-import { copyQueryToClipboard } from '../../../core/utils/explore';
+import { copyQueryToClipboard, copyToClipboard, serializeStateToUrlParam } from '../../../core/utils/explore';
+import { renderUrl } from 'app/core/utils/url';
+import appEvents from 'app/core/app_events';
 
 interface Props {
   query: QueryHistoryQuery;
@@ -55,6 +57,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQueryHistoryProperty }) => {
   const [starred, updateStared] = useState(query.starred);
+  let queryExpressions: any[] = [];
 
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -64,16 +67,50 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQuer
       <div className={styles.queryCardLeft}>
         {query.queries
           .filter(q => q !== '')
-          .map((q, index) => (
-            <div key={`${q}-${index}`} className={styles.queryRow}>
-              {q}
-            </div>
-          ))}
+          .map((q, index) => {
+            queryExpressions.push({ expr: q });
+            return (
+              <div key={`${q}-${index}`} className={styles.queryRow}>
+                {q}
+              </div>
+            );
+          })}
         {query.comment && <div>{query.comment}</div>}
       </div>
       <div className={styles.queryCardRight}>
-        <i className="fa fa-fw fa-copy" onClick={() => copyQueryToClipboard(query)}></i>
-        <i className="fa fa-fw fa-link" style={{ fontWeight: 'normal' }}></i>
+        <i
+          className="fa fa-fw fa-copy"
+          onClick={() => {
+            copyQueryToClipboard(query);
+            appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
+          }}
+        ></i>
+        <i
+          className="fa fa-fw fa-link"
+          onClick={() => {
+            let state = {
+              datasource: `${query.datasourceName}`,
+              queries: queryExpressions,
+              range: { from: 'now-1h', to: 'now' },
+              mode: query.datasourceId === 'loki' ? ExploreMode.Logs : ExploreMode.Metrics,
+              ui: {
+                showingGraph: true,
+                showingLogs: true,
+                showingTable: true,
+              },
+            };
+
+            console.log(query);
+
+            let serializedState = serializeStateToUrlParam(state, true);
+            let baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)[0];
+            console.log(baseUrl);
+            let url = renderUrl(`${baseUrl}/explore`, { left: serializedState });
+            copyToClipboard(url);
+            appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
+          }}
+          style={{ fontWeight: 'normal' }}
+        ></i>
         <i
           className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
           onClick={() => {

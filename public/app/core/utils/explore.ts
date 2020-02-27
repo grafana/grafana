@@ -371,21 +371,25 @@ export function addToQueryHistory(
   sessionName: string
 ): any {
   const ts = Date.now();
-  const stringifiedQueries = queries.map(q => q.expr);
+  const stringifiedQueries = queries.map(q => q.expr).filter(expr => expr !== '');
 
-  let newQueryHistory = [
-    { queries: stringifiedQueries, ts, datasourceId, datasourceName, starred, comment, sessionName },
-    ...queryHistory,
-  ];
+  if (stringifiedQueries.length > 0) {
+    let newQueryHistory = [
+      { queries: stringifiedQueries, ts, datasourceId, datasourceName, starred, comment, sessionName },
+      ...queryHistory,
+    ];
 
-  if (newQueryHistory.length > MAX_HISTORY_ITEMS) {
-    newQueryHistory = newQueryHistory.slice(0, MAX_HISTORY_ITEMS);
+    if (newQueryHistory.length > MAX_HISTORY_ITEMS) {
+      newQueryHistory = newQueryHistory.slice(0, MAX_HISTORY_ITEMS);
+    }
+
+    // Combine all queries of a datasource type into one history
+    const queryHistoryKey = 'grafana.explore.queryHistory';
+    store.setObject(queryHistoryKey, newQueryHistory);
+    return newQueryHistory;
   }
 
-  // Combine all queries of a datasource type into one history
-  const queryHistoryKey = 'grafana.explore.queryHistory';
-  store.setObject(queryHistoryKey, newQueryHistory);
-  return newQueryHistory;
+  return queryHistory;
 }
 
 export function getQueryHistory() {
@@ -615,6 +619,15 @@ export const sortQueries = (array: QueryHistoryQuery[], sortingValue: SortingVal
 export const copyQueryToClipboard = (query: QueryHistoryQuery) => {
   const el = document.createElement('textarea');
   el.value = query.queries.join('\n\n');
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+};
+
+export const copyToClipboard = (url: string) => {
+  const el = document.createElement('textarea');
+  el.value = url;
   document.body.appendChild(el);
   el.select();
   document.execCommand('copy');

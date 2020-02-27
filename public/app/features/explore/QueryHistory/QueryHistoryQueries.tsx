@@ -24,7 +24,7 @@ export type DataSourceOption = {
 export type QueryHistoryQuery = {
   ts: number;
   datasourceName: string;
-  datasourceType: string;
+  datasourceId: string;
   starred: boolean;
   comment: string;
   queries: string[];
