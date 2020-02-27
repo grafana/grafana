@@ -14,6 +14,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
+import { EDIT_PANEL_ID } from 'app/core/constants';
 
 import config from 'app/core/config';
 
@@ -38,7 +39,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   isInView: true,
-  isNewEdit: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -89,9 +89,11 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
+  options: {},
 };
 
 export class PanelModel {
+  /* persisted id, used in URL to identify a panel */
   id: number;
   gridPos: GridPos;
   type: string;
@@ -131,7 +133,6 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   isInView: boolean;
-  isNewEdit: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -180,7 +181,6 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
-
     this.render();
   }
 
@@ -280,6 +280,7 @@ export class PanelModel {
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
+
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;
@@ -354,16 +355,20 @@ export class PanelModel {
   }
 
   getEditClone() {
-    const clone = new PanelModel(this.getSaveModel());
-    clone.queryRunner = new PanelQueryRunner();
+    const sourceModel = this.getSaveModel();
 
-    // This will send the last result to the new runner
-    this.getQueryRunner()
+    // Temporary id for the clone, restored later in redux action when changes are saved
+    sourceModel.id = EDIT_PANEL_ID;
+
+    const clone = new PanelModel(sourceModel);
+    const sourceQueryRunner = this.getQueryRunner();
+
+    // pipe last result to new clone query runner
+    sourceQueryRunner
       .getData()
       .pipe(take(1))
-      .subscribe(val => clone.queryRunner.pipeDataToSubject(val));
+      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
 
-    clone.isNewEdit = true;
     return clone;
   }
 

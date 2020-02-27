@@ -42,6 +42,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
       max={settings.max}
       type="number"
       step={settings.step}
+      placeholder={settings.placeholder}
       onChange={e => {
         onChange(
           settings.integer ? toIntegerOrUndefined(e.currentTarget.value) : toFloatOrUndefined(e.currentTarget.value)
@@ -64,6 +65,7 @@ export const NumberOverrideEditor: React.FC<FieldOverrideEditorProps<number, Num
       max={settings.max}
       type="number"
       step={settings.step}
+      placeholder={settings.placeholder}
       onChange={e => {
         onChange(
           settings.integer ? toIntegerOrUndefined(e.currentTarget.value) : toFloatOrUndefined(e.currentTarget.value)

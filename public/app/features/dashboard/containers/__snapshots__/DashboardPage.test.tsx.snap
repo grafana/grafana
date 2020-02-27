@@ -4,7 +4,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
 <div
   className=""
 >
-  <Component
+  <Connect(DashNav)
     $injector={Object {}}
     dashboard={
       DashboardModel {
@@ -66,6 +66,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "y": 0,
             },
             "id": 1,
+            "options": Object {},
             "restoreModel": [Function],
             "targets": Array [
               Object {
@@ -94,7 +95,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "timezone": "",
         "title": "My dashboard",
         "uid": null,
-        "updatePanel": [Function],
         "version": 0,
       }
     }
@@ -113,7 +113,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       autoHideTimeout={200}
       className="custom-scrollbar--page"
       hideTracksWhenNotNeeded={false}
-      scrollTop={null}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
@@ -181,6 +180,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "y": 0,
                   },
                   "id": 1,
+                  "options": Object {},
                   "restoreModel": [Function],
                   "targets": Array [
                     Object {
@@ -209,7 +209,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
-              "updatePanel": [Function],
               "version": 0,
             }
           }
@@ -275,6 +274,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "y": 0,
                   },
                   "id": 1,
+                  "options": Object {},
                   "restoreModel": [Function],
                   "targets": Array [
                     Object {
@@ -303,7 +303,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
-              "updatePanel": [Function],
               "version": 0,
             }
           }
@@ -339,7 +338,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
 <div
   className="dashboard-page--settings-opening"
 >
-  <Component
+  <Connect(DashNav)
     $injector={Object {}}
     dashboard={
       DashboardModel {
@@ -401,6 +400,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "y": 0,
             },
             "id": 1,
+            "options": Object {},
             "restoreModel": [Function],
             "targets": Array [
               Object {
@@ -429,7 +429,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "timezone": "",
         "title": "My dashboard",
         "uid": null,
-        "updatePanel": [Function],
         "version": 0,
       }
     }
@@ -449,7 +448,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       autoHideTimeout={200}
       className="custom-scrollbar--page"
       hideTracksWhenNotNeeded={false}
-      scrollTop={null}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
     >
@@ -514,6 +512,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   "y": 0,
                 },
                 "id": 1,
+                "options": Object {},
                 "restoreModel": [Function],
                 "targets": Array [
                   Object {
@@ -542,7 +541,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             "timezone": "",
             "title": "My dashboard",
             "uid": null,
-            "updatePanel": [Function],
             "version": 0,
           }
         }
@@ -611,6 +609,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "y": 0,
                   },
                   "id": 1,
+                  "options": Object {},
                   "restoreModel": [Function],
                   "targets": Array [
                     Object {
@@ -639,7 +638,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
-              "updatePanel": [Function],
               "version": 0,
             }
           }
@@ -705,6 +703,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "y": 0,
                   },
                   "id": 1,
+                  "options": Object {},
                   "restoreModel": [Function],
                   "targets": Array [
                     Object {
@@ -733,7 +732,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
-              "updatePanel": [Function],
               "version": 0,
             }
           }

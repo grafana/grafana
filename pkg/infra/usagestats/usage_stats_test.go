@@ -160,6 +160,7 @@ func TestMetrics(t *testing.T) {
 		oauthProviders := map[string]bool{
 			"github":        true,
 			"gitlab":        true,
+			"azuread":       true,
 			"google":        true,
 			"generic_oauth": true,
 			"grafana_com":   true,
@@ -254,6 +255,7 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.auth_enabled.oauth_github.count").MustInt(), ShouldEqual, 1)
 				So(metrics.Get("stats.auth_enabled.oauth_gitlab.count").MustInt(), ShouldEqual, 1)
 				So(metrics.Get("stats.auth_enabled.oauth_google.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.oauth_azuread.count").MustInt(), ShouldEqual, 1)
 				So(metrics.Get("stats.auth_enabled.oauth_generic_oauth.count").MustInt(), ShouldEqual, 1)
 				So(metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt(), ShouldEqual, 1)
 

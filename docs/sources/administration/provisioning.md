@@ -253,9 +253,9 @@ Note: The JSON definition in the input field when using `Copy JSON to Clipboard`
                                                                                                                                                                  
 {{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-### Reusable Dashboard Urls
+### Reusable Dashboard URLs
 
-If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifier.
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the URLs given since the new dashboard URL uses the uid as identifier.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
 By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
@@ -351,7 +351,9 @@ The following sections detail the supported settings for each alert notification
 | icon_emoji |
 | icon_url |
 | uploadImage |
-| mention |
+| mentionUsers |
+| mentionGroups |
+| mentionChannel |
 | token |
 
 #### Alert notification `victorops`

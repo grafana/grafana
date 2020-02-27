@@ -24,7 +24,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     container: css`
       position: relative;
       display: flex;
-      padding: 2px 2px;
     `,
   };
 });
@@ -67,6 +66,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
   onMoveBack = () => {
     appEvents.emit(CoreEvents.shiftTime, -1);
   };
+
   onMoveForward = () => {
     appEvents.emit(CoreEvents.shiftTime, 1);
   };

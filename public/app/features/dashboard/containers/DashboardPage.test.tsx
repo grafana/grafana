@@ -8,7 +8,7 @@ import {
   mockToolkitActionCreatorWithoutPayload,
   ToolkitActionCreatorWithoutPayloadMockType,
 } from 'test/core/redux/mocks';
-import { DashboardInitPhase, DashboardRouteInfo, MutableDashboard } from 'app/types';
+import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
@@ -215,7 +215,7 @@ describe('DashboardPage', () => {
     it('should set scrollTop to 0', () => {
       expect(ctx.wrapper).not.toBe(null);
       expect(ctx.wrapper?.state()).not.toBe(null);
-      expect(ctx.wrapper?.state().scrollTop).toBe(0);
+      expect(ctx.wrapper?.state().updateScrollTop).toBe(0);
     });
 
     it('should add panel widget to dashboard panels', () => {
@@ -271,8 +271,9 @@ describe('DashboardPage', () => {
           edit: false,
         },
       },
+      panelEditorNew: {},
       dashboard: {
-        getModel: () => null as MutableDashboard,
+        getModel: () => ({} as DashboardModel),
       },
     } as any);
 
@@ -289,8 +290,9 @@ describe('DashboardPage', () => {
           edit: 'true',
         },
       },
+      panelEditorNew: {},
       dashboard: {
-        getModel: () => null as MutableDashboard,
+        getModel: () => ({} as DashboardModel),
       },
     } as any);
 

@@ -17,7 +17,7 @@ import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  timeInfo: string;
+  timeInfo?: string;
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
