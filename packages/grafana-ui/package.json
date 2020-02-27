@@ -12,18 +12,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git"
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-ui"
   },
   "main": "src/index.ts",
   "scripts": {
+    "build": "grafana-toolkit package:build --scope=ui",
+    "bundle": "rollup -c rollup.config.ts",
+    "clean": "rimraf ./dist ./compiled",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "lint": "eslint .storybook/ src/ --ext=.js,.ts,.tsx",
-    "typecheck": "tsc --noEmit",
     "storybook": "start-storybook -p 9001 -c .storybook -s .storybook/static",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s .storybook/static",
-    "clean": "rimraf ./dist ./compiled",
-    "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=ui",
-    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@grafana/data": "6.7.0-pre",
