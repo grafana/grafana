@@ -11,7 +11,7 @@ import {
 } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { initialCustomVariableState, customVariableReducer, ALL_VARIABLE_TEXT } from './reducer';
-import { QueryVariablePicker } from '../query/QueryVariablePicker';
+import { CustomVariablePicker } from './CustomVariablePicker';
 import { CustomVariableEditor } from './CustomVariableEditor';
 
 export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
@@ -20,7 +20,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableMode
     label: 'Custom',
     initialState: initialCustomVariableState,
     reducer: customVariableReducer,
-    picker: QueryVariablePicker,
+    picker: CustomVariablePicker,
     editor: CustomVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);

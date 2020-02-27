@@ -4,9 +4,8 @@ import { e2e } from '@grafana/e2e';
 
 import { QueryVariableModel } from '../variable';
 import { dispatch } from '../../../store/store';
-import { toVariablePayload } from '../state/actions';
-import { getLinkText, QueryVariablePickerState } from '../query/reducer';
-import { showQueryVariableDropDown } from '../query/actions';
+import { toVariablePayload, showVariableDropDown } from '../state/actions';
+import { getLinkText, QueryVariablePickerState } from './reducer';
 import { VariablePickerProps } from '../state/types';
 
 export interface Props extends VariablePickerProps<QueryVariableModel, QueryVariablePickerState> {}
@@ -15,7 +14,7 @@ export class VariableOptionsLinkText extends PureComponent<Props> {
   onShowDropDown = (event: MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
     event.preventDefault();
-    dispatch(showQueryVariableDropDown(toVariablePayload(this.props.variable)));
+    dispatch(showVariableDropDown(toVariablePayload(this.props.variable)));
   };
 
   render() {

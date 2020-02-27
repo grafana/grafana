@@ -1,8 +1,17 @@
 import { createReducer } from '@reduxjs/toolkit';
-import _ from 'lodash';
-import { DataSourceApi } from '@grafana/data';
-import { VariableHide, VariableOption, VariableTag, CustomVariableModel } from '../variable';
-import { addVariable, updateVariableQuery } from '../state/actions';
+import _, { cloneDeep } from 'lodash';
+import { VariableHide, VariableOption, CustomVariableModel } from '../variable';
+import {
+  addVariable,
+  updateVariableQuery,
+  changeVariableProp,
+  changeVariableNameSucceeded,
+  changeVariableNameFailed,
+  toggleAllVariableOptions,
+  showVariableDropDown,
+  hideVariableDropDown,
+  selectVariableOption,
+} from '../state/actions';
 import {
   emptyUuid,
   initialVariableEditorState,
@@ -10,9 +19,8 @@ import {
   VariableState,
   getInstanceState,
 } from '../state/types';
-import { ComponentType } from 'react';
-import { VariableQueryProps } from '../../../types';
-import { initialTemplatingState } from '../state/reducers';
+import { initialTemplatingState, TemplatingState } from '../state/reducers';
+import { Deferred } from '../deferred';
 
 export type MutateStateFunc<S extends VariableState> = (state: S) => S;
 export const applyStateChanges = <S extends VariableState>(state: S, ...args: Array<MutateStateFunc<S>>): S => {
@@ -24,18 +32,14 @@ export const applyStateChanges = <S extends VariableState>(state: S, ...args: Ar
 export interface CustomVariablePickerState {
   showDropDown: boolean;
   selectedValues: VariableOption[];
-  selectedTags: VariableTag[];
-  searchQuery: string | null;
   highlightIndex: number;
-  tags: VariableTag[];
   options: VariableOption[];
   oldVariableText: string | string[] | null;
+  searchQuery: string | null;
 }
 
-export interface CustomVariableEditorState extends VariableEditorState {
-  VariableQueryEditor: ComponentType<VariableQueryProps> | null;
-  dataSource: DataSourceApi | null;
-}
+/** TODO: use the VariableEditorState directly? */
+export interface CustomVariableEditorState extends VariableEditorState {}
 
 export interface CustomVariableState
   extends VariableState<CustomVariablePickerState, CustomVariableEditorState, CustomVariableModel> {}
@@ -43,10 +47,8 @@ export interface CustomVariableState
 export const initialCustomVariablePickerState: CustomVariablePickerState = {
   highlightIndex: -1,
   searchQuery: null,
-  selectedTags: [],
   selectedValues: [],
   showDropDown: false,
-  tags: [],
   options: [],
   oldVariableText: null,
 };
@@ -71,14 +73,42 @@ export const initialCustomVariableModelState: CustomVariableModel = {
 
 export const initialCustomVariableEditorState: CustomVariableEditorState = {
   ...initialVariableEditorState,
-  VariableQueryEditor: null,
-  dataSource: null,
+  type: 'custom',
 };
 
 export const initialCustomVariableState: CustomVariableState = {
   picker: initialCustomVariablePickerState,
   editor: initialCustomVariableEditorState,
   variable: initialCustomVariableModelState,
+};
+
+const hideOtherDropDowns = (state: TemplatingState) => {
+  // hack that closes drop downs that already are opened
+  // could be solved by moving picker state to
+  // 1. A separate picker state slice under templating in Redux
+  //  PROS:
+  //    - smaller state tree
+  //    - no need for this hack since there's only one picker state
+  //  CONS:
+  //    - state for a variable is no longer in one place but spread out under variables.variable and templating[type].picker templating[type].editor
+  //    - picker state will also need addressing like type and uuid to filter out picker state
+  // 2. Use local React state instead
+  //  PROS:
+  //    - no state tree
+  //    - no need for this hack
+  //  CONS:
+  //    - lot's of code and logic that has to move into component
+  //    - harder to test component, easier to test reducer
+  const openedDropDowns = Object.values(state.variables).filter(s => {
+    if (s.variable.type === 'custom') {
+      return (s.picker as CustomVariablePickerState).showDropDown;
+    }
+    return false;
+  });
+  openedDropDowns.map(state => {
+    state.picker = initialCustomVariablePickerState;
+    return state;
+  });
 };
 
 /**
@@ -93,22 +123,172 @@ export const NONE_VARIABLE_VALUE = '';
 
 export const customVariableReducer = createReducer(initialTemplatingState, builder =>
   builder
-    .addCase(addVariable, (state, action) => {})
+    .addCase(toggleAllVariableOptions, (state, action) => {
+      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
+      const { options } = instanceState.variable;
+      const selected = !options.find(option => option.selected);
+
+      instanceState.variable.options = options.map(option => ({
+        ...option,
+        selected,
+      }));
+
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
+    })
+    .addCase(addVariable, (state, action) => {
+      state.variables[action.payload.uuid!] = cloneDeep(initialCustomVariableState);
+      state.variables[action.payload.uuid!].variable = {
+        ...state.variables[action.payload.uuid!].variable,
+        ...action.payload.data.model,
+      };
+      state.variables[action.payload.uuid!].variable.uuid = action.payload.uuid;
+      state.variables[action.payload.uuid!].variable.index = action.payload.data.index;
+      state.variables[action.payload.uuid!].variable.global = action.payload.data.global;
+      state.variables[action.payload.uuid!].variable.initLock = new Deferred();
+      applyStateChanges(state.variables[action.payload.uuid!], updateQuery, updateOptions);
+    })
+    .addCase(changeVariableNameSucceeded, (state, action) => {
+      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
+      delete instanceState.editor.errors['name'];
+      instanceState.editor.name = action.payload.data;
+      instanceState.variable.name = action.payload.data;
+      applyStateChanges(instanceState, updateEditorIsValid);
+    })
+    .addCase(changeVariableNameFailed, (state, action) => {
+      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
+      instanceState.editor.name = action.payload.data.newName;
+      instanceState.editor.errors.name = action.payload.data.errorText;
+      applyStateChanges(instanceState, updateEditorIsValid);
+    })
     .addCase(updateVariableQuery, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid);
-      const query = action.payload.data ?? instanceState.variable.query ?? '';
-      const { includeAll } = instanceState.variable;
+      instanceState.variable.query = action.payload.data ?? instanceState.variable.query ?? '';
+      applyStateChanges(instanceState, updateQuery, updateOptions);
+    })
+    .addCase(changeVariableProp, (state, action) => {
+      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
+      (instanceState.variable as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
 
-      const options = query.match(/(?:\\,|[^,])+/g).map(text => {
-        text = text.replace(/\\,/g, ',');
-        return { text: text.trim(), value: text.trim(), selected: false };
+      applyStateChanges(instanceState, updateEditorErrors, updateEditorIsValid);
+    })
+    .addCase(showVariableDropDown, (state, action) => {
+      hideOtherDropDowns(state);
+      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
+      const oldVariableText = instanceState.picker.oldVariableText || instanceState.variable.current.text;
+      const highlightIndex = -1;
+      const showDropDown = true;
+      // const queryHasSearchFilter = getQueryHasSearchFilter(instanceState.variable);
+      // // new behaviour, if this is a query that uses searchfilter it might be a nicer
+      // // user experience to show the last typed search query in the input field
+      // const searchQuery =
+      //   queryHasSearchFilter && instanceState.picker.searchQuery ? instanceState.picker.searchQuery : '';
+
+      instanceState.picker.oldVariableText = oldVariableText;
+      instanceState.picker.highlightIndex = highlightIndex;
+      //instanceState.picker.searchQuery = searchQuery;
+      instanceState.picker.showDropDown = showDropDown;
+
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues);
+    })
+    .addCase(hideVariableDropDown, (state, action) => {
+      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
+      instanceState.picker.showDropDown = false;
+
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues);
+    })
+    .addCase(selectVariableOption, (state, action) => {
+      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
+      const { option, forceSelect, event } = action.payload.data;
+      const { multi } = instanceState.variable;
+      const newOptions: VariableOption[] = instanceState.variable.options.map(o => {
+        if (o.value !== option.value) {
+          let selected = o.selected;
+          if (o.text === ALL_VARIABLE_TEXT || option.text === ALL_VARIABLE_TEXT) {
+            selected = false;
+          } else if (!multi) {
+            selected = false;
+          } else if (event && (event.ctrlKey || event.metaKey || event.shiftKey)) {
+            selected = false;
+          }
+          o.selected = selected;
+          return o;
+        }
+        o.selected = forceSelect ? true : multi ? !option.selected : true;
+        return o;
       });
 
-      if (includeAll) {
-        options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
+      if (newOptions.length > 0 && newOptions.filter(o => o.selected).length === 0) {
+        newOptions[0].selected = true;
       }
 
-      instanceState.variable.options = options;
-      instanceState.variable.query = query;
+      instanceState.variable.options = newOptions;
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
     })
 );
+
+const updateEditorErrors = (state: CustomVariableState): CustomVariableState => {
+  let errorText = null;
+  if (
+    typeof state.variable.query === 'string' &&
+    state.variable.query.match(new RegExp('\\$' + state.variable.name + '(/| |$)'))
+  ) {
+    errorText = 'TODO: add better error message and validation..';
+  }
+
+  if (!errorText) {
+    delete state.editor.errors.query;
+    return state;
+  }
+
+  state.editor.errors.query = errorText;
+  return state;
+};
+
+const updateEditorIsValid = (state: CustomVariableState): CustomVariableState => {
+  state.editor.isValid = Object.keys(state.editor.errors).length === 0;
+  return state;
+};
+
+const updateSelectedValues = (state: CustomVariableState): CustomVariableState => {
+  state.picker.selectedValues = state.variable.options.filter(o => o.selected);
+  return state;
+};
+
+const updateQuery = (state: CustomVariableState): CustomVariableState => {
+  const { includeAll, query } = state.variable;
+  const match = query.match(/(?:\\,|[^,])+/g) ?? [];
+
+  const options = match.map(text => {
+    text = text.replace(/\\,/g, ',');
+    return { text: text.trim(), value: text.trim(), selected: false };
+  });
+
+  if (includeAll) {
+    options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
+  }
+  state.variable.options = options;
+  return state;
+};
+
+const updateOptions = (state: CustomVariableState): CustomVariableState => {
+  state.picker.options = state.variable.options.slice(0, Math.min(state.variable.options.length, 1000));
+  return state;
+};
+
+const updateCurrent = (state: CustomVariableState): CustomVariableState => {
+  const { options, searchQuery, selectedValues } = state.picker;
+
+  state.variable.current.value = selectedValues.map(v => v.value) as string[];
+  state.variable.current.text = selectedValues.map(v => v.text).join(' + ');
+
+  if (!state.variable.multi) {
+    state.variable.current.value = selectedValues[0].value;
+  }
+
+  // if we have a search query and no options use that
+  if (options.length === 0 && searchQuery && searchQuery.length > 0) {
+    state.variable.current = { text: searchQuery, value: searchQuery, selected: false };
+  }
+
+  return state;
+};

@@ -83,6 +83,12 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
     };
   }
 );
+export const selectVariableOption = createAction<VariablePayload<SelectVariableOption>>(
+  'templating/selectVariableOption'
+);
+export const toggleAllVariableOptions = createAction<VariablePayload>('templating/toggleAllOptions');
+export const showVariableDropDown = createAction<VariablePayload>('templating/showVariableDropDown');
+export const hideVariableDropDown = createAction<VariablePayload>('templating/hideVariableDropDown');
 export const removeVariable = createAction<VariablePayload>('templating/removeVariable');
 export const storeNewVariable = createAction<VariablePayload>('templating/storeNewVariable');
 export interface DuplicateVariable {

@@ -23,6 +23,10 @@ import {
   setInitLock,
   updateVariableOptions,
   updateVariableTags,
+  showVariableDropDown,
+  hideVariableDropDown,
+  toggleAllVariableOptions,
+  selectVariableOption,
 } from '../state/actions';
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
@@ -36,12 +40,8 @@ import {
 import {
   changeQueryVariableHighlightIndex,
   changeQueryVariableSearchQuery,
-  hideQueryVariableDropDown,
   queryVariableDatasourceLoaded,
   queryVariableEditorLoaded,
-  selectVariableOption,
-  showQueryVariableDropDown,
-  toggleAllVariableOptions,
   toggleVariableTag,
 } from './actions';
 import { ComponentType } from 'react';
@@ -117,6 +117,7 @@ export const initialQueryVariableEditorState: QueryVariableEditorState = {
   ...initialVariableEditorState,
   VariableQueryEditor: null,
   dataSource: null,
+  type: 'query',
 };
 
 export const initialQueryVariableState: QueryVariableState = {
@@ -149,9 +150,12 @@ const hideOtherDropDowns = (state: TemplatingState) => {
   //  CONS:
   //    - lot's of code and logic that has to move into component
   //    - harder to test component, easier to test reducer
-  const openedDropDowns = Object.values(state.variables).filter(
-    s => (s.picker as QueryVariablePickerState).showDropDown
-  );
+  const openedDropDowns = Object.values(state.variables).filter(s => {
+    if (s.variable.type === 'query') {
+      return (s.picker as QueryVariablePickerState).showDropDown;
+    }
+    return false;
+  });
   openedDropDowns.map(state => {
     state.picker = initialQueryVariablePickerState;
     return state;
@@ -435,7 +439,7 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
 
       applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
     })
-    .addCase(showQueryVariableDropDown, (state, action) => {
+    .addCase(showVariableDropDown, (state, action) => {
       hideOtherDropDowns(state);
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       const oldVariableText = instanceState.picker.oldVariableText || instanceState.variable.current.text;
@@ -454,7 +458,7 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
 
       applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateTags);
     })
-    .addCase(hideQueryVariableDropDown, (state, action) => {
+    .addCase(hideVariableDropDown, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       instanceState.picker.showDropDown = false;
 

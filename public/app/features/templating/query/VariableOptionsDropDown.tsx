@@ -4,10 +4,16 @@ import { e2e } from '@grafana/e2e';
 
 import { QueryVariableModel, VariableOption, VariableTag } from '../variable';
 import { dispatch } from '../../../store/store';
-import { toVariableIdentifier, toVariablePayload } from '../state/actions';
-import { QueryVariablePickerState } from '../query/reducer';
+import {
+  toVariableIdentifier,
+  toVariablePayload,
+  hideVariableDropDown,
+  toggleAllVariableOptions,
+  selectVariableOption,
+} from '../state/actions';
+import { QueryVariablePickerState } from './reducer';
 import { variableAdapters } from '../adapters';
-import { hideQueryVariableDropDown, selectVariableOption, toggleAllVariableOptions, toggleTag } from '../query/actions';
+import { toggleTag } from './actions';
 import { VariablePickerProps } from '../state/types';
 
 export interface Props extends VariablePickerProps<QueryVariableModel, QueryVariablePickerState> {}
@@ -42,7 +48,7 @@ export class VariableOptionsDropDown extends PureComponent<Props> {
     if (this.props.variable.current.text !== oldVariableText) {
       variableAdapters.get(this.props.variable.type).setValue(this.props.variable, this.props.variable.current, true);
     }
-    dispatch(hideQueryVariableDropDown(toVariablePayload(this.props.variable)));
+    dispatch(hideVariableDropDown(toVariablePayload(this.props.variable)));
   };
 
   onCloseDropDown = () => {

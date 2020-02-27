@@ -3,7 +3,6 @@ import { createAction } from '@reduxjs/toolkit';
 import { AppEvents, DataSourceApi } from '@grafana/data';
 
 import {
-  SelectVariableOption,
   toVariableIdentifier,
   toVariablePayload,
   updateVariableCompleted,
@@ -14,6 +13,7 @@ import {
   validateVariableSelectionState,
   VariableIdentifier,
   VariablePayload,
+  selectVariableOption,
 } from '../state/actions';
 import { QueryVariableModel, VariableRefresh, VariableTag } from '../variable';
 import { ThunkResult, VariableQueryProps } from '../../../types';
@@ -26,19 +26,9 @@ import { getVariable } from '../state/selectors';
 import { getQueryHasSearchFilter } from './reducer';
 import { variableAdapters } from '../adapters';
 
-export const showQueryVariableDropDown = createAction<VariablePayload>('templating/showQueryVariableDropDown');
-
-export const hideQueryVariableDropDown = createAction<VariablePayload>('templating/hideQueryVariableDropDown');
-
 export const changeQueryVariableHighlightIndex = createAction<VariablePayload<number>>(
   'templating/changeQueryVariableHighlightIndex'
 );
-
-export const selectVariableOption = createAction<VariablePayload<SelectVariableOption>>(
-  'templating/selectVariableOption'
-);
-
-export const toggleAllVariableOptions = createAction<VariablePayload>('templating/toggleAllOptions');
 
 export const queryVariableDatasourceLoaded = createAction<VariablePayload<DataSourceApi>>(
   'templating/queryVariableDatasourceLoaded'

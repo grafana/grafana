@@ -1,9 +1,10 @@
 import React, { ChangeEvent, PureComponent } from 'react';
-import { CustomVariableModel } from '../variable';
+import { CustomVariableModel, VariableWithMultiSupport } from '../variable';
 import { VariableEditorProps } from '../state/types';
 import { CustomVariableEditorState } from './reducer';
 import { dispatch } from '../../../store/store';
 import { updateVariableQuery, toVariablePayload } from '../state/actions';
+import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 
 export interface Props extends VariableEditorProps<CustomVariableModel, CustomVariableEditorState> {}
 export interface State {
@@ -12,19 +13,18 @@ export interface State {
 
 export class CustomVariableEditor extends PureComponent<Props, State> {
   state: State = {
-    query: '',
+    query: this.props.variable.query,
   };
-
-  componentWillReceiveProps(nextProps: Readonly<Props>): void {
-    if (nextProps.variable.query !== this.state.query) {
-      this.setState({ query: nextProps.variable.query });
-    }
-  }
 
   runQuery = () => dispatch(updateVariableQuery(toVariablePayload(this.props.variable, this.state.query)));
 
   onChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ query: event.target.value });
+  };
+
+  onSelectionOptionsChange = async (propName: keyof VariableWithMultiSupport, propValue: any) => {
+    this.props.onPropChange(propName, propValue);
+    this.runQuery();
   };
 
   render() {
@@ -46,6 +46,7 @@ export class CustomVariableEditor extends PureComponent<Props, State> {
             />
           </div>
         </div>
+        <SelectionOptionsEditor variable={this.props.variable} onPropChange={this.onSelectionOptionsChange} />
       </>
     );
   }

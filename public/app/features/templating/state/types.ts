@@ -9,7 +9,7 @@ export interface VariableEditorState {
   type: VariableType;
   errors: Record<string, string>;
   isValid: boolean;
-  dataSources: DataSourceSelectItem[];
+  dataSources: DataSourceSelectItem[]; // TODO: This isn't needed for custom move it?
 }
 
 export interface VariableEditorOnPropChange<Model extends VariableModel = VariableModel> {
@@ -32,10 +32,10 @@ export interface VariablePickerProps<Model extends VariableModel = VariableModel
 
 export const initialVariableEditorState: VariableEditorState = {
   name: '',
-  type: 'query',
+  type: 'query', // TODO: can we set this somewhere else?
   errors: {},
   isValid: true,
-  dataSources: [],
+  dataSources: [], // TODO: should we move this to QueryVariabelState or maybe a DatasourceVariableState?
 };
 
 export interface VariableState<

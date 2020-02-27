@@ -4,16 +4,15 @@ import { ClickOutsideWrapper } from '@grafana/ui';
 
 import { QueryVariableModel } from '../variable';
 import { dispatch } from '../../../store/store';
-import { toVariableIdentifier, toVariablePayload } from '../state/actions';
-import { QueryVariablePickerState } from '../query/reducer';
+import { toVariableIdentifier, toVariablePayload, hideVariableDropDown } from '../state/actions';
+import { QueryVariablePickerState } from './reducer';
 import { variableAdapters } from '../adapters';
 import {
   changeQueryVariableHighlightIndex,
   changeQueryVariableSearchQuery,
-  hideQueryVariableDropDown,
   searchQueryChanged,
   selectVariableOptionByHighlightIndex,
-} from '../query/actions';
+} from './actions';
 import { VariablePickerProps } from '../state/types';
 
 export interface Props extends VariablePickerProps<QueryVariableModel, QueryVariablePickerState> {}
@@ -66,7 +65,7 @@ export class VariableOptionsInput extends PureComponent<Props> {
       variableAdapters.get(this.props.variable.type).setValue(this.props.variable, this.props.variable.current, true);
     }
 
-    dispatch(hideQueryVariableDropDown(toVariablePayload(this.props.variable)));
+    dispatch(hideVariableDropDown(toVariablePayload(this.props.variable)));
   };
 
   debouncedOnChangeQuery = (searchQuery: string) => {
