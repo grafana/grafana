@@ -4,7 +4,7 @@ import { ClickOutsideWrapper } from '@grafana/ui';
 
 import { QueryVariableModel } from '../variable';
 import { dispatch } from '../../../store/store';
-import { toVariablePayload } from '../state/actions';
+import { toVariableIdentifier, toVariablePayload } from '../state/actions';
 import { QueryVariablePickerState } from '../query/reducer';
 import { variableAdapters } from '../adapters';
 import {
@@ -47,15 +47,14 @@ export class VariableOptionsInput extends PureComponent<Props> {
       return dispatch(changeQueryVariableHighlightIndex(payload));
     }
 
-    const { uuid } = this.props.variable;
     const { highlightIndex } = this.props.picker;
 
     if (event.keyCode === NavigationKeys.select) {
-      return dispatch(selectVariableOptionByHighlightIndex(uuid!, highlightIndex));
+      return dispatch(selectVariableOptionByHighlightIndex(toVariableIdentifier(this.props.variable), highlightIndex));
     }
 
     if (event.keyCode === NavigationKeys.selectAndClose) {
-      dispatch(selectVariableOptionByHighlightIndex(uuid!, highlightIndex));
+      dispatch(selectVariableOptionByHighlightIndex(toVariableIdentifier(this.props.variable), highlightIndex));
       return this.commitChanges();
     }
   };
@@ -71,7 +70,7 @@ export class VariableOptionsInput extends PureComponent<Props> {
   };
 
   debouncedOnChangeQuery = (searchQuery: string) => {
-    dispatch(searchQueryChanged(this.props.variable.uuid, searchQuery));
+    dispatch(searchQueryChanged(toVariableIdentifier(this.props.variable), searchQuery));
   };
 
   onQueryChanged = (event: ChangeEvent<HTMLInputElement>) => {

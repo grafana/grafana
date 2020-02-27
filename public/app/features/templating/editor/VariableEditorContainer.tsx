@@ -10,7 +10,7 @@ import {
   changeVariableOrder,
   duplicateVariable,
   removeVariable,
-  toPayload,
+  toVariablePayload,
   VariableIdentifier,
 } from '../state/actions';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
@@ -36,33 +36,33 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class VariableEditorContainerUnconnected extends PureComponent<Props> {
   componentDidMount(): void {
-    this.props.changeToEditorListMode(toPayload({ uuid: null, type: 'query' }));
+    this.props.changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' }));
   }
 
   onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.changeToEditorListMode(toPayload({ uuid: null, type: 'query' }));
+    this.props.changeToEditorListMode(toVariablePayload({ uuid: null, type: 'query' }));
   };
 
   onEditVariable = (identifier: VariableIdentifier) => {
-    this.props.changeToEditorEditMode(toPayload({ uuid: identifier.uuid, type: identifier.type }));
+    this.props.changeToEditorEditMode(toVariablePayload({ uuid: identifier.uuid, type: identifier.type }));
   };
 
   onChangeToAddMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.changeToEditorEditMode(toPayload({ uuid: emptyUuid, type: 'query' }));
+    this.props.changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' }));
   };
 
   onChangeVariableOrder = (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => {
-    this.props.changeVariableOrder(toPayload(identifier, { fromIndex, toIndex }));
+    this.props.changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex }));
   };
 
   onDuplicateVariable = (identifier: VariableIdentifier) => {
-    this.props.duplicateVariable(toPayload(identifier));
+    this.props.duplicateVariable(toVariablePayload(identifier));
   };
 
   onRemoveVariable = (identifier: VariableIdentifier) => {
-    this.props.removeVariable(toPayload(identifier));
+    this.props.removeVariable(toVariablePayload(identifier));
   };
 
   render() {

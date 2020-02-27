@@ -54,9 +54,12 @@ export const changeQueryVariableSearchQuery = createAction<VariablePayload<strin
   'templating/changeQueryVariableSearchQuery'
 );
 
-export const updateQueryVariableOptions = (args: VariableIdentifier, searchFilter?: string): ThunkResult<void> => {
+export const updateQueryVariableOptions = (
+  identifier: VariableIdentifier,
+  searchFilter?: string
+): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(args.uuid!, getState());
+    const variableInState = getVariable<QueryVariableModel>(identifier.uuid!, getState());
     try {
       dispatch(updateVariableStarting(toVariablePayload(variableInState)));
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
@@ -110,22 +113,24 @@ export const changeQueryVariableDataSource = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const variable = getVariable(identifier.uuid, getState());
       const dataSource = await getDatasourceSrv().get(name ?? '');
       const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
       const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? DefaultVariableQueryEditor;
-      dispatch(queryVariableDatasourceLoaded(toVariablePayload(variable, dataSource)));
-      dispatch(queryVariableEditorLoaded(toVariablePayload(variable, VariableQueryEditor)));
+      dispatch(queryVariableDatasourceLoaded(toVariablePayload(identifier, dataSource)));
+      dispatch(queryVariableEditorLoaded(toVariablePayload(identifier, VariableQueryEditor)));
     } catch (err) {
       console.error(err);
     }
   };
 };
 
-export const selectVariableOptionByHighlightIndex = (uuid: string, index: number): ThunkResult<void> => {
+export const selectVariableOptionByHighlightIndex = (
+  identifier: VariableIdentifier,
+  index: number
+): ThunkResult<void> => {
   return (dispatch, getState) => {
     try {
-      const variable = getVariable<QueryVariableModel>(uuid, getState());
+      const variable = getVariable<QueryVariableModel>(identifier.uuid, getState());
       const option = variable.options[index];
       const event = (null as unknown) as MouseEvent<HTMLAnchorElement>;
       const data = { option, forceSelect: false, event };
@@ -136,10 +141,10 @@ export const selectVariableOptionByHighlightIndex = (uuid: string, index: number
   };
 };
 
-export const toggleTag = (uuid: string, tag: VariableTag): ThunkResult<void> => {
+export const toggleTag = (identifier: VariableIdentifier, tag: VariableTag): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const variable = getVariable<QueryVariableModel>(uuid, getState());
+      const variable = getVariable<QueryVariableModel>(identifier.uuid, getState());
 
       if (tag.values) {
         return dispatch(toggleVariableTag(toVariablePayload(variable, tag)));
@@ -156,11 +161,11 @@ export const toggleTag = (uuid: string, tag: VariableTag): ThunkResult<void> => 
   };
 };
 
-export const searchQueryChanged = (uuid: string, searchQuery: string): ThunkResult<void> => async (
+export const searchQueryChanged = (identifier: VariableIdentifier, searchQuery: string): ThunkResult<void> => async (
   dispatch,
   getState
 ) => {
-  const variable = getVariable<QueryVariableModel>(uuid, getState());
+  const variable = getVariable<QueryVariableModel>(identifier.uuid, getState());
   if (getQueryHasSearchFilter(variable)) {
     await variableAdapters.get(variable.type).updateOptions(variable, searchQuery);
   }

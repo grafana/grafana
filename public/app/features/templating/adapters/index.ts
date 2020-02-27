@@ -4,7 +4,7 @@ import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from '../variable';
 import { createQueryVariableAdapter } from '../query/adapter';
-import { createCustomVariableAdapter } from '../custom/adapter';
+// import { createCustomVariableAdapter } from '../custom/adapter';
 import { VariableEditorProps, VariablePickerProps, VariableState } from '../state/types';
 import { TemplatingState } from '../state';
 
@@ -28,7 +28,7 @@ const allVariableAdapters: Record<VariableType, VariableAdapter<any> | null> = {
   textbox: null,
   constant: null,
   datasource: null,
-  custom: createCustomVariableAdapter(),
+  custom: null,
   interval: null,
   adhoc: null,
 };

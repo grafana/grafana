@@ -139,13 +139,19 @@ export const toVariableIdentifier = (variable: VariableModel): VariableIdentifie
   return { type: variable.type, uuid: variable.uuid! };
 };
 
-export const toVariablePayload = <T extends any = undefined>(variable: VariableModel, data?: T): VariablePayload<T> => {
-  return { type: variable.type, uuid: variable.uuid!, data: data as T };
-};
+export function toVariablePayload<T extends any = undefined>(
+  identifier: VariableIdentifier,
+  data?: T
+): VariablePayload<T>;
 
-export const toPayload = <T extends any = undefined>(identifier: VariableIdentifier, data?: T): VariablePayload<T> => {
-  return { type: identifier.type, uuid: identifier.uuid!, data: data as T };
-};
+export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
+
+export function toVariablePayload<T extends any = undefined>(
+  obj: VariableIdentifier | VariableModel,
+  data?: T
+): VariablePayload<T> {
+  return { type: obj.type, uuid: obj.uuid!, data: data as T };
+}
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
   return (dispatch, getState) => {
@@ -356,9 +362,8 @@ export const setOptionAsCurrent = (
   emitChanges: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.uuid!, getState());
-    dispatch(setCurrentVariableValue(toVariablePayload(variable, current)));
-    return dispatch(variableUpdated(toVariableIdentifier(variable), emitChanges));
+    dispatch(setCurrentVariableValue(toVariablePayload(identifier, current)));
+    return dispatch(variableUpdated(identifier, emitChanges));
   };
 };
 
@@ -420,7 +425,6 @@ export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents
 
 export const changeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable(identifier.uuid!, getState());
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
@@ -431,18 +435,18 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
     }
 
     const variables = getVariables(getState());
-    const stateVariables = variables.filter(v => v.name === newName && v.uuid !== variableInState.uuid);
+    const stateVariables = variables.filter(v => v.name === newName && v.uuid !== identifier.uuid);
 
     if (stateVariables.length) {
       errorText = 'Variable with the same name already exists';
     }
 
     if (errorText) {
-      dispatch(changeVariableNameFailed(toVariablePayload(variableInState, { newName, errorText })));
+      dispatch(changeVariableNameFailed(toVariablePayload(identifier, { newName, errorText })));
     }
 
     if (!errorText) {
-      dispatch(changeVariableNameSucceeded(toVariablePayload(variableInState, newName)));
+      dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, newName)));
     }
   };
 };
@@ -458,8 +462,7 @@ export const variableEditorInit = (identifier: VariableIdentifier): ThunkResult<
       .filter(ds => !ds.meta.mixed && ds.value !== null);
     const defaultDatasource: DataSourceSelectItem = { name: '', value: '', meta: {} as DataSourcePluginMeta, sort: '' };
 
-    const variable = getVariable(identifier.uuid!, getState());
-    dispatch(variableEditorMounted(toVariablePayload(variable, [defaultDatasource].concat(dataSources))));
+    dispatch(variableEditorMounted(toVariablePayload(identifier, [defaultDatasource].concat(dataSources))));
   };
 };
 
@@ -467,15 +470,15 @@ export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void
   return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.uuid!, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));
-    dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
+    dispatch(variableEditorUnMounted(toVariablePayload(identifier)));
+    dispatch(changeToEditorListMode(toVariablePayload(identifier)));
   };
 };
 
 export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const uuid = v4();
-    dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, uuid } as VariableModel)));
+    dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, uuid })));
     const variableInState = getVariable(uuid, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));

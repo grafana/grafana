@@ -4,7 +4,7 @@ import { e2e } from '@grafana/e2e';
 
 import { QueryVariableModel, VariableOption, VariableTag } from '../variable';
 import { dispatch } from '../../../store/store';
-import { toVariablePayload } from '../state/actions';
+import { toVariableIdentifier, toVariablePayload } from '../state/actions';
 import { QueryVariablePickerState } from '../query/reducer';
 import { variableAdapters } from '../adapters';
 import { hideQueryVariableDropDown, selectVariableOption, toggleAllVariableOptions, toggleTag } from '../query/actions';
@@ -22,8 +22,7 @@ export class VariableOptionsDropDown extends PureComponent<Props> {
   toggleTag = (tag: VariableTag) => (event: MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
     event.preventDefault();
-    const { uuid } = this.props.variable;
-    dispatch(toggleTag(uuid!, tag));
+    dispatch(toggleTag(toVariableIdentifier(this.props.variable), tag));
   };
 
   selectValue = (option: VariableOption) => (event: MouseEvent<HTMLAnchorElement>) => {
