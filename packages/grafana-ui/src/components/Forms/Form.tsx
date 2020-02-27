@@ -20,14 +20,15 @@ type FormAPI<T> = Pick<FormContextValues<T>, 'register' | 'errors' | 'control'>;
 
 interface FormProps<T> {
   validateOn?: Mode;
+  validateOnMount?: boolean;
   defaultValues?: DeepPartial<T>;
   onSubmit: OnSubmit<T>;
   children: (api: FormAPI<T>) => React.ReactNode;
 }
 
-export function Form<T>({ validateOn, defaultValues, onSubmit, children }: FormProps<T>) {
+export function Form<T>({ validateOn, defaultValues, onSubmit, validateOnMount = false, children }: FormProps<T>) {
   const theme = useTheme();
-  const { handleSubmit, register, errors, control, reset, getValues } = useForm<T>({
+  const { handleSubmit, register, errors, control, reset, getValues, triggerValidation } = useForm<T>({
     mode: validateOn || 'onSubmit',
     defaultValues: {
       ...defaultValues,
@@ -37,6 +38,12 @@ export function Form<T>({ validateOn, defaultValues, onSubmit, children }: FormP
   useEffect(() => {
     reset({ ...getValues(), ...defaultValues });
   }, [defaultValues]);
+
+  useEffect(() => {
+    if (validateOnMount) {
+      triggerValidation();
+    }
+  }, []);
 
   const styles = getFormStyles(theme);
 
