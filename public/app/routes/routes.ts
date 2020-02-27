@@ -351,8 +351,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     .when('/invite/:code', {
       template: '<react-container/>',
-      // templateUrl: 'public/app/partials/signup_invited.html',
-      // controller: 'InvitedCtrl',
       pageClass: 'sidemenu-hidden',
       resolve: {
         component: () =>
