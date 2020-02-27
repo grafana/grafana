@@ -32,6 +32,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey strin
 		Encoding:  opts.Encoding,
 		Timezone:  isoTimeOffsetToPosixTz(opts.Timezone),
 		Domain:    rs.domain,
+		Scale:     opts.Scale,
 	}
 	rs.log.Debug("calling renderer plugin", "req", req)
 

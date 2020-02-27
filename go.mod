@@ -86,3 +86,5 @@ require (
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.5
 )
+
+replace github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 => github.com/shankerwangmiao/grafana-plugin-model v0.0.0-20200227104120-282bb45274c7

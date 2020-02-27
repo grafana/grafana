@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"math"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -40,10 +41,21 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		return
 	}
 
+	scale, err := strconv.ParseFloat(queryReader.Get("scale", "1"), 32)
+	if err != nil {
+		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse scale as float: %s", err))
+		return
+	}
+	if math.IsInf(scale, 0) || math.IsNaN(scale) || scale <= 0 {
+		c.Handle(400, "Render parameters error", fmt.Errorf("Scale should be positive, rather than %v", scale))
+		return
+	}
+
 	maxConcurrentLimitForApiCalls := 30
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
 		Width:           width,
 		Height:          height,
+		Scale:           float32(scale),
 		Timeout:         time.Duration(timeout) * time.Second,
 		OrgId:           c.OrgId,
 		UserId:          c.UserId,

@@ -12,7 +12,7 @@
       params[parts[1]] = parts[2];
     });
 
-    var usage = "url=<url> png=<filename> width=<width> height=<height> renderKey=<key>";
+    var usage = "url=<url> png=<filename> width=<width> height=<height> scale=<scale> renderKey=<key>";
 
     if (!params.url || !params.png ||  !params.renderKey || !params.domain) {
       console.log(usage);
@@ -24,10 +24,10 @@
       'value': params.renderKey,
       'domain': params.domain,
     });
-
+    page.zoomFactor = parseFloat(params.scale || '1.0');
     page.viewportSize = {
-      width: params.width || '800',
-      height: params.height || '400'
+      width: parseInt(params.width || '800') * page.zoomFactor,
+      height: parseInt(params.height || '400') * page.zoomFactor
     };
 
     var timeoutMs = (parseInt(params.timeout) || 10) * 1000;
@@ -65,8 +65,8 @@
           
           // reset viewport to render full page
           page.viewportSize = {
-            width: bb.width,
-            height: bb.height
+            width: bb.width * page.zoomFactor,
+            height: bb.height * page.zoomFactor
           };
 
           page.render(params.png);

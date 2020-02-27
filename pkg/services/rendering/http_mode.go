@@ -46,6 +46,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
 	queryParams.Add("encoding", opts.Encoding)
 	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
+	queryParams.Add("scale", strconv.FormatFloat(float64(opts.Scale), 'f', -1, 32))
 	rendererUrl.RawQuery = queryParams.Encode()
 
 	req, err := http.NewRequest("GET", rendererUrl.String(), nil)

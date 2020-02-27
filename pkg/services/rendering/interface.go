@@ -15,6 +15,7 @@ var ErrPhantomJSNotInstalled = errors.New("PhantomJS executable not found")
 type Opts struct {
 	Width           int
 	Height          int
+	Scale           float32
 	Timeout         time.Duration
 	OrgId           int64
 	UserId          int64
