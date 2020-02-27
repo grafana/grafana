@@ -137,11 +137,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       QueryField = datasourceInstance.components?.ExploreQueryField;
     }
 
-    const filteredQueryResponse: PanelData = {
-      ...queryResponse,
-      error: null,
-    };
-
     return (
       <>
         <div className="query-row">
@@ -154,13 +149,13 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
                 onRunQuery={this.onRunQuery}
                 onBlur={noopOnBlur}
                 onChange={this.onChange}
-                data={filteredQueryResponse}
+                data={queryResponse}
                 absoluteRange={absoluteRange}
                 exploreMode={mode}
               />
             ) : (
               <QueryEditor
-                error={[]}
+                error={queryErrors}
                 datasource={datasourceInstance}
                 onQueryChange={this.onChange}
                 onExecuteQuery={this.onRunQuery}
