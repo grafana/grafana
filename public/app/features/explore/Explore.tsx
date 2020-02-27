@@ -48,6 +48,8 @@ import {
   getTimeRangeFromUrl,
   getTimeRange,
   lastUsedDatasourceKeyForOrgId,
+  getFirstQueryErrorWithoutRefId,
+  getValueWithRefId,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -275,6 +277,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
     const styles = getStyles();
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+    const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
+    const refId = getValueWithRefId(queryErrors);
+    const queryError = refId ? null : getFirstQueryErrorWithoutRefId(queryErrors);
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -294,7 +299,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                 <span className="btn-title">{'\xA0' + 'Add query'}</span>
               </button>
             </div>
-            <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
+            <ErrorContainer queryError={queryError} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
