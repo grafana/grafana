@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 
-import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
+import { QueryVariableModel, VariableRefresh } from '../variable';
 import { dispatch } from '../../../store/store';
 import {
   setOptionAsCurrent,
@@ -23,8 +23,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableMode
     picker: CustomVariablePicker,
     editor: CustomVariableEditor,
     dependsOn: (variable, variableToTest) => {
-      // TODO: we might need to change this one
-      return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
+      return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
       await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
