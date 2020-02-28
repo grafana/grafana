@@ -26,7 +26,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableMode
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable, searchFilter) => {
-      await dispatch(updateCustomVariableOptions(toVariableIdentifier(variable), null));
+      await dispatch(updateCustomVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
       const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);

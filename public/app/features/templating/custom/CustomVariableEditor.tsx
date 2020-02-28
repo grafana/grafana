@@ -2,10 +2,8 @@ import React, { ChangeEvent, PureComponent } from 'react';
 import { CustomVariableModel, VariableWithMultiSupport } from '../variable';
 import { VariableEditorProps } from '../state/types';
 import { CustomVariableEditorState } from './reducer';
-import { dispatch } from '../../../store/store';
-import { toVariableIdentifier } from '../state/actions';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { updateCustomVariableOptions } from './actions';
+import { variableAdapters } from '../adapters';
 
 export interface Props extends VariableEditorProps<CustomVariableModel, CustomVariableEditorState> {}
 export interface State {
@@ -13,14 +11,10 @@ export interface State {
 }
 
 export class CustomVariableEditor extends PureComponent<Props, State> {
-  state: State = {
-    query: this.props.variable.query,
-  };
-
-  runQuery = () => dispatch(updateCustomVariableOptions(toVariableIdentifier(this.props.variable), this.state.query));
+  runQuery = () => variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
 
   onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ query: event.target.value });
+    this.props.onPropChange('query', event.target.value);
   };
 
   onSelectionOptionsChange = async (propName: keyof VariableWithMultiSupport, propValue: any) => {
@@ -38,7 +32,7 @@ export class CustomVariableEditor extends PureComponent<Props, State> {
             <input
               type="text"
               className="gf-form-input"
-              value={this.state.query}
+              value={this.props.variable.query}
               onChange={this.onChange}
               onBlur={this.runQuery}
               placeholder="1, 10, 20, myvalue, escaped\,value"
