@@ -3,7 +3,6 @@ import _, { cloneDeep } from 'lodash';
 import { VariableHide, VariableOption, CustomVariableModel } from '../variable';
 import {
   addVariable,
-  updateVariableQuery,
   changeVariableProp,
   changeVariableNameSucceeded,
   changeVariableNameFailed,
@@ -22,6 +21,7 @@ import {
 } from '../state/types';
 import { initialTemplatingState, TemplatingState } from '../state/reducers';
 import { Deferred } from '../deferred';
+import { createCustomOptionsFromQuery } from './actions';
 
 export type MutateStateFunc<S extends VariableState> = (state: S) => S;
 export const applyStateChanges = <S extends VariableState>(state: S, ...args: Array<MutateStateFunc<S>>): S => {
@@ -160,10 +160,22 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
       instanceState.editor.errors.name = action.payload.data.errorText;
       applyStateChanges(instanceState, updateEditorIsValid);
     })
-    .addCase(updateVariableQuery, (state, action) => {
+    .addCase(createCustomOptionsFromQuery, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid);
-      instanceState.variable.query = action.payload.data ?? instanceState.variable.query ?? '';
-      applyStateChanges(instanceState, updateQuery, updateOptions);
+      const { includeAll, query } = instanceState.variable;
+      const match = query.match(/(?:\\,|[^,])+/g) ?? [];
+
+      const options = match.map(text => {
+        text = text.replace(/\\,/g, ',');
+        return { text: text.trim(), value: text.trim(), selected: false };
+      });
+
+      if (includeAll) {
+        options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
+      }
+
+      instanceState.variable.options = options;
+      applyStateChanges(instanceState, updateOptions);
     })
     .addCase(changeVariableProp, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
@@ -286,23 +298,6 @@ const updateEditorIsValid = (state: CustomVariableState): CustomVariableState =>
 
 const updateSelectedValues = (state: CustomVariableState): CustomVariableState => {
   state.picker.selectedValues = state.variable.options.filter(o => o.selected);
-  return state;
-};
-
-const updateQuery = (state: CustomVariableState): CustomVariableState => {
-  const { includeAll, query } = state.variable;
-  const match = query.match(/(?:\\,|[^,])+/g) ?? [];
-
-  const options = match.map(text => {
-    text = text.replace(/\\,/g, ',');
-    return { text: text.trim(), value: text.trim(), selected: false };
-  });
-
-  if (includeAll) {
-    options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
-  }
-
-  state.variable.options = options;
   return state;
 };
 

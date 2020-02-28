@@ -16,7 +16,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableMode
     reducer: customVariableReducer,
     picker: CustomVariablePicker,
     editor: CustomVariableEditor,
-    dependsOn: (variable, variableToTest) => {
+    dependsOn: () => {
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
@@ -25,7 +25,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableMode
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async (variable, searchFilter) => {
+    updateOptions: async variable => {
       await dispatch(updateCustomVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {

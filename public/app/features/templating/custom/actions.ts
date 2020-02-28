@@ -1,17 +1,17 @@
 import {
   VariableIdentifier,
   toVariablePayload,
-  updateVariableQuery,
   validateVariableSelectionState,
+  VariablePayload,
 } from '../state/actions';
 import { ThunkResult } from 'app/types';
-import { CustomVariableModel } from '../variable';
-import { getVariable } from '../state/selectors';
+import { createAction } from '@reduxjs/toolkit';
+
+export const createCustomOptionsFromQuery = createAction<VariablePayload>('templating/createCustomOptionsFromQuery');
 
 export const updateCustomVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const variable = getVariable<CustomVariableModel>(identifier.uuid, getState());
-    await dispatch(updateVariableQuery(toVariablePayload(variable, variable.query)));
+  return async dispatch => {
+    await dispatch(createCustomOptionsFromQuery(toVariablePayload(identifier)));
     await dispatch(validateVariableSelectionState(identifier));
   };
 };

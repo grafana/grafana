@@ -121,7 +121,6 @@ export const setCurrentVariableValue = createAction<VariablePayload<VariableOpti
 );
 
 export const changeVariableType = createAction<VariablePayload<VariableType>>('templating/changeVariableType');
-export const updateVariableQuery = createAction<VariablePayload<string>>('templating/updateVariableOptions');
 export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
 export const updateVariableStarting = createAction<VariablePayload>('templating/updateVariableStarting');
 export const updateVariableCompleted = createAction<VariablePayload>('templating/updateVariableCompleted');
