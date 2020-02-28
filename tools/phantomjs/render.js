@@ -24,7 +24,7 @@
       'value': params.renderKey,
       'domain': params.domain,
     });
-    page.zoomFactor = parseFloat(params.scale || '1.0');
+    page.zoomFactor = parseFloat(params.scale || '1.0') || 1;
     page.viewportSize = {
       width: parseInt(params.width || '800') * page.zoomFactor,
       height: parseInt(params.height || '400') * page.zoomFactor

@@ -144,6 +144,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 	renderOpts := rendering.Opts{
 		Width:           1000,
 		Height:          500,
+		Scale:           1,
 		Timeout:         timeout,
 		OrgId:           evalCtx.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
