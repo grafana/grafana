@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { auto } from 'angular';
+import angular, { auto } from 'angular';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
@@ -47,7 +47,7 @@ export interface ShowData {
   colorMap: any;
 }
 
-class SingleStatCtrl extends MetricsPanelCtrl {
+class SingleStatCtrl extends MetricsPanelCtrl implements angular.IComponentController {
   static templateUrl = 'module.html';
 
   data: Partial<ShowData> = {};
@@ -121,8 +121,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService, private linkSrv: LinkSrv, private $sanitize: any) {
     super($scope, $injector);
+  }
+
+  $onInit() {
     _.defaults(this.panel, this.panelDefaults);
 
+    if (!this.events) {
+      this.events = this.panel.events;
+    }
     this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));

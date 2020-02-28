@@ -14,7 +14,7 @@ import { AppEvents } from '@grafana/data';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 import locationUtil from 'app/core/utils/location_util';
 
-export class SettingsCtrl {
+export class SettingsCtrl implements angular.IComponentController {
   dashboard: DashboardModel;
   isOpen: boolean;
   viewId: string;
@@ -34,18 +34,12 @@ export class SettingsCtrl {
     private $location: ILocationService,
     private $rootScope: GrafanaRootScope,
     private dashboardSrv: DashboardSrv
-  ) {
+  ) {}
+
+  $onInit() {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
-    $scope.dashboard = this.dashboard;
-
-    this.$scope.$on('$destroy', () => {
-      this.dashboard.updateSubmenuVisibility();
-      setTimeout(() => {
-        this.$rootScope.appEvent(CoreEvents.dashScroll, { restore: true });
-        this.dashboard.startRefresh();
-      });
-    });
+    this.$scope.dashboard = this.dashboard;
 
     this.canSaveAs = contextSrv.hasEditPermissionInFolders;
     this.canSave = this.dashboard.meta.canSave;
@@ -54,9 +48,9 @@ export class SettingsCtrl {
     this.buildSectionList();
     this.onRouteUpdated();
 
-    this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
+    this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), this.$scope);
     this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
-    this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
+    this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onPostSave.bind(this), this.$scope);
     this.selectors = e2e.pages.Dashboard.Settings.General.selectors;
   }
 

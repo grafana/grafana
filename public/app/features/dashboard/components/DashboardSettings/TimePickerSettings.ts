@@ -1,11 +1,14 @@
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
+import angular from 'angular';
 
-export class TimePickerCtrl {
+export class TimePickerCtrl implements angular.IComponentController {
   panel: any;
   dashboard: DashboardModel;
 
-  constructor() {
+  constructor() {}
+
+  $onInit() {
     this.panel = this.dashboard.timepicker;
     this.panel.refresh_intervals = this.panel.refresh_intervals || [
       '5s',

@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { auto } from 'angular';
+import angular, { auto } from 'angular';
 
-export class QueryCtrl {
+export class QueryCtrl implements angular.IComponentController {
   target: any;
   datasource: any;
   panelCtrl: any;
@@ -10,7 +10,9 @@ export class QueryCtrl {
   error: string;
   isLastQuery: boolean;
 
-  constructor(public $scope: any, public $injector: auto.IInjectorService) {
+  constructor(public $scope: any, public $injector: auto.IInjectorService) {}
+
+  $onInit() {
     this.panel = this.panelCtrl.panel;
     this.isLastQuery = _.indexOf(this.panel.targets, this.target) === this.panel.targets.length - 1;
   }

@@ -12,7 +12,7 @@ import {
   calculateBucketSize,
   sortSeriesByLabel,
 } from './heatmap_data_converter';
-import { auto } from 'angular';
+import angular, { auto } from 'angular';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 import { DataProcessor } from '../graph/data_processor';
 import { LegacyResponseData, PanelEvents, DataFrame } from '@grafana/data';
@@ -108,7 +108,7 @@ const colorSchemes = [
 
 const dsSupportHistogramSort = ['elasticsearch'];
 
-export class HeatmapCtrl extends MetricsPanelCtrl {
+export class HeatmapCtrl extends MetricsPanelCtrl implements angular.IComponentController {
   static templateUrl = 'module.html';
 
   opacityScales: any = [];
@@ -127,6 +127,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
+  }
+
+  $onInit() {
     this.selectionActivated = false;
 
     _.defaultsDeep(this.panel, panelDefaults);
@@ -142,6 +145,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     });
 
     // Bind grafana panel events
+    if (!this.events) {
+      this.events = this.panel.events;
+    }
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));

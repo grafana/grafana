@@ -1,7 +1,8 @@
 import coreModule from 'app/core/core_module';
 import { getColorModes } from './time_region_manager';
+import angular from 'angular';
 
-export class TimeRegionFormCtrl {
+export class TimeRegionFormCtrl implements angular.IComponentController {
   panelCtrl: any;
   panel: any;
   disabled: boolean;
@@ -9,13 +10,15 @@ export class TimeRegionFormCtrl {
 
   /** @ngInject */
   constructor($scope: any) {
-    this.panel = this.panelCtrl.panel;
-
     const unbindDestroy = $scope.$on('$destroy', () => {
       this.panelCtrl.editingTimeRegions = false;
       this.panelCtrl.render();
       unbindDestroy();
     });
+  }
+
+  $onInit() {
+    this.panel = this.panelCtrl.panel;
 
     this.colorModes = getColorModes();
     this.panelCtrl.editingTimeRegions = true;

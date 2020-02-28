@@ -1,24 +1,28 @@
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 import tinycolor from 'tinycolor2';
-export class ThresholdFormCtrl {
+import angular from 'angular';
+
+export class ThresholdFormCtrl implements angular.IComponentController {
   panelCtrl: any;
   panel: any;
   disabled: boolean;
 
   /** @ngInject */
   constructor($scope: any) {
-    this.panel = this.panelCtrl.panel;
-
-    if (this.panel.alert) {
-      this.disabled = true;
-    }
-
     const unbindDestroy = $scope.$on('$destroy', () => {
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
       unbindDestroy();
     });
+  }
+
+  $onInit() {
+    this.panel = this.panelCtrl.panel;
+
+    if (this.panel.alert) {
+      this.disabled = true;
+    }
 
     this.panelCtrl.editingThresholds = true;
   }

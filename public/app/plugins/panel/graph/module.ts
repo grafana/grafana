@@ -163,7 +163,9 @@ class GraphCtrl extends MetricsPanelCtrl implements angular.IComponentController
     this.useDataFrames = true;
     this.processor = new DataProcessor(this.panel);
 
-    this.events = this.panel.events;
+    if (!this.events) {
+      this.events = this.panel.events;
+    }
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));

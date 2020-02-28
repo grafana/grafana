@@ -62,6 +62,9 @@ export class PanelCtrl {
   initEditMode() {
     if (!this.editModeInitiated) {
       this.editModeInitiated = true;
+      if (!this.events) {
+        this.events = this.panel.events;
+      }
       this.events.emit(PanelEvents.editModeInitialized);
     }
   }

@@ -3,7 +3,7 @@ import { PanelCtrl } from 'app/plugins/sdk';
 
 import { sanitize, escapeHtml } from 'app/core/utils/text';
 import config from 'app/core/config';
-import { auto, ISCEService } from 'angular';
+import angular, { auto, ISCEService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { PanelEvents } from '@grafana/data';
 import { renderMarkdown } from '@grafana/data';
@@ -17,7 +17,7 @@ For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
 
 `;
 
-export class TextPanelCtrl extends PanelCtrl {
+export class TextPanelCtrl extends PanelCtrl implements angular.IComponentController {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
   static scrollable = true;
 
@@ -36,9 +36,14 @@ export class TextPanelCtrl extends PanelCtrl {
     private $sce: ISCEService
   ) {
     super($scope, $injector);
+  }
 
+  $onInit() {
     _.defaults(this.panel, this.panelDefaults);
 
+    if (!this.events) {
+      this.events = this.panel.events;
+    }
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
     this.events.on(PanelEvents.render, this.onRender.bind(this));
@@ -48,7 +53,7 @@ export class TextPanelCtrl extends PanelCtrl {
       return [panel.content, panel.mode].join();
     };
 
-    $scope.$watch(
+    this.$scope.$watch(
       renderWhenChanged,
       _.throttle(() => {
         this.render();

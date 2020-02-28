@@ -1,13 +1,13 @@
 import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
 import impressionSrv from 'app/core/services/impression_srv';
-import { auto, IScope } from 'angular';
+import angular, { auto, IScope } from 'angular';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelEvents } from '@grafana/data';
 import { promiseToDigest } from '../../../core/utils/promiseToDigest';
 
-class DashListCtrl extends PanelCtrl {
+class DashListCtrl extends PanelCtrl implements angular.IComponentController {
   static templateUrl = 'module.html';
   static scrollable = true;
 
@@ -28,6 +28,9 @@ class DashListCtrl extends PanelCtrl {
   /** @ngInject */
   constructor($scope: IScope, $injector: auto.IInjectorService, private dashboardSrv: DashboardSrv) {
     super($scope, $injector);
+  }
+
+  $onInit() {
     _.defaults(this.panel, this.panelDefaults);
 
     if (this.panel.tag) {
@@ -35,6 +38,9 @@ class DashListCtrl extends PanelCtrl {
       delete this.panel.tag;
     }
 
+    if (!this.events) {
+      this.events = this.panel.events;
+    }
     this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 

@@ -2,14 +2,16 @@ import angular from 'angular';
 
 const module = angular.module('grafana.directives');
 
-export class QueryRowCtrl {
+export class QueryRowCtrl implements angular.IComponentController {
   target: any;
   queryCtrl: any;
   panelCtrl: any;
   panel: any;
   hasTextEditMode: boolean;
 
-  constructor() {
+  constructor() {}
+
+  $onInit() {
     this.panelCtrl = this.queryCtrl.panelCtrl;
     this.target = this.queryCtrl.target;
     this.panel = this.panelCtrl.panel;

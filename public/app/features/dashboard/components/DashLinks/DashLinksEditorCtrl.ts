@@ -14,7 +14,7 @@ export let iconMap = {
   cloud: 'fa-cloud',
 };
 
-export class DashLinksEditorCtrl {
+export class DashLinksEditorCtrl implements angular.IComponentController {
   dashboard: DashboardModel;
   iconMap: any;
   mode: any;
@@ -35,13 +35,15 @@ export class DashLinksEditorCtrl {
 
   /** @ngInject */
   constructor($scope: any, $rootScope: GrafanaRootScope) {
-    this.iconMap = iconMap;
-    this.dashboard.links = this.dashboard.links || [];
-    this.mode = 'list';
-
     $scope.$on('$destroy', () => {
       $rootScope.appEvent(CoreEvents.dashLinksUpdated);
     });
+  }
+
+  $onInit() {
+    this.iconMap = iconMap;
+    this.dashboard.links = this.dashboard.links || [];
+    this.mode = 'list';
   }
 
   backToList() {
