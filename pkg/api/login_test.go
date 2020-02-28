@@ -67,12 +67,13 @@ func (stub *FakeLogger) Info(testMessage string, ctx ...interface{}) {
 }
 
 type redirectCase struct {
-	desc      string
-	url       string
-	status    int
-	err       error
-	appURL    string
-	appSubURL string
+	desc        string
+	url         string
+	status      int
+	err         error
+	appURL      string
+	appSubURL   string
+	redirectURL string
 }
 
 func TestLoginErrorCookieApiEndpoint(t *testing.T) {
@@ -152,54 +153,56 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	redirectCases := []redirectCase{
 		{
-			desc:   "grafana relative url without subpath",
-			url:    "/profile",
-			appURL: "http://localhost:3000/",
-			status: 302,
+			desc:        "grafana relative url without subpath",
+			url:         "/profile",
+			redirectURL: "/profile",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 		{
-			desc:      "grafana invalid relative url starting with the subpath",
-			url:       "/grafanablah",
-			appURL:    "http://localhost:3000/",
-			appSubURL: "/grafana",
-			status:    200,
-			err:       login.ErrInvalidRedirectTo,
+			desc:        "grafana invalid relative url starting with the subpath",
+			url:         "/grafanablah",
+			redirectURL: "/grafana/",
+			appURL:      "http://localhost:3000/",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:      "grafana relative url with subpath with leading slash",
-			url:       "/grafana/profile",
-			appURL:    "http://localhost:3000/",
-			appSubURL: "/grafana",
-			status:    302,
+			desc:        "grafana relative url with subpath with leading slash",
+			url:         "/grafana/profile",
+			redirectURL: "/grafana/profile",
+			appURL:      "http://localhost:3000",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:      "relative url with missing subpath",
-			url:       "/profile",
-			appURL:    "http://localhost:3000/",
-			appSubURL: "/grafana",
-			status:    200,
-			err:       login.ErrInvalidRedirectTo,
+			desc:        "relative url with missing subpath",
+			url:         "/profile",
+			redirectURL: "/grafana/",
+			appURL:      "http://localhost:3000/",
+			appSubURL:   "/grafana",
+			status:      302,
 		},
 		{
-			desc:   "grafana absolute url",
-			url:    "http://localhost:3000/profile",
-			appURL: "http://localhost:3000/",
-			status: 200,
-			err:    login.ErrAbsoluteRedirectTo,
+			desc:        "grafana absolute url",
+			url:         "http://localhost:3000/profile",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 		{
-			desc:   "non grafana absolute url",
-			url:    "http://example.com",
-			appURL: "http://localhost:3000/",
-			status: 200,
-			err:    login.ErrAbsoluteRedirectTo,
+			desc:        "non grafana absolute url",
+			url:         "http://example.com",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 		{
-			desc:   "invalid url",
-			url:    ":foo",
-			appURL: "http://localhost:3000/",
-			status: 200,
-			err:    login.ErrInvalidRedirectTo,
+			desc:        "invalid url",
+			url:         ":foo",
+			redirectURL: "/",
+			appURL:      "http://localhost:3000/",
+			status:      302,
 		},
 	}
 
@@ -222,15 +225,22 @@ func TestLoginViewRedirect(t *testing.T) {
 			if c.status == 302 {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
-				assert.Equal(t, location[0], c.url)
+				assert.Equal(t, location[0], c.redirectURL)
 
 				setCookie, ok := sc.resp.Header()["Set-Cookie"]
 				assert.True(t, ok, "Set-Cookie exists")
 				assert.Greater(t, len(setCookie), 0)
 				var redirectToCookieFound bool
-				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, hs.Cfg.AppSubUrl+"/")
+				redirectToCookieShouldBeDeleted := c.url != c.redirectURL
+				expCookieValue := c.redirectURL
+				expCookieMaxAge := 60
+				if redirectToCookieShouldBeDeleted {
+					expCookieValue = ""
+					expCookieMaxAge = 0
+				}
+				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, hs.Cfg.AppSubUrl+"/", expCookieMaxAge)
 				for _, cookieValue := range setCookie {
-					if cookieValue == expCookieValue {
+					if cookieValue == expCookie {
 						redirectToCookieFound = true
 						break
 					}
