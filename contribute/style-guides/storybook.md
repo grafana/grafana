@@ -14,7 +14,7 @@ Stories for a component should be placed next to the component file. The Storybo
 
 ## Writing stories
 
-When writing stories we use the [CSF format](https://storybook.js.org/docs/formats/component-story-format/). For more in depth information on writing stories see [Storybook’s documentation on writing stories](https://storybook.js.org/docs/basics/writing-stories/).
+When writing stories, we use the [CSF format](https://storybook.js.org/docs/formats/component-story-format/). For more in-depth information on writing stories, see [Storybook’s documentation on writing stories](https://storybook.js.org/docs/basics/writing-stories/).
 
 With the CSF format, the default export defines some general information about the stories in the file:
 
