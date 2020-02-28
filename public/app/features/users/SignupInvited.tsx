@@ -37,6 +37,11 @@ const navModel = {
   },
 };
 
+const onSubmit = async (formData: FormModel) => {
+  await getBackendSrv().post('/api/user/invite/complete', { ...formData, inviteCode: code });
+  window.location.href = getConfig().appSubUrl + '/';
+};
+
 const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code }) => {
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
@@ -48,17 +53,10 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
       name: invite.name,
       username: invite.email,
     });
-    console.log(initFormModel);
 
     setGreeting(invite.name || invite.email || invite.username);
     setInvitedBy(invite.invitedBy);
   }, []);
-
-  const onSubmit = async (formData: FormModel) => {
-    await getBackendSrv().post('/api/user/invite/complete', { ...formData, inviteCode: code });
-    window.location.href = getConfig().appSubUrl + '/';
-    // updateLocation({ path: '/' });
-  };
 
   return (
     <Page navModel={navModel}>
