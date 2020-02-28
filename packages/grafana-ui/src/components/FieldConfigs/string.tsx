@@ -6,6 +6,7 @@ import Forms from '../Forms';
 export interface StringFieldConfigSettings {
   placeholder?: string;
   maxLength?: number;
+  expandTemplateVars?: boolean;
 }
 
 export const stringOverrideProcessor = (
@@ -13,6 +14,9 @@ export const stringOverrideProcessor = (
   context: FieldOverrideContext,
   settings: StringFieldConfigSettings
 ) => {
+  if (settings.expandTemplateVars && context.replaceVariables) {
+    return context.replaceVariables(value, context.field!.config.scopedVars);
+  }
   return `${value}`;
 };
 

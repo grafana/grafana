@@ -8,7 +8,7 @@ exports[`TableContainer should render component 1`] = `
   loading={false}
   onToggle={[Function]}
 >
-  <Component
+  <Memo(MetaInfoText)
     metaItems={
       Array [
         Object {

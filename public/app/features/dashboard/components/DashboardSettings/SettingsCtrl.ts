@@ -244,11 +244,11 @@ export class SettingsCtrl {
     );
   }
 
-  onFolderChange(folder: { id: number; title: string }) {
+  onFolderChange = (folder: { id: number; title: string }) => {
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
     this.hasUnsavedFolderChange = true;
-  }
+  };
 
   getFolder() {
     return {
