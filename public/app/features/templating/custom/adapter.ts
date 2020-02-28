@@ -16,7 +16,7 @@ import { CustomVariableEditor } from './CustomVariableEditor';
 
 export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
-    description: 'Variable values are fetched from a datasource query',
+    description: 'Define variable values manually',
     label: 'Custom',
     initialState: initialCustomVariableState,
     reducer: customVariableReducer,
