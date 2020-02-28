@@ -2867,6 +2867,11 @@
     unique-filename "^1.1.1"
     which "^1.3.1"
 
+"@grafana/data@6.6.2":
+  version "6.6.2"
+  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-6.6.2.tgz#34695504cd86bc3b07e4dddcf35ebb1b84158199"
+  integrity sha512-561FlVoE8iFaMB4mo6FBCQc/+J/tv77vzjFWcHE2HB1JwDF15IxbABcDzZWTfPy2ypAi7TR3Kc8Lvss5v0l9Qg==
+
 "@grafana/eslint-config@^1.0.0-rc1":
   version "1.0.0-rc1"
   resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-1.0.0-rc1.tgz#3b0a1abddfea900a57abc9526ad31abb1da2d42c"
@@ -16797,6 +16802,11 @@ ms@^2.0.0, ms@^2.1.1:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
+
+mstring@0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/mstring/-/mstring-0.1.2.tgz#8a268b1b2deade1e58e4d1eba5484a9fefafaf02"
+  integrity sha1-iiaLGy3q3h5Y5NHrpUhKn++vrwI=
 
 multicast-dns-service-types@^1.1.0:
   version "1.1.0"

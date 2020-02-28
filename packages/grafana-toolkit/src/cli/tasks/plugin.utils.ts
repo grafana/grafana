@@ -1,37 +1,65 @@
 import { Task, TaskRunner } from './task';
-// import { pluginBuildRunner } from './plugin.build';
-// import { restoreCwd } from '../utils/cwd';
-// import { getPluginJson } from '../../config/utils/pluginValidation';
-// import { getPluginId } from '../../config/utils/getPluginId';
-// import { PluginMeta } from '@grafana/data';
-
+import { execLine, getPluginVersion } from '../utils/execLine';
+import { GitHubRelease } from '../utils/githubRelease';
 // @ts-ignore
 import execa = require('execa');
-//import path = require('path');
-// import fs from 'fs';
-// import { getPackageDetails, findImagesInFolder, getGrafanaVersions, readGitLog } from '../../plugins/utils';
-// import {
-//   job,
-//   getJobFolder,
-//   writeJobStats,
-//   getCiFolder,
-//   getPluginBuildInfo,
-//   getPullRequestNumber,
-//   getCircleDownloadBaseURL,
-// } from '../../plugins/env';
-// import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
-// import { PluginPackageDetails, PluginBuildReport, TestResultsInfo } from '../../plugins/types';
-// import { runEndToEndTests } from '../../plugins/e2e/launcher';
-// import { getEndToEndSettings } from '../../plugins/index';
-// import { manifestTask } from './manifest';
-// import { execTask } from '../utils/execTask';
+
+const releaseNotes = () => {
+  return execLine(`awk \'BEGIN {FS="##"; RS=""} FNR==3 {print; exit}\' CHANGELOG.md'`);
+};
+
+const checkoutBranch = (branchName: string, options: string): string => {
+  const currentBranch = execLine(`git rev-parse --abbrev-ref HEAD`);
+  const createBranch = execLine(`git branch -a | grep ${branchName} | grep -v remote`) === branchName ? '' : '-b';
+  if (currentBranch !== branchName) {
+    return `git checkout ${createBranch} ${branchName}`;
+  }
+  return '';
+};
 
 export interface GithuPublishOptions {
   dryrun?: boolean;
+  verbose?: boolean;
 }
 
-const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun }) => {
-  console.log('hello world', dryrun);
+const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, verbose }) => {
+  const pluginVersion = getPluginVersion();
+  const options = dryrun ? '--dry-run' : '';
+  const GIT_EMAIL = 'eng@grafana.com';
+  const GIT_USERNAME = 'CircleCI Automation';
+  const GITHUB_TOKEN = '';
+  const gitRelease = new GitHubRelease(GITHUB_TOKEN, GIT_USERNAME, '', releaseNotes());
+  const githubPublishScript: string[] = [
+    `git config user.email ${GIT_EMAIL}`,
+    `git config user.name "${GIT_USERNAME}"`,
+    checkoutBranch(`release-${pluginVersion}`, options),
+    'git add --force dist/',
+    `git commit -m "automated release ${pluginVersion} [skip ci]" ${options}`,
+    `git push -f origin release-${pluginVersion} ${options}`,
+    `git tag -f ${pluginVersion}`,
+    `git push -f origin release-${pluginVersion} ${options}`,
+  ];
+
+  gitRelease.release();
+
+  githubPublishScript.forEach(line => {
+    try {
+      if (verbose) {
+        console.log('executing >>', line);
+        console.log(execLine(line));
+      } else {
+        execLine(line);
+        process.stdout.write('.');
+      }
+    } catch (ex) {
+      console.error(ex.message);
+      process.exit(-1);
+    }
+  });
+
+  if (verbose) {
+    process.stdout.write('\n');
+  }
 };
 
 export const githubPublishTask = new Task<GithuPublishOptions>('Github Publish', githubPublishRunner);
