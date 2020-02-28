@@ -1,14 +1,18 @@
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import { getPluginJson } from '../../config/utils/pluginValidation';
-import fs from 'fs';
+import { getCiFolder } from '../../plugins/env';
+import { getPluginId } from '../../config/utils/getPluginId';
 import path = require('path');
 
-const pluginJsonFile = path.resolve(`./src/plugin.json`);
+const ciDir = getCiFolder();
+const distDir = path.resolve(ciDir, 'dist');
+const distContentDir = path.resolve(distDir, getPluginId());
+const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
 const pluginJson = getPluginJson(pluginJsonFile);
 
-const execLine = (command: string): string => {
+const execLine = async (command: string): Promise<string> => {
   if (command.length > 0) {
-    return execSync(command)
+    return exec(command)
       .toString()
       .replace(/\r?\n|\r/g, '')
       .replace(/^\s+/g, '')
@@ -18,11 +22,7 @@ const execLine = (command: string): string => {
 };
 
 const getPluginVersion = (): string => {
-  if (pluginJson.info.version === '%VERSION%') {
-    return JSON.parse(fs.readFileSync(`./package.json`).toString())['version'];
-  } else {
-    return pluginJson.info.version;
-  }
+  return pluginJson.info.version;
 };
 
 export { execLine, getPluginVersion, pluginJson };

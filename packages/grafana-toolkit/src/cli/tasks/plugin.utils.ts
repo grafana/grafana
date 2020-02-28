@@ -8,9 +8,10 @@ const releaseNotes = () => {
   return execLine(`awk \'BEGIN {FS="##"; RS=""} FNR==3 {print; exit}\' CHANGELOG.md'`);
 };
 
-const checkoutBranch = (branchName: string, options: string): string => {
-  const currentBranch = execLine(`git rev-parse --abbrev-ref HEAD`);
-  const createBranch = execLine(`git branch -a | grep ${branchName} | grep -v remote`) === branchName ? '' : '-b';
+const checkoutBranch = async (branchName: string, options: string): Promise<string> => {
+  const currentBranch = await execLine(`git rev-parse --abbrev-ref HEAD`);
+  const createBranch =
+    (await execLine(`git branch -a | grep ${branchName} | grep -v remote`)) === branchName ? '' : '-b';
   if (currentBranch !== branchName) {
     return `git checkout ${createBranch} ${branchName}`;
   }
@@ -28,11 +29,11 @@ const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, ve
   const GIT_EMAIL = 'eng@grafana.com';
   const GIT_USERNAME = 'CircleCI Automation';
   const GITHUB_TOKEN = '';
-  const gitRelease = new GitHubRelease(GITHUB_TOKEN, GIT_USERNAME, '', releaseNotes());
+  const gitRelease = new GitHubRelease(GITHUB_TOKEN, GIT_USERNAME, '', await releaseNotes());
   const githubPublishScript: string[] = [
     `git config user.email ${GIT_EMAIL}`,
     `git config user.name "${GIT_USERNAME}"`,
-    checkoutBranch(`release-${pluginVersion}`, options),
+    await checkoutBranch(`release-${pluginVersion}`, options),
     'git add --force dist/',
     `git commit -m "automated release ${pluginVersion} [skip ci]" ${options}`,
     `git push -f origin release-${pluginVersion} ${options}`,
@@ -42,13 +43,15 @@ const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, ve
 
   gitRelease.release();
 
-  githubPublishScript.forEach(line => {
+  githubPublishScript.forEach(async line => {
     try {
       if (verbose) {
         console.log('executing >>', line);
-        console.log(execLine(line));
+      }
+      const output = await execLine(line);
+      if (verbose) {
+        console.log(output);
       } else {
-        execLine(line);
         process.stdout.write('.');
       }
     } catch (ex) {
