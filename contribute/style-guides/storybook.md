@@ -1,8 +1,8 @@
 # Why creating stories
 
-[Storybook](https://storybook.js.org/) is a tool which we use to manage our design system and the components which are a part of it. Storybook consists of stories: each story representing a component and a case in which it is used. To show a wide variety of use cases is good both documentation wise and for troubleshooting - it might be possible to reproduce a bug for an edge case in a story.
+[Storybook](https://storybook.js.org/) is a tool which we use to manage our design system and the components which are a part of it. Storybook consists of _stories:_ each story represents a component and a case in which it is used. To show a wide variety of use cases is good both documentation wise and for troubleshooting -- it might be possible to reproduce a bug for an edge case in a story.
 
-In short:
+Storybook is:
 
 - A good way to publish our design system with its implementations
 - Used as a tool for documentation
@@ -14,12 +14,12 @@ Stories for a component should be placed next to the component file. The Storybo
 
 ## Writing stories
 
-When writing stories we use the [CSF format](https://storybook.js.org/docs/formats/component-story-format/). For more in depth information on writing stories see [Storybook’s documentation on writing stories](https://storybook.js.org/docs/basics/writing-stories/).
+When writing stories, we use the [CSF format](https://storybook.js.org/docs/formats/component-story-format/). For more in-depth information on writing stories, see [Storybook’s documentation on writing stories](https://storybook.js.org/docs/basics/writing-stories/).
 
-With the CSF format the default export defines some general information about the stories in the file
+With the CSF format, the default export defines some general information about the stories in the file:
 
 - `title`: Where the component is going to live in the hierarchy
-- `decorators`: a list which can contain wrappers or provide context, such as theming
+- `decorators`: A list which can contain wrappers or provide context, such as theming
 
 ```jsx
 // In MyComponent.story.tsx
@@ -110,7 +110,7 @@ An MDX file can exist by itself without any connection to a story. This can be g
 
 ```
 
-It is also possible to add parameters to the Meta tag. This examples shows how to hide the tools.
+You can add parameters to the Meta tag. This example shows how to hide the tools:
 
 ```jsx
 <Meta title="Docs Overview/Color Palettes" parameters={{ options: { isToolshown: false }}}/>
@@ -134,7 +134,7 @@ interface MyProps {
 }
 ```
 
-## Using knobs
+## Knobs
 
 Knobs is an [addon to Storybook](https://github.com/storybookjs/storybook/tree/master/addons/knobs) which can be used to easily switch values in the UI. A good use case for it is to try different props for the component. Using knobs is easy. Grafana is set up so knobs can be used straight out of the box. Here is an example of how you might use it.
 
