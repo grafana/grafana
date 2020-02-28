@@ -1,5 +1,6 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
+import copy from 'rollup-plugin-copy';
 import sourceMaps from 'rollup-plugin-sourcemaps';
 import { terser } from 'rollup-plugin-terser';
 
@@ -21,6 +22,13 @@ const buildCjsPackage = ({ env }) => {
       },
     ],
     plugins: [
+      copy({
+        flatten: false,
+        targets: [
+          { src: 'cypress.json', dest: 'dist/' },
+          { src: 'cypress/**/*.+(js|ts)', dest: 'dist/cypress/' },
+        ],
+      }),
       commonjs({
         include: /node_modules/,
       }),
