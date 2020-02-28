@@ -17,15 +17,15 @@ import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
   changeVariableProp,
+  hideVariableDropDown,
   removeInitLock,
   resolveInitLock,
+  selectVariableOption,
   setCurrentVariableValue,
+  showVariableDropDown,
+  toggleAllVariableOptions,
   updateVariableOptions,
   updateVariableTags,
-  showVariableDropDown,
-  hideVariableDropDown,
-  toggleAllVariableOptions,
-  selectVariableOption,
 } from '../state/actions';
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
@@ -40,7 +40,7 @@ import {
   changeQueryVariableHighlightIndex,
   changeQueryVariableSearchQuery,
   queryVariableDatasourceLoaded,
-  queryVariableEditorLoaded,
+  queryVariableQueryEditorLoaded,
   toggleVariableTag,
 } from './actions';
 import { ComponentType } from 'react';
@@ -476,7 +476,7 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       instanceState.editor.dataSource = action.payload.data;
     })
-    .addCase(queryVariableEditorLoaded, (state, action) => {
+    .addCase(queryVariableQueryEditorLoaded, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       instanceState.editor.VariableQueryEditor = action.payload.data;
     })
@@ -492,14 +492,14 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       const values = tag.values || [];
       const selected = !tag.selected;
 
-      instanceState.variable.tags = instanceState.variable.tags.map(tag => {
-        if (tag.text !== tag.text) {
-          return tag;
+      instanceState.variable.tags = instanceState.variable.tags.map(t => {
+        if (t.text !== tag.text) {
+          return t;
         }
-        tag.selected = selected;
-        tag.valuesText = values.join(' + ');
-        tag.values = values;
-        return tag;
+        t.selected = selected;
+        t.valuesText = values.join(' + ');
+        t.values = values;
+        return t;
       });
 
       instanceState.variable.options = instanceState.variable.options.map(option => {
@@ -519,8 +519,8 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
 
       if (nextIndex < 0) {
         nextIndex = 0;
-      } else if (nextIndex > instanceState.picker.options.length) {
-        nextIndex = instanceState.picker.options.length;
+      } else if (nextIndex >= instanceState.picker.options.length) {
+        nextIndex = instanceState.picker.options.length - 1;
       }
 
       instanceState.picker.highlightIndex = nextIndex;

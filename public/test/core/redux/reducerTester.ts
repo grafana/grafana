@@ -5,8 +5,8 @@ export interface Given<State> {
   givenReducer: (
     reducer: Reducer<State, PayloadAction<any>>,
     state: State,
-    disableDeepFreeze?: boolean,
-    showDebugOutput?: boolean
+    showDebugOutput?: boolean,
+    disableDeepFreeze?: boolean
   ) => When<State>;
 }
 
@@ -62,8 +62,8 @@ export const reducerTester = <State>(): Given<State> => {
   const givenReducer = (
     reducer: Reducer<State, PayloadAction<any>>,
     state: State,
-    disableDeepFreeze = false,
-    debug = false
+    debug = false,
+    disableDeepFreeze = false
   ): When<State> => {
     reducerUnderTest = reducer;
     initialState = { ...state };

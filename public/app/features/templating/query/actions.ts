@@ -3,6 +3,7 @@ import { createAction } from '@reduxjs/toolkit';
 import { AppEvents, DataSourceApi } from '@grafana/data';
 
 import {
+  selectVariableOption,
   toVariableIdentifier,
   toVariablePayload,
   updateVariableCompleted,
@@ -13,7 +14,6 @@ import {
   validateVariableSelectionState,
   VariableIdentifier,
   VariablePayload,
-  selectVariableOption,
 } from '../state/actions';
 import { QueryVariableModel, VariableRefresh, VariableTag } from '../variable';
 import { ThunkResult, VariableQueryProps } from '../../../types';
@@ -34,8 +34,8 @@ export const queryVariableDatasourceLoaded = createAction<VariablePayload<DataSo
   'templating/queryVariableDatasourceLoaded'
 );
 
-export const queryVariableEditorLoaded = createAction<VariablePayload<ComponentType<VariableQueryProps>>>(
-  'templating/queryVariableEditorLoaded'
+export const queryVariableQueryEditorLoaded = createAction<VariablePayload<ComponentType<VariableQueryProps>>>(
+  'templating/queryVariableQueryEditorLoaded'
 );
 
 export const toggleVariableTag = createAction<VariablePayload<VariableTag>>('templating/toggleVariableTag');
@@ -107,7 +107,7 @@ export const changeQueryVariableDataSource = (
       const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
       const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? DefaultVariableQueryEditor;
       dispatch(queryVariableDatasourceLoaded(toVariablePayload(identifier, dataSource)));
-      dispatch(queryVariableEditorLoaded(toVariablePayload(identifier, VariableQueryEditor)));
+      dispatch(queryVariableQueryEditorLoaded(toVariablePayload(identifier, VariableQueryEditor)));
     } catch (err) {
       console.error(err);
     }
