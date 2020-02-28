@@ -65,10 +65,10 @@ describe('queryVariableReducer', () => {
           expect(resultingState.variables[0].editor).toEqual(initialQueryVariableEditorState);
           expect(resultingState.variables[0].picker).toEqual(initialQueryVariablePickerState);
           // make sure that initLock is defined
-          expect(resultingState.variables[0].variable?.initLock).toBeDefined();
-          expect(resultingState.variables[0].variable?.initLock.promise).toBeDefined();
-          expect(resultingState.variables[0].variable?.initLock.resolve).toBeDefined();
-          expect(resultingState.variables[0].variable?.initLock.reject).toBeDefined();
+          expect(resultingState.variables[0].variable.initLock!).toBeDefined();
+          expect(resultingState.variables[0].variable.initLock!.promise).toBeDefined();
+          expect(resultingState.variables[0].variable.initLock!.resolve).toBeDefined();
+          expect(resultingState.variables[0].variable.initLock!.reject).toBeDefined();
           return true;
         });
     });
@@ -456,11 +456,11 @@ describe('queryVariableReducer', () => {
           expect(resultingState.variables[0].picker).toEqual(expectedState.variables[0].picker);
           expect(resultingState.variables[0].editor).toEqual(expectedState.variables[0].editor);
           // make sure that initLock is defined
-          expect(resultingState.variables[0].variable?.initLock).toBeDefined();
-          expect(resultingState.variables[0].variable?.initLock.promise).toBeDefined();
-          expect(resultingState.variables[0].variable?.initLock.resolve).toBeDefined();
-          expect(resultingState.variables[0].variable?.initLock.resolve).toHaveBeenCalledTimes(1);
-          expect(resultingState.variables[0].variable?.initLock.reject).toBeDefined();
+          expect(resultingState.variables[0].variable.initLock!).toBeDefined();
+          expect(resultingState.variables[0].variable.initLock!.promise).toBeDefined();
+          expect(resultingState.variables[0].variable.initLock!.resolve).toBeDefined();
+          expect(resultingState.variables[0].variable.initLock!.resolve).toHaveBeenCalledTimes(1);
+          expect(resultingState.variables[0].variable.initLock!.reject).toBeDefined();
           return true;
         });
     });
