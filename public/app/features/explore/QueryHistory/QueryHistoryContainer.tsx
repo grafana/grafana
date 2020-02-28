@@ -1,9 +1,9 @@
 // Libraries
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Resizable } from 're-resizable';
-import { css, cx } from 'emotion';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
+import { css, cx } from 'emotion';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -15,10 +15,11 @@ import { updateQueryHistory } from '../state/actions';
 
 // Types
 import { StoreState } from 'app/types';
+import { ExploreId } from 'app/types/explore';
 
 // Components
 import { QueryHistory, SETTINGS_KEYS, Tabs } from './QueryHistory';
-import { QueryHistoryQuery } from './QueryHistoryQueries';
+import { QueryHistoryQuery } from './QueryHistoryContent';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
@@ -57,22 +58,36 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface Props {
-  queryHistory: QueryHistoryQuery[];
   updateQueryHistory: typeof updateQueryHistory;
-  width: number;
-  showQueryHistory: boolean;
+  queryHistory: QueryHistoryQuery[];
   firstTab: Tabs;
+  width: number;
+  activeDatasourceInstance: string;
 }
 
 function QueryHistoryContainer(props: Props) {
-  const { queryHistory, updateQueryHistory, width, showQueryHistory, firstTab } = props;
+  const [visible, setVisible] = useState(false);
+
+  //To create animation for drawer
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const { queryHistory, updateQueryHistory, width, firstTab, activeDatasourceInstance } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
 
+  const handle = (
+    <div className={styles.handle}>
+      <hr />
+    </div>
+  );
+
   return (
     <Resizable
-      className={cx(styles.container, showQueryHistory ? styles.drawerActive : styles.drawerNotActive)}
-      defaultSize={{ width, height: '300px' }}
+      className={cx(styles.container, visible ? styles.drawerActive : styles.drawerNotActive)}
+      defaultSize={{ width, height: '400px' }}
       enable={{
         top: true,
         right: false,
@@ -87,21 +102,28 @@ function QueryHistoryContainer(props: Props) {
       maxWidth={`${width}px`}
       minWidth={`${width}px`}
     >
-      <div className={styles.handle}>
-        <hr />
-      </div>
-      <QueryHistory queryHistory={queryHistory} onChangeQueryHistoryProperty={updateQueryHistory} firstTab={firstTab} />
+      {handle}
+      <QueryHistory
+        queryHistory={queryHistory}
+        onChangeQueryHistoryProperty={updateQueryHistory}
+        firstTab={firstTab}
+        activeDatasourceInstance={activeDatasourceInstance}
+      />
     </Resizable>
   );
 }
 
-function mapStateToProps(state: StoreState) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
+  // @ts-ignore
+  const item: ExploreItemState = explore[exploreId];
+  const { datasourceInstance } = item;
   const firstTab = store.getBool(SETTINGS_KEYS.activeStarredTab, false) ? Tabs.Starred : Tabs.QueryHistory;
   const { queryHistory } = explore;
   return {
     queryHistory,
     firstTab,
+    activeDatasourceInstance: datasourceInstance?.name,
   };
 }
 
@@ -109,4 +131,7 @@ const mapDispatchToProps = {
   updateQueryHistory,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(QueryHistoryContainer));
+export default hot(module)(
+  // @ts-ignore
+  connect(mapStateToProps, mapDispatchToProps)(QueryHistoryContainer)
+) as React.ComponentType<{ exploreId: ExploreId; width: number }>;

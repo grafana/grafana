@@ -114,7 +114,7 @@ interface ExploreProps {
 }
 
 interface ExploreState {
-  isQueryHistoryVisible: boolean;
+  showQueryHistory: boolean;
 }
 
 /**
@@ -149,7 +149,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     super(props);
     this.exploreEvents = new Emitter();
     this.state = {
-      isQueryHistoryVisible: false,
+      showQueryHistory: false,
     };
   }
 
@@ -251,10 +251,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  toggleIsQueryHistoryVisible = () => {
+  toggleShowQueryHistory = () => {
     this.setState(state => {
       return {
-        isQueryHistoryVisible: !state.isQueryHistoryVisible,
+        showQueryHistory: !state.showQueryHistory,
       };
     });
   };
@@ -293,7 +293,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       syncedTimes,
       isLive,
     } = this.props;
-    const { isQueryHistoryVisible } = this.state;
+    const { showQueryHistory } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
@@ -319,9 +319,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               <button
                 aria-label="Query history button"
                 className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
-                  ['explore-active-button']: this.state.isQueryHistoryVisible,
+                  ['explore-active-button']: showQueryHistory,
                 })}
-                onClick={this.toggleIsQueryHistoryVisible}
+                onClick={this.toggleShowQueryHistory}
                 disabled={isLive}
               >
                 <i className={'fa fa-fw fa-history icon-margin-right '} />
@@ -382,7 +382,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      <QueryHistoryContainer width={width} showQueryHistory={isQueryHistoryVisible} />
+                      {showQueryHistory && <QueryHistoryContainer width={width} exploreId={exploreId} />}
                     </ErrorBoundaryAlert>
                   </main>
                 );

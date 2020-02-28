@@ -33,7 +33,7 @@ import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explo
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
-import { QueryHistoryQuery, SortingValue } from '../../features/explore/QueryHistory/QueryHistoryQueries';
+import { QueryHistoryQuery } from '../../features/explore/QueryHistory/QueryHistoryContent';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -552,6 +552,8 @@ const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
 export enum SortOrder {
   Descending = 'Descending',
   Ascending = 'Ascending',
+  DatasourceAZ = 'Datasource A-Z',
+  DatasourceZA = 'Datasource Z-A',
 }
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
@@ -592,22 +594,22 @@ export function deduplicateLogRowsById(rows: LogRowModel[]) {
   return _.uniqBy(rows, 'uid');
 }
 
-export const sortQueries = (array: QueryHistoryQuery[], sortingValue: SortingValue) => {
+export const sortQueries = (array: QueryHistoryQuery[], sortOrder: SortOrder) => {
   let sortFunc;
 
-  if (sortingValue === 'Time ascending') {
+  if (sortOrder === SortOrder.Ascending) {
     sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
   }
-  if (sortingValue === 'Time descending') {
+  if (sortOrder === SortOrder.Descending) {
     sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
   }
 
-  if (sortingValue === 'Datasource A-Z') {
+  if (sortOrder === SortOrder.DatasourceAZ) {
     sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) =>
       a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0;
   }
 
-  if (sortingValue === 'Datasource Z-A') {
+  if (sortOrder === SortOrder.DatasourceZA) {
     sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) =>
       a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0;
   }
@@ -644,4 +646,23 @@ export const createUrlFromQueryHistory = (query: QueryHistoryQuery) => {
   const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)[0];
   const url = renderUrl(`${baseUrl}/explore`, { left: serializedState });
   return url;
+};
+
+export const mapNumbertoTimeInSlider = (num: number) => {
+  let str;
+  switch (num) {
+    case 0:
+      str = 'today';
+      break;
+    case 1:
+      str = 'yesterday';
+      break;
+    case 7:
+      str = 'a week ago';
+      break;
+    default:
+      str = `${num} days ago`;
+  }
+
+  return str;
 };

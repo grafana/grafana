@@ -14,6 +14,7 @@ export interface Props {
   /** Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed. */
   value?: number[];
   reverse?: boolean;
+  tooltipAlwaysVisible?: boolean;
   formatTooltipResult?: (value: number) => number | string;
   onChange?: (values: number[]) => void;
 }
@@ -102,6 +103,7 @@ export const Slider: FunctionComponent<Props> = ({
   reverse,
   formatTooltipResult,
   value,
+  tooltipAlwaysVisible = true,
 }) => {
   const isHorizontal = orientation === 'horizontal';
   const theme = useTheme();
@@ -112,7 +114,11 @@ export const Slider: FunctionComponent<Props> = ({
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
       <RangeWithTooltip
-        tipProps={{ visible: true, placement: isHorizontal ? 'top' : 'right' }}
+        tipProps={{
+          visible: tooltipAlwaysVisible,
+          trigger: ['focus', 'hover', 'click'],
+          placement: isHorizontal ? 'top' : 'right',
+        }}
         min={min}
         max={max}
         defaultValue={value || [min, max]}

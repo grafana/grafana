@@ -6,11 +6,11 @@ import { GrafanaTheme } from '@grafana/data';
 interface QueryHistorySettingsProps {
   activeTimeSpan: number;
   activeStarredTab: boolean;
-  showActiveDatasourceHistory: boolean;
+  onlyActiveDatasourceHistory: boolean;
   hiddenSessions: boolean;
   onChangeActiveTimeSpan: (option: { label: string; value: number }) => void;
   toggleActiveStarredTab: () => void;
-  toggleShowActiveDatasourceHistory: () => void;
+  toggleonlyActiveDatasourceHistory: () => void;
   toggleHideSessions: () => void;
 }
 
@@ -46,11 +46,11 @@ export function QueryHistorySettings(props: QueryHistorySettingsProps) {
   const {
     activeTimeSpan,
     activeStarredTab,
-    showActiveDatasourceHistory,
+    onlyActiveDatasourceHistory,
     hiddenSessions,
     onChangeActiveTimeSpan,
     toggleActiveStarredTab,
-    toggleShowActiveDatasourceHistory,
+    toggleonlyActiveDatasourceHistory,
     toggleHideSessions,
   } = props;
   const theme = useTheme();
@@ -80,7 +80,7 @@ export function QueryHistorySettings(props: QueryHistorySettingsProps) {
       </Forms.Field>
       <Forms.Field label="Datasource behaviour" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={showActiveDatasourceHistory} onChange={toggleShowActiveDatasourceHistory}></Forms.Switch>
+          <Forms.Switch value={onlyActiveDatasourceHistory} onChange={toggleonlyActiveDatasourceHistory}></Forms.Switch>
           <div className={styles.label}>Only show queries for datasource currently active in Explore</div>
         </div>
       </Forms.Field>

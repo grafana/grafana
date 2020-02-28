@@ -1,10 +1,9 @@
 import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, ExploreMode, AppEvents } from '@grafana/data';
-import { QueryHistoryQuery } from './QueryHistoryQueries';
-import { copyQueryToClipboard, copyToClipboard, createUrlFromQueryHistory } from '../../../core/utils/explore';
-import { renderUrl } from 'app/core/utils/url';
+import { GrafanaTheme, AppEvents } from '@grafana/data';
+import { QueryHistoryQuery } from './QueryHistoryContent';
+import { copyToClipboard, createUrlFromQueryHistory } from '../../../core/utils/explore';
 import appEvents from 'app/core/app_events';
 
 interface Props {
