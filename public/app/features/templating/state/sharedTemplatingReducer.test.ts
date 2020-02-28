@@ -197,6 +197,7 @@ describe('sharedTemplatingReducer', () => {
 
   describe('when variableEditorUnMounted is dispatched', () => {
     it('then state should be correct', () => {
+      variableAdapters.set('query', createQueryVariableAdapter());
       const initialState: TemplatingState = {
         variables: getVariableState(3, 1, true),
         uuidInEditor: '1',
@@ -230,7 +231,7 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
+              editor: { ...initialQueryVariableEditorState },
               picker: {},
             },
             '2': {
