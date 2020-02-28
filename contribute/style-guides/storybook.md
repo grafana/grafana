@@ -34,14 +34,14 @@ export default {
 
 ```
 
-When it comes to writing the actual stories, you continue in the same file with named exports - which are turned into the story name.
+When it comes to writing the actual stories, you continue in the same file with named exports. The exports are turned into the story name.
 
 ```jsx
 // Will produce a story name “some story”
 export const someStory = () => <MyComponent />;
 ```
 
-If you want to write cover cases with different values for props you don’t need to create a new story - using Knobs is usually enough. This will be covered further down.
+If you want to write cover cases with different values for props, then using knobs is usually enough. You don’t need to create a new story. This will be covered further down.
 
 ## Categorization
 
@@ -79,7 +79,7 @@ export default {
 };
 ```
 
-## The structure of an MDX file
+## MDX file structure
 
 There are some things that the MDX file should contain:
 
@@ -99,7 +99,7 @@ import { MyComponent } from "./MyComponent";
 
 ### MDX file without a relationship to a component
 
-An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page. Something that is required when the MDX file has no relation to a component is a `Meta` tag that says where in the hierarchy the component will live. It can look like this
+An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page. Something that is required when the MDX file has no relation to a component is a `Meta` tag that says where in the hierarchy the component will live. It can look like this:
 
 ```jsx
 <Meta title="Docs Overview/Color Palettes"/>
