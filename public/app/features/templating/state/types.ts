@@ -12,8 +12,14 @@ export interface VariableEditorState {
   dataSources: DataSourceSelectItem[]; // TODO: This isn't needed for custom move it?
 }
 
+export interface OnPropChangeArguments<Model extends VariableModel = VariableModel> {
+  propName: keyof Model;
+  propValue: any;
+  updateOptions?: boolean;
+}
+
 export interface VariableEditorOnPropChange<Model extends VariableModel = VariableModel> {
-  onPropChange: (propName: keyof Model, propValue: any) => void;
+  onPropChange: (args: OnPropChangeArguments<Model>) => void;
 }
 
 export interface VariableEditorProps<

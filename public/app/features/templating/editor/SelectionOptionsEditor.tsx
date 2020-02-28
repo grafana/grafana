@@ -13,21 +13,21 @@ export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupp
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = props => {
   const onMultiChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onPropChange('multi', event.target.checked);
+      props.onPropChange({ propName: 'multi', propValue: event.target.checked });
     },
     [props.onPropChange]
   );
 
   const onIncludeAllChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onPropChange('includeAll', event.target.checked);
+      props.onPropChange({ propName: 'includeAll', propValue: event.target.checked });
     },
     [props.onPropChange]
   );
 
   const onAllValueChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onPropChange('allValue', event.target.value);
+      props.onPropChange({ propName: 'allValue', propValue: event.target.value });
     },
     [props.onPropChange]
   );

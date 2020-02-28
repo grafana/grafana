@@ -1,9 +1,8 @@
-import React, { ChangeEvent, PureComponent } from 'react';
+import React, { ChangeEvent, PureComponent, FocusEvent } from 'react';
 import { CustomVariableModel, VariableWithMultiSupport } from '../variable';
-import { VariableEditorProps } from '../state/types';
+import { VariableEditorProps, OnPropChangeArguments } from '../state/types';
 import { CustomVariableEditorState } from './reducer';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { variableAdapters } from '../adapters';
 
 export interface Props extends VariableEditorProps<CustomVariableModel, CustomVariableEditorState> {}
 export interface State {
@@ -11,15 +10,23 @@ export interface State {
 }
 
 export class CustomVariableEditor extends PureComponent<Props, State> {
-  runQuery = () => variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
-
   onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange('query', event.target.value);
+    this.props.onPropChange({
+      propName: 'query',
+      propValue: event.target.value,
+    });
   };
 
-  onSelectionOptionsChange = async (propName: keyof VariableWithMultiSupport, propValue: any) => {
-    this.props.onPropChange(propName, propValue);
-    this.runQuery();
+  onSelectionOptionsChange = async ({ propName, propValue }: OnPropChangeArguments<VariableWithMultiSupport>) => {
+    this.props.onPropChange({ propName, propValue, updateOptions: true });
+  };
+
+  onBlur = (event: FocusEvent<HTMLInputElement>) => {
+    this.props.onPropChange({
+      propName: 'query',
+      propValue: event.target.value,
+      updateOptions: true,
+    });
   };
 
   render() {
@@ -34,7 +41,7 @@ export class CustomVariableEditor extends PureComponent<Props, State> {
               className="gf-form-input"
               value={this.props.variable.query}
               onChange={this.onChange}
-              onBlur={this.runQuery}
+              onBlur={this.onBlur}
               placeholder="1, 10, 20, myvalue, escaped\,value"
               required
               aria-label="Variable editor Form Custom Query field"

@@ -19,7 +19,7 @@ import {
   variableEditorUnMounted,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
-import { emptyUuid, VariableState } from '../state/types';
+import { emptyUuid, VariableState, OnPropChangeArguments } from '../state/types';
 import { VariableHide, VariableType } from '../variable';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
@@ -63,8 +63,11 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
     );
   };
 
-  onPropChanged = (propName: string, propValue: any) => {
+  onPropChanged = ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
     dispatch(changeVariableProp(toVariablePayload(this.props.variable, { propName, propValue })));
+    if (updateOptions) {
+      variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+    }
   };
 
   onHandleSubmit = async (event: FormEvent<HTMLFormElement>) => {

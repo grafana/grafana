@@ -5,11 +5,10 @@ import { FormLabel, Switch } from '@grafana/ui';
 import templateSrv from '../template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../variable';
-import { VariableEditorProps } from '../state/types';
+import { VariableEditorProps, OnPropChangeArguments } from '../state/types';
 import { QueryVariableEditorState } from './reducer';
 import { dispatch } from '../../../store/store';
 import { changeQueryVariableDataSource, initQueryVariableEditor } from './actions';
-import { variableAdapters } from '../adapters';
 import { toVariableIdentifier } from '../state/actions';
 
 export interface Props extends VariableEditorProps<QueryVariableModel, QueryVariableEditorState> {}
@@ -47,17 +46,14 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
     return value ?? '';
   };
 
-  runQuery = async () => await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
-
   onDataSourceChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    this.props.onPropChange('query', '');
-    this.props.onPropChange('datasource', event.target.value);
+    this.props.onPropChange({ propName: 'query', propValue: '' });
+    this.props.onPropChange({ propName: 'datasource', propValue: event.target.value });
   };
 
   onQueryChange = async (query: any, definition: string) => {
-    this.props.onPropChange('query', query);
-    this.props.onPropChange('definition', definition);
-    await this.runQuery();
+    this.props.onPropChange({ propName: 'query', propValue: query });
+    this.props.onPropChange({ propName: 'definition', propValue: definition, updateOptions: true });
   };
 
   onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -65,8 +61,7 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
   };
 
   onRegExBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange('regex', event.target.value);
-    await this.runQuery();
+    this.props.onPropChange({ propName: 'regex', propValue: event.target.value, updateOptions: true });
   };
 
   onTagsQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -74,8 +69,7 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
   };
 
   onTagsQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange('tagsQuery', event.target.value);
-    await this.runQuery();
+    this.props.onPropChange({ propName: 'tagsQuery', propValue: event.target.value, updateOptions: true });
   };
 
   onTagValuesQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -83,27 +77,23 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
   };
 
   onTagValuesQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange('tagValuesQuery', event.target.value);
-    await this.runQuery();
+    this.props.onPropChange({ propName: 'tagValuesQuery', propValue: event.target.value, updateOptions: true });
   };
 
   onRefreshChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    this.props.onPropChange('refresh', parseInt(event.target.value, 10));
+    this.props.onPropChange({ propName: 'refresh', propValue: parseInt(event.target.value, 10) });
   };
 
   onSortChange = async (event: ChangeEvent<HTMLSelectElement>) => {
-    this.props.onPropChange('sort', parseInt(event.target.value, 10));
-    await this.runQuery();
+    this.props.onPropChange({ propName: 'sort', propValue: parseInt(event.target.value, 10), updateOptions: true });
   };
 
-  onSelectionOptionsChange = async (propName: keyof VariableWithMultiSupport, propValue: any) => {
-    this.props.onPropChange(propName, propValue);
-    await this.runQuery();
+  onSelectionOptionsChange = async ({ propValue, propName }: OnPropChangeArguments<VariableWithMultiSupport>) => {
+    this.props.onPropChange({ propName, propValue, updateOptions: true });
   };
 
   onUseTagsChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange('useTags', event.target.checked);
-    await this.runQuery();
+    this.props.onPropChange({ propName: 'useTags', propValue: event.target.checked, updateOptions: true });
   };
 
   render() {
