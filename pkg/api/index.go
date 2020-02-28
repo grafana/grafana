@@ -87,6 +87,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
+		AppTitle:                "Grafana",
 	}
 
 	if setting.DisableGravatar {
@@ -229,9 +230,20 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 				}
 
 				if include.Type == "page" && include.AddToNav {
-					link := &dtos.NavLink{
-						Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
-						Text: include.Name,
+					var link *dtos.NavLink
+					if len(include.Path) > 0 {
+						link = &dtos.NavLink{
+							Url:  setting.AppSubUrl + include.Path,
+							Text: include.Name,
+						}
+						if include.DefaultNav {
+							appLink.Url = link.Url // Overwrite the hardcoded page logic
+						}
+					} else {
+						link = &dtos.NavLink{
+							Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
+							Text: include.Name,
+						}
 					}
 					appLink.Children = append(appLink.Children, link)
 				}
