@@ -39,6 +39,7 @@ import {
   updateHistory,
   addToQueryHistory,
   updateStarred,
+  updateComment,
 } from 'app/core/utils/explore';
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
@@ -502,12 +503,15 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
   };
 };
 
-export const updateQueryHistory = (ts: number, property: string): ThunkResult<void> => {
+export const updateQueryHistory = (ts: number, property: string, value?: string): ThunkResult<void> => {
   return (dispatch, getState) => {
     // Side-effect: Saving queryhistory in localstorage
     let nextQueryHistory;
     if (property === 'starred') {
       nextQueryHistory = updateStarred(getState().explore.queryHistory, ts);
+    }
+    if (property === 'comment') {
+      nextQueryHistory = updateComment(getState().explore.queryHistory, ts, value);
     }
     dispatch(queryHistoryUpdatedAction({ queryHistory: nextQueryHistory }));
   };

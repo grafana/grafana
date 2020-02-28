@@ -411,6 +411,20 @@ export function updateStarred(queryHistory: any[], ts: number) {
   return updatedQueries;
 }
 
+export function updateComment(queryHistory: any[], ts: number, newComment: string) {
+  const updatedQueries = queryHistory.map(q => {
+    if (q.ts === ts) {
+      const updatedQuery = Object.assign({}, q, { comment: newComment });
+      return updatedQuery;
+    }
+    return q;
+  });
+
+  const queryHistoryKey = 'grafana.explore.queryHistory';
+  store.setObject(queryHistoryKey, updatedQueries);
+  return updatedQueries;
+}
+
 export function clearHistory(datasourceId: string) {
   const historyKey = `grafana.explore.history.${datasourceId}`;
   store.delete(historyKey);

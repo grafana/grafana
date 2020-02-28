@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme } from '@grafana/ui';
+import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import { QueryHistoryQuery } from './QueryHistoryContent';
 import { copyToClipboard, createUrlFromQueryHistory } from '../../../core/utils/explore';
@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 
 interface Props {
   query: QueryHistoryQuery;
-  onChangeQueryHistoryProperty: (ts: number, property: string) => void;
+  onChangeQueryHistoryProperty: (ts: number, property: string, comment?: string) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -28,11 +28,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     queryCardLeft: css`
-      width: 100%;
       padding-right: 10px;
+      width: calc(100% - 150px);
     `,
     queryCardRight: css`
-      flex: 100px;
+      width: 150px;
       display: flex;
       justify-content: flex-end;
       i {
@@ -51,15 +51,33 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         padding: 0 0 4px 0;
       }
     `,
+    input: css`
+      width: 100%;
+      &:focus,
+      &:active {
+        outline: none;
+      }
+      &:placeholder {
+        font-style: italic;
+      }
+    `,
+    buttonRow: css`
+      > * {
+        margin-right: ${theme.spacing.xs};
+      }
+    `,
   };
 });
 
 export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQueryHistoryProperty }) => {
-  const [starred, updateStared] = useState(query.starred);
-  let queryExpressions: any[] = query.queries.filter(q => Boolean(q));
+  const [starred, setStared] = useState(query.starred);
+  const [activeUpdateComment, setActiveUpdateComment] = useState(false);
+  const [comment, setComment] = useState(query.comment);
 
+  const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
   const theme = useTheme();
   const styles = getStyles(theme);
+  let queryExpressions: any[] = query.queries.filter(q => Boolean(q));
 
   return (
     <>
@@ -73,9 +91,56 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQuer
                 </div>
               );
             })}
-            {query.comment && <div>{query.comment}</div>}
+            {!activeUpdateComment && query.comment && (
+              <div
+                className={css`
+                  overflow-wrap: break-word;
+                `}
+              >
+                {query.comment}
+              </div>
+            )}
+            {activeUpdateComment && (
+              <div>
+                <Forms.Input
+                  className={styles.input}
+                  value={comment}
+                  placeholder={comment ? null : 'write your comment here and save with enter'}
+                  onChange={e => setComment(e.currentTarget.value)}
+                />
+                <div className={styles.buttonRow}>
+                  <Forms.Button
+                    onClick={e => {
+                      e.preventDefault();
+                      onChangeQueryHistoryProperty(query.ts, 'comment', comment);
+                      toggleActiveUpdateComment();
+                    }}
+                  >
+                    Save
+                  </Forms.Button>
+                  <Forms.Button
+                    variant="secondary"
+                    className={css`
+                      margin-left: 8px;
+                    `}
+                    onClick={() => {
+                      toggleActiveUpdateComment();
+                      setComment(query.comment);
+                    }}
+                  >
+                    Cancel
+                  </Forms.Button>
+                </div>
+              </div>
+            )}
           </div>
           <div className={styles.queryCardRight}>
+            <i
+              className="fa fa-fw fa-pencil"
+              onClick={() => {
+                toggleActiveUpdateComment();
+              }}
+            ></i>
             <i
               className="fa fa-fw fa-copy"
               onClick={() => {
@@ -97,7 +162,7 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQuer
               className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
               onClick={() => {
                 onChangeQueryHistoryProperty(query.ts, 'starred');
-                updateStared(!starred);
+                setStared(!starred);
               }}
             ></i>
           </div>
