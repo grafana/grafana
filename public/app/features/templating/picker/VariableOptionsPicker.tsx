@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { QueryVariableModel } from '../variable';
-import { QueryVariablePickerState } from './reducer';
+import { QueryVariablePickerState } from '../query/reducer';
 import { VariablePickerProps } from '../state/types';
 import { VariableOptionsDropDown } from './VariableOptionsDropDown';
 import { VariableOptionsLinkText } from './VariableOptionsLinkText';
@@ -9,7 +9,7 @@ import { VariableOptionsInput } from './VariableOptionsInput';
 
 export interface Props extends VariablePickerProps<QueryVariableModel, QueryVariablePickerState> {}
 
-export class QueryVariablePicker extends PureComponent<Props> {
+export class VariableOptionsPicker extends PureComponent<Props> {
   render() {
     const { showDropDown } = this.props.picker;
 

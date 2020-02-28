@@ -11,9 +11,9 @@ import {
   toggleAllVariableOptions,
   selectVariableOption,
 } from '../state/actions';
-import { QueryVariablePickerState } from './reducer';
+import { QueryVariablePickerState } from '../query/reducer';
 import { variableAdapters } from '../adapters';
-import { toggleTag } from './actions';
+import { toggleTag } from '../query/actions';
 import { VariablePickerProps } from '../state/types';
 
 export interface Props extends VariablePickerProps<QueryVariableModel, QueryVariablePickerState> {}
