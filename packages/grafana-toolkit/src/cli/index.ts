@@ -218,10 +218,12 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:github-publish')
     .option('--dryrun', 'Do a dry run only', false)
+    .option('--verbose', 'Print verbose', false)
     .description('Publish to github ... etc etc etc')
     .action(async cmd => {
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
+        verbose: cmd.verbose,
       });
     });
 
