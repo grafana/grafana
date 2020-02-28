@@ -33,7 +33,6 @@ export interface CustomVariablePickerState {
   searchQuery: string | null;
 }
 
-/** TODO: use the VariableEditorState directly? */
 export interface CustomVariableEditorState extends VariableEditorState {}
 
 export interface CustomVariableState
