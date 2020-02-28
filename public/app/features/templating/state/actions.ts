@@ -475,7 +475,6 @@ export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void
   return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.uuid!, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(variableEditorUnMounted(toVariablePayload(identifier)));
     dispatch(changeToEditorListMode(toVariablePayload(identifier)));
   };
 };

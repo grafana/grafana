@@ -253,6 +253,71 @@ describe('sharedTemplatingReducer', () => {
     });
   });
 
+  describe('when variableEditorUnMounted is dispatched with empty uuid that is already unmounted', () => {
+    it('then state should be correct', () => {
+      variableAdapters.set('query', createQueryVariableAdapter());
+      const initialState: TemplatingState = {
+        variables: getVariableState(3, 1, true),
+        uuidInEditor: '1',
+      };
+
+      const payload = toVariablePayload({ uuid: '1', type: 'query' });
+      const emptyPayload = toVariablePayload({ uuid: emptyUuid, type: 'query' });
+
+      const expectedState: TemplatingState = {
+        variables: {
+          '0': {
+            variable: {
+              uuid: '0',
+              type: 'query',
+              name: 'Name-0',
+              hide: VariableHide.dontHide,
+              index: 0,
+              label: 'Label-0',
+              skipUrlSync: false,
+            },
+            editor: { ...initialVariableEditorState },
+            picker: {},
+          },
+          '1': {
+            variable: {
+              uuid: '1',
+              type: 'query',
+              name: 'Name-1',
+              hide: VariableHide.dontHide,
+              index: 1,
+              label: 'Label-1',
+              skipUrlSync: false,
+            },
+            editor: { ...initialQueryVariableEditorState },
+            picker: {},
+          },
+          '2': {
+            variable: {
+              uuid: '2',
+              type: 'query',
+              name: 'Name-2',
+              hide: VariableHide.dontHide,
+              index: 2,
+              label: 'Label-2',
+              skipUrlSync: false,
+            },
+            editor: { ...initialVariableEditorState },
+            picker: {},
+          },
+        },
+        uuidInEditor: null,
+      };
+
+      reducerTester<TemplatingState>()
+        .givenReducer(sharedTemplatingReducer, initialState)
+        .whenActionIsDispatched(variableEditorUnMounted(payload))
+        .thenStateShouldEqual(expectedState)
+        .whenActionIsDispatched(variableEditorUnMounted(emptyPayload))
+        .thenStateShouldEqual(expectedState);
+    });
+  });
+
   describe('when changeVariableLabel is dispatched', () => {
     it('then state should be correct', () => {
       const initialState: TemplatingState = {

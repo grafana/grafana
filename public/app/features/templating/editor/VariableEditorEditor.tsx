@@ -16,6 +16,7 @@ import {
   toVariableIdentifier,
   toVariablePayload,
   variableEditorInit,
+  variableEditorUnMounted,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { emptyUuid, VariableState } from '../state/types';
@@ -36,11 +37,9 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
     }
   }
 
-  // TODO: is this needed - when I add a custom variable this is triggering first
-  // in the add action and later here.
-  // componentWillUnmount(): void {
-  //   dispatch(variableEditorUnMounted(toVariablePayload(this.props.variable)));
-  // }
+  componentWillUnmount(): void {
+    dispatch(variableEditorUnMounted(toVariablePayload(this.props.variable)));
+  }
 
   onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();

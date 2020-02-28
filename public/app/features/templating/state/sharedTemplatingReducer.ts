@@ -37,9 +37,16 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       state.variables[action.payload.uuid!].editor.dataSources = action.payload.data;
     })
     .addCase(variableEditorUnMounted, (state, action) => {
+      const variableState = state.variables[action.payload.uuid!];
+
+      if (action.payload.uuid === emptyUuid && !variableState) {
+        return state;
+      }
+
       const { initialState } = variableAdapters.get(action.payload.type);
-      state.variables[action.payload.uuid!].editor = { ...initialState.editor };
+      variableState.editor = { ...initialState.editor };
       state.uuidInEditor = null;
+
       if (state.variables[emptyUuid]) {
         delete state.variables[emptyUuid];
       }
