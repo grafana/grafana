@@ -19,7 +19,7 @@ When writing stories, we use the [CSF format](https://storybook.js.org/docs/form
 With the CSF format, the default export defines some general information about the stories in the file:
 
 - `title`: Where the component is going to live in the hierarchy
-- `decorators`: a list which can contain wrappers or provide context, such as theming
+- `decorators`: A list which can contain wrappers or provide context, such as theming
 
 ```jsx
 // In MyComponent.story.tsx
