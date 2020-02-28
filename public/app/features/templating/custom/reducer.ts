@@ -22,13 +22,7 @@ import {
 import { initialTemplatingState, TemplatingState } from '../state/reducers';
 import { Deferred } from '../deferred';
 import { createCustomOptionsFromQuery } from './actions';
-
-export type MutateStateFunc<S extends VariableState> = (state: S) => S;
-export const applyStateChanges = <S extends VariableState>(state: S, ...args: Array<MutateStateFunc<S>>): S => {
-  return args.reduce((all, cur) => {
-    return cur(all);
-  }, state);
-};
+import { applyStateChanges } from '../state/applyStateChanges';
 
 export interface CustomVariablePickerState {
   showDropDown: boolean;

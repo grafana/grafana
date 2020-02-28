@@ -47,13 +47,7 @@ import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
 import { initialTemplatingState, TemplatingState } from '../state/reducers';
 import cloneDeep from 'lodash/cloneDeep';
-
-export type MutateStateFunc<S extends VariableState> = (state: S) => S;
-export const applyStateChanges = <S extends VariableState>(state: S, ...args: Array<MutateStateFunc<S>>): S => {
-  return args.reduce((all, cur) => {
-    return cur(all);
-  }, state);
-};
+import { applyStateChanges } from '../state/applyStateChanges';
 
 export interface QueryVariablePickerState {
   showDropDown: boolean;
