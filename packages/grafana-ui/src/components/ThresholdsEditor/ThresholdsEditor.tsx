@@ -6,20 +6,9 @@ import { ThemeContext } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { css } from 'emotion';
-import Select from '../Select/Select';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
-const modes: Array<SelectableValue<ThresholdsMode>> = [
-  { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
-  {
-    value: ThresholdsMode.Percentage,
-    label: 'Percentage',
-    description: 'Pick threshold based on the percent between min/max',
-  },
-];
-
 export interface Props {
-  showAlphaUI?: boolean;
   thresholds?: ThresholdsConfig;
   onChange: (thresholds: ThresholdsConfig) => void;
 }
@@ -151,14 +140,16 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   onModeChanged = (item: SelectableValue<ThresholdsMode>) => {
     if (item.value) {
       this.props.onChange({
-        ...this.props.thresholds,
+        ...getThresholdOrDefault(this.props.thresholds),
         mode: item.value,
       });
     }
   };
 
   renderInput = (threshold: ThresholdWithKey) => {
-    const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
+    const config = getThresholdOrDefault(this.props.thresholds);
+    const isPercent = config.mode === ThresholdsMode.Percentage;
+
     return (
       <div className="thresholds-row-input-inner">
         <span className="thresholds-row-input-inner-arrow" />
@@ -204,7 +195,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   render() {
     const { steps } = this.state;
-    const t = this.props.thresholds;
+
     return (
       <PanelOptionsGroup title="Thresholds">
         <ThemeContext.Consumer>
@@ -229,12 +220,6 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                     );
                   })}
               </div>
-
-              {this.props.showAlphaUI && (
-                <div>
-                  <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
-                </div>
-              )}
             </>
           )}
         </ThemeContext.Consumer>
@@ -247,7 +232,7 @@ export function thresholdsWithoutKey(
   thresholds: ThresholdsConfig | undefined,
   steps: ThresholdWithKey[]
 ): ThresholdsConfig {
-  thresholds = thresholds ?? { steps: [], mode: ThresholdsMode.Absolute };
+  thresholds = getThresholdOrDefault(thresholds);
 
   const mode = thresholds.mode ?? ThresholdsMode.Absolute;
 
@@ -260,8 +245,12 @@ export function thresholdsWithoutKey(
   };
 }
 
+function getThresholdOrDefault(thresholds?: ThresholdsConfig): ThresholdsConfig {
+  return thresholds ?? { steps: [], mode: ThresholdsMode.Absolute };
+}
+
 function toThresholdsWithKey(thresholds?: ThresholdsConfig): ThresholdWithKey[] {
-  thresholds = thresholds ?? { steps: [], mode: ThresholdsMode.Absolute };
+  thresholds = getThresholdOrDefault(thresholds);
 
   let steps: Threshold[] = thresholds.steps || [];
 
