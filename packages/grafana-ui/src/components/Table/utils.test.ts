@@ -33,7 +33,7 @@ function getData() {
 describe('Table utils', () => {
   describe('getColumns', () => {
     it('Should build columns from DataFrame', () => {
-      const columns = getColumns(getData(), 1000);
+      const columns = getColumns(getData(), 1000, 120);
 
       expect(columns[0].Header).toBe('Time');
       expect(columns[1].Header).toBe('Value');
