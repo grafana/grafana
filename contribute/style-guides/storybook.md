@@ -110,7 +110,7 @@ An MDX file can exist by itself without any connection to a story. This can be g
 
 ```
 
-It is also possible to add parameters to the Meta tag. This examples shows how to hide the tools.
+You can add parameters to the Meta tag. This example shows how to hide the tools:
 
 ```jsx
 <Meta title="Docs Overview/Color Palettes" parameters={{ options: { isToolshown: false }}}/>
