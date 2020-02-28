@@ -162,7 +162,7 @@ export class DashboardGrid extends PureComponent<Props> {
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
     for (const newPos of newLayout) {
-      this.panelMap[newPos.i].updateGridPos(newPos);
+      this.panelMap[newPos.i!].updateGridPos(newPos);
     }
 
     this.props.dashboard.sortPanelsByGridPos();
@@ -186,7 +186,7 @@ export class DashboardGrid extends PureComponent<Props> {
   };
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
-    this.panelMap[item.i].updateGridPos(item);
+    this.panelMap[item.i!].updateGridPos(item);
 
     // react-grid-layout has a bug (#670), and onLayoutChange() is only called when the component is mounted.
     // So it's required to call it explicitly when panel resized or moved to save layout changes.
@@ -194,12 +194,12 @@ export class DashboardGrid extends PureComponent<Props> {
   };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
-    this.panelMap[newItem.i].updateGridPos(newItem);
+    this.panelMap[newItem.i!].updateGridPos(newItem);
   };
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
-    this.panelMap[newItem.i].resizeDone();
+    this.panelMap[newItem.i!].resizeDone();
   };
 
   onDragStop: ItemCallback = (layout, oldItem, newItem) => {
@@ -253,14 +253,7 @@ export class DashboardGrid extends PureComponent<Props> {
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
-        <div
-          key={id}
-          className={panelClasses}
-          id={'panel-' + id}
-          ref={elem => {
-            this.panelRef[id] = elem;
-          }}
-        >
+        <div key={id} className={panelClasses} id={'panel-' + id} ref={elem => elem && (this.panelRef[id] = elem)}>
           {this.renderPanel(panel)}
         </div>
       );
