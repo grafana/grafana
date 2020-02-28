@@ -89,6 +89,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return getBackendSrv().datasourceRequest(options);
   }
 
+  /**
+   * Sends a GET request to the specified url on the newest matching and available index.
+   *
+   * When multiple indices span the provided time range, the request is sent starting from the newest index,
+   * and then going backwards until an index is found.
+   *
+   * @param url the url to query the index on, for example `/_mapping`.
+   */
   private get(url: string) {
     const range = this.timeSrv.timeRange();
     const indexList = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
@@ -106,7 +114,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   private async requestAllIndices(indexList: string[], url: string): Promise<any> {
-    const maxTraversals = 7; // do not go beyond one week
+    const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexList.length;
     for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
       try {
