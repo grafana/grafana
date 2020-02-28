@@ -616,20 +616,33 @@ export const sortQueries = (array: QueryHistoryQuery[], sortingValue: SortingVal
   return array.sort(sortFunc);
 };
 
-export const copyQueryToClipboard = (query: QueryHistoryQuery) => {
+export const copyToClipboard = (string: string) => {
   const el = document.createElement('textarea');
-  el.value = query.queries.join('\n\n');
+  el.value = string;
   document.body.appendChild(el);
   el.select();
   document.execCommand('copy');
   document.body.removeChild(el);
 };
 
-export const copyToClipboard = (url: string) => {
-  const el = document.createElement('textarea');
-  el.value = url;
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
+export const createUrlFromQueryHistory = (query: QueryHistoryQuery) => {
+  const queries = query.queries.map(q => ({ expr: q }));
+  const exploreState: ExploreUrlState = {
+    //currently set defaultly, as we are not saving timerange in queryhistory
+    range: { from: 'now-1h', to: 'now' },
+    datasource: `${query.datasourceName}`,
+    queries,
+    mode: query.datasourceId === 'loki' ? ExploreMode.Logs : ExploreMode.Metrics,
+    ui: {
+      showingGraph: true,
+      showingLogs: true,
+      showingTable: true,
+    },
+    context: 'explore',
+  };
+
+  const serializedState = serializeStateToUrlParam(exploreState, true);
+  const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)[0];
+  const url = renderUrl(`${baseUrl}/explore`, { left: serializedState });
+  return url;
 };

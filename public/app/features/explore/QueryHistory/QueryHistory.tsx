@@ -48,12 +48,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.lg} ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.sm};
       border-top: solid 1px ${borderColor};
     `,
+    tabs: css`
+      background-color: ${tabBarBg};
+      padding-top: ${theme.spacing.sm};
+    `,
     container: css`
       background-color: ${tabBarBg};
       padding-left: ${theme.spacing.sm};
-      padding-top: ${theme.spacing.xs};
       height: 100%;
       overflow-y: scroll;
+      background-color: ${tabContentBg};
     `,
   };
 });
@@ -181,7 +185,7 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
 
     return (
       <div className={styles.container}>
-        <TabsBar hideBorder={true}>
+        <TabsBar className={styles.tabs} hideBorder={true}>
           {tabs.map(t => (
             <Tab
               key={t.value}
