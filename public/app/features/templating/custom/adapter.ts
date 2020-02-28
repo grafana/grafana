@@ -1,5 +1,4 @@
 import cloneDeep from 'lodash/cloneDeep';
-
 import { QueryVariableModel, VariableRefresh } from '../variable';
 import { dispatch } from '../../../store/store';
 import {
