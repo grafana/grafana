@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -12,7 +12,7 @@ func init() {
 func (pm *PluginManager) updateAppDashboards() {
 	pm.log.Debug("Looking for App Dashboard Updates")
 
-	query := m.GetPluginSettingsQuery{OrgId: 0}
+	query := models.GetPluginSettingsQuery{OrgId: 0}
 
 	if err := bus.Dispatch(&query); err != nil {
 		plog.Error("Failed to get all plugin settings", "error", err)
@@ -44,7 +44,7 @@ func autoUpdateAppDashboard(pluginDashInfo *PluginDashboardInfoDTO, orgId int64)
 		PluginId:  pluginDashInfo.PluginId,
 		Overwrite: true,
 		Dashboard: dash.Data,
-		User:      &m.SignedInUser{UserId: 0, OrgRole: m.ROLE_ADMIN},
+		User:      &models.SignedInUser{UserId: 0, OrgRole: models.ROLE_ADMIN},
 		Path:      pluginDashInfo.Path,
 	}
 
@@ -68,7 +68,7 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 		if dash.Removed {
 			plog.Info("Deleting plugin dashboard", "pluginId", pluginDef.Id, "dashboard", dash.Slug)
 
-			deleteCmd := m.DeleteDashboardCommand{OrgId: orgId, Id: dash.DashboardId}
+			deleteCmd := models.DeleteDashboardCommand{OrgId: orgId, Id: dash.DashboardId}
 			if err := bus.Dispatch(&deleteCmd); err != nil {
 				plog.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
 				return
@@ -87,14 +87,14 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 	}
 
 	// update version in plugin_setting table to mark that we have processed the update
-	query := m.GetPluginSettingByIdQuery{PluginId: pluginDef.Id, OrgId: orgId}
+	query := models.GetPluginSettingByIdQuery{PluginId: pluginDef.Id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		plog.Error("Failed to read plugin setting by id", "error", err)
 		return
 	}
 
 	appSetting := query.Result
-	cmd := m.UpdatePluginSettingVersionCmd{
+	cmd := models.UpdatePluginSettingVersionCmd{
 		OrgId:         appSetting.OrgId,
 		PluginId:      appSetting.PluginId,
 		PluginVersion: pluginDef.Info.Version,
@@ -105,19 +105,19 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 	}
 }
 
-func handlePluginStateChanged(event *m.PluginStateChangedEvent) error {
+func handlePluginStateChanged(event *models.PluginStateChangedEvent) error {
 	plog.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
 		syncPluginDashboards(Plugins[event.PluginId], event.OrgId)
 	} else {
-		query := m.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
+		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
 
 		if err := bus.Dispatch(&query); err != nil {
 			return err
 		}
 		for _, dash := range query.Result {
-			deleteCmd := m.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
+			deleteCmd := models.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
 
 			plog.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
 
