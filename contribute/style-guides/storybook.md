@@ -1,6 +1,6 @@
 # Why creating stories
 
-[Storybook](https://storybook.js.org/) is a tool which we use to manage our design system and the components which are a part of it. Storybook consists of stories: each story representing a component and a case in which it is used. To show a wide variety of use cases is good both documentation wise and for troubleshooting - it might be possible to reproduce a bug for an edge case in a story.
+[Storybook](https://storybook.js.org/) is a tool which we use to manage our design system and the components which are a part of it. Storybook consists of _stories:_ each story represents a component and a case in which it is used. To show a wide variety of use cases is good both documentation wise and for troubleshooting -- it might be possible to reproduce a bug for an edge case in a story.
 
 In short:
 
