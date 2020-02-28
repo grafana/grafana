@@ -11,6 +11,7 @@ import {
   showVariableDropDown,
   hideVariableDropDown,
   selectVariableOption,
+  setCurrentVariableValue,
 } from '../state/actions';
 import {
   emptyUuid,
@@ -145,14 +146,6 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
       state.variables[action.payload.uuid!].variable.index = action.payload.data.index;
       state.variables[action.payload.uuid!].variable.global = action.payload.data.global;
       state.variables[action.payload.uuid!].variable.initLock = new Deferred();
-
-      applyStateChanges(
-        state.variables[action.payload.uuid!],
-        updateQuery,
-        updateOptions,
-        updateSelectedValues,
-        updateCurrent
-      );
     })
     .addCase(changeVariableNameSucceeded, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
@@ -231,7 +224,42 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
       instanceState.variable.options = newOptions;
       applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
     })
+    .addCase(setCurrentVariableValue, (state, action) => {
+      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid);
+      const current = { ...action.payload.data };
+
+      if (Array.isArray(current.text) && current.text.length > 0) {
+        current.text = current.text.join(' + ');
+      } else if (Array.isArray(current.value) && current.value[0] !== ALL_VARIABLE_VALUE) {
+        current.text = current.value.join(' + ');
+      }
+
+      instanceState.variable.current = current;
+      instanceState.variable.options = instanceState.variable.options.map(option => {
+        let selected = false;
+        if (Array.isArray(current.value)) {
+          for (let index = 0; index < current.value.length; index++) {
+            const value = current.value[index];
+            if (option.value === value) {
+              selected = true;
+              break;
+            }
+          }
+        } else if (option.value === current.value) {
+          selected = true;
+        }
+        option.selected = selected;
+        return option;
+      });
+
+      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateOldVariableText);
+    })
 );
+
+const updateOldVariableText = (state: CustomVariableState): CustomVariableState => {
+  state.picker.oldVariableText = state.variable.current.text;
+  return state;
+};
 
 const updateEditorErrors = (state: CustomVariableState): CustomVariableState => {
   let errorText = null;
@@ -269,10 +297,6 @@ const updateQuery = (state: CustomVariableState): CustomVariableState => {
     text = text.replace(/\\,/g, ',');
     return { text: text.trim(), value: text.trim(), selected: false };
   });
-
-  if (options.length > 0 && options.filter(o => o.selected).length === 0) {
-    options[0].selected = true;
-  }
 
   if (includeAll) {
     options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });

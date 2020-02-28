@@ -1,17 +1,12 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { QueryVariableModel, VariableRefresh } from '../variable';
+import { QueryVariableModel } from '../variable';
 import { dispatch } from '../../../store/store';
-import {
-  setOptionAsCurrent,
-  setOptionFromUrl,
-  toVariableIdentifier,
-  updateVariableQuery,
-  toVariablePayload,
-} from '../state/actions';
+import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { initialCustomVariableState, customVariableReducer, ALL_VARIABLE_TEXT } from './reducer';
 import { CustomVariablePicker } from './CustomVariablePicker';
 import { CustomVariableEditor } from './CustomVariableEditor';
+import { updateCustomVariableOptions } from './actions';
 
 export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
@@ -31,15 +26,10 @@ export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableMode
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable, searchFilter) => {
-      await dispatch(updateVariableQuery(toVariablePayload(variable)));
+      await dispatch(updateCustomVariableOptions(toVariableIdentifier(variable), null));
     },
     getSaveModel: variable => {
       const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
-      // remove options
-      if (variable.refresh !== VariableRefresh.never) {
-        return { ...rest, options: [] };
-      }
-
       return rest;
     },
     getValueForUrl: variable => {

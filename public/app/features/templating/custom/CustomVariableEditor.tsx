@@ -3,8 +3,9 @@ import { CustomVariableModel, VariableWithMultiSupport } from '../variable';
 import { VariableEditorProps } from '../state/types';
 import { CustomVariableEditorState } from './reducer';
 import { dispatch } from '../../../store/store';
-import { updateVariableQuery, toVariablePayload } from '../state/actions';
+import { toVariableIdentifier } from '../state/actions';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
+import { updateCustomVariableOptions } from './actions';
 
 export interface Props extends VariableEditorProps<CustomVariableModel, CustomVariableEditorState> {}
 export interface State {
@@ -16,7 +17,7 @@ export class CustomVariableEditor extends PureComponent<Props, State> {
     query: this.props.variable.query,
   };
 
-  runQuery = () => dispatch(updateVariableQuery(toVariablePayload(this.props.variable, this.state.query)));
+  runQuery = () => dispatch(updateCustomVariableOptions(toVariableIdentifier(this.props.variable), this.state.query));
 
   onChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ query: event.target.value });

@@ -40,7 +40,7 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       const variableState = state.variables[action.payload.uuid!];
 
       if (action.payload.uuid === emptyUuid && !variableState) {
-        return state;
+        return;
       }
 
       const { initialState } = variableAdapters.get(action.payload.type);
