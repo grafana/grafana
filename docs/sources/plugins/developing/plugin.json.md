@@ -32,7 +32,7 @@ The plugin.json file is mandatory for all plugins. When Grafana starts it will s
 | info.updated                | Date when this plugin was built. Use `%TODAY%` for Grafana to autopopulate this value.                                        |
 | info.version                | Project version of this commit. Use `%VERSION%` for Grafana to autopopulate this value.                                      |
 
-# Plugin.json Example
+## Plugin.json Example
 
 Here's an example of an up-to-date plugin.json file:
 
