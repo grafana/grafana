@@ -39,13 +39,13 @@ The image above shows you the top header for a Dashboard.
 
 ## Manage dashboards
 
-The time period for the dashboard can be controlled by the [Time range controls]({{< relref "../reference/timerange.md" >}}) in the upper right of the dashboard.
+The time period for the dashboard can be controlled by the [Time range controls]({{< relref "../../reference/timerange.md" >}}) in the upper right of the dashboard.
 
-Dashboards can use [templating]({{< relref "../reference/templating.md" >}}) to make them more dynamic and interactive.
+Dashboards can use [templating]({{< relref "../../reference/templating.md" >}}) to make them more dynamic and interactive.
 
-Dashboards can use [annotations]({{< relref "../reference/annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
+Dashboards can use [annotations]({{< relref "../../reference/annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
 
-Dashboards can be [shared]({{< relref "../reference/share_dashboard.md" >}}) easily in a variety of ways.
+Dashboards can be [shared]({{< relref "../../reference/share_dashboard.md" >}}) easily in a variety of ways.
 
 Dashboards can be tagged, and the dashboard picker provides quick, searchable access to all dashboards in a particular organization.
 
@@ -61,4 +61,4 @@ We use a unit abstraction so that Grafana looks great on all screens sizes.
 
 Collapse a row by clicking on the row title. If you save a dashboard with a row collapsed, then it saves in that state and does not load those graphs until you expand the row.
 
-Use the [repeating rows]({{< relref "../reference/templating.md#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
+Use the [repeating rows]({{< relref "../../reference/templating.md#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
