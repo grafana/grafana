@@ -27,16 +27,17 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     metricTypes: [],
     services: [],
     projects: [],
+    project: '',
   };
 
   constructor(props: VariableQueryProps) {
     super(props);
-    this.state = Object.assign(this.defaults, { defaultProject: this.props.datasource.projectName }, this.props.query);
+    this.state = Object.assign(this.defaults, { project: this.props.datasource.getDefaultProject() }, this.props.query);
   }
 
   async componentDidMount() {
     const projects = await this.props.datasource.getProjects();
-    const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
+    const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.query.project);
     const services = extractServicesFromMetricDescriptors(metricDescriptors).map((m: any) => ({
       value: m.service,
       name: m.serviceShortName,
@@ -55,6 +56,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       this.props.templateSrv.replace(this.state.selectedMetricType),
       this.props.templateSrv.replace(selectedService)
     );
+
     const state: any = {
       services,
       selectedService,
@@ -62,7 +64,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       selectedMetricType,
       metricDescriptors,
       projects: projects.map(({ value, label }: any) => ({ value, name: label })),
-      ...(await this.getLabels(selectedMetricType, this.state.defaultProject)),
+      ...(await this.getLabels(selectedMetricType, this.state.project)),
     };
     this.setState(state);
   }
@@ -70,23 +72,36 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   async onQueryTypeChange(event: ChangeEvent<HTMLSelectElement>) {
     const state: any = {
       selectedQueryType: event.target.value,
-      ...(await this.getLabels(this.state.selectedMetricType, this.state.defaultProject, event.target.value)),
+      ...(await this.getLabels(this.state.selectedMetricType, this.state.project, event.target.value)),
     };
     this.setState(state);
   }
 
-  async onServiceChange(event: ChangeEvent<HTMLSelectElement>) {
+  async onProjectChange(project: string) {
+    const metricDescriptors = await this.props.datasource.getMetricTypes(project);
+    const labels = await this.getLabels(this.state.selectedMetricType, project);
+    const { metricTypes, selectedMetricType } = getMetricTypes(
+      metricDescriptors,
+      this.state.selectedMetricType,
+      this.props.templateSrv.replace(this.state.selectedMetricType),
+      this.props.templateSrv.replace(this.state.selectedService)
+    );
+
+    this.setState({ ...labels, metricTypes, selectedMetricType, metricDescriptors, project });
+  }
+
+  async onServiceChange(service: string) {
     const { metricTypes, selectedMetricType } = getMetricTypes(
       this.state.metricDescriptors,
       this.state.selectedMetricType,
       this.props.templateSrv.replace(this.state.selectedMetricType),
-      this.props.templateSrv.replace(event.target.value)
+      this.props.templateSrv.replace(service)
     );
     const state: any = {
-      selectedService: event.target.value,
+      selectedService: service,
       metricTypes,
       selectedMetricType,
-      ...(await this.getLabels(selectedMetricType, this.state.defaultProject)),
+      ...(await this.getLabels(selectedMetricType, this.state.project)),
     };
     this.setState(state);
   }
@@ -94,7 +109,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   async onMetricTypeChange(event: ChangeEvent<HTMLSelectElement>) {
     const state: any = {
       selectedMetricType: event.target.value,
-      ...(await this.getLabels(event.target.value, this.state.defaultProject)),
+      ...(await this.getLabels(event.target.value, this.state.project)),
     };
     this.setState(state);
   }
@@ -109,14 +124,10 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
   }
 
-  async getLabels(
-    selectedMetricType: string,
-    defaultProject: string,
-    selectedQueryType = this.state.selectedQueryType
-  ) {
+  async getLabels(selectedMetricType: string, project: string, selectedQueryType = this.state.selectedQueryType) {
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
     if (selectedMetricType && selectedQueryType === MetricFindQueryTypes.LabelValues) {
-      const labels = await getLabelKeys(this.props.datasource, selectedMetricType, defaultProject);
+      const labels = await getLabelKeys(this.props.datasource, selectedMetricType, project);
       const labelKey = labels.some(l => l === this.props.templateSrv.replace(this.state.labelKey))
         ? this.state.labelKey
         : labels[0];
@@ -139,15 +150,15 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
         return (
           <>
             <SimpleSelect
-              value={this.state.defaultProject}
+              value={this.state.project}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onServiceChange(e)}
+              onValueChange={e => this.onProjectChange(e.target.value)}
               label="Project"
             />
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e)}
+              onValueChange={e => this.onServiceChange(e.target.value)}
               label="Service"
             />
           </>
@@ -158,15 +169,15 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
         return (
           <>
             <SimpleSelect
-              value={this.state.defaultProject}
+              value={this.state.project}
               options={this.insertTemplateVariables(this.state.projects)}
-              onValueChange={e => this.onServiceChange(e)}
+              onValueChange={e => this.onProjectChange(e.target.value)}
               label="Project"
             />
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e)}
+              onValueChange={e => this.onServiceChange(e.target.value)}
               label="Service"
             />
             <SimpleSelect

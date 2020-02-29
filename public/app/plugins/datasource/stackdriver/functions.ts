@@ -43,9 +43,9 @@ export const getAggregationOptionsByMetric = (valueType: ValueTypes, metricKind:
       });
 };
 
-export const getLabelKeys = async (datasource: any, selectedMetricType: any, defaultProject: string) => {
+export const getLabelKeys = async (datasource: any, selectedMetricType: any, project: string) => {
   const refId = 'handleLabelKeysQuery';
-  const labels = await datasource.getLabels(selectedMetricType, refId, defaultProject);
+  const labels = await datasource.getLabels(selectedMetricType, refId, project);
   return [...Object.keys(labels), ...systemLabels];
 };
 

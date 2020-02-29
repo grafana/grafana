@@ -14,7 +14,6 @@ export enum MetricFindQueryTypes {
 }
 
 export interface VariableQueryData {
-  defaultProject?: string;
   selectedQueryType: string;
   metricDescriptors: any[];
   selectedService: string;
@@ -24,10 +23,11 @@ export interface VariableQueryData {
   metricTypes: Array<{ value: string; name: string }>;
   services: Array<{ value: string; name: string }>;
   projects: Array<{ value: string; name: string }>;
+  project: string;
 }
 
 export interface StackdriverQuery extends DataQuery {
-  defaultProject?: string;
+  project: string;
   unit?: string;
   metricType: string;
   service?: string;
@@ -51,7 +51,7 @@ export interface StackdriverOptions extends DataSourceJsonData {
 }
 
 export interface AnnotationTarget {
-  defaultProject: string;
+  project: string;
   metricType: string;
   refId: string;
   filters: string[];

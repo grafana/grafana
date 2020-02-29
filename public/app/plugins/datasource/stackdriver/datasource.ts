@@ -12,27 +12,22 @@ import { CoreEvents } from 'app/types';
 export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
   url: string;
   baseUrl: string;
-  projectName: string;
   projectList: any[];
   authenticationType: string;
   queryPromise: Promise<any>;
-  metricTypes: any[];
+  metricTypesCache: { [key: string]: any[] };
 
   /** @ngInject */
   constructor(
-    instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
+    private instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
     public templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
     super(instanceSettings);
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
-    this.projectName =
-      instanceSettings.jsonData.authenticationType === 'gce'
-        ? instanceSettings.jsonData.gceDefaultProject
-        : instanceSettings.jsonData.defaultProject || '';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
-    this.metricTypes = [];
+    this.metricTypesCache = {};
   }
 
   get variables() {
@@ -42,7 +37,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   async getTimeSeries(options: any) {
     const queries = options.targets
       .filter((target: any) => {
-        return !target.hide && target.metricType && target.defaultProject !== undefined;
+        return !target.hide && target.metricType;
       })
       .map((t: any) => {
         return {
@@ -58,7 +53,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           filters: this.interpolateFilters(t.filters, options.scopedVars),
           aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
           type: 'timeSeriesQuery',
-          project: t.defaultProject,
+          project: this.templateSrv.replace(t.project ? t.project : this.getDefaultProject()),
         };
       });
 
@@ -97,13 +92,13 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     });
   }
 
-  async getLabels(metricType: string, refId: string, defaultProject: string, groupBys?: string[]) {
+  async getLabels(metricType: string, refId: string, project: string, groupBys?: string[]) {
     const response = await this.getTimeSeries({
       targets: [
         {
           refId: refId,
           datasourceId: this.id,
-          defaultProject,
+          project,
           metricType: this.templateSrv.replace(metricType),
           groupBys: this.interpolateGroupBys(groupBys || [], {}),
           crossSeriesReducer: 'REDUCE_NONE',
@@ -183,7 +178,10 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         view: 'FULL',
         filters: this.interpolateFilters(annotation.target.filters || [], options.scopedVars),
         type: 'annotationQuery',
-        project: this.templateSrv.replace(annotation.target.defaultProject, options.scopedVars || {}),
+        project: this.templateSrv.replace(
+          annotation.target.project ? annotation.target.project : this.getDefaultProject(),
+          options.scopedVars || {}
+        ),
       },
     ];
 
@@ -219,8 +217,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     let status, message;
     const defaultErrorMessage = 'Cannot connect to Stackdriver API';
     try {
-      const projectName = this.projectName;
-      const path = `v3/projects/${projectName}/metricDescriptors`;
+      const path = `v3/projects/${this.getDefaultProject()}/metricDescriptors`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
       if (response.status === 200) {
         status = 'success';
@@ -304,31 +301,41 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           ],
         },
       });
-      this.projectList = data.results.getProjectsListQuery.meta.projectsList;
-      return this.projectList;
+      return data.results.getProjectsListQuery.meta.projectsList;
     } catch (error) {
       throw this.formatStackdriverError(error);
     }
   }
 
-  async getMetricTypes(projectName: string): Promise<MetricDescriptor[]> {
+  getDefaultProject(): string {
+    const { defaultProject, authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
+    if (authenticationType === 'gce') {
+      return gceDefaultProject || defaultProject;
+    }
+
+    return defaultProject;
+  }
+
+  async getMetricTypes(project: string): Promise<MetricDescriptor[]> {
     try {
-      if (this.metricTypes.length === 0) {
-        const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
-        const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
-
-        this.metricTypes = data.metricDescriptors.map((m: any) => {
-          const [service] = m.type.split('/');
-          const [serviceShortName] = service.split('.');
-          m.service = service;
-          m.serviceShortName = serviceShortName;
-          m.displayName = m.displayName || m.type;
-
-          return m;
-        });
+      if (this.metricTypesCache[project]) {
+        return this.metricTypesCache[project];
       }
 
-      return this.metricTypes;
+      const metricsApiPath = `v3/projects/${project}/metricDescriptors`;
+      const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
+
+      this.metricTypesCache[project] = data.metricDescriptors.map((m: any) => {
+        const [service] = m.type.split('/');
+        const [serviceShortName] = service.split('.');
+        m.service = service;
+        m.serviceShortName = serviceShortName;
+        m.displayName = m.displayName || m.type;
+
+        return m;
+      });
+
+      return this.metricTypesCache[project];
     } catch (error) {
       appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
       return [];

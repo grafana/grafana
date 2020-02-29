@@ -28,7 +28,7 @@ interface State extends StackdriverQuery {
 }
 
 export const DefaultTarget: State = {
-  defaultProject: null,
+  project: '',
   metricType: '',
   metricKind: '',
   valueType: '',
@@ -56,28 +56,33 @@ export class QueryEditor extends React.Component<Props, State> {
 
   async componentDidMount() {
     const { events, target, templateSrv, datasource } = this.props;
+    if (!target.project) {
+      target.project = datasource.getDefaultProject();
+    }
+
     events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     events.on(PanelEvents.dataError, this.onDataError.bind(this));
+
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
     const variableOptionGroup = {
       label: 'Template Variables',
       expanded: false,
       options: datasource.variables.map(toOption),
     };
-    this.setState({
+
+    const state: Partial<State> = {
       ...this.props.target,
+      project: target.project,
       alignOptions,
       perSeriesAligner,
       variableOptionGroup,
-      defaultProject:
-        this.props.target.defaultProject !== undefined && this.props.target.defaultProject !== null
-          ? this.props.target.defaultProject
-          : this.props.datasource.projectName,
       variableOptions: variableOptionGroup.options,
-    });
+    };
+
+    this.setState(state);
 
     datasource
-      .getLabels(target.metricType, target.refId, this.props.datasource.projectName, target.groupBys)
+      .getLabels(target.metricType, target.refId, target.project, target.groupBys)
       .then(labels => this.setState({ labels }));
   }
 
@@ -122,12 +127,7 @@ export class QueryEditor extends React.Component<Props, State> {
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
       templateSrv
     );
-    const labels = await this.props.datasource.getLabels(
-      type,
-      target.refId,
-      this.state.defaultProject,
-      target.groupBys
-    );
+    const labels = await this.props.datasource.getLabels(type, target.refId, this.state.project, target.groupBys);
     this.setState(
       {
         alignOptions,
@@ -140,7 +140,7 @@ export class QueryEditor extends React.Component<Props, State> {
       },
       () => {
         onQueryChange(this.state);
-        if (this.state.defaultProject !== null) {
+        if (this.state.project !== null) {
           onExecuteQuery();
         }
       }
@@ -154,14 +154,14 @@ export class QueryEditor extends React.Component<Props, State> {
       this.props.onExecuteQuery();
     });
     datasource
-      .getLabels(target.metricType, target.refId, this.state.defaultProject, value)
+      .getLabels(target.metricType, target.refId, this.state.project, value)
       .then(labels => this.setState({ labels }));
   }
 
-  onPropertyChange(prop: string, value: string[]) {
+  onPropertyChange(prop: string, value: any) {
     this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
-      if (this.state.defaultProject !== null) {
+      if (this.state.project !== null) {
         this.props.onExecuteQuery();
       }
     });
@@ -170,7 +170,7 @@ export class QueryEditor extends React.Component<Props, State> {
   render() {
     const {
       usedAlignmentPeriod,
-      defaultProject,
+      project,
       metricType,
       crossSeriesReducer,
       groupBys,
@@ -184,19 +184,23 @@ export class QueryEditor extends React.Component<Props, State> {
       labels,
       variableOptionGroup,
       variableOptions,
+      refId,
     } = this.state;
     const { datasource, templateSrv } = this.props;
 
     return (
       <>
         <Project
+          project={project}
           datasource={datasource}
-          defaultProject={defaultProject}
-          onChange={value => this.onPropertyChange('defaultProject', value)}
+          onChange={value => {
+            this.onPropertyChange('project', value);
+            datasource.getLabels(metricType, refId, value, groupBys).then(labels => this.setState({ labels }));
+          }}
         />
         <Metrics
           templateSrv={templateSrv}
-          defaultProject={defaultProject}
+          project={project}
           metricType={metricType}
           templateVariableOptions={variableOptions}
           datasource={datasource}
@@ -205,7 +209,7 @@ export class QueryEditor extends React.Component<Props, State> {
           {metric => (
             <>
               <Filters
-                defaultProject={defaultProject}
+                project={project}
                 labels={labels}
                 filters={filters}
                 onChange={value => this.onPropertyChange('filters', value)}
