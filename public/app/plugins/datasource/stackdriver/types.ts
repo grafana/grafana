@@ -1,5 +1,15 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
+export enum AuthType {
+  JWT = 'jwt',
+  GCE = 'gce',
+}
+
+export const authTypes = [
+  { value: 'Google JWT File', key: AuthType.JWT },
+  { value: 'GCE Default Service Account', key: AuthType.GCE },
+];
+
 export enum MetricFindQueryTypes {
   Projects = 'projects',
   Services = 'services',

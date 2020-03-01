@@ -12,7 +12,7 @@ import { CoreEvents } from 'app/types';
 export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
   url: string;
   baseUrl: string;
-  projectList: any[];
+  projectList: Array<{ label: string; value: string }>;
   authenticationType: string;
   queryPromise: Promise<any>;
   metricTypesCache: { [key: string]: any[] };
@@ -39,7 +39,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       .filter((target: any) => {
         return !target.hide && target.metricType;
       })
-      .map((t: any) => {
+      .map((t: StackdriverQuery) => {
         return {
           refId: t.refId,
           intervalMs: options.intervalMs,
@@ -112,7 +112,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   interpolateGroupBys(groupBys: string[], scopedVars: {}): string[] {
-    let interpolatedGroupBys: any[] = [];
+    let interpolatedGroupBys: string[] = [];
     (groupBys || []).forEach(gb => {
       const interpolated = this.templateSrv.replace(gb, scopedVars || {}, 'csv').split(',');
       if (Array.isArray(interpolated)) {
