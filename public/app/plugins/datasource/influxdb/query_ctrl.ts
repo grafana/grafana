@@ -6,7 +6,7 @@ import queryPart from './query_part';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-export class InfluxQueryCtrl extends QueryCtrl {
+export class InfluxQueryCtrl extends QueryCtrl implements angular.IComponentController {
   static templateUrl = 'partials/query.editor.html';
 
   queryModel: InfluxQueryModel;
@@ -28,20 +28,23 @@ export class InfluxQueryCtrl extends QueryCtrl {
     private uiSegmentSrv: any
   ) {
     super($scope, $injector);
+  }
+
+  $onInit() {
     this.target = this.target;
-    this.queryModel = new InfluxQueryModel(this.target, templateSrv, this.panel.scopedVars);
+    this.queryModel = new InfluxQueryModel(this.target, this.templateSrv, this.panel.scopedVars);
     this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database);
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
     this.resultFormats = [
       { text: 'Time series', value: 'time_series' },
       { text: 'Table', value: 'table' },
     ];
-    this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
+    this.policySegment = this.uiSegmentSrv.newSegment(this.target.policy);
 
     if (!this.target.measurement) {
-      this.measurementSegment = uiSegmentSrv.newSelectMeasurement();
+      this.measurementSegment = this.uiSegmentSrv.newSelectMeasurement();
     } else {
-      this.measurementSegment = uiSegmentSrv.newSegment(this.target.measurement);
+      this.measurementSegment = this.uiSegmentSrv.newSegment(this.target.measurement);
     }
 
     this.tagSegments = [];
@@ -55,17 +58,17 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
 
       if (tag.condition) {
-        this.tagSegments.push(uiSegmentSrv.newCondition(tag.condition));
+        this.tagSegments.push(this.uiSegmentSrv.newCondition(tag.condition));
       }
 
-      this.tagSegments.push(uiSegmentSrv.newKey(tag.key));
-      this.tagSegments.push(uiSegmentSrv.newOperator(tag.operator));
-      this.tagSegments.push(uiSegmentSrv.newKeyValue(tag.value));
+      this.tagSegments.push(this.uiSegmentSrv.newKey(tag.key));
+      this.tagSegments.push(this.uiSegmentSrv.newOperator(tag.operator));
+      this.tagSegments.push(this.uiSegmentSrv.newKeyValue(tag.value));
     }
 
     this.fixTagSegments();
     this.buildSelectMenu();
-    this.removeTagFilterSegment = uiSegmentSrv.newSegment({
+    this.removeTagFilterSegment = this.uiSegmentSrv.newSegment({
       fake: true,
       value: '-- remove tag filter --',
     });

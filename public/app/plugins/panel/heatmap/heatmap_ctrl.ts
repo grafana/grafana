@@ -301,11 +301,13 @@ export class HeatmapCtrl extends MetricsPanelCtrl implements angular.IComponentC
 
   // Directly support DataFrame
   onDataFramesReceived(data: DataFrame[]) {
-    this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map(ts => {
-      ts.color = null; // remove whatever the processor set
-      ts.flotpairs = ts.getFlotPairs(this.panel.nullPointMode);
-      return ts;
-    });
+    if (this.processor) {
+      this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map(ts => {
+        ts.color = null; // remove whatever the processor set
+        ts.flotpairs = ts.getFlotPairs(this.panel.nullPointMode);
+        return ts;
+      });
+    }
 
     this.dataWarning = null;
     const datapointsCount = _.reduce(

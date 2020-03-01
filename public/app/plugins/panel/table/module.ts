@@ -9,8 +9,9 @@ import { TableRenderer } from './renderer';
 import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
+import angular from 'angular';
 
-export class TablePanelCtrl extends MetricsPanelCtrl {
+export class TablePanelCtrl extends MetricsPanelCtrl implements angular.IComponentController {
   static templateUrl = 'module.html';
 
   pageIndex: number;
@@ -59,7 +60,9 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     private variableSrv: any
   ) {
     super($scope, $injector);
+  }
 
+  $onInit() {
     this.pageIndex = 0;
 
     if (this.panel.styles === void 0) {
@@ -71,6 +74,9 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
 
+    if (!this.events) {
+      this.events = this.panel.events;
+    }
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));

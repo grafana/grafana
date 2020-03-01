@@ -1,13 +1,13 @@
 import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { dateMath, dateTime, PanelEvents } from '@grafana/data';
-import { auto, IScope } from 'angular';
+import angular, { auto, IScope } from 'angular';
 
 import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
-class AlertListPanel extends PanelCtrl {
+class AlertListPanel extends PanelCtrl implements angular.IComponentController {
   static templateUrl = 'module.html';
   static scrollable = true;
 
@@ -43,8 +43,14 @@ class AlertListPanel extends PanelCtrl {
   /** @ngInject */
   constructor($scope: IScope, $injector: auto.IInjectorService) {
     super($scope, $injector);
+  }
+
+  $onInit() {
     _.defaults(this.panel, this.panelDefaults);
 
+    if (!this.events) {
+      this.events = this.panel.events;
+    }
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
     this.templateSrv = this.$injector.get('templateSrv');

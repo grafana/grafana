@@ -223,10 +223,12 @@ class GraphCtrl extends MetricsPanelCtrl implements angular.IComponentController
 
   onDataFramesReceived(data: DataFrame[]) {
     this.dataList = data;
-    this.seriesList = this.processor.getSeriesList({
-      dataList: this.dataList,
-      range: this.range,
-    });
+    if (this.processor) {
+      this.seriesList = this.processor.getSeriesList({
+        dataList: this.dataList,
+        range: this.range,
+      });
+    }
 
     this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 

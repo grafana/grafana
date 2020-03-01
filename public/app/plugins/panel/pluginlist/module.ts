@@ -1,13 +1,13 @@
 import _ from 'lodash';
 import { PanelCtrl } from '../../../features/panel/panel_ctrl';
-import { auto, IScope } from 'angular';
+import angular, { auto, IScope } from 'angular';
 import { PanelEvents } from '@grafana/data';
 import { ContextSrv } from '../../../core/services/context_srv';
 import { CoreEvents } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
-class PluginListCtrl extends PanelCtrl {
+class PluginListCtrl extends PanelCtrl implements angular.IComponentController {
   static templateUrl = 'module.html';
   static scrollable = true;
 
@@ -22,9 +22,15 @@ class PluginListCtrl extends PanelCtrl {
   constructor($scope: IScope, $injector: auto.IInjectorService, contextSrv: ContextSrv) {
     super($scope, $injector);
 
+    this.isAdmin = contextSrv.hasRole('Admin');
+  }
+
+  $onInit() {
     _.defaults(this.panel, this.panelDefaults);
 
-    this.isAdmin = contextSrv.hasRole('Admin');
+    if (!this.events) {
+      this.events = this.panel.events;
+    }
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.pluginList = [];
     this.viewModel = [

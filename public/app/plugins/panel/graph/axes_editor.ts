@@ -1,7 +1,8 @@
 import { e2e } from '@grafana/e2e';
 import { GraphCtrl } from './module';
+import angular from 'angular';
 
-export class AxesEditorCtrl {
+export class AxesEditorCtrl implements angular.IComponentController {
   panel: any;
   panelCtrl: GraphCtrl;
   logScales: any;
@@ -13,6 +14,9 @@ export class AxesEditorCtrl {
   /** @ngInject */
   constructor(private $scope: any) {
     this.panelCtrl = $scope.ctrl as GraphCtrl;
+  }
+
+  $onInit() {
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
 
@@ -40,7 +44,7 @@ export class AxesEditorCtrl {
       { text: 'Current', value: 'current' },
     ];
 
-    if (this.panel.xaxis.mode === 'custom') {
+    if (this.panel.xaxis && this.panel.xaxis.mode === 'custom') {
       if (!this.panel.xaxis.name) {
         this.panel.xaxis.name = 'specify field';
       }
