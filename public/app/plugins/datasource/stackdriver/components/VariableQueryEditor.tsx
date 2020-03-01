@@ -1,4 +1,4 @@
-import React, { ChangeEvent, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { VariableQueryProps } from 'app/types/plugins';
 import { SimpleSelect } from './';
 import { getMetricTypes, getLabelKeys, extractServicesFromMetricDescriptors } from '../functions';
@@ -69,10 +69,10 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async onQueryTypeChange(event: ChangeEvent<HTMLSelectElement>) {
+  async onQueryTypeChange(queryType: string) {
     const state: any = {
-      selectedQueryType: event.target.value,
-      ...(await this.getLabels(this.state.selectedMetricType, this.state.project, event.target.value)),
+      selectedQueryType: queryType,
+      ...(await this.getLabels(this.state.selectedMetricType, this.state.project, queryType)),
     };
     this.setState(state);
   }
@@ -106,16 +106,16 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async onMetricTypeChange(event: ChangeEvent<HTMLSelectElement>) {
+  async onMetricTypeChange(metricType: string) {
     const state: any = {
-      selectedMetricType: event.target.value,
-      ...(await this.getLabels(event.target.value, this.state.project)),
+      selectedMetricType: metricType,
+      ...(await this.getLabels(metricType, this.state.project)),
     };
     this.setState(state);
   }
 
-  onLabelKeyChange(event: ChangeEvent<HTMLSelectElement>) {
-    this.setState({ labelKey: event.target.value });
+  onLabelKeyChange(labelKey: string) {
+    this.setState({ labelKey });
   }
 
   componentDidUpdate() {
@@ -183,14 +183,14 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.insertTemplateVariables(this.state.metricTypes)}
-              onValueChange={e => this.onMetricTypeChange(e)}
+              onValueChange={e => this.onMetricTypeChange(e.target.value)}
               label="Metric Type"
             />
             {queryType === MetricFindQueryTypes.LabelValues && (
               <SimpleSelect
                 value={this.state.labelKey}
                 options={this.insertTemplateVariables(this.state.labels.map(l => ({ value: l, name: l })))}
-                onValueChange={e => this.onLabelKeyChange(e)}
+                onValueChange={e => this.onLabelKeyChange(e.target.value)}
                 label="Label Key"
               />
             )}
@@ -203,13 +203,13 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
-              onValueChange={e => this.onServiceChange(e)}
+              onValueChange={e => this.onServiceChange(e.target.value)}
               label="Service"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.insertTemplateVariables(this.state.metricTypes)}
-              onValueChange={e => this.onMetricTypeChange(e)}
+              onValueChange={e => this.onMetricTypeChange(e.target.value)}
               label="Metric Type"
             />
           </>
@@ -225,7 +225,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
         <SimpleSelect
           value={this.state.selectedQueryType}
           options={this.queryTypes}
-          onValueChange={e => this.onQueryTypeChange(e)}
+          onValueChange={e => this.onQueryTypeChange(e.target.value)}
           label="Query Type"
         />
         {this.renderQueryTypeSwitch(this.state.selectedQueryType)}

@@ -14,6 +14,7 @@ const props: VariableQueryProps = {
   onChange: (query, definition) => {},
   query: {},
   datasource: {
+    getDefaultProject: () => '',
     getProjects: async (): Promise<any[]> => [],
     getMetricTypes: async (p: any): Promise<any[]> => [],
   },
