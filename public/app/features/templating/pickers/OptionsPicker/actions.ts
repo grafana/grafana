@@ -2,7 +2,7 @@ import { ThunkResult } from 'app/types';
 import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
-import { VariableOptionsPickerState, hideVariableDropDown, changeQueryVariableSearchQuery } from './reducer';
+import { OptionsPickerState, hideVariableDropDown, changeQueryVariableSearchQuery } from './reducer';
 
 export const filterOptions = (searchQuery: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -31,7 +31,7 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
   };
 };
 
-function mapToCurrent(picker: VariableOptionsPickerState): VariableOption {
+function mapToCurrent(picker: OptionsPickerState): VariableOption {
   const { options, searchQuery, multi } = picker;
 
   if (options.length === 0 && searchQuery && searchQuery.length > 0) {

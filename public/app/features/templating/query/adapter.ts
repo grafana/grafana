@@ -5,7 +5,7 @@ import { initialQueryVariableState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
 import { VariableAdapter } from '../adapters';
-import { VariableOptionsPicker } from '../pickers';
+import { OptionsPicker } from '../pickers';
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
 import { ALL_VARIABLE_TEXT } from '../state/types';
@@ -16,7 +16,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     label: 'Query',
     initialState: initialQueryVariableState,
     reducer: queryVariableReducer,
-    picker: VariableOptionsPicker,
+    picker: OptionsPicker,
     editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);

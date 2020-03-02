@@ -1,12 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import _, { cloneDeep } from 'lodash';
 import { containsSearchFilter, VariableOption, VariableTag, VariableWithMultiSupport } from '../../variable';
-import { SelectVariableOption as SVO } from '../../state/actions';
+import { SelectVariableOption } from '../../state/actions';
 import { ALL_VARIABLE_TEXT } from '../../state/types';
 import { isQuery } from '../../guard';
 import { applyStateChanges } from '../../state/applyStateChanges';
 
-export interface VariableOptionsPickerState {
+export interface OptionsPickerState {
   uuid: string;
   selectedValues: VariableOption[];
   selectedTags: VariableTag[];
@@ -17,7 +17,7 @@ export interface VariableOptionsPickerState {
   multi: boolean;
 }
 
-export const initialState: VariableOptionsPickerState = {
+export const initialState: OptionsPickerState = {
   uuid: null,
   highlightIndex: -1,
   searchQuery: null,
@@ -33,16 +33,16 @@ export const getTags = (model: VariableWithMultiSupport) => {
   return isQuery(model) ? cloneDeep(model.tags) : [];
 };
 
-const updateSelectedValues = (state: VariableOptionsPickerState): VariableOptionsPickerState => {
+const updateSelectedValues = (state: OptionsPickerState): OptionsPickerState => {
   state.selectedValues = state.options.filter(o => o.selected);
   return state;
 };
 
-const variableOptionsPickerSlice = createSlice({
+const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
   initialState,
   reducers: {
-    showVariableDropDown: (state, action: PayloadAction<VariableWithMultiSupport>): VariableOptionsPickerState => {
+    showVariableDropDown: (state, action: PayloadAction<VariableWithMultiSupport>): OptionsPickerState => {
       const { query, options, multi, uuid } = action.payload;
 
       state.highlightIndex = -1;
@@ -57,10 +57,10 @@ const variableOptionsPickerSlice = createSlice({
 
       return applyStateChanges(state, updateSelectedValues);
     },
-    hideVariableDropDown: (state, action: PayloadAction): VariableOptionsPickerState => {
+    hideVariableDropDown: (state, action: PayloadAction): OptionsPickerState => {
       return { ...initialState };
     },
-    selectVariableOption: (state, action: PayloadAction<SVO>): VariableOptionsPickerState => {
+    selectVariableOption: (state, action: PayloadAction<SelectVariableOption>): OptionsPickerState => {
       const { option, forceSelect, clearOthers } = action.payload;
       const { multi } = state;
       const newOptions: VariableOption[] = state.options.map(o => {
@@ -87,7 +87,7 @@ const variableOptionsPickerSlice = createSlice({
       state.options = newOptions;
       return applyStateChanges(state, updateSelectedValues);
     },
-    toggleVariableTag: (state, action: PayloadAction<VariableTag>): VariableOptionsPickerState => {
+    toggleVariableTag: (state, action: PayloadAction<VariableTag>): OptionsPickerState => {
       const tag = action.payload;
       const values = tag.values || [];
       const selected = !tag.selected;
@@ -117,7 +117,7 @@ const variableOptionsPickerSlice = createSlice({
         tags,
       };
     },
-    changeOptionsPickerHighlightIndex: (state, action: PayloadAction<number>): VariableOptionsPickerState => {
+    changeOptionsPickerHighlightIndex: (state, action: PayloadAction<number>): OptionsPickerState => {
       let nextIndex = state.highlightIndex + action.payload;
 
       if (nextIndex < 0) {
@@ -131,7 +131,7 @@ const variableOptionsPickerSlice = createSlice({
         highlightIndex: nextIndex,
       };
     },
-    toggleAllVariableOptions: (state, action: PayloadAction): VariableOptionsPickerState => {
+    toggleAllVariableOptions: (state, action: PayloadAction): OptionsPickerState => {
       const selected = !state.options.find(option => option.selected);
 
       return applyStateChanges(
@@ -148,7 +148,7 @@ const variableOptionsPickerSlice = createSlice({
     changeQueryVariableSearchQuery: (
       state,
       action: PayloadAction<{ searchQuery: string; query: string; options: VariableOption[] }>
-    ): VariableOptionsPickerState => {
+    ): OptionsPickerState => {
       const { options, searchQuery, query } = action.payload;
       let filteredOptions = options.slice(0, Math.min(options.length, 1000));
 
@@ -180,6 +180,6 @@ export const {
   changeOptionsPickerHighlightIndex,
   toggleAllVariableOptions,
   changeQueryVariableSearchQuery,
-} = variableOptionsPickerSlice.actions;
+} = optionsPickerSlice.actions;
 
-export const optionsPickerReducer = variableOptionsPickerSlice.reducer;
+export const optionsPickerReducer = optionsPickerSlice.reducer;

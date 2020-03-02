@@ -4,7 +4,7 @@ import { VariableState } from './types';
 import { variableAdapters } from '../adapters';
 import { sharedTemplatingReducer } from './sharedTemplatingReducer';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
-import { optionsPickerReducer } from '../pickers/options-picker/reducer';
+import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 
 export interface TemplatingState {
   uuidInEditor: string | null;
