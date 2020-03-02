@@ -71,10 +71,11 @@ require (
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
-	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
+	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/tools v0.0.0-20191213221258-04c2e8eff935 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
+	google.golang.org/api v0.14.0
 	google.golang.org/grpc v1.23.1
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect

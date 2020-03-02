@@ -70,7 +70,6 @@ export class MetricSelect extends React.Component<Props, State> {
     const { placeholder, className, isSearchable, onChange } = this.props;
     const { options } = this.state;
     const selectedOption = this.getSelectedOption();
-
     return (
       <Select
         className={className}
