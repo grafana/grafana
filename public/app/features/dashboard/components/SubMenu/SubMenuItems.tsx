@@ -27,7 +27,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variableStates }) => {
             className="submenu-item gf-form-inline"
             aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}
           >
-            <PickerRenderer picker={state.picker} editor={state.editor} variable={state.variable} />
+            <PickerRenderer editor={state.editor} variable={state.variable} />
           </div>
         );
       })}

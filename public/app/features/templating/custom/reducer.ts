@@ -22,28 +22,8 @@ import { Deferred } from '../deferred';
 import { createCustomOptionsFromQuery } from './actions';
 import { applyStateChanges } from '../state/applyStateChanges';
 
-export interface CustomVariablePickerState {
-  showDropDown: boolean;
-  selectedValues: VariableOption[];
-  highlightIndex: number;
-  options: VariableOption[];
-  oldVariableText: string | string[] | null;
-  searchQuery: string | null;
-}
-
 export interface CustomVariableEditorState extends VariableEditorState {}
-
-export interface CustomVariableState
-  extends VariableState<CustomVariablePickerState, CustomVariableEditorState, CustomVariableModel> {}
-
-export const initialCustomVariablePickerState: CustomVariablePickerState = {
-  highlightIndex: -1,
-  searchQuery: null,
-  selectedValues: [],
-  showDropDown: false,
-  options: [],
-  oldVariableText: null,
-};
+export interface CustomVariableState extends VariableState<CustomVariableEditorState, CustomVariableModel> {}
 
 export const initialCustomVariableModelState: CustomVariableModel = {
   uuid: emptyUuid,
@@ -69,7 +49,6 @@ export const initialCustomVariableEditorState: CustomVariableEditorState = {
 };
 
 export const initialCustomVariableState: CustomVariableState = {
-  picker: initialCustomVariablePickerState,
   editor: initialCustomVariableEditorState,
   variable: initialCustomVariableModelState,
 };
@@ -115,7 +94,6 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
       }
 
       instanceState.variable.options = options;
-      applyStateChanges(instanceState, updateOptions);
     })
     .addCase(changeVariableProp, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
@@ -150,15 +128,8 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
         option.selected = selected;
         return option;
       });
-
-      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateOldVariableText);
     })
 );
-
-const updateOldVariableText = (state: CustomVariableState): CustomVariableState => {
-  state.picker.oldVariableText = state.variable.current.text;
-  return state;
-};
 
 const updateEditorErrors = (state: CustomVariableState): CustomVariableState => {
   let errorText = null;
@@ -180,15 +151,5 @@ const updateEditorErrors = (state: CustomVariableState): CustomVariableState => 
 
 const updateEditorIsValid = (state: CustomVariableState): CustomVariableState => {
   state.editor.isValid = Object.keys(state.editor.errors).length === 0;
-  return state;
-};
-
-const updateSelectedValues = (state: CustomVariableState): CustomVariableState => {
-  state.picker.selectedValues = state.variable.options.filter(o => o.selected);
-  return state;
-};
-
-const updateOptions = (state: CustomVariableState): CustomVariableState => {
-  state.picker.options = state.variable.options.slice(0, Math.min(state.variable.options.length, 1000));
   return state;
 };

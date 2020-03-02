@@ -22,11 +22,7 @@ import {
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
-import {
-  initialQueryVariableEditorState,
-  initialQueryVariableModelState,
-  initialQueryVariablePickerState,
-} from '../query/reducer';
+import { initialQueryVariableEditorState, initialQueryVariableModelState } from '../query/reducer';
 
 const getVariableState = (
   noOfVariables: number,
@@ -58,7 +54,6 @@ const getVariableState = (
         skipUrlSync: false,
       },
       editor,
-      picker: {},
     };
   }
 
@@ -74,7 +69,6 @@ const getVariableState = (
         skipUrlSync: false,
       },
       editor: { ...initialVariableEditorState },
-      picker: {},
     };
   }
 
@@ -105,7 +99,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '2': {
               variable: {
@@ -118,7 +111,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -153,7 +145,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -174,7 +165,6 @@ describe('sharedTemplatingReducer', () => {
                   { name: 'ds2', sort: '', value: 'ds2-value', meta: ({} as unknown) as DataSourcePluginMeta },
                 ],
               },
-              picker: {},
             },
             '2': {
               variable: {
@@ -187,7 +177,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -219,7 +208,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -232,7 +220,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialQueryVariableEditorState },
-              picker: {},
             },
             '2': {
               variable: {
@@ -245,7 +232,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -277,7 +263,6 @@ describe('sharedTemplatingReducer', () => {
               skipUrlSync: false,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
           '1': {
             variable: {
@@ -290,7 +275,6 @@ describe('sharedTemplatingReducer', () => {
               skipUrlSync: false,
             },
             editor: { ...initialQueryVariableEditorState },
-            picker: {},
           },
           '2': {
             variable: {
@@ -303,7 +287,6 @@ describe('sharedTemplatingReducer', () => {
               skipUrlSync: false,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
         },
         uuidInEditor: null,
@@ -341,7 +324,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -354,7 +336,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState, name: 'Name-1' },
-              picker: {},
             },
             '2': {
               variable: {
@@ -367,7 +348,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: '1',
@@ -398,7 +378,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -411,7 +390,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState, name: 'Name-1' },
-              picker: {},
             },
             '2': {
               variable: {
@@ -424,7 +402,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: '1',
@@ -456,7 +433,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -469,7 +445,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState, name: 'Name-1', isValid: false },
-              picker: {},
             },
             '2': {
               variable: {
@@ -482,7 +457,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: '1',
@@ -514,7 +488,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -527,7 +500,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState, name: 'Name-1', isValid: false },
-              picker: {},
             },
             '2': {
               variable: {
@@ -540,7 +512,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: '1',
@@ -571,7 +542,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -589,7 +559,6 @@ describe('sharedTemplatingReducer', () => {
                 isValid: false,
                 errors: { update: 'Test error' },
               },
-              picker: {},
             },
             '2': {
               variable: {
@@ -602,7 +571,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: '1',
@@ -634,7 +602,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -647,7 +614,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '2': {
               variable: {
@@ -660,7 +626,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '11': {
               variable: {
@@ -673,7 +638,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialQueryVariableEditorState },
-              picker: { ...initialQueryVariablePickerState },
             },
           },
           uuidInEditor: null,
@@ -704,7 +668,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -717,7 +680,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '2': {
               variable: {
@@ -730,7 +692,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -762,7 +723,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '1': {
               variable: {
@@ -775,7 +735,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '2': {
               variable: {
@@ -788,7 +747,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             [emptyUuid]: {
               variable: {
@@ -801,7 +759,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             [11]: {
               variable: {
@@ -814,7 +771,6 @@ describe('sharedTemplatingReducer', () => {
                 skipUrlSync: false,
               },
               editor: { ...initialQueryVariableEditorState },
-              picker: { ...initialQueryVariablePickerState },
             },
           },
           uuidInEditor: null,
@@ -847,7 +803,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
               '1': {
                 variable: {
@@ -860,7 +815,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
               '2': {
                 variable: {
@@ -873,7 +827,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
               [emptyUuid]: {
                 variable: {
@@ -887,7 +840,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialQueryVariableEditorState },
-                picker: { ...initialQueryVariablePickerState },
               },
             },
             uuidInEditor: emptyUuid,
@@ -919,7 +871,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
               '1': {
                 variable: {
@@ -932,7 +883,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
               '2': {
                 variable: {
@@ -945,7 +895,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
             },
             uuidInEditor: '1',
@@ -979,7 +928,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
               '1': {
                 variable: {
@@ -992,7 +940,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
               '2': {
                 variable: {
@@ -1005,7 +952,6 @@ describe('sharedTemplatingReducer', () => {
                   skipUrlSync: false,
                 },
                 editor: { ...initialVariableEditorState },
-                picker: {},
               },
             },
             uuidInEditor: null,

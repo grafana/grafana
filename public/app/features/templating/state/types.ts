@@ -49,11 +49,9 @@ export const initialVariableEditorState: VariableEditorState = {
 };
 
 export interface VariableState<
-  PickerState extends {} = {},
   EditorState extends VariableEditorState = VariableEditorState,
   ModelState extends VariableModel = VariableModel
 > {
-  picker: PickerState;
   editor: EditorState;
   variable: ModelState;
 }

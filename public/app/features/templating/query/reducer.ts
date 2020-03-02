@@ -17,12 +17,9 @@ import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
   changeVariableProp,
-  hideVariableDropDown,
   removeInitLock,
   resolveInitLock,
   setCurrentVariableValue,
-  showVariableDropDown,
-  toggleAllVariableOptions,
   updateVariableOptions,
   updateVariableTags,
 } from '../state/actions';
@@ -39,48 +36,19 @@ import {
   ALL_VARIABLE_VALUE,
   NONE_VARIABLE_VALUE,
 } from '../state/types';
-import {
-  changeQueryVariableHighlightIndex,
-  changeQueryVariableSearchQuery,
-  queryVariableDatasourceLoaded,
-  queryVariableQueryEditorLoaded,
-  toggleVariableTag,
-} from './actions';
+import { queryVariableDatasourceLoaded, queryVariableQueryEditorLoaded } from './actions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
-import { initialTemplatingState, TemplatingState } from '../state/reducers';
+import { initialTemplatingState } from '../state/reducers';
 import cloneDeep from 'lodash/cloneDeep';
 import { applyStateChanges } from '../state/applyStateChanges';
-
-export interface QueryVariablePickerState {
-  showDropDown: boolean;
-  selectedValues: VariableOption[];
-  selectedTags: VariableTag[];
-  searchQuery: string | null;
-  highlightIndex: number;
-  tags: VariableTag[];
-  options: VariableOption[];
-  oldVariableText: string | string[] | null;
-}
 
 export interface QueryVariableEditorState extends VariableEditorState {
   VariableQueryEditor: ComponentType<VariableQueryProps> | null;
   dataSource: DataSourceApi | null;
 }
 
-export interface QueryVariableState
-  extends VariableState<QueryVariablePickerState, QueryVariableEditorState, QueryVariableModel> {}
-
-export const initialQueryVariablePickerState: QueryVariablePickerState = {
-  highlightIndex: -1,
-  searchQuery: null,
-  selectedTags: [],
-  selectedValues: [],
-  showDropDown: false,
-  tags: [],
-  options: [],
-  oldVariableText: null,
-};
+export interface QueryVariableState extends VariableState<QueryVariableEditorState, QueryVariableModel> {}
 
 export const initialQueryVariableModelState: QueryVariableModel = {
   uuid: emptyUuid,
@@ -117,41 +85,11 @@ export const initialQueryVariableEditorState: QueryVariableEditorState = {
 };
 
 export const initialQueryVariableState: QueryVariableState = {
-  picker: initialQueryVariablePickerState,
   editor: initialQueryVariableEditorState,
   variable: initialQueryVariableModelState,
 };
 
 export const getQueryHasSearchFilter = (variable: QueryVariableModel) => containsSearchFilter(variable.query);
-
-const hideOtherDropDowns = (state: TemplatingState) => {
-  // hack that closes drop downs that already are opened
-  // could be solved by moving picker state to
-  // 1. A separate picker state slice under templating in Redux
-  //  PROS:
-  //    - smaller state tree
-  //    - no need for this hack since there's only one picker state
-  //  CONS:
-  //    - state for a variable is no longer in one place but spread out under variables.variable and templating[type].picker templating[type].editor
-  //    - picker state will also need addressing like type and uuid to filter out picker state
-  // 2. Use local React state instead
-  //  PROS:
-  //    - no state tree
-  //    - no need for this hack
-  //  CONS:
-  //    - lot's of code and logic that has to move into component
-  //    - harder to test component, easier to test reducer
-  const openedDropDowns = Object.values(state.variables).filter(s => {
-    if (s.variable.type === 'query') {
-      return (s.picker as QueryVariablePickerState).showDropDown;
-    }
-    return false;
-  });
-  openedDropDowns.map(state => {
-    state.picker = initialQueryVariablePickerState;
-    return state;
-  });
-};
 
 export const getLinkText = (variable: VariableWithOptions) => {
   const { current, options } = variable;
@@ -259,40 +197,6 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
   return sortVariableValues(options, sort);
 };
 
-const updateSelectedValues = (state: QueryVariableState): QueryVariableState => {
-  state.picker.selectedValues = state.variable.options.filter(o => o.selected);
-  return state;
-};
-
-const updateOptions = (state: QueryVariableState): QueryVariableState => {
-  state.picker.options = state.variable.options.slice(0, Math.min(state.variable.options.length, 1000));
-  return state;
-};
-
-const updateCurrent = (state: QueryVariableState): QueryVariableState => {
-  const { options, searchQuery, selectedValues, selectedTags } = state.picker;
-
-  state.variable.current.value = selectedValues.map(v => v.value) as string[];
-  state.variable.current.text = selectedValues.map(v => v.text).join(' + ');
-  state.variable.current.tags = selectedTags;
-
-  if (!state.variable.multi) {
-    state.variable.current.value = selectedValues[0].value;
-  }
-
-  // if we have a search query and no options use that
-  if (options.length === 0 && searchQuery && searchQuery.length > 0) {
-    state.variable.current = { text: searchQuery, value: searchQuery, selected: false };
-  }
-
-  return state;
-};
-
-const updateOldVariableText = (state: QueryVariableState): QueryVariableState => {
-  state.picker.oldVariableText = state.variable.current.text;
-  return state;
-};
-
 const updateEditorErrors = (state: QueryVariableState): QueryVariableState => {
   let errorText = null;
   if (
@@ -313,11 +217,6 @@ const updateEditorErrors = (state: QueryVariableState): QueryVariableState => {
 
 const updateEditorIsValid = (state: QueryVariableState): QueryVariableState => {
   state.editor.isValid = Object.keys(state.editor.errors).length === 0;
-  return state;
-};
-
-const updateTags = (state: QueryVariableState): QueryVariableState => {
-  state.picker.tags = state.variable.tags;
   return state;
 };
 
@@ -386,8 +285,6 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
         option.selected = selected;
         return option;
       });
-
-      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateOldVariableText);
     })
     .addCase(resolveInitLock, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
@@ -396,31 +293,6 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
     .addCase(removeInitLock, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       instanceState.variable.initLock = null;
-    })
-    .addCase(showVariableDropDown, (state, action) => {
-      hideOtherDropDowns(state);
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      const oldVariableText = instanceState.picker.oldVariableText || instanceState.variable.current.text;
-      const highlightIndex = -1;
-      const showDropDown = true;
-      const queryHasSearchFilter = getQueryHasSearchFilter(instanceState.variable);
-      // new behaviour, if this is a query that uses searchfilter it might be a nicer
-      // user experience to show the last typed search query in the input field
-      const searchQuery =
-        queryHasSearchFilter && instanceState.picker.searchQuery ? instanceState.picker.searchQuery : '';
-
-      instanceState.picker.oldVariableText = oldVariableText;
-      instanceState.picker.highlightIndex = highlightIndex;
-      instanceState.picker.searchQuery = searchQuery;
-      instanceState.picker.showDropDown = showDropDown;
-
-      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateTags);
-    })
-    .addCase(hideVariableDropDown, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.picker.showDropDown = false;
-
-      applyStateChanges(instanceState, updateOptions, updateSelectedValues);
     })
     .addCase(changeVariableNameSucceeded, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
@@ -448,74 +320,5 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       (instanceState.variable as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
 
       applyStateChanges(instanceState, updateEditorErrors, updateEditorIsValid);
-    })
-    .addCase(toggleVariableTag, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      const tag = action.payload.data;
-      const values = tag.values || [];
-      const selected = !tag.selected;
-
-      instanceState.variable.tags = instanceState.variable.tags.map(t => {
-        if (t.text !== tag.text) {
-          return t;
-        }
-        t.selected = selected;
-        t.valuesText = values.join(' + ');
-        t.values = values;
-        return t;
-      });
-
-      instanceState.variable.options = instanceState.variable.options.map(option => {
-        if (values.indexOf(option.value) === -1) {
-          return option;
-        }
-
-        option.selected = selected;
-        return option;
-      });
-
-      applyStateChanges(instanceState, updateTags, updateOptions);
-    })
-    .addCase(changeQueryVariableHighlightIndex, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      let nextIndex = instanceState.picker.highlightIndex + action.payload.data;
-
-      if (nextIndex < 0) {
-        nextIndex = 0;
-      } else if (nextIndex >= instanceState.picker.options.length) {
-        nextIndex = instanceState.picker.options.length - 1;
-      }
-
-      instanceState.picker.highlightIndex = nextIndex;
-    })
-    .addCase(toggleAllVariableOptions, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      const { options } = instanceState.variable;
-      const selected = !options.find(option => option.selected);
-
-      instanceState.variable.options = options.map(option => ({
-        ...option,
-        selected,
-      }));
-
-      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
-    })
-    .addCase(changeQueryVariableSearchQuery, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.picker.searchQuery = action.payload.data;
-      instanceState.picker.highlightIndex = 0;
-      instanceState.picker.options = instanceState.variable.options.slice(
-        0,
-        Math.min(instanceState.variable.options.length, 1000)
-      );
-
-      if (!getQueryHasSearchFilter(instanceState.variable)) {
-        instanceState.picker.options = instanceState.picker.options.filter(option => {
-          const text = Array.isArray(option.text) ? option.text.toString() : option.text;
-          return text.toLowerCase().indexOf(action.payload.data.toLowerCase()) !== -1;
-        });
-      }
-
-      applyStateChanges(instanceState, updateSelectedValues, updateCurrent);
     })
 );

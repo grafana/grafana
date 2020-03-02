@@ -3,9 +3,7 @@ import { initialTemplatingState, TemplatingState } from '../state/reducers';
 import {
   initialQueryVariableEditorState,
   initialQueryVariableModelState,
-  initialQueryVariablePickerState,
   QueryVariableEditorState,
-  QueryVariablePickerState,
   queryVariableReducer,
 } from './reducer';
 import {
@@ -50,7 +48,6 @@ describe('queryVariableReducer', () => {
             type: 'type from model',
           });
           expect(resultingState.variables[0].editor).toEqual(initialQueryVariableEditorState);
-          expect(resultingState.variables[0].picker).toEqual(initialQueryVariablePickerState);
           // make sure that initLock is defined
           expect(resultingState.variables[0].variable.initLock!).toBeDefined();
           expect(resultingState.variables[0].variable.initLock!.promise).toBeDefined();
@@ -63,8 +60,7 @@ describe('queryVariableReducer', () => {
 
   const getVariableTestContext = (
     variableOverrides: Partial<QueryVariableModel> = {},
-    editorOverrides: Partial<QueryVariableEditorState> = {},
-    pickerOverrides: Partial<QueryVariablePickerState> = {}
+    editorOverrides: Partial<QueryVariableEditorState> = {}
   ) => {
     const defaultVariable = {
       ...initialQueryVariableModelState,
@@ -74,13 +70,11 @@ describe('queryVariableReducer', () => {
     };
     const variable = { ...defaultVariable, ...variableOverrides };
     const editor = { ...initialQueryVariableEditorState, ...editorOverrides };
-    const picker = { ...initialQueryVariablePickerState, ...pickerOverrides };
     const initialState: TemplatingState = {
       variables: {
         '0': {
           variable,
           editor,
-          picker,
         },
       },
       uuidInEditor: null,
@@ -308,19 +302,6 @@ describe('queryVariableReducer', () => {
                 ],
                 current: { selected: true, text: 'A + B', value: ['A', 'B'] },
               } as unknown) as VariableModel,
-              picker: {
-                ...initialState.variables[0].picker,
-                oldVariableText: 'A + B',
-                options: [
-                  { selected: false, text: 'All', value: '$__all' },
-                  { selected: true, text: 'A', value: 'A' },
-                  { selected: true, text: 'B', value: 'B' },
-                ],
-                selectedValues: [
-                  { selected: true, text: 'A', value: 'A' },
-                  { selected: true, text: 'B', value: 'B' },
-                ],
-              },
             },
           },
           uuidInEditor: null,
@@ -356,19 +337,6 @@ describe('queryVariableReducer', () => {
                 ],
                 current: { selected: true, text: 'A + B', value: ['A', 'B'] },
               } as unknown) as VariableModel,
-              picker: {
-                ...initialState.variables[0].picker,
-                oldVariableText: 'A + B',
-                options: [
-                  { selected: false, text: 'All', value: '$__all' },
-                  { selected: true, text: 'A', value: 'A' },
-                  { selected: true, text: 'B', value: 'B' },
-                ],
-                selectedValues: [
-                  { selected: true, text: 'A', value: 'A' },
-                  { selected: true, text: 'B', value: 'B' },
-                ],
-              },
             },
           },
           uuidInEditor: null,
@@ -404,16 +372,6 @@ describe('queryVariableReducer', () => {
                 ],
                 current: { selected: true, text: 'All', value: ['$__all'] },
               } as unknown) as VariableModel,
-              picker: {
-                ...initialState.variables[0].picker,
-                oldVariableText: 'All',
-                options: [
-                  { selected: true, text: 'All', value: '$__all' },
-                  { selected: false, text: 'A', value: 'A' },
-                  { selected: false, text: 'B', value: 'B' },
-                ],
-                selectedValues: [{ selected: true, text: 'All', value: '$__all' }],
-              },
             },
           },
           uuidInEditor: null,
@@ -440,7 +398,6 @@ describe('queryVariableReducer', () => {
           delete expectedState.variables[0].variable.initLock;
           expect(resultingRest).toEqual(expectedState.variables[0].variable);
           expect(resultingState.uuidInEditor).toEqual(expectedState.uuidInEditor);
-          expect(resultingState.variables[0].picker).toEqual(expectedState.variables[0].picker);
           expect(resultingState.variables[0].editor).toEqual(expectedState.variables[0].editor);
           // make sure that initLock is defined
           expect(resultingState.variables[0].variable.initLock!).toBeDefined();
