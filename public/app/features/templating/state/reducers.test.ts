@@ -22,7 +22,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            picker: {},
           },
           '1': {
             variable: {
@@ -35,7 +34,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
               global: true,
             },
-            picker: {},
           },
           '2': {
             variable: {
@@ -47,7 +45,6 @@ describe('templatingReducer', () => {
               label: 'Label-2',
               skipUrlSync: false,
             },
-            picker: {},
           },
           '3': {
             variable: {
@@ -60,7 +57,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
               global: true,
             },
-            picker: {},
           },
         },
         uuidInEditor: null,
@@ -82,7 +78,6 @@ describe('templatingReducer', () => {
                 skipUrlSync: false,
                 global: true,
               },
-              picker: {},
             },
             '3': {
               variable: {
@@ -95,7 +90,6 @@ describe('templatingReducer', () => {
                 skipUrlSync: false,
                 global: true,
               },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -117,7 +111,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            picker: {},
           },
         },
         uuidInEditor: null,
@@ -164,7 +157,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            picker: {},
           },
         },
         uuidInEditor: null,
@@ -207,7 +199,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            picker: {},
           },
         },
         uuidInEditor: null,

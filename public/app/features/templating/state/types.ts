@@ -13,8 +13,7 @@ export interface VariablePickerProps<Model extends VariableModel = VariableModel
   variable: Model;
 }
 
-export interface VariableState<PickerState extends {} = {}, ModelState extends VariableModel = VariableModel> {
-  picker: PickerState;
+export interface VariableState<ModelState extends VariableModel = VariableModel> {
   variable: ModelState;
 }
 

@@ -14,7 +14,7 @@ import {
 } from './actions';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
-import { initialQueryVariableModelState, initialQueryVariablePickerState } from '../query/reducer';
+import { initialQueryVariableModelState } from '../query/reducer';
 import { variableEditorUnMounted } from '../editor/reducer';
 
 const getVariableState = (
@@ -35,7 +35,6 @@ const getVariableState = (
         label: `Label-${index}`,
         skipUrlSync: false,
       },
-      picker: {},
     };
   }
 
@@ -50,7 +49,6 @@ const getVariableState = (
         label: `Label-${emptyUuid}`,
         skipUrlSync: false,
       },
-      picker: {},
     };
   }
 
@@ -80,7 +78,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '2': {
               variable: {
@@ -92,7 +89,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -123,7 +119,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '1': {
               variable: {
@@ -134,8 +129,7 @@ describe('sharedTemplatingReducer', () => {
                 index: 1,
                 label: 'Label-1',
                 skipUrlSync: false,
-              }, //
-              picker: {},
+              },
             },
             '2': {
               variable: {
@@ -147,7 +141,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -178,7 +171,6 @@ describe('sharedTemplatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            picker: {},
           },
           '1': {
             variable: {
@@ -189,8 +181,7 @@ describe('sharedTemplatingReducer', () => {
               index: 1,
               label: 'Label-1',
               skipUrlSync: false,
-            }, //
-            picker: {},
+            },
           },
           '2': {
             variable: {
@@ -202,7 +193,6 @@ describe('sharedTemplatingReducer', () => {
               label: 'Label-2',
               skipUrlSync: false,
             },
-            picker: {},
           },
         },
         uuidInEditor: null,
@@ -240,7 +230,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '1': {
               variable: {
@@ -252,7 +241,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '2': {
               variable: {
@@ -264,7 +252,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '11': {
               variable: {
@@ -276,7 +263,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              picker: { ...initialQueryVariablePickerState },
             },
           },
           uuidInEditor: null,
@@ -306,7 +292,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '1': {
               variable: {
@@ -318,7 +303,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '2': {
               variable: {
@@ -330,7 +314,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -361,7 +344,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '1': {
               variable: {
@@ -373,7 +355,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             '2': {
               variable: {
@@ -385,7 +366,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              picker: {},
             },
             [emptyUuid]: {
               variable: {
@@ -397,7 +377,6 @@ describe('sharedTemplatingReducer', () => {
                 label: `Label-${emptyUuid}`,
                 skipUrlSync: false,
               },
-              picker: {},
             },
             [11]: {
               variable: {
@@ -409,7 +388,6 @@ describe('sharedTemplatingReducer', () => {
                 label: `Label-${emptyUuid}`,
                 skipUrlSync: false,
               },
-              picker: { ...initialQueryVariablePickerState },
             },
           },
           uuidInEditor: null,
@@ -441,7 +419,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-0',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
               '1': {
                 variable: {
@@ -453,7 +430,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-1',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
               '2': {
                 variable: {
@@ -465,7 +441,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-2',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
               [emptyUuid]: {
                 variable: {
@@ -478,7 +453,6 @@ describe('sharedTemplatingReducer', () => {
                   label: null,
                   skipUrlSync: false,
                 },
-                picker: { ...initialQueryVariablePickerState },
               },
             },
             uuidInEditor: emptyUuid,
@@ -509,7 +483,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-0',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
               '1': {
                 variable: {
@@ -521,7 +494,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-1',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
               '2': {
                 variable: {
@@ -533,7 +505,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-2',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
             },
             uuidInEditor: '1',
@@ -566,7 +537,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-0',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
               '1': {
                 variable: {
@@ -578,7 +548,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-1',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
               '2': {
                 variable: {
@@ -590,7 +559,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-2',
                   skipUrlSync: false,
                 },
-                picker: {},
               },
             },
             uuidInEditor: null,

@@ -6,27 +6,8 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, emptyUuid, getInstanceState, Var
 import { initialTemplatingState } from '../state/reducers';
 import { Deferred } from '../deferred';
 import { createCustomOptionsFromQuery } from './actions';
-import { applyStateChanges } from '../state/applyStateChanges';
 
-export interface CustomVariablePickerState {
-  showDropDown: boolean;
-  selectedValues: VariableOption[];
-  highlightIndex: number;
-  options: VariableOption[];
-  oldVariableText: string | string[] | null;
-  searchQuery: string | null;
-}
-
-export interface CustomVariableState extends VariableState<CustomVariablePickerState, CustomVariableModel> {}
-
-export const initialCustomVariablePickerState: CustomVariablePickerState = {
-  highlightIndex: -1,
-  searchQuery: null,
-  selectedValues: [],
-  showDropDown: false,
-  options: [],
-  oldVariableText: null,
-};
+export interface CustomVariableState extends VariableState<CustomVariableModel> {}
 
 export const initialCustomVariableModelState: CustomVariableModel = {
   uuid: emptyUuid,
@@ -47,7 +28,6 @@ export const initialCustomVariableModelState: CustomVariableModel = {
 };
 
 export const initialCustomVariableState: CustomVariableState = {
-  picker: initialCustomVariablePickerState,
   variable: initialCustomVariableModelState,
 };
 
@@ -79,7 +59,6 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
       }
 
       instanceState.variable.options = options;
-      applyStateChanges(instanceState, updateOptions);
     })
     .addCase(changeVariableProp, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
@@ -112,22 +91,5 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
         option.selected = selected;
         return option;
       });
-
-      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateOldVariableText);
     })
 );
-
-const updateOldVariableText = (state: CustomVariableState): CustomVariableState => {
-  state.picker.oldVariableText = state.variable.current.text;
-  return state;
-};
-
-const updateSelectedValues = (state: CustomVariableState): CustomVariableState => {
-  state.picker.selectedValues = state.variable.options.filter(o => o.selected);
-  return state;
-};
-
-const updateOptions = (state: CustomVariableState): CustomVariableState => {
-  state.picker.options = state.variable.options.slice(0, Math.min(state.variable.options.length, 1000));
-  return state;
-};

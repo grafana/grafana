@@ -14,11 +14,7 @@ import { initialTemplatingState } from '../state/reducers';
 import cloneDeep from 'lodash/cloneDeep';
 import { createTextBoxOptions } from './actions';
 
-export interface TextBoxVariablePickerState {}
-
-export interface TextBoxVariableState extends VariableState<TextBoxVariablePickerState, TextBoxVariableModel> {}
-
-export const initialTextBoxVariablePickerState: TextBoxVariablePickerState = {};
+export interface TextBoxVariableState extends VariableState<TextBoxVariableModel> {}
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   uuid: emptyUuid,
@@ -36,7 +32,6 @@ export const initialTextBoxVariableModelState: TextBoxVariableModel = {
 };
 
 export const initialTextBoxVariableState: TextBoxVariableState = {
-  picker: initialTextBoxVariablePickerState,
   variable: initialTextBoxVariableModelState,
 };
 
