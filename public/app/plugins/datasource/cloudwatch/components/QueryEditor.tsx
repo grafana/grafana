@@ -64,7 +64,7 @@ export class QueryEditor extends PureComponent<Props, State> {
     const metaDataExist = data && Object.values(data).length && data.state === 'Done';
     return (
       <>
-        <QueryFieldsEditor {...this.props}></QueryFieldsEditor>
+        <QueryFieldsEditor {...{ ...this.props, query }}></QueryFieldsEditor>
         {query.statistics.length <= 1 && (
           <div className="gf-form-inline">
             <div className="gf-form">
