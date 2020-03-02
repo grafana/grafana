@@ -169,12 +169,12 @@ export class QueryEditor extends React.Component<Props, State> {
 
   render() {
     const {
+      groupBys = [],
+      filters = [],
       usedAlignmentPeriod,
       project,
       metricType,
       crossSeriesReducer,
-      groupBys,
-      filters,
       perSeriesAligner,
       alignOptions,
       alignmentPeriod,

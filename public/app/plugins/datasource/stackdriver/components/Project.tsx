@@ -16,7 +16,7 @@ export function Project({ project, datasource, onChange, templateVariableOptions
       <span className="gf-form-label width-9 query-keyword">Project</span>
       <SegmentAsync
         allowCustomValue
-        onChange={({ value }) => onChange(value)}
+        onChange={({ value }) => onChange(value!)}
         loadOptions={() =>
           datasource.getProjects().then(projects => [
             {

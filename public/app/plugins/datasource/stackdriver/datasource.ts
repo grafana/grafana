@@ -31,7 +31,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   ) {
     super(instanceSettings);
     this.baseUrl = `/stackdriver/`;
-    this.url = instanceSettings.url;
+    this.url = instanceSettings.url!;
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.metricTypesCache = {};
   }
@@ -53,11 +53,11 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           metricType: this.templateSrv.replace(t.metricType, options.scopedVars || {}),
           crossSeriesReducer: this.templateSrv.replace(t.crossSeriesReducer || 'REDUCE_MEAN', options.scopedVars || {}),
           perSeriesAligner: this.templateSrv.replace(t.perSeriesAligner, options.scopedVars || {}),
-          alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod, options.scopedVars || {}),
-          groupBys: this.interpolateGroupBys(t.groupBys, options.scopedVars),
+          alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod!, options.scopedVars || {}),
+          groupBys: this.interpolateGroupBys(t.groupBys || [], options.scopedVars),
           view: t.view || 'FULL',
-          filters: this.interpolateFilters(t.filters, options.scopedVars),
-          aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
+          filters: this.interpolateFilters(t.filters || [], options.scopedVars),
+          aliasBy: this.templateSrv.replace(t.aliasBy!, options.scopedVars || {}),
           type: 'timeSeriesQuery',
           project: this.templateSrv.replace(t.project ? t.project : this.getDefaultProject()),
         };
@@ -133,7 +133,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   resolvePanelUnitFromTargets(targets: StackdriverQuery[]) {
     let unit;
     if (targets.length > 0 && targets.every(t => t.unit === targets[0].unit)) {
-      if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit)) {
+      if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit!)) {
         // @ts-ignore
         unit = stackdriverUnitMappings[targets[0].unit];
       }
@@ -316,10 +316,10 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   getDefaultProject(): string {
     const { defaultProject, authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
     if (authenticationType === 'gce') {
-      return gceDefaultProject || defaultProject;
+      return gceDefaultProject || defaultProject || '';
     }
 
-    return defaultProject;
+    return defaultProject || '';
   }
 
   async getMetricTypes(project: string): Promise<MetricDescriptor[]> {
