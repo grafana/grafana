@@ -50,7 +50,7 @@ func validateInput(c utils.CommandLine, pluginFolder string) error {
 	return nil
 }
 
-func installCommand(c utils.CommandLine) error {
+func (cmd Command) installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
@@ -59,12 +59,12 @@ func installCommand(c utils.CommandLine) error {
 	pluginToInstall := c.Args().First()
 	version := c.Args().Get(1)
 
-	return InstallPlugin(pluginToInstall, version, c)
+	return InstallPlugin(pluginToInstall, version, c, cmd.Client)
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugins directory.
-func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
+func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils.ApiClient) error {
 	pluginFolder := c.PluginDirectory()
 	downloadURL := c.PluginURL()
 	isInternal := false
@@ -78,7 +78,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := c.ApiClient().GetPlugin(pluginName, c.RepoDirectory())
+		plugin, err := client.GetPlugin(pluginName, c.RepoDirectory())
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 			version = v.Version
 		}
 		downloadURL = fmt.Sprintf("%s/%s/versions/%s/download",
-			c.GlobalString("repo"),
+			c.String("repo"),
 			pluginName,
 			version,
 		)
@@ -111,31 +111,31 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
-		return errutil.Wrap("Failed to create temporary file", err)
+		return errutil.Wrap("failed to create temporary file", err)
 	}
 	defer os.Remove(tmpFile.Name())
 
-	err = c.ApiClient().DownloadFile(pluginName, tmpFile, downloadURL, checksum)
+	err = client.DownloadFile(pluginName, tmpFile, downloadURL, checksum)
 	if err != nil {
 		tmpFile.Close()
-		return errutil.Wrap("Failed to download plugin archive", err)
+		return errutil.Wrap("failed to download plugin archive", err)
 	}
 	err = tmpFile.Close()
 	if err != nil {
-		return errutil.Wrap("Failed to close tmp file", err)
+		return errutil.Wrap("failed to close tmp file", err)
 	}
 
 	err = extractFiles(tmpFile.Name(), pluginName, pluginFolder, isInternal)
 	if err != nil {
-		return errutil.Wrap("Failed to extract plugin archive", err)
+		return errutil.Wrap("failed to extract plugin archive", err)
 	}
 
 	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
 
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
-		if err := InstallPlugin(v.Id, "", c); err != nil {
-			return errutil.Wrapf(err, "Failed to install plugin '%s'", v.Id)
+		if err := InstallPlugin(v.Id, "", c, client); err != nil {
+			return errutil.Wrapf(err, "failed to install plugin '%s'", v.Id)
 		}
 
 		logger.Infof("Installed dependency: %v ✔\n", v.Id)
@@ -179,7 +179,7 @@ func SelectVersion(plugin *m.Plugin, version string) (*m.Version, error) {
 
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
-		return nil, xerrors.New("Plugin is not supported on your architecture and os.")
+		return nil, xerrors.New("plugin is not supported on your architecture and OS.")
 	}
 
 	if version == "" {
@@ -193,11 +193,11 @@ func SelectVersion(plugin *m.Plugin, version string) (*m.Version, error) {
 	}
 
 	if len(ver.Version) == 0 {
-		return nil, xerrors.New("Could not find the version you're looking for")
+		return nil, xerrors.New("could not find the version you're looking for")
 	}
 
 	if !supportsCurrentArch(&ver) {
-		return nil, xerrors.Errorf("Version you want is not supported on your architecture and os. Latest suitable version is %v", latestForArch.Version)
+		return nil, xerrors.Errorf("the version you want is not supported on your architecture and OS. Latest suitable version is %s", latestForArch.Version)
 	}
 
 	return &ver, nil
@@ -220,7 +220,7 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 	for _, zf := range r.File {
 		newFileName := RemoveGitBuildFromName(pluginName, zf.Name)
 		if !isPathSafe(newFileName, filepath.Join(filePath, pluginName)) {
-			return xerrors.Errorf("filepath: %v tries to write outside of plugin directory: %v. This can be a security risk.", zf.Name, path.Join(filePath, pluginName))
+			return xerrors.Errorf("filepath: %q tries to write outside of plugin directory: %q. This can be a security risk.", zf.Name, path.Join(filePath, pluginName))
 		}
 		newFile := path.Join(filePath, newFileName)
 
@@ -243,7 +243,7 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 			} else {
 				err = extractFile(zf, newFile)
 				if err != nil {
-					return errutil.Wrap("Failed to extract file", err)
+					return errutil.Wrap("failed to extract file", err)
 				}
 			}
 		}
@@ -260,12 +260,12 @@ func extractSymlink(file *zip.File, filePath string) error {
 	// symlink target is the contents of the file
 	src, err := file.Open()
 	if err != nil {
-		return errutil.Wrap("Failed to extract file", err)
+		return errutil.Wrap("failed to extract file", err)
 	}
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, src)
 	if err != nil {
-		return errutil.Wrap("Failed to copy symlink contents", err)
+		return errutil.Wrap("failed to copy symlink contents", err)
 	}
 	err = os.Symlink(strings.TrimSpace(buf.String()), filePath)
 	if err != nil {
@@ -292,7 +292,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 			return fmt.Errorf("file %s is in use. Please stop Grafana, install the plugin and restart Grafana", filePath)
 		}
 
-		return errutil.Wrap("Failed to open file", err)
+		return errutil.Wrap("failed to open file", err)
 	}
 	defer func() {
 		err = dst.Close()
@@ -300,7 +300,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	src, err := file.Open()
 	if err != nil {
-		return errutil.Wrap("Failed to extract file", err)
+		return errutil.Wrap("failed to extract file", err)
 	}
 	defer func() {
 		err = src.Close()
