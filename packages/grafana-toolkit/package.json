@@ -32,6 +32,7 @@
     "@grafana/data": "6.7.0-pre",
     "@grafana/eslint-config": "^1.0.0-rc1",
     "@grafana/tsconfig": "^1.0.0-rc1",
+    "@grafana/ui": "6.7.0-pre",
     "@types/command-exists": "^1.2.0",
     "@types/execa": "^0.9.0",
     "@types/expect-puppeteer": "3.3.1",
