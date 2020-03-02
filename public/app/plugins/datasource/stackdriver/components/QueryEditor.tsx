@@ -191,6 +191,7 @@ export class QueryEditor extends React.Component<Props, State> {
     return (
       <>
         <Project
+          templateVariableOptions={variableOptions}
           project={project}
           datasource={datasource}
           onChange={value => {

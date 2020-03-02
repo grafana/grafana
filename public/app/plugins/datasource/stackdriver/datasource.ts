@@ -104,7 +104,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         {
           refId: refId,
           datasourceId: this.id,
-          project,
+          project: this.templateSrv.replace(project),
           metricType: this.templateSrv.replace(metricType),
           groupBys: this.interpolateGroupBys(groupBys || [], {}),
           crossSeriesReducer: 'REDUCE_NONE',
@@ -323,15 +323,16 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async getMetricTypes(project: string): Promise<MetricDescriptor[]> {
+    const interpolatedProject = this.templateSrv.replace(project);
     try {
-      if (this.metricTypesCache[project]) {
-        return this.metricTypesCache[project];
+      if (this.metricTypesCache[interpolatedProject]) {
+        return this.metricTypesCache[interpolatedProject];
       }
 
-      const metricsApiPath = `v3/projects/${project}/metricDescriptors`;
+      const metricsApiPath = `v3/projects/${interpolatedProject}/metricDescriptors`;
       const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
 
-      this.metricTypesCache[project] = data.metricDescriptors.map((m: any) => {
+      this.metricTypesCache[interpolatedProject] = data.metricDescriptors.map((m: any) => {
         const [service] = m.type.split('/');
         const [serviceShortName] = service.split('.');
         m.service = service;
@@ -341,7 +342,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         return m;
       });
 
-      return this.metricTypesCache[project];
+      return this.metricTypesCache[interpolatedProject];
     } catch (error) {
       appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
       return [];

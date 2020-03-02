@@ -91,6 +91,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
     return (
       <>
         <Project
+          templateVariableOptions={variableOptions}
           datasource={datasource}
           project={project || datasource.getDefaultProject()}
           onChange={value => this.onChange('project', value)}
