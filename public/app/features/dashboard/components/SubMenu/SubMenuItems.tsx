@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { VariableState } from '../../../templating/state/types';
 import { VariableHide } from '../../../templating/variable';
 import { e2e } from '@grafana/e2e';
-import { VariablePicker } from '../../../templating/picker/VariablePicker';
+import { VariablePicker } from '../../../templating/pickers/VariablePicker';
 
 interface Props {
   variableStates: VariableState[];

@@ -1,5 +1,4 @@
 import castArray from 'lodash/castArray';
-import { MouseEvent } from 'react';
 import { v4 } from 'uuid';
 import { createAction, PrepareAction } from '@reduxjs/toolkit';
 import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
@@ -13,6 +12,7 @@ import {
   VariableRefresh,
   VariableType,
   VariableWithOptions,
+  VariableTag,
 } from '../variable';
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
@@ -63,7 +63,7 @@ export interface VariablePayload<T extends any = undefined> extends VariableIden
 export interface SelectVariableOption {
   option: VariableOption;
   forceSelect: boolean;
-  event: MouseEvent<HTMLAnchorElement>;
+  clearOthers: boolean;
 }
 
 export interface AddVariable<T extends VariableModel = VariableModel> {
@@ -87,7 +87,15 @@ export const selectVariableOption = createAction<VariablePayload<SelectVariableO
   'templating/selectVariableOption'
 );
 export const toggleAllVariableOptions = createAction<VariablePayload>('templating/toggleAllOptions');
-export const showVariableDropDown = createAction<VariablePayload>('templating/showVariableDropDown');
+export const showVariableDropDown = createAction<
+  VariablePayload<{
+    multi: boolean;
+    query: string;
+    current: VariableOption;
+    options: VariableOption[];
+    tags: VariableTag[];
+  }>
+>('templating/showVariableDropDown');
 export const hideVariableDropDown = createAction<VariablePayload>('templating/hideVariableDropDown');
 export const removeVariable = createAction<VariablePayload>('templating/removeVariable');
 export const storeNewVariable = createAction<VariablePayload>('templating/storeNewVariable');

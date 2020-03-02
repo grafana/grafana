@@ -1,8 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { initialTemplatingState, TemplatingState } from '../state/reducers';
 import {
-  ALL_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
   initialQueryVariableEditorState,
   initialQueryVariableModelState,
   initialQueryVariablePickerState,
@@ -19,7 +17,6 @@ import {
   hideVariableDropDown,
   removeInitLock,
   resolveInitLock,
-  selectVariableOption,
   setCurrentVariableValue,
   showVariableDropDown,
   toggleAllVariableOptions,
@@ -30,7 +27,6 @@ import {
 import { QueryVariableModel, VariableModel, VariableOption, VariableTag } from '../variable';
 import cloneDeep from 'lodash/cloneDeep';
 import { Deferred } from '../deferred';
-import { MouseEvent } from 'react';
 import { DataSourceApi } from '@grafana/data';
 import {
   changeQueryVariableHighlightIndex,
@@ -40,6 +36,7 @@ import {
   toggleVariableTag,
 } from './actions';
 import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../state/types';
 
 describe('queryVariableReducer', () => {
   describe('when addVariable is dispatched', () => {
@@ -491,278 +488,6 @@ describe('queryVariableReducer', () => {
           },
           uuidInEditor: null,
         });
-    });
-  });
-
-  describe('when selectVariableOption is dispatched', () => {
-    const opsAll = [
-      { text: 'All', value: '$__all', selected: true },
-      { text: 'A', value: 'A', selected: false },
-      { text: 'B', value: 'B', selected: false },
-    ];
-    const opsA = [
-      { text: 'All', value: '$__all', selected: false },
-      { text: 'A', value: 'A', selected: true },
-      { text: 'B', value: 'B', selected: false },
-    ];
-    const opsB = [
-      { text: 'All', value: '$__all', selected: false },
-      { text: 'A', value: 'A', selected: false },
-      { text: 'B', value: 'B', selected: true },
-    ];
-    const opsAB = [
-      { text: 'All', value: '$__all', selected: false },
-      { text: 'A', value: 'A', selected: true },
-      { text: 'B', value: 'B', selected: true },
-    ];
-
-    const opA = { text: 'A', selected: true, value: 'A' };
-    const opANot = { text: 'A', selected: false, value: 'A' };
-    const nullEv = (null as unknown) as MouseEvent<HTMLAnchorElement>;
-    const event = ({ ctrlKey: true } as unknown) as MouseEvent<HTMLAnchorElement>;
-    const opASel = [{ text: 'A', value: 'A', selected: true }];
-    const opBSel = [{ text: 'B', value: 'B', selected: true }];
-    const opAllSel = [{ text: 'All', value: '$__all', selected: true }];
-    const opABSel = [
-      { text: 'A', value: 'A', selected: true },
-      { text: 'B', value: 'B', selected: true },
-    ];
-
-    const expectSelectVariableOptionState = (args: {
-      options: any;
-      multi: any;
-      forceSelect: any;
-      event: any;
-      option: any;
-      expOps: any;
-      expCurr: any;
-      expSel: any;
-    }) => {
-      const { initialState } = getVariableTestContext({ options: args.options, multi: args.multi });
-      const payload = toVariablePayload(
-        { uuid: '0', type: 'query' },
-        { forceSelect: args.forceSelect, event: args.event, option: args.option }
-      );
-      reducerTester<TemplatingState>()
-        .givenReducer(queryVariableReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(selectVariableOption(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                options: args.expOps,
-                current: args.expCurr,
-              } as unknown) as VariableModel,
-              picker: {
-                ...initialState.variables[0].picker,
-                oldVariableText: null,
-                options: args.expOps,
-                selectedValues: args.expSel,
-              },
-            },
-          },
-          uuidInEditor: null,
-        });
-    };
-
-    describe('selectVariableOption for multi value variable', () => {
-      const multi = true;
-      describe('and options with All selected', () => {
-        const options = opsAll;
-        it.each`
-          option    | forceSelect | event     | expOps    | expCurr                                         | expSel
-          ${opANot} | ${true}     | ${nullEv} | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opANot} | ${false}    | ${nullEv} | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opANot} | ${true}     | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opANot} | ${false}    | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opA}    | ${true}     | ${nullEv} | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opA}    | ${false}    | ${nullEv} | ${opsAll} | ${{ text: 'All', value: ['$__all'], tags: [] }} | ${opAllSel}
-          ${opA}    | ${true}     | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opA}    | ${false}    | ${event}  | ${opsAll} | ${{ text: 'All', value: ['$__all'], tags: [] }} | ${opAllSel}
-        `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, event: $event, expOps: N/A, expCurr: $expCurr, expSel: N/A',
-          ({ option, forceSelect, event, expOps, expCurr, expSel }) =>
-            expectSelectVariableOptionState({
-              options,
-              multi,
-              option,
-              event,
-              forceSelect,
-              expCurr,
-              expOps,
-              expSel,
-            })
-        );
-      });
-      describe('and options with A selected', () => {
-        const options = opsA;
-        it.each`
-          option    | forceSelect | event     | expOps    | expCurr                                         | expSel
-          ${opANot} | ${true}     | ${nullEv} | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opANot} | ${false}    | ${nullEv} | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opANot} | ${true}     | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opANot} | ${false}    | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opA}    | ${true}     | ${nullEv} | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opA}    | ${false}    | ${nullEv} | ${opsAll} | ${{ text: 'All', value: ['$__all'], tags: [] }} | ${opAllSel}
-          ${opA}    | ${true}     | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}        | ${opASel}
-          ${opA}    | ${false}    | ${event}  | ${opsAll} | ${{ text: 'All', value: ['$__all'], tags: [] }} | ${opAllSel}
-        `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, event: $event, expOps: N/A, expCurr: $expCurr, expSel: N/A',
-          ({ option, forceSelect, event, expOps, expCurr, expSel }) =>
-            expectSelectVariableOptionState({
-              options,
-              multi,
-              option,
-              event,
-              forceSelect,
-              expCurr,
-              expOps,
-              expSel,
-            })
-        );
-      });
-      describe('and options with B selected', () => {
-        const options = opsB;
-        it.each`
-          option    | forceSelect | event     | expOps    | expCurr                                           | expSel
-          ${opANot} | ${true}     | ${nullEv} | ${opsAB}  | ${{ text: 'A + B', value: ['A', 'B'], tags: [] }} | ${opABSel}
-          ${opANot} | ${false}    | ${nullEv} | ${opsAB}  | ${{ text: 'A + B', value: ['A', 'B'], tags: [] }} | ${opABSel}
-          ${opANot} | ${true}     | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}          | ${opASel}
-          ${opANot} | ${false}    | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}          | ${opASel}
-          ${opA}    | ${true}     | ${nullEv} | ${opsAB}  | ${{ text: 'A + B', value: ['A', 'B'], tags: [] }} | ${opABSel}
-          ${opA}    | ${false}    | ${nullEv} | ${opsB}   | ${{ text: 'B', value: ['B'], tags: [] }}          | ${opBSel}
-          ${opA}    | ${true}     | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}          | ${opASel}
-          ${opA}    | ${false}    | ${event}  | ${opsAll} | ${{ text: 'All', value: ['$__all'], tags: [] }}   | ${opAllSel}
-        `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, event: $event, expOps: N/A, expCurr: $expCurr, expSel: N/A',
-          ({ option, forceSelect, event, expOps, expCurr, expSel }) =>
-            expectSelectVariableOptionState({
-              options,
-              multi,
-              option,
-              event,
-              forceSelect,
-              expCurr,
-              expOps,
-              expSel,
-            })
-        );
-      });
-      describe('and options with A + B selected', () => {
-        const options = opsAB;
-        it.each`
-          option    | forceSelect | event     | expOps    | expCurr                                           | expSel
-          ${opANot} | ${true}     | ${nullEv} | ${opsAB}  | ${{ text: 'A + B', value: ['A', 'B'], tags: [] }} | ${opABSel}
-          ${opANot} | ${false}    | ${nullEv} | ${opsAB}  | ${{ text: 'A + B', value: ['A', 'B'], tags: [] }} | ${opABSel}
-          ${opANot} | ${true}     | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}          | ${opASel}
-          ${opANot} | ${false}    | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}          | ${opASel}
-          ${opA}    | ${true}     | ${nullEv} | ${opsAB}  | ${{ text: 'A + B', value: ['A', 'B'], tags: [] }} | ${opABSel}
-          ${opA}    | ${false}    | ${nullEv} | ${opsB}   | ${{ text: 'B', value: ['B'], tags: [] }}          | ${opBSel}
-          ${opA}    | ${true}     | ${event}  | ${opsA}   | ${{ text: 'A', value: ['A'], tags: [] }}          | ${opASel}
-          ${opA}    | ${false}    | ${event}  | ${opsAll} | ${{ text: 'All', value: ['$__all'], tags: [] }}   | ${opAllSel}
-        `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, event: $event, expOps: N/A, expCurr: $expCurr, expSel: N/A',
-          ({ option, forceSelect, event, expOps, expCurr, expSel }) =>
-            expectSelectVariableOptionState({
-              options,
-              multi,
-              option,
-              event,
-              forceSelect,
-              expCurr,
-              expOps,
-              expSel,
-            })
-        );
-      });
-    });
-
-    describe('selectVariableOption for single value variable', () => {
-      const multi = false;
-      describe('and options with All selected', () => {
-        const options = opsAll;
-        it.each`
-          option    | forceSelect | event     | expOps  | expCurr                                | expSel
-          ${opANot} | ${true}     | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${false}    | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${true}     | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${false}    | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${true}     | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${false}    | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${true}     | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${false}    | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-        `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, event: $event, expOps: N/A, expCurr: $expCurr, expSel: N/A',
-          ({ option, forceSelect, event, expOps, expCurr, expSel }) =>
-            expectSelectVariableOptionState({
-              options,
-              multi,
-              option,
-              event,
-              forceSelect,
-              expCurr,
-              expOps,
-              expSel,
-            })
-        );
-      });
-      describe('and options with A selected', () => {
-        const options = opsA;
-        it.each`
-          option    | forceSelect | event     | expOps  | expCurr                                | expSel
-          ${opANot} | ${true}     | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${false}    | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${true}     | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${false}    | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${true}     | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${false}    | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${true}     | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${false}    | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-        `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, event: $event, expOps: N/A, expCurr: $expCurr, expSel: N/A',
-          ({ option, forceSelect, event, expOps, expCurr, expSel }) =>
-            expectSelectVariableOptionState({
-              options,
-              multi,
-              option,
-              event,
-              forceSelect,
-              expCurr,
-              expOps,
-              expSel,
-            })
-        );
-      });
-      describe('and options with B selected', () => {
-        const options = opsB;
-        it.each`
-          option    | forceSelect | event     | expOps  | expCurr                                | expSel
-          ${opANot} | ${true}     | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${false}    | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${true}     | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opANot} | ${false}    | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${true}     | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${false}    | ${nullEv} | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${true}     | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-          ${opA}    | ${false}    | ${event}  | ${opsA} | ${{ text: 'A', value: 'A', tags: [] }} | ${opASel}
-        `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, event: $event, expOps: N/A, expCurr: $expCurr, expSel: N/A',
-          ({ option, forceSelect, event, expOps, expCurr, expSel }) =>
-            expectSelectVariableOptionState({
-              options,
-              multi,
-              option,
-              event,
-              forceSelect,
-              expCurr,
-              expOps,
-              expSel,
-            })
-        );
-      });
     });
   });
 

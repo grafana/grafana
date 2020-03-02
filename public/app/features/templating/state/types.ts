@@ -4,6 +4,10 @@ import { TemplatingState } from './reducers';
 
 export const emptyUuid = '00000000-0000-0000-0000-000000000000';
 
+export const ALL_VARIABLE_TEXT = 'All';
+export const ALL_VARIABLE_VALUE = '$__all';
+export const NONE_VARIABLE_TEXT = 'None';
+export const NONE_VARIABLE_VALUE = '';
 export interface VariableEditorState {
   name: string;
   type: VariableType;
@@ -31,9 +35,9 @@ export interface VariableEditorProps<
   dataSources: DataSourceSelectItem[];
 }
 
-export interface VariablePickerProps<Model extends VariableModel = VariableModel, PickerState extends {} = {}> {
+// TODO: move to pickers/types?
+export interface VariablePickerProps<Model extends VariableModel = VariableModel> {
   variable: Model;
-  picker: PickerState;
 }
 
 export const initialVariableEditorState: VariableEditorState = {

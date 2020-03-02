@@ -1,20 +1,21 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { QueryVariableModel } from '../variable';
+import { CustomVariableModel } from '../variable';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
 import { VariableAdapter } from '../adapters';
-import { initialCustomVariableState, customVariableReducer, ALL_VARIABLE_TEXT } from './reducer';
-import { CustomVariablePicker } from './CustomVariablePicker';
+import { initialCustomVariableState, customVariableReducer } from './reducer';
+import { VariableOptionsPicker } from '../pickers';
 import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
+import { ALL_VARIABLE_TEXT } from '../state/types';
 
-export const createCustomVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
+export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableModel> => {
   return {
     description: 'Define variable values manually',
     label: 'Custom',
     initialState: initialCustomVariableState,
     reducer: customVariableReducer,
-    picker: CustomVariablePicker,
+    picker: VariableOptionsPicker,
     editor: CustomVariableEditor,
     dependsOn: () => {
       return false;

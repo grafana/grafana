@@ -24,9 +24,7 @@ export class VariablePicker extends PureComponent<VariableState> {
             {labelOrName}
           </label>
         )}
-        {hide !== VariableHide.hideVariable && PickerToRender && (
-          <PickerToRender variable={this.props.variable} picker={this.props.picker} />
-        )}
+        {hide !== VariableHide.hideVariable && PickerToRender && <PickerToRender variable={this.props.variable} />}
       </div>
     );
   }

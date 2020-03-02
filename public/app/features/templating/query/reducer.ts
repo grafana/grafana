@@ -20,7 +20,6 @@ import {
   hideVariableDropDown,
   removeInitLock,
   resolveInitLock,
-  selectVariableOption,
   setCurrentVariableValue,
   showVariableDropDown,
   toggleAllVariableOptions,
@@ -35,6 +34,10 @@ import {
   initialVariableEditorState,
   VariableEditorState,
   VariableState,
+  ALL_VARIABLE_TEXT,
+  NONE_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  NONE_VARIABLE_VALUE,
 } from '../state/types';
 import {
   changeQueryVariableHighlightIndex,
@@ -118,11 +121,6 @@ export const initialQueryVariableState: QueryVariableState = {
   editor: initialQueryVariableEditorState,
   variable: initialQueryVariableModelState,
 };
-
-export const ALL_VARIABLE_TEXT = 'All';
-export const ALL_VARIABLE_VALUE = '$__all';
-export const NONE_VARIABLE_TEXT = 'None';
-export const NONE_VARIABLE_VALUE = '';
 
 export const getQueryHasSearchFilter = (variable: QueryVariableModel) => containsSearchFilter(variable.query);
 
@@ -398,35 +396,6 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
     .addCase(removeInitLock, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       instanceState.variable.initLock = null;
-    })
-    .addCase(selectVariableOption, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      const { option, forceSelect, event } = action.payload.data;
-      const { multi } = instanceState.variable;
-      const newOptions: VariableOption[] = instanceState.variable.options.map(o => {
-        if (o.value !== option.value) {
-          let selected = o.selected;
-          if (o.text === ALL_VARIABLE_TEXT || option.text === ALL_VARIABLE_TEXT) {
-            selected = false;
-          } else if (!multi) {
-            selected = false;
-          } else if (event && (event.ctrlKey || event.metaKey || event.shiftKey)) {
-            selected = false;
-          }
-          o.selected = selected;
-          return o;
-        }
-        o.selected = forceSelect ? true : multi ? !option.selected : true;
-        return o;
-      });
-
-      if (newOptions.length > 0 && newOptions.filter(o => o.selected).length === 0) {
-        newOptions[0].selected = true;
-      }
-
-      instanceState.variable.options = newOptions;
-
-      applyStateChanges(instanceState, updateOptions, updateSelectedValues, updateCurrent);
     })
     .addCase(showVariableDropDown, (state, action) => {
       hideOtherDropDowns(state);
