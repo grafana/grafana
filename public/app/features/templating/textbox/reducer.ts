@@ -3,42 +3,22 @@ import { createReducer } from '@reduxjs/toolkit';
 import { TextBoxVariableModel, VariableHide, VariableOption } from '../variable';
 import {
   addVariable,
-  changeVariableNameFailed,
-  changeVariableNameSucceeded,
   changeVariableProp,
   removeInitLock,
   resolveInitLock,
   setCurrentVariableValue,
 } from '../state/actions';
 import { Deferred } from '../deferred';
-import {
-  ALL_VARIABLE_VALUE,
-  emptyUuid,
-  getInstanceState,
-  initialVariableEditorState,
-  VariableEditorState,
-  VariableState,
-} from '../state/types';
+import { ALL_VARIABLE_VALUE, emptyUuid, getInstanceState, VariableState } from '../state/types';
 import { initialTemplatingState } from '../state/reducers';
 import cloneDeep from 'lodash/cloneDeep';
-import { QueryVariableState } from '../query/reducer';
 import { createTextBoxOptions } from './actions';
 
 export interface TextBoxVariablePickerState {}
 
-export interface TextBoxVariableEditorState extends VariableEditorState {
-  query: string;
-}
-
-export interface TextBoxVariableState
-  extends VariableState<TextBoxVariablePickerState, TextBoxVariableEditorState, TextBoxVariableModel> {}
+export interface TextBoxVariableState extends VariableState<TextBoxVariablePickerState, TextBoxVariableModel> {}
 
 export const initialTextBoxVariablePickerState: TextBoxVariablePickerState = {};
-
-export const initialTextBoxVariableEditorState: TextBoxVariableEditorState = {
-  ...initialVariableEditorState,
-  query: '',
-};
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   uuid: emptyUuid,
@@ -57,7 +37,6 @@ export const initialTextBoxVariableModelState: TextBoxVariableModel = {
 
 export const initialTextBoxVariableState: TextBoxVariableState = {
   picker: initialTextBoxVariablePickerState,
-  editor: initialTextBoxVariableEditorState,
   variable: initialTextBoxVariableModelState,
 };
 
@@ -111,21 +90,8 @@ export const textBoxVariableReducer = createReducer(initialTemplatingState, buil
       instanceState.variable.initLock = null;
     })
     .addCase(changeVariableProp, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
+      const instanceState = getInstanceState<TextBoxVariableState>(state, action.payload.uuid!);
       (instanceState.variable as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
-    })
-    .addCase(changeVariableNameSucceeded, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      delete instanceState.editor.errors['name'];
-      instanceState.editor.name = action.payload.data;
-      instanceState.variable.name = action.payload.data;
-      instanceState.editor.isValid = Object.keys(instanceState.editor.errors).length === 0;
-    })
-    .addCase(changeVariableNameFailed, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.editor.name = action.payload.data.newName;
-      instanceState.editor.errors.name = action.payload.data.errorText;
-      instanceState.editor.isValid = Object.keys(instanceState.editor.errors).length === 0;
     })
     .addCase(createTextBoxOptions, (state, action) => {
       const instanceState = getInstanceState<TextBoxVariableState>(state, action.payload.uuid!);

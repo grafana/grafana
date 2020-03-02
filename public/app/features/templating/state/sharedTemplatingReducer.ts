@@ -4,23 +4,17 @@ import cloneDeep from 'lodash/cloneDeep';
 import {
   changeToEditorEditMode,
   changeToEditorListMode,
-  changeVariableHide,
-  changeVariableLabel,
   changeVariableOrder,
+  changeVariableType,
   duplicateVariable,
   removeVariable,
   storeNewVariable,
-  updateVariableCompleted,
-  updateVariableFailed,
-  updateVariableStarting,
-  variableEditorMounted,
-  variableEditorUnMounted,
-  changeVariableType,
 } from './actions';
 import { VariableModel } from '../variable';
-import { emptyUuid, initialVariableEditorState, VariableState } from './types';
+import { emptyUuid, getInstanceState, VariableState } from './types';
 import { initialTemplatingState } from './reducers';
 import { variableAdapters } from '../adapters';
+import { changeVariableNameSucceeded, variableEditorUnMounted } from '../editor/reducer';
 
 export const sharedTemplatingReducer = createReducer(initialTemplatingState, builder =>
   builder
@@ -31,11 +25,6 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
         variableStates[index].variable.index = index;
       }
     })
-    .addCase(variableEditorMounted, (state, action) => {
-      state.variables[action.payload.uuid!].editor.name = state.variables[action.payload.uuid].variable.name;
-      state.variables[action.payload.uuid!].editor.type = state.variables[action.payload.uuid].variable.type;
-      state.variables[action.payload.uuid!].editor.dataSources = action.payload.data;
-    })
     .addCase(variableEditorUnMounted, (state, action) => {
       const variableState = state.variables[action.payload.uuid!];
 
@@ -43,35 +32,11 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
         return;
       }
 
-      const { initialState } = variableAdapters.get(action.payload.type);
-      variableState.editor = { ...initialState.editor };
       state.uuidInEditor = null;
 
       if (state.variables[emptyUuid]) {
         delete state.variables[emptyUuid];
       }
-    })
-    .addCase(changeVariableLabel, (state, action) => {
-      state.variables[action.payload.uuid!].variable.label = action.payload.data;
-    })
-    .addCase(changeVariableHide, (state, action) => {
-      state.variables[action.payload.uuid!].variable.hide = action.payload.data;
-    })
-    .addCase(updateVariableStarting, (state, action) => {
-      state.variables[action.payload.uuid!].editor = {
-        ...initialVariableEditorState,
-        ...state.variables[action.payload.uuid!].editor,
-      };
-    })
-    .addCase(updateVariableCompleted, (state, action) => {
-      state.variables[action.payload.uuid!].editor = {
-        ...initialVariableEditorState,
-        ...state.variables[action.payload.uuid!].editor,
-      };
-    })
-    .addCase(updateVariableFailed, (state, action) => {
-      state.variables[action.payload.uuid!].editor.isValid = false;
-      state.variables[action.payload.uuid!].editor.errors.update = action.payload.data.message;
     })
     .addCase(duplicateVariable, (state, action) => {
       const original = cloneDeep<VariableModel>(state.variables[action.payload.uuid].variable);
@@ -130,5 +95,9 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
           index,
         },
       };
+    })
+    .addCase(changeVariableNameSucceeded, (state, action) => {
+      const instanceState = getInstanceState(state, action.payload.uuid);
+      instanceState.variable.name = action.payload.data;
     })
 );

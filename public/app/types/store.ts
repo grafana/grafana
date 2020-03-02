@@ -20,6 +20,7 @@ import { PanelEditorStateNew } from '../features/dashboard/components/PanelEdito
 import { ApiKeysState } from './apiKeys';
 import { TemplatingState } from '../features/templating/state/reducers';
 import { OptionsPickerState } from 'app/features/templating/pickers/OptionsPicker/reducer';
+import { VariableEditorState } from '../features/templating/editor/reducer';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -45,6 +46,7 @@ export interface StoreState {
   userAdmin: UserAdminState;
   templating: TemplatingState;
   optionsPicker: OptionsPickerState;
+  variableEditor: VariableEditorState;
 }
 
 /*

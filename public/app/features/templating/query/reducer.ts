@@ -1,6 +1,6 @@
 import { createReducer } from '@reduxjs/toolkit';
 import _ from 'lodash';
-import { DataSourceApi, stringToJsRegex } from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
 
 import {
   containsSearchFilter,
@@ -14,8 +14,6 @@ import {
 } from '../variable';
 import {
   addVariable,
-  changeVariableNameFailed,
-  changeVariableNameSucceeded,
   changeVariableProp,
   hideVariableDropDown,
   removeInitLock,
@@ -29,23 +27,15 @@ import {
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
 import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
   emptyUuid,
   getInstanceState,
-  initialVariableEditorState,
-  VariableEditorState,
-  VariableState,
-  ALL_VARIABLE_TEXT,
   NONE_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
   NONE_VARIABLE_VALUE,
+  VariableState,
 } from '../state/types';
-import {
-  changeQueryVariableHighlightIndex,
-  changeQueryVariableSearchQuery,
-  queryVariableDatasourceLoaded,
-  queryVariableQueryEditorLoaded,
-  toggleVariableTag,
-} from './actions';
+import { changeQueryVariableHighlightIndex, changeQueryVariableSearchQuery, toggleVariableTag } from './actions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
 import { initialTemplatingState, TemplatingState } from '../state/reducers';
@@ -63,13 +53,13 @@ export interface QueryVariablePickerState {
   oldVariableText: string | string[] | null;
 }
 
-export interface QueryVariableEditorState extends VariableEditorState {
+export interface QueryVariableEditorState {
   VariableQueryEditor: ComponentType<VariableQueryProps> | null;
+  dataSources: DataSourceSelectItem[];
   dataSource: DataSourceApi | null;
 }
 
-export interface QueryVariableState
-  extends VariableState<QueryVariablePickerState, QueryVariableEditorState, QueryVariableModel> {}
+export interface QueryVariableState extends VariableState<QueryVariablePickerState, QueryVariableModel> {}
 
 export const initialQueryVariablePickerState: QueryVariablePickerState = {
   highlightIndex: -1,
@@ -109,16 +99,8 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   initLock: null,
 };
 
-export const initialQueryVariableEditorState: QueryVariableEditorState = {
-  ...initialVariableEditorState,
-  VariableQueryEditor: null,
-  dataSource: null,
-  type: 'query',
-};
-
 export const initialQueryVariableState: QueryVariableState = {
   picker: initialQueryVariablePickerState,
-  editor: initialQueryVariableEditorState,
   variable: initialQueryVariableModelState,
 };
 
@@ -293,29 +275,6 @@ const updateOldVariableText = (state: QueryVariableState): QueryVariableState =>
   return state;
 };
 
-const updateEditorErrors = (state: QueryVariableState): QueryVariableState => {
-  let errorText = null;
-  if (
-    typeof state.variable.query === 'string' &&
-    state.variable.query.match(new RegExp('\\$' + state.variable.name + '(/| |$)'))
-  ) {
-    errorText = 'Query cannot contain a reference to itself. Variable: $' + state.variable.name;
-  }
-
-  if (!errorText) {
-    delete state.editor.errors.query;
-    return state;
-  }
-
-  state.editor.errors.query = errorText;
-  return state;
-};
-
-const updateEditorIsValid = (state: QueryVariableState): QueryVariableState => {
-  state.editor.isValid = Object.keys(state.editor.errors).length === 0;
-  return state;
-};
-
 const updateTags = (state: QueryVariableState): QueryVariableState => {
   state.picker.tags = state.variable.tags;
   return state;
@@ -422,32 +381,9 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
 
       applyStateChanges(instanceState, updateOptions, updateSelectedValues);
     })
-    .addCase(changeVariableNameSucceeded, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      delete instanceState.editor.errors['name'];
-      instanceState.editor.name = action.payload.data;
-      instanceState.variable.name = action.payload.data;
-      applyStateChanges(instanceState, updateEditorIsValid);
-    })
-    .addCase(changeVariableNameFailed, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.editor.name = action.payload.data.newName;
-      instanceState.editor.errors.name = action.payload.data.errorText;
-      applyStateChanges(instanceState, updateEditorIsValid);
-    })
-    .addCase(queryVariableDatasourceLoaded, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.editor.dataSource = action.payload.data;
-    })
-    .addCase(queryVariableQueryEditorLoaded, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.editor.VariableQueryEditor = action.payload.data;
-    })
     .addCase(changeVariableProp, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       (instanceState.variable as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
-
-      applyStateChanges(instanceState, updateEditorErrors, updateEditorIsValid);
     })
     .addCase(toggleVariableTag, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);

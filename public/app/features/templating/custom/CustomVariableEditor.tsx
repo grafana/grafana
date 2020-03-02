@@ -1,15 +1,11 @@
-import React, { ChangeEvent, PureComponent, FocusEvent } from 'react';
+import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
 import { CustomVariableModel, VariableWithMultiSupport } from '../variable';
-import { VariableEditorProps, OnPropChangeArguments } from '../state/types';
-import { CustomVariableEditorState } from './reducer';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
+import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 
-export interface Props extends VariableEditorProps<CustomVariableModel, CustomVariableEditorState> {}
-export interface State {
-  query: string;
-}
+export interface Props extends VariableEditorProps<CustomVariableModel> {}
 
-export class CustomVariableEditor extends PureComponent<Props, State> {
+export class CustomVariableEditor extends PureComponent<Props> {
   onChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',

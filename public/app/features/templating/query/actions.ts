@@ -1,22 +1,18 @@
-import { ComponentType } from 'react';
 import { createAction } from '@reduxjs/toolkit';
-import { AppEvents, DataSourceApi } from '@grafana/data';
+import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
 import {
   selectVariableOption,
   toVariableIdentifier,
   toVariablePayload,
-  updateVariableCompleted,
-  updateVariableFailed,
   updateVariableOptions,
-  updateVariableStarting,
   updateVariableTags,
   validateVariableSelectionState,
   VariableIdentifier,
   VariablePayload,
 } from '../state/actions';
 import { QueryVariableModel, VariableRefresh, VariableTag, VariableWithMultiSupport } from '../variable';
-import { ThunkResult, VariableQueryProps } from '../../../types';
+import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
@@ -25,14 +21,7 @@ import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { getQueryHasSearchFilter } from './reducer';
 import { variableAdapters } from '../adapters';
-
-export const queryVariableDatasourceLoaded = createAction<VariablePayload<DataSourceApi>>(
-  'templating/queryVariableDatasourceLoaded'
-);
-
-export const queryVariableQueryEditorLoaded = createAction<VariablePayload<ComponentType<VariableQueryProps>>>(
-  'templating/queryVariableQueryEditorLoaded'
-);
+import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 
 export const changeQueryVariableHighlightIndex = createAction<VariablePayload<number>>(
   'templating/changeQueryVariableHighlightIndex'
@@ -51,7 +40,7 @@ export const updateQueryVariableOptions = (
   return async (dispatch, getState) => {
     const variableInState = getVariable<QueryVariableModel>(identifier.uuid!, getState());
     try {
-      dispatch(updateVariableStarting(toVariablePayload(variableInState)));
+      await dispatch(removeVariableEditorError({ errorProp: 'update' }));
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
       const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
       if (variableInState.refresh === VariableRefresh.onTimeRangeChanged) {
@@ -71,13 +60,12 @@ export const updateQueryVariableOptions = (
       }
 
       await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
-      await dispatch(updateVariableCompleted(toVariablePayload(variableInState)));
     } catch (err) {
       console.error(err);
       if (err.data && err.data.message) {
         err.message = err.data.message;
       }
-      dispatch(updateVariableFailed(toVariablePayload(variableInState, err)));
+      dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
       appEvents.emit(AppEvents.alertError, [
         'Templating',
         'Template variables could not be initialized: ' + err.message,
@@ -90,6 +78,13 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
   dispatch,
   getState
 ) => {
+  const dataSources: DataSourceSelectItem[] = await getDatasourceSrv()
+    .getMetricSources()
+    .filter(ds => !ds.meta.mixed && ds.value !== null);
+  const defaultDatasource: DataSourceSelectItem = { name: '', value: '', meta: {} as DataSourcePluginMeta, sort: '' };
+  const allDataSources = [defaultDatasource].concat(dataSources);
+  dispatch(changeVariableEditorExtended({ propName: 'dataSources', propValue: allDataSources }));
+
   const variable = getVariable<QueryVariableModel>(identifier.uuid!, getState());
   if (!variable.datasource) {
     return;
@@ -106,8 +101,8 @@ export const changeQueryVariableDataSource = (
       const dataSource = await getDatasourceSrv().get(name ?? '');
       const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
       const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? DefaultVariableQueryEditor;
-      dispatch(queryVariableDatasourceLoaded(toVariablePayload(identifier, dataSource)));
-      dispatch(queryVariableQueryEditorLoaded(toVariablePayload(identifier, VariableQueryEditor)));
+      dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
+      dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
     } catch (err) {
       console.error(err);
     }

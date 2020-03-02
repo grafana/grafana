@@ -85,7 +85,7 @@ export class VariableEditorList extends PureComponent<Props> {
                   {this.props.variableStates.map((state, index) => {
                     const variable = state.variable as QueryVariableModel;
                     return (
-                      <tr key={variable.name}>
+                      <tr key={`${variable.name}-${index}`}>
                         <td style={{ width: '1%' }}>
                           <span
                             onClick={event => this.onEditClick(event, toVariableIdentifier(variable))}

@@ -1,7 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { initialTemplatingState, TemplatingState } from '../state/reducers';
 import {
-  initialQueryVariableEditorState,
   initialQueryVariableModelState,
   initialQueryVariablePickerState,
   QueryVariableEditorState,
@@ -11,8 +10,6 @@ import {
 } from './reducer';
 import {
   addVariable,
-  changeVariableNameFailed,
-  changeVariableNameSucceeded,
   changeVariableProp,
   hideVariableDropDown,
   removeInitLock,
@@ -27,15 +24,7 @@ import {
 import { QueryVariableModel, VariableModel, VariableOption, VariableTag } from '../variable';
 import cloneDeep from 'lodash/cloneDeep';
 import { Deferred } from '../deferred';
-import { DataSourceApi } from '@grafana/data';
-import {
-  changeQueryVariableHighlightIndex,
-  changeQueryVariableSearchQuery,
-  queryVariableDatasourceLoaded,
-  queryVariableQueryEditorLoaded,
-  toggleVariableTag,
-} from './actions';
-import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
+import { changeQueryVariableHighlightIndex, changeQueryVariableSearchQuery, toggleVariableTag } from './actions';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../state/types';
 
 describe('queryVariableReducer', () => {
@@ -59,7 +48,6 @@ describe('queryVariableReducer', () => {
             name: 'name from model',
             type: 'type from model',
           });
-          expect(resultingState.variables[0].editor).toEqual(initialQueryVariableEditorState);
           expect(resultingState.variables[0].picker).toEqual(initialQueryVariablePickerState);
           // make sure that initLock is defined
           expect(resultingState.variables[0].variable.initLock!).toBeDefined();
@@ -83,13 +71,11 @@ describe('queryVariableReducer', () => {
       name: '0',
     };
     const variable = { ...defaultVariable, ...variableOverrides };
-    const editor = { ...initialQueryVariableEditorState, ...editorOverrides };
     const picker = { ...initialQueryVariablePickerState, ...pickerOverrides };
     const initialState: TemplatingState = {
       variables: {
         '0': {
           variable,
-          editor,
           picker,
         },
       },
@@ -451,7 +437,6 @@ describe('queryVariableReducer', () => {
           expect(resultingRest).toEqual(expectedState.variables[0].variable);
           expect(resultingState.uuidInEditor).toEqual(expectedState.uuidInEditor);
           expect(resultingState.variables[0].picker).toEqual(expectedState.variables[0].picker);
-          expect(resultingState.variables[0].editor).toEqual(expectedState.variables[0].editor);
           // make sure that initLock is defined
           expect(resultingState.variables[0].variable.initLock!).toBeDefined();
           expect(resultingState.variables[0].variable.initLock!.promise).toBeDefined();
@@ -828,168 +813,168 @@ describe('queryVariableReducer', () => {
     });
   });
 
-  describe('when changeVariableNameSucceeded is dispatched and there are other errors', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext(
-        {},
-        {
-          errors: { name: 'A variable with that name already exists', update: 'Update failed' },
-          name: 'Name-0',
-        }
-      );
-      const newName = 'New name';
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, newName);
-      reducerTester<TemplatingState>()
-        .givenReducer(queryVariableReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeVariableNameSucceeded(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                name: 'New name',
-              } as unknown) as VariableModel,
-              editor: {
-                ...initialState.variables[0].editor,
-                name: 'New name',
-                errors: { update: 'Update failed' },
-                isValid: false,
-              },
-            },
-          },
-          uuidInEditor: null,
-        });
-    });
-  });
+  // describe('when changeVariableNameSucceeded is dispatched and there are other errors', () => {
+  //   it('then state should be correct', () => {
+  //     const { initialState } = getVariableTestContext(
+  //       {},
+  //       {
+  //         errors: { name: 'A variable with that name already exists', update: 'Update failed' },
+  //         name: 'Name-0',
+  //       }
+  //     );
+  //     const newName = 'New name';
+  //     const payload = toVariablePayload({ uuid: '0', type: 'query' }, newName);
+  //     reducerTester<TemplatingState>()
+  //       .givenReducer(queryVariableReducer, cloneDeep(initialState))
+  //       .whenActionIsDispatched(changeVariableNameSucceeded(payload))
+  //       .thenStateShouldEqual({
+  //         ...initialState,
+  //         variables: {
+  //           '0': {
+  //             ...initialState.variables[0],
+  //             variable: ({
+  //               ...initialState.variables[0].variable,
+  //               name: 'New name',
+  //             } as unknown) as VariableModel,
+  //             editor: {
+  //               ...initialState.variables[0].editor,
+  //               name: 'New name',
+  //               errors: { update: 'Update failed' },
+  //               isValid: false,
+  //             },
+  //           },
+  //         },
+  //         uuidInEditor: null,
+  //       });
+  //   });
+  // });
 
-  describe('when changeVariableNameSucceeded is dispatched and there no other errors', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext(
-        {},
-        {
-          errors: { name: 'A variable with that name already exists' },
-          name: 'Name-0',
-          isValid: false,
-        }
-      );
-      const newName = 'New name';
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, newName);
-      reducerTester<TemplatingState>()
-        .givenReducer(queryVariableReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeVariableNameSucceeded(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                name: 'New name',
-              } as unknown) as VariableModel,
-              editor: {
-                ...initialState.variables[0].editor,
-                name: 'New name',
-                errors: {},
-                isValid: true,
-              },
-            },
-          },
-          uuidInEditor: null,
-        });
-    });
-  });
+  // describe('when changeVariableNameSucceeded is dispatched and there no other errors', () => {
+  //   it('then state should be correct', () => {
+  //     const { initialState } = getVariableTestContext(
+  //       {},
+  //       {
+  //         errors: { name: 'A variable with that name already exists' },
+  //         name: 'Name-0',
+  //         isValid: false,
+  //       }
+  //     );
+  //     const newName = 'New name';
+  //     const payload = toVariablePayload({ uuid: '0', type: 'query' }, newName);
+  //     reducerTester<TemplatingState>()
+  //       .givenReducer(queryVariableReducer, cloneDeep(initialState))
+  //       .whenActionIsDispatched(changeVariableNameSucceeded(payload))
+  //       .thenStateShouldEqual({
+  //         ...initialState,
+  //         variables: {
+  //           '0': {
+  //             ...initialState.variables[0],
+  //             variable: ({
+  //               ...initialState.variables[0].variable,
+  //               name: 'New name',
+  //             } as unknown) as VariableModel,
+  //             editor: {
+  //               ...initialState.variables[0].editor,
+  //               name: 'New name',
+  //               errors: {},
+  //               isValid: true,
+  //             },
+  //           },
+  //         },
+  //         uuidInEditor: null,
+  //       });
+  //   });
+  // });
 
-  describe('when changeVariableNameFailed is dispatched', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext(
-        {},
-        {
-          errors: {},
-          name: 'Name-0',
-          isValid: true,
-        }
-      );
-      const newName = 'New name';
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, { newName, errorText: 'Name already exists' });
-      reducerTester<TemplatingState>()
-        .givenReducer(queryVariableReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeVariableNameFailed(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-              } as unknown) as VariableModel,
-              editor: {
-                ...initialState.variables[0].editor,
-                name: 'New name',
-                errors: { name: 'Name already exists' },
-                isValid: false,
-              },
-            },
-          },
-          uuidInEditor: null,
-        });
-    });
-  });
+  // describe('when changeVariableNameFailed is dispatched', () => {
+  //   it('then state should be correct', () => {
+  //     const { initialState } = getVariableTestContext(
+  //       {},
+  //       {
+  //         errors: {},
+  //         name: 'Name-0',
+  //         isValid: true,
+  //       }
+  //     );
+  //     const newName = 'New name';
+  //     const payload = toVariablePayload({ uuid: '0', type: 'query' }, { newName, errorText: 'Name already exists' });
+  //     reducerTester<TemplatingState>()
+  //       .givenReducer(queryVariableReducer, cloneDeep(initialState))
+  //       .whenActionIsDispatched(changeVariableNameFailed(payload))
+  //       .thenStateShouldEqual({
+  //         ...initialState,
+  //         variables: {
+  //           '0': {
+  //             ...initialState.variables[0],
+  //             variable: ({
+  //               ...initialState.variables[0].variable,
+  //             } as unknown) as VariableModel,
+  //             editor: {
+  //               ...initialState.variables[0].editor,
+  //               name: 'New name',
+  //               errors: { name: 'Name already exists' },
+  //               isValid: false,
+  //             },
+  //           },
+  //         },
+  //         uuidInEditor: null,
+  //       });
+  //   });
+  // });
 
-  describe('when queryVariableDatasourceLoaded is dispatched', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext();
-      const dataSource = ({ id: 'mock-data', name: 'MockData' } as unknown) as DataSourceApi;
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, dataSource);
-      reducerTester<TemplatingState>()
-        .givenReducer(queryVariableReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(queryVariableDatasourceLoaded(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-              } as unknown) as VariableModel,
-              editor: ({
-                ...initialState.variables[0].editor,
-                dataSource,
-              } as unknown) as QueryVariableEditorState,
-            },
-          },
-          uuidInEditor: null,
-        });
-    });
-  });
+  // describe('when queryVariableDatasourceLoaded is dispatched', () => {
+  //   it('then state should be correct', () => {
+  //     const { initialState } = getVariableTestContext();
+  //     const dataSource = ({ id: 'mock-data', name: 'MockData' } as unknown) as DataSourceApi;
+  //     const payload = toVariablePayload({ uuid: '0', type: 'query' }, dataSource);
+  //     reducerTester<TemplatingState>()
+  //       .givenReducer(queryVariableReducer, cloneDeep(initialState))
+  //       .whenActionIsDispatched(queryVariableDatasourceLoaded(payload))
+  //       .thenStateShouldEqual({
+  //         ...initialState,
+  //         variables: {
+  //           '0': {
+  //             ...initialState.variables[0],
+  //             variable: ({
+  //               ...initialState.variables[0].variable,
+  //             } as unknown) as VariableModel,
+  //             editor: ({
+  //               ...initialState.variables[0].editor,
+  //               dataSource,
+  //             } as unknown) as QueryVariableEditorState,
+  //           },
+  //         },
+  //         uuidInEditor: null,
+  //       });
+  //   });
+  // });
 
-  describe('when queryVariableQueryEditorLoaded is dispatched', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext();
-      const VariableQueryEditor = DefaultVariableQueryEditor;
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, VariableQueryEditor);
-      reducerTester<TemplatingState>()
-        .givenReducer(queryVariableReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(queryVariableQueryEditorLoaded(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-              } as unknown) as VariableModel,
-              editor: ({
-                ...initialState.variables[0].editor,
-                VariableQueryEditor,
-              } as unknown) as QueryVariableEditorState,
-            },
-          },
-          uuidInEditor: null,
-        });
-    });
-  });
+  // describe('when queryVariableQueryEditorLoaded is dispatched', () => {
+  //   it('then state should be correct', () => {
+  //     const { initialState } = getVariableTestContext();
+  //     const VariableQueryEditor = DefaultVariableQueryEditor;
+  //     const payload = toVariablePayload({ uuid: '0', type: 'query' }, VariableQueryEditor);
+  //     reducerTester<TemplatingState>()
+  //       .givenReducer(queryVariableReducer, cloneDeep(initialState))
+  //       .whenActionIsDispatched(queryVariableQueryEditorLoaded(payload))
+  //       .thenStateShouldEqual({
+  //         ...initialState,
+  //         variables: {
+  //           '0': {
+  //             ...initialState.variables[0],
+  //             variable: ({
+  //               ...initialState.variables[0].variable,
+  //             } as unknown) as VariableModel,
+  //             editor: ({
+  //               ...initialState.variables[0].editor,
+  //               VariableQueryEditor,
+  //             } as unknown) as QueryVariableEditorState,
+  //           },
+  //         },
+  //         uuidInEditor: null,
+  //       });
+  //   });
+  // });
 
   describe('when changeVariableProp is dispatched', () => {
     it('then state should be correct', () => {

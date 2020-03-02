@@ -1,20 +1,20 @@
 import React, { PureComponent } from 'react';
-import { MapStateToProps, connect, MapDispatchToProps } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { VariableLink } from '../shared/VariableLink';
-import { VariableInput, NavigationKeys } from '../shared/VariableInput';
+import { NavigationKeys, VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOptions } from './actions';
 import {
-  OptionsPickerState,
-  showVariableDropDown,
   changeOptionsPickerHighlightIndex,
-  toggleAllVariableOptions,
-  selectVariableOption,
-  toggleVariableTag,
   getTags,
+  OptionsPickerState,
+  selectVariableOption,
+  showVariableDropDown,
+  toggleAllVariableOptions,
+  toggleVariableTag,
 } from './reducer';
-import { VariableWithOptions, VariableWithMultiSupport, VariableOption } from '../../variable';
+import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
 import { searchQueryChanged, selectVariableOptionByHighlightIndex } from '../../query/actions';
 import { VariableOptions } from '../shared/VariableOptions';
 import { VariablePickerProps } from '../../state/types';
@@ -171,7 +171,7 @@ const getLinkText = (variable: VariableWithOptions) => {
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   showVariableDropDown,
   commitChangesToVariable,
-  filterOptions: filterOptions,
+  filterOptions,
   searchQueryChanged,
   changeOptionsPickerHighlightIndex,
   selectVariableOptionByHighlightIndex,

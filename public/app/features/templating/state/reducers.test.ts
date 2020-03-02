@@ -2,7 +2,7 @@ import { templatingReducer, TemplatingState } from './reducers';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
 import { VariableHide, VariableModel } from '../variable';
-import { initialVariableEditorState, VariableState } from './types';
+import { VariableState } from './types';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
 import { toVariablePayload, VariablePayload } from './actions';
@@ -22,7 +22,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
             picker: {},
           },
           '1': {
@@ -36,7 +35,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
               global: true,
             },
-            editor: { ...initialVariableEditorState },
             picker: {},
           },
           '2': {
@@ -49,7 +47,6 @@ describe('templatingReducer', () => {
               label: 'Label-2',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
             picker: {},
           },
           '3': {
@@ -63,7 +60,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
               global: true,
             },
-            editor: { ...initialVariableEditorState },
             picker: {},
           },
         },
@@ -86,7 +82,6 @@ describe('templatingReducer', () => {
                 skipUrlSync: false,
                 global: true,
               },
-              editor: { ...initialVariableEditorState },
               picker: {},
             },
             '3': {
@@ -100,7 +95,6 @@ describe('templatingReducer', () => {
                 skipUrlSync: false,
                 global: true,
               },
-              editor: { ...initialVariableEditorState },
               picker: {},
             },
           },
@@ -123,7 +117,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
             picker: {},
           },
         },
@@ -171,7 +164,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
             picker: {},
           },
         },
@@ -215,7 +207,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
             picker: {},
           },
         },

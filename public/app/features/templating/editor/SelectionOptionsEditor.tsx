@@ -3,12 +3,10 @@ import { Switch } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import { VariableWithMultiSupport } from '../variable';
-import { VariableEditorOnPropChange } from '../state/types';
+import { VariableEditorProps } from './types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
-  extends VariableEditorOnPropChange<Model> {
-  variable: Model;
-}
+  extends VariableEditorProps<Model> {}
 
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = props => {
   const onMultiChanged = useCallback(
