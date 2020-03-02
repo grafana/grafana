@@ -25,7 +25,7 @@ export enum MetricFindQueryTypes {
 
 export interface VariableQueryData {
   selectedQueryType: string;
-  metricDescriptors: any[];
+  metricDescriptors: MetricDescriptor[];
   selectedService: string;
   selectedMetricType: string;
   labels: string[];

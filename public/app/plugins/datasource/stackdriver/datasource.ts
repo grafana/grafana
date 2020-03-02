@@ -3,7 +3,13 @@ import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
 import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter, VariableQueryData } from './types';
-import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  ScopedVars,
+  DataQueryResponse,
+} from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -15,7 +21,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   projectList: Array<{ label: string; value: string }>;
   authenticationType: string;
   queryPromise: Promise<any>;
-  metricTypesCache: { [key: string]: any[] };
+  metricTypesCache: { [key: string]: MetricDescriptor[] };
 
   /** @ngInject */
   constructor(
@@ -34,9 +40,9 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return this.templateSrv.variables.map(v => `$${v.name}`);
   }
 
-  async getTimeSeries(options: any) {
+  async getTimeSeries(options: DataQueryRequest<StackdriverQuery>) {
     const queries = options.targets
-      .filter((target: any) => {
+      .filter((target: StackdriverQuery) => {
         return !target.hide && target.metricType;
       })
       .map((t: StackdriverQuery) => {
@@ -106,7 +112,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         },
       ],
       range: this.timeSrv.timeRange(),
-    });
+    } as DataQueryRequest<StackdriverQuery>);
     const result = response.results[refId];
     return result && result.meta ? result.meta.labels : {};
   }
@@ -124,7 +130,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return interpolatedGroupBys;
   }
 
-  resolvePanelUnitFromTargets(targets: any[]) {
+  resolvePanelUnitFromTargets(targets: StackdriverQuery[]) {
     let unit;
     if (targets.length > 0 && targets.every(t => t.unit === targets[0].unit)) {
       if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit)) {
@@ -135,11 +141,11 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return unit;
   }
 
-  async query(options: DataQueryRequest<StackdriverQuery>) {
-    const result: any[] = [];
+  async query(options: DataQueryRequest<StackdriverQuery>): Promise<DataQueryResponse> {
+    const result: DataQueryResponse[] = [];
     const data = await this.getTimeSeries(options);
     if (data.results) {
-      Object['values'](data.results).forEach((queryRes: any) => {
+      Object.values(data.results).forEach((queryRes: any) => {
         if (!queryRes.series) {
           return;
         }
