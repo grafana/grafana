@@ -19,7 +19,7 @@ import {
   variableEditorUnMounted,
 } from '../state/actions';
 import { variableAdapters } from '../adapters';
-import { emptyUuid, VariableState, OnPropChangeArguments } from '../state/types';
+import { emptyUuid, OnPropChangeArguments, VariableState } from '../state/types';
 import { VariableHide, VariableType } from '../variable';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
@@ -118,7 +118,7 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
                 <div className="gf-form-select-wrapper max-width-17">
                   <select
                     className="gf-form-input"
-                    value={this.props.editor.type}
+                    value={this.props.variable.type}
                     onChange={this.onTypeChange}
                     aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalTypeSelect}
                   >

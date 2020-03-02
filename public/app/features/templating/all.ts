@@ -13,6 +13,7 @@ import { TextBoxVariable } from './TextBoxVariable';
 import { variableAdapters } from './adapters';
 import { createQueryVariableAdapter } from './query/adapter';
 import { createCustomVariableAdapter } from './custom/adapter';
+import { createTextBoxVariableAdapter } from './textbox/adapter';
 
 coreModule.factory('templateSrv', () => templateSrv);
 
@@ -29,3 +30,4 @@ export {
 
 variableAdapters.set('query', createQueryVariableAdapter());
 variableAdapters.set('custom', createCustomVariableAdapter());
+variableAdapters.set('textbox', createTextBoxVariableAdapter());
