@@ -155,7 +155,7 @@ describe('StackdriverDataSource', () => {
 
       ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
       // @ts-ignore
-      result = await ds.getMetricTypes();
+      result = await ds.getMetricTypes('proj');
     });
 
     it('should return successfully', () => {
