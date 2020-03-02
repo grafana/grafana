@@ -1,1 +1,0 @@
-export { ShareModalCtrl } from './ShareModalCtrl';
