@@ -185,6 +185,19 @@ describe('StackdriverDataSource', () => {
       });
     });
 
+    describe('and is single value variable for the label part', () => {
+      beforeEach(() => {
+        const filterTemplateSrv = initTemplateSrv('resource.label.zone');
+        const ds = new StackdriverDataSource(instanceSettings, filterTemplateSrv, timeSrv);
+        interpolated = ds.interpolateFilters(['${test}', '=~', 'europe-north-1a'], {});
+      });
+
+      it('should replace the variable with the value and not with regex formatting', () => {
+        expect(interpolated.length).toBe(4);
+        expect(interpolated[0]).toBe('resource.label.zone');
+      });
+    });
+
     describe('and is multi value variable', () => {
       beforeEach(() => {
         const filterTemplateSrv = initTemplateSrv(['filtervalue1', 'filtervalue2'], true);

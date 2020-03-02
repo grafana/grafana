@@ -90,12 +90,15 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       .reduce((res, filter) => (filter.value ? [...res, filter] : res), []);
 
     const filterArray = _.flatten(
-      completeFilter.map(({ key, operator, value, condition }: Filter) => [key, operator, value, condition])
+      completeFilter.map(({ key, operator, value, condition }: Filter) => [
+        this.templateSrv.replace(key, scopedVars || {}),
+        operator,
+        this.templateSrv.replace(value, scopedVars || {}, 'regex'),
+        condition,
+      ])
     );
 
-    return (filterArray || []).map(f => {
-      return this.templateSrv.replace(f, scopedVars || {}, 'regex');
-    });
+    return filterArray || [];
   }
 
   async getLabels(metricType: string, refId: string, projectName: string, groupBys?: string[]) {
