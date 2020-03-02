@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { FC, memo, useMemo } from 'react';
 import { DataFrame, Field } from '@grafana/data';
 import { useSortBy, useTable, useBlockLayout, Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
@@ -10,22 +10,25 @@ import { getTableStyles } from './styles';
 import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
 import { getTextAlign } from './utils';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 export interface Props {
   data: DataFrame;
   width: number;
   height: number;
+  /** Minimal column width specified in pixels */
+  columnMinWidth?: number;
   onCellClick?: TableFilterActionCallback;
 }
 
-export const Table = ({ data, height, onCellClick, width }: Props) => {
+export const Table: FC<Props> = memo(({ data, height, onCellClick, width, columnMinWidth }) => {
   const theme = useTheme();
   const [ref, headerRowMeasurements] = useMeasure();
   const tableStyles = getTableStyles(theme);
 
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data, width), [data]),
+      columns: useMemo(() => getColumns(data, width, columnMinWidth ?? 150), [data, width, columnMinWidth]),
       data: useMemo(() => getTableRows(data), [data]),
     },
     useSortBy,
@@ -53,28 +56,39 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
     [prepareRow, rows]
   );
 
+  let totalWidth = 0;
+
+  for (const headerGroup of headerGroups) {
+    for (const header of headerGroup.headers) {
+      totalWidth += header.width as number;
+    }
+  }
+
   return (
     <div {...getTableProps()} className={tableStyles.table}>
-      <div>
-        {headerGroups.map((headerGroup: any) => (
-          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
-            {headerGroup.headers.map((column: any) =>
-              renderHeaderCell(column, tableStyles.headerCell, data.fields[column.index])
-            )}
-          </div>
-        ))}
-      </div>
-      <FixedSizeList
-        height={height - headerRowMeasurements.height}
-        itemCount={rows.length}
-        itemSize={tableStyles.rowHeight}
-        width={width}
-      >
-        {RenderRow}
-      </FixedSizeList>
+      <CustomScrollbar>
+        <div>
+          {headerGroups.map((headerGroup: any) => (
+            <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()} ref={ref}>
+              {headerGroup.headers.map((column: any) =>
+                renderHeaderCell(column, tableStyles.headerCell, data.fields[column.index])
+              )}
+            </div>
+          ))}
+        </div>
+        <FixedSizeList
+          height={height - headerRowMeasurements.height}
+          itemCount={rows.length}
+          itemSize={tableStyles.rowHeight}
+          width={totalWidth ?? width}
+          style={{ overflow: 'hidden auto' }}
+        >
+          {RenderRow}
+        </FixedSizeList>
+      </CustomScrollbar>
     </div>
   );
-};
+});
 
 function renderHeaderCell(column: any, className: string, field: Field) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());

@@ -3,7 +3,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
-import { loadDashboardPermissions, panelModelAndPluginReady } from './reducers';
+import { loadDashboardPermissions, panelModelAndPluginReady, setPanelAngularComponent } from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 // Types
@@ -134,10 +134,18 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
       return;
     }
 
-    let plugin = getStore().plugins.panels[pluginId];
+    const store = getStore();
+    let plugin = store.plugins.panels[pluginId];
 
     if (!plugin) {
       plugin = await dispatch(loadPanelPlugin(pluginId));
+    }
+
+    // clean up angular component (scope / ctrl state)
+    const angularComponent = store.dashboard.panels[panel.id].angularComponent;
+    if (angularComponent) {
+      angularComponent.destroy();
+      dispatch(setPanelAngularComponent({ panelId: panel.id, angularComponent: null }));
     }
 
     panel.changePlugin(plugin);

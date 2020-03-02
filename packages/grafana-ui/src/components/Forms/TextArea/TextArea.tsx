@@ -1,4 +1,4 @@
-import React, { FC, HTMLProps } from 'react';
+import React, { HTMLProps, forwardRef } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme } from '../../../themes';
@@ -26,13 +26,13 @@ const getTextAreaStyle = stylesFactory((theme: GrafanaTheme, invalid = false) =>
   };
 });
 
-export const TextArea: FC<Props> = ({ invalid, size = 'auto', ...props }) => {
+export const TextArea = forwardRef<HTMLTextAreaElement, Props>(({ invalid, size = 'auto', ...props }, ref) => {
   const theme = useTheme();
   const styles = getTextAreaStyle(theme, invalid);
 
   return (
     <div className={inputSizes()[size]}>
-      <textarea className={styles.textarea} {...props} />
+      <textarea ref={ref} className={styles.textarea} {...props} />
     </div>
   );
-};
+});
