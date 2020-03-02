@@ -309,7 +309,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       });
       return data.results.getProjectsListQuery.meta.projectsList;
     } catch (error) {
-      throw this.formatStackdriverError(error);
+      console.log(this.formatStackdriverError(error));
+      return [];
     }
   }
 
