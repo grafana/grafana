@@ -11,12 +11,12 @@ const themeOptions: Array<SelectableValue<string>> = [
   { label: 'light', value: 'light' },
 ];
 
-interface Props {
-  dashboard: DashboardModel;
+export interface Props {
+  dashboard?: DashboardModel;
   panel?: PanelModel;
 }
 
-interface State {
+export interface State {
   useCurrentTimeRange: boolean;
   includeTemplateVars: boolean;
   selectedTheme: SelectableValue<string>;
@@ -40,6 +40,17 @@ export class ShareLink extends PureComponent<Props, State> {
     this.buildUrl();
   }
 
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    const { useCurrentTimeRange, includeTemplateVars, selectedTheme } = this.state;
+    if (
+      prevState.useCurrentTimeRange !== useCurrentTimeRange ||
+      prevState.includeTemplateVars !== includeTemplateVars ||
+      prevState.selectedTheme.value !== selectedTheme.value
+    ) {
+      this.buildUrl();
+    }
+  }
+
   buildUrl = () => {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme } = this.state;
@@ -50,30 +61,15 @@ export class ShareLink extends PureComponent<Props, State> {
   };
 
   onUseCurrentTimeRangeChange = () => {
-    this.setState(
-      {
-        useCurrentTimeRange: !this.state.useCurrentTimeRange,
-      },
-      this.buildUrl
-    );
+    this.setState({ useCurrentTimeRange: !this.state.useCurrentTimeRange });
   };
 
   onIncludeTemplateVarsChange = () => {
-    this.setState(
-      {
-        includeTemplateVars: !this.state.includeTemplateVars,
-      },
-      this.buildUrl
-    );
+    this.setState({ includeTemplateVars: !this.state.includeTemplateVars });
   };
 
   onThemeChange = (value: SelectableValue<string>) => {
-    this.setState(
-      {
-        selectedTheme: value,
-      },
-      this.buildUrl
-    );
+    this.setState({ selectedTheme: value });
   };
 
   onShareUrlCopy = () => {

@@ -11,11 +11,11 @@ export function buildParams(
   selectedTheme: string
 ) {
   const params = getUrlSearchParams();
-  params.orgId = config.bootData.user.orgId;
 
   const range = getTimeSrv().timeRange();
   params.from = range.from.valueOf();
   params.to = range.to.valueOf();
+  params.orgId = config.bootData.user.orgId;
 
   if (!useCurrentTimeRange) {
     delete params.from;

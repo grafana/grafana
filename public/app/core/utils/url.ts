@@ -98,9 +98,14 @@ export function getUrlSearchParams() {
   for (const p of searchParamsSegments) {
     const keyValuePair = p.split('=');
     if (keyValuePair.length > 1) {
+      // key-value param
       const key = decodeURIComponent(keyValuePair[0]);
       const value = decodeURIComponent(keyValuePair[1]);
       params[key] = value;
+    } else if (keyValuePair.length === 1) {
+      // boolean param
+      const key = decodeURIComponent(keyValuePair[0]);
+      params[key] = true;
     }
   }
   return params;
