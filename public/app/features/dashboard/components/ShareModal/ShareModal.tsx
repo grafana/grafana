@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
+import { stylesFactory, Modal, TabsBar, Tab, TabContent, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, Modal, TabsBar, Tab, TabContent, withTheme, Themeable, Icon } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
@@ -30,7 +31,7 @@ const shareModalTabs = [
   { label: 'Export', value: 'export' },
 ];
 
-interface Props extends Themeable {
+interface Props {
   isOpen: boolean;
   dashboard: DashboardModel;
   panel?: PanelModel;
@@ -48,7 +49,7 @@ function getInitialState(): State {
   };
 }
 
-export class ShareModalUnthemed extends PureComponent<Props, State> {
+export class ShareModal extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = getInitialState();
@@ -89,7 +90,8 @@ export class ShareModalUnthemed extends PureComponent<Props, State> {
   }
 
   renderTitle() {
-    const { theme, panel } = this.props;
+    const { panel } = this.props;
+    const { theme } = config;
     const styles = getStyles(theme);
     const title = panel ? 'Share Panel' : 'Share';
 
@@ -120,5 +122,3 @@ export class ShareModalUnthemed extends PureComponent<Props, State> {
     );
   }
 }
-
-export const ShareModal = withTheme(ShareModalUnthemed);
