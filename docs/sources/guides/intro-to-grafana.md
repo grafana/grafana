@@ -19,10 +19,12 @@ Grafana is open source visualization and analytics software. It allows you to qu
 
 ## Grafana process
 
-1. Install Grafana on your system or configure and run a Docker image.
-1. Add a data source. (Repeat for each data source.)
-1. Create a dashboard.
-1. Add panels to the dashboard.
+This is the general process of running Grafana.
+
+1. [Install Grafana on your system]({{ < relref "../installation/_index.md">}}) or [configure]({{ < relref "../installation/configure-docker.md">}}) and [run a Docker image]({{ < relref "../installation/docker.md">}}).
+1. [Add a data source]({{ < relref "../features/datasources/add-a-data-source.md">}}). (Repeat for each [data source]({{ < relref "../features/datasources/data-sources.md">}}).)
+1. Create a [dashboard]({{ < relref "../features/dashboard/dashboards.md">}}).
+1. Add [panels]({{ < relref "../features/panels/panels.md">}}) to the dashboard.
 
 After creating a dashboard, there are many possible things you might do next. It all depends on your needs and your use case. 
 
@@ -47,7 +49,7 @@ Works best with our Loki data source but support for more are coming very soon.
 
 ## Unify
 
-Grafana allows you to display all your time-series data on a single "pane of glass" by using a dashboard to visualize data from one or more data sources. Mix different data sources in the same graph! You can specify a data source on a per-query basis. This works for even custom datasources.
+Grafana allows you to display all your time-series data on a single "pane of glass" by using a dashboard to visualize data from one or more data sources. Mix different data sources in the same graph! You can specify a data source on a per-query basis. This works for even custom data sources.
 
 Create dynamic & reusable dashboards with template variables that appear as dropdowns at the top of the dashboard.
 
@@ -73,7 +75,9 @@ Annotate graphs with rich events from different data sources. Hover over events 
 
 ## Authentication
 
-LDAP, Google Auth, Grafana.com, Github. However your company handles auth, Grafana makes it work easily with your existing workflow.
+Grafana supports different authentication styles, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview]({{ < relref "../auth/overview.md">}}) for more information.
+
+In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise]({{ < relref "../enterprise/_index.md">}}) for more information.
 
 ## Configure Grafana
 
@@ -81,6 +85,18 @@ LDAP, Google Auth, Grafana.com, Github. However your company handles auth, Grafa
 
 ## Templating
 
-## Cloud hosted Grafana
 
-## Enterprise
+
+## Grafana Cloud
+
+Grafana Cloud is a highly available, fast, fully managed OpenSaaS logging and metrics platform. Everything you love about Grafana, but Grafana Labs hosts it for you and handles all the headaches.
+
+[Learn more about Grafana Cloud](https://grafana.com/cloud/).
+
+## Grafana Enterprise
+
+Grafana Enterprise is a commercial edition of Grafana that includes additional features not found in the open source version.
+
+Building on everything you already know and love about Grafana, Grafana Enterprise adds enterprise data sources, advanced authentication options, more permission controls, 24x7x365 support, and training from the core Grafana team.
+
+[Learn more about Grafana Enterprise](https://grafana.com/enterprise). To purchase Enterprise or obtain a trial license, contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
