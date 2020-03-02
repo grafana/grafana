@@ -85,7 +85,9 @@ another "|" character. When constructing the table cells, separate each cell dat
 **Example**
 
 Heading one | Heading two
+
 \------------|------------
+
 Cell one data| Cell two data
 
 Will publish as:
@@ -101,7 +103,9 @@ Cell one data| Cell two data
 To avoid inconsistent list numbering, use repetitive list numbering:
 
 \1. First
+
 \1. Second
+
 \1. Third
 
 The list above will always display as:
@@ -136,5 +140,5 @@ following syntax:
 
 \[comment]: <> (Comment text to display)
 
-The word "comment" wrapped in "[]" followed by a ":", a space, "<>", and then 
+The word "comment" wrapped in "[]" followed by a ":", a space, "<>", and then
 the comment itself wrapped in "()".
