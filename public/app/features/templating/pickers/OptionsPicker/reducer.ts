@@ -48,7 +48,7 @@ const optionsPickerSlice = createSlice({
       state.highlightIndex = -1;
       state.options = cloneDeep(options);
       state.tags = getTags(action.payload);
-      state.multi = multi;
+      state.multi = multi ?? false;
       state.uuid = uuid;
       // new behaviour, if this is a query that uses searchfilter it might be a nicer
       // user experience to show the last typed search query in the input field
@@ -92,7 +92,7 @@ const optionsPickerSlice = createSlice({
       const values = tag.values || [];
       const selected = !tag.selected;
 
-      const tags = state.tags.map(t => {
+      state.tags = state.tags.map(t => {
         if (t.text !== tag.text) {
           return t;
         }
@@ -102,7 +102,7 @@ const optionsPickerSlice = createSlice({
         return t;
       });
 
-      const options = state.options.map(option => {
+      state.options = state.options.map(option => {
         if (values.indexOf(option.value) === -1) {
           return option;
         }
@@ -111,11 +111,7 @@ const optionsPickerSlice = createSlice({
         return option;
       });
 
-      return {
-        ...state,
-        options,
-        tags,
-      };
+      return applyStateChanges(state, updateSelectedValues);
     },
     changeOptionsPickerHighlightIndex: (state, action: PayloadAction<number>): OptionsPickerState => {
       let nextIndex = state.highlightIndex + action.payload;
@@ -150,24 +146,18 @@ const optionsPickerSlice = createSlice({
       action: PayloadAction<{ searchQuery: string; query: string; options: VariableOption[] }>
     ): OptionsPickerState => {
       const { options, searchQuery, query } = action.payload;
-      let filteredOptions = options.slice(0, Math.min(options.length, 1000));
+      state.options = options.slice(0, Math.min(options.length, 1000));
+      state.searchQuery = searchQuery;
+      state.highlightIndex = 0;
 
       if (!containsSearchFilter(query)) {
-        filteredOptions = options.filter(option => {
+        state.options = options.filter(option => {
           const text = Array.isArray(option.text) ? option.text.toString() : option.text;
-          return text.toLowerCase().indexOf(searchQuery) !== -1;
+          return text.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1;
         });
       }
 
-      return applyStateChanges(
-        {
-          ...state,
-          searchQuery,
-          highlightIndex: 0,
-          options: filteredOptions,
-        },
-        updateSelectedValues
-      );
+      return applyStateChanges(state, updateSelectedValues);
     },
   },
 });
