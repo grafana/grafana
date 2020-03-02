@@ -1,4 +1,4 @@
-import { ComponentType, MouseEvent } from 'react';
+import { ComponentType } from 'react';
 import { createAction } from '@reduxjs/toolkit';
 import { AppEvents, DataSourceApi } from '@grafana/data';
 
@@ -15,7 +15,7 @@ import {
   VariableIdentifier,
   VariablePayload,
 } from '../state/actions';
-import { QueryVariableModel, VariableRefresh, VariableTag } from '../variable';
+import { QueryVariableModel, VariableRefresh, VariableTag, VariableWithMultiSupport } from '../variable';
 import { ThunkResult, VariableQueryProps } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
@@ -26,16 +26,16 @@ import { getVariable } from '../state/selectors';
 import { getQueryHasSearchFilter } from './reducer';
 import { variableAdapters } from '../adapters';
 
-export const changeQueryVariableHighlightIndex = createAction<VariablePayload<number>>(
-  'templating/changeQueryVariableHighlightIndex'
-);
-
 export const queryVariableDatasourceLoaded = createAction<VariablePayload<DataSourceApi>>(
   'templating/queryVariableDatasourceLoaded'
 );
 
 export const queryVariableQueryEditorLoaded = createAction<VariablePayload<ComponentType<VariableQueryProps>>>(
   'templating/queryVariableQueryEditorLoaded'
+);
+
+export const changeQueryVariableHighlightIndex = createAction<VariablePayload<number>>(
+  'templating/changeQueryVariableHighlightIndex'
 );
 
 export const toggleVariableTag = createAction<VariablePayload<VariableTag>>('templating/toggleVariableTag');
@@ -114,16 +114,13 @@ export const changeQueryVariableDataSource = (
   };
 };
 
-export const selectVariableOptionByHighlightIndex = (
-  identifier: VariableIdentifier,
-  index: number
-): ThunkResult<void> => {
+export const selectVariableOptionByHighlightIndex = (): ThunkResult<void> => {
   return (dispatch, getState) => {
     try {
-      const variable = getVariable<QueryVariableModel>(identifier.uuid, getState());
-      const option = variable.options[index];
-      const event = (null as unknown) as MouseEvent<HTMLAnchorElement>;
-      const data = { option, forceSelect: false, event };
+      const { uuid, highlightIndex } = getState().optionsPicker;
+      const variable = getVariable<VariableWithMultiSupport>(uuid, getState());
+      const option = variable.options[highlightIndex];
+      const data = { option, forceSelect: false, clearOthers: false };
       dispatch(selectVariableOption(toVariablePayload(variable, data)));
     } catch (error) {
       console.error(error);
@@ -151,15 +148,14 @@ export const toggleTag = (identifier: VariableIdentifier, tag: VariableTag): Thu
   };
 };
 
-export const searchQueryChanged = (identifier: VariableIdentifier, searchQuery: string): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
-  const variable = getVariable<QueryVariableModel>(identifier.uuid, getState());
+export const searchQueryChanged = (searchQuery: string): ThunkResult<void> => async (dispatch, getState) => {
+  const { uuid } = getState().optionsPicker;
+  const variable = getVariable<QueryVariableModel>(uuid, getState());
+
   if (getQueryHasSearchFilter(variable)) {
     await variableAdapters.get(variable.type).updateOptions(variable, searchQuery);
+    // TODO: copy new options from variable to picker state if it is open.
   }
-  dispatch(changeQueryVariableSearchQuery(toVariablePayload(variable, searchQuery)));
 };
 
 function metricFindQuery(datasource: any, query: string, variable: QueryVariableModel, searchFilter?: string) {

@@ -4,6 +4,7 @@ import { VariableState } from './types';
 import { variableAdapters } from '../adapters';
 import { sharedTemplatingReducer } from './sharedTemplatingReducer';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
+import { optionsPickerReducer } from '../pickers/options-picker/reducer';
 
 export interface TemplatingState {
   uuidInEditor: string | null;
@@ -48,4 +49,5 @@ export const templatingReducer = (
 
 export default {
   templating: templatingReducer,
+  optionsPicker: optionsPickerReducer,
 };
