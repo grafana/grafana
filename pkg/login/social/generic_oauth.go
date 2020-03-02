@@ -38,7 +38,7 @@ func (s *SocialGenericOAuth) IsEmailAllowed(email string) bool {
 }
 
 func (s *SocialGenericOAuth) IsRoleAllowed(role string) bool {
-	s.log.Debug("s.roleRequired", "s.roleRequired", s.roleRequired)
+	s.log.Debug("Checking if role is allowed", "role", role, "s.roleRequired", s.roleRequired)
 	if !s.roleRequired {
 		return true
 	}
