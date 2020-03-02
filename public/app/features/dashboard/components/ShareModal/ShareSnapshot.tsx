@@ -265,8 +265,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         <div className="gf-form" style={{ marginTop: '40px' }}>
           <div className="gf-form-row">
             <a href={snapshotUrl} className="large share-modal-link" target="_blank">
-              <i className="fa fa-external-link-square"></i>
-              {snapshotUrl}
+              <i className="fa fa-external-link-square"></i> {snapshotUrl}
             </a>
             <br />
             <ClipboardButton variant="inverse" getText={this.getSnapshotUrl} onClipboardCopy={this.onSnapshotUrlCopy}>
