@@ -45,7 +45,7 @@ export default class StackdriverMetricFindQuery {
 
   async handleProjectsQuery() {
     const projects = await this.datasource.getProjects();
-    return projects.map((s: any) => ({
+    return projects.map((s: { label: string; value: string }) => ({
       text: s.label,
       value: s.value,
       expandable: true,

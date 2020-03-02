@@ -5,7 +5,8 @@ import StackdriverDatasource from './datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { StackdriverQuery, MetricDescriptor } from './types';
 
-export const extractServicesFromMetricDescriptors = (metricDescriptors: any) => _.uniqBy(metricDescriptors, 'service');
+export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
+  _.uniqBy(metricDescriptors, 'service');
 
 export const getMetricTypesByService = (metricDescriptors: MetricDescriptor[], service: string) =>
   metricDescriptors.filter((m: MetricDescriptor) => m.service === service);
