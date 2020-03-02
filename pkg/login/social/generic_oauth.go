@@ -42,6 +42,7 @@ func (s *SocialGenericOAuth) IsRoleAllowed(role string) bool {
 	if !s.roleRequired {
 		return true
 	}
+
 	switch role {
 	case
 		"Viewer",
