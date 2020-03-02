@@ -1,5 +1,5 @@
 import { AnnotationsSrv } from '../annotations_srv';
-import { AnnotationEvent, dateTime, DataQueryResponse, AnnotationQueryRequest } from '@grafana/data';
+import { AnnotationEvent, dateTime, DataQueryResponse, AnnotationQueryRequest, ScopedVars } from '@grafana/data';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
@@ -50,7 +50,13 @@ describe('AnnotationsSrv', function(this: any) {
   const ctx: { templateSrv: any } = {
     templateSrv: {
       updateIndex: () => {},
-      replace: (val: string) => val.replace('$var', '(3|4)'),
+      replace: (val: string, scopedVars?: ScopedVars) => {
+        let res = val.replace('$var', '(3|4)');
+        Object.keys(scopedVars || {}).forEach(scopedVar => {
+          res = res.replace('$' + scopedVar, scopedVars[scopedVar].value);
+        });
+        return res;
+      },
     },
   };
 
@@ -158,6 +164,14 @@ describe('AnnotationsSrv', function(this: any) {
     });
     it('should get annotations with template variable', async () => {
       options.panel.options.annotation = { tags: ['foo', '(other|bar:$var)'], matchAny: false };
+      expect(await annotationsSrv.getAnnotations(options)).toEqual({
+        alertState: undefined,
+        annotations: [annotation3],
+      });
+    });
+    it('should get annotations with scoped vars', async () => {
+      options.panel.options.annotation = { tags: ['foo', '(other|bar:$server)'], matchAny: false };
+      options.panel.scopedVars = { server: { text: 'Server3', value: '3' } };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({
         alertState: undefined,
         annotations: [annotation3],

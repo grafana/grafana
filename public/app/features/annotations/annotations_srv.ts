@@ -10,7 +10,15 @@ import _ from 'lodash';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, PanelModel, TimeRange, ScopedVars } from '@grafana/data';
+import {
+  AnnotationEvent,
+  AppEvents,
+  DataSourceApi,
+  PanelEvents,
+  PanelModel,
+  ScopedVars,
+  TimeRange,
+} from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { TemplateSrv } from '../templating/template_srv';
 import { appEvents } from 'app/core/core';
@@ -81,11 +89,18 @@ export class AnnotationsSrv {
     return !annotation.panelId || annotation.source.type !== 'dashboard' || annotation.panelId === panelId;
   }
 
-  private matchPanelAnnotationTags(annotation: AnnotationEvent, filterTags: string[], matchAny: boolean, scopedVars: ScopedVars) {
+  private matchPanelAnnotationTags(
+    annotation: AnnotationEvent,
+    filterTags: string[],
+    matchAny: boolean,
+    scopedVars: ScopedVars
+  ) {
     if (!_.isArray(filterTags) || filterTags.length === 0) {
       return true;
     }
-    const tagRegexps = filterTags.map(t => new RegExp('^' + this.templateSrv.replace(t, scopedVars, 'regex') + '$'));
+    const tagRegexps = filterTags.map(
+      t => new RegExp('^' + this.templateSrv.replace(t, scopedVars || {}, 'regex') + '$')
+    );
     const match = (regexp: RegExp) => annotation.tags && annotation.tags.some(t => regexp.test(t));
     return matchAny ? tagRegexps.some(match) : tagRegexps.every(match);
   }
