@@ -62,6 +62,3 @@ We use a unit abstraction so that Grafana looks great on all screens sizes.
 Collapse a row by clicking on the row title. If you save a dashboard with a row collapsed, then it saves in that state and does not load those graphs until you expand the row.
 
 Use the [repeating rows]({{< relref "../../reference/templating.md#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
-
-## Create a dashboard
-
