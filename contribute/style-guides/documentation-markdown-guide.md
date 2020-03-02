@@ -51,7 +51,6 @@ Include Block quotes inside text using right-facing arrows:
 ## Code blocks
 
 Code blocks written with markdown can show off syntax highlighting specific
-
 to different languages. Use three back tics to create a code block:
 
 ```
@@ -65,7 +64,6 @@ function testNum(a) {
 ```
 
 Write the name of the language after the first set of back tics, no spaces,
-
 to show specific syntax highlighting. For example; "\```javascript" produces the following:
 
 ```javascript
@@ -81,8 +79,7 @@ function testNum(a) {
 
 Construct a table by typing the table headings, and separating them with
 a "|" character. Then, add a second line of dashes ("-") separated by
-
-When constructing the table cells, separate each cell data with another
+another "|" character. When constructing the table cells, separate each cell data with another
 "|".
 
 **Example**
@@ -103,9 +100,9 @@ Cell one data| Cell two data
 
 To avoid inconsistent list numbering, use repetitive list numbering:
 
-1. First
-1. Second
-1. Third
+\1. First
+\1. Second
+\1. Third
 
 The list above will always display as:
 

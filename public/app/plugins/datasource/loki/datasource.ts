@@ -35,6 +35,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   AnnotationQueryRequest,
+  ExploreMode,
   ScopedVars,
 } from '@grafana/data';
 
@@ -48,7 +49,6 @@ import {
   LokiRangeQueryRequest,
   LokiStreamResponse,
 } from './types';
-import { ExploreMode } from 'app/types';
 import { LegacyTarget, LiveStreams } from './live_streams';
 import LanguageProvider from './language_provider';
 
@@ -267,25 +267,45 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     options: RangeQueryOptions,
     responseListLength = 1
   ): Observable<DataQueryResponse> => {
-    if (target.liveStreaming) {
-      return this.runLiveQuery(target, options);
+    // target.maxLines value already preprocessed
+    // available cases:
+    // 1) empty input -> mapped to NaN, falls back to dataSource.maxLines limit
+    // 2) input with at least 1 character and that is either incorrect (value in the input field is not a number) or negative
+    //    - mapped to 0, falls back to the limit of 0 lines
+    // 3) default case - correct input, mapped to the value from the input field
+
+    let linesLimit = 0;
+    if (target.maxLines === undefined) {
+      // no target.maxLines, using options.maxDataPoints
+      linesLimit = Math.min(options.maxDataPoints || Infinity, this.maxLines);
+    } else {
+      // using target.maxLines
+      if (isNaN(target.maxLines)) {
+        linesLimit = this.maxLines;
+      } else {
+        linesLimit = target.maxLines;
+      }
     }
 
-    const query = this.createRangeQuery(target, options);
+    const queryOptions = { ...options, maxDataPoints: linesLimit };
+    if (target.liveStreaming) {
+      return this.runLiveQuery(target, queryOptions);
+    }
+    const query = this.createRangeQuery(target, queryOptions);
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.cancelled || err.status === 404, target)),
       filter((response: any) => (response.cancelled ? false : true)),
       switchMap((response: { data: LokiResponse; status: number }) =>
         iif<DataQueryResponse, DataQueryResponse>(
           () => response.status === 404,
-          defer(() => this.runLegacyQuery(target, options)),
+          defer(() => this.runLegacyQuery(target, queryOptions)),
           defer(() =>
             processRangeQueryResponse(
               response.data,
               target,
               query,
               responseListLength,
-              this.maxLines,
+              linesLimit,
               this.instanceSettings.jsonData,
               options.reverse
             )

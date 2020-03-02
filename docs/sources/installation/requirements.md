@@ -27,7 +27,7 @@ The following operating systems are supported for Grafana installation:
 
 While you can install Grafana on other operating systems, we do not recommend doing so and do not provide support for that use case.
 
-Installation of Grafana on other operating systems is possible, but not supported. Please see the [building from source]({{< relref "../project/building_from_source/#building-grafana-from-source" >}}) guide for more information.
+Installation of Grafana on other operating systems is possible, but not supported.
 
 ## Hardware recommendations
 

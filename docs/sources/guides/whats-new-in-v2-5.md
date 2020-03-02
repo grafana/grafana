@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v2.5"
+title = "What's new in Grafana v2.5"
 description = "Feature and improvement highlights for Grafana v2.5"
-keywords = ["grafana", "new", "documentation", "2.5"]
+keywords = ["grafana", "new", "documentation", "2.5", "release notes"]
 type = "docs"
 +++
 
@@ -103,4 +103,3 @@ view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG
 - - -
 
 ### <a href="https://grafana.com/get">Download Grafana 2.5 now</a>
-

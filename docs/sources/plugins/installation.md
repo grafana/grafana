@@ -22,6 +22,6 @@ Grafana handles the plugin installation automatically.
 
 ## Install plugin on local Grafana
 
-Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading a .zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The .zip option is available if your Grafana server does not have access to the internet.
+Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompress a .zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The .zip option is available if your Grafana server does not have access to the internet.
 
 For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../administration/cli.md#plugins-commands" >}}).

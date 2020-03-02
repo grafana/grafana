@@ -1,6 +1,5 @@
-/* tslint:disable:import-blacklist */
 import angular from 'angular';
-import moment from 'moment';
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import _ from 'lodash';
 import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
@@ -108,7 +107,6 @@ export class DashboardLoaderSrv {
       datasourceSrv: this.datasourceSrv,
     };
 
-    /*jshint -W054 */
     const scriptFunc = new Function(
       'ARGS',
       'kbn',

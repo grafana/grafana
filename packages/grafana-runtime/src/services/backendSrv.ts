@@ -23,7 +23,7 @@ export type BackendSrvRequest = {
 };
 
 export interface BackendSrv {
-  get(url: string, params?: any): Promise<any>;
+  get(url: string, params?: any, requestId?: string): Promise<any>;
 
   delete(url: string): Promise<any>;
 

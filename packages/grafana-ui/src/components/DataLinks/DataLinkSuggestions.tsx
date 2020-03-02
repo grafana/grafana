@@ -1,5 +1,5 @@
 import { selectThemeVariant, ThemeContext } from '../../index';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, VariableSuggestion } from '@grafana/data';
 import { css, cx } from 'emotion';
 import _ from 'lodash';
 import React, { useRef, useContext, useMemo } from 'react';
@@ -7,22 +7,6 @@ import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
 import tinycolor from 'tinycolor2';
 import { stylesFactory } from '../../themes';
-
-export enum VariableOrigin {
-  Series = 'series',
-  Field = 'field',
-  Fields = 'fields',
-  Value = 'value',
-  BuiltIn = 'built-in',
-  Template = 'template',
-}
-
-export interface VariableSuggestion {
-  value: string;
-  label: string;
-  documentation?: string;
-  origin: VariableOrigin;
-}
 
 interface DataLinkSuggestionsProps {
   suggestions: VariableSuggestion[];

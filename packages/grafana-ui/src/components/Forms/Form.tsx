@@ -2,7 +2,7 @@
  * This is a stub implementation only for correct styles to be applied
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, Mode, OnSubmit, DeepPartial, FormContextValues } from 'react-hook-form';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
@@ -27,10 +27,17 @@ interface FormProps<T> {
 
 export function Form<T>({ validateOn, defaultValues, onSubmit, children }: FormProps<T>) {
   const theme = useTheme();
-  const { handleSubmit, register, errors, control } = useForm<T>({
+  const { handleSubmit, register, errors, control, reset, getValues } = useForm<T>({
     mode: validateOn || 'onSubmit',
-    defaultValues,
+    defaultValues: {
+      ...defaultValues,
+    },
   });
+
+  useEffect(() => {
+    reset({ ...getValues(), ...defaultValues });
+  }, [defaultValues]);
+
   const styles = getFormStyles(theme);
 
   return (

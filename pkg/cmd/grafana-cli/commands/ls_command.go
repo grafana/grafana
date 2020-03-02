@@ -2,7 +2,6 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -20,9 +19,8 @@ var validateLsCommand = func(pluginDir string) error {
 
 	logger.Debug("plugindir: " + pluginDir + "\n")
 	pluginDirInfo, err := s.IoHelper.Stat(pluginDir)
-
 	if err != nil {
-		return fmt.Errorf("error: %s", err)
+		return err
 	}
 
 	if !pluginDirInfo.IsDir() {
@@ -32,7 +30,7 @@ var validateLsCommand = func(pluginDir string) error {
 	return nil
 }
 
-func lsCommand(c utils.CommandLine) error {
+func (cmd Command) lsCommand(c utils.CommandLine) error {
 	pluginDir := c.PluginDirectory()
 	if err := validateLsCommand(pluginDir); err != nil {
 		return err
@@ -45,7 +43,7 @@ func lsCommand(c utils.CommandLine) error {
 	}
 
 	for _, plugin := range plugins {
-		logger.Infof("%s %s %s \n", plugin.Id, color.YellowString("@"), plugin.Info.Version)
+		logger.Infof("%s %s %s\n", plugin.Id, color.YellowString("@"), plugin.Info.Version)
 	}
 
 	return nil

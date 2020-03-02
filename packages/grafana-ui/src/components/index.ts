@@ -25,7 +25,6 @@ export { SecretFormField } from './SecretFormFied/SecretFormField';
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
-
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
@@ -84,18 +83,18 @@ export {
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
-export { Collapse } from './Collapse/Collapse';
+export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { LogLabels } from './Logs/LogLabels';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
+export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
-export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
@@ -116,6 +115,31 @@ export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
+export { Slider } from './Slider/Slider';
+
+// TODO: namespace!!
+export {
+  StringValueEditor,
+  StringOverrideEditor,
+  stringOverrideProcessor,
+  StringFieldConfigSettings,
+} from './FieldConfigs/string';
+export {
+  NumberValueEditor,
+  NumberOverrideEditor,
+  numberOverrideProcessor,
+  NumberFieldConfigSettings,
+} from './FieldConfigs/number';
+export {
+  selectOverrideProcessor,
+  SelectValueEditor,
+  SelectOverrideEditor,
+  SelectFieldConfigSettings,
+} from './FieldConfigs/select';
 
 // Next-gen forms
 export { default as Forms } from './Forms';
+export { ValuePicker } from './ValuePicker/ValuePicker';
+export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
+export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';
+export { HorizontalGroup, VerticalGroup } from './Layout/Layout';

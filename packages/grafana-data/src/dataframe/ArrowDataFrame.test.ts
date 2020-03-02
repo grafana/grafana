@@ -6,7 +6,7 @@ import { toDataFrameDTO, toDataFrame } from './processDataFrame';
 import { FieldType } from '../types';
 import { Table } from 'apache-arrow';
 
-/* tslint:disable */
+/* eslint-disable */
 const resp = {
   results: {
     '': {
@@ -21,7 +21,7 @@ const resp = {
     },
   },
 };
-/* tslint:enable */
+/* eslint-enable */
 
 describe('GEL Utils', () => {
   test('should parse output with dataframe', () => {
