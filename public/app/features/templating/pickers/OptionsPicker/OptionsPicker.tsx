@@ -6,7 +6,7 @@ import { VariableLink } from '../shared/VariableLink';
 import { VariableInput, NavigationKeys } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOptions } from './actions';
 import {
-  VariableOptionsPickerState,
+  OptionsPickerState,
   showVariableDropDown,
   changeOptionsPickerHighlightIndex,
   toggleAllVariableOptions,
@@ -22,7 +22,7 @@ import { VariablePickerProps } from '../../state/types';
 interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
 
 interface ConnectedProps {
-  picker: VariableOptionsPickerState;
+  picker: OptionsPickerState;
 }
 
 interface DispatchProps {
@@ -39,7 +39,7 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export class VariableOptionsPickerUnconnected extends PureComponent<Props> {
+export class OptionsPickerUnconnected extends PureComponent<Props> {
   onShowOptions = () => this.props.showVariableDropDown(this.props.variable);
   onHideOptions = () => this.props.commitChangesToVariable();
   onToggleOption = (option: VariableOption, clearOthers: boolean) => {
@@ -102,7 +102,7 @@ export class VariableOptionsPickerUnconnected extends PureComponent<Props> {
     return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} />;
   }
 
-  renderOptions(showOptions: boolean, picker: VariableOptionsPickerState) {
+  renderOptions(showOptions: boolean, picker: OptionsPickerState) {
     if (!showOptions) {
       return null;
     }
@@ -184,5 +184,5 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
   picker: state.optionsPicker,
 });
 
-export const VariableOptionsPicker = connect(mapStateToProps, mapDispatchToProps)(VariableOptionsPickerUnconnected);
-VariableOptionsPicker.displayName = 'VariableOptionsPicker';
+export const OptionsPicker = connect(mapStateToProps, mapDispatchToProps)(OptionsPickerUnconnected);
+OptionsPicker.displayName = 'OptionsPicker';

@@ -4,7 +4,7 @@ import { VariableHide } from '../variable';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
 
-export class VariablePicker extends PureComponent<VariableState> {
+export class PickerRenderer extends PureComponent<VariableState> {
   render() {
     if (!this.props.variable) {
       return <div>Couldn't load variable</div>;

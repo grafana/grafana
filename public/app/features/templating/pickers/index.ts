@@ -1,1 +1,1 @@
-export { VariableOptionsPicker } from './options-picker/VariableOptionsPicker';
+export { OptionsPicker } from './OptionsPicker/OptionsPicker';

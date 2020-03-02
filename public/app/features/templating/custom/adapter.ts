@@ -4,7 +4,7 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { initialCustomVariableState, customVariableReducer } from './reducer';
-import { VariableOptionsPicker } from '../pickers';
+import { OptionsPicker } from '../pickers';
 import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
 import { ALL_VARIABLE_TEXT } from '../state/types';
@@ -15,7 +15,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     label: 'Custom',
     initialState: initialCustomVariableState,
     reducer: customVariableReducer,
-    picker: VariableOptionsPicker,
+    picker: OptionsPicker,
     editor: CustomVariableEditor,
     dependsOn: () => {
       return false;

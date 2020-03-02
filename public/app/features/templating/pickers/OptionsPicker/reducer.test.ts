@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import {
   optionsPickerReducer,
-  VariableOptionsPickerState,
+  OptionsPickerState,
   initialState,
   selectVariableOption,
   showVariableDropDown,
@@ -9,7 +9,7 @@ import {
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import { VariableWithMultiSupport } from '../../variable';
 
-const getVariableTestContext = (extend: Partial<VariableOptionsPickerState>) => {
+const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
   return {
     initialState: {
       ...initialState,
@@ -62,7 +62,7 @@ describe('when selectVariableOption is dispatched', () => {
     const { initialState } = getVariableTestContext({ options: args.options, multi: args.multi });
     const payload = { forceSelect: args.forceSelect, clearOthers: args.clearOthers, option: args.option };
 
-    reducerTester<VariableOptionsPickerState>()
+    reducerTester<OptionsPickerState>()
       .givenReducer(optionsPickerReducer, cloneDeep(initialState))
       .whenActionIsDispatched(selectVariableOption(payload))
       .thenStateShouldEqual({
@@ -280,7 +280,7 @@ describe('when showVariableDropDown is dispatched and picker has an oldVariableT
       uuid: '0',
     } as VariableWithMultiSupport;
 
-    reducerTester<VariableOptionsPickerState>()
+    reducerTester<OptionsPickerState>()
       .givenReducer(optionsPickerReducer, cloneDeep(initialState))
       .whenActionIsDispatched(showVariableDropDown(payload))
       .thenStateShouldEqual({
