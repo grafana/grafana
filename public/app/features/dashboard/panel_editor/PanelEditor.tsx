@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { Tooltip } from '@grafana/ui';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { AngularComponent, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { e2e } from '@grafana/e2e';
 
 import { QueriesTab } from './QueriesTab';
@@ -16,19 +15,19 @@ import { DashboardModel } from '../state/DashboardModel';
 import { StoreState } from '../../../types';
 import { panelEditorCleanUp, PanelEditorTab, PanelEditorTabIds } from './state/reducers';
 import { changePanelEditorTab, refreshPanelEditor } from './state/actions';
+import { changePanelPlugin } from '../state/actions';
 import { getActiveTabAndTabs } from './state/selectors';
 
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  angularPanel?: AngularComponent;
-  onPluginTypeChange: (newType: PanelPluginMeta) => void;
   activeTab: PanelEditorTabIds;
   tabs: PanelEditorTab[];
   refreshPanelEditor: typeof refreshPanelEditor;
   panelEditorCleanUp: typeof panelEditorCleanUp;
   changePanelEditorTab: typeof changePanelEditorTab;
+  changePanelPlugin: typeof changePanelPlugin;
 }
 
 class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
@@ -64,22 +63,19 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   onPluginTypeChange = (newType: PanelPluginMeta) => {
-    const { onPluginTypeChange } = this.props;
-    onPluginTypeChange(newType);
-
+    this.props.changePanelPlugin(this.props.panel, newType.id);
     this.refreshFromState(newType);
   };
 
   renderCurrentTab(activeTab: string) {
-    const { panel, dashboard, plugin, angularPanel } = this.props;
-
+    const { panel, dashboard, plugin } = this.props;
     switch (activeTab) {
       case 'advanced':
         return <GeneralTab panel={panel} />;
       case 'queries':
         return <QueriesTab panel={panel} dashboard={dashboard} />;
       case 'alert':
-        return <AlertTab angularPanel={angularPanel} dashboard={dashboard} panel={panel} />;
+        return <AlertTab dashboard={dashboard} panel={panel} />;
       case 'visualization':
         return (
           <VisualizationTab
@@ -87,7 +83,6 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
             dashboard={dashboard}
             plugin={plugin}
             onPluginTypeChange={this.onPluginTypeChange}
-            angularPanel={angularPanel}
           />
         );
       default:
@@ -111,11 +106,10 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => getActiveTabAndTabs(state.location, state.panelEditor);
+const mapStateToProps = (state: StoreState) => getActiveTabAndTabs(state.location, state.panelEditor);
+const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab, changePanelPlugin };
 
-const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab };
-
-export const PanelEditor = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedPanelEditor));
+export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(UnConnectedPanelEditor);
 
 interface TabItemParams {
   tab: PanelEditorTab;

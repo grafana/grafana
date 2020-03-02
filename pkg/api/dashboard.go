@@ -278,6 +278,7 @@ func dashboardSaveErrorToApiResponse(err error) Response {
 		err == m.ErrFolderNotFound ||
 		err == m.ErrDashboardFolderCannotHaveParent ||
 		err == m.ErrDashboardFolderNameExists ||
+		err == m.ErrDashboardRefreshIntervalTooShort ||
 		err == m.ErrDashboardCannotSaveProvisionedDashboard {
 		return Error(400, err.Error(), nil)
 	}

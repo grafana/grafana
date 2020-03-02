@@ -312,7 +312,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
-      if (logLevelField) {
+      if (logLevelField && logLevelField.values.get(j)) {
         logLevel = getLogLevelFromKey(logLevelField.values.get(j));
       } else if (seriesLogLevel) {
         logLevel = seriesLogLevel;
@@ -353,11 +353,17 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   }
 
   const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limitValue = Object.values(
+    limits.reduce((acc: any, elem: any) => {
+      acc[elem.refId] = elem.meta.limit;
+      return acc;
+    }, {})
+  ).reduce((acc: number, elem: any) => (acc += elem), 0);
 
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${deduplicatedLogRows.length} returned)`,
+      value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }

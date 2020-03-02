@@ -7,7 +7,7 @@ import { UseState } from '../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { Select } from './Select';
 
-const SelectStories = storiesOf('UI/Select/Select', module);
+const SelectStories = storiesOf('General/Select/Select', module);
 
 SelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
 

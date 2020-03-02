@@ -3,6 +3,8 @@ package api
 import (
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/rendering"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -168,6 +170,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":          defaultDatasource,
 		"datasources":                datasources,
+		"minRefreshInterval":         setting.MinRefreshInterval,
 		"panels":                     panels,
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
@@ -177,6 +180,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
 		"alertingMinInterval":        setting.AlertingMinInterval,
+		"autoAssignOrg":              setting.AutoAssignOrg,
+		"verfiyEmailEnabled":         setting.VerifyEmailEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
@@ -206,7 +211,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"stateInfo":  hs.License.StateInfo(),
 			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
 		},
-		"featureToggles": hs.Cfg.FeatureToggles,
+		"featureToggles":    hs.Cfg.FeatureToggles,
+		"phantomJSRenderer": rendering.IsPhantomJSEnabled,
 	}
 
 	return jsonObj, nil

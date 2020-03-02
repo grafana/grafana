@@ -35,7 +35,6 @@ export function sqlPartEditorDirective(templateSrv: any) {
       $scope.partActions = [];
 
       function clickFuncParam(this: any, paramIndex: number) {
-        /*jshint validthis:true */
         const $link = $(this);
         const $input = $link.next();
 
@@ -61,7 +60,6 @@ export function sqlPartEditorDirective(templateSrv: any) {
       }
 
       function switchToLink($input: JQuery, paramIndex: number) {
-        /*jshint validthis:true */
         const $link = $input.prev();
         const newValue = $input.val();
 
@@ -79,14 +77,12 @@ export function sqlPartEditorDirective(templateSrv: any) {
       }
 
       function inputKeyPress(this: any, paramIndex: number, e: any) {
-        /*jshint validthis:true */
         if (e.which === 13) {
           switchToLink($(this), paramIndex);
         }
       }
 
       function inputKeyDown(this: any) {
-        /*jshint validthis:true */
         this.style.width = (3 + this.value.length) * 8 + 'px';
       }
 
@@ -172,7 +168,7 @@ export function sqlPartEditorDirective(templateSrv: any) {
           }
 
           const paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
-          const $paramLink = $('<a class="graphite-func-param-link pointer">' + paramValue + '</a>');
+          const $paramLink = $('<a class="query-part__link">' + paramValue + '</a>');
           const $input = $(paramTemplate);
 
           $paramLink.appendTo($paramsContainer);

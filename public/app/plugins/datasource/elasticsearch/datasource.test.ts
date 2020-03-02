@@ -1,5 +1,5 @@
 import angular from 'angular';
-import { dateMath, Field } from '@grafana/data';
+import { CoreApp, DataQueryRequest, dateMath, Field } from '@grafana/data';
 import _ from 'lodash';
 import { ElasticDatasource } from './datasource';
 import { toUtc, dateTime } from '@grafana/data';
@@ -7,7 +7,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { ElasticsearchOptions } from './types';
+import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -613,7 +613,56 @@ describe('ElasticDatasource', function(this: any) {
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
     });
   });
+
+  describe('query', () => {
+    it('should replace range as integer not string', () => {
+      const dataSource = new ElasticDatasource(
+        {
+          url: 'http://es.com',
+          database: '[asd-]YYYY.MM.DD',
+          jsonData: {
+            interval: 'Daily',
+            esVersion: 2,
+            timeField: '@time',
+          },
+        } as DataSourceInstanceSettings<ElasticsearchOptions>,
+        templateSrv as TemplateSrv,
+        timeSrv as TimeSrv
+      );
+      (dataSource as any).post = jest.fn(() => Promise.resolve({ responses: [] }));
+      dataSource.query(createElasticQuery());
+
+      const query = ((dataSource as any).post as jest.Mock).mock.calls[0][1];
+      expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
+    });
+  });
 });
+
+const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
+  return {
+    requestId: '',
+    dashboardId: 0,
+    interval: '',
+    panelId: 0,
+    scopedVars: {},
+    timezone: '',
+    app: CoreApp.Dashboard,
+    startTime: 0,
+    range: {
+      from: dateTime([2015, 4, 30, 10]),
+      to: dateTime([2015, 5, 1, 10]),
+    } as any,
+    targets: [
+      {
+        refId: '',
+        isLogsQuery: false,
+        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+        metrics: [{ type: 'count', id: '' }],
+        query: 'test',
+      },
+    ],
+  };
+};
 
 const logsResponse = {
   data: {

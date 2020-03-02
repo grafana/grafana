@@ -24,7 +24,7 @@ const getKnobs = () => {
   };
 };
 
-const PieChartStories = storiesOf('UI/PieChart/PieChart', module);
+const PieChartStories = storiesOf('Visualizations/PieChart', module);
 
 PieChartStories.addDecorator(withCenteredStory);
 

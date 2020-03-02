@@ -80,10 +80,14 @@ func buildArrowFields(f *Frame) ([]arrow.Field, error) {
 			return nil, err
 		}
 
-		fieldMeta := map[string]string{
-			"name":   field.Name,
-			"labels": field.Labels.String(),
+		fieldMeta := map[string]string{"name": field.Name}
+
+		if field.Labels != nil {
+			if fieldMeta["labels"], err = toJSONString(field.Labels); err != nil {
+				return nil, err
+			}
 		}
+
 		if field.Config != nil {
 			str, err := toJSONString(field.Config)
 			if err != nil {
@@ -293,16 +297,12 @@ func initializeFrameFields(schema *arrow.Schema, frame *Frame) ([]bool, error) {
 			Name: field.Name,
 		}
 		if labelsAsString, ok := getMDKey("labels", field.Metadata); ok {
-			var err error
-			sdkField.Labels, err = LabelsFromString(labelsAsString)
-			if err != nil {
+			if err := json.Unmarshal([]byte(labelsAsString), &sdkField.Labels); err != nil {
 				return nil, err
 			}
 		}
 		if configAsString, ok := getMDKey("config", field.Metadata); ok {
-			var err error
-			sdkField.Config, err = FieldConfigFromJSON(configAsString)
-			if err != nil {
+			if err := json.Unmarshal([]byte(configAsString), &sdkField.Config); err != nil {
 				return nil, err
 			}
 		}
@@ -645,7 +645,8 @@ func UnmarshalArrow(b []byte) (*Frame, error) {
 	return frame, nil
 }
 
-// ToJSONString return the FieldConfig as a json string
+// ToJSONString calls json.Marshal on val and returns it as a string. An
+// error is returned if json.Marshal errors.
 func toJSONString(val interface{}) (string, error) {
 	b, err := json.Marshal(val)
 	if err != nil {

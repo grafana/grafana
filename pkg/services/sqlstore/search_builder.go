@@ -3,7 +3,7 @@ package sqlstore
 import (
 	"strings"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 // SearchBuilder is a builder/object mother that builds a dashboard search query
@@ -13,16 +13,16 @@ type SearchBuilder struct {
 	isStarred           bool
 	limit               int64
 	page                int64
-	signedInUser        *m.SignedInUser
+	signedInUser        *models.SignedInUser
 	whereDashboardIdsIn []int64
 	whereTitle          string
 	whereTypeFolder     bool
 	whereTypeDash       bool
 	whereFolderIds      []int64
-	permission          m.PermissionType
+	permission          models.PermissionType
 }
 
-func NewSearchBuilder(signedInUser *m.SignedInUser, limit int64, page int64, permission m.PermissionType) *SearchBuilder {
+func NewSearchBuilder(signedInUser *models.SignedInUser, limit int64, page int64, permission models.PermissionType) *SearchBuilder {
 	// Default to page 1
 	if page < 1 {
 		page = 1

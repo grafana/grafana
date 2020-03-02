@@ -112,7 +112,13 @@ function toArrowVector(field: Field): ArrowVector {
 }
 
 export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
-  const table = Table.new(
+  // Return the original table
+  let table = (data as any).table;
+  if (table instanceof Table) {
+    return table as Table;
+  }
+
+  table = Table.new(
     data.fields.map(field => {
       const column = Column.new(field.name, toArrowVector(field));
       if (field.labels) {
