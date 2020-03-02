@@ -1,14 +1,27 @@
-import { ThunkResult } from 'app/types';
-import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
+import debounce from 'lodash/debounce';
+import { ThunkResult, StoreState, ThunkDispatch } from 'app/types';
+import { VariableOption, VariableWithMultiSupport, VariableWithOptions, containsSearchFilter } from '../../variable';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
-import { OptionsPickerState, hideVariableDropDown, changeQueryVariableSearchQuery } from './reducer';
+import {
+  OptionsPickerState,
+  hideOptions,
+  updateOptionsFromSearch,
+  updateSearchQuery,
+  updateOptionsAndFilter,
+  toggleOption,
+} from './reducer';
 
-export const filterOptions = (searchQuery: string): ThunkResult<void> => {
+export const filterOrSearchOptions = (searchQuery: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { uuid } = getState().optionsPicker;
-    const { options, query } = getVariable<VariableWithMultiSupport>(uuid, getState());
-    dispatch(changeQueryVariableSearchQuery({ searchQuery, query, options }));
+    const { query, options } = getVariable<VariableWithOptions>(uuid, getState());
+    dispatch(updateSearchQuery(searchQuery));
+
+    if (containsSearchFilter(query)) {
+      return searchForOptionsWithDebounce(dispatch, getState, searchQuery);
+    }
+    return dispatch(updateOptionsAndFilter(options));
   };
 };
 
@@ -22,14 +35,40 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
     const nextVariable = { current, options: picker.options } as VariableWithOptions;
 
     if (getLinkText(nextVariable) === variable.current.text) {
-      return dispatch(hideVariableDropDown());
+      return dispatch(hideOptions());
     }
 
     const adapter = variableAdapters.get(variable.type);
     await adapter.setValue(variable, current, true);
-    return dispatch(hideVariableDropDown());
+    return dispatch(hideOptions());
   };
 };
+
+export const toggleOptionByHighlight = (clearOthers: boolean): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const { uuid, highlightIndex } = getState().optionsPicker;
+    const variable = getVariable<VariableWithMultiSupport>(uuid, getState());
+    const option = variable.options[highlightIndex];
+    dispatch(toggleOption({ option, forceSelect: false, clearOthers }));
+  };
+};
+
+const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreState, searchQuery: string) => {
+  try {
+    const { uuid } = getState().optionsPicker;
+    const existing = getVariable<VariableWithOptions>(uuid, getState());
+
+    const adapter = variableAdapters.get(existing.type);
+    await adapter.updateOptions(existing, searchQuery);
+
+    const updated = getVariable<VariableWithOptions>(uuid, getState());
+    dispatch(updateOptionsFromSearch(updated.options));
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const searchForOptionsWithDebounce = debounce(searchForOptions, 500);
 
 function mapToCurrent(picker: OptionsPickerState): VariableOption {
   const { options, searchQuery, multi } = picker;

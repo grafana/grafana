@@ -3,7 +3,6 @@ import { createAction } from '@reduxjs/toolkit';
 import { AppEvents, DataSourceApi } from '@grafana/data';
 
 import {
-  selectVariableOption,
   toVariableIdentifier,
   toVariablePayload,
   updateVariableCompleted,
@@ -15,7 +14,7 @@ import {
   VariableIdentifier,
   VariablePayload,
 } from '../state/actions';
-import { QueryVariableModel, VariableRefresh, VariableTag, VariableWithMultiSupport } from '../variable';
+import { QueryVariableModel, VariableRefresh } from '../variable';
 import { ThunkResult, VariableQueryProps } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
@@ -23,8 +22,6 @@ import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
-import { getQueryHasSearchFilter } from './reducer';
-import { variableAdapters } from '../adapters';
 
 export const queryVariableDatasourceLoaded = createAction<VariablePayload<DataSourceApi>>(
   'templating/queryVariableDatasourceLoaded'
@@ -33,12 +30,6 @@ export const queryVariableDatasourceLoaded = createAction<VariablePayload<DataSo
 export const queryVariableQueryEditorLoaded = createAction<VariablePayload<ComponentType<VariableQueryProps>>>(
   'templating/queryVariableQueryEditorLoaded'
 );
-
-export const changeQueryVariableHighlightIndex = createAction<VariablePayload<number>>(
-  'templating/changeQueryVariableHighlightIndex'
-);
-
-export const toggleVariableTag = createAction<VariablePayload<VariableTag>>('templating/toggleVariableTag');
 
 export const changeQueryVariableSearchQuery = createAction<VariablePayload<string>>(
   'templating/changeQueryVariableSearchQuery'
@@ -113,57 +104,3 @@ export const changeQueryVariableDataSource = (
     }
   };
 };
-
-export const selectVariableOptionByHighlightIndex = (): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    try {
-      const { uuid, highlightIndex } = getState().optionsPicker;
-      const variable = getVariable<VariableWithMultiSupport>(uuid, getState());
-      const option = variable.options[highlightIndex];
-      const data = { option, forceSelect: false, clearOthers: false };
-      dispatch(selectVariableOption(toVariablePayload(variable, data)));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-};
-
-export const toggleTag = (identifier: VariableIdentifier, tag: VariableTag): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    try {
-      const variable = getVariable<QueryVariableModel>(identifier.uuid, getState());
-
-      if (tag.values) {
-        return dispatch(toggleVariableTag(toVariablePayload(variable, tag)));
-      }
-
-      const datasource = await getDatasourceSrv().get(variable.datasource ?? '');
-      const query = variable.tagValuesQuery.replace('$tag', tag.text.toString());
-      const result = await metricFindQuery(datasource, query, variable);
-      const values = result?.map((value: any) => value.text) || [];
-      return dispatch(toggleVariableTag(toVariablePayload(variable, { ...tag, values })));
-    } catch (error) {
-      return console.error(error);
-    }
-  };
-};
-
-export const searchQueryChanged = (searchQuery: string): ThunkResult<void> => async (dispatch, getState) => {
-  const { uuid } = getState().optionsPicker;
-  const variable = getVariable<QueryVariableModel>(uuid, getState());
-
-  if (getQueryHasSearchFilter(variable)) {
-    await variableAdapters.get(variable.type).updateOptions(variable, searchQuery);
-    // TODO: copy new options from variable to picker state if it is open.
-  }
-};
-
-function metricFindQuery(datasource: any, query: string, variable: QueryVariableModel, searchFilter?: string) {
-  const options: any = { range: undefined, variable, searchFilter };
-
-  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
-    options.range = getTimeSrv().timeRange();
-  }
-
-  return datasource.metricFindQuery(query, options);
-}

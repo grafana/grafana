@@ -3,13 +3,15 @@ import {
   optionsPickerReducer,
   OptionsPickerState,
   initialState as optionsPickerInitialState,
-  selectVariableOption,
-  showVariableDropDown,
-  hideVariableDropDown,
-  toggleVariableTag,
-  changeOptionsPickerHighlightIndex,
-  toggleAllVariableOptions,
-  changeQueryVariableSearchQuery,
+  toggleOption,
+  showOptions,
+  hideOptions,
+  toggleTag,
+  moveOptionsHighlight,
+  toggleAllOptions,
+  updateOptionsAndFilter,
+  updateSearchQuery,
+  updateOptionsFromSearch,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import { VariableWithMultiSupport, VariableTag } from '../../variable';
@@ -25,7 +27,7 @@ const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
 };
 
 describe('optionsPickerReducer', () => {
-  describe('when selectVariableOption is dispatched', () => {
+  describe('when toggleOption is dispatched', () => {
     const opsAll = [
       { text: 'All', value: '$__all', selected: true },
       { text: 'A', value: 'A', selected: false },
@@ -57,7 +59,7 @@ describe('optionsPickerReducer', () => {
       { text: 'B', value: 'B', selected: true },
     ];
 
-    const expectSelectVariableOptionState = (args: {
+    const expectToggleOptionState = (args: {
       options: any;
       multi: any;
       forceSelect: any;
@@ -71,7 +73,7 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(selectVariableOption(payload))
+        .whenActionIsDispatched(toggleOption(payload))
         .thenStateShouldEqual({
           ...initialState,
           selectedValues: args.expSel,
@@ -79,7 +81,7 @@ describe('optionsPickerReducer', () => {
         });
     };
 
-    describe('selectVariableOption for multi value variable', () => {
+    describe('toggleOption for multi value variable', () => {
       const multi = true;
       describe('and options with All selected', () => {
         const options = opsAll;
@@ -94,9 +96,9 @@ describe('optionsPickerReducer', () => {
           ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
           ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
+          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectSelectVariableOptionState({
+            expectToggleOptionState({
               options,
               multi,
               option,
@@ -120,9 +122,9 @@ describe('optionsPickerReducer', () => {
           ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
           ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
+          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectSelectVariableOptionState({
+            expectToggleOptionState({
               options,
               multi,
               option,
@@ -146,9 +148,9 @@ describe('optionsPickerReducer', () => {
           ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
           ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
+          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectSelectVariableOptionState({
+            expectToggleOptionState({
               options,
               multi,
               option,
@@ -172,9 +174,9 @@ describe('optionsPickerReducer', () => {
           ${opA}    | ${true}     | ${true}     | ${opsA}   | ${opASel}
           ${opA}    | ${false}    | ${true}     | ${opsAll} | ${opAllSel}
         `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
+          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectSelectVariableOptionState({
+            expectToggleOptionState({
               options,
               multi,
               option,
@@ -187,7 +189,7 @@ describe('optionsPickerReducer', () => {
       });
     });
 
-    describe('selectVariableOption for single value variable', () => {
+    describe('toggleOption for single value variable', () => {
       const multi = false;
       describe('and options with All selected', () => {
         const options = opsAll;
@@ -202,9 +204,9 @@ describe('optionsPickerReducer', () => {
           ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
           ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
         `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
+          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectSelectVariableOptionState({
+            expectToggleOptionState({
               options,
               multi,
               option,
@@ -228,9 +230,9 @@ describe('optionsPickerReducer', () => {
           ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
           ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
         `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
+          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectSelectVariableOptionState({
+            expectToggleOptionState({
               options,
               multi,
               option,
@@ -254,9 +256,9 @@ describe('optionsPickerReducer', () => {
           ${opA}    | ${true}     | ${true}     | ${opsA} | ${opASel}
           ${opA}    | ${false}    | ${true}     | ${opsA} | ${opASel}
         `(
-          'when selectVariableOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
+          'when toggleOption is dispatched and option: $option, forceSelect: $forceSelect, clearOthers: $clearOthers, expOps: $expOps, expSel: $expSel',
           ({ option, forceSelect, clearOthers, expOps, expSel }) =>
-            expectSelectVariableOptionState({
+            expectToggleOptionState({
               options,
               multi,
               option,
@@ -270,7 +272,7 @@ describe('optionsPickerReducer', () => {
     });
   });
 
-  describe('when showVariableDropDown is dispatched and picker has searchQuery and variable has searchFilter', () => {
+  describe('when showOptions is dispatched and picker has searchQuery and variable has searchFilter', () => {
     it('then state should be correct', () => {
       const query = '*.__searchFilter';
       const searchQuery = 'a search query';
@@ -285,7 +287,7 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(showVariableDropDown(payload))
+        .whenActionIsDispatched(showOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
           options: payload.options,
@@ -297,7 +299,7 @@ describe('optionsPickerReducer', () => {
     });
   });
 
-  describe('when showVariableDropDown is dispatched and searchQuery and variable has no searchFilter', () => {
+  describe('when showOptions is dispatched and searchQuery and variable has no searchFilter', () => {
     it('then state should be correct', () => {
       const query = '*.';
       const searchQuery: any = null;
@@ -312,7 +314,7 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(showVariableDropDown(payload))
+        .whenActionIsDispatched(showOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
           uuid: '0',
@@ -329,7 +331,7 @@ describe('optionsPickerReducer', () => {
     });
   });
 
-  describe('when hideVariableDropDown is dispatched', () => {
+  describe('when hideOptions is dispatched', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext({
         options: [
@@ -344,12 +346,12 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(hideVariableDropDown())
+        .whenActionIsDispatched(hideOptions())
         .thenStateShouldEqual({ ...optionsPickerInitialState });
     });
   });
 
-  describe('when toggleVariableTag is dispatched', () => {
+  describe('when toggleTag is dispatched', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext({
         tags: [
@@ -367,7 +369,7 @@ describe('optionsPickerReducer', () => {
       const payload: VariableTag = { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] };
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(toggleVariableTag(payload))
+        .whenActionIsDispatched(toggleTag(payload))
         .thenStateShouldEqual({
           ...initialState,
           options: [
@@ -396,7 +398,7 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeOptionsPickerHighlightIndex(-1))
+        .whenActionIsDispatched(moveOptionsHighlight(-1))
         .thenStateShouldEqual({
           ...initialState,
           highlightIndex: 0,
@@ -416,7 +418,7 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeOptionsPickerHighlightIndex(-1))
+        .whenActionIsDispatched(moveOptionsHighlight(-1))
         .thenStateShouldEqual({
           ...initialState,
           highlightIndex: 0,
@@ -436,7 +438,7 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeOptionsPickerHighlightIndex(1))
+        .whenActionIsDispatched(moveOptionsHighlight(1))
         .thenStateShouldEqual({
           ...initialState,
           highlightIndex: 1,
@@ -456,7 +458,7 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeOptionsPickerHighlightIndex(1))
+        .whenActionIsDispatched(moveOptionsHighlight(1))
         .thenStateShouldEqual({
           ...initialState,
           highlightIndex: 1,
@@ -464,7 +466,7 @@ describe('optionsPickerReducer', () => {
     });
   });
 
-  describe('when toggleAllVariableOptions is dispatched', () => {
+  describe('when toggleAllOptions is dispatched', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext({
         options: [
@@ -476,7 +478,7 @@ describe('optionsPickerReducer', () => {
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(toggleAllVariableOptions())
+        .whenActionIsDispatched(toggleAllOptions())
         .thenStateShouldEqual({
           ...initialState,
           options: [
@@ -491,10 +493,10 @@ describe('optionsPickerReducer', () => {
     });
   });
 
-  describe('when changeQueryVariableSearchQuery is dispatched and variable has searchFilter', () => {
+  describe('when updateOptionsAndFilter is dispatched and searchFilter exists', () => {
     it('then state should be correct', () => {
       const searchQuery = 'A';
-      const query = '__searchFilter';
+
       const options = [
         { text: 'All', value: '$__all', selected: true },
         { text: 'A', value: 'A', selected: false },
@@ -502,48 +504,59 @@ describe('optionsPickerReducer', () => {
       ];
 
       const { initialState } = getVariableTestContext({
-        options,
-        highlightIndex: 1,
-        searchQuery: '',
+        searchQuery,
       });
-
-      const payload = { query, searchQuery, options };
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeQueryVariableSearchQuery(payload))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
         .thenStateShouldEqual({
           ...initialState,
-          options,
+          options: [
+            { text: 'All', value: '$__all', selected: true },
+            { text: 'A', value: 'A', selected: false },
+          ],
+          selectedValues: [{ text: 'All', value: '$__all', selected: true }],
           searchQuery,
           highlightIndex: 0,
-          selectedValues: [{ text: 'All', value: '$__all', selected: true }],
         });
     });
   });
 
-  describe('when changeQueryVariableSearchQuery is dispatched and variable has no searchFilter', () => {
+  describe('when updateOptionsFromSearch is dispatched and variable has searchFilter', () => {
     it('then state should be correct', () => {
-      const searchQuery = 'B';
-      const query = '.*';
+      const searchQuery = '__searchFilter';
       const options = [
         { text: 'All', value: '$__all', selected: true },
         { text: 'A', value: 'A', selected: false },
         { text: 'B', value: 'B', selected: false },
       ];
       const { initialState } = getVariableTestContext({
-        options,
-        highlightIndex: 1,
-        searchQuery: '',
+        searchQuery,
       });
-      const payload = { searchQuery, query, options };
+
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(changeQueryVariableSearchQuery(payload))
+        .whenActionIsDispatched(updateOptionsFromSearch(options))
         .thenStateShouldEqual({
           ...initialState,
-          options: [{ text: 'B', value: 'B', selected: false }],
+          options: options,
+          selectedValues: [{ text: 'All', value: '$__all', selected: true }],
           highlightIndex: 0,
+        });
+    });
+  });
+
+  describe('when updateSearchQuery is dispatched', () => {
+    it('then state should be correct', () => {
+      const searchQuery = 'A';
+      const { initialState } = getVariableTestContext({});
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateSearchQuery(searchQuery))
+        .thenStateShouldEqual({
+          ...initialState,
           searchQuery,
         });
     });
