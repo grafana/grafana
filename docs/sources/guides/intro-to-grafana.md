@@ -32,46 +32,37 @@ For example, if you want to view weather data and statistics about your smart ho
 
 The following sections provide an overview of things you might want to do with your Grafana database and links so you can learn more. For more guidance and ideas, check out the [Grafana Community forums](https://community.grafana.com/).
 
-## Visualize
+## Explore metrics and logs
 
-From heatmaps to histograms, graphs to geo maps, Grafana has visualization options to help you understand your data. 
-Build dashboards with panels and queries
+Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side. Refer to [Explore]({{ < relref "../features/explore/index.md" > }}) for more information.
 
-## Explore metrics
+## Set alerts
 
-Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side.
+If you're using [Grafana alerting]({{ < relref "../alerting/_index.md" > }}), you can have alerts sent through a number of different notifiers, including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack. 
 
-## Explore logs
+Alert hooks allow you to create different notifiers with a bit of code if you prefer some other channels of communication. Visually define alert rules for your most important metrics.
 
-Experience the magic of switching from metrics to logs with preserved label filters. Quickly search through all your logs or streaming them live.
+## Make annotations
 
-Works best with our Loki data source but support for more are coming very soon.
+Annotate graphs with rich events from different data sources. Hover over events to see the full event metadata and tags.
 
-## Unify
+This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source. Refer to [Annotations]({{ < relref "../reference/annotations.md" > }}) for more information.
 
-Grafana allows you to display all your time-series data on a single "pane of glass" by using a dashboard to visualize data from one or more data sources. Mix different data sources in the same graph! You can specify a data source on a per-query basis. This works for even custom data sources.
+## Dashboard templates
 
-Create dynamic & reusable dashboards with template variables that appear as dropdowns at the top of the dashboard.
+[Templating]({{ < relref "../reference/templating.md">}}) allows you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both. 
 
-## Alert
+Templating allows you to drill down into your data, say, from all data to North America data, down to Texas data, and beyond. You can also share these dashboards across teams within your organization—or if you create a great dashboard template for a popular data source, you can contribute it to the whole community to customize and use.
 
-Seamlessly define alerts where it makes sense — while you’re in the data. Define thresholds visually, and get notified via Slack, PagerDuty, and more. Visually define alert rules for your most important metrics. Grafana will continuously evaluate and send notifications to systems like Slack, PagerDuty, VictorOps, OpsGenie.
+## Configure Grafana
 
-## Extend
+If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{ < relref "../installation/configuration.md">}}) and the [Grafana CLI]({{ < relref "../administration/cli.md">}}).
 
-Discover hundreds of dashboards and plugins in the official library. Thanks to the passion and momentum of our community, new ones are added every week.
-Plugins - https://grafana.com/grafana/plugins
-Dashboards
+Configuration covers both config files and environment variables. You can set up default ports, logging levels, email IP addresses, security, and more.
 
-## Collaborate
+## Import dashboards and plugins
 
-Bring everyone together, and share data and dashboards across teams. Grafana empowers users, and helps foster a data driven culture. Share a to dashboard or fullscreen panel. Automatically includes current time range and variables. Create a public or internal snapshots. Server side render API makes chat integration possible.
-
-Add users, permissions, organizations
-
-## Annotations
-
-Annotate graphs with rich events from different data sources. Hover over events shows you the full event metadata and tags. Annotate graphs with rich events from different data sources. Hover over events shows you the full event metadata and tags.
+Discover hundreds of [dashboards](https://grafana.com/grafana/dashboards) and [plugins](https://grafana.com/grafana/plugins) in the official library. Thanks to the passion and momentum of our community, new ones are added every week.
 
 ## Authentication
 
@@ -79,13 +70,17 @@ Grafana supports different authentication styles, such as LDAP and OAuth, and al
 
 In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise]({{ < relref "../enterprise/_index.md">}}) for more information.
 
-## Configure Grafana
-
 ## Provisioning
 
-## Templating
+While it's easy to click, drag, and drop to create a single dashboard, power users in need of many dashboards will want to automate the setup with a script. You can script anything in Grafana. 
 
+For example, if you're spinning up a new Kubernetes cluster, you can also spin up a Grafana automatically with a script that would have the right server, IP address, and data sources preset and locked. It's also a way of getting control over a lot of dashboards.
 
+Refer to [Provisioning]({{ < relref "../administration/provisioning.md">}}) for more information.
+
+## Permissions
+
+Bring everyone together, and share data and dashboards across teams. Grafana empowers users, and helps foster a data-driven culture. [Learn more about user permissions]({{ < relref "../permissions/overview.md" > }}).
 
 ## Grafana Cloud
 

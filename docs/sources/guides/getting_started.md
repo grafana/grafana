@@ -13,7 +13,7 @@ weight = 100
 
 # Getting started
 
-This guide will help you get started and acquainted with Grafana.
+This guide will help you get started and acquainted with Grafana. To learn more about Grafana in general, refer to [Intro to Grafana]({{< relref "intro-to-grafana.md" >}}).
 
 ## Install Grafana
 

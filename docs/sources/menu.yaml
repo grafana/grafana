@@ -3,6 +3,8 @@
   children:
   - name: Getting started
     link: /guides/getting_started/
+  - name: Intro to Grafana
+    link: /guides/intro_to_grafana/
   - name: Intro to time series
     link: /guides/timeseries/
   - name: Glossary
