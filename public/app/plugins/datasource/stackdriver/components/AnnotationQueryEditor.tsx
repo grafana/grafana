@@ -24,7 +24,7 @@ interface State extends AnnotationTarget {
 }
 
 const DefaultTarget: State = {
-  project: '',
+  projectName: '',
   projects: [],
   metricType: '',
   filters: [],
@@ -43,9 +43,10 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
 
   async componentDidMount() {
     const { target, datasource } = this.props;
-    if (!target.project) {
-      target.project = datasource.getDefaultProject();
+    if (!target.projectName) {
+      target.projectName = datasource.getDefaultProject();
     }
+
     const variableOptionGroup = {
       label: 'Template Variables',
       options: datasource.variables.map(toOption),
@@ -59,7 +60,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
       projects,
     });
 
-    datasource.getLabels(target.metricType, target.project, target.refId).then(labels => this.setState({ labels }));
+    datasource.getLabels(target.metricType, target.projectName, target.refId).then(labels => this.setState({ labels }));
   }
 
   onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
@@ -75,7 +76,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         onQueryChange(this.state);
       }
     );
-    datasource.getLabels(type, this.state.refId, this.state.project).then(labels => this.setState({ labels }));
+    datasource.getLabels(type, this.state.refId, this.state.projectName).then(labels => this.setState({ labels }));
   };
 
   onChange(prop: string, value: string | string[]) {
@@ -85,7 +86,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const { project, metricType, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
+    const { projectName, metricType, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
     const { datasource } = this.props;
 
     return (
@@ -93,11 +94,11 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         <Project
           templateVariableOptions={variableOptions}
           datasource={datasource}
-          project={project || datasource.getDefaultProject()}
-          onChange={value => this.onChange('project', value)}
+          projectName={projectName || datasource.getDefaultProject()}
+          onChange={value => this.onChange('projectName', value)}
         />
         <Metrics
-          project={project}
+          projectName={projectName}
           metricType={metricType}
           templateSrv={datasource.templateSrv}
           datasource={datasource}
@@ -109,7 +110,6 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
               <Filters
                 labels={labels}
                 filters={filters}
-                project={project}
                 onChange={value => this.onChange('filters', value)}
                 variableOptionGroup={variableOptionGroup}
               />

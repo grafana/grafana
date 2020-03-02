@@ -27,18 +27,22 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     metricTypes: [],
     services: [],
     projects: [],
-    project: '',
+    projectName: '',
   };
 
   constructor(props: VariableQueryProps) {
     super(props);
-    this.state = Object.assign(this.defaults, { project: this.props.datasource.getDefaultProject() }, this.props.query);
+    this.state = Object.assign(
+      this.defaults,
+      { projectName: this.props.datasource.getDefaultProject() },
+      this.props.query
+    );
   }
 
   async componentDidMount() {
     const projects = await this.props.datasource.getProjects();
     const metricDescriptors = await this.props.datasource.getMetricTypes(
-      this.props.query.project || this.props.datasource.getDefaultProject()
+      this.props.query.projectName || this.props.datasource.getDefaultProject()
     );
     const services = extractServicesFromMetricDescriptors(metricDescriptors).map((m: any) => ({
       value: m.service,
@@ -66,7 +70,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       selectedMetricType,
       metricDescriptors,
       projects: projects.map(({ value, label }: any) => ({ value, name: label })),
-      ...(await this.getLabels(selectedMetricType, this.state.project)),
+      ...(await this.getLabels(selectedMetricType, this.state.projectName)),
     };
     this.setState(state);
   }
@@ -74,14 +78,14 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   async onQueryTypeChange(queryType: string) {
     const state: any = {
       selectedQueryType: queryType,
-      ...(await this.getLabels(this.state.selectedMetricType, this.state.project, queryType)),
+      ...(await this.getLabels(this.state.selectedMetricType, this.state.projectName, queryType)),
     };
     this.setState(state);
   }
 
-  async onProjectChange(project: string) {
-    const metricDescriptors = await this.props.datasource.getMetricTypes(project);
-    const labels = await this.getLabels(this.state.selectedMetricType, project);
+  async onProjectChange(projectName: string) {
+    const metricDescriptors = await this.props.datasource.getMetricTypes(projectName);
+    const labels = await this.getLabels(this.state.selectedMetricType, projectName);
     const { metricTypes, selectedMetricType } = getMetricTypes(
       metricDescriptors,
       this.state.selectedMetricType,
@@ -89,7 +93,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       this.props.templateSrv.replace(this.state.selectedService)
     );
 
-    this.setState({ ...labels, metricTypes, selectedMetricType, metricDescriptors, project });
+    this.setState({ ...labels, metricTypes, selectedMetricType, metricDescriptors, projectName });
   }
 
   async onServiceChange(service: string) {
@@ -103,7 +107,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       selectedService: service,
       metricTypes,
       selectedMetricType,
-      ...(await this.getLabels(selectedMetricType, this.state.project)),
+      ...(await this.getLabels(selectedMetricType, this.state.projectName)),
     };
     this.setState(state);
   }
@@ -111,7 +115,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   async onMetricTypeChange(metricType: string) {
     const state: any = {
       selectedMetricType: metricType,
-      ...(await this.getLabels(metricType, this.state.project)),
+      ...(await this.getLabels(metricType, this.state.projectName)),
     };
     this.setState(state);
   }
@@ -126,10 +130,10 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
   }
 
-  async getLabels(selectedMetricType: string, project: string, selectedQueryType = this.state.selectedQueryType) {
+  async getLabels(selectedMetricType: string, projectName: string, selectedQueryType = this.state.selectedQueryType) {
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
     if (selectedMetricType && selectedQueryType === MetricFindQueryTypes.LabelValues) {
-      const labels = await getLabelKeys(this.props.datasource, selectedMetricType, project);
+      const labels = await getLabelKeys(this.props.datasource, selectedMetricType, projectName);
       const labelKey = labels.some(l => l === this.props.templateSrv.replace(this.state.labelKey))
         ? this.state.labelKey
         : labels[0];
@@ -152,7 +156,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
         return (
           <>
             <SimpleSelect
-              value={this.state.project}
+              value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
               onValueChange={e => this.onProjectChange(e.target.value)}
               label="Project"
@@ -171,7 +175,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
         return (
           <>
             <SimpleSelect
-              value={this.state.project}
+              value={this.state.projectName}
               options={this.insertTemplateVariables(this.state.projects)}
               onValueChange={e => this.onProjectChange(e.target.value)}
               label="Project"

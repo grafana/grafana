@@ -33,11 +33,11 @@ export interface VariableQueryData {
   metricTypes: Array<{ value: string; name: string }>;
   services: Array<{ value: string; name: string }>;
   projects: Array<{ value: string; name: string }>;
-  project: string;
+  projectName: string;
 }
 
 export interface StackdriverQuery extends DataQuery {
-  project: string;
+  projectName: string;
   unit?: string;
   metricType: string;
   service?: string;
@@ -61,7 +61,7 @@ export interface StackdriverOptions extends DataSourceJsonData {
 }
 
 export interface AnnotationTarget {
-  project: string;
+  projectName: string;
   metricType: string;
   refId: string;
   filters: string[];

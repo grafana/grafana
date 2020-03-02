@@ -59,7 +59,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           filters: this.interpolateFilters(t.filters || [], options.scopedVars),
           aliasBy: this.templateSrv.replace(t.aliasBy!, options.scopedVars || {}),
           type: 'timeSeriesQuery',
-          project: this.templateSrv.replace(t.project ? t.project : this.getDefaultProject()),
+          projectName: this.templateSrv.replace(t.projectName ? t.projectName : this.getDefaultProject()),
         };
       });
 
@@ -98,13 +98,13 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     });
   }
 
-  async getLabels(metricType: string, refId: string, project: string, groupBys?: string[]) {
+  async getLabels(metricType: string, refId: string, projectName: string, groupBys?: string[]) {
     const response = await this.getTimeSeries({
       targets: [
         {
           refId: refId,
           datasourceId: this.id,
-          project: this.templateSrv.replace(project),
+          projectName: this.templateSrv.replace(projectName),
           metricType: this.templateSrv.replace(metricType),
           groupBys: this.interpolateGroupBys(groupBys || [], {}),
           crossSeriesReducer: 'REDUCE_NONE',
@@ -184,8 +184,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         view: 'FULL',
         filters: this.interpolateFilters(annotation.target.filters || [], options.scopedVars),
         type: 'annotationQuery',
-        project: this.templateSrv.replace(
-          annotation.target.project ? annotation.target.project : this.getDefaultProject(),
+        projectName: this.templateSrv.replace(
+          annotation.target.projectName ? annotation.target.projectName : this.getDefaultProject(),
           options.scopedVars || {}
         ),
       },
@@ -323,9 +323,13 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return defaultProject || '';
   }
 
-  async getMetricTypes(project: string): Promise<MetricDescriptor[]> {
-    const interpolatedProject = this.templateSrv.replace(project);
+  async getMetricTypes(projectName: string): Promise<MetricDescriptor[]> {
     try {
+      if (!projectName) {
+        return [];
+      }
+
+      const interpolatedProject = this.templateSrv.replace(projectName);
       if (this.metricTypesCache[interpolatedProject]) {
         return this.metricTypesCache[interpolatedProject];
       }

@@ -28,7 +28,7 @@ interface State extends StackdriverQuery {
 }
 
 export const DefaultTarget: State = {
-  project: '',
+  projectName: '',
   metricType: '',
   metricKind: '',
   valueType: '',
@@ -56,8 +56,8 @@ export class QueryEditor extends React.Component<Props, State> {
 
   async componentDidMount() {
     const { events, target, templateSrv, datasource } = this.props;
-    if (!target.project) {
-      target.project = datasource.getDefaultProject();
+    if (!target.projectName) {
+      target.projectName = datasource.getDefaultProject();
     }
 
     events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
@@ -72,7 +72,7 @@ export class QueryEditor extends React.Component<Props, State> {
 
     const state: Partial<State> = {
       ...this.props.target,
-      project: target.project,
+      projectName: target.projectName,
       alignOptions,
       perSeriesAligner,
       variableOptionGroup,
@@ -82,7 +82,7 @@ export class QueryEditor extends React.Component<Props, State> {
     this.setState(state);
 
     datasource
-      .getLabels(target.metricType, target.refId, target.project, target.groupBys)
+      .getLabels(target.metricType, target.refId, target.projectName, target.groupBys)
       .then(labels => this.setState({ labels }));
   }
 
@@ -127,7 +127,7 @@ export class QueryEditor extends React.Component<Props, State> {
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
       templateSrv
     );
-    const labels = await this.props.datasource.getLabels(type, target.refId, this.state.project, target.groupBys);
+    const labels = await this.props.datasource.getLabels(type, target.refId, this.state.projectName, target.groupBys);
     this.setState(
       {
         alignOptions,
@@ -140,7 +140,7 @@ export class QueryEditor extends React.Component<Props, State> {
       },
       () => {
         onQueryChange(this.state);
-        if (this.state.project !== null) {
+        if (this.state.projectName !== null) {
           onExecuteQuery();
         }
       }
@@ -154,14 +154,14 @@ export class QueryEditor extends React.Component<Props, State> {
       this.props.onExecuteQuery();
     });
     datasource
-      .getLabels(target.metricType, target.refId, this.state.project, value)
+      .getLabels(target.metricType, target.refId, this.state.projectName, value)
       .then(labels => this.setState({ labels }));
   }
 
   onPropertyChange(prop: string, value: any) {
     this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
-      if (this.state.project !== null) {
+      if (this.state.projectName !== null) {
         this.props.onExecuteQuery();
       }
     });
@@ -172,7 +172,7 @@ export class QueryEditor extends React.Component<Props, State> {
       groupBys = [],
       filters = [],
       usedAlignmentPeriod,
-      project,
+      projectName,
       metricType,
       crossSeriesReducer,
       perSeriesAligner,
@@ -192,16 +192,16 @@ export class QueryEditor extends React.Component<Props, State> {
       <>
         <Project
           templateVariableOptions={variableOptions}
-          project={project}
+          projectName={projectName}
           datasource={datasource}
           onChange={value => {
-            this.onPropertyChange('project', value);
+            this.onPropertyChange('projectName', value);
             datasource.getLabels(metricType, refId, value, groupBys).then(labels => this.setState({ labels }));
           }}
         />
         <Metrics
           templateSrv={templateSrv}
-          project={project}
+          projectName={projectName}
           metricType={metricType}
           templateVariableOptions={variableOptions}
           datasource={datasource}
@@ -210,7 +210,6 @@ export class QueryEditor extends React.Component<Props, State> {
           {metric => (
             <>
               <Filters
-                project={project}
                 labels={labels}
                 filters={filters}
                 onChange={value => this.onPropertyChange('filters', value)}

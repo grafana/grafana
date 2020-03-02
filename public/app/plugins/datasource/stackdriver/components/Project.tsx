@@ -5,12 +5,12 @@ import StackdriverDatasource from '../datasource';
 
 export interface Props {
   datasource: StackdriverDatasource;
-  onChange: (project: string) => void;
+  onChange: (projectName: string) => void;
   templateVariableOptions: Array<SelectableValue<string>>;
-  project: string;
+  projectName: string;
 }
 
-export function Project({ project, datasource, onChange, templateVariableOptions }: Props) {
+export function Project({ projectName, datasource, onChange, templateVariableOptions }: Props) {
   return (
     <div className="gf-form-inline">
       <span className="gf-form-label width-9 query-keyword">Project</span>
@@ -26,7 +26,7 @@ export function Project({ project, datasource, onChange, templateVariableOptions
             ...projects,
           ])
         }
-        value={project}
+        value={projectName}
         placeholder="Select Project"
       />
       <div className="gf-form gf-form--grow">

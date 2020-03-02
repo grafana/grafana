@@ -8,12 +8,12 @@ import (
 type (
 	// StackdriverQuery is the query that Grafana sends from the frontend
 	StackdriverQuery struct {
-		Target   string
-		Params   url.Values
-		RefID    string
-		GroupBys []string
-		AliasBy  string
-		Project  string
+		Target      string
+		Params      url.Values
+		RefID       string
+		GroupBys    []string
+		AliasBy     string
+		ProjectName string
 	}
 
 	StackdriverBucketOptions struct {

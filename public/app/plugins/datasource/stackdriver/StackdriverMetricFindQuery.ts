@@ -15,6 +15,10 @@ export default class StackdriverMetricFindQuery {
 
   async execute(query: VariableQueryData) {
     try {
+      if (!query.projectName) {
+        query.projectName = this.datasource.getDefaultProject();
+      }
+
       switch (query.selectedQueryType) {
         case MetricFindQueryTypes.Projects:
           return this.handleProjectsQuery();
@@ -52,8 +56,8 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleServiceQuery({ project }: VariableQueryData) {
-    const metricDescriptors = await this.datasource.getMetricTypes(project);
+  async handleServiceQuery({ projectName }: VariableQueryData) {
+    const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
       text: s.serviceShortName,
@@ -62,11 +66,11 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleMetricTypesQuery({ selectedService, project }: VariableQueryData) {
+  async handleMetricTypesQuery({ selectedService, projectName }: VariableQueryData) {
     if (!selectedService) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(project);
+    const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     return getMetricTypesByService(metricDescriptors, this.datasource.templateSrv.replace(selectedService)).map(
       (s: any) => ({
         text: s.displayName,
@@ -76,50 +80,50 @@ export default class StackdriverMetricFindQuery {
     );
   }
 
-  async handleLabelKeysQuery({ selectedMetricType, project }: VariableQueryData) {
+  async handleLabelKeysQuery({ selectedMetricType, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
-    const labelKeys = await getLabelKeys(this.datasource, selectedMetricType, project);
+    const labelKeys = await getLabelKeys(this.datasource, selectedMetricType, projectName);
     return labelKeys.map(this.toFindQueryResult);
   }
 
-  async handleLabelValuesQuery({ selectedMetricType, labelKey, project }: VariableQueryData) {
+  async handleLabelValuesQuery({ selectedMetricType, labelKey, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleLabelValuesQuery';
-    const labels = await this.datasource.getLabels(selectedMetricType, refId, project, [labelKey]);
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, projectName, [labelKey]);
     const interpolatedKey = this.datasource.templateSrv.replace(labelKey);
     const values = labels.hasOwnProperty(interpolatedKey) ? labels[interpolatedKey] : [];
     return values.map(this.toFindQueryResult);
   }
 
-  async handleResourceTypeQuery({ selectedMetricType, project }: VariableQueryData) {
+  async handleResourceTypeQuery({ selectedMetricType, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleResourceTypeQueryQueryType';
-    const labels = await this.datasource.getLabels(selectedMetricType, refId, project);
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, projectName);
     return labels['resource.type'].map(this.toFindQueryResult);
   }
 
-  async handleAlignersQuery({ selectedMetricType, project }: VariableQueryData) {
+  async handleAlignersQuery({ selectedMetricType, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(project);
+    const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const { valueType, metricKind } = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
     return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
-  async handleAggregationQuery({ selectedMetricType, project }: VariableQueryData) {
+  async handleAggregationQuery({ selectedMetricType, projectName }: VariableQueryData) {
     if (!selectedMetricType) {
       return [];
     }
-    const metricDescriptors = await this.datasource.getMetricTypes(project);
+    const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const { valueType, metricKind } = metricDescriptors.find(
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );

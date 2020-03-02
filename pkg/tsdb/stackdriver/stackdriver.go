@@ -181,12 +181,12 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		aliasBy := query.Model.Get("aliasBy").MustString()
 
 		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
-			Target:   target,
-			Params:   params,
-			RefID:    query.RefId,
-			GroupBys: groupBysAsStrings,
-			AliasBy:  aliasBy,
-			Project:  query.Model.Get("project").MustString(""),
+			Target:      target,
+			Params:      params,
+			RefID:       query.RefId,
+			GroupBys:    groupBysAsStrings,
+			AliasBy:     aliasBy,
+			ProjectName: query.Model.Get("projectName").MustString(""),
 		})
 	}
 
@@ -290,7 +290,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
-	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+query.Project+"/timeSeries"))
+	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+query.ProjectName+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, StackdriverResponse{}, nil

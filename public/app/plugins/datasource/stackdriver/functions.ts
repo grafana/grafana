@@ -50,9 +50,13 @@ export const getAggregationOptionsByMetric = (valueType: ValueTypes, metricKind:
       });
 };
 
-export const getLabelKeys = async (datasource: StackdriverDatasource, selectedMetricType: string, project: string) => {
+export const getLabelKeys = async (
+  datasource: StackdriverDatasource,
+  selectedMetricType: string,
+  projectName: string
+) => {
   const refId = 'handleLabelKeysQuery';
-  const labels = await datasource.getLabels(selectedMetricType, refId, project);
+  const labels = await datasource.getLabels(selectedMetricType, refId, projectName);
   return [...Object.keys(labels), ...systemLabels];
 };
 

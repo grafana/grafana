@@ -12,7 +12,7 @@ export interface Props {
   templateSrv: TemplateSrv;
   templateVariableOptions: Array<SelectableValue<string>>;
   datasource: StackdriverDatasource;
-  project: string;
+  projectName: string;
   metricType: string;
   children?: (renderProps: any) => JSX.Element;
 }
@@ -24,7 +24,7 @@ interface State {
   service: string;
   metric: string;
   metricDescriptor: MetricDescriptor;
-  project: string;
+  projectName: string;
 }
 
 export function Metrics(props: Props) {
@@ -35,15 +35,15 @@ export function Metrics(props: Props) {
     service: '',
     metric: '',
     metricDescriptor: null,
-    project: null,
+    projectName: null,
   });
 
   const { services, service, metrics } = state;
-  const { metricType, templateVariableOptions, project } = props;
+  const { metricType, templateVariableOptions, projectName } = props;
 
   const loadMetricDescriptors = async () => {
-    if (project) {
-      const metricDescriptors = await props.datasource.getMetricTypes(props.project);
+    if (projectName) {
+      const metricDescriptors = await props.datasource.getMetricTypes(props.projectName);
       const services = getServicesList(metricDescriptors);
       const metrics = getMetricsList(metricDescriptors);
       const service = metrics.length > 0 ? metrics[0].service : '';
@@ -54,7 +54,7 @@ export function Metrics(props: Props) {
 
   useEffect(() => {
     loadMetricDescriptors();
-  }, [project]);
+  }, [projectName]);
 
   const getSelectedMetricDescriptor = (metricDescriptors: MetricDescriptor[], metricType: string) => {
     return metricDescriptors.find(md => md.type === props.templateSrv.replace(metricType));
