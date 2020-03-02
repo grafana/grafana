@@ -122,11 +122,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           />
         )}
         {variableStateToEdit && (
-          <VariableEditorEditor
-            picker={variableStateToEdit.picker}
-            editor={variableStateToEdit.editor}
-            variable={variableStateToEdit.variable}
-          />
+          <VariableEditorEditor editor={variableStateToEdit.editor} variable={variableStateToEdit.variable} />
         )}
       </div>
     );

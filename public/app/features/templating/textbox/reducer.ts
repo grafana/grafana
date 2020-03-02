@@ -24,16 +24,11 @@ import cloneDeep from 'lodash/cloneDeep';
 import { QueryVariableState } from '../query/reducer';
 import { createTextBoxOptions } from './actions';
 
-export interface TextBoxVariablePickerState {}
-
 export interface TextBoxVariableEditorState extends VariableEditorState {
   query: string;
 }
 
-export interface TextBoxVariableState
-  extends VariableState<TextBoxVariablePickerState, TextBoxVariableEditorState, TextBoxVariableModel> {}
-
-export const initialTextBoxVariablePickerState: TextBoxVariablePickerState = {};
+export interface TextBoxVariableState extends VariableState<TextBoxVariableEditorState, TextBoxVariableModel> {}
 
 export const initialTextBoxVariableEditorState: TextBoxVariableEditorState = {
   ...initialVariableEditorState,
@@ -56,7 +51,6 @@ export const initialTextBoxVariableModelState: TextBoxVariableModel = {
 };
 
 export const initialTextBoxVariableState: TextBoxVariableState = {
-  picker: initialTextBoxVariablePickerState,
   editor: initialTextBoxVariableEditorState,
   variable: initialTextBoxVariableModelState,
 };

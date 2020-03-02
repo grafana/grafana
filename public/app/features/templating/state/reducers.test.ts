@@ -23,7 +23,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
           '1': {
             variable: {
@@ -37,7 +36,6 @@ describe('templatingReducer', () => {
               global: true,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
           '2': {
             variable: {
@@ -50,7 +48,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
           '3': {
             variable: {
@@ -64,7 +61,6 @@ describe('templatingReducer', () => {
               global: true,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
         },
         uuidInEditor: null,
@@ -87,7 +83,6 @@ describe('templatingReducer', () => {
                 global: true,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
             '3': {
               variable: {
@@ -101,7 +96,6 @@ describe('templatingReducer', () => {
                 global: true,
               },
               editor: { ...initialVariableEditorState },
-              picker: {},
             },
           },
           uuidInEditor: null,
@@ -124,7 +118,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
         },
         uuidInEditor: null,
@@ -172,7 +165,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
         },
         uuidInEditor: null,
@@ -216,7 +208,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
             },
             editor: { ...initialVariableEditorState },
-            picker: {},
           },
         },
         uuidInEditor: null,
