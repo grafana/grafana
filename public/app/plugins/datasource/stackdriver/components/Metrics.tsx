@@ -89,16 +89,16 @@ export function Metrics(props: Props) {
         description: m.description,
       }));
 
-    setState({ ...state, service, metrics });
-
     if (metrics.length > 0 && !metrics.some(m => m.value === templateSrv.replace(metricType))) {
-      onMetricTypeChange(metrics[0]);
+      onMetricTypeChange(metrics[0], { service, metrics });
+    } else {
+      setState({ ...state, service, metrics });
     }
   };
 
-  const onMetricTypeChange = ({ value }: any) => {
+  const onMetricTypeChange = ({ value }: any, extra: any = {}) => {
     const metricDescriptor = getSelectedMetricDescriptor(state.metricDescriptors, value);
-    setState({ ...state, metricDescriptor });
+    setState({ ...state, metricDescriptor, ...extra });
     props.onChange({ ...metricDescriptor, type: value });
   };
 
@@ -111,6 +111,7 @@ export function Metrics(props: Props) {
     return services.length > 0 ? _.uniqBy(services, s => s.value) : [];
   };
 
+  console.log('rerender', { service, metricType });
   return (
     <>
       <div className="gf-form-inline">
