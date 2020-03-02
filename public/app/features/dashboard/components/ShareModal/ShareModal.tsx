@@ -1,28 +1,10 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
-import { stylesFactory, Modal, TabsBar, Tab, TabContent, Icon } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { config } from 'app/core/config';
+import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareExport } from './ShareExport';
 import { ShareEmbed } from './ShareEmbed';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  modalHeaderTitle: css`
-    font-size: ${theme.typography.heading.h3};
-    padding-top: ${theme.spacing.sm};
-    margin: 0 ${theme.spacing.md};
-  `,
-  modalHeaderIcon: css`
-    margin-right: ${theme.spacing.md};
-    font-size: inherit;
-    &:before {
-      vertical-align: baseline;
-    }
-  `,
-}));
 
 const shareModalTabs = [
   { label: 'Link', value: 'link' },
@@ -60,49 +42,30 @@ export class ShareModal extends PureComponent<Props, State> {
     this.props.onDismiss();
   };
 
-  onSelectTab = (t: any) => () => {
+  onSelectTab = (t: any) => {
     this.setState({ tab: t.value });
   };
 
-  renderTabsBar() {
+  getTabs() {
     const { panel } = this.props;
-    const { tab } = this.state;
 
-    return (
-      <TabsBar hideBorder={true}>
-        {shareModalTabs.map((t, index) => {
-          // Filter tabs for dashboard/panel share modal
-          if ((panel && t.value === 'export') || (!panel && t.value === 'embed')) {
-            return null;
-          }
-
-          return (
-            <Tab
-              key={`${t.value}-${index}`}
-              label={t.label}
-              active={t.value === tab}
-              onChangeTab={this.onSelectTab(t)}
-            />
-          );
-        })}
-      </TabsBar>
-    );
+    // Filter tabs for dashboard/panel share modal
+    return shareModalTabs.filter(t => {
+      if (panel) {
+        return t.value !== 'export';
+      }
+      return t.value !== 'embed';
+    });
   }
 
   renderTitle() {
     const { panel } = this.props;
-    const { theme } = config;
-    const styles = getStyles(theme);
+    const { tab } = this.state;
     const title = panel ? 'Share Panel' : 'Share';
+    const tabs = this.getTabs();
 
     return (
-      <>
-        <h2 className={styles.modalHeaderTitle}>
-          <Icon name="share-square-o" className={styles.modalHeaderIcon} />
-          {title}
-        </h2>
-        {this.renderTabsBar()}
-      </>
+      <ModalTabsHeader title={title} icon="share-square-o" tabs={tabs} activeTab={tab} onChangeTab={this.onSelectTab} />
     );
   }
 
