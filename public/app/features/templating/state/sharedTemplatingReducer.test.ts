@@ -15,6 +15,7 @@ import {
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState, initialQueryVariablePickerState } from '../query/reducer';
+import { variableEditorUnMounted } from '../editor/reducer';
 
 const getVariableState = (
   noOfVariables: number,
@@ -99,461 +100,122 @@ describe('sharedTemplatingReducer', () => {
     });
   });
 
-  // describe('when variableEditorMounted is dispatched', () => {
-  //   it('then state should be correct', () => {
-  //     const initialState: TemplatingState = {
-  //       variables: getVariableState(3),
-  //       uuidInEditor: null,
-  //     };
-  //     const datasources: DataSourceSelectItem[] = [
-  //       { name: 'ds1', sort: '', value: 'ds1-value', meta: ({} as unknown) as DataSourcePluginMeta },
-  //       { name: 'ds2', sort: '', value: 'ds2-value', meta: ({} as unknown) as DataSourcePluginMeta },
-  //     ];
-  //     const payload = toVariablePayload({ uuid: '1', type: 'query' }, datasources);
-  //     reducerTester<TemplatingState>()
-  //       .givenReducer(sharedTemplatingReducer, initialState)
-  //       .whenActionIsDispatched(variableEditorMounted(payload))
-  //       .thenStateShouldEqual({
-  //         variables: {
-  //           '0': {
-  //             variable: {
-  //               uuid: '0',
-  //               type: 'query',
-  //               name: 'Name-0',
-  //               hide: VariableHide.dontHide,
-  //               index: 0,
-  //               label: 'Label-0',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '1': {
-  //             variable: {
-  //               uuid: '1',
-  //               type: 'query',
-  //               name: 'Name-1',
-  //               hide: VariableHide.dontHide,
-  //               index: 1,
-  //               label: 'Label-1',
-  //               skipUrlSync: false,
-  //             },
-  //             editor: {
-  //               ...initialVariableEditorState,
-  //               name: 'Name-1',
-  //               type: 'query',
-  //               dataSources: [
-  //                 { name: 'ds1', sort: '', value: 'ds1-value', meta: ({} as unknown) as DataSourcePluginMeta },
-  //                 { name: 'ds2', sort: '', value: 'ds2-value', meta: ({} as unknown) as DataSourcePluginMeta },
-  //               ],
-  //             },
-  //             picker: {},
-  //           },
-  //           '2': {
-  //             variable: {
-  //               uuid: '2',
-  //               type: 'query',
-  //               name: 'Name-2',
-  //               hide: VariableHide.dontHide,
-  //               index: 2,
-  //               label: 'Label-2',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //         },
-  //         uuidInEditor: null,
-  //       });
-  //   });
-  // });
+  describe('when variableEditorUnMounted is dispatched', () => {
+    it('then state should be correct', () => {
+      variableAdapters.set('query', createQueryVariableAdapter());
+      const initialState: TemplatingState = {
+        variables: getVariableState(3, 1, true),
+        uuidInEditor: '1',
+      };
+      const payload = toVariablePayload({ uuid: '1', type: 'query' });
+      reducerTester<TemplatingState>()
+        .givenReducer(sharedTemplatingReducer, initialState)
+        .whenActionIsDispatched(variableEditorUnMounted(payload))
+        .thenStateShouldEqual({
+          variables: {
+            '0': {
+              variable: {
+                uuid: '0',
+                type: 'query',
+                name: 'Name-0',
+                hide: VariableHide.dontHide,
+                index: 0,
+                label: 'Label-0',
+                skipUrlSync: false,
+              },
+              picker: {},
+            },
+            '1': {
+              variable: {
+                uuid: '1',
+                type: 'query',
+                name: 'Name-1',
+                hide: VariableHide.dontHide,
+                index: 1,
+                label: 'Label-1',
+                skipUrlSync: false,
+              }, //
+              picker: {},
+            },
+            '2': {
+              variable: {
+                uuid: '2',
+                type: 'query',
+                name: 'Name-2',
+                hide: VariableHide.dontHide,
+                index: 2,
+                label: 'Label-2',
+                skipUrlSync: false,
+              },
+              picker: {},
+            },
+          },
+          uuidInEditor: null,
+        });
+    });
+  });
 
-  // describe('when variableEditorUnMounted is dispatched', () => {
-  //   it('then state should be correct', () => {
-  //     variableAdapters.set('query', createQueryVariableAdapter());
-  //     const initialState: TemplatingState = {
-  //       variables: getVariableState(3, 1, true),
-  //       uuidInEditor: '1',
-  //     };
-  //     const payload = toVariablePayload({ uuid: '1', type: 'query' });
-  //     reducerTester<TemplatingState>()
-  //       .givenReducer(sharedTemplatingReducer, initialState)
-  //       .whenActionIsDispatched(variableEditorUnMounted(payload))
-  //       .thenStateShouldEqual({
-  //         variables: {
-  //           '0': {
-  //             variable: {
-  //               uuid: '0',
-  //               type: 'query',
-  //               name: 'Name-0',
-  //               hide: VariableHide.dontHide,
-  //               index: 0,
-  //               label: 'Label-0',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '1': {
-  //             variable: {
-  //               uuid: '1',
-  //               type: 'query',
-  //               name: 'Name-1',
-  //               hide: VariableHide.dontHide,
-  //               index: 1,
-  //               label: 'Label-1',
-  //               skipUrlSync: false,
-  //             },//
-  //             picker: {},
-  //           },
-  //           '2': {
-  //             variable: {
-  //               uuid: '2',
-  //               type: 'query',
-  //               name: 'Name-2',
-  //               hide: VariableHide.dontHide,
-  //               index: 2,
-  //               label: 'Label-2',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //         },
-  //         uuidInEditor: null,
-  //       });
-  //   });
-  // });
+  describe('when variableEditorUnMounted is dispatched with empty uuid that is already unmounted', () => {
+    it('then state should be correct', () => {
+      variableAdapters.set('query', createQueryVariableAdapter());
+      const initialState: TemplatingState = {
+        variables: getVariableState(3, 1, true),
+        uuidInEditor: '1',
+      };
 
-  // describe('when variableEditorUnMounted is dispatched with empty uuid that is already unmounted', () => {
-  //   it('then state should be correct', () => {
-  //     variableAdapters.set('query', createQueryVariableAdapter());
-  //     const initialState: TemplatingState = {
-  //       variables: getVariableState(3, 1, true),
-  //       uuidInEditor: '1',
-  //     };
-  //
-  //     const payload = toVariablePayload({ uuid: '1', type: 'query' });
-  //     const emptyPayload = toVariablePayload({ uuid: emptyUuid, type: 'query' });
-  //
-  //     const expectedState: TemplatingState = {
-  //       variables: {
-  //         '0': {
-  //           variable: {
-  //             uuid: '0',
-  //             type: 'query',
-  //             name: 'Name-0',
-  //             hide: VariableHide.dontHide,
-  //             index: 0,
-  //             label: 'Label-0',
-  //             skipUrlSync: false,
-  //           },
-  //           picker: {},
-  //         },
-  //         '1': {
-  //           variable: {
-  //             uuid: '1',
-  //             type: 'query',
-  //             name: 'Name-1',
-  //             hide: VariableHide.dontHide,
-  //             index: 1,
-  //             label: 'Label-1',
-  //             skipUrlSync: false,
-  //           },//
-  //           picker: {},
-  //         },
-  //         '2': {
-  //           variable: {
-  //             uuid: '2',
-  //             type: 'query',
-  //             name: 'Name-2',
-  //             hide: VariableHide.dontHide,
-  //             index: 2,
-  //             label: 'Label-2',
-  //             skipUrlSync: false,
-  //           },
-  //           picker: {},
-  //         },
-  //       },
-  //       uuidInEditor: null,
-  //     };
-  //
-  //     reducerTester<TemplatingState>()
-  //       .givenReducer(sharedTemplatingReducer, initialState)
-  //       .whenActionIsDispatched(variableEditorUnMounted(payload))
-  //       .thenStateShouldEqual(expectedState)
-  //       .whenActionIsDispatched(variableEditorUnMounted(emptyPayload))
-  //       .thenStateShouldEqual(expectedState);
-  //   });
-  // });
+      const payload = toVariablePayload({ uuid: '1', type: 'query' });
+      const emptyPayload = toVariablePayload({ uuid: emptyUuid, type: 'query' });
 
-  // describe('when changeVariableLabel is dispatched', () => {
-  //   it('then state should be correct', () => {
-  //     const initialState: TemplatingState = {
-  //       variables: getVariableState(3, 1),
-  //       uuidInEditor: '1',
-  //     };
-  //     const payload = toVariablePayload({ uuid: '1', type: 'query' }, 'New label');
-  //     reducerTester<TemplatingState>()
-  //       .givenReducer(sharedTemplatingReducer, initialState)
-  //       .whenActionIsDispatched(changeVariableLabel(payload))
-  //       .thenStateShouldEqual({
-  //         variables: {
-  //           '0': {
-  //             variable: {
-  //               uuid: '0',
-  //               type: 'query',
-  //               name: 'Name-0',
-  //               hide: VariableHide.dontHide,
-  //               index: 0,
-  //               label: 'Label-0',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '1': {
-  //             variable: {
-  //               uuid: '1',
-  //               type: 'query',
-  //               name: 'Name-1',
-  //               hide: VariableHide.dontHide,
-  //               index: 1,
-  //               label: 'New label',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '2': {
-  //             variable: {
-  //               uuid: '2',
-  //               type: 'query',
-  //               name: 'Name-2',
-  //               hide: VariableHide.dontHide,
-  //               index: 2,
-  //               label: 'Label-2',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //         },
-  //         uuidInEditor: '1',
-  //       });
-  //   });
-  // });
+      const expectedState: TemplatingState = {
+        variables: {
+          '0': {
+            variable: {
+              uuid: '0',
+              type: 'query',
+              name: 'Name-0',
+              hide: VariableHide.dontHide,
+              index: 0,
+              label: 'Label-0',
+              skipUrlSync: false,
+            },
+            picker: {},
+          },
+          '1': {
+            variable: {
+              uuid: '1',
+              type: 'query',
+              name: 'Name-1',
+              hide: VariableHide.dontHide,
+              index: 1,
+              label: 'Label-1',
+              skipUrlSync: false,
+            }, //
+            picker: {},
+          },
+          '2': {
+            variable: {
+              uuid: '2',
+              type: 'query',
+              name: 'Name-2',
+              hide: VariableHide.dontHide,
+              index: 2,
+              label: 'Label-2',
+              skipUrlSync: false,
+            },
+            picker: {},
+          },
+        },
+        uuidInEditor: null,
+      };
 
-  // describe('when changeVariableHide is dispatched', () => {
-  //   it('then state should be correct', () => {
-  //     const initialState: TemplatingState = {
-  //       variables: getVariableState(3, 1),
-  //       uuidInEditor: '1',
-  //     };
-  //     const payload = toVariablePayload({ uuid: '1', type: 'query' }, VariableHide.hideVariable);
-  //     reducerTester<TemplatingState>()
-  //       .givenReducer(sharedTemplatingReducer, initialState)
-  //       .whenActionIsDispatched(changeVariableHide(payload))
-  //       .thenStateShouldEqual({
-  //         variables: {
-  //           '0': {
-  //             variable: {
-  //               uuid: '0',
-  //               type: 'query',
-  //               name: 'Name-0',
-  //               hide: VariableHide.dontHide,
-  //               index: 0,
-  //               label: 'Label-0',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '1': {
-  //             variable: {
-  //               uuid: '1',
-  //               type: 'query',
-  //               name: 'Name-1',
-  //               hide: VariableHide.hideVariable,
-  //               index: 1,
-  //               label: 'Label-1',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '2': {
-  //             variable: {
-  //               uuid: '2',
-  //               type: 'query',
-  //               name: 'Name-2',
-  //               hide: VariableHide.dontHide,
-  //               index: 2,
-  //               label: 'Label-2',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //         },
-  //         uuidInEditor: '1',
-  //       });
-  //   });
-  // });
-
-  // describe('when updateVariableStarting is dispatched', () => {
-  //   it('then state should be correct', () => {
-  //     const initialState: TemplatingState = {
-  //       variables: getVariableState(3, 1),
-  //       uuidInEditor: '1',
-  //     };
-  //     initialState.variables['1'].editor.isValid = false;
-  //     const payload = toVariablePayload({ uuid: '1', type: 'query' });
-  //     reducerTester<TemplatingState>()
-  //       .givenReducer(sharedTemplatingReducer, initialState)
-  //       .whenActionIsDispatched(updateVariableStarting(payload))
-  //       .thenStateShouldEqual({
-  //         variables: {
-  //           '0': {
-  //             variable: {
-  //               uuid: '0',
-  //               type: 'query',
-  //               name: 'Name-0',
-  //               hide: VariableHide.dontHide,
-  //               index: 0,
-  //               label: 'Label-0',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '1': {
-  //             variable: {
-  //               uuid: '1',
-  //               type: 'query',
-  //               name: 'Name-1',
-  //               hide: VariableHide.dontHide,
-  //               index: 1,
-  //               label: 'Label-1',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '2': {
-  //             variable: {
-  //               uuid: '2',
-  //               type: 'query',
-  //               name: 'Name-2',
-  //               hide: VariableHide.dontHide,
-  //               index: 2,
-  //               label: 'Label-2',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //         },
-  //         uuidInEditor: '1',
-  //       });
-  //   });
-  // });
-
-  // describe('when updateVariableCompleted is dispatched', () => {
-  //   it('then state should be correct', () => {
-  //     const initialState: TemplatingState = {
-  //       variables: getVariableState(3, 1),
-  //       uuidInEditor: '1',
-  //     };
-  //     initialState.variables['1'].editor.isValid = false;
-  //     const payload = toVariablePayload({ uuid: '1', type: 'query' });
-  //     reducerTester<TemplatingState>()
-  //       .givenReducer(sharedTemplatingReducer, initialState)
-  //       .whenActionIsDispatched(updateVariableCompleted(payload))
-  //       .thenStateShouldEqual({
-  //         variables: {
-  //           '0': {
-  //             variable: {
-  //               uuid: '0',
-  //               type: 'query',
-  //               name: 'Name-0',
-  //               hide: VariableHide.dontHide,
-  //               index: 0,
-  //               label: 'Label-0',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '1': {
-  //             variable: {
-  //               uuid: '1',
-  //               type: 'query',
-  //               name: 'Name-1',
-  //               hide: VariableHide.dontHide,
-  //               index: 1,
-  //               label: 'Label-1',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '2': {
-  //             variable: {
-  //               uuid: '2',
-  //               type: 'query',
-  //               name: 'Name-2',
-  //               hide: VariableHide.dontHide,
-  //               index: 2,
-  //               label: 'Label-2',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //         },
-  //         uuidInEditor: '1',
-  //       });
-  //   });
-  // });
-
-  // describe('when updateVariableFailed is dispatched', () => {
-  //   it('then state should be correct', () => {
-  //     const initialState: TemplatingState = {
-  //       variables: getVariableState(3, 1),
-  //       uuidInEditor: '1',
-  //     };
-  //     const payload = toVariablePayload({ uuid: '1', type: 'query' }, new Error('Test error'));
-  //     reducerTester<TemplatingState>()
-  //       .givenReducer(sharedTemplatingReducer, initialState)
-  //       .whenActionIsDispatched(updateVariableFailed(payload))
-  //       .thenStateShouldEqual({
-  //         variables: {
-  //           '0': {
-  //             variable: {
-  //               uuid: '0',
-  //               type: 'query',
-  //               name: 'Name-0',
-  //               hide: VariableHide.dontHide,
-  //               index: 0,
-  //               label: 'Label-0',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '1': {
-  //             variable: {
-  //               uuid: '1',
-  //               type: 'query',
-  //               name: 'Name-1',
-  //               hide: VariableHide.dontHide,
-  //               index: 1,
-  //               label: 'Label-1',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //           '2': {
-  //             variable: {
-  //               uuid: '2',
-  //               type: 'query',
-  //               name: 'Name-2',
-  //               hide: VariableHide.dontHide,
-  //               index: 2,
-  //               label: 'Label-2',
-  //               skipUrlSync: false,
-  //             },
-  //             picker: {},
-  //           },
-  //         },
-  //         uuidInEditor: '1',
-  //       });
-  //   });
-  // });
+      reducerTester<TemplatingState>()
+        .givenReducer(sharedTemplatingReducer, initialState)
+        .whenActionIsDispatched(variableEditorUnMounted(payload))
+        .thenStateShouldEqual(expectedState)
+        .whenActionIsDispatched(variableEditorUnMounted(emptyPayload))
+        .thenStateShouldEqual(expectedState);
+    });
+  });
 
   describe('when duplicateVariable is dispatched', () => {
     it('then state should be correct', () => {
