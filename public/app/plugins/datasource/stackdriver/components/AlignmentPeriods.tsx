@@ -8,7 +8,7 @@ import { Segment } from '@grafana/ui';
 import { alignmentPeriods, alignOptions } from '../constants';
 
 export interface Props {
-  onChange: (alignmentPeriod: any) => void;
+  onChange: (alignmentPeriod: string) => void;
   templateSrv: TemplateSrv;
   templateVariableOptions: Array<SelectableValue<string>>;
   alignmentPeriod: string;

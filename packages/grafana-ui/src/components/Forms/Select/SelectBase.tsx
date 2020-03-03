@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { SelectableValue, deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
@@ -24,6 +24,7 @@ import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
+import { withSelectArrowNavigation } from '../../Select/withSelectArrowNavigation';
 
 type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
@@ -64,6 +65,7 @@ export interface SelectCommonProps<T> {
   prefix?: JSX.Element | string | null;
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
+  menuPosition?: 'fixed' | 'absolute';
 }
 
 export interface SelectAsyncProps<T> {
@@ -175,9 +177,19 @@ export function SelectBase<T>({
   width,
   invalid,
   components,
+  menuPosition,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
+  const onChangeWithEmpty = useCallback(
+    (value: SelectValue<T>) => {
+      if (isMulti && (value === undefined || value === null)) {
+        return onChange([]);
+      }
+      onChange(value);
+    },
+    [isMulti]
+  );
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
@@ -229,13 +241,14 @@ export function SelectBase<T>({
     onMenuClose: onCloseMenu,
     tabSelectsValue,
     options,
-    onChange,
+    onChange: onChangeWithEmpty,
     onBlur,
     onKeyDown,
     menuShouldScrollIntoView: false,
     renderControl,
     captureMenuScroll: false,
     menuPlacement: 'auto',
+    menuPosition,
   };
 
   // width property is deprecated in favor of size or className
@@ -259,10 +272,10 @@ export function SelectBase<T>({
       defaultOptions,
     };
   }
-
+  const NavigatableSelect = withSelectArrowNavigation(ReactSelectComponent);
   return (
     <>
-      <ReactSelectComponent
+      <NavigatableSelect
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
