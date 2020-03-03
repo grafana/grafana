@@ -16,71 +16,37 @@ weight = 5
 
 The SAML authentication integration allows your Grafana users to log in by using an external SAML Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
-## Supported SAML
-
 The SAML single-sign-on (SSO) standard is varied and flexible. Our implementation contains the subset of features needed to provide a smooth authentication experience into Grafana.
 
 > Should you encounter any problems with our implementation, please don't hesitate to contact us.
 
-Grafana supports:
+## Supported SAML
 
-* From the Service Provider (SP) to the Identity Provider (IdP)
+Grafana supports the following SAML setups.
 
-    - `HTTP-POST` binding
-    - `HTTP-Redirect` binding
+* From the Service Provider (SP) to the Identity Provider (IdP):
+  - `HTTP-POST` binding
+  - `HTTP-Redirect` binding
 
-* From the Identity Provider (IdP) to the Service Provider (SP)
+* From the Identity Provider (IdP) to the Service Provider (SP):
+  - `HTTP-POST` binding
 
-    - `HTTP-POST` binding
+In terms of security:
+* Grafana supports signed and encrypted assertions. 
+* Grafana does not support signed or encrypted requests.
 
-* In terms of security, we currently support signed and encrypted Assertions. However, signed or encrypted requests are not supported.
-
-* In terms of initiation, only SP-initiated requests are supported. There's no support for IdP-initiated request.
+In terms of initiation: 
+* Grafana supports SP-initiated requests.
+* Grafana does not support IdP-initiated request.
 
 ## Set up SAML authentication
 
-To use the SAML integration, you need to enable SAML in the [main config file]({{< relref "../installation/configuration.md" >}}).
+To use the SAML integration, you need to enable SAML in the Grafana configuration file, either `custom.ini` or `grafana.ini. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information about configuring Grafana.
 
-```bash
+```ini
 [auth.saml]
 # Defaults to false. If true, the feature is enabled
 enabled = true
-
-# Base64-encoded public X.509 certificate. Used to sign requests to the IdP
-certificate =
-
-# Path to the public X.509 certificate. Used to sign requests to the IdP
-certificate_path =
-
-# Base64-encoded private key. Used to decrypt assertions from the IdP
-private_key =
-
-# Path to the private key. Used to decrypt assertions from the IdP
-private_key_path =
-
-# Base64-encoded IdP SAML metadata XML. Used to verify and obtain binding locations from the IdP
-idp_metadata =
-
-# Path to the SAML metadata XML. Used to verify and obtain binding locations from the IdP
-idp_metadata_path =
-
-# URL to fetch SAML IdP metadata. Used to verify and obtain binding locations from the IdP
-idp_metadata_url =
-
-# Duration, since the IdP issued a response and the SP is allowed to process it. Defaults to 90 seconds
-max_issue_delay =
-
-# Duration, for how long the SP's metadata should be valid. Defaults to 48 hours
-metadata_valid_duration =
-
-# Friendly name or name of the attribute within the SAML assertion to use as the user's name
-assertion_attribute_name = displayName
-
-# Friendly name or name of the attribute within the SAML assertion to use as the user's login handle
-assertion_attribute_login = mail
-
-# Friendly name or name of the attribute within the SAML assertion to use as the user's email
-assertion_attribute_email = mail
 ```
 
 Important to note:
@@ -88,9 +54,7 @@ Important to note:
 - Like any other Grafana configuration, use of [environment variables for these options is supported]({{< relref "../installation/configuration.md#using-environment-variables" >}})
 - Only one form of configuration option is required. Using multiple forms, e.g. both `certificate` and `certificate_path` will result in an error
 
-## Grafana configuration
-
-Example working configuration:
+## Example SAML configuration
 
 ```bash
 [auth.saml]
@@ -105,7 +69,7 @@ assertion_attribute_login = mail
 assertion_attribute_email = mail
 ```
 
-Available options:
+## SAML configuration options
 
 | Setting                                                     | Required | Description                                                                                        | Default       |
 | ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- | ------------- |
@@ -119,7 +83,7 @@ Available options:
 | `assertion_attribute_login`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's login handle | `mail`        |
 | `assertion_attribute_email`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's email        | `mail`        |
 
-### Cert and private key
+### Certificate and private key
 
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part.
 
