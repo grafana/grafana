@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Explore should render component 1`] = `
+<div
+  className="explore"
+>
+  <Connect(UnConnectedExploreToolbar)
+    exploreId="left"
+    onChangeTime={[Function]}
+  />
+  <div
+    className="explore-container"
+  >
+    <QueryRows
+      exploreEvents={
+        Emitter {
+          "emitter": EventEmitter {
+            "_events": Object {},
+            "_eventsCount": 0,
+          },
+        }
+      }
+      exploreId="left"
+      queryKeys={Array []}
+    />
+    <div
+      className="gf-form"
+    >
+      <button
+        aria-label="Add row button"
+        className="gf-form-label gf-form-label--btn css-o41ti2"
+        disabled={false}
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-fw fa-plus icon-margin-right"
+        />
+        <span
+          className="btn-title"
+        >
+           Add query
+        </span>
+      </button>
+    </div>
+    <Component
+      queryError={Object {}}
+    />
+    <AutoSizer
+      disableHeight={true}
+      disableWidth={false}
+      onResize={[Function]}
+      style={Object {}}
+    >
+      <Component />
+    </AutoSizer>
+  </div>
+</div>
+`;
