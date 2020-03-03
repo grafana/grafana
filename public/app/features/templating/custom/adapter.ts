@@ -3,7 +3,7 @@ import { CustomVariableModel } from '../variable';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
 import { VariableAdapter } from '../adapters';
-import { initialCustomVariableState, customVariableReducer } from './reducer';
+import { customVariableReducer, initialCustomVariableModelState } from './reducer';
 import { OptionsPicker } from '../pickers';
 import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
@@ -13,7 +13,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
   return {
     description: 'Define variable values manually',
     label: 'Custom',
-    initialState: initialCustomVariableState,
+    initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,
     picker: OptionsPicker,
     editor: CustomVariableEditor,

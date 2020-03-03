@@ -1,6 +1,8 @@
+import cloneDeep from 'lodash/cloneDeep';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { sharedReducer } from './sharedReducer';
-import { QueryVariableModel, VariableHide, VariableModel } from '../variable';
+import { QueryVariableModel, VariableHide } from '../variable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, emptyUuid } from './types';
 import {
   addVariable,
@@ -18,7 +20,6 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { variableEditorUnMounted } from '../editor/reducer';
 import { initialQueryVariableModelState } from '../query/reducer';
-import cloneDeep from 'lodash/cloneDeep';
 import { Deferred } from '../deferred';
 import { getVariableState, getVariableTestContext } from './helpers';
 import { changeToEditorEditMode } from './uuidInEditorReducer';
@@ -35,7 +36,7 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(addVariable(payload))
         .thenStatePredicateShouldEqual(resultingState => {
           // we need to remove initLock because instances will no be reference equal
-          const { initLock, ...resultingRest } = resultingState[0].variable;
+          const { initLock, ...resultingRest } = resultingState[0];
           const expectedState = { ...initialQueryVariableModelState };
           delete expectedState.initLock;
           expect(resultingRest).toEqual({
@@ -47,10 +48,10 @@ describe('sharedReducer', () => {
             type: 'type from model',
           });
           // make sure that initLock is defined
-          expect(resultingState[0].variable.initLock!).toBeDefined();
-          expect(resultingState[0].variable.initLock!.promise).toBeDefined();
-          expect(resultingState[0].variable.initLock!.resolve).toBeDefined();
-          expect(resultingState[0].variable.initLock!.reject).toBeDefined();
+          expect(resultingState[0].initLock!).toBeDefined();
+          expect(resultingState[0].initLock!.promise).toBeDefined();
+          expect(resultingState[0].initLock!.resolve).toBeDefined();
+          expect(resultingState[0].initLock!.reject).toBeDefined();
           return true;
         });
     });
@@ -65,26 +66,22 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(removeVariable(payload))
         .thenStateShouldEqual({
           '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
           '2': {
-            variable: {
-              uuid: '2',
-              type: 'query',
-              name: 'Name-2',
-              hide: VariableHide.dontHide,
-              index: 1,
-              label: 'Label-2',
-              skipUrlSync: false,
-            },
+            uuid: '2',
+            type: 'query',
+            name: 'Name-2',
+            hide: VariableHide.dontHide,
+            index: 1,
+            label: 'Label-2',
+            skipUrlSync: false,
           },
         });
     });
@@ -100,37 +97,31 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(variableEditorUnMounted(payload))
         .thenStateShouldEqual({
           '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
           '1': {
-            variable: {
-              uuid: '1',
-              type: 'query',
-              name: 'Name-1',
-              hide: VariableHide.dontHide,
-              index: 1,
-              label: 'Label-1',
-              skipUrlSync: false,
-            },
+            uuid: '1',
+            type: 'query',
+            name: 'Name-1',
+            hide: VariableHide.dontHide,
+            index: 1,
+            label: 'Label-1',
+            skipUrlSync: false,
           },
           '2': {
-            variable: {
-              uuid: '2',
-              type: 'query',
-              name: 'Name-2',
-              hide: VariableHide.dontHide,
-              index: 2,
-              label: 'Label-2',
-              skipUrlSync: false,
-            },
+            uuid: '2',
+            type: 'query',
+            name: 'Name-2',
+            hide: VariableHide.dontHide,
+            index: 2,
+            label: 'Label-2',
+            skipUrlSync: false,
           },
         });
     });
@@ -146,37 +137,31 @@ describe('sharedReducer', () => {
 
       const expectedState: VariablesState = {
         '0': {
-          variable: {
-            uuid: '0',
-            type: 'query',
-            name: 'Name-0',
-            hide: VariableHide.dontHide,
-            index: 0,
-            label: 'Label-0',
-            skipUrlSync: false,
-          },
+          uuid: '0',
+          type: 'query',
+          name: 'Name-0',
+          hide: VariableHide.dontHide,
+          index: 0,
+          label: 'Label-0',
+          skipUrlSync: false,
         },
         '1': {
-          variable: {
-            uuid: '1',
-            type: 'query',
-            name: 'Name-1',
-            hide: VariableHide.dontHide,
-            index: 1,
-            label: 'Label-1',
-            skipUrlSync: false,
-          },
+          uuid: '1',
+          type: 'query',
+          name: 'Name-1',
+          hide: VariableHide.dontHide,
+          index: 1,
+          label: 'Label-1',
+          skipUrlSync: false,
         },
         '2': {
-          variable: {
-            uuid: '2',
-            type: 'query',
-            name: 'Name-2',
-            hide: VariableHide.dontHide,
-            index: 2,
-            label: 'Label-2',
-            skipUrlSync: false,
-          },
+          uuid: '2',
+          type: 'query',
+          name: 'Name-2',
+          hide: VariableHide.dontHide,
+          index: 2,
+          label: 'Label-2',
+          skipUrlSync: false,
         },
       };
 
@@ -199,48 +184,40 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(duplicateVariable(payload))
         .thenStateShouldEqual({
           '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
           '1': {
-            variable: {
-              uuid: '1',
-              type: 'query',
-              name: 'Name-1',
-              hide: VariableHide.dontHide,
-              index: 1,
-              label: 'Label-1',
-              skipUrlSync: false,
-            },
+            uuid: '1',
+            type: 'query',
+            name: 'Name-1',
+            hide: VariableHide.dontHide,
+            index: 1,
+            label: 'Label-1',
+            skipUrlSync: false,
           },
           '2': {
-            variable: {
-              uuid: '2',
-              type: 'query',
-              name: 'Name-2',
-              hide: VariableHide.dontHide,
-              index: 2,
-              label: 'Label-2',
-              skipUrlSync: false,
-            },
+            uuid: '2',
+            type: 'query',
+            name: 'Name-2',
+            hide: VariableHide.dontHide,
+            index: 2,
+            label: 'Label-2',
+            skipUrlSync: false,
           },
           '11': {
-            variable: {
-              uuid: '11',
-              type: 'query',
-              name: 'copy_of_Name-1',
-              hide: VariableHide.dontHide,
-              index: 3,
-              label: 'Label-1',
-              skipUrlSync: false,
-            },
+            uuid: '11',
+            type: 'query',
+            name: 'copy_of_Name-1',
+            hide: VariableHide.dontHide,
+            index: 3,
+            label: 'Label-1',
+            skipUrlSync: false,
           },
         });
     });
@@ -255,37 +232,31 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(changeVariableOrder(payload))
         .thenStateShouldEqual({
           '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 1,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 1,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
           '1': {
-            variable: {
-              uuid: '1',
-              type: 'query',
-              name: 'Name-1',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-1',
-              skipUrlSync: false,
-            },
+            uuid: '1',
+            type: 'query',
+            name: 'Name-1',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-1',
+            skipUrlSync: false,
           },
           '2': {
-            variable: {
-              uuid: '2',
-              type: 'query',
-              name: 'Name-2',
-              hide: VariableHide.dontHide,
-              index: 2,
-              label: 'Label-2',
-              skipUrlSync: false,
-            },
+            uuid: '2',
+            type: 'query',
+            name: 'Name-2',
+            hide: VariableHide.dontHide,
+            index: 2,
+            label: 'Label-2',
+            skipUrlSync: false,
           },
         });
     });
@@ -301,59 +272,49 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(storeNewVariable(payload))
         .thenStateShouldEqual({
           '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
           '1': {
-            variable: {
-              uuid: '1',
-              type: 'query',
-              name: 'Name-1',
-              hide: VariableHide.dontHide,
-              index: 1,
-              label: 'Label-1',
-              skipUrlSync: false,
-            },
+            uuid: '1',
+            type: 'query',
+            name: 'Name-1',
+            hide: VariableHide.dontHide,
+            index: 1,
+            label: 'Label-1',
+            skipUrlSync: false,
           },
           '2': {
-            variable: {
-              uuid: '2',
-              type: 'query',
-              name: 'Name-2',
-              hide: VariableHide.dontHide,
-              index: 2,
-              label: 'Label-2',
-              skipUrlSync: false,
-            },
+            uuid: '2',
+            type: 'query',
+            name: 'Name-2',
+            hide: VariableHide.dontHide,
+            index: 2,
+            label: 'Label-2',
+            skipUrlSync: false,
           },
           [emptyUuid]: {
-            variable: {
-              uuid: emptyUuid,
-              type: 'query',
-              name: `Name-${emptyUuid}`,
-              hide: VariableHide.dontHide,
-              index: 3,
-              label: `Label-${emptyUuid}`,
-              skipUrlSync: false,
-            },
+            uuid: emptyUuid,
+            type: 'query',
+            name: `Name-${emptyUuid}`,
+            hide: VariableHide.dontHide,
+            index: 3,
+            label: `Label-${emptyUuid}`,
+            skipUrlSync: false,
           },
           [11]: {
-            variable: {
-              uuid: '11',
-              type: 'query',
-              name: `Name-${emptyUuid}`,
-              hide: VariableHide.dontHide,
-              index: 3,
-              label: `Label-${emptyUuid}`,
-              skipUrlSync: false,
-            },
+            uuid: '11',
+            type: 'query',
+            name: `Name-${emptyUuid}`,
+            hide: VariableHide.dontHide,
+            index: 3,
+            label: `Label-${emptyUuid}`,
+            skipUrlSync: false,
           },
         });
     });
@@ -375,18 +336,15 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': {
+          '0': ({
             ...initialState[0],
-            variable: ({
-              ...initialState[0].variable,
-              options: [
-                { selected: false, text: 'All', value: '$__all' },
-                { selected: true, text: 'A', value: 'A' },
-                { selected: true, text: 'B', value: 'B' },
-              ],
-              current: { selected: true, text: 'A + B', value: ['A', 'B'] },
-            } as unknown) as VariableModel,
-          },
+            options: [
+              { selected: false, text: 'All', value: '$__all' },
+              { selected: true, text: 'A', value: 'A' },
+              { selected: true, text: 'B', value: 'B' },
+            ],
+            current: { selected: true, text: 'A + B', value: ['A', 'B'] },
+          } as unknown) as QueryVariableModel,
         });
     });
   });
@@ -407,18 +365,15 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': {
+          '0': ({
             ...initialState[0],
-            variable: ({
-              ...initialState[0].variable,
-              options: [
-                { selected: false, text: 'All', value: '$__all' },
-                { selected: true, text: 'A', value: 'A' },
-                { selected: true, text: 'B', value: 'B' },
-              ],
-              current: { selected: true, text: 'A + B', value: ['A', 'B'] },
-            } as unknown) as VariableModel,
-          },
+            options: [
+              { selected: false, text: 'All', value: '$__all' },
+              { selected: true, text: 'A', value: 'A' },
+              { selected: true, text: 'B', value: 'B' },
+            ],
+            current: { selected: true, text: 'A + B', value: ['A', 'B'] },
+          } as unknown) as QueryVariableModel,
         });
     });
   });
@@ -439,18 +394,15 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': {
+          '0': ({
             ...initialState[0],
-            variable: ({
-              ...initialState[0].variable,
-              options: [
-                { selected: true, text: 'All', value: '$__all' },
-                { selected: false, text: 'A', value: 'A' },
-                { selected: false, text: 'B', value: 'B' },
-              ],
-              current: { selected: true, text: 'All', value: ['$__all'] },
-            } as unknown) as VariableModel,
-          },
+            options: [
+              { selected: true, text: 'All', value: '$__all' },
+              { selected: false, text: 'A', value: 'A' },
+              { selected: false, text: 'B', value: 'B' },
+            ],
+            current: { selected: true, text: 'All', value: ['$__all'] },
+          } as unknown) as QueryVariableModel,
         });
     });
   });
@@ -469,16 +421,16 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(resolveInitLock(payload))
         .thenStatePredicateShouldEqual(resultingState => {
           // we need to remove initLock because instances will no be reference equal
-          const { initLock, ...resultingRest } = resultingState[0].variable;
+          const { initLock, ...resultingRest } = resultingState[0];
           const expectedState = cloneDeep(initialState);
-          delete expectedState[0].variable.initLock;
-          expect(resultingRest).toEqual(expectedState[0].variable);
+          delete expectedState[0].initLock;
+          expect(resultingRest).toEqual(expectedState[0]);
           // make sure that initLock is defined
-          expect(resultingState[0].variable.initLock!).toBeDefined();
-          expect(resultingState[0].variable.initLock!.promise).toBeDefined();
-          expect(resultingState[0].variable.initLock!.resolve).toBeDefined();
-          expect(resultingState[0].variable.initLock!.resolve).toHaveBeenCalledTimes(1);
-          expect(resultingState[0].variable.initLock!.reject).toBeDefined();
+          expect(resultingState[0].initLock!).toBeDefined();
+          expect(resultingState[0].initLock!.promise).toBeDefined();
+          expect(resultingState[0].initLock!.resolve).toBeDefined();
+          expect(resultingState[0].initLock!.resolve).toHaveBeenCalledTimes(1);
+          expect(resultingState[0].initLock!.reject).toBeDefined();
           return true;
         });
     });
@@ -500,10 +452,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': {
             ...initialState[0],
-            variable: ({
-              ...initialState[0].variable,
-              initLock: null,
-            } as unknown) as VariableModel,
+            initLock: null,
           },
         });
     });
@@ -512,8 +461,8 @@ describe('sharedReducer', () => {
   describe('when changeVariableProp is dispatched', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext();
-      const propName = 'useTags';
-      const propValue = true;
+      const propName = 'name';
+      const propValue = 'Updated name';
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, { propName, propValue });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
@@ -522,10 +471,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': {
             ...initialState[0],
-            variable: ({
-              ...initialState[0].variable,
-              useTags: true,
-            } as unknown) as VariableModel,
+            name: 'Updated name',
           },
         });
     });
@@ -542,49 +488,41 @@ describe('sharedReducer', () => {
           .whenActionIsDispatched(changeToEditorEditMode(payload))
           .thenStateShouldEqual({
             '0': {
-              variable: {
-                uuid: '0',
-                type: 'query',
-                name: 'Name-0',
-                hide: VariableHide.dontHide,
-                index: 0,
-                label: 'Label-0',
-                skipUrlSync: false,
-              },
+              uuid: '0',
+              type: 'query',
+              name: 'Name-0',
+              hide: VariableHide.dontHide,
+              index: 0,
+              label: 'Label-0',
+              skipUrlSync: false,
             },
             '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.dontHide,
-                index: 1,
-                label: 'Label-1',
-                skipUrlSync: false,
-              },
+              uuid: '1',
+              type: 'query',
+              name: 'Name-1',
+              hide: VariableHide.dontHide,
+              index: 1,
+              label: 'Label-1',
+              skipUrlSync: false,
             },
             '2': {
-              variable: {
-                uuid: '2',
-                type: 'query',
-                name: 'Name-2',
-                hide: VariableHide.dontHide,
-                index: 2,
-                label: 'Label-2',
-                skipUrlSync: false,
-              },
+              uuid: '2',
+              type: 'query',
+              name: 'Name-2',
+              hide: VariableHide.dontHide,
+              index: 2,
+              label: 'Label-2',
+              skipUrlSync: false,
             },
             [emptyUuid]: {
-              variable: {
-                ...initialQueryVariableModelState,
-                uuid: emptyUuid,
-                type: 'query',
-                name: '',
-                hide: VariableHide.dontHide,
-                index: 3,
-                label: null,
-                skipUrlSync: false,
-              },
+              ...initialQueryVariableModelState,
+              uuid: emptyUuid,
+              type: 'query',
+              name: '',
+              hide: VariableHide.dontHide,
+              index: 3,
+              label: null,
+              skipUrlSync: false,
             },
           });
       });
@@ -600,37 +538,31 @@ describe('sharedReducer', () => {
           .whenActionIsDispatched(changeToEditorEditMode(payload))
           .thenStateShouldEqual({
             '0': {
-              variable: {
-                uuid: '0',
-                type: 'query',
-                name: 'Name-0',
-                hide: VariableHide.dontHide,
-                index: 0,
-                label: 'Label-0',
-                skipUrlSync: false,
-              },
+              uuid: '0',
+              type: 'query',
+              name: 'Name-0',
+              hide: VariableHide.dontHide,
+              index: 0,
+              label: 'Label-0',
+              skipUrlSync: false,
             },
             '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.dontHide,
-                index: 1,
-                label: 'Label-1',
-                skipUrlSync: false,
-              },
+              uuid: '1',
+              type: 'query',
+              name: 'Name-1',
+              hide: VariableHide.dontHide,
+              index: 1,
+              label: 'Label-1',
+              skipUrlSync: false,
             },
             '2': {
-              variable: {
-                uuid: '2',
-                type: 'query',
-                name: 'Name-2',
-                hide: VariableHide.dontHide,
-                index: 2,
-                label: 'Label-2',
-                skipUrlSync: false,
-              },
+              uuid: '2',
+              type: 'query',
+              name: 'Name-2',
+              hide: VariableHide.dontHide,
+              index: 2,
+              label: 'Label-2',
+              skipUrlSync: false,
             },
           });
       });

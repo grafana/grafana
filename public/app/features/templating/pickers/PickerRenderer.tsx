@@ -1,10 +1,13 @@
 import React, { PureComponent } from 'react';
-import { VariableState } from '../state/types';
-import { VariableHide } from '../variable';
+import { VariableHide, VariableModel } from '../variable';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
 
-export class PickerRenderer extends PureComponent<VariableState> {
+interface Props {
+  variable: VariableModel;
+}
+
+export class PickerRenderer extends PureComponent<Props> {
   render() {
     if (!this.props.variable) {
       return <div>Couldn't load variable</div>;

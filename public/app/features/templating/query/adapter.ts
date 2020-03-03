@@ -1,7 +1,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 
 import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
-import { initialQueryVariableState, queryVariableReducer } from './reducer';
+import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
 import { VariableAdapter } from '../adapters';
@@ -14,7 +14,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
   return {
     description: 'Variable values are fetched from a datasource query',
     label: 'Query',
-    initialState: initialQueryVariableState,
+    initialState: initialQueryVariableModelState,
     reducer: queryVariableReducer,
     picker: OptionsPicker,
     editor: QueryVariableEditor,

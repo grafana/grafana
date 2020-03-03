@@ -1,5 +1,5 @@
-import { emptyUuid, VariableState } from './types';
-import { QueryVariableModel, VariableHide } from '../variable';
+import { emptyUuid } from './types';
+import { QueryVariableModel, VariableHide, VariableModel } from '../variable';
 import { initialQueryVariableModelState } from '../query/reducer';
 import { VariablesState } from './variablesReducer';
 
@@ -7,34 +7,30 @@ export const getVariableState = (
   noOfVariables: number,
   inEditorIndex = -1,
   includeEmpty = false
-): Record<string, VariableState> => {
-  const variables: Record<string, VariableState> = {};
+): Record<string, VariableModel> => {
+  const variables: Record<string, VariableModel> = {};
 
   for (let index = 0; index < noOfVariables; index++) {
     variables[index] = {
-      variable: {
-        uuid: index.toString(),
-        type: 'query',
-        name: `Name-${index}`,
-        hide: VariableHide.dontHide,
-        index,
-        label: `Label-${index}`,
-        skipUrlSync: false,
-      },
+      uuid: index.toString(),
+      type: 'query',
+      name: `Name-${index}`,
+      hide: VariableHide.dontHide,
+      index,
+      label: `Label-${index}`,
+      skipUrlSync: false,
     };
   }
 
   if (includeEmpty) {
     variables[emptyUuid] = {
-      variable: {
-        uuid: emptyUuid,
-        type: 'query',
-        name: `Name-${emptyUuid}`,
-        hide: VariableHide.dontHide,
-        index: noOfVariables,
-        label: `Label-${emptyUuid}`,
-        skipUrlSync: false,
-      },
+      uuid: emptyUuid,
+      type: 'query',
+      name: `Name-${emptyUuid}`,
+      hide: VariableHide.dontHide,
+      index: noOfVariables,
+      label: `Label-${emptyUuid}`,
+      skipUrlSync: false,
     };
   }
 
@@ -50,9 +46,7 @@ export const getVariableTestContext = (variableOverrides: Partial<QueryVariableM
   };
   const variable = { ...defaultVariable, ...variableOverrides };
   const initialState: VariablesState = {
-    '0': {
-      variable,
-    },
+    '0': variable,
   };
 
   return { initialState };

@@ -1,7 +1,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 
 import { TextBoxVariableModel } from '../variable';
-import { initialTextBoxVariableState, textBoxVariableReducer } from './reducer';
+import { initialTextBoxVariableModelState, textBoxVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
 import { VariableAdapter } from '../adapters';
@@ -13,7 +13,7 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
   return {
     description: 'Define a textbox variable, where users can enter any arbitrary string',
     label: 'Text box',
-    initialState: initialTextBoxVariableState,
+    initialState: initialTextBoxVariableModelState,
     reducer: textBoxVariableReducer,
     picker: TextBoxVariablePicker,
     editor: TextBoxVariableEditor,

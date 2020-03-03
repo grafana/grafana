@@ -1,5 +1,5 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { emptyUuid, VariableState } from '../state/types';
+import { emptyUuid } from '../state/types';
 import { StoreState } from '../../../types';
 import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
@@ -14,14 +14,15 @@ import {
 } from '../state/actions';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
-import { getVariableStates } from '../state/selectors';
+import { getVariableClones } from '../state/selectors';
 import { changeToEditorEditMode, changeToEditorListMode } from '../state/uuidInEditorReducer';
+import { VariableModel } from '../variable';
 
 interface OwnProps {}
 
 interface ConnectedProps {
   uuidInEditor: string | null;
-  variableStates: VariableState[];
+  variables: VariableModel[];
 }
 
 interface DispatchProps {
@@ -66,8 +67,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const variableStateToEdit =
-      this.props.variableStates.find(s => s.variable.uuid === this.props.uuidInEditor) ?? null;
+    const variableToEdit = this.props.variables.find(s => s.uuid === this.props.uuidInEditor) ?? null;
     return (
       <div>
         <div className="page-action-bar">
@@ -99,7 +99,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           </h3>
 
           <div className="page-action-bar__spacer" />
-          {this.props.variableStates.length > 0 && variableStateToEdit === null && (
+          {this.props.variables.length > 0 && variableToEdit === null && (
             <a
               type="button"
               className="btn btn-primary"
@@ -111,9 +111,9 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           )}
         </div>
 
-        {!variableStateToEdit && (
+        {!variableToEdit && (
           <VariableEditorList
-            variableStates={this.props.variableStates}
+            variables={this.props.variables}
             onAddClick={this.onChangeToAddMode}
             onEditClick={this.onEditVariable}
             onChangeVariableOrder={this.onChangeVariableOrder}
@@ -121,16 +121,14 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             onRemoveVariable={this.onRemoveVariable}
           />
         )}
-        {variableStateToEdit && (
-          <VariableEditorEditor identifier={toVariableIdentifier(variableStateToEdit.variable)} />
-        )}
+        {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}
       </div>
     );
   }
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variableStates: getVariableStates(state, true),
+  variables: getVariableClones(state, true),
   uuidInEditor: state.templating.uuidInEditor,
 });
 

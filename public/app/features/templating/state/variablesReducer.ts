@@ -1,11 +1,11 @@
-import { VariableState } from './types';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { VariablePayload } from './actions';
 import { cleanUpDashboard } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';
 import { sharedReducer } from './sharedReducer';
+import { VariableModel } from '../variable';
 
-export interface VariablesState extends Record<string, VariableState> {}
+export interface VariablesState extends Record<string, VariableModel> {}
 
 export const initialVariablesState: VariablesState = {};
 
@@ -14,15 +14,15 @@ export const variablesReducer = (
   action: PayloadAction<VariablePayload>
 ): VariablesState => {
   if (cleanUpDashboard.match(action)) {
-    const globalVariables = Object.values(state).filter(v => v.variable.global);
+    const globalVariables = Object.values(state).filter(v => v.global);
     if (!globalVariables) {
       return initialVariablesState;
     }
 
     const variables = globalVariables.reduce((allVariables, state) => {
-      allVariables[state.variable.uuid!] = state;
+      allVariables[state.uuid!] = state;
       return allVariables;
-    }, {} as Record<string, VariableState>);
+    }, {} as Record<string, VariableModel>);
 
     return variables;
   }

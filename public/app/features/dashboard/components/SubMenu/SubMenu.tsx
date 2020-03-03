@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
-import { VariableState } from '../../../templating/state/types';
-import { getVariableStates } from '../../../templating/state/selectors';
-import { VariableHide } from '../../../templating/variable';
+import { getVariableClones } from '../../../templating/state/selectors';
+import { VariableHide, VariableModel } from '../../../templating/variable';
 import { DashboardModel } from '../../state';
 import { AngularDashboardLinks } from './AngularDashboardLinks';
 import { Annotations } from './Annotations';
@@ -14,7 +13,7 @@ interface OwnProps {
 }
 
 interface ConnectedProps {
-  variableStates: VariableState[];
+  variables: VariableModel[];
 }
 
 interface DispatchProps {}
@@ -40,10 +39,8 @@ class SubMenuUnConnected extends PureComponent<Props> {
       return true;
     }
 
-    const visibleVariableStates = this.props.variableStates.filter(
-      state => state.variable.hide !== VariableHide.hideVariable
-    );
-    if (visibleVariableStates.length > 0) {
+    const visibleVariables = this.props.variables.filter(variable => variable.hide !== VariableHide.hideVariable);
+    if (visibleVariables.length > 0) {
       return true;
     }
 
@@ -58,7 +55,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
 
     return (
       <div className="submenu-controls">
-        <SubMenuItems variableStates={this.props.variableStates} />
+        <SubMenuItems variables={this.props.variables} />
         <Annotations
           annotations={this.props.dashboard.annotations.list}
           onAnnotationChanged={this.onAnnotationStateChanged}
@@ -72,7 +69,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variableStates: getVariableStates(state, false),
+  variables: getVariableClones(state, false),
 });
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
