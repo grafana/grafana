@@ -25,6 +25,8 @@ interface LicenseInfo {
   expiry: number;
   licenseUrl: string;
   stateInfo: string;
+  activeUsers?: number;
+  maxUsers?: number;
 }
 
 export class GrafanaBootConfig {
