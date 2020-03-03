@@ -18,5 +18,5 @@ export interface VariableState<ModelState extends VariableModel = VariableModel>
 }
 
 export const getInstanceState = <State extends VariableState = VariableState>(state: VariablesState, uuid: string) => {
-  return state.variables[uuid] as State;
+  return state[uuid] as State;
 };

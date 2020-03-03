@@ -7,22 +7,62 @@ import { createAction } from '@reduxjs/toolkit';
 import { toVariablePayload, VariablePayload } from './actions';
 import { variablesReducer, VariablesState } from './variablesReducer';
 
-describe('templatingReducer', () => {
+describe('variablesReducer', () => {
   describe('when cleanUpDashboard is dispatched', () => {
     it('then all variables except global variables should be removed', () => {
       const initialState: VariablesState = {
-        variables: {
-          '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+        '0': {
+          variable: {
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
+        },
+        '1': {
+          variable: {
+            uuid: '1',
+            type: 'query',
+            name: 'Name-1',
+            hide: VariableHide.dontHide,
+            index: 1,
+            label: 'Label-1',
+            skipUrlSync: false,
+            global: true,
+          },
+        },
+        '2': {
+          variable: {
+            uuid: '2',
+            type: 'query',
+            name: 'Name-2',
+            hide: VariableHide.dontHide,
+            index: 2,
+            label: 'Label-2',
+            skipUrlSync: false,
+          },
+        },
+        '3': {
+          variable: {
+            uuid: '3',
+            type: 'query',
+            name: 'Name-3',
+            hide: VariableHide.dontHide,
+            index: 3,
+            label: 'Label-3',
+            skipUrlSync: false,
+            global: true,
+          },
+        },
+      };
+
+      reducerTester<VariablesState>()
+        .givenReducer(variablesReducer, initialState)
+        .whenActionIsDispatched(cleanUpDashboard())
+        .thenStateShouldEqual({
           '1': {
             variable: {
               uuid: '1',
@@ -33,17 +73,6 @@ describe('templatingReducer', () => {
               label: 'Label-1',
               skipUrlSync: false,
               global: true,
-            },
-          },
-          '2': {
-            variable: {
-              uuid: '2',
-              type: 'query',
-              name: 'Name-2',
-              hide: VariableHide.dontHide,
-              index: 2,
-              label: 'Label-2',
-              skipUrlSync: false,
             },
           },
           '3': {
@@ -58,39 +87,6 @@ describe('templatingReducer', () => {
               global: true,
             },
           },
-        },
-      };
-
-      reducerTester<VariablesState>()
-        .givenReducer(variablesReducer, initialState)
-        .whenActionIsDispatched(cleanUpDashboard())
-        .thenStateShouldEqual({
-          variables: {
-            '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.dontHide,
-                index: 1,
-                label: 'Label-1',
-                skipUrlSync: false,
-                global: true,
-              },
-            },
-            '3': {
-              variable: {
-                uuid: '3',
-                type: 'query',
-                name: 'Name-3',
-                hide: VariableHide.dontHide,
-                index: 3,
-                label: 'Label-3',
-                skipUrlSync: false,
-                global: true,
-              },
-            },
-          },
         });
     });
   });
@@ -98,17 +94,15 @@ describe('templatingReducer', () => {
   describe('when any action is dispatched with a type prop that is registered in variableAdapters', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
       const initialState: VariablesState = {
-        variables: {
-          '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+        '0': {
+          variable: {
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
         },
       };
@@ -143,17 +137,15 @@ describe('templatingReducer', () => {
   describe('when any action is dispatched with a type prop that is not registered in variableAdapters', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
       const initialState: VariablesState = {
-        variables: {
-          '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+        '0': {
+          variable: {
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
         },
       };
@@ -184,17 +176,15 @@ describe('templatingReducer', () => {
   describe('when any action is dispatched missing type prop', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
       const initialState: VariablesState = {
-        variables: {
-          '0': {
-            variable: {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
+        '0': {
+          variable: {
+            uuid: '0',
+            type: 'query',
+            name: 'Name-0',
+            hide: VariableHide.dontHide,
+            index: 0,
+            label: 'Label-0',
+            skipUrlSync: false,
           },
         },
       };

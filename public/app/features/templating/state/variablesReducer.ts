@@ -5,20 +5,16 @@ import { cleanUpDashboard } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';
 import { sharedReducer } from './sharedReducer';
 
-export interface VariablesState {
-  variables: Record<string, VariableState>;
-}
+export interface VariablesState extends Record<string, VariableState> {}
 
-export const initialVariablesState: VariablesState = {
-  variables: {},
-};
+export const initialVariablesState: VariablesState = {};
 
 export const variablesReducer = (
   state: VariablesState = initialVariablesState,
   action: PayloadAction<VariablePayload>
 ): VariablesState => {
   if (cleanUpDashboard.match(action)) {
-    const globalVariables = Object.values(state.variables).filter(v => v.variable.global);
+    const globalVariables = Object.values(state).filter(v => v.variable.global);
     if (!globalVariables) {
       return initialVariablesState;
     }
@@ -28,10 +24,7 @@ export const variablesReducer = (
       return allVariables;
     }, {} as Record<string, VariableState>);
 
-    return {
-      ...state,
-      variables,
-    };
+    return variables;
   }
 
   if (action?.payload?.type && variableAdapters.contains(action?.payload?.type)) {

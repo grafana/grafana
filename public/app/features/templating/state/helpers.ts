@@ -50,10 +50,8 @@ export const getVariableTestContext = (variableOverrides: Partial<QueryVariableM
   };
   const variable = { ...defaultVariable, ...variableOverrides };
   const initialState: VariablesState = {
-    variables: {
-      '0': {
-        variable,
-      },
+    '0': {
+      variable,
     },
   };
 

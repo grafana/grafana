@@ -20,18 +20,16 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                options: [
-                  { text: 'All', value: '$__all', selected: false },
-                  { text: 'A', value: 'A', selected: false },
-                  { text: 'B', value: 'B', selected: false },
-                ],
-              } as unknown) as VariableModel,
-            },
+          '0': {
+            ...initialState[0],
+            variable: ({
+              ...initialState[0].variable,
+              options: [
+                { text: 'All', value: '$__all', selected: false },
+                { text: 'A', value: 'A', selected: false },
+                { text: 'B', value: 'B', selected: false },
+              ],
+            } as unknown) as VariableModel,
           },
         });
     });
@@ -50,17 +48,15 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                options: [
-                  { text: 'A', value: 'A', selected: false },
-                  { text: 'B', value: 'B', selected: false },
-                ],
-              } as unknown) as VariableModel,
-            },
+          '0': {
+            ...initialState[0],
+            variable: ({
+              ...initialState[0].variable,
+              options: [
+                { text: 'A', value: 'A', selected: false },
+                { text: 'B', value: 'B', selected: false },
+              ],
+            } as unknown) as VariableModel,
           },
         });
     });
@@ -75,14 +71,12 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                options: [{ text: 'All', value: '$__all', selected: false }],
-              } as unknown) as VariableModel,
-            },
+          '0': {
+            ...initialState[0],
+            variable: ({
+              ...initialState[0].variable,
+              options: [{ text: 'All', value: '$__all', selected: false }],
+            } as unknown) as VariableModel,
           },
         });
     });
@@ -97,14 +91,12 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                options: [{ text: 'None', value: '', selected: false, isNone: true }],
-              } as unknown) as VariableModel,
-            },
+          '0': {
+            ...initialState[0],
+            variable: ({
+              ...initialState[0].variable,
+              options: [{ text: 'None', value: '', selected: false, isNone: true }],
+            } as unknown) as VariableModel,
           },
         });
     });
@@ -123,17 +115,15 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                options: [
-                  { text: 'All', value: '$__all', selected: false },
-                  { text: 'A', value: 'A', selected: false },
-                ],
-              } as unknown) as VariableModel,
-            },
+          '0': {
+            ...initialState[0],
+            variable: ({
+              ...initialState[0].variable,
+              options: [
+                { text: 'All', value: '$__all', selected: false },
+                { text: 'A', value: 'A', selected: false },
+              ],
+            } as unknown) as VariableModel,
           },
         });
     });
@@ -152,14 +142,12 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                options: [{ text: 'A', value: 'A', selected: false }],
-              } as unknown) as VariableModel,
-            },
+          '0': {
+            ...initialState[0],
+            variable: ({
+              ...initialState[0].variable,
+              options: [{ text: 'A', value: 'A', selected: false }],
+            } as unknown) as VariableModel,
           },
         });
     });
@@ -175,17 +163,15 @@ describe('queryVariableReducer', () => {
         .whenActionIsDispatched(updateVariableTags(payload))
         .thenStateShouldEqual({
           ...initialState,
-          variables: {
-            '0': {
-              ...initialState.variables[0],
-              variable: ({
-                ...initialState.variables[0].variable,
-                tags: [
-                  { text: 'A', selected: false },
-                  { text: 'B', selected: false },
-                ],
-              } as unknown) as VariableModel,
-            },
+          '0': {
+            ...initialState[0],
+            variable: ({
+              ...initialState[0].variable,
+              tags: [
+                { text: 'A', selected: false },
+                { text: 'B', selected: false },
+              ],
+            } as unknown) as VariableModel,
           },
         });
     });
