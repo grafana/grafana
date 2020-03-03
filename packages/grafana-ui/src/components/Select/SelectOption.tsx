@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React from 'react';
 
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
@@ -13,10 +13,11 @@ export interface ExtendedOptionProps extends OptionProps<any> {
   };
 }
 
-export const SelectOption = forwardRef((props: ExtendedOptionProps, ref) => {
+export const SelectOption = (props: ExtendedOptionProps) => {
   const { children, isSelected, data } = props;
+
   return (
-    <components.Option {...props} innerRef={ref}>
+    <components.Option {...props}>
       <div className="gf-form-select-box__desc-option">
         {data.imgUrl && <img className="gf-form-select-box__desc-option__img" src={data.imgUrl} />}
         <div className="gf-form-select-box__desc-option__body">
@@ -27,6 +28,6 @@ export const SelectOption = forwardRef((props: ExtendedOptionProps, ref) => {
       </div>
     </components.Option>
   );
-});
+};
 
 export default SelectOption;

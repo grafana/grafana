@@ -24,7 +24,6 @@ import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
-import { withSelectArrowNavigation } from '../../Select/withSelectArrowNavigation';
 
 type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
@@ -272,10 +271,10 @@ export function SelectBase<T>({
       defaultOptions,
     };
   }
-  const NavigatableSelect = withSelectArrowNavigation(ReactSelectComponent);
+
   return (
     <>
-      <NavigatableSelect
+      <ReactSelectComponent
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,

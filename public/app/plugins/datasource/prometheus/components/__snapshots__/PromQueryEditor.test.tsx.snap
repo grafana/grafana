@@ -86,10 +86,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             "Group": [Function],
             "IndicatorsContainer": [Function],
             "MenuList": [Function],
-            "Option": Object {
-              "$$typeof": Symbol(react.forward_ref),
-              "render": [Function],
-            },
+            "Option": [Function],
             "SingleValue": [Function],
           }
         }
@@ -156,10 +153,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             "Group": [Function],
             "IndicatorsContainer": [Function],
             "MenuList": [Function],
-            "Option": Object {
-              "$$typeof": Symbol(react.forward_ref),
-              "render": [Function],
-            },
+            "Option": [Function],
             "SingleValue": [Function],
           }
         }
