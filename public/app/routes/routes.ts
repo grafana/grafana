@@ -216,8 +216,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/org/new', {
-      templateUrl: 'public/app/features/org/partials/newOrg.html',
-      controller: 'NewOrgCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "NewOrgPage" */ 'app/features/org/NewOrgPage')),
+      },
+      // templateUrl: 'public/app/features/org/partials/newOrg.html',
+      // controller: 'NewOrgCtrl',
     })
     .when('/org/users', {
       template: '<react-container />',
