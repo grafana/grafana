@@ -74,16 +74,16 @@ export class DashboardExporter {
         getDataSourceSrv()
           .get(datasource)
           .then(ds => {
-            if (ds.meta.builtIn) {
+            if (ds.meta?.builtIn) {
               return;
             }
 
             // add data source type to require list
-            requires['datasource' + ds.meta.id] = {
+            requires['datasource' + ds.meta?.id] = {
               type: 'datasource',
-              id: ds.meta.id,
-              name: ds.meta.name,
-              version: ds.meta.info.version || '1.0.0',
+              id: ds.meta?.id,
+              name: ds.meta?.name,
+              version: ds.meta?.info.version || '1.0.0',
             };
 
             // if used via variable we can skip templatizing usage
@@ -97,8 +97,8 @@ export class DashboardExporter {
               label: ds.name,
               description: '',
               type: 'datasource',
-              pluginId: ds.meta.id,
-              pluginName: ds.meta.name,
+              pluginId: ds.meta?.id,
+              pluginName: ds.meta?.name,
             };
 
             obj.datasource = '${' + refName + '}';

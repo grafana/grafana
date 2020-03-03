@@ -41,7 +41,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme } = this.state;
 
-    const iframeHtml = buildIframeHtml(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme.value);
+    const iframeHtml = buildIframeHtml(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
     this.setState({ iframeHtml });
   };
 

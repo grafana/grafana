@@ -5,10 +5,10 @@ import templateSrv from 'app/features/templating/template_srv';
 import { PanelModel, dateTime } from '@grafana/data';
 
 export function buildParams(
-  panel: PanelModel,
   useCurrentTimeRange: boolean,
   includeTemplateVars: boolean,
-  selectedTheme: string
+  selectedTheme?: string,
+  panel?: PanelModel
 ) {
   const params = getUrlSearchParams();
 
@@ -53,25 +53,25 @@ export function buildBaseUrl() {
 }
 
 export function buildShareUrl(
-  panel: PanelModel,
   useCurrentTimeRange: boolean,
   includeTemplateVars: boolean,
-  selectedTheme: string
+  selectedTheme?: string,
+  panel?: PanelModel
 ) {
   const baseUrl = buildBaseUrl();
-  const params = buildParams(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme);
+  const params = buildParams(useCurrentTimeRange, includeTemplateVars, selectedTheme, panel);
 
   return appendQueryToUrl(baseUrl, toUrlParams(params));
 }
 
 export function buildSoloUrl(
-  panel: PanelModel,
   useCurrentTimeRange: boolean,
   includeTemplateVars: boolean,
-  selectedTheme: string
+  selectedTheme?: string,
+  panel?: PanelModel
 ) {
   const baseUrl = buildBaseUrl();
-  const params = buildParams(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme);
+  const params = buildParams(useCurrentTimeRange, includeTemplateVars, selectedTheme, panel);
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
@@ -81,12 +81,12 @@ export function buildSoloUrl(
 }
 
 export function buildImageUrl(
-  panel: PanelModel,
   useCurrentTimeRange: boolean,
   includeTemplateVars: boolean,
-  selectedTheme: string
+  selectedTheme?: string,
+  panel?: PanelModel
 ) {
-  let soloUrl = buildSoloUrl(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme);
+  let soloUrl = buildSoloUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme, panel);
 
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
@@ -95,12 +95,12 @@ export function buildImageUrl(
 }
 
 export function buildIframeHtml(
-  panel: PanelModel,
   useCurrentTimeRange: boolean,
   includeTemplateVars: boolean,
-  selectedTheme: string
+  selectedTheme?: string,
+  panel?: PanelModel
 ) {
-  let soloUrl = buildSoloUrl(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme);
+  let soloUrl = buildSoloUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme, panel);
   return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 }
 

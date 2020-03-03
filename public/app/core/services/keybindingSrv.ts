@@ -273,7 +273,7 @@ export class KeybindingSrv {
           component: ShareModal,
           props: {
             dashboard: dashboard,
-            panel: panelInfo.panel,
+            panel: panelInfo?.panel,
           },
         });
       }

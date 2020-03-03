@@ -62,7 +62,7 @@ function shareLinkScenario(description: string, scenarioFn: (ctx: ScenarioContex
       },
       mount: (propOverrides?: any) => {
         const props: any = {
-          panel: null,
+          panel: undefined,
         };
 
         Object.assign(props, propOverrides);
@@ -95,7 +95,7 @@ describe('ShareModal', () => {
 
     it('should generate share url absolute time', () => {
       const state = ctx.wrapper?.state();
-      expect(state.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&panelId=22&fullscreen');
+      expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&panelId=22&fullscreen');
     });
 
     it('should generate render url', () => {
@@ -107,7 +107,7 @@ describe('ShareModal', () => {
       const state = ctx.wrapper?.state();
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
       const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
-      expect(state.imageUrl).toContain(base + params);
+      expect(state?.imageUrl).toContain(base + params);
     });
 
     it('should generate render url for scripted dashboard', () => {
@@ -119,24 +119,24 @@ describe('ShareModal', () => {
       const state = ctx.wrapper?.state();
       const base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
       const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
-      expect(state.imageUrl).toContain(base + params);
+      expect(state?.imageUrl).toContain(base + params);
     });
 
     it('should remove panel id when no panel in scope', () => {
       ctx.mount({
-        panel: null,
+        panel: undefined,
       });
 
       const state = ctx.wrapper?.state();
-      expect(state.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1');
+      expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1');
     });
 
     it('should add theme when specified', () => {
-      ctx.wrapper?.setProps({ panel: null });
+      ctx.wrapper?.setProps({ panel: undefined });
       ctx.wrapper?.setState({ selectedTheme: { label: 'light', value: 'light' } });
 
       const state = ctx.wrapper?.state();
-      expect(state.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
+      expect(state?.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
     });
 
     it('should remove fullscreen from image url when is first param in querystring and modeSharePanel is true', () => {
@@ -146,8 +146,8 @@ describe('ShareModal', () => {
       });
 
       const state = ctx.wrapper?.state();
-      expect(state.shareUrl).toContain('?fullscreen&edit&from=1000&to=2000&orgId=1&panelId=1');
-      expect(state.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
+      expect(state?.shareUrl).toContain('?fullscreen&edit&from=1000&to=2000&orgId=1&panelId=1');
+      expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
     });
 
     it('should remove edit from image url when is first param in querystring and modeSharePanel is true', () => {
@@ -157,8 +157,8 @@ describe('ShareModal', () => {
       });
 
       const state = ctx.wrapper?.state();
-      expect(state.shareUrl).toContain('?edit&fullscreen&from=1000&to=2000&orgId=1&panelId=1');
-      expect(state.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
+      expect(state?.shareUrl).toContain('?edit&fullscreen&from=1000&to=2000&orgId=1&panelId=1');
+      expect(state?.imageUrl).toContain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
     });
 
     it('should include template variables in url', () => {
@@ -171,7 +171,7 @@ describe('ShareModal', () => {
       ctx.wrapper?.setState({ includeTemplateVars: true });
 
       const state = ctx.wrapper?.state();
-      expect(state.shareUrl).toContain(
+      expect(state?.shareUrl).toContain(
         'http://server/#!/test?from=1000&to=2000&orgId=1&var-app=mupp&var-server=srv-01'
       );
     });

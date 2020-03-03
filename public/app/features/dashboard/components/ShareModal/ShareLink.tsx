@@ -55,8 +55,8 @@ export class ShareLink extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme } = this.state;
 
-    const shareUrl = buildShareUrl(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme.value);
-    const imageUrl = buildImageUrl(panel, useCurrentTimeRange, includeTemplateVars, selectedTheme.value);
+    const shareUrl = buildShareUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
+    const imageUrl = buildImageUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
     this.setState({ shareUrl, imageUrl });
   };
 

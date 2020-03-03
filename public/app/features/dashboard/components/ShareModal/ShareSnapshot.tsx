@@ -26,7 +26,7 @@ interface State {
   step: number;
   snapshotName: string;
   selectedExpireOption: SelectableValue<number>;
-  snapshotExpires: number;
+  snapshotExpires?: number;
   snapshotUrl: string;
   deleteUrl: string;
   timeoutSeconds: number;
