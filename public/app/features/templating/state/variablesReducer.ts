@@ -2,22 +2,46 @@ import { createReducer } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 
 import {
-  changeToEditorEditMode,
-  changeToEditorListMode,
+  addVariable,
   changeVariableOrder,
+  changeVariableProp,
   changeVariableType,
   duplicateVariable,
+  removeInitLock,
   removeVariable,
+  resolveInitLock,
+  setCurrentVariableValue,
   storeNewVariable,
 } from './actions';
-import { VariableModel } from '../variable';
-import { emptyUuid, getInstanceState, VariableState } from './types';
+import { VariableModel, VariableWithOptions } from '../variable';
+import { ALL_VARIABLE_VALUE, emptyUuid, getInstanceState, VariableState } from './types';
 import { initialTemplatingState } from './reducers';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded, variableEditorUnMounted } from '../editor/reducer';
+import { Deferred } from '../deferred';
+import { changeToEditorEditMode } from './uuidInEditorReducer';
 
-export const sharedTemplatingReducer = createReducer(initialTemplatingState, builder =>
+export const variablesReducer = createReducer(initialTemplatingState, builder =>
   builder
+    .addCase(addVariable, (state, action) => {
+      state.variables[action.payload.uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
+      state.variables[action.payload.uuid!].variable = {
+        ...state.variables[action.payload.uuid!].variable,
+        ...action.payload.data.model,
+      };
+      state.variables[action.payload.uuid!].variable.uuid = action.payload.uuid;
+      state.variables[action.payload.uuid!].variable.index = action.payload.data.index;
+      state.variables[action.payload.uuid!].variable.global = action.payload.data.global;
+      state.variables[action.payload.uuid!].variable.initLock = new Deferred();
+    })
+    .addCase(resolveInitLock, (state, action) => {
+      const instanceState = getInstanceState(state, action.payload.uuid!);
+      instanceState.variable.initLock?.resolve();
+    })
+    .addCase(removeInitLock, (state, action) => {
+      const instanceState = getInstanceState(state, action.payload.uuid!);
+      instanceState.variable.initLock = null;
+    })
     .addCase(removeVariable, (state, action) => {
       delete state.variables[action.payload.uuid!];
       const variableStates = Object.values(state.variables);
@@ -31,8 +55,6 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
       if (action.payload.uuid === emptyUuid && !variableState) {
         return;
       }
-
-      state.uuidInEditor = null;
 
       if (state.variables[emptyUuid]) {
         delete state.variables[emptyUuid];
@@ -75,10 +97,6 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
         state.variables[emptyUuid].variable.uuid = emptyUuid;
         state.variables[emptyUuid].variable.index = Object.values(state.variables).length - 1;
       }
-      state.uuidInEditor = action.payload.uuid;
-    })
-    .addCase(changeToEditorListMode, (state, action) => {
-      state.uuidInEditor = null;
     })
     .addCase(changeVariableType, (state, action) => {
       const { uuid } = action.payload;
@@ -99,5 +117,37 @@ export const sharedTemplatingReducer = createReducer(initialTemplatingState, bui
     .addCase(changeVariableNameSucceeded, (state, action) => {
       const instanceState = getInstanceState(state, action.payload.uuid);
       instanceState.variable.name = action.payload.data;
+    })
+    .addCase(setCurrentVariableValue, (state, action) => {
+      const instanceState = getInstanceState<VariableState<VariableWithOptions>>(state, action.payload.uuid);
+      const current = { ...action.payload.data };
+
+      if (Array.isArray(current.text) && current.text.length > 0) {
+        current.text = current.text.join(' + ');
+      } else if (Array.isArray(current.value) && current.value[0] !== ALL_VARIABLE_VALUE) {
+        current.text = current.value.join(' + ');
+      }
+
+      instanceState.variable.current = current;
+      instanceState.variable.options = instanceState.variable.options.map(option => {
+        let selected = false;
+        if (Array.isArray(current.value)) {
+          for (let index = 0; index < current.value.length; index++) {
+            const value = current.value[index];
+            if (option.value === value) {
+              selected = true;
+              break;
+            }
+          }
+        } else if (option.value === current.value) {
+          selected = true;
+        }
+        option.selected = selected;
+        return option;
+      });
+    })
+    .addCase(changeVariableProp, (state, action) => {
+      const instanceState = getInstanceState(state, action.payload.uuid!);
+      (instanceState.variable as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
     })
 );

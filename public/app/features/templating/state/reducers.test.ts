@@ -59,7 +59,6 @@ describe('templatingReducer', () => {
             },
           },
         },
-        uuidInEditor: null,
       };
 
       reducerTester<TemplatingState>()
@@ -92,7 +91,6 @@ describe('templatingReducer', () => {
               },
             },
           },
-          uuidInEditor: null,
         });
     });
   });
@@ -113,7 +111,6 @@ describe('templatingReducer', () => {
             },
           },
         },
-        uuidInEditor: null,
       };
       const variableAdapter: VariableAdapter<VariableModel> = {
         label: 'Mock label',
@@ -159,7 +156,6 @@ describe('templatingReducer', () => {
             },
           },
         },
-        uuidInEditor: null,
       };
       const variableAdapter: VariableAdapter<VariableModel> = {
         label: 'Mock label',
@@ -201,7 +197,6 @@ describe('templatingReducer', () => {
             },
           },
         },
-        uuidInEditor: null,
       };
       const variableAdapter: VariableAdapter<VariableModel> = {
         label: 'Mock label',

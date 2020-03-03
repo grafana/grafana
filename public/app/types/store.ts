@@ -47,6 +47,7 @@ export interface StoreState {
   templating: TemplatingState;
   optionsPicker: OptionsPickerState;
   variableEditor: VariableEditorState;
+  uuidInEditor: string | null;
 }
 
 /*
