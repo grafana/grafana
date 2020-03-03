@@ -42,7 +42,7 @@ import {
   updateComment,
 } from 'app/core/utils/explore';
 // Types
-import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
+import { ExploreItemState, ExploreUrlState, ThunkResult, QueryHistoryQuery } from 'app/types';
 
 import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
@@ -269,7 +269,7 @@ export function initializeExplore(
   eventBridge: Emitter,
   ui: ExploreUIState,
   originPanelId: number,
-  queryHistory: any[]
+  queryHistory: QueryHistoryQuery[]
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));

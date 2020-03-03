@@ -17,6 +17,8 @@ export interface Props {
   tooltipAlwaysVisible?: boolean;
   formatTooltipResult?: (value: number) => number | string;
   onChange?: (values: number[]) => void;
+  onBeforeChange?: (values: number[]) => void;
+  onAfterChange?: (values: number[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
@@ -99,6 +101,8 @@ export const Slider: FunctionComponent<Props> = ({
   min,
   max,
   onChange,
+  onAfterChange,
+  onBeforeChange,
   orientation = 'horizontal',
   reverse,
   formatTooltipResult,
@@ -116,7 +120,6 @@ export const Slider: FunctionComponent<Props> = ({
       <RangeWithTooltip
         tipProps={{
           visible: tooltipAlwaysVisible,
-          trigger: ['focus', 'hover', 'click'],
           placement: isHorizontal ? 'top' : 'right',
         }}
         min={min}
@@ -124,6 +127,8 @@ export const Slider: FunctionComponent<Props> = ({
         defaultValue={value || [min, max]}
         tipFormatter={(value: number) => (formatTooltipResult ? formatTooltipResult(value) : value)}
         onChange={onChange}
+        onAfterChange={onAfterChange}
+        onBeforeChange={onBeforeChange}
         vertical={!isHorizontal}
         reverse={reverse}
       />

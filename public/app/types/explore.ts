@@ -234,3 +234,14 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
+
+export type QueryHistoryQuery = {
+  ts: number;
+  datasourceName: string;
+  datasourceId: string;
+  starred: boolean;
+  comment: string;
+  queries: string[];
+  sessionName: string;
+  timeRange?: string;
+};

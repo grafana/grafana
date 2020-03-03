@@ -29,11 +29,10 @@ import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { ExploreUrlState, QueryOptions, QueryTransaction, QueryHistoryQuery } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
-import { QueryHistoryQuery } from '../../features/explore/QueryHistory/QueryHistoryContent';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -361,7 +360,7 @@ export function updateHistory<T extends DataQuery = any>(
 }
 
 export function addToQueryHistory(
-  queryHistory: any[],
+  queryHistory: QueryHistoryQuery[],
   datasourceId: string,
   datasourceName: string,
   queries: any[],
@@ -370,12 +369,24 @@ export function addToQueryHistory(
   sessionName: string
 ): any {
   const ts = Date.now();
-  const stringifiedQueries = queries.map(q => q.expr).filter(expr => expr !== '');
+  /* Save only queries, that are not falsy (e.g. empty strings, null) */
+  const stringifiedQueries = queries.map(q => q.expr).filter(expr => Boolean(expr));
+  const currentActiveTimeSpan = store.getObject('grafana.explore.queryHistory.activeTimeSpan', 2);
+  const activeTimeSpanLowerBoundary =
+    currentActiveTimeSpan === 1
+      ? new Date(ts).setDate(new Date(ts).getDay() - 7)
+      : new Date(ts).setDate(new Date(ts).getDay() - currentActiveTimeSpan);
+
+  console.log(activeTimeSpanLowerBoundary);
+  /* Keep only queries, that are within the selected active time span or that are starred  */
+  const queryHistoryWithinActiveTimeSpan = queryHistory.filter(
+    q => q.ts > activeTimeSpanLowerBoundary || q.starred === true
+  );
 
   if (stringifiedQueries.length > 0) {
     let newQueryHistory = [
       { queries: stringifiedQueries, ts, datasourceId, datasourceName, starred, comment, sessionName },
-      ...queryHistory,
+      ...queryHistoryWithinActiveTimeSpan,
     ];
 
     if (newQueryHistory.length > MAX_HISTORY_ITEMS) {
@@ -396,7 +407,7 @@ export function getQueryHistory() {
   return store.getObject(queryHistoryKey);
 }
 
-export function updateStarred(queryHistory: any[], ts: number) {
+export function updateStarred(queryHistory: QueryHistoryQuery[], ts: number) {
   const updatedQueries = queryHistory.map(q => {
     if (q.ts === ts) {
       const isStarred = q.starred;
@@ -411,7 +422,7 @@ export function updateStarred(queryHistory: any[], ts: number) {
   return updatedQueries;
 }
 
-export function updateComment(queryHistory: any[], ts: number, newComment: string) {
+export function updateComment(queryHistory: QueryHistoryQuery[], ts: number, newComment: string) {
   const updatedQueries = queryHistory.map(q => {
     if (q.ts === ts) {
       const updatedQuery = Object.assign({}, q, { comment: newComment });
@@ -679,4 +690,12 @@ export const mapNumbertoTimeInSlider = (num: number) => {
   }
 
   return str;
+};
+
+export const createActiveTimeBoundary = (days: number, isUpperBoundary: boolean) => {
+  const today = isUpperBoundary
+    ? new Date(new Date().setHours(24, 0, 0, 0))
+    : new Date(new Date().setHours(0, 0, 0, 0));
+  const boundary = new Date(today).setDate(today.getDate() + days);
+  return boundary;
 };

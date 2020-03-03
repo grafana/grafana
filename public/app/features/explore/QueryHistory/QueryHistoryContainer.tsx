@@ -15,11 +15,10 @@ import { updateQueryHistory } from '../state/actions';
 
 // Types
 import { StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
+import { ExploreId, QueryHistoryQuery } from 'app/types/explore';
 
 // Components
 import { QueryHistory, SETTINGS_KEYS, Tabs } from './QueryHistory';
-import { QueryHistoryQuery } from './QueryHistoryContent';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;

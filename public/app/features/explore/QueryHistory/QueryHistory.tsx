@@ -6,6 +6,7 @@ import { QueryHistorySettings } from './QueryHistorySettings';
 import { QueryHistoryContent, DataSourceOption } from './QueryHistoryContent';
 import store from 'app/core/store';
 import { SortOrder } from 'app/core/utils/explore';
+import { QueryHistoryQuery } from 'app/types/explore';
 
 export enum Tabs {
   QueryHistory = 'Query history',
@@ -21,7 +22,7 @@ export const SETTINGS_KEYS = {
 };
 
 interface QueryHistoryProps extends Themeable {
-  queryHistory: any[];
+  queryHistory: QueryHistoryQuery[];
   firstTab: Tabs;
   activeDatasourceInstance: string;
   onChangeQueryHistoryProperty: (ts: number, property: string) => void;
@@ -118,7 +119,14 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
   onChangeSortOrder = (sortOrder: SortOrder) => this.setState({ sortOrder });
 
   render() {
-    const { datasourceFilters, sortOrder, activeTab, activeStarredTab, onlyActiveDatasourceHistory } = this.state;
+    const {
+      datasourceFilters,
+      sortOrder,
+      activeTab,
+      activeStarredTab,
+      onlyActiveDatasourceHistory,
+      activeTimeSpan,
+    } = this.state;
     const { theme, queryHistory, onChangeQueryHistoryProperty, activeDatasourceInstance } = this.props;
     const styles = getStyles(theme);
 
@@ -136,6 +144,7 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
           onlyActiveDatasourceHistory={onlyActiveDatasourceHistory}
           activeDatasourceInstance={activeDatasourceInstance}
+          activeTimeSpan={activeTimeSpan}
         />
       ),
       icon: 'fa fa-history',
@@ -155,6 +164,7 @@ class UnThemedQueryHistory extends PureComponent<QueryHistoryProps, QueryHistory
           activeDatasourceInstance={activeDatasourceInstance}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
           datasourceFilters={datasourceFilters}
+          activeTimeSpan={activeTimeSpan}
         />
       ),
       icon: 'fa fa-star',

@@ -40,7 +40,14 @@ import {
   ExploreMode,
 } from '@grafana/data';
 
-import { ExploreItemState, ExploreUrlState, ExploreId, ExploreUpdateState, ExploreUIState } from 'app/types/explore';
+import {
+  ExploreItemState,
+  ExploreUrlState,
+  ExploreId,
+  ExploreUpdateState,
+  ExploreUIState,
+  QueryHistoryQuery,
+} from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   ensureQueries,
@@ -110,7 +117,7 @@ interface ExploreProps {
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
-  queryHistory: any[];
+  queryHistory: QueryHistoryQuery[];
 }
 
 interface ExploreState {

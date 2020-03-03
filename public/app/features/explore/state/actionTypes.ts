@@ -15,7 +15,7 @@ import {
   TimeRange,
   ExploreMode,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExploreUIState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUIState, QueryHistoryQuery } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
@@ -64,7 +64,7 @@ export interface InitializeExplorePayload {
   mode: ExploreMode;
   ui: ExploreUIState;
   originPanelId: number;
-  queryHistory: any[];
+  queryHistory: QueryHistoryQuery[];
 }
 
 export interface LoadDatasourceMissingPayload {

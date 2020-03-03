@@ -2,7 +2,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
-import { QueryHistoryQuery } from './QueryHistoryContent';
+import { QueryHistoryQuery } from 'app/types/explore';
 import { copyToClipboard, createUrlFromQueryHistory } from '../../../core/utils/explore';
 import appEvents from 'app/core/app_events';
 
@@ -77,7 +77,7 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQuer
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
   const theme = useTheme();
   const styles = getStyles(theme);
-  let queryExpressions: any[] = query.queries.filter(q => Boolean(q));
+  let queryExpressions: string[] = query.queries.filter(q => Boolean(q));
 
   return (
     <>
@@ -105,7 +105,7 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQuer
                 <Forms.Input
                   className={styles.input}
                   value={comment}
-                  placeholder={comment ? null : 'write your comment here and save with enter'}
+                  placeholder={comment ? null : 'add your comment'}
                   onChange={e => setComment(e.currentTarget.value)}
                 />
                 <div className={styles.buttonRow}>

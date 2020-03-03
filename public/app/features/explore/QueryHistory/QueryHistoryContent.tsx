@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from 'emotion';
 import { stylesFactory, useTheme, Select, Slider } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { getExploreDatasources } from '../state/selectors';
 import { QueryHistoryCard } from './QueryHistoryCard';
-import { sortQueries, SortOrder, mapNumbertoTimeInSlider } from '../../../core/utils/explore';
+import { sortQueries, SortOrder, mapNumbertoTimeInSlider, createActiveTimeBoundary } from '../../../core/utils/explore';
+import { QueryHistoryQuery } from 'app/types/explore';
 
 const sortOrderOptions = [
   { label: 'Time ascending', value: SortOrder.Ascending },
@@ -19,17 +20,6 @@ export type DataSourceOption = {
   imgUrl?: string;
 };
 
-export type QueryHistoryQuery = {
-  ts: number;
-  datasourceName: string;
-  datasourceId: string;
-  starred: boolean;
-  comment: string;
-  queries: string[];
-  sessionName: string;
-  timeRange?: string;
-};
-
 interface QueryHistoryContentProps {
   queries: QueryHistoryQuery[];
   sortOrder: SortOrder;
@@ -39,6 +29,7 @@ interface QueryHistoryContentProps {
   onChangeSortOrder: (sortOrder: SortOrder) => void;
   onChangeQueryHistoryProperty: (ts: number, property: string) => void;
   datasourceFilters?: DataSourceOption[] | null;
+  activeTimeSpan?: number;
   onSelectDatasourceFilters?: (datasources: DataSourceOption[] | null) => void;
 }
 
@@ -116,7 +107,10 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
     onChangeQueryHistoryProperty,
     onlyActiveDatasourceHistory,
     activeDatasourceInstance,
+    activeTimeSpan,
   } = props;
+
+  const [sliderFilter, setSliderFilter] = useState([0, activeTimeSpan]);
 
   useEffect(() => {
     onlyActiveDatasourceHistory && activeDatasourceInstance
@@ -134,10 +128,15 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
 
   const filteredQueries: QueryHistoryQuery[] = onlyStarred ? queries.filter(q => q.starred === true) : queries;
   const sortedQueries = sortQueries(filteredQueries, sortOrder);
-  const queriesToDisplay = datasourceFilters
+  const filteredQueriesByDatasource = datasourceFilters
     ? sortedQueries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
     : sortedQueries;
 
+  const queriesToDisplay = filteredQueriesByDatasource.filter(
+    q =>
+      q.ts > createActiveTimeBoundary(sliderFilter[0], false) && q.ts < createActiveTimeBoundary(sliderFilter[1], true)
+  );
+  console.log(queriesToDisplay);
   return (
     <div className={styles.container}>
       {!onlyStarred && (
@@ -147,18 +146,20 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
               Filter history <br />
               between
             </div>
-            <div className="label-slider">today</div>
+            <div className="label-slider">{mapNumbertoTimeInSlider(sliderFilter[0])}</div>
             <div className="slider">
               <Slider
                 tooltipAlwaysVisible={false}
                 min={0}
-                max={7}
+                max={activeTimeSpan === 1 ? 7 : activeTimeSpan}
+                value={sliderFilter}
                 orientation="vertical"
                 formatTooltipResult={mapNumbertoTimeInSlider}
                 reverse={true}
+                onAfterChange={setSliderFilter}
               />
             </div>
-            <div className="label-slider">5 days ago</div>
+            <div className="label-slider">{mapNumbertoTimeInSlider(sliderFilter[1])}</div>
           </div>
         </div>
       )}
