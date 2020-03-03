@@ -3,33 +3,47 @@ import isEqual from 'lodash/isEqual';
 import { AppEvents } from '@grafana/data';
 import { FormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
-
-import { dispatch } from '../../../store/store';
-import {
-  changeVariableHide,
-  changeVariableLabel,
-  changeVariableName,
-  changeVariableProp,
-  changeVariableType,
-  onEditorAdd,
-  onEditorUpdate,
-  toVariableIdentifier,
-  toVariablePayload,
-  variableEditorInit,
-  variableEditorUnMounted,
-} from '../state/actions';
+import { changeVariableProp, changeVariableType, toVariablePayload, VariableIdentifier } from '../state/actions';
 import { variableAdapters } from '../adapters';
-import { emptyUuid, OnPropChangeArguments, VariableState } from '../state/types';
-import { VariableHide, VariableType } from '../variable';
+import { emptyUuid } from '../state/types';
+import { VariableHide, VariableModel, VariableType } from '../variable';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
+import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { StoreState } from '../../../types';
+import { VariableEditorState } from './reducer';
+import { getVariable } from '../state/selectors';
+import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { OnPropChangeArguments } from './types';
 
-export class VariableEditorEditor extends PureComponent<VariableState> {
+export interface OwnProps {
+  identifier: VariableIdentifier;
+}
+
+interface ConnectedProps {
+  editor: VariableEditorState;
+  variable: VariableModel;
+}
+
+interface DispatchProps {
+  variableEditorMount: typeof variableEditorMount;
+  variableEditorUnMount: typeof variableEditorUnMount;
+  changeVariableName: typeof changeVariableName;
+  changeVariableProp: typeof changeVariableProp;
+  onEditorUpdate: typeof onEditorUpdate;
+  onEditorAdd: typeof onEditorAdd;
+  changeVariableType: typeof changeVariableType;
+}
+
+type Props = OwnProps & ConnectedProps & DispatchProps;
+
+export class VariableEditorEditorUnConnected extends PureComponent<Props> {
   componentDidMount(): void {
-    dispatch(variableEditorInit(toVariableIdentifier(this.props.variable)));
+    this.props.variableEditorMount(this.props.identifier);
   }
 
-  componentDidUpdate(prevProps: Readonly<VariableState>, prevState: Readonly<{}>, snapshot?: any): void {
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<{}>, snapshot?: any): void {
     if (!isEqual(prevProps.editor.errors, this.props.editor.errors)) {
       Object.values(this.props.editor.errors).forEach(error => {
         appEvents.emit(AppEvents.alertWarning, ['Validation', error]);
@@ -38,35 +52,40 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
   }
 
   componentWillUnmount(): void {
-    dispatch(variableEditorUnMounted(toVariablePayload(this.props.variable)));
+    this.props.variableEditorUnMount(this.props.identifier);
   }
 
   onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
-    dispatch(changeVariableName(toVariableIdentifier(this.props.variable), event.target.value));
+    this.props.changeVariableName(this.props.identifier, event.target.value);
   };
 
   onTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
     event.preventDefault();
-    dispatch(changeVariableType(toVariablePayload(this.props.variable, event.target.value as VariableType)));
+    this.props.changeVariableType(toVariablePayload(this.props.identifier, event.target.value as VariableType));
   };
 
   onLabelChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
-    dispatch(changeVariableLabel(toVariablePayload(this.props.variable, event.target.value)));
+    this.props.changeVariableProp(
+      toVariablePayload(this.props.identifier, { propName: 'label', propValue: event.target.value })
+    );
   };
 
   onHideChange = (event: ChangeEvent<HTMLSelectElement>) => {
     event.preventDefault();
-    dispatch(
-      changeVariableHide(toVariablePayload(this.props.variable, parseInt(event.target.value, 10) as VariableHide))
+    this.props.changeVariableProp(
+      toVariablePayload(this.props.identifier, {
+        propName: 'hide',
+        propValue: parseInt(event.target.value, 10) as VariableHide,
+      })
     );
   };
 
-  onPropChanged = ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
-    dispatch(changeVariableProp(toVariablePayload(this.props.variable, { propName, propValue })));
+  onPropChanged = async ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
+    this.props.changeVariableProp(toVariablePayload(this.props.identifier, { propName, propValue }));
     if (updateOptions) {
-      variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+      await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
     }
   };
 
@@ -77,11 +96,11 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
     }
 
     if (this.props.variable.uuid !== emptyUuid) {
-      await dispatch(onEditorUpdate(toVariableIdentifier(this.props.variable)));
+      await this.props.onEditorUpdate(this.props.identifier);
     }
 
     if (this.props.variable.uuid === emptyUuid) {
-      await dispatch(onEditorAdd(toVariableIdentifier(this.props.variable)));
+      await this.props.onEditorAdd(this.props.identifier);
     }
   };
 
@@ -174,14 +193,7 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
             </div>
           </div>
 
-          {EditorToRender && (
-            <EditorToRender
-              editor={this.props.editor}
-              variable={this.props.variable}
-              dataSources={this.props.editor.dataSources}
-              onPropChange={this.onPropChanged}
-            />
-          )}
+          {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
 
           <VariableValuesPreview variable={this.props.variable} />
 
@@ -210,3 +222,24 @@ export class VariableEditorEditor extends PureComponent<VariableState> {
     );
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
+  editor: state.variableEditor,
+  variable: getVariable(ownProps.identifier.uuid!, state),
+});
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  variableEditorMount,
+  variableEditorUnMount,
+  changeVariableName,
+  changeVariableProp,
+  onEditorUpdate,
+  onEditorAdd,
+  changeVariableType,
+};
+
+export const VariableEditorEditor = connectWithStore(
+  VariableEditorEditorUnConnected,
+  mapStateToProps,
+  mapDispatchToProps
+);

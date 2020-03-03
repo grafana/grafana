@@ -2,11 +2,9 @@ import castArray from 'lodash/castArray';
 import { v4 } from 'uuid';
 import { createAction, PrepareAction } from '@reduxjs/toolkit';
 import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
-import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
 import {
   QueryVariableModel,
-  VariableHide,
   VariableModel,
   VariableOption,
   VariableRefresh,
@@ -16,7 +14,6 @@ import {
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
 
@@ -101,7 +98,6 @@ export const changeVariableOrder = createAction<VariablePayload<{ fromIndex: num
 );
 export const changeToEditorListMode = createAction<VariablePayload>('templating/changeToEditorListMode');
 export const changeToEditorEditMode = createAction<VariablePayload>('templating/changeToEditorEditMode');
-export const setInitLock = createAction<VariablePayload>('templating/setInitLock');
 export const resolveInitLock = createAction<VariablePayload>('templating/resolveInitLock');
 export const removeInitLock = createAction<VariablePayload>('templating/removeInitLock');
 export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>(
@@ -110,23 +106,7 @@ export const setCurrentVariableValue = createAction<VariablePayload<VariableOpti
 
 export const changeVariableType = createAction<VariablePayload<VariableType>>('templating/changeVariableType');
 export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
-export const updateVariableStarting = createAction<VariablePayload>('templating/updateVariableStarting');
-export const updateVariableCompleted = createAction<VariablePayload>('templating/updateVariableCompleted');
-export const updateVariableFailed = createAction<VariablePayload<Error>>('templating/updateVariableFailed');
 export const updateVariableTags = createAction<VariablePayload<any[]>>('templating/updateVariableTags');
-export const variableEditorMounted = createAction<VariablePayload<DataSourceSelectItem[]>>(
-  'templating/variableEditorMounted'
-);
-export const variableEditorUnMounted = createAction<VariablePayload>('templating/variableEditorUnMounted');
-export const changeVariableNameSucceeded = createAction<VariablePayload<string>>(
-  'templating/changeVariableNameSucceeded'
-);
-export const changeVariableNameFailed = createAction<VariablePayload<{ newName: string; errorText: string }>>(
-  'templating/changeVariableNameFailed'
-);
-
-export const changeVariableLabel = createAction<VariablePayload<string>>('templating/changeVariableLabel');
-export const changeVariableHide = createAction<VariablePayload<VariableHide>>('templating/changeVariableHide');
 export const changeVariableProp = createAction<VariablePayload<{ propName: string; propValue: any }>>(
   'templating/changeVariableProp'
 );
@@ -416,64 +396,6 @@ export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents
         dashboard?.startRefresh();
       }
     });
-  };
-};
-
-export const changeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    let errorText = null;
-    if (!newName.match(/^(?!__).*$/)) {
-      errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
-    }
-
-    if (!newName.match(/^\w+$/)) {
-      errorText = 'Only word and digit characters are allowed in variable names';
-    }
-
-    const variables = getVariables(getState());
-    const stateVariables = variables.filter(v => v.name === newName && v.uuid !== identifier.uuid);
-
-    if (stateVariables.length) {
-      errorText = 'Variable with the same name already exists';
-    }
-
-    if (errorText) {
-      dispatch(changeVariableNameFailed(toVariablePayload(identifier, { newName, errorText })));
-    }
-
-    if (!errorText) {
-      dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, newName)));
-    }
-  };
-};
-
-export const variableEditorInit = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const dataSources: DataSourceSelectItem[] = await getDatasourceSrv()
-      .getMetricSources()
-      .filter(ds => !ds.meta.mixed && ds.value !== null);
-    const defaultDatasource: DataSourceSelectItem = { name: '', value: '', meta: {} as DataSourcePluginMeta, sort: '' };
-
-    dispatch(variableEditorMounted(toVariablePayload(identifier, [defaultDatasource].concat(dataSources))));
-  };
-};
-
-export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.uuid!, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(changeToEditorListMode(toVariablePayload(identifier)));
-  };
-};
-
-export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const uuid = v4();
-    dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, uuid })));
-    const variableInState = getVariable(uuid, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(variableEditorUnMounted(toVariablePayload(variableInState)));
-    dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
   };
 };
 

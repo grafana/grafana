@@ -5,44 +5,61 @@ import { FormLabel, Switch } from '@grafana/ui';
 import templateSrv from '../template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../variable';
-import { VariableEditorProps, OnPropChangeArguments } from '../state/types';
 import { QueryVariableEditorState } from './reducer';
-import { dispatch } from '../../../store/store';
-import { changeQueryVariableDataSource, initQueryVariableEditor } from './actions';
+import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
+import { VariableEditorState } from '../editor/reducer';
+import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { StoreState } from '../../../types';
 import { toVariableIdentifier } from '../state/actions';
+import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 
-export interface Props extends VariableEditorProps<QueryVariableModel, QueryVariableEditorState> {}
+export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
+
+interface ConnectedProps {
+  editor: VariableEditorState<QueryVariableEditorState>;
+}
+
+interface DispatchProps {
+  initQueryVariableEditor: typeof initQueryVariableEditor;
+  changeQueryVariableDataSource: typeof changeQueryVariableDataSource;
+  changeQueryVariableQuery: typeof changeQueryVariableQuery;
+}
+
+type Props = OwnProps & ConnectedProps & DispatchProps;
+
 export interface State {
   regex: string | null;
   tagsQuery: string | null;
   tagValuesQuery: string | null;
 }
 
-export class QueryVariableEditor extends PureComponent<Props, State> {
+export class QueryVariableEditorUnConnected extends PureComponent<Props, State> {
   state: State = {
     regex: null,
     tagsQuery: null,
     tagValuesQuery: null,
   };
 
-  componentDidMount(): void {
-    dispatch(initQueryVariableEditor(toVariableIdentifier(this.props.variable)));
+  async componentDidMount() {
+    await this.props.initQueryVariableEditor(toVariableIdentifier(this.props.variable));
   }
 
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (prevProps.variable.datasource !== this.props.variable.datasource) {
-      dispatch(
-        changeQueryVariableDataSource(toVariableIdentifier(this.props.variable), this.props.variable.datasource)
+      this.props.changeQueryVariableDataSource(
+        toVariableIdentifier(this.props.variable),
+        this.props.variable.datasource
       );
     }
   }
 
   getSelectedDataSourceValue = (): string => {
-    if (!this.props.dataSources.length) {
+    if (!this.props.editor.extended?.dataSources.length) {
       return '';
     }
-    const foundItem = this.props.dataSources.find(ds => ds.value === this.props.variable.datasource);
-    const value = foundItem ? foundItem.value : this.props.dataSources[0].value;
+    const foundItem = this.props.editor.extended?.dataSources.find(ds => ds.value === this.props.variable.datasource);
+    const value = foundItem ? foundItem.value : this.props.editor.extended?.dataSources[0].value;
     return value ?? '';
   };
 
@@ -52,8 +69,7 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
   };
 
   onQueryChange = async (query: any, definition: string) => {
-    this.props.onPropChange({ propName: 'query', propValue: query });
-    this.props.onPropChange({ propName: 'definition', propValue: definition, updateOptions: true });
+    this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
   };
 
   onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +113,7 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { VariableQueryEditor } = this.props.editor;
+    const VariableQueryEditor = this.props.editor.extended?.VariableQueryEditor;
     return (
       <>
         <div className="gf-form-group">
@@ -115,8 +131,8 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
                     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors.queryOptionsDataSourceSelect
                   }
                 >
-                  {this.props.dataSources.length &&
-                    this.props.dataSources.map(ds => (
+                  {this.props.editor.extended?.dataSources.length &&
+                    this.props.editor.extended?.dataSources.map(ds => (
                       <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.name}>
                         {ds.name}
                       </option>
@@ -152,9 +168,9 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
             </div>
           </div>
 
-          {VariableQueryEditor && this.props.editor.dataSource && (
+          {VariableQueryEditor && this.props.editor.extended?.dataSource && (
             <VariableQueryEditor
-              datasource={this.props.editor.dataSource}
+              datasource={this.props.editor.extended?.dataSource}
               query={this.props.variable.query}
               templateSrv={templateSrv}
               onChange={this.onQueryChange}
@@ -275,3 +291,19 @@ export class QueryVariableEditor extends PureComponent<Props, State> {
     );
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
+  editor: state.variableEditor as VariableEditorState<QueryVariableEditorState>,
+});
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  initQueryVariableEditor,
+  changeQueryVariableDataSource,
+  changeQueryVariableQuery,
+};
+
+export const QueryVariableEditor = connectWithStore(
+  QueryVariableEditorUnConnected,
+  mapStateToProps,
+  mapDispatchToProps
+);

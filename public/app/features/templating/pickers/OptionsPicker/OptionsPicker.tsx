@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
-import { MapStateToProps, connect, MapDispatchToProps } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { VariableLink } from '../shared/VariableLink';
-import { VariableInput, NavigationKeys } from '../shared/VariableInput';
+import { NavigationKeys, VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, toggleOptionByHighlight } from './actions';
 import {
   OptionsPickerState,

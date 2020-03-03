@@ -1,29 +1,13 @@
 import { createReducer } from '@reduxjs/toolkit';
-import _, { cloneDeep } from 'lodash';
-import { VariableHide, VariableOption, CustomVariableModel } from '../variable';
-import {
-  addVariable,
-  changeVariableProp,
-  changeVariableNameSucceeded,
-  changeVariableNameFailed,
-  setCurrentVariableValue,
-} from '../state/actions';
-import {
-  emptyUuid,
-  initialVariableEditorState,
-  VariableEditorState,
-  VariableState,
-  getInstanceState,
-  ALL_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
-} from '../state/types';
+import { cloneDeep } from 'lodash';
+import { CustomVariableModel, VariableHide, VariableOption } from '../variable';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/actions';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, emptyUuid, getInstanceState, VariableState } from '../state/types';
 import { initialTemplatingState } from '../state/reducers';
 import { Deferred } from '../deferred';
 import { createCustomOptionsFromQuery } from './actions';
-import { applyStateChanges } from '../state/applyStateChanges';
 
-export interface CustomVariableEditorState extends VariableEditorState {}
-export interface CustomVariableState extends VariableState<CustomVariableEditorState, CustomVariableModel> {}
+export interface CustomVariableState extends VariableState<CustomVariableModel> {}
 
 export const initialCustomVariableModelState: CustomVariableModel = {
   uuid: emptyUuid,
@@ -43,13 +27,7 @@ export const initialCustomVariableModelState: CustomVariableModel = {
   initLock: null,
 };
 
-export const initialCustomVariableEditorState: CustomVariableEditorState = {
-  ...initialVariableEditorState,
-  type: 'custom',
-};
-
 export const initialCustomVariableState: CustomVariableState = {
-  editor: initialCustomVariableEditorState,
   variable: initialCustomVariableModelState,
 };
 
@@ -65,19 +43,6 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
       state.variables[action.payload.uuid!].variable.index = action.payload.data.index;
       state.variables[action.payload.uuid!].variable.global = action.payload.data.global;
       state.variables[action.payload.uuid!].variable.initLock = new Deferred();
-    })
-    .addCase(changeVariableNameSucceeded, (state, action) => {
-      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
-      delete instanceState.editor.errors['name'];
-      instanceState.editor.name = action.payload.data;
-      instanceState.variable.name = action.payload.data;
-      applyStateChanges(instanceState, updateEditorIsValid);
-    })
-    .addCase(changeVariableNameFailed, (state, action) => {
-      const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
-      instanceState.editor.name = action.payload.data.newName;
-      instanceState.editor.errors.name = action.payload.data.errorText;
-      applyStateChanges(instanceState, updateEditorIsValid);
     })
     .addCase(createCustomOptionsFromQuery, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid);
@@ -98,8 +63,6 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
     .addCase(changeVariableProp, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid!);
       (instanceState.variable as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
-
-      applyStateChanges(instanceState, updateEditorErrors, updateEditorIsValid);
     })
     .addCase(setCurrentVariableValue, (state, action) => {
       const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid);
@@ -130,26 +93,3 @@ export const customVariableReducer = createReducer(initialTemplatingState, build
       });
     })
 );
-
-const updateEditorErrors = (state: CustomVariableState): CustomVariableState => {
-  let errorText = null;
-  if (
-    typeof state.variable.query === 'string' &&
-    state.variable.query.match(new RegExp('\\$' + state.variable.name + '(/| |$)'))
-  ) {
-    errorText = 'TODO: add better error message and validation..';
-  }
-
-  if (!errorText) {
-    delete state.editor.errors.query;
-    return state;
-  }
-
-  state.editor.errors.query = errorText;
-  return state;
-};
-
-const updateEditorIsValid = (state: CustomVariableState): CustomVariableState => {
-  state.editor.isValid = Object.keys(state.editor.errors).length === 0;
-  return state;
-};

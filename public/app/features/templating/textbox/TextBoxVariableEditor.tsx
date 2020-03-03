@@ -1,9 +1,8 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { TextBoxVariableModel } from '../variable';
-import { VariableEditorProps } from '../state/types';
-import { TextBoxVariableEditorState } from './reducer';
+import { VariableEditorProps } from '../editor/types';
 
-export interface Props extends VariableEditorProps<TextBoxVariableModel, TextBoxVariableEditorState> {}
+export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 export class TextBoxVariableEditor extends PureComponent<Props> {
   onQueryChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();

@@ -10,6 +10,7 @@ import {
   changeVariableOrder,
   duplicateVariable,
   removeVariable,
+  toVariableIdentifier,
   toVariablePayload,
   VariableIdentifier,
 } from '../state/actions';
@@ -122,7 +123,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           />
         )}
         {variableStateToEdit && (
-          <VariableEditorEditor editor={variableStateToEdit.editor} variable={variableStateToEdit.variable} />
+          <VariableEditorEditor identifier={toVariableIdentifier(variableStateToEdit.variable)} />
         )}
       </div>
     );

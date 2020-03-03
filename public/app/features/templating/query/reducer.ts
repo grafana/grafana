@@ -1,6 +1,6 @@
 import { createReducer } from '@reduxjs/toolkit';
 import _ from 'lodash';
-import { DataSourceApi, stringToJsRegex } from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
 
 import {
   containsSearchFilter,
@@ -10,12 +10,9 @@ import {
   VariableRefresh,
   VariableSort,
   VariableTag,
-  VariableWithOptions,
 } from '../variable';
 import {
   addVariable,
-  changeVariableNameFailed,
-  changeVariableNameSucceeded,
   changeVariableProp,
   removeInitLock,
   resolveInitLock,
@@ -26,29 +23,26 @@ import {
 import templateSrv from '../template_srv';
 import { Deferred } from '../deferred';
 import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
   emptyUuid,
   getInstanceState,
-  initialVariableEditorState,
-  VariableEditorState,
-  VariableState,
-  ALL_VARIABLE_TEXT,
   NONE_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
   NONE_VARIABLE_VALUE,
+  VariableState,
 } from '../state/types';
-import { queryVariableDatasourceLoaded, queryVariableQueryEditorLoaded } from './actions';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
 import { initialTemplatingState } from '../state/reducers';
 import cloneDeep from 'lodash/cloneDeep';
-import { applyStateChanges } from '../state/applyStateChanges';
 
-export interface QueryVariableEditorState extends VariableEditorState {
+export interface QueryVariableEditorState {
   VariableQueryEditor: ComponentType<VariableQueryProps> | null;
+  dataSources: DataSourceSelectItem[];
   dataSource: DataSourceApi | null;
 }
 
-export interface QueryVariableState extends VariableState<QueryVariableEditorState, QueryVariableModel> {}
+export interface QueryVariableState extends VariableState<QueryVariableModel> {}
 
 export const initialQueryVariableModelState: QueryVariableModel = {
   uuid: emptyUuid,
@@ -77,54 +71,11 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   initLock: null,
 };
 
-export const initialQueryVariableEditorState: QueryVariableEditorState = {
-  ...initialVariableEditorState,
-  VariableQueryEditor: null,
-  dataSource: null,
-  type: 'query',
-};
-
 export const initialQueryVariableState: QueryVariableState = {
-  editor: initialQueryVariableEditorState,
   variable: initialQueryVariableModelState,
 };
 
 export const getQueryHasSearchFilter = (variable: QueryVariableModel) => containsSearchFilter(variable.query);
-
-export const getLinkText = (variable: VariableWithOptions) => {
-  const { current, options } = variable;
-
-  if (!current.tags || current.tags.length === 0) {
-    return current.text;
-  }
-
-  // filer out values that are in selected tags
-  const selectedAndNotInTag = options.filter(option => {
-    if (!option.selected) {
-      return false;
-    }
-
-    if (!current || !current.tags || !current.tags.length) {
-      return false;
-    }
-
-    for (let i = 0; i < current.tags.length; i++) {
-      const tag = current.tags[i];
-      const foundIndex = tag?.values?.findIndex(v => v === option.value);
-      if (foundIndex && foundIndex !== -1) {
-        return false;
-      }
-    }
-    return true;
-  });
-
-  // convert values to text
-  const currentTexts = selectedAndNotInTag.map(s => s.text);
-
-  // join texts
-  const newLinkText = currentTexts.join(' + ');
-  return newLinkText.length > 0 ? `${newLinkText} + ` : newLinkText;
-};
 
 const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortOrder === VariableSort.disabled) {
@@ -195,29 +146,6 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
 
   options = _.uniqBy(options, 'value');
   return sortVariableValues(options, sort);
-};
-
-const updateEditorErrors = (state: QueryVariableState): QueryVariableState => {
-  let errorText = null;
-  if (
-    typeof state.variable.query === 'string' &&
-    state.variable.query.match(new RegExp('\\$' + state.variable.name + '(/| |$)'))
-  ) {
-    errorText = 'Query cannot contain a reference to itself. Variable: $' + state.variable.name;
-  }
-
-  if (!errorText) {
-    delete state.editor.errors.query;
-    return state;
-  }
-
-  state.editor.errors.query = errorText;
-  return state;
-};
-
-const updateEditorIsValid = (state: QueryVariableState): QueryVariableState => {
-  state.editor.isValid = Object.keys(state.editor.errors).length === 0;
-  return state;
 };
 
 export const queryVariableReducer = createReducer(initialTemplatingState, builder =>
@@ -294,31 +222,8 @@ export const queryVariableReducer = createReducer(initialTemplatingState, builde
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       instanceState.variable.initLock = null;
     })
-    .addCase(changeVariableNameSucceeded, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      delete instanceState.editor.errors['name'];
-      instanceState.editor.name = action.payload.data;
-      instanceState.variable.name = action.payload.data;
-      applyStateChanges(instanceState, updateEditorIsValid);
-    })
-    .addCase(changeVariableNameFailed, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.editor.name = action.payload.data.newName;
-      instanceState.editor.errors.name = action.payload.data.errorText;
-      applyStateChanges(instanceState, updateEditorIsValid);
-    })
-    .addCase(queryVariableDatasourceLoaded, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.editor.dataSource = action.payload.data;
-    })
-    .addCase(queryVariableQueryEditorLoaded, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
-      instanceState.editor.VariableQueryEditor = action.payload.data;
-    })
     .addCase(changeVariableProp, (state, action) => {
       const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid!);
       (instanceState.variable as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
-
-      applyStateChanges(instanceState, updateEditorErrors, updateEditorIsValid);
     })
 );

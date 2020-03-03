@@ -2,27 +2,20 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { TemplatingState } from './reducers';
 import { sharedTemplatingReducer } from './sharedTemplatingReducer';
 import { VariableHide } from '../variable';
-import { emptyUuid, initialVariableEditorState, VariableEditorState, VariableState } from './types';
+import { emptyUuid, VariableState } from './types';
 import {
   changeToEditorEditMode,
   changeToEditorListMode,
-  changeVariableHide,
-  changeVariableLabel,
   changeVariableOrder,
   duplicateVariable,
   removeVariable,
   storeNewVariable,
   toVariablePayload,
-  updateVariableCompleted,
-  updateVariableFailed,
-  updateVariableStarting,
-  variableEditorMounted,
-  variableEditorUnMounted,
 } from './actions';
-import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
-import { initialQueryVariableEditorState, initialQueryVariableModelState } from '../query/reducer';
+import { initialQueryVariableModelState } from '../query/reducer';
+import { variableEditorUnMounted } from '../editor/reducer';
 
 const getVariableState = (
   noOfVariables: number,
@@ -32,17 +25,6 @@ const getVariableState = (
   const variables: Record<string, VariableState> = {};
 
   for (let index = 0; index < noOfVariables; index++) {
-    const editor: VariableEditorState =
-      index === inEditorIndex
-        ? {
-            ...initialVariableEditorState,
-            type: 'query',
-            name: `Name-${index}`,
-            isValid: true,
-            errors: {},
-            dataSources: [],
-          }
-        : { ...initialVariableEditorState };
     variables[index] = {
       variable: {
         uuid: index.toString(),
@@ -53,7 +35,6 @@ const getVariableState = (
         label: `Label-${index}`,
         skipUrlSync: false,
       },
-      editor,
     };
   }
 
@@ -68,7 +49,6 @@ const getVariableState = (
         label: `Label-${emptyUuid}`,
         skipUrlSync: false,
       },
-      editor: { ...initialVariableEditorState },
     };
   }
 
@@ -98,7 +78,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '2': {
               variable: {
@@ -110,73 +89,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
-            },
-          },
-          uuidInEditor: null,
-        });
-    });
-  });
-
-  describe('when variableEditorMounted is dispatched', () => {
-    it('then state should be correct', () => {
-      const initialState: TemplatingState = {
-        variables: getVariableState(3),
-        uuidInEditor: null,
-      };
-      const datasources: DataSourceSelectItem[] = [
-        { name: 'ds1', sort: '', value: 'ds1-value', meta: ({} as unknown) as DataSourcePluginMeta },
-        { name: 'ds2', sort: '', value: 'ds2-value', meta: ({} as unknown) as DataSourcePluginMeta },
-      ];
-      const payload = toVariablePayload({ uuid: '1', type: 'query' }, datasources);
-      reducerTester<TemplatingState>()
-        .givenReducer(sharedTemplatingReducer, initialState)
-        .whenActionIsDispatched(variableEditorMounted(payload))
-        .thenStateShouldEqual({
-          variables: {
-            '0': {
-              variable: {
-                uuid: '0',
-                type: 'query',
-                name: 'Name-0',
-                hide: VariableHide.dontHide,
-                index: 0,
-                label: 'Label-0',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-            '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.dontHide,
-                index: 1,
-                label: 'Label-1',
-                skipUrlSync: false,
-              },
-              editor: {
-                ...initialVariableEditorState,
-                name: 'Name-1',
-                type: 'query',
-                dataSources: [
-                  { name: 'ds1', sort: '', value: 'ds1-value', meta: ({} as unknown) as DataSourcePluginMeta },
-                  { name: 'ds2', sort: '', value: 'ds2-value', meta: ({} as unknown) as DataSourcePluginMeta },
-                ],
-              },
-            },
-            '2': {
-              variable: {
-                uuid: '2',
-                type: 'query',
-                name: 'Name-2',
-                hide: VariableHide.dontHide,
-                index: 2,
-                label: 'Label-2',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
             },
           },
           uuidInEditor: null,
@@ -207,7 +119,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '1': {
               variable: {
@@ -219,7 +130,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              editor: { ...initialQueryVariableEditorState },
             },
             '2': {
               variable: {
@@ -231,7 +141,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
           },
           uuidInEditor: null,
@@ -262,7 +171,6 @@ describe('sharedTemplatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
           },
           '1': {
             variable: {
@@ -274,7 +182,6 @@ describe('sharedTemplatingReducer', () => {
               label: 'Label-1',
               skipUrlSync: false,
             },
-            editor: { ...initialQueryVariableEditorState },
           },
           '2': {
             variable: {
@@ -286,7 +193,6 @@ describe('sharedTemplatingReducer', () => {
               label: 'Label-2',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
           },
         },
         uuidInEditor: null,
@@ -298,283 +204,6 @@ describe('sharedTemplatingReducer', () => {
         .thenStateShouldEqual(expectedState)
         .whenActionIsDispatched(variableEditorUnMounted(emptyPayload))
         .thenStateShouldEqual(expectedState);
-    });
-  });
-
-  describe('when changeVariableLabel is dispatched', () => {
-    it('then state should be correct', () => {
-      const initialState: TemplatingState = {
-        variables: getVariableState(3, 1),
-        uuidInEditor: '1',
-      };
-      const payload = toVariablePayload({ uuid: '1', type: 'query' }, 'New label');
-      reducerTester<TemplatingState>()
-        .givenReducer(sharedTemplatingReducer, initialState)
-        .whenActionIsDispatched(changeVariableLabel(payload))
-        .thenStateShouldEqual({
-          variables: {
-            '0': {
-              variable: {
-                uuid: '0',
-                type: 'query',
-                name: 'Name-0',
-                hide: VariableHide.dontHide,
-                index: 0,
-                label: 'Label-0',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-            '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.dontHide,
-                index: 1,
-                label: 'New label',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState, name: 'Name-1' },
-            },
-            '2': {
-              variable: {
-                uuid: '2',
-                type: 'query',
-                name: 'Name-2',
-                hide: VariableHide.dontHide,
-                index: 2,
-                label: 'Label-2',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-          },
-          uuidInEditor: '1',
-        });
-    });
-  });
-
-  describe('when changeVariableHide is dispatched', () => {
-    it('then state should be correct', () => {
-      const initialState: TemplatingState = {
-        variables: getVariableState(3, 1),
-        uuidInEditor: '1',
-      };
-      const payload = toVariablePayload({ uuid: '1', type: 'query' }, VariableHide.hideVariable);
-      reducerTester<TemplatingState>()
-        .givenReducer(sharedTemplatingReducer, initialState)
-        .whenActionIsDispatched(changeVariableHide(payload))
-        .thenStateShouldEqual({
-          variables: {
-            '0': {
-              variable: {
-                uuid: '0',
-                type: 'query',
-                name: 'Name-0',
-                hide: VariableHide.dontHide,
-                index: 0,
-                label: 'Label-0',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-            '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.hideVariable,
-                index: 1,
-                label: 'Label-1',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState, name: 'Name-1' },
-            },
-            '2': {
-              variable: {
-                uuid: '2',
-                type: 'query',
-                name: 'Name-2',
-                hide: VariableHide.dontHide,
-                index: 2,
-                label: 'Label-2',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-          },
-          uuidInEditor: '1',
-        });
-    });
-  });
-
-  describe('when updateVariableStarting is dispatched', () => {
-    it('then state should be correct', () => {
-      const initialState: TemplatingState = {
-        variables: getVariableState(3, 1),
-        uuidInEditor: '1',
-      };
-      initialState.variables['1'].editor.isValid = false;
-      const payload = toVariablePayload({ uuid: '1', type: 'query' });
-      reducerTester<TemplatingState>()
-        .givenReducer(sharedTemplatingReducer, initialState)
-        .whenActionIsDispatched(updateVariableStarting(payload))
-        .thenStateShouldEqual({
-          variables: {
-            '0': {
-              variable: {
-                uuid: '0',
-                type: 'query',
-                name: 'Name-0',
-                hide: VariableHide.dontHide,
-                index: 0,
-                label: 'Label-0',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-            '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.dontHide,
-                index: 1,
-                label: 'Label-1',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState, name: 'Name-1', isValid: false },
-            },
-            '2': {
-              variable: {
-                uuid: '2',
-                type: 'query',
-                name: 'Name-2',
-                hide: VariableHide.dontHide,
-                index: 2,
-                label: 'Label-2',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-          },
-          uuidInEditor: '1',
-        });
-    });
-  });
-
-  describe('when updateVariableCompleted is dispatched', () => {
-    it('then state should be correct', () => {
-      const initialState: TemplatingState = {
-        variables: getVariableState(3, 1),
-        uuidInEditor: '1',
-      };
-      initialState.variables['1'].editor.isValid = false;
-      const payload = toVariablePayload({ uuid: '1', type: 'query' });
-      reducerTester<TemplatingState>()
-        .givenReducer(sharedTemplatingReducer, initialState)
-        .whenActionIsDispatched(updateVariableCompleted(payload))
-        .thenStateShouldEqual({
-          variables: {
-            '0': {
-              variable: {
-                uuid: '0',
-                type: 'query',
-                name: 'Name-0',
-                hide: VariableHide.dontHide,
-                index: 0,
-                label: 'Label-0',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-            '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.dontHide,
-                index: 1,
-                label: 'Label-1',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState, name: 'Name-1', isValid: false },
-            },
-            '2': {
-              variable: {
-                uuid: '2',
-                type: 'query',
-                name: 'Name-2',
-                hide: VariableHide.dontHide,
-                index: 2,
-                label: 'Label-2',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-          },
-          uuidInEditor: '1',
-        });
-    });
-  });
-
-  describe('when updateVariableFailed is dispatched', () => {
-    it('then state should be correct', () => {
-      const initialState: TemplatingState = {
-        variables: getVariableState(3, 1),
-        uuidInEditor: '1',
-      };
-      const payload = toVariablePayload({ uuid: '1', type: 'query' }, new Error('Test error'));
-      reducerTester<TemplatingState>()
-        .givenReducer(sharedTemplatingReducer, initialState)
-        .whenActionIsDispatched(updateVariableFailed(payload))
-        .thenStateShouldEqual({
-          variables: {
-            '0': {
-              variable: {
-                uuid: '0',
-                type: 'query',
-                name: 'Name-0',
-                hide: VariableHide.dontHide,
-                index: 0,
-                label: 'Label-0',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-            '1': {
-              variable: {
-                uuid: '1',
-                type: 'query',
-                name: 'Name-1',
-                hide: VariableHide.dontHide,
-                index: 1,
-                label: 'Label-1',
-                skipUrlSync: false,
-              },
-              editor: {
-                ...initialVariableEditorState,
-                name: 'Name-1',
-                isValid: false,
-                errors: { update: 'Test error' },
-              },
-            },
-            '2': {
-              variable: {
-                uuid: '2',
-                type: 'query',
-                name: 'Name-2',
-                hide: VariableHide.dontHide,
-                index: 2,
-                label: 'Label-2',
-                skipUrlSync: false,
-              },
-              editor: { ...initialVariableEditorState },
-            },
-          },
-          uuidInEditor: '1',
-        });
     });
   });
 
@@ -601,7 +230,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '1': {
               variable: {
@@ -613,7 +241,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '2': {
               variable: {
@@ -625,7 +252,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '11': {
               variable: {
@@ -637,7 +263,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              editor: { ...initialQueryVariableEditorState },
             },
           },
           uuidInEditor: null,
@@ -667,7 +292,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '1': {
               variable: {
@@ -679,7 +303,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '2': {
               variable: {
@@ -691,7 +314,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
           },
           uuidInEditor: null,
@@ -722,7 +344,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-0',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '1': {
               variable: {
@@ -734,7 +355,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-1',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             '2': {
               variable: {
@@ -746,7 +366,6 @@ describe('sharedTemplatingReducer', () => {
                 label: 'Label-2',
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             [emptyUuid]: {
               variable: {
@@ -758,7 +377,6 @@ describe('sharedTemplatingReducer', () => {
                 label: `Label-${emptyUuid}`,
                 skipUrlSync: false,
               },
-              editor: { ...initialVariableEditorState },
             },
             [11]: {
               variable: {
@@ -770,7 +388,6 @@ describe('sharedTemplatingReducer', () => {
                 label: `Label-${emptyUuid}`,
                 skipUrlSync: false,
               },
-              editor: { ...initialQueryVariableEditorState },
             },
           },
           uuidInEditor: null,
@@ -802,7 +419,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-0',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
               '1': {
                 variable: {
@@ -814,7 +430,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-1',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
               '2': {
                 variable: {
@@ -826,7 +441,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-2',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
               [emptyUuid]: {
                 variable: {
@@ -839,7 +453,6 @@ describe('sharedTemplatingReducer', () => {
                   label: null,
                   skipUrlSync: false,
                 },
-                editor: { ...initialQueryVariableEditorState },
               },
             },
             uuidInEditor: emptyUuid,
@@ -870,7 +483,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-0',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
               '1': {
                 variable: {
@@ -882,7 +494,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-1',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
               '2': {
                 variable: {
@@ -894,7 +505,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-2',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
             },
             uuidInEditor: '1',
@@ -927,7 +537,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-0',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
               '1': {
                 variable: {
@@ -939,7 +548,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-1',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
               '2': {
                 variable: {
@@ -951,7 +559,6 @@ describe('sharedTemplatingReducer', () => {
                   label: 'Label-2',
                   skipUrlSync: false,
                 },
-                editor: { ...initialVariableEditorState },
               },
             },
             uuidInEditor: null,

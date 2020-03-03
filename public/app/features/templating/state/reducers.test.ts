@@ -2,7 +2,7 @@ import { templatingReducer, TemplatingState } from './reducers';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
 import { VariableHide, VariableModel } from '../variable';
-import { initialVariableEditorState, VariableState } from './types';
+import { VariableState } from './types';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
 import { toVariablePayload, VariablePayload } from './actions';
@@ -22,7 +22,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
           },
           '1': {
             variable: {
@@ -35,7 +34,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
               global: true,
             },
-            editor: { ...initialVariableEditorState },
           },
           '2': {
             variable: {
@@ -47,7 +45,6 @@ describe('templatingReducer', () => {
               label: 'Label-2',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
           },
           '3': {
             variable: {
@@ -60,7 +57,6 @@ describe('templatingReducer', () => {
               skipUrlSync: false,
               global: true,
             },
-            editor: { ...initialVariableEditorState },
           },
         },
         uuidInEditor: null,
@@ -82,7 +78,6 @@ describe('templatingReducer', () => {
                 skipUrlSync: false,
                 global: true,
               },
-              editor: { ...initialVariableEditorState },
             },
             '3': {
               variable: {
@@ -95,7 +90,6 @@ describe('templatingReducer', () => {
                 skipUrlSync: false,
                 global: true,
               },
-              editor: { ...initialVariableEditorState },
             },
           },
           uuidInEditor: null,
@@ -117,7 +111,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
           },
         },
         uuidInEditor: null,
@@ -164,7 +157,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
           },
         },
         uuidInEditor: null,
@@ -207,7 +199,6 @@ describe('templatingReducer', () => {
               label: 'Label-0',
               skipUrlSync: false,
             },
-            editor: { ...initialVariableEditorState },
           },
         },
         uuidInEditor: null,
