@@ -4,8 +4,8 @@ import { StoreState } from 'app/types';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { VariableLink } from '../shared/VariableLink';
 import { VariableInput } from '../shared/VariableInput';
-import { commitChangesToVariable, filterOrSearchOptions, navigateOptions } from './actions';
-import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption, toggleTag } from './reducer';
+import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
+import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
 import { VariableWithOptions, VariableWithMultiSupport, VariableOption, VariableTag } from '../../variable';
 import { VariableOptions } from '../shared/VariableOptions';
 import { VariablePickerProps } from '../../state/types';
@@ -22,7 +22,7 @@ interface DispatchProps {
   commitChangesToVariable: typeof commitChangesToVariable;
   toggleAllOptions: typeof toggleAllOptions;
   toggleOption: typeof toggleOption;
-  toggleTag: typeof toggleTag;
+  toggleAndFetchTag: typeof toggleAndFetchTag;
   filterOrSearchOptions: typeof filterOrSearchOptions;
   navigateOptions: typeof navigateOptions;
 }
@@ -84,7 +84,7 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
           values={picker.options}
           onToggle={this.onToggleOption}
           onToggleAll={this.props.toggleAllOptions}
-          onToggleTag={this.props.toggleTag}
+          onToggleTag={this.props.toggleAndFetchTag}
           highlightIndex={picker.highlightIndex}
           multi={picker.multi}
           tags={picker.tags}
@@ -146,7 +146,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   filterOrSearchOptions,
   toggleAllOptions,
   toggleOption,
-  toggleTag,
+  toggleAndFetchTag,
   navigateOptions,
 };
 
