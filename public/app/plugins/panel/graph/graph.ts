@@ -430,12 +430,21 @@ class GraphElement {
         options.series.bars.barWidth = 0.7;
         options.series.bars.align = 'center';
 
+        const tickValues = [];
+        let index = 1;
         for (let i = 0; i < this.data.length; i++) {
           const series = this.data[i];
-          series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
+          let tickName = series.alias;
+          if (options.series.stack && series.stack != null) {
+            tickName = series.stack;
+          }
+          if (tickValues[tickName] == null) {
+            tickValues[tickName] = index++;
+          }
+          series.data = [[tickValues[tickName], series.stats[panel.xaxis.values[0]]]];
         }
 
-        this.addXSeriesAxis(options);
+        this.addXSeriesAxis(options, tickValues);
         break;
       }
       case 'histogram': {
@@ -614,9 +623,9 @@ class GraphElement {
     };
   }
 
-  addXSeriesAxis(options: any) {
-    const ticks = _.map(this.data, (series, index) => {
-      return [index + 1, series.alias];
+  addXSeriesAxis(options: any, tickValues: any) {
+    const ticks = Object.entries(tickValues).map((tickKeyValuePair: any) => {
+      return [Number(tickKeyValuePair[1]), tickKeyValuePair[0]];
     });
 
     options.xaxis = {
@@ -624,7 +633,7 @@ class GraphElement {
       show: this.panel.xaxis.show,
       mode: null,
       min: 0,
-      max: ticks.length + 1,
+      max: Object.keys(tickValues).length + 1,
       label: 'Datetime',
       ticks: ticks,
     };
