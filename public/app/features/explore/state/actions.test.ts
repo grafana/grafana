@@ -255,7 +255,7 @@ describe('loading datasource', () => {
             exploreId,
             requestedDatasourceName: mockDatasourceInstance.name,
           }),
-          loadDatasourceReadyAction({ exploreId, history: [], richHistory: [] }),
+          loadDatasourceReadyAction({ exploreId, history: [] }),
         ]);
       });
     });
