@@ -10,14 +10,12 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import { getProcessedDataFrames } from '../state/runRequest';
-import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   LoadingState,
-  ScopedVars,
   AbsoluteTimeRange,
   DefaultTimeRange,
   toUtc,
@@ -25,7 +23,6 @@ import {
   PanelEvents,
   PanelData,
   PanelPlugin,
-  applyFieldOverrides,
 } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -213,20 +210,11 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onRender = () => {
     const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
-
     this.setState(stateUpdate);
   };
 
   onOptionsChange = (options: any) => {
     this.props.panel.updateOptions(options);
-  };
-
-  replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
-    let vars = this.props.panel.scopedVars;
-    if (extraVars) {
-      vars = vars ? { ...vars, ...extraVars } : extraVars;
-    }
-    return templateSrv.replace(value, vars, format);
   };
 
   onPanelError = (message: string) => {
@@ -283,20 +271,13 @@ export class PanelChrome extends PureComponent<Props, State> {
       'panel-content--no-padding': plugin.noPadding,
     });
     const panelOptions = panel.getOptions();
-    const processedData = applyFieldOverrides({
-      data: data.series,
-      fieldOptions: panelOptions.fieldOptions,
-      theme,
-      replaceVariables: this.replaceVariables,
-      custom: panel.plugin.customFieldConfigs,
-    });
 
     return (
       <>
         <div className={panelContentClassNames}>
           <PanelComponent
             id={panel.id}
-            data={{ ...data, series: processedData }}
+            data={data}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panelOptions}
@@ -304,7 +285,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             width={panelWidth}
             height={innerPanelHeight}
             renderCounter={renderCounter}
-            replaceVariables={this.replaceVariables}
+            replaceVariables={panel.replaceVariables}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
           />

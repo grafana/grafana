@@ -3,6 +3,7 @@ import _ from 'lodash';
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
   DataQuery,
@@ -174,8 +175,17 @@ export class PanelModel {
     return this.options;
   }
 
+  replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
+    let vars = this.scopedVars;
+    if (extraVars) {
+      vars = vars ? { ...vars, ...extraVars } : extraVars;
+    }
+    return templateSrv.replace(value, vars, format);
+  };
+
   updateOptions(options: object) {
     this.options = options;
+    this.updateQueryRunnerFieldOverrides();
     this.render();
   }
 
@@ -283,6 +293,7 @@ export class PanelModel {
     }
 
     this.applyPluginOptionDefaults(plugin);
+    this.updateQueryRunnerFieldOverrides();
   }
 
   changePlugin(newPlugin: PanelPlugin) {
@@ -320,6 +331,7 @@ export class PanelModel {
     this.type = pluginId;
     this.plugin = newPlugin;
     this.applyPluginOptionDefaults(newPlugin);
+    this.updateQueryRunnerFieldOverrides();
 
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);
@@ -391,6 +403,26 @@ export class PanelModel {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.getQueryRunner().setTransformations(transformations);
+  }
+
+  updateQueryRunnerFieldOverrides() {
+    if (!this.plugin) {
+      return;
+    }
+
+    this.getQueryRunner().setFieldOverrides({
+      fieldOptions: this.options.fieldOptions,
+      replaceVariables: this.replaceVariables,
+      custom: this.plugin.customFieldConfigs,
+      theme: config.theme,
+    });
+
+    this.getQueryRunner()
+      .getData()
+      .pipe(take(1))
+      .subscribe(val => {
+        this.getQueryRunner().pipeDataToSubject(val);
+      });
   }
 }
 

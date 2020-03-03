@@ -23,6 +23,8 @@ import {
   DataTransformerConfig,
   transformDataFrame,
   ScopedVars,
+  ApplyFieldOverrideOptions,
+  applyFieldOverrides,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -54,6 +56,8 @@ export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private transformations?: DataTransformerConfig[];
+  private fieldOverrideOptions?: ApplyFieldOverrideOptions;
+  private lastResultUnprocessed?: PanelData;
   private lastResult?: PanelData;
 
   constructor() {
@@ -64,20 +68,32 @@ export class PanelQueryRunner {
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
   getData(transform = true): Observable<PanelData> {
-    if (transform) {
-      return this.subject.pipe(
-        map((data: PanelData) => {
-          if (this.hasTransformations()) {
-            const newSeries = transformDataFrame(this.transformations, data.series);
-            return { ...data, series: newSeries };
-          }
-          return data;
-        })
-      );
-    }
+    return this.subject.pipe(
+      // apply overrides
+      map((data: PanelData) => {
+        // field overrides are applied on the unprocessed query results
+        let processedData: PanelData = this.lastResultUnprocessed;
+        if (this.fieldOverrideOptions) {
+          processedData = {
+            ...data,
+            series: applyFieldOverrides({ data: processedData.series, ...this.fieldOverrideOptions }),
+          };
+        }
+        return processedData;
+      }),
+      // apply transformations
+      map((data: PanelData) => {
+        let processedData: PanelData = data;
 
-    // Just pass it directly
-    return this.subject.pipe();
+        if (transform && this.hasTransformations()) {
+          processedData = {
+            ...data,
+            series: transformDataFrame(this.transformations, data.series),
+          };
+        }
+        return processedData;
+      })
+    );
   }
 
   hasTransformations() {
@@ -164,6 +180,8 @@ export class PanelQueryRunner {
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
+        // Store preprocessed query results for applying overrides later on in the pipeline
+        this.lastResultUnprocessed = this.lastResult;
         this.subject.next(this.lastResult);
       },
     });
@@ -177,6 +195,10 @@ export class PanelQueryRunner {
   setTransformations(transformations?: DataTransformerConfig[]) {
     this.transformations = transformations;
   }
+
+  setFieldOverrides = (options?: ApplyFieldOverrideOptions) => {
+    this.fieldOverrideOptions = options;
+  };
 
   /**
    * Called when the panel is closed
