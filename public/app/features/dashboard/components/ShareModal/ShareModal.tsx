@@ -14,6 +14,10 @@ const shareModalTabs: ShareModalTabModel[] = [
   { label: 'Export', value: 'export', component: ShareExport },
 ];
 
+export function addShareTab(tab: ShareModalTabModel) {
+  shareModalTabs.push(tab);
+}
+
 interface Props {
   dashboard: DashboardModel;
   panel?: PanelModel;
