@@ -54,6 +54,13 @@ func TestStatsDataAccess(t *testing.T) {
 			err := GetAdminStats(&query)
 			assert.Nil(t, err)
 		})
+
+		t.Run("Get active user count stats should not result in error", func(t *testing.T) {
+			query := models.GetActiveUserCountStatsQuery{}
+			err := GetActiveUserCountStats(&query)
+			assert.Nil(t, err)
+			assert.Equal(t, query.Result.Count, int64(1))
+		})
 	})
 }
 
@@ -108,5 +115,12 @@ func populateDB(t *testing.T) {
 		Role:   models.ROLE_ADMIN,
 	}
 	err = AddOrgUser(cmd)
+	assert.Nil(t, err)
+
+	// update 1st user last seen at
+	updateUserLastSeenAtCmd := &models.UpdateUserLastSeenAtCommand{
+		UserId: users[0].Id,
+	}
+	err = UpdateUserLastSeenAt(updateUserLastSeenAtCmd)
 	assert.Nil(t, err)
 }

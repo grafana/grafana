@@ -13,6 +13,7 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
+	bus.AddHandler("sql", GetActiveUserCountStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
@@ -182,4 +183,19 @@ func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCou
 
 		return err
 	})
+}
+
+func GetActiveUserCountStats(query *models.GetActiveUserCountStatsQuery) error {
+	activeEndDate := time.Now().Add(-activeUserTimeLimit)
+
+	var rawSql = `SELECT COUNT(*) AS Count FROM ` + dialect.Quote("user") + ` where last_seen_at > ?`
+	var stats models.ActiveUserCountStats
+	_, err := x.SQL(rawSql, activeEndDate).Get(&stats)
+	if err != nil {
+		return err
+	}
+
+	query.Result = &stats
+
+	return err
 }
