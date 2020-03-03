@@ -51,7 +51,7 @@ export class AnnotationsSrv {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = flattenDeep(results[0]);
 
-        annotations = _.filter(annotations, item => {
+        annotations = annotations.filter(item => {
           return (
             this.matchPanelId(item, options.panel.id) &&
             (!options.panel.options.annotation ||
@@ -93,7 +93,7 @@ export class AnnotationsSrv {
     annotation: AnnotationEvent,
     filterTags: string[],
     matchAny: boolean,
-    scopedVars: ScopedVars
+    scopedVars: ScopedVars | undefined
   ) {
     if (!_.isArray(filterTags) || filterTags.length === 0) {
       return true;

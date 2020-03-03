@@ -52,8 +52,8 @@ describe('AnnotationsSrv', function(this: any) {
       updateIndex: () => {},
       replace: (val: string, scopedVars?: ScopedVars) => {
         let res = val.replace('$var', '(3|4)');
-        Object.keys(scopedVars || {}).forEach(scopedVar => {
-          res = res.replace('$' + scopedVar, scopedVars[scopedVar].value);
+        Object.entries(scopedVars || {}).forEach(([scopedVar, scopedValue]) => {
+          res = res.replace('$' + scopedVar, scopedValue ? scopedValue.value : '');
         });
         return res;
       },
