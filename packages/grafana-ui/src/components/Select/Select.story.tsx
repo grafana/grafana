@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
 import { withKnobs, object } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -80,5 +80,16 @@ export const withAllowCustomValue = () => {
 };
 
 export const asyncSelect = () => {
-  return <AsyncSelect options={options} onChange={value => action('onChange')(value)} />;
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const loadAsyncOptions = () => {
+    return new Promise<Array<SelectableValue<string>>>(resolve => {
+      setTimeout(() => {
+        setIsLoading(false);
+        resolve(options);
+      }, 2000);
+    });
+  };
+  return (
+    <AsyncSelect isLoading={isLoading} loadOptions={loadAsyncOptions} onChange={value => action('onChange')(value)} />
+  );
 };
