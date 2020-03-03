@@ -8,6 +8,7 @@ import memoizeOne from 'memoize-one';
 
 // Services & Utils
 import store from 'app/core/store';
+import config from 'app/core/config';
 // Components
 import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
@@ -323,17 +324,19 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 <i className={'fa fa-fw fa-plus icon-margin-right'} />
                 <span className="btn-title">{'\xA0' + 'Add query'}</span>
               </button>
-              <button
-                aria-label="Query history button"
-                className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
-                  ['explore-active-button']: showQueryHistory,
-                })}
-                onClick={this.toggleShowQueryHistory}
-                disabled={isLive}
-              >
-                <i className={'fa fa-fw fa-history icon-margin-right '} />
-                <span className="btn-title">{'\xA0' + 'Query history'}</span>
-              </button>
+              {config.featureToggles.richHistory && (
+                <button
+                  aria-label="Query history button"
+                  className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
+                    ['explore-active-button']: showQueryHistory,
+                  })}
+                  onClick={this.toggleShowQueryHistory}
+                  disabled={isLive}
+                >
+                  <i className={'fa fa-fw fa-history icon-margin-right '} />
+                  <span className="btn-title">{'\xA0' + 'Query history'}</span>
+                </button>
+              )}
             </div>
             <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
             <AutoSizer onResize={this.onResize} disableHeight>
@@ -389,7 +392,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      {showQueryHistory && <QueryHistoryContainer width={width} exploreId={exploreId} />}
+                      {showQueryHistory && config.featureToggles.richHistory && (
+                        <QueryHistoryContainer width={width} exploreId={exploreId} />
+                      )}
                     </ErrorBoundaryAlert>
                   </main>
                 );

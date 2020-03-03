@@ -18,6 +18,7 @@ interface FeatureToggles {
   expressions: boolean;
   newEdit: boolean;
   meta: boolean;
+  richHistory: boolean;
 }
 
 interface LicenseInfo {
@@ -68,6 +69,7 @@ export class GrafanaBootConfig {
     expressions: false,
     newEdit: false,
     meta: false,
+    richHistory: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   phantomJSRenderer = false;
