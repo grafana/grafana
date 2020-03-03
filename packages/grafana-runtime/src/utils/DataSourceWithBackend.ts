@@ -71,13 +71,27 @@ export class DataSourceWithBackend<
   }
 
   /**
-   * This makes the arrow libary loading async.
+   * This makes the arrow library loading async.
    */
   async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
     const { resultsToDataFrames } = await import(
       /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/ArrowDataFrame'
     );
     return { data: resultsToDataFrames(rsp) };
+  }
+
+  /**
+   * Make a GET request to the datasource resource path
+   */
+  async getResource(path: string, params?: any): Promise<Record<string, any>> {
+    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params);
+  }
+
+  /**
+   * Send a POST request to the datasource resource path
+   */
+  async postResource(path: string, body?: any): Promise<Record<string, any>> {
+    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
   }
 
   testDatasource() {

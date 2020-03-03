@@ -47,7 +47,8 @@ func Wrap(action interface{}) macaron.Handler {
 
 func (r *NormalResponse) WriteTo(ctx *m.ReqContext) {
 	if r.err != nil {
-		ctx.Logger.Error(r.errMessage, "error", r.err)
+		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr())
+
 	}
 
 	header := ctx.Resp.Header()

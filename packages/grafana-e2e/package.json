@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
   "version": "6.7.0-pre",
-  "description": "Grafana End to End Test Library",
+  "description": "Grafana End-to-End Test Library",
   "keywords": [
     "grafana",
     "e2e",
@@ -11,17 +11,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git"
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-e2e"
   },
   "main": "src/index.ts",
   "scripts": {
-    "lint": "eslint cypress/ src/ --ext=.js,.ts,.tsx",
-    "typecheck": "tsc --noEmit",
-    "clean": "rimraf ./dist ./compiled",
-    "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=e2e",
+    "bundle": "rollup -c rollup.config.ts",
+    "clean": "rimraf ./dist ./compiled",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "lint": "eslint cypress/ src/ --ext=.js,.ts,.tsx",
     "open": "cypress open",
-    "start": "cypress run"
+    "start": "cypress run",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",

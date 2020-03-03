@@ -17,8 +17,13 @@ Array [
         className="gf-form-input"
         onChange={[Function]}
         required={true}
-        value="services"
+        value="projects"
       >
+        <option
+          value="projects"
+        >
+          Projects
+        </option>
         <option
           value="services"
         >

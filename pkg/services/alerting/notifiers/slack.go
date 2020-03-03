@@ -276,22 +276,25 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 			},
 		}
 	}
+	attachment := map[string]interface{}{
+		"color":       evalContext.GetStateModel().Color,
+		"title":       evalContext.GetNotificationTitle(),
+		"title_link":  ruleURL,
+		"text":        msg,
+		"fallback":    evalContext.GetNotificationTitle(),
+		"fields":      fields,
+		"footer":      "Grafana v" + setting.BuildVersion,
+		"footer_icon": "https://grafana.com/assets/img/fav32.png",
+		"ts":          time.Now().Unix(),
+	}
+	if imageURL != "" {
+		attachment["image_url"] = imageURL
+	}
 	body := map[string]interface{}{
 		"text":   evalContext.GetNotificationTitle(),
 		"blocks": blocks,
 		"attachments": []map[string]interface{}{
-			{
-				"color":       evalContext.GetStateModel().Color,
-				"title":       evalContext.GetNotificationTitle(),
-				"title_link":  ruleURL,
-				"text":        msg,
-				"fallback":    evalContext.GetNotificationTitle(),
-				"fields":      fields,
-				"image_url":   imageURL,
-				"footer":      "Grafana v" + setting.BuildVersion,
-				"footer_icon": "https://grafana.com/assets/img/fav32.png",
-				"ts":          time.Now().Unix(),
-			},
+			attachment,
 		},
 		"parse": "full", // to linkify urls, users and channels in alert message.
 	}
@@ -313,6 +316,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if err != nil {
 		return err
 	}
+
 	cmd := &models.SendWebhookSync{Url: sn.URL, Body: string(data)}
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send slack notification", "error", err, "webhook", sn.Name)
