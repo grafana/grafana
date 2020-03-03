@@ -40,6 +40,9 @@ export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Modal } from './Modal/Modal';
+
+export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsContext';
+
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
@@ -138,7 +141,7 @@ export {
 } from './FieldConfigs/select';
 
 // Next-gen forms
-export { default as Forms } from './Forms';
+export { default as Forms, ButtonVariant } from './Forms';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';

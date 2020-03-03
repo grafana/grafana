@@ -24,6 +24,7 @@ import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
+import { withSelectArrowNavigation } from '../../Select/withSelectArrowNavigation';
 
 type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 
@@ -64,6 +65,7 @@ export interface SelectCommonProps<T> {
   prefix?: JSX.Element | string | null;
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
+  menuPosition?: 'fixed' | 'absolute';
 }
 
 export interface SelectAsyncProps<T> {
@@ -175,6 +177,7 @@ export function SelectBase<T>({
   width,
   invalid,
   components,
+  menuPosition,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
@@ -245,6 +248,7 @@ export function SelectBase<T>({
     renderControl,
     captureMenuScroll: false,
     menuPlacement: 'auto',
+    menuPosition,
   };
 
   // width property is deprecated in favor of size or className
@@ -268,10 +272,10 @@ export function SelectBase<T>({
       defaultOptions,
     };
   }
-
+  const NavigatableSelect = withSelectArrowNavigation(ReactSelectComponent);
   return (
     <>
-      <ReactSelectComponent
+      <NavigatableSelect
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
