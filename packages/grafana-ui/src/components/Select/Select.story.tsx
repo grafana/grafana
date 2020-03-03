@@ -9,9 +9,15 @@ import { Select } from './Select';
 
 const SelectStories = storiesOf('General/Select/Select', module);
 
-SelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
+export default {
+  title: 'General/Select/Select',
+  component: Select,
+  decorators: [withCenteredStory, withKnobs],
+};
 
-SelectStories.add('default', () => {
+// SelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
+
+export const basic = () => {
   const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
   const value = object<SelectableValue<string>>('Selected Value:', intialState);
   const options = object<Array<SelectableValue<string>>>('Options:', [
@@ -35,9 +41,9 @@ SelectStories.add('default', () => {
       }}
     </UseState>
   );
-});
+};
 
-SelectStories.add('With allowCustomValue', () => {
+export const withAllowCustomValue = () => {
   const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
   // @ts-ignore
   const value = object<SelectableValue<string>>('Selected Value:', null);
@@ -64,4 +70,4 @@ SelectStories.add('With allowCustomValue', () => {
       }}
     </UseState>
   );
-});
+};
