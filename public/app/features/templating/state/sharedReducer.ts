@@ -13,13 +13,14 @@ import {
   setCurrentVariableValue,
   storeNewVariable,
 } from './actions';
-import { VariableModel, VariableWithOptions } from '../variable';
+import { VariableModel, VariableWithOptions, VariableOption } from '../variable';
 import { ALL_VARIABLE_VALUE, emptyUuid, getInstanceState } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded, variableEditorUnMounted } from '../editor/reducer';
 import { Deferred } from '../deferred';
 import { changeToEditorEditMode } from './uuidInEditorReducer';
 import { initialVariablesState } from './variablesReducer';
+import { isQuery } from '../guard';
 
 export const sharedReducer = createReducer(initialVariablesState, builder =>
   builder
@@ -145,9 +146,26 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
         option.selected = selected;
         return option;
       });
+
+      if (hasTags(current) && isQuery(instanceState)) {
+        const selected = current.tags.reduce((all: Record<string, boolean>, tag) => {
+          all[tag.text.toString()] = tag.selected;
+          return all;
+        }, {});
+
+        instanceState.tags = instanceState.tags.map(t => {
+          const text = t.text.toString();
+          t.selected = selected[text];
+          return t;
+        });
+      }
     })
     .addCase(changeVariableProp, (state, action) => {
       const instanceState = getInstanceState(state, action.payload.uuid!);
       (instanceState as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
     })
 );
+
+const hasTags = (option: VariableOption): boolean => {
+  return Array.isArray(option.tags) && option.tags.length > 0;
+};

@@ -5,10 +5,11 @@ import { ClickOutsideWrapper } from '@grafana/ui';
 import { VariableLink } from '../shared/VariableLink';
 import { VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions } from './actions';
-import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption, toggleTag, getTags } from './reducer';
-import { VariableWithOptions, VariableWithMultiSupport, VariableOption } from '../../variable';
+import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption, toggleTag } from './reducer';
+import { VariableWithOptions, VariableWithMultiSupport, VariableOption, VariableTag } from '../../variable';
 import { VariableOptions } from '../shared/VariableOptions';
 import { VariablePickerProps } from '../../state/types';
+import { isQuery } from '../../guard';
 
 interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
 
@@ -62,7 +63,7 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
     }
 
     const linkText = getLinkText(variable);
-    const tags = getTags(variable);
+    const tags = getSelectedTags(variable);
 
     return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} />;
   }
@@ -93,6 +94,13 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
     );
   }
 }
+
+const getSelectedTags = (variable: VariableWithOptions): VariableTag[] => {
+  if (!isQuery(variable) || !Array.isArray(variable.tags)) {
+    return [];
+  }
+  return variable.tags.filter(t => t.selected);
+};
 
 const getLinkText = (variable: VariableWithOptions) => {
   const { current, options } = variable;
