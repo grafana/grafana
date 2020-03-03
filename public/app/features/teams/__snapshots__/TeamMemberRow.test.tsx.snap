@@ -97,10 +97,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -190,10 +187,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }

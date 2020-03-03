@@ -31,10 +31,7 @@ exports[`Render should disable access key id field 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -141,10 +138,7 @@ exports[`Render should disable access key id field 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -217,10 +211,7 @@ exports[`Render should render component 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -327,10 +318,7 @@ exports[`Render should render component 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -403,10 +391,7 @@ exports[`Render should should show access key and secret access key fields 1`] =
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -513,10 +498,7 @@ exports[`Render should should show access key and secret access key fields 1`] =
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -589,10 +571,7 @@ exports[`Render should should show arn role field 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -699,10 +678,7 @@ exports[`Render should should show arn role field 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -775,10 +751,7 @@ exports[`Render should should show credentials profile name field 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }
@@ -885,10 +858,7 @@ exports[`Render should should show credentials profile name field 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": Object {
-                "$$typeof": Symbol(react.forward_ref),
-                "render": [Function],
-              },
+              "Option": [Function],
               "SingleValue": [Function],
             }
           }

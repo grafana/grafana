@@ -27,8 +27,6 @@ import { PopoverContent } from '../Tooltip/Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
 
-import { withSelectArrowNavigation } from './withSelectArrowNavigation';
-
 /**
  * Changes in new selects:
  * - noOptionsMessage & loadingMessage is of string type
@@ -44,7 +42,7 @@ interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 
   value?: SelectableValue<T>;
 }
 
-export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
+interface LegacySelectProps<T> extends LegacyCommonProps<T> {
   tooltipContent?: PopoverContent;
   noOptionsMessage?: () => string;
   isDisabled?: boolean;
@@ -54,7 +52,7 @@ export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
 export const MenuList = (props: any) => {
   return (
     <components.MenuList {...props}>
-      <CustomScrollbar scrollRef={props.scrollRef} autoHide={false} autoHeightMax="inherit">
+      <CustomScrollbar autoHide={false} autoHeightMax="inherit">
         {props.children}
       </CustomScrollbar>
     </components.MenuList>
@@ -127,7 +125,6 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       SelectComponent = Creatable;
       creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => input);
     }
-    const NavigatableSelect = withSelectArrowNavigation(SelectComponent);
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
     const selectComponents = { ...Select.defaultProps.components, ...components };
@@ -135,7 +132,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
-            <NavigatableSelect
+            <SelectComponent
               captureMenuScroll={false}
               classNamePrefix="gf-form-select-box"
               className={selectClassNames}
@@ -172,8 +169,6 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
     );
   }
 }
-
-const NavigatableAsyncSelect = withSelectArrowNavigation(ReactAsyncSelect);
 
 export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
   static defaultProps: Partial<AsyncProps<any>> = {
@@ -231,7 +226,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
-            <NavigatableAsyncSelect
+            <ReactAsyncSelect
               captureMenuScroll={false}
               classNamePrefix="gf-form-select-box"
               className={selectClassNames}
