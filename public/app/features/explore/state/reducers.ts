@@ -64,6 +64,7 @@ import {
   toggleTableAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
+  cancelQueriesAction,
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
@@ -230,6 +231,14 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       logsResult: null,
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
       queryResponse: createEmptyQueryResponse(),
+      loading: false,
+    };
+  }
+
+  if (cancelQueriesAction.match(action)) {
+    stopQueryState(state.querySubscription);
+    return {
+      ...state,
       loading: false,
     };
   }

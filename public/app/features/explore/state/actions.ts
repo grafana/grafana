@@ -75,6 +75,8 @@ import {
   ToggleTablePayload,
   updateDatasourceInstanceAction,
   updateUIStateAction,
+  changeLoadingStateAction,
+  cancelQueriesAction,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
@@ -228,6 +230,17 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
   return dispatch => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(clearQueriesAction({ exploreId }));
+    dispatch(stateSave());
+  };
+}
+
+/**
+ * Cancel running queries
+ */
+export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
+  return dispatch => {
+    dispatch(scanStopAction({ exploreId }));
+    dispatch(cancelQueriesAction({ exploreId }));
     dispatch(stateSave());
   };
 }
@@ -444,6 +457,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
     const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
 
     let firstResponse = true;
+    dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request)
       .pipe(

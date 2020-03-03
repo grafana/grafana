@@ -192,6 +192,10 @@ i.navbar-page-btn__search {
     @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
   }
 
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
+  }
+
   @include media-breakpoint-down(lg) {
     .btn-title {
       margin-left: $space-xs;
