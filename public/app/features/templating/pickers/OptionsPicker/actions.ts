@@ -1,6 +1,7 @@
 import debounce from 'lodash/debounce';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { containsSearchFilter, VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
+import { toVariablePayload, setCurrentVariableValue } from '../../state/actions';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../shared/types';
@@ -57,18 +58,18 @@ export const filterOrSearchOptions = (searchQuery: string): ThunkResult<void> =>
 export const commitChangesToVariable = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const picker = getState().templating.optionsPicker;
-    const variable = getVariable<VariableWithMultiSupport>(picker.uuid, getState());
-
-    // TODO: dispatch action and move this to variable reducer
+    const existing = getVariable<VariableWithMultiSupport>(picker.uuid, getState());
     const current = mapToCurrent(picker);
-    const nextVariable = { current, options: picker.options } as VariableWithOptions;
 
-    if (getLinkText(nextVariable) === variable.current.text) {
+    dispatch(setCurrentVariableValue(toVariablePayload(existing, current)));
+    const updated = getVariable<VariableWithMultiSupport>(picker.uuid, getState());
+
+    if (existing.current.text === updated.current.text) {
       return dispatch(hideOptions());
     }
 
-    const adapter = variableAdapters.get(variable.type);
-    await adapter.setValue(variable, current, true);
+    const adapter = variableAdapters.get(updated.type);
+    await adapter.setValue(updated, updated.current, true);
     return dispatch(hideOptions());
   };
 };
@@ -129,41 +130,3 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption {
     selected: true,
   };
 }
-
-const getLinkText = (variable: VariableWithOptions) => {
-  const { current, options } = variable;
-
-  if (!current.tags || current.tags.length === 0) {
-    if (typeof current.text === 'string') {
-      return current.text;
-    }
-    return current.text.join(' + ');
-  }
-
-  // filer out values that are in selected tags
-  const selectedAndNotInTag = options.filter(option => {
-    if (!option.selected) {
-      return false;
-    }
-
-    if (!current || !current.tags || !current.tags.length) {
-      return false;
-    }
-
-    for (let i = 0; i < current.tags.length; i++) {
-      const tag = current.tags[i];
-      const foundIndex = tag?.values?.findIndex(v => v === option.value);
-      if (foundIndex && foundIndex !== -1) {
-        return false;
-      }
-    }
-    return true;
-  });
-
-  // convert values to text
-  const currentTexts = selectedAndNotInTag.map(s => s.text);
-
-  // join texts
-  const newLinkText = currentTexts.join(' + ');
-  return newLinkText.length > 0 ? `${newLinkText} + ` : newLinkText;
-};

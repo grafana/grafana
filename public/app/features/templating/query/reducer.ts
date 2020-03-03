@@ -3,7 +3,6 @@ import _ from 'lodash';
 import { DataSourceApi, DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
 
 import {
-  containsSearchFilter,
   QueryVariableModel,
   VariableHide,
   VariableOption,
@@ -64,8 +63,6 @@ export const initialQueryVariableModelState: QueryVariableModel = {
 export const initialQueryVariableState: QueryVariableState = {
   variable: initialQueryVariableModelState,
 };
-
-export const getQueryHasSearchFilter = (variable: QueryVariableModel) => containsSearchFilter(variable.query);
 
 const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortOrder === VariableSort.disabled) {
