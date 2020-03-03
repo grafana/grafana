@@ -3,7 +3,6 @@ import _ from 'lodash';
 import { DataSourceApi, DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
 
 import {
-  containsSearchFilter,
   QueryVariableModel,
   VariableHide,
   VariableOption,
@@ -20,7 +19,6 @@ import {
   getInstanceState,
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
-  VariableState,
 } from '../state/types';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
@@ -31,8 +29,6 @@ export interface QueryVariableEditorState {
   dataSources: DataSourceSelectItem[];
   dataSource: DataSourceApi | null;
 }
-
-export interface QueryVariableState extends VariableState<QueryVariableModel> {}
 
 export const initialQueryVariableModelState: QueryVariableModel = {
   uuid: emptyUuid,
@@ -60,12 +56,6 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   definition: '',
   initLock: null,
 };
-
-export const initialQueryVariableState: QueryVariableState = {
-  variable: initialQueryVariableModelState,
-};
-
-export const getQueryHasSearchFilter = (variable: QueryVariableModel) => containsSearchFilter(variable.query);
 
 const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   if (sortOrder === VariableSort.disabled) {
@@ -142,8 +132,8 @@ export const queryVariableReducer = createReducer(initialVariablesState, builder
   builder
     .addCase(updateVariableOptions, (state, action) => {
       const results = action.payload.data;
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid);
-      const { regex, includeAll, sort } = instanceState.variable;
+      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.uuid);
+      const { regex, includeAll, sort } = instanceState;
       const options = metricNamesToVariableValues(regex, sort, results);
 
       if (includeAll) {
@@ -153,16 +143,16 @@ export const queryVariableReducer = createReducer(initialVariablesState, builder
         options.push({ text: NONE_VARIABLE_TEXT, value: NONE_VARIABLE_VALUE, isNone: true, selected: false });
       }
 
-      instanceState.variable.options = options;
+      instanceState.options = options;
     })
     .addCase(updateVariableTags, (state, action) => {
-      const instanceState = getInstanceState<QueryVariableState>(state, action.payload.uuid);
+      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.uuid);
       const results = action.payload.data;
       const tags: VariableTag[] = [];
       for (let i = 0; i < results.length; i++) {
         tags.push({ text: results[i].text, selected: false });
       }
 
-      instanceState.variable.tags = tags;
+      instanceState.tags = tags;
     })
 );

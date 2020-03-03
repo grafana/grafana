@@ -1,5 +1,4 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import { VariableState } from './types';
 import {
   initialState as initialOptionPickerState,
   optionsPickerReducer,
@@ -8,9 +7,10 @@ import {
 import { initialVariableEditorState, variableEditorReducer, VariableEditorState } from '../editor/reducer';
 import { uuidInEditorReducer } from './uuidInEditorReducer';
 import { variablesReducer } from './variablesReducer';
+import { VariableModel } from '../variable';
 
 export interface TemplatingState {
-  variables: Record<string, VariableState>;
+  variables: Record<string, VariableModel>;
   optionsPicker: OptionsPickerState;
   editor: VariableEditorState;
   uuidInEditor: string | null;

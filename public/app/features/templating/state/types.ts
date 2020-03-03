@@ -13,10 +13,6 @@ export interface VariablePickerProps<Model extends VariableModel = VariableModel
   variable: Model;
 }
 
-export interface VariableState<ModelState extends VariableModel = VariableModel> {
-  variable: ModelState;
-}
-
-export const getInstanceState = <State extends VariableState = VariableState>(state: VariablesState, uuid: string) => {
-  return state[uuid] as State;
+export const getInstanceState = <Model extends VariableModel = VariableModel>(state: VariablesState, uuid: string) => {
+  return state[uuid] as Model;
 };

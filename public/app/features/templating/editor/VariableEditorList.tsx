@@ -1,12 +1,11 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { VariableState } from '../state/types';
 import { e2e } from '@grafana/e2e';
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
 import { QueryVariableModel, VariableModel } from '../variable';
 import { toVariableIdentifier, VariableIdentifier } from '../state/actions';
 
 export interface Props {
-  variableStates: VariableState[];
+  variables: VariableModel[];
   onAddClick: (event: MouseEvent<HTMLAnchorElement>) => void;
   onEditClick: (identifier: VariableIdentifier) => void;
   onChangeVariableOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;
@@ -44,7 +43,7 @@ export class VariableEditorList extends PureComponent<Props> {
     return (
       <div>
         <div>
-          {this.props.variableStates.length === 0 && (
+          {this.props.variables.length === 0 && (
             <div>
               <EmptyListCTA
                 title="There are no variables yet"
@@ -68,7 +67,7 @@ export class VariableEditorList extends PureComponent<Props> {
             </div>
           )}
 
-          {this.props.variableStates.length > 0 && (
+          {this.props.variables.length > 0 && (
             <div>
               <table
                 className="filter-table filter-table--hover"
@@ -82,8 +81,8 @@ export class VariableEditorList extends PureComponent<Props> {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.props.variableStates.map((state, index) => {
-                    const variable = state.variable as QueryVariableModel;
+                  {this.props.variables.map((state, index) => {
+                    const variable = state as QueryVariableModel;
                     return (
                       <tr key={`${variable.name}-${index}`}>
                         <td style={{ width: '1%' }}>
@@ -120,7 +119,7 @@ export class VariableEditorList extends PureComponent<Props> {
                           )}
                         </td>
                         <td style={{ width: '1%' }}>
-                          {index < this.props.variableStates.length - 1 && (
+                          {index < this.props.variables.length - 1 && (
                             <i
                               onClick={event => this.onChangeVariableOrder(event, variable, MoveType.down)}
                               className="pointer fa fa-arrow-down"

@@ -3,14 +3,14 @@ import { Reducer } from 'redux';
 import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from './variable';
-import { VariablePickerProps, VariableState } from './state/types';
+import { VariablePickerProps } from './state/types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
 
 export interface VariableAdapter<Model extends VariableModel> {
   description: string;
   label: string;
-  initialState: VariableState;
+  initialState: Model;
   dependsOn: (variable: Model, variableToTest: Model) => boolean;
   setValue: (variable: Model, option: VariableOption, emitChanges?: boolean) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;

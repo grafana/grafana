@@ -1,33 +1,32 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { VariableState } from '../../../templating/state/types';
-import { VariableHide } from '../../../templating/variable';
+import { VariableHide, VariableModel } from '../../../templating/variable';
 import { e2e } from '@grafana/e2e';
 import { PickerRenderer } from '../../../templating/pickers/PickerRenderer';
 
 interface Props {
-  variableStates: VariableState[];
+  variables: VariableModel[];
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variableStates }) => {
-  const [visibleVariableStates, setVisibleVariableStates] = useState([]);
+export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
+  const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
   useEffect(() => {
-    setVisibleVariableStates(variableStates.filter(state => state.variable.hide !== VariableHide.hideVariable));
-  }, [variableStates]);
+    setVisibleVariables(variables.filter(state => state.hide !== VariableHide.hideVariable));
+  }, [variables]);
 
-  if (visibleVariableStates.length === 0) {
+  if (visibleVariables.length === 0) {
     return null;
   }
 
   return (
     <>
-      {visibleVariableStates.map(state => {
+      {visibleVariables.map(variable => {
         return (
           <div
-            key={state.variable.uuid}
+            key={variable.uuid}
             className="submenu-item gf-form-inline"
             aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}
           >
-            <PickerRenderer variable={state.variable} />
+            <PickerRenderer variable={variable} />
           </div>
         );
       })}
