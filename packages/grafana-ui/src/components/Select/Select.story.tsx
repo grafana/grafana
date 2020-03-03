@@ -1,5 +1,4 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withKnobs, object } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -7,15 +6,11 @@ import { UseState } from '../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { Select } from './Select';
 
-const SelectStories = storiesOf('General/Select/Select', module);
-
 export default {
   title: 'General/Select/Select',
   component: Select,
   decorators: [withCenteredStory, withKnobs],
 };
-
-// SelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
 
 export const basic = () => {
   const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
