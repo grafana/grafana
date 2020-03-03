@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,6 +40,7 @@ var (
 func GetContextHandler(
 	ats models.UserTokenService,
 	remoteCache *remotecache.RemoteCache,
+	renderService rendering.Service,
 ) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &models.ReqContext{
@@ -62,7 +64,7 @@ func GetContextHandler(
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
 		switch {
-		case initContextWithRenderAuth(ctx):
+		case initContextWithRenderAuth(ctx, renderService):
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
 		case initContextWithAuthProxy(remoteCache, ctx, orgId):
@@ -236,6 +238,11 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 
 func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.UserTokenService, token *models.UserToken) macaron.BeforeFunc {
 	return func(w macaron.ResponseWriter) {
+		// if response has already been written, skip.
+		if w.Written() {
+			return
+		}
+
 		// if the request is cancelled by the client we should not try
 		// to rotate the token since the client would not accept any result.
 		if ctx.Context.Req.Context().Err() == context.Canceled {
@@ -273,6 +280,11 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 func AddDefaultResponseHeaders() macaron.Handler {
 	return func(ctx *macaron.Context) {
 		ctx.Resp.Before(func(w macaron.ResponseWriter) {
+			// if response has already been written, skip.
+			if w.Written() {
+				return
+			}
+
 			if !strings.HasPrefix(ctx.Req.URL.Path, "/api/datasources/proxy/") {
 				AddNoCacheHeaders(ctx.Resp)
 			}

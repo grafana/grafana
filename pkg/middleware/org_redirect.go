@@ -7,11 +7,13 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
 
+// OrgRedirect changes org and redirects users if the
+// querystring `orgId` doesn't match the active org.
 func OrgRedirect() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		orgIdValue := req.URL.Query().Get("orgId")
@@ -21,7 +23,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		ctx, ok := c.Data["ctx"].(*m.ReqContext)
+		ctx, ok := c.Data["ctx"].(*models.ReqContext)
 		if !ok || !ctx.IsSignedIn {
 			return
 		}
@@ -30,7 +32,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		cmd := m.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
+		cmd := models.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
 		if err := bus.Dispatch(&cmd); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)

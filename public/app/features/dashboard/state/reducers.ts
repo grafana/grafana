@@ -7,6 +7,8 @@ import {
   PanelState,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';
+import { AngularComponent } from '@grafana/runtime';
+import { EDIT_PANEL_ID } from 'app/core/constants';
 import { processAclItems } from 'app/core/utils/acl';
 import { panelEditorReducer } from '../panel_editor/state/reducers';
 import { panelEditorReducerNew } from '../components/PanelEditor/state/reducers';
@@ -64,6 +66,7 @@ const dashbardSlice = createSlice({
         state.getModel = () => null;
       }
 
+      state.panels = {};
       state.initPhase = DashboardInitPhase.NotStarted;
       state.isInitSlow = false;
       state.initError = null;
@@ -77,7 +80,15 @@ const dashbardSlice = createSlice({
     panelModelAndPluginReady: (state: DashboardState, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
       updatePanelState(state, action.payload.panelId, { plugin: action.payload.plugin });
     },
-    addPanelToDashboard: (state, action: PayloadAction<AddPanelPayload>) => {},
+    cleanUpEditPanel: (state, action: PayloadAction) => {
+      delete state.panels[EDIT_PANEL_ID];
+    },
+    setPanelAngularComponent: (state: DashboardState, action: PayloadAction<SetPanelAngularComponentPayload>) => {
+      updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
+    },
+    addPanel: (state, action: PayloadAction<PanelModel>) => {
+      state.panels[action.payload.id] = { pluginId: action.payload.type };
+    },
   },
 });
 
@@ -94,8 +105,9 @@ export interface PanelModelAndPluginReadyPayload {
   plugin: PanelPlugin;
 }
 
-export interface AddPanelPayload {
-  panel: PanelModel;
+export interface SetPanelAngularComponentPayload {
+  panelId: number;
+  angularComponent: AngularComponent | null;
 }
 
 export const {
@@ -109,7 +121,9 @@ export const {
   setDashboardQueriesToUpdateOnLoad,
   clearDashboardQueriesToUpdateOnLoad,
   panelModelAndPluginReady,
-  addPanelToDashboard,
+  addPanel,
+  cleanUpEditPanel,
+  setPanelAngularComponent,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;

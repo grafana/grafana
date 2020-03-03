@@ -87,12 +87,18 @@
       name: Overview
     - link: /features/panels/graph/
       name: Graph
+    - link: /features/panels/table_panel/
+      name: Table
+    - link: /features/panels/stat/
+      name: Stat
+    - link: /features/panels/gauge/
+      name: Gauge
+    - link: /features/panels/bar_gauge/
+      name: Bar gauge
     - link: /features/panels/logs/
       name: Logs
     - link: /features/panels/singlestat/
       name: Singlestat
-    - link: /features/panels/table_panel/
-      name: Table
     - link: /features/panels/heatmap/
       name: Heatmap
     - link: /features/panels/alertlist/
@@ -117,19 +123,21 @@
     - link: /reference/search/
       name: Search
     - link: /reference/share_dashboard/
-      name: Sharing a Dashboard
+      name: Sharing a dashboard
     - link: /reference/share_panel/
-      name: Sharing a Panel
+      name: Sharing a panel
     - link: /reference/timerange/
-      name: Time Range
+      name: Time range
     - link: /reference/export_import/
-      name: Export and Import
-    - link: /reference/scripting/
-      name: Scripted Dashboards
+      name: Export and import
+    - link: /reference/datalinks/
+      name: Data links
     - link: /reference/dashboard_history/
-      name: Dashboard Version History
+      name: Dashboard version history
     - link: /reference/dashboard/
       name: JSON Model
+    - link: /reference/scripting/
+      name: Scripted dashboards
   - name: Data Sources
     link: /features/datasources/
     children:
