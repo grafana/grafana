@@ -20,9 +20,7 @@ const setup = (propOverrides?: object) => {
       basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
-      secureJsonFields: {
-        appInsightsApiKey: false,
-      },
+      secureJsonFields: {},
       jsonData: {
         cloudName: '',
         subscriptionId: '',
@@ -50,7 +48,7 @@ describe('Render', () => {
 
   it('should disable insights api key input', () => {
     const wrapper = setup({
-      datasourceConfig: {
+      options: {
         secureJsonFields: {
           appInsightsApiKey: true,
         },
@@ -67,7 +65,7 @@ describe('Render', () => {
 
   it('should enable insights api key input', () => {
     const wrapper = setup({
-      datasourceConfig: {
+      options: {
         secureJsonFields: {
           appInsightsApiKey: false,
         },
