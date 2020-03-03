@@ -1,4 +1,3 @@
-import { templatingReducer, TemplatingState } from './reducers';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
 import { VariableHide, VariableModel } from '../variable';
@@ -6,11 +5,12 @@ import { VariableState } from './types';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
 import { toVariablePayload, VariablePayload } from './actions';
+import { variablesReducer, VariablesState } from './variablesReducer';
 
 describe('templatingReducer', () => {
   describe('when cleanUpDashboard is dispatched', () => {
     it('then all variables except global variables should be removed', () => {
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: {
           '0': {
             variable: {
@@ -61,8 +61,8 @@ describe('templatingReducer', () => {
         },
       };
 
-      reducerTester<TemplatingState>()
-        .givenReducer(templatingReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(variablesReducer, initialState)
         .whenActionIsDispatched(cleanUpDashboard())
         .thenStateShouldEqual({
           variables: {
@@ -97,7 +97,7 @@ describe('templatingReducer', () => {
 
   describe('when any action is dispatched with a type prop that is registered in variableAdapters', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: {
           '0': {
             variable: {
@@ -128,8 +128,8 @@ describe('templatingReducer', () => {
       };
       variableAdapters.set('query', variableAdapter);
       const mockAction = createAction<VariablePayload>('mockAction');
-      reducerTester<TemplatingState>()
-        .givenReducer(templatingReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(variablesReducer, initialState)
         .whenActionIsDispatched(mockAction(toVariablePayload({ type: 'query', uuid: '0' })))
         .thenStateShouldEqual(initialState);
       expect(variableAdapter.reducer).toHaveBeenCalledTimes(1);
@@ -142,7 +142,7 @@ describe('templatingReducer', () => {
 
   describe('when any action is dispatched with a type prop that is not registered in variableAdapters', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: {
           '0': {
             variable: {
@@ -173,8 +173,8 @@ describe('templatingReducer', () => {
       };
       variableAdapters.set('query', variableAdapter);
       const mockAction = createAction<VariablePayload>('mockAction');
-      reducerTester<TemplatingState>()
-        .givenReducer(templatingReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(variablesReducer, initialState)
         .whenActionIsDispatched(mockAction(toVariablePayload({ type: 'adhoc', uuid: '0' })))
         .thenStateShouldEqual(initialState);
       expect(variableAdapter.reducer).toHaveBeenCalledTimes(0);
@@ -183,7 +183,7 @@ describe('templatingReducer', () => {
 
   describe('when any action is dispatched missing type prop', () => {
     it('then the reducer for that variableAdapter should be invoked', () => {
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: {
           '0': {
             variable: {
@@ -214,8 +214,8 @@ describe('templatingReducer', () => {
       };
       variableAdapters.set('query', variableAdapter);
       const mockAction = createAction<string>('mockAction');
-      reducerTester<TemplatingState>()
-        .givenReducer(templatingReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(variablesReducer, initialState)
         .whenActionIsDispatched(mockAction('mocked'))
         .thenStateShouldEqual(initialState);
       expect(variableAdapter.reducer).toHaveBeenCalledTimes(0);

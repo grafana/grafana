@@ -6,15 +6,15 @@ import { VariableLink } from '../shared/VariableLink';
 import { NavigationKeys, VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, toggleOptionByHighlight } from './actions';
 import {
+  getTags,
+  moveOptionsHighlight,
   OptionsPickerState,
   showOptions,
-  moveOptionsHighlight,
   toggleAllOptions,
   toggleOption,
   toggleTag,
-  getTags,
 } from './reducer';
-import { VariableWithOptions, VariableWithMultiSupport, VariableOption } from '../../variable';
+import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
 import { VariableOptions } from '../shared/VariableOptions';
 import { VariablePickerProps } from '../../state/types';
 
@@ -178,7 +178,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  picker: state.optionsPicker,
+  picker: state.templating.optionsPicker,
 });
 
 export const OptionsPicker = connect(mapStateToProps, mapDispatchToProps)(OptionsPickerUnconnected);

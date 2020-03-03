@@ -293,7 +293,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
-  editor: state.variableEditor as VariableEditorState<QueryVariableEditorState>,
+  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {

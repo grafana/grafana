@@ -1,6 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { initialTemplatingState, TemplatingState } from './reducers';
-import { variablesReducer } from './variablesReducer';
+import { initialTemplatingState } from './reducers';
+import { sharedReducer } from './sharedReducer';
 import { QueryVariableModel, VariableHide, VariableModel } from '../variable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, emptyUuid } from './types';
 import {
@@ -23,15 +23,16 @@ import cloneDeep from 'lodash/cloneDeep';
 import { Deferred } from '../deferred';
 import { getVariableState, getVariableTestContext } from './helpers';
 import { changeToEditorEditMode } from './uuidInEditorReducer';
+import { VariablesState } from './variablesReducer';
 
-describe('variablesReducer', () => {
+describe('sharedReducer', () => {
   describe('when addVariable is dispatched', () => {
     it('then state should be correct', () => {
       const model = ({ name: 'name from model', type: 'type from model' } as unknown) as QueryVariableModel;
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, { global: true, index: 0, model });
       variableAdapters.set('query', createQueryVariableAdapter());
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, { ...initialTemplatingState })
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, { ...initialTemplatingState })
         .whenActionIsDispatched(addVariable(payload))
         .thenStatePredicateShouldEqual(resultingState => {
           // we need to remove initLock because instances will no be reference equal
@@ -58,12 +59,12 @@ describe('variablesReducer', () => {
 
   describe('when removeVariable is dispatched', () => {
     it('then state should be correct', () => {
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: getVariableState(3),
       };
       const payload = toVariablePayload({ uuid: '1', type: 'query' });
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(removeVariable(payload))
         .thenStateShouldEqual({
           variables: {
@@ -97,12 +98,12 @@ describe('variablesReducer', () => {
   describe('when variableEditorUnMounted is dispatched', () => {
     it('then state should be correct', () => {
       variableAdapters.set('query', createQueryVariableAdapter());
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: getVariableState(3, 1, true),
       };
       const payload = toVariablePayload({ uuid: '1', type: 'query' });
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(variableEditorUnMounted(payload))
         .thenStateShouldEqual({
           variables: {
@@ -147,14 +148,14 @@ describe('variablesReducer', () => {
   describe('when variableEditorUnMounted is dispatched with empty uuid that is already unmounted', () => {
     it('then state should be correct', () => {
       variableAdapters.set('query', createQueryVariableAdapter());
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: getVariableState(3, 1, true),
       };
 
       const payload = toVariablePayload({ uuid: '1', type: 'query' });
       const emptyPayload = toVariablePayload({ uuid: emptyUuid, type: 'query' });
 
-      const expectedState: TemplatingState = {
+      const expectedState: VariablesState = {
         variables: {
           '0': {
             variable: {
@@ -192,8 +193,8 @@ describe('variablesReducer', () => {
         },
       };
 
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(variableEditorUnMounted(payload))
         .thenStateShouldEqual(expectedState)
         .whenActionIsDispatched(variableEditorUnMounted(emptyPayload))
@@ -204,12 +205,12 @@ describe('variablesReducer', () => {
   describe('when duplicateVariable is dispatched', () => {
     it('then state should be correct', () => {
       variableAdapters.set('query', createQueryVariableAdapter());
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: getVariableState(3),
       };
       const payload = toVariablePayload({ uuid: '1', type: 'query' }, { newUuid: '11' });
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(duplicateVariable(payload))
         .thenStateShouldEqual({
           variables: {
@@ -264,12 +265,12 @@ describe('variablesReducer', () => {
 
   describe('when changeVariableOrder is dispatched', () => {
     it('then state should be correct', () => {
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: getVariableState(3),
       };
       const payload = toVariablePayload({ uuid: '1', type: 'query' }, { fromIndex: 1, toIndex: 0 });
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(changeVariableOrder(payload))
         .thenStateShouldEqual({
           variables: {
@@ -314,12 +315,12 @@ describe('variablesReducer', () => {
   describe('when storeNewVariable is dispatched', () => {
     it('then state should be correct', () => {
       variableAdapters.set('query', createQueryVariableAdapter());
-      const initialState: TemplatingState = {
+      const initialState: VariablesState = {
         variables: getVariableState(3, -1, true),
       };
       const payload = toVariablePayload({ uuid: '11', type: 'query' });
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, initialState)
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(storeNewVariable(payload))
         .thenStateShouldEqual({
           variables: {
@@ -394,8 +395,8 @@ describe('variablesReducer', () => {
       });
       const current = { text: ['A', 'B'], selected: true, value: ['A', 'B'] };
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, current);
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, cloneDeep(initialState))
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
@@ -428,8 +429,8 @@ describe('variablesReducer', () => {
       });
       const current = { text: 'A + B', selected: true, value: ['A', 'B'] };
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, current);
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, cloneDeep(initialState))
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
@@ -462,8 +463,8 @@ describe('variablesReducer', () => {
       });
       const current = { text: ALL_VARIABLE_TEXT, selected: true, value: [ALL_VARIABLE_VALUE] };
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, current);
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, cloneDeep(initialState))
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
@@ -494,8 +495,8 @@ describe('variablesReducer', () => {
       } as unknown) as Deferred;
       const { initialState } = getVariableTestContext({ initLock });
       const payload = toVariablePayload({ uuid: '0', type: 'query' });
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, cloneDeep(initialState))
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(resolveInitLock(payload))
         .thenStatePredicateShouldEqual(resultingState => {
           // we need to remove initLock because instances will no be reference equal
@@ -523,8 +524,8 @@ describe('variablesReducer', () => {
       } as unknown) as Deferred;
       const { initialState } = getVariableTestContext({ initLock });
       const payload = toVariablePayload({ uuid: '0', type: 'query' });
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, cloneDeep(initialState))
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(removeInitLock(payload))
         .thenStateShouldEqual({
           ...initialState,
@@ -547,8 +548,8 @@ describe('variablesReducer', () => {
       const propName = 'useTags';
       const propValue = true;
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, { propName, propValue });
-      reducerTester<TemplatingState>()
-        .givenReducer(variablesReducer, cloneDeep(initialState))
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(changeVariableProp(payload))
         .thenStateShouldEqual({
           ...initialState,
@@ -569,12 +570,12 @@ describe('variablesReducer', () => {
     describe('and uuid is emptyUuid', () => {
       it('then state should be correct', () => {
         variableAdapters.set('query', createQueryVariableAdapter());
-        const initialState: TemplatingState = {
+        const initialState: VariablesState = {
           variables: getVariableState(3),
         };
         const payload = toVariablePayload({ uuid: emptyUuid, type: 'query' });
-        reducerTester<TemplatingState>()
-          .givenReducer(variablesReducer, initialState)
+        reducerTester<VariablesState>()
+          .givenReducer(sharedReducer, initialState)
           .whenActionIsDispatched(changeToEditorEditMode(payload))
           .thenStateShouldEqual({
             variables: {
@@ -631,12 +632,12 @@ describe('variablesReducer', () => {
     describe('and uuid is not emptyUuid', () => {
       it('then state should be correct', () => {
         variableAdapters.set('query', createQueryVariableAdapter());
-        const initialState: TemplatingState = {
+        const initialState: VariablesState = {
           variables: getVariableState(3),
         };
         const payload = toVariablePayload({ uuid: '1', type: 'query' });
-        reducerTester<TemplatingState>()
-          .givenReducer(variablesReducer, initialState)
+        reducerTester<VariablesState>()
+          .givenReducer(sharedReducer, initialState)
           .whenActionIsDispatched(changeToEditorEditMode(payload))
           .thenStateShouldEqual({
             variables: {

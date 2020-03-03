@@ -2,8 +2,8 @@ import { createReducer } from '@reduxjs/toolkit';
 
 import { TextBoxVariableModel, VariableHide, VariableOption } from '../variable';
 import { emptyUuid, getInstanceState, VariableState } from '../state/types';
-import { initialTemplatingState } from '../state/reducers';
 import { createTextBoxOptions } from './actions';
+import { initialVariablesState } from '../state/variablesReducer';
 
 export interface TextBoxVariableState extends VariableState<TextBoxVariableModel> {}
 
@@ -26,7 +26,7 @@ export const initialTextBoxVariableState: TextBoxVariableState = {
   variable: initialTextBoxVariableModelState,
 };
 
-export const textBoxVariableReducer = createReducer(initialTemplatingState, builder =>
+export const textBoxVariableReducer = createReducer(initialVariablesState, builder =>
   builder.addCase(createTextBoxOptions, (state, action) => {
     const instanceState = getInstanceState<TextBoxVariableState>(state, action.payload.uuid!);
     instanceState.variable.options = [

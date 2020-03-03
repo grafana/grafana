@@ -1,7 +1,7 @@
 import { emptyUuid, VariableState } from './types';
 import { QueryVariableModel, VariableHide } from '../variable';
 import { initialQueryVariableModelState } from '../query/reducer';
-import { TemplatingState } from './reducers';
+import { VariablesState } from './variablesReducer';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -49,7 +49,7 @@ export const getVariableTestContext = (variableOverrides: Partial<QueryVariableM
     name: '0',
   };
   const variable = { ...defaultVariable, ...variableOverrides };
-  const initialState: TemplatingState = {
+  const initialState: VariablesState = {
     variables: {
       '0': {
         variable,

@@ -24,7 +24,7 @@ import {
 } from '../state/types';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
-import { initialTemplatingState } from '../state/reducers';
+import { initialVariablesState } from '../state/variablesReducer';
 
 export interface QueryVariableEditorState {
   VariableQueryEditor: ComponentType<VariableQueryProps> | null;
@@ -138,7 +138,7 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
   return sortVariableValues(options, sort);
 };
 
-export const queryVariableReducer = createReducer(initialTemplatingState, builder =>
+export const queryVariableReducer = createReducer(initialVariablesState, builder =>
   builder
     .addCase(updateVariableOptions, (state, action) => {
       const results = action.payload.data;

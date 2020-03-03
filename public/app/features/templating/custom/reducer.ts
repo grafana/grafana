@@ -1,8 +1,8 @@
 import { createReducer } from '@reduxjs/toolkit';
 import { CustomVariableModel, VariableHide, VariableOption } from '../variable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, emptyUuid, getInstanceState, VariableState } from '../state/types';
-import { initialTemplatingState } from '../state/reducers';
 import { createCustomOptionsFromQuery } from './actions';
+import { initialVariablesState } from '../state/variablesReducer';
 
 export interface CustomVariableState extends VariableState<CustomVariableModel> {}
 
@@ -28,7 +28,7 @@ export const initialCustomVariableState: CustomVariableState = {
   variable: initialCustomVariableModelState,
 };
 
-export const customVariableReducer = createReducer(initialTemplatingState, builder =>
+export const customVariableReducer = createReducer(initialVariablesState, builder =>
   builder.addCase(createCustomOptionsFromQuery, (state, action) => {
     const instanceState = getInstanceState<CustomVariableState>(state, action.payload.uuid);
     const { includeAll, query } = instanceState.variable;
