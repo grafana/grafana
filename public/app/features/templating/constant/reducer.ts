@@ -9,7 +9,7 @@ export const initialConstantVariableModelState: ConstantVariableModel = {
   global: false,
   type: 'constant',
   name: '',
-  hide: VariableHide.hideLabel,
+  hide: VariableHide.hideVariable,
   label: '',
   query: '',
   current: {} as VariableOption,

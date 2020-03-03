@@ -54,8 +54,8 @@ export enum VariableRefresh {
 
 export enum VariableHide {
   dontHide,
-  hideVariable,
   hideLabel,
+  hideVariable,
 }
 
 export enum VariableSort {
