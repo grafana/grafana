@@ -41,6 +41,7 @@ export interface SelectCommonProps<T> {
   prefix?: JSX.Element | string | null;
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
+  menuPosition?: 'fixed' | 'absolute';
 }
 
 export interface SelectAsyncProps<T> {
