@@ -411,9 +411,17 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/alerting/notifications', {
-      templateUrl: 'public/app/features/alerting/partials/notifications_list.html',
-      controller: 'AlertNotificationsListCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => {
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+          );
+        },
+      },
+      // templateUrl: 'public/app/features/alerting/partials/notifications_list.html',
+      // controller: 'AlertNotificationsListCtrl',
+      // controllerAs: 'ctrl',
     })
     .when('/alerting/notification/new', {
       templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
