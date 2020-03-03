@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { action } from '@storybook/addon-actions';
 import { withKnobs, object } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -76,27 +76,28 @@ export const withAllowCustomValue = () => {
 
 export const asyncSelect = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const loadAsyncOptions = () => {
-    return new Promise<Array<SelectableValue<string>>>(resolve => {
-      setTimeout(() => {
-        setIsLoading(false);
-        resolve([
-          { label: 'Another label', value: 'Another value 1' },
-
-          { label: 'Another label', value: 'Another value 2' },
-
-          { label: 'Another label', value: 'Another value 3' },
-
-          { label: 'Another label', value: 'Another value 4' },
-
-          { label: 'Another label', value: 'Another value 5' },
-
-          { label: 'Another label', value: 'Another value ' },
-        ]);
-      }, 1000);
-    });
-  };
+  const [value, setValue] = useState();
+  const loadAsyncOptions = useCallback(
+    inputValue => {
+      return new Promise<Array<SelectableValue<string>>>(resolve => {
+        setTimeout(() => {
+          setIsLoading(false);
+          resolve(options.filter(option => option.label && option.label.includes(inputValue)));
+        }, 1000);
+      });
+    },
+    [value]
+  );
   return (
-    <AsyncSelect isLoading={isLoading} loadOptions={loadAsyncOptions} onChange={value => action('onChange')(value)} />
+    <AsyncSelect
+      value={value}
+      defaultOptions
+      isLoading={isLoading}
+      loadOptions={loadAsyncOptions}
+      onChange={value => {
+        action('onChange')(value);
+        setValue(value);
+      }}
+    />
   );
 };
