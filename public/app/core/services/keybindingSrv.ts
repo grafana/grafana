@@ -15,6 +15,7 @@ import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getLocationSrv } from '@grafana/runtime';
 import { DashboardModel } from '../../features/dashboard/state';
+import { SaveDashboardModalProxy } from '../../features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -183,7 +184,12 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      scope.appEvent(CoreEvents.saveDashboard);
+      appEvents.emit(CoreEvents.showModalReact, {
+        component: SaveDashboardModalProxy,
+        props: {
+          dashboard,
+        },
+      });
     });
 
     this.bind('t z', () => {
