@@ -236,12 +236,12 @@ export class DashNav extends PureComponent<Props> {
                   tooltip="Save dashboard"
                   classSuffix="save"
                   icon="fa fa-save"
-                  onClick={() => {
-                    showModal(SaveDashboardModalProxy, {
-                      dashboard,
-                      onDismiss: hideModal,
-                    });
-                  }}
+                  // onClick={() => {
+                  //   showModal(SaveDashboardModalProxy, {
+                  //     dashboard,
+                  //     onDismiss: hideModal,
+                  //   });
+                  // }}
                 />
               )}
             </ModalsController>

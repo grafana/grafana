@@ -1,5 +1,5 @@
 // // Libraries
-// import React from 'react';
+import React from 'react';
 // import ReactDOM from 'react-dom';
 // import { Provider } from 'react-redux';
 
@@ -9,6 +9,7 @@
 // import { ContextSrv } from 'app/core/services/context_srv';
 // import { provideTheme } from 'app/core/utils/ConfigProvider';
 // import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
+import { ModalRoot, ModalsProvider } from '@grafana/ui';
 // import { GrafanaRootScope } from './GrafanaCtrl';
 
 // export function WrapInProvider(store: any, Component: any, props: any) {
@@ -21,16 +22,16 @@
 //   );
 // }
 
-// export const provideModalsContext = (component: any) => {
-//   return (props: any) => (
-//     <ModalsProvider>
-//       <>
-//         {React.createElement(component, { ...props })}
-//         <ModalRoot />
-//       </>
-//     </ModalsProvider>
-//   );
-// };
+export const provideModalsContext = (component: any) => {
+  return (props: any) => (
+    <ModalsProvider>
+      <>
+        {React.createElement(component, { ...props })}
+        <ModalRoot />
+      </>
+    </ModalsProvider>
+  );
+};
 
 // /** @ngInject */
 // export function reactContainer(
