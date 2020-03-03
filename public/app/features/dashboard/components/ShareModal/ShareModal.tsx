@@ -5,12 +5,13 @@ import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareExport } from './ShareExport';
 import { ShareEmbed } from './ShareEmbed';
+import { ShareModalTabModel } from './types';
 
-const shareModalTabs = [
-  { label: 'Link', value: 'link' },
-  { label: 'Embed', value: 'embed' },
-  { label: 'Snapshot', value: 'snapshot' },
-  { label: 'Export', value: 'export' },
+const shareModalTabs: ShareModalTabModel[] = [
+  { label: 'Link', value: 'link', component: ShareLink },
+  { label: 'Embed', value: 'embed', component: ShareEmbed },
+  { label: 'Snapshot', value: 'snapshot', component: ShareSnapshot },
+  { label: 'Export', value: 'export', component: ShareExport },
 ];
 
 interface Props {
@@ -57,6 +58,11 @@ export class ShareModal extends PureComponent<Props, State> {
     });
   }
 
+  getActiveTab() {
+    const { tab } = this.state;
+    return shareModalTabs.find(t => t.value === tab);
+  }
+
   renderTitle() {
     const { panel } = this.props;
     const { tab } = this.state;
@@ -70,15 +76,13 @@ export class ShareModal extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, panel } = this.props;
-    const { tab } = this.state;
+    const activeTabModel = this.getActiveTab();
+    const ActiveTab = activeTabModel?.component;
 
     return (
       <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.onDismiss}>
         <TabContent>
-          {tab === 'link' && <ShareLink dashboard={dashboard} panel={panel} />}
-          {tab === 'embed' && panel && <ShareEmbed dashboard={dashboard} panel={panel} />}
-          {tab === 'snapshot' && <ShareSnapshot dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />}
-          {tab === 'export' && !panel && <ShareExport dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />}
+          <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />
         </TabContent>
       </Modal>
     );

@@ -12,7 +12,7 @@ const themeOptions: Array<SelectableValue<string>> = [
 ];
 
 export interface Props {
-  dashboard?: DashboardModel;
+  dashboard: DashboardModel;
   panel?: PanelModel;
 }
 
