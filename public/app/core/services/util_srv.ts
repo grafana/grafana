@@ -6,7 +6,7 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { provideTheme } from 'app/core/utils/ConfigProvider';
+import { AngularModalProxy } from '../components/modals/AngularModalProxy';
 
 export class UtilSrv {
   modalScope: any;
@@ -14,7 +14,9 @@ export class UtilSrv {
   reactModalNode = document.createElement('div');
 
   /** @ngInject */
-  constructor(private $rootScope: GrafanaRootScope, private $modal: any) {}
+  constructor(private $rootScope: GrafanaRootScope, private $modal: any) {
+    this.reactModalNode.setAttribute('id', 'angular2ReactModalRoot');
+  }
 
   init() {
     appEvents.on(CoreEvents.showModal, this.showModal.bind(this), this.$rootScope);
@@ -26,12 +28,15 @@ export class UtilSrv {
   showModalReact(options: any) {
     const { component, props } = options;
     const modalProps = {
-      ...props,
-      isOpen: true,
-      onDismiss: this.onReactModalDismiss,
+      component,
+      props: {
+        ...props,
+        isOpen: true,
+        onDismiss: this.onReactModalDismiss,
+      },
     };
 
-    const elem = React.createElement(provideTheme(component), modalProps);
+    const elem = React.createElement(AngularModalProxy, modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
     return ReactDOM.render(elem, this.reactModalNode);
   }

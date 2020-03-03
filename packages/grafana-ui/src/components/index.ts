@@ -40,6 +40,7 @@ export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
+
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
@@ -47,6 +48,7 @@ export { QueryField } from './QueryField/QueryField';
 export { Modal } from './Modal/Modal';
 export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
+export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsContext';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
@@ -120,6 +122,7 @@ export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
 export { Drawer } from './Drawer/Drawer';
+export { Slider } from './Slider/Slider';
 
 // TODO: namespace!!
 export {
@@ -142,7 +145,7 @@ export {
 } from './FieldConfigs/select';
 
 // Next-gen forms
-export { default as Forms } from './Forms';
+export { default as Forms, ButtonVariant } from './Forms';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';
