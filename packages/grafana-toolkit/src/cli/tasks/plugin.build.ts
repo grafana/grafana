@@ -109,7 +109,6 @@ export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix } = {}) =>
 });
 
 export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage }) => {
-  await clean();
   await prepare();
   await lintPlugin({ fix: false });
   await testPlugin({ updateSnapshot: false, coverage, watch: false });

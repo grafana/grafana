@@ -8,13 +8,16 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { Tooltip } from '@grafana/ui';
+import { ModalsController } from '@grafana/ui';
+import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
 import { getLocationService } from '@grafana/runtime';
+import { ShareModal } from '../ShareModal/ShareModal';
+import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -77,12 +80,6 @@ export class DashNav extends PureComponent<Props> {
     appEvents.emit(CoreEvents.toggleKioskMode);
   };
 
-  onSave = () => {
-    const { $injector } = this.props;
-    const dashboardSrv = $injector.get('dashboardSrv');
-    dashboardSrv.saveDashboard();
-  };
-
   onOpenSettings = () => {
     getLocationService().partial({
       editview: 'settings',
@@ -114,18 +111,6 @@ export class DashNav extends PureComponent<Props> {
   onPlaylistStop = () => {
     this.playlistSrv.stop();
     this.forceUpdate();
-  };
-
-  onOpenShare = () => {
-    const $rootScope = this.props.$injector.get('$rootScope');
-    const modalScope = $rootScope.$new();
-    modalScope.tabIndex = 0;
-    modalScope.dashboard = this.props.dashboard;
-
-    appEvents.emit(CoreEvents.showModal, {
-      src: 'public/app/features/dashboard/components/ShareModal/template.html',
-      scope: modalScope,
-    });
   };
 
   renderDashboardTitleSearchButton() {
@@ -169,15 +154,7 @@ export class DashNav extends PureComponent<Props> {
   renderBackButton() {
     return (
       <div className="navbar-edit">
-        <Tooltip content="Go back (Esc)">
-          <button
-            className="navbar-edit__back-btn"
-            onClick={this.onClose}
-            aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow}
-          >
-            <i className="fa fa-arrow-left" />
-          </button>
-        </Tooltip>
+        <BackButton onClick={this.onClose} aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow} />
       </div>
     );
   }
@@ -235,16 +212,39 @@ export class DashNav extends PureComponent<Props> {
           )}
 
           {canShare && (
-            <DashNavButton
-              tooltip="Share dashboard"
-              classSuffix="share"
-              icon="fa fa-share-square-o"
-              onClick={this.onOpenShare}
-            />
+            <ModalsController>
+              {({ showModal, hideModal }) => (
+                <DashNavButton
+                  tooltip="Share dashboard"
+                  classSuffix="share"
+                  icon="fa fa-share-square-o"
+                  onClick={() => {
+                    showModal(ShareModal, {
+                      dashboard,
+                      onDismiss: hideModal,
+                    });
+                  }}
+                />
+              )}
+            </ModalsController>
           )}
 
           {canSave && (
-            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
+            <ModalsController>
+              {({ showModal, hideModal }) => (
+                <DashNavButton
+                  tooltip="Save dashboard"
+                  classSuffix="save"
+                  icon="fa fa-save"
+                  onClick={() => {
+                    showModal(SaveDashboardModalProxy, {
+                      dashboard,
+                      onDismiss: hideModal,
+                    });
+                  }}
+                />
+              )}
+            </ModalsController>
           )}
 
           {snapshotUrl && (

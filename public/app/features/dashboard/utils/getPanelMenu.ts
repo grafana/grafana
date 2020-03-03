@@ -1,7 +1,7 @@
 // import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import config from 'app/core/config';
-import { getDataSourceSrv, getLocationService } from '@grafana/runtime';
+import { getDataSourceSrv, getLocationService, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
 import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -12,7 +12,11 @@ import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
 
-export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): PanelMenuItem[] {
+export function getPanelMenu(
+  dashboard: DashboardModel,
+  panel: PanelModel,
+  angularComponent?: AngularComponent
+): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     getLocationService().partial({
@@ -184,8 +188,8 @@ export function getPanelMenu(dashboard: DashboardModel, panel: PanelModel): Pane
   });
 
   // add old angular panel options
-  if (panel.angularPanel) {
-    const scope = panel.angularPanel.getScope();
+  if (angularComponent) {
+    const scope = angularComponent.getScope();
     const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     const angularMenuItems = panelCtrl.getExtendedMenu();
 

@@ -184,9 +184,7 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/org/users/invite',
-    templateUrl: 'public/app/features/org/partials/invite.html',
-    controller: 'UserInviteCtrl',
-    controllerAs: 'ctrl',
+    component: SafeDynamicImport(import(/* webpackChunkName: "UserInvitePage" */ 'app/features/org/UserInvitePage')),
   },
   // TODO[Router]: resolve roles
   // {
@@ -301,8 +299,7 @@ export const routes: RouteDescriptor[] = [
   },
   {
     path: '/invite/:code',
-    templateUrl: 'public/app/partials/signup_invited.html',
-    controller: 'InvitedCtrl',
+    component: SafeDynamicImport(import(/* webpackChunkName: "SignupInvited" */ 'app/features/users/SignupInvited')),
     pageClass: 'sidemenu-hidden',
   },
   {

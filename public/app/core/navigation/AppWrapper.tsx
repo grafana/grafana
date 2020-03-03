@@ -10,7 +10,7 @@ import { ThemeProvider, ConfigContext } from '../utils/ConfigProvider';
 import { config, getLocationService } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from '../../store/store';
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
 import { contextSrv } from '../services/context_srv';
 import { SideMenu } from '../components/sidemenu/SideMenu';
 import { RouteDescriptor } from './types';
@@ -125,23 +125,28 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
         <ErrorBoundaryAlert style="page">
           <ConfigContext.Provider value={config}>
             <ThemeProvider>
-              <div className="grafana-app">
-                <Router history={getLocationService().getHistory()}>
-                  <>
-                    <SideMenu />
+              <ModalsProvider>
+                <>
+                  <div className="grafana-app">
+                    <Router history={getLocationService().getHistory()}>
+                      <>
+                        <SideMenu />
 
-                    <div className="main-view">
-                      <div
-                        ref={this.container}
-                        dangerouslySetInnerHTML={{
-                          __html: appSeed,
-                        }}
-                      />
-                      {this.state.ngInjector && this.container && this.renderRoutes()}
-                    </div>
-                  </>
-                </Router>
-              </div>
+                        <div className="main-view">
+                          <div
+                            ref={this.container}
+                            dangerouslySetInnerHTML={{
+                              __html: appSeed,
+                            }}
+                          />
+                          {this.state.ngInjector && this.container && this.renderRoutes()}
+                        </div>
+                      </>
+                    </Router>
+                  </div>
+                  <ModalRoot />
+                </>
+              </ModalsProvider>
             </ThemeProvider>
           </ConfigContext.Provider>
         </ErrorBoundaryAlert>

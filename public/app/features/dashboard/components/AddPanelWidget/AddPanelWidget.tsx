@@ -10,7 +10,7 @@ import store from 'app/core/store';
 // Store
 import { store as reduxStore } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-import { addPanelToDashboard } from 'app/features/dashboard/state/reducers';
+import { addPanel } from 'app/features/dashboard/state/reducers';
 // Types
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -23,7 +23,7 @@ export interface OwnProps {
 }
 
 export interface DispatchProps {
-  addPanelToDashboard: typeof addPanelToDashboard;
+  addPanel: typeof addPanel;
 }
 
 export type Props = OwnProps & DispatchProps;
@@ -197,6 +197,6 @@ export class AddPanelWidgetUnconnected extends React.Component<Props, State> {
   }
 }
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanelToDashboard };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel };
 
 export const AddPanelWidget = connect(null, mapDispatchToProps)(AddPanelWidgetUnconnected);
