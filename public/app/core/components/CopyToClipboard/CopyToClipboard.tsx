@@ -3,7 +3,7 @@ import ClipboardJS from 'clipboard';
 
 interface Props {
   text: () => string;
-  elType?: string;
+  elType?: string | React.RefForwardingComponent<any, any>;
   onSuccess?: (evt: any) => void;
   onError?: (evt: any) => void;
   className?: string;

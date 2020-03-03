@@ -8,12 +8,14 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
+import { ModalsController } from '@grafana/ui';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 // State
 import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { CoreEvents, StoreState } from 'app/types';
+import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -65,12 +67,6 @@ export class DashNav extends PureComponent<Props> {
 
   onToggleTVMode = () => {
     appEvents.emit(CoreEvents.toggleKioskMode);
-  };
-
-  onSave = () => {
-    const { $injector } = this.props;
-    const dashboardSrv = $injector.get('dashboardSrv');
-    dashboardSrv.saveDashboard();
   };
 
   onOpenSettings = () => {
@@ -223,7 +219,23 @@ export class DashNav extends PureComponent<Props> {
           )}
 
           {canSave && (
-            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
+            <ModalsController>
+              {({ showModal, hideModal }) => {
+                return (
+                  <DashNavButton
+                    tooltip="Save dashboard"
+                    classSuffix="save"
+                    icon="fa fa-save"
+                    onClick={() => {
+                      showModal(SaveDashboardModalProxy, {
+                        dashboard,
+                        onDismiss: hideModal,
+                      });
+                    }}
+                  />
+                );
+              }}
+            </ModalsController>
           )}
 
           {snapshotUrl && (

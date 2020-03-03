@@ -25,7 +25,6 @@ import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
-import { withSelectArrowNavigation } from '../../Select/withSelectArrowNavigation';
 
 const CustomControl = (props: any) => {
   const {
@@ -103,6 +102,7 @@ export function SelectBase<T>({
   width,
   invalid,
   components,
+  menuPosition,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
@@ -173,6 +173,7 @@ export function SelectBase<T>({
     renderControl,
     captureMenuScroll: false,
     menuPlacement: 'auto',
+    menuPosition,
   };
 
   // width property is deprecated in favor of size or className
@@ -196,10 +197,10 @@ export function SelectBase<T>({
       defaultOptions,
     };
   }
-  const NavigatableSelect = withSelectArrowNavigation(ReactSelectComponent);
+
   return (
     <>
-      <NavigatableSelect
+      <ReactSelectComponent
         components={{
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
