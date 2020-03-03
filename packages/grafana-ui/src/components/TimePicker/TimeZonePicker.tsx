@@ -10,7 +10,7 @@ interface Props {
   onChange: (newValue: string) => void;
 }
 
-export const TimeZonePicker: FC<Props> = ({ onChange, value, size }) => {
+export const TimeZonePicker: FC<Props> = ({ onChange, value, size = 'md' }) => {
   const timeZoneGroups = getTimeZoneGroups();
 
   const groupOptions = timeZoneGroups.map(group => {

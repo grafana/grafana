@@ -19,6 +19,10 @@ export interface State {
 export class DashboardPicker extends PureComponent<Props, State> {
   debouncedSearch: any;
 
+  static defaultProps = {
+    size: 'md',
+  };
+
   constructor(props: Props) {
     super(props);
 
