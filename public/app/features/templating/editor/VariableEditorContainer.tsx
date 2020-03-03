@@ -5,8 +5,6 @@ import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import {
-  changeToEditorEditMode,
-  changeToEditorListMode,
   changeVariableOrder,
   duplicateVariable,
   removeVariable,
@@ -17,6 +15,7 @@ import {
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { getVariableStates } from '../state/selectors';
+import { changeToEditorEditMode, changeToEditorListMode } from '../state/uuidInEditorReducer';
 
 interface OwnProps {}
 
@@ -37,12 +36,12 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class VariableEditorContainerUnconnected extends PureComponent<Props> {
   componentDidMount(): void {
-    this.props.changeToEditorListMode(toVariablePayload({ uuid: (null as unknown) as string, type: 'query' }));
+    this.props.changeToEditorListMode();
   }
 
   onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.changeToEditorListMode(toVariablePayload({ uuid: (null as unknown) as string, type: 'query' }));
+    this.props.changeToEditorListMode();
   };
 
   onEditVariable = (identifier: VariableIdentifier) => {

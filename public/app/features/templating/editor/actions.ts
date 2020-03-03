@@ -6,9 +6,10 @@ import {
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
-import { changeToEditorListMode, storeNewVariable, toVariablePayload, VariableIdentifier } from '../state/actions';
+import { storeNewVariable, toVariablePayload, VariableIdentifier } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { v4 } from 'uuid';
+import { changeToEditorListMode } from '../state/uuidInEditorReducer';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -26,7 +27,7 @@ export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void
   return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.uuid!, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(changeToEditorListMode(toVariablePayload(identifier)));
+    dispatch(changeToEditorListMode());
   };
 };
 
@@ -36,7 +37,7 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
     dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, uuid })));
     const variableInState = getVariable(uuid, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(changeToEditorListMode(toVariablePayload(variableInState)));
+    dispatch(changeToEditorListMode());
   };
 };
 

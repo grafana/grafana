@@ -1,12 +1,12 @@
 import debounce from 'lodash/debounce';
-import { ThunkResult, StoreState, ThunkDispatch } from 'app/types';
-import { VariableOption, VariableWithMultiSupport, VariableWithOptions, containsSearchFilter } from '../../variable';
+import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import { containsSearchFilter, VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../shared/types';
 import {
-  OptionsPickerState,
   hideOptions,
+  OptionsPickerState,
   updateOptionsFromSearch,
   updateSearchQuery,
   updateOptionsAndFilter,
@@ -43,7 +43,7 @@ export const navigateOptions = (key: NavigationKey, clearOthers: boolean): Thunk
 
 export const filterOrSearchOptions = (searchQuery: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { uuid } = getState().optionsPicker;
+    const { uuid } = getState().templating.optionsPicker;
     const { query, options } = getVariable<VariableWithOptions>(uuid, getState());
     dispatch(updateSearchQuery(searchQuery));
 
@@ -56,7 +56,7 @@ export const filterOrSearchOptions = (searchQuery: string): ThunkResult<void> =>
 
 export const commitChangesToVariable = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const picker = getState().optionsPicker;
+    const picker = getState().templating.optionsPicker;
     const variable = getVariable<VariableWithMultiSupport>(picker.uuid, getState());
 
     // TODO: dispatch action and move this to variable reducer
@@ -75,7 +75,7 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
 
 export const toggleOptionByHighlight = (clearOthers: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const { uuid, highlightIndex } = getState().optionsPicker;
+    const { uuid, highlightIndex } = getState().templating.optionsPicker;
     const variable = getVariable<VariableWithMultiSupport>(uuid, getState());
     const option = variable.options[highlightIndex];
     dispatch(toggleOption({ option, forceSelect: false, clearOthers }));
@@ -84,7 +84,7 @@ export const toggleOptionByHighlight = (clearOthers: boolean): ThunkResult<void>
 
 const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreState, searchQuery: string) => {
   try {
-    const { uuid } = getState().optionsPicker;
+    const { uuid } = getState().templating.optionsPicker;
     const existing = getVariable<VariableWithOptions>(uuid, getState());
 
     const adapter = variableAdapters.get(existing.type);

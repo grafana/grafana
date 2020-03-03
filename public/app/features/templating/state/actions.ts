@@ -96,8 +96,6 @@ export const duplicateVariable = createAction<PrepareAction<VariablePayload<Dupl
 export const changeVariableOrder = createAction<VariablePayload<{ fromIndex: number; toIndex: number }>>(
   'templating/changeVariableOrder'
 );
-export const changeToEditorListMode = createAction<VariablePayload>('templating/changeToEditorListMode');
-export const changeToEditorEditMode = createAction<VariablePayload>('templating/changeToEditorEditMode');
 export const resolveInitLock = createAction<VariablePayload>('templating/resolveInitLock');
 export const removeInitLock = createAction<VariablePayload>('templating/removeInitLock');
 export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>(

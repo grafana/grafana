@@ -4,8 +4,8 @@ import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from './variable';
 import { VariablePickerProps, VariableState } from './state/types';
-import { TemplatingState } from './state/reducers';
 import { VariableEditorProps } from './editor/types';
+import { VariablesState } from './state/variablesReducer';
 
 export interface VariableAdapter<Model extends VariableModel> {
   description: string;
@@ -19,7 +19,7 @@ export interface VariableAdapter<Model extends VariableModel> {
   getValueForUrl: (variable: Model) => string | string[];
   picker: ComponentType<VariablePickerProps>;
   editor: ComponentType<VariableEditorProps>;
-  reducer: Reducer<TemplatingState>;
+  reducer: Reducer<VariablesState>;
 }
 
 const allVariableAdapters: Record<VariableType, VariableAdapter<any> | null> = {

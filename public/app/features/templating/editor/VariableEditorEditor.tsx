@@ -224,7 +224,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
-  editor: state.variableEditor,
+  editor: state.templating.editor,
   variable: getVariable(ownProps.identifier.uuid!, state),
 });
 

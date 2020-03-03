@@ -1,5 +1,5 @@
 import { VariableModel } from '../variable';
-import { TemplatingState } from './reducers';
+import { VariablesState } from './variablesReducer';
 
 export const emptyUuid = '00000000-0000-0000-0000-000000000000';
 
@@ -17,6 +17,6 @@ export interface VariableState<ModelState extends VariableModel = VariableModel>
   variable: ModelState;
 }
 
-export const getInstanceState = <State extends VariableState = VariableState>(state: TemplatingState, uuid: string) => {
-  return state.variables[uuid] as State;
+export const getInstanceState = <State extends VariableState = VariableState>(state: VariablesState, uuid: string) => {
+  return state[uuid] as State;
 };

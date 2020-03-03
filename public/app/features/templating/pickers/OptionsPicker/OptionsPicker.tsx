@@ -143,7 +143,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  picker: state.optionsPicker,
+  picker: state.templating.optionsPicker,
 });
 
 export const OptionsPicker = connect(mapStateToProps, mapDispatchToProps)(OptionsPickerUnconnected);
