@@ -17,15 +17,10 @@ const intialState: SelectableValue<string> = { label: 'A label', value: 'A value
 const options = object<Array<SelectableValue<string>>>('Options:', [
   intialState,
   { label: 'Another label', value: 'Another value 1' },
-
   { label: 'Another label', value: 'Another value 2' },
-
   { label: 'Another label', value: 'Another value 3' },
-
   { label: 'Another label', value: 'Another value 4' },
-
   { label: 'Another label', value: 'Another value 5' },
-
   { label: 'Another label', value: 'Another value ' },
 ]);
 
