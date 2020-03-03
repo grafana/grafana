@@ -30,12 +30,7 @@ const options = object<Array<SelectableValue<string>>>('Options:', [
 ]);
 
 export const basic = () => {
-  // const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
   const value = object<SelectableValue<string>>('Selected Value:', intialState);
-  // const options = object<Array<SelectableValue<string>>>('Options:', [
-  //   intialState,
-  //   { label: 'Another label', value: 'Another value' },
-  // ]);
 
   return (
     <UseState initialState={value}>
@@ -81,7 +76,7 @@ export const withAllowCustomValue = () => {
 
 export const asyncSelect = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const loadAsyncOptions = (_inputValue: string) => {
+  const loadAsyncOptions = () => {
     return new Promise<Array<SelectableValue<string>>>(resolve => {
       setTimeout(() => {
         setIsLoading(false);
