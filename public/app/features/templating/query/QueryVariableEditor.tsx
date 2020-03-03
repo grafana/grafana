@@ -6,8 +6,8 @@ import templateSrv from '../template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../variable';
 import { QueryVariableEditorState } from './reducer';
-import { changeQueryVariableDataSource, initQueryVariableEditor } from './actions';
-import { addVariableEditorError, removeVariableEditorError, VariableEditorState } from '../editor/reducer';
+import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
+import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
@@ -23,8 +23,7 @@ interface ConnectedProps {
 interface DispatchProps {
   initQueryVariableEditor: typeof initQueryVariableEditor;
   changeQueryVariableDataSource: typeof changeQueryVariableDataSource;
-  addVariableEditorError: typeof addVariableEditorError;
-  removeVariableEditorError: typeof removeVariableEditorError;
+  changeQueryVariableQuery: typeof changeQueryVariableQuery;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -70,23 +69,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   onQueryChange = async (query: any, definition: string) => {
-    this.props.onPropChange({ propName: 'query', propValue: query });
-    this.props.onPropChange({ propName: 'definition', propValue: definition, updateOptions: true });
-
-    let errorText = null;
-    if (
-      typeof query === 'string' &&
-      this.props.variable.query.match(new RegExp('\\$' + this.props.variable.name + '(/| |$)'))
-    ) {
-      errorText = 'Query cannot contain a reference to itself. Variable: $' + this.props.variable.name;
-    }
-
-    if (!errorText) {
-      this.props.removeVariableEditorError({ errorProp: 'query' });
-      return;
-    }
-
-    this.props.addVariableEditorError({ errorProp: 'query', errorText });
+    this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
   };
 
   onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -316,8 +299,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   initQueryVariableEditor,
   changeQueryVariableDataSource,
-  addVariableEditorError,
-  removeVariableEditorError,
+  changeQueryVariableQuery,
 };
 
 export const QueryVariableEditor = connectWithStore(
