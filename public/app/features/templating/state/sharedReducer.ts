@@ -87,10 +87,13 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
     })
     .addCase(storeNewVariable, (state, action) => {
       const uuid = action.payload.uuid!;
-      const emptyVariable: VariableModel = cloneDeep<VariableModel>(state[emptyUuid]);
-      state[uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
-      state[uuid!] = emptyVariable;
-      state[uuid!].uuid = uuid;
+      const emptyVariable = cloneDeep<VariableModel>(state[emptyUuid]);
+      state[uuid!] = {
+        ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
+        ...emptyVariable,
+        uuid,
+        index: Object.values(state).length - 1,
+      };
     })
     .addCase(changeToEditorEditMode, (state, action) => {
       if (action.payload.uuid === emptyUuid) {
@@ -106,13 +109,10 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
 
       state[uuid!] = {
         ...initialState,
-        variable: {
-          ...initialState.variable,
-          uuid,
-          label,
-          name,
-          index,
-        },
+        uuid,
+        label,
+        name,
+        index,
       };
     })
     .addCase(changeVariableNameSucceeded, (state, action) => {

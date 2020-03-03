@@ -308,13 +308,11 @@ describe('sharedReducer', () => {
             skipUrlSync: false,
           },
           [11]: {
+            ...initialQueryVariableModelState,
             uuid: '11',
-            type: 'query',
             name: `Name-${emptyUuid}`,
-            hide: VariableHide.dontHide,
             index: 3,
             label: `Label-${emptyUuid}`,
-            skipUrlSync: false,
           },
         });
     });
