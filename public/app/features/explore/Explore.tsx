@@ -14,7 +14,7 @@ import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
-import QueryHistoryContainer from './QueryHistory/QueryHistoryContainer';
+import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 // Actions
 import {
   changeSize,
@@ -47,7 +47,7 @@ import {
   ExploreId,
   ExploreUpdateState,
   ExploreUIState,
-  QueryHistoryQuery,
+  RichHistoryQuery,
 } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
@@ -75,9 +75,6 @@ const getStyles = stylesFactory(() => {
     `,
     button: css`
       margin: 1em 4px 0 0;
-    `,
-    cheatSheetAlign: css`
-      margin-right: 1px;
     `,
   };
 });
@@ -118,11 +115,11 @@ interface ExploreProps {
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
-  queryHistory: QueryHistoryQuery[];
+  richHistory: RichHistoryQuery[];
 }
 
 interface ExploreState {
-  showQueryHistory: boolean;
+  showRichHistory: boolean;
 }
 
 /**
@@ -157,7 +154,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     super(props);
     this.exploreEvents = new Emitter();
     this.state = {
-      showQueryHistory: false,
+      showRichHistory: false,
     };
   }
 
@@ -171,7 +168,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       mode,
       initialUI,
       originPanelId,
-      queryHistory,
+      richHistory,
     } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
@@ -187,7 +184,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         this.exploreEvents,
         initialUI,
         originPanelId,
-        queryHistory
+        richHistory
       );
     }
   }
@@ -259,10 +256,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  toggleShowQueryHistory = () => {
+  toggleShowRichHistory = () => {
     this.setState(state => {
       return {
-        showQueryHistory: !state.showQueryHistory,
+        showRichHistory: !state.showRichHistory,
       };
     });
   };
@@ -301,7 +298,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       syncedTimes,
       isLive,
     } = this.props;
-    const { showQueryHistory } = this.state;
+    const { showRichHistory } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
@@ -326,11 +323,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </button>
               {config.featureToggles.richHistory && (
                 <button
-                  aria-label="Query history button"
+                  aria-label="Rich history button"
                   className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
-                    ['explore-active-button']: showQueryHistory,
+                    ['explore-active-button']: showRichHistory,
                   })}
-                  onClick={this.toggleShowQueryHistory}
+                  onClick={this.toggleShowRichHistory}
                   disabled={isLive}
                 >
                   <i className={'fa fa-fw fa-history icon-margin-right '} />
@@ -349,7 +346,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                   <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
-                        <div className={`grafana-info-box grafana-info-box--max-lg ${styles.cheatSheetAlign}`}>
+                        <div className={'grafana-info-box grafana-info-box--max-lg'}>
                           <StartPage
                             onClickExample={this.onClickExample}
                             datasource={datasourceInstance}
@@ -392,8 +389,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      {showQueryHistory && config.featureToggles.richHistory && (
-                        <QueryHistoryContainer width={width} exploreId={exploreId} />
+                      {showRichHistory && config.featureToggles.richHistory && (
+                        <RichHistoryContainer width={width} exploreId={exploreId} />
                       )}
                     </ErrorBoundaryAlert>
                   </main>
@@ -412,7 +409,7 @@ const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
-  const { split, syncedTimes, queryHistory } = explore;
+  const { split, syncedTimes, richHistory } = explore;
   const item: ExploreItemState = explore[exploreId];
   const timeZone = getTimeZone(state.user);
   const {
@@ -482,7 +479,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     originPanelId,
     syncedTimes,
     timeZone,
-    queryHistory,
+    richHistory,
   };
 }
 

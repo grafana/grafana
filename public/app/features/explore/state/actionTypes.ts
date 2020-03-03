@@ -15,7 +15,7 @@ import {
   TimeRange,
   ExploreMode,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExploreUIState, QueryHistoryQuery } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUIState, RichHistoryQuery } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
@@ -64,7 +64,7 @@ export interface InitializeExplorePayload {
   mode: ExploreMode;
   ui: ExploreUIState;
   originPanelId: number;
-  queryHistory: QueryHistoryQuery[];
+  richHistory: RichHistoryQuery[];
 }
 
 export interface LoadDatasourceMissingPayload {
@@ -298,7 +298,7 @@ export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen
 
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
-export const queryHistoryUpdatedAction = createAction<any>('explore/queryHistoryUpdated');
+export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */

@@ -29,7 +29,7 @@ import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreUrlState, QueryOptions, QueryTransaction, QueryHistoryQuery } from 'app/types/explore';
+import { ExploreUrlState, QueryOptions, QueryTransaction, RichHistoryQuery } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -336,6 +336,93 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
+/*
+ * Add queries to rich history. Save only queries within the retention period, or that are starred.
+ * Side-effect: store history in local storage
+ */
+
+export function addToRichHistory(
+  richHistory: RichHistoryQuery[],
+  datasourceId: string,
+  datasourceName: string,
+  queries: any[],
+  starred: boolean,
+  comment: string,
+  sessionName: string
+): any {
+  const ts = Date.now();
+
+  /* Save only queries, that are not falsy (e.g. empty strings, null) */
+  const arrayOfStringifiedQueries = queries.map(query => query.expr).filter(expr => Boolean(expr));
+
+  const retentionPeriod = store.getObject('grafana.explore.richHistory.retentionPeriod', 7);
+  const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
+
+  /* Keep only queries, that are within the selected retention period or that are starred.
+   * If no queries, initialize with exmpty array
+   */
+  const queriesToKeep = richHistory.filter(q => q.ts > retentionPeriodLastTs || q.starred === true) || [];
+
+  if (arrayOfStringifiedQueries.length > 0) {
+    if (
+      /* Don't save duplicated queries for the same datasource */
+      queriesToKeep.length > 0 &&
+      JSON.stringify(arrayOfStringifiedQueries) === JSON.stringify(queriesToKeep[0].queries) &&
+      JSON.stringify(datasourceName) === JSON.stringify(queriesToKeep[0].datasourceName)
+    ) {
+      return richHistory;
+    }
+
+    let newHistory = [
+      { queries: arrayOfStringifiedQueries, ts, datasourceId, datasourceName, starred, comment, sessionName },
+      ...queriesToKeep,
+    ];
+    console.log(newHistory);
+
+    /* Combine all queries of a datasource type into one rich history */
+    const richHistoryKey = 'grafana.explore.richHistory';
+    store.setObject(richHistoryKey, newHistory);
+    return newHistory;
+  }
+
+  return richHistory;
+}
+
+export function getRichHistory() {
+  const richHistoryKey = 'grafana.explore.richHistory';
+  return store.getObject(richHistoryKey);
+}
+
+export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
+  const updatedQueries = richHistory.map(query => {
+    /* Timestamps are currently unique - we can use them to identify specific queries */
+    if (query.ts === ts) {
+      const isStarred = query.starred;
+      const updatedQuery = Object.assign({}, query, { starred: !isStarred });
+      return updatedQuery;
+    }
+    return query;
+  });
+
+  const richHistoryKey = 'grafana.explore.richHistory';
+  store.setObject(richHistoryKey, updatedQueries);
+  return updatedQueries;
+}
+
+export function updateCommentInRichHistory(richHistory: RichHistoryQuery[], ts: number, newComment: string) {
+  const updatedQueries = richHistory.map(query => {
+    if (query.ts === ts) {
+      const updatedQuery = Object.assign({}, query, { comment: newComment });
+      return updatedQuery;
+    }
+    return query;
+  });
+
+  const richHistoryKey = 'grafana.explore.richHistory';
+  store.setObject(richHistoryKey, updatedQueries);
+  return updatedQueries;
+}
+
 /**
  * Update the query history. Side-effect: store history in local storage
  */
@@ -357,86 +444,6 @@ export function updateHistory<T extends DataQuery = any>(
   const historyKey = `grafana.explore.history.${datasourceId}`;
   store.setObject(historyKey, history);
   return history;
-}
-
-export function addToQueryHistory(
-  queryHistory: QueryHistoryQuery[],
-  datasourceId: string,
-  datasourceName: string,
-  queries: any[],
-  starred: boolean,
-  comment: string,
-  sessionName: string
-): any {
-  const ts = Date.now();
-  /* Save only queries, that are not falsy (e.g. empty strings, null) */
-  const stringifiedQueries = queries.map(q => q.expr).filter(expr => Boolean(expr));
-  const currentActiveTimeSpan = store.getObject('grafana.explore.queryHistory.activeTimeSpan', 2);
-  const activeTimeSpanLowerBoundary = createActiveTimeBoundary(
-    currentActiveTimeSpan === 1 ? 7 : currentActiveTimeSpan,
-    false
-  );
-
-  /* Keep only queries, that are within the selected active time span or that are starred  */
-  const queryHistoryWithinActiveTimeSpan = queryHistory.filter(
-    q => q.ts > activeTimeSpanLowerBoundary || q.starred === true
-  );
-
-  if (stringifiedQueries.length > 0) {
-    if (
-      /* Don't save duplicated queries*/
-      JSON.stringify(stringifiedQueries) === JSON.stringify(queryHistoryWithinActiveTimeSpan[0].queries) &&
-      JSON.stringify(datasourceName) === JSON.stringify(queryHistoryWithinActiveTimeSpan[0].datasourceName)
-    ) {
-      return queryHistory;
-    }
-
-    let newQueryHistory = [
-      { queries: stringifiedQueries, ts, datasourceId, datasourceName, starred, comment, sessionName },
-      ...queryHistoryWithinActiveTimeSpan,
-    ];
-
-    // Combine all queries of a datasource type into one history
-    const queryHistoryKey = 'grafana.explore.queryHistory';
-    store.setObject(queryHistoryKey, newQueryHistory);
-    return newQueryHistory;
-  }
-
-  return queryHistory;
-}
-
-export function getQueryHistory() {
-  const queryHistoryKey = 'grafana.explore.queryHistory';
-  return store.getObject(queryHistoryKey);
-}
-
-export function updateStarred(queryHistory: QueryHistoryQuery[], ts: number) {
-  const updatedQueries = queryHistory.map(q => {
-    if (q.ts === ts) {
-      const isStarred = q.starred;
-      const updatedQuery = Object.assign({}, q, { starred: !isStarred });
-      return updatedQuery;
-    }
-    return q;
-  });
-
-  const queryHistoryKey = 'grafana.explore.queryHistory';
-  store.setObject(queryHistoryKey, updatedQueries);
-  return updatedQueries;
-}
-
-export function updateComment(queryHistory: QueryHistoryQuery[], ts: number, newComment: string) {
-  const updatedQueries = queryHistory.map(q => {
-    if (q.ts === ts) {
-      const updatedQuery = Object.assign({}, q, { comment: newComment });
-      return updatedQuery;
-    }
-    return q;
-  });
-
-  const queryHistoryKey = 'grafana.explore.queryHistory';
-  store.setObject(queryHistoryKey, updatedQueries);
-  return updatedQueries;
 }
 
 export function clearHistory(datasourceId: string) {
@@ -622,30 +629,30 @@ export function deduplicateLogRowsById(rows: LogRowModel[]) {
   return _.uniqBy(rows, 'uid');
 }
 
-export const sortQueries = (array: QueryHistoryQuery[], sortOrder: SortOrder) => {
+export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => {
   let sortFunc;
 
   if (sortOrder === SortOrder.Ascending) {
-    sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
   }
   if (sortOrder === SortOrder.Descending) {
-    sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
   }
 
   if (sortOrder === SortOrder.DatasourceAZ) {
-    sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) =>
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
       a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0;
   }
 
   if (sortOrder === SortOrder.DatasourceZA) {
-    sortFunc = (a: QueryHistoryQuery, b: QueryHistoryQuery) =>
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
       a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0;
   }
 
   return array.sort(sortFunc);
 };
 
-export const copyToClipboard = (string: string) => {
+export const copyStringToClipboard = (string: string) => {
   const el = document.createElement('textarea');
   el.value = string;
   document.body.appendChild(el);
@@ -654,13 +661,14 @@ export const copyToClipboard = (string: string) => {
   document.body.removeChild(el);
 };
 
-export const createUrlFromQueryHistory = (query: QueryHistoryQuery) => {
-  const queries = query.queries.map(q => ({ expr: q }));
+export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
+  const queries = query.queries.map(query => ({ expr: query }));
   const exploreState: ExploreUrlState = {
-    //currently set defaultly, as we are not saving timerange in queryhistory
+    /* Default range, as we are not saving timerange in rich history */
     range: { from: 'now-1h', to: 'now' },
-    datasource: `${query.datasourceName}`,
+    datasource: query.datasourceName,
     queries,
+    /* Default mode. In the future, we can also save the query mode */
     mode: query.datasourceId === 'loki' ? ExploreMode.Logs : ExploreMode.Metrics,
     ui: {
       showingGraph: true,
@@ -676,6 +684,7 @@ export const createUrlFromQueryHistory = (query: QueryHistoryQuery) => {
   return url;
 };
 
+/* Needed for slider in Rich history to map numerical values to meaningful strings */
 export const mapNumbertoTimeInSlider = (num: number) => {
   let str;
   switch (num) {
@@ -688,6 +697,9 @@ export const mapNumbertoTimeInSlider = (num: number) => {
     case 7:
       str = 'a week ago';
       break;
+    case 14:
+      str = 'two weeks ago';
+      break;
     default:
       str = `${num} days ago`;
   }
@@ -695,9 +707,14 @@ export const mapNumbertoTimeInSlider = (num: number) => {
   return str;
 };
 
-export const createActiveTimeBoundary = (days: number, isUpperBoundary: boolean) => {
-  const now = new Date();
-  const date = new Date(now.setDate(now.getDate() - days));
-  const boundary = isUpperBoundary ? date.setHours(24, 0, 0, 0) : date.setHours(0, 0, 0, 0);
+export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) => {
+  const today = new Date();
+  const date = new Date(today.setDate(today.getDate() - days));
+  /*
+   * As a retention period boundaries, we consider:
+   * - The last timestamp equals to the 24:00 of the last day of retention
+   * - The first timestamp that equals to the 00:00 of the first day of retention
+   */
+  const boundary = isLastTs ? date.setHours(24, 0, 0, 0) : date.setHours(0, 0, 0, 0);
   return boundary;
 };

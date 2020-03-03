@@ -3,15 +3,13 @@ import { css } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
-interface QueryHistorySettingsProps {
-  activeTimeSpan: number;
-  activeStarredTab: boolean;
-  onlyActiveDatasourceHistory: boolean;
-  hiddenSessions: boolean;
-  onChangeActiveTimeSpan: (option: { label: string; value: number }) => void;
-  toggleActiveStarredTab: () => void;
-  toggleonlyActiveDatasourceHistory: () => void;
-  toggleHideSessions: () => void;
+interface RichHistorySettingsProps {
+  retentionPeriod: number;
+  starredTabAsFirstTab: boolean;
+  activeDatasourceOnly: boolean;
+  onChangeRetentionPeriod: (option: { label: string; value: number }) => void;
+  toggleStarredTabAsFirstTab: () => void;
+  toggleactiveDatasourceOnly: () => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -36,26 +34,25 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const timeSpanOptions = [
+const retentionPeriodOptions = [
   { value: 2, label: '2 days' },
   { value: 5, label: '5 days' },
-  { value: 1, label: '1 week' },
+  { value: 7, label: '1 week' },
+  { value: 14, label: '2 weeks' },
 ];
 
-export function QueryHistorySettings(props: QueryHistorySettingsProps) {
+export function RichHistorySettings(props: RichHistorySettingsProps) {
   const {
-    activeTimeSpan,
-    activeStarredTab,
-    onlyActiveDatasourceHistory,
-    hiddenSessions,
-    onChangeActiveTimeSpan,
-    toggleActiveStarredTab,
-    toggleonlyActiveDatasourceHistory,
-    toggleHideSessions,
+    retentionPeriod,
+    starredTabAsFirstTab,
+    activeDatasourceOnly,
+    onChangeRetentionPeriod,
+    toggleStarredTabAsFirstTab,
+    toggleactiveDatasourceOnly,
   } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
-  const selectedOption = timeSpanOptions.find(v => v.value === activeTimeSpan);
+  const selectedOption = retentionPeriodOptions.find(v => v.value === retentionPeriod);
 
   return (
     <div className={styles.container}>
@@ -67,27 +64,21 @@ export function QueryHistorySettings(props: QueryHistorySettingsProps) {
         <div className={styles.input}>
           <Forms.Select
             value={selectedOption}
-            options={timeSpanOptions}
-            onChange={onChangeActiveTimeSpan}
+            options={retentionPeriodOptions}
+            onChange={onChangeRetentionPeriod}
           ></Forms.Select>
         </div>
       </Forms.Field>
       <Forms.Field label="Default active tab" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={activeStarredTab} onChange={toggleActiveStarredTab}></Forms.Switch>
+          <Forms.Switch value={starredTabAsFirstTab} onChange={toggleStarredTabAsFirstTab}></Forms.Switch>
           <div className={styles.label}>Change the default active tab from “Query history” to “Starred”</div>
         </div>
       </Forms.Field>
       <Forms.Field label="Datasource behaviour" description=" " className="space-between">
         <div className={styles.switch}>
-          <Forms.Switch value={onlyActiveDatasourceHistory} onChange={toggleonlyActiveDatasourceHistory}></Forms.Switch>
+          <Forms.Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Forms.Switch>
           <div className={styles.label}>Only show queries for datasource currently active in Explore</div>
-        </div>
-      </Forms.Field>
-      <Forms.Field label="Query list options" description=" " className="space-between">
-        <div className={styles.switch}>
-          <Forms.Switch value={hiddenSessions} onChange={toggleHideSessions}></Forms.Switch>
-          <div className={styles.label}>Hide sessions by default</div>
         </div>
       </Forms.Field>
     </div>

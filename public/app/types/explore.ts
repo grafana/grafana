@@ -47,7 +47,7 @@ export interface ExploreState {
   /**
    * History of all queries
    */
-  queryHistory: any[];
+  richHistory: RichHistoryQuery[];
 }
 
 export interface ExploreItemState {
@@ -235,7 +235,7 @@ export interface QueryTransaction {
   scanning?: boolean;
 }
 
-export type QueryHistoryQuery = {
+export type RichHistoryQuery = {
   ts: number;
   datasourceName: string;
   datasourceId: string;

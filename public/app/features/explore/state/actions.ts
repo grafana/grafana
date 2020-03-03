@@ -37,12 +37,12 @@ import {
   serializeStateToUrlParam,
   stopQueryState,
   updateHistory,
-  addToQueryHistory,
-  updateStarred,
-  updateComment,
+  addToRichHistory,
+  updateStarredInRichHistory,
+  updateCommentInRichHistory,
 } from 'app/core/utils/explore';
 // Types
-import { ExploreItemState, ExploreUrlState, ThunkResult, QueryHistoryQuery } from 'app/types';
+import { ExploreItemState, ExploreUrlState, ThunkResult, RichHistoryQuery } from 'app/types';
 
 import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
@@ -56,7 +56,7 @@ import {
   ChangeSizePayload,
   clearQueriesAction,
   historyUpdatedAction,
-  queryHistoryUpdatedAction,
+  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -269,7 +269,7 @@ export function initializeExplore(
   eventBridge: Emitter,
   ui: ExploreUIState,
   originPanelId: number,
-  queryHistory: QueryHistoryQuery[]
+  richHistory: RichHistoryQuery[]
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
@@ -283,7 +283,7 @@ export function initializeExplore(
         mode,
         ui,
         originPanelId,
-        queryHistory,
+        richHistory,
       })
     );
     dispatch(updateTime({ exploreId }));
@@ -405,7 +405,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
-    const queryHistory = getState().explore.queryHistory;
+    const richHistory = getState().explore.richHistory;
     const exploreItemState = getState().explore[exploreId];
     const {
       datasourceInstance,
@@ -466,8 +466,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
-          const nextQueryHistory = addToQueryHistory(
-            queryHistory || [],
+          const nextRichHistory = addToRichHistory(
+            richHistory || [],
             datasourceId,
             datasourceName,
             queries,
@@ -476,7 +476,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
             ''
           );
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-          dispatch(queryHistoryUpdatedAction({ queryHistory: nextQueryHistory }));
+          dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
           // We save queries to the URL here so that only successfully run queries change the URL.
           dispatch(stateSave());
@@ -503,17 +503,17 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
   };
 };
 
-export const updateQueryHistory = (ts: number, property: string, value?: string): ThunkResult<void> => {
+export const updateRichHistory = (ts: number, property: string, updatedProperty?: string): ThunkResult<void> => {
   return (dispatch, getState) => {
-    // Side-effect: Saving queryhistory in localstorage
-    let nextQueryHistory;
+    // Side-effect: Saving rich history in localstorage
+    let nextRichHistory;
     if (property === 'starred') {
-      nextQueryHistory = updateStarred(getState().explore.queryHistory, ts);
+      nextRichHistory = updateStarredInRichHistory(getState().explore.richHistory, ts);
     }
     if (property === 'comment') {
-      nextQueryHistory = updateComment(getState().explore.queryHistory, ts, value);
+      nextRichHistory = updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
     }
-    dispatch(queryHistoryUpdatedAction({ queryHistory: nextQueryHistory }));
+    dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
   };
 };
 
@@ -768,7 +768,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRangeFromUrl(urlRange, timeZone);
-    const queryHistory = store.getObject('grafana.explore.queryHistory');
+    const richHistory = store.getObject('grafana.explore.richHistory');
 
     // need to refresh datasource
     if (update.datasource) {
@@ -784,7 +784,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
           eventBridge,
           ui,
           originPanelId,
-          queryHistory
+          richHistory
         )
       );
       return;

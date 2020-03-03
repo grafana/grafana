@@ -25,7 +25,7 @@ import {
   refreshIntervalToSortOrder,
   sortLogsResult,
   stopQueryState,
-  getQueryHistory,
+  getRichHistory,
 } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
@@ -39,7 +39,7 @@ import {
   clearQueriesAction,
   highlightLogsExpressionAction,
   historyUpdatedAction,
-  queryHistoryUpdatedAction,
+  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -138,7 +138,7 @@ export const initialExploreState: ExploreState = {
   syncedTimes: false,
   left: initialExploreItemState,
   right: initialExploreItemState,
-  queryHistory: getQueryHistory() || [],
+  richHistory: getRichHistory() || [],
 };
 
 /**
@@ -642,10 +642,10 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return { ...state, syncedTimes: action.payload.syncedTimes };
   }
 
-  if (queryHistoryUpdatedAction.match(action)) {
+  if (richHistoryUpdatedAction.match(action)) {
     return {
       ...state,
-      queryHistory: action.payload.queryHistory,
+      richHistory: action.payload.richHistory,
     };
   }
 

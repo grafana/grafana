@@ -45,7 +45,6 @@ class Page extends Component<Props> {
 
   render() {
     const { navModel } = this.props;
-    console.log('navModel', navModel);
     return (
       <div className="page-scrollbar-wrapper">
         <CustomScrollbar autoHeightMin={'100%'} className="custom-scrollbar--page">

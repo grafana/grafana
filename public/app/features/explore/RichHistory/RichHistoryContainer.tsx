@@ -8,17 +8,17 @@ import { css, cx } from 'emotion';
 // Services & Utils
 import store from 'app/core/store';
 import { stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
 
 // Actions
-import { updateQueryHistory } from '../state/actions';
+import { updateRichHistory } from '../state/actions';
 
 // Types
 import { StoreState } from 'app/types';
-import { ExploreId, QueryHistoryQuery } from 'app/types/explore';
+import { GrafanaTheme } from '@grafana/data';
+import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
-// Components
-import { QueryHistory, SETTINGS_KEYS, Tabs } from './QueryHistory';
+// Components, enums
+import { RichHistory, RICH_HISTORY_SETTING_KEYS, Tabs } from './RichHistory';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
@@ -57,27 +57,28 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface Props {
-  updateQueryHistory: typeof updateQueryHistory;
-  queryHistory: QueryHistoryQuery[];
-  firstTab: Tabs;
   width: number;
+  exploreId: ExploreId;
+  updateRichHistory: typeof updateRichHistory;
   activeDatasourceInstance: string;
+  richHistory: RichHistoryQuery[];
+  firstTab: Tabs;
 }
 
-function QueryHistoryContainer(props: Props) {
+function RichHistoryContainer(props: Props) {
   const [visible, setVisible] = useState(false);
 
-  //To create animation for drawer
+  /* To create sliding animation for rich history drawer */
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
-  const { queryHistory, updateQueryHistory, width, firstTab, activeDatasourceInstance } = props;
+  const { richHistory, updateRichHistory, width, firstTab, activeDatasourceInstance } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  const handle = (
+  const drawerHandle = (
     <div className={styles.handle}>
       <hr />
     </div>
@@ -101,11 +102,11 @@ function QueryHistoryContainer(props: Props) {
       maxWidth={`${width}px`}
       minWidth={`${width}px`}
     >
-      {handle}
-      <QueryHistory
-        queryHistory={queryHistory}
-        onChangeQueryHistoryProperty={updateQueryHistory}
+      {drawerHandle}
+      <RichHistory
+        richHistory={richHistory}
         firstTab={firstTab}
+        onChangeRichHistoryProperty={updateRichHistory}
         activeDatasourceInstance={activeDatasourceInstance}
       />
     </Resizable>
@@ -117,20 +118,22 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
   const { datasourceInstance } = item;
-  const firstTab = store.getBool(SETTINGS_KEYS.activeStarredTab, false) ? Tabs.Starred : Tabs.QueryHistory;
-  const { queryHistory } = explore;
+  const firstTab = store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false)
+    ? Tabs.Starred
+    : Tabs.RichHistory;
+  const { richHistory } = explore;
   return {
-    queryHistory,
+    richHistory,
     firstTab,
     activeDatasourceInstance: datasourceInstance?.name,
   };
 }
 
 const mapDispatchToProps = {
-  updateQueryHistory,
+  updateRichHistory,
 };
 
 export default hot(module)(
   // @ts-ignore
-  connect(mapStateToProps, mapDispatchToProps)(QueryHistoryContainer)
+  connect(mapStateToProps, mapDispatchToProps)(RichHistoryContainer)
 ) as React.ComponentType<{ exploreId: ExploreId; width: number }>;

@@ -2,13 +2,13 @@ import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
-import { QueryHistoryQuery } from 'app/types/explore';
-import { copyToClipboard, createUrlFromQueryHistory } from '../../../core/utils/explore';
+import { RichHistoryQuery } from 'app/types/explore';
+import { copyStringToClipboard, createUrlFromRichHistory } from '../../../core/utils/explore';
 import appEvents from 'app/core/app_events';
 
 interface Props {
-  query: QueryHistoryQuery;
-  onChangeQueryHistoryProperty: (ts: number, property: string, comment?: string) => void;
+  query: RichHistoryQuery;
+  onChangeRichHistoryProperty: (ts: number, property: string, comment?: string) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -69,7 +69,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQueryHistoryProperty }) => {
+export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichHistoryProperty }) => {
   const [starred, setStared] = useState(query.starred);
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState(query.comment);
@@ -112,7 +112,7 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQuer
                   <Forms.Button
                     onClick={e => {
                       e.preventDefault();
-                      onChangeQueryHistoryProperty(query.ts, 'comment', comment);
+                      onChangeRichHistoryProperty(query.ts, 'comment', comment);
                       toggleActiveUpdateComment();
                     }}
                   >
@@ -145,15 +145,15 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQuer
               className="fa fa-fw fa-copy"
               onClick={() => {
                 const queries = query.queries.join('\n\n');
-                copyToClipboard(queries);
+                copyStringToClipboard(queries);
                 appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
               }}
             ></i>
             <i
               className="fa fa-fw fa-link"
               onClick={() => {
-                const url = createUrlFromQueryHistory(query);
-                copyToClipboard(url);
+                const url = createUrlFromRichHistory(query);
+                copyStringToClipboard(url);
                 appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
               }}
               style={{ fontWeight: 'normal' }}
@@ -161,7 +161,7 @@ export const QueryHistoryCard: FunctionComponent<Props> = ({ query, onChangeQuer
             <i
               className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
               onClick={() => {
-                onChangeQueryHistoryProperty(query.ts, 'starred');
+                onChangeRichHistoryProperty(query.ts, 'starred');
                 setStared(!starred);
               }}
             ></i>

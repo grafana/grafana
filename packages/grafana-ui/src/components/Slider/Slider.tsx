@@ -15,9 +15,10 @@ export interface Props {
   value?: number[];
   reverse?: boolean;
   tooltipAlwaysVisible?: boolean;
+
   formatTooltipResult?: (value: number) => number | string;
+
   onChange?: (values: number[]) => void;
-  onBeforeChange?: (values: number[]) => void;
   onAfterChange?: (values: number[]) => void;
 }
 
@@ -102,7 +103,6 @@ export const Slider: FunctionComponent<Props> = ({
   max,
   onChange,
   onAfterChange,
-  onBeforeChange,
   orientation = 'horizontal',
   reverse,
   formatTooltipResult,
@@ -128,7 +128,6 @@ export const Slider: FunctionComponent<Props> = ({
         tipFormatter={(value: number) => (formatTooltipResult ? formatTooltipResult(value) : value)}
         onChange={onChange}
         onAfterChange={onAfterChange}
-        onBeforeChange={onBeforeChange}
         vertical={!isHorizontal}
         reverse={reverse}
       />

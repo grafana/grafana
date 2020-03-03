@@ -1,4 +1,4 @@
-import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery } from 'app/types/explore';
 import { makeExploreItemState } from 'app/features/explore/state/reducers';
 import { StoreState, UserState } from 'app/types';
 import { TimeRange, dateTime, DataSourceApi } from '@grafana/data';
@@ -71,13 +71,13 @@ export const mockExploreState = (options: any = {}) => {
   };
   const split: boolean = options.split || false;
   const syncedTimes: boolean = options.syncedTimes || false;
-  const queryHistory: any[] = [];
+  const richHistory: RichHistoryQuery[] = [];
   const explore: ExploreState = {
     left,
     right,
     syncedTimes,
     split,
-    queryHistory,
+    richHistory,
   };
 
   const user: UserState = {

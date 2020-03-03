@@ -1,11 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { css } from 'emotion';
-import { stylesFactory, useTheme, Select, Slider } from '@grafana/ui';
+
+// Types
+import { RichHistoryQuery } from 'app/types/explore';
+
+// Utils
+import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { getExploreDatasources } from '../state/selectors';
-import { QueryHistoryCard } from './QueryHistoryCard';
-import { sortQueries, SortOrder, mapNumbertoTimeInSlider, createActiveTimeBoundary } from '../../../core/utils/explore';
-import { QueryHistoryQuery } from 'app/types/explore';
+
+import {
+  sortQueries,
+  SortOrder,
+  mapNumbertoTimeInSlider,
+  createRetentionPeriodBoundary,
+} from '../../../core/utils/explore';
+
+// Components
+import { RichHistoryCard } from './RichHistoryCard';
+import { Select, Slider } from '@grafana/ui';
 
 const sortOrderOptions = [
   { label: 'Time ascending', value: SortOrder.Ascending },
@@ -20,22 +33,23 @@ export type DataSourceOption = {
   imgUrl?: string;
 };
 
-interface QueryHistoryContentProps {
-  queries: QueryHistoryQuery[];
+interface RichHistoryContentProps {
+  queries: RichHistoryQuery[];
   sortOrder: SortOrder;
-  onlyStarred: boolean;
-  onlyActiveDatasourceHistory: boolean;
+  activeDatasourceOnly: boolean;
   activeDatasourceInstance: string;
+  datasourceFilters: DataSourceOption[] | null;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onChangeQueryHistoryProperty: (ts: number, property: string) => void;
-  datasourceFilters?: DataSourceOption[] | null;
-  activeTimeSpan?: number;
-  onSelectDatasourceFilters?: (datasources: DataSourceOption[] | null) => void;
+  onChangeRichHistoryProperty: (ts: number, property: string, updatedProperty?: string) => void;
+  onSelectDatasourceFilters: (datasources: DataSourceOption[] | null) => void;
+  onlyStarred?: boolean;
+  retentionPeriod?: number;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, onlyStarred: boolean) => {
   const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
-  // 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab
+
+  /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
   const cardWidth = onlyStarred ? '100%' : '100% - 134px';
   return {
     container: css`
@@ -95,12 +109,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme, onlyStarred: boolean) => {
     `,
     heading: css`
       font-size: ${theme.typography.heading.h4};
-      margin: ${theme.spacing.sm} 0;
+      margin: ${theme.spacing.sm} ${theme.spacing.xxs};
     `,
   };
 });
 
-export function QueryHistoryContent(props: QueryHistoryContentProps) {
+export function RichHistoryContent(props: RichHistoryContentProps) {
   const {
     datasourceFilters,
     onSelectDatasourceFilters,
@@ -108,19 +122,23 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
     onlyStarred,
     onChangeSortOrder,
     sortOrder,
-    onChangeQueryHistoryProperty,
-    onlyActiveDatasourceHistory,
+    onChangeRichHistoryProperty,
+    activeDatasourceOnly,
     activeDatasourceInstance,
-    activeTimeSpan,
+    retentionPeriod,
   } = props;
 
-  const [sliderFilter, setSliderFilter] = useState([0, activeTimeSpan]);
+  const [sliderRetentionFilter, setSliderRetentionFilter] = useState([0, retentionPeriod]);
 
+  /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
+   *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
+   * available for user.
+   */
   useEffect(() => {
-    onlyActiveDatasourceHistory && activeDatasourceInstance
+    activeDatasourceOnly && activeDatasourceInstance
       ? onSelectDatasourceFilters([{ label: activeDatasourceInstance, value: activeDatasourceInstance }])
       : onSelectDatasourceFilters(null);
-  }, [activeDatasourceInstance, onlyActiveDatasourceHistory]);
+  }, [activeDatasourceInstance, activeDatasourceOnly]);
 
   const theme = useTheme();
   const styles = getStyles(theme, onlyStarred);
@@ -128,18 +146,24 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
     return { value: d.value, label: d.value, imgUrl: d.meta.info.logos.small };
   });
 
-  const listOfDatasourceFilters = datasourceFilters && datasourceFilters.map(d => d.value);
-
-  const filteredQueries: QueryHistoryQuery[] = onlyStarred ? queries.filter(q => q.starred === true) : queries;
+  const filteredQueries: RichHistoryQuery[] = onlyStarred ? queries.filter(q => q.starred === true) : queries;
   const sortedQueries = sortQueries(filteredQueries, sortOrder);
+  const listOfDatasourceFilters = datasourceFilters && datasourceFilters.map(d => d.value);
   const filteredQueriesByDatasource = datasourceFilters
     ? sortedQueries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
     : sortedQueries;
 
   const queriesToDisplay = filteredQueriesByDatasource.filter(
     q =>
-      q.ts < createActiveTimeBoundary(sliderFilter[0], true) && q.ts > createActiveTimeBoundary(sliderFilter[1], false)
+      q.ts < createRetentionPeriodBoundary(sliderRetentionFilter[0], true) &&
+      q.ts > createRetentionPeriodBoundary(sliderRetentionFilter[1], false)
   );
+
+  // const starredQueries = onlyStarred && queries.filter(q => q.starred === true);
+  // const starredQueriesFilteredByDatasource = datasourceFilters
+  // ? starredQueries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+  // : starredQueries;
+  // const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
 
   return (
     <div className={styles.container}>
@@ -150,27 +174,27 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
               Filter history <br />
               between
             </div>
-            <div className="label-slider">{mapNumbertoTimeInSlider(sliderFilter[0])}</div>
+            <div className="label-slider">{mapNumbertoTimeInSlider(sliderRetentionFilter[0])}</div>
             <div className="slider">
               <Slider
                 tooltipAlwaysVisible={false}
                 min={0}
-                max={activeTimeSpan === 1 ? 7 : activeTimeSpan}
-                value={sliderFilter}
+                max={retentionPeriod}
+                value={sliderRetentionFilter}
                 orientation="vertical"
                 formatTooltipResult={mapNumbertoTimeInSlider}
                 reverse={true}
-                onAfterChange={setSliderFilter}
+                onAfterChange={setSliderRetentionFilter}
               />
             </div>
-            <div className="label-slider">{mapNumbertoTimeInSlider(sliderFilter[1])}</div>
+            <div className="label-slider">{mapNumbertoTimeInSlider(sliderRetentionFilter[1])}</div>
           </div>
         </div>
       )}
 
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
-          {!onlyActiveDatasourceHistory && (
+          {!activeDatasourceOnly && (
             <div className={styles.multiselect}>
               <Select
                 isMulti={true}
@@ -192,9 +216,7 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
 
         {onlyStarred &&
           filteredQueries.map(q => {
-            return (
-              <QueryHistoryCard query={q} key={q.ts} onChangeQueryHistoryProperty={onChangeQueryHistoryProperty} />
-            );
+            return <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />;
           })}
 
         {!onlyStarred &&
@@ -204,13 +226,11 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
               return (
                 <div key={q.ts}>
                   <div className={styles.heading}>{new Date(q.ts).toDateString().substring(4)}</div>
-                  <QueryHistoryCard query={q} key={q.ts} onChangeQueryHistoryProperty={onChangeQueryHistoryProperty} />
+                  <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />
                 </div>
               );
             } else {
-              return (
-                <QueryHistoryCard query={q} key={q.ts} onChangeQueryHistoryProperty={onChangeQueryHistoryProperty} />
-              );
+              return <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />;
             }
           })}
       </div>
