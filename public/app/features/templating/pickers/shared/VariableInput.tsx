@@ -1,24 +1,18 @@
 import React, { PureComponent } from 'react';
 import { trim } from 'lodash';
+import { NavigationKey } from './types';
+
 export interface Props {
   onChange: (value: string) => void;
-  onNavigate: (key: NavigationKeys, clearOthers: boolean) => void;
+  onNavigate: (key: NavigationKey, clearOthers: boolean) => void;
   value: string;
-}
-
-export enum NavigationKeys {
-  moveUp = 38,
-  moveDown = 40,
-  select = 32,
-  cancel = 27,
-  selectAndClose = 13,
 }
 
 export class VariableInput extends PureComponent<Props> {
   onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (NavigationKeys[event.keyCode]) {
+    if (NavigationKey[event.keyCode]) {
       const clearOthers = event.ctrlKey || event.metaKey || event.shiftKey;
-      this.props.onNavigate(event.keyCode as NavigationKeys, clearOthers);
+      this.props.onNavigate(event.keyCode as NavigationKey, clearOthers);
     }
   };
 

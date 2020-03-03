@@ -3,6 +3,7 @@ import { ThunkResult, StoreState, ThunkDispatch } from 'app/types';
 import { VariableOption, VariableWithMultiSupport, VariableWithOptions, containsSearchFilter } from '../../variable';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
+import { NavigationKey } from '../shared/types';
 import {
   OptionsPickerState,
   hideOptions,
@@ -10,7 +11,35 @@ import {
   updateSearchQuery,
   updateOptionsAndFilter,
   toggleOption,
+  moveOptionsHighlight,
 } from './reducer';
+
+export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    if (key === NavigationKey.cancel) {
+      return dispatch(commitChangesToVariable());
+    }
+
+    if (key === NavigationKey.select) {
+      return dispatch(toggleOptionByHighlight(clearOthers));
+    }
+
+    if (key === NavigationKey.selectAndClose) {
+      dispatch(toggleOptionByHighlight(clearOthers));
+      return dispatch(commitChangesToVariable());
+    }
+
+    if (key === NavigationKey.moveDown) {
+      return dispatch(moveOptionsHighlight(1));
+    }
+
+    if (key === NavigationKey.moveUp) {
+      return dispatch(moveOptionsHighlight(-1));
+    }
+
+    return undefined;
+  };
+};
 
 export const filterOrSearchOptions = (searchQuery: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
