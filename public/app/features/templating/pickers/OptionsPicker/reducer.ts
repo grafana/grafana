@@ -33,8 +33,7 @@ export const initialState: OptionsPickerState = {
   multi: false,
 };
 
-// TODO: move to some other place
-export const getTags = (model: VariableWithMultiSupport) => {
+const getTags = (model: VariableWithMultiSupport) => {
   return isQuery(model) ? cloneDeep(model.tags) : [];
 };
 

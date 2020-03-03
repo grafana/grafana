@@ -126,7 +126,7 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption {
   return {
     value: values,
     text: texts.join(' + '),
-    tags: picker.tags,
+    tags: picker.tags.filter(t => t.selected),
     selected: true,
   };
 }
