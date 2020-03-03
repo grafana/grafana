@@ -72,7 +72,7 @@ const getStyles = memoizeOne(() => {
   };
 });
 
-interface ExploreProps {
+export interface ExploreProps {
   changeSize: typeof changeSize;
   datasourceInstance: DataSourceApi;
   datasourceMissing: boolean;
