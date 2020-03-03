@@ -98,10 +98,10 @@ const getLinkText = (variable: VariableWithOptions) => {
   const { current, options } = variable;
 
   if (!current.tags || current.tags.length === 0) {
-    if (typeof current.text === 'string') {
-      return current.text;
+    if (Array.isArray(current.text)) {
+      return current.text.join(' + ');
     }
-    return current.text.join(' + ');
+    return current.text;
   }
 
   // filer out values that are in selected tags
