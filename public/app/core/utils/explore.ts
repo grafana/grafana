@@ -372,26 +372,29 @@ export function addToQueryHistory(
   /* Save only queries, that are not falsy (e.g. empty strings, null) */
   const stringifiedQueries = queries.map(q => q.expr).filter(expr => Boolean(expr));
   const currentActiveTimeSpan = store.getObject('grafana.explore.queryHistory.activeTimeSpan', 2);
-  const activeTimeSpanLowerBoundary =
-    currentActiveTimeSpan === 1
-      ? new Date(ts).setDate(new Date(ts).getDay() - 7)
-      : new Date(ts).setDate(new Date(ts).getDay() - currentActiveTimeSpan);
+  const activeTimeSpanLowerBoundary = createActiveTimeBoundary(
+    currentActiveTimeSpan === 1 ? 7 : currentActiveTimeSpan,
+    false
+  );
 
-  console.log(activeTimeSpanLowerBoundary);
   /* Keep only queries, that are within the selected active time span or that are starred  */
   const queryHistoryWithinActiveTimeSpan = queryHistory.filter(
     q => q.ts > activeTimeSpanLowerBoundary || q.starred === true
   );
 
   if (stringifiedQueries.length > 0) {
+    if (
+      /* Don't save duplicated queries*/
+      JSON.stringify(stringifiedQueries) === JSON.stringify(queryHistoryWithinActiveTimeSpan[0].queries) &&
+      JSON.stringify(datasourceName) === JSON.stringify(queryHistoryWithinActiveTimeSpan[0].datasourceName)
+    ) {
+      return queryHistory;
+    }
+
     let newQueryHistory = [
       { queries: stringifiedQueries, ts, datasourceId, datasourceName, starred, comment, sessionName },
       ...queryHistoryWithinActiveTimeSpan,
     ];
-
-    if (newQueryHistory.length > MAX_HISTORY_ITEMS) {
-      newQueryHistory = newQueryHistory.slice(0, MAX_HISTORY_ITEMS);
-    }
 
     // Combine all queries of a datasource type into one history
     const queryHistoryKey = 'grafana.explore.queryHistory';
@@ -693,9 +696,8 @@ export const mapNumbertoTimeInSlider = (num: number) => {
 };
 
 export const createActiveTimeBoundary = (days: number, isUpperBoundary: boolean) => {
-  const today = isUpperBoundary
-    ? new Date(new Date().setHours(24, 0, 0, 0))
-    : new Date(new Date().setHours(0, 0, 0, 0));
-  const boundary = new Date(today).setDate(today.getDate() + days);
+  const now = new Date();
+  const date = new Date(now.setDate(now.getDate() - days));
+  const boundary = isUpperBoundary ? date.setHours(24, 0, 0, 0) : date.setHours(0, 0, 0, 0);
   return boundary;
 };

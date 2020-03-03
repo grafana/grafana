@@ -93,6 +93,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, onlyStarred: boolean) => {
         margin: 0 10px 0 0;
       }
     `,
+    heading: css`
+      font-size: ${theme.typography.heading.h4};
+      margin: ${theme.spacing.sm} 0;
+    `,
   };
 });
 
@@ -134,9 +138,9 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
 
   const queriesToDisplay = filteredQueriesByDatasource.filter(
     q =>
-      q.ts > createActiveTimeBoundary(sliderFilter[0], false) && q.ts < createActiveTimeBoundary(sliderFilter[1], true)
+      q.ts < createActiveTimeBoundary(sliderFilter[0], true) && q.ts > createActiveTimeBoundary(sliderFilter[1], false)
   );
-  console.log(queriesToDisplay);
+
   return (
     <div className={styles.container}>
       {!onlyStarred && (
@@ -163,6 +167,7 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
           </div>
         </div>
       )}
+
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!onlyActiveDatasourceHistory && (
@@ -184,9 +189,30 @@ export function QueryHistoryContent(props: QueryHistoryContentProps) {
             />
           </div>
         </div>
-        {queriesToDisplay.map(q => (
-          <QueryHistoryCard query={q} key={q.ts} onChangeQueryHistoryProperty={onChangeQueryHistoryProperty} />
-        ))}
+
+        {onlyStarred &&
+          filteredQueries.map(q => {
+            return (
+              <QueryHistoryCard query={q} key={q.ts} onChangeQueryHistoryProperty={onChangeQueryHistoryProperty} />
+            );
+          })}
+
+        {!onlyStarred &&
+          queriesToDisplay.map((q, index) => {
+            const previousDateString = index > 0 ? new Date(queriesToDisplay[index - 1].ts).toDateString() : '';
+            if (new Date(q.ts).toDateString() !== previousDateString) {
+              return (
+                <div key={q.ts}>
+                  <div className={styles.heading}>{new Date(q.ts).toDateString().substring(4)}</div>
+                  <QueryHistoryCard query={q} key={q.ts} onChangeQueryHistoryProperty={onChangeQueryHistoryProperty} />
+                </div>
+              );
+            } else {
+              return (
+                <QueryHistoryCard query={q} key={q.ts} onChangeQueryHistoryProperty={onChangeQueryHistoryProperty} />
+              );
+            }
+          })}
       </div>
     </div>
   );
