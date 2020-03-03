@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
-import { Forms } from '../index';
+import { getTimeZoneGroups } from '@grafana/data';
+import { Cascader } from '../index';
 import { FormInputSize } from '../Forms/types';
 
 interface Props {
@@ -23,19 +23,24 @@ export const TimeZonePicker: FC<Props> = ({ onChange, value, size }) => {
 
     return {
       label: group.label,
-      options,
+      value: group.label,
+      items: options,
     };
   });
 
-  const selectedValue = groupOptions.map(group => {
-    return group.options.find(option => option.value === value);
-  });
+  const selectedValue = groupOptions.reduce(
+    (acc, group) => {
+      const found = group.items.find(option => option.value === value);
+      return found || acc;
+    },
+    { value: '' }
+  );
 
   return (
-    <Forms.Select
+    <Cascader
       options={groupOptions}
-      value={selectedValue}
-      onChange={(newValue: SelectableValue) => onChange(newValue.value)}
+      initialValue={selectedValue?.value}
+      onSelect={(newValue: string) => onChange(newValue)}
       size={size}
       placeholder="Select timezone"
     />
