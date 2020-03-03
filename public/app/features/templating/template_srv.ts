@@ -186,15 +186,15 @@ export class TemplateSrv {
         return this.encodeURIComponentStrict(value);
       }
       case 'singlequote': {
-        // escape single quotes with slash
-        const regExp = new RegExp("'", 'g');
+        // escape single quotes with backslash
+        const regExp = new RegExp(`'`, 'g');
         if (_.isArray(value)) {
-          return _.map(value, v => `'${_.replace(v, regExp, "\\'")}'`).join(',');
+          return _.map(value, v => `'${_.replace(v, regExp, `\\'`)}'`).join(',');
         }
-        return `'${_.replace(value, regExp, "\\'")}'`;
+        return `'${_.replace(value, regExp, `\\'`)}'`;
       }
       case 'doublequote': {
-        // escape double quotes with slash
+        // escape double quotes with backslash
         const regExp = new RegExp('"', 'g');
         if (_.isArray(value)) {
           return _.map(value, v => `"${_.replace(v, regExp, '\\"')}"`).join(',');
@@ -202,8 +202,8 @@ export class TemplateSrv {
         return `"${_.replace(value, regExp, '\\"')}"`;
       }
       case 'sqlstring': {
-        // escape single quotes in sql string
-        const regExp = new RegExp("'", 'g');
+        // escape single quotes in by pairing them
+        const regExp = new RegExp(`'`, 'g');
         if (_.isArray(value)) {
           return _.map(value, v => `'${_.replace(v, regExp, "''")}'`).join(',');
         }
