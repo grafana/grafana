@@ -81,12 +81,24 @@ export const withAllowCustomValue = () => {
 
 export const asyncSelect = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const loadAsyncOptions = () => {
+  const loadAsyncOptions = (_inputValue: string) => {
     return new Promise<Array<SelectableValue<string>>>(resolve => {
       setTimeout(() => {
         setIsLoading(false);
-        resolve(options);
-      }, 2000);
+        resolve([
+          { label: 'Another label', value: 'Another value 1' },
+
+          { label: 'Another label', value: 'Another value 2' },
+
+          { label: 'Another label', value: 'Another value 3' },
+
+          { label: 'Another label', value: 'Another value 4' },
+
+          { label: 'Another label', value: 'Another value 5' },
+
+          { label: 'Another label', value: 'Another value ' },
+        ]);
+      }, 1000);
     });
   };
   return (
