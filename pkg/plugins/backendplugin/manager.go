@@ -98,12 +98,13 @@ func (m *manager) Register(descriptor PluginDescriptor) error {
 func (m *manager) start(ctx context.Context) {
 	m.pluginsMu.RLock()
 	defer m.pluginsMu.RUnlock()
-	for _, p := range m.plugins {
+	for pID, p := range m.plugins {
 		if !p.managed {
 			continue
 		}
 
 		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+			delete(m.plugins, pID)
 			p.logger.Error("Failed to start plugin", "error", err)
 			continue
 		}
