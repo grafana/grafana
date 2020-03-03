@@ -17,7 +17,7 @@ export const initialVariableEditorState: VariableEditorState = {
 };
 
 const variableEditorReducerSlice = createSlice({
-  name: 'variableEditor',
+  name: 'templating/editor',
   initialState: initialVariableEditorState,
   reducers: {
     variableEditorMounted: (state: VariableEditorState, action: PayloadAction<string>) => {

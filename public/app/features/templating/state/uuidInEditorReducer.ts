@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { VariablePayload } from './actions';
 
 const uuidInEditorReducerSlice = createSlice({
-  name: 'uuidInEditor',
+  name: 'templating/uuidInEditor',
   initialState: null,
   reducers: {
     changeToEditorEditMode: (state, action: PayloadAction<VariablePayload>) => {
