@@ -1,2 +1,2 @@
-export { ShareModal, addShareTab } from './ShareModal';
+export { ShareModal, addDashboardShareTab, addPanelShareTab } from './ShareModal';
 export * from './types';
