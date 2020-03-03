@@ -50,7 +50,7 @@ Grafana will also attempt to do role mapping through OAuth as described below.
 
 > Only available in Grafana v6.5+.
 
-Check for the presence of an role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+Check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
 See [JMESPath examples](#jmespath-examples) for more information.
 
@@ -223,7 +223,7 @@ allowed_organizations =
 
 ## JMESPath examples
 
-To ease configuring a proper JMESPath expression you can test/evaluate expression with a custom payload at http://jmespath.org/.
+To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
 
 ### Role mapping
 

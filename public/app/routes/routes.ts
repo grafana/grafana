@@ -227,9 +227,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/org/users/invite', {
-      templateUrl: 'public/app/features/org/partials/invite.html',
-      controller: 'UserInviteCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container/>',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserInvitePage" */ 'app/features/org/UserInvitePage')),
+      },
     })
     .when('/org/apikeys', {
       template: '<react-container />',
@@ -348,9 +350,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       pageClass: 'login-page sidemenu-hidden',
     })
     .when('/invite/:code', {
-      templateUrl: 'public/app/partials/signup_invited.html',
-      controller: 'InvitedCtrl',
+      template: '<react-container/>',
       pageClass: 'sidemenu-hidden',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "SignupInvited" */ 'app/features/users/SignupInvited')),
+      },
     })
     .when('/signup', {
       template: '<react-container/>',

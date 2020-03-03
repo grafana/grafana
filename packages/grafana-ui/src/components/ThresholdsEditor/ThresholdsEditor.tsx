@@ -6,21 +6,10 @@ import { ThemeContext } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { css } from 'emotion';
-import Select from '../Select/Select';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
-const modes: Array<SelectableValue<ThresholdsMode>> = [
-  { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
-  {
-    value: ThresholdsMode.Percentage,
-    label: 'Percentage',
-    description: 'Pick threshold based on the percent between min/max',
-  },
-];
-
 export interface Props {
-  showAlphaUI?: boolean;
-  thresholds: ThresholdsConfig;
+  thresholds?: ThresholdsConfig;
   onChange: (thresholds: ThresholdsConfig) => void;
 }
 
@@ -34,25 +23,11 @@ interface ThresholdWithKey extends Threshold {
 
 let counter = 100;
 
-function toThresholdsWithKey(steps?: Threshold[]): ThresholdWithKey[] {
-  if (!steps || steps.length === 0) {
-    steps = [{ value: -Infinity, color: 'green' }];
-  }
-
-  return steps.map(t => {
-    return {
-      color: t.color,
-      value: t.value === null ? -Infinity : t.value,
-      key: counter++,
-    };
-  });
-}
-
 export class ThresholdsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const steps = toThresholdsWithKey(props.thresholds!.steps);
+    const steps = toThresholdsWithKey(props.thresholds);
     steps[0].value = -Infinity;
 
     this.state = { steps };
@@ -165,14 +140,16 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   onModeChanged = (item: SelectableValue<ThresholdsMode>) => {
     if (item.value) {
       this.props.onChange({
-        ...this.props.thresholds,
+        ...getThresholdOrDefault(this.props.thresholds),
         mode: item.value,
       });
     }
   };
 
   renderInput = (threshold: ThresholdWithKey) => {
-    const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
+    const config = getThresholdOrDefault(this.props.thresholds);
+    const isPercent = config.mode === ThresholdsMode.Percentage;
+
     return (
       <div className="thresholds-row-input-inner">
         <span className="thresholds-row-input-inner-arrow" />
@@ -218,7 +195,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   render() {
     const { steps } = this.state;
-    const t = this.props.thresholds;
+
     return (
       <PanelOptionsGroup title="Thresholds">
         <ThemeContext.Consumer>
@@ -243,12 +220,6 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                     );
                   })}
               </div>
-
-              {this.props.showAlphaUI && (
-                <div>
-                  <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
-                </div>
-              )}
             </>
           )}
         </ThemeContext.Consumer>
@@ -257,8 +228,14 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   }
 }
 
-export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: ThresholdWithKey[]): ThresholdsConfig {
+export function thresholdsWithoutKey(
+  thresholds: ThresholdsConfig | undefined,
+  steps: ThresholdWithKey[]
+): ThresholdsConfig {
+  thresholds = getThresholdOrDefault(thresholds);
+
   const mode = thresholds.mode ?? ThresholdsMode.Absolute;
+
   return {
     mode,
     steps: steps.map(t => {
@@ -266,4 +243,26 @@ export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: Thresh
       return rest; // everything except key
     }),
   };
+}
+
+function getThresholdOrDefault(thresholds?: ThresholdsConfig): ThresholdsConfig {
+  return thresholds ?? { steps: [], mode: ThresholdsMode.Absolute };
+}
+
+function toThresholdsWithKey(thresholds?: ThresholdsConfig): ThresholdWithKey[] {
+  thresholds = getThresholdOrDefault(thresholds);
+
+  let steps: Threshold[] = thresholds.steps || [];
+
+  if (thresholds.steps && thresholds.steps.length === 0) {
+    steps = [{ value: -Infinity, color: 'green' }];
+  }
+
+  return steps.map(t => {
+    return {
+      color: t.color,
+      value: t.value === null ? -Infinity : t.value,
+      key: counter++,
+    };
+  });
 }

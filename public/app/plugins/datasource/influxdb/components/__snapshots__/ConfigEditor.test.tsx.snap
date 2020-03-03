@@ -125,7 +125,10 @@ exports[`Render should disable basic auth password input 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": [Function],
+              "Option": Object {
+                "$$typeof": Symbol(react.forward_ref),
+                "render": [Function],
+              },
               "SingleValue": [Function],
             }
           }
@@ -342,7 +345,10 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": [Function],
+              "Option": Object {
+                "$$typeof": Symbol(react.forward_ref),
+                "render": [Function],
+              },
               "SingleValue": [Function],
             }
           }
@@ -559,7 +565,10 @@ exports[`Render should hide white listed cookies input when browser access chose
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": [Function],
+              "Option": Object {
+                "$$typeof": Symbol(react.forward_ref),
+                "render": [Function],
+              },
               "SingleValue": [Function],
             }
           }
@@ -776,7 +785,10 @@ exports[`Render should render component 1`] = `
               "Group": [Function],
               "IndicatorsContainer": [Function],
               "MenuList": [Function],
-              "Option": [Function],
+              "Option": Object {
+                "$$typeof": Symbol(react.forward_ref),
+                "render": [Function],
+              },
               "SingleValue": [Function],
             }
           }
