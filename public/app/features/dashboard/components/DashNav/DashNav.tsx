@@ -100,15 +100,6 @@ export class DashNav extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onOpenShare = () => {
-    appEvents.emit(CoreEvents.showModalReact, {
-      component: ShareModal,
-      props: {
-        dashboard: this.props.dashboard,
-      },
-    });
-  };
-
   renderDashboardTitleSearchButton() {
     const { dashboard } = this.props;
 
@@ -208,31 +199,38 @@ export class DashNav extends PureComponent<Props> {
           )}
 
           {canShare && (
-            <DashNavButton
-              tooltip="Share dashboard"
-              classSuffix="share"
-              icon="fa fa-share-square-o"
-              onClick={this.onOpenShare}
-            />
+            <ModalsController>
+              {({ showModal, hideModal }) => (
+                <DashNavButton
+                  tooltip="Share dashboard"
+                  classSuffix="share"
+                  icon="fa fa-share-square-o"
+                  onClick={() => {
+                    showModal(ShareModal, {
+                      dashboard,
+                      onDismiss: hideModal,
+                    });
+                  }}
+                />
+              )}
+            </ModalsController>
           )}
 
           {canSave && (
             <ModalsController>
-              {({ showModal, hideModal }) => {
-                return (
-                  <DashNavButton
-                    tooltip="Save dashboard"
-                    classSuffix="save"
-                    icon="fa fa-save"
-                    onClick={() => {
-                      showModal(SaveDashboardModalProxy, {
-                        dashboard,
-                        onDismiss: hideModal,
-                      });
-                    }}
-                  />
-                );
-              }}
+              {({ showModal, hideModal }) => (
+                <DashNavButton
+                  tooltip="Save dashboard"
+                  classSuffix="save"
+                  icon="fa fa-save"
+                  onClick={() => {
+                    showModal(SaveDashboardModalProxy, {
+                      dashboard,
+                      onDismiss: hideModal,
+                    });
+                  }}
+                />
+              )}
             </ModalsController>
           )}
 

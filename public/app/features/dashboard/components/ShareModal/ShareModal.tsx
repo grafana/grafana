@@ -14,7 +14,6 @@ const shareModalTabs = [
 ];
 
 interface Props {
-  isOpen: boolean;
   dashboard: DashboardModel;
   panel?: PanelModel;
 
@@ -70,11 +69,11 @@ export class ShareModal extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isOpen, dashboard, panel } = this.props;
+    const { dashboard, panel } = this.props;
     const { tab } = this.state;
 
     return (
-      <Modal title={this.renderTitle()} isOpen={isOpen} onDismiss={this.onDismiss}>
+      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.onDismiss}>
         <TabContent>
           {tab === 'link' && <ShareLink dashboard={dashboard} panel={panel} />}
           {tab === 'embed' && panel && <ShareEmbed dashboard={dashboard} panel={panel} />}
