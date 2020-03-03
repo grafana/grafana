@@ -245,6 +245,9 @@ If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses
 
 To fix this error, remove the ES2016 code from your comments.
 
+### I am getting this message when I try to install @grafana/toolkit canary: `error An unexpected error occurred: "https://registry.yarnpkg.com/@grafana/data/-/data-6.6.0-pre-047abc87c2.tgz: Request failed \"404 Not Found\""`
+Canary releases are a short lived ones. There is a single canary version available and the previous one is unpublished from npm when we publish a new one. This means that your yarn.lock file might contain a reference to a version, that is no longer published. To fix this issue please regenerate your yarn.lock file.
+
 ## Contribute to grafana-toolkit
 You can contribute to grafana-toolkit by helping develop it or by debugging it.
 
