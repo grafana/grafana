@@ -240,6 +240,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
                 SingleValue,
                 IndicatorsContainer,
                 NoOptionsMessage,
+                MenuList,
               }}
               defaultValue={defaultValue}
               value={value}
