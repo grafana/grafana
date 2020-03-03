@@ -1,10 +1,8 @@
 import React, { PureComponent } from 'react';
-import debounce from 'lodash/debounce';
-
+import { trim } from 'lodash';
 export interface Props {
   onChange: (value: string) => void;
-  onKeyDown: (key: NavigationKeys) => void;
-  onSearch: (value: string) => void;
+  onNavigate: (key: NavigationKeys, clearOthers: boolean) => void;
   value: string;
 }
 
@@ -17,23 +15,22 @@ export enum NavigationKeys {
 }
 
 export class VariableInput extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-    this.onSearchWithDebounce = debounce(this.onSearchWithDebounce, 200);
-  }
-
   onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (NavigationKeys[event.keyCode]) {
-      this.props.onKeyDown(event.keyCode as NavigationKeys);
+      const clearOthers = event.ctrlKey || event.metaKey || event.shiftKey;
+      this.props.onNavigate(event.keyCode as NavigationKeys, clearOthers);
     }
   };
 
   onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onChange(event.target.value);
-    this.onSearchWithDebounce(event.target.value);
+    if (this.shouldUpdateValue(event.target.value)) {
+      this.props.onChange(event.target.value);
+    }
   };
 
-  onSearchWithDebounce = (value: string) => this.props.onSearch(value);
+  private shouldUpdateValue(value: string) {
+    return trim(value).length > 0 || trim(this.props.value).length > 0;
+  }
 
   render() {
     return (

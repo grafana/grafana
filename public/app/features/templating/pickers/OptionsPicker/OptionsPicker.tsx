@@ -4,18 +4,17 @@ import { StoreState } from 'app/types';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { VariableLink } from '../shared/VariableLink';
 import { NavigationKeys, VariableInput } from '../shared/VariableInput';
-import { commitChangesToVariable, filterOptions } from './actions';
+import { commitChangesToVariable, filterOrSearchOptions, toggleOptionByHighlight } from './actions';
 import {
-  changeOptionsPickerHighlightIndex,
-  getTags,
   OptionsPickerState,
-  selectVariableOption,
-  showVariableDropDown,
-  toggleAllVariableOptions,
-  toggleVariableTag,
+  showOptions,
+  moveOptionsHighlight,
+  toggleAllOptions,
+  toggleOption,
+  toggleTag,
+  getTags,
 } from './reducer';
-import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
-import { searchQueryChanged, selectVariableOptionByHighlightIndex } from '../../query/actions';
+import { VariableWithOptions, VariableWithMultiSupport, VariableOption } from '../../variable';
 import { VariableOptions } from '../shared/VariableOptions';
 import { VariablePickerProps } from '../../state/types';
 
@@ -26,50 +25,50 @@ interface ConnectedProps {
 }
 
 interface DispatchProps {
-  searchQueryChanged: typeof searchQueryChanged;
-  showVariableDropDown: typeof showVariableDropDown;
+  showOptions: typeof showOptions;
   commitChangesToVariable: typeof commitChangesToVariable;
-  filterOptions: typeof filterOptions;
-  changeOptionsPickerHighlightIndex: typeof changeOptionsPickerHighlightIndex;
-  selectVariableOptionByHighlightIndex: typeof selectVariableOptionByHighlightIndex;
-  toggleAllVariableOptions: typeof toggleAllVariableOptions;
-  selectVariableOption: typeof selectVariableOption;
-  toggleVariableTag: typeof toggleVariableTag;
+  moveOptionsHighlight: typeof moveOptionsHighlight;
+  toggleOptionByHighlight: typeof toggleOptionByHighlight;
+  toggleAllOptions: typeof toggleAllOptions;
+  toggleOption: typeof toggleOption;
+  toggleTag: typeof toggleTag;
+  filterOrSearchOptions: typeof filterOrSearchOptions;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class OptionsPickerUnconnected extends PureComponent<Props> {
-  onShowOptions = () => this.props.showVariableDropDown(this.props.variable);
+  onShowOptions = () => this.props.showOptions(this.props.variable);
   onHideOptions = () => this.props.commitChangesToVariable();
+
   onToggleOption = (option: VariableOption, clearOthers: boolean) => {
-    this.props.selectVariableOption({
+    this.props.toggleOption({
       option,
       clearOthers,
       forceSelect: false,
     });
   };
 
-  onNavigateOptions = (key: NavigationKeys) => {
+  onNavigateOptions = (key: NavigationKeys, clearOthers: boolean) => {
     if (key === NavigationKeys.cancel) {
       return this.onHideOptions();
     }
 
     if (key === NavigationKeys.select) {
-      return this.props.selectVariableOptionByHighlightIndex();
+      return this.props.toggleOptionByHighlight(clearOthers);
     }
 
     if (key === NavigationKeys.selectAndClose) {
-      this.props.selectVariableOptionByHighlightIndex();
+      this.props.toggleOptionByHighlight(clearOthers);
       return this.onHideOptions();
     }
 
     if (key === NavigationKeys.moveDown) {
-      return this.props.changeOptionsPickerHighlightIndex(1);
+      return this.props.moveOptionsHighlight(1);
     }
 
     if (key === NavigationKeys.moveUp) {
-      return this.props.changeOptionsPickerHighlightIndex(-1);
+      return this.props.moveOptionsHighlight(-1);
     }
 
     return undefined;
@@ -111,15 +110,14 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
       <ClickOutsideWrapper onClick={this.onHideOptions}>
         <VariableInput
           value={picker.searchQuery}
-          onChange={this.props.filterOptions}
-          onSearch={this.props.searchQueryChanged}
-          onKeyDown={this.onNavigateOptions}
+          onChange={this.props.filterOrSearchOptions}
+          onNavigate={this.onNavigateOptions}
         />
         <VariableOptions
           values={picker.options}
           onToggle={this.onToggleOption}
-          onToggleAll={this.props.toggleAllVariableOptions}
-          onToggleTag={this.props.toggleVariableTag}
+          onToggleAll={this.props.toggleAllOptions}
+          onToggleTag={this.props.toggleTag}
           highlightIndex={picker.highlightIndex}
           multi={picker.multi}
           tags={picker.tags}
@@ -169,15 +167,14 @@ const getLinkText = (variable: VariableWithOptions) => {
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  showVariableDropDown,
+  showOptions,
   commitChangesToVariable,
-  filterOptions,
-  searchQueryChanged,
-  changeOptionsPickerHighlightIndex,
-  selectVariableOptionByHighlightIndex,
-  toggleAllVariableOptions,
-  selectVariableOption,
-  toggleVariableTag,
+  filterOrSearchOptions,
+  moveOptionsHighlight,
+  toggleOptionByHighlight,
+  toggleAllOptions,
+  toggleOption,
+  toggleTag,
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({

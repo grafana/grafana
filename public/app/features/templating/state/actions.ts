@@ -8,7 +8,6 @@ import {
   VariableModel,
   VariableOption,
   VariableRefresh,
-  VariableTag,
   VariableType,
   VariableWithOptions,
 } from '../variable';
@@ -57,12 +56,6 @@ export interface VariablePayload<T extends any = undefined> extends VariableIden
   data: T;
 }
 
-export interface SelectVariableOption {
-  option: VariableOption;
-  forceSelect: boolean;
-  clearOthers: boolean;
-}
-
 export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
   index: number; // the order in variables list
@@ -80,20 +73,7 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
     };
   }
 );
-export const selectVariableOption = createAction<VariablePayload<SelectVariableOption>>(
-  'templating/selectVariableOption'
-);
-export const toggleAllVariableOptions = createAction<VariablePayload>('templating/toggleAllOptions');
-export const showVariableDropDown = createAction<
-  VariablePayload<{
-    multi: boolean;
-    query: string;
-    current: VariableOption;
-    options: VariableOption[];
-    tags: VariableTag[];
-  }>
->('templating/showVariableDropDown');
-export const hideVariableDropDown = createAction<VariablePayload>('templating/hideVariableDropDown');
+
 export const removeVariable = createAction<VariablePayload>('templating/removeVariable');
 export const storeNewVariable = createAction<VariablePayload>('templating/storeNewVariable');
 export interface DuplicateVariable {
