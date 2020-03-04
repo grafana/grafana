@@ -1,8 +1,9 @@
-import { execLine } from './execLine';
 import { getPluginId } from '../../config/utils/getPluginId';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getCiFolder } from '../../plugins/env';
 import path = require('path');
+// @ts-ignore
+import execa = require('execa');
 
 const ghrPlatform = (): string => {
   switch (process.platform) {
@@ -44,29 +45,26 @@ class GitHubRelease {
     const outName = `./ghr.${GHR_EXTENSION}`;
     const archiveName = `ghr_v${GHR_VERSION}_${GHR_PLATFORM}_${GHR_ARCH}`;
     const ghrUrl = `https://github.com/tcnksm/ghr/releases/download/v${GHR_VERSION}/${archiveName}.${GHR_EXTENSION}`;
-    execLine(`wget ${ghrUrl} -o ${outName}`);
+    execa.shell(`wget ${ghrUrl} -o ${outName}`);
     if (GHR_EXTENSION === 'tar.gz') {
-      execLine(`tar zxOvf ${outName} ${archiveName}/ghr > ./ghr`);
+      execa.shell(`tar zxOvf ${outName} ${archiveName}/ghr > ./ghr`);
     } else {
-      execLine(`unzip -p ${outName} ${archiveName}/ghr.exe > ./ghr.exe`);
+      execa.shell(`unzip -p ${outName} ${archiveName}/ghr.exe > ./ghr.exe`);
     }
   }
 
   release() {
-    const ciDir = getCiFolder();
-    const distDir = path.resolve(ciDir, 'dist');
-    const distContentDir = path.resolve(distDir, getPluginId());
-    const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
-    const pluginJson = getPluginJson(pluginJsonFile);
-    execLine(`ghr
+    const distDir = path.resolve(process.cwd(), 'dist');
+    const pluginVersion = getPluginJson(path.resolve(distDir, 'plugin.json')).info.version;
+    execa.shell(`ghr
       -t "${this.token}"
       -u "${this.username}"
       -r "${getPluginId()}"
       -c "${this.commitHash}"
-      -n "${getPluginId()}_v${pluginJson.info.version}"
+      -n "${getPluginId()}_v${pluginVersion}"
       -b "${this.releaseNotes}"
       -delete
-      "v${pluginJson.info.version}"
+      "v${pluginVersion}"
       ${PUBLISH_DIR}`);
   }
 }
