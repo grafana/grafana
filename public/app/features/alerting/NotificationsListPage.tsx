@@ -1,21 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, FC } from 'react';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
-import { NavModelSrv } from 'app/core/core';
 import { getBackendSrv } from '@grafana/runtime';
+import { StoreState } from 'app/types';
+import { connect } from 'react-redux';
+import { hot } from 'react-hot-loader';
+import { useAsync } from 'react-use';
+import { NavModelItem } from '@grafana/data';
 
-export const NotificationsListPage = () => {
+interface PropsWithState {
+  navModel: NavModelItem;
+}
+
+export const NotificationsListPage: FC<PropsWithState> = ({ navModel }) => {
   const [notifications, setNotifications] = useState();
+  useAsync(async () => {
+    await getBackendSrv()
+      .get(`/api/alert-notifications`)
+      .then((result: any) => {
+        setNotifications(result);
+      });
+  });
 
-  getBackendSrv()
-    .get(`/api/alert-notifications`)
-    .then((result: any) => {
-      setNotifications(result);
-    });
   console.log(notifications);
-  const navModel = new NavModelSrv().getNav('alerting', 'channels', 0);
+  // const navModel = new NavModelSrv().getNav('alerting', 'channels', 0);
   return (
-    <Page navModel={navModel}>
+    <Page navModel={{ main: navModel.parentItem, node: navModel }}>
       <Page.Contents>
         {notifications && notifications.map()}
 
@@ -36,4 +46,8 @@ export const NotificationsListPage = () => {
   );
 };
 
-export default NotificationsListPage;
+const mapStateToProps = (state: StoreState) => ({
+  navModel: state.navIndex['channels'],
+});
+
+export default hot(module)(connect(mapStateToProps)(NotificationsListPage));
