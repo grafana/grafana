@@ -6,7 +6,7 @@ import { RichHistoryQuery } from 'app/types/explore';
 
 // Utils
 import { stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { getExploreDatasources } from '../state/selectors';
 
 import {
@@ -19,7 +19,7 @@ import {
 
 // Components
 import { RichHistoryCard } from './RichHistoryCard';
-import { Select, Slider } from '@grafana/ui';
+import { Forms, Slider } from '@grafana/ui';
 
 const sortOrderOptions = [
   { label: 'Time ascending', value: SortOrder.Ascending },
@@ -28,23 +28,17 @@ const sortOrderOptions = [
   { label: 'Datasource Z-A', value: SortOrder.DatasourceZA },
 ];
 
-export type DataSourceOption = {
-  value: string;
-  label: string;
-  imgUrl?: string;
-};
-
 interface RichHistoryContentProps {
   queries: RichHistoryQuery[];
   sortOrder: SortOrder;
   activeDatasourceOnly: boolean;
   activeDatasourceInstance: string;
-  datasourceFilters: DataSourceOption[] | null;
+  datasourceFilters: SelectableValue[] | null;
+  onlyStarred: boolean;
+  retentionPeriod: number;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
   onChangeRichHistoryProperty: (ts: number, property: string, updatedProperty?: string) => void;
-  onSelectDatasourceFilters: (datasources: DataSourceOption[] | null) => void;
-  onlyStarred?: boolean;
-  retentionPeriod?: number;
+  onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, onlyStarred: boolean) => {
@@ -129,14 +123,14 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
     retentionPeriod,
   } = props;
 
-  const [sliderRetentionFilter, setSliderRetentionFilter] = useState([0, retentionPeriod]);
+  const [sliderRetentionFilter, setSliderRetentionFilter] = useState<number[]>([0, retentionPeriod]);
 
   const theme = useTheme();
   const styles = getStyles(theme, onlyStarred);
-  const exploreDatasources = getExploreDatasources().map(d => {
-    return { value: d.value, label: d.value, imgUrl: d.meta.info.logos.small };
+  const exploreDatasources = getExploreDatasources()?.map(d => {
+    return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
   });
-  const listOfDatasourceFilters = datasourceFilters && datasourceFilters.map(d => d.value);
+  const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
    *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
@@ -153,17 +147,17 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
     <div className={styles.selectors}>
       {!activeDatasourceOnly && (
         <div className={styles.multiselect}>
-          <Select
+          <Forms.Select
             isMulti={true}
             options={exploreDatasources}
             value={datasourceFilters}
             placeholder="Filter queries for specific datasources(s)"
-            onChange={onSelectDatasourceFilters}
+            onChange={e => onSelectDatasourceFilters(e.value)}
           />
         </div>
       )}
       <div className={styles.sort}>
-        <Select
+        <Forms.Select
           options={sortOrderOptions}
           placeholder="Sort queries by"
           onChange={e => onChangeSortOrder(e.value as SortOrder)}
@@ -176,7 +170,7 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
   if (onlyStarred) {
     const starredQueries = queries.filter(q => q.starred === true);
     const starredQueriesFilteredByDatasource = datasourceFilters
-      ? starredQueries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+      ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
       : starredQueries;
     const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
 
@@ -194,10 +188,10 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
     /* If in History tab, render following content */
   } else {
     const filteredQueriesByDatasource = datasourceFilters
-      ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+      ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
       : queries;
     const sortedQueries = sortQueries(filteredQueriesByDatasource, sortOrder);
-    const queriesWithinSelectedTimeline = sortedQueries.filter(
+    const queriesWithinSelectedTimeline = sortedQueries?.filter(
       q =>
         q.ts < createRetentionPeriodBoundary(sliderRetentionFilter[0], true) &&
         q.ts > createRetentionPeriodBoundary(sliderRetentionFilter[1], false)

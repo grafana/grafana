@@ -15,9 +15,7 @@ export interface Props {
   value?: number[];
   reverse?: boolean;
   tooltipAlwaysVisible?: boolean;
-
   formatTooltipResult?: (value: number) => number | string;
-
   onChange?: (values: number[]) => void;
   onAfterChange?: (values: number[]) => void;
 }

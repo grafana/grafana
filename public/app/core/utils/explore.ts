@@ -344,10 +344,10 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
 export function addToRichHistory(
   richHistory: RichHistoryQuery[],
   datasourceId: string,
-  datasourceName: string,
+  datasourceName: string | null,
   queries: string[],
   starred: boolean,
-  comment: string,
+  comment: string | null,
   sessionName: string
 ): any {
   const ts = Date.now();
@@ -407,7 +407,11 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
   return updatedQueries;
 }
 
-export function updateCommentInRichHistory(richHistory: RichHistoryQuery[], ts: number, newComment: string) {
+export function updateCommentInRichHistory(
+  richHistory: RichHistoryQuery[],
+  ts: number,
+  newComment: string | undefined
+) {
   const updatedQueries = richHistory.map(query => {
     if (query.ts === ts) {
       const updatedQuery = Object.assign({}, query, { comment: newComment });

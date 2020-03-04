@@ -468,7 +468,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
           const arrayOfStringifiedQueries = queries.map(query =>
-            datasourceInstance.getQueryDisplayText
+            datasourceInstance?.getQueryDisplayText
               ? datasourceInstance.getQueryDisplayText(query)
               : getQueryDisplayText(query)
           );

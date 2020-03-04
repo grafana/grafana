@@ -73,7 +73,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichHistoryProperty }) => {
   const [starred, setStared] = useState(query.starred);
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
-  const [comment, setComment] = useState(query.comment);
+  const [comment, setComment] = useState<string | undefined>(query.comment);
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
   const theme = useTheme();
@@ -103,7 +103,7 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
             <Forms.Input
               className={styles.input}
               value={comment}
-              placeholder={comment ? null : 'add comment'}
+              placeholder={comment ? undefined : 'add comment'}
               onChange={e => setComment(e.currentTarget.value)}
             />
             <div className={styles.buttonRow}>

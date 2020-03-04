@@ -13,7 +13,7 @@ import { TabsBar, Tab, TabContent, Themeable } from '@grafana/ui';
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
-import { RichHistoryContent, DataSourceOption } from './RichHistoryContent';
+import { RichHistoryContent } from './RichHistoryContent';
 
 export enum Tabs {
   RichHistory = 'Query history',
@@ -40,7 +40,7 @@ interface RichHistoryState {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourceOnly: boolean;
-  datasourceFilters: DataSourceOption[] | null;
+  datasourceFilters: SelectableValue[] | null;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -75,7 +75,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       activeTab: this.props.firstTab,
       datasourceFilters: null,
       sortOrder: SortOrder.Descending,
-      retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 2),
+      retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
       activeDatasourceOnly: store.getBool(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
     };
@@ -104,12 +104,12 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, activeDatasourceOnly);
   };
 
-  onSelectDatasourceFilters = (datasources: DataSourceOption[] | null) => {
-    this.setState({ datasourceFilters: datasources });
+  onSelectDatasourceFilters = (value: SelectableValue[]) => {
+    this.setState({ datasourceFilters: value });
   };
 
   onSelectTab = (item: SelectableValue<Tabs>) => {
-    this.setState({ activeTab: item.value });
+    this.setState({ activeTab: item.value! });
   };
 
   onChangeSortOrder = (sortOrder: SortOrder) => this.setState({ sortOrder });
@@ -127,10 +127,11 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     const styles = getStyles(theme);
 
     const QueriesTab = {
-      label: Tabs.RichHistory,
+      label: 'Query History',
       value: Tabs.RichHistory,
       content: (
         <RichHistoryContent
+          onlyStarred={false}
           queries={richHistory}
           sortOrder={sortOrder}
           datasourceFilters={datasourceFilters}
@@ -146,7 +147,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     };
 
     const StarredTab = {
-      label: Tabs.Starred,
+      label: 'Starred',
       value: Tabs.Starred,
       content: (
         <RichHistoryContent
@@ -156,6 +157,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           datasourceFilters={datasourceFilters}
           activeDatasourceOnly={activeDatasourceOnly}
           activeDatasourceInstance={activeDatasourceInstance}
+          retentionPeriod={retentionPeriod}
           onChangeSortOrder={this.onChangeSortOrder}
           onChangeRichHistoryProperty={onChangeRichHistoryProperty}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
@@ -165,7 +167,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     };
 
     const SettingsTab = {
-      label: Tabs.Settings,
+      label: 'Settings',
       value: Tabs.Settings,
       content: (
         <RichHistorySettings
@@ -180,7 +182,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       icon: 'gicon gicon-preferences',
     };
 
-    const tabs = [];
+    let tabs = [];
     tabs.push(QueriesTab);
     tabs.push(SettingsTab);
 
