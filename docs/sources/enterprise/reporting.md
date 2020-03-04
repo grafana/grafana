@@ -6,31 +6,26 @@ type = "docs"
 aliases = ["/docs/grafana/latest/administration/reports"]
 [menu.docs]
 parent = "enterprise"
-weight = 8
+weight = 400
 +++
 
 # Reporting
 
-> Only available in Grafana Enterprise v6.4+.
-
-Reporting allows you to generate PDFs from any of your Dashboards and have them sent out to interested parties on a schedule.
+Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-## Dashboard as a Report
+> Only available in Grafana Enterprise v6.4+.
 
-With Reports there are a few things to keep in mind, most importantly, any changes you make to the Dashboard used in a report will be reflected in the report. If you change the time range in the Dashboard the time range will be the same in the report as well.
+Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report changes as well.
 
-## Setup
+## Requirements
 
-> SMTP must be configured for reports to be sent
-
-
-### Rendering
+* SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../installation/configuration.md#smtp" >}}) in [Configuration]({{< relref "../installation/configuration.md" >}}) for more information.
+* The Image Renderer plugin must be installed or the remote rendering service must be set up.
 
 > Reporting requires the [rendering plugin]({{< relref "../administration/image_rendering.md#grafana-image-renderer-plugin" >}}).
 
-Reporting with the built-in image rendering is not supported. We recommend installing the image renderer plugin.
 
 ## Usage
 
@@ -47,6 +42,11 @@ Currently only Organisation Admins can create reports. To get to report click on
 | Message       | message body in the email with the report                         |
 | Schedule      | how often do you want the report generated and sent               |
 
-## Debugging errors
+## Troubleshooting
 
-If you have problems with the reporting feature you can enable debug logging by switching the logger to debug (`filters = report:debug`). Learn more about making configuration changes [here]({{< relref "../installation/configuration.md#filters" >}}).
+To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
+
+```bash
+[log]
+filters = saml.auth:debug
+```
