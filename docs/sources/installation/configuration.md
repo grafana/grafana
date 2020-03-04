@@ -10,7 +10,7 @@ parent = "admin"
 weight = 1
 +++
 
-# Configuration
+# Configuration is great!
 
 Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
