@@ -48,6 +48,7 @@ export { QueryField } from './QueryField/QueryField';
 export { Modal } from './Modal/Modal';
 export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
+export { ModalTabContent } from './Modal/ModalTabContent';
 export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsContext';
 
 // Renderless
