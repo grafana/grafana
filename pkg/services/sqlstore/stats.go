@@ -21,21 +21,21 @@ func init() {
 var activeUserTimeLimit = time.Hour * 24 * 30
 
 func GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-	var rawSql = `SELECT COUNT(*) as count, type FROM alert_notification GROUP BY type`
+	var rawSql = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("alert_notification") + ` GROUP BY type`
 	query.Result = make([]*models.NotifierUsageStats, 0)
 	err := x.SQL(rawSql).Find(&query.Result)
 	return err
 }
 
 func GetDataSourceStats(query *models.GetDataSourceStatsQuery) error {
-	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`
+	var rawSql = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("data_source") + ` GROUP BY type`
 	query.Result = make([]*models.DataSourceStats, 0)
 	err := x.SQL(rawSql).Find(&query.Result)
 	return err
 }
 
 func GetDataSourceAccessStats(query *models.GetDataSourceAccessStatsQuery) error {
-	var rawSql = `SELECT COUNT(*) as count, type, access FROM data_source GROUP BY type, access`
+	var rawSql = `SELECT COUNT(*) as count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
 	query.Result = make([]*models.DataSourceAccessStats, 0)
 	err := x.SQL(rawSql).Find(&query.Result)
 	return err
@@ -59,17 +59,17 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 
 	sb.Write(`(
 		SELECT COUNT(acl.id)
-		FROM `+dialect.Quote("dashboard_acl")+` as acl
-			inner join `+dialect.Quote("dashboard")+` as d
-			on d.id = acl.dashboard_id
+		FROM `+dialect.Quote("dashboard_acl")+` AS acl
+			INNER JOIN `+dialect.Quote("dashboard")+` AS d
+			ON d.id = acl.dashboard_id
 		WHERE d.is_folder = ?
 	) AS dashboard_permissions,`, dialect.BooleanStr(false))
 
 	sb.Write(`(
 		SELECT COUNT(acl.id)
-		FROM `+dialect.Quote("dashboard_acl")+` as acl
-			inner join `+dialect.Quote("dashboard")+` as d
-			on d.id = acl.dashboard_id
+		FROM `+dialect.Quote("dashboard_acl")+` AS acl
+			INNER JOIN `+dialect.Quote("dashboard")+` AS d
+			ON d.id = acl.dashboard_id
 		WHERE d.is_folder = ?
 	) AS folder_permissions,`, dialect.BooleanStr(true))
 
