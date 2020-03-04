@@ -24,4 +24,5 @@ export interface RouteDescriptor {
   controller?: any;
   controllerAs?: string;
   redirectTo?: string;
+  roles?: () => string[];
 }

@@ -11,6 +11,7 @@ import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { playlistRoutes } from '../features/playlist/playlist_routes';
 import { RouteDescriptor } from '../core/navigation/types';
+import { config } from '../core/config';
 
 // const importDashboardPage = () =>
 //   SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
@@ -160,7 +161,7 @@ export const routes: RouteDescriptor[] = [
 
     reloadOnSearch: false,
     // TODO
-    // roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
+    roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
     component: SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
   },
   {
@@ -187,15 +188,11 @@ export const routes: RouteDescriptor[] = [
     component: SafeDynamicImport(import(/* webpackChunkName: "UserInvitePage" */ 'app/features/org/UserInvitePage')),
   },
   // TODO[Router]: resolve roles
-  // {
-  //   path: '/org/apikeys',
-
-  //   resolve: {
-  //     roles: () => ['Editor', 'Admin'],
-  //     component: () =>
-  //       SafeDynamicImport(import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')),
-  //   },
-  // },
+  {
+    path: '/org/apikeys',
+    roles: () => ['Editor', 'Admin'],
+    component: SafeDynamicImport(import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')),
+  },
   // TODO[Router]: resolve roles
   // {
   //   path: '/org/teams',

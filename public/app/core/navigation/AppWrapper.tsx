@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Router, Route } from 'react-router-dom';
+import { Router, Route, Redirect } from 'react-router-dom';
 import { GrafanaApp } from '../../app';
 import angular from 'angular';
 import { each, extend } from 'lodash';
@@ -80,6 +80,14 @@ export default class AppWrapper extends React.Component<AppWrapperProps, AppWrap
     const isAngularRoute = !!route.controller;
     const { ngInjector } = this.state;
     const $rootScope = ngInjector.get('$rootScope');
+    const roles = route.roles ? route.roles() : [];
+
+    // TODO[Router]: test this logic
+    if (roles && roles.length) {
+      if (!roles.some(r => contextSrv.hasRole(r))) {
+        return <Redirect to="/" />;
+      }
+    }
 
     if (isAngularRoute) {
       return (
