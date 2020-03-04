@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 )
@@ -83,6 +84,7 @@ type CallResourceRequest struct {
 	URL     string
 	Headers map[string][]string
 	Body    []byte
+	User    *models.SignedInUser
 }
 
 // CallResourceResult call resource result.

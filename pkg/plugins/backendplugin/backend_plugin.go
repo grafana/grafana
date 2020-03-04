@@ -224,6 +224,12 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		Url:     req.URL,
 		Headers: reqHeaders,
 		Body:    req.Body,
+		User: &pluginv2.User{
+			Name:  req.User.Name,
+			Login: req.User.Login,
+			Email: req.User.Email,
+			Role:  string(req.User.OrgRole),
+		},
 	}
 
 	if req.Config.DataSourceConfig != nil {
