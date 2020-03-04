@@ -126,7 +126,7 @@ assertion_attribute_email = mail
 
 ## Troubleshooting
 
-To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information.
+To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
 
 ```bash
 [log]
