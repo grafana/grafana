@@ -31,32 +31,19 @@ Currently only Organization Admins can create reports.
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 1. Click on the reports icon in the side menu. The Reports tab allow you to view, create, and update your reports.
-1. Enter report information.
-   * Name
-   * Choose dashboard
-   * Recipients
-   * Reply to
-   * Custom message 
-1. Preview the report to make sure it appears as you expect. Update if necessary.
-1. Enter scheduling information. Options vary depending on the frequency you select.
-1. Save the report.
+1. Enter report information. All fields are required unless otherwise indicated.
+   * **Name -** Name of the report as you want it to appear in the Reports list.
+   * **Choose dashboard -** Select the dashboard to generate the report from.
+   * **Recipients -** Enter the emails of the people or teams that you want to receive the report.
+   * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email. 
+   * **Custom message -** Message body in the email with the report.
+2. **Preview** the report to make sure it appears as you expect. Update if necessary.
+3. Enter scheduling information. Options vary depending on the frequency you select.
+4. **Save** the report.
 
+## Troubleshoot reporting
 
-
-
-
-| Setting       | Description                                                       |
-| --------------|------------------------------------------------------------------ |
-| Name          | name of the Report                                                |
-| Dashboard     | what dashboard to generate the report from                        |
-| Recipients    | emails of the people who will receive this report                 |
-| ReplyTo       | your email address, so that the recipient can respond             |
-| Message       | message body in the email with the report                         |
-| Schedule      | how often do you want the report generated and sent               |
-
-## Troubleshooting
-
-To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
 
 ```bash
 [log]
