@@ -18,12 +18,6 @@ const ghrPlatform = (): string => {
   }
 };
 
-const GHR_VERSION = '0.13.0';
-const GHR_ARCH = process.arch === 'x64' ? 'amd64' : '386';
-const GHR_PLATFORM = ghrPlatform();
-const GHR_EXTENSION = process.platform === 'linux' ? 'tar.gz' : 'zip';
-const PUBLISH_DIR = path.resolve(getCiFolder(), 'packages');
-
 class GitHubRelease {
   token: string;
   username: string;
@@ -42,6 +36,10 @@ class GitHubRelease {
    * Get the ghr binary to perform the release
    */
   private getGhr() {
+    const GHR_VERSION = '0.13.0';
+    const GHR_ARCH = process.arch === 'x64' ? 'amd64' : '386';
+    const GHR_PLATFORM = ghrPlatform();
+    const GHR_EXTENSION = process.platform === 'linux' ? 'tar.gz' : 'zip';
     const outName = `./ghr.${GHR_EXTENSION}`;
     const archiveName = `ghr_v${GHR_VERSION}_${GHR_PLATFORM}_${GHR_ARCH}`;
     const ghrUrl = `https://github.com/tcnksm/ghr/releases/download/v${GHR_VERSION}/${archiveName}.${GHR_EXTENSION}`;
@@ -54,6 +52,7 @@ class GitHubRelease {
   }
 
   release() {
+    const PUBLISH_DIR = path.resolve(getCiFolder(), 'packages');
     const distDir = path.resolve(process.cwd(), 'dist');
     const pluginVersion = getPluginJson(path.resolve(distDir, 'plugin.json')).info.version;
     execa.shell(`ghr
