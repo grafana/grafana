@@ -202,6 +202,8 @@ find ./conf ./pkg ./public/views | wc -l
 
 Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory. 
 
+In case you are on Mac and you set your `ulimit` in `.bash_profile`, it will fail silently when changing the value later via command line so you have to rise it in the `.bash_profile` and then restart your terminal to pick the new value.
+
 ## Next steps
 
 - Read our [style guides](/contribute/style-guides).
