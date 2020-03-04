@@ -144,7 +144,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 1,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -172,7 +171,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 2,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -200,7 +198,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 3,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -228,7 +225,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 4,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -282,7 +278,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "id": 1,
           "isInView": false,
           "options": Object {},
-          "restoreModel": [Function],
           "targets": Array [
             Object {
               "refId": "A",
@@ -395,7 +390,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 1,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -423,7 +417,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 2,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -451,7 +444,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 3,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -479,7 +471,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 4,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -533,7 +524,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "id": 2,
           "isInView": false,
           "options": Object {},
-          "restoreModel": [Function],
           "targets": Array [
             Object {
               "refId": "A",
@@ -646,7 +636,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 1,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -674,7 +663,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 2,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -702,7 +690,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 3,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -730,7 +717,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 4,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -784,7 +770,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "id": 3,
           "isInView": false,
           "options": Object {},
-          "restoreModel": [Function],
           "targets": Array [
             Object {
               "refId": "A",
@@ -897,7 +882,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 1,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -925,7 +909,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 2,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -953,7 +936,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 3,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -981,7 +963,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "id": 4,
               "isInView": false,
               "options": Object {},
-              "restoreModel": [Function],
               "targets": Array [
                 Object {
                   "refId": "A",
@@ -1035,7 +1016,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "id": 4,
           "isInView": false,
           "options": Object {},
-          "restoreModel": [Function],
           "targets": Array [
             Object {
               "refId": "A",

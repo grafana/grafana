@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 var (
@@ -185,47 +185,21 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("X-Grafana-User", proxy.ctx.SignedInUser.Login)
 		}
 
-		// clear cookie header, except for whitelisted cookies
-		var keptCookies []*http.Cookie
+		keepCookieNames := []string{}
 		if proxy.ds.JsonData != nil {
 			if keepCookies := proxy.ds.JsonData.Get("keepCookies"); keepCookies != nil {
-				keepCookieNames := keepCookies.MustStringArray()
-				for _, c := range req.Cookies() {
-					for _, v := range keepCookieNames {
-						if c.Name == v {
-							keptCookies = append(keptCookies, c)
-						}
-					}
-				}
+				keepCookieNames = keepCookies.MustStringArray()
 			}
 		}
-		req.Header.Del("Cookie")
-		for _, c := range keptCookies {
-			req.AddCookie(c)
-		}
 
-		// clear X-Forwarded Host/Port/Proto headers
-		req.Header.Del("X-Forwarded-Host")
-		req.Header.Del("X-Forwarded-Port")
-		req.Header.Del("X-Forwarded-Proto")
+		proxyutil.ClearCookieHeader(req, keepCookieNames)
+		proxyutil.PrepareProxyRequest(req)
+
 		req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 		// Clear Origin and Referer to avoir CORS issues
 		req.Header.Del("Origin")
 		req.Header.Del("Referer")
-
-		// set X-Forwarded-For header
-		if req.RemoteAddr != "" {
-			remoteAddr, _, err := net.SplitHostPort(req.RemoteAddr)
-			if err != nil {
-				remoteAddr = req.RemoteAddr
-			}
-			if req.Header.Get("X-Forwarded-For") != "" {
-				req.Header.Set("X-Forwarded-For", req.Header.Get("X-Forwarded-For")+", "+remoteAddr)
-			} else {
-				req.Header.Set("X-Forwarded-For", remoteAddr)
-			}
-		}
 
 		if proxy.route != nil {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)

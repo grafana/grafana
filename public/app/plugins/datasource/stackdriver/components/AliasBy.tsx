@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 import { Input } from '@grafana/ui';
 
 export interface Props {
-  onChange: (alignmentPeriod: any) => void;
+  onChange: (alignmentPeriod: string) => void;
   value: string;
 }
 

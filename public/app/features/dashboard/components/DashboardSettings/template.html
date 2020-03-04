@@ -9,14 +9,12 @@
   </a>
 
   <div class="dashboard-settings__aside-actions">
-    <button class="btn btn-primary" ng-click="ctrl.saveDashboard()" ng-show="ctrl.canSave"
-      aria-label={{ctrl.selectors.saveDashBoard}}>
-      Save
-    </button>
-    <button class="btn btn-inverse" ng-click="ctrl.openSaveAsModal()" ng-show="ctrl.canSaveAs"
-      aria-label={{ctrl.selectors.saveAsDashBoard}}>
-      Save As...
-    </button>
+    <div ng-show="ctrl.canSave">
+      <save-dashboard-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save button" />
+    </div>
+    <div ng-show="ctrl.canSaveAs">
+      <save-dashboard-as-button getDashboard="ctrl.getDashboard" aria-label="Dashboard settings aside actions Save as button" variant="'secondary'" useNewForms="true"/>
+    </div>
   </div>
 </aside>
 
