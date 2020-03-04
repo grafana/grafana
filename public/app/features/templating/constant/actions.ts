@@ -7,7 +7,9 @@ import {
 import { ThunkResult } from 'app/types';
 import { createAction } from '@reduxjs/toolkit';
 
-export const createConstantOptionsFromQuery = createAction<VariablePayload>('templating/createCustomOptionsFromQuery');
+export const createConstantOptionsFromQuery = createAction<VariablePayload>(
+  'templating/createConstantOptionsFromQuery'
+);
 
 export const updateConstantVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {
