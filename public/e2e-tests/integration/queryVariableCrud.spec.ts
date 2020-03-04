@@ -23,7 +23,8 @@ const assertDefaultsForNewVariable = () => {
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
     e2e()
       .get('option:selected')
-      .should('have.text', '');
+      .should('not.exist');
+    // .should('have.text', ''); // newVariables
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput().should('not.exist');
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect().within(select => {
@@ -70,7 +71,8 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
-    .select(`${dataSourceName}`)
+    .select(`string:${dataSourceName}`)
+    // .select(`${dataSourceName}`) // newVariables
     .blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
     .within(input => {
@@ -102,15 +104,19 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
   logSection('Creating a Query Variable with required, OK!');
 };
 
-const assertVariableTableRow = ({ name, query }: QueryVariableData) => {
+const assertVariableTableRow = ({ name, query }: QueryVariableData, index: number, length: number) => {
   e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(name)
     .should('exist')
     .contains(name);
   e2e.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(name)
     .should('exist')
     .contains(query);
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(name).should('exist');
-  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(name).should('exist');
+  if (index !== length - 1) {
+    e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(name).should('exist');
+  }
+  if (index !== 0) {
+    e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(name).should('exist');
+  }
   e2e.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(name).should('exist');
   e2e.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(name).should('exist');
 };
@@ -126,7 +132,7 @@ const assertVariableTable = (args: QueryVariableData[]) => {
     });
 
   for (let index = 0; index < args.length; index++) {
-    assertVariableTableRow(args[index]);
+    assertVariableTableRow(args[index], index, args.length);
   }
 
   logSection('Asserting variable table, Ok');
@@ -223,7 +229,7 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
         .should('have.length', queryVariables.length + 1);
     });
   const newItem = { ...itemToDuplicate, name: `copy_of_${itemToDuplicate.name}` };
-  assertVariableTableRow(newItem);
+  assertVariableTableRow(newItem, queryVariables.length - 1, queryVariables.length);
   e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(newItem.name).click();
 
   newItem.label = `copy_of_${itemToDuplicate.label}`;
@@ -292,6 +298,7 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
     query: 'A constant',
     options: ['A constant'],
     selectedOption: 'undefined',
+    // selectedOption: 'A constant', // newVariables
   };
   queryVariables[1] = updatedItem;
 
@@ -324,7 +331,7 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
 
-  assertVariableTableRow(queryVariables[1]);
+  assertVariableTableRow(queryVariables[1], 1, queryVariables.length);
   queryVariables[1].selectedOption = 'A constant';
 
   logSection('Asserting variable update, OK!');
