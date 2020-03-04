@@ -12,15 +12,15 @@
   children:
   - name: Requirements
     link: /installation/requirements/
-  - name: Install on Ubuntu / Debian
+  - name: Install on Ubuntu/Debian
     link: /installation/debian/
-  - name: Install on Centos / Redhat
+  - name: Install on Centos/RedHat/SUSE
     link: /installation/rpm/
   - name: Install on Windows
     link: /installation/windows/
   - name: Install on macOS
     link: /installation/mac/
-  - name: Install using Docker
+  - name: Run Docker image
     link: /installation/docker/
   - name: Upgrade Grafana
     link: /installation/upgrading/
