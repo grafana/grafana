@@ -3,6 +3,7 @@ import { ThemeContext } from '../../themes';
 import { getButtonStyles } from './styles';
 import { ButtonContent } from './ButtonContent';
 import { ButtonSize, ButtonStyles, ButtonVariant } from './types';
+import { cx } from 'emotion';
 
 type CommonProps = {
   size?: ButtonSize;
@@ -16,7 +17,7 @@ type CommonProps = {
   styles?: ButtonStyles;
 };
 
-type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
+export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   const theme = useContext(ThemeContext);
   const { size, variant, icon, children, className, styles: stylesProp, ...buttonProps } = props;
@@ -34,7 +35,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
     });
 
   return (
-    <button className={styles.button} {...buttonProps} ref={ref}>
+    <button className={cx(styles.button, className)} {...buttonProps} ref={ref}>
       <ButtonContent icon={icon}>{children}</ButtonContent>
     </button>
   );
@@ -42,7 +43,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
 
 Button.displayName = 'Button';
 
-type LinkButtonProps = CommonProps &
+export type LinkButtonProps = CommonProps &
   AnchorHTMLAttributes<HTMLAnchorElement> & {
     // We allow disabled here even though it is not standard for a link. We use it as a selector to style it as
     // disabled.
@@ -62,7 +63,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>((
     });
 
   return (
-    <a className={styles.button} {...anchorProps} ref={ref}>
+    <a className={cx(styles.button, className)} {...anchorProps} ref={ref}>
       <ButtonContent icon={icon}>{children}</ButtonContent>
     </a>
   );
