@@ -1,4 +1,4 @@
-import moment from 'moment';
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import { alertRulesReducer, initialState, loadAlertRules, loadedAlertRules, setSearchQuery } from './reducers';
 import { AlertRuleDTO, AlertRulesState } from 'app/types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
