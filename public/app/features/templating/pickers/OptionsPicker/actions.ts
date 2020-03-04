@@ -1,6 +1,14 @@
 import debounce from 'lodash/debounce';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
-import { containsSearchFilter, VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
+import {
+  containsSearchFilter,
+  VariableOption,
+  VariableWithMultiSupport,
+  VariableWithOptions,
+  VariableTag,
+  QueryVariableModel,
+  VariableRefresh,
+} from '../../variable';
 import { toVariablePayload, setCurrentVariableValue } from '../../state/actions';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
@@ -13,7 +21,10 @@ import {
   updateOptionsAndFilter,
   toggleOption,
   moveOptionsHighlight,
+  toggleTag,
 } from './reducer';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
@@ -81,6 +92,41 @@ export const toggleOptionByHighlight = (clearOthers: boolean): ThunkResult<void>
     const option = variable.options[highlightIndex];
     dispatch(toggleOption({ option, forceSelect: false, clearOthers }));
   };
+};
+
+export const toggleAndFetchTag = (tag: VariableTag): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    if (Array.isArray(tag.values)) {
+      return dispatch(toggleTag(tag));
+    }
+
+    const values = await dispatch(fetchTagValues(tag.text.toString()));
+    return dispatch(toggleTag({ ...tag, values }));
+  };
+};
+
+const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
+  return async (dispatch, getState) => {
+    const picker = getState().templating.optionsPicker;
+    const variable = getVariable<QueryVariableModel>(picker.uuid, getState());
+
+    const datasources = await getDataSourceSrv().get(variable.datasource);
+    const query = variable.tagValuesQuery.replace('$tag', tagText);
+    const options = { range: getTimeRange(variable), variable };
+    const results = await datasources.metricFindQuery(query, options);
+
+    if (!Array.isArray(results)) {
+      return [];
+    }
+    return results.map(value => value.text);
+  };
+};
+
+const getTimeRange = (variable: QueryVariableModel) => {
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+    return getTimeSrv().timeRange();
+  }
+  return undefined;
 };
 
 const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreState, searchQuery: string) => {
