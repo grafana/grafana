@@ -7,7 +7,7 @@ type = "docs"
 name = "Datasource"
 identifier = "datasource-permissions"
 parent = "enterprise"
-weight = 4
+weight = 200
 +++
 
 # Data source permissions
