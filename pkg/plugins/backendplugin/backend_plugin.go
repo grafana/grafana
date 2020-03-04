@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -72,7 +73,7 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		if rawBackend != nil {
 			if plugin, ok := rawBackend.(CorePlugin); ok {
 				p.core = plugin
-				client.DatasourcePlugin = plugin
+				client.CorePlugin = plugin
 			}
 		}
 
@@ -238,7 +239,7 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		}
 	}
 
-	protoResp, err := p.core.CallResource(ctx, protoReq)
+	protoStream, err := p.core.CallResource(ctx, protoReq)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
@@ -251,15 +252,34 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		return nil, errutil.Wrap("Failed to call resource", err)
 	}
 
-	respHeaders := map[string][]string{}
-	for key, values := range protoResp.Headers {
-		respHeaders[key] = values.Values
+	for {
+		protoResp, err := protoStream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, errutil.Wrap("Failed to receive response from resource call", err)
+		}
+
+		if err := protoStream.CloseSend(); err != nil {
+			return nil, errutil.Wrap("Failed to close response stream from resource call", err)
+		}
+
+		respHeaders := map[string][]string{}
+		for key, values := range protoResp.Headers {
+			respHeaders[key] = values.Values
+		}
+
+		return &CallResourceResult{
+			Headers: respHeaders,
+			Body:    protoResp.Body,
+			Status:  int(protoResp.Code),
+		}, nil
 	}
 
 	return &CallResourceResult{
-		Headers: respHeaders,
-		Body:    protoResp.Body,
-		Status:  int(protoResp.Code),
+		Headers: map[string][]string{},
+		Status:  http.StatusOK,
 	}, nil
 }
 
