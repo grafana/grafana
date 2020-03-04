@@ -201,6 +201,7 @@ describe('PanelQueryRunner', () => {
           defaults: {
             unit: 'm/s',
           },
+          // @ts-ignore
           overrides: [{}],
         },
       });
@@ -222,6 +223,7 @@ describe('PanelQueryRunner', () => {
         },
       });
       expect(spy).not.toBeCalled();
+      // @ts-ignore
       ctx.runner.setTransformations([{}]);
       ctx.runner.getData().subscribe({
         next: (data: grafanaData.PanelData) => {
