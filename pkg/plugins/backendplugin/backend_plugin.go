@@ -205,12 +205,17 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		reqHeaders[k] = &pluginv2.CallResource_StringList{Values: v}
 	}
 
+	jsonDataBytes, err := req.Config.JSONData.ToDB()
+	if err != nil {
+		return nil, err
+	}
+
 	protoReq := &pluginv2.CallResource_Request{
 		Config: &pluginv2.PluginConfig{
 			OrgId:                   req.Config.OrgID,
 			PluginId:                req.Config.PluginID,
 			PluginType:              req.Config.PluginType,
-			JsonData:                req.Config.JSONData,
+			JsonData:                jsonDataBytes,
 			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
 			UpdatedMS:               req.Config.Updated.UnixNano() / int64(time.Millisecond),
 		},

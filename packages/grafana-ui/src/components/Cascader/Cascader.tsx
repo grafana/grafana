@@ -205,6 +205,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           >
             <div className={disableDivFocus}>
               <Input
+                size={size || 'md'}
                 placeholder={placeholder}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
