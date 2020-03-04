@@ -3,6 +3,7 @@ import { VariablePayload } from '../state/actions';
 
 type VariableEditorExtension<ExtendedProps extends {} = {}> = { [P in keyof ExtendedProps]: ExtendedProps[P] };
 export interface VariableEditorState<ExtendedProps extends {} = {}> {
+  id: string;
   name: string;
   errors: Record<string, string>;
   isValid: boolean;
@@ -10,6 +11,7 @@ export interface VariableEditorState<ExtendedProps extends {} = {}> {
 }
 
 export const initialVariableEditorState: VariableEditorState = {
+  id: '',
   isValid: true,
   errors: {},
   name: '',
@@ -20,8 +22,14 @@ const variableEditorReducerSlice = createSlice({
   name: 'templating/editor',
   initialState: initialVariableEditorState,
   reducers: {
-    variableEditorMounted: (state: VariableEditorState, action: PayloadAction<string>) => {
-      state.name = action.payload;
+    setIdInEditor: (state: VariableEditorState, action: PayloadAction<{ id: string }>) => {
+      state.id = action.payload.id;
+    },
+    clearIdInEditor: (state: VariableEditorState, action: PayloadAction<undefined>) => {
+      state.id = '';
+    },
+    variableEditorMounted: (state: VariableEditorState, action: PayloadAction<{ name: string }>) => {
+      state.name = action.payload.name;
     },
     variableEditorUnMounted: (state: VariableEditorState, action: PayloadAction<VariablePayload>) => {
       return initialVariableEditorState;
@@ -65,6 +73,8 @@ const variableEditorReducerSlice = createSlice({
 export const variableEditorReducer = variableEditorReducerSlice.reducer;
 
 export const {
+  setIdInEditor,
+  clearIdInEditor,
   changeVariableNameSucceeded,
   changeVariableNameFailed,
   variableEditorMounted,

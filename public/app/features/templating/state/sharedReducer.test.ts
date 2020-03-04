@@ -18,11 +18,9 @@ import {
 } from './actions';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
-import { variableEditorUnMounted } from '../editor/reducer';
 import { initialQueryVariableModelState } from '../query/reducer';
 import { Deferred } from '../deferred';
 import { getVariableState, getVariableTestContext } from './helpers';
-import { changeToEditorEditMode } from './uuidInEditorReducer';
 import { initialVariablesState, VariablesState } from './variablesReducer';
 
 describe('sharedReducer', () => {
@@ -57,10 +55,10 @@ describe('sharedReducer', () => {
     });
   });
 
-  describe('when removeVariable is dispatched', () => {
+  describe('when removeVariable is dispatched and reIndex is true', () => {
     it('then state should be correct', () => {
       const initialState: VariablesState = getVariableState(3);
-      const payload = toVariablePayload({ uuid: '1', type: 'query' });
+      const payload = toVariablePayload({ uuid: '1', type: 'query' }, { reIndex: true });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(removeVariable(payload))
@@ -87,14 +85,13 @@ describe('sharedReducer', () => {
     });
   });
 
-  describe('when variableEditorUnMounted is dispatched', () => {
+  describe('when removeVariable is dispatched and reIndex is false', () => {
     it('then state should be correct', () => {
-      variableAdapters.set('query', createQueryVariableAdapter());
-      const initialState: VariablesState = getVariableState(3, 1, true);
-      const payload = toVariablePayload({ uuid: '1', type: 'query' });
+      const initialState: VariablesState = getVariableState(3);
+      const payload = toVariablePayload({ uuid: '1', type: 'query' }, { reIndex: false });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, initialState)
-        .whenActionIsDispatched(variableEditorUnMounted(payload))
+        .whenActionIsDispatched(removeVariable(payload))
         .thenStateShouldEqual({
           '0': {
             uuid: '0',
@@ -103,15 +100,6 @@ describe('sharedReducer', () => {
             hide: VariableHide.dontHide,
             index: 0,
             label: 'Label-0',
-            skipUrlSync: false,
-          },
-          '1': {
-            uuid: '1',
-            type: 'query',
-            name: 'Name-1',
-            hide: VariableHide.dontHide,
-            index: 1,
-            label: 'Label-1',
             skipUrlSync: false,
           },
           '2': {
@@ -124,53 +112,6 @@ describe('sharedReducer', () => {
             skipUrlSync: false,
           },
         });
-    });
-  });
-
-  describe('when variableEditorUnMounted is dispatched with empty uuid that is already unmounted', () => {
-    it('then state should be correct', () => {
-      variableAdapters.set('query', createQueryVariableAdapter());
-      const initialState: VariablesState = getVariableState(3, 1, true);
-
-      const payload = toVariablePayload({ uuid: '1', type: 'query' });
-      const emptyPayload = toVariablePayload({ uuid: emptyUuid, type: 'query' });
-
-      const expectedState: VariablesState = {
-        '0': {
-          uuid: '0',
-          type: 'query',
-          name: 'Name-0',
-          hide: VariableHide.dontHide,
-          index: 0,
-          label: 'Label-0',
-          skipUrlSync: false,
-        },
-        '1': {
-          uuid: '1',
-          type: 'query',
-          name: 'Name-1',
-          hide: VariableHide.dontHide,
-          index: 1,
-          label: 'Label-1',
-          skipUrlSync: false,
-        },
-        '2': {
-          uuid: '2',
-          type: 'query',
-          name: 'Name-2',
-          hide: VariableHide.dontHide,
-          index: 2,
-          label: 'Label-2',
-          skipUrlSync: false,
-        },
-      };
-
-      reducerTester<VariablesState>()
-        .givenReducer(sharedReducer, initialState)
-        .whenActionIsDispatched(variableEditorUnMounted(payload))
-        .thenStateShouldEqual(expectedState)
-        .whenActionIsDispatched(variableEditorUnMounted(emptyPayload))
-        .thenStateShouldEqual(expectedState);
     });
   });
 
@@ -472,98 +413,6 @@ describe('sharedReducer', () => {
             name: 'Updated name',
           },
         });
-    });
-  });
-
-  describe('when changeToEditorEditMode is dispatched', () => {
-    describe('and uuid is emptyUuid', () => {
-      it('then state should be correct', () => {
-        variableAdapters.set('query', createQueryVariableAdapter());
-        const initialState: VariablesState = getVariableState(3);
-        const payload = toVariablePayload({ uuid: emptyUuid, type: 'query' });
-        reducerTester<VariablesState>()
-          .givenReducer(sharedReducer, initialState)
-          .whenActionIsDispatched(changeToEditorEditMode(payload))
-          .thenStateShouldEqual({
-            '0': {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
-            '1': {
-              uuid: '1',
-              type: 'query',
-              name: 'Name-1',
-              hide: VariableHide.dontHide,
-              index: 1,
-              label: 'Label-1',
-              skipUrlSync: false,
-            },
-            '2': {
-              uuid: '2',
-              type: 'query',
-              name: 'Name-2',
-              hide: VariableHide.dontHide,
-              index: 2,
-              label: 'Label-2',
-              skipUrlSync: false,
-            },
-            [emptyUuid]: {
-              ...initialQueryVariableModelState,
-              uuid: emptyUuid,
-              type: 'query',
-              name: '',
-              hide: VariableHide.dontHide,
-              index: 3,
-              label: null,
-              skipUrlSync: false,
-            },
-          });
-      });
-    });
-
-    describe('and uuid is not emptyUuid', () => {
-      it('then state should be correct', () => {
-        variableAdapters.set('query', createQueryVariableAdapter());
-        const initialState: VariablesState = getVariableState(3);
-        const payload = toVariablePayload({ uuid: '1', type: 'query' });
-        reducerTester<VariablesState>()
-          .givenReducer(sharedReducer, initialState)
-          .whenActionIsDispatched(changeToEditorEditMode(payload))
-          .thenStateShouldEqual({
-            '0': {
-              uuid: '0',
-              type: 'query',
-              name: 'Name-0',
-              hide: VariableHide.dontHide,
-              index: 0,
-              label: 'Label-0',
-              skipUrlSync: false,
-            },
-            '1': {
-              uuid: '1',
-              type: 'query',
-              name: 'Name-1',
-              hide: VariableHide.dontHide,
-              index: 1,
-              label: 'Label-1',
-              skipUrlSync: false,
-            },
-            '2': {
-              uuid: '2',
-              type: 'query',
-              name: 'Name-2',
-              hide: VariableHide.dontHide,
-              index: 2,
-              label: 'Label-2',
-              skipUrlSync: false,
-            },
-          });
-      });
     });
   });
 });

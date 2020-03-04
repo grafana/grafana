@@ -3,23 +3,37 @@ import { getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
+  clearIdInEditor,
+  setIdInEditor,
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
-import { storeNewVariable, toVariablePayload, VariableIdentifier } from '../state/actions';
+import {
+  AddVariable,
+  addVariable,
+  removeVariable,
+  storeNewVariable,
+  toVariablePayload,
+  VariableIdentifier,
+} from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { v4 } from 'uuid';
-import { changeToEditorListMode } from '../state/uuidInEditorReducer';
+import { emptyUuid } from '../state/types';
+import cloneDeep from 'lodash/cloneDeep';
+import { VariableType } from '../variable';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    dispatch(variableEditorMounted(getVariable(identifier.uuid!).name));
+  return async dispatch => {
+    dispatch(variableEditorMounted({ name: getVariable(identifier.uuid!).name }));
   };
 };
 
 export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
     dispatch(variableEditorUnMounted(toVariablePayload(identifier)));
+    if (getState().templating.variables[emptyUuid]) {
+      dispatch(removeVariable(toVariablePayload({ type: identifier.type, uuid: emptyUuid }, { reIndex: false })));
+    }
   };
 };
 
@@ -27,7 +41,7 @@ export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void
   return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.uuid!, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(changeToEditorListMode());
+    dispatch(switchToListMode());
   };
 };
 
@@ -37,7 +51,8 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
     dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, uuid })));
     const variableInState = getVariable(uuid, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(changeToEditorListMode());
+    dispatch(switchToListMode());
+    dispatch(removeVariable(toVariablePayload({ type: identifier.type, uuid: emptyUuid }, { reIndex: false })));
   };
 };
 
@@ -67,4 +82,27 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
       dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, newName)));
     }
   };
+};
+
+export const switchToNewMode = (): ThunkResult<void> => (dispatch, getState) => {
+  const type: VariableType = 'query';
+  const uuid = emptyUuid;
+  const global = false;
+  const model = cloneDeep(variableAdapters.get(type).initialState);
+  const index = Object.values(getState().templating.variables).length;
+  const identifier = { type, uuid };
+  dispatch(
+    addVariable(
+      toVariablePayload<AddVariable>(identifier, { global, model, index })
+    )
+  );
+  dispatch(setIdInEditor({ id: identifier.uuid }));
+};
+
+export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<void> => dispatch => {
+  dispatch(setIdInEditor({ id: identifier.uuid }));
+};
+
+export const switchToListMode = (): ThunkResult<void> => dispatch => {
+  dispatch(clearIdInEditor());
 };

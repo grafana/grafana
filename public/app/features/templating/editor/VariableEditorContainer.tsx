@@ -15,43 +15,44 @@ import {
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { getVariableClones } from '../state/selectors';
-import { changeToEditorEditMode, changeToEditorListMode } from '../state/uuidInEditorReducer';
 import { VariableModel } from '../variable';
+import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 
 interface OwnProps {}
 
 interface ConnectedProps {
-  uuidInEditor: string | null;
+  idInEditor: string | null;
   variables: VariableModel[];
 }
 
 interface DispatchProps {
-  changeToEditorListMode: typeof changeToEditorListMode;
-  changeToEditorEditMode: typeof changeToEditorEditMode;
   changeVariableOrder: typeof changeVariableOrder;
   duplicateVariable: typeof duplicateVariable;
   removeVariable: typeof removeVariable;
+  switchToNewMode: typeof switchToNewMode;
+  switchToEditMode: typeof switchToEditMode;
+  switchToListMode: typeof switchToListMode;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class VariableEditorContainerUnconnected extends PureComponent<Props> {
   componentDidMount(): void {
-    this.props.changeToEditorListMode();
+    this.props.switchToListMode();
   }
 
   onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.changeToEditorListMode();
+    this.props.switchToListMode();
   };
 
   onEditVariable = (identifier: VariableIdentifier) => {
-    this.props.changeToEditorEditMode(toVariablePayload({ uuid: identifier.uuid, type: identifier.type }));
+    this.props.switchToEditMode(identifier);
   };
 
-  onChangeToAddMode = (event: MouseEvent<HTMLAnchorElement>) => {
+  onNewVariable = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    this.props.changeToEditorEditMode(toVariablePayload({ uuid: emptyUuid, type: 'query' }));
+    this.props.switchToNewMode();
   };
 
   onChangeVariableOrder = (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => {
@@ -63,11 +64,11 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   onRemoveVariable = (identifier: VariableIdentifier) => {
-    this.props.removeVariable(toVariablePayload(identifier));
+    this.props.removeVariable(toVariablePayload(identifier, { reIndex: true }));
   };
 
   render() {
-    const variableToEdit = this.props.variables.find(s => s.uuid === this.props.uuidInEditor) ?? null;
+    const variableToEdit = this.props.variables.find(s => s.uuid === this.props.idInEditor) ?? null;
     return (
       <div>
         <div className="page-action-bar">
@@ -78,7 +79,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             >
               Variables
             </a>
-            {this.props.uuidInEditor === emptyUuid && (
+            {this.props.idInEditor === emptyUuid && (
               <span>
                 <i
                   className="fa fa-fw fa-chevron-right"
@@ -87,7 +88,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
                 New
               </span>
             )}
-            {this.props.uuidInEditor && this.props.uuidInEditor !== emptyUuid && (
+            {this.props.idInEditor && this.props.idInEditor !== emptyUuid && (
               <span>
                 <i
                   className="fa fa-fw fa-chevron-right"
@@ -103,7 +104,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             <a
               type="button"
               className="btn btn-primary"
-              onClick={this.onChangeToAddMode}
+              onClick={this.onNewVariable}
               aria-label={e2e.pages.Dashboard.Settings.Variables.List.selectors.newButton}
             >
               New
@@ -114,7 +115,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
         {!variableToEdit && (
           <VariableEditorList
             variables={this.props.variables}
-            onAddClick={this.onChangeToAddMode}
+            onAddClick={this.onNewVariable}
             onEditClick={this.onEditVariable}
             onChangeVariableOrder={this.onChangeVariableOrder}
             onDuplicateVariable={this.onDuplicateVariable}
@@ -129,15 +130,16 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
   variables: getVariableClones(state, true),
-  uuidInEditor: state.templating.uuidInEditor,
+  idInEditor: state.templating.editor.id,
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  changeToEditorListMode,
-  changeToEditorEditMode,
   changeVariableOrder,
   duplicateVariable,
   removeVariable,
+  switchToNewMode,
+  switchToEditMode,
+  switchToListMode,
 };
 
 export const VariableEditorContainer = connectWithStore(

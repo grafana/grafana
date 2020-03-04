@@ -16,9 +16,8 @@ import {
 import { VariableModel, VariableOption, VariableWithOptions } from '../variable';
 import { ALL_VARIABLE_VALUE, emptyUuid, getInstanceState } from './types';
 import { variableAdapters } from '../adapters';
-import { changeVariableNameSucceeded, variableEditorUnMounted } from '../editor/reducer';
+import { changeVariableNameSucceeded } from '../editor/reducer';
 import { Deferred } from '../deferred';
-import { changeToEditorEditMode } from './uuidInEditorReducer';
 import { initialVariablesState } from './variablesReducer';
 import { isQuery } from '../guard';
 
@@ -45,20 +44,13 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
     })
     .addCase(removeVariable, (state, action) => {
       delete state[action.payload.uuid!];
-      const variableStates = Object.values(state);
-      for (let index = 0; index < variableStates.length; index++) {
-        variableStates[index].index = index;
-      }
-    })
-    .addCase(variableEditorUnMounted, (state, action) => {
-      const variableState = state[action.payload.uuid!];
-
-      if (action.payload.uuid === emptyUuid && !variableState) {
+      if (!action.payload.data.reIndex) {
         return;
       }
 
-      if (state[emptyUuid]) {
-        delete state[emptyUuid];
+      const variableStates = Object.values(state);
+      for (let index = 0; index < variableStates.length; index++) {
+        variableStates[index].index = index;
       }
     })
     .addCase(duplicateVariable, (state, action) => {
@@ -94,13 +86,6 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
         uuid,
         index: Object.values(state).length - 1,
       };
-    })
-    .addCase(changeToEditorEditMode, (state, action) => {
-      if (action.payload.uuid === emptyUuid) {
-        state[emptyUuid] = cloneDeep(variableAdapters.get('query').initialState);
-        state[emptyUuid].uuid = emptyUuid;
-        state[emptyUuid].index = Object.values(state).length - 1;
-      }
     })
     .addCase(changeVariableType, (state, action) => {
       const { uuid } = action.payload;

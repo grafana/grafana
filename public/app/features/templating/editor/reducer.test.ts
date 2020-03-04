@@ -4,8 +4,10 @@ import {
   changeVariableEditorExtended,
   changeVariableNameFailed,
   changeVariableNameSucceeded,
+  clearIdInEditor,
   initialVariableEditorState,
   removeVariableEditorError,
+  setIdInEditor,
   variableEditorMounted,
   variableEditorReducer,
   VariableEditorState,
@@ -14,9 +16,33 @@ import {
 import { toVariablePayload } from '../state/actions';
 
 describe('variableEditorReducer', () => {
+  describe('when setIdInEditor is dispatched', () => {
+    it('then state should be correct ', () => {
+      const payload = { id: '0' };
+      reducerTester<VariableEditorState>()
+        .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
+        .whenActionIsDispatched(setIdInEditor(payload))
+        .thenStateShouldEqual({
+          ...initialVariableEditorState,
+          id: '0',
+        });
+    });
+  });
+
+  describe('when clearIdInEditor is dispatched', () => {
+    it('then state should be correct ', () => {
+      reducerTester<VariableEditorState>()
+        .givenReducer(variableEditorReducer, { ...initialVariableEditorState, id: '0' })
+        .whenActionIsDispatched(clearIdInEditor())
+        .thenStateShouldEqual({
+          ...initialVariableEditorState,
+        });
+    });
+  });
+
   describe('when variableEditorMounted is dispatched', () => {
     it('then state should be correct ', () => {
-      const payload = 'A name';
+      const payload = { name: 'A name' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
         .whenActionIsDispatched(variableEditorMounted(payload))
@@ -31,6 +57,7 @@ describe('variableEditorReducer', () => {
     it('then state should be correct ', () => {
       const initialState = {
         ...initialVariableEditorState,
+        id: '0',
         name: 'A name',
         isValid: false,
         errors: { update: 'Something wrong' },

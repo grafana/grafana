@@ -74,7 +74,7 @@ export const addVariable = createAction<PrepareAction<VariablePayload<AddVariabl
   }
 );
 
-export const removeVariable = createAction<VariablePayload>('templating/removeVariable');
+export const removeVariable = createAction<VariablePayload<{ reIndex: boolean }>>('templating/removeVariable');
 export const storeNewVariable = createAction<VariablePayload>('templating/storeNewVariable');
 export interface DuplicateVariable {
   newUuid: string;
