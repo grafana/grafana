@@ -6,17 +6,17 @@ import path = require('path');
 // @ts-ignore
 import execa = require('execa');
 
-const releaseNotes = () => {
-  return execLine(`awk \'BEGIN {FS="##"; RS=""} FNR==3 {print; exit}\' CHANGELOG.md`);
+const releaseNotes = async (): Promise<string> => {
+  const { stdout } = await execa.shell(`awk \'BEGIN {FS="##"; RS=""} FNR==3 {print; exit}\' CHANGELOG.md`);
+  return stdout;
 };
 
 const checkoutBranch = async (branchName: string, options: string): Promise<string> => {
-  const currentBranch = await execLine(`git rev-parse --abbrev-ref HEAD`);
-  const createBranch =
-    (await execLine(`git branch -a | grep ${branchName} | grep -v remote || echo 'No release found'`)) === branchName
-      ? ''
-      : '-b';
-  if (currentBranch !== branchName) {
+  const currentBranch = await execa.shell(`git rev-parse --abbrev-ref HEAD`);
+  const branchesAvailable = await execa.shell(`git branch -a | grep ${branchName} | grep -v remote 
+    || echo 'No release found'`);
+  const createBranch = branchesAvailable.stdout === branchName ? '' : '-b';
+  if (currentBranch.stdout !== branchName) {
     return `git checkout ${createBranch} ${branchName}`;
   }
   return '';
@@ -26,11 +26,6 @@ export interface GithuPublishOptions {
   dryrun?: boolean;
   verbose?: boolean;
 }
-
-const execLine = async (line: string): Promise<string> => {
-  const { stdout } = await execa.shell(line);
-  return stdout;
-};
 
 const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, verbose }) => {
   const distDir = path.resolve(process.cwd(), 'dist');
@@ -58,9 +53,9 @@ const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, ve
       if (verbose) {
         console.log('executing >>', line);
       }
-      const output = await execLine(line);
+      const { stdout } = await execa.shell(line);
       if (verbose) {
-        console.log(output);
+        console.log(stdout);
       } else {
         process.stdout.write('.');
       }
