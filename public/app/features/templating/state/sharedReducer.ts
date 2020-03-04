@@ -13,7 +13,7 @@ import {
   setCurrentVariableValue,
   storeNewVariable,
 } from './actions';
-import { VariableModel, VariableWithOptions, VariableOption } from '../variable';
+import { VariableModel, VariableOption, VariableWithOptions } from '../variable';
 import { ALL_VARIABLE_VALUE, emptyUuid, getInstanceState } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded, variableEditorUnMounted } from '../editor/reducer';

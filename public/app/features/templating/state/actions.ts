@@ -82,12 +82,17 @@ export interface DuplicateVariable {
 export const duplicateVariable = createAction<PrepareAction<VariablePayload<DuplicateVariable>>>(
   'templating/duplicateVariable',
   (payload: VariablePayload<DuplicateVariable>) => {
+    if (payload.data?.newUuid) {
+      // for testing purposes we allow to pass existing newUuid
+      return { payload };
+    }
+
     return {
       payload: {
         ...payload,
         data: {
           ...payload.data,
-          newUuid: payload.data.newUuid ?? v4(), // for testing purposes we allow to pass existing newUuid
+          newUuid: v4(),
         },
       },
     };
@@ -128,7 +133,7 @@ export function toVariablePayload<T extends any = undefined>(
 }
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return dispatch => {
     for (let index = 0; index < list.length; index++) {
       const model = list[index];
       if (!variableAdapters.contains(model.type)) {
@@ -335,7 +340,7 @@ export const setOptionAsCurrent = (
   current: VariableOption,
   emitChanges: boolean
 ): ThunkResult<void> => {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(setCurrentVariableValue(toVariablePayload(identifier, current)));
     return dispatch(variableUpdated(identifier, emitChanges));
   };
