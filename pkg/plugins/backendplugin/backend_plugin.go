@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -198,8 +197,12 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 	return res, nil
 }
 
-func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (*CallResourceResult, error) {
+func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (CallResourceResultStream, error) {
 	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
+
+	if p.core == nil || p.client == nil || p.client.Exited() {
+		return nil, errors.New("Plugin not running, cannot call resource")
+	}
 
 	reqHeaders := map[string]*pluginv2.CallResource_StringList{}
 	for k, v := range req.Headers {
@@ -243,8 +246,10 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
-				return &CallResourceResult{
-					Status: http.StatusNotImplemented,
+				return &singleCallResourceResult{
+					result: &CallResourceResult{
+						Status: http.StatusNotImplemented,
+					},
 				}, nil
 			}
 		}
@@ -252,34 +257,8 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		return nil, errutil.Wrap("Failed to call resource", err)
 	}
 
-	for {
-		protoResp, err := protoStream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, errutil.Wrap("Failed to receive response from resource call", err)
-		}
-
-		if err := protoStream.CloseSend(); err != nil {
-			return nil, errutil.Wrap("Failed to close response stream from resource call", err)
-		}
-
-		respHeaders := map[string][]string{}
-		for key, values := range protoResp.Headers {
-			respHeaders[key] = values.Values
-		}
-
-		return &CallResourceResult{
-			Headers: respHeaders,
-			Body:    protoResp.Body,
-			Status:  int(protoResp.Code),
-		}, nil
-	}
-
-	return &CallResourceResult{
-		Headers: map[string][]string{},
-		Status:  http.StatusOK,
+	return &callResourceResultStream{
+		stream: protoStream,
 	}, nil
 }
 

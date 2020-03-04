@@ -91,3 +91,46 @@ type CallResourceResult struct {
 	Headers map[string][]string
 	Body    []byte
 }
+
+type CallResourceResultStream interface {
+	Recv() (*CallResourceResult, error)
+	Close() error
+}
+
+type callResourceResultStream struct {
+	stream pluginv2.Core_CallResourceClient
+}
+
+func (s *callResourceResultStream) Recv() (*CallResourceResult, error) {
+	protoResp, err := s.stream.Recv()
+	if err != nil {
+		return nil, err
+	}
+
+	respHeaders := map[string][]string{}
+	for key, values := range protoResp.Headers {
+		respHeaders[key] = values.Values
+	}
+
+	return &CallResourceResult{
+		Headers: respHeaders,
+		Body:    protoResp.Body,
+		Status:  int(protoResp.Code),
+	}, nil
+}
+
+func (s *callResourceResultStream) Close() error {
+	return s.stream.CloseSend()
+}
+
+type singleCallResourceResult struct {
+	result *CallResourceResult
+}
+
+func (s *singleCallResourceResult) Recv() (*CallResourceResult, error) {
+	return s.result, nil
+}
+
+func (s *singleCallResourceResult) Close() error {
+	return nil
+}
