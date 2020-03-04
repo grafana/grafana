@@ -138,7 +138,7 @@
       name: JSON Model
     - link: /reference/scripting/
       name: Scripted dashboards
-  - name: Data Sources
+  - name: Data sources
     link: /features/datasources/
     children:
     - link: /features/datasources/cloudwatch/
@@ -188,7 +188,7 @@
     link: /features/reporting/
   - name: Navigation links
     link: /features/navigation-links/
-- name: What's New In Grafana
+- name: What's new In Grafana
   link: /whatsnew/
   children:
   - name: Version 6.6
@@ -241,14 +241,14 @@
   children:
   - name: Overview
     link: /enterprise/
-  - name: Reporting
-    link: /enterprise/reporting/
   - name: Data source permissions
     link: /enterprise/datasource_permissions/
   - name: Enhanced LDAP
     link: /enterprise/enhanced_ldap/
   - name: SAML authentication
     link: /enterprise/saml/
+  - name: Reporting
+    link: /enterprise/reporting/
   - name: Team sync
     link: /enterprise/team-sync/
   - name: White labeling
