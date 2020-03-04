@@ -40,6 +40,7 @@ import {
   addToRichHistory,
   updateStarredInRichHistory,
   updateCommentInRichHistory,
+  getQueryDisplayText,
 } from 'app/core/utils/explore';
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult, RichHistoryQuery } from 'app/types';
@@ -466,11 +467,17 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
+          const arrayOfStringifiedQueries = queries.map(query =>
+            datasourceInstance.getQueryDisplayText
+              ? datasourceInstance.getQueryDisplayText(query)
+              : getQueryDisplayText(query)
+          );
+
           const nextRichHistory = addToRichHistory(
             richHistory || [],
             datasourceId,
             datasourceName,
-            queries,
+            arrayOfStringifiedQueries,
             false,
             '',
             ''

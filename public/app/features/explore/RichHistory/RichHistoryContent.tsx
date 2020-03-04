@@ -14,6 +14,7 @@ import {
   SortOrder,
   mapNumbertoTimeInSlider,
   createRetentionPeriodBoundary,
+  createDateStringFromTs,
 } from '../../../core/utils/explore';
 
 // Components
@@ -109,7 +110,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, onlyStarred: boolean) => {
     `,
     heading: css`
       font-size: ${theme.typography.heading.h4};
-      margin: ${theme.spacing.sm} ${theme.spacing.xxs};
+      margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
     `,
   };
 });
@@ -130,6 +131,13 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
 
   const [sliderRetentionFilter, setSliderRetentionFilter] = useState([0, retentionPeriod]);
 
+  const theme = useTheme();
+  const styles = getStyles(theme, onlyStarred);
+  const exploreDatasources = getExploreDatasources().map(d => {
+    return { value: d.value, label: d.value, imgUrl: d.meta.info.logos.small };
+  });
+  const listOfDatasourceFilters = datasourceFilters && datasourceFilters.map(d => d.value);
+
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
    *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
    * available for user.
@@ -140,34 +148,62 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
       : onSelectDatasourceFilters(null);
   }, [activeDatasourceInstance, activeDatasourceOnly]);
 
-  const theme = useTheme();
-  const styles = getStyles(theme, onlyStarred);
-  const exploreDatasources = getExploreDatasources().map(d => {
-    return { value: d.value, label: d.value, imgUrl: d.meta.info.logos.small };
-  });
-
-  const filteredQueries: RichHistoryQuery[] = onlyStarred ? queries.filter(q => q.starred === true) : queries;
-  const sortedQueries = sortQueries(filteredQueries, sortOrder);
-  const listOfDatasourceFilters = datasourceFilters && datasourceFilters.map(d => d.value);
-  const filteredQueriesByDatasource = datasourceFilters
-    ? sortedQueries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
-    : sortedQueries;
-
-  const queriesToDisplay = filteredQueriesByDatasource.filter(
-    q =>
-      q.ts < createRetentionPeriodBoundary(sliderRetentionFilter[0], true) &&
-      q.ts > createRetentionPeriodBoundary(sliderRetentionFilter[1], false)
+  /* selectorsAndSorter id used several times, therefore extracted to variable */
+  const selectorsAndSorter = () => (
+    <div className={styles.selectors}>
+      {!activeDatasourceOnly && (
+        <div className={styles.multiselect}>
+          <Select
+            isMulti={true}
+            options={exploreDatasources}
+            value={datasourceFilters}
+            placeholder="Filter queries for specific datasources(s)"
+            onChange={onSelectDatasourceFilters}
+          />
+        </div>
+      )}
+      <div className={styles.sort}>
+        <Select
+          options={sortOrderOptions}
+          placeholder="Sort queries by"
+          onChange={e => onChangeSortOrder(e.value as SortOrder)}
+        />
+      </div>
+    </div>
   );
 
-  // const starredQueries = onlyStarred && queries.filter(q => q.starred === true);
-  // const starredQueriesFilteredByDatasource = datasourceFilters
-  // ? starredQueries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
-  // : starredQueries;
-  // const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
+  /* If in Starred tab, render following content */
+  if (onlyStarred) {
+    const starredQueries = queries.filter(q => q.starred === true);
+    const starredQueriesFilteredByDatasource = datasourceFilters
+      ? starredQueries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+      : starredQueries;
+    const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
 
-  return (
-    <div className={styles.container}>
-      {!onlyStarred && (
+    return (
+      <div className={styles.container}>
+        <div className={styles.containerContent}>
+          {selectorsAndSorter()}
+          {sortedStarredQueries.map(q => {
+            return <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />;
+          })}
+        </div>
+      </div>
+    );
+
+    /* If in History tab, render following content */
+  } else {
+    const filteredQueriesByDatasource = datasourceFilters
+      ? queries.filter(q => listOfDatasourceFilters.includes(q.datasourceName))
+      : queries;
+    const sortedQueries = sortQueries(filteredQueriesByDatasource, sortOrder);
+    const queriesWithinSelectedTimeline = sortedQueries.filter(
+      q =>
+        q.ts < createRetentionPeriodBoundary(sliderRetentionFilter[0], true) &&
+        q.ts > createRetentionPeriodBoundary(sliderRetentionFilter[1], false)
+    );
+    return (
+      <div className={styles.container}>
         <div className={styles.containerSlider}>
           <div className={styles.slider}>
             <div className="label-slider">
@@ -190,42 +226,17 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
             <div className="label-slider">{mapNumbertoTimeInSlider(sliderRetentionFilter[1])}</div>
           </div>
         </div>
-      )}
 
-      <div className={styles.containerContent}>
-        <div className={styles.selectors}>
-          {!activeDatasourceOnly && (
-            <div className={styles.multiselect}>
-              <Select
-                isMulti={true}
-                options={exploreDatasources}
-                value={datasourceFilters}
-                placeholder="Filter queries for specific datasources(s)"
-                onChange={onSelectDatasourceFilters}
-              />
-            </div>
-          )}
-          <div className={styles.sort}>
-            <Select
-              options={sortOrderOptions}
-              placeholder="Sort queries by"
-              onChange={e => onChangeSortOrder(e.value as SortOrder)}
-            />
-          </div>
-        </div>
+        <div className={styles.containerContent}>
+          {selectorsAndSorter()}
+          {queriesWithinSelectedTimeline.map((q, i) => {
+            const previousDateString = i > 0 ? createDateStringFromTs(queriesWithinSelectedTimeline[i - 1].ts) : '';
+            const currentDateString = createDateStringFromTs(q.ts);
 
-        {onlyStarred &&
-          filteredQueries.map(q => {
-            return <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />;
-          })}
-
-        {!onlyStarred &&
-          queriesToDisplay.map((q, index) => {
-            const previousDateString = index > 0 ? new Date(queriesToDisplay[index - 1].ts).toDateString() : '';
-            if (new Date(q.ts).toDateString() !== previousDateString) {
+            if (currentDateString !== previousDateString) {
               return (
                 <div key={q.ts}>
-                  <div className={styles.heading}>{new Date(q.ts).toDateString().substring(4)}</div>
+                  <div className={styles.heading}>{currentDateString}</div>
                   <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />
                 </div>
               );
@@ -233,7 +244,8 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
               return <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />;
             }
           })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 }

@@ -345,15 +345,14 @@ export function addToRichHistory(
   richHistory: RichHistoryQuery[],
   datasourceId: string,
   datasourceName: string,
-  queries: any[],
+  queries: string[],
   starred: boolean,
   comment: string,
   sessionName: string
 ): any {
   const ts = Date.now();
-
   /* Save only queries, that are not falsy (e.g. empty strings, null) */
-  const arrayOfStringifiedQueries = queries.map(query => query.expr).filter(expr => Boolean(expr));
+  const queriesToSave = queries.filter(expr => Boolean(expr));
 
   const retentionPeriod = store.getObject('grafana.explore.richHistory.retentionPeriod', 7);
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
@@ -363,18 +362,18 @@ export function addToRichHistory(
    */
   const queriesToKeep = richHistory.filter(q => q.ts > retentionPeriodLastTs || q.starred === true) || [];
 
-  if (arrayOfStringifiedQueries.length > 0) {
+  if (queriesToSave.length > 0) {
     if (
       /* Don't save duplicated queries for the same datasource */
       queriesToKeep.length > 0 &&
-      JSON.stringify(arrayOfStringifiedQueries) === JSON.stringify(queriesToKeep[0].queries) &&
+      JSON.stringify(queriesToSave) === JSON.stringify(queriesToKeep[0].queries) &&
       JSON.stringify(datasourceName) === JSON.stringify(queriesToKeep[0].datasourceName)
     ) {
       return richHistory;
     }
 
     let newHistory = [
-      { queries: arrayOfStringifiedQueries, ts, datasourceId, datasourceName, starred, comment, sessionName },
+      { queries: queriesToSave, ts, datasourceId, datasourceName, starred, comment, sessionName },
       ...queriesToKeep,
     ];
     console.log(newHistory);
@@ -718,3 +717,14 @@ export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) =
   const boundary = isLastTs ? date.setHours(24, 0, 0, 0) : date.setHours(0, 0, 0, 0);
   return boundary;
 };
+
+export function createDateStringFromTs(ts: number) {
+  const date = new Date(ts);
+  const month = date.toLocaleString('default', { month: 'long' });
+  const day = date.getDate();
+  return `${month} ${day}`;
+}
+
+export function getQueryDisplayText(query: DataQuery): string {
+  return JSON.stringify(query);
+}

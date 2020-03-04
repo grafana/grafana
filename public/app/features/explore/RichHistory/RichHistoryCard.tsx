@@ -45,6 +45,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     queryRow: css`
       border-top: 2px solid ${bgColor};
       font-weight: ${theme.typography.weight.bold};
+      word-break: break-all;
       padding: 4px 2px;
       :first-child {
         border-top: none;
@@ -77,97 +78,92 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
   const theme = useTheme();
   const styles = getStyles(theme);
-  let queryExpressions: string[] = query.queries.filter(q => Boolean(q));
 
   return (
-    <>
-      {queryExpressions.length > 0 && (
-        <div className={styles.queryCard}>
-          <div className={styles.queryCardLeft}>
-            {queryExpressions.map((q, index) => {
-              return (
-                <div key={`${q}-${index}`} className={styles.queryRow}>
-                  {q}
-                </div>
-              );
-            })}
-            {!activeUpdateComment && query.comment && (
-              <div
-                className={css`
-                  overflow-wrap: break-word;
-                `}
+    <div className={styles.queryCard}>
+      <div className={styles.queryCardLeft}>
+        {query.queries.map((q, i) => {
+          return (
+            <div key={`${q}-${i}`} className={styles.queryRow}>
+              {q}
+            </div>
+          );
+        })}
+        {!activeUpdateComment && query.comment && (
+          <div
+            className={css`
+              overflow-wrap: break-word;
+            `}
+          >
+            {query.comment}
+          </div>
+        )}
+        {activeUpdateComment && (
+          <div>
+            <Forms.Input
+              className={styles.input}
+              value={comment}
+              placeholder={comment ? null : 'add comment'}
+              onChange={e => setComment(e.currentTarget.value)}
+            />
+            <div className={styles.buttonRow}>
+              <Forms.Button
+                onClick={e => {
+                  e.preventDefault();
+                  onChangeRichHistoryProperty(query.ts, 'comment', comment);
+                  toggleActiveUpdateComment();
+                }}
               >
-                {query.comment}
-              </div>
-            )}
-            {activeUpdateComment && (
-              <div>
-                <Forms.Input
-                  className={styles.input}
-                  value={comment}
-                  placeholder={comment ? null : 'add your comment'}
-                  onChange={e => setComment(e.currentTarget.value)}
-                />
-                <div className={styles.buttonRow}>
-                  <Forms.Button
-                    onClick={e => {
-                      e.preventDefault();
-                      onChangeRichHistoryProperty(query.ts, 'comment', comment);
-                      toggleActiveUpdateComment();
-                    }}
-                  >
-                    Save
-                  </Forms.Button>
-                  <Forms.Button
-                    variant="secondary"
-                    className={css`
-                      margin-left: 8px;
-                    `}
-                    onClick={() => {
-                      toggleActiveUpdateComment();
-                      setComment(query.comment);
-                    }}
-                  >
-                    Cancel
-                  </Forms.Button>
-                </div>
-              </div>
-            )}
+                Save
+              </Forms.Button>
+              <Forms.Button
+                variant="secondary"
+                className={css`
+                  margin-left: 8px;
+                `}
+                onClick={() => {
+                  toggleActiveUpdateComment();
+                  setComment(query.comment);
+                }}
+              >
+                Cancel
+              </Forms.Button>
+            </div>
           </div>
-          <div className={styles.queryCardRight}>
-            <i
-              className="fa fa-fw fa-pencil"
-              onClick={() => {
-                toggleActiveUpdateComment();
-              }}
-            ></i>
-            <i
-              className="fa fa-fw fa-copy"
-              onClick={() => {
-                const queries = query.queries.join('\n\n');
-                copyStringToClipboard(queries);
-                appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
-              }}
-            ></i>
-            <i
-              className="fa fa-fw fa-link"
-              onClick={() => {
-                const url = createUrlFromRichHistory(query);
-                copyStringToClipboard(url);
-                appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
-              }}
-              style={{ fontWeight: 'normal' }}
-            ></i>
-            <i
-              className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
-              onClick={() => {
-                onChangeRichHistoryProperty(query.ts, 'starred');
-                setStared(!starred);
-              }}
-            ></i>
-          </div>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+      <div className={styles.queryCardRight}>
+        <i
+          className="fa fa-fw fa-comment-o"
+          onClick={() => {
+            toggleActiveUpdateComment();
+          }}
+        ></i>
+        <i
+          className="fa fa-fw fa-copy"
+          onClick={() => {
+            const queries = query.queries.join('\n\n');
+            copyStringToClipboard(queries);
+            appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
+          }}
+        ></i>
+        <i
+          className="fa fa-fw fa-link"
+          onClick={() => {
+            const url = createUrlFromRichHistory(query);
+            copyStringToClipboard(url);
+            appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
+          }}
+          style={{ fontWeight: 'normal' }}
+        ></i>
+        <i
+          className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
+          onClick={() => {
+            onChangeRichHistoryProperty(query.ts, 'starred');
+            setStared(!starred);
+          }}
+        ></i>
+      </div>
+    </div>
   );
 };
