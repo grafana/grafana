@@ -1,8 +1,12 @@
+import moment from 'moment';
 import { alertRulesReducer, initialState, loadAlertRules, loadedAlertRules, setSearchQuery } from './reducers';
 import { AlertRuleDTO, AlertRulesState } from 'app/types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 describe('Alert rules', () => {
+  const newStateDate = moment()
+    .subtract(1, 'y')
+    .format('YYYY-MM-DD');
   const payload: AlertRuleDTO[] = [
     {
       id: 2,
@@ -12,7 +16,7 @@ describe('Alert rules', () => {
       panelId: 4,
       name: 'TestData - Always Alerting',
       state: 'alerting',
-      newStateDate: '2018-09-04T10:00:30+02:00',
+      newStateDate: `${newStateDate}T10:00:30+02:00`,
       evalDate: '0001-01-01T00:00:00Z',
       evalData: { evalMatches: [{ metric: 'A-series', tags: null, value: 215 }] },
       executionError: '',
@@ -26,7 +30,7 @@ describe('Alert rules', () => {
       panelId: 3,
       name: 'TestData - Always OK',
       state: 'ok',
-      newStateDate: '2018-09-04T10:01:01+02:00',
+      newStateDate: `${newStateDate}T10:01:01+02:00`,
       evalDate: '0001-01-01T00:00:00Z',
       evalData: {},
       executionError: '',
@@ -40,7 +44,7 @@ describe('Alert rules', () => {
       panelId: 3,
       name: 'TestData - ok',
       state: 'ok',
-      newStateDate: '2018-09-04T10:01:01+02:00',
+      newStateDate: `${newStateDate}T10:01:01+02:00`,
       evalDate: '0001-01-01T00:00:00Z',
       evalData: {},
       executionError: 'error',
@@ -54,7 +58,7 @@ describe('Alert rules', () => {
       panelId: 3,
       name: 'TestData - Paused',
       state: 'paused',
-      newStateDate: '2018-09-04T10:01:01+02:00',
+      newStateDate: `${newStateDate}T10:01:01+02:00`,
       evalDate: '0001-01-01T00:00:00Z',
       evalData: {},
       executionError: 'error',
@@ -68,7 +72,7 @@ describe('Alert rules', () => {
       panelId: 3,
       name: 'TestData - Ok',
       state: 'ok',
-      newStateDate: '2018-09-04T10:01:01+02:00',
+      newStateDate: `${newStateDate}T10:01:01+02:00`,
       evalDate: '0001-01-01T00:00:00Z',
       evalData: {
         noData: true,
@@ -122,7 +126,7 @@ describe('Alert rules', () => {
               executionError: '',
               id: 2,
               name: 'TestData - Always Alerting',
-              newStateDate: '2018-09-04T10:00:30+02:00',
+              newStateDate: `${newStateDate}T10:00:30+02:00`,
               panelId: 4,
               state: 'alerting',
               stateAge: 'a year',
@@ -140,7 +144,7 @@ describe('Alert rules', () => {
               executionError: '',
               id: 1,
               name: 'TestData - Always OK',
-              newStateDate: '2018-09-04T10:01:01+02:00',
+              newStateDate: `${newStateDate}T10:01:01+02:00`,
               panelId: 3,
               state: 'ok',
               stateAge: 'a year',
@@ -159,7 +163,7 @@ describe('Alert rules', () => {
               id: 3,
               info: 'Execution Error: error',
               name: 'TestData - ok',
-              newStateDate: '2018-09-04T10:01:01+02:00',
+              newStateDate: `${newStateDate}T10:01:01+02:00`,
               panelId: 3,
               state: 'ok',
               stateAge: 'a year',
@@ -177,7 +181,7 @@ describe('Alert rules', () => {
               executionError: 'error',
               id: 4,
               name: 'TestData - Paused',
-              newStateDate: '2018-09-04T10:01:01+02:00',
+              newStateDate: `${newStateDate}T10:01:01+02:00`,
               panelId: 3,
               state: 'paused',
               stateAge: 'a year',
@@ -198,7 +202,7 @@ describe('Alert rules', () => {
               id: 5,
               info: 'Query returned no data',
               name: 'TestData - Ok',
-              newStateDate: '2018-09-04T10:01:01+02:00',
+              newStateDate: `${newStateDate}T10:01:01+02:00`,
               panelId: 3,
               state: 'ok',
               stateAge: 'a year',
