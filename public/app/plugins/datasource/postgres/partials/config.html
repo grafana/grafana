@@ -29,44 +29,42 @@
 	</div>
 
 	<div class="gf-form">
-		<label class="gf-form-label width-7">SSL Mode</label>
+		<label class="gf-form-label width-7">SSL/TLS Mode</label>
 		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-			<select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" ng-init="ctrl.current.jsonData.sslmode"></select>
+			<select class="gf-form-input" ng-model="ctrl.current.jsonData.sslMode" ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" ng-init="ctrl.current.jsonData.sslMode"></select>
 			<info-popover mode="right-absolute">
-				This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+				This option determines whether or with what priority a secure TLS (SSL) TCP/IP connection will be negotiated with the server.
 			</info-popover>
 		</div>
+
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">SSL/TLS Root Certificate</span>
+			 <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslRootCertFile' placeholder="TLS root cert file"></input>
+			<info-popover mode="right-absolute">
+				If the selected TLS mode needs a TLS Root Certificate, provide the path to the file here.
+				  Be sure that the file is readable by the user executing the grafana process.
+			</info-popover>
+		</div>
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">SSL/TLS Client Certificate</span>
+			 <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslCertFile' placeholder="TLS user cert file"></input>
+			<info-popover mode="right-absolute">
+				If the selected TLS mode needs a TLS Client Certificate, provide the path to the file here.
+				  Be sure that the file is readable by the user executing the grafana process.
+			</info-popover>
+		</div>
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">SSL/TLS Client Key</span>
+			 <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslKeyFile' placeholder="TLS user key file"></input>
+			<info-popover mode="right-absolute">
+				If the selected TLS mode needs a TLS Client Key, provide the path to the file here.
+				  Be sure that the file is <i>only</i> readable by the user executing the grafana process.
+			</info-popover>
+		</div>
+
 	</div>
 </div>
 
-<b>Connection Certificate Files</b>
-
-<div class="gf-form-group">
-	<div class="gf-form max-width-30">
-		<span class="gf-form-label width-7">TLS Root Cert</span>
- 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslrootcertfile' placeholder="TLS root cert file"></input>
-		<info-popover mode="right-absolute">
-			If the selected TLS Mode needs a TLS Root Certificate, provide the path to the file here.
-      		Be sure that the file is readable by the user executing the grafana process.
-		</info-popover>
-	</div>
-	<div class="gf-form max-width-30">
-		<span class="gf-form-label width-7">TLS User Cert</span>
- 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslcertfile' placeholder="TLS user cert file"></input>
-		<info-popover mode="right-absolute">
-			If the selected TLS Mode needs a TLS Client Certificate, provide the path to the file here.
-      		Be sure that the file is readable by the user executing the grafana process.
-		</info-popover>
-	</div>
-	<div class="gf-form max-width-30">
-		<span class="gf-form-label width-7">TLS User Key</span>
- 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslkeyfile' placeholder="TLS user key file"></input>
-		<info-popover mode="right-absolute">
-			If the selected TLS Mode needs a TLS Client Key, provide the path to the file here.
-      		Be sure that the file is <i>only</i> readable by the user executing the grafana process.
-		</info-popover>
-	</div>
-</div>
 
 <b>Connection limits</b>
 

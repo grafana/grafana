@@ -48,20 +48,20 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
+	sslmode := datasource.JsonData.Get("sslMode").MustString("verify-full")
 
 	// Always pass SSL mode
 	sslopts := "sslmode=" + url.QueryEscape(sslmode)
 
 	// Attach root certificate if provided
-	if sslrootcert := datasource.JsonData.Get("sslrootcertfile").MustString(""); sslrootcert != "" {
-		logger.Debug("Setting CA certificate", "sslrootcert", sslrootcert)
+	if sslrootcert := datasource.JsonData.Get("sslRootCertFile").MustString(""); sslrootcert != "" {
+		logger.Debug("Setting CA certificate", "sslRootCert", sslrootcert)
 		sslopts += "&sslrootcert=" + url.QueryEscape(sslrootcert)
 	}
 
 	// Attach client certificate and key if both are provided
-	sslcert := datasource.JsonData.Get("sslcertfile").MustString("")
-	sslkey := datasource.JsonData.Get("sslkeyfile").MustString("")
+	sslcert := datasource.JsonData.Get("sslCertFile").MustString("")
+	sslkey := datasource.JsonData.Get("sslKeyFile").MustString("")
 	if sslcert != "" && sslkey != "" {
 		logger.Debug("Setting TLS client auth", "sslcert", sslcert, "sslkey", sslkey)
 		sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
