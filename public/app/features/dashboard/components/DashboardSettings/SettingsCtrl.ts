@@ -59,7 +59,7 @@ export class SettingsCtrl {
     this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
     this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
     this.selectors = e2e.pages.Dashboard.Settings.General.selectors;
-    this.useAngularTemplating = getConfig().featureToggles.newVariables === false;
+    this.useAngularTemplating = !getConfig().featureToggles.newVariables;
   }
 
   buildSectionList() {
