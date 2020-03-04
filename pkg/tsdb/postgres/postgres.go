@@ -48,7 +48,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
-	sslmode := datasource.JsonData.Get("sslMode").MustString("verify-full")
+	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
 
 	// Always pass SSL mode
 	sslopts := "sslmode=" + url.QueryEscape(sslmode)
