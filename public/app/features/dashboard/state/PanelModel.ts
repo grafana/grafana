@@ -146,6 +146,7 @@ export class PanelModel {
     // this should not be removed in save model as exporter needs to templatize it
     this.datasource = null;
     this.restoreModel(model);
+    this.replaceVariables = this.replaceVariables.bind(this);
   }
 
   /** Given a persistened PanelModel restores property values */
