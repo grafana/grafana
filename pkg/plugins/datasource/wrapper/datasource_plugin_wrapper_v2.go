@@ -49,6 +49,12 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 			},
 		},
 		Queries: []*pluginv2.DataQuery{},
+		User: &pluginv2.User{
+			Name:  query.User.Name,
+			Login: query.User.Login,
+			Email: query.User.Email,
+			Role:  string(query.User.OrgRole),
+		},
 	}
 
 	for _, q := range query.Queries {
