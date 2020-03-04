@@ -23,6 +23,7 @@ class GitHubRelease {
   username: string;
   commitHash: string;
   releaseNotes: string;
+
   constructor(token: string, username: string, commitHash: string, releaseNotes: string) {
     // Get the ghr binary according to platform
     this.getGhr();
