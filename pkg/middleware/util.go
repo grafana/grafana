@@ -27,6 +27,14 @@ func Gziper() macaron.Handler {
 			return
 		}
 
+		if strings.HasPrefix(requestPath, "/api/datasources/") && strings.Contains(requestPath, "/resources") {
+			return
+		}
+
+		if strings.HasPrefix(requestPath, "/api/plugins/") && strings.Contains(requestPath, "/resources") {
+			return
+		}
+
 		if _, err := ctx.Invoke(gziper); err != nil {
 			gziperLogger.Error("Invoking gzip handler failed", "err", err)
 		}
