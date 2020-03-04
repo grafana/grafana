@@ -22,16 +22,28 @@ Any changes you make to a dashboard used in a report are reflected the next time
 ## Requirements
 
 * SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../installation/configuration.md#smtp" >}}) in [Configuration]({{< relref "../installation/configuration.md" >}}) for more information.
-* The Image Renderer plugin must be installed or the remote rendering service must be set up.
+* The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
 
-> Reporting requires the [rendering plugin]({{< relref "../administration/image_rendering.md#grafana-image-renderer-plugin" >}}).
+## Create or update a report
 
-
-## Usage
+Currently only Organization Admins can create reports.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-Currently only Organisation Admins can create reports. To get to report click on the reports icon in the side menu. This will allow you to list, create and update your reports.
+1. Click on the reports icon in the side menu. The Reports tab allow you to view, create, and update your reports.
+1. Enter report information.
+   * Name
+   * Choose dashboard
+   * Recipients
+   * Reply to
+   * Custom message 
+1. Preview the report to make sure it appears as you expect. Update if necessary.
+1. Enter scheduling information. Options vary depending on the frequency you select.
+1. Save the report.
+
+
+
+
 
 | Setting       | Description                                                       |
 | --------------|------------------------------------------------------------------ |
