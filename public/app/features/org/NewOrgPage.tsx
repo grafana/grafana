@@ -1,9 +1,12 @@
 import React, { FC } from 'react';
-import { NavModelSrv } from 'app/core/core';
 import { getBackendSrv } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
 import { Forms } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
+import { StoreState } from 'app/types';
+import { hot } from 'react-hot-loader';
+import { connect } from 'react-redux';
+import { NavModelItem } from '@grafana/data';
 
 const createOrg = (newOrg: { name: string }) => {
   getBackendSrv()
@@ -17,11 +20,13 @@ const createOrg = (newOrg: { name: string }) => {
     });
 };
 
-export const NewOrgPage: FC = () => {
-  const navModel = new NavModelSrv().getNav('admin', 'global-orgs', 0);
-  console.log(navModel);
+interface PropsWithState {
+  navModel: NavModelItem;
+}
+
+export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
   return (
-    <Page navModel={navModel}>
+    <Page navModel={{ main: navModel.parentItem, node: navModel.parentItem }}>
       <Page.Contents>
         <h3 className="page-sub-heading">New Organization</h3>
 
@@ -57,4 +62,8 @@ export const NewOrgPage: FC = () => {
   );
 };
 
-export default NewOrgPage;
+const mapStateToProps = (state: StoreState) => {
+  return { navModel: state.navIndex['global-orgs'] };
+};
+
+export default hot(module)(connect(mapStateToProps)(NewOrgPage));
