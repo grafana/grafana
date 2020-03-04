@@ -42,6 +42,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
+  replaceVariables: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -175,13 +176,13 @@ export class PanelModel {
     return this.options;
   }
 
-  replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
+  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
     let vars = this.scopedVars;
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
     return templateSrv.replace(value, vars, format);
-  };
+  }
 
   updateOptions(options: object) {
     this.options = options;
@@ -417,12 +418,7 @@ export class PanelModel {
       theme: config.theme,
     });
 
-    this.getQueryRunner()
-      .getData()
-      .pipe(take(1))
-      .subscribe(val => {
-        this.getQueryRunner().pipeDataToSubject(val);
-      });
+    this.getQueryRunner().resendLastResult();
   }
 }
 

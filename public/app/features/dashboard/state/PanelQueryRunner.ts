@@ -57,7 +57,6 @@ export class PanelQueryRunner {
   private subscription?: Unsubscribable;
   private transformations?: DataTransformerConfig[];
   private fieldOverrideOptions?: ApplyFieldOverrideOptions;
-  private lastResultUnprocessed?: PanelData;
   private lastResult?: PanelData;
 
   constructor() {
@@ -71,27 +70,24 @@ export class PanelQueryRunner {
     return this.subject.pipe(
       // apply overrides
       map((data: PanelData) => {
-        // field overrides are applied on the unprocessed query results
-        let processedData: PanelData = this.lastResultUnprocessed;
         if (this.fieldOverrideOptions) {
-          processedData = {
+          const series = applyFieldOverrides({ data: data.series, ...this.fieldOverrideOptions });
+          return {
             ...data,
-            series: applyFieldOverrides({ data: processedData.series, ...this.fieldOverrideOptions }),
+            series,
           };
         }
-        return processedData;
+        return data;
       }),
       // apply transformations
       map((data: PanelData) => {
-        let processedData: PanelData = data;
-
         if (transform && this.hasTransformations()) {
-          processedData = {
+          return {
             ...data,
             series: transformDataFrame(this.transformations, data.series),
           };
         }
-        return processedData;
+        return data;
       })
     );
   }
@@ -114,7 +110,6 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
-      // delayStateNotification,
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
@@ -181,7 +176,6 @@ export class PanelQueryRunner {
       next: (data: PanelData) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
-        this.lastResultUnprocessed = this.lastResult;
         this.subject.next(this.lastResult);
       },
     });
@@ -190,6 +184,12 @@ export class PanelQueryRunner {
   pipeDataToSubject = (data: PanelData) => {
     this.subject.next(data);
     this.lastResult = data;
+  };
+
+  resendLastResult = () => {
+    if (this.lastResult) {
+      this.subject.next(this.lastResult);
+    }
   };
 
   setTransformations(transformations?: DataTransformerConfig[]) {
