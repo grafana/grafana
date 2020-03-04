@@ -1,20 +1,20 @@
 import { cloneDeep } from 'lodash';
 import {
+  hideOptions,
+  initialState as optionsPickerInitialState,
+  moveOptionsHighlight,
   optionsPickerReducer,
   OptionsPickerState,
-  initialState as optionsPickerInitialState,
-  toggleOption,
   showOptions,
-  hideOptions,
-  toggleTag,
-  moveOptionsHighlight,
   toggleAllOptions,
+  toggleOption,
+  toggleTag,
   updateOptionsAndFilter,
-  updateSearchQuery,
   updateOptionsFromSearch,
+  updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { VariableWithMultiSupport, VariableTag } from '../../variable';
+import { VariableTag, VariableWithMultiSupport } from '../../variable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
@@ -292,7 +292,7 @@ describe('optionsPickerReducer', () => {
           ...initialState,
           options: payload.options,
           searchQuery,
-          uuid: payload.uuid,
+          uuid: payload.uuid!,
           multi: payload.multi,
           selectedValues: [selected],
         });

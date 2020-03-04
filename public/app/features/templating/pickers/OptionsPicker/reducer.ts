@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import _, { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { containsSearchFilter, VariableOption, VariableTag, VariableWithMultiSupport } from '../../variable';
 import { ALL_VARIABLE_TEXT } from '../../state/types';
 import { isQuery } from '../../guard';
@@ -23,7 +23,7 @@ export interface OptionsPickerState {
 }
 
 export const initialState: OptionsPickerState = {
-  uuid: null,
+  uuid: '',
   highlightIndex: -1,
   searchQuery: null,
   selectedTags: [],
@@ -54,13 +54,13 @@ const optionsPickerSlice = createSlice({
   initialState,
   reducers: {
     showOptions: (state, action: PayloadAction<VariableWithMultiSupport>): OptionsPickerState => {
-      const { query, options, multi, uuid } = action.payload;
+      const { query, options, multi } = action.payload;
 
       state.highlightIndex = -1;
       state.options = cloneDeep(options);
       state.tags = getTags(action.payload);
       state.multi = multi ?? false;
-      state.uuid = uuid;
+      state.uuid = action.payload.uuid!;
       // new behaviour, if this is a query that uses searchfilter it might be a nicer
       // user experience to show the last typed search query in the input field
       const queryHasSearchFilter = containsSearchFilter(query);

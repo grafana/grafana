@@ -6,7 +6,7 @@ import { VariableLink } from '../shared/VariableLink';
 import { VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
 import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
-import { VariableWithOptions, VariableWithMultiSupport, VariableOption, VariableTag } from '../../variable';
+import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
 import { VariableOptions } from '../shared/VariableOptions';
 import { VariablePickerProps } from '../../state/types';
 import { isQuery } from '../../guard';

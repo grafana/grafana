@@ -148,7 +148,7 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
       });
 
       if (hasTags(current) && isQuery(instanceState)) {
-        const selected = current.tags.reduce((all: Record<string, boolean>, tag) => {
+        const selected = current!.tags!.reduce((all: Record<string, boolean>, tag) => {
           all[tag.text.toString()] = tag.selected;
           return all;
         }, {});

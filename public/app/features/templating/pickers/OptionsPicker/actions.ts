@@ -2,26 +2,26 @@ import debounce from 'lodash/debounce';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import {
   containsSearchFilter,
+  QueryVariableModel,
   VariableOption,
+  VariableRefresh,
+  VariableTag,
   VariableWithMultiSupport,
   VariableWithOptions,
-  VariableTag,
-  QueryVariableModel,
-  VariableRefresh,
 } from '../../variable';
-import { toVariablePayload, setCurrentVariableValue } from '../../state/actions';
+import { setCurrentVariableValue, toVariablePayload } from '../../state/actions';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../shared/types';
 import {
   hideOptions,
+  moveOptionsHighlight,
   OptionsPickerState,
+  toggleOption,
+  toggleTag,
+  updateOptionsAndFilter,
   updateOptionsFromSearch,
   updateSearchQuery,
-  updateOptionsAndFilter,
-  toggleOption,
-  moveOptionsHighlight,
-  toggleTag,
 } from './reducer';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -56,7 +56,7 @@ export const navigateOptions = (key: NavigationKey, clearOthers: boolean): Thunk
 export const filterOrSearchOptions = (searchQuery: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { uuid } = getState().templating.optionsPicker;
-    const { query, options } = getVariable<VariableWithOptions>(uuid, getState());
+    const { query, options } = getVariable<VariableWithOptions>(uuid!, getState());
     dispatch(updateSearchQuery(searchQuery));
 
     if (containsSearchFilter(query)) {
@@ -110,9 +110,14 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
     const picker = getState().templating.optionsPicker;
     const variable = getVariable<QueryVariableModel>(picker.uuid, getState());
 
-    const datasources = await getDataSourceSrv().get(variable.datasource);
+    const datasources = await getDataSourceSrv().get(variable.datasource ?? '');
     const query = variable.tagValuesQuery.replace('$tag', tagText);
     const options = { range: getTimeRange(variable), variable };
+
+    if (!datasources.metricFindQuery) {
+      return [];
+    }
+
     const results = await datasources.metricFindQuery(query, options);
 
     if (!Array.isArray(results)) {
@@ -146,7 +151,7 @@ const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreSt
 
 const searchForOptionsWithDebounce = debounce(searchForOptions, 500);
 
-function mapToCurrent(picker: OptionsPickerState): VariableOption {
+function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
   const { options, searchQuery, multi } = picker;
 
   if (options.length === 0 && searchQuery && searchQuery.length > 0) {

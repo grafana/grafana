@@ -5,7 +5,7 @@ import { NavigationKey } from './types';
 export interface Props {
   onChange: (value: string) => void;
   onNavigate: (key: NavigationKey, clearOthers: boolean) => void;
-  value: string;
+  value: string | null;
 }
 
 export class VariableInput extends PureComponent<Props> {
@@ -23,7 +23,7 @@ export class VariableInput extends PureComponent<Props> {
   };
 
   private shouldUpdateValue(value: string) {
-    return trim(value).length > 0 || trim(this.props.value).length > 0;
+    return trim(value ?? '').length > 0 || trim(this.props.value ?? '').length > 0;
   }
 
   render() {
