@@ -24,6 +24,10 @@ interface PropsWithState {
   navModel: NavModelItem;
 }
 
+interface CreateOrgFormDTO {
+  name: string;
+}
+
 export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
   return (
     <Page navModel={{ main: navModel.parentItem, node: navModel.parentItem }}>
@@ -36,7 +40,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
           deployments.{' '}
         </p>
 
-        <Forms.Form<{ name: string }> onSubmit={createOrg}>
+        <Forms.Form<CreateOrgFormDTO> onSubmit={createOrg}>
           {({ register, errors }) => {
             return (
               <>
