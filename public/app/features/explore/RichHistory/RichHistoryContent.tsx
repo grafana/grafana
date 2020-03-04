@@ -14,7 +14,7 @@ import {
   SortOrder,
   mapNumbertoTimeInSlider,
   createRetentionPeriodBoundary,
-  createDateStringFromTs,
+  createQueryHeading,
 } from '../../../core/utils/explore';
 
 // Components
@@ -230,13 +230,12 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
         <div className={styles.containerContent}>
           {selectorsAndSorter()}
           {queriesWithinSelectedTimeline.map((q, i) => {
-            const previousDateString = i > 0 ? createDateStringFromTs(queriesWithinSelectedTimeline[i - 1].ts) : '';
-            const currentDateString = createDateStringFromTs(q.ts);
-
-            if (currentDateString !== previousDateString) {
+            let currentHeading = createQueryHeading(q, sortOrder);
+            let previousHeading = i > 0 ? createQueryHeading(queriesWithinSelectedTimeline[i - 1], sortOrder) : '';
+            if (currentHeading !== previousHeading) {
               return (
                 <div key={q.ts}>
-                  <div className={styles.heading}>{currentDateString}</div>
+                  <div className={styles.heading}>{currentHeading}</div>
                   <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />
                 </div>
               );

@@ -376,7 +376,6 @@ export function addToRichHistory(
       { queries: queriesToSave, ts, datasourceId, datasourceName, starred, comment, sessionName },
       ...queriesToKeep,
     ];
-    console.log(newHistory);
 
     /* Combine all queries of a datasource type into one rich history */
     const richHistoryKey = 'grafana.explore.richHistory';
@@ -638,12 +637,12 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
   }
 
-  if (sortOrder === SortOrder.DatasourceAZ) {
+  if (sortOrder === SortOrder.DatasourceZA) {
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
       a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0;
   }
 
-  if (sortOrder === SortOrder.DatasourceZA) {
+  if (sortOrder === SortOrder.DatasourceAZ) {
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
       a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0;
   }
@@ -727,4 +726,14 @@ export function createDateStringFromTs(ts: number) {
 
 export function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
+}
+
+export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder) {
+  let heading = '';
+  if (sortOrder === SortOrder.DatasourceAZ || sortOrder === SortOrder.DatasourceZA) {
+    heading = query.datasourceName;
+  } else {
+    heading = createDateStringFromTs(query.ts);
+  }
+  return heading;
 }
