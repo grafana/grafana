@@ -1,17 +1,21 @@
 import { Task, TaskRunner } from './task';
-import { execLine, getPluginVersion } from '../utils/execLine';
+import { getPluginJson } from '../../config/utils/pluginValidation';
 import { GitHubRelease } from '../utils/githubRelease';
+import path = require('path');
+
 // @ts-ignore
 import execa = require('execa');
 
 const releaseNotes = () => {
-  return execLine(`awk \'BEGIN {FS="##"; RS=""} FNR==3 {print; exit}\' CHANGELOG.md'`);
+  return execLine(`awk \'BEGIN {FS="##"; RS=""} FNR==3 {print; exit}\' CHANGELOG.md`);
 };
 
 const checkoutBranch = async (branchName: string, options: string): Promise<string> => {
   const currentBranch = await execLine(`git rev-parse --abbrev-ref HEAD`);
   const createBranch =
-    (await execLine(`git branch -a | grep ${branchName} | grep -v remote`)) === branchName ? '' : '-b';
+    (await execLine(`git branch -a | grep ${branchName} | grep -v remote || echo 'No release found'`)) === branchName
+      ? ''
+      : '-b';
   if (currentBranch !== branchName) {
     return `git checkout ${createBranch} ${branchName}`;
   }
@@ -23,8 +27,14 @@ export interface GithuPublishOptions {
   verbose?: boolean;
 }
 
+const execLine = async (line: string): Promise<string> => {
+  const { stdout } = await execa.shell(line);
+  return stdout;
+};
+
 const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, verbose }) => {
-  const pluginVersion = getPluginVersion();
+  const distDir = path.resolve(process.cwd(), 'dist');
+  const pluginVersion = getPluginJson(path.resolve(distDir, 'plugin.json')).info.version;
   const options = dryrun ? '--dry-run' : '';
   const GIT_EMAIL = 'eng@grafana.com';
   const GIT_USERNAME = 'CircleCI Automation';
