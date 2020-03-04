@@ -40,7 +40,7 @@ const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, ve
     throw `Github publish requires that you set the environment variable GITHUB_TOKEN to a valid github api token.
     See: https://github.com/settings/tokens for more details.`;
   }
-  const gitRelease = new GitHubRelease(githubToken, GIT_USERNAME, '', await releaseNotes());
+  const gitRelease = new GitHubRelease(githubToken, GIT_USERNAME, await releaseNotes());
   const githubPublishScript: string[] = [
     `git config user.email ${GIT_EMAIL}`,
     `git config user.name "${GIT_USERNAME}"`,

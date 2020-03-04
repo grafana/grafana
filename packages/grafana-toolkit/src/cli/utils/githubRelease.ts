@@ -21,15 +21,13 @@ const ghrPlatform = (): string => {
 class GitHubRelease {
   token: string;
   username: string;
-  commitHash: string;
   releaseNotes: string;
 
-  constructor(token: string, username: string, commitHash: string, releaseNotes: string) {
+  constructor(token: string, username: string, releaseNotes: string) {
     // Get the ghr binary according to platform
     this.getGhr();
     this.token = token;
     this.username = username;
-    this.commitHash = commitHash;
     this.releaseNotes = releaseNotes;
   }
 
@@ -55,16 +53,17 @@ class GitHubRelease {
   release() {
     const PUBLISH_DIR = path.resolve(getCiFolder(), 'packages');
     const distDir = path.resolve(process.cwd(), 'dist');
-    const pluginVersion = getPluginJson(path.resolve(distDir, 'plugin.json')).info.version;
+    const pluginInfo = getPluginJson(path.resolve(distDir, 'plugin.json')).info;
+    const commitHash = pluginInfo.build?.hash;
     execa.shell(`ghr
       -t "${this.token}"
       -u "${this.username}"
       -r "${getPluginId()}"
-      -c "${this.commitHash}"
-      -n "${getPluginId()}_v${pluginVersion}"
+      -c "${commitHash}"
+      -n "${getPluginId()}_v${pluginInfo.version}"
       -b "${this.releaseNotes}"
       -delete
-      "v${pluginVersion}"
+      "v${pluginInfo.version}"
       ${PUBLISH_DIR}`);
   }
 }
