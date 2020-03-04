@@ -33,8 +33,14 @@ const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, ve
   const options = dryrun ? '--dry-run' : '';
   const GIT_EMAIL = 'eng@grafana.com';
   const GIT_USERNAME = 'CircleCI Automation';
-  const GITHUB_TOKEN = '';
-  const gitRelease = new GitHubRelease(GITHUB_TOKEN, GIT_USERNAME, '', await releaseNotes());
+  let githubToken = '';
+  if (process.env['GITHUB_TOKEN']) {
+    githubToken = process.env['GITHUB_TOKEN'];
+  } else {
+    throw `Github publish requires that you set the environment variable GITHUB_TOKEN to a valid github api token.
+    See: https://github.com/settings/tokens for more details.`;
+  }
+  const gitRelease = new GitHubRelease(githubToken, GIT_USERNAME, '', await releaseNotes());
   const githubPublishScript: string[] = [
     `git config user.email ${GIT_EMAIL}`,
     `git config user.name "${GIT_USERNAME}"`,
