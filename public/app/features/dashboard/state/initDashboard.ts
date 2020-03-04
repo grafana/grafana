@@ -24,6 +24,7 @@ import { DashboardModel } from './DashboardModel';
 import { DataQuery } from '@grafana/data';
 import { getConfig } from '../../../core/config';
 import { initDashboardTemplating, processVariables } from '../../templating/state/actions';
+import { variableAdapters } from '../../templating/adapters';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -187,7 +188,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         const list =
           dashboard.variables.list.length > 0
             ? dashboard.variables.list
-            : dashboard.templating.list.filter(v => v.type === 'query');
+            : dashboard.templating.list.filter(v => variableAdapters.contains(v.type));
         await dispatch(initDashboardTemplating(list));
         await dispatch(processVariables());
       }

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { ScopedVars } from '@grafana/data';
 
 import { assignModelProperties } from 'app/core/utils/model_utils';
-import { Deferred } from './deferred';
+import { Deferred } from '../../core/utils/deferred';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier

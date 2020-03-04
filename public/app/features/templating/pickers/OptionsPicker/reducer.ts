@@ -3,7 +3,7 @@ import { cloneDeep } from 'lodash';
 import { containsSearchFilter, VariableOption, VariableTag, VariableWithMultiSupport } from '../../variable';
 import { ALL_VARIABLE_TEXT } from '../../state/types';
 import { isQuery } from '../../guard';
-import { applyStateChanges } from '../../state/applyStateChanges';
+import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 
 export interface ToggleOption {
   option: VariableOption;

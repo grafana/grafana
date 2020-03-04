@@ -1,11 +1,11 @@
 import { createReducer } from '@reduxjs/toolkit';
 import { ConstantVariableModel, VariableHide, VariableOption } from '../variable';
-import { emptyUuid, getInstanceState } from '../state/types';
+import { EMPTY_UUID, getInstanceState } from '../state/types';
 import { createConstantOptionsFromQuery } from './actions';
 import { initialVariablesState } from '../state/variablesReducer';
 
 export const initialConstantVariableModelState: ConstantVariableModel = {
-  uuid: emptyUuid,
+  uuid: EMPTY_UUID,
   global: false,
   type: 'constant',
   name: '',

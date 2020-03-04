@@ -1,5 +1,5 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { emptyUuid } from '../state/types';
+import { EMPTY_UUID } from '../state/types';
 import { StoreState } from '../../../types';
 import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
@@ -79,7 +79,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             >
               Variables
             </a>
-            {this.props.idInEditor === emptyUuid && (
+            {this.props.idInEditor === EMPTY_UUID && (
               <span>
                 <i
                   className="fa fa-fw fa-chevron-right"
@@ -88,7 +88,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
                 New
               </span>
             )}
-            {this.props.idInEditor && this.props.idInEditor !== emptyUuid && (
+            {this.props.idInEditor && this.props.idInEditor !== EMPTY_UUID && (
               <span>
                 <i
                   className="fa fa-fw fa-chevron-right"

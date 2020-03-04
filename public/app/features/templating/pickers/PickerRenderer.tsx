@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { FunctionComponent, useMemo } from 'react';
 import { VariableHide, VariableModel } from '../variable';
 import { e2e } from '@grafana/e2e';
 import { variableAdapters } from '../adapters';
@@ -7,28 +7,27 @@ interface Props {
   variable: VariableModel;
 }
 
-export class PickerRenderer extends PureComponent<Props> {
-  render() {
-    if (!this.props.variable) {
-      return <div>Couldn't load variable</div>;
-    }
+export const PickerRenderer: FunctionComponent<Props> = props => {
+  const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
+  const labelOrName = useMemo(() => props.variable.label || props.variable.name, [props.variable]);
 
-    const { hide, label, name } = this.props.variable;
-    const labelOrName = label || name;
-    const PickerToRender = variableAdapters.get(this.props.variable.type).picker;
-
-    return (
-      <div className="gf-form">
-        {hide === VariableHide.dontHide && (
-          <label
-            className="gf-form-label template-variable"
-            aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemLabels(labelOrName)}
-          >
-            {labelOrName}
-          </label>
-        )}
-        {hide !== VariableHide.hideVariable && PickerToRender && <PickerToRender variable={this.props.variable} />}
-      </div>
-    );
+  if (!props.variable) {
+    return <div>Couldn't load variable</div>;
   }
-}
+
+  return (
+    <div className="gf-form">
+      {props.variable.hide === VariableHide.dontHide && (
+        <label
+          className="gf-form-label template-variable"
+          aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItemLabels(labelOrName)}
+        >
+          {labelOrName}
+        </label>
+      )}
+      {props.variable.hide !== VariableHide.hideVariable && PickerToRender && (
+        <PickerToRender variable={props.variable} />
+      )}
+    </div>
+  );
+};

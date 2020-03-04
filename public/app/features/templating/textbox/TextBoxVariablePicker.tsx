@@ -28,10 +28,6 @@ export class TextBoxVariablePicker extends PureComponent<Props> {
   };
 
   render() {
-    if (!this.props.variable) {
-      return <div>Couldn't load variable</div>;
-    }
-
     return (
       <input
         type="text"

@@ -1,12 +1,12 @@
 import { createReducer } from '@reduxjs/toolkit';
 
 import { TextBoxVariableModel, VariableHide, VariableOption } from '../variable';
-import { emptyUuid, getInstanceState } from '../state/types';
+import { EMPTY_UUID, getInstanceState } from '../state/types';
 import { createTextBoxOptions } from './actions';
 import { initialVariablesState } from '../state/variablesReducer';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
-  uuid: emptyUuid,
+  uuid: EMPTY_UUID,
   global: false,
   index: -1,
   type: 'textbox',

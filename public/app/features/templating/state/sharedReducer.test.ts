@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { sharedReducer } from './sharedReducer';
 import { QueryVariableModel, VariableHide } from '../variable';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, emptyUuid } from './types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID } from './types';
 import {
   addVariable,
   changeVariableOrder,
@@ -19,7 +19,7 @@ import {
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
-import { Deferred } from '../deferred';
+import { Deferred } from '../../../core/utils/deferred';
 import { getVariableState, getVariableTestContext } from './helpers';
 import { initialVariablesState, VariablesState } from './variablesReducer';
 
@@ -239,21 +239,21 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
           },
-          [emptyUuid]: {
-            uuid: emptyUuid,
+          [EMPTY_UUID]: {
+            uuid: EMPTY_UUID,
             type: 'query',
-            name: `Name-${emptyUuid}`,
+            name: `Name-${EMPTY_UUID}`,
             hide: VariableHide.dontHide,
             index: 3,
-            label: `Label-${emptyUuid}`,
+            label: `Label-${EMPTY_UUID}`,
             skipUrlSync: false,
           },
           [11]: {
             ...initialQueryVariableModelState,
             uuid: '11',
-            name: `Name-${emptyUuid}`,
+            name: `Name-${EMPTY_UUID}`,
             index: 3,
-            label: `Label-${emptyUuid}`,
+            label: `Label-${EMPTY_UUID}`,
           },
         });
     });

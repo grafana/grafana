@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { getTagColorsFromName } from '@grafana/ui';
+import { getTagColorsFromName, Tooltip } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { VariableOption, VariableTag } from '../../variable';
 
@@ -108,17 +108,20 @@ export class VariableOptions extends PureComponent<Props> {
     }
 
     return (
-      <a
-        className={`${
-          selectedValues.length > 1 ? 'variable-options-column-header many-selected' : 'variable-options-column-header'
-        }`}
-        onClick={this.onToggleAll}
-        // bs-tooltip="'Clear selections'"
-        data-placement="top"
-      >
-        <span className="variable-option-icon"></span>
-        Selected ({selectedValues.length})
-      </a>
+      <Tooltip content={'Clear selections'} placement={'top'}>
+        <a
+          className={`${
+            selectedValues.length > 1
+              ? 'variable-options-column-header many-selected'
+              : 'variable-options-column-header'
+          }`}
+          onClick={this.onToggleAll}
+          data-placement="top"
+        >
+          <span className="variable-option-icon"></span>
+          Selected ({selectedValues.length})
+        </a>
+      </Tooltip>
     );
   }
 }

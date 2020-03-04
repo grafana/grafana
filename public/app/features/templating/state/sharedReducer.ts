@@ -14,10 +14,10 @@ import {
   storeNewVariable,
 } from './actions';
 import { VariableModel, VariableOption, VariableWithOptions } from '../variable';
-import { ALL_VARIABLE_VALUE, emptyUuid, getInstanceState } from './types';
+import { ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
-import { Deferred } from '../deferred';
+import { Deferred } from '../../../core/utils/deferred';
 import { initialVariablesState } from './variablesReducer';
 import { isQuery } from '../guard';
 
@@ -79,7 +79,7 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
     })
     .addCase(storeNewVariable, (state, action) => {
       const uuid = action.payload.uuid!;
-      const emptyVariable = cloneDeep<VariableModel>(state[emptyUuid]);
+      const emptyVariable = cloneDeep<VariableModel>(state[EMPTY_UUID]);
       state[uuid!] = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...emptyVariable,

@@ -15,7 +15,7 @@ import templateSrv from '../template_srv';
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
-  emptyUuid,
+  EMPTY_UUID,
   getInstanceState,
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
@@ -31,7 +31,7 @@ export interface QueryVariableEditorState {
 }
 
 export const initialQueryVariableModelState: QueryVariableModel = {
-  uuid: emptyUuid,
+  uuid: EMPTY_UUID,
   global: false,
   index: -1,
   type: 'query',

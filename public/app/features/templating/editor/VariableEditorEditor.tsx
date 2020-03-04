@@ -5,7 +5,7 @@ import { FormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 import { changeVariableProp, changeVariableType, toVariablePayload, VariableIdentifier } from '../state/actions';
 import { variableAdapters } from '../adapters';
-import { emptyUuid } from '../state/types';
+import { EMPTY_UUID } from '../state/types';
 import { VariableHide, VariableModel, VariableType } from '../variable';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
@@ -95,11 +95,11 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
       return;
     }
 
-    if (this.props.variable.uuid !== emptyUuid) {
+    if (this.props.variable.uuid !== EMPTY_UUID) {
       await this.props.onEditorUpdate(this.props.identifier);
     }
 
-    if (this.props.variable.uuid === emptyUuid) {
+    if (this.props.variable.uuid === EMPTY_UUID) {
       await this.props.onEditorAdd(this.props.identifier);
     }
   };
@@ -109,7 +109,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     if (!EditorToRender) {
       return null;
     }
-    const newVariable = this.props.variable.uuid && this.props.variable.uuid === emptyUuid;
+    const newVariable = this.props.variable.uuid && this.props.variable.uuid === EMPTY_UUID;
 
     return (
       <div>

@@ -45,10 +45,6 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
     const { variable, picker } = this.props;
     const showOptions = picker.uuid === variable.uuid;
 
-    if (!variable) {
-      return <div>Couldn't load variable</div>;
-    }
-
     return (
       <div className="variable-link-wrapper">
         {this.renderLink(showOptions, variable)}
