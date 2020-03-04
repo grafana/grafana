@@ -85,7 +85,10 @@ export const updateDatasourcePluginSecureJsonDataOption = <J, S extends {} = Key
   });
 };
 
-export function updateDatasourcePluginResetOption(props: DataSourcePluginOptionsEditorProps, key: string) {
+export const updateDatasourcePluginResetOption = <J, S extends {} = KeyValue>(
+  props: DataSourcePluginOptionsEditorProps,
+  key: string
+) => {
   const config = props.options;
 
   props.onOptionsChange({
@@ -99,4 +102,4 @@ export function updateDatasourcePluginResetOption(props: DataSourcePluginOptions
       [key]: false,
     },
   });
-}
+};

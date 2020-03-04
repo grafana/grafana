@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"text/template"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -28,7 +28,7 @@ func InterpolateString(text string, data templateData) (string, error) {
 
 // InterpolateURL accepts template data and return a string with substitutions
 func InterpolateURL(anURL *url.URL, route *plugins.AppPluginRoute, orgID int64, appID string) (*url.URL, error) {
-	query := m.GetPluginSettingByIdQuery{OrgId: orgID, PluginId: appID}
+	query := models.GetPluginSettingByIdQuery{OrgId: orgID, PluginId: appID}
 	result, err := url.Parse(anURL.String())
 	if query.Result != nil {
 		if len(query.Result.JsonData) > 0 {
