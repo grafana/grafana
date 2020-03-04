@@ -88,6 +88,8 @@ func (s *Server) Run() (err error) {
 	login.Init()
 	social.NewOAuthService()
 
+	s.log.Info("Hello world!")
+
 	services := registry.GetServices()
 
 	if err = s.buildServiceGraph(services); err != nil {
