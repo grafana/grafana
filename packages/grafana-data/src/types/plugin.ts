@@ -123,7 +123,7 @@ export interface PluginConfigPage<T extends PluginMeta> {
 
 export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // Meta is filled in by the plugin loading system
-  meta?: T;
+  meta: T;
 
   // This is set if the plugin system had errors loading the plugin
   loadError?: boolean;
@@ -141,5 +141,9 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
     }
     this.configPages.push(tab);
     return this;
+  }
+
+  constructor() {
+    this.meta = {} as T;
   }
 }

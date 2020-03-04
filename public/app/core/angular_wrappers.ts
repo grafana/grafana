@@ -23,6 +23,11 @@ import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import {
+  SaveDashboardAsButtonConnected,
+  SaveDashboardButtonConnected,
+} from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -135,5 +140,29 @@ export function registerAngularDirectives() {
     'showAccessOptions',
     'dataSourceConfig',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('folderPicker', FolderPicker, [
+    'labelClass',
+    'rootName',
+    'enableCreateNew',
+    'enableReset',
+    'initialTitle',
+    'initialFolderId',
+    'dashboardId',
+    'onCreateFolder',
+    ['enterFolderCreation', { watchDepth: 'reference', wrapApply: true }],
+    ['exitFolderCreation', { watchDepth: 'reference', wrapApply: true }],
+    ['onLoad', { watchDepth: 'reference', wrapApply: true }],
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('saveDashboardButton', SaveDashboardButtonConnected, [
+    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
+    'variant',
+    'useNewForms',
+    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }

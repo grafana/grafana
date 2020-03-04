@@ -32,7 +32,15 @@ describe('dashboard reducer', () => {
     beforeEach(() => {
       state = dashboardReducer(initialState, dashboardInitFetching());
       state = dashboardReducer(state, dashboardInitSlow());
-      state = dashboardReducer(state, dashboardInitCompleted(new DashboardModel({ title: 'My dashboard' })));
+      state = dashboardReducer(
+        state,
+        dashboardInitCompleted(
+          new DashboardModel({
+            title: 'My dashboard',
+            panels: [{ id: 1 }, { id: 2 }],
+          })
+        )
+      );
     });
 
     it('should set model', async () => {
@@ -41,6 +49,11 @@ describe('dashboard reducer', () => {
 
     it('should set reset isInitSlow', async () => {
       expect(state.isInitSlow).toBe(false);
+    });
+
+    it('should create panel state', async () => {
+      expect(state.panels['1']).toBeDefined();
+      expect(state.panels['2']).toBeDefined();
     });
   });
 

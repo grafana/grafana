@@ -25,6 +25,8 @@ var (
 	oauthJwtTokenCache = oauthJwtTokenCacheType{
 		cache: map[string]*oauth2.Token{},
 	}
+	// timeNow makes it possible to test usage of time
+	timeNow = time.Now
 )
 
 type tokenCacheType struct {
@@ -44,9 +46,39 @@ type accessTokenProvider struct {
 }
 
 type jwtToken struct {
-	ExpiresOn       time.Time `json:"-"`
-	ExpiresOnString string    `json:"expires_on"`
-	AccessToken     string    `json:"access_token"`
+	ExpiresOn   time.Time
+	AccessToken string
+}
+
+func (token *jwtToken) UnmarshalJSON(b []byte) error {
+	var t struct {
+		AccessToken string       `json:"access_token"`
+		ExpiresOn   *json.Number `json:"expires_on"`
+		ExpiresIn   *json.Number `json:"expires_in"`
+	}
+
+	if err := json.Unmarshal(b, &t); err != nil {
+		return err
+	}
+
+	token.AccessToken = t.AccessToken
+	token.ExpiresOn = timeNow()
+
+	if t.ExpiresOn != nil {
+		expiresOn, err := t.ExpiresOn.Int64()
+		if err != nil {
+			return err
+		}
+		token.ExpiresOn = time.Unix(expiresOn, 0)
+	} else if t.ExpiresIn != nil {
+		expiresIn, err := t.ExpiresIn.Int64()
+		if err != nil {
+			return err
+		}
+		token.ExpiresOn = timeNow().Add(time.Duration(expiresIn) * time.Second)
+	}
+
+	return nil
 }
 
 func newAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.AppPluginRoute) *accessTokenProvider {
@@ -61,7 +93,7 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 	tokenCache.Lock()
 	defer tokenCache.Unlock()
 	if cachedToken, found := tokenCache.cache[provider.getAccessTokenCacheKey()]; found {
-		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
+		if cachedToken.ExpiresOn.After(timeNow().Add(time.Second * 10)) {
 			logger.Info("Using token from cache")
 			return cachedToken.AccessToken, nil
 		}
@@ -97,12 +129,8 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 		return "", err
 	}
 
-	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
-	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
 	tokenCache.cache[provider.getAccessTokenCacheKey()] = &token
-
 	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
-
 	return token.AccessToken, nil
 }
 
@@ -110,7 +138,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	oauthJwtTokenCache.Lock()
 	defer oauthJwtTokenCache.Unlock()
 	if cachedToken, found := oauthJwtTokenCache.cache[provider.getAccessTokenCacheKey()]; found {
-		if cachedToken.Expiry.After(time.Now().Add(time.Second * 10)) {
+		if cachedToken.Expiry.After(timeNow().Add(time.Second * 10)) {
 			logger.Debug("Using token from cache")
 			return cachedToken.AccessToken, nil
 		}

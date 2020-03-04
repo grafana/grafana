@@ -14,11 +14,19 @@ func (v *nullablegenVector) Set(idx int, i interface{}) {
 }
 
 func (v *nullablegenVector) Append(i interface{}) {
+	if i == nil {
+		(*v) = append((*v), nil)
+		return
+	}
 	(*v) = append((*v), i.(*gen))
 }
 
 func (v *nullablegenVector) At(i int) interface{} {
 	return (*v)[i]
+}
+
+func (v *nullablegenVector) PointerAt(i int) interface{} {
+	return &(*v)[i]
 }
 
 func (v *nullablegenVector) Len() int {
@@ -27,4 +35,8 @@ func (v *nullablegenVector) Len() int {
 
 func (v *nullablegenVector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *nullablegenVector) Extend(i int) {
+	(*v) = append((*v), make([]*gen, i)...)
 }

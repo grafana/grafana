@@ -37,7 +37,7 @@ export interface CascaderOption {
   items?: CascaderOption[];
   disabled?: boolean;
   title?: string;
-  /**  Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compability.*/
+  /**  Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compatibility.*/
   children?: CascaderOption[];
 }
 
@@ -205,11 +205,11 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           >
             <div className={disableDivFocus}>
               <Input
+                size={size || 'md'}
                 placeholder={placeholder}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
-                size={size || 'md'}
                 suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
               />
             </div>

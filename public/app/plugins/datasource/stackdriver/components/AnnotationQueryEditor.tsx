@@ -5,7 +5,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
 
 import StackdriverDatasource from '../datasource';
-import { Metrics, Filters, AnnotationsHelp } from './';
+import { Metrics, Filters, AnnotationsHelp, Project } from './';
 import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
 
@@ -24,7 +24,8 @@ interface State extends AnnotationTarget {
 }
 
 const DefaultTarget: State = {
-  defaultProject: 'loading project...',
+  projectName: '',
+  projects: [],
   metricType: '',
   filters: [],
   metricKind: '',
@@ -40,20 +41,26 @@ const DefaultTarget: State = {
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
-  componentDidMount() {
+  async componentDidMount() {
     const { target, datasource } = this.props;
+    if (!target.projectName) {
+      target.projectName = datasource.getDefaultProject();
+    }
+
     const variableOptionGroup = {
       label: 'Template Variables',
       options: datasource.variables.map(toOption),
     };
 
+    const projects = await datasource.getProjects();
     this.setState({
       variableOptionGroup,
       variableOptions: variableOptionGroup.options,
       ...target,
+      projects,
     });
 
-    datasource.getLabels(target.metricType, target.refId).then(labels => this.setState({ labels }));
+    datasource.getLabels(target.metricType, target.projectName, target.refId).then(labels => this.setState({ labels }));
   }
 
   onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
@@ -69,7 +76,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         onQueryChange(this.state);
       }
     );
-    datasource.getLabels(type, this.state.refId).then(labels => this.setState({ labels }));
+    datasource.getLabels(type, this.state.refId, this.state.projectName).then(labels => this.setState({ labels }));
   };
 
   onChange(prop: string, value: string | string[]) {
@@ -79,22 +86,19 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const {
-      defaultProject,
-      metricType,
-      filters,
-      title,
-      text,
-      variableOptionGroup,
-      labels,
-      variableOptions,
-    } = this.state;
+    const { projectName, metricType, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
     const { datasource } = this.props;
 
     return (
       <>
+        <Project
+          templateVariableOptions={variableOptions}
+          datasource={datasource}
+          projectName={projectName || datasource.getDefaultProject()}
+          onChange={value => this.onChange('projectName', value)}
+        />
         <Metrics
-          defaultProject={defaultProject}
+          projectName={projectName}
           metricType={metricType}
           templateSrv={datasource.templateSrv}
           datasource={datasource}
