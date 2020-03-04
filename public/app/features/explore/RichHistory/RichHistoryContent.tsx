@@ -152,7 +152,7 @@ export function RichHistoryContent(props: RichHistoryContentProps) {
             options={exploreDatasources}
             value={datasourceFilters}
             placeholder="Filter queries for specific datasources(s)"
-            onChange={e => onSelectDatasourceFilters(e.value)}
+            onChange={onSelectDatasourceFilters}
           />
         </div>
       )}
