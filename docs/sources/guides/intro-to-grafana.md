@@ -14,19 +14,9 @@ weight = 200
 
 This topic provides a high-level look at Grafana, the Grafana process, and Grafana features. It's a good place to start if you want to learn more about Grafana software. To jump right in, refer to [Getting started]({{< relref "getting_started.md" >}}).
 
-
 Grafana is open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics no matter where they are stored. In plain English, it provides you with tools to turn your time-series database (TSDB) data into beautiful graphs and visualizations.
 
-## Grafana process
-
-This is the general process of running Grafana.
-
-1. [Install Grafana on your system]({{< relref "../installation/_index.md" >}}) or [configure]({{< relref "../installation/configure-docker.md" >}}) and [run a Docker image]({{< relref "../installation/docker.md" >}}).
-1. [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}). (Repeat for each [data source]({{< relref "../features/datasources/data-sources.md" >}}).)
-1. Create a [dashboard]({{< relref "../features/dashboard/dashboards.md" >}}).
-1. Add [panels]({{< relref "../features/panels/panels.md" >}}) to the dashboard.
-
-After creating a dashboard, there are many possible things you might do next. It all depends on your needs and your use case. 
+After creating a dashboard like you do in [Getting started]({{< relref "getting_started.md" >}}), there are many possible things you might do next. It all depends on your needs and your use case. 
 
 For example, if you want to view weather data and statistics about your smart home, then you might create a playlist. If you are the administrator for a corporation and are managing Grafana for multiple teams, then you might need to set up provisioning and authentication.
 
