@@ -1,6 +1,15 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
-import { PanelData, dateMath, TimeRange, VizOrientation, PanelProps, LoadingState, dateTime } from '@grafana/data';
+import {
+  PanelData,
+  dateMath,
+  TimeRange,
+  VizOrientation,
+  PanelProps,
+  LoadingState,
+  dateTime,
+  FieldConfigSource,
+} from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
 
 import { BarGaugePanel } from './BarGaugePanel';
@@ -41,6 +50,10 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
     orientation: VizOrientation.Horizontal,
     showUnfilled: true,
   };
+  const fieldConfig: FieldConfigSource = {
+    defaults: {},
+    overrides: [],
+  };
 
   return mount<BarGaugePanel>(
     <BarGaugePanel
@@ -49,6 +62,7 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
       timeRange={timeRange}
       timeZone={'utc'}
       options={options}
+      fieldConfig={fieldConfig}
       onOptionsChange={() => {}}
       onChangeTimeRange={() => {}}
       replaceVariables={s => s}
