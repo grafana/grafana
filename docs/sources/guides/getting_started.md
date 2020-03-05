@@ -35,6 +35,10 @@ This step varies according to your computer operating system. Refer to the instr
 
  Congratulations, you have gotten started with Grafana! You have a dashboard and are displaying results. Feel free to experiment with what you have built, continue on to add another data source, or explore [Next steps](#next-steps).
 
+## Next steps
+
+Different user types will have different interests. Some suggestions are listed below, or refer to [What is Grafana?]({{< relref "what-is-grafana.md" >}}) for a general overview of Grafana features.
+
 ### All users
 
 All users might want to learn about:
