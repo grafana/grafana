@@ -1,8 +1,9 @@
-import { createReducer } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { CustomVariableModel, VariableHide, VariableOption } from '../variable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState } from '../state/types';
-import { createCustomOptionsFromQuery } from './actions';
-import { initialVariablesState } from '../state/variablesReducer';
+import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { VariablePayload } from '../state/actions';
 
 export const initialCustomVariableModelState: CustomVariableModel = {
   uuid: EMPTY_UUID,
@@ -22,21 +23,29 @@ export const initialCustomVariableModelState: CustomVariableModel = {
   initLock: null,
 };
 
-export const customVariableReducer = createReducer(initialVariablesState, builder =>
-  builder.addCase(createCustomOptionsFromQuery, (state, action) => {
-    const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.uuid);
-    const { includeAll, query } = instanceState;
-    const match = query.match(/(?:\\,|[^,])+/g) ?? [];
+export const customVariableSlice = createSlice({
+  name: 'templating/custom',
+  initialState: initialVariablesState,
+  reducers: {
+    createCustomOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+      const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.uuid);
+      const { includeAll, query } = instanceState;
+      const match = query.match(/(?:\\,|[^,])+/g) ?? [];
 
-    const options = match.map(text => {
-      text = text.replace(/\\,/g, ',');
-      return { text: text.trim(), value: text.trim(), selected: false };
-    });
+      const options = match.map(text => {
+        text = text.replace(/\\,/g, ',');
+        return { text: text.trim(), value: text.trim(), selected: false };
+      });
 
-    if (includeAll) {
-      options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
-    }
+      if (includeAll) {
+        options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
+      }
 
-    instanceState.options = options;
-  })
-);
+      instanceState.options = options;
+    },
+  },
+});
+
+export const customVariableReducer = customVariableSlice.reducer;
+
+export const { createCustomOptionsFromQuery } = customVariableSlice.actions;
