@@ -36,9 +36,7 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
     displayMode: BarGaugeDisplayMode.Lcd,
     fieldOptions: {
       calcs: ['mean'],
-      defaults: {},
       values: false,
-      overrides: [],
     },
     orientation: VizOrientation.Horizontal,
     showUnfilled: true,

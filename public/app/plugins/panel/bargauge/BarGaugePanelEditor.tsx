@@ -1,90 +1,26 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-import {
-  ThresholdsEditor,
-  ValueMappingsEditor,
-  PanelOptionsGrid,
-  FieldDisplayEditor,
-  FieldPropertiesEditor,
-  PanelOptionsGroup,
-  FormLabel,
-  Select,
-  DataLinksEditor,
-  Switch,
-} from '@grafana/ui';
-import {
-  ThresholdsConfig,
-  ValueMapping,
-  FieldDisplayOptions,
-  FieldConfig,
-  DataLink,
-  PanelEditorProps,
-} from '@grafana/data';
+import { PanelOptionsGrid, PanelOptionsGroup, FormLabel, Select, Switch } from '@grafana/ui';
+import { PanelEditorProps } from '@grafana/data';
 import { BarGaugeOptions, displayModes } from './types';
 import { orientationOptions } from '../gauge/types';
-import {
-  getDataLinksVariableSuggestions,
-  getCalculationValueDataLinksVariableSuggestions,
-} from 'app/features/panel/panellinks/link_srv';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
-    const current = this.props.options.fieldOptions.defaults;
-    this.onDefaultsChange({
-      ...current,
-      thresholds,
-    });
-  };
-
-  onValueMappingsChanged = (mappings: ValueMapping[]) => {
-    const current = this.props.options.fieldOptions.defaults;
-    this.onDefaultsChange({
-      ...current,
-      mappings,
-    });
-  };
-
-  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      fieldOptions,
-    });
-
-  onDefaultsChange = (field: FieldConfig) => {
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
-      defaults: field,
-    });
-  };
-
   onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
   onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
   onToggleShowUnfilled = () => {
     this.props.onOptionsChange({ ...this.props.options, showUnfilled: !this.props.options.showUnfilled });
   };
 
-  onDataLinksChanged = (links: DataLink[]) => {
-    this.onDefaultsChange({
-      ...this.props.options.fieldOptions.defaults,
-      links,
-    });
-  };
   render() {
     const { options } = this.props;
-    const { fieldOptions } = options;
-    const { defaults } = fieldOptions;
-
-    const suggestions = fieldOptions.values
-      ? getDataLinksVariableSuggestions(this.props.data.series)
-      : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
     const labelWidth = 6;
 
     return (
       <>
         <PanelOptionsGrid>
           <PanelOptionsGroup title="Display">
-            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={labelWidth} />
             <div className="form-field">
               <FormLabel width={labelWidth}>Orientation</FormLabel>
               <Select
@@ -114,28 +50,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
               />
             )}
           </PanelOptionsGroup>
-          <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor
-              showMinMax={true}
-              showTitle={true}
-              onChange={this.onDefaultsChange}
-              value={defaults}
-            />
-          </PanelOptionsGroup>
-
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
-
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
-
-        <PanelOptionsGroup title="Data links">
-          <DataLinksEditor
-            value={defaults.links}
-            onChange={this.onDataLinksChanged}
-            suggestions={suggestions}
-            maxLinks={10}
-          />
-        </PanelOptionsGroup>
       </>
     );
   }
