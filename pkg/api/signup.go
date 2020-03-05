@@ -5,13 +5,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/user/signup/options
-func GetSignUpOptions(c *m.ReqContext) Response {
+func GetSignUpOptions(c *models.ReqContext) Response {
 	return JSON(200, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
 		"autoAssignOrg":      setting.AutoAssignOrg,
@@ -19,20 +19,20 @@ func GetSignUpOptions(c *m.ReqContext) Response {
 }
 
 // POST /api/user/signup
-func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
+func SignUp(c *models.ReqContext, form dtos.SignUpForm) Response {
 	if !setting.AllowUserSignUp {
 		return Error(401, "User signup is disabled", nil)
 	}
 
-	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
+	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
 		return Error(422, "User with same email address already exists", nil)
 	}
 
-	cmd := m.CreateTempUserCommand{}
+	cmd := models.CreateTempUserCommand{}
 	cmd.OrgId = -1
 	cmd.Email = form.Email
-	cmd.Status = m.TmpUserSignUpStarted
+	cmd.Status = models.TmpUserSignUpStarted
 	cmd.InvitedByUserId = c.UserId
 	var err error
 	cmd.Code, err = util.GetRandomString(20)
@@ -57,12 +57,12 @@ func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 	return JSON(200, util.DynMap{"status": "SignUpCreated"})
 }
 
-func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Response {
+func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2Form) Response {
 	if !setting.AllowUserSignUp {
 		return Error(401, "User signup is disabled", nil)
 	}
 
-	createUserCmd := m.CreateUserCommand{
+	createUserCmd := models.CreateUserCommand{
 		Email:    form.Email,
 		Login:    form.Username,
 		Name:     form.Name,
@@ -79,7 +79,7 @@ func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Re
 	}
 
 	// check if user exists
-	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
+	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
 		return Error(401, "User with same email address already exists", nil)
 	}
@@ -99,12 +99,12 @@ func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Re
 	}
 
 	// mark temp user as completed
-	if ok, rsp := updateTempUserStatus(form.Code, m.TmpUserCompleted); !ok {
+	if ok, rsp := updateTempUserStatus(form.Code, models.TmpUserCompleted); !ok {
 		return rsp
 	}
 
 	// check for pending invites
-	invitesQuery := m.GetTempUsersQuery{Email: form.Email, Status: m.TmpUserInvitePending}
+	invitesQuery := models.GetTempUsersQuery{Email: form.Email, Status: models.TmpUserInvitePending}
 	if err := bus.Dispatch(&invitesQuery); err != nil {
 		return Error(500, "Failed to query database for invites", err)
 	}
@@ -124,10 +124,10 @@ func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Re
 }
 
 func verifyUserSignUpEmail(email string, code string) (bool, Response) {
-	query := m.GetTempUserByCodeQuery{Code: code}
+	query := models.GetTempUserByCodeQuery{Code: code}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == m.ErrTempUserNotFound {
+		if err == models.ErrTempUserNotFound {
 			return false, Error(404, "Invalid email verification code", nil)
 		}
 		return false, Error(500, "Failed to read temp user", err)
