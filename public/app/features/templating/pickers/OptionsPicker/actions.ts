@@ -9,7 +9,7 @@ import {
   VariableWithMultiSupport,
   VariableWithOptions,
 } from '../../variable';
-import { setCurrentVariableValue, toVariablePayload } from '../../state/actions';
+import { toVariablePayload } from '../../state/actions';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../shared/types';
@@ -25,6 +25,7 @@ import {
 } from './reducer';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { setCurrentVariableValue } from '../../state/sharedReducer';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
@@ -72,7 +73,7 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
     const existing = getVariable<VariableWithMultiSupport>(picker.uuid, getState());
     const current = mapToCurrent(picker);
 
-    dispatch(setCurrentVariableValue(toVariablePayload(existing, current)));
+    dispatch(setCurrentVariableValue(toVariablePayload(existing, { option: current })));
     const updated = getVariable<VariableWithMultiSupport>(picker.uuid, getState());
 
     if (existing.current.text === updated.current.text) {

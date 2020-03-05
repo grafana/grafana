@@ -4,19 +4,13 @@ import { StoreState } from '../../../types';
 import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
-import {
-  changeVariableOrder,
-  duplicateVariable,
-  removeVariable,
-  toVariableIdentifier,
-  toVariablePayload,
-  VariableIdentifier,
-} from '../state/actions';
+import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/actions';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { getVariableClones } from '../state/selectors';
 import { VariableModel } from '../variable';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
+import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 
 interface OwnProps {}
 

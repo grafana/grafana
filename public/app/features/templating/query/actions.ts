@@ -2,7 +2,6 @@ import { createAction } from '@reduxjs/toolkit';
 import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
 import {
-  changeVariableProp,
   toVariableIdentifier,
   toVariablePayload,
   updateVariableOptions,
@@ -21,6 +20,7 @@ import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { variableAdapters } from '../adapters';
+import { changeVariableProp } from '../state/sharedReducer';
 
 export const changeQueryVariableSearchQuery = createAction<VariablePayload<string>>(
   'templating/changeQueryVariableSearchQuery'

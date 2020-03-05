@@ -1,9 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { sharedReducer } from './sharedReducer';
-import { QueryVariableModel, VariableHide } from '../variable';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID } from './types';
 import {
   addInitLock,
   addVariable,
@@ -14,9 +11,12 @@ import {
   removeVariable,
   resolveInitLock,
   setCurrentVariableValue,
+  sharedReducer,
   storeNewVariable,
-  toVariablePayload,
-} from './actions';
+} from './sharedReducer';
+import { QueryVariableModel, VariableHide } from '../variable';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID } from './types';
+import { toVariablePayload } from './actions';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
@@ -142,13 +142,11 @@ describe('sharedReducer', () => {
             skipUrlSync: false,
           },
           '11': {
+            ...initialQueryVariableModelState,
             uuid: '11',
-            type: 'query',
             name: 'copy_of_Name-1',
-            hide: VariableHide.dontHide,
             index: 3,
             label: 'Label-1',
-            skipUrlSync: false,
           },
         });
     });
@@ -259,7 +257,7 @@ describe('sharedReducer', () => {
         ],
       });
       const current = { text: ['A', 'B'], selected: true, value: ['A', 'B'] };
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, current);
+      const payload = toVariablePayload({ uuid: '0', type: 'query' }, { option: current });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(setCurrentVariableValue(payload))
@@ -288,7 +286,7 @@ describe('sharedReducer', () => {
         ],
       });
       const current = { text: 'A + B', selected: true, value: ['A', 'B'] };
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, current);
+      const payload = toVariablePayload({ uuid: '0', type: 'query' }, { option: current });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(setCurrentVariableValue(payload))
@@ -317,7 +315,7 @@ describe('sharedReducer', () => {
         ],
       });
       const current = { text: ALL_VARIABLE_TEXT, selected: true, value: [ALL_VARIABLE_VALUE] };
-      const payload = toVariablePayload({ uuid: '0', type: 'query' }, current);
+      const payload = toVariablePayload({ uuid: '0', type: 'query' }, { option: current });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
         .whenActionIsDispatched(setCurrentVariableValue(payload))

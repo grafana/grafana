@@ -8,19 +8,13 @@ import {
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
-import {
-  AddVariable,
-  addVariable,
-  removeVariable,
-  storeNewVariable,
-  toVariablePayload,
-  VariableIdentifier,
-} from '../state/actions';
+import { AddVariable, toVariablePayload, VariableIdentifier } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { v4 } from 'uuid';
 import { EMPTY_UUID } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '../variable';
+import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {

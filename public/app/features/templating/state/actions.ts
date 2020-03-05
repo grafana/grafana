@@ -1,6 +1,5 @@
 import castArray from 'lodash/castArray';
-import { v4 } from 'uuid';
-import { createAction, PrepareAction } from '@reduxjs/toolkit';
+import { createAction } from '@reduxjs/toolkit';
 import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
 
 import {
@@ -16,6 +15,7 @@ import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
+import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -62,58 +62,8 @@ export interface AddVariable<T extends VariableModel = VariableModel> {
   model: T;
 }
 
-export const addVariable = createAction<PrepareAction<VariablePayload<AddVariable>>>(
-  'templating/addVariable',
-  (payload: VariablePayload<AddVariable>) => {
-    return {
-      payload: {
-        ...payload,
-        uuid: payload.uuid ?? v4(), // for testing purposes we allow to pass existing uuid
-      },
-    };
-  }
-);
-
-export const removeVariable = createAction<VariablePayload<{ reIndex: boolean }>>('templating/removeVariable');
-export const storeNewVariable = createAction<VariablePayload>('templating/storeNewVariable');
-export interface DuplicateVariable {
-  newUuid: string;
-}
-export const duplicateVariable = createAction<PrepareAction<VariablePayload<DuplicateVariable>>>(
-  'templating/duplicateVariable',
-  (payload: VariablePayload<DuplicateVariable>) => {
-    if (payload.data?.newUuid) {
-      // for testing purposes we allow to pass existing newUuid
-      return { payload };
-    }
-
-    return {
-      payload: {
-        ...payload,
-        data: {
-          ...payload.data,
-          newUuid: v4(),
-        },
-      },
-    };
-  }
-);
-export const changeVariableOrder = createAction<VariablePayload<{ fromIndex: number; toIndex: number }>>(
-  'templating/changeVariableOrder'
-);
-export const addInitLock = createAction<VariablePayload>('templating/addInitLock');
-export const resolveInitLock = createAction<VariablePayload>('templating/resolveInitLock');
-export const removeInitLock = createAction<VariablePayload>('templating/removeInitLock');
-export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>(
-  'templating/setCurrentVariableValue'
-);
-
-export const changeVariableType = createAction<VariablePayload<VariableType>>('templating/changeVariableType');
 export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
 export const updateVariableTags = createAction<VariablePayload<any[]>>('templating/updateVariableTags');
-export const changeVariableProp = createAction<VariablePayload<{ propName: string; propValue: any }>>(
-  'templating/changeVariableProp'
-);
 
 export const toVariableIdentifier = (variable: VariableModel): VariableIdentifier => {
   return { type: variable.type, uuid: variable.uuid! };
@@ -346,7 +296,7 @@ export const setOptionAsCurrent = (
   emitChanges: boolean
 ): ThunkResult<void> => {
   return async dispatch => {
-    dispatch(setCurrentVariableValue(toVariablePayload(identifier, current)));
+    dispatch(setCurrentVariableValue(toVariablePayload(identifier, { option: current })));
     return dispatch(variableUpdated(identifier, emitChanges));
   };
 };

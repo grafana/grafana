@@ -3,7 +3,7 @@ import isEqual from 'lodash/isEqual';
 import { AppEvents } from '@grafana/data';
 import { FormLabel } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
-import { changeVariableProp, changeVariableType, toVariablePayload, VariableIdentifier } from '../state/actions';
+import { toVariablePayload, VariableIdentifier } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { EMPTY_UUID } from '../state/types';
 import { VariableHide, VariableModel, VariableType } from '../variable';
@@ -16,6 +16,7 @@ import { VariableEditorState } from './reducer';
 import { getVariable } from '../state/selectors';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { OnPropChangeArguments } from './types';
+import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
 
 export interface OwnProps {
   identifier: VariableIdentifier;
@@ -62,7 +63,9 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 
   onTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
     event.preventDefault();
-    this.props.changeVariableType(toVariablePayload(this.props.identifier, event.target.value as VariableType));
+    this.props.changeVariableType(
+      toVariablePayload(this.props.identifier, { newType: event.target.value as VariableType })
+    );
   };
 
   onLabelChange = (event: ChangeEvent<HTMLInputElement>) => {

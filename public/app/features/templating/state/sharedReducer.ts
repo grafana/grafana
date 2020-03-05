@@ -1,52 +1,43 @@
-import { createReducer } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 
-import {
-  addInitLock,
-  addVariable,
-  changeVariableOrder,
-  changeVariableProp,
-  changeVariableType,
-  duplicateVariable,
-  removeInitLock,
-  removeVariable,
-  resolveInitLock,
-  setCurrentVariableValue,
-  storeNewVariable,
-} from './actions';
-import { VariableModel, VariableOption, VariableWithOptions } from '../variable';
+import { AddVariable, VariablePayload } from './actions';
+import { VariableModel, VariableOption, VariableType, VariableWithOptions } from '../variable';
 import { ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { Deferred } from '../../../core/utils/deferred';
-import { initialVariablesState } from './variablesReducer';
+import { initialVariablesState, VariablesState } from './variablesReducer';
 import { isQuery } from '../guard';
+import { v4 } from 'uuid';
 
-export const sharedReducer = createReducer(initialVariablesState, builder =>
-  builder
-    .addCase(addVariable, (state, action) => {
-      state[action.payload.uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
-      state[action.payload.uuid!] = {
-        ...state[action.payload.uuid!],
+const sharedReducerSlice = createSlice({
+  name: 'templating/shared',
+  initialState: initialVariablesState,
+  reducers: {
+    addVariable: (state: VariablesState, action: PayloadAction<VariablePayload<AddVariable>>) => {
+      const uuid = action.payload.uuid ?? v4(); // for testing purposes we can call this with an uuid
+      state[uuid] = {
+        ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...action.payload.data.model,
       };
-      state[action.payload.uuid!].uuid = action.payload.uuid;
-      state[action.payload.uuid!].index = action.payload.data.index;
-      state[action.payload.uuid!].global = action.payload.data.global;
-    })
-    .addCase(addInitLock, (state, action) => {
+      state[uuid].uuid = uuid;
+      state[uuid].index = action.payload.data.index;
+      state[uuid].global = action.payload.data.global;
+    },
+    addInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.uuid!);
       instanceState.initLock = new Deferred();
-    })
-    .addCase(resolveInitLock, (state, action) => {
+    },
+    resolveInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.uuid!);
       instanceState.initLock?.resolve();
-    })
-    .addCase(removeInitLock, (state, action) => {
+    },
+    removeInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.uuid!);
       instanceState.initLock = null;
-    })
-    .addCase(removeVariable, (state, action) => {
+    },
+    removeVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ reIndex: boolean }>>) => {
       delete state[action.payload.uuid!];
       if (!action.payload.data.reIndex) {
         return;
@@ -56,19 +47,24 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
       for (let index = 0; index < variableStates.length; index++) {
         variableStates[index].index = index;
       }
-    })
-    .addCase(duplicateVariable, (state, action) => {
+    },
+    duplicateVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ newUuid: string }>>) => {
+      const newUuid = action.payload.data?.newUuid ?? v4();
       const original = cloneDeep<VariableModel>(state[action.payload.uuid]);
-      const uuid = action.payload.data.newUuid;
       const index = Object.keys(state).length;
       const name = `copy_of_${original.name}`;
-      state[uuid!] = cloneDeep(variableAdapters.get(action.payload.type).initialState);
-      state[uuid!] = original;
-      state[uuid!].uuid = uuid;
-      state[uuid!].name = name;
-      state[uuid!].index = index;
-    })
-    .addCase(changeVariableOrder, (state, action) => {
+      state[newUuid] = {
+        ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
+        ...original,
+        uuid: newUuid,
+        name,
+        index,
+      };
+    },
+    changeVariableOrder: (
+      state: VariablesState,
+      action: PayloadAction<VariablePayload<{ fromIndex: number; toIndex: number }>>
+    ) => {
       const variables = Object.values(state).map(s => s);
       const fromVariable = variables.find(v => v.index === action.payload.data.fromIndex);
       const toVariable = variables.find(v => v.index === action.payload.data.toIndex);
@@ -80,37 +76,35 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
       if (toVariable) {
         state[toVariable.uuid!].index = action.payload.data.fromIndex;
       }
-    })
-    .addCase(storeNewVariable, (state, action) => {
+    },
+    storeNewVariable: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const uuid = action.payload.uuid!;
       const emptyVariable = cloneDeep<VariableModel>(state[EMPTY_UUID]);
       state[uuid!] = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...emptyVariable,
         uuid,
-        index: Object.values(state).length - 1,
+        index: emptyVariable.index,
       };
-    })
-    .addCase(changeVariableType, (state, action) => {
+    },
+    changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
       const { uuid } = action.payload;
-      const initialState = cloneDeep(variableAdapters.get(action.payload.data).initialState);
       const { label, name, index } = state[uuid!];
 
       state[uuid!] = {
-        ...initialState,
+        ...cloneDeep(variableAdapters.get(action.payload.data.newType).initialState),
         uuid,
         label,
         name,
         index,
       };
-    })
-    .addCase(changeVariableNameSucceeded, (state, action) => {
-      const instanceState = getInstanceState(state, action.payload.uuid);
-      instanceState.name = action.payload.data;
-    })
-    .addCase(setCurrentVariableValue, (state, action) => {
+    },
+    setCurrentVariableValue: (
+      state: VariablesState,
+      action: PayloadAction<VariablePayload<{ option: VariableOption }>>
+    ) => {
       const instanceState = getInstanceState<VariableWithOptions>(state, action.payload.uuid);
-      const current = { ...action.payload.data };
+      const current = { ...action.payload.data.option };
 
       if (Array.isArray(current.text) && current.text.length > 0) {
         current.text = current.text.join(' + ');
@@ -148,12 +142,37 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
           return t;
         });
       }
-    })
-    .addCase(changeVariableProp, (state, action) => {
+    },
+    changeVariableProp: (
+      state: VariablesState,
+      action: PayloadAction<VariablePayload<{ propName: string; propValue: any }>>
+    ) => {
       const instanceState = getInstanceState(state, action.payload.uuid!);
       (instanceState as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
-    })
-);
+    },
+  },
+  extraReducers: builder =>
+    builder.addCase(changeVariableNameSucceeded, (state, action) => {
+      const instanceState = getInstanceState(state, action.payload.uuid);
+      instanceState.name = action.payload.data;
+    }),
+});
+
+export const sharedReducer = sharedReducerSlice.reducer;
+
+export const {
+  addInitLock,
+  removeVariable,
+  addVariable,
+  changeVariableProp,
+  changeVariableOrder,
+  storeNewVariable,
+  duplicateVariable,
+  setCurrentVariableValue,
+  changeVariableType,
+  removeInitLock,
+  resolveInitLock,
+} = sharedReducerSlice.actions;
 
 const hasTags = (option: VariableOption): boolean => {
   return Array.isArray(option.tags) && option.tags.length > 0;
