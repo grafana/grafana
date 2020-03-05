@@ -26,9 +26,8 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h5>Install on Windows</h5>
     </a>
     <a href="{{< relref "installation/docker.md" >}}" class="nav-cards__item nav-cards__item--install">
-        <div class="nav-cards__icon fa fa-windows">
-        </div>
-        <h5>Run Docker image</h5>
+        <h4>Run Docker image</h4>
+        <p>Run Grafana on a Docker image.</p>
     </a>
     <a href="https://grafana.com/cloud/grafana" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-cloud">

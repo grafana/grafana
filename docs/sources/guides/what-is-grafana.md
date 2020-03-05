@@ -24,7 +24,9 @@ The following sections provide an overview of things you might want to do with y
 
 ## Explore metrics and logs
 
-Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side. Refer to [Explore]({{< relref "../features/explore/index.md" >}}) for more information.
+Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side. 
+
+Refer to [Explore]({{< relref "../features/explore/index.md" >}}) for more information.
 
 ## Alerts
 
@@ -36,7 +38,9 @@ Alert hooks allow you to create different notifiers with a bit of code if you pr
 
 Annotate graphs with rich events from different data sources. Hover over events to see the full event metadata and tags.
 
-This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source. Refer to [Annotations]({{< relref "../reference/annotations.md" >}}) for more information.
+This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source.
+
+Refer to [Annotations]({{< relref "../reference/annotations.md" >}}) for more information.
 
 ## Dashboard templating
 
@@ -58,7 +62,9 @@ Discover hundreds of [dashboards](https://grafana.com/grafana/dashboards) and [p
 
 Grafana supports different authentication methods, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview]({{< relref "../auth/overview.md" >}}) for more information.
 
-In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) for more information.
+In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams.
+
+Refer to [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) for more information.
 
 ## Provisioning
 
@@ -76,7 +82,7 @@ Bring everyone together, and share data and dashboards across teams. Grafana emp
 
 Grafana Cloud is a highly available, fast, fully managed OpenSaaS logging and metrics platform. Everything you love about Grafana, but Grafana Labs hosts it for you and handles all the headaches.
 
-[Learn more about Grafana Cloud](https://grafana.com/cloud/).
+[Learn more about Grafana Cloud.](https://grafana.com/cloud/)
 
 ## Grafana Enterprise
 
