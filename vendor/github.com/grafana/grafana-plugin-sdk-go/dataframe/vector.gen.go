@@ -27,12 +27,20 @@ func (v *uint8Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *uint8Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *uint8Vector) Len() int {
 	return len((*v))
 }
 
 func (v *uint8Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *uint8Vector) Extend(i int) {
+	(*v) = append((*v), make([]uint8, i)...)
 }
 
 //go:Uint16erate uint16ny -in=$GOFILE -out=vector.Uint16.go uint16 "Uint16=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -56,12 +64,20 @@ func (v *uint16Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *uint16Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *uint16Vector) Len() int {
 	return len((*v))
 }
 
 func (v *uint16Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *uint16Vector) Extend(i int) {
+	(*v) = append((*v), make([]uint16, i)...)
 }
 
 //go:Uint32erate uint32ny -in=$GOFILE -out=vector.Uint32.go uint32 "Uint32=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -85,12 +101,20 @@ func (v *uint32Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *uint32Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *uint32Vector) Len() int {
 	return len((*v))
 }
 
 func (v *uint32Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *uint32Vector) Extend(i int) {
+	(*v) = append((*v), make([]uint32, i)...)
 }
 
 //go:Uint64erate uint64ny -in=$GOFILE -out=vector.Uint64.go uint64 "Uint64=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -114,12 +138,20 @@ func (v *uint64Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *uint64Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *uint64Vector) Len() int {
 	return len((*v))
 }
 
 func (v *uint64Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *uint64Vector) Extend(i int) {
+	(*v) = append((*v), make([]uint64, i)...)
 }
 
 //go:Int8erate int8ny -in=$GOFILE -out=vector.Int8.go int8 "Int8=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -143,12 +175,20 @@ func (v *int8Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *int8Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *int8Vector) Len() int {
 	return len((*v))
 }
 
 func (v *int8Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *int8Vector) Extend(i int) {
+	(*v) = append((*v), make([]int8, i)...)
 }
 
 //go:Int16erate int16ny -in=$GOFILE -out=vector.Int16.go int16 "Int16=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -172,12 +212,20 @@ func (v *int16Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *int16Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *int16Vector) Len() int {
 	return len((*v))
 }
 
 func (v *int16Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *int16Vector) Extend(i int) {
+	(*v) = append((*v), make([]int16, i)...)
 }
 
 //go:Int32erate int32ny -in=$GOFILE -out=vector.Int32.go int32 "Int32=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -201,12 +249,20 @@ func (v *int32Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *int32Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *int32Vector) Len() int {
 	return len((*v))
 }
 
 func (v *int32Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *int32Vector) Extend(i int) {
+	(*v) = append((*v), make([]int32, i)...)
 }
 
 //go:Int64erate int64ny -in=$GOFILE -out=vector.Int64.go int64 "Int64=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -230,12 +286,20 @@ func (v *int64Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *int64Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *int64Vector) Len() int {
 	return len((*v))
 }
 
 func (v *int64Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *int64Vector) Extend(i int) {
+	(*v) = append((*v), make([]int64, i)...)
 }
 
 //go:Float32erate float32ny -in=$GOFILE -out=vector.Float32.go float32 "Float32=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -259,12 +323,20 @@ func (v *float32Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *float32Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *float32Vector) Len() int {
 	return len((*v))
 }
 
 func (v *float32Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *float32Vector) Extend(i int) {
+	(*v) = append((*v), make([]float32, i)...)
 }
 
 //go:Float64erate float64ny -in=$GOFILE -out=vector.Float64.go float64 "Float64=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -288,12 +360,20 @@ func (v *float64Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *float64Vector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *float64Vector) Len() int {
 	return len((*v))
 }
 
 func (v *float64Vector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *float64Vector) Extend(i int) {
+	(*v) = append((*v), make([]float64, i)...)
 }
 
 //go:Stringerate stringny -in=$GOFILE -out=vector.String.go string "String=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -317,12 +397,20 @@ func (v *stringVector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *stringVector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *stringVector) Len() int {
 	return len((*v))
 }
 
 func (v *stringVector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *stringVector) Extend(i int) {
+	(*v) = append((*v), make([]string, i)...)
 }
 
 //go:Boolerate boolny -in=$GOFILE -out=vector.Bool.go bool "Bool=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -346,12 +434,20 @@ func (v *boolVector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *boolVector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *boolVector) Len() int {
 	return len((*v))
 }
 
 func (v *boolVector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *boolVector) Extend(i int) {
+	(*v) = append((*v), make([]bool, i)...)
 }
 
 //go:TimeTimeerate timeTimeny -in=$GOFILE -out=vector.TimeTime.go time.Time "TimeTime=uint8,uint16,uint32,uint64,int8,int16,int32,int64,float32,float64,string,bool,time.Time"
@@ -375,10 +471,18 @@ func (v *timeTimeVector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *timeTimeVector) PointerAt(i int) interface{} {
+	return &(*v)[i]
+}
+
 func (v *timeTimeVector) Len() int {
 	return len((*v))
 }
 
 func (v *timeTimeVector) PrimitiveType() VectorPType {
 	return vectorPType(v)
+}
+
+func (v *timeTimeVector) Extend(i int) {
+	(*v) = append((*v), make([]time.Time, i)...)
 }

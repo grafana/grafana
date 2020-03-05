@@ -1,5 +1,7 @@
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { config } from 'app/core/config';
+import kbn from 'app/core/utils/kbn';
 
 export class TimePickerCtrl {
   panel: any;
@@ -19,6 +21,15 @@ export class TimePickerCtrl {
       '2h',
       '1d',
     ];
+    if (config.minRefreshInterval) {
+      this.panel.refresh_intervals = this.filterRefreshRates(this.panel.refresh_intervals);
+    }
+  }
+
+  filterRefreshRates(refreshRates: string[]) {
+    return refreshRates.filter(rate => {
+      return kbn.interval_to_ms(rate) > kbn.interval_to_ms(config.minRefreshInterval);
+    });
   }
 }
 

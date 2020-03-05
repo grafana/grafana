@@ -64,6 +64,19 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
           .input {
             border-color: ${invalid ? colors.redBase : colors.formInputBorder};
           }
+
+          // only show number buttons on hover
+          input[type='number'] {
+            -moz-appearance: number-input;
+            -webkit-appearance: number-input;
+            appearance: textfield;
+          }
+
+          input[type='number']::-webkit-inner-spin-button,
+          input[type='number']::-webkit-outer-spin-button {
+            -webkit-appearance: inner-spin-button !important;
+            opacity: 1;
+          }
         }
       `
     ),
@@ -129,21 +142,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         border-radius: ${borderRadius};
         height: 100%;
         width: 100%;
-
-        /*
-         Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in
-         https://github.com/grafana/grafana/commit/488fe62f158a9e0a0bced2b678ada5d43cf3998e.
-         */
-
-        &[type='number']::-webkit-outer-spin-button,
-        &[type='number']::-webkit-inner-spin-button {
-          -webkit-appearance: inner-spin-button !important;
-          opacity: 1;
-        }
-
-        &[type='number'] {
-          -moz-appearance: number-input;
-        }
       `
     ),
     inputDisabled: css`

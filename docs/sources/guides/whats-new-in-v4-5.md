@@ -25,7 +25,7 @@ The new query editor has full syntax highlighting. As well as auto complete for 
 {{< docs-imagebox img="/img/docs/v45/elastic_ad_hoc_filters.png" class="docs-image--block" >}}
 
 ### Table cell links!
-Create column styles that turn cells into links that use the value in the cell  (or other other row values) to generate a url to another dashboard or system:
+Create column styles that turn cells into links that use the value in the cell  (or other other row values) to generate a URL to another dashboard or system:
 ![](/img/docs/v45/table_links.jpg)
 
 ### Query Inspector
@@ -37,7 +37,7 @@ More information [here](https://community.grafana.com/t/using-grafanas-query-ins
 
 ### New Features
 
-* **Table panel**: Render cell values as links that can have an url template that uses variables from current table row. [#3754](https://github.com/grafana/grafana/issues/3754)
+* **Table panel**: Render cell values as links that can have an URL template that uses variables from current table row. [#3754](https://github.com/grafana/grafana/issues/3754)
 * **Elasticsearch**: Add ad hoc filters directly by clicking values in table panel [#8052](https://github.com/grafana/grafana/issues/8052).
 * **MySQL**: New rich query editor with syntax highlighting
 * **Prometheus**: New rich query editor with syntax highlighting, metric and range auto complete and integrated function docs. [#5117](https://github.com/grafana/grafana/issues/5117)

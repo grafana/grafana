@@ -4,20 +4,20 @@ import (
 	"context"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // POST /api/ds/query   DataSource query w/ expressions
-func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
+func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
 	if !setting.IsExpressionsEnabled() {
 		return Error(404, "Expressions feature toggle is not enabled", nil)
 	}
@@ -32,7 +32,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 	}
 
 	expr := false
-	var ds *m.DataSource
+	var ds *models.DataSource
 	for i, query := range reqDto.Queries {
 		name, err := query.Get("datasource").String()
 		if err != nil {
@@ -50,12 +50,13 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 		if i == 0 && !expr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
-				if err == m.ErrDataSourceAccessDenied {
+				if err == models.ErrDataSourceAccessDenied {
 					return Error(403, "Access denied to datasource", err)
 				}
 				return Error(500, "Unable to load datasource meta data", err)
 			}
 		}
+
 		request.Queries = append(request.Queries, &tsdb.Query{
 			RefId:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
@@ -63,7 +64,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 			Model:         query,
 			DataSource:    ds,
 		})
-
 	}
 
 	var resp *tsdb.Response
@@ -93,7 +93,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 }
 
 // POST /api/tsdb/query
-func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
+func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
 	if len(reqDto.Queries) == 0 {
@@ -107,7 +107,7 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == m.ErrDataSourceAccessDenied {
+		if err == models.ErrDataSourceAccessDenied {
 			return Error(403, "Access denied to datasource", err)
 		}
 		return Error(500, "Unable to load datasource meta data", err)
@@ -143,7 +143,7 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 }
 
 // GET /api/tsdb/testdata/scenarios
-func GetTestDataScenarios(c *m.ReqContext) Response {
+func GetTestDataScenarios(c *models.ReqContext) Response {
 	result := make([]interface{}, 0)
 
 	scenarioIds := make([]string, 0)
@@ -166,15 +166,15 @@ func GetTestDataScenarios(c *m.ReqContext) Response {
 }
 
 // Generates a index out of range error
-func GenerateError(c *m.ReqContext) Response {
+func GenerateError(c *models.ReqContext) Response {
 	var array []string
 	// nolint: govet
 	return JSON(200, array[20])
 }
 
 // GET /api/tsdb/testdata/gensql
-func GenerateSQLTestData(c *m.ReqContext) Response {
-	if err := bus.Dispatch(&m.InsertSqlTestDataCommand{}); err != nil {
+func GenerateSQLTestData(c *models.ReqContext) Response {
+	if err := bus.Dispatch(&models.InsertSqlTestDataCommand{}); err != nil {
 		return Error(500, "Failed to insert test data", err)
 	}
 
@@ -182,7 +182,7 @@ func GenerateSQLTestData(c *m.ReqContext) Response {
 }
 
 // GET /api/tsdb/testdata/random-walk
-func GetTestDataRandomWalk(c *m.ReqContext) Response {
+func GetTestDataRandomWalk(c *models.ReqContext) Response {
 	from := c.Query("from")
 	to := c.Query("to")
 	intervalMs := c.QueryInt64("intervalMs")
@@ -190,7 +190,7 @@ func GetTestDataRandomWalk(c *m.ReqContext) Response {
 	timeRange := tsdb.NewTimeRange(from, to)
 	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
-	dsInfo := &m.DataSource{Type: "testdata"}
+	dsInfo := &models.DataSource{Type: "testdata"}
 	request.Queries = append(request.Queries, &tsdb.Query{
 		RefId:      "A",
 		IntervalMs: intervalMs,

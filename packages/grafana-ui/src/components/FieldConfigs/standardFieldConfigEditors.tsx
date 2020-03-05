@@ -10,9 +10,8 @@ import {
 } from './thresholds';
 import { DataLinksOverrideEditor, dataLinksOverrideProcessor, DataLinksValueEditor } from './links';
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace StandardFieldConfigEditors {
-  export const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+export const getStandardFieldConfigs = () => {
+  const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
     id: 'title', // Match field properties
     name: 'Title',
     description: 'The field title',
@@ -27,7 +26,7 @@ export namespace StandardFieldConfigEditors {
     shouldApply: field => field.type !== FieldType.time,
   };
 
-  export const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const unit: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
     id: 'unit', // Match field properties
     name: 'Unit',
     description: 'value units',
@@ -43,7 +42,7 @@ export namespace StandardFieldConfigEditors {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  export const min: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const min: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
     id: 'min', // Match field properties
     name: 'Min',
     description: 'Minimum expected value',
@@ -58,7 +57,7 @@ export namespace StandardFieldConfigEditors {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  export const max: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const max: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
     id: 'max', // Match field properties
     name: 'Max',
     description: 'Maximum expected value',
@@ -74,7 +73,7 @@ export namespace StandardFieldConfigEditors {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  export const decimals: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
+  const decimals: FieldPropertyEditorItem<number, NumberFieldConfigSettings> = {
     id: 'decimals', // Match field properties
     name: 'Decimals',
     description: 'How many decimal places should be shown on a number',
@@ -93,7 +92,7 @@ export namespace StandardFieldConfigEditors {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  export const thresholds: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
+  const thresholds: FieldPropertyEditorItem<ThresholdsConfig, ThresholdsFieldConfigSettings> = {
     id: 'thresholds', // Match field properties
     name: 'Thresholds',
     description: 'Manage Thresholds',
@@ -109,7 +108,7 @@ export namespace StandardFieldConfigEditors {
     shouldApply: field => field.type === FieldType.number,
   };
 
-  export const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
+  const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
     id: 'noValue', // Match field properties
     name: 'No Value',
     description: 'What to show when there is no value',
@@ -125,7 +124,7 @@ export namespace StandardFieldConfigEditors {
     shouldApply: () => true,
   };
 
-  export const links: FieldPropertyEditorItem<DataLink[], StringFieldConfigSettings> = {
+  const links: FieldPropertyEditorItem<DataLink[], StringFieldConfigSettings> = {
     id: 'links', // Match field properties
     name: 'DataLinks',
     description: 'Manage date links',
@@ -137,16 +136,6 @@ export namespace StandardFieldConfigEditors {
     },
     shouldApply: () => true,
   };
-}
 
-export const getStandardFieldConfigs = () => {
-  return [
-    StandardFieldConfigEditors.decimals,
-    StandardFieldConfigEditors.max,
-    StandardFieldConfigEditors.min,
-    StandardFieldConfigEditors.noValue,
-    StandardFieldConfigEditors.thresholds,
-    StandardFieldConfigEditors.title,
-    StandardFieldConfigEditors.unit,
-  ];
+  return [unit, min, max, decimals, thresholds, title, noValue, links];
 };

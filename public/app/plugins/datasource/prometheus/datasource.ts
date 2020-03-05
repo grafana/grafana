@@ -538,7 +538,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   };
 
-  async annotationQuery(options: any) {
+  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
     const annotation = options.annotation;
     const { expr = '', tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
 
@@ -570,35 +570,57 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return [];
     }
 
+    const step = Math.floor(query.step) * 1000;
+
     response?.data?.data?.result?.forEach(series => {
       const tags = Object.entries(series.metric)
         .filter(([k]) => splitKeys.includes(k))
         .map(([_k, v]: [string, string]) => v);
 
-      const dupCheck: Record<number, boolean> = {};
-      for (const value of series.values) {
-        const valueIsTrue = value[1] === '1'; // e.g. ALERTS
-        if (valueIsTrue || annotation.useValueForTime) {
-          const event: AnnotationEvent = {
-            annotation,
-            title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
-            tags,
-            text: self.resultTransformer.renderTemplate(textFormat, series.metric),
-          };
-
-          if (annotation.useValueForTime) {
-            const timestampValue = Math.floor(parseFloat(value[1]));
-            if (dupCheck[timestampValue]) {
-              continue;
-            }
-            dupCheck[timestampValue] = true;
-            event.time = timestampValue;
-          } else {
-            event.time = Math.floor(parseFloat(value[0])) * 1000;
-          }
-
-          eventList.push(event);
+      series.values.forEach((value: any[]) => {
+        let timestampValue;
+        // rewrite timeseries to a common format
+        if (annotation.useValueForTime) {
+          timestampValue = Math.floor(parseFloat(value[1]));
+          value[1] = 1;
+        } else {
+          timestampValue = Math.floor(parseFloat(value[0])) * 1000;
         }
+        value[0] = timestampValue;
+      });
+
+      const activeValues = series.values.filter((value: Record<number, string>) => parseFloat(value[1]) >= 1);
+      const activeValuesTimestamps = activeValues.map((value: number[]) => value[0]);
+
+      // Instead of creating singular annotation for each active event we group events into region if they are less
+      // then `step` apart.
+      let latestEvent: AnnotationEvent = null;
+      activeValuesTimestamps.forEach((timestamp: number) => {
+        // We already have event `open` and we have new event that is inside the `step` so we just update the end.
+        if (latestEvent && latestEvent.timeEnd + step >= timestamp) {
+          latestEvent.timeEnd = timestamp;
+          return;
+        }
+
+        // Event exists but new one is outside of the `step` so we "finish" the current region.
+        if (latestEvent) {
+          eventList.push(latestEvent);
+        }
+
+        // We start a new region.
+        latestEvent = {
+          time: timestamp,
+          timeEnd: timestamp,
+          annotation,
+          title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
+          tags,
+          text: self.resultTransformer.renderTemplate(textFormat, series.metric),
+        };
+      });
+      if (latestEvent) {
+        // finish up last point if we have one
+        latestEvent.timeEnd = activeValuesTimestamps[activeValuesTimestamps.length - 1];
+        eventList.push(latestEvent);
       }
     });
 
