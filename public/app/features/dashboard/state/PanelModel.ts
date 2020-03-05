@@ -42,7 +42,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
-  replaceVariables: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -146,7 +145,6 @@ export class PanelModel {
     // this should not be removed in save model as exporter needs to templatize it
     this.datasource = null;
     this.restoreModel(model);
-    this.replaceVariables = this.replaceVariables.bind(this);
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -175,14 +173,6 @@ export class PanelModel {
 
   getOptions() {
     return this.options;
-  }
-
-  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
-    let vars = this.scopedVars;
-    if (extraVars) {
-      vars = vars ? { ...vars, ...extraVars } : extraVars;
-    }
-    return templateSrv.replace(value, vars, format);
   }
 
   updateOptions(options: object) {
@@ -405,6 +395,14 @@ export class PanelModel {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.getQueryRunner().setTransformations(transformations);
+  }
+
+  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+    let vars = this.scopedVars;
+    if (extraVars) {
+      vars = vars ? { ...vars, ...extraVars } : extraVars;
+    }
+    return templateSrv.replace(value, vars, format);
   }
 
   updateQueryRunnerFieldOverrides() {

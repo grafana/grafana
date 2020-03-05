@@ -285,7 +285,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             width={panelWidth}
             height={innerPanelHeight}
             renderCounter={renderCounter}
-            replaceVariables={panel.replaceVariables}
+            replaceVariables={panel.replaceVariables.bind(panel)}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
           />
