@@ -8,10 +8,9 @@ import {
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
-import { AddVariable, toVariablePayload, VariableIdentifier } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { v4 } from 'uuid';
-import { EMPTY_UUID } from '../state/types';
+import { AddVariable, EMPTY_UUID, toVariablePayload, VariableIdentifier } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '../variable';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';

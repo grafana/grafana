@@ -15,8 +15,7 @@ import {
   storeNewVariable,
 } from './sharedReducer';
 import { QueryVariableModel, VariableHide } from '../variable';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID } from './types';
-import { toVariablePayload } from './actions';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID, toVariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';

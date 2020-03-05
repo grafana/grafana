@@ -1,9 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 
-import { AddVariable, VariablePayload } from './actions';
 import { VariableModel, VariableOption, VariableType, VariableWithOptions } from '../variable';
-import { ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState } from './types';
+import { AddVariable, ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { Deferred } from '../../../core/utils/deferred';

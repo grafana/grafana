@@ -1,20 +1,14 @@
 import castArray from 'lodash/castArray';
 import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
 
-import {
-  QueryVariableModel,
-  VariableModel,
-  VariableOption,
-  VariableRefresh,
-  VariableType,
-  VariableWithOptions,
-} from '../variable';
+import { QueryVariableModel, VariableModel, VariableOption, VariableRefresh, VariableWithOptions } from '../variable';
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
 import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
+import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -45,39 +39,6 @@ import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVa
 //              action => setCurrentVariableValue
 //              thunk => variableUpdated
 //                adapter => updateOptions for dependent nodes
-
-export interface VariableIdentifier {
-  type: VariableType;
-  uuid: string;
-}
-
-export interface VariablePayload<T extends any = undefined> extends VariableIdentifier {
-  data: T;
-}
-
-export interface AddVariable<T extends VariableModel = VariableModel> {
-  global: boolean; // part of dashboard or global
-  index: number; // the order in variables list
-  model: T;
-}
-
-export const toVariableIdentifier = (variable: VariableModel): VariableIdentifier => {
-  return { type: variable.type, uuid: variable.uuid! };
-};
-
-export function toVariablePayload<T extends any = undefined>(
-  identifier: VariableIdentifier,
-  data?: T
-): VariablePayload<T>;
-
-export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
-
-export function toVariablePayload<T extends any = undefined>(
-  obj: VariableIdentifier | VariableModel,
-  data?: T
-): VariablePayload<T> {
-  return { type: obj.type, uuid: obj.uuid!, data: data as T };
-}
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
   return (dispatch, getState) => {

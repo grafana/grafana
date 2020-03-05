@@ -13,7 +13,7 @@ import {
   VariableEditorState,
   variableEditorUnMounted,
 } from './reducer';
-import { toVariablePayload } from '../state/actions';
+import { toVariablePayload } from '../state/types';
 
 describe('variableEditorReducer', () => {
   describe('when setIdInEditor is dispatched', () => {

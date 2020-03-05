@@ -10,7 +10,6 @@ import {
   VariableSort,
   VariableTag,
 } from '../variable';
-import { VariablePayload } from '../state/actions';
 import templateSrv from '../template_srv';
 import {
   ALL_VARIABLE_TEXT,
@@ -19,6 +18,7 @@ import {
   getInstanceState,
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
+  VariablePayload,
 } from '../state/types';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';

@@ -1,9 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { TextBoxVariableModel, VariableHide, VariableOption } from '../variable';
-import { EMPTY_UUID, getInstanceState } from '../state/types';
+import { EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
-import { VariablePayload } from '../state/actions';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   uuid: EMPTY_UUID,

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { VariablePayload } from '../state/actions';
+import { VariablePayload } from '../state/types';
 
 type VariableEditorExtension<ExtendedProps extends {} = {}> = { [P in keyof ExtendedProps]: ExtendedProps[P] };
 export interface VariableEditorState<ExtendedProps extends {} = {}> {

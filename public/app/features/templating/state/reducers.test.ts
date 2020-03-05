@@ -3,8 +3,8 @@ import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
 import { VariableHide, VariableModel } from '../variable';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
-import { toVariablePayload, VariablePayload } from './actions';
 import { variablesReducer, VariablesState } from './variablesReducer';
+import { toVariablePayload, VariablePayload } from './types';
 
 describe('variablesReducer', () => {
   describe('when cleanUpDashboard is dispatched', () => {

@@ -1,11 +1,6 @@
 import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
-import {
-  toVariableIdentifier,
-  toVariablePayload,
-  validateVariableSelectionState,
-  VariableIdentifier,
-} from '../state/actions';
+import { validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../variable';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
@@ -18,6 +13,7 @@ import { addVariableEditorError, changeVariableEditorExtended, removeVariableEdi
 import { variableAdapters } from '../adapters';
 import { changeVariableProp } from '../state/sharedReducer';
 import { updateVariableOptions, updateVariableTags } from './reducer';
+import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,

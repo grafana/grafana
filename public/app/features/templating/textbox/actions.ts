@@ -1,9 +1,9 @@
-import { toVariablePayload, VariableIdentifier } from '../state/actions';
 import { TextBoxVariableModel } from '../variable';
 import { ThunkResult } from '../../../types';
 import { getVariable } from '../state/selectors';
 import { variableAdapters } from '../adapters';
 import { createTextBoxOptions } from './reducer';
+import { toVariablePayload, VariableIdentifier } from '../state/types';
 
 export const updateTextBoxVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {

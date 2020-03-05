@@ -1,11 +1,11 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, PureComponent } from 'react';
 
 import { TextBoxVariableModel } from '../variable';
-import { VariablePickerProps } from '../state/types';
+import { toVariablePayload } from '../state/types';
 import { dispatch } from '../../../store/store';
-import { toVariablePayload } from '../state/actions';
 import { variableAdapters } from '../adapters';
 import { changeVariableProp } from '../state/sharedReducer';
+import { VariablePickerProps } from '../pickers/types';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 

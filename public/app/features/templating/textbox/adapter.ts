@@ -3,11 +3,12 @@ import cloneDeep from 'lodash/cloneDeep';
 import { TextBoxVariableModel } from '../variable';
 import { initialTextBoxVariableModelState, textBoxVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
+import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { TextBoxVariablePicker } from './TextBoxVariablePicker';
 import { TextBoxVariableEditor } from './TextBoxVariableEditor';
 import { updateTextBoxVariableOptions } from './actions';
+import { toVariableIdentifier } from '../state/types';
 
 export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableModel> => {
   return {

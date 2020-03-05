@@ -1,10 +1,9 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { EMPTY_UUID } from '../state/types';
+import { EMPTY_UUID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { StoreState } from '../../../types';
 import { e2e } from '@grafana/e2e';
 import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/actions';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { getVariableClones } from '../state/selectors';

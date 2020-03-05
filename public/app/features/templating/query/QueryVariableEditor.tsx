@@ -11,8 +11,8 @@ import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
-import { toVariableIdentifier } from '../state/actions';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { toVariableIdentifier } from '../state/types';
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 

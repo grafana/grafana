@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ConstantVariableModel, VariableHide, VariableOption } from '../variable';
-import { EMPTY_UUID, getInstanceState } from '../state/types';
+import { EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
-import { VariablePayload } from '../state/actions';
 
 export const initialConstantVariableModelState: ConstantVariableModel = {
   uuid: EMPTY_UUID,

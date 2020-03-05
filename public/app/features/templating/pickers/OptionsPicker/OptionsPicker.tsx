@@ -8,8 +8,8 @@ import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggle
 import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
 import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../variable';
 import { VariableOptions } from '../shared/VariableOptions';
-import { VariablePickerProps } from '../../state/types';
 import { isQuery } from '../../guard';
+import { VariablePickerProps } from '../types';
 
 interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
 

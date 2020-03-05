@@ -1,10 +1,10 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { queryVariableReducer, updateVariableOptions, updateVariableTags } from './reducer';
-import { toVariablePayload } from '../state/actions';
 import { QueryVariableModel, VariableOption } from '../variable';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariablesState } from '../state/variablesReducer';
 import { getVariableTestContext } from '../state/helpers';
+import { toVariablePayload } from '../state/types';
 
 describe('queryVariableReducer', () => {
   describe('when updateVariableOptions is dispatched and includeAll is true', () => {

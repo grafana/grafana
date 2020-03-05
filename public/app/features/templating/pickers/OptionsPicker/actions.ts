@@ -9,7 +9,6 @@ import {
   VariableWithMultiSupport,
   VariableWithOptions,
 } from '../../variable';
-import { toVariablePayload } from '../../state/actions';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
 import { NavigationKey } from '../shared/types';
@@ -26,6 +25,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { setCurrentVariableValue } from '../../state/sharedReducer';
+import { toVariablePayload } from '../../state/types';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {

@@ -3,12 +3,12 @@ import cloneDeep from 'lodash/cloneDeep';
 import { containsVariable, QueryVariableModel, VariableRefresh } from '../variable';
 import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl, toVariableIdentifier } from '../state/actions';
+import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { OptionsPicker } from '../pickers';
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
-import { ALL_VARIABLE_TEXT } from '../state/types';
+import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {

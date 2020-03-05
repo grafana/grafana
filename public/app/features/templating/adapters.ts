@@ -3,9 +3,9 @@ import { Reducer } from 'redux';
 import { UrlQueryValue } from '@grafana/runtime';
 
 import { VariableModel, VariableOption, VariableType } from './variable';
-import { VariablePickerProps } from './state/types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
+import { VariablePickerProps } from './pickers/types';
 
 export interface VariableAdapter<Model extends VariableModel> {
   description: string;

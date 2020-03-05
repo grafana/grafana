@@ -1,9 +1,9 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { VariablePayload } from './actions';
 import { cleanUpDashboard } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';
 import { sharedReducer } from './sharedReducer';
 import { VariableModel } from '../variable';
+import { VariablePayload } from './types';
 
 export interface VariablesState extends Record<string, VariableModel> {}
 
