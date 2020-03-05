@@ -12,7 +12,7 @@ weight = 200
 
 # What is Grafana?
 
-This topic provides a high-level look at Grafana, the Grafana process, and Grafana features. It is a good place to start if you want to learn more about Grafana software. To jump right in and start seeing (fake) data in graphs, refer to [Getting started]({{< relref "getting_started.md" >}}).
+This topic provides a high-level look at Grafana, the Grafana process, and Grafana features. It's a good place to start if you want to learn more about Grafana software. To jump right in, refer to [Getting started]({{< relref "getting_started.md" >}}).
 
 
 Grafana is open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics no matter where they are stored. In plain English, it provides you with tools to turn your time-series database (TSDB) data into beautiful graphs and visualizations.
@@ -48,7 +48,7 @@ Annotate graphs with rich events from different data sources. Hover over events 
 
 This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source. Refer to [Annotations]({{< relref "../reference/annotations.md" >}}) for more information.
 
-## Dashboard variables
+## Dashboard templating
 
 [Variables]({{< relref "../reference/templating.md" >}}), also called templates, allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both. 
 
