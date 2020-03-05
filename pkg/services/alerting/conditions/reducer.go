@@ -96,8 +96,12 @@ func (s *queryReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 		}
 	case "diff":
 		allNull, value = calculateDiff(series, allNull, value, diff)
+	case "diff_abs":
+		allNull, value = calculateDiff(series, allNull, value, diffAbs)
 	case "percent_diff":
 		allNull, value = calculateDiff(series, allNull, value, percentDiff)
+	case "percent_diff_abs":
+		allNull, value = calculateDiff(series, allNull, value, percentDiffAbs)
 	case "count_non_null":
 		for _, v := range series.Points {
 			if isValid(v[0]) {
@@ -141,8 +145,7 @@ func calculateDiff(series *tsdb.TimeSeries, allNull bool, value float64, fn func
 		for i := 0; i < len(points); i++ {
 			if isValid(points[i][0]) {
 				allNull = false
-				val := fn(first, points[i][0].Float64)
-				value = math.Abs(val)
+				value = fn(first, points[i][0].Float64)
 				break
 			}
 		}
@@ -158,6 +161,14 @@ var diff = func(newest, oldest float64) float64 {
 	return newest - oldest
 }
 
+var diffAbs = func(newest, oldest float64) float64 {
+	return math.Abs(newest - oldest)
+}
+
 var percentDiff = func(newest, oldest float64) float64 {
-	return (newest - oldest) / oldest * 100
+	return (newest - oldest) / math.Abs(oldest) * 100
+}
+
+var percentDiffAbs = func(newest, oldest float64) float64 {
+	return math.Abs((newest - oldest) / oldest * 100)
 }

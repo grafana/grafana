@@ -1,9 +1,10 @@
 package backendplugin
 
 import (
-	"encoding/json"
 	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 )
@@ -69,7 +70,7 @@ type PluginConfig struct {
 	OrgID                   int64
 	PluginID                string
 	PluginType              string
-	JSONData                json.RawMessage
+	JSONData                *simplejson.Json
 	DecryptedSecureJSONData map[string]string
 	Updated                 time.Time
 	DataSourceConfig        *DataSourceConfig

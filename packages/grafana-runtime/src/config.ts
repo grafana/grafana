@@ -30,6 +30,7 @@ interface LicenseInfo {
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  minRefreshInterval = '';
   appSubUrl = '';
   windowTitlePrefix = '';
   buildInfo: BuildInfo = {} as BuildInfo;

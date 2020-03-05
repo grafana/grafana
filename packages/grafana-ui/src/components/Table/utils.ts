@@ -42,7 +42,7 @@ export function getTextAlign(field: Field): TextAlignProperty {
   return 'left';
 }
 
-export function getColumns(data: DataFrame, availableWidth: number): Column[] {
+export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
   const columns: Column[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
@@ -67,7 +67,7 @@ export function getColumns(data: DataFrame, availableWidth: number): Column[] {
   const sharedWidth = availableWidth / fieldCountWithoutWidth;
   for (const column of columns) {
     if (!column.width) {
-      column.width = sharedWidth;
+      column.width = Math.max(sharedWidth, columnMinWidth);
     }
   }
 

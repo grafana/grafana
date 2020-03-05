@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Utils & Services
-import { AngularComponent } from '@grafana/runtime';
 import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
@@ -37,7 +36,6 @@ interface State {
 
 export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
-  angularOptions: AngularComponent;
   querySubscription: Unsubscribable;
 
   constructor(props: Props) {
@@ -65,14 +63,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     const { plugin, dashboard, panel } = this.props;
 
     if (plugin.angularPanelCtrl) {
-      return (
-        <AngularPanelOptions
-          plugin={plugin}
-          dashboard={dashboard}
-          panel={panel}
-          onPluginTypeChange={this.onPluginTypeChange}
-        />
-      );
+      return <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} />;
     }
 
     if (plugin.editor) {

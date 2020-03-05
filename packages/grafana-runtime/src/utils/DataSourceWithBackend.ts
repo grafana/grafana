@@ -44,7 +44,7 @@ export class DataSourceWithBackend<
         throw new Error('Unknown Datasource: ' + q.datasource);
       }
       return {
-        ...q,
+        ...this.applyTemplateVariables(q),
         datasourceId: ds.id,
         intervalMs,
         maxDataPoints,
@@ -71,7 +71,14 @@ export class DataSourceWithBackend<
   }
 
   /**
-   * This makes the arrow libary loading async.
+   * Override to apply template variables
+   */
+  applyTemplateVariables(query: DataQuery) {
+    return query;
+  }
+
+  /**
+   * This makes the arrow library loading async.
    */
   async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
     const { resultsToDataFrames } = await import(
