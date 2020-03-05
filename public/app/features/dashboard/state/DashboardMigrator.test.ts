@@ -128,7 +128,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(22);
+      expect(model.schemaVersion).toBe(23);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -573,6 +573,47 @@ describe('DashboardModel', () => {
           'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
         );
       });
+    });
+  });
+
+  describe('when migrating fieldOptions', () => {
+    let model: any;
+    const defaultsMock = {
+      links: [
+        {
+          url: 'http://mylink.com?series=${__series_name}',
+        },
+        {
+          url: 'http://mylink.com?series=${__value_time}',
+        },
+      ],
+      title: '$__cell_0 * $__field_name * $__series_name',
+    };
+
+    const overridesMock = [{}];
+    const fieldOptionsMock = {
+      someOption: 1,
+      defaults: defaultsMock,
+      overrides: overridesMock,
+    };
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            //  panel with field options
+            options: {
+              fieldOptions: fieldOptionsMock,
+            },
+          },
+        ],
+      });
+    });
+
+    it('should move fieldOptions to root level of PanelModel and remove them from options', () => {
+      // TODO
+      // expect(model.panels[0].options.fieldOptions).toEqual({ someOption: 1 });
+      expect(model.panels[0].fieldConfig).toEqual({ defaults: defaultsMock, overrides: overridesMock });
     });
   });
 });
