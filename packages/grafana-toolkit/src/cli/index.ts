@@ -168,15 +168,11 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-build')
-    .option('--backend', 'Run Makefile for backend task', false)
+    .option('--finish', 'move all results to the jobs folder', false)
     .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
-      if (typeof cmd === 'string') {
-        console.error(`Invalid argument: ${cmd}\nSee --help for a list of available commands.`);
-        process.exit(1);
-      }
       await execTask(ciBuildPluginTask)({
-        backend: cmd.backend,
+        finish: cmd.finish,
       });
     });
 
