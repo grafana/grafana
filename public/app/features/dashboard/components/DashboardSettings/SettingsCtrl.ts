@@ -5,7 +5,7 @@ import { e2e } from '@grafana/e2e';
 
 import { appEvents, contextSrv, coreModule } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
-import config, { getConfig } from 'app/core/config';
+import { getConfig } from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
@@ -125,7 +125,7 @@ export class SettingsCtrl {
 
     for (const section of this.sections) {
       const sectionParams = _.defaults({ editview: section.id }, params);
-      section.url = config.appSubUrl + url + '?' + $.param(sectionParams);
+      section.url = getConfig().appSubUrl + url + '?' + $.param(sectionParams);
     }
   }
 
