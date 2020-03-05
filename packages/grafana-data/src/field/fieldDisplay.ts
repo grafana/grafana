@@ -19,7 +19,8 @@ import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 
-export interface FieldDisplayOptions extends FieldConfigSource {
+// export interface FieldDisplayOptions extends FieldConfigSource {
+export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
@@ -57,6 +58,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
   if (fieldCount > 1 || !parts.length) {
     parts.push('${' + VAR_FIELD_NAME + '}');
   }
+
   return parts.join(' ');
 }
 
@@ -75,6 +77,7 @@ export interface FieldDisplay {
 export interface GetFieldDisplayValuesOptions {
   data?: DataFrame[];
   fieldOptions: FieldDisplayOptions;
+  fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
@@ -84,7 +87,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, fieldOptions } = options;
+  const { replaceVariables, fieldOptions, fieldConfig } = options;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -94,7 +97,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     const data = options.data;
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
-    const defaultTitle = getTitleTemplate(fieldOptions.defaults.title, calcs, data);
+    const defaultTitle = getTitleTemplate(fieldConfig.defaults.title, calcs, data);
     const scopedVars: ScopedVars = {};
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
@@ -194,7 +197,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push(createNoValuesFieldDisplay(options));
-  } else if (values.length === 1 && !fieldOptions.defaults.title) {
+  } else if (values.length === 1 && !fieldConfig.defaults.title) {
     // Don't show title for single item
     values[0].display.title = undefined;
   }
