@@ -26,7 +26,7 @@ This is the general process of running Grafana.
 1. Create a [dashboard]({{< relref "../features/dashboard/dashboards.md" >}}).
 1. Add [panels]({{< relref "../features/panels/panels.md" >}}) to the dashboard.
 
-After creating a dashboard, there are many possible things you might do next. It all depends on your needs and your use case. 
+Where to go next depends on your needs and your use case.
 
 For example, if you want to view weather data and statistics about your smart home, then you might create a playlist. If you are the administrator for a corporation and are managing Grafana for multiple teams, then you might need to set up provisioning and authentication.
 
