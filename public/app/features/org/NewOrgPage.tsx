@@ -6,7 +6,8 @@ import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { NavModelItem } from '@grafana/data';
+import { NavModel } from '@grafana/data';
+import { getNavModel } from '../../core/selectors/navModel';
 
 const createOrg = (newOrg: { name: string }) => {
   getBackendSrv()
@@ -21,7 +22,7 @@ const createOrg = (newOrg: { name: string }) => {
 };
 
 interface PropsWithState {
-  navModel: NavModelItem;
+  navModel: NavModel;
 }
 
 interface CreateOrgFormDTO {
@@ -30,7 +31,7 @@ interface CreateOrgFormDTO {
 
 export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
   return (
-    <Page navModel={{ main: navModel.parentItem, node: navModel.parentItem }}>
+    <Page navModel={navModel}>
       <Page.Contents>
         <h3 className="page-sub-heading">New Organization</h3>
 
@@ -67,7 +68,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
 };
 
 const mapStateToProps = (state: StoreState) => {
-  return { navModel: state.navIndex['global-orgs'] };
+  return { navModel: getNavModel(state.navIndex, 'global-orgs') };
 };
 
 export default hot(module)(connect(mapStateToProps)(NewOrgPage));
