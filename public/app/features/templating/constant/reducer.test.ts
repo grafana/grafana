@@ -3,12 +3,12 @@ import cloneDeep from 'lodash/cloneDeep';
 import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload } from '../state/types';
 import { constantVariableReducer, createConstantOptionsFromQuery } from './reducer';
-import { createCustomVariableAdapter } from '../custom/adapter';
 import { VariablesState } from '../state/variablesReducer';
-import { VariableOption, CustomVariableModel } from '../variable';
+import { ConstantVariableModel } from '../variable';
+import { createConstantVariableAdapter } from './adapter';
 
 describe('constantVariableReducer', () => {
-  const adapter = createCustomVariableAdapter();
+  const adapter = createConstantVariableAdapter();
 
   describe('when createConstantOptionsFromQuery is dispatched', () => {
     it('then state should be correct', () => {
@@ -28,9 +28,9 @@ describe('constantVariableReducer', () => {
                 text: query,
                 value: query,
                 selected: false,
-              } as VariableOption,
+              },
             ],
-          } as CustomVariableModel,
+          } as ConstantVariableModel,
         });
     });
   });
@@ -53,9 +53,9 @@ describe('constantVariableReducer', () => {
                 text: query.trim(),
                 value: query.trim(),
                 selected: false,
-              } as VariableOption,
+              },
             ],
-          } as CustomVariableModel,
+          } as ConstantVariableModel,
         });
     });
   });
