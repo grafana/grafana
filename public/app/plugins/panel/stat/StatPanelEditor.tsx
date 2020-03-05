@@ -1,52 +1,14 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-import {
-  ThresholdsEditor,
-  PanelOptionsGrid,
-  ValueMappingsEditor,
-  FieldDisplayEditor,
-  FieldPropertiesEditor,
-  PanelOptionsGroup,
-  DataLinksEditor,
-  FormLabel,
-  Select,
-} from '@grafana/ui';
+import { PanelOptionsGrid, FieldDisplayEditor, PanelOptionsGroup, FormLabel, Select } from '@grafana/ui';
 
-import {
-  ThresholdsConfig,
-  ValueMapping,
-  FieldConfig,
-  DataLink,
-  PanelEditorProps,
-  FieldDisplayOptions,
-} from '@grafana/data';
+import { PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
 
 import { StatPanelOptions, colorModes, graphModes, justifyModes } from './types';
 import { orientationOptions } from '../gauge/types';
 
-import {
-  getDataLinksVariableSuggestions,
-  getCalculationValueDataLinksVariableSuggestions,
-} from 'app/features/panel/panellinks/link_srv';
-
 export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOptions>> {
-  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
-    const current = this.props.options.fieldOptions.defaults;
-    this.onDefaultsChange({
-      ...current,
-      thresholds,
-    });
-  };
-
-  onValueMappingsChanged = (mappings: ValueMapping[]) => {
-    const current = this.props.options.fieldOptions.defaults;
-    this.onDefaultsChange({
-      ...current,
-      mappings,
-    });
-  };
-
   onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
@@ -58,27 +20,9 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
   onJustifyModeChanged = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, justifyMode: value });
   onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
 
-  onDefaultsChange = (field: FieldConfig) => {
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
-      defaults: field,
-    });
-  };
-
-  onDataLinksChanged = (links: DataLink[]) => {
-    this.onDefaultsChange({
-      ...this.props.options.fieldOptions.defaults,
-      links,
-    });
-  };
-
   render() {
     const { options } = this.props;
     const { fieldOptions } = options;
-    const { defaults } = fieldOptions;
-    const suggestions = fieldOptions.values
-      ? getDataLinksVariableSuggestions(this.props.data.series)
-      : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
     return (
       <>
@@ -126,29 +70,7 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
               />
             </div>
           </PanelOptionsGroup>
-
-          <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor
-              showMinMax={true}
-              onChange={this.onDefaultsChange}
-              value={defaults}
-              showTitle={true}
-            />
-          </PanelOptionsGroup>
-
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
-
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
-
-        <PanelOptionsGroup title="Data links">
-          <DataLinksEditor
-            value={defaults.links}
-            onChange={this.onDataLinksChanged}
-            suggestions={suggestions}
-            maxLinks={10}
-          />
-        </PanelOptionsGroup>
       </>
     );
   }
