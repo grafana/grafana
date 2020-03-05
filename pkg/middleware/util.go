@@ -29,11 +29,8 @@ func Gziper() macaron.Handler {
 			return
 		}
 
-		if strings.HasPrefix(requestPath, "/api/datasources/") && strings.Contains(requestPath, resourcesPath) {
-			return
-		}
-
-		if strings.HasPrefix(requestPath, "/api/plugins/") && strings.Contains(requestPath, resourcesPath) {
+		// ignore resources
+		if (strings.HasPrefix(requestPath, "/api/datasources/") || strings.HasPrefix(requestPath, "/api/plugins/")) && strings.Contains(requestPath, resourcesPath) {
 			return
 		}
 
