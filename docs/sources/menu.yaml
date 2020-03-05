@@ -2,7 +2,7 @@
   link: /guides/
   children:
   - name: What is Grafana?
-    link: /guides/intro-to-grafana/
+    link: /guides/what-is-grafana/
   - name: Getting started
     link: /guides/getting_started/
   - name: Intro to time series
