@@ -172,7 +172,7 @@
     - link: /features/datasources/prometheus/
       name: Prometheus
     - link: /features/datasources/testdata/
-      name: Testdata
+      name: TestData DB
   - name: Explore
     link: /features/explore/
   - name: Alerting
