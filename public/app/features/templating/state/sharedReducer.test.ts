@@ -5,6 +5,7 @@ import { sharedReducer } from './sharedReducer';
 import { QueryVariableModel, VariableHide } from '../variable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID } from './types';
 import {
+  addInitLock,
   addVariable,
   changeVariableOrder,
   changeVariableProp,
@@ -32,25 +33,14 @@ describe('sharedReducer', () => {
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, { ...initialVariablesState })
         .whenActionIsDispatched(addVariable(payload))
-        .thenStatePredicateShouldEqual(resultingState => {
-          // we need to remove initLock because instances will no be reference equal
-          const { initLock, ...resultingRest } = resultingState[0];
-          const expectedState = { ...initialQueryVariableModelState };
-          delete expectedState.initLock;
-          expect(resultingRest).toEqual({
-            ...expectedState,
+        .thenStateShouldEqual({
+          [0]: {
+            ...initialQueryVariableModelState,
+            ...model,
             uuid: '0',
-            index: 0,
             global: true,
-            name: 'name from model',
-            type: 'type from model',
-          });
-          // make sure that initLock is defined
-          expect(resultingState[0].initLock!).toBeDefined();
-          expect(resultingState[0].initLock!.promise).toBeDefined();
-          expect(resultingState[0].initLock!.resolve).toBeDefined();
-          expect(resultingState[0].initLock!.reject).toBeDefined();
-          return true;
+            index: 0,
+          },
         });
     });
   });
@@ -342,6 +332,29 @@ describe('sharedReducer', () => {
             ],
             current: { selected: true, text: 'All', value: ['$__all'] },
           } as unknown) as QueryVariableModel,
+        });
+    });
+  });
+
+  describe('when addInitLock is dispatched', () => {
+    it('then state should be correct', () => {
+      const { initialState } = getVariableTestContext({});
+      const payload = toVariablePayload({ uuid: '0', type: 'query' });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(addInitLock(payload))
+        .thenStatePredicateShouldEqual(resultingState => {
+          // we need to remove initLock because instances will no be reference equal
+          const { initLock, ...resultingRest } = resultingState[0];
+          const expectedState = cloneDeep(initialState);
+          delete expectedState[0].initLock;
+          expect(resultingRest).toEqual(expectedState[0]);
+          // make sure that initLock is defined
+          expect(resultingState[0].initLock!).toBeDefined();
+          expect(resultingState[0].initLock!.promise).toBeDefined();
+          expect(resultingState[0].initLock!.resolve).toBeDefined();
+          expect(resultingState[0].initLock!.reject).toBeDefined();
+          return true;
         });
     });
   });

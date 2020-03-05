@@ -20,12 +20,24 @@ const assertDefaultsForNewVariable = () => {
       .get('option:selected')
       .should('have.text', '');
   });
-  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
-    e2e()
-      .get('option:selected')
-      .should('not.exist');
-    // .should('have.text', ''); // newVariables
-  });
+
+  e2e()
+    .window()
+    .then((win: any) => {
+      let chainer = 'not.exist';
+      let value: string = undefined;
+      if (win.grafanaBootData.settings.featureToggles.newVariables) {
+        chainer = 'have.text';
+        value = '';
+      }
+
+      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
+        e2e()
+          .get('option:selected')
+          .should(chainer, value);
+      });
+    });
+
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput().should('not.exist');
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect().within(select => {
     e2e()
@@ -70,10 +82,17 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().should('be.visible');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
-  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
-    .select(`string:${dataSourceName}`)
-    // .select(`${dataSourceName}`) // newVariables
-    .blur();
+  e2e()
+    .window()
+    .then((win: any) => {
+      let text = `string:${dataSourceName}`;
+      if (win.grafanaBootData.settings.featureToggles.newVariables) {
+        text = `${dataSourceName}`;
+      }
+      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
+        .select(text)
+        .blur();
+    });
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
     .within(input => {
       expect(input.attr('placeholder')).equals('metric name or tags query');
@@ -287,19 +306,19 @@ const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
 };
 
 const assertUpdateItem = (data: QueryVariableData[]) => {
-  logSection('Asserting variable update');
   const queryVariables = [...data];
   // updates an item to a constant variable instead
   const itemToUpdate = queryVariables[1];
-  const updatedItem = {
+  let updatedItem = {
     ...itemToUpdate,
     name: `update_of_${itemToUpdate.name}`,
     label: `update_of_${itemToUpdate.label}`,
     query: 'A constant',
     options: ['A constant'],
     selectedOption: 'undefined',
-    // selectedOption: 'A constant', // newVariables
   };
+
+  logSection('Asserting variable update');
   queryVariables[1] = updatedItem;
 
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
@@ -326,12 +345,22 @@ const assertUpdateItem = (data: QueryVariableData[]) => {
 
   e2e.pages.Dashboard.Toolbar.backArrow().click();
 
-  assertVariableLabelAndComponent(queryVariables[1]);
+  e2e()
+    .window()
+    .then((win: any) => {
+      if (win.grafanaBootData.settings.featureToggles.newVariables) {
+        queryVariables[1].selectedOption = 'A constant';
+      } else {
+        queryVariables[1].selectedOption = 'undefined';
+      }
+      assertVariableLabelAndComponent(queryVariables[1]);
+    });
 
   e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
 
   assertVariableTableRow(queryVariables[1], 1, queryVariables.length);
+
   queryVariables[1].selectedOption = 'A constant';
 
   logSection('Asserting variable update, OK!');

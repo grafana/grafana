@@ -101,6 +101,7 @@ export const duplicateVariable = createAction<PrepareAction<VariablePayload<Dupl
 export const changeVariableOrder = createAction<VariablePayload<{ fromIndex: number; toIndex: number }>>(
   'templating/changeVariableOrder'
 );
+export const addInitLock = createAction<VariablePayload>('templating/addInitLock');
 export const resolveInitLock = createAction<VariablePayload>('templating/resolveInitLock');
 export const removeInitLock = createAction<VariablePayload>('templating/removeInitLock');
 export const setCurrentVariableValue = createAction<VariablePayload<VariableOption>>(
@@ -133,7 +134,7 @@ export function toVariablePayload<T extends any = undefined>(
 }
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
-  return dispatch => {
+  return (dispatch, getState) => {
     for (let index = 0; index < list.length; index++) {
       const model = list[index];
       if (!variableAdapters.contains(model.type)) {
@@ -141,6 +142,10 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
       }
 
       dispatch(addVariable(toVariablePayload(model, { global: false, index, model })));
+    }
+
+    for (let index = 0; index < getVariables(getState()).length; index++) {
+      dispatch(addInitLock(toVariablePayload(getVariables(getState())[index])));
     }
   };
 };

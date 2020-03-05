@@ -2,6 +2,7 @@ import { createReducer } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 
 import {
+  addInitLock,
   addVariable,
   changeVariableOrder,
   changeVariableProp,
@@ -32,7 +33,10 @@ export const sharedReducer = createReducer(initialVariablesState, builder =>
       state[action.payload.uuid!].uuid = action.payload.uuid;
       state[action.payload.uuid!].index = action.payload.data.index;
       state[action.payload.uuid!].global = action.payload.data.global;
-      state[action.payload.uuid!].initLock = new Deferred();
+    })
+    .addCase(addInitLock, (state, action) => {
+      const instanceState = getInstanceState(state, action.payload.uuid!);
+      instanceState.initLock = new Deferred();
     })
     .addCase(resolveInitLock, (state, action) => {
       const instanceState = getInstanceState(state, action.payload.uuid!);
