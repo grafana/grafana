@@ -1,8 +1,8 @@
-import { createReducer } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ConstantVariableModel, VariableHide, VariableOption } from '../variable';
 import { EMPTY_UUID, getInstanceState } from '../state/types';
-import { createConstantOptionsFromQuery } from './actions';
-import { initialVariablesState } from '../state/variablesReducer';
+import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { VariablePayload } from '../state/actions';
 
 export const initialConstantVariableModelState: ConstantVariableModel = {
   uuid: EMPTY_UUID,
@@ -19,9 +19,19 @@ export const initialConstantVariableModelState: ConstantVariableModel = {
   initLock: null,
 };
 
-export const constantVariableReducer = createReducer(initialVariablesState, builder =>
-  builder.addCase(createConstantOptionsFromQuery, (state, action) => {
-    const instanceState = getInstanceState<ConstantVariableModel>(state, action.payload.uuid);
-    instanceState.options = [{ text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false }];
-  })
-);
+export const constantVariableSlice = createSlice({
+  name: 'templating/constant',
+  initialState: initialVariablesState,
+  reducers: {
+    createConstantOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+      const instanceState = getInstanceState<ConstantVariableModel>(state, action.payload.uuid);
+      instanceState.options = [
+        { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false },
+      ];
+    },
+  },
+});
+
+export const constantVariableReducer = constantVariableSlice.reducer;
+
+export const { createConstantOptionsFromQuery } = constantVariableSlice.actions;
