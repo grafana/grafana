@@ -505,8 +505,8 @@ export class DashboardMigrator {
             overrides: panel.options.fieldOptions.overrides || [],
           };
 
-          // delete panel.options.fieldOptions.defaults;
-          // delete panel.options.fieldOptions.overrides;
+          delete panel.options.fieldOptions.defaults;
+          delete panel.options.fieldOptions.overrides;
         }
       });
     }
