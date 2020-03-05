@@ -24,22 +24,13 @@ class GitHubRelease {
   repository: string;
   releaseNotes: string;
   commitHash?: string;
-  recreate?: boolean;
 
-  constructor(
-    token: string,
-    username: string,
-    repository: string,
-    releaseNotes: string,
-    commitHash?: string,
-    recreate?: boolean
-  ) {
+  constructor(token: string, username: string, repository: string, releaseNotes: string, commitHash?: string) {
     this.token = token;
     this.username = username;
     this.repository = repository;
     this.releaseNotes = releaseNotes;
     this.commitHash = commitHash;
-    this.recreate = recreate;
   }
 
   /**
@@ -69,7 +60,7 @@ class GitHubRelease {
     return exeNameFullPath;
   }
 
-  async release() {
+  async release(recreate: boolean) {
     const ciDir = getCiFolder();
     const distDir = path.resolve(ciDir, 'dist');
     const distContentDir = path.resolve(distDir, getPluginId());
@@ -102,13 +93,13 @@ class GitHubRelease {
       PUBLISH_DIR,
     ];
 
-    if (this.recreate) {
+    if (recreate) {
       args.splice(12, 0, '-recreate');
     }
 
     const { stdout } = await execa(ghrExe, args);
 
-    console.log('ghr completed', stdout);
+    console.log(stdout);
   }
 }
 

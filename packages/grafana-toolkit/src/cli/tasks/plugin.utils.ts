@@ -3,8 +3,7 @@ import { getPluginJson } from '../../config/utils/pluginValidation';
 import { GitHubRelease } from '../utils/githubRelease';
 import { getPluginId } from '../../config/utils/getPluginId';
 import { getCiFolder } from '../../plugins/env';
-import parseGitConfig = require('parse-git-config');
-import gitUrlParse = require('git-url-parse');
+import { useSpinner } from '../utils/useSpinner';
 
 import path = require('path');
 
@@ -34,16 +33,30 @@ const checkoutBranch = async (branchName: string): Promise<Command> => {
   return [];
 };
 
-export interface GithuPublishOptions {
-  dryrun?: boolean;
-  verbose?: boolean;
-  commitHash?: string;
-  recreate?: boolean;
-}
+const gitUrlParse = (url: string): { owner: string; name: string } => {
+  let matchResult: RegExpMatchArray | null = [];
 
-const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, verbose, commitHash, recreate }) => {
-  const gitConfig = parseGitConfig.sync();
-  const parsedUrl = gitUrlParse(parseGitConfig.expandKeys(gitConfig).remote.origin.url);
+  if (url.match(/^git@github.com/)) {
+    // We have an ssh style url.
+    matchResult = url.match(/^git@github.com:(.*?)\/(.*?)\.git/);
+  }
+
+  if (url.match(/^https:\/\/github.com\//)) {
+    // We have an https style url
+    matchResult = url.match(/^https:\/\/github.com\/(.*?)\/(.*?)\/.git/);
+  }
+
+  if (matchResult && matchResult.length > 2) {
+    return {
+      owner: matchResult[1],
+      name: matchResult[2],
+    };
+  }
+
+  throw `Coult not find a suitable git repository. Received [${url}]`;
+};
+
+const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, verbose }) => {
   const ciDir = getCiFolder();
   const distDir = path.resolve(ciDir, 'dist');
   const distContentDir = path.resolve(distDir, getPluginId());
@@ -51,13 +64,7 @@ const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, ve
   const pluginVersion = getPluginJson(pluginJsonFile).info.version;
   const GIT_EMAIL = 'eng@grafana.com';
   const GIT_USERNAME = 'CircleCI Automation';
-  let githubToken = '';
-  if (process.env['GITHUB_TOKEN']) {
-    githubToken = process.env['GITHUB_TOKEN'];
-  } else {
-    throw `Github publish requires that you set the environment variable GITHUB_TOKEN to a valid github api token.
-    See: https://github.com/settings/tokens for more details.`;
-  }
+
   const githubPublishScript: Command = [
     ['git', ['config', 'user.email', GIT_EMAIL]],
     ['git', ['config', 'user.name', GIT_USERNAME]],
@@ -92,8 +99,6 @@ const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, ve
         const { stdout } = await execa(command, args);
         if (verbose) {
           console.log(stdout);
-        } else {
-          process.stdout.write('.');
         }
       } else {
         if (verbose) {
@@ -120,21 +125,56 @@ const githubPublishRunner: TaskRunner<GithuPublishOptions> = async ({ dryrun, ve
       process.exit(-1);
     }
   }
+});
 
-  console.log('Running github release');
-  const gitRelease = new GitHubRelease(
-    githubToken,
-    parsedUrl.owner,
-    parsedUrl.name,
-    await releaseNotes(),
-    commitHash,
-    recreate
-  );
-  await gitRelease.release();
+interface GithubPluglishReleaseOptions {
+  commitHash?: string;
+  recreate?: boolean;
+  githubToken: string;
+  gitRepoOwner: string;
+  gitRepoName: string;
+}
 
-  if (verbose) {
-    process.stdout.write('\n');
+const createRelease = useSpinner<GithubPluglishReleaseOptions>(
+  'Creating release',
+  async ({ commitHash, recreate, githubToken, gitRepoName, gitRepoOwner }) => {
+    const gitRelease = new GitHubRelease(githubToken, gitRepoOwner, gitRepoName, await releaseNotes(), commitHash);
+    return gitRelease.release(recreate || false);
   }
+);
+
+export interface GithubPublishOptions {
+  dryrun?: boolean;
+  verbose?: boolean;
+  commitHash?: string;
+  recreate?: boolean;
+}
+
+const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, verbose, commitHash, recreate }) => {
+  if (!process.env['CIRCLE_REPOSITORY_URL']) {
+    throw `The release plugin requires you specify the repository url as environment variable CIRCLE_REPOSITORY_URL`;
+  }
+
+  if (!process.env['GITHUB_TOKEN']) {
+    throw `Github publish requires that you set the environment variable GITHUB_TOKEN to a valid github api token.
+    See: https://github.com/settings/tokens for more details.`;
+  }
+
+  const parsedUrl = gitUrlParse(process.env['CIRCLE_REPOSITORY_URL']);
+  const githubToken = process.env['GITHUB_TOKEN'];
+
+  await prepareRelease({
+    dryrun,
+    verbose,
+  });
+
+  await createRelease({
+    commitHash,
+    recreate,
+    githubToken,
+    gitRepoOwner: parsedUrl.owner,
+    gitRepoName: parsedUrl.name,
+  });
 };
 
-export const githubPublishTask = new Task<GithuPublishOptions>('Github Publish', githubPublishRunner);
+export const githubPublishTask = new Task<GithubPublishOptions>('Github Publish', githubPublishRunner);
