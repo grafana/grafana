@@ -14,7 +14,7 @@ import {
   updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { VariableTag, VariableWithMultiSupport } from '../../variable';
+import { VariableTag, VariableWithMultiSupport, QueryVariableModel } from '../../variable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
@@ -272,18 +272,20 @@ describe('optionsPickerReducer', () => {
     });
   });
 
-  describe('when showOptions is dispatched and picker has searchQuery and variable has searchFilter', () => {
+  describe('when showOptions is dispatched and picker has queryValue and variable has searchFilter', () => {
     it('then state should be correct', () => {
       const query = '*.__searchFilter';
-      const searchQuery = 'a search query';
+      const queryValue = 'a search query';
       const selected = { text: 'All', value: '$__all', selected: true };
-      const { initialState } = getVariableTestContext({ searchQuery });
+      const { initialState } = getVariableTestContext({});
       const payload = {
+        type: 'query',
         query,
         options: [selected, { text: 'A', value: 'A', selected: false }, { text: 'B', value: 'B', selected: false }],
         multi: false,
         uuid: '0',
-      } as VariableWithMultiSupport;
+        queryValue,
+      } as QueryVariableModel;
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
@@ -291,7 +293,7 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           options: payload.options,
-          searchQuery,
+          queryValue,
           uuid: payload.uuid!,
           multi: payload.multi,
           selectedValues: [selected],
@@ -299,18 +301,18 @@ describe('optionsPickerReducer', () => {
     });
   });
 
-  describe('when showOptions is dispatched and searchQuery and variable has no searchFilter', () => {
+  describe('when showOptions is dispatched and queryValue and variable has no searchFilter', () => {
     it('then state should be correct', () => {
       const query = '*.';
-      const searchQuery: any = null;
+      const queryValue: any = null;
       const current = { text: ALL_VARIABLE_TEXT, selected: true, value: [ALL_VARIABLE_VALUE] };
       const options = [
         { text: 'All', value: '$__all', selected: true },
         { text: 'A', value: 'A', selected: false },
         { text: 'B', value: 'B', selected: false },
       ];
-      const { initialState } = getVariableTestContext({ searchQuery });
-      const payload = { uuid: '0', current, query, options } as VariableWithMultiSupport;
+      const { initialState } = getVariableTestContext({});
+      const payload = { type: 'query', uuid: '0', current, query, options, queryValue } as QueryVariableModel;
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
@@ -318,7 +320,7 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           uuid: '0',
-          searchQuery: '',
+          queryValue: '',
           selectedValues: [
             {
               text: ALL_VARIABLE_TEXT,
@@ -339,7 +341,7 @@ describe('optionsPickerReducer', () => {
           { text: 'A', value: 'A', selected: false },
           { text: 'B', value: 'B', selected: false },
         ],
-        searchQuery: 'a search',
+        queryValue: 'a search',
         highlightIndex: 1,
         uuid: '0',
       });
@@ -504,7 +506,7 @@ describe('optionsPickerReducer', () => {
       ];
 
       const { initialState } = getVariableTestContext({
-        searchQuery,
+        queryValue: searchQuery,
       });
 
       reducerTester<OptionsPickerState>()
@@ -517,7 +519,7 @@ describe('optionsPickerReducer', () => {
             { text: 'A', value: 'A', selected: false },
           ],
           selectedValues: [{ text: 'All', value: '$__all', selected: true }],
-          searchQuery,
+          queryValue: searchQuery,
           highlightIndex: 0,
         });
     });
@@ -532,7 +534,7 @@ describe('optionsPickerReducer', () => {
         { text: 'B', value: 'B', selected: false },
       ];
       const { initialState } = getVariableTestContext({
-        searchQuery,
+        queryValue: searchQuery,
       });
 
       reducerTester<OptionsPickerState>()
@@ -557,7 +559,7 @@ describe('optionsPickerReducer', () => {
         .whenActionIsDispatched(updateSearchQuery(searchQuery))
         .thenStateShouldEqual({
           ...initialState,
-          searchQuery,
+          queryValue: searchQuery,
         });
     });
   });

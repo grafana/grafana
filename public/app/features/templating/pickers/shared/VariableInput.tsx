@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { trim } from 'lodash';
-import { NavigationKey } from './types';
+import { NavigationKey } from '../types';
 
 export interface Props {
   onChange: (value: string) => void;
