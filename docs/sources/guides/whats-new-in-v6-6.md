@@ -131,19 +131,19 @@ This release adds new white labeling options to the grafana.ini file (can also b
 
 ```bash
 [white_labeling]
-# Set to complete url to override login logo
+# Set to complete URL to override login logo
 login_logo = https://my.logo.url/images/logo.png
 
 # Set to complete css background expression to override login background
 login_background = url(http://www.bhmpics.com/wallpapers/starfield-1920x1080.jpg)
 
-# Set to complete url to override menu logo
+# Set to complete URL to override menu logo
 menu_logo = https://my.logo.url/images/logo_icon.png
 
-# Set to complete url to override fav icon (icon shown in browser tab)
+# Set to complete URL to override fav icon (icon shown in browser tab)
 fav_icon = https://my.logo.url/images/logo_icon_32px.png
 
-# Set to complete url to override apple/ios icon
+# Set to complete URL to override apple/ios icon
 apple_touch_icon = https://my.logo.url/images/logo_icon_32px.png
 
 # Below is an example for how to replace the default footer & help links with 2 custom links

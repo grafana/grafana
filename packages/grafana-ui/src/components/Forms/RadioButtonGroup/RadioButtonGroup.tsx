@@ -31,6 +31,7 @@ const getRadioButtonGroupStyles = () => {
     `,
   };
 };
+
 interface RadioButtonGroupProps<T> {
   value?: T;
   disabled?: boolean;
@@ -63,7 +64,7 @@ export function RadioButtonGroup<T>({
 
   return (
     <div className={styles.radioGroup}>
-      {options.map((o, i) => {
+      {options.map(o => {
         const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
         return (
           <RadioButton
@@ -72,7 +73,7 @@ export function RadioButtonGroup<T>({
             active={value === o.value}
             key={o.label}
             onChange={handleOnChange(o)}
-            id={`option-${i}`}
+            id={`option-${o.value}`}
             name={groupName.current}
           >
             {o.label}

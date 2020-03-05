@@ -9,9 +9,11 @@ import (
 type Vector interface {
 	Set(idx int, i interface{})
 	Append(i interface{})
+	Extend(i int)
 	At(i int) interface{}
 	Len() int
 	PrimitiveType() VectorPType
+	PointerAt(i int) interface{}
 	//buildArrowColumn(pool memory.Allocator, field arrow.Field) *array.Column
 }
 
@@ -79,6 +81,73 @@ func newVector(t interface{}, n int) (v Vector) {
 		panic(fmt.Sprintf("unsupported vector type of %T", t))
 	}
 	return
+}
+
+
+// ValidVectorType returns if a primitive slice is a valid / supported Vector type
+func ValidVectorType(t interface{}) bool {
+	switch t.(type) {
+	// ints
+	case []int8:
+		return true
+	case []*int8:
+		return true
+	case []int16:
+		return true
+	case []*int16:
+		return true
+	case []int32:
+		return true
+	case []*int32:
+		return true
+	case []int64:
+		return true
+	case []*int64:
+		return true
+
+	// uints
+	case []uint8:
+		return true
+	case []*uint8:
+		return true
+	case []uint16:
+		return true
+	case []*uint16:
+		return true
+	case []uint32:
+		return true
+	case []*uint32:
+		return true
+	case []uint64:
+		return true
+	case []*uint64:
+		return true
+
+	// floats
+	case []float32:
+		return true
+	case []*float32:
+		return true
+	case []float64:
+		return true
+	case []*float64:
+		return true
+
+	case []string:
+		return true
+	case []*string:
+		return true
+	case []bool:
+		return true
+	case []*bool:
+		return true
+	case []time.Time:
+		return true
+	case []*time.Time:
+		return true
+	default:
+		return false
+	}
 }
 
 // VectorPType indicates the go type underlying the Vector.
@@ -220,4 +289,177 @@ func vectorPType(v Vector) VectorPType {
 	}
 
 	return VectorPType(-1)
+}
+
+func pTypeFromVal(v interface{}) VectorPType {
+	switch v.(type) {
+	case int8:
+		return VectorPTypeInt8
+	case *int8:
+		return VectorPTypeNullableInt8
+
+	case int16:
+		return VectorPTypeInt16
+	case *int16:
+		return VectorPTypeNullableInt16
+
+	case int32:
+		return VectorPTypeInt32
+	case *int32:
+		return VectorPTypeNullableInt32
+
+	case int64:
+		return VectorPTypeInt64
+	case *int64:
+		return VectorPTypeNullableInt64
+
+	case uint8:
+		return VectorPTypeUint8
+	case *uint8:
+		return VectorPTypeNullableUint8
+
+	case uint16:
+		return VectorPTypeUint16
+	case *uint16:
+		return VectorPTypeNullableUint16
+
+	case uint32:
+		return VectorPTypeUint32
+	case *uint32:
+		return VectorPTypeNullableUint32
+
+	case uint64:
+		return VectorPTypeUint64
+	case *uint64:
+		return VectorPTypeNullableUint64
+
+	case float32:
+		return VectorPTypeFloat32
+	case *float32:
+		return VectorPTypeNullableFloat32
+
+	case float64:
+		return VectorPTypeFloat64
+	case *float64:
+		return VectorPTypeNullableFloat64
+
+	case string:
+		return VectorPTypeString
+	case *string:
+		return VectorPTypeNullableString
+
+	case bool:
+		return VectorPTypeBool
+	case *bool:
+		return VectorPTypeNullableBool
+
+	case time.Time:
+		return VectorPTypeTime
+	case *time.Time:
+		return VectorPTypeNullableTime
+	}
+	return VectorPType(-1)
+}
+
+func (p VectorPType) String() string {
+	if p < 0 {
+		return "invalid/unsupported"
+	}
+	return fmt.Sprintf("[]%v", p.ItemTypeString())
+
+}
+
+// ItemTypeString returns the string representation of the type of element within in the vector
+func (p VectorPType) ItemTypeString() string {
+	switch p {
+	case VectorPTypeInt8:
+		return "int8"
+	case VectorPTypeNullableInt8:
+		return "*int8"
+
+	case VectorPTypeInt16:
+		return "int16"
+	case VectorPTypeNullableInt16:
+		return "*int16"
+
+	case VectorPTypeInt32:
+		return "int32"
+	case VectorPTypeNullableInt32:
+		return "*int32"
+
+	case VectorPTypeInt64:
+		return "int64"
+	case VectorPTypeNullableInt64:
+		return "*int64"
+
+	case VectorPTypeUint8:
+		return "unit8"
+	case VectorPTypeNullableUint8:
+		return "*uint8"
+
+	case VectorPTypeUint16:
+		return "uint16"
+	case VectorPTypeNullableUint16:
+		return "*uint16"
+
+	case VectorPTypeUint32:
+		return "uint32"
+	case VectorPTypeNullableUint32:
+		return "*uint32"
+
+	case VectorPTypeUint64:
+		return "uint64"
+	case VectorPTypeNullableUint64:
+		return "*uint64"
+
+	case VectorPTypeFloat32:
+		return "float32"
+	case VectorPTypeNullableFloat32:
+		return "*float32"
+
+	case VectorPTypeFloat64:
+		return "float64"
+	case VectorPTypeNullableFloat64:
+		return "*float64"
+
+	case VectorPTypeString:
+		return "string"
+	case VectorPTypeNullableString:
+		return "*string"
+
+	case VectorPTypeBool:
+		return "bool"
+	case VectorPTypeNullableBool:
+		return "*bool"
+
+	case VectorPTypeTime:
+		return "time.Time"
+	case VectorPTypeNullableTime:
+		return "*time.Time"
+	}
+	return "invalid/unsupported type"
+}
+
+// Nullable returns if type is a nullable type
+func (p VectorPType) Nullable() bool {
+	switch p {
+	case VectorPTypeNullableInt8, VectorPTypeNullableInt16, VectorPTypeNullableInt32, VectorPTypeNullableInt64:
+		return true
+
+	case VectorPTypeNullableUint8, VectorPTypeNullableUint16, VectorPTypeNullableUint32, VectorPTypeNullableUint64:
+		return true
+
+	case VectorPTypeNullableFloat32, VectorPTypeNullableFloat64:
+		return true
+
+	case VectorPTypeNullableString:
+		return true
+
+	case VectorPTypeNullableBool:
+		return true
+
+	case VectorPTypeNullableTime:
+		return true
+	}
+	return false
 }

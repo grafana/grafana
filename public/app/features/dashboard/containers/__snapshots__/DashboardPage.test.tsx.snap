@@ -67,7 +67,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
             },
             "id": 1,
             "options": Object {},
-            "restoreModel": [Function],
             "targets": Array [
               Object {
                 "refId": "A",
@@ -181,7 +180,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                   },
                   "id": 1,
                   "options": Object {},
-                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -275,7 +273,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                   },
                   "id": 1,
                   "options": Object {},
-                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -401,7 +398,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             },
             "id": 1,
             "options": Object {},
-            "restoreModel": [Function],
             "targets": Array [
               Object {
                 "refId": "A",
@@ -513,7 +509,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 },
                 "id": 1,
                 "options": Object {},
-                "restoreModel": [Function],
                 "targets": Array [
                   Object {
                     "refId": "A",
@@ -610,7 +605,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   },
                   "id": 1,
                   "options": Object {},
-                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -704,7 +698,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   },
                   "id": 1,
                   "options": Object {},
-                  "restoreModel": [Function],
                   "targets": Array [
                     Object {
                       "refId": "A",

@@ -10,13 +10,12 @@ weight = 400
 
 # Install on Windows
 
-[Download the latest stable package for Windows.](https://grafana.com/grafana/download?platform=windows)
-
 You can either download the Windows installer package or a standalone Windows binary file.
 
 Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
+1. Navigate to [Download Grafana](https://grafana.com/grafana/download?platform=windows).
 1. Select a Grafana version you want to install. 
    * The most recent Grafana version is selected by default.
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
