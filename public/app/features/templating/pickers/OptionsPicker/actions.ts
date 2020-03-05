@@ -11,7 +11,7 @@ import {
 } from '../../variable';
 import { variableAdapters } from '../../adapters';
 import { getVariable } from '../../state/selectors';
-import { NavigationKey } from '../shared/types';
+import { NavigationKey } from '../types';
 import {
   hideOptions,
   moveOptionsHighlight,
@@ -24,7 +24,7 @@ import {
 } from './reducer';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { setCurrentVariableValue } from '../../state/sharedReducer';
+import { setCurrentVariableValue, changeVariableProp } from '../../state/sharedReducer';
 import { toVariablePayload } from '../../state/types';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
@@ -71,9 +71,11 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const picker = getState().templating.optionsPicker;
     const existing = getVariable<VariableWithMultiSupport>(picker.uuid, getState());
-    const current = mapToCurrent(picker);
+    const currentPayload = { option: mapToCurrent(picker) };
+    const searchQueryPayload = { propName: 'queryValue', propValue: picker.queryValue };
 
-    dispatch(setCurrentVariableValue(toVariablePayload(existing, { option: current })));
+    dispatch(setCurrentVariableValue(toVariablePayload(existing, currentPayload)));
+    dispatch(changeVariableProp(toVariablePayload(existing, searchQueryPayload)));
     const updated = getVariable<VariableWithMultiSupport>(picker.uuid, getState());
 
     if (existing.current.text === updated.current.text) {
@@ -153,7 +155,7 @@ const searchForOptions = async (dispatch: ThunkDispatch, getState: () => StoreSt
 const searchForOptionsWithDebounce = debounce(searchForOptions, 500);
 
 function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
-  const { options, searchQuery, multi } = picker;
+  const { options, queryValue: searchQuery, multi } = picker;
 
   if (options.length === 0 && searchQuery && searchQuery.length > 0) {
     return { text: searchQuery, value: searchQuery, selected: false };

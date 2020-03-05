@@ -72,7 +72,7 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
     return (
       <ClickOutsideWrapper onClick={this.onHideOptions}>
         <VariableInput
-          value={picker.searchQuery}
+          value={picker.queryValue}
           onChange={this.props.filterOrSearchOptions}
           onNavigate={this.props.navigateOptions}
         />

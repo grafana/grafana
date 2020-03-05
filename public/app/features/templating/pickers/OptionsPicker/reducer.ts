@@ -15,7 +15,7 @@ export interface OptionsPickerState {
   uuid: string;
   selectedValues: VariableOption[];
   selectedTags: VariableTag[];
-  searchQuery: string | null;
+  queryValue: string | null;
   highlightIndex: number;
   tags: VariableTag[];
   options: VariableOption[];
@@ -25,7 +25,7 @@ export interface OptionsPickerState {
 export const initialState: OptionsPickerState = {
   uuid: '',
   highlightIndex: -1,
-  searchQuery: null,
+  queryValue: null,
   selectedTags: [],
   selectedValues: [],
   tags: [],
@@ -34,7 +34,10 @@ export const initialState: OptionsPickerState = {
 };
 
 const getTags = (model: VariableWithMultiSupport) => {
-  return isQuery(model) ? cloneDeep(model.tags) : [];
+  if (isQuery(model) && Array.isArray(model.tags)) {
+    return cloneDeep(model.tags);
+  }
+  return [];
 };
 
 const updateSelectedValues = (state: OptionsPickerState): OptionsPickerState => {
@@ -61,10 +64,13 @@ const optionsPickerSlice = createSlice({
       state.tags = getTags(action.payload);
       state.multi = multi ?? false;
       state.uuid = action.payload.uuid!;
-      // new behaviour, if this is a query that uses searchfilter it might be a nicer
-      // user experience to show the last typed search query in the input field
-      const queryHasSearchFilter = containsSearchFilter(query);
-      state.searchQuery = queryHasSearchFilter && state.searchQuery ? state.searchQuery : '';
+      state.queryValue = '';
+
+      if (isQuery(action.payload)) {
+        const { queryValue } = action.payload;
+        const queryHasSearchFilter = containsSearchFilter(query);
+        state.queryValue = queryHasSearchFilter && queryValue ? queryValue : '';
+      }
 
       return applyStateChanges(state, updateSelectedValues);
     },
@@ -148,11 +154,11 @@ const optionsPickerSlice = createSlice({
       return applyStateChanges(state, updateSelectedValues);
     },
     updateSearchQuery: (state, action: PayloadAction<string>): OptionsPickerState => {
-      state.searchQuery = action.payload;
+      state.queryValue = action.payload;
       return state;
     },
     updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
-      const searchQuery = (state.searchQuery ?? '').toLowerCase();
+      const searchQuery = (state.queryValue ?? '').toLowerCase();
 
       state.options = applyLimit(action.payload);
       state.highlightIndex = 0;
