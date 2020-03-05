@@ -1,10 +1,10 @@
 - name: Getting started
   link: /guides/
   children:
+  - name: What is Grafana?
+    link: /guides/intro-to-grafana/
   - name: Getting started
     link: /guides/getting_started/
-  - name: Intro to Grafana
-    link: /guides/intro-to-grafana/
   - name: Intro to time series
     link: /guides/timeseries/
   - name: Glossary
