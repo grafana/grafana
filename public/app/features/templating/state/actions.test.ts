@@ -7,7 +7,7 @@ import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/templating/state/reducers';
 import { initDashboardTemplating, processVariables } from './actions';
-import { addInitLock, addVariable } from './sharedReducer';
+import { addInitLock, addVariable, removeInitLock, resolveInitLock } from './sharedReducer';
 import { toVariablePayload } from './types';
 import { UrlQueryMap } from '@grafana/runtime';
 
@@ -63,7 +63,7 @@ describe('shared actions', () => {
     });
   });
 
-  describe('when initDashboardTemplating is dispatched', () => {
+  describe('when processVariables is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       variableAdapters.set('query', createQueryVariableAdapter());
       variableAdapters.set('custom', createCustomVariableAdapter());
@@ -85,6 +85,33 @@ describe('shared actions', () => {
 
       tester.thenDispatchedActionPredicateShouldEqual(dispatchedActions => {
         expect(dispatchedActions.length).toEqual(8);
+
+        expect(dispatchedActions[0]).toEqual(
+          resolveInitLock(toVariablePayload({ ...query, uuid: dispatchedActions[0].payload.uuid }))
+        );
+        expect(dispatchedActions[1]).toEqual(
+          resolveInitLock(toVariablePayload({ ...constant, uuid: dispatchedActions[1].payload.uuid }))
+        );
+        expect(dispatchedActions[2]).toEqual(
+          resolveInitLock(toVariablePayload({ ...custom, uuid: dispatchedActions[2].payload.uuid }))
+        );
+        expect(dispatchedActions[3]).toEqual(
+          resolveInitLock(toVariablePayload({ ...textbox, uuid: dispatchedActions[3].payload.uuid }))
+        );
+
+        expect(dispatchedActions[4]).toEqual(
+          removeInitLock(toVariablePayload({ ...query, uuid: dispatchedActions[4].payload.uuid }))
+        );
+        expect(dispatchedActions[5]).toEqual(
+          removeInitLock(toVariablePayload({ ...constant, uuid: dispatchedActions[5].payload.uuid }))
+        );
+        expect(dispatchedActions[6]).toEqual(
+          removeInitLock(toVariablePayload({ ...custom, uuid: dispatchedActions[6].payload.uuid }))
+        );
+        expect(dispatchedActions[7]).toEqual(
+          removeInitLock(toVariablePayload({ ...textbox, uuid: dispatchedActions[7].payload.uuid }))
+        );
+
         return true;
       });
     });
