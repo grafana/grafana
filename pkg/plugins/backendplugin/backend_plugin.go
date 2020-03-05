@@ -186,8 +186,8 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
 				return &pluginv2.CheckHealth_Response{
-					Status: pluginv2.CheckHealth_Response_UNKNOWN,
-					Info:   "Health check not implemented",
+					Status:  pluginv2.CheckHealth_Response_UNKNOWN,
+					Message: "Health check not implemented",
 				}, nil
 			}
 		}
