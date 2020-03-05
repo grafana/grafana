@@ -39,14 +39,14 @@ In terms of initiation:
 
 ## Set up SAML authentication
 
-The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../installation/configuration.md#using-environment-variables" >}})
+The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../installation/configuration.md#configure-with-environment-variables" >}}).
 
 | Setting                                                     | Required | Description                                                                                        | Default       |
 | ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- | ------------- |
 | `enabled`                                                   | No       | Whether SAML authentication is allowed                                                             | `false`       |
 | `certificate` or `certificate_path`                         | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
 | `private_key` or `private_key_path`                         | Yes      | Base64-encoded string or Path for the SP private key                                               |               |
-| `idp_metadata` or `idp_metadata_path` or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
+| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
 | `max_issue_delay`                                           | No       | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
 | `metadata_valid_duration`                                   | No       | Duration, for how long the SP metadata is valid                                                  | `48h`         |
 | `assertion_attribute_name`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user name         | `displayName` |
@@ -124,7 +124,7 @@ assertion_attribute_login = mail
 assertion_attribute_email = mail
 ```
 
-## Troubleshooting
+## Troubleshoot SAML authentication
 
 To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
 

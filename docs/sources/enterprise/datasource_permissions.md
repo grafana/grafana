@@ -37,7 +37,7 @@ When permissions are enabled for a data source in an organization, you restrict 
 
 {{< docs-imagebox img="/img/docs/enterprise/datasource_permissions_add_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/img/docs/enterprise/datasource_permissions_add.gif" >}}
 
-After you have [enabled permissions](#restricting-access-enable-permissions) for a data source you can assign query permissions to users and teams which will allow access to query the data source.
+After you have enabled permissions for a data source you can assign query permissions to users and teams which will allow access to query the data source.
 
 **Assign query permission to users and teams:**
 

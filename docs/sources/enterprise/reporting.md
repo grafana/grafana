@@ -13,9 +13,9 @@ weight = 400
 
 Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
-
 > Only available in Grafana Enterprise v6.4+.
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report changes as well.
 
@@ -28,8 +28,6 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 Currently only Organization Admins can create reports.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
-
 1. Click on the reports icon in the side menu. The Reports tab allow you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
    * **Name -** Name of the report as you want it to appear in the Reports list.
@@ -37,9 +35,11 @@ Currently only Organization Admins can create reports.
    * **Recipients -** Enter the emails of the people or teams that you want to receive the report.
    * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email. 
    * **Custom message -** Message body in the email with the report.
-2. **Preview** the report to make sure it appears as you expect. Update if necessary.
-3. Enter scheduling information. Options vary depending on the frequency you select.
-4. **Save** the report.
+1. **Preview** the report to make sure it appears as you expect. Update if necessary.
+1. Enter scheduling information. Options vary depending on the frequency you select.
+1. **Save** the report.
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting
 

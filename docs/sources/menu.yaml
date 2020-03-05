@@ -107,7 +107,7 @@
       name: Dashboard list
     - link: /features/panels/text/
       name: Text
-  - name: Dashboard Features
+  - name: Dashboard features
     link: /features/dashboard/
     children:
     - link: /features/dashboard/dashboards/
@@ -245,10 +245,10 @@
     link: /enterprise/datasource_permissions/
   - name: Enhanced LDAP
     link: /enterprise/enhanced_ldap/
-  - name: SAML authentication
-    link: /enterprise/saml/
   - name: Reporting
     link: /enterprise/reporting/
+  - name: SAML authentication
+    link: /enterprise/saml/
   - name: Team sync
     link: /enterprise/team-sync/
   - name: White labeling

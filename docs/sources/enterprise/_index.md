@@ -45,26 +45,26 @@ With Grafana Enterprise, you can set up synchronization between LDAP groups and 
 
 Supported auth providers:
 
-* [LDAP]({{< relref "../auth/enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
 * [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
 * [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
-* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
+* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 
 ## White labeling
 
-White labeling makes it possible to customize the logos and footer links of Grafana. [Learn More]({{< relref "white-labeling.md" >}}).
+[White labeling]({{< relref "white-labeling.md" >}}) allows you to replace the Grafana brand and logo with your own corporate brand and logo. You can also change footer links to point to your custom resources.
 
 ## Enterprise plugins
 
 With a Grafana Enterprise license, you get access to Enterprise plugins, including:
 
-* [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
+* [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
 * [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
 * [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
 * [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
 * [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
-* [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
 * [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
+* [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
 
 ## Try Grafana Enterprise
 
