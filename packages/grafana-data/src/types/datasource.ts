@@ -506,9 +506,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /**
    * This is the full Authorization header if basic auth is ennabled.
-   * Only available here when access is Browser (direct), when acess is Server (proxy)
+   * Only available here when access is Browser (direct), when access is Server (proxy)
    * The basic auth header, username & password is never exposted to browser/Frontend
-   * so this will be emtpy then.
+   * so this will be empty then.
    */
   basicAuth?: string;
   withCredentials?: boolean;

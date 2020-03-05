@@ -11,6 +11,8 @@ awsconfig
 /public/views/error.html
 /emails/dist
 /reports
+.yarnrc
+.yarn/
 
 # Enterprise emails
 /emails/templates/enterprise_*
@@ -89,6 +91,7 @@ debug.test
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
+/packages/**/tsdoc-metadata.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**

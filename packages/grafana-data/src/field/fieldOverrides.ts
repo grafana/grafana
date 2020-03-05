@@ -69,7 +69,6 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
  * Return a copy of the DataFrame with all rules applied
  */
 export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFrame[] {
-  const scopedVars: ScopedVars = {};
   if (!options.data) {
     return [];
   }
@@ -100,7 +99,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     if (!name) {
       name = `Series[${index}]`;
     }
-    scopedVars['__series'] = { text: 'Series', value: { name } };
+
+    const scopedVars: ScopedVars = {
+      __series: { text: 'Series', value: { name } },
+    };
 
     const fields: Field[] = frame.fields.map((field, fieldIndex) => {
       // Config is mutable within this scope
@@ -183,6 +185,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         config,
         type,
       };
+
       // and set the display processor using it
       f.display = getDisplayProcessor({
         field: f,
