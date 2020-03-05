@@ -1,5 +1,4 @@
 import castArray from 'lodash/castArray';
-import { createAction } from '@reduxjs/toolkit';
 import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
 
 import {
@@ -61,9 +60,6 @@ export interface AddVariable<T extends VariableModel = VariableModel> {
   index: number; // the order in variables list
   model: T;
 }
-
-export const updateVariableOptions = createAction<VariablePayload<any[]>>('templating/updateVariableOptions');
-export const updateVariableTags = createAction<VariablePayload<any[]>>('templating/updateVariableTags');
 
 export const toVariableIdentifier = (variable: VariableModel): VariableIdentifier => {
   return { type: variable.type, uuid: variable.uuid! };

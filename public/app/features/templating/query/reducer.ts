@@ -1,4 +1,4 @@
-import { createReducer } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import _ from 'lodash';
 import { DataSourceApi, DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
 
@@ -10,7 +10,7 @@ import {
   VariableSort,
   VariableTag,
 } from '../variable';
-import { updateVariableOptions, updateVariableTags } from '../state/actions';
+import { VariablePayload } from '../state/actions';
 import templateSrv from '../template_srv';
 import {
   ALL_VARIABLE_TEXT,
@@ -22,7 +22,7 @@ import {
 } from '../state/types';
 import { ComponentType } from 'react';
 import { VariableQueryProps } from '../../../types';
-import { initialVariablesState } from '../state/variablesReducer';
+import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 export interface QueryVariableEditorState {
   VariableQueryEditor: ComponentType<VariableQueryProps> | null;
@@ -128,9 +128,11 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
   return sortVariableValues(options, sort);
 };
 
-export const queryVariableReducer = createReducer(initialVariablesState, builder =>
-  builder
-    .addCase(updateVariableOptions, (state, action) => {
+export const queryVariableSlice = createSlice({
+  name: 'query',
+  initialState: initialVariablesState,
+  reducers: {
+    updateVariableOptions: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
       const results = action.payload.data;
       const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.uuid);
       const { regex, includeAll, sort } = instanceState;
@@ -144,8 +146,8 @@ export const queryVariableReducer = createReducer(initialVariablesState, builder
       }
 
       instanceState.options = options;
-    })
-    .addCase(updateVariableTags, (state, action) => {
+    },
+    updateVariableTags: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
       const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.uuid);
       const results = action.payload.data;
       const tags: VariableTag[] = [];
@@ -154,5 +156,10 @@ export const queryVariableReducer = createReducer(initialVariablesState, builder
       }
 
       instanceState.tags = tags;
-    })
-);
+    },
+  },
+});
+
+export const queryVariableReducer = queryVariableSlice.reducer;
+
+export const { updateVariableOptions, updateVariableTags } = queryVariableSlice.actions;

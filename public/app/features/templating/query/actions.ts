@@ -1,14 +1,10 @@
-import { createAction } from '@reduxjs/toolkit';
 import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 
 import {
   toVariableIdentifier,
   toVariablePayload,
-  updateVariableOptions,
-  updateVariableTags,
   validateVariableSelectionState,
   VariableIdentifier,
-  VariablePayload,
 } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../variable';
 import { ThunkResult } from '../../../types';
@@ -21,10 +17,7 @@ import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { variableAdapters } from '../adapters';
 import { changeVariableProp } from '../state/sharedReducer';
-
-export const changeQueryVariableSearchQuery = createAction<VariablePayload<string>>(
-  'templating/changeQueryVariableSearchQuery'
-);
+import { updateVariableOptions, updateVariableTags } from './reducer';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
