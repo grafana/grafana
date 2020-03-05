@@ -240,8 +240,8 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
   const displayName = 'No data';
-  const { fieldOptions } = options;
-  const { defaults } = fieldOptions;
+  const { fieldConfig } = options;
+  const { defaults } = fieldConfig;
 
   const displayProcessor = getDisplayProcessor({
     field: {
