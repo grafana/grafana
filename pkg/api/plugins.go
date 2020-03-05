@@ -226,8 +226,8 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	}
 
 	payload := map[string]interface{}{
-		"status": resp.Status.String(),
-		"info":   resp.Info,
+		"status":  resp.Status.String(),
+		"message": resp.Message,
 	}
 
 	if resp.Status != backendplugin.HealthStatusOk {
