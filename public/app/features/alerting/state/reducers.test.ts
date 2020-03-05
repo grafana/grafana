@@ -1,10 +1,10 @@
-import moment from 'moment';
+import { dateTime } from '@grafana/data';
 import { alertRulesReducer, initialState, loadAlertRules, loadedAlertRules, setSearchQuery } from './reducers';
 import { AlertRuleDTO, AlertRulesState } from 'app/types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 describe('Alert rules', () => {
-  const newStateDate = moment()
+  const newStateDate = dateTime()
     .subtract(1, 'y')
     .format('YYYY-MM-DD');
   const payload: AlertRuleDTO[] = [
