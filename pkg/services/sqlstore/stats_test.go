@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStatsDataAccess(t *testing.T) {
@@ -18,7 +19,7 @@ func TestStatsDataAccess(t *testing.T) {
 
 			query := models.GetSystemStatsQuery{}
 			err := GetSystemStats(&query)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, int64(3), query.Result.Users)
 			assert.Equal(t, 1, query.Result.Editors)
 			assert.Equal(t, 1, query.Result.Viewers)
@@ -58,7 +59,7 @@ func TestStatsDataAccess(t *testing.T) {
 		t.Run("Get active user count stats should not result in error", func(t *testing.T) {
 			query := models.GetActiveUserStatsQuery{}
 			err := GetActiveUserStats(&query)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, int64(1), query.Result.ActiveUsers)
 			assert.Equal(t, int64(1), query.Result.ActiveAdmins)
 			assert.Equal(t, int64(0), query.Result.ActiveEditors)
