@@ -5,4 +5,5 @@ import { PieChartOptions, defaults } from './types';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .setDefaults(defaults)
+  .setFieldConfigDefaults({ unit: 'short' })
   .setEditor(PieChartPanelEditor);

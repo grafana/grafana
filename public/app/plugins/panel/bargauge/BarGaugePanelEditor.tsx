@@ -1,12 +1,18 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-import { PanelOptionsGrid, PanelOptionsGroup, FormLabel, Select, Switch } from '@grafana/ui';
-import { PanelEditorProps } from '@grafana/data';
+import { PanelOptionsGrid, FieldDisplayEditor, PanelOptionsGroup, FormLabel, Select, Switch } from '@grafana/ui';
+import { FieldDisplayOptions, PanelEditorProps } from '@grafana/data';
 import { BarGaugeOptions, displayModes } from './types';
 import { orientationOptions } from '../gauge/types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
+  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
+    this.props.onOptionsChange({
+      ...this.props.options,
+      fieldOptions,
+    });
+
   onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
   onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
   onToggleShowUnfilled = () => {
@@ -15,12 +21,15 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
 
   render() {
     const { options } = this.props;
+    const { fieldOptions } = options;
+
     const labelWidth = 6;
 
     return (
       <>
         <PanelOptionsGrid>
           <PanelOptionsGroup title="Display">
+            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={labelWidth} />
             <div className="form-field">
               <FormLabel width={labelWidth}>Orientation</FormLabel>
               <Select

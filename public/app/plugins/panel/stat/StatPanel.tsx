@@ -73,11 +73,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
 
     return getFieldDisplayValues({
       fieldConfig,
-      fieldOptions: {
-        calcs: options.fieldOptions.calcs,
-        values: options.fieldOptions.values,
-        limit: options.fieldOptions.limit,
-      },
+      fieldOptions: options.fieldOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,
