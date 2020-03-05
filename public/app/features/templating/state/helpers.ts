@@ -5,6 +5,7 @@ import { variablesReducer, VariablesState } from './variablesReducer';
 import { combineReducers } from '@reduxjs/toolkit';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';
+import { locationReducer } from '../../../core/reducers/location';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -63,11 +64,21 @@ export const getModel = (type: VariableType): VariableModel => ({
   skipUrlSync: false,
 });
 
-export const getRootReducer = () =>
+export const getTemplatingRootReducer = () =>
   combineReducers({
     templating: combineReducers({
       optionsPicker: optionsPickerReducer,
       editor: variableEditorReducer,
       variables: variablesReducer,
     }),
+  });
+
+export const getTemplatingAndLocationRootReducer = () =>
+  combineReducers({
+    templating: combineReducers({
+      optionsPicker: optionsPickerReducer,
+      editor: variableEditorReducer,
+      variables: variablesReducer,
+    }),
+    location: locationReducer,
   });

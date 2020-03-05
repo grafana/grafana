@@ -10,7 +10,14 @@ export interface ReduxTesterGiven<State> {
 }
 
 export interface ReduxTesterWhen<State> {
-  whenActionIsDispatched: (action: any) => ReduxTesterThen<State>;
+  whenActionIsDispatched: (
+    action: any,
+    clearPreviousActions?: boolean
+  ) => ReduxTesterWhen<State> & ReduxTesterThen<State>;
+  whenAsyncActionIsDispatched: (
+    action: any,
+    clearPreviousActions?: boolean
+  ) => Promise<ReduxTesterWhen<State> & ReduxTesterThen<State>>;
 }
 
 export interface ReduxTesterThen<State> {
@@ -53,8 +60,27 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
     return instance;
   };
 
-  const whenActionIsDispatched = (action: any): ReduxTesterThen<State> => {
+  const whenActionIsDispatched = (
+    action: any,
+    clearPreviousActions?: boolean
+  ): ReduxTesterWhen<State> & ReduxTesterThen<State> => {
+    if (clearPreviousActions) {
+      dispatchedActions.length = 0;
+    }
     store.dispatch(action);
+
+    return instance;
+  };
+
+  const whenAsyncActionIsDispatched = async (
+    action: any,
+    clearPreviousActions?: boolean
+  ): Promise<ReduxTesterWhen<State> & ReduxTesterThen<State>> => {
+    if (clearPreviousActions) {
+      dispatchedActions.length = 0;
+    }
+
+    await store.dispatch(action);
 
     return instance;
   };
@@ -62,6 +88,10 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
   const thenDispatchedActionShouldEqual = (...actions: AnyAction[]): ReduxTesterWhen<State> => {
     if (debug) {
       console.log('Dispatched Actions', JSON.stringify(dispatchedActions, null, 2));
+    }
+
+    if (!actions.length) {
+      throw new Error('thenDispatchedActionShouldEqual has to be called with at least one action');
     }
 
     expect(dispatchedActions).toEqual(actions);
@@ -82,6 +112,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
   const instance = {
     givenRootReducer,
     whenActionIsDispatched,
+    whenAsyncActionIsDispatched,
     thenDispatchedActionShouldEqual,
     thenDispatchedActionPredicateShouldEqual,
   };

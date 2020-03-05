@@ -1,4 +1,4 @@
-import { getModel, getRootReducer } from './helpers';
+import { getModel, getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -6,13 +6,14 @@ import { createTextBoxVariableAdapter } from '../textbox/adapter';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/templating/state/reducers';
-import { initDashboardTemplating } from './actions';
+import { initDashboardTemplating, processVariables } from './actions';
 import { addInitLock, addVariable } from './sharedReducer';
 import { toVariablePayload } from './types';
+import { UrlQueryMap } from '@grafana/runtime';
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
-    it('then correct actions are dispatched', async () => {
+    it('then correct actions are dispatched', () => {
       variableAdapters.set('query', createQueryVariableAdapter());
       variableAdapters.set('custom', createCustomVariableAdapter());
       variableAdapters.set('textbox', createTextBoxVariableAdapter());
@@ -25,7 +26,7 @@ describe('shared actions', () => {
       const list = [query, constant, datasource, custom, textbox];
 
       reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getRootReducer())
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating(list))
         .thenDispatchedActionPredicateShouldEqual(dispatchedActions => {
           expect(dispatchedActions.length).toEqual(8);
@@ -59,6 +60,33 @@ describe('shared actions', () => {
 
           return true;
         });
+    });
+  });
+
+  describe('when initDashboardTemplating is dispatched', () => {
+    it('then correct actions are dispatched', async () => {
+      variableAdapters.set('query', createQueryVariableAdapter());
+      variableAdapters.set('custom', createCustomVariableAdapter());
+      variableAdapters.set('textbox', createTextBoxVariableAdapter());
+      variableAdapters.set('constant', createConstantVariableAdapter());
+      const query = getModel('query');
+      const constant = getModel('constant');
+      const datasource = getModel('datasource');
+      const custom = getModel('custom');
+      const textbox = getModel('textbox');
+      const list = [query, constant, datasource, custom, textbox];
+
+      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
+        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query: {} } },
+      })
+        .givenRootReducer(getTemplatingAndLocationRootReducer())
+        .whenActionIsDispatched(initDashboardTemplating(list))
+        .whenAsyncActionIsDispatched(processVariables(), true);
+
+      tester.thenDispatchedActionPredicateShouldEqual(dispatchedActions => {
+        expect(dispatchedActions.length).toEqual(8);
+        return true;
+      });
     });
   });
 });
