@@ -8,6 +8,8 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
+const resourcesPath = "/resources"
+
 func Gziper() macaron.Handler {
 	gziperLogger := log.New("gziper")
 	gziper := gzip.Gziper()
@@ -27,11 +29,11 @@ func Gziper() macaron.Handler {
 			return
 		}
 
-		if strings.HasPrefix(requestPath, "/api/datasources/") && strings.Contains(requestPath, "/resources") {
+		if strings.HasPrefix(requestPath, "/api/datasources/") && strings.Contains(requestPath, resourcesPath) {
 			return
 		}
 
-		if strings.HasPrefix(requestPath, "/api/plugins/") && strings.Contains(requestPath, "/resources") {
+		if strings.HasPrefix(requestPath, "/api/plugins/") && strings.Contains(requestPath, resourcesPath) {
 			return
 		}
 
