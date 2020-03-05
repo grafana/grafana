@@ -1,11 +1,11 @@
 import { EMPTY_UUID } from './types';
-import { QueryVariableModel, VariableHide, VariableModel, VariableType } from '../variable';
-import { initialQueryVariableModelState } from '../query/reducer';
+import { VariableHide, VariableModel, VariableType } from '../variable';
 import { variablesReducer, VariablesState } from './variablesReducer';
 import { combineReducers } from '@reduxjs/toolkit';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';
 import { locationReducer } from '../../../core/reducers/location';
+import { VariableAdapter } from '../adapters';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -41,16 +41,19 @@ export const getVariableState = (
   return variables;
 };
 
-export const getVariableTestContext = (variableOverrides: Partial<QueryVariableModel> = {}) => {
+export const getVariableTestContext = <Model extends VariableModel>(
+  adapter: VariableAdapter<Model>,
+  variableOverrides: Partial<Model> = {}
+) => {
   const defaultVariable = {
-    ...initialQueryVariableModelState,
+    ...adapter.initialState,
     uuid: '0',
     index: 0,
     name: '0',
   };
-  const variable = { ...defaultVariable, ...variableOverrides };
+
   const initialState: VariablesState = {
-    '0': variable,
+    '0': { ...defaultVariable, ...variableOverrides },
   };
 
   return { initialState };

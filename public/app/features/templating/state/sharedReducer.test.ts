@@ -248,7 +248,8 @@ describe('sharedReducer', () => {
 
   describe('when setCurrentVariableValue is dispatched and current.text is an Array with values', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, {
         options: [
           { text: 'All', value: '$__all', selected: false },
           { text: 'A', value: 'A', selected: false },
@@ -277,7 +278,8 @@ describe('sharedReducer', () => {
 
   describe('when setCurrentVariableValue is dispatched and current.value is an Array with values except All value', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, {
         options: [
           { text: 'All', value: '$__all', selected: false },
           { text: 'A', value: 'A', selected: false },
@@ -306,7 +308,8 @@ describe('sharedReducer', () => {
 
   describe('when setCurrentVariableValue is dispatched and current.value is an Array with values containing All value', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, {
         options: [
           { text: 'All', value: '$__all', selected: false },
           { text: 'A', value: 'A', selected: false },
@@ -335,7 +338,8 @@ describe('sharedReducer', () => {
 
   describe('when addInitLock is dispatched', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({});
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, {});
       const payload = toVariablePayload({ uuid: '0', type: 'query' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
@@ -363,7 +367,8 @@ describe('sharedReducer', () => {
         reject: jest.fn(),
         promise: jest.fn(),
       } as unknown) as Deferred;
-      const { initialState } = getVariableTestContext({ initLock });
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, { initLock });
       const payload = toVariablePayload({ uuid: '0', type: 'query' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
@@ -392,7 +397,8 @@ describe('sharedReducer', () => {
         reject: jest.fn(),
         promise: jest.fn(),
       } as unknown) as Deferred;
-      const { initialState } = getVariableTestContext({ initLock });
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, { initLock });
       const payload = toVariablePayload({ uuid: '0', type: 'query' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
@@ -409,7 +415,8 @@ describe('sharedReducer', () => {
 
   describe('when changeVariableProp is dispatched', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext();
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter);
       const propName = 'name';
       const propValue = 'Updated name';
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, { propName, propValue });
