@@ -14,7 +14,7 @@ TimeZonePickerStories.add('default', () => {
   return (
     <UseState
       initialState={{
-        value: 'europe/stockholm',
+        value: 'Europe/Stockholm',
       }}
     >
       {(value, updateValue) => {
@@ -25,7 +25,7 @@ TimeZonePickerStories.add('default', () => {
               action('on selected')(newValue);
               updateValue({ value: newValue });
             }}
-            width={20}
+            size="sm"
           />
         );
       }}
