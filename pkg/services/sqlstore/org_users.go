@@ -103,12 +103,12 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 	whereConditions := make([]string, 0)
 	whereParams := make([]interface{}, 0)
 
-	whereConditions = append(whereConditions, "org_user.org_id = $1")
+	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgId)
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
-		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" $1 OR name "+dialect.LikeStr()+" $2 OR login "+dialect.LikeStr()+" $3)")
+		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
 		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 	}
 
@@ -129,7 +129,7 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 		"org_user.role",
 		"user.last_seen_at",
 	)
-	sess.OrderBy("LOWER(user.login),user.login,LOWER(user.email),user.email")
+	sess.OrderBy("LOWER(user.login),user.login")
 	//sess.Asc("user.email", "user.login")
 
 	if err := sess.Find(&query.Result); err != nil {
