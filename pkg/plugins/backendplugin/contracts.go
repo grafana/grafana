@@ -92,16 +92,16 @@ type CallResourceResult struct {
 	Body    []byte
 }
 
-type CallResourceResultStream interface {
+type callResourceResultStream interface {
 	Recv() (*CallResourceResult, error)
 	Close() error
 }
 
-type callResourceResultStream struct {
+type callResourceResultStreamImpl struct {
 	stream pluginv2.Core_CallResourceClient
 }
 
-func (s *callResourceResultStream) Recv() (*CallResourceResult, error) {
+func (s *callResourceResultStreamImpl) Recv() (*CallResourceResult, error) {
 	protoResp, err := s.stream.Recv()
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (s *callResourceResultStream) Recv() (*CallResourceResult, error) {
 	}, nil
 }
 
-func (s *callResourceResultStream) Close() error {
+func (s *callResourceResultStreamImpl) Close() error {
 	return s.stream.CloseSend()
 }
 

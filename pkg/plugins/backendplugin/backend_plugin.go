@@ -197,7 +197,7 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 	return res, nil
 }
 
-func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (CallResourceResultStream, error) {
+func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (callResourceResultStream, error) {
 	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
 
 	if p.core == nil || p.client == nil || p.client.Exited() {
@@ -257,7 +257,7 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		return nil, errutil.Wrap("Failed to call resource", err)
 	}
 
-	return &callResourceResultStream{
+	return &callResourceResultStreamImpl{
 		stream: protoStream,
 	}, nil
 }
