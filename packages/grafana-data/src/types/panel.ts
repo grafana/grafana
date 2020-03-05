@@ -3,9 +3,9 @@ import { DataQueryError, DataQueryRequest } from './datasource';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
-import { DataFrame } from './dataFrame';
+import { DataFrame, FieldConfig } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { FieldConfigEditorRegistry } from './fieldOverrides';
+import { FieldConfigEditorRegistry, FieldConfigSource } from './fieldOverrides';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -36,6 +36,7 @@ export interface PanelProps<T = any> {
   timeZone: TimeZone;
   options: T;
   onOptionsChange: (options: T) => void;
+  fieldConfig?: FieldConfigSource;
   renderCounter: number;
   transparent: boolean;
   width: number;
@@ -80,6 +81,10 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   customFieldConfigs?: FieldConfigEditorRegistry;
   defaults?: TOptions;
+  fieldConfigDefaults?: FieldConfigSource = {
+    defaults: {},
+    overrides: [],
+  };
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
@@ -131,6 +136,17 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
 
   setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
     this.customFieldConfigs = registry;
+    return this;
+  }
+
+  /**
+   * Enables configuration of panel's default field config
+   */
+  setFieldConfigDefaults(defaults: FieldConfig) {
+    this.fieldConfigDefaults = {
+      defaults,
+      overrides: [],
+    };
     return this;
   }
 }

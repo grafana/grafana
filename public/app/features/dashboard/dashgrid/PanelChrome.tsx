@@ -23,6 +23,7 @@ import {
   PanelEvents,
   PanelData,
   PanelPlugin,
+  FieldConfigSource,
 } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -217,6 +218,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.props.panel.updateOptions(options);
   };
 
+  onFieldConfigChange = (config: FieldConfigSource) => {
+    this.props.panel.updateFieldConfig(config);
+  };
+
   onPanelError = (message: string) => {
     if (this.state.errorMessage !== message) {
       this.setState({ errorMessage: message });
@@ -281,6 +286,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panelOptions}
+            fieldConfig={panel.fieldConfig}
             transparent={panel.transparent}
             width={panelWidth}
             height={innerPanelHeight}

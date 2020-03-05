@@ -14,6 +14,7 @@ import {
   PanelEvents,
   PanelPlugin,
   ScopedVars,
+  FieldConfigSource,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 
@@ -121,6 +122,7 @@ export class PanelModel {
   options: {
     [key: string]: any;
   };
+  fieldConfig?: FieldConfigSource;
 
   maxDataPoints?: number;
   interval?: string;
@@ -180,6 +182,12 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
+
+    this.render();
+  }
+
+  updateFieldConfig(config: FieldConfigSource) {
+    this.fieldConfig = config;
     this.updateQueryRunnerFieldOverrides();
     this.render();
   }
@@ -273,6 +281,19 @@ export class PanelModel {
         return srcValue;
       }
     });
+
+    this.fieldConfig = _.mergeWith(
+      {},
+      plugin.fieldConfigDefaults,
+      this.fieldConfig || {},
+      (objValue: any, srcValue: any): any => {
+        if (_.isArray(srcValue)) {
+          return srcValue;
+        }
+      }
+    );
+
+    debugger;
   }
 
   pluginLoaded(plugin: PanelPlugin) {
