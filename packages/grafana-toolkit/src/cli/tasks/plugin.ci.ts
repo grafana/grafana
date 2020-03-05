@@ -31,6 +31,7 @@ const rimraf = promisify(rimrafCallback);
 
 export interface PluginCIOptions {
   finish?: boolean;
+  upload?: boolean;
 }
 
 /**
@@ -306,7 +307,7 @@ export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', t
  *
  *  Create a report from all the previous steps
  */
-const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({}) => {
+const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const ciDir = path.resolve(process.cwd(), 'ci');
   const packageDir = path.resolve(ciDir, 'packages');
   const packageInfo = require(path.resolve(packageDir, 'info.json')) as PluginPackageDetails;

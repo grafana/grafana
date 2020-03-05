@@ -195,9 +195,7 @@ export const run = (includeInternalScripts = false) => {
     .option('--full', 'run all the tests (even stuff that will break)')
     .description('end-to-end test using bundle in /artifacts')
     .action(async cmd => {
-      await execTask(ciTestPluginTask)({
-        full: cmd.full,
-      });
+      await execTask(ciTestPluginTask)({});
     });
 
   program
