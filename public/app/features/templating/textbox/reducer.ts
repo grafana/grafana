@@ -1,9 +1,9 @@
-import { createReducer } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { TextBoxVariableModel, VariableHide, VariableOption } from '../variable';
 import { EMPTY_UUID, getInstanceState } from '../state/types';
-import { createTextBoxOptions } from './actions';
-import { initialVariablesState } from '../state/variablesReducer';
+import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { VariablePayload } from '../state/actions';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   uuid: EMPTY_UUID,
@@ -20,10 +20,20 @@ export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   initLock: null,
 };
 
-export const textBoxVariableReducer = createReducer(initialVariablesState, builder =>
-  builder.addCase(createTextBoxOptions, (state, action) => {
-    const instanceState = getInstanceState<TextBoxVariableModel>(state, action.payload.uuid!);
-    instanceState.options = [{ text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false }];
-    instanceState.current = instanceState.options[0];
-  })
-);
+export const textBoxVariableSlice = createSlice({
+  name: 'templating/textbox',
+  initialState: initialVariablesState,
+  reducers: {
+    createTextBoxOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+      const instanceState = getInstanceState<TextBoxVariableModel>(state, action.payload.uuid!);
+      instanceState.options = [
+        { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false },
+      ];
+      instanceState.current = instanceState.options[0];
+    },
+  },
+});
+
+export const textBoxVariableReducer = textBoxVariableSlice.reducer;
+
+export const { createTextBoxOptions } = textBoxVariableSlice.actions;

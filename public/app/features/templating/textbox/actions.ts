@@ -1,12 +1,9 @@
-import { createAction } from '@reduxjs/toolkit';
-
-import { toVariablePayload, VariableIdentifier, VariablePayload } from '../state/actions';
+import { toVariablePayload, VariableIdentifier } from '../state/actions';
 import { TextBoxVariableModel } from '../variable';
 import { ThunkResult } from '../../../types';
 import { getVariable } from '../state/selectors';
 import { variableAdapters } from '../adapters';
-
-export const createTextBoxOptions = createAction<VariablePayload>('templating/createTextBoxOptions');
+import { createTextBoxOptions } from './reducer';
 
 export const updateTextBoxVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
