@@ -40,9 +40,14 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables } = this.props;
+    const { data, options, replaceVariables, fieldConfig } = this.props;
     return getFieldDisplayValues({
-      fieldOptions: options.fieldOptions,
+      fieldConfig,
+      fieldOptions: {
+        calcs: options.fieldOptions.calcs,
+        values: options.fieldOptions.values,
+        limit: options.fieldOptions.limit,
+      },
       replaceVariables,
       theme: config.theme,
       data: data.series,
