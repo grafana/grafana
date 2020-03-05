@@ -66,7 +66,7 @@ Discover hundreds of [dashboards](https://grafana.com/grafana/dashboards) and [p
 
 ## Authentication
 
-Grafana supports different authentication styles, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview]({{< relref "../auth/overview.md" >}}) for more information.
+Grafana supports different authentication methods, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview]({{< relref "../auth/overview.md" >}}) for more information.
 
 In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) for more information.
 
