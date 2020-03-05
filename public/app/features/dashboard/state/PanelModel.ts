@@ -292,8 +292,6 @@ export class PanelModel {
         }
       }
     );
-
-    debugger;
   }
 
   pluginLoaded(plugin: PanelPlugin) {
