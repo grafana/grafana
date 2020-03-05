@@ -91,6 +91,7 @@ debug.test
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
+/packages/**/tsdoc-metadata.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**

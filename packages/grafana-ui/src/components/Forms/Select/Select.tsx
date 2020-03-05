@@ -1,6 +1,7 @@
 import React from 'react';
 import { SelectableValue } from '@grafana/data';
-import { SelectCommonProps, SelectBase, MultiSelectCommonProps, SelectAsyncProps } from './SelectBase';
+import { SelectCommonProps, MultiSelectCommonProps, SelectAsyncProps } from './types';
+import { SelectBase } from './SelectBase';
 
 export function Select<T>(props: SelectCommonProps<T>) {
   return <SelectBase {...props} />;

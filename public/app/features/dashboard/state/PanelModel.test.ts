@@ -146,23 +146,6 @@ describe('PanelModel', () => {
       });
     });
 
-    describe('when changing from angular panel', () => {
-      const angularPanel = {
-        scope: {},
-        destroy: jest.fn(),
-      };
-
-      beforeEach(() => {
-        model.angularPanel = angularPanel;
-        model.changePlugin(getPanelPlugin({ id: 'graph' }));
-      });
-
-      it('should set angularPanel to undefined and call destory', () => {
-        expect(angularPanel.destroy.mock.calls.length).toBe(1);
-        expect(model.angularPanel).toBe(undefined);
-      });
-    });
-
     describe('when changing to react panel from angular panel', () => {
       let panelQueryRunner: any;
 

@@ -3,12 +3,11 @@ package middleware
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
-
-	m "github.com/grafana/grafana/pkg/models"
 )
 
-func initContextWithRenderAuth(ctx *m.ReqContext, renderService rendering.Service) bool {
+func initContextWithRenderAuth(ctx *models.ReqContext, renderService rendering.Service) bool {
 	key := ctx.GetCookie("renderKey")
 	if key == "" {
 		return false
@@ -21,10 +20,10 @@ func initContextWithRenderAuth(ctx *m.ReqContext, renderService rendering.Servic
 	}
 
 	ctx.IsSignedIn = true
-	ctx.SignedInUser = &m.SignedInUser{
+	ctx.SignedInUser = &models.SignedInUser{
 		OrgId:   renderUser.OrgID,
 		UserId:  renderUser.UserID,
-		OrgRole: m.RoleType(renderUser.OrgRole),
+		OrgRole: models.RoleType(renderUser.OrgRole),
 	}
 	ctx.IsRenderCall = true
 	ctx.LastSeenAt = time.Now()

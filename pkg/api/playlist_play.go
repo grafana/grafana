@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
@@ -15,7 +15,7 @@ func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]i
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
 	if len(dashboardByIDs) > 0 {
-		dashboardQuery := m.GetDashboardsQuery{DashboardIds: dashboardByIDs}
+		dashboardQuery := models.GetDashboardsQuery{DashboardIds: dashboardByIDs}
 		if err := bus.Dispatch(&dashboardQuery); err != nil {
 			return result, err
 		}
@@ -26,7 +26,7 @@ func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]i
 				Slug:  item.Slug,
 				Title: item.Title,
 				Uri:   "db/" + item.Slug,
-				Url:   m.GetDashboardUrl(item.Uid, item.Slug),
+				Url:   models.GetDashboardUrl(item.Uid, item.Slug),
 				Order: dashboardIDOrder[item.Id],
 			})
 		}
@@ -35,7 +35,7 @@ func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]i
 	return result, nil
 }
 
-func populateDashboardsByTag(orgID int64, signedInUser *m.SignedInUser, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
+func populateDashboardsByTag(orgID int64, signedInUser *models.SignedInUser, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
 	for _, tag := range dashboardByTag {
@@ -65,7 +65,7 @@ func populateDashboardsByTag(orgID int64, signedInUser *m.SignedInUser, dashboar
 	return result
 }
 
-func LoadPlaylistDashboards(orgID int64, signedInUser *m.SignedInUser, playlistID int64) (dtos.PlaylistDashboardsSlice, error) {
+func LoadPlaylistDashboards(orgID int64, signedInUser *models.SignedInUser, playlistID int64) (dtos.PlaylistDashboardsSlice, error) {
 	playlistItems, _ := LoadPlaylistItems(playlistID)
 
 	dashboardByIDs := make([]int64, 0)
