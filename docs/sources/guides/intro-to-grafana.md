@@ -1,16 +1,16 @@
 +++
-title = "Intro to Grafana"
-description = "Introduction to Grafana"
+title = "What is Grafana?"
+description = "Overview of Grafana and features"
 keywords = ["grafana", "intro", "guide", "started"]
 type = "docs"
 [menu.docs]
-name = "Getting started"
-identifier = "intro_to_grafana"
+name = "What is Grafana?"
+identifier = "what_is_grafana"
 parent = "guides"
 weight = 200
 +++
 
-# Intro to Grafana
+# What is Grafana?
 
 This topic provides a high-level look at Grafana, the Grafana process, and Grafana features. It is a good place to start if you want to learn more about Grafana software. To jump right in and start seeing (fake) data in graphs, refer to [Getting started]({{< relref "getting_started.md" >}}).
 
