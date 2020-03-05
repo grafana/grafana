@@ -509,24 +509,18 @@ describe('DashboardModel', () => {
     describe('data links', () => {
       it('should replace __series_name variable with __series.name', () => {
         expect(model.panels[0].options.dataLinks[0].url).toBe('http://mylink.com?series=${__series.name}');
-        expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
-          'http://mylink.com?series=${__series.name}'
-        );
+        expect(model.panels[1].fieldConfig.defaults.links[0].url).toBe('http://mylink.com?series=${__series.name}');
       });
 
       it('should replace __value_time variable with __value.time', () => {
         expect(model.panels[0].options.dataLinks[1].url).toBe('http://mylink.com?series=${__value.time}');
-        expect(model.panels[1].options.fieldOptions.defaults.links[1].url).toBe(
-          'http://mylink.com?series=${__value.time}'
-        );
+        expect(model.panels[1].fieldConfig.defaults.links[1].url).toBe('http://mylink.com?series=${__value.time}');
       });
     });
 
     describe('field display', () => {
       it('should replace __series_name and __field_name variables with new syntax', () => {
-        expect(model.panels[1].options.fieldOptions.defaults.title).toBe(
-          '$__cell_0 * ${__field.name} * ${__series.name}'
-        );
+        expect(model.panels[1].fieldConfig.defaults.title).toBe('$__cell_0 * ${__field.name} * ${__series.name}');
       });
     });
   });
@@ -569,7 +563,7 @@ describe('DashboardModel', () => {
         expect(model.panels[0].options.dataLinks[0].url).toBe(
           'http://mylink.com?series=${__field.labels}&${__field.labels.a}'
         );
-        expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
+        expect(model.panels[1].fieldConfig.defaults.links[0].url).toBe(
           'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
         );
       });
@@ -611,8 +605,7 @@ describe('DashboardModel', () => {
     });
 
     it('should move fieldOptions to root level of PanelModel and remove them from options', () => {
-      // TODO
-      // expect(model.panels[0].options.fieldOptions).toEqual({ someOption: 1 });
+      expect(model.panels[0].options.fieldOptions).toEqual({ someOption: 1 });
       expect(model.panels[0].fieldConfig).toEqual({ defaults: defaultsMock, overrides: overridesMock });
     });
   });
