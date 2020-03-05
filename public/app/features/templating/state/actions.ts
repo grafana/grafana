@@ -42,13 +42,14 @@ import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './t
 
 export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
   return (dispatch, getState) => {
+    let orderIndex = 0;
     for (let index = 0; index < list.length; index++) {
       const model = list[index];
       if (!variableAdapters.contains(model.type)) {
         continue;
       }
 
-      dispatch(addVariable(toVariablePayload(model, { global: false, index, model })));
+      dispatch(addVariable(toVariablePayload(model, { global: false, index: orderIndex++, model })));
     }
 
     for (let index = 0; index < getVariables(getState()).length; index++) {

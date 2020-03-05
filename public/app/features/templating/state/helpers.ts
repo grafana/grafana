@@ -1,7 +1,10 @@
 import { EMPTY_UUID } from './types';
-import { QueryVariableModel, VariableHide, VariableModel } from '../variable';
+import { QueryVariableModel, VariableHide, VariableModel, VariableType } from '../variable';
 import { initialQueryVariableModelState } from '../query/reducer';
-import { VariablesState } from './variablesReducer';
+import { variablesReducer, VariablesState } from './variablesReducer';
+import { combineReducers } from '@reduxjs/toolkit';
+import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
+import { variableEditorReducer } from '../editor/reducer';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -51,3 +54,20 @@ export const getVariableTestContext = (variableOverrides: Partial<QueryVariableM
 
   return { initialState };
 };
+
+export const getModel = (type: VariableType): VariableModel => ({
+  name: type,
+  type,
+  label: '',
+  hide: VariableHide.dontHide,
+  skipUrlSync: false,
+});
+
+export const getRootReducer = () =>
+  combineReducers({
+    templating: combineReducers({
+      optionsPicker: optionsPickerReducer,
+      editor: variableEditorReducer,
+      variables: variablesReducer,
+    }),
+  });
