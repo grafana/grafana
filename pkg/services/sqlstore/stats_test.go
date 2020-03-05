@@ -78,14 +78,14 @@ func populateDB(t *testing.T) {
 			OrgName: fmt.Sprintf("Org #%v", i),
 		}
 		err := CreateUser(context.Background(), cmd)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		users[i] = cmd.Result
 	}
 
 	// get 1st user's organisation
 	getOrgByIdQuery := &models.GetOrgByIdQuery{Id: users[0].OrgId}
 	err := GetOrgById(getOrgByIdQuery)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	org := getOrgByIdQuery.Result
 
 	// add 2nd user as editor
@@ -95,7 +95,7 @@ func populateDB(t *testing.T) {
 		Role:   models.ROLE_EDITOR,
 	}
 	err = AddOrgUser(cmd)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// add 3rd user as viewer
 	cmd = &models.AddOrgUserCommand{
@@ -104,12 +104,12 @@ func populateDB(t *testing.T) {
 		Role:   models.ROLE_VIEWER,
 	}
 	err = AddOrgUser(cmd)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// get 2nd user's organisation
 	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[1].OrgId}
 	err = GetOrgById(getOrgByIdQuery)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	org = getOrgByIdQuery.Result
 
 	// add 1st user as admin
@@ -119,12 +119,12 @@ func populateDB(t *testing.T) {
 		Role:   models.ROLE_ADMIN,
 	}
 	err = AddOrgUser(cmd)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// update 1st user last seen at
 	updateUserLastSeenAtCmd := &models.UpdateUserLastSeenAtCommand{
 		UserId: users[0].Id,
 	}
 	err = UpdateUserLastSeenAt(updateUserLastSeenAtCmd)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }

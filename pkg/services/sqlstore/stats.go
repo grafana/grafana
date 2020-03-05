@@ -35,7 +35,7 @@ func GetDataSourceStats(query *models.GetDataSourceStatsQuery) error {
 }
 
 func GetDataSourceAccessStats(query *models.GetDataSourceAccessStatsQuery) error {
-	var rawSql = `SELECT COUNT(*) as count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
+	var rawSql = `SELECT COUNT(*) AS count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
 	query.Result = make([]*models.DataSourceAccessStats, 0)
 	err := x.SQL(rawSql).Find(&query.Result)
 	return err
