@@ -25,6 +25,9 @@ import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
 import { manifestTask } from './manifest';
 import { execTask } from '../utils/execTask';
+import rimrafCallback from 'rimraf';
+import { promisify } from 'util';
+const rimraf = promisify(rimrafCallback);
 
 export interface PluginCIOptions {
   backend?: boolean;
@@ -46,7 +49,9 @@ export interface PluginCIOptions {
 const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   const start = Date.now();
   const workDir = getJobFolder();
-  await execa('rimraf', [workDir]);
+
+  await rimraf(`${process.cwd()}/dist`);
+  await rimraf(workDir);
   fs.mkdirSync(workDir);
 
   if (backend) {

@@ -7,6 +7,8 @@ import classNames from 'classnames';
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { Branding } from 'app/core/components/Branding/Branding';
+
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
@@ -108,7 +110,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // if we just got dashboard update title
     if (!prevProps.dashboard) {
-      document.title = dashboard.title + ' - Grafana';
+      document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts

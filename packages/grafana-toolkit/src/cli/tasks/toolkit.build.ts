@@ -60,6 +60,7 @@ const copyFiles = () => {
     'src/config/tsconfig.plugin.local.json',
     'src/config/eslint.plugin.json',
     'src/config/styles.mock.js',
+    'src/config/jest.plugin.config.local.js',
 
     // plugin test file
     'src/plugins/e2e/commonPluginTests.ts',

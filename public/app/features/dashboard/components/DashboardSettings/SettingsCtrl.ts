@@ -56,7 +56,9 @@ export class SettingsCtrl {
 
     this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
     this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
-    this.$rootScope.onAppEvent(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
+
+    appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
+
     this.selectors = e2e.pages.Dashboard.Settings.General.selectors;
   }
 
@@ -146,15 +148,6 @@ export class SettingsCtrl {
       this.viewId = '404';
     }
   }
-
-  openSaveAsModal() {
-    this.dashboardSrv.showSaveAsModal();
-  }
-
-  saveDashboard() {
-    this.dashboardSrv.saveDashboard();
-  }
-
   saveDashboardJson() {
     this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
       this.$route.reload();
@@ -257,6 +250,10 @@ export class SettingsCtrl {
       url: this.dashboard.meta.folderUrl,
     };
   }
+
+  getDashboard = () => {
+    return this.dashboard;
+  };
 }
 
 export function dashboardSettings() {

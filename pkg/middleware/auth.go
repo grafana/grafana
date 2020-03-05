@@ -6,7 +6,7 @@ import (
 
 	macaron "gopkg.in/macaron.v1"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -16,7 +16,7 @@ type AuthOptions struct {
 	ReqSignedIn     bool
 }
 
-func getApiKey(c *m.ReqContext) string {
+func getApiKey(c *models.ReqContext) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	if len(parts) == 2 && parts[0] == "Bearer" {
@@ -32,7 +32,7 @@ func getApiKey(c *m.ReqContext) string {
 	return ""
 }
 
-func accessForbidden(c *m.ReqContext) {
+func accessForbidden(c *models.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(403, "Permission denied", nil)
 		return
@@ -41,7 +41,7 @@ func accessForbidden(c *m.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func notAuthorized(c *m.ReqContext) {
+func notAuthorized(c *models.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
@@ -52,14 +52,14 @@ func notAuthorized(c *m.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func EnsureEditorOrViewerCanEdit(c *m.ReqContext) {
-	if !c.SignedInUser.HasRole(m.ROLE_EDITOR) && !setting.ViewersCanEdit {
+func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
+	if !c.SignedInUser.HasRole(models.ROLE_EDITOR) && !setting.ViewersCanEdit {
 		accessForbidden(c)
 	}
 }
 
-func RoleAuth(roles ...m.RoleType) macaron.Handler {
-	return func(c *m.ReqContext) {
+func RoleAuth(roles ...models.RoleType) macaron.Handler {
+	return func(c *models.ReqContext) {
 		ok := false
 		for _, role := range roles {
 			if role == c.OrgRole {
@@ -74,7 +74,7 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 }
 
 func Auth(options *AuthOptions) macaron.Handler {
-	return func(c *m.ReqContext) {
+	return func(c *models.ReqContext) {
 		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
 			notAuthorized(c)
 			return
@@ -93,8 +93,8 @@ func Auth(options *AuthOptions) macaron.Handler {
 // Intended for when feature flags open up access to APIs that
 // are otherwise only available to admins.
 func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
-	return func(c *m.ReqContext) {
-		if c.OrgRole == m.ROLE_ADMIN {
+	return func(c *models.ReqContext) {
+		if c.OrgRole == models.ROLE_ADMIN {
 			return
 		}
 
@@ -105,7 +105,7 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 }
 
 func SnapshotPublicModeOrSignedIn() macaron.Handler {
-	return func(c *m.ReqContext) {
+	return func(c *models.ReqContext) {
 		if setting.SnapshotPublicMode {
 			return
 		}
