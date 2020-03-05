@@ -201,7 +201,7 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
 
 	if p.core == nil || p.client == nil || p.client.Exited() {
-		return nil, errors.New("Plugin not running, cannot call resource")
+		return nil, errors.New("plugin not running, cannot call resource")
 	}
 
 	reqHeaders := map[string]*pluginv2.CallResource_StringList{}
