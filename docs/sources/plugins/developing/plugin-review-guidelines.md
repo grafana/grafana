@@ -140,7 +140,7 @@ A basic guide for data sources can be found [here](http://docs.grafana.org/plugi
 
 ### Config Page Guidelines
 
-- It should be as easy as possible for a user to configure a url. If the data source is using the `datasource-http-settings` component, it should use the `suggest-url` attribute to suggest the default url or a url that is similar to what it should be (especially important if the url refers to a REST endpoint that is not common knowledge for most users e.g. `https://yourserver:4000/api/custom-endpoint`).
+- It should be as easy as possible for a user to configure a URL. If the data source is using the `datasource-http-settings` component, it should use the `suggest-url` attribute to suggest the default URL or a URL that is similar to what it should be (especially important if the URL refers to a REST endpoint that is not common knowledge for most users e.g. `https://yourserver:4000/api/custom-endpoint`).
 
     ```html
     <datasource-http-settings

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Legend } from './Legend';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -98,7 +98,7 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
             <Forms.InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
           </Field>
 
-          <Field label="RadioButton" invalid={!!errors.select}>
+          <Field label="Select" invalid={!!errors.select}>
             <Forms.InputControl
               name="select"
               control={control}
@@ -122,17 +122,39 @@ export const basic = () => {
 };
 
 export const defaultValues = () => {
+  const defaultValues = [
+    {
+      name: 'Roger Waters',
+      nested: {
+        path: 'Nested path default value',
+      },
+      radio: 'option2',
+      select: 'option1',
+      switch: true,
+    },
+    {
+      name: 'John Waters',
+      nested: {
+        path: 'Nested path default value updated',
+      },
+      radio: 'option1',
+      select: 'option2',
+      switch: false,
+    },
+  ];
+  const [defaultsIdx, setDefaultsIdx] = useState(0);
+
   return (
     <>
-      {renderForm({
-        name: 'Roger Waters',
-        nested: {
-          path: 'Nested path default value',
-        },
-        radio: 'option2',
-        select: 'option1',
-        switch: true,
-      })}
+      {renderForm(defaultValues[defaultsIdx])}
+      <Button
+        onClick={() => {
+          setDefaultsIdx(s => (s + 1) % 2);
+        }}
+        variant="secondary"
+      >
+        Change default values
+      </Button>
     </>
   );
 };

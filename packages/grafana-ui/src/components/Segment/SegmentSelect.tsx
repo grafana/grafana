@@ -37,7 +37,6 @@ export function SegmentSelect<T>({
             width: ${width > 120 ? width : 120}px;
           `
         )}
-        noOptionsMessage={() => noOptionsMessage}
         placeholder=""
         autoFocus={true}
         isOpen={true}

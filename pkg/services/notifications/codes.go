@@ -8,7 +8,7 @@ import (
 
 	"github.com/unknwon/com"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,7 +49,7 @@ func createTimeLimitCode(data string, minutes int, startInf interface{}) (string
 }
 
 // verify time limit code
-func validateUserEmailCode(user *m.User, code string) (bool, error) {
+func validateUserEmailCode(user *models.User, code string) (bool, error) {
 	if len(code) <= 18 {
 		return false, nil
 	}
@@ -94,7 +94,7 @@ func getLoginForEmailCode(code string) string {
 	return string(b)
 }
 
-func createUserEmailCode(u *m.User, startInf interface{}) (string, error) {
+func createUserEmailCode(u *models.User, startInf interface{}) (string, error) {
 	minutes := setting.EmailCodeValidMinutes
 	data := com.ToStr(u.Id) + u.Email + u.Login + u.Password + u.Rands
 	code, err := createTimeLimitCode(data, minutes, startInf)
