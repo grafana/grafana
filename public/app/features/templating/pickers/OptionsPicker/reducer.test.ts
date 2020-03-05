@@ -14,7 +14,7 @@ import {
   updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { VariableTag, VariableWithMultiSupport, QueryVariableModel } from '../../variable';
+import { QueryVariableModel, VariableTag } from '../../variable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
