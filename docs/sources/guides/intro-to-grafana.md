@@ -62,7 +62,7 @@ Configuration covers both config files and environment variables. You can set up
 
 ## Import dashboards and plugins
 
-Discover hundreds of [dashboards](https://grafana.com/grafana/dashboards) and [plugins](https://grafana.com/grafana/plugins) in the official library. Thanks to the passion and momentum of our community, new ones are added every week.
+Discover hundreds of [dashboards](https://grafana.com/grafana/dashboards) and [plugins](https://grafana.com/grafana/plugins) in the official library. Thanks to the passion and momentum of community members, new ones are added every week.
 
 ## Authentication
 
