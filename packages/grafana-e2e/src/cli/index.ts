@@ -1,6 +1,6 @@
-import { resolve, sep } from 'path';
 import execa, { Options } from 'execa';
 import program from 'commander';
+import { resolve, sep } from 'path';
 
 const cypress = (commandName: string) => {
   // Support running an unpublished dev build
