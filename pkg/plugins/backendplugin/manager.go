@@ -243,6 +243,8 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 			}
 
 			for k, values := range resp.Headers {
+				// Due to security reasons we don't want to forward
+				// cookies from a backend plugin to clients/browsers.
 				if k == "Set-Cookie" {
 					continue
 				}
