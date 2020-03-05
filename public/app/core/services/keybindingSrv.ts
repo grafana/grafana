@@ -15,7 +15,7 @@ import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getLocationSrv } from '@grafana/runtime';
 import { DashboardModel } from '../../features/dashboard/state';
-import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from '../../features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
 export class KeybindingSrv {

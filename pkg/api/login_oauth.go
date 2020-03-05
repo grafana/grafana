@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -39,7 +39,7 @@ func GenStateString() (string, error) {
 	return base64.URLEncoding.EncodeToString(rnd), nil
 }
 
-func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
+func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	if setting.OAuthService == nil {
 		ctx.Handle(404, "OAuth not enabled", nil)
 		return
@@ -172,19 +172,19 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		return
 	}
 
-	extUser := &m.ExternalUserInfo{
+	extUser := &models.ExternalUserInfo{
 		AuthModule: "oauth_" + name,
 		OAuthToken: token,
 		AuthId:     userInfo.Id,
 		Name:       userInfo.Name,
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
-		OrgRoles:   map[int64]m.RoleType{},
+		OrgRoles:   map[int64]models.RoleType{},
 		Groups:     userInfo.Groups,
 	}
 
 	if userInfo.Role != "" {
-		rt := m.RoleType(userInfo.Role)
+		rt := models.RoleType(userInfo.Role)
 		if rt.IsValid() {
 			var orgID int64
 			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
@@ -197,7 +197,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	}
 
 	// add/update user in grafana
-	cmd := &m.UpsertUserCommand{
+	cmd := &models.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
@@ -236,7 +236,7 @@ func hashStatecode(code, seed string) string {
 	return hex.EncodeToString(hashBytes[:])
 }
 
-func (hs *HTTPServer) redirectWithError(ctx *m.ReqContext, err error, v ...interface{}) {
+func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Error(err.Error(), v...)
 	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
 		oauthLogger.Error("Failed to set encrypted cookie", "err", err)

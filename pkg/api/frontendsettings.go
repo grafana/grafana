@@ -3,6 +3,7 @@ package api
 import (
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -10,24 +11,23 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
-func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
-	orgDataSources := make([]*m.DataSource, 0)
+func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
+	orgDataSources := make([]*models.DataSource, 0)
 
 	if c.OrgId != 0 {
-		query := m.GetDataSourcesQuery{OrgId: c.OrgId}
+		query := models.GetDataSourcesQuery{OrgId: c.OrgId}
 		err := bus.Dispatch(&query)
 
 		if err != nil {
 			return nil, err
 		}
 
-		dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
 			User:        c.SignedInUser,
 			Datasources: query.Result,
 		}
@@ -62,7 +62,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
-		if ds.Access == m.DS_ACCESS_PROXY {
+		if ds.Access == models.DS_ACCESS_PROXY {
 			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
@@ -96,7 +96,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 		dsMap["jsonData"] = jsonData
 
-		if ds.Access == m.DS_ACCESS_DIRECT {
+		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
 				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
 			}
@@ -104,24 +104,24 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 				dsMap["withCredentials"] = ds.WithCredentials
 			}
 
-			if ds.Type == m.DS_INFLUXDB_08 {
+			if ds.Type == models.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
-			if ds.Type == m.DS_INFLUXDB {
+			if ds.Type == models.DS_INFLUXDB {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url
 			}
 		}
 
-		if (ds.Type == m.DS_INFLUXDB) || (ds.Type == m.DS_ES) {
+		if (ds.Type == models.DS_INFLUXDB) || (ds.Type == models.DS_ES) {
 			dsMap["database"] = ds.Database
 		}
 
-		if ds.Type == m.DS_PROMETHEUS {
+		if ds.Type == models.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			jsonData.Set("directUrl", ds.Url)
 		}
@@ -247,7 +247,7 @@ func getPanelSort(id string) int {
 	return sort
 }
 
-func (hs *HTTPServer) GetFrontendSettings(c *m.ReqContext) {
+func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)

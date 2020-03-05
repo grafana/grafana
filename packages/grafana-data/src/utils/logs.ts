@@ -20,16 +20,21 @@ export function getLogLevel(line: string): LogLevel {
   if (!line) {
     return LogLevel.unknown;
   }
+  let level = LogLevel.unknown;
+  let currentIndex: number | undefined = undefined;
+
   for (const key of Object.keys(LogLevel)) {
     const regexp = new RegExp(`\\b${key}\\b`, 'i');
-    if (regexp.test(line)) {
-      const level = (LogLevel as any)[key];
-      if (level) {
-        return level;
+    const result = regexp.exec(line);
+
+    if (result) {
+      if (currentIndex === undefined || result.index < currentIndex) {
+        level = (LogLevel as any)[key];
+        currentIndex = result.index;
       }
     }
   }
-  return LogLevel.unknown;
+  return level;
 }
 
 export function getLogLevelFromKey(key: string): LogLevel {
