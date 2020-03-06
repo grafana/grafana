@@ -20,11 +20,11 @@ jobs:
       - name: Deploy Storybook
         run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
       - name: test
-        run: ls ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
+        run: ls ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA::8}
       - uses: actions-hub/gcloud@master
         env:
           PROJECT_ID: grafanalabs-global
           APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_STORYBOOK_SERVICE_ACCOUNT }}
           CLI: gsutil
         with:
-          args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}  gs://grafana-storybook/${GITHUB_SHA}
+          args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}  gs://grafana-storybook/${GITHUB_SHA::8}
