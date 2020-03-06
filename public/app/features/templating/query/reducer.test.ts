@@ -5,11 +5,14 @@ import cloneDeep from 'lodash/cloneDeep';
 import { VariablesState } from '../state/variablesReducer';
 import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload } from '../state/types';
+import { createQueryVariableAdapter } from './adapter';
 
 describe('queryVariableReducer', () => {
+  const adapter = createQueryVariableAdapter();
+
   describe('when updateVariableOptions is dispatched and includeAll is true', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({ includeAll: true });
+      const { initialState } = getVariableTestContext(adapter, { includeAll: true });
       const options: VariableOption[] = [
         { text: 'A', value: 'A', selected: false },
         { text: 'B', value: 'B', selected: false },
@@ -34,7 +37,7 @@ describe('queryVariableReducer', () => {
 
   describe('when updateVariableOptions is dispatched and includeAll is false', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({ includeAll: false });
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false });
       const options: VariableOption[] = [
         { text: 'A', value: 'A', selected: false },
         { text: 'B', value: 'B', selected: false },
@@ -58,7 +61,7 @@ describe('queryVariableReducer', () => {
 
   describe('when updateVariableOptions is dispatched and includeAll is true and payload is an empty array', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({ includeAll: true });
+      const { initialState } = getVariableTestContext(adapter, { includeAll: true });
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, []);
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
@@ -75,7 +78,7 @@ describe('queryVariableReducer', () => {
 
   describe('when updateVariableOptions is dispatched and includeAll is false and payload is an empty array', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({ includeAll: false });
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false });
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, []);
       reducerTester<VariablesState>()
         .givenReducer(queryVariableReducer, cloneDeep(initialState))
@@ -92,7 +95,7 @@ describe('queryVariableReducer', () => {
 
   describe('when updateVariableOptions is dispatched and includeAll is true and regex is set', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({ includeAll: true, regex: '/.*(a).*/i' });
+      const { initialState } = getVariableTestContext(adapter, { includeAll: true, regex: '/.*(a).*/i' });
       const options: VariableOption[] = [
         { text: 'A', value: 'A', selected: false },
         { text: 'B', value: 'B', selected: false },
@@ -116,7 +119,7 @@ describe('queryVariableReducer', () => {
 
   describe('when updateVariableOptions is dispatched and includeAll is false and regex is set', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({ includeAll: false, regex: '/.*(a).*/i' });
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex: '/.*(a).*/i' });
       const options: VariableOption[] = [
         { text: 'A', value: 'A', selected: false },
         { text: 'B', value: 'B', selected: false },
@@ -137,7 +140,7 @@ describe('queryVariableReducer', () => {
 
   describe('when updateVariableTags is dispatched', () => {
     it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext();
+      const { initialState } = getVariableTestContext(adapter);
       const tags: any[] = [{ text: 'A' }, { text: 'B' }];
       const payload = toVariablePayload({ uuid: '0', type: 'query' }, tags);
       reducerTester<VariablesState>()
