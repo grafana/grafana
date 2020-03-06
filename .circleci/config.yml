@@ -7,6 +7,9 @@ aliases:
       ignore: /.*/
     tags:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+  - &filter-only-release-test
+    branches:
+      only: chore/new-release-pipeline
   - &filter-not-release-or-master
     tags:
       ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
@@ -15,6 +18,14 @@ aliases:
   - &filter-only-master
     branches:
       only: master
+  - &filter-master-or-release
+    branches:
+      only: master
+    tags:
+      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+  - &filter-master-or-release-test
+    branches:
+      only: chore/new-release-pipeline
 
 executors:
   grafana-build:
@@ -331,7 +342,13 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
-  publish-oss-master:
+  publish-packages:
+    description: "Publish packages"
+    parameters:
+      edition:
+        type: string
+      versionMode:
+        type: string
     executor: grafana-publish
     steps:
       - attach_workspace:
@@ -341,49 +358,8 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - run:
-          name: GCP credentials
-          command: echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json
-      - run:
-          name: Sign in to GCP
-          command: /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-      - run:
-          name: Publish to GCP
-          command: |
-            /opt/google-cloud-sdk/bin/gsutil cp /tmp/workspace/oss/dist/* gs://$GCP_BUCKET_NAME/oss/master/
-      - run:
-          name: Publish to Grafana.com
-          command: |
-            cp -r /tmp/workspace/oss/dist .
-            rm -f dist/*latest*
-            cd dist
-            /tmp/workspace/scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
-
-  publish-enterprise-master:
-    executor: grafana-publish
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: GCP credentials
-          command: echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json
-      - run:
-          name: Sign in to GCP
-          command: /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-      - run:
-          name: Publish to GCP
-          command: |
-            /opt/google-cloud-sdk/bin/gsutil cp /tmp/workspace/enterprise/dist/* gs://$GCP_BUCKET_NAME/enterprise/master/
-      - run:
-          name: Publish to Grafana.com
-          command: |
-            cp -r /tmp/workspace/enterprise/dist .
-            rm -f dist/*latest*
-            cd dist
-            /tmp/workspace/scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
+          name: Publish packages
+          command: /tmp/workspace/bin/grabpl publish-packages --edition << parameters.edition >> --version-mode << parameters.versionMode >> --deb-db-bucket grafana-aptly-db-test --deb-repo-bucket grafana-repo-test --packages-bucket grafana-downloads-test
 
   docker-oss-master:
     executor: docker
@@ -1727,6 +1703,32 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
+  release-packages-test:
+    docker:
+      - image: circleci/node:12
+    steps:
+      - checkout
+      - run:
+          name: CI job started
+          command: './scripts/ci-job-started.sh'
+      - run:
+          name: Bootstrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: npm - Prepare auth token
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
+          name: Release packages
+          command: echo ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
+      - run:
+          name: CI job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
   scan-docker-master:
     docker:
       - image: circleci/buildpack-deps:stretch
@@ -1764,180 +1766,180 @@ workflows:
   build-pipeline:
     jobs:
       - install-grabpl:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: armv6
           name: build-oss-backend-armv6
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: armv7
           name: build-oss-backend-armv7
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: arm64
           name: build-oss-backend-arm64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
             - install-grabpl
       - build-frontend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           name: build-oss-frontend
           edition: oss
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: armv6
           name: build-enterprise-backend-armv6
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: armv7
           name: build-enterprise-backend-armv7
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: armv7-musl
           name: build-enterprise-backend-armv7-musl
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: arm64
           name: build-enterprise-backend-arm64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: arm64-musl
           name: build-enterprise-backend-arm64-musl
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: osx64
           name: build-enterprise-backend-osx64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: win64
           name: build-enterprise-backend-win64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: linux-x64
           name: build-enterprise-backend-linux-x64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           edition: enterprise
           variant: linux-x64-musl
           name: build-enterprise-backend-linux-x64-musl
           requires:
             - install-grabpl
       - build-frontend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           name: build-enterprise-frontend
           edition: enterprise
           requires:
             - install-grabpl
       - build-release-publisher:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
       - codespell:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
       - lint-go:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
       - shellcheck-grabpl:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
       - test-backend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
             - lint-go
       - test-frontend:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
       - mysql-integration-test:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
             - lint-go
       - postgres-integration-test:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
             - lint-go
       - package-oss:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
             - build-oss-backend-armv6
@@ -1957,7 +1959,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
       - package-enterprise:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - install-grabpl
             - build-enterprise-backend-armv6
@@ -1977,68 +1979,107 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
       - build-oss-windows-installer:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - package-oss
       - build-enterprise-windows-installer:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - package-enterprise
       - release-next-packages:
           filters: *filter-only-master
           requires:
             - test-frontend
-      - publish-oss-master:
+      - release-packages-test:
+          filters: *filter-only-release-test
+          requires:
+            - end-to-end-tests
+            # TODO: Do we have more dependencies?
+      - publish-packages:
           filters: *filter-only-master
+          name: publish-oss-master-packages
+          edition: oss
+          versionMode: master
           requires:
             - package-oss
             - build-oss-windows-installer
             - end-to-end-tests
             - build-release-publisher
+      - publish-packages:
+          filters: *filter-only-release-test
+          name: publish-oss-release-packages
+          edition: oss
+          versionMode: release
+          requires:
+            - package-oss
+            - build-oss-windows-installer
+            - end-to-end-tests
+            - build-release-publisher
+      # TODO: Replicate for release
       - docker-oss-master:
           filters: *filter-only-master
           requires:
             - package-oss
             - build-oss-windows-installer
+      # TODO: Replicate for release
       - docker-ubuntu-oss-master:
           filters: *filter-only-master
           requires:
             - package-oss
             - build-oss-windows-installer
-      - publish-enterprise-master:
+      - publish-packages:
           filters: *filter-only-master
+          name: publish-enterprise-master-packages
+          edition: enterprise
+          versionMode: master
           requires:
             - package-enterprise
             - build-enterprise-windows-installer
             - end-to-end-tests
             - build-release-publisher
+      - publish-packages:
+          filters: *filter-only-release-test
+          name: publish-enterprise-release-packages
+          edition: enterprise
+          versionMode: release
+          requires:
+            - package-enterprise
+            - build-enterprise-windows-installer
+            - end-to-end-tests
+            - build-release-publisher
+      # TODO: Replicate for release
       - docker-enterprise-master:
           filters: *filter-only-master
           requires:
             - package-enterprise
+      # TODO: Replicate for release
       - docker-ubuntu-enterprise-master:
           filters: *filter-only-master
           requires:
             - package-enterprise
       - end-to-end-tests:
-          filters: *filter-only-master
+          filters: *filter-master-or-release-test
           requires:
             - docker-oss-master
+      # TODO: Replicate for release
       - publish-docker-oss-master:
           filters: *filter-only-master
           requires:
             - docker-oss-master
             - end-to-end-tests
+      # TODO: Replicate for release
       - publish-docker-ubuntu-oss-master:
           filters: *filter-only-master
           requires:
             - docker-ubuntu-oss-master
             - end-to-end-tests
+      # TODO: Replicate for release
       - publish-docker-enterprise-master:
           filters: *filter-only-master
           requires:
             - docker-enterprise-master
             - end-to-end-tests
+      # TODO: Replicate for release
       - publish-docker-ubuntu-enterprise-master:
           filters: *filter-only-master
           requires:
