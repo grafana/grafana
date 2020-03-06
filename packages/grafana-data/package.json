@@ -37,7 +37,7 @@
     "@types/papaparse": "4.5.9",
     "@types/pretty-format": "20.0.1",
     "@types/react": "16.8.16",
-    "@types/sinon": "^7.0.11",
+    "@types/sinon": "^7.5.2",
     "pretty-format": "24.9.0",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",
