@@ -37,11 +37,13 @@ import {
   serializeStateToUrlParam,
   stopQueryState,
   updateHistory,
+} from 'app/core/utils/explore';
+import {
   addToRichHistory,
   updateStarredInRichHistory,
   updateCommentInRichHistory,
   getQueryDisplayText,
-} from 'app/core/utils/explore';
+} from 'app/core/utils/richHistory';
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult, RichHistoryQuery } from 'app/types';
 

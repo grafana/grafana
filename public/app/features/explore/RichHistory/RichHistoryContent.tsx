@@ -9,13 +9,13 @@ import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { getExploreDatasources } from '../state/selectors';
 
+import { SortOrder } from '../../../core/utils/explore';
 import {
   sortQueries,
-  SortOrder,
   mapNumbertoTimeInSlider,
   createRetentionPeriodBoundary,
   createQueryHeading,
-} from '../../../core/utils/explore';
+} from '../../../core/utils/richHistory';
 
 // Components
 import { RichHistoryCard } from './RichHistoryCard';

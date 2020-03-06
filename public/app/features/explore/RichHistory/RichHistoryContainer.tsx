@@ -133,7 +133,7 @@ const mapDispatchToProps = {
   updateRichHistory,
 };
 
-export default hot(module)(
-  // @ts-ignore
-  connect(mapStateToProps, mapDispatchToProps)(RichHistoryContainer)
-) as React.ComponentType<{ exploreId: ExploreId; width: number }>;
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryContainer)) as React.ComponentType<{
+  exploreId: ExploreId;
+  width: number;
+}>;

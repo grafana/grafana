@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import { RichHistoryQuery } from 'app/types/explore';
-import { copyStringToClipboard, createUrlFromRichHistory } from '../../../core/utils/explore';
+import { copyStringToClipboard, createUrlFromRichHistory } from '../../../core/utils/richHistory';
 import appEvents from 'app/core/app_events';
 
 interface Props {

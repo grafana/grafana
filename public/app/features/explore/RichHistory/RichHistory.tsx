@@ -9,7 +9,7 @@ import { stylesFactory, withTheme } from '@grafana/ui';
 //Types
 import { RichHistoryQuery } from 'app/types/explore';
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { TabsBar, Tab, TabContent, Themeable } from '@grafana/ui';
+import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar } from '@grafana/ui';
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
@@ -50,17 +50,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       height: 100%;
-      overflow-y: scroll;
       background-color: ${tabContentBg};
     `,
     tabContent: css`
       background-color: ${tabContentBg};
-      border-top: solid 1px ${borderColor};
       padding: ${theme.spacing.lg} ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md};
     `,
     tabs: css`
       background-color: ${tabBarBg};
       padding-top: ${theme.spacing.sm};
+      border-color: ${borderColor};
       ul {
         margin-left: ${theme.spacing.md};
       }
@@ -182,18 +181,11 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       icon: 'gicon gicon-preferences',
     };
 
-    let tabs = [];
-    tabs.push(QueriesTab);
-    tabs.push(SettingsTab);
-
-    /* If user selects to have starredTabAsFirstTab === true, move
-     * StarredTab to first position, otherwise second
-     */
-    tabs.splice(starredTabAsFirstTab ? 0 : 1, 0, StarredTab);
+    let tabs = starredTabAsFirstTab ? [StarredTab, QueriesTab, SettingsTab] : [QueriesTab, StarredTab, SettingsTab];
 
     return (
       <div className={styles.container}>
-        <TabsBar className={styles.tabs} hideBorder={true}>
+        <TabsBar className={styles.tabs}>
           {tabs.map(t => (
             <Tab
               key={t.value}
@@ -204,13 +196,9 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
             />
           ))}
         </TabsBar>
-        <TabContent className={styles.tabContent}>
-          {tabs
-            .filter(t => t.value === activeTab)
-            .map(t => (
-              <div key={t.label}>{t.content}</div>
-            ))}
-        </TabContent>
+        <CustomScrollbar>
+          <TabContent className={styles.tabContent}>{tabs.find(t => t.value === activeTab)?.content}</TabContent>
+        </CustomScrollbar>
       </div>
     );
   }

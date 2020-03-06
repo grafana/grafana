@@ -25,8 +25,8 @@ import {
   refreshIntervalToSortOrder,
   sortLogsResult,
   stopQueryState,
-  getRichHistory,
 } from 'app/core/utils/explore';
+import { getRichHistory } from 'app/core/utils/richHistory';
 import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
   addQueryRowAction,
