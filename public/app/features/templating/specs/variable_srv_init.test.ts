@@ -104,7 +104,7 @@ describe('VariableSrv init', function(this: any) {
   });
 
   // this test will moved to redux tests instead
-  describe.skip('given dependent variables', () => {
+  describe('given dependent variables', () => {
     const variableList = [
       {
         name: 'app',
