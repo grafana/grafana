@@ -1,6 +1,8 @@
 - name: Getting started
   link: /guides/
   children:
+  - name: What is Grafana?
+    link: /guides/what-is-grafana/
   - name: Getting started
     link: /guides/getting_started/
   - name: Intro to time series
@@ -68,7 +70,7 @@
     - link: /permissions/dashboard_folder_permissions/
       name: Dashboard and Folder
     - link: /permissions/datasource_permissions/
-      name: Datasource
+      name: Data source
   - name: Grafana CLI
     link: /administration/cli/
   - name: Internal metrics
@@ -141,6 +143,8 @@
   - name: Data Sources
     link: /features/datasources/
     children:
+    - link: /features/datasources/add-data-source/
+      name: Add data source
     - link: /features/datasources/cloudwatch/
       name: AWS Cloudwatch
     - link: /features/datasources/azuremonitor/
@@ -168,7 +172,7 @@
     - link: /features/datasources/prometheus/
       name: Prometheus
     - link: /features/datasources/testdata/
-      name: Testdata
+      name: TestData DB
   - name: Explore
     link: /features/explore/
   - name: Alerting
