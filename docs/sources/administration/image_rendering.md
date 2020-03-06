@@ -85,22 +85,25 @@ The following example describes how to build and run the remote HTTP rendering s
 1. Clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) Git repository.
 2. Install dependencies and build:
 
-```bash
-yarn install --pure-lockfile
-yarn run build
-```
-3. Run the server
+    ```bash
+    yarn install --pure-lockfile
+    yarn run build
+    ```
 
-```bash
-node build/app.js server --port=8081
-```
+3. Run the server:
+
+    ```bash
+    node build/app.js server --port=8081
+    ```
+
 4. Update Grafana configuration:
 
-```
-[rendering]
-server_url = http://localhost:8081/render
-callback_url = http://localhost:3000/
-```
+    ```
+    [rendering]
+    server_url = http://localhost:8081/render
+    callback_url = http://localhost:3000/
+    ```
+
 5. Restart Grafana.
 
 ## PhantomJS

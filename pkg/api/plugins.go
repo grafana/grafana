@@ -1,16 +1,16 @@
 package api
 
 import (
-	"encoding/json"
 	"sort"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -226,8 +226,8 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	}
 
 	payload := map[string]interface{}{
-		"status": resp.Status.String(),
-		"info":   resp.Info,
+		"status":  resp.Status.String(),
+		"message": resp.Message,
 	}
 
 	if resp.Status != backendplugin.HealthStatusOk {
@@ -238,66 +238,40 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 }
 
 // /api/plugins/:pluginId/resources/*
-func (hs *HTTPServer) CallResource(c *models.ReqContext) Response {
+func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 	plugin, exists := plugins.Plugins[pluginID]
 	if !exists {
-		return Error(404, "Plugin not found, no installed plugin with that id", nil)
+		c.JsonApiErr(404, "Plugin not found, no installed plugin with that id", nil)
+		return
 	}
 
-	var jsonDataBytes []byte
+	var jsonData *simplejson.Json
 	var decryptedSecureJSONData map[string]string
 	var updated time.Time
 
 	ps, err := hs.getCachedPluginSettings(pluginID, c.SignedInUser)
 	if err != nil {
 		if err != models.ErrPluginSettingNotFound {
-			return Error(500, "Failed to get plugin settings", err)
+			c.JsonApiErr(500, "Failed to get plugin settings", err)
+			return
 		}
+		jsonData = simplejson.New()
+		decryptedSecureJSONData = make(map[string]string)
 	} else {
-		jsonDataBytes, err = json.Marshal(&ps.JsonData)
-		if err != nil {
-			return Error(500, "Failed to marshal JSON data to bytes", err)
-		}
-
 		decryptedSecureJSONData = ps.DecryptedValues()
 		updated = ps.Updated
 	}
 
-	body, err := c.Req.Body().Bytes()
-	if err != nil {
-		return Error(500, "Failed to read request body", err)
+	config := backendplugin.PluginConfig{
+		OrgID:                   c.OrgId,
+		PluginID:                plugin.Id,
+		PluginType:              plugin.Type,
+		JSONData:                jsonData,
+		DecryptedSecureJSONData: decryptedSecureJSONData,
+		Updated:                 updated,
 	}
-
-	req := backendplugin.CallResourceRequest{
-		Config: backendplugin.PluginConfig{
-			OrgID:                   c.OrgId,
-			PluginID:                plugin.Id,
-			PluginType:              plugin.Type,
-			JSONData:                jsonDataBytes,
-			DecryptedSecureJSONData: decryptedSecureJSONData,
-			Updated:                 updated,
-		},
-		Path:    c.Params("*"),
-		Method:  c.Req.Method,
-		URL:     c.Req.URL.String(),
-		Headers: c.Req.Header.Clone(),
-		Body:    body,
-	}
-	resp, err := hs.BackendPluginManager.CallResource(c.Req.Context(), req)
-	if err != nil {
-		return Error(500, "Failed to call resource", err)
-	}
-
-	if resp.Status >= 400 {
-		return Error(resp.Status, "", nil)
-	}
-
-	return &NormalResponse{
-		body:   resp.Body,
-		status: resp.Status,
-		header: resp.Headers,
-	}
+	hs.BackendPluginManager.CallResource(config, c, c.Params("*"))
 }
 
 func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {

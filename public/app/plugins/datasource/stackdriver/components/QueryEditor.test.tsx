@@ -11,6 +11,7 @@ const props: Props = {
   datasource: {
     getProjects: () => Promise.resolve([]),
     getDefaultProject: () => Promise.resolve('projectName'),
+    ensureGCEDefaultProject: () => {},
     getMetricTypes: () => Promise.resolve([]),
     getLabels: () => Promise.resolve([]),
     variables: [],
