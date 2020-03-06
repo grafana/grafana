@@ -10,7 +10,6 @@ import { initDashboardTemplating, processVariable } from './actions';
 import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
 import { VariableRefresh } from '../variable';
-import { removeVariableEditorError } from '../editor/reducer';
 import { updateVariableOptions } from '../query/reducer';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
@@ -224,7 +223,6 @@ describe('processVariable', () => {
               .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
             tester.thenDispatchedActionShouldEqual(
-              removeVariableEditorError({ errorProp: 'update' }),
               updateVariableOptions(
                 toVariablePayload({ type: 'query', uuid: '3' }, [
                   {
@@ -306,7 +304,6 @@ describe('processVariable', () => {
               .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
             tester.thenDispatchedActionShouldEqual(
-              removeVariableEditorError({ errorProp: 'update' }),
               updateVariableOptions(
                 toVariablePayload({ type: 'query', uuid: '3' }, [
                   {
@@ -343,35 +340,6 @@ describe('processVariable', () => {
                       text: ['B'],
                       value: ['B'],
                       selected: false,
-                    },
-                  }
-                )
-              ),
-              removeVariableEditorError({ errorProp: 'update' }),
-              updateVariableOptions(
-                toVariablePayload({ type: 'query', uuid: '3' }, [
-                  {
-                    value: 'A',
-                    text: 'A',
-                  },
-                  {
-                    value: 'B',
-                    text: 'B',
-                  },
-                  {
-                    value: 'C',
-                    text: 'C',
-                  },
-                ])
-              ),
-              setCurrentVariableValue(
-                toVariablePayload(
-                  { type: 'query', uuid: '3' },
-                  {
-                    option: {
-                      text: ['B'],
-                      value: ['B'],
-                      selected: true,
                     },
                   }
                 )

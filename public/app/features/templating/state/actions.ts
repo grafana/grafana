@@ -84,6 +84,8 @@ export const processVariable = (identifier: VariableIdentifier, queryParams: Url
     const urlValue = queryParams['var-' + variable.name];
     if (urlValue !== void 0) {
       await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
+      await dispatch(resolveInitLock(toVariablePayload(variable)));
+      return;
     }
 
     if (variable.hasOwnProperty('refresh')) {
@@ -93,6 +95,8 @@ export const processVariable = (identifier: VariableIdentifier, queryParams: Url
         refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
       ) {
         await variableAdapters.get(variable.type).updateOptions(refreshableVariable);
+        await dispatch(resolveInitLock(toVariablePayload(variable)));
+        return;
       }
     }
 
