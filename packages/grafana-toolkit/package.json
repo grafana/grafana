@@ -90,7 +90,7 @@
     "postcss-preset-env": "6.6.0",
     "prettier": "^1.19.1",
     "puppeteer-core": "1.18.1",
-    "react-dev-utils": "^9.0.1",
+    "react-dev-utils": "^10.2.0",
     "replace-in-file": "^4.1.0",
     "replace-in-file-webpack-plugin": "^1.0.6",
     "rimraf": "^3.0.0",
