@@ -1,19 +1,19 @@
 import { variableAdapters } from '../adapters';
-import { createConstantVariableAdapter } from '../constant/adapter';
+import { updateCustomVariableOptions } from './actions';
+import { createCustomVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from 'app/features/templating/state/reducers';
-import { updateConstantVariableOptions } from './actions';
 import { getTemplatingRootReducer } from '../state/helpers';
-import { ConstantVariableModel, VariableOption, VariableHide } from '../variable';
+import { VariableOption, VariableHide, CustomVariableModel } from '../variable';
 import { toVariablePayload } from '../state/types';
-import { createConstantOptionsFromQuery } from './reducer';
 import { setCurrentVariableValue } from '../state/sharedReducer';
 import { initDashboardTemplating } from '../state/actions';
+import { TemplatingState } from '../state/reducers';
+import { createCustomOptionsFromQuery } from './reducer';
 
-describe('constant actions', () => {
-  variableAdapters.set('constant', createConstantVariableAdapter());
+describe('custom actions', () => {
+  variableAdapters.set('custom', createCustomVariableAdapter());
 
-  describe('when updateConstantVariableOptions is dispatched', () => {
+  describe('when updateCustomVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const option: VariableOption = {
         value: 'A',
@@ -21,8 +21,8 @@ describe('constant actions', () => {
         selected: false,
       };
 
-      const variable: ConstantVariableModel = {
-        type: 'constant',
+      const variable: CustomVariableModel = {
+        type: 'custom',
         uuid: '0',
         global: false,
         current: {
@@ -30,23 +30,36 @@ describe('constant actions', () => {
           text: '',
           selected: false,
         },
-        options: [],
-        query: 'A',
-        name: 'Constant',
+        options: [
+          {
+            text: 'A',
+            value: 'A',
+            selected: false,
+          },
+          {
+            text: 'B',
+            value: 'B',
+            selected: false,
+          },
+        ],
+        query: 'A,B',
+        name: 'Custom',
         label: '',
         hide: VariableHide.dontHide,
         skipUrlSync: false,
         index: 0,
+        multi: true,
+        includeAll: false,
       };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toVariablePayload(variable)), true);
+        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionPredicateShouldEqual(actions => {
         const [createAction, setCurrentAction] = actions;
-        expect(createAction).toEqual(createConstantOptionsFromQuery(toVariablePayload(variable)));
+        expect(createAction).toEqual(createCustomOptionsFromQuery(toVariablePayload(variable)));
         expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
         return true;
       });
