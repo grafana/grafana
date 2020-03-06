@@ -34,7 +34,7 @@
     "@torkelo/react-select": "3.0.8",
     "@types/react-color": "3.0.1",
     "@types/react-select": "3.0.8",
-    "@types/react-table": "7.0.2",
+    "@types/react-table": "7.0.10",
     "@types/slate": "0.47.1",
     "@types/slate-react": "0.22.5",
     "bizcharts": "^3.5.5",
