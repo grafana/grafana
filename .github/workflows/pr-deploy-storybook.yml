@@ -27,4 +27,4 @@ jobs:
           APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_STORYBOOK_SERVICE_ACCOUNT }}
           CLI: gsutil
         with:
-          args: cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}  gs://grafana-storybook/${GITHUB_SHA}
+          args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}  gs://grafana-storybook/${GITHUB_SHA}
