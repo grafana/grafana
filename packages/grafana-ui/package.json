@@ -79,7 +79,7 @@
     "@types/jquery": "1.10.35",
     "@types/lodash": "4.14.123",
     "@types/node": "10.14.1",
-    "@types/papaparse": "4.5.9",
+    "@types/papaparse": "5.0.3",
     "@types/pretty-format": "20.0.1",
     "@types/rc-slider": "8.6.5",
     "@types/react": "16.8.16",
