@@ -757,11 +757,12 @@ jobs:
   end-to-end-tests:
     docker:
       - image: circleci/node:12-browsers
-      - image: grafana/grafana-dev:master-$CIRCLE_SHA1
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - run: docker load -i /tmp/docker/grafana-oss-amd64.tar
+      - run: docker run -d -p 3000:3000 PR-${CIRCLE_SHA1}
       - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
       - run:
           name: CI job started
@@ -1316,27 +1317,26 @@ jobs:
           when: on_success
 
   grafana-docker-pr:
-    machine:
-      image: circleci/classic:201808-01
+    executor: docker
     steps:
-      - checkout
-      - run:
-          name: ci job started
-          command: './scripts/ci-job-started.sh'
       - attach_workspace:
           at: .
+      - checkout
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
       - run:
-          name: ci job failed
-          command: './scripts/ci-job-failed.sh'
-          when: on_fail
+          name: Copy Grafana archives
+          command: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run:
-          name: ci job succeeded
-          command: './scripts/ci-job-succeeded.sh'
-          when: on_success
+          name: Build Docker images
+          command: |
+            pushd packaging/docker && ./build.sh "PR-${CIRCLE_SHA1}" && popd
+            mkdir docker
+            docker save -o docker/grafana-oss-amd64.tar "PR-${CIRCLE_SHA1}"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docker/grafana-oss*.tar
 
   grafana-docker-ubuntu-pr:
     machine:
