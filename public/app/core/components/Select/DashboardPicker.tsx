@@ -15,13 +15,11 @@ export interface Props {
 export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboardId, size = 'md' }) => {
   const getDashboards = (query = '') => {
     return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
-      const dashboards = result.map((item: DashboardSearchHit) => ({
+      return result.map((item: DashboardSearchHit) => ({
         id: item.id,
         value: item.id,
         label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
       }));
-
-      return dashboards;
     });
   };
 
