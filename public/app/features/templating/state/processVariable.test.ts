@@ -1,6 +1,6 @@
 import { UrlQueryMap } from '@grafana/runtime';
 
-import { getModel, getTemplatingRootReducer } from './helpers';
+import { getTemplatingRootReducer, variableMockBuilder } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -67,63 +67,34 @@ describe('processVariable', () => {
   const getAndSetupProcessVariableContext = () => {
     variableAdapters.set('custom', createCustomVariableAdapter());
     variableAdapters.set('query', createQueryVariableAdapter());
-    const custom = {
-      ...getModel('custom'),
-      uuid: '0',
-      query: 'A,B,C',
-      current: { selected: true, text: 'A', value: 'A' },
-      options: [
-        { selected: true, text: 'A', value: 'A' },
-        { selected: false, text: 'B', value: 'B' },
-        { selected: false, text: 'C', value: 'C' },
-      ],
-    };
-    const queryDependsOnCustom = {
-      ...getModel('query'),
-      name: 'queryDependsOnCustom',
-      refresh: VariableRefresh.onDashboardLoad,
-      uuid: '1',
-      query: '$custom.*',
-      current: { selected: true, text: 'AA', value: 'AA' },
-      options: [
-        { selected: true, text: 'AA', value: 'AA' },
-        { selected: false, text: 'AB', value: 'AB' },
-        { selected: false, text: 'AC', value: 'AC' },
-      ],
-    };
-    const queryDependsOnQueryAndCustom = {
-      ...getModel('query'),
-      name: 'queryDependsOnQueryAndCustom',
-      refresh: VariableRefresh.onDashboardLoad,
-      uuid: '2',
-      query: '$custom.$queryDependsOnCustom.*',
-      current: { selected: false, text: 'AAA', value: 'AAA' },
-      options: [
-        { selected: true, text: 'AAA', value: 'AAA' },
-        { selected: false, text: 'AAB', value: 'AAB' },
-        { selected: false, text: 'AAC', value: 'AAC' },
-      ],
-    };
-    const queryNoDepends = {
-      ...getModel('query'),
-      name: 'queryNoDepends',
-      refresh: VariableRefresh.onDashboardLoad,
-      uuid: '3',
-      query: '*',
-      current: { selected: false, text: 'A', value: 'A' },
-      options: [
-        { selected: true, text: 'A', value: 'A' },
-        { selected: false, text: 'B', value: 'B' },
-        { selected: false, text: 'C', value: 'C' },
-      ],
-    };
+    const custom = variableMockBuilder('custom')
+      .withUuid('0')
+      .withQuery('A,B,C')
+      .withOptions('A', 'B', 'C')
+      .withCurrent('A')
+      .create();
 
-    const list = [custom, queryDependsOnCustom, queryDependsOnQueryAndCustom, queryNoDepends];
+    const queryDependsOnCustom = variableMockBuilder('query')
+      .withUuid('1')
+      .withName('queryDependsOnCustom')
+      .withQuery('$custom.*')
+      .withOptions('AA', 'AB', 'AC')
+      .withCurrent('AA')
+      .create();
+
+    const queryNoDepends = variableMockBuilder('query')
+      .withUuid('2')
+      .withName('queryNoDepends')
+      .withQuery('*')
+      .withOptions('A', 'B', 'C')
+      .withCurrent('A')
+      .create();
+
+    const list = [custom, queryDependsOnCustom, queryNoDepends];
 
     return {
       custom,
       queryDependsOnCustom,
-      queryDependsOnQueryAndCustom,
       queryNoDepends,
       list,
     };
@@ -178,7 +149,7 @@ describe('processVariable', () => {
             .whenActionIsDispatched(initDashboardTemplating(list))
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
-          tester.thenDispatchedActionShouldEqual(resolveInitLock(toVariablePayload({ type: 'query', uuid: '3' })));
+          tester.thenDispatchedActionShouldEqual(resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' })));
         });
       });
 
@@ -194,16 +165,16 @@ describe('processVariable', () => {
 
             tester.thenDispatchedActionShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', uuid: '3' }, [
+                toVariablePayload({ type: 'query', uuid: '2' }, [
                   { value: 'A', text: 'A' },
                   { value: 'B', text: 'B' },
                   { value: 'C', text: 'C' },
                 ])
               ),
               setCurrentVariableValue(
-                toVariablePayload({ type: 'query', uuid: '3' }, { option: { text: 'A', value: 'A', selected: false } })
+                toVariablePayload({ type: 'query', uuid: '2' }, { option: { text: 'A', value: 'A', selected: false } })
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', uuid: '3' }))
+              resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' }))
             );
           });
         });
@@ -226,11 +197,11 @@ describe('processVariable', () => {
           tester.thenDispatchedActionShouldEqual(
             setCurrentVariableValue(
               toVariablePayload(
-                { type: 'query', uuid: '3' },
+                { type: 'query', uuid: '2' },
                 { option: { text: ['B'], value: ['B'], selected: false } }
               )
             ),
-            resolveInitLock(toVariablePayload({ type: 'query', uuid: '3' }))
+            resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' }))
           );
         });
       });
@@ -251,22 +222,22 @@ describe('processVariable', () => {
 
             tester.thenDispatchedActionShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', uuid: '3' }, [
+                toVariablePayload({ type: 'query', uuid: '2' }, [
                   { value: 'A', text: 'A' },
                   { value: 'B', text: 'B' },
                   { value: 'C', text: 'C' },
                 ])
               ),
               setCurrentVariableValue(
-                toVariablePayload({ type: 'query', uuid: '3' }, { option: { text: 'A', value: 'A', selected: false } })
+                toVariablePayload({ type: 'query', uuid: '2' }, { option: { text: 'A', value: 'A', selected: false } })
               ),
               setCurrentVariableValue(
                 toVariablePayload(
-                  { type: 'query', uuid: '3' },
+                  { type: 'query', uuid: '2' },
                   { option: { text: ['B'], value: ['B'], selected: false } }
                 )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', uuid: '3' }))
+              resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' }))
             );
           });
         });

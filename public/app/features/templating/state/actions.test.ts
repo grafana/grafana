@@ -1,11 +1,6 @@
 import { UrlQueryMap } from '@grafana/runtime';
 
-import {
-  getModel,
-  getTemplatingAndLocationRootReducer,
-  getTemplatingRootReducer,
-  variableMockBuilder,
-} from './helpers';
+import { getTemplatingAndLocationRootReducer, getTemplatingRootReducer, variableMockBuilder } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -24,11 +19,11 @@ describe('shared actions', () => {
       variableAdapters.set('custom', createCustomVariableAdapter());
       variableAdapters.set('textbox', createTextBoxVariableAdapter());
       variableAdapters.set('constant', createConstantVariableAdapter());
-      const query = getModel('query');
-      const constant = getModel('constant');
-      const datasource = getModel('datasource');
-      const custom = getModel('custom');
-      const textbox = getModel('textbox');
+      const query = variableMockBuilder('query').create();
+      const constant = variableMockBuilder('constant').create();
+      const datasource = variableMockBuilder('datasource').create();
+      const custom = variableMockBuilder('custom').create();
+      const textbox = variableMockBuilder('textbox').create();
       const list = [query, constant, datasource, custom, textbox];
 
       reduxTester<{ templating: TemplatingState }>()
@@ -75,11 +70,11 @@ describe('shared actions', () => {
       variableAdapters.set('custom', createCustomVariableAdapter());
       variableAdapters.set('textbox', createTextBoxVariableAdapter());
       variableAdapters.set('constant', createConstantVariableAdapter());
-      const query = getModel('query');
-      const constant = getModel('constant');
-      const datasource = getModel('datasource');
-      const custom = getModel('custom');
-      const textbox = getModel('textbox');
+      const query = variableMockBuilder('query').create();
+      const constant = variableMockBuilder('constant').create();
+      const datasource = variableMockBuilder('datasource').create();
+      const custom = variableMockBuilder('custom').create();
+      const textbox = variableMockBuilder('textbox').create();
       const list = [query, constant, datasource, custom, textbox];
 
       const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
