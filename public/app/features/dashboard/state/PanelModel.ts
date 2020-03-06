@@ -42,6 +42,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
+  replaceVariables: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -145,6 +146,7 @@ export class PanelModel {
     // this should not be removed in save model as exporter needs to templatize it
     this.datasource = null;
     this.restoreModel(model);
+    this.replaceVariables = this.replaceVariables.bind(this);
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -322,8 +324,10 @@ export class PanelModel {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
+
+    // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
+    this.replaceVariables = this.replaceVariables.bind(this);
     this.applyPluginOptionDefaults(newPlugin);
-    this.updateQueryRunnerFieldOverrides();
 
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);
