@@ -45,7 +45,7 @@
     "jquery": "3.4.1",
     "lodash": "4.17.15",
     "moment": "2.24.0",
-    "papaparse": "4.6.3",
+    "papaparse": "5.1.1",
     "rc-cascader": "0.17.5",
     "rc-drawer": "3.0.2",
     "rc-slider": "8.7.1",
