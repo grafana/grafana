@@ -42,9 +42,9 @@ This feature, which shows up as a graph marker in Grafana, is useful for correla
 
 Refer to [Annotations]({{< relref "../reference/annotations.md" >}}) for more information.
 
-## Dashboard templating
+## Dashboard variables
 
-[Variables]({{< relref "../reference/templating.md" >}}), also called templates, allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both. 
+[Template variables]({{< relref "../reference/templating.md" >}}) allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both. 
 
 Templating allows you to drill down into your data, say, from all data to North America data, down to Texas data, and beyond. You can also share these dashboards across teams within your organization—or if you create a great dashboard template for a popular data source, you can contribute it to the whole community to customize and use.
 
@@ -70,13 +70,14 @@ Refer to [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) for more
 
 While it's easy to click, drag, and drop to create a single dashboard, power users in need of many dashboards will want to automate the setup with a script. You can script anything in Grafana. 
 
-For example, if you're spinning up a new Kubernetes cluster, you can also spin up a Grafana automatically with a script that would have the right server, IP address, and data sources preset and locked. It's also a way of getting control over a lot of dashboards.
+For example, if you're spinning up a new Kubernetes cluster, you can also spin up a Grafana automatically with a script that would have the right server, IP address, and data sources preset and locked in so users cannot change them. It's also a way of getting control over a lot of dashboards.
 
 Refer to [Provisioning]({{< relref "../administration/provisioning.md" >}}) for more information.
 
-## Permissions
+## Democratize metrics
 
-Bring everyone together, and share data and dashboards across teams. Grafana empowers users, and helps foster a data-driven culture. [Learn more about user permissions]({{< relref "../permissions/overview.md" >}}).
+When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set [permissions]({{< relref "../permissions/overview.md" >}}) on folders, dashboards, and down to the [data source level]({{< relref "../enterprise/datasource_permissions.md" >}}) if you're using [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}).
+
 
 ## Grafana Cloud
 
@@ -86,7 +87,7 @@ Grafana Cloud is a highly available, fast, fully managed OpenSaaS logging and me
 
 ## Grafana Enterprise
 
-Grafana Enterprise is a commercial edition of Grafana that includes additional features not found in the open source version.
+[Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) is a commercial edition of Grafana that includes additional features not found in the open source version.
 
 Building on everything you already know and love about Grafana, Grafana Enterprise adds enterprise data sources, advanced authentication options, more permission controls, 24x7x365 support, and training from the core Grafana team.
 
