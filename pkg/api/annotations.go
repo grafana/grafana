@@ -4,13 +4,13 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetAnnotations(c *m.ReqContext) Response {
+func GetAnnotations(c *models.ReqContext) Response {
 
 	query := &annotations.ItemQuery{
 		From:        c.QueryInt64("from"),
@@ -50,7 +50,7 @@ func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
-func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
+func PostAnnotation(c *models.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 	if canSave, err := canSaveByDashboardID(c, cmd.DashboardId); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -94,7 +94,7 @@ func formatGraphiteAnnotation(what string, data string) string {
 	return text
 }
 
-func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd) Response {
+func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
 	if cmd.What == "" {
@@ -145,7 +145,7 @@ func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd
 	})
 }
 
-func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
+func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	annotationID := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
@@ -171,7 +171,7 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	return Success("Annotation updated")
 }
 
-func PatchAnnotation(c *m.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
+func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
 	annotationID := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
@@ -219,7 +219,7 @@ func PatchAnnotation(c *m.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
 	return Success("Annotation patched")
 }
 
-func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response {
+func DeleteAnnotations(c *models.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
 	err := repo.Delete(&annotations.DeleteParams{
@@ -236,7 +236,7 @@ func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response 
 	return Success("Annotations deleted")
 }
 
-func DeleteAnnotationByID(c *m.ReqContext) Response {
+func DeleteAnnotationByID(c *models.ReqContext) Response {
 	repo := annotations.GetRepository()
 	annotationID := c.ParamsInt64(":annotationId")
 
@@ -256,8 +256,8 @@ func DeleteAnnotationByID(c *m.ReqContext) Response {
 	return Success("Annotation deleted")
 }
 
-func canSaveByDashboardID(c *m.ReqContext, dashboardID int64) (bool, error) {
-	if dashboardID == 0 && !c.SignedInUser.HasRole(m.ROLE_EDITOR) {
+func canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error) {
+	if dashboardID == 0 && !c.SignedInUser.HasRole(models.ROLE_EDITOR) {
 		return false, nil
 	}
 
@@ -271,7 +271,7 @@ func canSaveByDashboardID(c *m.ReqContext, dashboardID int64) (bool, error) {
 	return true, nil
 }
 
-func canSave(c *m.ReqContext, repo annotations.Repository, annotationID int64) Response {
+func canSave(c *models.ReqContext, repo annotations.Repository, annotationID int64) Response {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
 
 	if err != nil || len(items) == 0 {

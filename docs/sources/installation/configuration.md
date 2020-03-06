@@ -502,6 +502,13 @@ Set to false to disable all checks to https://grafana.com for new versions of in
 
 Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
+### min_refresh_interval
+
+> Only available in Grafana v6.7+.
+
+When set, this will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is not set/unrestricted.
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
+
 ## [dashboards.json]
 
 > This have been replaced with dashboards [provisioning]({{< relref "../administration/provisioning" >}}) in 5.0+
