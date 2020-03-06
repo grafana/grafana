@@ -160,7 +160,11 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   });
 
   // Write a manifest.txt file in the dist folder
-  await execTask(manifestTask)({ folder: distContentDir });
+  try {
+    await execTask(manifestTask)({ folder: distContentDir });
+  } catch (err) {
+    console.warn(`Error signing manifest: ${distContentDir}`, err);
+  }
 
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
