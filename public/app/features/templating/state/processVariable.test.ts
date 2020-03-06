@@ -71,27 +71,11 @@ describe('processVariable', () => {
       ...getModel('custom'),
       uuid: '0',
       query: 'A,B,C',
-      current: {
-        selected: false,
-        text: 'A',
-        value: 'A',
-      },
+      current: { selected: true, text: 'A', value: 'A' },
       options: [
-        {
-          selected: true,
-          text: 'A',
-          value: 'A',
-        },
-        {
-          selected: false,
-          text: 'B',
-          value: 'B',
-        },
-        {
-          selected: false,
-          text: 'C',
-          value: 'C',
-        },
+        { selected: true, text: 'A', value: 'A' },
+        { selected: false, text: 'B', value: 'B' },
+        { selected: false, text: 'C', value: 'C' },
       ],
     };
     const queryDependsOnCustom = {

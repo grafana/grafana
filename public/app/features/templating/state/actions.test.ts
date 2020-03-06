@@ -1,6 +1,11 @@
 import { UrlQueryMap } from '@grafana/runtime';
 
-import { getModel, getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
+import {
+  getModel,
+  getTemplatingAndLocationRootReducer,
+  getTemplatingRootReducer,
+  variableMockBuilder,
+} from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -8,9 +13,9 @@ import { createTextBoxVariableAdapter } from '../textbox/adapter';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/templating/state/reducers';
-import { initDashboardTemplating, processVariables } from './actions';
-import { addInitLock, addVariable, removeInitLock, resolveInitLock } from './sharedReducer';
-import { toVariablePayload } from './types';
+import { initDashboardTemplating, processVariables, setOptionFromUrl } from './actions';
+import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
+import { toVariableIdentifier, toVariablePayload } from './types';
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
@@ -115,6 +120,39 @@ describe('shared actions', () => {
 
         return true;
       });
+    });
+  });
+
+  describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
+    it.each`
+      urlValue      | expected
+      ${'B'}        | ${['B']}
+      ${['B']}      | ${['B']}
+      ${'X'}        | ${['X']}
+      ${''}         | ${['']}
+      ${['A', 'B']} | ${['A', 'B']}
+      ${null}       | ${[null]}
+      ${undefined}  | ${[undefined]}
+    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
+      const custom = variableMockBuilder('custom')
+        .withUuid('0')
+        .withOptions('A', 'B', 'C')
+        .withCurrent('A')
+        .create();
+
+      const tester = await reduxTester<{ templating: TemplatingState }>()
+        .givenRootReducer(getTemplatingRootReducer())
+        .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+        .whenAsyncActionIsDispatched(setOptionFromUrl(toVariableIdentifier(custom), urlValue), true);
+
+      tester.thenDispatchedActionShouldEqual(
+        setCurrentVariableValue(
+          toVariablePayload(
+            { type: 'custom', uuid: '0' },
+            { option: { text: expected, value: expected, selected: false } }
+          )
+        )
+      );
     });
   });
 });
