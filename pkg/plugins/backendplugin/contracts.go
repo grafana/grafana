@@ -38,8 +38,9 @@ func (hs HealthStatus) String() string {
 
 // CheckHealthResult check health result.
 type CheckHealthResult struct {
-	Status HealthStatus
-	Info   string
+	Status      HealthStatus
+	Message     string
+	JSONDetails string
 }
 
 func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *CheckHealthResult {
@@ -52,8 +53,9 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *Check
 	}
 
 	return &CheckHealthResult{
-		Status: status,
-		Info:   protoResp.Info,
+		Status:      status,
+		Message:     protoResp.Message,
+		JSONDetails: protoResp.JsonDetails,
 	}
 }
 
