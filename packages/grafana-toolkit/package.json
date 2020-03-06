@@ -105,7 +105,7 @@
     "tslib": "1.10.0",
     "typescript": "3.7.2",
     "url-loader": "^2.0.1",
-    "webpack": "4.35.0"
+    "webpack": "4.41.5"
   },
   "_moduleAliases": {
     "puppeteer": "node_modules/puppeteer-core"
