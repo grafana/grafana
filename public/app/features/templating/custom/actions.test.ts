@@ -59,9 +59,11 @@ describe('custom actions', () => {
 
       tester.thenDispatchedActionPredicateShouldEqual(actions => {
         const [createAction, setCurrentAction] = actions;
+        const expectedNumberOfActions = 2;
+
         expect(createAction).toEqual(createCustomOptionsFromQuery(toVariablePayload(variable)));
         expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return true;
+        return actions.length === expectedNumberOfActions;
       });
     });
   });
