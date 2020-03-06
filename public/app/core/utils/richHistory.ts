@@ -10,6 +10,14 @@ import { serializeStateToUrlParam, SortOrder } from './explore';
 // Types
 import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
 
+const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
+
+export const RICH_HISTORY_SETTING_KEYS = {
+  retentionPeriod: `${RICH_HISTORY_KEY}.retentionPeriod`,
+  starredTabAsFirstTab: `${RICH_HISTORY_KEY}.starredTabAsFirstTab`,
+  activeDatasourceOnly: `${RICH_HISTORY_KEY}.activeDatasourceOnly`,
+};
+
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.
  * Side-effect: store history in local storage
@@ -28,7 +36,7 @@ export function addToRichHistory(
   /* Save only queries, that are not falsy (e.g. empty strings, null) */
   const queriesToSave = queries.filter(expr => Boolean(expr));
 
-  const retentionPeriod = store.getObject('grafana.explore.richHistory.retentionPeriod', 7);
+  const retentionPeriod = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
 
   /* Keep only queries, that are within the selected retention period or that are starred.
@@ -52,8 +60,7 @@ export function addToRichHistory(
     ];
 
     /* Combine all queries of a datasource type into one rich history */
-    const richHistoryKey = 'grafana.explore.richHistory';
-    store.setObject(richHistoryKey, newHistory);
+    store.setObject(RICH_HISTORY_KEY, newHistory);
     return newHistory;
   }
 
@@ -61,8 +68,7 @@ export function addToRichHistory(
 }
 
 export function getRichHistory() {
-  const richHistoryKey = 'grafana.explore.richHistory';
-  return store.getObject(richHistoryKey);
+  return store.getObject(RICH_HISTORY_KEY);
 }
 
 export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
@@ -76,8 +82,7 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
     return query;
   });
 
-  const richHistoryKey = 'grafana.explore.richHistory';
-  store.setObject(richHistoryKey, updatedQueries);
+  store.setObject(RICH_HISTORY_KEY, updatedQueries);
   return updatedQueries;
 }
 
@@ -94,8 +99,7 @@ export function updateCommentInRichHistory(
     return query;
   });
 
-  const richHistoryKey = 'grafana.explore.richHistory';
-  store.setObject(richHistoryKey, updatedQueries);
+  store.setObject(RICH_HISTORY_KEY, updatedQueries);
   return updatedQueries;
 }
 

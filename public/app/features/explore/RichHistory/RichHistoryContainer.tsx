@@ -8,6 +8,7 @@ import { css, cx } from 'emotion';
 // Services & Utils
 import store from 'app/core/store';
 import { stylesFactory, useTheme } from '@grafana/ui';
+import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
 
 // Actions
 import { updateRichHistory } from '../state/actions';
@@ -18,7 +19,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
 // Components, enums
-import { RichHistory, RICH_HISTORY_SETTING_KEYS, Tabs } from './RichHistory';
+import { RichHistory, Tabs } from './RichHistory';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;

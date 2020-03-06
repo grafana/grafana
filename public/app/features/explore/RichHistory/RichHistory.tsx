@@ -3,6 +3,7 @@ import { css } from 'emotion';
 
 //Services & Utils
 import { SortOrder } from 'app/core/utils/explore';
+import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
 import store from 'app/core/store';
 import { stylesFactory, withTheme } from '@grafana/ui';
 
@@ -13,7 +14,8 @@ import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar } from '@grafana/u
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
-import { RichHistoryContent } from './RichHistoryContent';
+import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
+import { RichHistoryStarredTab } from './RichHistoryStarredTab';
 
 export enum Tabs {
   RichHistory = 'Query history',
@@ -21,11 +23,12 @@ export enum Tabs {
   Settings = 'Settings',
 }
 
-export const RICH_HISTORY_SETTING_KEYS = {
-  retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
-  starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
-  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
-};
+export const sortOrderOptions = [
+  { label: 'Time ascending', value: SortOrder.Ascending },
+  { label: 'Time descending', value: SortOrder.Descending },
+  { label: 'Datasource A-Z', value: SortOrder.DatasourceAZ },
+  { label: 'Datasource Z-A', value: SortOrder.DatasourceZA },
+];
 
 interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
@@ -129,8 +132,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       label: 'Query History',
       value: Tabs.RichHistory,
       content: (
-        <RichHistoryContent
-          onlyStarred={false}
+        <RichHistoryQueriesTab
           queries={richHistory}
           sortOrder={sortOrder}
           datasourceFilters={datasourceFilters}
@@ -149,14 +151,12 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       label: 'Starred',
       value: Tabs.Starred,
       content: (
-        <RichHistoryContent
-          onlyStarred={true}
+        <RichHistoryStarredTab
           queries={richHistory}
           sortOrder={sortOrder}
           datasourceFilters={datasourceFilters}
           activeDatasourceOnly={activeDatasourceOnly}
           activeDatasourceInstance={activeDatasourceInstance}
-          retentionPeriod={retentionPeriod}
           onChangeSortOrder={this.onChangeSortOrder}
           onChangeRichHistoryProperty={onChangeRichHistoryProperty}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
@@ -196,7 +196,11 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
             />
           ))}
         </TabsBar>
-        <CustomScrollbar>
+        <CustomScrollbar
+          className={css`
+            min-height: 100% !important;
+          `}
+        >
           <TabContent className={styles.tabContent}>{tabs.find(t => t.value === activeTab)?.content}</TabContent>
         </CustomScrollbar>
       </div>
