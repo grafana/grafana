@@ -9,16 +9,22 @@ jobs:
     name: Deploy Storybook
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 12.x
-    - run: npm install -g yarn
-    - run: yarn install --pure-lockfile
-    - name: Build Storybook
-      run: yarn storybook:build
-    - name: Deploy Storybook
-      run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
-    - name: test
-      run: ls ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
-
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - run: npm install -g yarn
+      - run: yarn install --pure-lockfile
+      - name: Build Storybook
+        run: yarn storybook:build
+      - name: Deploy Storybook
+        run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
+      - name: test
+        run: ls ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
+      - uses: actions-hub/gcloud@master
+        env:
+          PROJECT_ID: grafanalabs-global
+          APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_STORYBOOK_SERVICE_ACCOUNT }}
+          CLI: gsutil
+        with:
+          args: cp ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}  gs://grafana-storybook/${GITHUB_SHA}
