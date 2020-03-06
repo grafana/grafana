@@ -70,7 +70,7 @@
     "html-loader": "0.5.5",
     "html-webpack-plugin": "^3.2.0",
     "inquirer": "^6.3.1",
-    "jest": "24.8.0",
+    "jest": "25.1.0",
     "jest-canvas-mock": "2.1.2",
     "jest-cli": "^24.8.0",
     "jest-coverage-badges": "^1.1.2",
