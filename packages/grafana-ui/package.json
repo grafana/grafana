@@ -50,7 +50,7 @@
     "rc-drawer": "3.0.2",
     "rc-slider": "8.7.1",
     "rc-time-picker": "^3.7.2",
-    "react": "16.12.0",
+    "react": "16.13.0",
     "react-calendar": "2.19.2",
     "react-color": "2.17.0",
     "react-custom-scrollbars": "4.2.1",
