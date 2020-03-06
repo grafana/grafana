@@ -72,7 +72,7 @@
     "inquirer": "^6.3.1",
     "jest": "25.1.0",
     "jest-canvas-mock": "2.2.0",
-    "jest-cli": "^24.8.0",
+    "jest-cli": "^25.1.0",
     "jest-coverage-badges": "^1.1.2",
     "jest-junit": "^6.4.0",
     "less": "^3.10.3",
