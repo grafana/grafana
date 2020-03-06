@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import { debounce } from 'lodash';
+import { useAsyncFn } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { Forms } from '@grafana/ui';
 import { FormInputSize } from '@grafana/ui/src/components/Forms/types';
@@ -29,16 +30,18 @@ export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size 
     trailing: true,
   });
 
+  const [state, fetch] = useAsyncFn(debouncedSearch, []);
+
   return (
     <Forms.AsyncSelect
       size={size}
-      isLoading={false}
+      isLoading={state.loading}
       isClearable={isClearable}
       defaultOptions={true}
-      loadOptions={debouncedSearch}
+      loadOptions={fetch}
       onChange={onSelected}
       placeholder="Select dashboard"
-      noOptionsMessage={'No dashboards found'}
+      noOptionsMessage="No dashboards found"
       value={currentDashboard}
     />
   );
