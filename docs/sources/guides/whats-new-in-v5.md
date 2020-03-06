@@ -107,7 +107,7 @@ and alerts as well.
 ### Data sources
 
 Data sources can now be setup using config files. These data sources are by default not editable from the Grafana GUI.
-It's also possible to update and delete data sources from the config file. More info in the [data source provisioning docs](/administration/provisioning/#datasources).
+It's also possible to update and delete data sources from the config file. More info in the [data source provisioning docs](/latest/administration/provisioning/#datasources).
 
 ### Dashboards
 
@@ -115,7 +115,7 @@ We also deprecated the `[dashboard.json]` in favor of our new dashboard provisio
 in sync with dashboards in Grafana's database. The dashboard provisioner has multiple advantages over the old
 `[dashboard.json]` feature. Instead of storing the dashboard in memory we now insert the dashboard into the database,
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
-expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
+expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/latest/administration/provisioning/#dashboards)
 
 
 ## Graphite Tags and Integrated Function Docs

@@ -203,7 +203,7 @@ datasources:
 
 ### Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
+It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/latest/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -240,9 +240,9 @@ When Grafana starts, it will update/insert all dashboards available in the confi
 It's possible to make changes to a provisioned dashboard in the Grafana UI. However, it is not possible to automatically save the changes back to the provisioning source.
 If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can `Save` the dashboard then changes will be persisted to the Grafana database.
 
-> **Note.** 
+> **Note.**
 > If a provisioned dashboard is saved from the UI and then later updated from the source, the dashboard stored in the database will always be overwritten. The `version` property in the JSON file will not affect this, even if it is lower than the existing dashboard.
-> 
+>
 > If a provisioned dashboard is saved from the UI and the source is removed, the dashboard stored in the database will be deleted unless the configuration option `disableDeletion` is set to true.
 
 If `allowUiUpdates` is configured to `false`, you are not able to make changes to a provisioned dashboard. When you click `Save`, Grafana brings up a *Cannot save provisioned dashboard* dialog. The screenshot below illustrates this behavior.
@@ -250,7 +250,7 @@ If `allowUiUpdates` is configured to `false`, you are not able to make changes t
 Grafana offers options to export the JSON definition of a dashboard. Either `Copy JSON to Clipboard` or `Save JSON to file` can help you synchronize your dashboard changes back to the provisioning source.
 
 Note: The JSON definition in the input field when using `Copy JSON to Clipboard` or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
-                                                                                                                                                                 
+
 {{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard URLs
@@ -266,7 +266,7 @@ By default Grafana will delete dashboards in the database if the file is removed
 
 ## Alert Notification Channels
 
-Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/installation/configuration/#provisioning) directory.
+Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/latest/installation/configuration/#provisioning) directory.
 
 Each config file can contain the following top-level fields:
 - `notifiers`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
@@ -463,4 +463,3 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | url |
-
