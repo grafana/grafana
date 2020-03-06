@@ -89,7 +89,7 @@
     "@types/tinycolor2": "1.4.1",
     "common-tags": "^1.8.0",
     "pretty-format": "24.9.0",
-    "react-docgen-typescript-loader": "3.3.0",
+    "react-docgen-typescript-loader": "3.6.0",
     "react-test-renderer": "16.9.0",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",
