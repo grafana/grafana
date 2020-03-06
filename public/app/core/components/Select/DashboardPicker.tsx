@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { FC } from 'react';
 import { debounce } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { Forms } from '@grafana/ui';
@@ -12,32 +12,8 @@ export interface Props {
   size?: FormInputSize;
 }
 
-export interface State {
-  isLoading: boolean;
-}
-
-export class DashboardPicker extends PureComponent<Props, State> {
-  debouncedSearch: any;
-
-  static defaultProps = {
-    size: 'md',
-  };
-
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      isLoading: false,
-    };
-
-    this.debouncedSearch = debounce(this.getDashboards, 300, {
-      leading: true,
-      trailing: true,
-    });
-  }
-
-  getDashboards = (query = '') => {
-    this.setState({ isLoading: true });
+export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboardId, size = 'md' }) => {
+  const getDashboards = (query = '') => {
     return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
       const dashboards = result.map((item: DashboardSearchHit) => ({
         id: item.id,
@@ -45,27 +21,26 @@ export class DashboardPicker extends PureComponent<Props, State> {
         label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
       }));
 
-      this.setState({ isLoading: false });
       return dashboards;
     });
   };
 
-  render() {
-    const { size, onSelected, currentDashboardId } = this.props;
-    const { isLoading } = this.state;
+  const debouncedSearch = debounce(getDashboards, 300, {
+    leading: true,
+    trailing: true,
+  });
 
-    return (
-      <Forms.AsyncSelect
-        size={size}
-        isLoading={isLoading}
-        isClearable={true}
-        defaultOptions={true}
-        loadOptions={this.debouncedSearch}
-        onChange={onSelected}
-        placeholder="Select dashboard"
-        noOptionsMessage={'No dashboards found'}
-        value={currentDashboardId}
-      />
-    );
-  }
-}
+  return (
+    <Forms.AsyncSelect
+      size={size}
+      isLoading={false}
+      isClearable={true}
+      defaultOptions={true}
+      loadOptions={debouncedSearch}
+      onChange={onSelected}
+      placeholder="Select dashboard"
+      noOptionsMessage={'No dashboards found'}
+      value={currentDashboardId}
+    />
+  );
+};
