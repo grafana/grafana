@@ -3,6 +3,7 @@ package backendplugin
 import (
 	"context"
 	"errors"
+	"io"
 	"sync"
 	"time"
 
@@ -209,30 +210,59 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 		Body:    body,
 	}
 
-	res, err := p.callResource(clonedReq.Context(), req)
+	stream, err := p.callResource(clonedReq.Context(), req)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to call resource", err)
 		return
 	}
 
-	// Make sure a content type always is returned in response
-	if _, exists := res.Headers["Content-Type"]; !exists {
-		res.Headers["Content-Type"] = []string{"application/json"}
-	}
+	processedStreams := 0
 
-	for k, values := range res.Headers {
-		if k == "Set-Cookie" {
-			continue
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			if processedStreams == 0 {
+				c.JsonApiErr(500, "Received empty resource response ", nil)
+			}
+			return
+		}
+		if err != nil {
+			if processedStreams == 0 {
+				c.JsonApiErr(500, "Failed to receive response from resource call", err)
+			} else {
+				p.logger.Error("Failed to receive response from resource call", "error", err)
+			}
+			return
 		}
 
-		for _, v := range values {
-			c.Resp.Header().Add(k, v)
-		}
-	}
+		// Expected that headers and status are only part of first stream
+		if processedStreams == 0 {
+			// Make sure a content type always is returned in response
+			if _, exists := resp.Headers["Content-Type"]; !exists {
+				resp.Headers["Content-Type"] = []string{"application/json"}
+			}
 
-	c.WriteHeader(res.Status)
-	if _, err := c.Write(res.Body); err != nil {
-		p.logger.Error("Failed to write resource response", "error", err)
+			for k, values := range resp.Headers {
+				// Due to security reasons we don't want to forward
+				// cookies from a backend plugin to clients/browsers.
+				if k == "Set-Cookie" {
+					continue
+				}
+
+				for _, v := range values {
+					c.Resp.Header().Add(k, v)
+				}
+			}
+
+			c.WriteHeader(resp.Status)
+		}
+
+		if _, err := c.Write(resp.Body); err != nil {
+			p.logger.Error("Failed to write resource response", "error", err)
+		}
+
+		c.Resp.Flush()
+		processedStreams++
 	}
 }
 
