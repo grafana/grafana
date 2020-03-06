@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import { RichHistoryQuery } from 'app/types/explore';
-import { copyStringToClipboard, createUrlFromRichHistory } from '../../../core/utils/richHistory';
+import { copyStringToClipboard, createUrlFromRichHistory } from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
 
 interface Props {
@@ -30,6 +30,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     queryCardLeft: css`
       padding-right: 10px;
       width: calc(100% - 150px);
+      cursor: pointer;
     `,
     queryCardRight: css`
       width: 150px;
@@ -138,6 +139,7 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
           onClick={() => {
             toggleActiveUpdateComment();
           }}
+          title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
         ></i>
         <i
           className="fa fa-fw fa-copy"
@@ -146,6 +148,7 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
             copyStringToClipboard(queries);
             appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
           }}
+          title="Copy query to clipboard"
         ></i>
         <i
           className="fa fa-fw fa-link"
@@ -155,6 +158,7 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
             appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
           }}
           style={{ fontWeight: 'normal' }}
+          title="Copy link to clipboard"
         ></i>
         <i
           className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
@@ -162,6 +166,7 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
             onChangeRichHistoryProperty(query.ts, 'starred');
             setStared(!starred);
           }}
+          title={query.starred ? 'Unstar query' : 'Star query'}
         ></i>
       </div>
     </div>

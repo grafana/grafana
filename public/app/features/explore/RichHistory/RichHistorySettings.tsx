@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { deleteRichHistory } from 'app/core/utils/richHistory';
 
 interface RichHistorySettingsProps {
   retentionPeriod: number;
@@ -81,6 +82,23 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
           <div className={styles.label}>Only show queries for datasource currently active in Explore</div>
         </div>
       </Forms.Field>
+      <div
+        className={css`
+          font-weight: ${theme.typography.weight.bold};
+        `}
+      >
+        Clear query history
+      </div>
+      <div
+        className={css`
+          margin-bottom: ${theme.spacing.sm};
+        `}
+      >
+        Delete all of your query history, permanently.
+      </div>
+      <Forms.Button variant="destructive" onClick={deleteRichHistory}>
+        Clear query history
+      </Forms.Button>
     </div>
   );
 }

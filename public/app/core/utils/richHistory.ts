@@ -71,6 +71,10 @@ export function getRichHistory() {
   return store.getObject(RICH_HISTORY_KEY);
 }
 
+export function deleteRichHistory() {
+  return store.delete(RICH_HISTORY_KEY);
+}
+
 export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
   const updatedQueries = richHistory.map(query => {
     /* Timestamps are currently unique - we can use them to identify specific queries */
