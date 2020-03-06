@@ -8,11 +8,11 @@ import { DashboardSearchHit, DashboardDTO } from 'app/types';
 
 export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;
-  currentDashboardId?: SelectableValue<number>;
+  currentDashboard?: SelectableValue<number>;
   size?: FormInputSize;
 }
 
-export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboardId, size = 'md' }) => {
+export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size = 'md' }) => {
   const getDashboards = (query = '') => {
     return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
       return result.map((item: DashboardSearchHit) => ({
@@ -38,7 +38,7 @@ export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboardId, siz
       onChange={onSelected}
       placeholder="Select dashboard"
       noOptionsMessage={'No dashboards found'}
-      value={currentDashboardId}
+      value={currentDashboard}
     />
   );
 };
