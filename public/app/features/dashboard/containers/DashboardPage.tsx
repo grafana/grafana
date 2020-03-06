@@ -213,6 +213,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   onAddPanel = () => {
     const { dashboard } = this.props;
+    debugger;
 
     // Return if the "Add panel" exists already
     if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
