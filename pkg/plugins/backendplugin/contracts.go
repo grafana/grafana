@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 )
@@ -37,8 +38,9 @@ func (hs HealthStatus) String() string {
 
 // CheckHealthResult check health result.
 type CheckHealthResult struct {
-	Status HealthStatus
-	Info   string
+	Status      HealthStatus
+	Message     string
+	JSONDetails string
 }
 
 func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *CheckHealthResult {
@@ -51,8 +53,9 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *Check
 	}
 
 	return &CheckHealthResult{
-		Status: status,
-		Info:   protoResp.Info,
+		Status:      status,
+		Message:     protoResp.Message,
+		JSONDetails: protoResp.JsonDetails,
 	}
 }
 
@@ -83,6 +86,7 @@ type CallResourceRequest struct {
 	URL     string
 	Headers map[string][]string
 	Body    []byte
+	User    *models.SignedInUser
 }
 
 // CallResourceResult call resource result.
@@ -90,4 +94,47 @@ type CallResourceResult struct {
 	Status  int
 	Headers map[string][]string
 	Body    []byte
+}
+
+type callResourceResultStream interface {
+	Recv() (*CallResourceResult, error)
+	Close() error
+}
+
+type callResourceResultStreamImpl struct {
+	stream pluginv2.Core_CallResourceClient
+}
+
+func (s *callResourceResultStreamImpl) Recv() (*CallResourceResult, error) {
+	protoResp, err := s.stream.Recv()
+	if err != nil {
+		return nil, err
+	}
+
+	respHeaders := map[string][]string{}
+	for key, values := range protoResp.Headers {
+		respHeaders[key] = values.Values
+	}
+
+	return &CallResourceResult{
+		Headers: respHeaders,
+		Body:    protoResp.Body,
+		Status:  int(protoResp.Code),
+	}, nil
+}
+
+func (s *callResourceResultStreamImpl) Close() error {
+	return s.stream.CloseSend()
+}
+
+type singleCallResourceResult struct {
+	result *CallResourceResult
+}
+
+func (s *singleCallResourceResult) Recv() (*CallResourceResult, error) {
+	return s.result, nil
+}
+
+func (s *singleCallResourceResult) Close() error {
+	return nil
 }
