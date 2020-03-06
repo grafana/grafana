@@ -118,6 +118,14 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const packagesDir = path.resolve(ciDir, 'packages');
   const distDir = path.resolve(ciDir, 'dist');
   const docsDir = path.resolve(ciDir, 'docs');
+  const jobsDir = path.resolve(ciDir, 'jobs');
+
+  fs.exists(jobsDir, jobsDirExists => {
+    if (!jobsDirExists) {
+      throw 'You must run plugin:ci-build prior to running plugin:ci-package';
+    }
+  });
+
   const grafanaEnvDir = path.resolve(ciDir, 'grafana-test-env');
   await execa('rimraf', [packagesDir, distDir, grafanaEnvDir]);
   fs.mkdirSync(packagesDir);
