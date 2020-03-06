@@ -30,7 +30,7 @@
   "devDependencies": {
     "@grafana/eslint-config": "^1.0.0-rc1",
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "@types/jest": "23.3.14",
+    "@types/jest": "25.1.2",
     "@types/jquery": "1.10.35",
     "@types/lodash": "4.14.123",
     "@types/node": "10.14.1",
