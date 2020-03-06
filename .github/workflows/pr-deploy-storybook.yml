@@ -2,7 +2,7 @@ name: Build Grafana Storybook (test action)
 
 on:
   pull_request:
-    types: [opened, synchronize, labeled]
+    types: [opened, synchronize, labeled, edited]
 
 jobs:
   build:
