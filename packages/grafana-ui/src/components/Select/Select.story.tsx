@@ -34,6 +34,7 @@ export const basic = () => {
           <Select
             placeholder="Choose..."
             options={options}
+            width={20}
             onChange={value => {
               action('onChanged fired')(value);
               updateValue(value);
@@ -57,6 +58,7 @@ export const withAllowCustomValue = () => {
             // value={value}
             placeholder="Choose..."
             options={options}
+            width={20}
             allowCustomValue={true}
             onChange={value => {
               action('onChanged fired')(value);
@@ -87,6 +89,7 @@ export const asyncSelect = () => {
     <AsyncSelect
       value={value}
       defaultOptions
+      width={20}
       isLoading={isLoading}
       loadOptions={loadAsyncOptions}
       onChange={value => {

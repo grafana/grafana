@@ -1,16 +1,15 @@
-import { resolve, sep } from 'path';
-import execa, { Options } from 'execa';
-import program from 'commander';
+const execa = require('execa');
+const program = require('commander');
+const { resolve, sep } = require('path');
 
-const cypress = (commandName: string) => {
+const cypress = commandName => {
   // Support running an unpublished dev build
-  const parentPath = resolve(`${__dirname}/../`);
-  const parentDirname = parentPath.split(sep).pop();
-  const projectPath = resolve(`${parentPath}${parentDirname === 'dist' ? '/..' : ''}`);
+  const dirname = __dirname.split(sep).pop();
+  const projectPath = resolve(`${__dirname}${dirname === 'dist' ? '/..' : ''}`);
 
   const cypressOptions = [commandName, '--env', `CWD=${process.cwd()}`, `--project=${projectPath}`];
 
-  const execaOptions: Options = {
+  const execaOptions = {
     cwd: __dirname,
     stdio: 'inherit',
   };
@@ -20,7 +19,7 @@ const cypress = (commandName: string) => {
     .catch(error => console.error(error.message));
 };
 
-export default () => {
+module.exports = () => {
   const configOption = '-c, --config <path>';
   const configDescription = 'path to JSON file where configuration values are set; defaults to "cypress.json"';
 
