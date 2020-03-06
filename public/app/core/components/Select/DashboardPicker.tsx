@@ -10,9 +10,10 @@ export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;
   currentDashboard?: SelectableValue<number>;
   size?: FormInputSize;
+  isClearable?: boolean;
 }
 
-export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size = 'md' }) => {
+export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size = 'md', isClearable = false }) => {
   const getDashboards = (query = '') => {
     return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
       return result.map((item: DashboardSearchHit) => ({
@@ -32,7 +33,7 @@ export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size 
     <Forms.AsyncSelect
       size={size}
       isLoading={false}
-      isClearable={true}
+      isClearable={isClearable}
       defaultOptions={true}
       loadOptions={debouncedSearch}
       onChange={onSelected}
