@@ -21,10 +21,6 @@ jobs:
         run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
       - name: test
         run: ls ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
-  publish:
-    name: Publish to GCP
-    runs-on: ubuntu-latest
-    steps:
       - uses: actions-hub/gcloud@master
         env:
           PROJECT_ID: grafanalabs-global
