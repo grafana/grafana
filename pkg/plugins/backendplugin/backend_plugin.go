@@ -72,7 +72,7 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		if rawBackend != nil {
 			if plugin, ok := rawBackend.(CorePlugin); ok {
 				p.core = plugin
-				client.DatasourcePlugin = plugin
+				client.CorePlugin = plugin
 			}
 		}
 
@@ -186,8 +186,8 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
 				return &pluginv2.CheckHealth_Response{
-					Status: pluginv2.CheckHealth_Response_UNKNOWN,
-					Info:   "Health check not implemented",
+					Status:  pluginv2.CheckHealth_Response_UNKNOWN,
+					Message: "Health check not implemented",
 				}, nil
 			}
 		}
@@ -197,8 +197,12 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 	return res, nil
 }
 
-func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (*CallResourceResult, error) {
+func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (callResourceResultStream, error) {
 	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
+
+	if p.core == nil || p.client == nil || p.client.Exited() {
+		return nil, errors.New("plugin not running, cannot call resource")
+	}
 
 	reqHeaders := map[string]*pluginv2.CallResource_StringList{}
 	for k, v := range req.Headers {
@@ -238,12 +242,14 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		}
 	}
 
-	protoResp, err := p.core.CallResource(ctx, protoReq)
+	protoStream, err := p.core.CallResource(ctx, protoReq)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
-				return &CallResourceResult{
-					Status: http.StatusNotImplemented,
+				return &singleCallResourceResult{
+					result: &CallResourceResult{
+						Status: http.StatusNotImplemented,
+					},
 				}, nil
 			}
 		}
@@ -251,15 +257,8 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		return nil, errutil.Wrap("Failed to call resource", err)
 	}
 
-	respHeaders := map[string][]string{}
-	for key, values := range protoResp.Headers {
-		respHeaders[key] = values.Values
-	}
-
-	return &CallResourceResult{
-		Headers: respHeaders,
-		Body:    protoResp.Body,
-		Status:  int(protoResp.Code),
+	return &callResourceResultStreamImpl{
+		stream: protoStream,
 	}, nil
 }
 

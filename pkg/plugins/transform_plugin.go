@@ -53,9 +53,9 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
 	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
-	if client.DatasourcePlugin != nil {
+	if client.CorePlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DatasourcePlugin), nil
+			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.CorePlugin), nil
 		})
 	}
 
