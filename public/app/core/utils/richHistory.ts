@@ -217,3 +217,22 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   }
   return heading;
 }
+
+export function isParsable(string: string) {
+  try {
+    JSON.parse(string);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+export function createDataQuery(query: RichHistoryQuery, queryString: string, index: number) {
+  let dataQuery;
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  isParsable(queryString)
+    ? (dataQuery = JSON.parse(queryString))
+    : (dataQuery = { expr: queryString, refId: letters[index], datasource: query.datasourceName });
+
+  return dataQuery;
+}

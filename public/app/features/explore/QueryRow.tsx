@@ -121,7 +121,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       mode,
       latency,
     } = this.props;
-    console.log(this.props);
 
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');

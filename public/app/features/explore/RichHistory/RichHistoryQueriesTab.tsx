@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { css } from 'emotion';
 
 // Types
-import { RichHistoryQuery } from 'app/types/explore';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 // Utils
 import { stylesFactory, useTheme } from '@grafana/ui';
@@ -18,7 +18,7 @@ import {
 } from 'app/core/utils/richHistory';
 
 // Components
-import { RichHistoryCard } from './RichHistoryCard';
+import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { Select, Slider } from '@grafana/ui';
 
@@ -29,8 +29,8 @@ interface Props {
   activeDatasourceInstance: string;
   datasourceFilters: SelectableValue[] | null;
   retentionPeriod: number;
+  exploreId: ExploreId;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onChangeRichHistoryProperty: (ts: number, property: string, updatedProperty?: string) => void;
   onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
 }
 
@@ -109,10 +109,10 @@ export function RichHistoryQueriesTab(props: Props) {
     queries,
     onChangeSortOrder,
     sortOrder,
-    onChangeRichHistoryProperty,
     activeDatasourceOnly,
     activeDatasourceInstance,
     retentionPeriod,
+    exploreId,
   } = props;
 
   const [sliderRetentionFilter, setSliderRetentionFilter] = useState<[number, number]>([0, retentionPeriod]);
@@ -196,11 +196,11 @@ export function RichHistoryQueriesTab(props: Props) {
             return (
               <div key={q.ts}>
                 <div className={styles.heading}>{currentHeading}</div>
-                <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />
+                <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />
               </div>
             );
           } else {
-            return <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />;
+            return <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />;
           }
         })}
       </div>

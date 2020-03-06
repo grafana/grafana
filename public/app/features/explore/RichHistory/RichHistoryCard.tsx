@@ -1,14 +1,23 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { useState } from 'react';
+import { connect } from 'react-redux';
+import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
-import { GrafanaTheme, AppEvents } from '@grafana/data';
-import { RichHistoryQuery } from 'app/types/explore';
-import { copyStringToClipboard, createUrlFromRichHistory } from 'app/core/utils/richHistory';
+import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
+import { StoreState } from 'app/types';
 
+import { changeQuery, changeDatasource, clearQueries, updateRichHistory } from '../state/actions';
 interface Props {
   query: RichHistoryQuery;
-  onChangeRichHistoryProperty: (ts: number, property: string, comment?: string) => void;
+  changeQuery: typeof changeQuery;
+  changeDatasource: typeof changeDatasource;
+  clearQueries: typeof clearQueries;
+  updateRichHistory: typeof updateRichHistory;
+  exploreId: ExploreId;
+  datasourceInstance: DataSourceApi;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -71,7 +80,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichHistoryProperty }) => {
+export function RichHistoryCard(props: Props) {
+  const {
+    query,
+    updateRichHistory,
+    changeQuery,
+    changeDatasource,
+    exploreId,
+    clearQueries,
+    datasourceInstance,
+  } = props;
   const [starred, setStared] = useState(query.starred);
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
@@ -80,9 +98,26 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
   const theme = useTheme();
   const styles = getStyles(theme);
 
+  const changeQueries = () => {
+    query.queries.forEach((q, i) => {
+      const dataQuery = createDataQuery(query, q, i);
+      changeQuery(exploreId, dataQuery, i);
+    });
+  };
+
+  const onChangeQuery = async (query: RichHistoryQuery) => {
+    if (query.datasourceName !== datasourceInstance?.name) {
+      await changeDatasource(exploreId, query.datasourceName);
+      changeQueries();
+    } else {
+      clearQueries(exploreId);
+      changeQueries();
+    }
+  };
+
   return (
     <div className={styles.queryCard}>
-      <div className={styles.queryCardLeft}>
+      <div className={styles.queryCardLeft} onClick={() => onChangeQuery(query)}>
         {query.queries.map((q, i) => {
           return (
             <div key={`${q}-${i}`} className={styles.queryRow}>
@@ -111,7 +146,7 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
               <Forms.Button
                 onClick={e => {
                   e.preventDefault();
-                  onChangeRichHistoryProperty(query.ts, 'comment', comment);
+                  updateRichHistory(query.ts, 'comment', comment);
                   toggleActiveUpdateComment();
                 }}
               >
@@ -163,7 +198,7 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
         <i
           className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
           onClick={() => {
-            onChangeRichHistoryProperty(query.ts, 'starred');
+            updateRichHistory(query.ts, 'starred');
             setStared(!starred);
           }}
           title={query.starred ? 'Unstar query' : 'Star query'}
@@ -171,4 +206,24 @@ export const RichHistoryCard: FunctionComponent<Props> = ({ query, onChangeRichH
       </div>
     </div>
   );
+}
+
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+  const explore = state.explore;
+  const { datasourceInstance } = explore[exploreId];
+  // @ts-ignore
+  const item: ExploreItemState = explore[exploreId];
+  return {
+    exploreId,
+    datasourceInstance,
+  };
+}
+
+const mapDispatchToProps = {
+  changeQuery,
+  changeDatasource,
+  clearQueries,
+  updateRichHistory,
 };
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryCard));

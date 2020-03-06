@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { css } from 'emotion';
 
 // Types
-import { RichHistoryQuery } from 'app/types/explore';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 // Utils
 import { stylesFactory, useTheme } from '@grafana/ui';
@@ -13,7 +13,7 @@ import { SortOrder } from '../../../core/utils/explore';
 import { sortQueries } from '../../../core/utils/richHistory';
 
 // Components
-import { RichHistoryCard } from './RichHistoryCard';
+import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { Select } from '@grafana/ui';
 
@@ -23,8 +23,8 @@ interface Props {
   activeDatasourceOnly: boolean;
   activeDatasourceInstance: string;
   datasourceFilters: SelectableValue[] | null;
+  exploreId: ExploreId;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onChangeRichHistoryProperty: (ts: number, property: string, updatedProperty?: string) => void;
   onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
 }
 
@@ -86,9 +86,9 @@ export function RichHistoryStarredTab(props: Props) {
     queries,
     onChangeSortOrder,
     sortOrder,
-    onChangeRichHistoryProperty,
     activeDatasourceOnly,
     activeDatasourceInstance,
+    exploreId,
   } = props;
 
   const theme = useTheme();
@@ -138,7 +138,7 @@ export function RichHistoryStarredTab(props: Props) {
           </div>
         </div>
         {sortedStarredQueries.map(q => {
-          return <RichHistoryCard query={q} key={q.ts} onChangeRichHistoryProperty={onChangeRichHistoryProperty} />;
+          return <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />;
         })}
       </div>
     </div>

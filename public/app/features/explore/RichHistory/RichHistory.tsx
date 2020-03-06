@@ -8,7 +8,7 @@ import store from 'app/core/store';
 import { stylesFactory, withTheme } from '@grafana/ui';
 
 //Types
-import { RichHistoryQuery } from 'app/types/explore';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
 import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar } from '@grafana/ui';
 
@@ -34,7 +34,7 @@ interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
   activeDatasourceInstance: string;
   firstTab: Tabs;
-  onChangeRichHistoryProperty: (ts: number, property: string, updatedProperty?: string) => void;
+  exploreId: ExploreId;
 }
 
 interface RichHistoryState {
@@ -125,7 +125,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       activeDatasourceOnly,
       retentionPeriod,
     } = this.state;
-    const { theme, richHistory, onChangeRichHistoryProperty, activeDatasourceInstance } = this.props;
+    const { theme, richHistory, activeDatasourceInstance, exploreId } = this.props;
     const styles = getStyles(theme);
 
     const QueriesTab = {
@@ -140,8 +140,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           activeDatasourceInstance={activeDatasourceInstance}
           retentionPeriod={retentionPeriod}
           onChangeSortOrder={this.onChangeSortOrder}
-          onChangeRichHistoryProperty={onChangeRichHistoryProperty}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
+          exploreId={exploreId}
         />
       ),
       icon: 'fa fa-history',
@@ -158,8 +158,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           activeDatasourceOnly={activeDatasourceOnly}
           activeDatasourceInstance={activeDatasourceInstance}
           onChangeSortOrder={this.onChangeSortOrder}
-          onChangeRichHistoryProperty={onChangeRichHistoryProperty}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
+          exploreId={exploreId}
         />
       ),
       icon: 'fa fa-star',

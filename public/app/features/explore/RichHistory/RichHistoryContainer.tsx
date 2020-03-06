@@ -10,9 +10,6 @@ import store from 'app/core/store';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
 
-// Actions
-import { updateRichHistory } from '../state/actions';
-
 // Types
 import { StoreState } from 'app/types';
 import { GrafanaTheme } from '@grafana/data';
@@ -60,7 +57,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 interface Props {
   width: number;
   exploreId: ExploreId;
-  updateRichHistory: typeof updateRichHistory;
   activeDatasourceInstance: string;
   richHistory: RichHistoryQuery[];
   firstTab: Tabs;
@@ -75,7 +71,7 @@ function RichHistoryContainer(props: Props) {
     return () => clearTimeout(timer);
   }, []);
 
-  const { richHistory, updateRichHistory, width, firstTab, activeDatasourceInstance } = props;
+  const { richHistory, width, firstTab, activeDatasourceInstance, exploreId } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -107,14 +103,14 @@ function RichHistoryContainer(props: Props) {
       <RichHistory
         richHistory={richHistory}
         firstTab={firstTab}
-        onChangeRichHistoryProperty={updateRichHistory}
         activeDatasourceInstance={activeDatasourceInstance}
+        exploreId={exploreId}
       />
     </Resizable>
   );
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
@@ -130,11 +126,4 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   };
 }
 
-const mapDispatchToProps = {
-  updateRichHistory,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryContainer)) as React.ComponentType<{
-  exploreId: ExploreId;
-  width: number;
-}>;
+export default hot(module)(connect(mapStateToProps)(RichHistoryContainer));
