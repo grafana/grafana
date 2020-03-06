@@ -14,6 +14,8 @@ const props: VariableQueryProps = {
   onChange: (query, definition) => {},
   query: {},
   datasource: {
+    getDefaultProject: () => '',
+    getProjects: async (): Promise<any[]> => [],
     getMetricTypes: async (p: any): Promise<any[]> => [],
   },
   templateSrv: { replace: (s: string) => s, variables: [] },
@@ -28,7 +30,7 @@ describe('VariableQueryEditor', () => {
   describe('and a new variable is created', () => {
     it('should trigger a query using the first query type in the array', done => {
       props.onChange = (query, definition) => {
-        expect(definition).toBe('Stackdriver - Services');
+        expect(definition).toBe('Stackdriver - Projects');
         done();
       };
       renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();

@@ -12,19 +12,22 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git"
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-ui"
   },
   "main": "src/index.ts",
   "scripts": {
+    "build": "grafana-toolkit package:build --scope=ui",
+    "bundle": "rollup -c rollup.config.ts",
+    "clean": "rimraf ./dist ./compiled",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "lint": "eslint .storybook/ src/ --ext=.js,.ts,.tsx",
-    "typecheck": "tsc --noEmit",
     "storybook": "start-storybook -p 9001 -c .storybook -s .storybook/static",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s .storybook/static",
-    "clean": "rimraf ./dist ./compiled",
-    "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=ui"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@emotion/core": "^10.0.27",
     "@grafana/data": "6.7.0-pre",
     "@grafana/slate-react": "0.22.9-grafana",
     "@grafana/tsconfig": "^1.0.0-rc1",
@@ -45,6 +48,7 @@
     "papaparse": "4.6.3",
     "rc-cascader": "0.17.5",
     "rc-drawer": "3.0.2",
+    "rc-slider": "8.7.1",
     "rc-time-picker": "^3.7.2",
     "react": "16.12.0",
     "react-calendar": "2.19.2",
@@ -65,6 +69,7 @@
     "@storybook/addon-docs": "5.3.9",
     "@storybook/addon-info": "5.3.9",
     "@storybook/addon-knobs": "5.3.9",
+    "@storybook/addon-storysource": "5.3.14",
     "@storybook/react": "5.3.9",
     "@storybook/theming": "5.3.9",
     "@types/classnames": "2.2.7",
@@ -76,6 +81,7 @@
     "@types/node": "10.14.1",
     "@types/papaparse": "4.5.9",
     "@types/pretty-format": "20.0.1",
+    "@types/rc-slider": "8.6.5",
     "@types/react": "16.8.16",
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.9.0",

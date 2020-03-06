@@ -9,16 +9,18 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git"
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-data"
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "lint": "eslint src/ --ext=.js,.ts,.tsx",
-    "typecheck": "tsc --noEmit",
-    "clean": "rimraf ./dist ./compiled",
+    "build": "grafana-toolkit package:build --scope=data",
     "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=data"
+    "clean": "rimraf ./dist ./compiled",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "lint": "eslint src/ --ext=.js,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "apache-arrow": "0.15.1",

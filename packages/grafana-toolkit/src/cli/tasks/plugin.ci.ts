@@ -25,10 +25,12 @@ import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
 import { manifestTask } from './manifest';
 import { execTask } from '../utils/execTask';
+import rimrafCallback from 'rimraf';
+import { promisify } from 'util';
+const rimraf = promisify(rimrafCallback);
 
 export interface PluginCIOptions {
-  backend?: boolean;
-  full?: boolean;
+  finish?: boolean;
   upload?: boolean;
 }
 
@@ -43,33 +45,26 @@ export interface PluginCIOptions {
  *  Anything that should be put into the final zip file should be put in:
  *   ~/ci/jobs/build_xxx/dist
  */
-const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
+const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
   const start = Date.now();
-  const workDir = getJobFolder();
-  await execa('rimraf', [workDir]);
-  fs.mkdirSync(workDir);
 
-  if (backend) {
-    const makefile = path.resolve(process.cwd(), 'Makefile');
-    if (!fs.existsSync(makefile)) {
-      throw new Error(`Missing: ${makefile}. A Makefile is required for backend plugins.`);
+  if (finish) {
+    const workDir = getJobFolder();
+    await rimraf(workDir);
+    fs.mkdirSync(workDir);
+
+    // Move local folders to the scoped job folder
+    for (const name of ['dist', 'coverage']) {
+      const dir = path.resolve(process.cwd(), name);
+      if (fs.existsSync(dir)) {
+        fs.renameSync(dir, path.resolve(workDir, name));
+      }
     }
-
-    // Run plugin-ci task
-    execa('make', ['backend-plugin-ci']).stdout!.pipe(process.stdout);
+    writeJobStats(start, workDir);
   } else {
     // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
   }
-
-  // Move local folders to the scoped job folder
-  for (const name of ['dist', 'coverage']) {
-    const dir = path.resolve(process.cwd(), name);
-    if (fs.existsSync(dir)) {
-      fs.renameSync(dir, path.resolve(workDir, name));
-    }
-  }
-  writeJobStats(start, workDir);
 };
 
 export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', buildPluginRunner);
@@ -234,7 +229,7 @@ export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', pa
  *  deploy the zip to a running grafana instance
  *
  */
-const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
+const testPluginRunner: TaskRunner<PluginCIOptions> = async ({}) => {
   const start = Date.now();
   const workDir = getJobFolder();
   const results: TestResultsInfo = { job, passed: 0, failed: 0, screenshots: [] };

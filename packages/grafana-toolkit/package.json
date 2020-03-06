@@ -12,17 +12,18 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git"
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-toolkit"
   },
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
   },
   "scripts": {
-    "lint": "eslint src/ --ext=.js,.ts,.tsx",
-    "typecheck": "tsc --noEmit",
-    "precommit": "npm run lint & npm run typecheck",
+    "build": "grafana-toolkit toolkit:build",
     "clean": "rimraf ./dist ./compiled",
-    "build": "grafana-toolkit toolkit:build"
+    "lint": "eslint src/ --ext=.js,.ts,.tsx",
+    "precommit": "npm run lint & npm run typecheck",
+    "typecheck": "tsc --noEmit"
   },
   "main": "src/index.ts",
   "dependencies": {
