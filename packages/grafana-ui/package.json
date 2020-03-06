@@ -84,7 +84,7 @@
     "@types/rc-slider": "8.6.5",
     "@types/react": "16.9.23",
     "@types/react-custom-scrollbars": "4.0.6",
-    "@types/react-test-renderer": "16.9.0",
+    "@types/react-test-renderer": "16.9.2",
     "@types/react-transition-group": "2.0.16",
     "@types/tinycolor2": "1.4.1",
     "common-tags": "^1.8.0",
