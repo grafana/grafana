@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/jmespath/go-jmespath"
 	"golang.org/x/oauth2"
+	jose "gopkg.in/square/go-jose.v2"
 )
 
 type SocialGenericOAuth struct {
@@ -111,6 +112,17 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	if s.extractAPI(&data, client) {
 		s.fillUserInfo(userInfo, &data)
+	}
+
+	if userInfo.Role == "" && s.roleAttributePath != "" {
+		parsedToken, err := jose.ParseSigned(token.AccessToken)
+		if err == nil {
+			s.log.Debug("Parsing roleAttributePath from AccessToken", "accessToken", string(parsedToken.UnsafePayloadWithoutVerification()))
+			role := s.searchJSONForAttr(s.roleAttributePath, parsedToken.UnsafePayloadWithoutVerification())
+			if role != "" {
+				userInfo.Role = role
+			}
+		}
 	}
 
 	if userInfo.Email == "" {

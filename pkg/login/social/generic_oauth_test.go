@@ -161,6 +161,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			Name              string
 			APIURLReponse     interface{}
 			OAuth2Extra       interface{}
+			OAuth2AccessToken string
 			RoleAttributePath string
 			ExpectedEmail     string
 			ExpectedRole      string
@@ -283,6 +284,18 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedEmail:     "john.doe@example.com",
 				ExpectedRole:      "FromResponse",
 			},
+			{
+				Name: "Given a valid id_token with no role, a valid role path, a valid api response with no email, merge",
+				OAuth2Extra: map[string]interface{}{
+					// { "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+				},
+				// { "role": "Admin" }
+				OAuth2AccessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+				RoleAttributePath: "role",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Admin",
+			},
 		}
 
 		for _, test := range tests {
@@ -296,7 +309,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				}))
 				provider.apiUrl = ts.URL
 				staticToken := oauth2.Token{
-					AccessToken:  "",
+					AccessToken:  test.OAuth2AccessToken,
 					TokenType:    "",
 					RefreshToken: "",
 					Expiry:       time.Now(),

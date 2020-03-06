@@ -54,6 +54,9 @@ Check for the presence of a role using the [JMESPath](http://jmespath.org/exampl
 
 See [JMESPath examples](#jmespath-examples) for more information.
 
+The `role_attribute_path` JMESPath expression will be applied first on the id_toke and userinfo by api_url, like all other options like `email_attribute_path`.
+If there is no hit it will look up the `access_token`.
+
 ## Set up OAuth2 with Okta
 
 First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
