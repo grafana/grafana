@@ -129,7 +129,7 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
 };
 
 export const queryVariableSlice = createSlice({
-  name: 'query',
+  name: 'templating/query',
   initialState: initialVariablesState,
   reducers: {
     updateVariableOptions: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {

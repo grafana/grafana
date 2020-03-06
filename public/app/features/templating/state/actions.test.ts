@@ -1,3 +1,5 @@
+import { UrlQueryMap } from '@grafana/runtime';
+
 import { getModel, getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
@@ -9,7 +11,6 @@ import { TemplatingState } from 'app/features/templating/state/reducers';
 import { initDashboardTemplating, processVariables } from './actions';
 import { addInitLock, addVariable, removeInitLock, resolveInitLock } from './sharedReducer';
 import { toVariablePayload } from './types';
-import { UrlQueryMap } from '@grafana/runtime';
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
