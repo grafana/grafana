@@ -203,12 +203,10 @@ export const validateVariableSelectionState = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variableInState = getVariable<VariableWithOptions>(identifier.uuid!, getState());
+    const current = variableInState.current || (({} as unknown) as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
-    if (!variableInState.current) {
-      return setValue(variableInState, {} as VariableOption);
-    }
 
-    if (Array.isArray(variableInState.current.value)) {
+    if (Array.isArray(current.value)) {
       const selected = selectOptionsForCurrentValue(variableInState);
 
       // if none pick first
@@ -228,14 +226,14 @@ export const validateVariableSelectionState = (
     let option: VariableOption | undefined | null = null;
 
     // 1. find the current value
-    option = variableInState.options.find(v => v.text === variableInState.current.text);
+    option = variableInState.options?.find(v => v.text === current.text);
     if (option) {
       return setValue(variableInState, option);
     }
 
     // 2. find the default value
     if (defaultValue) {
-      option = variableInState.options.find(v => v.text === defaultValue);
+      option = variableInState.options?.find(v => v.text === defaultValue);
       if (option) {
         return setValue(variableInState, option);
       }

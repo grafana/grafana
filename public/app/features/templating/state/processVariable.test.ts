@@ -111,7 +111,7 @@ describe('processVariable', () => {
           .whenActionIsDispatched(initDashboardTemplating(list))
           .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams), true);
 
-        tester.thenDispatchedActionShouldEqual(resolveInitLock(toVariablePayload({ type: 'custom', uuid: '0' })));
+        await tester.thenDispatchedActionShouldEqual(resolveInitLock(toVariablePayload({ type: 'custom', uuid: '0' })));
       });
     });
 
@@ -124,7 +124,7 @@ describe('processVariable', () => {
           .whenActionIsDispatched(initDashboardTemplating(list))
           .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams), true);
 
-        tester.thenDispatchedActionShouldEqual(
+        await tester.thenDispatchedActionShouldEqual(
           setCurrentVariableValue(
             toVariablePayload({ type: 'custom', uuid: '0' }, { option: { text: ['B'], value: ['B'], selected: false } })
           ),
@@ -149,7 +149,9 @@ describe('processVariable', () => {
             .whenActionIsDispatched(initDashboardTemplating(list))
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
-          tester.thenDispatchedActionShouldEqual(resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' })));
+          await tester.thenDispatchedActionShouldEqual(
+            resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' }))
+          );
         });
       });
 
@@ -163,7 +165,7 @@ describe('processVariable', () => {
               .whenActionIsDispatched(initDashboardTemplating(list))
               .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
-            tester.thenDispatchedActionShouldEqual(
+            await tester.thenDispatchedActionShouldEqual(
               updateVariableOptions(
                 toVariablePayload({ type: 'query', uuid: '2' }, [
                   { value: 'A', text: 'A' },
@@ -194,7 +196,7 @@ describe('processVariable', () => {
             .whenActionIsDispatched(initDashboardTemplating(list))
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
-          tester.thenDispatchedActionShouldEqual(
+          await tester.thenDispatchedActionShouldEqual(
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', uuid: '2' },
@@ -220,7 +222,7 @@ describe('processVariable', () => {
               .whenActionIsDispatched(initDashboardTemplating(list))
               .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
-            tester.thenDispatchedActionShouldEqual(
+            await tester.thenDispatchedActionShouldEqual(
               updateVariableOptions(
                 toVariablePayload({ type: 'query', uuid: '2' }, [
                   { value: 'A', text: 'A' },
@@ -265,7 +267,9 @@ describe('processVariable', () => {
             true
           );
 
-          tester.thenDispatchedActionShouldEqual(resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' })));
+          await tester.thenDispatchedActionShouldEqual(
+            resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' }))
+          );
         });
       });
 
@@ -284,7 +288,7 @@ describe('processVariable', () => {
               true
             );
 
-            tester.thenDispatchedActionShouldEqual(
+            await tester.thenDispatchedActionShouldEqual(
               updateVariableOptions(
                 toVariablePayload({ type: 'query', uuid: '1' }, [
                   { value: 'AA', text: 'AA' },
@@ -323,7 +327,7 @@ describe('processVariable', () => {
             true
           );
 
-          tester.thenDispatchedActionShouldEqual(
+          await tester.thenDispatchedActionShouldEqual(
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', uuid: '1' },
@@ -354,7 +358,7 @@ describe('processVariable', () => {
               true
             );
 
-            tester.thenDispatchedActionShouldEqual(
+            await tester.thenDispatchedActionShouldEqual(
               updateVariableOptions(
                 toVariablePayload({ type: 'query', uuid: '1' }, [
                   { value: 'AA', text: 'AA' },

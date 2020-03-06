@@ -79,6 +79,7 @@ export const variableMockBuilder = (type: VariableType) => {
   };
 
   const withOptions = (...texts: string[]) => {
+    model.options = [];
     for (let index = 0; index < texts.length; index++) {
       model.options.push({ text: texts[index], value: texts[index], selected: false });
     }
@@ -100,6 +101,11 @@ export const variableMockBuilder = (type: VariableType) => {
     return instance;
   };
 
+  const withMulti = () => {
+    model.multi = true;
+    return instance;
+  };
+
   const create = () => model;
 
   const instance = {
@@ -109,6 +115,7 @@ export const variableMockBuilder = (type: VariableType) => {
     withCurrent,
     withRefresh,
     withQuery,
+    withMulti,
     create,
   };
 
