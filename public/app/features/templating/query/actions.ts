@@ -22,7 +22,9 @@ export const updateQueryVariableOptions = (
   return async (dispatch, getState) => {
     const variableInState = getVariable<QueryVariableModel>(identifier.uuid!, getState());
     try {
-      await dispatch(removeVariableEditorError({ errorProp: 'update' }));
+      if (getState().templating.editor.id === variableInState.uuid) {
+        dispatch(removeVariableEditorError({ errorProp: 'update' }));
+      }
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
       const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
       if (variableInState.refresh === VariableRefresh.onTimeRangeChanged) {
@@ -47,7 +49,9 @@ export const updateQueryVariableOptions = (
       if (err.data && err.data.message) {
         err.message = err.data.message;
       }
-      dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
+      if (getState().templating.editor.id === variableInState.uuid) {
+        dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
+      }
       appEvents.emit(AppEvents.alertError, [
         'Templating',
         'Template variables could not be initialized: ' + err.message,

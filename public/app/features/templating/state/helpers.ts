@@ -1,11 +1,13 @@
+import { combineReducers } from '@reduxjs/toolkit';
+import cloneDeep from 'lodash/cloneDeep';
+
 import { EMPTY_UUID } from './types';
 import { VariableHide, VariableModel, VariableType } from '../variable';
 import { variablesReducer, VariablesState } from './variablesReducer';
-import { combineReducers } from '@reduxjs/toolkit';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';
 import { locationReducer } from '../../../core/reducers/location';
-import { VariableAdapter } from '../adapters';
+import { VariableAdapter, variableAdapters } from '../adapters';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -66,6 +68,38 @@ export const getModel = (type: VariableType): VariableModel => ({
   hide: VariableHide.dontHide,
   skipUrlSync: false,
 });
+
+export const variableMockBuilder = (type: VariableType) => {
+  const model = { ...cloneDeep(variableAdapters.get(type).initialState), ...getModel(type) };
+
+  const withUuid = (uuid: string) => {
+    model.uuid = uuid;
+    return instance;
+  };
+
+  const withOptions = (...texts: string[]) => {
+    for (let index = 0; index < texts.length; index++) {
+      model.options.push({ text: texts[index], value: texts[index], selected: false });
+    }
+    return instance;
+  };
+
+  const withCurrent = (text: string | string[]) => {
+    model.current = { text, value: text, selected: true };
+    return instance;
+  };
+
+  const create = () => model;
+
+  const instance = {
+    withUuid,
+    withOptions,
+    withCurrent,
+    create,
+  };
+
+  return instance;
+};
 
 export const getTemplatingRootReducer = () =>
   combineReducers({

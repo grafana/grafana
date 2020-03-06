@@ -10,7 +10,6 @@ import { initDashboardTemplating, processVariable } from './actions';
 import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
 import { VariableRefresh } from '../variable';
-import { removeVariableEditorError } from '../editor/reducer';
 import { updateVariableOptions } from '../query/reducer';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
@@ -64,7 +63,6 @@ describe('processVariable', () => {
   // these following processVariable tests will test the following base setup
   // custom doesn't depend on any other variable
   // queryDependsOnCustom depends on custom
-  // queryDependsOnQueryAndCustom depends on queryDependsOnCustom and custom
   // queryNoDepends doesn't depend on any other variable
   const getAndSetupProcessVariableContext = () => {
     variableAdapters.set('custom', createCustomVariableAdapter());
@@ -73,27 +71,11 @@ describe('processVariable', () => {
       ...getModel('custom'),
       uuid: '0',
       query: 'A,B,C',
-      current: {
-        selected: false,
-        text: 'A',
-        value: 'A',
-      },
+      current: { selected: true, text: 'A', value: 'A' },
       options: [
-        {
-          selected: true,
-          text: 'A',
-          value: 'A',
-        },
-        {
-          selected: false,
-          text: 'B',
-          value: 'B',
-        },
-        {
-          selected: false,
-          text: 'C',
-          value: 'C',
-        },
+        { selected: true, text: 'A', value: 'A' },
+        { selected: false, text: 'B', value: 'B' },
+        { selected: false, text: 'C', value: 'C' },
       ],
     };
     const queryDependsOnCustom = {
@@ -102,6 +84,12 @@ describe('processVariable', () => {
       refresh: VariableRefresh.onDashboardLoad,
       uuid: '1',
       query: '$custom.*',
+      current: { selected: true, text: 'AA', value: 'AA' },
+      options: [
+        { selected: true, text: 'AA', value: 'AA' },
+        { selected: false, text: 'AB', value: 'AB' },
+        { selected: false, text: 'AC', value: 'AC' },
+      ],
     };
     const queryDependsOnQueryAndCustom = {
       ...getModel('query'),
@@ -109,6 +97,12 @@ describe('processVariable', () => {
       refresh: VariableRefresh.onDashboardLoad,
       uuid: '2',
       query: '$custom.$queryDependsOnCustom.*',
+      current: { selected: false, text: 'AAA', value: 'AAA' },
+      options: [
+        { selected: true, text: 'AAA', value: 'AAA' },
+        { selected: false, text: 'AAB', value: 'AAB' },
+        { selected: false, text: 'AAC', value: 'AAC' },
+      ],
     };
     const queryNoDepends = {
       ...getModel('query'),
@@ -116,27 +110,11 @@ describe('processVariable', () => {
       refresh: VariableRefresh.onDashboardLoad,
       uuid: '3',
       query: '*',
-      current: {
-        selected: false,
-        text: 'A',
-        value: 'A',
-      },
+      current: { selected: false, text: 'A', value: 'A' },
       options: [
-        {
-          selected: true,
-          text: 'A',
-          value: 'A',
-        },
-        {
-          selected: false,
-          text: 'B',
-          value: 'B',
-        },
-        {
-          selected: false,
-          text: 'C',
-          value: 'C',
-        },
+        { selected: true, text: 'A', value: 'A' },
+        { selected: false, text: 'B', value: 'B' },
+        { selected: false, text: 'C', value: 'C' },
       ],
     };
 
@@ -177,16 +155,7 @@ describe('processVariable', () => {
 
         tester.thenDispatchedActionShouldEqual(
           setCurrentVariableValue(
-            toVariablePayload(
-              { type: 'custom', uuid: '0' },
-              {
-                option: {
-                  text: ['B'],
-                  value: ['B'],
-                  selected: false,
-                },
-              }
-            )
+            toVariablePayload({ type: 'custom', uuid: '0' }, { option: { text: ['B'], value: ['B'], selected: false } })
           ),
           resolveInitLock(toVariablePayload({ type: 'custom', uuid: '0' }))
         );
@@ -224,34 +193,15 @@ describe('processVariable', () => {
               .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
             tester.thenDispatchedActionShouldEqual(
-              removeVariableEditorError({ errorProp: 'update' }),
               updateVariableOptions(
                 toVariablePayload({ type: 'query', uuid: '3' }, [
-                  {
-                    value: 'A',
-                    text: 'A',
-                  },
-                  {
-                    value: 'B',
-                    text: 'B',
-                  },
-                  {
-                    value: 'C',
-                    text: 'C',
-                  },
+                  { value: 'A', text: 'A' },
+                  { value: 'B', text: 'B' },
+                  { value: 'C', text: 'C' },
                 ])
               ),
               setCurrentVariableValue(
-                toVariablePayload(
-                  { type: 'query', uuid: '3' },
-                  {
-                    option: {
-                      text: 'A',
-                      value: 'A',
-                      selected: false,
-                    },
-                  }
-                )
+                toVariablePayload({ type: 'query', uuid: '3' }, { option: { text: 'A', value: 'A', selected: false } })
               ),
               resolveInitLock(toVariablePayload({ type: 'query', uuid: '3' }))
             );
@@ -277,13 +227,7 @@ describe('processVariable', () => {
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', uuid: '3' },
-                {
-                  option: {
-                    text: ['B'],
-                    value: ['B'],
-                    selected: false,
-                  },
-                }
+                { option: { text: ['B'], value: ['B'], selected: false } }
               )
             ),
             resolveInitLock(toVariablePayload({ type: 'query', uuid: '3' }))
@@ -306,77 +250,160 @@ describe('processVariable', () => {
               .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
             tester.thenDispatchedActionShouldEqual(
-              removeVariableEditorError({ errorProp: 'update' }),
               updateVariableOptions(
                 toVariablePayload({ type: 'query', uuid: '3' }, [
-                  {
-                    value: 'A',
-                    text: 'A',
-                  },
-                  {
-                    value: 'B',
-                    text: 'B',
-                  },
-                  {
-                    value: 'C',
-                    text: 'C',
-                  },
+                  { value: 'A', text: 'A' },
+                  { value: 'B', text: 'B' },
+                  { value: 'C', text: 'C' },
                 ])
               ),
               setCurrentVariableValue(
-                toVariablePayload(
-                  { type: 'query', uuid: '3' },
-                  {
-                    option: {
-                      text: 'A',
-                      value: 'A',
-                      selected: false,
-                    },
-                  }
-                )
+                toVariablePayload({ type: 'query', uuid: '3' }, { option: { text: 'A', value: 'A', selected: false } })
               ),
               setCurrentVariableValue(
                 toVariablePayload(
                   { type: 'query', uuid: '3' },
-                  {
-                    option: {
-                      text: ['B'],
-                      value: ['B'],
-                      selected: false,
-                    },
-                  }
-                )
-              ),
-              removeVariableEditorError({ errorProp: 'update' }),
-              updateVariableOptions(
-                toVariablePayload({ type: 'query', uuid: '3' }, [
-                  {
-                    value: 'A',
-                    text: 'A',
-                  },
-                  {
-                    value: 'B',
-                    text: 'B',
-                  },
-                  {
-                    value: 'C',
-                    text: 'C',
-                  },
-                ])
-              ),
-              setCurrentVariableValue(
-                toVariablePayload(
-                  { type: 'query', uuid: '3' },
-                  {
-                    option: {
-                      text: ['B'],
-                      value: ['B'],
-                      selected: true,
-                    },
-                  }
+                  { option: { text: ['B'], value: ['B'], selected: false } }
                 )
               ),
               resolveInitLock(toVariablePayload({ type: 'query', uuid: '3' }))
+            );
+          });
+        });
+      });
+    });
+  });
+
+  // testing processVariable for the queryDependsOnCustom variable from case described above
+  describe('when processVariable is dispatched for a query variable with one dependency', () => {
+    describe('and queryParams does not match variable', () => {
+      const queryParams: UrlQueryMap = {};
+
+      describe('and refresh is VariableRefresh.never', () => {
+        const refresh = VariableRefresh.never;
+        it('then correct actions are dispatched', async () => {
+          const { list, custom, queryDependsOnCustom } = getAndSetupProcessVariableContext();
+          queryDependsOnCustom.refresh = refresh;
+          const customProcessed = await reduxTester<{ templating: TemplatingState }>()
+            .givenRootReducer(getTemplatingRootReducer())
+            .whenActionIsDispatched(initDashboardTemplating(list))
+            .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
+
+          const tester = await customProcessed.whenAsyncActionIsDispatched(
+            processVariable(toVariableIdentifier(queryDependsOnCustom), queryParams),
+            true
+          );
+
+          tester.thenDispatchedActionShouldEqual(resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' })));
+        });
+      });
+
+      [VariableRefresh.onDashboardLoad, VariableRefresh.onTimeRangeChanged].forEach(refresh => {
+        describe(`and refresh is ${refresh}`, () => {
+          it('then correct actions are dispatched', async () => {
+            const { list, custom, queryDependsOnCustom } = getAndSetupProcessVariableContext();
+            queryDependsOnCustom.refresh = refresh;
+            const customProcessed = await reduxTester<{ templating: TemplatingState }>()
+              .givenRootReducer(getTemplatingRootReducer())
+              .whenActionIsDispatched(initDashboardTemplating(list))
+              .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
+
+            const tester = await customProcessed.whenAsyncActionIsDispatched(
+              processVariable(toVariableIdentifier(queryDependsOnCustom), queryParams),
+              true
+            );
+
+            tester.thenDispatchedActionShouldEqual(
+              updateVariableOptions(
+                toVariablePayload({ type: 'query', uuid: '1' }, [
+                  { value: 'AA', text: 'AA' },
+                  { value: 'AB', text: 'AB' },
+                  { value: 'AC', text: 'AC' },
+                ])
+              ),
+              setCurrentVariableValue(
+                toVariablePayload(
+                  { type: 'query', uuid: '1' },
+                  { option: { text: 'AA', value: 'AA', selected: false } }
+                )
+              ),
+              resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' }))
+            );
+          });
+        });
+      });
+    });
+
+    describe('and queryParams does match variable', () => {
+      const queryParams: UrlQueryMap = { 'var-queryDependsOnCustom': 'AB' };
+
+      describe('and refresh is VariableRefresh.never', () => {
+        const refresh = VariableRefresh.never;
+        it('then correct actions are dispatched', async () => {
+          const { list, custom, queryDependsOnCustom } = getAndSetupProcessVariableContext();
+          queryDependsOnCustom.refresh = refresh;
+          const customProcessed = await reduxTester<{ templating: TemplatingState }>()
+            .givenRootReducer(getTemplatingRootReducer())
+            .whenActionIsDispatched(initDashboardTemplating(list))
+            .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
+
+          const tester = await customProcessed.whenAsyncActionIsDispatched(
+            processVariable(toVariableIdentifier(queryDependsOnCustom), queryParams),
+            true
+          );
+
+          tester.thenDispatchedActionShouldEqual(
+            setCurrentVariableValue(
+              toVariablePayload(
+                { type: 'query', uuid: '1' },
+                { option: { text: ['AB'], value: ['AB'], selected: false } }
+              )
+            ),
+            resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' }))
+          );
+        });
+      });
+
+      [VariableRefresh.onDashboardLoad, VariableRefresh.onTimeRangeChanged].forEach(refresh => {
+        describe(`and refresh is ${
+          refresh === VariableRefresh.onDashboardLoad
+            ? 'VariableRefresh.onDashboardLoad'
+            : 'VariableRefresh.onTimeRangeChanged'
+        }`, () => {
+          it('then correct actions are dispatched', async () => {
+            const { list, custom, queryDependsOnCustom } = getAndSetupProcessVariableContext();
+            queryDependsOnCustom.refresh = refresh;
+            const customProcessed = await reduxTester<{ templating: TemplatingState }>()
+              .givenRootReducer(getTemplatingRootReducer())
+              .whenActionIsDispatched(initDashboardTemplating(list))
+              .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
+
+            const tester = await customProcessed.whenAsyncActionIsDispatched(
+              processVariable(toVariableIdentifier(queryDependsOnCustom), queryParams),
+              true
+            );
+
+            tester.thenDispatchedActionShouldEqual(
+              updateVariableOptions(
+                toVariablePayload({ type: 'query', uuid: '1' }, [
+                  { value: 'AA', text: 'AA' },
+                  { value: 'AB', text: 'AB' },
+                  { value: 'AC', text: 'AC' },
+                ])
+              ),
+              setCurrentVariableValue(
+                toVariablePayload(
+                  { type: 'query', uuid: '1' },
+                  { option: { text: 'AA', value: 'AA', selected: false } }
+                )
+              ),
+              setCurrentVariableValue(
+                toVariablePayload(
+                  { type: 'query', uuid: '1' },
+                  { option: { text: ['AB'], value: ['AB'], selected: false } }
+                )
+              ),
+              resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' }))
             );
           });
         });
