@@ -57,7 +57,7 @@
     "react-dom": "16.13.0",
     "react-highlight-words": "0.16.0",
     "react-hook-form": "4.10.1",
-    "react-popper": "1.3.3",
+    "react-popper": "1.3.7",
     "react-storybook-addon-props-combinations": "1.1.0",
     "react-table": "7.0.0-rc.16",
     "react-transition-group": "2.6.1",
