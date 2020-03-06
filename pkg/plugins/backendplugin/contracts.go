@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 )
@@ -37,8 +38,9 @@ func (hs HealthStatus) String() string {
 
 // CheckHealthResult check health result.
 type CheckHealthResult struct {
-	Status  HealthStatus
-	Message string
+	Status      HealthStatus
+	Message     string
+	JSONDetails string
 }
 
 func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *CheckHealthResult {
@@ -51,8 +53,9 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *Check
 	}
 
 	return &CheckHealthResult{
-		Status:  status,
-		Message: protoResp.Message,
+		Status:      status,
+		Message:     protoResp.Message,
+		JSONDetails: protoResp.JsonDetails,
 	}
 }
 
@@ -83,6 +86,7 @@ type CallResourceRequest struct {
 	URL     string
 	Headers map[string][]string
 	Body    []byte
+	User    *models.SignedInUser
 }
 
 // CallResourceResult call resource result.

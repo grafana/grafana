@@ -51,6 +51,15 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		Queries: []*pluginv2.DataQuery{},
 	}
 
+	if query.User != nil {
+		pbQuery.User = &pluginv2.User{
+			Name:  query.User.Name,
+			Login: query.User.Login,
+			Email: query.User.Email,
+			Role:  string(query.User.OrgRole),
+		}
+	}
+
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {

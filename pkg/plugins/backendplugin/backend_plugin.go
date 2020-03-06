@@ -230,6 +230,15 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		Body:    req.Body,
 	}
 
+	if req.User != nil {
+		protoReq.User = &pluginv2.User{
+			Name:  req.User.Name,
+			Login: req.User.Login,
+			Email: req.User.Email,
+			Role:  string(req.User.OrgRole),
+		}
+	}
+
 	if req.Config.DataSourceConfig != nil {
 		protoReq.Config.DatasourceConfig = &pluginv2.DataSourceConfig{
 			Id:               req.Config.DataSourceConfig.ID,

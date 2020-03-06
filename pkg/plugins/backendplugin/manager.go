@@ -208,6 +208,7 @@ func (m *manager) CallResource(config PluginConfig, c *models.ReqContext, path s
 		URL:     clonedReq.URL.String(),
 		Headers: clonedReq.Header,
 		Body:    body,
+		User:    c.SignedInUser,
 	}
 
 	stream, err := p.callResource(clonedReq.Context(), req)
