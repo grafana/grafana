@@ -6,24 +6,24 @@ exports[`UserPicker renders correctly 1`] = `
 >
   <div>
     <div
-      className="gf-form-input gf-form-input--form-dropdown css-1daubv-SelectContainer"
+      className="gf-form-input gf-form-input--form-dropdown css-at6rp9-SelectContainer"
       onKeyDown={[Function]}
     >
       <div
-        className="gf-form-select-box__control css-1g8ily9-Control"
+        className="gf-form-select-box__control css-ia584n-Control"
         onMouseDown={[Function]}
         onTouchEnd={[Function]}
       >
         <div
-          className="gf-form-select-box__value-container css-pilx6v-ValueContainer"
+          className="gf-form-select-box__value-container css-1q9zhbr-ValueContainer"
         >
           <div
-            className="gf-form-select-box__placeholder css-ovmm9z-Placeholder"
+            className="gf-form-select-box__placeholder css-d8h0m4-Placeholder"
           >
             Select user
           </div>
           <div
-            className="css-17yls17-Input"
+            className="css-zz0hea-Input"
           >
             <div
               className="gf-form-select-box__input"
@@ -81,7 +81,7 @@ exports[`UserPicker renders correctly 1`] = `
           </div>
         </div>
         <div
-          className="gf-form-select-box__indicators css-1pmvkci-IndicatorsContainer"
+          className="gf-form-select-box__indicators css-q46mcr-IndicatorsContainer"
         >
           <span
             className="gf-form-select-box__select-arrow "
