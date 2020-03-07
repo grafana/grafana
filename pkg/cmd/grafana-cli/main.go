@@ -16,8 +16,6 @@ import (
 var version = "master"
 
 func main() {
-	setupLogging()
-
 	app := &cli.App{
 		Name: "Grafana CLI",
 		Authors: []*cli.Author{
@@ -51,8 +49,9 @@ func main() {
 				Usage: "Skip TLS verification (insecure)",
 			},
 			&cli.BoolFlag{
-				Name:  "debug, d",
-				Usage: "Enable debug logging",
+				Name:    "debug",
+				Usage:   "Enable debug logging",
+				Aliases: []string{"d"},
 			},
 			&cli.StringFlag{
 				Name:  "configOverrides",
@@ -73,20 +72,13 @@ func main() {
 
 	app.Before = func(c *cli.Context) error {
 		services.Init(version, c.Bool("insecure"))
+		logger.SetDebug(c.IsSet("debug"))
 		return nil
 	}
 
 	if err := app.Run(os.Args); err != nil {
 		logger.Errorf("%s: %s %s\n", color.RedString("Error"), color.RedString("✗"), err)
 		os.Exit(1)
-	}
-}
-
-func setupLogging() {
-	for _, f := range os.Args {
-		if f == "-d" || f == "--debug" || f == "-debug" {
-			logger.SetDebug(true)
-		}
 	}
 }
 

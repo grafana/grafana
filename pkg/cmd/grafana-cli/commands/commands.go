@@ -17,7 +17,6 @@ import (
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		debug := cmd.Bool("debug")
 
 		cfg := setting.NewCfg()
 
@@ -30,7 +29,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			return errutil.Wrap("failed to load configuration", err)
 		}
 
-		if debug {
+		if context.IsSet("debug") {
 			cfg.LogConfigSources()
 		}
 
@@ -53,6 +52,13 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
+
+		cfg := setting.NewCfg()
+
+		if context.IsSet("debug") {
+			cfg.LogConfigSources()
+		}
+
 		if err := command(cmd); err != nil {
 			return err
 		}
