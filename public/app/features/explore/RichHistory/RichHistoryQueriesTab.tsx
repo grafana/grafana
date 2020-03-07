@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { css } from 'emotion';
+import { uniqBy } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -99,6 +100,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       font-size: ${theme.typography.heading.h4};
       margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
     `,
+    feedback: css`
+      height: 60px;
+      margin-top: ${theme.spacing.lg};
+      display: flex;
+      justify-content: center;
+      font-weight: ${theme.typography.weight.light};
+      font-size: ${theme.typography.size.sm};
+      a {
+        font-weight: ${theme.typography.weight.semibold};
+        margin-left: ${theme.spacing.xxs};
+      }
+    `,
   };
 });
 
@@ -119,10 +132,26 @@ export function RichHistoryQueriesTab(props: Props) {
 
   const theme = useTheme();
   const styles = getStyles(theme);
-  const exploreDatasources = getExploreDatasources()?.map(d => {
-    return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
-  });
+  const listOfDsNamesWithQueries = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
+
+  /* Display only explore datasoources, that have saved queries */
+  const datasources = getExploreDatasources()
+    ?.filter(ds => listOfDsNamesWithQueries.includes(ds.name))
+    .map(d => {
+      return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
+    });
+
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
+  const filteredQueriesByDatasource = datasourceFilters
+    ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
+    : queries;
+
+  const sortedQueries = sortQueries(filteredQueriesByDatasource, sortOrder);
+  const queriesWithinSelectedTimeline = sortedQueries?.filter(
+    q =>
+      q.ts < createRetentionPeriodBoundary(sliderRetentionFilter[0], true) &&
+      q.ts > createRetentionPeriodBoundary(sliderRetentionFilter[1], false)
+  );
 
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
    *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
@@ -134,15 +163,6 @@ export function RichHistoryQueriesTab(props: Props) {
       : onSelectDatasourceFilters(null);
   }, [activeDatasourceInstance, activeDatasourceOnly]);
 
-  const filteredQueriesByDatasource = datasourceFilters
-    ? queries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
-    : queries;
-  const sortedQueries = sortQueries(filteredQueriesByDatasource, sortOrder);
-  const queriesWithinSelectedTimeline = sortedQueries?.filter(
-    q =>
-      q.ts < createRetentionPeriodBoundary(sliderRetentionFilter[0], true) &&
-      q.ts > createRetentionPeriodBoundary(sliderRetentionFilter[1], false)
-  );
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
@@ -174,7 +194,7 @@ export function RichHistoryQueriesTab(props: Props) {
             <div className={styles.multiselect}>
               <Select
                 isMulti={true}
-                options={exploreDatasources}
+                options={datasources}
                 value={datasourceFilters}
                 placeholder="Filter queries for specific datasources(s)"
                 onChange={onSelectDatasourceFilters}
@@ -203,6 +223,10 @@ export function RichHistoryQueriesTab(props: Props) {
             return <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />;
           }
         })}
+        <div className={styles.feedback}>
+          Query history is a beta feature. The history is local to your browse and is not shared with others.
+          <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
+        </div>
       </div>
     </div>
   );

@@ -35,6 +35,7 @@ interface RichHistoryProps extends Themeable {
   activeDatasourceInstance: string;
   firstTab: Tabs;
   exploreId: ExploreId;
+  deleteRichHistory: () => void;
 }
 
 interface RichHistoryState {
@@ -125,7 +126,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       activeDatasourceOnly,
       retentionPeriod,
     } = this.state;
-    const { theme, richHistory, activeDatasourceInstance, exploreId } = this.props;
+    const { theme, richHistory, activeDatasourceInstance, exploreId, deleteRichHistory } = this.props;
     const styles = getStyles(theme);
 
     const QueriesTab = {
@@ -176,6 +177,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           onChangeRetentionPeriod={this.onChangeRetentionPeriod}
           toggleStarredTabAsFirstTab={this.toggleStarredTabAsFirstTab}
           toggleactiveDatasourceOnly={this.toggleactiveDatasourceOnly}
+          deleteRichHistory={deleteRichHistory}
         />
       ),
       icon: 'gicon gicon-preferences',

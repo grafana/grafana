@@ -1,8 +1,8 @@
 import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { deleteRichHistory } from 'app/core/utils/richHistory';
+import { GrafanaTheme, AppEvents } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 
 interface RichHistorySettingsProps {
   retentionPeriod: number;
@@ -11,6 +11,7 @@ interface RichHistorySettingsProps {
   onChangeRetentionPeriod: (option: { label: string; value: number }) => void;
   toggleStarredTabAsFirstTab: () => void;
   toggleactiveDatasourceOnly: () => void;
+  deleteRichHistory: () => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -50,6 +51,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
     onChangeRetentionPeriod,
     toggleStarredTabAsFirstTab,
     toggleactiveDatasourceOnly,
+    deleteRichHistory,
   } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -96,7 +98,13 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
       >
         Delete all of your query history, permanently.
       </div>
-      <Forms.Button variant="destructive" onClick={deleteRichHistory}>
+      <Forms.Button
+        variant="destructive"
+        onClick={() => {
+          deleteRichHistory();
+          appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
+        }}
+      >
         Clear query history
       </Forms.Button>
     </div>

@@ -40,6 +40,7 @@ import {
 } from 'app/core/utils/explore';
 import {
   addToRichHistory,
+  deleteAllFromRichHistory,
   updateStarredInRichHistory,
   updateCommentInRichHistory,
   getQueryDisplayText,
@@ -523,6 +524,13 @@ export const updateRichHistory = (ts: number, property: string, updatedProperty?
       nextRichHistory = updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
     }
     dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+  };
+};
+
+export const deleteRichHistory = (): ThunkResult<void> => {
+  return dispatch => {
+    deleteAllFromRichHistory();
+    dispatch(richHistoryUpdatedAction({ richHistory: [] }));
   };
 };
 

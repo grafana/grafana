@@ -71,7 +71,7 @@ export function getRichHistory() {
   return store.getObject(RICH_HISTORY_KEY);
 }
 
-export function deleteRichHistory() {
+export function deleteAllFromRichHistory() {
   return store.delete(RICH_HISTORY_KEY);
 }
 

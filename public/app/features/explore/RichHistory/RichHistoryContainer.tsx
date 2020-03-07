@@ -18,6 +18,9 @@ import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 // Components, enums
 import { RichHistory, Tabs } from './RichHistory';
 
+//Actions
+import { deleteRichHistory } from '../state/actions';
+
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
@@ -26,7 +29,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       position: fixed !important;
       bottom: 0;
       background: ${bg};
-      border: 1px solid ${borderColor};
+      border-top: 1px solid ${borderColor};
+      margin: 0px;
+      margin-right: -${theme.spacing.md};
+      margin-left: -${theme.spacing.md};
     `,
     drawerActive: css`
       opacity: 1;
@@ -60,6 +66,7 @@ interface Props {
   activeDatasourceInstance: string;
   richHistory: RichHistoryQuery[];
   firstTab: Tabs;
+  deleteRichHistory: typeof deleteRichHistory;
 }
 
 function RichHistoryContainer(props: Props) {
@@ -71,9 +78,10 @@ function RichHistoryContainer(props: Props) {
     return () => clearTimeout(timer);
   }, []);
 
-  const { richHistory, width, firstTab, activeDatasourceInstance, exploreId } = props;
+  const { richHistory, width, firstTab, activeDatasourceInstance, exploreId, deleteRichHistory } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
+  const drawerWidth = `${width + 31.5}px`;
 
   const drawerHandle = (
     <div className={styles.handle}>
@@ -84,7 +92,7 @@ function RichHistoryContainer(props: Props) {
   return (
     <Resizable
       className={cx(styles.container, visible ? styles.drawerActive : styles.drawerNotActive)}
-      defaultSize={{ width, height: '400px' }}
+      defaultSize={{ width: drawerWidth, height: '400px' }}
       enable={{
         top: true,
         right: false,
@@ -96,8 +104,8 @@ function RichHistoryContainer(props: Props) {
         topLeft: false,
       }}
       maxHeight="100vh"
-      maxWidth={`${width}px`}
-      minWidth={`${width}px`}
+      maxWidth={drawerWidth}
+      minWidth={drawerWidth}
     >
       {drawerHandle}
       <RichHistory
@@ -105,6 +113,7 @@ function RichHistoryContainer(props: Props) {
         firstTab={firstTab}
         activeDatasourceInstance={activeDatasourceInstance}
         exploreId={exploreId}
+        deleteRichHistory={deleteRichHistory}
       />
     </Resizable>
   );
@@ -126,4 +135,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   };
 }
 
-export default hot(module)(connect(mapStateToProps)(RichHistoryContainer));
+const mapDispatchToProps = {
+  deleteRichHistory,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryContainer));
