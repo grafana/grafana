@@ -3,7 +3,7 @@ import { metricDescriptors } from './testData';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
-import { StackdriverOptions } from '../types';
+import { StackdriverOptions, StackdriverQuery } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -155,7 +155,7 @@ describe('StackdriverDataSource', () => {
 
       ds = new StackdriverDataSource(instanceSettings, templateSrv, timeSrv);
       // @ts-ignore
-      result = await ds.getMetricTypes();
+      result = await ds.getMetricTypes('proj');
     });
 
     it('should return successfully', () => {
@@ -182,6 +182,19 @@ describe('StackdriverDataSource', () => {
       it('should replace the variable with the value', () => {
         expect(interpolated.length).toBe(4);
         expect(interpolated[2]).toBe('filtervalue1');
+      });
+    });
+
+    describe('and is single value variable for the label part', () => {
+      beforeEach(() => {
+        const filterTemplateSrv = initTemplateSrv('resource.label.zone');
+        const ds = new StackdriverDataSource(instanceSettings, filterTemplateSrv, timeSrv);
+        interpolated = ds.interpolateFilters(['${test}', '=~', 'europe-north-1a'], {});
+      });
+
+      it('should replace the variable with the value and not with regex formatting', () => {
+        expect(interpolated.length).toBe(4);
+        expect(interpolated[0]).toBe('resource.label.zone');
       });
     });
 
@@ -237,7 +250,7 @@ describe('StackdriverDataSource', () => {
     describe('when theres only one target', () => {
       describe('and the stackdriver unit doesnt have a corresponding grafana unit', () => {
         beforeEach(() => {
-          res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }]);
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }] as StackdriverQuery[]);
         });
         it('should return undefined', () => {
           expect(res).toBeUndefined();
@@ -245,7 +258,7 @@ describe('StackdriverDataSource', () => {
       });
       describe('and the stackdriver unit has a corresponding grafana unit', () => {
         beforeEach(() => {
-          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }]);
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }] as StackdriverQuery[]);
         });
         it('should return bits', () => {
           expect(res).toEqual('bits');
@@ -256,7 +269,7 @@ describe('StackdriverDataSource', () => {
     describe('when theres more than one target', () => {
       describe('and all target units are the same', () => {
         beforeEach(() => {
-          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'bit' }]);
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'bit' }] as StackdriverQuery[]);
         });
         it('should return bits', () => {
           expect(res).toEqual('bits');
@@ -264,7 +277,10 @@ describe('StackdriverDataSource', () => {
       });
       describe('and all target units are the same but doesnt have grafana mappings', () => {
         beforeEach(() => {
-          res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }, { unit: 'megaseconds' }]);
+          res = ds.resolvePanelUnitFromTargets([
+            { unit: 'megaseconds' },
+            { unit: 'megaseconds' },
+          ] as StackdriverQuery[]);
         });
         it('should return the default value of undefined', () => {
           expect(res).toBeUndefined();
@@ -272,7 +288,7 @@ describe('StackdriverDataSource', () => {
       });
       describe('and all target units are not the same', () => {
         beforeEach(() => {
-          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'min' }]);
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'min' }] as StackdriverQuery[]);
         });
         it('should return the default value of undefined', () => {
           expect(res).toBeUndefined();

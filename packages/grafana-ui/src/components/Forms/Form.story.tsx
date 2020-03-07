@@ -98,7 +98,7 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
             <Forms.InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
           </Field>
 
-          <Field label="RadioButton" invalid={!!errors.select}>
+          <Field label="Select" invalid={!!errors.select}>
             <Forms.InputControl
               name="select"
               control={control}

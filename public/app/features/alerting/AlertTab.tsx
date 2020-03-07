@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { css } from 'emotion';
 import { Alert, Button } from '@grafana/ui';
 
@@ -14,18 +13,27 @@ import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
 
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { PanelModel, angularPanelUpdated } from '../dashboard/state/PanelModel';
+import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
 import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
 import { CoreEvents } from 'app/types';
 
-interface Props {
+interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
+}
+
+interface ConnectedProps {
+  angularPanelComponent: AngularComponent;
+}
+
+interface DispatchProps {
   changePanelEditorTab: typeof changePanelEditorTab;
 }
+
+export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 interface State {
   validatonMessage: string;
@@ -42,7 +50,6 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.loadAlertTab();
-    this.props.panel.events.on(angularPanelUpdated, this.onAngularPanelUpdated);
   }
 
   onAngularPanelUpdated = () => {
@@ -60,13 +67,13 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 
   async loadAlertTab() {
-    const { panel } = this.props;
+    const { panel, angularPanelComponent } = this.props;
 
-    if (!this.element || !panel.angularPanel || this.component) {
+    if (!this.element || !angularPanelComponent || this.component) {
       return;
     }
 
-    const scope = panel.angularPanel.getScope();
+    const scope = angularPanelComponent.getScope();
 
     // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
     if (!scope.$$childHead) {
@@ -213,8 +220,12 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => ({});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  return {
+    angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+  };
+};
 
-const mapDispatchToProps = { changePanelEditorTab };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelEditorTab };
 
-export const AlertTab = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab));
+export const AlertTab = connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab);
