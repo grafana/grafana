@@ -22,15 +22,15 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func validateInput(c utils.CommandLine, pluginFolder string) error {
+func validateInput(c utils.CommandLine, pluginsDir string) error {
 	arg := c.Args().First()
 	if arg == "" {
 		return errors.New("please specify plugin to install")
 	}
 
-	pluginsDir := c.PluginDirectory()
 	if pluginsDir == "" {
 		return errors.New("missing pluginsDir flag")
 	}
@@ -51,8 +51,8 @@ func validateInput(c utils.CommandLine, pluginFolder string) error {
 }
 
 func (cmd Command) installCommand(c utils.CommandLine) error {
-	pluginFolder := c.PluginDirectory()
-	if err := validateInput(c, pluginFolder); err != nil {
+	pluginsDir := setting.PluginsPath
+	if err := validateInput(c, pluginsDir); err != nil {
 		return err
 	}
 
@@ -65,7 +65,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugins directory.
 func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils.ApiClient) error {
-	pluginFolder := c.PluginDirectory()
+	pluginsDir := setting.PluginsPath
 	downloadURL := c.PluginURL()
 	isInternal := false
 
@@ -105,7 +105,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 
 	logger.Infof("installing %v @ %v\n", pluginName, version)
 	logger.Infof("from: %v\n", downloadURL)
-	logger.Infof("into: %v\n", pluginFolder)
+	logger.Infof("into: %v\n", pluginsDir)
 	logger.Info("\n")
 
 	// Create temp file for downloading zip file
@@ -125,14 +125,14 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 		return errutil.Wrap("failed to close tmp file", err)
 	}
 
-	err = extractFiles(tmpFile.Name(), pluginName, pluginFolder, isInternal)
+	err = extractFiles(tmpFile.Name(), pluginName, pluginsDir, isInternal)
 	if err != nil {
 		return errutil.Wrap("failed to extract plugin archive", err)
 	}
 
 	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
 
-	res, _ := services.ReadPlugin(pluginFolder, pluginName)
+	res, _ := services.ReadPlugin(pluginsDir, pluginName)
 	for _, v := range res.Dependencies.Plugins {
 		if err := InstallPlugin(v.Id, "", c, client); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", v.Id)

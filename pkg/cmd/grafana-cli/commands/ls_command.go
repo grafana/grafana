@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var ls_getPlugins func(path string) []models.InstalledPlugin = services.GetLocalPlugins
@@ -31,12 +32,12 @@ var validateLsCommand = func(pluginDir string) error {
 }
 
 func (cmd Command) lsCommand(c utils.CommandLine) error {
-	pluginDir := c.PluginDirectory()
-	if err := validateLsCommand(pluginDir); err != nil {
+	pluginsDir := setting.PluginsPath
+	if err := validateLsCommand(pluginsDir); err != nil {
 		return err
 	}
 
-	plugins := ls_getPlugins(pluginDir)
+	plugins := ls_getPlugins(pluginsDir)
 
 	if len(plugins) > 0 {
 		logger.Info("installed plugins:\n")

@@ -462,7 +462,7 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 		}
 	}
 
-	userConfig, err := ini.Load(configFile)
+	userConfig, err := ini.Load(makeAbsolute(configFile, HomePath))
 	if err != nil {
 		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
 	}

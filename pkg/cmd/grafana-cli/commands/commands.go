@@ -53,6 +53,23 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
+		debug := cmd.Bool("debug")
+
+		cfg := setting.NewCfg()
+
+		configOptions := strings.Split(cmd.String("configOverrides"), " ")
+		if err := cfg.Load(&setting.CommandLineArgs{
+			Config:   cmd.ConfigFile(),
+			HomePath: cmd.HomePath(),
+			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
+		}); err != nil {
+			return errutil.Wrap("failed to load configuration", err)
+		}
+
+		if debug {
+			cfg.LogConfigSources()
+		}
+
 		if err := command(cmd); err != nil {
 			return err
 		}
