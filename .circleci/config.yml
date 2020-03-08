@@ -9,7 +9,9 @@ aliases:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
   - &filter-only-release-test
     branches:
-      only: chore/new-release-pipeline
+      ignore: /.*/
+    tags:
+      only: /^vtest-new-release-pipeline$/
   - &filter-not-release-or-master
     tags:
       ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
@@ -25,7 +27,9 @@ aliases:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
   - &filter-master-or-release-test
     branches:
-      only: chore/new-release-pipeline
+      ignore: /.*/
+    tags:
+      only: /^vtest-new-release-pipeline$/
 
 executors:
   grafana-build:
@@ -83,8 +87,13 @@ jobs:
       - run:
           name: Build Grafana backend
           command: |
-            /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
-              --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
+            if [[ -z $CIRCLE_TAG ]]; then
+              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+                --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
+            else
+              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+                --variants << parameters.variant >> $CIRCLE_TAG
+            fi
       - run:
           name: Move artifacts
           command: mkdir -p << parameters.edition >> && mv bin << parameters.edition >>/
@@ -290,7 +299,12 @@ jobs:
           command: cp -r /tmp/workspace/oss/* .
       - run:
           name: Package Grafana
-          command: /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID
+          command: |
+            if [[ -z $CIRCLE_TAG ]]; then
+              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID
+            else
+              /tmp/workspace/bin/grabpl package --edition oss $CIRCLE_TAG
+            fi
       - run:
           name: Move artifacts
           command: |
@@ -323,7 +337,12 @@ jobs:
           command: cp -r /tmp/workspace/enterprise/* .
       - run:
           name: Package Grafana
-          command: /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
+          command: |
+            if [[ -z $CIRCLE_TAG ]]; then
+              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
+            else
+              /tmp/workspace/bin/grabpl package --edition enterprise $CIRCLE_TAG
+            fi
       - run:
           name: Move artifacts
           command: |
@@ -347,8 +366,6 @@ jobs:
     parameters:
       edition:
         type: string
-      versionMode:
-        type: string
     executor: grafana-publish
     steps:
       - attach_workspace:
@@ -359,9 +376,15 @@ jobs:
           command: ./scripts/ci-job-started.sh
       - run:
           name: Publish packages
-          command: /tmp/workspace/bin/grabpl publish-packages --edition << parameters.edition >> --version-mode << parameters.versionMode >> --deb-db-bucket grafana-aptly-db-test --deb-repo-bucket grafana-repo-test --packages-bucket grafana-downloads-test
+          command: /tmp/workspace/bin/grabpl publish-packages --edition << parameters.edition >> --deb-db-bucket grafana-aptly-db-test --deb-repo-bucket grafana-repo-test --packages-bucket grafana-downloads-test --simulate-release
 
-  docker-oss-master:
+  build-docker-images:
+    description: "Build Docker images"
+    parameters:
+      edition:
+        type: string
+      ubuntu:
+        type: boolean
     executor: docker
     steps:
       - attach_workspace:
@@ -371,32 +394,20 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - run: docker info
+      # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
           name: Copy Grafana archives
           command: |
-            cp /tmp/workspace/oss/dist/grafana-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
-            cp /tmp/workspace/oss/dist/grafana-*.linux-armv7-musl.tar.gz packaging/docker/grafana-latest.linux-armv7-musl.tar.gz
-            cp /tmp/workspace/oss/dist/grafana-*.linux-arm64-musl.tar.gz packaging/docker/grafana-latest.linux-arm64-musl.tar.gz
+            cp -r /tmp/workspace/<< parameters.edition >>/dist .
       - run:
           name: Build Docker images
           command: |
-            pushd packaging/docker && ./build.sh "master-${CIRCLE_SHA1}" && popd
-            mkdir docker
-            docker save -o docker/grafana-oss-amd64.tar "grafana/grafana:master-${CIRCLE_SHA1}"
-            docker save -o docker/grafana-oss-arm32v7.tar "grafana/grafana-arm32v7-linux:master-${CIRCLE_SHA1}"
-            docker save -o docker/grafana-oss-arm64v8.tar "grafana/grafana-arm64v8-linux:master-${CIRCLE_SHA1}"
-      # Publish dev image, since e2e tests need it
-      - run:
-          name: Publish development Docker image
-          command: |
-            docker tag "grafana/grafana:master-${CIRCLE_SHA1}" "grafana/grafana-dev:master-${CIRCLE_SHA1}"
-            docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-            docker push "grafana/grafana-dev:master-${CIRCLE_SHA1}"
+            /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> --ubuntu << parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
       - persist_to_workspace:
           root: .
           paths:
-            - docker/grafana-oss*.tar
+            - docker/*.tar
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -406,143 +417,13 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
-  docker-ubuntu-oss-master:
-    executor: docker
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run: docker info
-      - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run:
-          name: Copy Grafana archives
-          command: |
-            cp /tmp/workspace/oss/dist/grafana-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
-            cp /tmp/workspace/oss/dist/grafana-*.linux-armv7.tar.gz packaging/docker/grafana-latest.linux-armv7.tar.gz
-            cp /tmp/workspace/oss/dist/grafana-*.linux-arm64.tar.gz packaging/docker/grafana-latest.linux-arm64.tar.gz
-      - run:
-          name: Build Docker images
-          command: |
-            pushd packaging/docker && ./build.sh --ubuntu "master-${CIRCLE_SHA1}" && popd
-            mkdir docker
-            docker save -o docker/grafana-oss-amd64-ubuntu.tar "grafana/grafana:master-${CIRCLE_SHA1}-ubuntu"
-            docker save -o docker/grafana-oss-arm32v7-ubuntu.tar "grafana/grafana-arm32v7-linux:master-${CIRCLE_SHA1}-ubuntu"
-            docker save -o docker/grafana-oss-arm64v8-ubuntu.tar "grafana/grafana-arm64v8-linux:master-${CIRCLE_SHA1}-ubuntu"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - docker/grafana-oss*.tar
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  docker-enterprise-master:
-    executor: docker
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run: docker info
-      - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run:
-          name: Copy Grafana archives
-          command: |
-            cp /tmp/workspace/enterprise/dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
-            cp /tmp/workspace/enterprise/dist/grafana-enterprise-*.linux-armv7-musl.tar.gz packaging/docker/grafana-latest.linux-armv7-musl.tar.gz
-            cp /tmp/workspace/enterprise/dist/grafana-enterprise-*.linux-arm64-musl.tar.gz packaging/docker/grafana-latest.linux-arm64-musl.tar.gz
-      - run:
-          name: Build Docker images
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            pushd packaging/docker
-            docker build -t "grafana/grafana-enterprise:master" --no-cache=true .
-            docker build -t "grafana/grafana-enterprise-arm32v7-linux:master" \
-              --build-arg BASE_IMAGE=arm32v7/alpine:3.10 \
-              --build-arg GRAFANA_TGZ=grafana-latest.linux-armv7-musl.tar.gz \
-              --no-cache=true .
-            docker build -t "grafana/grafana-enterprise-arm64v8-linux:master" \
-              --build-arg BASE_IMAGE=arm64v8/alpine:3.10 \
-              --build-arg GRAFANA_TGZ=grafana-latest.linux-arm64-musl.tar.gz \
-              --no-cache=true .
-            popd
-            mkdir docker
-            docker save -o docker/grafana-enterprise-amd64.tar "grafana/grafana-enterprise:master"
-            docker save -o docker/grafana-enterprise-arm32v7.tar "grafana/grafana-enterprise-arm32v7-linux:master"
-            docker save -o docker/grafana-enterprise-arm64v8.tar "grafana/grafana-enterprise-arm64v8-linux:master"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - docker/grafana-enterprise*.tar
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  docker-ubuntu-enterprise-master:
-    executor: docker
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run: docker info
-      - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run:
-          name: Copy Grafana archives
-          command: |
-            cp /tmp/workspace/enterprise/dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
-            cp /tmp/workspace/enterprise/dist/grafana-enterprise-*.linux-armv7.tar.gz packaging/docker/grafana-latest.linux-armv7.tar.gz
-            cp /tmp/workspace/enterprise/dist/grafana-enterprise-*.linux-arm64.tar.gz packaging/docker/grafana-latest.linux-arm64.tar.gz
-      - run:
-          name: Build Docker images
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            pushd packaging/docker
-            docker build -t "grafana/grafana-enterprise:master-ubuntu" --no-cache=true -f ubuntu.Dockerfile .
-            docker build -t "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu" \
-              --build-arg BASE_IMAGE=arm32v7/ubuntu:19.10 \
-              --build-arg GRAFANA_TGZ=grafana-latest.linux-armv7.tar.gz \
-              --no-cache=true -f ubuntu.Dockerfile .
-            docker build -t "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu" \
-              --build-arg BASE_IMAGE=arm64v8/ubuntu:19.10 \
-              --build-arg GRAFANA_TGZ=grafana-latest.linux-arm64.tar.gz \
-              --no-cache=true -f ubuntu.Dockerfile .
-            popd
-            mkdir docker
-            docker save -o docker/grafana-enterprise-amd64-ubuntu.tar "grafana/grafana-enterprise:master-ubuntu"
-            docker save -o docker/grafana-enterprise-arm32v7-ubuntu.tar "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu"
-            docker save -o docker/grafana-enterprise-arm64v8-ubuntu.tar "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - docker/grafana-enterprise*.tar
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  publish-docker-oss-master:
+  publish-docker-images:
+    description: Publish Docker images
+    parameters:
+      edition:
+        type: string
+      ubuntu:
+        type: boolean
     executor: docker
     steps:
       - attach_workspace:
@@ -552,175 +433,12 @@ jobs:
           name: CI job started
           command: ./scripts/ci-job-started.sh
       - run:
-          name: Load Docker images
-          command: |
-            docker load -i /tmp/workspace/docker/grafana-oss-amd64.tar
-            docker load -i /tmp/workspace/docker/grafana-oss-arm32v7.tar
-            docker load -i /tmp/workspace/docker/grafana-oss-arm64v8.tar
-      - run:
-          name: Log into Docker Hub
-          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+          name: Copy artifacts from workspace
+          command: cp -r /tmp/workspace/<< parameters.edition >>/docker .
       - run:
           name: Publish Docker images
           command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker tag "grafana/grafana:master-${CIRCLE_SHA1}" "grafana/grafana:master"
-            docker push "grafana/grafana:master"
-            docker tag "grafana/grafana-arm32v7-linux:master-${CIRCLE_SHA1}" "grafana/grafana-arm32v7-linux:master"
-            docker push "grafana/grafana-arm32v7-linux:master"
-            docker tag "grafana/grafana-arm64v8-linux:master-${CIRCLE_SHA1}" "grafana/grafana-arm64v8-linux:master"
-            docker push "grafana/grafana-arm64v8-linux:master"
-      - run:
-          name: Publish Docker manifest
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker manifest create "grafana/grafana:master" \
-              "grafana/grafana:master" \
-              "grafana/grafana-arm32v7-linux:master" \
-              "grafana/grafana-arm64v8-linux:master"
-            docker manifest push "grafana/grafana:master"
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  publish-docker-ubuntu-oss-master:
-    executor: docker
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: Load Docker images
-          command: |
-            mkdir docker
-            docker load -i /tmp/workspace/docker/grafana-oss-amd64-ubuntu.tar
-            docker load -i /tmp/workspace/docker/grafana-oss-arm32v7-ubuntu.tar
-            docker load -i /tmp/workspace/docker/grafana-oss-arm64v8-ubuntu.tar
-      - run:
-          name: Log into Docker Hub
-          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-      - run:
-          name: Publish Docker images
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker tag "grafana/grafana:master-${CIRCLE_SHA1}-ubuntu" "grafana/grafana:master-ubuntu"
-            docker push "grafana/grafana:master-ubuntu"
-            docker tag "grafana/grafana-arm32v7-linux:master-${CIRCLE_SHA1}-ubuntu" "grafana/grafana-arm32v7-linux:master-ubuntu"
-            docker push "grafana/grafana-arm32v7-linux:master-ubuntu"
-            docker tag "grafana/grafana-arm64v8-linux:master-${CIRCLE_SHA1}-ubuntu" "grafana/grafana-arm64v8-linux:master-ubuntu"
-            docker push "grafana/grafana-arm64v8-linux:master-ubuntu"
-      - run:
-          name: Publish Docker manifest
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker manifest create "grafana/grafana:master-ubuntu" \
-              "grafana/grafana:master-ubuntu" \
-              "grafana/grafana-arm32v7-linux:master-ubuntu" \
-              "grafana/grafana-arm64v8-linux:master-ubuntu"
-            docker manifest push "grafana/grafana:master-ubuntu"
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  publish-docker-enterprise-master:
-    executor: docker
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: Load Docker images
-          command: |
-            mkdir docker
-            docker load -i /tmp/workspace/docker/grafana-enterprise-amd64.tar
-            docker load -i /tmp/workspace/docker/grafana-enterprise-arm32v7.tar
-            docker load -i /tmp/workspace/docker/grafana-enterprise-arm64v8.tar
-      - run:
-          name: Log into Docker Hub
-          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-      - run:
-          name: Publish Docker images
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker push "grafana/grafana-enterprise:master"
-            docker push "grafana/grafana-enterprise-arm32v7-linux:master"
-            docker push "grafana/grafana-enterprise-arm64v8-linux:master"
-      - run:
-          name: Publish Docker manifest
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker manifest create "grafana/grafana-enterprise:master" \
-              "grafana/grafana-enterprise:master" \
-              "grafana/grafana-enterprise-arm32v7-linux:master" \
-              "grafana/grafana-enterprise-arm64v8-linux:master"
-            docker manifest push "grafana/grafana-enterprise:master"
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
-  publish-docker-ubuntu-enterprise-master:
-    executor: docker
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: Load Docker images
-          command: |
-            mkdir docker
-            docker load -i /tmp/workspace/docker/grafana-enterprise-amd64-ubuntu.tar
-            docker load -i /tmp/workspace/docker/grafana-enterprise-arm32v7-ubuntu.tar
-            docker load -i /tmp/workspace/docker/grafana-enterprise-arm64v8-ubuntu.tar
-      - run:
-          name: Log into Docker Hub
-          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-      - run:
-          name: Publish Docker images
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker push "grafana/grafana-enterprise:master-ubuntu"
-            docker push "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu"
-            docker push "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu"
-
-            # Publish dev image
-            docker tag "grafana/grafana-enterprise:master-ubuntu" \
-              "grafana/grafana-enterprise-dev:master-${CIRCLE_SHA1}"
-            docker push "grafana/grafana-enterprise-dev:master-${CIRCLE_SHA1}"
-            # deploy to kubernetes
-            ./packaging/docker/deploy_to_k8s.sh "grafana/grafana-enterprise-dev:master-${CIRCLE_SHA1}"
-      - run:
-          name: Publish Docker manifest
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker manifest create "grafana/grafana-enterprise:master-ubuntu" \
-              "grafana/grafana-enterprise:master-ubuntu" \
-              "grafana/grafana-enterprise-arm32v7-linux:master-ubuntu" \
-              "grafana/grafana-enterprise-arm64v8-linux:master-ubuntu"
-            docker manifest push "grafana/grafana-enterprise:master-ubuntu"
+            /tmp/workspace/bin/grabpl publish-docker --edition << parameters.edition >> --ubuntu << parameters.ubuntu >> --dry-run
       - run:
           name: CI job failed
           command: ./scripts/ci-job-failed.sh
@@ -1996,94 +1714,90 @@ workflows:
             - end-to-end-tests
             # TODO: Do we have more dependencies?
       - publish-packages:
-          filters: *filter-only-master
-          name: publish-oss-master-packages
+          filters: *filter-master-or-release-test
+          name: publish-oss-packages
           edition: oss
-          versionMode: master
           requires:
             - package-oss
             - build-oss-windows-installer
             - end-to-end-tests
             - build-release-publisher
       - publish-packages:
-          filters: *filter-only-release-test
-          name: publish-oss-release-packages
-          edition: oss
-          versionMode: release
-          requires:
-            - package-oss
-            - build-oss-windows-installer
-            - end-to-end-tests
-            - build-release-publisher
-      # TODO: Replicate for release
-      - docker-oss-master:
-          filters: *filter-only-master
-          requires:
-            - package-oss
-            - build-oss-windows-installer
-      # TODO: Replicate for release
-      - docker-ubuntu-oss-master:
-          filters: *filter-only-master
-          requires:
-            - package-oss
-            - build-oss-windows-installer
-      - publish-packages:
-          filters: *filter-only-master
-          name: publish-enterprise-master-packages
+          filters: *filter-master-or-release-test
+          name: publish-enterprise-packages
           edition: enterprise
-          versionMode: master
           requires:
             - package-enterprise
             - build-enterprise-windows-installer
             - end-to-end-tests
             - build-release-publisher
-      - publish-packages:
-          filters: *filter-only-release-test
-          name: publish-enterprise-release-packages
+      - build-docker-images:
+          filters: *filter-master-or-release-test
+          name: build-oss-docker-images
+          edition: oss
+          ubuntu: false
+          requires:
+            - package-oss
+            - build-oss-windows-installer
+      - build-docker-images:
+          filters: *filter-master-or-release-test
+          name: build-oss-ubuntu-docker-images
+          edition: oss
+          ubuntu: true
+          requires:
+            - package-oss
+            - build-oss-windows-installer
+      - build-docker-images:
+          filters: *filter-master-or-release-test
+          name: build-enterprise-docker-images
           edition: enterprise
-          versionMode: release
+          ubuntu: false
           requires:
             - package-enterprise
             - build-enterprise-windows-installer
-            - end-to-end-tests
-            - build-release-publisher
-      # TODO: Replicate for release
-      - docker-enterprise-master:
-          filters: *filter-only-master
+      - build-docker-images:
+          filters: *filter-master-or-release-test
+          name: build-enterprise-ubuntu-docker-images
+          edition: enterprise
+          ubuntu: true
           requires:
             - package-enterprise
-      # TODO: Replicate for release
-      - docker-ubuntu-enterprise-master:
-          filters: *filter-only-master
-          requires:
-            - package-enterprise
+            - build-enterprise-windows-installer
       - end-to-end-tests:
           filters: *filter-master-or-release-test
           requires:
-            - docker-oss-master
-      # TODO: Replicate for release
-      - publish-docker-oss-master:
-          filters: *filter-only-master
+            - build-oss-docker-images
+      - publish-docker-images:
+          filters: *filter-master-or-release-test
+          name: publish-oss-docker-images
+          edition: oss
+          ubuntu: false
           requires:
-            - docker-oss-master
+            - build-oss-docker-images
             - end-to-end-tests
-      # TODO: Replicate for release
-      - publish-docker-ubuntu-oss-master:
-          filters: *filter-only-master
+      - publish-docker-images:
+          filters: *filter-master-or-release-test
+          name: publish-oss-ubuntu-docker-images
+          edition: oss
+          ubuntu: true
           requires:
-            - docker-ubuntu-oss-master
+            - build-oss-ubuntu-docker-images
             - end-to-end-tests
-      # TODO: Replicate for release
-      - publish-docker-enterprise-master:
-          filters: *filter-only-master
+      - publish-docker-images:
+          filters: *filter-master-or-release-test
+          name: publish-enterprise-docker-images
+          edition: enterprise
+          ubuntu: false
           requires:
-            - docker-enterprise-master
+            - build-enterprise-docker-images
             - end-to-end-tests
-      # TODO: Replicate for release
-      - publish-docker-ubuntu-enterprise-master:
-          filters: *filter-only-master
+      - publish-docker-images:
+          filters: *filter-master-or-release-test
+          name: publish-enterprise-ubuntu-docker-images
+          edition: enterprise
+          ubuntu: true
           requires:
-            - docker-ubuntu-enterprise-master
+            - build-enterprise-ubuntu-docker-images
             - end-to-end-tests
 
   release:
