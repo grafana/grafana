@@ -86,7 +86,9 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const { projectName, metricType, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
+    const {
+      queryType: { metricType, projectName, filters, title, text, variableOptionGroup, labels, variableOptions },
+    } = this.state;
     const { datasource } = this.props;
 
     return (
