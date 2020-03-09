@@ -12,8 +12,9 @@ type Frame struct {
 	Name   string
 	Fields []*Field
 
-	RefID string
-	Meta  *QueryResultMeta
+	RefID    string
+	Meta     *QueryResultMeta
+	Warnings []Warning
 }
 
 // Field represents a column of data with a specific type.
@@ -36,6 +37,11 @@ func (f *Frame) AppendRow(vals ...interface{}) {
 	for i, v := range vals {
 		f.Fields[i].Vector.Append(v)
 	}
+}
+
+// AppendWarning adds warnings to the data frame.
+func (f *Frame) AppendWarning(message string, details string) {
+	f.Warnings = append(f.Warnings, Warning{Message: message, Details: details})
 }
 
 // AppendRowSafe adds a new row to the Frame by appending to each each element of vals to

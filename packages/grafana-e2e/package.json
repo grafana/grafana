@@ -5,6 +5,7 @@
   "version": "6.7.0-pre",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
+    "cli",
     "grafana",
     "e2e",
     "typescript"

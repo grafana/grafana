@@ -56,6 +56,7 @@ export class QueryEditor extends React.Component<Props, State> {
 
   async componentDidMount() {
     const { events, target, templateSrv, datasource } = this.props;
+    await datasource.ensureGCEDefaultProject();
     if (!target.projectName) {
       target.projectName = datasource.getDefaultProject();
     }
