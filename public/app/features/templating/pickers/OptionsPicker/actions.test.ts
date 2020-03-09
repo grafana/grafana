@@ -24,6 +24,21 @@ import { setCurrentVariableValue, changeVariableProp } from '../../state/sharedR
 import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
 
+const datasource = {
+  metricFindQuery: jest.fn(() => Promise.resolve([])),
+};
+
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+
+  return {
+    ...original,
+    getDataSourceSrv: jest.fn(() => ({
+      get: () => datasource,
+    })),
+  };
+});
+
 describe('options picker actions', () => {
   variableAdapters.set('query', createQueryVariableAdapter());
 
@@ -334,7 +349,6 @@ describe('options picker actions', () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
       const tag = createTag('tag', []);
       const variable = createVariable({ options, includeAll: false, tags: [tag] });
-      const clearOthers = false;
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
@@ -355,9 +369,12 @@ describe('options picker actions', () => {
   describe('when toggleAndFetchTag is dispatched without values', () => {
     it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
-      const tag = createTag('tag', []);
+      const tag = createTag('tag');
+      const values = [createMetric('b')];
       const variable = createVariable({ options, includeAll: false, tags: [tag] });
-      const clearOthers = false;
+
+      datasource.metricFindQuery.mockReset();
+      datasource.metricFindQuery.mockImplementation(() => Promise.resolve(values));
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
@@ -369,7 +386,7 @@ describe('options picker actions', () => {
         const [toggleTagAction] = actions;
         const expectedNumberOfActions = 1;
 
-        expect(toggleTagAction).toEqual(toggleTag(tag));
+        expect(toggleTagAction).toEqual(toggleTag({ ...tag, values: ['b'] }));
         return actions.length === expectedNumberOfActions;
       });
     });

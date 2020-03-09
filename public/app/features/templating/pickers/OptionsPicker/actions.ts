@@ -113,15 +113,15 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
     const picker = getState().templating.optionsPicker;
     const variable = getVariable<QueryVariableModel>(picker.uuid, getState());
 
-    const datasources = await getDataSourceSrv().get(variable.datasource ?? '');
+    const datasource = await getDataSourceSrv().get(variable.datasource ?? '');
     const query = variable.tagValuesQuery.replace('$tag', tagText);
     const options = { range: getTimeRange(variable), variable };
 
-    if (!datasources.metricFindQuery) {
+    if (!datasource.metricFindQuery) {
       return [];
     }
 
-    const results = await datasources.metricFindQuery(query, options);
+    const results = await datasource.metricFindQuery(query, options);
 
     if (!Array.isArray(results)) {
       return [];
