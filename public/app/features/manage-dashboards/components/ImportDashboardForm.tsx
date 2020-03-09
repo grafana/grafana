@@ -181,7 +181,7 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
                   error={uidExistsError}
                 >
                   <>
-                    {!uidReset && (
+                    {!uidReset ? (
                       <Forms.Input
                         size="md"
                         defaultValue="Value set"
@@ -190,12 +190,13 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
                           !this.state.uidReset && <Forms.Button onClick={this.onUidReset}>Change uid</Forms.Button>
                         }
                       />
+                    ) : (
+                      <Forms.Input
+                        size="md"
+                        name="uid"
+                        ref={register({ required: true, validate: async v => await this.validateUid(v) })}
+                      />
                     )}
-                    <Forms.Input
-                      size="md"
-                      name="uid"
-                      ref={register({ required: true, validate: async v => await this.validateUid(v) })}
-                    />
                   </>
                 </Forms.Field>
                 {inputs.map((input: any, index: number) => {
