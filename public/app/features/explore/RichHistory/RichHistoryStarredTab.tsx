@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { css } from 'emotion';
+import { uniqBy } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -93,9 +94,12 @@ export function RichHistoryStarredTab(props: Props) {
 
   const theme = useTheme();
   const styles = getStyles(theme);
-  const exploreDatasources = getExploreDatasources()?.map(d => {
-    return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
-  });
+  const listOfDsNamesWithQueries = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
+  const exploreDatasources = getExploreDatasources()
+    ?.filter(ds => listOfDsNamesWithQueries.includes(ds.name))
+    .map(d => {
+      return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
+    });
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.

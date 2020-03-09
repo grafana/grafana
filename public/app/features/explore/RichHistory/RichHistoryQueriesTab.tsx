@@ -49,9 +49,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           margin-top: ${theme.spacing.lg};
         }
         &:first-of-type {
-          margin-top: ${theme.spacing.sm};
           font-weight: ${theme.typography.weight.semibold};
-          margin-bottom: ${theme.spacing.xs};
+          margin-bottom: ${theme.spacing.md};
         }
       }
     `,

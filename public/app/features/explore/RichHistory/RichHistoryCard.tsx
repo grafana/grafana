@@ -20,16 +20,18 @@ interface Props {
   datasourceInstance: DataSourceApi;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
   const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
   const cardColor = theme.isLight ? theme.colors.white : theme.colors.dark7;
+  const cardBottomPadding = hasComment ? theme.spacing.sm : theme.spacing.xs;
+  const cardBoxShadow = theme.isLight ? `0px 2px 2px ${bgColor}` : `0px 2px 4px black`;
   return {
     queryCard: css`
       display: flex;
       border: 1px solid ${bgColor};
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing.sm} ${theme.spacing.sm} ${cardBottomPadding};
       margin: ${theme.spacing.sm} 0;
-      box-shadow: 0px 2px 2px ${bgColor};
+      box-shadow: ${cardBoxShadow};
       background-color: ${cardColor};
       border-radius: ${theme.border.radius};
       .starred {
@@ -53,7 +55,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     queryRow: css`
-      border-top: 2px solid ${bgColor};
+      border-top: 1px solid ${bgColor};
       font-weight: ${theme.typography.weight.bold};
       word-break: break-all;
       padding: 4px 2px;
@@ -64,18 +66,25 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     input: css`
       width: 100%;
+      font-size: ${theme.typography.size.sm};
       &:focus,
       &:active {
         outline: none;
       }
       &:placeholder {
         font-style: italic;
+        font-size: ${theme.typography.size.sm};
       }
     `,
     buttonRow: css`
       > * {
         margin-right: ${theme.spacing.xs};
       }
+    `,
+    comment: css`
+      overflow-wrap: break-word;
+      font-size: ${theme.typography.size.sm};
+      margin-top: ${theme.spacing.xs};
     `,
   };
 });
@@ -96,7 +105,7 @@ export function RichHistoryCard(props: Props) {
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, Boolean(query.comment));
 
   const changeQueries = () => {
     query.queries.forEach((q, i) => {
@@ -125,15 +134,7 @@ export function RichHistoryCard(props: Props) {
             </div>
           );
         })}
-        {!activeUpdateComment && query.comment && (
-          <div
-            className={css`
-              overflow-wrap: break-word;
-            `}
-          >
-            {query.comment}
-          </div>
-        )}
+        {!activeUpdateComment && query.comment && <div className={styles.comment}>{query.comment}</div>}
         {activeUpdateComment && (
           <div>
             <Forms.Input

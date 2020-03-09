@@ -58,7 +58,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     tabContent: css`
       background-color: ${tabContentBg};
-      padding: ${theme.spacing.lg} ${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md};
+      padding: ${theme.spacing.md};
     `,
     tabs: css`
       background-color: ${tabBarBg};
