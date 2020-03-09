@@ -210,7 +210,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
               from.toISOString(),
               to.toISOString(),
               queryRequest.refId,
-              queryResult.meta.gmdMeta
+              queryResult.meta.custom
             );
 
             return {

@@ -9,8 +9,6 @@ export enum LoadingState {
 }
 
 export interface QueryResultMeta {
-  [key: string]: any;
-
   // Match the result to the query
   requestId?: string;
 
@@ -21,7 +19,13 @@ export interface QueryResultMeta {
   limit?: number;
 
   // DatasSource Specific Values
-  custom?: Record<string, any>;
+  custom?: any;
+
+  // true if old legacy json field values, used to convert back to old json doc formats for old table panel
+  json?: boolean;
+
+  // Used to record transformations that where applied
+  transformations?: string[];
 }
 
 export interface QueryResultBase {

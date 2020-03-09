@@ -74,7 +74,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
-          meta: { gmdMeta: [] },
+          meta: { custom: [] },
           series: [
             {
               name: 'CPUUtilization_Average',
@@ -188,7 +188,7 @@ describe('CloudWatchDatasource', () => {
       });
 
       it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
-        response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
+        response.results['A'].meta.custom = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
@@ -200,7 +200,7 @@ describe('CloudWatchDatasource', () => {
       });
 
       it('should be built correctly if theres two search expressions returned in meta for a given query row', done => {
-        response.results['A'].meta.gmdMeta = [
+        response.results['A'].meta.custom = [
           { Expression: `REMOVE_EMPTY(SEARCH('first expression'))` },
           { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
         ];
@@ -215,7 +215,7 @@ describe('CloudWatchDatasource', () => {
       });
 
       it('should be built correctly if the query is a metric stat query', done => {
-        response.results['A'].meta.gmdMeta = [{ Period: '300' }];
+        response.results['A'].meta.custom = [{ Period: '300' }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
@@ -423,7 +423,7 @@ describe('CloudWatchDatasource', () => {
           error: '',
           refId: 'A',
           meta: {
-            gmdMeta: [
+            custom: [
               {
                 Period: 300,
               },

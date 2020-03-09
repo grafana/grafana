@@ -104,7 +104,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		}
 
 		queryResult.Series = append(queryResult.Series, timeSeries...)
-		queryResult.Meta.Set("gmdMeta", queryMeta)
+		queryResult.Meta.Set("custom", queryMeta)
 		results[refID] = queryResult
 	}
 
