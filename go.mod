@@ -2,7 +2,7 @@ module github.com/grafana/grafana
 
 go 1.13
 
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.19.1-0.20200309131134-6469ee406a21
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.19.1-0.20200309155635-afe2e8cdd5f9
 
 require (
 	cloud.google.com/go v0.38.0 // indirect
