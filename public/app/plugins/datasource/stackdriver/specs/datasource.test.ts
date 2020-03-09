@@ -180,7 +180,7 @@ describe('StackdriverDataSource', () => {
       });
 
       it('should replace the variable with the value', () => {
-        expect(interpolated.length).toBe(4);
+        expect(interpolated.length).toBe(3);
         expect(interpolated[2]).toBe('filtervalue1');
       });
     });
@@ -193,7 +193,7 @@ describe('StackdriverDataSource', () => {
       });
 
       it('should replace the variable with the value and not with regex formatting', () => {
-        expect(interpolated.length).toBe(4);
+        expect(interpolated.length).toBe(3);
         expect(interpolated[0]).toBe('resource.label.zone');
       });
     });

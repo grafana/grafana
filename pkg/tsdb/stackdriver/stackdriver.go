@@ -156,11 +156,13 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 
 		metricType := query.Model.Get("metricType").MustString()
 		filterParts := query.Model.Get("filters").MustArray()
+		slo := query.Model.Get("slo").MustString()
+		service := query.Model.Get("service").MustString()
 
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
-		params.Add("filter", buildFilterString(metricType, filterParts))
+		params.Add("filter", buildFilterString(metricType, filterParts, service, slo))
 		params.Add("view", query.Model.Get("view").MustString("FULL"))
 		setAggParams(&params, query, durationSeconds)
 
@@ -222,7 +224,11 @@ func interpolateFilterWildcards(value string) string {
 	return value
 }
 
-func buildFilterString(metricType string, filterParts []interface{}) string {
+func buildFilterString(metricType string, filterParts []interface{}, service string, slo string) string {
+	if service == "slo" {
+		return slo
+	}
+
 	filterString := ""
 	for i, part := range filterParts {
 		mod := i % 4
@@ -242,6 +248,7 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 			filterString += part.(string)
 		}
 	}
+
 	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
 }
 

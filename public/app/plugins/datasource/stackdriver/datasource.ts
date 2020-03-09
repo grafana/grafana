@@ -44,7 +44,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     await this.ensureGCEDefaultProject();
     const queries = options.targets
       .filter((target: StackdriverQuery) => {
-        return !target.hide && target.metricType;
+        return !target.hide && target.service === 'slo' ? !!target.slo : !!target.metricType;
       })
       .map((t: StackdriverQuery) => {
         return {
@@ -58,6 +58,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           groupBys: this.interpolateGroupBys(t.groupBys || [], options.scopedVars),
           view: t.view || 'FULL',
           filters: this.interpolateFilters(t.filters || [], options.scopedVars),
+          service: this.templateSrv.replace(t.service ?? '', options.scopedVars || {}),
+          slo: this.templateSrv.replace(t.slo || '', options.scopedVars || {}),
           aliasBy: this.templateSrv.replace(t.aliasBy!, options.scopedVars || {}),
           type: 'timeSeriesQuery',
           projectName: this.templateSrv.replace(t.projectName ? t.projectName : this.getDefaultProject()),
@@ -82,11 +84,11 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
     const completeFilter = _.chunk(filters, 4)
-      .map(([key, operator, value, condition = 'AND']) => ({
+      .map(([key, operator, value, condition]) => ({
         key,
         operator,
         value,
-        condition,
+        ...(condition && { condition }),
       }))
       .reduce((res, filter) => (filter.value ? [...res, filter] : res), []);
 
@@ -95,7 +97,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         this.templateSrv.replace(key, scopedVars || {}),
         operator,
         this.templateSrv.replace(value, scopedVars || {}, 'regex'),
-        condition,
+        ...(condition ? [condition] : []),
       ])
     );
 
