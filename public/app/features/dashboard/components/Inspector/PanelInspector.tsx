@@ -28,10 +28,11 @@ interface Props {
 
 export enum InspectTab {
   Data = 'data',
-  Raw = 'raw',
+  Request = 'request',
   Issue = 'issue',
   Meta = 'meta', // When result metadata exists
   Error = 'error',
+  Stats = 'stats',
 }
 
 interface State {
@@ -253,10 +254,30 @@ export class PanelInspector extends PureComponent<Props, State> {
     return <div>{error.message}</div>;
   }
 
-  renderRawJsonTab(last: PanelData) {
+  renderRequestTab() {
     return (
       <CustomScrollbar>
-        <JSONFormatter json={last} open={2} />
+        <JSONFormatter json={this.state.last} open={2} />
+      </CustomScrollbar>
+    );
+  }
+
+  renderStatsTab() {
+    return (
+      <CustomScrollbar>
+        <table className="filter-table">
+          <tbody>
+            <tr>
+              <td>Query time</td>
+            </tr>
+            <tr>
+              <td>Data processing time</td>
+            </tr>
+            <tr>
+              <td>Rendering time</td>
+            </tr>
+          </tbody>
+        </table>
       </CustomScrollbar>
     );
   }
@@ -270,6 +291,9 @@ export class PanelInspector extends PureComponent<Props, State> {
       tabs.push({ label: 'Data', value: InspectTab.Data });
     }
 
+    tabs.push({ label: 'Stats', value: InspectTab.Stats });
+    tabs.push({ label: 'Request', value: InspectTab.Request });
+
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
     }
@@ -277,8 +301,6 @@ export class PanelInspector extends PureComponent<Props, State> {
     if (error && error.message) {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
-
-    tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
 
     return (
       <InspectHeader
@@ -314,8 +336,9 @@ export class PanelInspector extends PureComponent<Props, State> {
                   <div style={{ width, height }}>
                     {tab === InspectTab.Meta && this.renderMetadataInspector()}
                     {tab === InspectTab.Issue && this.renderIssueTab()}
-                    {tab === InspectTab.Raw && this.renderRawJsonTab(last)}
+                    {tab === InspectTab.Request && this.renderRequestTab()}
                     {tab === InspectTab.Error && this.renderErrorTab(error)}
+                    {tab === InspectTab.Stats && this.renderStatsTab()}
                   </div>
                 );
               }}
