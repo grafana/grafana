@@ -14,23 +14,23 @@ export interface Props {
   isClearable?: boolean;
 }
 
-export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size = 'md', isClearable = false }) => {
-  const getDashboards = (query = '') => {
-    return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
-      return result.map((item: DashboardSearchHit) => ({
-        id: item.id,
-        value: item.id,
-        label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
-      }));
-    });
-  };
+const getDashboards = (query = '') => {
+  return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
+    return result.map((item: DashboardSearchHit) => ({
+      id: item.id,
+      value: item.id,
+      label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
+    }));
+  });
+};
 
+export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size = 'md', isClearable = false }) => {
   const debouncedSearch = debounce(getDashboards, 300, {
     leading: true,
     trailing: true,
   });
 
-  const [state, fetch] = useAsyncFn(debouncedSearch, []);
+  const [state, searchDashboards] = useAsyncFn(debouncedSearch, []);
 
   return (
     <Forms.AsyncSelect
@@ -38,7 +38,7 @@ export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size 
       isLoading={state.loading}
       isClearable={isClearable}
       defaultOptions={true}
-      loadOptions={fetch}
+      loadOptions={searchDashboards}
       onChange={onSelected}
       placeholder="Select dashboard"
       noOptionsMessage="No dashboards found"
