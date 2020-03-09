@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewDatasourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, plugin backendplugin.CorePlugin) *DatasourcePluginWrapperV2 {
-	return &DatasourcePluginWrapperV2{CorePlugin: plugin, logger: log, pluginId: pluginId, pluginType: pluginType}
+func NewDatasourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, plugin backendplugin.DataPlugin) *DatasourcePluginWrapperV2 {
+	return &DatasourcePluginWrapperV2{DataPlugin: plugin, logger: log, pluginId: pluginId, pluginType: pluginType}
 }
 
 type DatasourcePluginWrapperV2 struct {
-	backendplugin.CorePlugin
+	backendplugin.DataPlugin
 	logger     log.Logger
 	pluginId   string
 	pluginType string
@@ -30,7 +30,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		return nil, err
 	}
 
-	pbQuery := &pluginv2.DataQueryRequest{
+	pbQuery := &pluginv2.QueryDataRequest{
 		Config: &pluginv2.PluginConfig{
 			OrgId:                   ds.OrgId,
 			PluginId:                tw.pluginId,
@@ -77,7 +77,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		})
 	}
 
-	pbRes, err := tw.CorePlugin.DataQuery(ctx, pbQuery)
+	pbRes, err := tw.DataPlugin.QueryData(ctx, pbQuery)
 	if err != nil {
 		return nil, err
 	}

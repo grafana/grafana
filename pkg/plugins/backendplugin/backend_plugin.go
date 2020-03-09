@@ -33,7 +33,7 @@ type BackendPlugin struct {
 	logger         log.Logger
 	startFns       PluginStartFuncs
 	diagnostics    DiagnosticsPlugin
-	core           CorePlugin
+	resource       ResourcePlugin
 }
 
 func (p *BackendPlugin) start(ctx context.Context) error {
@@ -52,7 +52,12 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 			return err
 		}
 
-		rawBackend, err := rpcClient.Dispense("backend")
+		rawResource, err := rpcClient.Dispense("resource")
+		if err != nil {
+			return err
+		}
+
+		rawData, err := rpcClient.Dispense("data")
 		if err != nil {
 			return err
 		}
@@ -69,10 +74,16 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		}
 
 		client = &Client{}
-		if rawBackend != nil {
-			if plugin, ok := rawBackend.(CorePlugin); ok {
-				p.core = plugin
-				client.CorePlugin = plugin
+		if rawResource != nil {
+			if plugin, ok := rawResource.(ResourcePlugin); ok {
+				p.resource = plugin
+				client.ResourcePlugin = plugin
+			}
+		}
+
+		if rawData != nil {
+			if plugin, ok := rawData.(DataPlugin); ok {
+				client.DataPlugin = plugin
 			}
 		}
 
@@ -138,7 +149,7 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context, ch chan<- prometheus
 		return nil
 	}
 
-	res, err := p.diagnostics.CollectMetrics(ctx, &pluginv2.CollectMetrics_Request{})
+	res, err := p.diagnostics.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
@@ -174,19 +185,19 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context, ch chan<- prometheus
 	return nil
 }
 
-func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_Response, error) {
+func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealthResponse, error) {
 	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
-		return &pluginv2.CheckHealth_Response{
-			Status: pluginv2.CheckHealth_Response_UNKNOWN,
+		return &pluginv2.CheckHealthResponse{
+			Status: pluginv2.CheckHealthResponse_UNKNOWN,
 		}, nil
 	}
 
-	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealth_Request{})
+	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
-				return &pluginv2.CheckHealth_Response{
-					Status:  pluginv2.CheckHealth_Response_UNKNOWN,
+				return &pluginv2.CheckHealthResponse{
+					Status:  pluginv2.CheckHealthResponse_UNKNOWN,
 					Message: "Health check not implemented",
 				}, nil
 			}
@@ -200,13 +211,13 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (callResourceResultStream, error) {
 	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
 
-	if p.core == nil || p.client == nil || p.client.Exited() {
+	if p.resource == nil || p.client == nil || p.client.Exited() {
 		return nil, errors.New("plugin not running, cannot call resource")
 	}
 
-	reqHeaders := map[string]*pluginv2.CallResource_StringList{}
+	reqHeaders := map[string]*pluginv2.StringList{}
 	for k, v := range req.Headers {
-		reqHeaders[k] = &pluginv2.CallResource_StringList{Values: v}
+		reqHeaders[k] = &pluginv2.StringList{Values: v}
 	}
 
 	jsonDataBytes, err := req.Config.JSONData.ToDB()
@@ -214,7 +225,7 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		return nil, err
 	}
 
-	protoReq := &pluginv2.CallResource_Request{
+	protoReq := &pluginv2.CallResourceRequest{
 		Config: &pluginv2.PluginConfig{
 			OrgId:                   req.Config.OrgID,
 			PluginId:                req.Config.PluginID,
@@ -251,7 +262,7 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		}
 	}
 
-	protoStream, err := p.core.CallResource(ctx, protoReq)
+	protoStream, err := p.resource.CallResource(ctx, protoReq)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
