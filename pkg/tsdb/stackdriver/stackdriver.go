@@ -102,10 +102,8 @@ func (e *StackdriverExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuer
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
 	if err != nil {
-		slog.Debug("Stackdriver", "Auth", "Failed to use GCE auth: ", err)
 		return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
 	}
-	slog.Debug("Stackdriver", "Auth", "Successfully use GCE auth: ", gceDefaultProject)
 
 	queryResult.Meta.Set("defaultProject", gceDefaultProject)
 	result.Results[refId] = queryResult

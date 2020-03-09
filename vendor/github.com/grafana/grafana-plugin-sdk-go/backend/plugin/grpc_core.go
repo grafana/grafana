@@ -12,6 +12,10 @@ type CoreServer interface {
 	pluginv2.CoreServer
 }
 
+type CoreClient interface {
+	pluginv2.CoreClient
+}
+
 // CoreGRPCPlugin implements the GRPCPlugin interface from github.com/hashicorp/go-plugin.
 type CoreGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
@@ -38,21 +42,21 @@ func (s *coreGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryR
 	return s.server.DataQuery(ctx, req)
 }
 
-func (s *coreGRPCServer) CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
-	return s.server.CallResource(ctx, req)
+func (s *coreGRPCServer) CallResource(req *pluginv2.CallResource_Request, srv pluginv2.Core_CallResourceServer) error {
+	return s.server.CallResource(req, srv)
 }
 
 type coreGRPCClient struct {
 	client pluginv2.CoreClient
 }
 
-func (m *coreGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
-	return m.client.DataQuery(ctx, req)
+func (m *coreGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, opts ...grpc.CallOption) (*pluginv2.DataQueryResponse, error) {
+	return m.client.DataQuery(ctx, req, opts...)
 }
 
-func (m *coreGRPCClient) CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error) {
-	return m.client.CallResource(ctx, req)
+func (m *coreGRPCClient) CallResource(ctx context.Context, req *pluginv2.CallResource_Request, opts ...grpc.CallOption) (pluginv2.Core_CallResourceClient, error) {
+	return m.client.CallResource(ctx, req, opts...)
 }
 
 var _ CoreServer = &coreGRPCServer{}
-var _ CoreServer = &coreGRPCClient{}
+var _ CoreClient = &coreGRPCClient{}
