@@ -2,7 +2,7 @@ name: Build Grafana Storybook (test action)
 
 on:
   pull_request:
-    types: [opened, synchronize, labeled, edited]
+    types: [opened, synchronize, labeled]
 
 jobs:
   build:
@@ -18,7 +18,7 @@ jobs:
       - name: Build Storybook
         run: yarn storybook:build
       - name: Deploy Storybook
-        run: mv ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
+        run: mv -v ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
       - name: test
         run: ls ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}
       - uses: actions-hub/gcloud@master
@@ -27,4 +27,4 @@ jobs:
           APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_STORYBOOK_SERVICE_ACCOUNT }}
           CLI: gsutil
         with:
-          args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}  gs://grafana-storybook/${GITHUB_SHA::8}
+          args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/${GITHUB_SHA}  gs://grafana-storybook/${GITHUB_SHA}
