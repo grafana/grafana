@@ -336,8 +336,9 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, Wrap(GenerateSQLTestData))
 		apiRoute.Get("/tsdb/testdata/random-walk", Wrap(GetTestDataRandomWalk))
 
-		// DataSource w/ expressions
-		apiRoute.Post("/ds/query", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetricsV2))
+		// data endpoints
+		apiRoute.Post("/ds/query", bind(dtos.QueryDataRequest{}), Wrap(hs.QueryData))
+		apiRoute.Post("/ds/transform", bind(dtos.TransformDataRequest{}), Wrap(hs.TransformData))
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), Wrap(AlertTest))

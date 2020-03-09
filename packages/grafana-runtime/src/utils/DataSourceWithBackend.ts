@@ -25,17 +25,31 @@ export class DataSourceWithBackend<
    * Ideally final -- any other implementation would be wrong!
    */
   query(request: DataQueryRequest): Observable<DataQueryResponse> {
-    const { targets, intervalMs, maxDataPoints, range } = request;
+    const { targets, intervalMs, maxDataPoints, range, requestId } = request;
+    let rangeFrom: any = undefined;
+    let rangeTo: any = undefined;
+
+    if (range) {
+      rangeFrom = range.from.valueOf().toString();
+      rangeTo = range.to.valueOf().toString();
+    }
 
     let expressionCount = 0;
-    const orgId = config.bootData.user.orgId;
     const queries = targets.map(q => {
       if (q.datasource === ExpressionDatasourceID) {
         expressionCount++;
         return {
-          ...q,
           datasourceId: this.id,
-          orgId,
+          datasourceName: q.datasource,
+          refId: q.refId,
+          from: rangeFrom,
+          to: rangeTo,
+          intervalMs,
+          maxDataPoints,
+          model: {
+            ...q,
+            datasourceId: this.id,
+          },
         };
       }
       const dsName = q.datasource && q.datasource !== 'default' ? q.datasource : config.defaultDatasource;
@@ -44,29 +58,35 @@ export class DataSourceWithBackend<
         throw new Error('Unknown Datasource: ' + q.datasource);
       }
       return {
-        ...this.applyTemplateVariables(q),
         datasourceId: ds.id,
+        datasourceName: q.datasource,
+        refId: q.refId,
+        from: rangeFrom,
+        to: rangeTo,
         intervalMs,
         maxDataPoints,
-        orgId,
+        model: {
+          ...this.applyTemplateVariables(q),
+          datasourceId: ds.id,
+        },
       };
     });
 
     const body: any = {
-      expressionCount,
       queries,
     };
-    if (range) {
-      body.range = range;
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
-    }
 
     const req: Promise<DataQueryResponse> = getBackendSrv()
-      .post('/api/ds/query', body)
+      .datasourceRequest({
+        url: expressionCount > 0 ? '/api/ds/transform' : '/api/ds/query',
+        method: 'POST',
+        data: body,
+        requestId,
+      })
       .then((rsp: any) => {
-        return this.toDataQueryResponse(rsp);
+        return this.toDataQueryResponse(rsp?.data);
       });
+
     return from(req);
   }
 
