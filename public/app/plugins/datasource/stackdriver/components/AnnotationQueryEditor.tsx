@@ -5,7 +5,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
 
 import StackdriverDatasource from '../datasource';
-import { Metrics, Filters, AnnotationsHelp, Project } from './';
+import { Metrics, LabelFilter, AnnotationsHelp, Project } from './';
 import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
 
@@ -107,7 +107,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         >
           {metric => (
             <>
-              <Filters
+              <LabelFilter
                 labels={labels}
                 filters={filters}
                 onChange={value => this.onChange('filters', value)}
