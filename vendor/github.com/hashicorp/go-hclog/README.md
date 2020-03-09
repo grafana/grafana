@@ -132,7 +132,7 @@ Alternatively, you may configure the system-wide logger:
 
 ```go
 // log the standard logger from 'import "log"'
-log.SetOutput(appLogger.Writer(&hclog.StandardLoggerOptions{InferLevels: true}))
+log.SetOutput(appLogger.StandardWriter(&hclog.StandardLoggerOptions{InferLevels: true}))
 log.SetPrefix("")
 log.SetFlags(0)
 

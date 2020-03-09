@@ -2,6 +2,8 @@ module github.com/grafana/grafana
 
 go 1.13
 
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.19.1-0.20200309124716-6608b0c90a58
+
 require (
 	cloud.google.com/go v0.38.0 // indirect
 	github.com/BurntSushi/toml v0.3.1
@@ -33,7 +35,7 @@ require (
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.19.0
-	github.com/hashicorp/go-hclog v0.8.0
+	github.com/hashicorp/go-hclog v0.12.1
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/hashicorp/go-version v1.1.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
@@ -44,7 +46,6 @@ require (
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/lib/pq v1.2.0
 	github.com/linkedin/goavro/v2 v2.9.7
-	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/opentracing/opentracing-go v1.1.0

@@ -11,6 +11,7 @@ import (
 type stdlogAdapter struct {
 	log         Logger
 	inferLevels bool
+	forceLevel  Level
 }
 
 // Take the data, infer the levels if configured, and send it through
@@ -18,27 +19,38 @@ type stdlogAdapter struct {
 func (s *stdlogAdapter) Write(data []byte) (int, error) {
 	str := string(bytes.TrimRight(data, " \t\n"))
 
-	if s.inferLevels {
+	if s.forceLevel != NoLevel {
+		// Use pickLevel to strip log levels included in the line since we are
+		// forcing the level
+		_, str := s.pickLevel(str)
+
+		// Log at the forced level
+		s.dispatch(str, s.forceLevel)
+	} else if s.inferLevels {
 		level, str := s.pickLevel(str)
-		switch level {
-		case Trace:
-			s.log.Trace(str)
-		case Debug:
-			s.log.Debug(str)
-		case Info:
-			s.log.Info(str)
-		case Warn:
-			s.log.Warn(str)
-		case Error:
-			s.log.Error(str)
-		default:
-			s.log.Info(str)
-		}
+		s.dispatch(str, level)
 	} else {
 		s.log.Info(str)
 	}
 
 	return len(data), nil
+}
+
+func (s *stdlogAdapter) dispatch(str string, level Level) {
+	switch level {
+	case Trace:
+		s.log.Trace(str)
+	case Debug:
+		s.log.Debug(str)
+	case Info:
+		s.log.Info(str)
+	case Warn:
+		s.log.Warn(str)
+	case Error:
+		s.log.Error(str)
+	default:
+		s.log.Info(str)
+	}
 }
 
 // Detect, based on conventions, what log level this is.
