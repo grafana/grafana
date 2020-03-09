@@ -39,6 +39,8 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
         dispatch(
           updateLocation({
             path: newUrl,
+            replace: true,
+            query: {},
           })
         );
       }
