@@ -2,7 +2,7 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
-import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter, VariableQueryData } from './types';
+import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter, VariableQueryData, QueryType } from './types';
 import {
   DataSourceApi,
   DataQueryRequest,
@@ -40,29 +40,49 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return this.templateSrv.variables.map(v => `$${v.name}`);
   }
 
-  async getTimeSeries(options: DataQueryRequest<StackdriverQuery>) {
+  migrateQuery(query: StackdriverQuery): StackdriverQuery {
+    if (!query.hasOwnProperty('metricQuery')) {
+      const { hide, refId, datasource, key, queryType, maxLines, metric, ...rest } = query as any;
+      return {
+        refId,
+        hide,
+        queryType: QueryType.METRICS,
+        metricQuery: rest,
+      };
+    }
+    return query;
+  }
+
+  // async getTimeSeries(options: DataQueryRequest<StackdriverQuery>) {
+  async getTimeSeries(options: any) {
     await this.ensureGCEDefaultProject();
     const queries = options.targets
       .filter((target: StackdriverQuery) => {
-        return !target.hide && target.service === 'slo' ? !!target.slo : !!target.metricType;
+        return !target.hide;
       })
       .map((t: StackdriverQuery) => {
+        const { metricQuery, refId } = this.migrateQuery(t);
         return {
-          refId: t.refId,
+          refId,
           intervalMs: options.intervalMs,
           datasourceId: this.id,
-          metricType: this.templateSrv.replace(t.metricType, options.scopedVars || {}),
-          crossSeriesReducer: this.templateSrv.replace(t.crossSeriesReducer || 'REDUCE_MEAN', options.scopedVars || {}),
-          perSeriesAligner: this.templateSrv.replace(t.perSeriesAligner, options.scopedVars || {}),
-          alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod!, options.scopedVars || {}),
-          groupBys: this.interpolateGroupBys(t.groupBys || [], options.scopedVars),
-          view: t.view || 'FULL',
-          filters: this.interpolateFilters(t.filters || [], options.scopedVars),
-          service: this.templateSrv.replace(t.service ?? '', options.scopedVars || {}),
-          slo: this.templateSrv.replace(t.slo || '', options.scopedVars || {}),
-          aliasBy: this.templateSrv.replace(t.aliasBy!, options.scopedVars || {}),
+          metricType: this.templateSrv.replace(metricQuery.metricType, options.scopedVars || {}),
+          crossSeriesReducer: this.templateSrv.replace(
+            metricQuery.crossSeriesReducer || 'REDUCE_MEAN',
+            options.scopedVars || {}
+          ),
+          perSeriesAligner: this.templateSrv.replace(metricQuery.perSeriesAligner, options.scopedVars || {}),
+          alignmentPeriod: this.templateSrv.replace(metricQuery.alignmentPeriod!, options.scopedVars || {}),
+          groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], options.scopedVars),
+          view: metricQuery.view || 'FULL',
+          filters: this.interpolateFilters(metricQuery.filters || [], options.scopedVars),
+          service: this.templateSrv.replace(metricQuery.service ?? '', options.scopedVars || {}),
+          slo: this.templateSrv.replace(metricQuery.slo || '', options.scopedVars || {}),
+          aliasBy: this.templateSrv.replace(metricQuery.aliasBy!, options.scopedVars || {}),
           type: 'timeSeriesQuery',
-          projectName: this.templateSrv.replace(t.projectName ? t.projectName : this.getDefaultProject()),
+          projectName: this.templateSrv.replace(
+            metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject()
+          ),
         };
       });
 
@@ -108,17 +128,19 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     const response = await this.getTimeSeries({
       targets: [
         {
-          refId: refId,
+          refId,
           datasourceId: this.id,
-          projectName: this.templateSrv.replace(projectName),
-          metricType: this.templateSrv.replace(metricType),
-          groupBys: this.interpolateGroupBys(groupBys || [], {}),
-          crossSeriesReducer: 'REDUCE_NONE',
-          view: 'HEADERS',
+          metricQuery: {
+            projectName: this.templateSrv.replace(projectName),
+            metricType: this.templateSrv.replace(metricType),
+            groupBys: this.interpolateGroupBys(groupBys || [], {}),
+            crossSeriesReducer: 'REDUCE_NONE',
+            view: 'HEADERS',
+          },
         },
       ],
       range: this.timeSrv.timeRange(),
-    } as DataQueryRequest<StackdriverQuery>);
+    });
     const result = response.results[refId];
     return result && result.meta ? result.meta.labels : {};
   }
@@ -136,9 +158,9 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return interpolatedGroupBys;
   }
 
-  resolvePanelUnitFromTargets(targets: StackdriverQuery[]) {
+  resolvePanelUnitFromTargets(targets: any) {
     let unit;
-    if (targets.length > 0 && targets.every(t => t.unit === targets[0].unit)) {
+    if (targets.length > 0 && targets.every((t: any) => t.unit === targets[0].unit)) {
       if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit!)) {
         // @ts-ignore
         unit = stackdriverUnitMappings[targets[0].unit];

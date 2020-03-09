@@ -10,3 +10,4 @@ export { AlignmentPeriods } from './AlignmentPeriods';
 export { AliasBy } from './AliasBy';
 export { Aggregations } from './Aggregations';
 export { SimpleSelect } from './SimpleSelect';
+export { MetricQueryEditor } from './MetricQueryEditor';

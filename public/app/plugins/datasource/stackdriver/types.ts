@@ -36,7 +36,17 @@ export interface VariableQueryData {
   projectName: string;
 }
 
-export interface StackdriverQuery extends DataQuery {
+export enum QueryType {
+  METRICS = 'metrics',
+  SLO = 'slo',
+}
+
+export const queryTypes = [
+  { label: 'Metrics', value: QueryType.METRICS },
+  { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
+];
+
+export interface MetricQuery {
   projectName: string;
   unit?: string;
   metricType: string;
@@ -53,6 +63,11 @@ export interface StackdriverQuery extends DataQuery {
   valueType: string;
   datasourceId?: number;
   view?: string;
+}
+
+export interface StackdriverQuery extends DataQuery {
+  queryType: QueryType;
+  metricQuery: MetricQuery;
 }
 
 export interface StackdriverOptions extends DataSourceJsonData {

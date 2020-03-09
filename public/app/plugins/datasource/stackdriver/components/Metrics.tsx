@@ -40,6 +40,7 @@ export function Metrics(props: Props) {
 
   const { services, service, metrics } = state;
   const { metricType, templateVariableOptions, projectName } = props;
+  console.log({ metricType });
 
   const loadMetricDescriptors = async () => {
     if (projectName) {

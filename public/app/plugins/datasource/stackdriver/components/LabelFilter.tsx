@@ -27,7 +27,8 @@ export const LabelFilter: FunctionComponent<Props> = ({
   const options = [removeOption, variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))];
 
   return (
-    <>
+    <div className="gf-form-inline">
+      <label className="gf-form-label query-keyword width-9">Filter</label>
       {filters.map(({ key, operator, value, condition }, index) => (
         <Fragment key={index}>
           <Segment
@@ -84,6 +85,9 @@ export const LabelFilter: FunctionComponent<Props> = ({
           }
         />
       )}
-    </>
+      <div className="gf-form gf-form--grow">
+        <label className="gf-form-label gf-form-label--grow"></label>
+      </div>
+    </div>
   );
 };

@@ -3,7 +3,7 @@ import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from '
 import { SelectableValue } from '@grafana/data';
 import StackdriverDatasource from './datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { StackdriverQuery, MetricDescriptor, Filter } from './types';
+import { MetricDescriptor, Filter, MetricQuery } from './types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
   _.uniqBy(metricDescriptors, 'service');
@@ -61,7 +61,7 @@ export const getLabelKeys = async (
 };
 
 export const getAlignmentPickerData = (
-  { valueType, metricKind, perSeriesAligner }: Partial<StackdriverQuery>,
+  { valueType, metricKind, perSeriesAligner }: Partial<MetricQuery>,
   templateSrv: TemplateSrv
 ) => {
   const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!).map(option => ({

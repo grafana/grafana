@@ -1,5 +1,4 @@
 import { DataSourcePlugin } from '@grafana/data';
-import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import StackdriverDatasource from './datasource';
 import { QueryEditor } from './components/QueryEditor';
 import { StackdriverConfigCtrl } from './config_ctrl';
