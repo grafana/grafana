@@ -8,7 +8,7 @@ import memoizeOne from 'memoize-one';
 
 // Services & Utils
 import store from 'app/core/store';
-import config from 'app/core/config';
+
 // Components
 import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
@@ -321,19 +321,17 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 <i className={'fa fa-fw fa-plus icon-margin-right'} />
                 <span className="btn-title">{'\xA0' + 'Add query'}</span>
               </button>
-              {config.featureToggles.richHistory && (
-                <button
-                  aria-label="Rich history button"
-                  className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
-                    ['explore-active-button']: showRichHistory,
-                  })}
-                  onClick={this.toggleShowRichHistory}
-                  disabled={isLive}
-                >
-                  <i className={'fa fa-fw fa-history icon-margin-right '} />
-                  <span className="btn-title">{'\xA0' + 'Query history'}</span>
-                </button>
-              )}
+              <button
+                aria-label="Rich history button"
+                className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
+                  ['explore-active-button']: showRichHistory,
+                })}
+                onClick={this.toggleShowRichHistory}
+                disabled={isLive}
+              >
+                <i className={'fa fa-fw fa-history icon-margin-right '} />
+                <span className="btn-title">{'\xA0' + 'Query history'}</span>
+              </button>
             </div>
             <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
             <AutoSizer onResize={this.onResize} disableHeight>

@@ -68,8 +68,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     slider: css`
-      height: 300px;
-      position: absolute;
+      position: fixed;
     `,
     selectors: css`
       display: flex;
