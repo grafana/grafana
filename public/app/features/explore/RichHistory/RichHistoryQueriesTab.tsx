@@ -15,7 +15,7 @@ import {
   sortQueries,
   mapNumbertoTimeInSlider,
   createRetentionPeriodBoundary,
-  createQueryHeading,
+  mapQueriesToHeadings,
 } from 'app/core/utils/richHistory';
 
 // Components
@@ -111,6 +111,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         margin-left: ${theme.spacing.xxs};
       }
     `,
+    queries: css`
+      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.weight.regular};
+      margin-left: ${theme.spacing.xs};
+    `,
   };
 });
 
@@ -151,6 +156,11 @@ export function RichHistoryQueriesTab(props: Props) {
       q.ts < createRetentionPeriodBoundary(sliderRetentionFilter[0], true) &&
       q.ts > createRetentionPeriodBoundary(sliderRetentionFilter[1], false)
   );
+
+  /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
+   * are keys and arrays with queries that belong to that headings are values.
+   */
+  let mappedQueriesToHeadings = mapQueriesToHeadings(queriesWithinSelectedTimeline, sortOrder);
 
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
    *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
@@ -208,19 +218,17 @@ export function RichHistoryQueriesTab(props: Props) {
             />
           </div>
         </div>
-        {queriesWithinSelectedTimeline.map((q, i) => {
-          let currentHeading = createQueryHeading(q, sortOrder);
-          let previousHeading = i > 0 ? createQueryHeading(queriesWithinSelectedTimeline[i - 1], sortOrder) : '';
-          if (currentHeading !== previousHeading) {
-            return (
-              <div key={q.ts}>
-                <div className={styles.heading}>{currentHeading}</div>
-                <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />
+        {Object.keys(mappedQueriesToHeadings).map(heading => {
+          return (
+            <div key={heading}>
+              <div className={styles.heading}>
+                {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
-            );
-          } else {
-            return <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />;
-          }
+              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => (
+                <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />
+              ))}
+            </div>
+          );
         })}
         <div className={styles.feedback}>
           Query history is a beta feature. The history is local to your browse and is not shared with others.

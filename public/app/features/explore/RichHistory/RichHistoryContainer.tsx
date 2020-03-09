@@ -22,8 +22,10 @@ import { RichHistory, Tabs } from './RichHistory';
 import { deleteRichHistory } from '../state/actions';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
+  const handleShadow = theme.isLight ? `0px 2px 2px ${bgColor}` : `0px 2px 4px black`;
   return {
     container: css`
       position: fixed !important;
@@ -51,6 +53,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       top: -5px;
       left: calc(50% - 101px);
       padding: ${theme.spacing.xs};
+      box-shadow: ${handleShadow};
       cursor: grab;
       hr {
         border-top: 2px dotted ${theme.colors.gray70};

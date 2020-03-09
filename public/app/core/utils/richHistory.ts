@@ -236,3 +236,18 @@ export function createDataQuery(query: RichHistoryQuery, queryString: string, in
 
   return dataQuery;
 }
+
+export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
+  let mappedQueriesToHeadings: any = {};
+
+  query.forEach(q => {
+    let heading = createQueryHeading(q, sortOrder);
+    if (!(heading in mappedQueriesToHeadings)) {
+      mappedQueriesToHeadings[heading] = [q];
+    } else {
+      mappedQueriesToHeadings[heading] = [...mappedQueriesToHeadings[heading], q];
+    }
+  });
+
+  return mappedQueriesToHeadings;
+}

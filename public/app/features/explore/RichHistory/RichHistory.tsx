@@ -26,8 +26,8 @@ export enum Tabs {
 export const sortOrderOptions = [
   { label: 'Time ascending', value: SortOrder.Ascending },
   { label: 'Time descending', value: SortOrder.Descending },
-  { label: 'Datasource A-Z', value: SortOrder.DatasourceAZ },
-  { label: 'Datasource Z-A', value: SortOrder.DatasourceZA },
+  { label: 'Data source A-Z', value: SortOrder.DatasourceAZ },
+  { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
 ];
 
 interface RichHistoryProps extends Themeable {
@@ -130,7 +130,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     const styles = getStyles(theme);
 
     const QueriesTab = {
-      label: 'Query History',
+      label: 'Query history',
       value: Tabs.RichHistory,
       content: (
         <RichHistoryQueriesTab

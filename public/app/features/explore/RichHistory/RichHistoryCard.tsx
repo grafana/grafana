@@ -64,18 +64,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
         padding: 0 0 4px 0;
       }
     `,
-    input: css`
-      width: 100%;
-      font-size: ${theme.typography.size.sm};
-      &:focus,
-      &:active {
-        outline: none;
-      }
-      &:placeholder {
-        font-style: italic;
-        font-size: ${theme.typography.size.sm};
-      }
-    `,
     buttonRow: css`
       > * {
         margin-right: ${theme.spacing.xs};
@@ -137,8 +125,7 @@ export function RichHistoryCard(props: Props) {
         {!activeUpdateComment && query.comment && <div className={styles.comment}>{query.comment}</div>}
         {activeUpdateComment && (
           <div>
-            <Forms.Input
-              className={styles.input}
+            <Forms.TextArea
               value={comment}
               placeholder={comment ? undefined : 'add comment'}
               onChange={e => setComment(e.currentTarget.value)}
