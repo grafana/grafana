@@ -28,9 +28,9 @@ import { setCurrentVariableValue, changeVariableProp } from '../../state/sharedR
 import { toVariablePayload } from '../../state/types';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     if (key === NavigationKey.cancel) {
-      return dispatch(commitChangesToVariable());
+      return await dispatch(commitChangesToVariable());
     }
 
     if (key === NavigationKey.select) {
@@ -39,7 +39,7 @@ export const navigateOptions = (key: NavigationKey, clearOthers: boolean): Thunk
 
     if (key === NavigationKey.selectAndClose) {
       dispatch(toggleOptionByHighlight(clearOthers));
-      return dispatch(commitChangesToVariable());
+      return await dispatch(commitChangesToVariable());
     }
 
     if (key === NavigationKey.moveDown) {
