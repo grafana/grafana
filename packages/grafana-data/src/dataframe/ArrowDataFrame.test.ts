@@ -37,6 +37,13 @@ describe('GEL Utils', () => {
     const norm = frames.map(f => toDataFrameDTO(f));
     expect(norm).toMatchSnapshot();
   });
+
+  test('processEmptyResults', () => {
+    const frames = resultsToDataFrames({
+      results: { '': { refId: '', meta: null, series: null, tables: null, dataframes: null } },
+    });
+    expect(frames.length).toEqual(0);
+  });
 });
 
 describe('Read/Write arrow Table to DataFrame', () => {

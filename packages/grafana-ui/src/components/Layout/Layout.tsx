@@ -8,7 +8,7 @@ enum Orientation {
   Vertical,
 }
 type Spacing = 'xs' | 'sm' | 'md' | 'lg';
-type Justify = 'flex-start' | 'flex-end' | 'space-between';
+type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 
 export interface LayoutProps {
   children: React.ReactNode[];

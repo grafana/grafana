@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 
 export interface Props {
-  onChange: (perSeriesAligner: any) => void;
+  onChange: (perSeriesAligner: string) => void;
   templateVariableOptions: Array<SelectableValue<string>>;
   alignOptions: Array<SelectableValue<string>>;
   perSeriesAligner: string;

@@ -30,4 +30,5 @@ const Forms = {
   Legend,
 };
 
+export { ButtonVariant } from './Button';
 export default Forms;

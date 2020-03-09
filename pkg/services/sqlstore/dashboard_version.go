@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,8 +15,8 @@ func init() {
 }
 
 // GetDashboardVersion gets the dashboard version for the given dashboard ID and version number.
-func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
-	version := m.DashboardVersion{}
+func GetDashboardVersion(query *models.GetDashboardVersionQuery) error {
+	version := models.DashboardVersion{}
 	has, err := x.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=? AND dashboard.org_id=?", query.DashboardId, query.Version, query.OrgId).
 		Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 		Get(&version)
@@ -26,7 +26,7 @@ func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
 	}
 
 	if !has {
-		return m.ErrDashboardVersionNotFound
+		return models.ErrDashboardVersionNotFound
 	}
 
 	version.Data.Set("id", version.DashboardId)
@@ -35,7 +35,7 @@ func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
 }
 
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
-func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
+func GetDashboardVersions(query *models.GetDashboardVersionsQuery) error {
 	if query.Limit == 0 {
 		query.Limit = 1000
 	}
@@ -62,14 +62,14 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 	}
 
 	if len(query.Result) < 1 {
-		return m.ErrNoVersionsForDashboardId
+		return models.ErrNoVersionsForDashboardId
 	}
 	return nil
 }
 
 const MAX_VERSIONS_TO_DELETE = 100
 
-func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
+func DeleteExpiredVersions(cmd *models.DeleteExpiredVersionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		versionsToKeep := setting.DashboardVersionsToKeep
 		if versionsToKeep < 1 {

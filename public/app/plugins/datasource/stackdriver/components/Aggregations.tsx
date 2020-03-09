@@ -5,9 +5,10 @@ import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { getAggregationOptionsByMetric } from '../functions';
 import { ValueTypes, MetricKind } from '../constants';
+import { MetricDescriptor } from '../types';
 
 export interface Props {
-  onChange: (metricDescriptor: any) => void;
+  onChange: (metricDescriptor: MetricDescriptor[]) => void;
   metricDescriptor: {
     valueType: string;
     metricKind: string;

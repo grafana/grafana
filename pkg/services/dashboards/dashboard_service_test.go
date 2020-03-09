@@ -1,6 +1,8 @@
 package dashboards
 
 import (
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -14,7 +16,9 @@ func TestDashboardService(t *testing.T) {
 	Convey("Dashboard service tests", t, func() {
 		bus.ClearBusHandlers()
 
-		service := &dashboardServiceImpl{}
+		service := &dashboardServiceImpl{
+			log: log.New("test.logger"),
+		}
 
 		origNewDashboardGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
@@ -183,6 +187,43 @@ func TestDashboardService(t *testing.T) {
 				_, err := service.SaveProvisionedDashboard(dto, nil)
 				So(err, ShouldBeNil)
 				So(provisioningValidated, ShouldBeFalse)
+			})
+
+			Convey("Should override invalid refresh interval if dashboard is provisioned", func() {
+				oldRefreshInterval := setting.MinRefreshInterval
+				setting.MinRefreshInterval = "5m"
+				defer func() { setting.MinRefreshInterval = oldRefreshInterval }()
+
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+					cmd.Result = &models.DashboardProvisioning{}
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				dto.Dashboard = models.NewDashboard("Dash")
+				dto.Dashboard.SetId(3)
+				dto.User = &models.SignedInUser{UserId: 1}
+				dto.Dashboard.Data.Set("refresh", "1s")
+				_, err := service.SaveProvisionedDashboard(dto, nil)
+				So(err, ShouldBeNil)
+				So(dto.Dashboard.Data.Get("refresh").MustString(), ShouldEqual, "5m")
+
 			})
 		})
 
