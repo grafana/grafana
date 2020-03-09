@@ -111,18 +111,21 @@ import { Forms } from '@grafana/ui';
 ```
 Note that when using `Forms.InputControl`, it expects the name of the prop that handles input change to be called `onChange`.
 If the property is named differently for any specific component, additional `onChangeName` prop has to be provided, specifying the name.
-Additionally the value to for the `onChange` prop is passed as an array. Check [react-hook-form docs](https://react-hook-form.com/api/#Controller)
+Additionally, the value to for the `onChange` prop is passed as an array. Check [react-hook-form docs](https://react-hook-form.com/api/#Controller)
 for more prop options.
 
 ```jsx
-{/* In case of Select the value has to be returned as an object with a `value` key */}
-const onSelectChange = ([value]) => ({ value });
+{/* In case of Select the value has to be returned as an object with a `value` key for the value to be saved to form data */}
+const onSelectChange = ([value]) => {
+  // ...
+  return { value };
+}
 
 <Field label="SelectExample">
   <Forms.InputControl
     as={Select}
     control={control}
-    name="select"
+    name="select"x
     onSelectChange={onSelectChange}
     {/* Pass the name of the on change handler */}
     onChangeName='onSelectChange'
