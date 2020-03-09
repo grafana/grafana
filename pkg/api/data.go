@@ -12,7 +12,7 @@ import (
 // POST /api/ds/query
 func (hs *HTTPServer) QueryData(c *models.ReqContext, reqDto dtos.QueryDataRequest) Response {
 	if len(reqDto.Queries) == 0 {
-		return Error(500, "No queries found in query", nil)
+		return Error(500, "No queries found in request", nil)
 	}
 
 	request := &tsdb.TsdbQuery{
@@ -27,9 +27,9 @@ func (hs *HTTPServer) QueryData(c *models.ReqContext, reqDto dtos.QueryDataReque
 			ds, err = hs.DatasourceCache.GetDatasource(query.DatasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
 				if err == models.ErrDataSourceAccessDenied {
-					return Error(403, "Access denied to datasource", err)
+					return Error(403, "Access to datasource denied", err)
 				}
-				return Error(500, "Unable to load datasource meta data", err)
+				return Error(500, "Unable to load datasource metadata", err)
 			}
 		}
 
@@ -81,7 +81,7 @@ func (hs *HTTPServer) TransformData(c *models.ReqContext, reqDto dtos.TransformD
 	}
 
 	if len(reqDto.Queries) == 0 {
-		return Error(500, "No queries found in query", nil)
+		return Error(500, "No queries found in request", nil)
 	}
 
 	request := &tsdb.TsdbQuery{
@@ -105,9 +105,9 @@ func (hs *HTTPServer) TransformData(c *models.ReqContext, reqDto dtos.TransformD
 			ds, err = hs.DatasourceCache.GetDatasource(query.DatasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
 				if err == models.ErrDataSourceAccessDenied {
-					return Error(403, "Access denied to datasource", err)
+					return Error(403, "Access to datasource denied", err)
 				}
-				return Error(500, "Unable to load datasource meta data", err)
+				return Error(500, "Unable to load datasource metadata", err)
 			}
 		}
 
