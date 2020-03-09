@@ -59,7 +59,7 @@ describe('options picker actions', () => {
         ...createOption('A'),
         selected: true,
         value: ['A'],
-        tags: [],
+        tags: [] as any[],
       };
 
       tester.thenDispatchedActionPredicateShouldEqual(actions => {
@@ -205,7 +205,7 @@ describe('options picker actions', () => {
         ...createOption('B'),
         selected: true,
         value: ['B'],
-        tags: [],
+        tags: [] as any[],
       };
 
       tester.thenDispatchedActionPredicateShouldEqual(actions => {
@@ -263,8 +263,8 @@ describe('options picker actions', () => {
       const option = {
         ...createOption(''),
         selected: true,
-        value: [],
-        tags: [],
+        value: [] as any[],
+        tags: [] as any[],
       };
 
       tester.thenDispatchedActionPredicateShouldEqual(actions => {
@@ -300,7 +300,7 @@ describe('options picker actions', () => {
         ...createOption('A'),
         selected: true,
         value: ['A'],
-        tags: [],
+        tags: [] as any[],
       };
 
       tester.thenDispatchedActionPredicateShouldEqual(actions => {
