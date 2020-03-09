@@ -762,7 +762,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run: docker load -i /tmp/docker/grafana-oss-amd64.tar
-      - run: docker run -d -p 3000:3000 "PR-${CIRCLE_SHA1}"
+      - run: docker run -d -p 3000:3000 "grafana/grafana:pr-${CIRCLE_SHA1}"
       - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
       - run:
           name: CI job started
@@ -1333,7 +1333,7 @@ jobs:
           command: |
             pushd packaging/docker && ./build.sh --fast "pr-${CIRCLE_SHA1}" && popd
             mkdir docker
-            docker save -o docker/grafana-oss-amd64.tar "pr-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-amd64.tar "grafana/grafana:pr-${CIRCLE_SHA1}"
       - persist_to_workspace:
           root: .
           paths:
