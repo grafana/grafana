@@ -31,7 +31,7 @@ export const onUpdateDatasourceJsonDataOptionChecked = <J, S, K extends keyof J>
   props: DataSourcePluginOptionsEditorProps<J, S>,
   key: K,
   val: boolean
-) => (event: React.SyntheticEvent<HTMLInputElement> | undefined) => {
+) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
   updateDatasourcePluginJsonDataOption(props, key, val);
 };
 
