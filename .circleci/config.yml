@@ -1317,11 +1317,12 @@ jobs:
           when: on_success
 
   grafana-docker-pr:
-    executor: docker
+    machine:
+      image: circleci/classic:201808-01
     steps:
+      - checkout
       - attach_workspace:
           at: .
-      - checkout
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
