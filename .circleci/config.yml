@@ -1331,9 +1331,9 @@ jobs:
       - run:
           name: Build Docker images
           command: |
-            pushd packaging/docker && ./build.sh --fast "PR-${CIRCLE_SHA1}" && popd
+            pushd packaging/docker && ./build.sh --fast "pr-${CIRCLE_SHA1}" && popd
             mkdir docker
-            docker save -o docker/grafana-oss-amd64.tar "PR-${CIRCLE_SHA1}"
+            docker save -o docker/grafana-oss-amd64.tar "pr-${CIRCLE_SHA1}"
       - persist_to_workspace:
           root: .
           paths:
