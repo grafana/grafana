@@ -2,7 +2,7 @@ import React, { FunctionComponent, Fragment } from 'react';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
-import { labelsToGroupedOptions, toOption } from '../functions';
+import { labelsToGroupedOptions, filtersToStringArray, stringArrayToFilters, toOption } from '../functions';
 import { Filter } from '../types';
 
 export interface Props {
@@ -15,18 +15,8 @@ export interface Props {
 const removeText = '-- remove filter --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText, icon: 'fa fa-remove' };
 const operators = ['=', '!=', '=~', '!=~'];
-const filtersToStringArray = (filters: Filter[]) =>
-  _.flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition]));
 
-const stringArrayToFilters = (filterArray: string[]) =>
-  _.chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
-    key,
-    operator,
-    value,
-    condition,
-  }));
-
-export const Filters: FunctionComponent<Props> = ({
+export const LabelFilter: FunctionComponent<Props> = ({
   labels = {},
   filters: filterArray,
   onChange,
@@ -37,8 +27,7 @@ export const Filters: FunctionComponent<Props> = ({
   const options = [removeOption, variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))];
 
   return (
-    <div className="gf-form-inline">
-      <label className="gf-form-label query-keyword width-9">Filter</label>
+    <>
       {filters.map(({ key, operator, value, condition }, index) => (
         <Fragment key={index}>
           <Segment
@@ -95,9 +84,6 @@ export const Filters: FunctionComponent<Props> = ({
           }
         />
       )}
-      <div className="gf-form gf-form--grow">
-        <label className="gf-form-label gf-form-label--grow"></label>
-      </div>
-    </div>
+    </>
   );
 };

@@ -551,20 +551,20 @@ func TestStackdriver(t *testing.T) {
 			Convey("and theres no regex operator", func() {
 				Convey("and there are wildcards in a filter value", func() {
 					filterParts := []interface{}{"zone", "=", "*-central1*"}
-					value := buildFilterString("somemetrictype", filterParts)
+					value := buildFilterString("somemetrictype", filterParts, "", "")
 					So(value, ShouldEqual, `metric.type="somemetrictype" zone=has_substring("-central1")`)
 				})
 
 				Convey("and there are no wildcards in any filter value", func() {
 					filterParts := []interface{}{"zone", "!=", "us-central1-a"}
-					value := buildFilterString("somemetrictype", filterParts)
+					value := buildFilterString("somemetrictype", filterParts, "", "")
 					So(value, ShouldEqual, `metric.type="somemetrictype" zone!="us-central1-a"`)
 				})
 			})
 
 			Convey("and there is a regex operator", func() {
 				filterParts := []interface{}{"zone", "=~", "us-central1-a~"}
-				value := buildFilterString("somemetrictype", filterParts)
+				value := buildFilterString("somemetrictype", filterParts, "", "")
 				Convey("it should remove the ~ character from the operator that belongs to the value", func() {
 					So(value, ShouldNotContainSubstring, `=~`)
 					So(value, ShouldContainSubstring, `zone=`)

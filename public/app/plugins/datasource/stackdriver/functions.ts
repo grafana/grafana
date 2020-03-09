@@ -3,7 +3,7 @@ import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from '
 import { SelectableValue } from '@grafana/data';
 import StackdriverDatasource from './datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { StackdriverQuery, MetricDescriptor } from './types';
+import { StackdriverQuery, MetricDescriptor, Filter } from './types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
   _.uniqBy(metricDescriptors, 'service');
@@ -91,5 +91,18 @@ export const labelsToGroupedOptions = (groupBys: string[]) => {
   }, {});
   return Object.entries(groups).map(([label, options]) => ({ label, options, expanded: true }), []);
 };
+
+export const filtersToStringArray = (filters: Filter[]) => {
+  const strArr = _.flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition]));
+  return strArr.filter((_, i) => i !== strArr.length - 1);
+};
+
+export const stringArrayToFilters = (filterArray: string[]) =>
+  _.chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
+    key,
+    operator,
+    value,
+    condition,
+  }));
 
 export const toOption = (value: string) => ({ label: value, value } as SelectableValue<string>);

@@ -47,6 +47,7 @@ export interface StackdriverQuery extends DataQuery {
   perSeriesAligner: string;
   groupBys?: string[];
   filters?: string[];
+  slo?: string;
   aliasBy?: string;
   metricKind: string;
   valueType: string;
@@ -100,5 +101,5 @@ export interface Filter {
   key: string;
   operator: string;
   value: string;
-  condition: string;
+  condition?: string;
 }
