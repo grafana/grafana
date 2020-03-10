@@ -140,7 +140,8 @@
         </div>
         <div class="gf-form" ng-repeat="nc in ctrl.alertNotifications">
           <span class="gf-form-label">
-            <i class="{{nc.iconClass}}"></i>&nbsp;{{nc.name}}&nbsp;
+            <i class="{{nc.iconClass}}"></i>
+            &nbsp;{{nc.name}}&nbsp;<span ng-if="nc.isDefault">(default)</span>
             <i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification(nc)" ng-if="nc.isDefault === false"></i>
           </span>
         </div>
