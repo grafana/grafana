@@ -7,13 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetPendingOrgInvites(c *m.ReqContext) Response {
-	query := m.GetTempUsersQuery{OrgId: c.OrgId, Status: m.TmpUserInvitePending}
+func GetPendingOrgInvites(c *models.ReqContext) Response {
+	query := models.GetTempUsersQuery{OrgId: c.OrgId, Status: models.TmpUserInvitePending}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return Error(500, "Failed to get invites from db", err)
@@ -26,15 +26,15 @@ func GetPendingOrgInvites(c *m.ReqContext) Response {
 	return JSON(200, query.Result)
 }
 
-func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
+func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	if !inviteDto.Role.IsValid() {
 		return Error(400, "Invalid role specified", nil)
 	}
 
 	// first try get existing user
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
+	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
 	if err := bus.Dispatch(&userQuery); err != nil {
-		if err != m.ErrUserNotFound {
+		if err != models.ErrUserNotFound {
 			return Error(500, "Failed to query db for existing user check", err)
 		}
 	} else {
@@ -45,11 +45,11 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 		return Error(400, "Cannot invite when login is disabled.", nil)
 	}
 
-	cmd := m.CreateTempUserCommand{}
+	cmd := models.CreateTempUserCommand{}
 	cmd.OrgId = c.OrgId
 	cmd.Email = inviteDto.LoginOrEmail
 	cmd.Name = inviteDto.Name
-	cmd.Status = m.TmpUserInvitePending
+	cmd.Status = models.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
 	var err error
 	cmd.Code, err = util.GetRandomString(30)
@@ -65,7 +65,7 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 
 	// send invite email
 	if inviteDto.SendEmail && util.IsEmail(inviteDto.LoginOrEmail) {
-		emailCmd := m.SendEmailCommand{
+		emailCmd := models.SendEmailCommand{
 			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite.html",
 			Data: map[string]interface{}{
@@ -78,13 +78,13 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 		}
 
 		if err := bus.Dispatch(&emailCmd); err != nil {
-			if err == m.ErrSmtpNotEnabled {
+			if err == models.ErrSmtpNotEnabled {
 				return Error(412, err.Error(), err)
 			}
 			return Error(500, "Failed to send email invite", err)
 		}
 
-		emailSentCmd := m.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
+		emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
 		if err := bus.Dispatch(&emailSentCmd); err != nil {
 			return Error(500, "Failed to update invite with email sent info", err)
 		}
@@ -95,18 +95,18 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	return Success(fmt.Sprintf("Created invite for %s", inviteDto.LoginOrEmail))
 }
 
-func inviteExistingUserToOrg(c *m.ReqContext, user *m.User, inviteDto *dtos.AddInviteForm) Response {
+func inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto *dtos.AddInviteForm) Response {
 	// user exists, add org role
-	createOrgUserCmd := m.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.Id, Role: inviteDto.Role}
+	createOrgUserCmd := models.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.Id, Role: inviteDto.Role}
 	if err := bus.Dispatch(&createOrgUserCmd); err != nil {
-		if err == m.ErrOrgUserAlreadyAdded {
+		if err == models.ErrOrgUserAlreadyAdded {
 			return Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
 		return Error(500, "Error while trying to create org user", err)
 	}
 
 	if inviteDto.SendEmail && util.IsEmail(user.Email) {
-		emailCmd := m.SendEmailCommand{
+		emailCmd := models.SendEmailCommand{
 			To:       []string{user.Email},
 			Template: "invited_to_org.html",
 			Data: map[string]interface{}{
@@ -124,8 +124,8 @@ func inviteExistingUserToOrg(c *m.ReqContext, user *m.User, inviteDto *dtos.AddI
 	return Success(fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName))
 }
 
-func RevokeInvite(c *m.ReqContext) Response {
-	if ok, rsp := updateTempUserStatus(c.Params(":code"), m.TmpUserRevoked); !ok {
+func RevokeInvite(c *models.ReqContext) Response {
+	if ok, rsp := updateTempUserStatus(c.Params(":code"), models.TmpUserRevoked); !ok {
 		return rsp
 	}
 
@@ -135,17 +135,17 @@ func RevokeInvite(c *m.ReqContext) Response {
 // GetInviteInfoByCode gets a pending user invite corresponding to a certain code.
 // A response containing an InviteInfo object is returned if the invite is found.
 // If a (pending) invite is not found, 404 is returned.
-func GetInviteInfoByCode(c *m.ReqContext) Response {
-	query := m.GetTempUserByCodeQuery{Code: c.Params(":code")}
+func GetInviteInfoByCode(c *models.ReqContext) Response {
+	query := models.GetTempUserByCodeQuery{Code: c.Params(":code")}
 	if err := bus.Dispatch(&query); err != nil {
-		if err == m.ErrTempUserNotFound {
+		if err == models.ErrTempUserNotFound {
 			return Error(404, "Invite not found", nil)
 		}
 		return Error(500, "Failed to get invite", err)
 	}
 
 	invite := query.Result
-	if invite.Status != m.TmpUserInvitePending {
+	if invite.Status != models.TmpUserInvitePending {
 		return Error(404, "Invite not found", nil)
 	}
 
@@ -157,22 +157,22 @@ func GetInviteInfoByCode(c *m.ReqContext) Response {
 	})
 }
 
-func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Response {
-	query := m.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
+func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.CompleteInviteForm) Response {
+	query := models.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == m.ErrTempUserNotFound {
+		if err == models.ErrTempUserNotFound {
 			return Error(404, "Invite not found", nil)
 		}
 		return Error(500, "Failed to get invite", err)
 	}
 
 	invite := query.Result
-	if invite.Status != m.TmpUserInvitePending {
+	if invite.Status != models.TmpUserInvitePending {
 		return Error(412, fmt.Sprintf("Invite cannot be used in status %s", invite.Status), nil)
 	}
 
-	cmd := m.CreateUserCommand{
+	cmd := models.CreateUserCommand{
 		Email:        completeInvite.Email,
 		Name:         completeInvite.Name,
 		Login:        completeInvite.Username,
@@ -205,9 +205,9 @@ func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.Comple
 	return Success("User created and logged in")
 }
 
-func updateTempUserStatus(code string, status m.TempUserStatus) (bool, Response) {
+func updateTempUserStatus(code string, status models.TempUserStatus) (bool, Response) {
 	// update temp user status
-	updateTmpUserCmd := m.UpdateTempUserStatusCommand{Code: code, Status: status}
+	updateTmpUserCmd := models.UpdateTempUserStatusCommand{Code: code, Status: status}
 	if err := bus.Dispatch(&updateTmpUserCmd); err != nil {
 		return false, Error(500, "Failed to update invite status", err)
 	}
@@ -215,23 +215,23 @@ func updateTempUserStatus(code string, status m.TempUserStatus) (bool, Response)
 	return true, nil
 }
 
-func applyUserInvite(user *m.User, invite *m.TempUserDTO, setActive bool) (bool, Response) {
+func applyUserInvite(user *models.User, invite *models.TempUserDTO, setActive bool) (bool, Response) {
 	// add to org
-	addOrgUserCmd := m.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.Id, Role: invite.Role}
+	addOrgUserCmd := models.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.Id, Role: invite.Role}
 	if err := bus.Dispatch(&addOrgUserCmd); err != nil {
-		if err != m.ErrOrgUserAlreadyAdded {
+		if err != models.ErrOrgUserAlreadyAdded {
 			return false, Error(500, "Error while trying to create org user", err)
 		}
 	}
 
 	// update temp user status
-	if ok, rsp := updateTempUserStatus(invite.Code, m.TmpUserCompleted); !ok {
+	if ok, rsp := updateTempUserStatus(invite.Code, models.TmpUserCompleted); !ok {
 		return false, rsp
 	}
 
 	if setActive {
 		// set org to active
-		if err := bus.Dispatch(&m.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
+		if err := bus.Dispatch(&models.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
 			return false, Error(500, "Failed to set org as active", err)
 		}
 	}

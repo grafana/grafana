@@ -4,7 +4,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
 <div
   className=""
 >
-  <Component
+  <Connect(DashNav)
     $injector={Object {}}
     dashboard={
       DashboardModel {
@@ -30,6 +30,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
             "_eventsCount": 0,
           },
         },
+        "getVariables": [Function],
         "gnetId": null,
         "graphTooltip": 0,
         "id": null,
@@ -66,7 +67,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "y": 0,
             },
             "id": 1,
-            "restoreModel": [Function],
+            "options": Object {},
             "targets": Array [
               Object {
                 "refId": "A",
@@ -94,7 +95,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "timezone": "",
         "title": "My dashboard",
         "uid": null,
-        "updatePanel": [Function],
+        "variables": Object {
+          "list": Array [],
+        },
         "version": 0,
       }
     }
@@ -119,7 +122,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       <div
         className="dashboard-container"
       >
-        <SubMenu
+        <AngularSubMenu
           dashboard={
             DashboardModel {
               "annotations": Object {
@@ -144,6 +147,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                   "_eventsCount": 0,
                 },
               },
+              "getVariables": [Function],
               "gnetId": null,
               "graphTooltip": 0,
               "id": null,
@@ -180,7 +184,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "y": 0,
                   },
                   "id": 1,
-                  "restoreModel": [Function],
+                  "options": Object {},
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -208,7 +212,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
-              "updatePanel": [Function],
+              "variables": Object {
+                "list": Array [],
+              },
               "version": 0,
             }
           }
@@ -238,6 +244,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                   "_eventsCount": 0,
                 },
               },
+              "getVariables": [Function],
               "gnetId": null,
               "graphTooltip": 0,
               "id": null,
@@ -274,7 +281,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "y": 0,
                   },
                   "id": 1,
-                  "restoreModel": [Function],
+                  "options": Object {},
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -302,7 +309,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
-              "updatePanel": [Function],
+              "variables": Object {
+                "list": Array [],
+              },
               "version": 0,
             }
           }
@@ -338,7 +347,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
 <div
   className="dashboard-page--settings-opening"
 >
-  <Component
+  <Connect(DashNav)
     $injector={Object {}}
     dashboard={
       DashboardModel {
@@ -364,6 +373,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             "_eventsCount": 0,
           },
         },
+        "getVariables": [Function],
         "gnetId": null,
         "graphTooltip": 0,
         "id": null,
@@ -400,7 +410,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "y": 0,
             },
             "id": 1,
-            "restoreModel": [Function],
+            "options": Object {},
             "targets": Array [
               Object {
                 "refId": "A",
@@ -428,7 +438,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "timezone": "",
         "title": "My dashboard",
         "uid": null,
-        "updatePanel": [Function],
+        "variables": Object {
+          "list": Array [],
+        },
         "version": 0,
       }
     }
@@ -476,6 +488,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "_eventsCount": 0,
               },
             },
+            "getVariables": [Function],
             "gnetId": null,
             "graphTooltip": 0,
             "id": null,
@@ -512,7 +525,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   "y": 0,
                 },
                 "id": 1,
-                "restoreModel": [Function],
+                "options": Object {},
                 "targets": Array [
                   Object {
                     "refId": "A",
@@ -540,7 +553,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             "timezone": "",
             "title": "My dashboard",
             "uid": null,
-            "updatePanel": [Function],
+            "variables": Object {
+              "list": Array [],
+            },
             "version": 0,
           }
         }
@@ -548,7 +563,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       <div
         className="dashboard-container"
       >
-        <SubMenu
+        <AngularSubMenu
           dashboard={
             DashboardModel {
               "annotations": Object {
@@ -573,6 +588,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   "_eventsCount": 0,
                 },
               },
+              "getVariables": [Function],
               "gnetId": null,
               "graphTooltip": 0,
               "id": null,
@@ -609,7 +625,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "y": 0,
                   },
                   "id": 1,
-                  "restoreModel": [Function],
+                  "options": Object {},
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -637,7 +653,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
-              "updatePanel": [Function],
+              "variables": Object {
+                "list": Array [],
+              },
               "version": 0,
             }
           }
@@ -667,6 +685,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   "_eventsCount": 0,
                 },
               },
+              "getVariables": [Function],
               "gnetId": null,
               "graphTooltip": 0,
               "id": null,
@@ -703,7 +722,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "y": 0,
                   },
                   "id": 1,
-                  "restoreModel": [Function],
+                  "options": Object {},
                   "targets": Array [
                     Object {
                       "refId": "A",
@@ -731,7 +750,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "timezone": "",
               "title": "My dashboard",
               "uid": null,
-              "updatePanel": [Function],
+              "variables": Object {
+                "list": Array [],
+              },
               "version": 0,
             }
           }

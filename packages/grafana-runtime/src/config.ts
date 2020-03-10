@@ -1,6 +1,6 @@
 import extend from 'lodash/extend';
 import { getTheme } from '@grafana/ui';
-import { GrafanaTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme, GrafanaThemeType, PanelPluginMeta } from '@grafana/data';
 
 export interface BuildInfo {
   version: string;
@@ -18,6 +18,7 @@ interface FeatureToggles {
   expressions: boolean;
   newEdit: boolean;
   meta: boolean;
+  newVariables: boolean;
 }
 
 interface LicenseInfo {
@@ -30,6 +31,7 @@ interface LicenseInfo {
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  minRefreshInterval = '';
   appSubUrl = '';
   windowTitlePrefix = '';
   buildInfo: BuildInfo = {} as BuildInfo;
@@ -49,11 +51,14 @@ export class GrafanaBootConfig {
   exploreEnabled = false;
   ldapEnabled = false;
   samlEnabled = false;
+  autoAssignOrg = true;
+  verifyEmailEnabled = false;
   oauth: any;
   disableUserSignUp = false;
   loginHint: any;
   passwordHint: any;
   loginError: any;
+  navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
@@ -65,6 +70,7 @@ export class GrafanaBootConfig {
     expressions: false,
     newEdit: false,
     meta: false,
+    newVariables: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   phantomJSRenderer = false;
@@ -98,6 +104,7 @@ export class GrafanaBootConfig {
 const bootData = (window as any).grafanaBootData || {
   settings: {},
   user: {},
+  navTree: [],
 };
 
 const options = bootData.settings;

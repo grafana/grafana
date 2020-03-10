@@ -56,7 +56,12 @@ module.exports = merge(common, {
                     modules: false,
                   },
                 ],
-                '@babel/preset-typescript',
+                [
+                  '@babel/preset-typescript',
+                  {
+                    allowNamespaces: true,
+                  },
+                ],
                 '@babel/preset-react',
               ],
             },
@@ -66,7 +71,7 @@ module.exports = merge(common, {
             options: {
               emitError: true,
               emitWarning: true,
-            }
+            },
           },
         ],
       },
@@ -81,7 +86,7 @@ module.exports = merge(common, {
     minimizer: [
       new TerserPlugin({
         cache: false,
-        parallel: true,
+        parallel: false,
         sourceMap: true,
       }),
       new OptimizeCSSAssetsPlugin({}),
@@ -90,6 +95,7 @@ module.exports = merge(common, {
   plugins: [
     new ForkTsCheckerWebpackPlugin({
       checkSyntacticErrors: true,
+      memoryLimit: 4096,
     }),
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[hash].css',

@@ -62,7 +62,7 @@ export interface PanelModel<TOptions = any> {
 export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
 
 /**
- * Called before a panel is initalized
+ * Called before a panel is initialized
  */
 export type PanelTypeChangedHandler<TOptions = any> = (
   options: Partial<TOptions>,

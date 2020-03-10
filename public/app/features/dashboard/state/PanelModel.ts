@@ -5,25 +5,24 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
+  DataLink,
   DataQuery,
   DataQueryResponseData,
-  PanelPlugin,
-  PanelEvents,
-  DataLink,
   DataTransformerConfig,
+  eventFactory,
+  PanelEvents,
+  PanelPlugin,
   ScopedVars,
 } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
+import { EDIT_PANEL_ID } from 'app/core/constants';
 
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { eventFactory } from '@grafana/data';
 import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
-export const angularPanelUpdated = eventFactory('panel-angular-panel-updated');
 
 export interface GridPos {
   x: number;
@@ -38,13 +37,10 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   isInView: true,
-  isNewEdit: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
-  angularPanel: true,
-  restoreModel: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -90,6 +86,7 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
+  options: {},
 };
 
 export class PanelModel {
@@ -133,15 +130,13 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   isInView: boolean;
-  isNewEdit: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
-  legend?: { show: boolean };
+  legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   hideAlertThreshold: boolean;
   plugin?: PanelPlugin;
-  angularPanel?: AngularComponent;
 
   private queryRunner?: PanelQueryRunner;
 
@@ -154,7 +149,7 @@ export class PanelModel {
   }
 
   /** Given a persistened PanelModel restores property values */
-  restoreModel = (model: any) => {
+  restoreModel(model: any) {
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
@@ -165,7 +160,7 @@ export class PanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
-  };
+  }
 
   ensureQueryIds() {
     if (this.targets && _.isArray(this.targets)) {
@@ -183,7 +178,6 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
-
     this.render();
   }
 
@@ -299,10 +293,6 @@ export class PanelModel {
     const oldPluginId = this.type;
     const wasAngular = !!this.plugin.angularPanelCtrl;
 
-    if (this.angularPanel) {
-      this.setAngularPanel(undefined);
-    }
-
     // remove panel type specific  options
     for (const key of _.keys(this)) {
       if (mustKeepProps[key]) {
@@ -358,16 +348,20 @@ export class PanelModel {
   }
 
   getEditClone() {
-    const clone = new PanelModel(this.getSaveModel());
-    clone.queryRunner = new PanelQueryRunner();
+    const sourceModel = this.getSaveModel();
 
-    // This will send the last result to the new runner
-    this.getQueryRunner()
+    // Temporary id for the clone, restored later in redux action when changes are saved
+    sourceModel.id = EDIT_PANEL_ID;
+
+    const clone = new PanelModel(sourceModel);
+    const sourceQueryRunner = this.getQueryRunner();
+
+    // pipe last result to new clone query runner
+    sourceQueryRunner
       .getData()
       .pipe(take(1))
-      .subscribe(val => clone.queryRunner.pipeDataToSubject(val));
+      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
 
-    clone.isNewEdit = true;
     return clone;
   }
 
@@ -394,25 +388,11 @@ export class PanelModel {
       this.queryRunner.destroy();
       this.queryRunner = null;
     }
-
-    if (this.angularPanel) {
-      this.angularPanel.destroy();
-    }
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.getQueryRunner().setTransformations(transformations);
-  }
-
-  setAngularPanel(component: AngularComponent) {
-    if (this.angularPanel) {
-      // this will remove all event listeners
-      this.angularPanel.destroy();
-    }
-
-    this.angularPanel = component;
-    this.events.emit(angularPanelUpdated);
   }
 }
 

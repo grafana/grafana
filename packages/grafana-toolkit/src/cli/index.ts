@@ -14,6 +14,7 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
+import { githubPublishTask } from './tasks/plugin.utils';
 import {
   ciBuildPluginTask,
   ciBuildPluginDocsTask,
@@ -168,15 +169,11 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-build')
-    .option('--backend', 'Run Makefile for backend task', false)
+    .option('--finish', 'move all results to the jobs folder', false)
     .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
-      if (typeof cmd === 'string') {
-        console.error(`Invalid argument: ${cmd}\nSee --help for a list of available commands.`);
-        process.exit(1);
-      }
       await execTask(ciBuildPluginTask)({
-        backend: cmd.backend,
+        finish: cmd.finish,
       });
     });
 
@@ -199,9 +196,7 @@ export const run = (includeInternalScripts = false) => {
     .option('--full', 'run all the tests (even stuff that will break)')
     .description('end-to-end test using bundle in /artifacts')
     .action(async cmd => {
-      await execTask(ciTestPluginTask)({
-        full: cmd.full,
-      });
+      await execTask(ciTestPluginTask)({});
     });
 
   program
@@ -211,6 +206,22 @@ export const run = (includeInternalScripts = false) => {
     .action(async cmd => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
+      });
+    });
+
+  program
+    .command('plugin:github-publish')
+    .option('--dryrun', 'Do a dry run only', false)
+    .option('--verbose', 'Print verbose', false)
+    .option('--commitHash <hashKey>', 'Specify the commit hash')
+    .option('--recreate', 'Recreate the release if already present')
+    .description('Publish to github ... etc etc etc')
+    .action(async cmd => {
+      await execTask(githubPublishTask)({
+        dryrun: cmd.dryrun,
+        verbose: cmd.verbose,
+        commitHash: cmd.commitHash,
+        recreate: cmd.recreate,
       });
     });
 

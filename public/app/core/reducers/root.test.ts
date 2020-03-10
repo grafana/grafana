@@ -87,7 +87,7 @@ describe('rootReducer', () => {
       } as StoreState;
 
       reducerTester<StoreState>()
-        .givenReducer(rootReducer, state, true)
+        .givenReducer(rootReducer, state, false, true)
         .whenActionIsDispatched(cleanUpAction({ stateSelector: (storeState: StoreState) => storeState.teams }))
         .thenStatePredicateShouldEqual(resultingState => {
           expect(resultingState.teams).toEqual({ ...initialTeamsState });

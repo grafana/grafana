@@ -8,6 +8,7 @@ import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
+
 interface CascaderProps {
   /** The seperator between levels in the search */
   separator?: string;
@@ -37,7 +38,7 @@ export interface CascaderOption {
   items?: CascaderOption[];
   disabled?: boolean;
   title?: string;
-  /**  Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compability.*/
+  /**  Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compatibility.*/
   children?: CascaderOption[];
 }
 
@@ -184,7 +185,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onChange={this.onSelect}
             onBlur={this.onBlur}
             options={searchableOptions}
-            size={size || 'md'}
+            size={size}
             onCreateOption={this.onCreateOption}
             formatCreateLabel={this.props.formatCreateLabel}
           />
@@ -205,11 +206,11 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           >
             <div className={disableDivFocus}>
               <Input
+                size={size}
                 placeholder={placeholder}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
-                size={size || 'md'}
                 suffix={focusCascade ? <Icon name="caret-up" /> : <Icon name="caret-down" />}
               />
             </div>

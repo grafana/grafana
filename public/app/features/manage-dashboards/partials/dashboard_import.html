@@ -12,7 +12,8 @@
 
     <div class="gf-form-group">
       <div class="gf-form gf-form--grow">
-        <input type="text" class="gf-form-input max-width-30" ng-model="ctrl.gnetUrl" placeholder="Paste Grafana.com dashboard url or id" ng-blur="ctrl.checkGnetDashboard()"></textarea>
+        <input type="text" class="gf-form-input max-width-30" ng-model="ctrl.gnetUrl"
+          placeholder="Paste Grafana.com dashboard url or id" ng-blur="ctrl.checkGnetDashboard()"></textarea>
       </div>
       <div class="gf-form" ng-if="ctrl.gnetError">
         <label class="gf-form-label text-warning">
@@ -43,7 +44,8 @@
     <div class="gf-form-group" ng-if="ctrl.dash.gnetId">
       <h3 class="section-heading">
         Importing Dashboard from
-        <a href="https://grafana.com/dashboards/{{ctrl.dash.gnetId}}" class="external-link" target="_blank">Grafana.com</a>
+        <a href="https://grafana.com/dashboards/{{ctrl.dash.gnetId}}" class="external-link"
+          target="_blank">Grafana.com</a>
       </h3>
 
       <div class="gf-form">
@@ -64,7 +66,8 @@
       <div class="gf-form-inline">
         <div class="gf-form gf-form--grow">
           <label class="gf-form-label width-15">Name</label>
-          <input type="text" class="gf-form-input" ng-model="ctrl.dash.title" give-focus="true" ng-change="ctrl.titleChanged()" ng-class="{'validation-error': ctrl.nameExists || !ctrl.dash.title}">
+          <input type="text" class="gf-form-input" ng-model="ctrl.dash.title" give-focus="true"
+            ng-change="ctrl.titleChanged()" ng-class="{'validation-error': ctrl.nameExists || !ctrl.dash.title}">
           <label class="gf-form-label text-success" ng-if="ctrl.titleTouched && !ctrl.hasNameValidationError">
             <i class="fa fa-check"></i>
           </label>
@@ -82,14 +85,10 @@
 
       <div class="gf-form-inline">
         <div class="gf-form gf-form--grow">
-          <folder-picker  label-class="width-15"
-                          initial-folder-id="ctrl.folderId"
-                          initial-title="ctrl.initialFolderTitle"
-                          on-change="ctrl.onFolderChange($folder)"
-                          on-load="ctrl.onFolderChange($folder)"
-                          enter-folder-creation="ctrl.onEnterFolderCreation()"
-                          exit-folder-creation="ctrl.onExitFolderCreation()"
-                          enable-create-new="true">
+          <folder-picker label-class="width-15" initial-folder-id="ctrl.folderId"
+            initial-title="ctrl.initialFolderTitle" on-change="ctrl.onFolderChange"
+            enter-folder-creation="ctrl.onEnterFolderCreation" exit-folder-creation="ctrl.onExitFolderCreation"
+            enable-create-new="true">
           </folder-picker>
         </div>
       </div>
@@ -99,14 +98,20 @@
           <span class="gf-form-label width-15">
             Unique identifier (uid)
             <info-popover mode="right-normal">
-                The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
-                The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will not break any
-                bookmarked links to that dashboard.
+              The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple
+              Grafana installs.
+              The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will
+              not break any
+              bookmarked links to that dashboard.
             </info-popover>
           </span>
-          <input type="text" class="gf-form-input" disabled="disabled" ng-model="ctrl.autoGenerateUidValue" ng-if="ctrl.autoGenerateUid">
-          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.autoGenerateUid = false" ng-if="ctrl.autoGenerateUid">change</a>
-          <input type="text" class="gf-form-input" maxlength="40" placeholder="optional, will be auto-generated if empty" ng-model="ctrl.dash.uid" ng-change="ctrl.uidChanged()" ng-if="!ctrl.autoGenerateUid">
+          <input type="text" class="gf-form-input" disabled="disabled" ng-model="ctrl.autoGenerateUidValue"
+            ng-if="ctrl.autoGenerateUid">
+          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.autoGenerateUid = false"
+            ng-if="ctrl.autoGenerateUid">change</a>
+          <input type="text" class="gf-form-input" maxlength="40"
+            placeholder="optional, will be auto-generated if empty" ng-model="ctrl.dash.uid"
+            ng-change="ctrl.uidChanged()" ng-if="!ctrl.autoGenerateUid">
           <label class="gf-form-label text-success" ng-if="!ctrl.autoGenerateUid && !ctrl.hasUidValidationError">
             <i class="fa fa-check"></i>
           </label>
@@ -132,12 +137,14 @@
           </label>
           <!-- Data source input -->
           <div class="gf-form-select-wrapper" style="width: 100%" ng-if="input.type === 'datasource'">
-            <select class="gf-form-input" ng-model="input.value" ng-options="v.value as v.text for v in input.options" ng-change="ctrl.inputValueChanged()">
+            <select class="gf-form-input" ng-model="input.value" ng-options="v.value as v.text for v in input.options"
+              ng-change="ctrl.inputValueChanged()">
               <option value="" ng-hide="input.value">{{input.info}}</option>
             </select>
           </div>
           <!-- Constant input -->
-          <input ng-if="input.type === 'constant'" type="text" class="gf-form-input" ng-model="input.value" placeholder="{{input.default}}" ng-change="ctrl.inputValueChanged()">
+          <input ng-if="input.type === 'constant'" type="text" class="gf-form-input" ng-model="input.value"
+            placeholder="{{input.default}}" ng-change="ctrl.inputValueChanged()">
           <label class="gf-form-label text-success" ng-show="input.value">
             <i class="fa fa-check"></i>
           </label>
@@ -146,10 +153,12 @@
     </div>
 
     <div class="gf-form-button-row">
-      <button type="button" class="btn btn-primary width-12" ng-click="ctrl.saveDashboard()" ng-hide="ctrl.nameExists || ctrl.uidExists" ng-disabled="!ctrl.isValid()">
+      <button type="button" class="btn btn-primary width-12" ng-click="ctrl.saveDashboard()"
+        ng-hide="ctrl.nameExists || ctrl.uidExists" ng-disabled="!ctrl.isValid()">
         Import
       </button>
-      <button type="button" class="btn btn-danger width-12" ng-click="ctrl.saveDashboard()" ng-show="ctrl.nameExists || ctrl.uidExists" ng-disabled="!ctrl.isValid()">
+      <button type="button" class="btn btn-danger width-12" ng-click="ctrl.saveDashboard()"
+        ng-show="ctrl.nameExists || ctrl.uidExists" ng-disabled="!ctrl.isValid()">
         Import (Overwrite)
       </button>
       <a class="btn btn-link" ng-click="ctrl.back()">Cancel</a>

@@ -146,9 +146,12 @@ export function grafanaDataFrameToArrowTable(data: DataFrame): Table {
 export function resultsToDataFrames(rsp: any): DataFrame[] {
   const frames: DataFrame[] = [];
   for (const res of Object.values(rsp.results)) {
-    for (const b of (res as any).dataframes) {
-      const t = base64StringToArrowTable(b as string);
-      frames.push(arrowTableToDataFrame(t));
+    const r = res as any;
+    if (r.dataframes) {
+      for (const b of r.dataframes) {
+        const t = base64StringToArrowTable(b as string);
+        frames.push(arrowTableToDataFrame(t));
+      }
     }
   }
   return frames;

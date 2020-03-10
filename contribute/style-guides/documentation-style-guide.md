@@ -2,6 +2,8 @@
 
 This style guide applies to all documentation created for Grafana products.
 
+For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
+
 ## Contributing
 
 The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.

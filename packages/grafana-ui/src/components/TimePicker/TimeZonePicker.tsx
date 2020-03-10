@@ -1,15 +1,16 @@
 import React, { FC } from 'react';
-import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
-import { Select } from '../Select/Select';
+import { getTimeZoneGroups } from '@grafana/data';
+import { Cascader } from '../index';
+import { FormInputSize } from '../Forms/types';
 
 interface Props {
   value: string;
-  width?: number;
+  size?: FormInputSize;
 
   onChange: (newValue: string) => void;
 }
 
-export const TimeZonePicker: FC<Props> = ({ onChange, value, width }) => {
+export const TimeZonePicker: FC<Props> = ({ onChange, value, size = 'md' }) => {
   const timeZoneGroups = getTimeZoneGroups();
 
   const groupOptions = timeZoneGroups.map(group => {
@@ -22,20 +23,26 @@ export const TimeZonePicker: FC<Props> = ({ onChange, value, width }) => {
 
     return {
       label: group.label,
-      options,
+      value: group.label,
+      items: options,
     };
   });
 
-  const selectedValue = groupOptions.map(group => {
-    return group.options.find(option => option.value === value);
-  });
+  const selectedValue = groupOptions.reduce(
+    (acc, group) => {
+      const found = group.items.find(option => option.value === value);
+      return found || acc;
+    },
+    { value: '' }
+  );
 
   return (
-    <Select
+    <Cascader
       options={groupOptions}
-      value={selectedValue}
-      onChange={(newValue: SelectableValue) => onChange(newValue.value)}
-      width={width}
+      initialValue={selectedValue?.value}
+      onSelect={(newValue: string) => onChange(newValue)}
+      size={size}
+      placeholder="Select timezone"
     />
   );
 };

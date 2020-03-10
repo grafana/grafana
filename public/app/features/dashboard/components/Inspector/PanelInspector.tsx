@@ -3,19 +3,10 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
 
+import { InspectHeader } from './InspectHeader';
+
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import {
-  JSONFormatter,
-  Drawer,
-  Select,
-  Table,
-  TabsBar,
-  Tab,
-  TabContent,
-  Forms,
-  stylesFactory,
-  CustomScrollbar,
-} from '@grafana/ui';
+import { JSONFormatter, Drawer, Select, Table, TabContent, Forms, stylesFactory, CustomScrollbar } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,
@@ -25,6 +16,7 @@ import {
   toCSV,
   DataQueryError,
   PanelData,
+  DataQuery,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 
@@ -44,7 +36,7 @@ export enum InspectTab {
 
 interface State {
   // The last raw response
-  last?: PanelData;
+  last: PanelData;
 
   // Data frem the last response
   data: DataFrame[];
@@ -57,67 +49,62 @@ interface State {
 
   // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
-}
 
-const getStyles = stylesFactory(() => {
-  return {
-    toolbar: css`
-      display: flex;
-      margin: 8px 0;
-      justify-content: flex-end;
-      align-items: center;
-    `,
-    dataFrameSelect: css`
-      flex-grow: 2;
-    `,
-    downloadCsv: css`
-      margin-left: 16px;
-    `,
-    tabContent: css`
-      height: calc(100% - 32px);
-    `,
-    dataTabContent: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-    `,
-  };
-});
+  stats: { requestTime: number; queries: number; dataSources: number };
+
+  drawerWidth: string;
+}
 
 export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      last: {} as PanelData,
       data: [],
       selected: 0,
       tab: props.selectedTab || InspectTab.Data,
+      drawerWidth: '40%',
+      stats: { requestTime: 0, queries: 0, dataSources: 0 },
     };
   }
 
   async componentDidMount() {
     const { panel } = this.props;
+
     if (!panel) {
       this.onDismiss(); // Try to close the component
       return;
     }
 
     const lastResult = panel.getQueryRunner().getLastResult();
+
     if (!lastResult) {
       this.onDismiss(); // Usually opened from refresh?
       return;
     }
 
-    // Find the first DataSource wanting to show custom metadata
     let metaDS: DataSourceApi;
-    const data = lastResult?.series;
-    const error = lastResult?.error;
+    const data = lastResult.series;
+    const error = lastResult.error;
 
-    if (data) {
+    const targets = lastResult.request?.targets || [];
+    const requestTime = lastResult.request?.endTime ? lastResult.request?.endTime - lastResult.request.startTime : -1;
+    const dataSources = new Set(targets.map(t => t.datasource)).size;
+
+    // Find the first DataSource wanting to show custom metadata
+    if (data && targets.length) {
+      const queries: Record<string, DataQuery> = {};
+
+      for (const target of targets) {
+        queries[target.refId] = target;
+      }
+
       for (const frame of data) {
-        const key = frame.meta?.datasource;
-        if (key) {
-          const dataSource = await getDataSourceSrv().get(key);
+        const q = queries[frame.refId];
+
+        if (q && frame.meta && frame.meta.custom) {
+          const dataSource = await getDataSourceSrv().get(q.datasource);
+
           if (dataSource && dataSource.components?.MetadataInspector) {
             metaDS = dataSource;
             break;
@@ -132,6 +119,11 @@ export class PanelInspector extends PureComponent<Props, State> {
       data,
       metaDS,
       tab: error ? InspectTab.Error : prevState.tab,
+      stats: {
+        requestTime,
+        queries: targets.length,
+        dataSources,
+      },
     }));
   }
 
@@ -140,6 +132,12 @@ export class PanelInspector extends PureComponent<Props, State> {
       query: { inspect: null, tab: null },
       partial: true,
     });
+  };
+
+  onToggleExpand = () => {
+    this.setState(prevState => ({
+      drawerWidth: prevState.drawerWidth === '100%' ? '40%' : '100%',
+    }));
   };
 
   onSelectTab = (item: SelectableValue<InspectTab>) => {
@@ -179,6 +177,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     if (!data || !data.length) {
       return <div>No Data</div>;
     }
+
     const choices = data.map((frame, index) => {
       return {
         value: index,
@@ -220,6 +219,7 @@ export class PanelInspector extends PureComponent<Props, State> {
               if (width === 0) {
                 return null;
               }
+
               return (
                 <div style={{ width, height }}>
                   <Table width={width} height={height} data={processed[selected]} />
@@ -261,43 +261,46 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 
-  render() {
-    const { panel } = this.props;
-    const { last, tab } = this.state;
-    const styles = getStyles();
-
+  drawerHeader = () => {
+    const { tab, last, stats } = this.state;
     const error = last?.error;
-    if (!panel) {
-      this.onDismiss(); // Try to close the component
-      return null;
-    }
-
     const tabs = [];
+
     if (last && last?.series?.length > 0) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
     }
+
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
     }
+
     if (error && error.message) {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
+
     tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
 
     return (
-      <Drawer title={panel.title} onClose={this.onDismiss}>
-        <TabsBar>
-          {tabs.map((t, index) => {
-            return (
-              <Tab
-                key={`${t.value}-${index}`}
-                label={t.label}
-                active={t.value === tab}
-                onChangeTab={() => this.onSelectTab(t)}
-              />
-            );
-          })}
-        </TabsBar>
+      <InspectHeader
+        tabs={tabs}
+        tab={tab}
+        stats={stats}
+        onSelectTab={this.onSelectTab}
+        onClose={this.onDismiss}
+        panel={this.props.panel}
+        onToggleExpand={this.onToggleExpand}
+        isExpanded={this.state.drawerWidth === '100%'}
+      />
+    );
+  };
+
+  render() {
+    const { last, tab, drawerWidth } = this.state;
+    const styles = getStyles();
+    const error = last?.error;
+
+    return (
+      <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
         <TabContent className={styles.tabContent}>
           {tab === InspectTab.Data ? (
             this.renderDataTab()
@@ -323,3 +326,29 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 }
+
+const getStyles = stylesFactory(() => {
+  return {
+    toolbar: css`
+      display: flex;
+      margin: 8px 0;
+      justify-content: flex-end;
+      align-items: center;
+    `,
+    dataFrameSelect: css`
+      flex-grow: 2;
+    `,
+    downloadCsv: css`
+      margin-left: 16px;
+    `,
+    tabContent: css`
+      height: calc(100% - 32px);
+    `,
+    dataTabContent: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    `,
+  };
+});

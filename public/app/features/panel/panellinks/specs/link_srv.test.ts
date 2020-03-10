@@ -1,15 +1,10 @@
 import { LinkSrv } from '../link_srv';
 import { DataLinkBuiltInVars } from '@grafana/ui';
-import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
 import { updateConfig } from '../../../../core/config';
 
-jest.mock('angular', () => {
-  const AngularJSMock = require('test/mocks/angular');
-  return new AngularJSMock();
-});
 jest.mock('app/core/core', () => ({
   appEvents: {
     on: () => {},
@@ -141,6 +136,40 @@ describe('linkSrv', () => {
           {}
         ).href
       ).toEqual('/d/1?time=1000000001');
+    });
+    it('should not trim white space from data links', () => {
+      expect(
+        linkSrv.getDataLinkUIModel(
+          {
+            title: 'White space',
+            url: 'www.google.com?query=some query',
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href
+      ).toEqual('www.google.com?query=some query');
+    });
+    it('should remove new lines from data link', () => {
+      expect(
+        linkSrv.getDataLinkUIModel(
+          {
+            title: 'New line',
+            url: 'www.google.com?query=some\nquery',
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href
+      ).toEqual('www.google.com?query=somequery');
     });
   });
 

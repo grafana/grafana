@@ -1,8 +1,7 @@
-import { MatcherConfig, FieldConfig, Field } from '../types';
-import { Registry, RegistryItem } from '../utils';
 import { ComponentType } from 'react';
+import { MatcherConfig, FieldConfig, Field, DataFrame, VariableSuggestionsScope, VariableSuggestion } from '../types';
+import { Registry, RegistryItem } from '../utils';
 import { InterpolateFunction } from './panel';
-import { DataFrame } from 'apache-arrow';
 
 export interface DynamicConfigValue {
   prop: string;
@@ -26,18 +25,21 @@ export interface FieldConfigSource {
 export interface FieldConfigEditorProps<TValue, TSettings> {
   item: FieldPropertyEditorItem<TValue, TSettings>; // The property info
   value: TValue;
+  context: FieldOverrideContext;
   onChange: (value?: TValue) => void;
 }
 
 export interface FieldOverrideContext {
-  field: Field;
-  data: DataFrame;
-  replaceVariables: InterpolateFunction;
+  field?: Field;
+  dataFrameIndex?: number; // The index for the selected field frame
+  data: DataFrame[]; // All results
+  replaceVariables?: InterpolateFunction;
+  getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
 }
 
 export interface FieldOverrideEditorProps<TValue, TSettings> {
   item: FieldPropertyEditorItem<TValue, TSettings>;
-  value: any;
+  value: TValue;
   context: FieldOverrideContext;
   onChange: (value?: any) => void;
 }
@@ -54,6 +56,9 @@ export interface FieldPropertyEditorItem<TValue = any, TSettings = any> extends 
 
   // Configuration options for the particular property
   settings: TSettings;
+
+  // Checks if field should be processed
+  shouldApply: (field: Field) => boolean;
 }
 
 export type FieldConfigEditorRegistry = Registry<FieldPropertyEditorItem>;

@@ -24,7 +24,6 @@ import {
   getCalculationValueDataLinksVariableSuggestions,
   getDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
-import { config } from 'app/core/config';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -130,11 +129,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor
-            onChange={this.onThresholdsChanged}
-            thresholds={defaults.thresholds}
-            showAlphaUI={config.featureToggles.newEdit}
-          />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
