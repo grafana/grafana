@@ -51,23 +51,34 @@ export interface MetricQuery {
   unit?: string;
   metricType: string;
   service?: string;
-  refId: string;
   crossSeriesReducer: string;
   alignmentPeriod?: string;
-  perSeriesAligner: string;
+  perSeriesAligner?: string;
   groupBys?: string[];
   filters?: string[];
   slo?: string;
   aliasBy?: string;
-  metricKind: string;
-  valueType: string;
+  metricKind?: string;
+  valueType?: string;
   datasourceId?: number;
   view?: string;
 }
 
+export interface SLOQuery {
+  projectName: string;
+  unit?: string;
+  alignmentPeriod?: string;
+  perSeriesAligner?: string;
+  slo?: string;
+  aliasBy?: string;
+  datasourceId?: number;
+}
+
 export interface StackdriverQuery extends DataQuery {
+  refId: string;
   queryType: QueryType;
   metricQuery: MetricQuery;
+  sloQuery?: SLOQuery;
 }
 
 export interface StackdriverOptions extends DataSourceJsonData {

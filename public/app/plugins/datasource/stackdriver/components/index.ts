@@ -11,3 +11,5 @@ export { AliasBy } from './AliasBy';
 export { Aggregations } from './Aggregations';
 export { SimpleSelect } from './SimpleSelect';
 export { MetricQueryEditor } from './MetricQueryEditor';
+export { SLOQueryEditor } from './SLOQueryEditor';
+export { QueryTypeSelector } from './QueryType';

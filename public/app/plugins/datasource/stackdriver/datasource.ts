@@ -53,7 +53,6 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return query;
   }
 
-  // async getTimeSeries(options: DataQueryRequest<StackdriverQuery>) {
   async getTimeSeries(options: any) {
     await this.ensureGCEDefaultProject();
     const queries = options.targets
