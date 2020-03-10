@@ -10,9 +10,9 @@ const graphiteVersions = [
   { label: '1.1.x', value: '1.1' },
 ];
 
-const graphiteTypes = Object.keys(GraphiteType).map((key: string) => ({
-  label: key,
-  value: (GraphiteType as any)[key],
+const graphiteTypes = Object.entries(GraphiteType).map(([label, value]) => ({
+  label,
+  value,
 }));
 
 export type Props = DataSourcePluginOptionsEditorProps<GraphiteOptions>;
