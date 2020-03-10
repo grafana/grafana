@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
-import { DataSourceHttpSettings, FormLabel, Button } from '@grafana/ui';
+import { DataSourceHttpSettings, FormLabel, Button, Select } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps, onUpdateDatasourceJsonDataOptionSelect } from '@grafana/data';
 import { GraphiteOptions, GraphiteType } from '../types';
-import { Select } from '@grafana/ui/src/components/Forms/Select/Select';
+import styles from './ConfigEditor.styles';
 
 const graphiteVersions = [
   { label: '0.9.x', value: '0.9' },
@@ -69,16 +69,18 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
               />
 
-              <Button
-                style={{ marginLeft: '8px', marginTop: '5px' }}
-                variant="secondary"
-                size="sm"
-                onClick={() =>
-                  this.setState((prevState: State) => ({ showMetricTankHelp: !prevState.showMetricTankHelp }))
-                }
-              >
-                Help <i className={showMetricTankHelp ? 'fa fa-caret-down' : 'fa fa-caret-right'} />
-              </Button>
+              <div className={styles.helpbtn}>
+                <Button
+                  style={{ marginLeft: '8px', marginTop: '5px' }}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    this.setState((prevState: State) => ({ showMetricTankHelp: !prevState.showMetricTankHelp }))
+                  }
+                >
+                  Help <i className={showMetricTankHelp ? 'fa fa-caret-down' : 'fa fa-caret-right'} />
+                </Button>
+              </div>
             </div>
           </div>
           {showMetricTankHelp && (
