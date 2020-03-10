@@ -12,7 +12,14 @@ const webpackOptions = {
           return modulePath.startsWith(packageRoot) && !modulePath.startsWith(packageModules);
         },
         test: /\.ts$/,
-        use: 'ts-loader',
+        use: [
+          {
+            loader: 'ts-loader',
+            options: {
+              configFile: `${__dirname}/../tsconfig.json`,
+            },
+          },
+        ],
       },
     ],
   },
