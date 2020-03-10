@@ -1,4 +1,4 @@
-package dataframe
+package data
 
 import (
 	"github.com/apache/arrow/go/arrow"

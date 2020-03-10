@@ -1,8 +1,8 @@
-package dataframe
+package data
 
 import "encoding/json"
 
-// Warning contains information about problems in a dataframe.
+// Warning contains information about problems in a data.
 type Warning struct {
 	// Short message (typically shown in the header)
 	Message string `json:"message,omitempty"`
