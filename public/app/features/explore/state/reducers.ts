@@ -26,7 +26,6 @@ import {
   sortLogsResult,
   stopQueryState,
 } from 'app/core/utils/explore';
-import { getRichHistory } from 'app/core/utils/richHistory';
 import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
   addQueryRowAction,
@@ -134,7 +133,7 @@ export const createEmptyQueryResponse = (): PanelData => ({
  */
 export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
-  split: null,
+  split: false,
   syncedTimes: false,
   left: initialExploreItemState,
   right: initialExploreItemState,

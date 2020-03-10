@@ -107,7 +107,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, activeDatasourceOnly);
   };
 
-  onSelectDatasourceFilters = (value: SelectableValue[]) => {
+  onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
     this.setState({ datasourceFilters: value });
   };
 
@@ -150,7 +150,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       activeDatasourceOnly,
       retentionPeriod,
     } = this.state;
-    const { theme, richHistory, activeDatasourceInstance, exploreId, deleteRichHistory } = this.props;
+    const { theme, richHistory, exploreId, deleteRichHistory } = this.props;
     const styles = getStyles(theme);
 
     const QueriesTab = {
