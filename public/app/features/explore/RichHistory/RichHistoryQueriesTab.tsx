@@ -230,7 +230,7 @@ export function RichHistoryQueriesTab(props: Props) {
           );
         })}
         <div className={styles.feedback}>
-          Query history is a beta feature. The history is local to your browse and is not shared with others.
+          Query history is a beta feature. The history is local to your browser and is not shared with others.
           <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
         </div>
       </div>
