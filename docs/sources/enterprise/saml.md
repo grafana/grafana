@@ -55,7 +55,7 @@ The table below describes all SAML configuration options. Continue reading below
 
 ### Enable SAML authentication
 
-To use the SAML integration, set `enabled` to `true` in the Grafana configuration file, either `custom.ini` or `grafana.ini`. 
+To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`. 
 
 Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information about configuring Grafana.
 
@@ -82,13 +82,13 @@ Grafana supports three ways of specifying the IdP metadata.
 
 Prevents SAML response replay attacks and internal clock skews between the SP (Grafana) and the IdP. You can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
 
-The configuration options is specified as a duration, such as `90s` or `1h`.
+The configuration options is specified as a duration, such as `max_issue_delay = 90s` or `max_issue_delay = 1h`.
 
 ### Metadata valid duration
 
 SP metadata is likely to expire at some point, perhaps due to a certificate rotation or change of location binding. Grafana allows you to specify for how long the metadata should be valid. Leveraging the `validUntil` field, you can tell consumers until when your metadata is going to be valid. The duration is computed by adding the duration to the current time.
 
-The configuration option is specified as a duration, such as `48h`.
+The configuration option is specified as a duration, such as `metadata_valid_duration = 48h`.
 
 ### Identity provider (IdP) registration
 
