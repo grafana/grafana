@@ -56,7 +56,7 @@ Supported auth providers:
 
 ## Enterprise plugins
 
-With a Grafana Enterprise license, you get access to Enterprise plugins, including:
+With a Grafana Enterprise license, you get access to premium plugins, including:
 
 * [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
 * [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
