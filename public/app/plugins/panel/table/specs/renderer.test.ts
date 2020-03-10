@@ -259,7 +259,7 @@ describe('when rendering table', () => {
 
     it('number style should ignore string non-numeric values', () => {
       const html = renderer.renderCell(1, 0, 'asd');
-      expect(html).toBe('<td>asd</td>');
+      expect(html).toBe('<td>as</td>');
     });
 
     it('colored cell should have style (handles HEX color values)', () => {

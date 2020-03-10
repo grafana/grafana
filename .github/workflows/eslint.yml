@@ -1,7 +1,10 @@
-name: Run ESLint on Pull Requests
+name: Frontend ESLint
 
 on:
-  - pull_request
+  pull_request
+    paths:
+    - '**.ts'
+    - '**.tsx'
 
 jobs:
   build:
