@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
 import { containsSearchFilter, VariableOption, VariableTag, VariableWithMultiSupport } from '../../variable';
-import { ALL_VARIABLE_TEXT } from '../../state/types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 import { isQuery } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 
@@ -52,6 +52,14 @@ const applyLimit = (options: VariableOption[]): VariableOption[] => {
   return options.slice(0, Math.min(options.length, 1000));
 };
 
+const updateDefaultSelection = (state: OptionsPickerState): OptionsPickerState => {
+  const { options } = state;
+  if (options.length > 0 && options.filter(o => o.selected).length === 0) {
+    options[0].selected = true;
+  }
+  return state;
+};
+
 const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
   initialState,
@@ -97,12 +105,8 @@ const optionsPickerSlice = createSlice({
         return o;
       });
 
-      if (newOptions.length > 0 && newOptions.filter(o => o.selected).length === 0) {
-        newOptions[0].selected = true;
-      }
-
       state.options = newOptions;
-      return applyStateChanges(state, updateSelectedValues);
+      return applyStateChanges(state, updateDefaultSelection, updateSelectedValues);
     },
     toggleTag: (state, action: PayloadAction<VariableTag>): OptionsPickerState => {
       const tag = action.payload;
@@ -113,13 +117,24 @@ const optionsPickerSlice = createSlice({
         if (t.text !== tag.text) {
           return t;
         }
+
         t.selected = selected;
-        t.valuesText = values.join(' + ');
         t.values = values;
+
+        if (selected) {
+          t.valuesText = values.join(' + ');
+        } else {
+          delete t.valuesText;
+        }
+
         return t;
       });
 
       state.options = state.options.map(option => {
+        if (option.value === ALL_VARIABLE_VALUE && selected === true) {
+          option.selected = false;
+        }
+
         if (values.indexOf(option.value) === -1) {
           return option;
         }
@@ -128,7 +143,7 @@ const optionsPickerSlice = createSlice({
         return option;
       });
 
-      return applyStateChanges(state, updateSelectedValues);
+      return applyStateChanges(state, updateDefaultSelection, updateSelectedValues);
     },
     moveOptionsHighlight: (state, action: PayloadAction<number>): OptionsPickerState => {
       let nextIndex = state.highlightIndex + action.payload;

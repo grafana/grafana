@@ -174,5 +174,5 @@ export const {
 } = sharedReducerSlice.actions;
 
 const hasTags = (option: VariableOption): boolean => {
-  return Array.isArray(option.tags) && option.tags.length > 0;
+  return Array.isArray(option.tags);
 };

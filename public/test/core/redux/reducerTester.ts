@@ -85,7 +85,7 @@ export const reducerTester = <State>(): Given<State> => {
     if (showDebugOutput) {
       console.log(JSON.stringify(resultingState, null, 2));
     }
-    expect(state).toEqual(resultingState);
+    expect(resultingState).toEqual(state);
 
     return instance;
   };
