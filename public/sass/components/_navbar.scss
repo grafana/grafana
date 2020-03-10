@@ -171,11 +171,16 @@ i.navbar-page-btn__search {
     .gicon {
       filter: $navbar-btn-gicon-brightness;
     }
+
     &:hover {
       .gicon {
         filter: brightness(0.8);
       }
     }
+  }
+
+  &--danger {
+    @include buttonBackground($red-base, $red-shade);
   }
 
   &--tight {

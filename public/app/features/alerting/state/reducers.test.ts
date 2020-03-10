@@ -1,8 +1,10 @@
 import { alertRulesReducer, initialState, loadAlertRules, loadedAlertRules, setSearchQuery } from './reducers';
 import { AlertRuleDTO, AlertRulesState } from 'app/types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { dateTime } from '@grafana/data';
 
 describe('Alert rules', () => {
+  const realDateNow = Date.now.bind(global.Date);
   const payload: AlertRuleDTO[] = [
     {
       id: 2,
@@ -77,6 +79,17 @@ describe('Alert rules', () => {
       url: '/d/ggHbN42mk/alerting-with-testdata',
     },
   ];
+
+  beforeAll(() => {
+    const anchor = '2019-09-04T10:01:01+02:00';
+    const unix = dateTime(anchor).valueOf();
+    const dateNowStub = jest.fn(() => unix);
+    global.Date.now = dateNowStub;
+  });
+
+  afterAll(() => {
+    global.Date.now = realDateNow;
+  });
 
   describe('when loadAlertRules is dispatched', () => {
     it('then state should be correct', () => {

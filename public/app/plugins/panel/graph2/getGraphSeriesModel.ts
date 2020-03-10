@@ -44,6 +44,7 @@ export const getGraphSeriesModel = (
   let fieldColumnIndex = -1;
   for (const series of dataFrames) {
     const { timeField } = getTimeField(series);
+    console.log(timeField);
     if (!timeField) {
       continue;
     }

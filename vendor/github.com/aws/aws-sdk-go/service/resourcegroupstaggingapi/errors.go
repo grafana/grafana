@@ -2,6 +2,10 @@
 
 package resourcegroupstaggingapi
 
+import (
+	"github.com/aws/aws-sdk-go/private/protocol"
+)
+
 const (
 
 	// ErrCodeConcurrentModificationException for service response error code
@@ -70,3 +74,12 @@ const (
 	// The request was denied to limit the frequency of submitted requests.
 	ErrCodeThrottledException = "ThrottledException"
 )
+
+var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
+	"ConcurrentModificationException": newErrorConcurrentModificationException,
+	"ConstraintViolationException":    newErrorConstraintViolationException,
+	"InternalServiceException":        newErrorInternalServiceException,
+	"InvalidParameterException":       newErrorInvalidParameterException,
+	"PaginationTokenExpiredException": newErrorPaginationTokenExpiredException,
+	"ThrottledException":              newErrorThrottledException,
+}

@@ -2,12 +2,10 @@
 // requests and responses.
 package jsonrpc
 
-//go:generate go run -tags codegen ../../../models/protocol_tests/generate.go ../../../models/protocol_tests/input/json.json build_test.go
-//go:generate go run -tags codegen ../../../models/protocol_tests/generate.go ../../../models/protocol_tests/output/json.json unmarshal_test.go
+//go:generate go run -tags codegen ../../../private/model/cli/gen-protocol-tests ../../../models/protocol_tests/input/json.json build_test.go
+//go:generate go run -tags codegen ../../../private/model/cli/gen-protocol-tests ../../../models/protocol_tests/output/json.json unmarshal_test.go
 
 import (
-	"strings"
-
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/private/protocol/json/jsonutil"
@@ -16,17 +14,26 @@ import (
 
 var emptyJSON = []byte("{}")
 
-// BuildHandler is a named request handler for building jsonrpc protocol requests
-var BuildHandler = request.NamedHandler{Name: "awssdk.jsonrpc.Build", Fn: Build}
+// BuildHandler is a named request handler for building jsonrpc protocol
+// requests
+var BuildHandler = request.NamedHandler{
+	Name: "awssdk.jsonrpc.Build",
+	Fn:   Build,
+}
 
-// UnmarshalHandler is a named request handler for unmarshaling jsonrpc protocol requests
-var UnmarshalHandler = request.NamedHandler{Name: "awssdk.jsonrpc.Unmarshal", Fn: Unmarshal}
+// UnmarshalHandler is a named request handler for unmarshaling jsonrpc
+// protocol requests
+var UnmarshalHandler = request.NamedHandler{
+	Name: "awssdk.jsonrpc.Unmarshal",
+	Fn:   Unmarshal,
+}
 
-// UnmarshalMetaHandler is a named request handler for unmarshaling jsonrpc protocol request metadata
-var UnmarshalMetaHandler = request.NamedHandler{Name: "awssdk.jsonrpc.UnmarshalMeta", Fn: UnmarshalMeta}
-
-// UnmarshalErrorHandler is a named request handler for unmarshaling jsonrpc protocol request errors
-var UnmarshalErrorHandler = request.NamedHandler{Name: "awssdk.jsonrpc.UnmarshalError", Fn: UnmarshalError}
+// UnmarshalMetaHandler is a named request handler for unmarshaling jsonrpc
+// protocol request metadata
+var UnmarshalMetaHandler = request.NamedHandler{
+	Name: "awssdk.jsonrpc.UnmarshalMeta",
+	Fn:   UnmarshalMeta,
+}
 
 // Build builds a JSON payload for a JSON RPC request.
 func Build(req *request.Request) {
@@ -78,33 +85,4 @@ func Unmarshal(req *request.Request) {
 // UnmarshalMeta unmarshals headers from a response for a JSON RPC service.
 func UnmarshalMeta(req *request.Request) {
 	rest.UnmarshalMeta(req)
-}
-
-// UnmarshalError unmarshals an error response for a JSON RPC service.
-func UnmarshalError(req *request.Request) {
-	defer req.HTTPResponse.Body.Close()
-
-	var jsonErr jsonErrorResponse
-	err := jsonutil.UnmarshalJSONError(&jsonErr, req.HTTPResponse.Body)
-	if err != nil {
-		req.Error = awserr.NewRequestFailure(
-			awserr.New(request.ErrCodeSerialization,
-				"failed to unmarshal error message", err),
-			req.HTTPResponse.StatusCode,
-			req.RequestID,
-		)
-		return
-	}
-
-	codes := strings.SplitN(jsonErr.Code, "#", 2)
-	req.Error = awserr.NewRequestFailure(
-		awserr.New(codes[len(codes)-1], jsonErr.Message, nil),
-		req.HTTPResponse.StatusCode,
-		req.RequestID,
-	)
-}
-
-type jsonErrorResponse struct {
-	Code    string `json:"__type"`
-	Message string `json:"message"`
 }

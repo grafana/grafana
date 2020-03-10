@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -38,6 +39,11 @@ type cloudwatchResponse struct {
 	RequestExceededMaxLimit bool
 	PartialData             bool
 	Period                  int
+}
+
+type logsQuery struct {
+	RefID string
+	query *cloudwatchlogs.StartQueryInput
 }
 
 type queryError struct {

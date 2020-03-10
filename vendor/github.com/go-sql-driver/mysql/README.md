@@ -40,7 +40,7 @@ A MySQL-Driver for Go's [database/sql](https://golang.org/pkg/database/sql/) pac
   * Optional placeholder interpolation
 
 ## Requirements
-  * Go 1.7 or higher. We aim to support the 3 latest versions of Go.
+  * Go 1.10 or higher. We aim to support the 3 latest versions of Go.
   * MySQL (4.1+), MariaDB, Percona Server, Google CloudSQL or Sphinx (2.2.3+)
 
 ---------------------------------------
@@ -166,17 +166,33 @@ Sets the charset used for client-server interaction (`"SET NAMES <value>"`). If 
 Usage of the `charset` parameter is discouraged because it issues additional queries to the server.
 Unless you need the fallback behavior, please use `collation` instead.
 
+##### `checkConnLiveness`
+
+```
+Type:           bool
+Valid Values:   true, false
+Default:        true
+```
+
+On supported platforms connections retrieved from the connection pool are checked for liveness before using them. If the check fails, the respective connection is marked as bad and the query retried with another connection.
+`checkConnLiveness=false` disables this liveness check of connections.
+
 ##### `collation`
 
 ```
 Type:           string
 Valid Values:   <name>
-Default:        utf8_general_ci
+Default:        utf8mb4_general_ci
 ```
 
 Sets the collation used for client-server interaction on connection. In contrast to `charset`, `collation` does not issue additional queries. If the specified collation is unavailable on the target server, the connection will fail.
 
 A list of valid charsets for a server is retrievable with `SHOW COLLATION`.
+
+The default collation (`utf8mb4_general_ci`) is supported from MySQL 5.5.  You should use an older collation (e.g. `utf8_general_ci`) for older MySQL.
+
+Collations for charset "ucs2", "utf16", "utf16le", and "utf32" can not be used ([ref](https://dev.mysql.com/doc/refman/5.7/en/charset-connection.html#charset-connection-impermissible-client-charset)).
+
 
 ##### `clientFoundRows`
 
@@ -328,11 +344,11 @@ Timeout for establishing connections, aka dial timeout. The value must be a deci
 
 ```
 Type:           bool / string
-Valid Values:   true, false, skip-verify, <name>
+Valid Values:   true, false, skip-verify, preferred, <name>
 Default:        false
 ```
 
-`tls=true` enables TLS / SSL encrypted connection to the server. Use `skip-verify` if you want to use a self-signed or invalid certificate (server side). Use a custom value registered with [`mysql.RegisterTLSConfig`](https://godoc.org/github.com/go-sql-driver/mysql#RegisterTLSConfig).
+`tls=true` enables TLS / SSL encrypted connection to the server. Use `skip-verify` if you want to use a self-signed or invalid certificate (server side) or use `preferred` to use TLS only when advertised by the server. This is similar to `skip-verify`, but additionally allows a fallback to a connection which is not encrypted. Neither `skip-verify` nor `preferred` add any reliable security. You can use a custom TLS config after registering it with [`mysql.RegisterTLSConfig`](https://godoc.org/github.com/go-sql-driver/mysql#RegisterTLSConfig).
 
 
 ##### `writeTimeout`
@@ -391,14 +407,9 @@ TCP on a remote host, e.g. Amazon RDS:
 id:password@tcp(your-amazonaws-uri.com:3306)/dbname
 ```
 
-Google Cloud SQL on App Engine (First Generation MySQL Server):
+Google Cloud SQL on App Engine:
 ```
-user@cloudsql(project-id:instance-name)/dbname
-```
-
-Google Cloud SQL on App Engine (Second Generation MySQL Server):
-```
-user@cloudsql(project-id:regionname:instance-name)/dbname
+user:password@unix(/cloudsql/project-id:region-name:instance-name)/dbname
 ```
 
 TCP using default port (3306) on localhost:
@@ -444,7 +455,7 @@ See the [godoc of Go-MySQL-Driver](https://godoc.org/github.com/go-sql-driver/my
 ### `time.Time` support
 The default internal output type of MySQL `DATE` and `DATETIME` values is `[]byte` which allows you to scan the value into a `[]byte`, `string` or `sql.RawBytes` variable in your program.
 
-However, many want to scan MySQL `DATE` and `DATETIME` values into `time.Time` variables, which is the logical opposite in Go to `DATE` and `DATETIME` in MySQL. You can do that by changing the internal output type from `[]byte` to `time.Time` with the DSN parameter `parseTime=true`. You can set the default [`time.Time` location](https://golang.org/pkg/time/#Location) with the `loc` DSN parameter.
+However, many want to scan MySQL `DATE` and `DATETIME` values into `time.Time` variables, which is the logical equivalent in Go to `DATE` and `DATETIME` in MySQL. You can do that by changing the internal output type from `[]byte` to `time.Time` with the DSN parameter `parseTime=true`. You can set the default [`time.Time` location](https://golang.org/pkg/time/#Location) with the `loc` DSN parameter.
 
 **Caution:** As of Go 1.1, this makes `time.Time` the only variable type you can scan `DATE` and `DATETIME` values into. This breaks for example [`sql.RawBytes` support](https://github.com/go-sql-driver/mysql/wiki/Examples#rawbytes).
 
@@ -452,13 +463,13 @@ Alternatively you can use the [`NullTime`](https://godoc.org/github.com/go-sql-d
 
 
 ### Unicode support
-Since version 1.1 Go-MySQL-Driver automatically uses the collation `utf8_general_ci` by default.
+Since version 1.5 Go-MySQL-Driver automatically uses the collation ` utf8mb4_general_ci` by default.
 
 Other collations / charsets can be set using the [`collation`](#collation) DSN parameter.
 
 Version 1.0 of the driver recommended adding `&charset=utf8` (alias for `SET NAMES utf8`) to the DSN to enable proper UTF-8 support. This is not necessary anymore. The [`collation`](#collation) parameter should be preferred to set another collation / charset than the default.
 
-See http://dev.mysql.com/doc/refman/5.7/en/charset-unicode.html for more details on MySQL's Unicode support.
+See http://dev.mysql.com/doc/refman/8.0/en/charset-unicode.html for more details on MySQL's Unicode support.
 
 ## Testing / Development
 To run the driver tests you may need to adjust the configuration. See the [Testing Wiki-Page](https://github.com/go-sql-driver/mysql/wiki/Testing "Testing") for details.

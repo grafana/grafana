@@ -36,6 +36,10 @@ const (
 	// API request that was canceled. Requests given a aws.Context may
 	// return this error when canceled.
 	CanceledErrorCode = "RequestCanceled"
+
+	// ErrCodeRequestError is an error preventing the SDK from continuing to
+	// process the request.
+	ErrCodeRequestError = "RequestError"
 )
 
 // A Request is the service request to be made.
@@ -51,6 +55,7 @@ type Request struct {
 	HTTPRequest            *http.Request
 	HTTPResponse           *http.Response
 	Body                   io.ReadSeeker
+	streamingBody          io.ReadCloser
 	BodyStart              int64 // offset from beginning of Body that the request body starts
 	Params                 interface{}
 	Error                  error
@@ -129,8 +134,6 @@ func New(cfg aws.Config, clientInfo metadata.ClientInfo, handlers Handlers,
 		httpReq.URL = &url.URL{}
 		err = awserr.New("InvalidEndpointURL", "invalid endpoint uri", err)
 	}
-
-	SanitizeHostForHeader(httpReq)
 
 	r := &Request{
 		Config:     cfg,
@@ -295,6 +298,13 @@ func (r *Request) SetReaderBody(reader io.ReadSeeker) {
 	r.ResetBody()
 }
 
+// SetStreamingBody set the reader to be used for the request that will stream
+// bytes to the server. Request's Body must not be set to any reader.
+func (r *Request) SetStreamingBody(reader io.ReadCloser) {
+	r.streamingBody = reader
+	r.SetReaderBody(aws.ReadSeekCloser(reader))
+}
+
 // Presign returns the request's signed URL. Error will be returned
 // if the signing fails. The expire parameter is only used for presigned Amazon
 // S3 API requests. All other AWS services will use a fixed expiration
@@ -414,11 +424,17 @@ func (r *Request) Sign() error {
 		return r.Error
 	}
 
+	SanitizeHostForHeader(r.HTTPRequest)
+
 	r.Handlers.Sign.Run(r)
 	return r.Error
 }
 
 func (r *Request) getNextRequestBody() (body io.ReadCloser, err error) {
+	if r.streamingBody != nil {
+		return r.streamingBody, nil
+	}
+
 	if r.safeBody != nil {
 		r.safeBody.Close()
 	}
@@ -621,6 +637,10 @@ func SanitizeHostForHeader(r *http.Request) {
 func getHost(r *http.Request) string {
 	if r.Host != "" {
 		return r.Host
+	}
+
+	if r.URL == nil {
+		return ""
 	}
 
 	return r.URL.Host

@@ -1,14 +1,16 @@
 import '../datasource';
-import CloudWatchDatasource from '../datasource';
+import { CloudWatchDatasource } from '../datasource';
 import * as redux from 'app/store/store';
 import { dateMath } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
-import { CloudWatchQuery } from '../types';
+import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { of, empty } from 'rxjs';
+import { expand, map } from 'rxjs/operators';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -46,14 +48,15 @@ describe('CloudWatchDatasource', () => {
     jest.clearAllMocks();
   });
 
-  describe('When performing CloudWatch query', () => {
-    let requestParams: { queries: CloudWatchQuery[] };
+  describe('When performing CloudWatch metrics query', () => {
+    let requestParams: { queries: CloudWatchMetricsQuery[] };
 
     const query = {
       range: defaultTimeRange,
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          type: 'Metrics',
           expression: '',
           refId: 'A',
           region: 'us-east-1',
@@ -72,6 +75,7 @@ describe('CloudWatchDatasource', () => {
       timings: [null],
       results: {
         A: {
+          type: 'Metrics',
           error: '',
           refId: 'A',
           meta: { gmdMeta: [] },
@@ -101,12 +105,11 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query', done => {
       ctx.ds.query(query).then(() => {
-        const params = requestParams.queries[0];
-        expect(params.namespace).toBe(query.targets[0].namespace);
-        expect(params.metricName).toBe(query.targets[0].metricName);
-        expect(params.dimensions['InstanceId']).toStrictEqual(['i-12345678']);
-        expect(params.statistics).toEqual(query.targets[0].statistics);
-        expect(params.period).toBe(query.targets[0].period);
+        expect(requestParams.queries[0].namespace).toBe(query.targets[0].namespace);
+        expect(requestParams.queries[0].metricName).toBe(query.targets[0].metricName);
+        expect(requestParams.queries[0].dimensions['InstanceId']).toStrictEqual(['i-12345678']);
+        expect(requestParams.queries[0].statistics).toEqual(query.targets[0].statistics);
+        expect(requestParams.queries[0].period).toBe(query.targets[0].period);
         done();
       });
     });
@@ -130,6 +133,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'AWS/EC2',
@@ -144,8 +148,7 @@ describe('CloudWatchDatasource', () => {
       };
 
       ctx.ds.query(query).then(() => {
-        const params = requestParams.queries[0];
-        expect(params.period).toBe('600');
+        expect(requestParams.queries[0].period).toBe('600');
         done();
       });
     });
@@ -156,6 +159,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'AWS/EC2',
@@ -238,6 +242,7 @@ describe('CloudWatchDatasource', () => {
 
     describe('and throttling exception is thrown', () => {
       const partialQuery = {
+        type: 'Metrics',
         namespace: 'AWS/EC2',
         metricName: 'CPUUtilization',
         dimensions: {
@@ -376,6 +381,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'default',
             namespace: 'AWS/EC2',
@@ -402,6 +408,7 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          type: 'Metrics',
           refId: 'A',
           region: 'us-east-1',
           namespace: 'AWS/ApplicationELB',
@@ -463,7 +470,7 @@ describe('CloudWatchDatasource', () => {
   });
 
   describe('When performing CloudWatch query with template variables', () => {
-    let requestParams: { queries: CloudWatchQuery[] };
+    let requestParams: { queries: CloudWatchMetricsQuery[] };
     beforeEach(() => {
       templateSrv.init([
         new CustomVariable(
@@ -530,6 +537,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
@@ -555,6 +563,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
@@ -588,6 +597,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
@@ -617,6 +627,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            type: 'Metrics',
             refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
@@ -802,4 +813,28 @@ describe('CloudWatchDatasource', () => {
       });
     }
   );
+
+  describe('CloudWatch Logs Insights', () => {
+    it('should repeat query until status is complete', async () => {
+      const myQuery = [
+        { value: 1, status: 'Running' },
+        { value: 2, status: 'Running' },
+        { value: 3, status: 'Running' },
+        { value: 4, status: 'Complete' },
+      ];
+      const POLLING_TIMES = [100, 100, 100, 100, 100, 100, 100, 100];
+      const zorp = of(myQuery[0])
+        .pipe(
+          expand((response, i) => {
+            return response.status === 'Complete' || i >= POLLING_TIMES.length ? empty() : of(myQuery[i + 1]);
+          }),
+          map(val => val.value)
+        )
+        .toPromise();
+
+      const florp = await zorp;
+      console.log(florp);
+      expect(2).toBe(2);
+    });
+  });
 });

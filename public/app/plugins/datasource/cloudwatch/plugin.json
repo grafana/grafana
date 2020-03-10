@@ -4,6 +4,7 @@
   "id": "cloudwatch",
   "category": "cloud",
   "metrics": true,
+  "logs": true,
   "alerting": true,
   "annotations": true,
   "includes": [

@@ -54,6 +54,8 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, queryContext)
+	case "logAction":
+		result, err = e.executeLogActions(ctx, queryContext)
 	case "timeSeriesQuery":
 		fallthrough
 	default:

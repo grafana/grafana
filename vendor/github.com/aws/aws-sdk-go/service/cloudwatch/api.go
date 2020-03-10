@@ -58,8 +58,26 @@ func (c *CloudWatch) DeleteAlarmsRequest(input *DeleteAlarmsInput) (req *request
 
 // DeleteAlarms API operation for Amazon CloudWatch.
 //
-// Deletes the specified alarms. You can delete up to 50 alarms in one operation.
+// Deletes the specified alarms. You can delete up to 100 alarms in one operation.
+// However, this total can include no more than one composite alarm. For example,
+// you could delete 99 metric alarms and one composite alarms with one operation,
+// but you can't delete two composite alarms with one operation.
+//
 // In the event of an error, no alarms are deleted.
+//
+// It is possible to create a loop or cycle of composite alarms, where composite
+// alarm A depends on composite alarm B, and composite alarm B also depends
+// on composite alarm A. In this scenario, you can't delete any composite alarm
+// that is part of the cycle because there is always still a composite alarm
+// that depends on that alarm that you want to delete.
+//
+// To get out of such a situation, you must break the cycle by changing the
+// rule of one of the composite alarms in the cycle to remove a dependency that
+// creates the cycle. The simplest change to make to break a cycle is to change
+// the AlarmRule of one of the alarms to False.
+//
+// Additionally, the evaluation of composite alarms stops if CloudWatch detects
+// a cycle in the evaluation path.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -408,7 +426,7 @@ func (c *CloudWatch) DescribeAlarmHistoryRequest(input *DescribeAlarmHistoryInpu
 //
 // Retrieves the history for the specified alarm. You can filter the results
 // by date range or item type. If an alarm name is not specified, the histories
-// for all alarms are returned.
+// for either all metric alarms or all composite alarms are returned.
 //
 // CloudWatch retains the history of an alarm even if you delete the alarm.
 //
@@ -547,9 +565,8 @@ func (c *CloudWatch) DescribeAlarmsRequest(input *DescribeAlarmsInput) (req *req
 
 // DescribeAlarms API operation for Amazon CloudWatch.
 //
-// Retrieves the specified alarms. If no alarms are specified, all alarms are
-// returned. Alarms can be retrieved by using only a prefix for the alarm name,
-// the alarm state, or a prefix for any action.
+// Retrieves the specified alarms. You can filter the results by specifying
+// a a prefix for the alarm name, the alarm state, or a prefix for any action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1513,7 +1530,7 @@ func (c *CloudWatch) GetMetricDataRequest(input *GetMetricDataInput) (req *reque
 
 // GetMetricData API operation for Amazon CloudWatch.
 //
-// You can use the GetMetricData API to retrieve as many as 100 different metrics
+// You can use the GetMetricData API to retrieve as many as 500 different metrics
 // in a single request, with a total of as many as 100,800 data points. You
 // can also optionally perform math expressions on the values of the returned
 // statistics, to create new time series that represent new insights into your
@@ -2067,14 +2084,17 @@ func (c *CloudWatch) ListMetricsRequest(input *ListMetricsInput) (req *request.R
 // ListMetrics API operation for Amazon CloudWatch.
 //
 // List the specified metrics. You can use the returned metrics with GetMetricData
-// or GetMetricStatistics to obtain statistical data.
+// (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
+// or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html)
+// to obtain statistical data.
 //
 // Up to 500 results are returned for any one call. To retrieve additional results,
 // use the returned token with subsequent calls.
 //
 // After you create a metric, allow up to fifteen minutes before the metric
 // appears. Statistics about the metric, however, are available sooner using
-// GetMetricData or GetMetricStatistics.
+// GetMetricData (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
+// or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2336,6 +2356,124 @@ func (c *CloudWatch) PutAnomalyDetector(input *PutAnomalyDetectorInput) (*PutAno
 // for more information on using Contexts.
 func (c *CloudWatch) PutAnomalyDetectorWithContext(ctx aws.Context, input *PutAnomalyDetectorInput, opts ...request.Option) (*PutAnomalyDetectorOutput, error) {
 	req, out := c.PutAnomalyDetectorRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opPutCompositeAlarm = "PutCompositeAlarm"
+
+// PutCompositeAlarmRequest generates a "aws/request.Request" representing the
+// client's request for the PutCompositeAlarm operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See PutCompositeAlarm for more information on using the PutCompositeAlarm
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the PutCompositeAlarmRequest method.
+//    req, resp := client.PutCompositeAlarmRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutCompositeAlarm
+func (c *CloudWatch) PutCompositeAlarmRequest(input *PutCompositeAlarmInput) (req *request.Request, output *PutCompositeAlarmOutput) {
+	op := &request.Operation{
+		Name:       opPutCompositeAlarm,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &PutCompositeAlarmInput{}
+	}
+
+	output = &PutCompositeAlarmOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(query.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// PutCompositeAlarm API operation for Amazon CloudWatch.
+//
+// Creates or updates a composite alarm. When you create a composite alarm,
+// you specify a rule expression for the alarm that takes into account the alarm
+// states of other alarms that you have created. The composite alarm goes into
+// ALARM state only if all conditions of the rule are met.
+//
+// The alarms specified in a composite alarm's rule expression can include metric
+// alarms and other composite alarms.
+//
+// Using composite alarms can reduce alarm noise. You can create multiple metric
+// alarms, and also create a composite alarm and set up alerts only for the
+// composite alarm. For example, you could create a composite alarm that goes
+// into ALARM state only when more than one of the underlying metric alarms
+// are in ALARM state.
+//
+// Currently, the only alarm actions that can be taken by composite alarms are
+// notifying SNS topics.
+//
+// It is possible to create a loop or cycle of composite alarms, where composite
+// alarm A depends on composite alarm B, and composite alarm B also depends
+// on composite alarm A. In this scenario, you can't delete any composite alarm
+// that is part of the cycle because there is always still a composite alarm
+// that depends on that alarm that you want to delete.
+//
+// To get out of such a situation, you must break the cycle by changing the
+// rule of one of the composite alarms in the cycle to remove a dependency that
+// creates the cycle. The simplest change to make to break a cycle is to change
+// the AlarmRule of one of the alarms to False.
+//
+// Additionally, the evaluation of composite alarms stops if CloudWatch detects
+// a cycle in the evaluation path.
+//
+// When this operation creates an alarm, the alarm state is immediately set
+// to INSUFFICIENT_DATA. The alarm is then evaluated and its state is set appropriately.
+// Any actions associated with the new state are then executed. For a composite
+// alarm, this initial time after creation is the only time that the alarm can
+// be in INSUFFICIENT_DATA state.
+//
+// When you update an existing alarm, its state is left unchanged, but the update
+// completely overwrites the previous configuration of the alarm.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation PutCompositeAlarm for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeLimitExceededFault "LimitExceeded"
+//   The quota for alarms for this customer has already been reached.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutCompositeAlarm
+func (c *CloudWatch) PutCompositeAlarm(input *PutCompositeAlarmInput) (*PutCompositeAlarmOutput, error) {
+	req, out := c.PutCompositeAlarmRequest(input)
+	return out, req.Send()
+}
+
+// PutCompositeAlarmWithContext is the same as PutCompositeAlarm with the addition of
+// the ability to pass a context and additional request options.
+//
+// See PutCompositeAlarm for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatch) PutCompositeAlarmWithContext(ctx aws.Context, input *PutCompositeAlarmInput, opts ...request.Option) (*PutCompositeAlarmOutput, error) {
+	req, out := c.PutCompositeAlarmRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2703,7 +2841,8 @@ func (c *CloudWatch) PutMetricDataRequest(input *PutMetricDataInput) (req *reque
 // Publishes metric data points to Amazon CloudWatch. CloudWatch associates
 // the data points with the specified metric. If the specified metric does not
 // exist, CloudWatch creates the metric. When CloudWatch creates a metric, it
-// can take up to fifteen minutes for the metric to appear in calls to ListMetrics.
+// can take up to fifteen minutes for the metric to appear in calls to ListMetrics
+// (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html).
 //
 // You can publish either individual data points in the Value field, or arrays
 // of values and the number of times each value occurred during the period by
@@ -2727,8 +2866,12 @@ func (c *CloudWatch) PutMetricDataRequest(input *PutMetricDataInput) (req *reque
 // in the Amazon CloudWatch User Guide.
 //
 // Data points with time stamps from 24 hours ago or longer can take at least
-// 48 hours to become available for GetMetricData or GetMetricStatistics from
-// the time they are submitted.
+// 48 hours to become available for GetMetricData (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
+// or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html)
+// from the time they are submitted. Data points with time stamps between 3
+// and 24 hours ago can take as much as 2 hours to become available for for
+// GetMetricData (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
+// or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html).
 //
 // CloudWatch needs raw data points to calculate percentile statistics. If you
 // publish data using a statistic set instead, you can only retrieve percentile
@@ -2830,10 +2973,21 @@ func (c *CloudWatch) SetAlarmStateRequest(input *SetAlarmStateInput) (req *reque
 // state differs from the previous value, the action configured for the appropriate
 // state is invoked. For example, if your alarm is configured to send an Amazon
 // SNS message when an alarm is triggered, temporarily changing the alarm state
-// to ALARM sends an SNS message. The alarm returns to its actual state (often
-// within seconds). Because the alarm state change happens quickly, it is typically
-// only visible in the alarm's History tab in the Amazon CloudWatch console
-// or through DescribeAlarmHistory.
+// to ALARM sends an SNS message.
+//
+// Metric alarms returns to their actual state quickly, often within seconds.
+// Because the metric alarm state change happens quickly, it is typically only
+// visible in the alarm's History tab in the Amazon CloudWatch console or through
+// DescribeAlarmHistory (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarmHistory.html).
+//
+// If you use SetAlarmState on a composite alarm, the composite alarm is not
+// guaranteed to return to its actual state. It will return to its actual state
+// only once any of its children alarms change state. It is also re-evaluated
+// if you update its configuration.
+//
+// If an alarm triggers EC2 Auto Scaling policies or application Auto Scaling
+// policies, you must include information in the StateReasonData parameter to
+// enable the policy to take the correct action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3072,6 +3226,9 @@ type AlarmHistoryItem struct {
 	// The descriptive name for the alarm.
 	AlarmName *string `min:"1" type:"string"`
 
+	// The type of alarm, either metric alarm or composite alarm.
+	AlarmType *string `type:"string" enum:"AlarmType"`
+
 	// Data about the alarm, in JSON format.
 	HistoryData *string `min:"1" type:"string"`
 
@@ -3098,6 +3255,12 @@ func (s AlarmHistoryItem) GoString() string {
 // SetAlarmName sets the AlarmName field's value.
 func (s *AlarmHistoryItem) SetAlarmName(v string) *AlarmHistoryItem {
 	s.AlarmName = &v
+	return s
+}
+
+// SetAlarmType sets the AlarmType field's value.
+func (s *AlarmHistoryItem) SetAlarmType(v string) *AlarmHistoryItem {
+	s.AlarmType = &v
 	return s
 }
 
@@ -3147,6 +3310,10 @@ type AnomalyDetector struct {
 
 	// The statistic associated with the anomaly detection model.
 	Stat *string `type:"string"`
+
+	// The current status of the anomaly detector's training. The possible values
+	// are TRAINED | PENDING_TRAINING | TRAINED_INSUFFICIENT_DATA
+	StateValue *string `type:"string" enum:"AnomalyDetectorStateValue"`
 }
 
 // String returns the string representation
@@ -3186,6 +3353,12 @@ func (s *AnomalyDetector) SetNamespace(v string) *AnomalyDetector {
 // SetStat sets the Stat field's value.
 func (s *AnomalyDetector) SetStat(v string) *AnomalyDetector {
 	s.Stat = &v
+	return s
+}
+
+// SetStateValue sets the StateValue field's value.
+func (s *AnomalyDetector) SetStateValue(v string) *AnomalyDetector {
+	s.StateValue = &v
 	return s
 }
 
@@ -3249,6 +3422,143 @@ func (s *AnomalyDetectorConfiguration) SetExcludedTimeRanges(v []*Range) *Anomal
 // SetMetricTimezone sets the MetricTimezone field's value.
 func (s *AnomalyDetectorConfiguration) SetMetricTimezone(v string) *AnomalyDetectorConfiguration {
 	s.MetricTimezone = &v
+	return s
+}
+
+// The details about a composite alarm.
+type CompositeAlarm struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether actions should be executed during any changes to the alarm
+	// state.
+	ActionsEnabled *bool `type:"boolean"`
+
+	// The actions to execute when this alarm transitions to the ALARM state from
+	// any other state. Each action is specified as an Amazon Resource Name (ARN).
+	AlarmActions []*string `type:"list"`
+
+	// The Amazon Resource Name (ARN) of the alarm.
+	AlarmArn *string `min:"1" type:"string"`
+
+	// The time stamp of the last update to the alarm configuration.
+	AlarmConfigurationUpdatedTimestamp *time.Time `type:"timestamp"`
+
+	// The description of the alarm.
+	AlarmDescription *string `type:"string"`
+
+	// The name of the alarm.
+	AlarmName *string `min:"1" type:"string"`
+
+	// The rule that this alarm uses to evaluate its alarm state.
+	AlarmRule *string `min:"1" type:"string"`
+
+	// The actions to execute when this alarm transitions to the INSUFFICIENT_DATA
+	// state from any other state. Each action is specified as an Amazon Resource
+	// Name (ARN).
+	InsufficientDataActions []*string `type:"list"`
+
+	// The actions to execute when this alarm transitions to the OK state from any
+	// other state. Each action is specified as an Amazon Resource Name (ARN).
+	OKActions []*string `type:"list"`
+
+	// An explanation for the alarm state, in text format.
+	StateReason *string `type:"string"`
+
+	// An explanation for the alarm state, in JSON format.
+	StateReasonData *string `type:"string"`
+
+	// The time stamp of the last update to the alarm state.
+	StateUpdatedTimestamp *time.Time `type:"timestamp"`
+
+	// The state value for the alarm.
+	StateValue *string `type:"string" enum:"StateValue"`
+}
+
+// String returns the string representation
+func (s CompositeAlarm) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CompositeAlarm) GoString() string {
+	return s.String()
+}
+
+// SetActionsEnabled sets the ActionsEnabled field's value.
+func (s *CompositeAlarm) SetActionsEnabled(v bool) *CompositeAlarm {
+	s.ActionsEnabled = &v
+	return s
+}
+
+// SetAlarmActions sets the AlarmActions field's value.
+func (s *CompositeAlarm) SetAlarmActions(v []*string) *CompositeAlarm {
+	s.AlarmActions = v
+	return s
+}
+
+// SetAlarmArn sets the AlarmArn field's value.
+func (s *CompositeAlarm) SetAlarmArn(v string) *CompositeAlarm {
+	s.AlarmArn = &v
+	return s
+}
+
+// SetAlarmConfigurationUpdatedTimestamp sets the AlarmConfigurationUpdatedTimestamp field's value.
+func (s *CompositeAlarm) SetAlarmConfigurationUpdatedTimestamp(v time.Time) *CompositeAlarm {
+	s.AlarmConfigurationUpdatedTimestamp = &v
+	return s
+}
+
+// SetAlarmDescription sets the AlarmDescription field's value.
+func (s *CompositeAlarm) SetAlarmDescription(v string) *CompositeAlarm {
+	s.AlarmDescription = &v
+	return s
+}
+
+// SetAlarmName sets the AlarmName field's value.
+func (s *CompositeAlarm) SetAlarmName(v string) *CompositeAlarm {
+	s.AlarmName = &v
+	return s
+}
+
+// SetAlarmRule sets the AlarmRule field's value.
+func (s *CompositeAlarm) SetAlarmRule(v string) *CompositeAlarm {
+	s.AlarmRule = &v
+	return s
+}
+
+// SetInsufficientDataActions sets the InsufficientDataActions field's value.
+func (s *CompositeAlarm) SetInsufficientDataActions(v []*string) *CompositeAlarm {
+	s.InsufficientDataActions = v
+	return s
+}
+
+// SetOKActions sets the OKActions field's value.
+func (s *CompositeAlarm) SetOKActions(v []*string) *CompositeAlarm {
+	s.OKActions = v
+	return s
+}
+
+// SetStateReason sets the StateReason field's value.
+func (s *CompositeAlarm) SetStateReason(v string) *CompositeAlarm {
+	s.StateReason = &v
+	return s
+}
+
+// SetStateReasonData sets the StateReasonData field's value.
+func (s *CompositeAlarm) SetStateReasonData(v string) *CompositeAlarm {
+	s.StateReasonData = &v
+	return s
+}
+
+// SetStateUpdatedTimestamp sets the StateUpdatedTimestamp field's value.
+func (s *CompositeAlarm) SetStateUpdatedTimestamp(v time.Time) *CompositeAlarm {
+	s.StateUpdatedTimestamp = &v
+	return s
+}
+
+// SetStateValue sets the StateValue field's value.
+func (s *CompositeAlarm) SetStateValue(v string) *CompositeAlarm {
+	s.StateValue = &v
 	return s
 }
 
@@ -3639,7 +3949,7 @@ type DeleteInsightRulesInput struct {
 	_ struct{} `type:"structure"`
 
 	// An array of the rule names to delete. If you need to find out the names of
-	// your rules, use DescribeInsightRules.
+	// your rules, use DescribeInsightRules (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeInsightRules.html).
 	//
 	// RuleNames is a required field
 	RuleNames []*string `type:"list" required:"true"`
@@ -3704,6 +4014,11 @@ type DescribeAlarmHistoryInput struct {
 	// The name of the alarm.
 	AlarmName *string `min:"1" type:"string"`
 
+	// Use this parameter to specify whether you want the operation to return metric
+	// alarms or composite alarms. If you omit this parameter, only metric alarms
+	// are returned.
+	AlarmTypes []*string `type:"list"`
+
 	// The ending date to retrieve alarm history.
 	EndDate *time.Time `type:"timestamp"`
 
@@ -3716,6 +4031,11 @@ type DescribeAlarmHistoryInput struct {
 	// The token returned by a previous call to indicate that there is more data
 	// available.
 	NextToken *string `type:"string"`
+
+	// Specified whether to return the newest or oldest alarm history first. Specify
+	// TimestampDescending to have the newest event history returned first, and
+	// specify TimestampAscending to have the oldest history returned first.
+	ScanBy *string `type:"string" enum:"ScanBy"`
 
 	// The starting date to retrieve alarm history.
 	StartDate *time.Time `type:"timestamp"`
@@ -3753,6 +4073,12 @@ func (s *DescribeAlarmHistoryInput) SetAlarmName(v string) *DescribeAlarmHistory
 	return s
 }
 
+// SetAlarmTypes sets the AlarmTypes field's value.
+func (s *DescribeAlarmHistoryInput) SetAlarmTypes(v []*string) *DescribeAlarmHistoryInput {
+	s.AlarmTypes = v
+	return s
+}
+
 // SetEndDate sets the EndDate field's value.
 func (s *DescribeAlarmHistoryInput) SetEndDate(v time.Time) *DescribeAlarmHistoryInput {
 	s.EndDate = &v
@@ -3774,6 +4100,12 @@ func (s *DescribeAlarmHistoryInput) SetMaxRecords(v int64) *DescribeAlarmHistory
 // SetNextToken sets the NextToken field's value.
 func (s *DescribeAlarmHistoryInput) SetNextToken(v string) *DescribeAlarmHistoryInput {
 	s.NextToken = &v
+	return s
+}
+
+// SetScanBy sets the ScanBy field's value.
+func (s *DescribeAlarmHistoryInput) SetScanBy(v string) *DescribeAlarmHistoryInput {
+	s.ScanBy = &v
 	return s
 }
 
@@ -3960,15 +4292,41 @@ func (s *DescribeAlarmsForMetricOutput) SetMetricAlarms(v []*MetricAlarm) *Descr
 type DescribeAlarmsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The action name prefix.
+	// Use this parameter to filter the results of the operation to only those alarms
+	// that use a certain alarm action. For example, you could specify the ARN of
+	// an SNS topic to find all alarms that send notifications to that topic.
 	ActionPrefix *string `min:"1" type:"string"`
 
-	// The alarm name prefix. If this parameter is specified, you cannot specify
-	// AlarmNames.
+	// An alarm name prefix. If you specify this parameter, you receive information
+	// about all alarms that have names that start with this prefix.
+	//
+	// If this parameter is specified, you cannot specify AlarmNames.
 	AlarmNamePrefix *string `min:"1" type:"string"`
 
-	// The names of the alarms.
+	// The names of the alarms to retrieve information about.
 	AlarmNames []*string `type:"list"`
+
+	// Use this parameter to specify whether you want the operation to return metric
+	// alarms or composite alarms. If you omit this parameter, only metric alarms
+	// are returned.
+	AlarmTypes []*string `type:"list"`
+
+	// If you use this parameter and specify the name of a composite alarm, the
+	// operation returns information about the "children" alarms of the alarm you
+	// specify. These are the metric alarms and composite alarms referenced in the
+	// AlarmRule field of the composite alarm that you specify in ChildrenOfAlarmName.
+	// Information about the composite alarm that you name in ChildrenOfAlarmName
+	// is not returned.
+	//
+	// If you specify ChildrenOfAlarmName, you cannot specify any other parameters
+	// in the request except for MaxRecords and NextToken. If you do so, you will
+	// receive a validation error.
+	//
+	// Only the Alarm Name, ARN, StateValue (OK/ALARM/INSUFFICIENT_DATA), and StateUpdatedTimestamp
+	// information are returned by this operation when you use this parameter. To
+	// get complete information about these alarms, perform another DescribeAlarms
+	// operation and specify the parent alarm names in the AlarmNames parameter.
+	ChildrenOfAlarmName *string `min:"1" type:"string"`
 
 	// The maximum number of alarm descriptions to retrieve.
 	MaxRecords *int64 `min:"1" type:"integer"`
@@ -3977,7 +4335,24 @@ type DescribeAlarmsInput struct {
 	// available.
 	NextToken *string `type:"string"`
 
-	// The state value to be used in matching alarms.
+	// If you use this parameter and specify the name of a metric or composite alarm,
+	// the operation returns information about the "parent" alarms of the alarm
+	// you specify. These are the composite alarms that have AlarmRule parameters
+	// that reference the alarm named in ParentsOfAlarmName. Information about the
+	// alarm that you specify in ParentsOfAlarmName is not returned.
+	//
+	// If you specify ParentsOfAlarmName, you cannot specify any other parameters
+	// in the request except for MaxRecords and NextToken. If you do so, you will
+	// receive a validation error.
+	//
+	// Only the Alarm Name and ARN are returned by this operation when you use this
+	// parameter. To get complete information about these alarms, perform another
+	// DescribeAlarms operation and specify the parent alarm names in the AlarmNames
+	// parameter.
+	ParentsOfAlarmName *string `min:"1" type:"string"`
+
+	// Specify this parameter to receive information only about alarms that are
+	// currently in the state that you specify.
 	StateValue *string `type:"string" enum:"StateValue"`
 }
 
@@ -4000,8 +4375,14 @@ func (s *DescribeAlarmsInput) Validate() error {
 	if s.AlarmNamePrefix != nil && len(*s.AlarmNamePrefix) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("AlarmNamePrefix", 1))
 	}
+	if s.ChildrenOfAlarmName != nil && len(*s.ChildrenOfAlarmName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ChildrenOfAlarmName", 1))
+	}
 	if s.MaxRecords != nil && *s.MaxRecords < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("MaxRecords", 1))
+	}
+	if s.ParentsOfAlarmName != nil && len(*s.ParentsOfAlarmName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ParentsOfAlarmName", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -4028,6 +4409,18 @@ func (s *DescribeAlarmsInput) SetAlarmNames(v []*string) *DescribeAlarmsInput {
 	return s
 }
 
+// SetAlarmTypes sets the AlarmTypes field's value.
+func (s *DescribeAlarmsInput) SetAlarmTypes(v []*string) *DescribeAlarmsInput {
+	s.AlarmTypes = v
+	return s
+}
+
+// SetChildrenOfAlarmName sets the ChildrenOfAlarmName field's value.
+func (s *DescribeAlarmsInput) SetChildrenOfAlarmName(v string) *DescribeAlarmsInput {
+	s.ChildrenOfAlarmName = &v
+	return s
+}
+
 // SetMaxRecords sets the MaxRecords field's value.
 func (s *DescribeAlarmsInput) SetMaxRecords(v int64) *DescribeAlarmsInput {
 	s.MaxRecords = &v
@@ -4040,6 +4433,12 @@ func (s *DescribeAlarmsInput) SetNextToken(v string) *DescribeAlarmsInput {
 	return s
 }
 
+// SetParentsOfAlarmName sets the ParentsOfAlarmName field's value.
+func (s *DescribeAlarmsInput) SetParentsOfAlarmName(v string) *DescribeAlarmsInput {
+	s.ParentsOfAlarmName = &v
+	return s
+}
+
 // SetStateValue sets the StateValue field's value.
 func (s *DescribeAlarmsInput) SetStateValue(v string) *DescribeAlarmsInput {
 	s.StateValue = &v
@@ -4049,7 +4448,10 @@ func (s *DescribeAlarmsInput) SetStateValue(v string) *DescribeAlarmsInput {
 type DescribeAlarmsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The information for the specified alarms.
+	// The information about any composite alarms returned by the operation.
+	CompositeAlarms []*CompositeAlarm `type:"list"`
+
+	// The information about any metric alarms returned by the operation.
 	MetricAlarms []*MetricAlarm `type:"list"`
 
 	// The token that marks the start of the next batch of returned results.
@@ -4064,6 +4466,12 @@ func (s DescribeAlarmsOutput) String() string {
 // GoString returns the string representation
 func (s DescribeAlarmsOutput) GoString() string {
 	return s.String()
+}
+
+// SetCompositeAlarms sets the CompositeAlarms field's value.
+func (s *DescribeAlarmsOutput) SetCompositeAlarms(v []*CompositeAlarm) *DescribeAlarmsOutput {
+	s.CompositeAlarms = v
+	return s
 }
 
 // SetMetricAlarms sets the MetricAlarms field's value.
@@ -4088,7 +4496,7 @@ type DescribeAnomalyDetectorsInput struct {
 	Dimensions []*Dimension `type:"list"`
 
 	// The maximum number of results to return in one operation. The maximum value
-	// you can specify is 10.
+	// that you can specify is 100.
 	//
 	// To retrieve the remaining results, make another call with the returned NextToken
 	// value.
@@ -4457,7 +4865,7 @@ type DisableInsightRulesInput struct {
 	_ struct{} `type:"structure"`
 
 	// An array of the rule names to disable. If you need to find out the names
-	// of your rules, use DescribeInsightRules.
+	// of your rules, use DescribeInsightRules (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeInsightRules.html).
 	//
 	// RuleNames is a required field
 	RuleNames []*string `type:"list" required:"true"`
@@ -4572,7 +4980,7 @@ type EnableInsightRulesInput struct {
 	_ struct{} `type:"structure"`
 
 	// An array of the rule names to enable. If you need to find out the names of
-	// your rules, use DescribeInsightRules.
+	// your rules, use DescribeInsightRules (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeInsightRules.html).
 	//
 	// RuleNames is a required field
 	RuleNames []*string `type:"list" required:"true"`
@@ -4677,7 +5085,7 @@ type GetDashboardOutput struct {
 
 	// The detailed information about the dashboard, including what widgets are
 	// included and their location on the dashboard. For more information about
-	// the DashboardBody syntax, see CloudWatch-Dashboard-Body-Structure.
+	// the DashboardBody syntax, see Dashboard Body Structure and Syntax (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/CloudWatch-Dashboard-Body-Structure.html).
 	DashboardBody *string `type:"string"`
 
 	// The name of the dashboard.
@@ -4956,7 +5364,7 @@ type GetMetricDataInput struct {
 	MaxDatapoints *int64 `type:"integer"`
 
 	// The metric queries to be returned. A single GetMetricData call can include
-	// as many as 100 MetricDataQuery structures. Each of these structures can specify
+	// as many as 500 MetricDataQuery structures. Each of these structures can specify
 	// either a metric to retrieve, or a math expression to perform on retrieved
 	// data.
 	//
@@ -5390,7 +5798,8 @@ type GetMetricWidgetImageInput struct {
 	// limits, and so on. You can include only one MetricWidget parameter in each
 	// GetMetricWidgetImage call.
 	//
-	// For more information about the syntax of MetricWidget see CloudWatch-Metric-Widget-Structure.
+	// For more information about the syntax of MetricWidget see GetMetricWidgetImage:
+	// Metric Widget Structure and Syntax (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/CloudWatch-Metric-Widget-Structure.html).
 	//
 	// If any metric on the graph could not load all the requested data points,
 	// an orange triangle with an exclamation point appears next to the graph legend.
@@ -5561,7 +5970,7 @@ func (s *InsightRule) SetState(v string) *InsightRule {
 // If the rule contains a single key, then each unique contributor is each unique
 // value for this key.
 //
-// For more information, see GetInsightRuleReport.
+// For more information, see GetInsightRuleReport (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetInsightRuleReport.html).
 type InsightRuleContributor struct {
 	_ struct{} `type:"structure"`
 
@@ -5613,7 +6022,8 @@ func (s *InsightRuleContributor) SetKeys(v []*string) *InsightRuleContributor {
 
 // One data point related to one contributor.
 //
-// For more information, see GetInsightRuleReport and InsightRuleContributor.
+// For more information, see GetInsightRuleReport (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetInsightRuleReport.html)
+// and InsightRuleContributor (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_InsightRuleContributor.html).
 type InsightRuleContributorDatapoint struct {
 	_ struct{} `type:"structure"`
 
@@ -5653,7 +6063,7 @@ func (s *InsightRuleContributorDatapoint) SetTimestamp(v time.Time) *InsightRule
 // One data point from the metric time series returned in a Contributor Insights
 // rule report.
 //
-// For more information, see GetInsightRuleReport.
+// For more information, see GetInsightRuleReport (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetInsightRuleReport.html).
 type InsightRuleMetricDatapoint struct {
 	_ struct{} `type:"structure"`
 
@@ -6112,7 +6522,7 @@ func (s *Metric) SetNamespace(v string) *Metric {
 	return s
 }
 
-// Represents an alarm.
+// The details about a metric alarm.
 type MetricAlarm struct {
 	_ struct{} `type:"structure"`
 
@@ -6394,7 +6804,7 @@ func (s *MetricAlarm) SetUnit(v string) *MetricAlarm {
 // When used in GetMetricData, it indicates the metric data to return, and whether
 // this call is just retrieving a batch set of data for one metric, or is performing
 // a math expression on metric data. A single GetMetricData call can include
-// up to 100 MetricDataQuery structures.
+// up to 500 MetricDataQuery structures.
 //
 // When used in PutMetricAlarm, it enables you to create an alarm based on a
 // metric math expression. Each MetricDataQuery in the array specifies either
@@ -6457,10 +6867,6 @@ type MetricDataQuery struct {
 	// at intervals of less than one minute, the period can be 1, 5, 10, 30, 60,
 	// or any multiple of 60. High-resolution metrics are those metrics stored by
 	// a PutMetricData operation that includes a StorageResolution of 1 second.
-	//
-	// If you are performing a GetMetricData operation, use this field only if you
-	// are specifying an Expression. Do not use this field when you are specifying
-	// a MetricStat in a GetMetricData operation.
 	Period *int64 `min:"1" type:"integer"`
 
 	// When used in GetMetricData, this option indicates whether to return the timestamps
@@ -7082,6 +7488,209 @@ func (s PutAnomalyDetectorOutput) GoString() string {
 	return s.String()
 }
 
+type PutCompositeAlarmInput struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether actions should be executed during any changes to the alarm
+	// state of the composite alarm. The default is TRUE.
+	ActionsEnabled *bool `type:"boolean"`
+
+	// The actions to execute when this alarm transitions to the ALARM state from
+	// any other state. Each action is specified as an Amazon Resource Name (ARN).
+	//
+	// Valid Values: arn:aws:sns:region:account-id:sns-topic-name
+	AlarmActions []*string `type:"list"`
+
+	// The description for the composite alarm.
+	AlarmDescription *string `type:"string"`
+
+	// The name for the composite alarm. This name must be unique within your AWS
+	// account.
+	//
+	// AlarmName is a required field
+	AlarmName *string `min:"1" type:"string" required:"true"`
+
+	// An expression that specifies which other alarms are to be evaluated to determine
+	// this composite alarm's state. For each alarm that you reference, you designate
+	// a function that specifies whether that alarm needs to be in ALARM state,
+	// OK state, or INSUFFICIENT_DATA state. You can use operators (AND, OR and
+	// NOT) to combine multiple functions in a single expression. You can use parenthesis
+	// to logically group the functions in your expression.
+	//
+	// You can use either alarm names or ARNs to reference the other alarms that
+	// are to be evaluated.
+	//
+	// Functions can include the following:
+	//
+	//    * ALARM("alarm-name or alarm-ARN") is TRUE if the named alarm is in ALARM
+	//    state.
+	//
+	//    * OK("alarm-name or alarm-ARN") is TRUE if the named alarm is in OK state.
+	//
+	//    * INSUFFICIENT_DATA("alarm-name or alarm-ARN") is TRUE if the named alarm
+	//    is in INSUFFICIENT_DATA state.
+	//
+	//    * TRUE always evaluates to TRUE.
+	//
+	//    * FALSE always evaluates to FALSE.
+	//
+	// TRUE and FALSE are useful for testing a complex AlarmRule structure, and
+	// for testing your alarm actions.
+	//
+	// Alarm names specified in AlarmRule can be surrounded with double-quotes ("),
+	// but do not have to be.
+	//
+	// The following are some examples of AlarmRule:
+	//
+	//    * ALARM(CPUUtilizationTooHigh) AND ALARM(DiskReadOpsTooHigh) specifies
+	//    that the composite alarm goes into ALARM state only if both CPUUtilizationTooHigh
+	//    and DiskReadOpsTooHigh alarms are in ALARM state.
+	//
+	//    * ALARM(CPUUtilizationTooHigh) AND NOT ALARM(DeploymentInProgress) specifies
+	//    that the alarm goes to ALARM state if CPUUtilizationTooHigh is in ALARM
+	//    state and DeploymentInProgress is not in ALARM state. This example reduces
+	//    alarm noise during a known deployment window.
+	//
+	//    * (ALARM(CPUUtilizationTooHigh) OR ALARM(DiskReadOpsTooHigh)) AND OK(NetworkOutTooHigh)
+	//    goes into ALARM state if CPUUtilizationTooHigh OR DiskReadOpsTooHigh is
+	//    in ALARM state, and if NetworkOutTooHigh is in OK state. This provides
+	//    another example of using a composite alarm to prevent noise. This rule
+	//    ensures that you are not notified with an alarm action on high CPU or
+	//    disk usage if a known network problem is also occurring.
+	//
+	// The AlarmRule can specify as many as 100 "children" alarms. The AlarmRule
+	// expression can have as many as 500 elements. Elements are child alarms, TRUE
+	// or FALSE statements, and parentheses.
+	//
+	// AlarmRule is a required field
+	AlarmRule *string `min:"1" type:"string" required:"true"`
+
+	// The actions to execute when this alarm transitions to the INSUFFICIENT_DATA
+	// state from any other state. Each action is specified as an Amazon Resource
+	// Name (ARN).
+	//
+	// Valid Values: arn:aws:sns:region:account-id:sns-topic-name
+	InsufficientDataActions []*string `type:"list"`
+
+	// The actions to execute when this alarm transitions to an OK state from any
+	// other state. Each action is specified as an Amazon Resource Name (ARN).
+	//
+	// Valid Values: arn:aws:sns:region:account-id:sns-topic-name
+	OKActions []*string `type:"list"`
+
+	// A list of key-value pairs to associate with the composite alarm. You can
+	// associate as many as 50 tags with an alarm.
+	//
+	// Tags can help you organize and categorize your resources. You can also use
+	// them to scope user permissions, by granting a user permission to access or
+	// change only resources with certain tag values.
+	Tags []*Tag `type:"list"`
+}
+
+// String returns the string representation
+func (s PutCompositeAlarmInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutCompositeAlarmInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutCompositeAlarmInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutCompositeAlarmInput"}
+	if s.AlarmName == nil {
+		invalidParams.Add(request.NewErrParamRequired("AlarmName"))
+	}
+	if s.AlarmName != nil && len(*s.AlarmName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AlarmName", 1))
+	}
+	if s.AlarmRule == nil {
+		invalidParams.Add(request.NewErrParamRequired("AlarmRule"))
+	}
+	if s.AlarmRule != nil && len(*s.AlarmRule) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AlarmRule", 1))
+	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetActionsEnabled sets the ActionsEnabled field's value.
+func (s *PutCompositeAlarmInput) SetActionsEnabled(v bool) *PutCompositeAlarmInput {
+	s.ActionsEnabled = &v
+	return s
+}
+
+// SetAlarmActions sets the AlarmActions field's value.
+func (s *PutCompositeAlarmInput) SetAlarmActions(v []*string) *PutCompositeAlarmInput {
+	s.AlarmActions = v
+	return s
+}
+
+// SetAlarmDescription sets the AlarmDescription field's value.
+func (s *PutCompositeAlarmInput) SetAlarmDescription(v string) *PutCompositeAlarmInput {
+	s.AlarmDescription = &v
+	return s
+}
+
+// SetAlarmName sets the AlarmName field's value.
+func (s *PutCompositeAlarmInput) SetAlarmName(v string) *PutCompositeAlarmInput {
+	s.AlarmName = &v
+	return s
+}
+
+// SetAlarmRule sets the AlarmRule field's value.
+func (s *PutCompositeAlarmInput) SetAlarmRule(v string) *PutCompositeAlarmInput {
+	s.AlarmRule = &v
+	return s
+}
+
+// SetInsufficientDataActions sets the InsufficientDataActions field's value.
+func (s *PutCompositeAlarmInput) SetInsufficientDataActions(v []*string) *PutCompositeAlarmInput {
+	s.InsufficientDataActions = v
+	return s
+}
+
+// SetOKActions sets the OKActions field's value.
+func (s *PutCompositeAlarmInput) SetOKActions(v []*string) *PutCompositeAlarmInput {
+	s.OKActions = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *PutCompositeAlarmInput) SetTags(v []*Tag) *PutCompositeAlarmInput {
+	s.Tags = v
+	return s
+}
+
+type PutCompositeAlarmOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s PutCompositeAlarmOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutCompositeAlarmOutput) GoString() string {
+	return s.String()
+}
+
 type PutDashboardInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7089,7 +7698,8 @@ type PutDashboardInput struct {
 	// widgets to include and their location on the dashboard. This parameter is
 	// required.
 	//
-	// For more information about the syntax, see CloudWatch-Dashboard-Body-Structure.
+	// For more information about the syntax, see Dashboard Body Structure and Syntax
+	// (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/CloudWatch-Dashboard-Body-Structure.html).
 	//
 	// DashboardBody is a required field
 	DashboardBody *string `type:"string" required:"true"`
@@ -7269,7 +7879,7 @@ type PutMetricAlarmInput struct {
 	//
 	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
 	// | arn:aws:automate:region:ec2:recover | arn:aws:automate:region:ec2:reboot
-	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-idautoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
 	//
 	// Valid Values (for use with IAM roles): arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
 	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
@@ -7336,7 +7946,7 @@ type PutMetricAlarmInput struct {
 	//
 	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
 	// | arn:aws:automate:region:ec2:recover | arn:aws:automate:region:ec2:reboot
-	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-idautoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
 	//
 	// Valid Values (for use with IAM roles): >arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
 	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
@@ -7361,7 +7971,7 @@ type PutMetricAlarmInput struct {
 	//
 	// One item in the Metrics array is the expression that the alarm watches. You
 	// designate this expression by setting ReturnValue to true for this object
-	// in the array. For more information, see MetricDataQuery.
+	// in the array. For more information, see MetricDataQuery (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDataQuery.html).
 	//
 	// If you use the Metrics parameter, you cannot include the MetricName, Dimensions,
 	// Period, Namespace, Statistic, or ExtendedStatistic parameters of PutMetricAlarm
@@ -7377,7 +7987,7 @@ type PutMetricAlarmInput struct {
 	//
 	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
 	// | arn:aws:automate:region:ec2:recover | arn:aws:automate:region:ec2:reboot
-	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-idautoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
 	//
 	// Valid Values (for use with IAM roles): arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
 	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
@@ -7848,6 +8458,10 @@ type SetAlarmStateInput struct {
 	StateReason *string `type:"string" required:"true"`
 
 	// The reason that this alarm is set to this specific state, in JSON format.
+	//
+	// For SNS or EC2 alarm actions, this is just informational. But for EC2 Auto
+	// Scaling or application Auto Scaling alarm actions, the Auto Scaling policy
+	// uses the information in this field to take the correct action.
 	StateReasonData *string `type:"string"`
 
 	// The value of the state.
@@ -8214,6 +8828,25 @@ func (s UntagResourceOutput) String() string {
 func (s UntagResourceOutput) GoString() string {
 	return s.String()
 }
+
+const (
+	// AlarmTypeCompositeAlarm is a AlarmType enum value
+	AlarmTypeCompositeAlarm = "CompositeAlarm"
+
+	// AlarmTypeMetricAlarm is a AlarmType enum value
+	AlarmTypeMetricAlarm = "MetricAlarm"
+)
+
+const (
+	// AnomalyDetectorStateValuePendingTraining is a AnomalyDetectorStateValue enum value
+	AnomalyDetectorStateValuePendingTraining = "PENDING_TRAINING"
+
+	// AnomalyDetectorStateValueTrainedInsufficientData is a AnomalyDetectorStateValue enum value
+	AnomalyDetectorStateValueTrainedInsufficientData = "TRAINED_INSUFFICIENT_DATA"
+
+	// AnomalyDetectorStateValueTrained is a AnomalyDetectorStateValue enum value
+	AnomalyDetectorStateValueTrained = "TRAINED"
+)
 
 const (
 	// ComparisonOperatorGreaterThanOrEqualToThreshold is a ComparisonOperator enum value

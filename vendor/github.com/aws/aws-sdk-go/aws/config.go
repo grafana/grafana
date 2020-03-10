@@ -165,6 +165,13 @@ type Config struct {
 	// in the ARN, when an ARN is provided as an argument to a bucket parameter.
 	S3UseARNRegion *bool
 
+	// Set this to `true` to enable the SDK to unmarshal API response header maps to
+	// normalized lower case map keys.
+	//
+	// For example S3's X-Amz-Meta prefixed header will be unmarshaled to lower case
+	// Metadata member's map keys. The value of the header in the map is unaffected.
+	LowerCaseHeaderMaps *bool
+
 	// Set this to `true` to disable the EC2Metadata client from overriding the
 	// default http.Client's Timeout. This is helpful if you do not want the
 	// EC2Metadata client to create a new http.Client. This options is only

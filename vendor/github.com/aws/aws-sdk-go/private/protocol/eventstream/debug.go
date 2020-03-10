@@ -101,7 +101,7 @@ func (hs *decodedHeaders) UnmarshalJSON(b []byte) error {
 		}
 		headers.Set(h.Name, value)
 	}
-	(*hs) = decodedHeaders(headers)
+	*hs = decodedHeaders(headers)
 
 	return nil
 }

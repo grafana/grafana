@@ -8,6 +8,8 @@ import memoizeOne from 'memoize-one';
 
 // Services & Utils
 import store from 'app/core/store';
+import config from 'app/core/config';
+
 // Components
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
@@ -276,6 +278,10 @@ export class Explore extends React.PureComponent<ExploreProps> {
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
+    // TEMP: Remove for 7.0
+    const cloudwatchLogsDisabled =
+      datasourceInstance?.meta?.id === 'cloudwatch' && !config.featureToggles.cloudwatchLogs;
+
     return (
       <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
@@ -335,7 +341,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                           {mode === ExploreMode.Metrics && (
                             <TableContainer width={width} exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
                           )}
-                          {mode === ExploreMode.Logs && (
+                          {mode === ExploreMode.Logs && !cloudwatchLogsDisabled && (
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}

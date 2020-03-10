@@ -31,7 +31,7 @@ var initRequest func(*request.Request)
 const (
 	ServiceName = "s3"        // Name of service.
 	EndpointsID = ServiceName // ID to lookup a service endpoint with.
-	ServiceID   = "S3"        // ServiceID is a unique identifer of a specific service.
+	ServiceID   = "S3"        // ServiceID is a unique identifier of a specific service.
 )
 
 // New creates a new instance of the S3 client with a session.
@@ -78,6 +78,7 @@ func newClient(cfg aws.Config, handlers request.Handlers, partitionID, endpoint,
 	svc.Handlers.UnmarshalMeta.PushBackNamed(restxml.UnmarshalMetaHandler)
 	svc.Handlers.UnmarshalError.PushBackNamed(restxml.UnmarshalErrorHandler)
 
+	svc.Handlers.BuildStream.PushBackNamed(restxml.BuildHandler)
 	svc.Handlers.UnmarshalStream.PushBackNamed(restxml.UnmarshalHandler)
 
 	// Run custom client initialization if present

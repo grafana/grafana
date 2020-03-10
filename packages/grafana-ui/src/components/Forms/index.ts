@@ -4,7 +4,7 @@ import { Label } from './Label';
 import { Input } from './Input/Input';
 import { ButtonSelect } from './Select/ButtonSelect';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
-import { AsyncSelect, Select } from './Select/Select';
+import { AsyncSelect, Select, MultiSelect, AsyncMultiSelect } from './Select/Select';
 import { Form } from './Form';
 import { Field } from './Field';
 import { Button, LinkButton } from './Button';
@@ -22,9 +22,11 @@ const Forms = {
   Button,
   LinkButton,
   Select,
+  AsyncSelect,
+  MultiSelect,
+  AsyncMultiSelect,
   ButtonSelect,
   InputControl,
-  AsyncSelect,
   TextArea,
 };
 

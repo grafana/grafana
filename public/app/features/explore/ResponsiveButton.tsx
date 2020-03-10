@@ -8,7 +8,7 @@ export enum IconSide {
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   splitted: boolean;
   title: string;
-  onClick: () => void;
+  onClick?: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
   buttonClassName?: string;
   iconClassName?: string;
   iconSide?: IconSide;
@@ -19,7 +19,7 @@ function formatBtnTitle(title: string, iconSide?: string): string {
   return iconSide === IconSide.left ? '\xA0' + title : iconSide === IconSide.right ? title + '\xA0' : title;
 }
 
-export const ResponsiveButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
+export const ResponsiveButton = forwardRef<HTMLButtonElement, Props>((props, ref) => {
   const defaultProps = {
     iconSide: IconSide.left,
   };
@@ -28,10 +28,11 @@ export const ResponsiveButton = forwardRef<HTMLDivElement, Props>((props, ref) =
   const { title, onClick, buttonClassName, iconClassName, splitted, iconSide, disabled, ...divElementProps } = props;
 
   return (
-    <div ref={ref} {...divElementProps}>
+    <div {...divElementProps}>
       <button
+        ref={ref}
         className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`}
-        onClick={onClick}
+        onClick={onClick ?? undefined}
         disabled={disabled || false}
       >
         {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}

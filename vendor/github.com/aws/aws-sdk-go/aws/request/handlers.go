@@ -10,6 +10,7 @@ import (
 type Handlers struct {
 	Validate         HandlerList
 	Build            HandlerList
+	BuildStream      HandlerList
 	Sign             HandlerList
 	Send             HandlerList
 	ValidateResponse HandlerList
@@ -28,6 +29,7 @@ func (h *Handlers) Copy() Handlers {
 	return Handlers{
 		Validate:         h.Validate.copy(),
 		Build:            h.Build.copy(),
+		BuildStream:      h.BuildStream.copy(),
 		Sign:             h.Sign.copy(),
 		Send:             h.Send.copy(),
 		ValidateResponse: h.ValidateResponse.copy(),
@@ -46,6 +48,7 @@ func (h *Handlers) Copy() Handlers {
 func (h *Handlers) Clear() {
 	h.Validate.Clear()
 	h.Build.Clear()
+	h.BuildStream.Clear()
 	h.Send.Clear()
 	h.Sign.Clear()
 	h.Unmarshal.Clear()
@@ -65,6 +68,9 @@ func (h *Handlers) IsEmpty() bool {
 		return false
 	}
 	if h.Build.Len() != 0 {
+		return false
+	}
+	if h.BuildStream.Len() != 0 {
 		return false
 	}
 	if h.Send.Len() != 0 {
@@ -318,5 +324,20 @@ func MakeAddToUserAgentHandler(name, version string, extra ...string) func(*Requ
 func MakeAddToUserAgentFreeFormHandler(s string) func(*Request) {
 	return func(r *Request) {
 		AddToUserAgent(r, s)
+	}
+}
+
+// WithSetRequestHeaders updates the operation request's HTTP header to contain
+// the header key value pairs provided. If the header key already exists in the
+// request's HTTP header set, the existing value(s) will be replaced.
+func WithSetRequestHeaders(h map[string]string) Option {
+	return withRequestHeader(h).SetRequestHeaders
+}
+
+type withRequestHeader map[string]string
+
+func (h withRequestHeader) SetRequestHeaders(r *Request) {
+	for k, v := range h {
+		r.HTTPRequest.Header[k] = []string{v}
 	}
 }

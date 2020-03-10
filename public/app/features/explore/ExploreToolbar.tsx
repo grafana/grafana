@@ -8,7 +8,15 @@ import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { ToggleButtonGroup, ToggleButton, Tooltip, ButtonSelect, SetInterval } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, DataQuery, ExploreMode } from '@grafana/data';
+import {
+  RawTimeRange,
+  TimeZone,
+  TimeRange,
+  DataQuery,
+  ExploreMode,
+  DataSourceApi,
+  DataSourceJsonData,
+} from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -33,6 +41,7 @@ import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
+import { config } from '@grafana/runtime';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -68,6 +77,7 @@ interface StateProps {
   datasourceLoading?: boolean;
   containerWidth: number;
   datasourceName?: string;
+  datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData>;
 }
 
 interface DispatchProps {
@@ -181,6 +191,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       isPaused,
       originPanelId,
       datasourceLoading,
+      datasourceInstance,
       containerWidth,
     } = this.props;
 
@@ -193,6 +204,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
+
+    // TEMP: Remove for 7.0
+    const cloudwatchLogsDisabled =
+      datasourceInstance?.meta?.id === 'cloudwatch' && !config.featureToggles.cloudwatchLogs;
+
+    const showModeToggle = supportedModes.length > 1 && !cloudwatchLogsDisabled;
 
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
@@ -231,7 +248,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
-                {supportedModes.length > 1 ? (
+                {showModeToggle ? (
                   <div className="query-type-toggle">
                     <ToggleButtonGroup label="" transparent={true}>
                       <ToggleButton
@@ -371,6 +388,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
   return {
     datasourceMissing,
     datasourceName: datasourceInstance?.name,
+    datasourceInstance,
     loading,
     range,
     timeZone: getTimeZone(state.user),

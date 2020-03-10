@@ -167,7 +167,7 @@ type Uploader struct {
 	BufferProvider ReadSeekerWriteToProvider
 
 	// partPool allows for the re-usage of streaming payload part buffers between upload calls
-	partPool *partPool
+	partPool byteSlicePool
 }
 
 // NewUploader creates a new Uploader instance to upload objects to S3. Pass In
@@ -204,7 +204,7 @@ func newUploader(client s3iface.S3API, options ...func(*Uploader)) *Uploader {
 		option(u)
 	}
 
-	u.partPool = newPartPool(u.PartSize)
+	u.partPool = newByteSlicePool(u.PartSize)
 
 	return u
 }
@@ -397,14 +397,18 @@ func (u *uploader) init() error {
 		u.cfg.MaxUploadParts = MaxUploadParts
 	}
 
-	// If PartSize was changed or partPool was never setup then we need to allocated a new pool
-	// so that we return []byte slices of the correct size
-	if u.cfg.partPool == nil || u.cfg.partPool.partSize != u.cfg.PartSize {
-		u.cfg.partPool = newPartPool(u.cfg.PartSize)
+	// Try to get the total size for some optimizations
+	if err := u.initSize(); err != nil {
+		return err
 	}
 
-	// Try to get the total size for some optimizations
-	return u.initSize()
+	// If PartSize was changed or partPool was never setup then we need to allocated a new pool
+	// so that we return []byte slices of the correct size
+	if u.cfg.partPool == nil || u.cfg.partPool.Size() != u.cfg.PartSize {
+		u.cfg.partPool = newByteSlicePool(u.cfg.PartSize)
+	}
+
+	return nil
 }
 
 // initSize tries to detect the total stream size, setting u.totalSize. If
@@ -472,15 +476,15 @@ func (u *uploader) nextReader() (io.ReadSeeker, int, func(), error) {
 		return reader, int(n), cleanup, err
 
 	default:
-		part := u.cfg.partPool.Get().([]byte)
-		n, err := readFillBuf(r, part)
+		part := u.cfg.partPool.Get()
+		n, err := readFillBuf(r, *part)
 		u.readerPos += int64(n)
 
 		cleanup := func() {
 			u.cfg.partPool.Put(part)
 		}
 
-		return bytes.NewReader(part[0:n]), n, cleanup, err
+		return bytes.NewReader((*part)[0:n]), n, cleanup, err
 	}
 }
 
@@ -554,6 +558,7 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker, cleanup func()) (*UploadO
 	// Create the multipart
 	resp, err := u.cfg.S3.CreateMultipartUploadWithContext(u.ctx, params, u.cfg.RequestOptions...)
 	if err != nil {
+		cleanup()
 		return nil, err
 	}
 	u.uploadID = *resp.UploadId
@@ -668,6 +673,8 @@ func (u *multiuploader) readChunk(ch chan chunk) {
 				u.seterr(err)
 			}
 		}
+
+		data.cleanup()
 	}
 }
 
@@ -685,7 +692,6 @@ func (u *multiuploader) send(c chunk) error {
 	}
 
 	resp, err := u.cfg.S3.UploadPartWithContext(u.ctx, params, u.cfg.RequestOptions...)
-	c.cleanup()
 	if err != nil {
 		return err
 	}
@@ -758,17 +764,40 @@ func (u *multiuploader) complete() *s3.CompleteMultipartUploadOutput {
 	return resp
 }
 
+type byteSlicePool interface {
+	Get() *[]byte
+	Put(*[]byte)
+	Size() int64
+}
+
 type partPool struct {
 	partSize int64
 	sync.Pool
+}
+
+func (p *partPool) Get() *[]byte {
+	return p.Pool.Get().(*[]byte)
+}
+
+func (p *partPool) Put(b *[]byte) {
+	p.Pool.Put(b)
+}
+
+func (p *partPool) Size() int64 {
+	return p.partSize
 }
 
 func newPartPool(partSize int64) *partPool {
 	p := &partPool{partSize: partSize}
 
 	p.New = func() interface{} {
-		return make([]byte, p.partSize)
+		bs := make([]byte, p.partSize)
+		return &bs
 	}
 
 	return p
+}
+
+var newByteSlicePool = func(partSize int64) byteSlicePool {
+	return newPartPool(partSize)
 }

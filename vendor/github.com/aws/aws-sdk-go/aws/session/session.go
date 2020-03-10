@@ -642,10 +642,16 @@ func (s *Session) ClientConfig(service string, cfgs ...*aws.Config) client.Confi
 
 	region := aws.StringValue(s.Config.Region)
 	resolved, err := s.resolveEndpoint(service, region, s.Config)
-	if err != nil && s.Config.Logger != nil {
-		s.Config.Logger.Log(fmt.Sprintf(
-			"ERROR: unable to resolve endpoint for service %q, region %q, err: %v",
-			service, region, err))
+	if err != nil {
+		s.Handlers.Validate.PushBack(func(r *request.Request) {
+			if len(r.ClientInfo.Endpoint) != 0 {
+				// Error occurred while resolving endpoint, but the request
+				// being invoked has had an endpoint specified after the client
+				// was created.
+				return
+			}
+			r.Error = err
+		})
 	}
 
 	return client.Config{

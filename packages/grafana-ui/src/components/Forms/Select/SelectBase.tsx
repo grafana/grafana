@@ -65,6 +65,8 @@ export interface SelectCommonProps<T> {
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
   menuPosition?: 'fixed' | 'absolute';
+  closeMenuOnSelect?: boolean;
+  isOptionDisabled?: (option: any) => boolean;
 }
 
 export interface SelectAsyncProps<T> {
@@ -177,6 +179,8 @@ export function SelectBase<T>({
   invalid,
   components,
   menuPosition,
+  closeMenuOnSelect = true,
+  isOptionDisabled,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
@@ -248,6 +252,8 @@ export function SelectBase<T>({
     captureMenuScroll: false,
     menuPlacement: 'auto',
     menuPosition,
+    closeMenuOnSelect,
+    isOptionDisabled,
   };
 
   // width property is deprecated in favor of size or className
@@ -348,6 +354,10 @@ export function SelectBase<T>({
           container: () => ({
             position: 'relative',
             width: inputSizesPixels(size),
+          }),
+          option: (provided: any, state: any) => ({
+            ...provided,
+            opacity: state.isDisabled ? 0.5 : 1,
           }),
         }}
         className={widthClass}

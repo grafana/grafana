@@ -267,9 +267,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const allSeries: LogFields[] = logSeries.map(series => {
     const fieldCache = new FieldCache(series);
 
-    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
-    // more explicit checks.
-    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+    const stringField = fieldCache.hasFieldNamed('line')
+      ? fieldCache.getFieldByName('line')
+      : fieldCache.getFirstFieldOfType(FieldType.string);
     if (stringField.labels) {
       allLabels.push(stringField.labels);
     }
