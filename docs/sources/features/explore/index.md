@@ -51,6 +51,44 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 You can close the newly created query by clicking on the Close Split button.
 
+## Query history
+
+> BETA: Query history is a beta feature.
+> Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the "Query history" button in Explore.
+
+#### View query history
+
+Query history lets you view the history of your querying. For each individual query, you can:
+
+- Replace Explore query for selected query by clicking on the query card
+- Create and/or edit comment
+- Copy query to clipboard
+- Copy URL link with the query to clipboard
+- Star query
+
+#### Manage favorite queries
+
+All queries that are starred are displayed in "Starred" tab as well. This allows you to reuse queries that you run often without typing them from scratch.
+
+#### Sort query history
+
+By default query history shows you the most recent queries. This can be changed and history can be sorted by date or by data source name in ascending or descending order. It is possible to sort queries in "Query history" and "Starred" tab. If you are in split mode, chosen sorting mode is applied only to currently active panel.
+
+#### Filter query history
+
+Filter query history in "Query history" and "Starred" tab by data source name. In "Query history" tab is is also possible to filter queries by date using the slider. If you are in split mode, filters are applied only to your currently active panel.
+
+#### Query history settings
+
+Query history can be customized by:
+
+- Selecting the period of time for which Grafana will save your query history. Default time is 1 week.
+- Selecting if "Query history" to "Starred" will be your default active tab. Default is "Query history".
+- Selecting if all queries in your history history are always displayed, or if queries for data source currently active in Explore are displayed. Default is all queries.
+- Delete all of your query history.
+
+Query history settings are global, and applied to both panels in split mode.
+
 ## Prometheus-specific Features
 
 The first version of Explore features a custom querying experience for Prometheus. When a query is executed, it actually executes two queries, a normal Prometheus query for the graph and an Instant Query for the table. An Instant Query returns the last value for each time series which shows a good summary of the data shown in the graph.
@@ -69,9 +107,9 @@ The autocomplete menu can be trigger by pressing Ctrl+Space. The Autocomplete me
 
 Suggestions can appear under the query field - click on them to update your query with the suggested change.
 
-* For counters (monotonically increasing metrics), a rate function will be suggested.
-* For buckets, a histogram function will be suggested.
-* For recording rules, possible to expand the rules.
+- For counters (monotonically increasing metrics), a rate function will be suggested.
+- For buckets, a histogram function will be suggested.
+- For recording rules, possible to expand the rules.
 
 ### Table Filters
 
@@ -80,6 +118,7 @@ Click on the filter button <span title="Filter for label" class="logs-label__ico
 ## Logs Integration
 
 Along with metrics, Explore allows you to investigate your logs with the following data sources:
+
 - [Loki](../datasources/loki)
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
@@ -92,9 +131,9 @@ You can customize how logs are displayed and select which columns are shown.
 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
 
-* `exact` Exact matches are done on the whole line, except for date fields.
-* `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
-* `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
+- `exact` Exact matches are done on the whole line, except for date fields.
+- `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
+- `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
 #### Time
 
