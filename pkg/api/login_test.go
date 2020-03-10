@@ -72,7 +72,6 @@ type redirectCase struct {
 	err       error
 	appURL    string
 	appSubURL string
-	path      string
 }
 
 func TestLoginErrorCookieApiEndpoint(t *testing.T) {
@@ -155,7 +154,6 @@ func TestLoginViewRedirect(t *testing.T) {
 			desc:   "grafana relative url without subpath",
 			url:    "/profile",
 			appURL: "http://localhost:3000",
-			path:   "/",
 			status: 302,
 		},
 		{
@@ -163,15 +161,6 @@ func TestLoginViewRedirect(t *testing.T) {
 			url:       "/grafana/profile",
 			appURL:    "http://localhost:3000",
 			appSubURL: "grafana",
-			path:      "grafana/",
-			status:    302,
-		},
-		{
-			desc:      "grafana slashed relative url with subpath",
-			url:       "/grafana/profile",
-			appURL:    "http://localhost:3000",
-			appSubURL: "grafana",
-			path:      "/grafana/",
 			status:    302,
 		},
 		{
@@ -179,23 +168,13 @@ func TestLoginViewRedirect(t *testing.T) {
 			url:       "/profile",
 			appURL:    "http://localhost:3000",
 			appSubURL: "grafana",
-			path:      "grafana/",
 			status:    200,
 			err:       login.ErrInvalidRedirectTo,
-		},
-		{
-			desc:      "grafana subpath absolute url",
-			url:       "http://localhost:3000/grafana/profile",
-			appURL:    "http://localhost:3000",
-			appSubURL: "grafana",
-			path:      "/grafana/profile",
-			status:    200,
 		},
 		{
 			desc:   "grafana absolute url",
 			url:    "http://localhost:3000/profile",
 			appURL: "http://localhost:3000",
-			path:   "/",
 			status: 200,
 			err:    login.ErrAbsoluteRedirectTo,
 		},
@@ -203,7 +182,6 @@ func TestLoginViewRedirect(t *testing.T) {
 			desc:   "non grafana absolute url",
 			url:    "http://example.com",
 			appURL: "http://localhost:3000",
-			path:   "/",
 			status: 200,
 			err:    login.ErrAbsoluteRedirectTo,
 		},
@@ -211,7 +189,6 @@ func TestLoginViewRedirect(t *testing.T) {
 			desc:   "invalid url",
 			url:    ":foo",
 			appURL: "http://localhost:3000",
-			path:   "/",
 			status: 200,
 			err:    login.ErrInvalidRedirectTo,
 		},
@@ -226,7 +203,7 @@ func TestLoginViewRedirect(t *testing.T) {
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     c.path,
+				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSiteMode,
 			}
@@ -242,7 +219,7 @@ func TestLoginViewRedirect(t *testing.T) {
 				assert.True(t, ok, "Set-Cookie exists")
 				assert.Greater(t, len(setCookie), 0)
 				var redirectToCookieFound bool
-				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, c.path)
+				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, hs.Cfg.AppSubUrl+"/")
 				for _, cookieValue := range setCookie {
 					if cookieValue == expCookieValue {
 						redirectToCookieFound = true
@@ -301,12 +278,6 @@ func TestLoginPostRedirect(t *testing.T) {
 		{
 			desc:      "grafana relative url with subpath",
 			url:       "/grafana/profile",
-			appURL:    "https://localhost:3000",
-			appSubURL: "grafana",
-		},
-		{
-			desc:      "grafana no slash relative url with subpath",
-			url:       "grafana/profile",
 			appURL:    "https://localhost:3000",
 			appSubURL: "grafana",
 		},
