@@ -68,7 +68,7 @@ export function addToRichHistory(
 }
 
 export function getRichHistory() {
-  return store.getObject(RICH_HISTORY_KEY);
+  return store.getObject(RICH_HISTORY_KEY, []);
 }
 
 export function deleteAllFromRichHistory() {

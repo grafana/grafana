@@ -138,7 +138,7 @@ export const initialExploreState: ExploreState = {
   syncedTimes: false,
   left: initialExploreItemState,
   right: initialExploreItemState,
-  richHistory: getRichHistory() || [],
+  richHistory: [],
 };
 
 /**

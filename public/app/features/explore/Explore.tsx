@@ -115,7 +115,6 @@ interface ExploreProps {
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
-  richHistory: RichHistoryQuery[];
 }
 
 interface ExploreState {
@@ -168,7 +167,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       mode,
       initialUI,
       originPanelId,
-      richHistory,
     } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
@@ -183,8 +181,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         width,
         this.exploreEvents,
         initialUI,
-        originPanelId,
-        richHistory
+        originPanelId
       );
     }
   }
@@ -405,7 +402,7 @@ const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
-  const { split, syncedTimes, richHistory } = explore;
+  const { split, syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId];
   const timeZone = getTimeZone(state.user);
   const {
@@ -475,7 +472,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     originPanelId,
     syncedTimes,
     timeZone,
-    richHistory,
   };
 }
 

@@ -64,7 +64,6 @@ export interface InitializeExplorePayload {
   mode: ExploreMode;
   ui: ExploreUIState;
   originPanelId: number;
-  richHistory: RichHistoryQuery[];
 }
 
 export interface LoadDatasourceMissingPayload {

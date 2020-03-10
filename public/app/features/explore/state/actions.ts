@@ -44,9 +44,10 @@ import {
   updateStarredInRichHistory,
   updateCommentInRichHistory,
   getQueryDisplayText,
+  getRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
-import { ExploreItemState, ExploreUrlState, ThunkResult, RichHistoryQuery } from 'app/types';
+import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
 
 import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
@@ -272,8 +273,7 @@ export function initializeExplore(
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState,
-  originPanelId: number,
-  richHistory: RichHistoryQuery[]
+  originPanelId: number
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
@@ -287,10 +287,11 @@ export function initializeExplore(
         mode,
         ui,
         originPanelId,
-        richHistory,
       })
     );
     dispatch(updateTime({ exploreId }));
+    const richHistory = getRichHistory();
+    dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }
 
@@ -785,7 +786,6 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRangeFromUrl(urlRange, timeZone);
-    const richHistory = store.getObject('grafana.explore.richHistory');
 
     // need to refresh datasource
     if (update.datasource) {
@@ -800,8 +800,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
           containerWidth,
           eventBridge,
           ui,
-          originPanelId,
-          richHistory
+          originPanelId
         )
       );
       return;
