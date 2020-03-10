@@ -434,6 +434,10 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   endTime?: number;
 }
 
+export interface DataQueryTimings {
+  dataProcessingTime: number;
+}
+
 export interface QueryFix {
   type: string;
   label: string;
