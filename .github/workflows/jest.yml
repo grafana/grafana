@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Run ESLint
+    name: Run Unit Test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
