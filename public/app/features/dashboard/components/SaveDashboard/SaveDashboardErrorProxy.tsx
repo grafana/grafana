@@ -8,12 +8,20 @@ import { SaveDashboardModalProps } from './types';
 import { SaveDashboardAsButton } from './SaveDashboardButton';
 
 interface SaveDashboardErrorProxyProps {
+  /** original dashboard */
   dashboard: DashboardModel;
+  /** dashboard save model with applied modifications, i.e. title */
+  dashboardSaveModel: any;
   error: any;
   onDismiss: () => void;
 }
 
-export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = ({ dashboard, error, onDismiss }) => {
+export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = ({
+  dashboard,
+  dashboardSaveModel,
+  error,
+  onDismiss,
+}) => {
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
@@ -35,7 +43,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
           }
           confirmText="Save & Overwrite"
           onConfirm={async () => {
-            await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
+            await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
             onDismiss();
           }}
           onDismiss={onDismiss}
@@ -53,7 +61,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
           }
           confirmText="Save & Overwrite"
           onConfirm={async () => {
-            await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
+            await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
             onDismiss();
           }}
           onDismiss={onDismiss}

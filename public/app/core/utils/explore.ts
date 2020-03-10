@@ -500,6 +500,8 @@ const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
 export enum SortOrder {
   Descending = 'Descending',
   Ascending = 'Ascending',
+  DatasourceAZ = 'Datasource A-Z',
+  DatasourceZA = 'Datasource Z-A',
 }
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
