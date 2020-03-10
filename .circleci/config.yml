@@ -1670,15 +1670,6 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
-  store-build-artifacts:
-    docker:
-      - image: circleci/node:12
-    steps:
-      - attach_workspace:
-          at: .
-      - store_artifacts:
-          path: ./dist
-
   build-grafana-packages:
     docker:
       - image: circleci/node:12
@@ -2207,18 +2198,10 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
-        - store-build-artifacts:
-            requires:
-              - build-fast-package
-              - test-backend
-              - test-frontend
-              - codespell
-              - lint-go
-              - shellcheck
-              - mysql-integration-test
-              - postgres-integration-test
-              - cache-server-test
+        - end-to-end-tests:
             filters: *filter-not-release-or-master
+            requires:
+              - grafana-docker-pr
         - build-docs-website:
             filters: *filter-not-release-or-master
   nightly:
