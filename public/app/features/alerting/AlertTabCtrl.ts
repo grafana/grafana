@@ -237,7 +237,6 @@ export class AlertTabCtrl {
     for (const notification of this.notifications) {
       if (notification.isDefault) {
         notification.iconClass = this.getNotificationIcon(notification.type);
-        notification.bgColor = '#00678b';
         this.alertNotifications.push(notification);
       }
     }
