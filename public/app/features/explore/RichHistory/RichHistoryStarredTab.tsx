@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { css } from 'emotion';
 import { uniqBy } from 'lodash';
 
@@ -22,7 +22,6 @@ interface Props {
   queries: RichHistoryQuery[];
   sortOrder: SortOrder;
   activeDatasourceOnly: boolean;
-  activeDatasourceInstance: string;
   datasourceFilters: SelectableValue[] | null;
   exploreId: ExploreId;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
@@ -88,7 +87,6 @@ export function RichHistoryStarredTab(props: Props) {
     onChangeSortOrder,
     sortOrder,
     activeDatasourceOnly,
-    activeDatasourceInstance,
     exploreId,
   } = props;
 
@@ -101,16 +99,6 @@ export function RichHistoryStarredTab(props: Props) {
       return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
     });
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
-
-  /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
-   *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
-   * available for user.
-   */
-  useEffect(() => {
-    activeDatasourceOnly && activeDatasourceInstance
-      ? onSelectDatasourceFilters([{ label: activeDatasourceInstance, value: activeDatasourceInstance }])
-      : onSelectDatasourceFilters(null);
-  }, [activeDatasourceInstance, activeDatasourceOnly]);
 
   const starredQueries = queries.filter(q => q.starred === true);
   const starredQueriesFilteredByDatasource = datasourceFilters

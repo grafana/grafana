@@ -117,6 +117,30 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
 
   onChangeSortOrder = (sortOrder: SortOrder) => this.setState({ sortOrder });
 
+  /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
+   *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
+   * available for user.
+   */
+  updateFilters() {
+    this.state.activeDatasourceOnly && this.props.activeDatasourceInstance
+      ? this.onSelectDatasourceFilters([
+          { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
+        ])
+      : this.onSelectDatasourceFilters(null);
+  }
+
+  componentDidMount() {
+    this.updateFilters();
+  }
+  componentDidUpdate(prevProps: RichHistoryProps, prevState: RichHistoryState) {
+    if (
+      this.props.activeDatasourceInstance !== prevProps.activeDatasourceInstance ||
+      this.state.activeDatasourceOnly !== prevState.activeDatasourceOnly
+    ) {
+      this.updateFilters();
+    }
+  }
+
   render() {
     const {
       datasourceFilters,
@@ -138,7 +162,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           sortOrder={sortOrder}
           datasourceFilters={datasourceFilters}
           activeDatasourceOnly={activeDatasourceOnly}
-          activeDatasourceInstance={activeDatasourceInstance}
           retentionPeriod={retentionPeriod}
           onChangeSortOrder={this.onChangeSortOrder}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
@@ -157,7 +180,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           sortOrder={sortOrder}
           datasourceFilters={datasourceFilters}
           activeDatasourceOnly={activeDatasourceOnly}
-          activeDatasourceInstance={activeDatasourceInstance}
           onChangeSortOrder={this.onChangeSortOrder}
           onSelectDatasourceFilters={this.onSelectDatasourceFilters}
           exploreId={exploreId}

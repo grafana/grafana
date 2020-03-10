@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { css } from 'emotion';
 import { uniqBy } from 'lodash';
 
@@ -27,7 +27,6 @@ interface Props {
   queries: RichHistoryQuery[];
   sortOrder: SortOrder;
   activeDatasourceOnly: boolean;
-  activeDatasourceInstance: string;
   datasourceFilters: SelectableValue[] | null;
   retentionPeriod: number;
   exploreId: ExploreId;
@@ -126,7 +125,6 @@ export function RichHistoryQueriesTab(props: Props) {
     onChangeSortOrder,
     sortOrder,
     activeDatasourceOnly,
-    activeDatasourceInstance,
     retentionPeriod,
     exploreId,
   } = props;
@@ -160,16 +158,6 @@ export function RichHistoryQueriesTab(props: Props) {
    * are keys and arrays with queries that belong to that headings are values.
    */
   let mappedQueriesToHeadings = mapQueriesToHeadings(queriesWithinSelectedTimeline, sortOrder);
-
-  /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
-   *  Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
-   * available for user.
-   */
-  useEffect(() => {
-    activeDatasourceOnly && activeDatasourceInstance
-      ? onSelectDatasourceFilters([{ label: activeDatasourceInstance, value: activeDatasourceInstance }])
-      : onSelectDatasourceFilters(null);
-  }, [activeDatasourceInstance, activeDatasourceOnly]);
 
   return (
     <div className={styles.container}>
