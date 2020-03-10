@@ -29,17 +29,13 @@ Grafana Enterprise includes high-level security integration.
 
 ### Enhanced LDAP integration
 
-With Grafana Enterprise, you can set up synchronization between LDAP groups and Grafana teams. [Learn more about enhanced LDAP.]({{< relref "enhanced_ldap.md" >}})
+With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you can set up synchronization between LDAP groups and Grafana teams.
 
 ### SAML authentication
 
 [SAML authentication]({{< relref "saml.md" >}}) enables your Grafana Enterprise users to authenticate with SAML.
 
-## Reporting
-
-[Reporting]({{< relref "reporting.md" >}}) allows you to take any dashboard, generate a PDF report, and set up a schedule to have it emailed to whoever you choose.
-
-## Team sync
+### Team sync
 
 [Team sync]({{< relref "team-sync.md" >}}) allows you to set up synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team.
 
@@ -49,6 +45,10 @@ Supported auth providers:
 * [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
 * [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 * [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+
+## Reporting
+
+[Reporting]({{< relref "reporting.md" >}}) allows you to take any dashboard, generate a PDF report, and set up a schedule to have it emailed to whoever you choose.
 
 ## White labeling
 
