@@ -100,9 +100,9 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 					Tags:   map[string]string{multiValuedDimension: value},
 					Points: make([]tsdb.TimePoint, 0),
 				}
-				for key, value := range query.Dimensions {
-					if key != multiValuedDimension && len(value) > 0 {
-						emptySeries.Tags[key] = value[0]
+				for key, values := range query.Dimensions {
+					if key != multiValuedDimension && len(values) > 0 {
+						emptySeries.Tags[key] = values[0]
 					}
 				}
 
