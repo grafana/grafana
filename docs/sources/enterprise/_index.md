@@ -21,7 +21,7 @@ Grafana Enterprise includes all of the features found in the open source edition
 
 ## Enhanced security features
 
-Grafana Enterprise includes high-level security integration.
+Grafana Enterprise includes integrations with more ways to authenticate your users and enhanced authorization capabilities.
 
 ### Data source permissions
 
