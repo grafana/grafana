@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
-import { stylesFactory, useTheme, Forms } from '@grafana/ui';
+import { stylesFactory, useTheme, Forms, styleMixins } from '@grafana/ui';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { copyStringToClipboard, createUrlFromRichHistory, createDataQuery } from 'app/core/utils/richHistory';
@@ -22,20 +22,17 @@ interface Props {
 
 const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
   const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
-  const cardColor = theme.isLight ? theme.colors.white : theme.colors.dark7;
   const cardBottomPadding = hasComment ? theme.spacing.sm : theme.spacing.xs;
-  const cardBoxShadow = theme.isLight ? `0px 2px 2px ${bgColor}` : `0px 2px 4px black`;
+
   return {
     queryCard: css`
+      ${styleMixins.listItem(theme)}
       display: flex;
-      border: 1px solid ${bgColor};
       padding: ${theme.spacing.sm} ${theme.spacing.sm} ${cardBottomPadding};
       margin: ${theme.spacing.sm} 0;
-      box-shadow: ${cardBoxShadow};
-      background-color: ${cardColor};
-      border-radius: ${theme.border.radius};
+
       .starred {
-        color: ${theme.colors.blue77};
+        color: ${theme.colors.orange};
       }
     `,
     queryCardLeft: css`
@@ -47,16 +44,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
       width: 150px;
       display: flex;
       justify-content: flex-end;
+
       i {
-        font-size: ${theme.typography.size.lg};
-        font-weight: ${theme.typography.weight.bold};
-        margin: 3px;
+        margin: ${theme.spacing.xs};
         cursor: pointer;
       }
     `,
     queryRow: css`
       border-top: 1px solid ${bgColor};
-      font-weight: ${theme.typography.weight.bold};
       word-break: break-all;
       padding: 4px 2px;
       :first-child {
