@@ -43,7 +43,7 @@ $gray-5: ${theme.colors.gray5};
 $gray-6: ${theme.colors.gray6};
 
 $gray-blue: ${theme.colors.grayBlue};
-$input-black: #09090b;
+$input-black: ${theme.colors.formInputBg};
 
 $white: ${theme.colors.white};
 
@@ -194,12 +194,12 @@ $btn-active-box-shadow: 0px 0px 4px rgba(255, 120, 10, 0.5);
 $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
-$input-color: $gray-4;
+$input-color: ${theme.colors.formInputText};
 $input-border-color: $dark-6;
 $input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: $dark-6 !default;
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: $gray-1 !default;
+$input-color-placeholder: ${theme.colors.formInputPlaceholderText};
 $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-6;
 $input-color-select-arrow: $white;
