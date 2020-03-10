@@ -163,6 +163,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controller: CreateFolderCtrl,
       controllerAs: 'ctrl',
     })
+    .when('/dashboards/folder/new2', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/*webpackChunkName: NewDashboardsFolder*/ 'app/features/folders/components/NewDashboardsFolder')
+          ),
+      },
+    })
     .when('/dashboards/f/:uid/:slug/permissions', {
       template: '<react-container />',
       resolve: {
