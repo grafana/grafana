@@ -55,7 +55,7 @@ Check for the presence of a role using the [JMESPath](http://jmespath.org/exampl
 See [JMESPath examples](#jmespath-examples) for more information.
 
 The `role_attribute_path` JMESPath expression is first applied on the id_token and userinfo by api_url, like all other options. For example, `email_attribute_path`.
-If there is no hit, then the JMESPath expression will be applied to the `access_token`.
+If the `role_attribute_path` JMESPath expression has no match in the id_toke or userinfo, then the expression will be applied to the `access_token`.
 
 ## Set up OAuth2 with Okta
 
