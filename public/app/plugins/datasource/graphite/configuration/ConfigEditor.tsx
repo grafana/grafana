@@ -46,36 +46,40 @@ export class ConfigEditor extends PureComponent<Props, State> {
         />
         <h3 className="page-heading">Graphite details</h3>
         <div className="gf-form-group">
-          <div className="gf-form">
-            <FormLabel tooltip="This option controls what functions are available in the Graphite query editor.">
-              Version
-            </FormLabel>
-            <Select
-              value={currentVersion}
-              options={graphiteVersions}
-              width={8}
-              onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteVersion')}
-            />
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <FormLabel tooltip="This option controls what functions are available in the Graphite query editor.">
+                Version
+              </FormLabel>
+              <Select
+                value={currentVersion}
+                options={graphiteVersions}
+                width={8}
+                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteVersion')}
+              />
+            </div>
           </div>
           <div className="gf-form-inline">
-            <FormLabel>Type</FormLabel>
-            <Select
-              options={graphiteTypes}
-              value={graphiteTypes.find(type => type.value === options.jsonData.graphiteType)}
-              width={8}
-              onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
-            />
+            <div className="gf-form">
+              <FormLabel>Type</FormLabel>
+              <Select
+                options={graphiteTypes}
+                value={graphiteTypes.find(type => type.value === options.jsonData.graphiteType)}
+                width={8}
+                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
+              />
 
-            <Button
-              style={{ marginLeft: '8px', marginTop: '5px' }}
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                this.setState((prevState: State) => ({ showMetricTankHelp: !prevState.showMetricTankHelp }))
-              }
-            >
-              Help <i className={showMetricTankHelp ? 'fa fa-caret-down' : 'fa fa-caret-right'} />
-            </Button>
+              <Button
+                style={{ marginLeft: '8px', marginTop: '5px' }}
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  this.setState((prevState: State) => ({ showMetricTankHelp: !prevState.showMetricTankHelp }))
+                }
+              >
+                Help <i className={showMetricTankHelp ? 'fa fa-caret-down' : 'fa fa-caret-right'} />
+              </Button>
+            </div>
           </div>
           {showMetricTankHelp && (
             <div className="grafana-info-box m-t-2">
