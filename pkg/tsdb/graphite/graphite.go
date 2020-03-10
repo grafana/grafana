@@ -48,13 +48,25 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		"maxDataPoints": []string{"500"},
 	}
 
+	emptyQueries := make([]string, 0)
 	for _, query := range tsdbQuery.Queries {
 		glog.Debug("graphite", "query", query.Model)
+		currTarget := ""
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
-			target = fixIntervalFormat(fullTarget)
+			currTarget = fullTarget
 		} else {
-			target = fixIntervalFormat(query.Model.Get("target").MustString())
+			currTarget = query.Model.Get("target").MustString()
 		}
+		if currTarget == "" {
+			glog.Debug("graphite", "empty query target", query.Model)
+			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", query.Model))
+			continue
+		}
+		target = fixIntervalFormat(currTarget)
+	}
+
+	if target == "" {
+		return nil, fmt.Errorf("No query target found: %v", strings.Join(emptyQueries, "\n"))
 	}
 
 	formData["target"] = []string{target}
