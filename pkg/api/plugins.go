@@ -268,7 +268,6 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	config := backendplugin.PluginConfig{
 		OrgID:                   c.OrgId,
 		PluginID:                plugin.Id,
-		PluginType:              plugin.Type,
 		JSONData:                jsonData,
 		DecryptedSecureJSONData: decryptedSecureJSONData,
 		Updated:                 updated,
