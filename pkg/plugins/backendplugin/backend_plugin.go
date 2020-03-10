@@ -229,10 +229,9 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		Config: &pluginv2.PluginConfig{
 			OrgId:                   req.Config.OrgID,
 			PluginId:                req.Config.PluginID,
-			PluginType:              req.Config.PluginType,
 			JsonData:                jsonDataBytes,
 			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
-			UpdatedMS:               req.Config.Updated.UnixNano() / int64(time.Millisecond),
+			LastUpdatedMS:           req.Config.Updated.UnixNano() / int64(time.Millisecond),
 		},
 		Path:    req.Path,
 		Method:  req.Method,
