@@ -22,7 +22,8 @@ export const SLOFilter: FunctionComponent<Props> = ({ onChange, value = '' }) =>
   const [autofocus, setAutofocus] = useState(false);
 
   return (
-    <>
+    <div className="gf-form-inline">
+      <label className="gf-form-label query-keyword width-9">Filter</label>
       {showSlo && (
         <SegmentInput
           Component={
@@ -62,6 +63,9 @@ export const SLOFilter: FunctionComponent<Props> = ({ onChange, value = '' }) =>
           <i className="fa fa-plus" />
         </a>
       )}
-    </>
+      <div className="gf-form gf-form--grow">
+        <label className="gf-form-label gf-form-label--grow"></label>
+      </div>
+    </div>
   );
 };

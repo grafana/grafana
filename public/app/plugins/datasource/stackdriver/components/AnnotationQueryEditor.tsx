@@ -41,7 +41,7 @@ const DefaultTarget: State = {
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
-  async componentDidMount() {
+  async componentWillMount() {
     const { target, datasource } = this.props;
     if (!target.projectName) {
       target.projectName = datasource.getDefaultProject();
@@ -86,9 +86,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const {
-      queryType: { metricType, projectName, filters, title, text, variableOptionGroup, labels, variableOptions },
-    } = this.state;
+    const { metricType, projectName, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
     const { datasource } = this.props;
 
     return (

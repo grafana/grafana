@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-
-import events from 'app/core/app_events';
-
-import { Project, Aggregations, Metrics, LabelFilter, GroupBys, Alignments, AlignmentPeriods, AliasBy, Help } from '.';
+import { Project, Aggregations, Metrics, LabelFilter, GroupBys, Alignments, AlignmentPeriods, AliasBy } from '.';
 import { MetricQuery, MetricDescriptor } from '../types';
-import { getAlignmentPickerData, toOption } from '../functions';
+import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
-import { PanelEvents, SelectableValue, TimeSeries } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
 export interface Props {
   refId: string;
+  usedAlignmentPeriod: string;
+  variableOptionGroup: SelectableValue<string>;
   onChange: (query: MetricQuery) => void;
   onRunQuery: () => void;
   query: MetricQuery;
@@ -17,23 +16,12 @@ export interface Props {
 }
 
 interface State {
-  variableOptions: Array<SelectableValue<string>>;
-  variableOptionGroup: SelectableValue<string>;
-  alignOptions: Array<SelectableValue<string>>;
-  lastQuery: string;
-  lastQueryError: string;
   labels: any;
   [key: string]: any;
 }
 
 export const defaultState: State = {
-  lastQueryError: '',
-  usedAlignmentPeriod: '',
-  alignOptions: [],
-  lastQuery: '',
   labels: {},
-  variableOptionGroup: {},
-  variableOptions: [],
 };
 
 export const defaultQuery: MetricQuery = {
@@ -41,7 +29,6 @@ export const defaultQuery: MetricQuery = {
   metricType: '',
   metricKind: '',
   valueType: '',
-  refId: '',
   service: '',
   unit: '',
   crossSeriesReducer: 'REDUCE_MEAN',
@@ -52,73 +39,23 @@ export const defaultQuery: MetricQuery = {
   aliasBy: '',
 };
 
-function Editor({ refId, query, datasource, onChange, onRunQuery = () => {} }: React.PropsWithChildren<Props>) {
+function Editor({
+  refId,
+  query,
+  datasource,
+  onChange,
+  usedAlignmentPeriod,
+  variableOptionGroup,
+}: React.PropsWithChildren<Props>) {
   const [state, setState] = useState<State>(defaultState);
 
   useEffect(() => {
-    events.on(PanelEvents.dataReceived, onDataReceived);
-    events.on(PanelEvents.dataError, onDataError);
-
-    const variableOptionGroup = {
-      label: 'Template Variables',
-      expanded: false,
-      options: datasource.variables.map(toOption),
-    };
-
-    setState({ ...state, variableOptionGroup, variableOptions: variableOptionGroup.options });
-
-    return () => {
-      events.off(PanelEvents.dataReceived, onDataReceived);
-      events.off(PanelEvents.dataError, onDataError);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (query) {
-      const { perSeriesAligner, alignOptions } = getAlignmentPickerData(query, datasource.templateSrv);
-
-      setState({
-        ...state,
-        alignOptions,
-        perSeriesAligner,
-      });
-
+    if (query && query.projectName && query.metricType) {
       datasource
         .getLabels(query.metricType, refId, query.projectName, query.groupBys)
         .then(labels => setState({ ...state, labels }));
     }
-  }, [query]);
-
-  const onDataReceived = (dataList: TimeSeries[]) => {
-    const series = dataList.find((item: any) => item.refId === refId);
-    if (series) {
-      setState({
-        ...state,
-        lastQuery: decodeURIComponent(series.meta.rawQuery),
-        lastQueryError: '',
-        usedAlignmentPeriod: series.meta.alignmentPeriod,
-      });
-    }
-  };
-
-  const onDataError = (err: any) => {
-    let lastQuery;
-    let lastQueryError;
-    if (err.data && err.data.error) {
-      lastQueryError = datasource.formatStackdriverError(err);
-    } else if (err.data && err.data.results) {
-      const queryRes = err.data.results[refId];
-      lastQuery = decodeURIComponent(queryRes.meta.rawQuery);
-      if (queryRes && queryRes.error) {
-        try {
-          lastQueryError = JSON.parse(queryRes.error).error.message;
-        } catch {
-          lastQueryError = queryRes.error;
-        }
-      }
-    }
-    setState({ ...state, lastQuery, lastQueryError });
-  };
+  }, [query.projectName, query.groupBys, query.metricType]);
 
   const onMetricTypeChange = async ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(
@@ -132,22 +69,13 @@ function Editor({ refId, query, datasource, onChange, onRunQuery = () => {} }: R
     onChange({ ...query, perSeriesAligner, metricType: type, unit, valueType, metricKind });
   };
 
-  const {
-    lastQuery,
-    lastQueryError,
-    labels,
-    variableOptionGroup,
-    variableOptions,
-    usedAlignmentPeriod,
-    alignOptions,
-  } = state;
-
-  console.log('render metricqueryeditor');
+  const { labels } = state;
+  const { perSeriesAligner, alignOptions } = getAlignmentPickerData(query, datasource.templateSrv);
 
   return (
     <>
       <Project
-        templateVariableOptions={variableOptions}
+        templateVariableOptions={variableOptionGroup.options}
         projectName={query.projectName}
         datasource={datasource}
         onChange={projectName => {
@@ -158,7 +86,7 @@ function Editor({ refId, query, datasource, onChange, onRunQuery = () => {} }: R
         templateSrv={datasource.templateSrv}
         projectName={query.projectName}
         metricType={query.metricType}
-        templateVariableOptions={variableOptions}
+        templateVariableOptions={variableOptionGroup.options}
         datasource={datasource}
         onChange={onMetricTypeChange}
       >
@@ -178,7 +106,7 @@ function Editor({ refId, query, datasource, onChange, onRunQuery = () => {} }: R
             />
             <Aggregations
               metricDescriptor={metric}
-              templateVariableOptions={variableOptions}
+              templateVariableOptions={variableOptionGroup.options}
               crossSeriesReducer={query.crossSeriesReducer}
               groupBys={query.groupBys}
               onChange={crossSeriesReducer => onChange({ ...query, crossSeriesReducer })}
@@ -187,8 +115,8 @@ function Editor({ refId, query, datasource, onChange, onRunQuery = () => {} }: R
                 displayAdvancedOptions && (
                   <Alignments
                     alignOptions={alignOptions}
-                    templateVariableOptions={variableOptions}
-                    perSeriesAligner={query.perSeriesAligner}
+                    templateVariableOptions={variableOptionGroup.options}
+                    perSeriesAligner={perSeriesAligner}
                     onChange={perSeriesAligner => onChange({ ...query, perSeriesAligner })}
                   />
                 )
@@ -196,14 +124,13 @@ function Editor({ refId, query, datasource, onChange, onRunQuery = () => {} }: R
             </Aggregations>
             <AlignmentPeriods
               templateSrv={datasource.templateSrv}
-              templateVariableOptions={variableOptions}
+              templateVariableOptions={variableOptionGroup.options}
               alignmentPeriod={query.alignmentPeriod}
               perSeriesAligner={query.perSeriesAligner}
               usedAlignmentPeriod={usedAlignmentPeriod}
               onChange={alignmentPeriod => onChange({ ...query, alignmentPeriod })}
             />
             <AliasBy value={query.aliasBy} onChange={aliasBy => onChange({ ...query, aliasBy })} />
-            <Help rawQuery={lastQuery} lastQueryError={lastQueryError} />
           </>
         )}
       </Metrics>
