@@ -2,7 +2,7 @@
 // Any changes will be lost if this file is regenerated.
 // see https://github.com/cheekybits/genny
 
-package dataframe
+package data
 
 import "time"
 
@@ -31,6 +31,26 @@ func (v *nullableUint8Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableUint8Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *uint8
+		return g
+	}
+	var g uint8
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableUint8Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g uint8
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableUint8Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -39,8 +59,8 @@ func (v *nullableUint8Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableUint8Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableUint8Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableUint8Vector) Extend(i int) {
@@ -72,6 +92,26 @@ func (v *nullableUint16Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableUint16Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *uint16
+		return g
+	}
+	var g uint16
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableUint16Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g uint16
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableUint16Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -80,8 +120,8 @@ func (v *nullableUint16Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableUint16Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableUint16Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableUint16Vector) Extend(i int) {
@@ -113,6 +153,26 @@ func (v *nullableUint32Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableUint32Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *uint32
+		return g
+	}
+	var g uint32
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableUint32Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g uint32
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableUint32Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -121,8 +181,8 @@ func (v *nullableUint32Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableUint32Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableUint32Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableUint32Vector) Extend(i int) {
@@ -154,6 +214,26 @@ func (v *nullableUint64Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableUint64Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *uint64
+		return g
+	}
+	var g uint64
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableUint64Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g uint64
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableUint64Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -162,8 +242,8 @@ func (v *nullableUint64Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableUint64Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableUint64Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableUint64Vector) Extend(i int) {
@@ -195,6 +275,26 @@ func (v *nullableInt8Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableInt8Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *int8
+		return g
+	}
+	var g int8
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableInt8Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g int8
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableInt8Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -203,8 +303,8 @@ func (v *nullableInt8Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableInt8Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableInt8Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableInt8Vector) Extend(i int) {
@@ -236,6 +336,26 @@ func (v *nullableInt16Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableInt16Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *int16
+		return g
+	}
+	var g int16
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableInt16Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g int16
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableInt16Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -244,8 +364,8 @@ func (v *nullableInt16Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableInt16Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableInt16Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableInt16Vector) Extend(i int) {
@@ -277,6 +397,26 @@ func (v *nullableInt32Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableInt32Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *int32
+		return g
+	}
+	var g int32
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableInt32Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g int32
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableInt32Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -285,8 +425,8 @@ func (v *nullableInt32Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableInt32Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableInt32Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableInt32Vector) Extend(i int) {
@@ -318,6 +458,26 @@ func (v *nullableInt64Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableInt64Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *int64
+		return g
+	}
+	var g int64
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableInt64Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g int64
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableInt64Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -326,8 +486,8 @@ func (v *nullableInt64Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableInt64Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableInt64Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableInt64Vector) Extend(i int) {
@@ -359,6 +519,26 @@ func (v *nullableFloat32Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableFloat32Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *float32
+		return g
+	}
+	var g float32
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableFloat32Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g float32
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableFloat32Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -367,8 +547,8 @@ func (v *nullableFloat32Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableFloat32Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableFloat32Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableFloat32Vector) Extend(i int) {
@@ -400,6 +580,26 @@ func (v *nullableFloat64Vector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableFloat64Vector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *float64
+		return g
+	}
+	var g float64
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableFloat64Vector) ConcreteAt(i int) (interface{}, bool) {
+	var g float64
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableFloat64Vector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -408,8 +608,8 @@ func (v *nullableFloat64Vector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableFloat64Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableFloat64Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableFloat64Vector) Extend(i int) {
@@ -441,6 +641,26 @@ func (v *nullableStringVector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableStringVector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *string
+		return g
+	}
+	var g string
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableStringVector) ConcreteAt(i int) (interface{}, bool) {
+	var g string
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableStringVector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -449,8 +669,8 @@ func (v *nullableStringVector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableStringVector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableStringVector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableStringVector) Extend(i int) {
@@ -482,6 +702,26 @@ func (v *nullableBoolVector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableBoolVector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *bool
+		return g
+	}
+	var g bool
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableBoolVector) ConcreteAt(i int) (interface{}, bool) {
+	var g bool
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableBoolVector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -490,8 +730,8 @@ func (v *nullableBoolVector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableBoolVector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableBoolVector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableBoolVector) Extend(i int) {
@@ -523,6 +763,26 @@ func (v *nullableTimeTimeVector) At(i int) interface{} {
 	return (*v)[i]
 }
 
+func (v *nullableTimeTimeVector) CopyAt(i int) interface{} {
+	if (*v)[i] == nil {
+		var g *time.Time
+		return g
+	}
+	var g time.Time
+	g = *(*v)[i]
+	return &g
+}
+
+func (v *nullableTimeTimeVector) ConcreteAt(i int) (interface{}, bool) {
+	var g time.Time
+	val := (*v)[i]
+	if val == nil {
+		return g, false
+	}
+	g = *val
+	return g, true
+}
+
 func (v *nullableTimeTimeVector) PointerAt(i int) interface{} {
 	return &(*v)[i]
 }
@@ -531,8 +791,8 @@ func (v *nullableTimeTimeVector) Len() int {
 	return len((*v))
 }
 
-func (v *nullableTimeTimeVector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *nullableTimeTimeVector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *nullableTimeTimeVector) Extend(i int) {

@@ -1,4 +1,4 @@
-package dataframe
+package data
 
 import (
 	"github.com/cheekybits/genny/generic"
@@ -35,8 +35,18 @@ func (v *genVector) Len() int {
 	return len((*v))
 }
 
-func (v *genVector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *genVector) CopyAt(i int) interface{} {
+	var g gen
+	g = (*v)[i]
+	return g
+}
+
+func (v *genVector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *genVector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *genVector) Extend(i int) {
