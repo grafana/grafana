@@ -248,6 +248,7 @@
     "prismjs": "1.16.0",
     "prop-types": "15.7.2",
     "rc-cascader": "0.17.5",
+    "re-resizable": "^6.2.0",
     "react": "16.12.0",
     "react-dom": "16.12.0",
     "react-grid-layout": "0.17.1",
