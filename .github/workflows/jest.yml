@@ -13,9 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
-          with:
-            node-version: 12
+        with:
+          node-version: 12
 
       - uses: stefanoeb/jest-action@1.0.2
-          with:
-            jestArgs: --ci --maxWorkers 2
+        with:
+          jestArgs: --ci --maxWorkers 2
