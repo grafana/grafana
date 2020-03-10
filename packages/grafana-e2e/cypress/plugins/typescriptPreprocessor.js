@@ -1,17 +1,23 @@
+const { resolve } = require('path');
 const wp = require('@cypress/webpack-preprocessor');
 
+const packageRoot = resolve(`${__dirname}/../../`);
+const packageModules = `${packageRoot}/node_modules`;
+
 const webpackOptions = {
-  resolve: {
-    extensions: ['.ts', '.js'],
-  },
   module: {
     rules: [
       {
+        include: modulePath => {
+          return modulePath.startsWith(packageRoot) && !modulePath.startsWith(packageModules);
+        },
         test: /\.ts$/,
-        exclude: [/node_modules/],
         use: 'ts-loader',
       },
     ],
+  },
+  resolve: {
+    extensions: ['.ts', '.js'],
   },
 };
 
