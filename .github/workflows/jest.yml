@@ -1,7 +1,7 @@
 name: Frontend Unit Tests
 
 on:
-  pull_request
+  pull_request:
     paths:
     - '**.ts'
     - '**.tsx'

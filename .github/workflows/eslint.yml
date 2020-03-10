@@ -1,14 +1,14 @@
 name: Frontend ESLint
 
 on:
-  pull_request
+  pull_request:
     paths:
     - '**.ts'
     - '**.tsx'
 
 jobs:
   build:
-    name: Run ESLint
+    name: Run Jest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
