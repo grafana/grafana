@@ -1,6 +1,6 @@
-const compareSnapshotsPlugin = require('./cy-compare-images');
-const cypressTypeScriptPreprocessor = require('./cy-ts-preprocessor');
-const extendConfigPlugin = require('./cy-extend-config');
+const compareSnapshotsPlugin = require('./compareSnapshots');
+const extendConfig = require('./extendConfig');
+const typescriptPreprocessor = require('./typescriptPreprocessor');
 
 module.exports = (on, config) => {
   // yarn build fails with:
@@ -9,10 +9,8 @@ module.exports = (on, config) => {
   // on('task', {
   //   failed: require('cypress-failed-log/src/failed')(),
   // });
-  on('file:preprocessor', cypressTypeScriptPreprocessor);
-  on('task', {
-    compareSnapshotsPlugin,
-  });
+  on('file:preprocessor', typescriptPreprocessor);
+  on('task', { compareSnapshotsPlugin });
   on('task', {
     log({ message, optional }) {
       optional ? console.log(message, optional) : console.log(message);
@@ -22,5 +20,5 @@ module.exports = (on, config) => {
 
   // Always extend with this library's config and return for diffing
   // @todo remove this when possible: https://github.com/cypress-io/cypress/issues/5674
-  return extendConfigPlugin(config);
+  return extendConfig(config);
 };

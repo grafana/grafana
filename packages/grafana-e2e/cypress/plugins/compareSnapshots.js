@@ -1,4 +1,3 @@
-const fs = require('fs');
 const BlinkDiff = require('blink-diff');
 
 function compareSnapshotsPlugin(args) {
