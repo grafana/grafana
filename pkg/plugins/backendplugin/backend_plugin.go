@@ -229,10 +229,9 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		Config: &pluginv2.PluginConfig{
 			OrgId:                   req.Config.OrgID,
 			PluginId:                req.Config.PluginID,
-			PluginType:              req.Config.PluginType,
 			JsonData:                jsonDataBytes,
 			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
-			UpdatedMS:               req.Config.Updated.UnixNano() / int64(time.Millisecond),
+			LastUpdatedMS:           req.Config.Updated.UnixNano() / int64(time.Millisecond),
 		},
 		Path:    req.Path,
 		Method:  req.Method,
@@ -251,14 +250,22 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 	}
 
 	if req.Config.DataSourceConfig != nil {
+		datasourceJSONData, err := req.Config.DataSourceConfig.JSONData.ToDB()
+		if err != nil {
+			return nil, err
+		}
+
 		protoReq.Config.DatasourceConfig = &pluginv2.DataSourceConfig{
-			Id:               req.Config.DataSourceConfig.ID,
-			Name:             req.Config.DataSourceConfig.Name,
-			Url:              req.Config.DataSourceConfig.URL,
-			Database:         req.Config.DataSourceConfig.Database,
-			User:             req.Config.DataSourceConfig.User,
-			BasicAuthEnabled: req.Config.DataSourceConfig.BasicAuthEnabled,
-			BasicAuthUser:    req.Config.DataSourceConfig.BasicAuthUser,
+			Id:                      req.Config.DataSourceConfig.ID,
+			Name:                    req.Config.DataSourceConfig.Name,
+			Url:                     req.Config.DataSourceConfig.URL,
+			Database:                req.Config.DataSourceConfig.Database,
+			User:                    req.Config.DataSourceConfig.User,
+			BasicAuthEnabled:        req.Config.DataSourceConfig.BasicAuthEnabled,
+			BasicAuthUser:           req.Config.DataSourceConfig.BasicAuthUser,
+			JsonData:                datasourceJSONData,
+			DecryptedSecureJsonData: req.Config.DataSourceConfig.DecryptedSecureJSONData,
+			LastUpdatedMS:           req.Config.DataSourceConfig.Updated.UnixNano() / int64(time.Millisecond),
 		}
 	}
 

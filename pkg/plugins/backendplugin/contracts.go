@@ -60,19 +60,21 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealthResponse) *CheckH
 }
 
 type DataSourceConfig struct {
-	ID               int64
-	Name             string
-	URL              string
-	User             string
-	Database         string
-	BasicAuthEnabled bool
-	BasicAuthUser    string
+	ID                      int64
+	Name                    string
+	URL                     string
+	User                    string
+	Database                string
+	BasicAuthEnabled        bool
+	BasicAuthUser           string
+	JSONData                *simplejson.Json
+	DecryptedSecureJSONData map[string]string
+	Updated                 time.Time
 }
 
 type PluginConfig struct {
 	OrgID                   int64
 	PluginID                string
-	PluginType              string
 	JSONData                *simplejson.Json
 	DecryptedSecureJSONData map[string]string
 	Updated                 time.Time

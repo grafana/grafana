@@ -275,20 +275,19 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	}
 
 	config := backendplugin.PluginConfig{
-		OrgID:                   c.OrgId,
-		PluginID:                plugin.Id,
-		PluginType:              plugin.Type,
-		JSONData:                ds.JsonData,
-		DecryptedSecureJSONData: ds.DecryptedValues(),
-		Updated:                 ds.Updated,
+		OrgID:    c.OrgId,
+		PluginID: plugin.Id,
 		DataSourceConfig: &backendplugin.DataSourceConfig{
-			ID:               ds.Id,
-			Name:             ds.Name,
-			URL:              ds.Url,
-			Database:         ds.Database,
-			User:             ds.User,
-			BasicAuthEnabled: ds.BasicAuth,
-			BasicAuthUser:    ds.BasicAuthUser,
+			ID:                      ds.Id,
+			Name:                    ds.Name,
+			URL:                     ds.Url,
+			Database:                ds.Database,
+			User:                    ds.User,
+			BasicAuthEnabled:        ds.BasicAuth,
+			BasicAuthUser:           ds.BasicAuthUser,
+			JSONData:                ds.JsonData,
+			DecryptedSecureJSONData: ds.DecryptedValues(),
+			Updated:                 ds.Updated,
 		},
 	}
 	hs.BackendPluginManager.CallResource(config, c, c.Params("*"))
