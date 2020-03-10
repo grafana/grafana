@@ -1,13 +1,12 @@
 package hclog
 
 import (
-	"bytes"
+	"bufio"
 	"encoding"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"reflect"
+	"os"
 	"runtime"
 	"sort"
 	"strconv"
@@ -17,41 +16,17 @@ import (
 	"time"
 )
 
-// TimeFormat to use for logging. This is a version of RFC3339 that contains
-// contains millisecond precision
-const TimeFormat = "2006-01-02T15:04:05.000Z0700"
-
 var (
 	_levelToBracket = map[Level]string{
 		Debug: "[DEBUG]",
 		Trace: "[TRACE]",
-		Info:  "[INFO] ",
-		Warn:  "[WARN] ",
+		Info:  "[INFO ]",
+		Warn:  "[WARN ]",
 		Error: "[ERROR]",
 	}
 )
 
-// Make sure that intLogger is a Logger
-var _ Logger = &intLogger{}
-
-// intLogger is an internal logger implementation. Internal in that it is
-// defined entirely by this package.
-type intLogger struct {
-	json       bool
-	caller     bool
-	name       string
-	timeFormat string
-
-	// This is a pointer so that it's shared by any derived loggers, since
-	// those derived loggers share the bufio.Writer as well.
-	mutex  *sync.Mutex
-	writer *writer
-	level  *int32
-
-	implied []interface{}
-}
-
-// New returns a configured logger.
+// Given the options (nil for defaults), create a new Logger
 func New(opts *LoggerOptions) Logger {
 	if opts == nil {
 		opts = &LoggerOptions{}
@@ -59,7 +34,7 @@ func New(opts *LoggerOptions) Logger {
 
 	output := opts.Output
 	if output == nil {
-		output = DefaultOutput
+		output = os.Stderr
 	}
 
 	level := opts.Level
@@ -67,49 +42,70 @@ func New(opts *LoggerOptions) Logger {
 		level = DefaultLevel
 	}
 
-	mutex := opts.Mutex
-	if mutex == nil {
-		mutex = new(sync.Mutex)
+	mtx := opts.Mutex
+	if mtx == nil {
+		mtx = new(sync.Mutex)
 	}
 
-	l := &intLogger{
+	ret := &intLogger{
+		m:          mtx,
 		json:       opts.JSONFormat,
 		caller:     opts.IncludeLocation,
 		name:       opts.Name,
 		timeFormat: TimeFormat,
-		mutex:      mutex,
-		writer:     newWriter(output),
+		w:          bufio.NewWriter(output),
 		level:      new(int32),
 	}
-
 	if opts.TimeFormat != "" {
-		l.timeFormat = opts.TimeFormat
+		ret.timeFormat = opts.TimeFormat
 	}
-
-	atomic.StoreInt32(l.level, int32(level))
-
-	return l
+	atomic.StoreInt32(ret.level, int32(level))
+	return ret
 }
+
+// The internal logger implementation. Internal in that it is defined entirely
+// by this package.
+type intLogger struct {
+	json       bool
+	caller     bool
+	name       string
+	timeFormat string
+
+	// this is a pointer so that it's shared by any derived loggers, since
+	// those derived loggers share the bufio.Writer as well.
+	m     *sync.Mutex
+	w     *bufio.Writer
+	level *int32
+
+	implied []interface{}
+}
+
+// Make sure that intLogger is a Logger
+var _ Logger = &intLogger{}
+
+// The time format to use for logging. This is a version of RFC3339 that
+// contains millisecond precision
+const TimeFormat = "2006-01-02T15:04:05.000Z0700"
 
 // Log a message and a set of key/value pairs if the given level is at
 // or more severe that the threshold configured in the Logger.
-func (l *intLogger) Log(level Level, msg string, args ...interface{}) {
-	if level < Level(atomic.LoadInt32(l.level)) {
+func (z *intLogger) Log(level Level, msg string, args ...interface{}) {
+	if level < Level(atomic.LoadInt32(z.level)) {
 		return
 	}
 
 	t := time.Now()
 
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
+	z.m.Lock()
+	defer z.m.Unlock()
 
-	if l.json {
-		l.logJSON(t, level, msg, args...)
+	if z.json {
+		z.logJson(t, level, msg, args...)
 	} else {
-		l.log(t, level, msg, args...)
+		z.log(t, level, msg, args...)
 	}
 
-	l.writer.Flush(level)
+	z.w.Flush()
 }
 
 // Cleanup a path by returning the last 2 segments of the path only.
@@ -125,8 +121,10 @@ func trimCallerPath(path string) string {
 	// and https://github.com/golang/go/issues/18151
 	//
 	// for discussion on the issue on Go side.
+	//
 
 	// Find the last separator.
+	//
 	idx := strings.LastIndexByte(path, '/')
 	if idx == -1 {
 		return path
@@ -142,37 +140,37 @@ func trimCallerPath(path string) string {
 }
 
 // Non-JSON logging format function
-func (l *intLogger) log(t time.Time, level Level, msg string, args ...interface{}) {
-	l.writer.WriteString(t.Format(l.timeFormat))
-	l.writer.WriteByte(' ')
+func (z *intLogger) log(t time.Time, level Level, msg string, args ...interface{}) {
+	z.w.WriteString(t.Format(z.timeFormat))
+	z.w.WriteByte(' ')
 
 	s, ok := _levelToBracket[level]
 	if ok {
-		l.writer.WriteString(s)
+		z.w.WriteString(s)
 	} else {
-		l.writer.WriteString("[?????]")
+		z.w.WriteString("[UNKN ]")
 	}
 
-	if l.caller {
+	if z.caller {
 		if _, file, line, ok := runtime.Caller(3); ok {
-			l.writer.WriteByte(' ')
-			l.writer.WriteString(trimCallerPath(file))
-			l.writer.WriteByte(':')
-			l.writer.WriteString(strconv.Itoa(line))
-			l.writer.WriteByte(':')
+			z.w.WriteByte(' ')
+			z.w.WriteString(trimCallerPath(file))
+			z.w.WriteByte(':')
+			z.w.WriteString(strconv.Itoa(line))
+			z.w.WriteByte(':')
 		}
 	}
 
-	l.writer.WriteByte(' ')
+	z.w.WriteByte(' ')
 
-	if l.name != "" {
-		l.writer.WriteString(l.name)
-		l.writer.WriteString(": ")
+	if z.name != "" {
+		z.w.WriteString(z.name)
+		z.w.WriteString(": ")
 	}
 
-	l.writer.WriteString(msg)
+	z.w.WriteString(msg)
 
-	args = append(l.implied, args...)
+	args = append(z.implied, args...)
 
 	var stacktrace CapturedStacktrace
 
@@ -187,14 +185,11 @@ func (l *intLogger) log(t time.Time, level Level, msg string, args ...interface{
 			}
 		}
 
-		l.writer.WriteByte(':')
+		z.w.WriteByte(':')
 
 	FOR:
 		for i := 0; i < len(args); i = i + 2 {
-			var (
-				val string
-				raw bool
-			)
+			var val string
 
 			switch st := args[i+1].(type) {
 			case string:
@@ -225,77 +220,32 @@ func (l *intLogger) log(t time.Time, level Level, msg string, args ...interface{
 			case Format:
 				val = fmt.Sprintf(st[0].(string), st[1:]...)
 			default:
-				v := reflect.ValueOf(st)
-				if v.Kind() == reflect.Slice {
-					val = l.renderSlice(v)
-					raw = true
-				} else {
-					val = fmt.Sprintf("%v", st)
-				}
+				val = fmt.Sprintf("%v", st)
 			}
 
-			l.writer.WriteByte(' ')
-			l.writer.WriteString(args[i].(string))
-			l.writer.WriteByte('=')
+			z.w.WriteByte(' ')
+			z.w.WriteString(args[i].(string))
+			z.w.WriteByte('=')
 
-			if !raw && strings.ContainsAny(val, " \t\n\r") {
-				l.writer.WriteByte('"')
-				l.writer.WriteString(val)
-				l.writer.WriteByte('"')
+			if strings.ContainsAny(val, " \t\n\r") {
+				z.w.WriteByte('"')
+				z.w.WriteString(val)
+				z.w.WriteByte('"')
 			} else {
-				l.writer.WriteString(val)
+				z.w.WriteString(val)
 			}
 		}
 	}
 
-	l.writer.WriteString("\n")
+	z.w.WriteString("\n")
 
 	if stacktrace != "" {
-		l.writer.WriteString(string(stacktrace))
+		z.w.WriteString(string(stacktrace))
 	}
-}
-
-func (l *intLogger) renderSlice(v reflect.Value) string {
-	var buf bytes.Buffer
-
-	buf.WriteRune('[')
-
-	for i := 0; i < v.Len(); i++ {
-		if i > 0 {
-			buf.WriteString(", ")
-		}
-
-		sv := v.Index(i)
-
-		var val string
-
-		switch sv.Kind() {
-		case reflect.String:
-			val = sv.String()
-		case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
-			val = strconv.FormatInt(sv.Int(), 10)
-		case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			val = strconv.FormatUint(sv.Uint(), 10)
-		default:
-			val = fmt.Sprintf("%v", sv.Interface())
-		}
-
-		if strings.ContainsAny(val, " \t\n\r") {
-			buf.WriteByte('"')
-			buf.WriteString(val)
-			buf.WriteByte('"')
-		} else {
-			buf.WriteString(val)
-		}
-	}
-
-	buf.WriteRune(']')
-
-	return buf.String()
 }
 
 // JSON logging function
-func (l *intLogger) logJSON(t time.Time, level Level, msg string, args ...interface{}) {
+func (z *intLogger) logJson(t time.Time, level Level, msg string, args ...interface{}) {
 	vals := map[string]interface{}{
 		"@message":   msg,
 		"@timestamp": t.Format("2006-01-02T15:04:05.000000Z07:00"),
@@ -319,17 +269,17 @@ func (l *intLogger) logJSON(t time.Time, level Level, msg string, args ...interf
 
 	vals["@level"] = levelStr
 
-	if l.name != "" {
-		vals["@module"] = l.name
+	if z.name != "" {
+		vals["@module"] = z.name
 	}
 
-	if l.caller {
+	if z.caller {
 		if _, file, line, ok := runtime.Caller(3); ok {
 			vals["@caller"] = fmt.Sprintf("%s:%d", file, line)
 		}
 	}
 
-	args = append(l.implied, args...)
+	args = append(z.implied, args...)
 
 	if args != nil && len(args) > 0 {
 		if len(args)%2 != 0 {
@@ -367,80 +317,80 @@ func (l *intLogger) logJSON(t time.Time, level Level, msg string, args ...interf
 		}
 	}
 
-	err := json.NewEncoder(l.writer).Encode(vals)
+	err := json.NewEncoder(z.w).Encode(vals)
 	if err != nil {
 		panic(err)
 	}
 }
 
 // Emit the message and args at DEBUG level
-func (l *intLogger) Debug(msg string, args ...interface{}) {
-	l.Log(Debug, msg, args...)
+func (z *intLogger) Debug(msg string, args ...interface{}) {
+	z.Log(Debug, msg, args...)
 }
 
 // Emit the message and args at TRACE level
-func (l *intLogger) Trace(msg string, args ...interface{}) {
-	l.Log(Trace, msg, args...)
+func (z *intLogger) Trace(msg string, args ...interface{}) {
+	z.Log(Trace, msg, args...)
 }
 
 // Emit the message and args at INFO level
-func (l *intLogger) Info(msg string, args ...interface{}) {
-	l.Log(Info, msg, args...)
+func (z *intLogger) Info(msg string, args ...interface{}) {
+	z.Log(Info, msg, args...)
 }
 
 // Emit the message and args at WARN level
-func (l *intLogger) Warn(msg string, args ...interface{}) {
-	l.Log(Warn, msg, args...)
+func (z *intLogger) Warn(msg string, args ...interface{}) {
+	z.Log(Warn, msg, args...)
 }
 
 // Emit the message and args at ERROR level
-func (l *intLogger) Error(msg string, args ...interface{}) {
-	l.Log(Error, msg, args...)
+func (z *intLogger) Error(msg string, args ...interface{}) {
+	z.Log(Error, msg, args...)
 }
 
 // Indicate that the logger would emit TRACE level logs
-func (l *intLogger) IsTrace() bool {
-	return Level(atomic.LoadInt32(l.level)) == Trace
+func (z *intLogger) IsTrace() bool {
+	return Level(atomic.LoadInt32(z.level)) == Trace
 }
 
 // Indicate that the logger would emit DEBUG level logs
-func (l *intLogger) IsDebug() bool {
-	return Level(atomic.LoadInt32(l.level)) <= Debug
+func (z *intLogger) IsDebug() bool {
+	return Level(atomic.LoadInt32(z.level)) <= Debug
 }
 
 // Indicate that the logger would emit INFO level logs
-func (l *intLogger) IsInfo() bool {
-	return Level(atomic.LoadInt32(l.level)) <= Info
+func (z *intLogger) IsInfo() bool {
+	return Level(atomic.LoadInt32(z.level)) <= Info
 }
 
 // Indicate that the logger would emit WARN level logs
-func (l *intLogger) IsWarn() bool {
-	return Level(atomic.LoadInt32(l.level)) <= Warn
+func (z *intLogger) IsWarn() bool {
+	return Level(atomic.LoadInt32(z.level)) <= Warn
 }
 
 // Indicate that the logger would emit ERROR level logs
-func (l *intLogger) IsError() bool {
-	return Level(atomic.LoadInt32(l.level)) <= Error
+func (z *intLogger) IsError() bool {
+	return Level(atomic.LoadInt32(z.level)) <= Error
 }
 
 // Return a sub-Logger for which every emitted log message will contain
 // the given key/value pairs. This is used to create a context specific
 // Logger.
-func (l *intLogger) With(args ...interface{}) Logger {
+func (z *intLogger) With(args ...interface{}) Logger {
 	if len(args)%2 != 0 {
 		panic("With() call requires paired arguments")
 	}
 
-	sl := *l
+	var nz intLogger = *z
 
-	result := make(map[string]interface{}, len(l.implied)+len(args))
-	keys := make([]string, 0, len(l.implied)+len(args))
+	result := make(map[string]interface{}, len(z.implied)+len(args))
+	keys := make([]string, 0, len(z.implied)+len(args))
 
 	// Read existing args, store map and key for consistent sorting
-	for i := 0; i < len(l.implied); i += 2 {
-		key := l.implied[i].(string)
+	for i := 0; i < len(z.implied); i += 2 {
+		key := z.implied[i].(string)
 		keys = append(keys, key)
-		result[key] = l.implied[i+1]
+		result[key] = z.implied[i+1]
 	}
 	// Read new args, store map and key for consistent sorting
 	for i := 0; i < len(args); i += 2 {
@@ -455,57 +405,53 @@ func (l *intLogger) With(args ...interface{}) Logger {
 	// Sort keys to be consistent
 	sort.Strings(keys)
 
-	sl.implied = make([]interface{}, 0, len(l.implied)+len(args))
+	nz.implied = make([]interface{}, 0, len(z.implied)+len(args))
 	for _, k := range keys {
-		sl.implied = append(sl.implied, k)
-		sl.implied = append(sl.implied, result[k])
+		nz.implied = append(nz.implied, k)
+		nz.implied = append(nz.implied, result[k])
 	}
 
-	return &sl
+	return &nz
 }
 
 // Create a new sub-Logger that a name decending from the current name.
 // This is used to create a subsystem specific Logger.
-func (l *intLogger) Named(name string) Logger {
-	sl := *l
+func (z *intLogger) Named(name string) Logger {
+	var nz intLogger = *z
 
-	if sl.name != "" {
-		sl.name = sl.name + "." + name
+	if nz.name != "" {
+		nz.name = nz.name + "." + name
 	} else {
-		sl.name = name
+		nz.name = name
 	}
 
-	return &sl
+	return &nz
 }
 
 // Create a new sub-Logger with an explicit name. This ignores the current
 // name. This is used to create a standalone logger that doesn't fall
 // within the normal hierarchy.
-func (l *intLogger) ResetNamed(name string) Logger {
-	sl := *l
+func (z *intLogger) ResetNamed(name string) Logger {
+	var nz intLogger = *z
 
-	sl.name = name
+	nz.name = name
 
-	return &sl
+	return &nz
 }
 
 // Update the logging level on-the-fly. This will affect all subloggers as
 // well.
-func (l *intLogger) SetLevel(level Level) {
-	atomic.StoreInt32(l.level, int32(level))
+func (z *intLogger) SetLevel(level Level) {
+	atomic.StoreInt32(z.level, int32(level))
 }
 
 // Create a *log.Logger that will send it's data through this Logger. This
 // allows packages that expect to be using the standard library log to actually
 // use this logger.
-func (l *intLogger) StandardLogger(opts *StandardLoggerOptions) *log.Logger {
+func (z *intLogger) StandardLogger(opts *StandardLoggerOptions) *log.Logger {
 	if opts == nil {
 		opts = &StandardLoggerOptions{}
 	}
 
-	return log.New(l.StandardWriter(opts), "", 0)
-}
-
-func (l *intLogger) StandardWriter(opts *StandardLoggerOptions) io.Writer {
-	return &stdlogAdapter{l, opts.InferLevels}
+	return log.New(&stdlogAdapter{z, opts.InferLevels}, "", 0)
 }

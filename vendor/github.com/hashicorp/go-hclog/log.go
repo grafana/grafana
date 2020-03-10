@@ -9,42 +9,38 @@ import (
 )
 
 var (
-	//DefaultOutput is used as the default log output.
-	DefaultOutput io.Writer = os.Stderr
-
-	// DefaultLevel is used as the default log level.
-	DefaultLevel = Info
+	DefaultOutput = os.Stderr
+	DefaultLevel  = Info
 )
 
-// Level represents a log level.
 type Level int32
 
 const (
-	// NoLevel is a special level used to indicate that no level has been
+	// This is a special level used to indicate that no level has been
 	// set and allow for a default to be used.
 	NoLevel Level = 0
 
-	// Trace is the most verbose level. Intended to be used for the tracing
-	// of actions in code, such as function enters/exits, etc.
+	// The most verbose level. Intended to be used for the tracing of actions
+	// in code, such as function enters/exits, etc.
 	Trace Level = 1
 
-	// Debug information for programmer lowlevel analysis.
+	// For programmer lowlevel analysis.
 	Debug Level = 2
 
-	// Info information about steady state operations.
+	// For information about steady state operations.
 	Info Level = 3
 
-	// Warn information about rare but handled events.
+	// For information about rare but handled events.
 	Warn Level = 4
 
-	// Error information about unrecoverable events.
+	// For information about unrecoverable events.
 	Error Level = 5
 )
 
-// Format is a simple convience type for when formatting is required. When
-// processing a value of this type, the logger automatically treats the first
-// argument as a Printf formatting string and passes the rest as the values
-// to be formatted. For example: L.Info(Fmt{"%d beans/day", beans}).
+// When processing a value of this type, the logger automatically treats the first
+// argument as a Printf formatting string and passes the rest as the values to be
+// formatted. For example: L.Info(Fmt{"%d beans/day", beans}). This is a simple
+// convience type for when formatting is required.
 type Format []interface{}
 
 // Fmt returns a Format type. This is a convience function for creating a Format
@@ -57,7 +53,7 @@ func Fmt(str string, args ...interface{}) Format {
 // the level string is invalid. This facilitates setting the log level via
 // config or environment variable by name in a predictable way.
 func LevelFromString(levelStr string) Level {
-	// We don't care about case. Accept both "INFO" and "info".
+	// We don't care about case. Accept "INFO" or "info"
 	levelStr = strings.ToLower(strings.TrimSpace(levelStr))
 	switch levelStr {
 	case "trace":
@@ -75,7 +71,7 @@ func LevelFromString(levelStr string) Level {
 	}
 }
 
-// Logger describes the interface that must be implemeted by all loggers.
+// The main Logger interface. All code should code against this interface only.
 type Logger interface {
 	// Args are alternating key, val pairs
 	// keys must be strings
@@ -131,12 +127,8 @@ type Logger interface {
 
 	// Return a value that conforms to the stdlib log.Logger interface
 	StandardLogger(opts *StandardLoggerOptions) *log.Logger
-
-	// Return a value that conforms to io.Writer, which can be passed into log.SetOutput()
-	StandardWriter(opts *StandardLoggerOptions) io.Writer
 }
 
-// StandardLoggerOptions can be used to configure a new standard logger.
 type StandardLoggerOptions struct {
 	// Indicate that some minimal parsing should be done on strings to try
 	// and detect their level and re-emit them.
@@ -145,7 +137,6 @@ type StandardLoggerOptions struct {
 	InferLevels bool
 }
 
-// LoggerOptions can be used to configure a new logger.
 type LoggerOptions struct {
 	// Name of the subsystem to prefix logs with
 	Name string
@@ -153,7 +144,7 @@ type LoggerOptions struct {
 	// The threshold for the logger. Anything less severe is supressed
 	Level Level
 
-	// Where to write the logs to. Defaults to os.Stderr if nil
+	// Where to write the logs to. Defaults to os.Stdout if nil
 	Output io.Writer
 
 	// An optional mutex pointer in case Output is shared

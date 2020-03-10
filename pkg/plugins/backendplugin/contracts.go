@@ -43,12 +43,12 @@ type CheckHealthResult struct {
 	JSONDetails string
 }
 
-func checkHealthResultFromProto(protoResp *pluginv2.CheckHealth_Response) *CheckHealthResult {
+func checkHealthResultFromProto(protoResp *pluginv2.CheckHealthResponse) *CheckHealthResult {
 	status := HealthStatusUnknown
 	switch protoResp.Status {
-	case pluginv2.CheckHealth_Response_ERROR:
+	case pluginv2.CheckHealthResponse_ERROR:
 		status = HealthStatusError
-	case pluginv2.CheckHealth_Response_OK:
+	case pluginv2.CheckHealthResponse_OK:
 		status = HealthStatusOk
 	}
 
@@ -102,7 +102,7 @@ type callResourceResultStream interface {
 }
 
 type callResourceResultStreamImpl struct {
-	stream pluginv2.Core_CallResourceClient
+	stream pluginv2.Resource_CallResourceClient
 }
 
 func (s *callResourceResultStreamImpl) Recv() (*CallResourceResult, error) {
