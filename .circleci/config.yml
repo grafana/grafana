@@ -763,7 +763,7 @@ jobs:
       - checkout
       - setup_remote_docker
       - run: docker load -i /tmp/workspace/docker/grafana-oss-amd64.tar
-      - run: docker run -p 3000:3000 grafana/grafana:pr-${CIRCLE_SHA1}
+      - run: docker run -d -p 3000:3000 grafana/grafana:pr-${CIRCLE_SHA1}
       - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
       - run:
           name: CI job started
