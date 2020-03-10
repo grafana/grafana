@@ -44,7 +44,7 @@ export class DataSourceWithBackend<
         throw new Error('Unknown Datasource: ' + q.datasource);
       }
       return {
-        ...q,
+        ...this.applyTemplateVariables(q),
         datasourceId: ds.id,
         intervalMs,
         maxDataPoints,
@@ -68,6 +68,13 @@ export class DataSourceWithBackend<
         return this.toDataQueryResponse(rsp);
       });
     return from(req);
+  }
+
+  /**
+   * Override to apply template variables
+   */
+  applyTemplateVariables(query: DataQuery) {
+    return query;
   }
 
   /**

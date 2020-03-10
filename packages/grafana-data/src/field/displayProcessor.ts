@@ -53,8 +53,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     let numeric = toNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
-
     let shouldFormat = true;
+
     if (mappings && mappings.length > 0) {
       const mappedValue = getMappedValue(mappings, value);
 
@@ -100,7 +100,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         text = ''; // No data?
       }
     }
-    return { text, numeric, prefix, suffix };
+
+    return { text, numeric, prefix, suffix, ...scaleFunc(-Infinity) };
   };
 }
 

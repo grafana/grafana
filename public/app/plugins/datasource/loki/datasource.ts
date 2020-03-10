@@ -390,9 +390,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   async metadataRequest(url: string, params?: Record<string, string>) {
     const res = await this._request(url, params, { silent: true }).toPromise();
-    return {
-      data: { data: res.data.data || res.data.values || [] },
-    };
+    return res.data.data || res.data.values || [];
   }
 
   async metricFindQuery(query: string) {
@@ -423,7 +421,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   async labelNamesQuery() {
     const url = (await this.getVersion()) === 'v0' ? `${LEGACY_LOKI_ENDPOINT}/label` : `${LOKI_ENDPOINT}/label`;
     const result = await this.metadataRequest(url);
-    return result.data.data.map((value: string) => ({ text: value }));
+    return result.map((value: string) => ({ text: value }));
   }
 
   async labelValuesQuery(label: string) {
@@ -432,7 +430,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         ? `${LEGACY_LOKI_ENDPOINT}/label/${label}/values`
         : `${LOKI_ENDPOINT}/label/${label}/values`;
     const result = await this.metadataRequest(url);
-    return result.data.data.map((value: string) => ({ text: value }));
+    return result.map((value: string) => ({ text: value }));
   }
 
   interpolateQueryExpr(value: any, variable: any) {

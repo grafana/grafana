@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { e2e } from '@grafana/e2e';
 import { Switch, Select, ClipboardButton } from '@grafana/ui';
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -12,7 +13,7 @@ const themeOptions: Array<SelectableValue<string>> = [
 ];
 
 export interface Props {
-  dashboard?: DashboardModel;
+  dashboard: DashboardModel;
   panel?: PanelModel;
 }
 
@@ -83,6 +84,7 @@ export class ShareLink extends PureComponent<Props, State> {
   render() {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, selectedTheme, shareUrl, imageUrl } = this.state;
+    const selectors = e2e.pages.SharePanelModal.selectors;
 
     return (
       <div className="share-modal-body">
@@ -122,14 +124,13 @@ export class ShareLink extends PureComponent<Props, State> {
                     <ClipboardButton variant="inverse" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
                       Copy
                     </ClipboardButton>
-                    {/* <button className="btn btn-inverse" clipboard-button="getShareUrl()">Copy</button> */}
                   </div>
                 </div>
               </div>
             </div>
             {panel && (
               <div className="gf-form">
-                <a href={imageUrl} target="_blank">
+                <a href={imageUrl} target="_blank" aria-label={selectors.linkToRenderedImage}>
                   <i className="fa fa-camera"></i> Direct link rendered image
                 </a>
               </div>

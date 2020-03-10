@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,7 +23,7 @@ type templateData struct {
 func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.Header, error) {
 	result := http.Header{}
 
-	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
+	query := models.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.
 }
 
 func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string, error) {
-	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
+	query := models.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
 	if err := bus.Dispatch(&query); err != nil {
 		return "", err
 	}
@@ -56,7 +56,7 @@ func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string
 }
 
 // NewApiPluginProxy create a plugin proxy
-func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
 	targetURL, _ := url.Parse(route.Url)
 
 	director := func(req *http.Request) {

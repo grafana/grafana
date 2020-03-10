@@ -20,7 +20,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 import { CoreEvents } from 'app/types';
 
-import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
