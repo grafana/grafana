@@ -22,10 +22,12 @@ import { RichHistory, Tabs } from './RichHistory';
 import { deleteRichHistory } from '../state/actions';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.gray15;
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
   const handleShadow = theme.isLight ? `0px 2px 2px ${bgColor}` : `0px 2px 4px black`;
+  const handleDots = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
+
   return {
     container: css`
       position: fixed !important;
@@ -44,9 +46,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       opacity: 0;
       transform: translateY(150px);
     `,
+    rzHandle: css`
+      background: transparent;
+      transition: 0.2s border-color ease-in-out;
+      border-top: 1px solid transparent;
+
+      &:hover {
+        border-bottom: 1px solid ${theme.colors.blueLight};
+      }
+    `,
     handle: css`
       background-color: ${borderColor};
-      height: 10px;
+      height: 8px;
       width: 202px;
       border-radius: 10px;
       position: absolute;
@@ -55,8 +66,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.xs};
       box-shadow: ${handleShadow};
       cursor: grab;
+
       hr {
-        border-top: 2px dotted ${theme.colors.gray70};
+        border-top: 2px dotted ${handleDots};
         margin: 0;
       }
     `,
@@ -96,6 +108,7 @@ function RichHistoryContainer(props: Props) {
     <Resizable
       className={cx(styles.container, visible ? styles.drawerActive : styles.drawerNotActive)}
       defaultSize={{ width: drawerWidth, height: '400px' }}
+      handleClasses={{ top: styles.rzHandle }}
       enable={{
         top: true,
         right: false,
