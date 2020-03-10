@@ -13,7 +13,7 @@ interface FormProps<T> {
 
 export function Form<T>({ validateOn, defaultValues, onSubmit, validateOnMount = false, children }: FormProps<T>) {
   const { handleSubmit, register, errors, control, reset, getValues, triggerValidation } = useForm<T>({
-    mode: validateOn || 'onSubmit',
+    mode: validateOn,
     defaultValues,
   });
 
