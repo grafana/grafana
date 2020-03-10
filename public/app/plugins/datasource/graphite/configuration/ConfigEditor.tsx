@@ -71,7 +71,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
               <div className={styles.helpbtn}>
                 <Button
-                  style={{ marginLeft: '8px', marginTop: '5px' }}
                   variant="secondary"
                   size="sm"
                   onClick={() =>
