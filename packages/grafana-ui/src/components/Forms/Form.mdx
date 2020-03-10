@@ -111,10 +111,13 @@ import { Forms } from '@grafana/ui';
 ```
 Note that when using `Forms.InputControl`, it expects the name of the prop that handles input change to be called `onChange`.
 If the property is named differently for any specific component, additional `onChangeName` prop has to be provided, specifying the name.
-Additionally, the value to for the `onChange` prop is passed as an array. Check [react-hook-form docs](https://react-hook-form.com/api/#Controller)
+Additionally, the `onChange` arguments passed as an array. Check [react-hook-form docs](https://react-hook-form.com/api/#Controller)
 for more prop options.
 
 ```jsx
+{/* DashboardPicker has onSelected prop instead of onChange */}
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+
 {/* In case of Select the value has to be returned as an object with a `value` key for the value to be saved to form data */}
 const onSelectChange = ([value]) => {
   // ...
@@ -123,12 +126,12 @@ const onSelectChange = ([value]) => {
 
 <Field label="SelectExample">
   <Forms.InputControl
-    as={Select}
+    as={DashboardPicker}
     control={control}
-    name="select"x
-    onSelectChange={onSelectChange}
-    {/* Pass the name of the on change handler */}
-    onChangeName='onSelectChange'
+    name="select"
+    onSelected={onSelectChange}
+    {/* Pass the name of the onChange handler */}
+    onChangeName='onSelected'
   />
 </Field>
 
