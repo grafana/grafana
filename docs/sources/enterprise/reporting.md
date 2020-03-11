@@ -41,6 +41,18 @@ Currently only Organization Admins can create reports.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
+## Rendering configuration
+
+When Grafana generates a report, it will render each panel separately and then put them together in a PDF file. You can configure the per-panel rendering request timeout and the maximum number of concurrent calls to the rendering service. These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
+
+```ini
+[reporting]
+# Set timeout for each panel rendering request
+rendering_timeout = 10s
+# Set maximum number of concurrent calls to the rendering service
+concurrent_render_limit = 10
+```
+
 ## Troubleshoot reporting
 
 To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md#filters" >}}) for more information.
