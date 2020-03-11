@@ -1002,6 +1002,15 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
+  store-build-artifacts:
+    docker:
+      - image: circleci/node:12
+    steps:
+      - attach_workspace:
+          at: .
+      - store_artifacts:
+          path: ./dist
+
   build-grafana-packages:
     docker:
       - image: circleci/node:12
