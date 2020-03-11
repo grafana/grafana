@@ -8,7 +8,7 @@ import { PluginMeta } from '@grafana/data';
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs from 'fs';
+import fs from 'fs-extra';
 import { getPackageDetails, findImagesInFolder, getGrafanaVersions, readGitLog } from '../../plugins/utils';
 import {
   job,
