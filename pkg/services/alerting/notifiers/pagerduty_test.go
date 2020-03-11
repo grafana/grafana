@@ -197,6 +197,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 						{Key: "group", Value: "aGroup"},
 						{Key: "class", Value: "aClass"},
 						{Key: "component", Value: "aComponent"},
+						{Key: "severity", Value: "warning"},
 					},
 				})
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
@@ -224,9 +225,10 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"group":     "aGroup",
 							"class":     "aClass",
 							"component": "aComponent",
+							"severity":  "warning",
 							"keyOnly":   "",
 						},
-						"severity":  "critical",
+						"severity":  "warning",
 						"summary":   "someRule - someMessage",
 						"timestamp": "<<PRESENCE>>",
 						"class":     "aClass",
