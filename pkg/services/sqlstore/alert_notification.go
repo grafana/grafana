@@ -171,10 +171,10 @@ func getAlertNotificationUidInternal(query *m.GetAlertNotificationUidQuery, sess
 	}
 
 	if len(results) == 0 {
-		query.Result = ""
-	} else {
-		query.Result = results[0]
+		return fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] not found", query.Id, query.OrgId)
 	}
+
+	query.Result = results[0]
 
 	return nil
 }

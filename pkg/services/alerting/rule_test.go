@@ -145,7 +145,7 @@ func TestAlertRuleModel(t *testing.T) {
 			_, err := NewRuleFromDBAlert(alert)
 			Convey("raises an error", func() {
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "Alert validation error: Unable to translate notification id to uid, Alert notification [ Id: 999, OrgId: 1 ] doesn't exists AlertId: 1 PanelId: 1 DashboardId: 1")
+				So(err.Error(), ShouldEqual, "Alert validation error: Unable to translate notification id to uid, Alert notification [ Id: 999, OrgId: 1 ] not found AlertId: 1 PanelId: 1 DashboardId: 1")
 			})
 		})
 

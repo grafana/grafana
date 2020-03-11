@@ -192,10 +192,6 @@ func getAlertNotificationUidByIDAndOrgID(notificationID int64, orgID int64) (str
 		return "", err
 	}
 
-	if query.Result == "" {
-		return "", fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] doesn't exists", notificationID, orgID)
-	}
-
 	return query.Result, nil
 }
 

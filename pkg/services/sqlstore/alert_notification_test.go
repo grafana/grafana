@@ -369,6 +369,23 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldEqual, "a-cached-uid")
 			})
+
+			Convey("Returns an error without populating cache when the notification doesn't exist in the database", func() {
+				query := &models.GetAlertNotificationUidQuery{
+					Id:    -1,
+					OrgId: 100,
+				}
+
+				err := ss.GetAlertNotificationUidWithId(query)
+				So(query.Result, ShouldEqual, "")
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "Alert notification [ Id: -1, OrgId: 100 ] not found")
+
+				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
+				result, found := ss.CacheService.Get(cacheKey)
+				So(found, ShouldBeFalse)
+				So(result, ShouldBeNil)
+			})
 		})
 	})
 }
