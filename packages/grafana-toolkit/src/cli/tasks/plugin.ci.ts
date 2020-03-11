@@ -118,6 +118,14 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const packagesDir = path.resolve(ciDir, 'packages');
   const distDir = path.resolve(ciDir, 'dist');
   const docsDir = path.resolve(ciDir, 'docs');
+  const jobsDir = path.resolve(ciDir, 'jobs');
+
+  fs.exists(jobsDir, jobsDirExists => {
+    if (!jobsDirExists) {
+      throw 'You must run plugin:ci-build prior to running plugin:ci-package';
+    }
+  });
+
   const grafanaEnvDir = path.resolve(ciDir, 'grafana-test-env');
   await execa('rimraf', [packagesDir, distDir, grafanaEnvDir]);
   fs.mkdirSync(packagesDir);
@@ -160,7 +168,11 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   });
 
   // Write a manifest.txt file in the dist folder
-  await execTask(manifestTask)({ folder: distContentDir });
+  try {
+    await execTask(manifestTask)({ folder: distContentDir });
+  } catch (err) {
+    console.warn(`Error signing manifest: ${distContentDir}`, err);
+  }
 
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';

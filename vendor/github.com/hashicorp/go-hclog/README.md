@@ -128,21 +128,6 @@ stdLogger.Printf("[DEBUG] %+v", stdLogger)
 ... [DEBUG] my-app: &{mu:{state:0 sema:0} prefix: flag:0 out:0xc42000a0a0 buf:[]}
 ```
 
-Alternatively, you may configure the system-wide logger:
-
-```go
-// log the standard logger from 'import "log"'
-log.SetOutput(appLogger.Writer(&hclog.StandardLoggerOptions{InferLevels: true}))
-log.SetPrefix("")
-log.SetFlags(0)
-
-log.Printf("[DEBUG] %d", 42)
-```
-
-```text
-... [DEBUG] my-app: 42
-```
-
 Notice that if `appLogger` is initialized with the `INFO` log level _and_ you
 specify `InferLevels: true`, you will not see any output here. You must change
 `appLogger` to `DEBUG` to see output. See the docs for more information.

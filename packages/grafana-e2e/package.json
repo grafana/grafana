@@ -5,6 +5,7 @@
   "version": "6.7.0-pre",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
+    "cli",
     "grafana",
     "e2e",
     "typescript"
@@ -29,8 +30,6 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cypress/webpack-preprocessor": "4.1.1",
-    "@grafana/tsconfig": "^1.0.0-rc1",
     "@types/node": "13.7.7",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",
@@ -40,15 +39,17 @@
     "rollup-plugin-terser": "4.0.4",
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
-    "ts-loader": "6.2.1",
-    "ts-node": "8.5.0",
-    "typescript": "3.7.2"
+    "ts-node": "8.5.0"
   },
   "types": "src/index.ts",
   "dependencies": {
+    "@cypress/webpack-preprocessor": "4.1.1",
+    "@grafana/tsconfig": "^1.0.0-rc1",
     "blink-diff": "1.0.13",
     "commander": "4.1.1",
     "cypress": "3.7.0",
-    "execa": "4.0.0"
+    "execa": "4.0.0",
+    "ts-loader": "6.2.1",
+    "typescript": "3.7.2"
   }
 }
