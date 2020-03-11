@@ -55,40 +55,63 @@ You can close the newly created query by clicking on the Close Split button.
 
 > BETA: Query history is a beta feature.
 
-Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click **Query history** in Explore.
+Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
 
-#### View query history
+### View query history
 
 Query history lets you view the history of your querying. For each individual query, you can:
 
-- Replace Explore query for selected query by clicking on the query card
-- Create and/or edit comment
-- Copy query to clipboard
-- Copy URL link with the query to clipboard
-- Star query
+- Replace Explore query for selected query by clicking on the query card.
+- Create and/or edit comment.
+- Copy query to clipboard.
+- Copy URL link with the query to clipboard.
+- Star query.
 
-#### Manage favorite queries
+### Manage favorite queries
 
-All queries that are starred are displayed in "Starred" tab as well. This allows you to reuse queries that you run often without typing them from scratch.
+All queries that have been starred in **Query history** tab by clicking on star icon are displayed in **Starred** tab as well. This allows you to access your favourite queries faster, and to reuse these queries without typing them from scratch.
 
-#### Sort query history
+### Sort query history
 
-By default query history shows you the most recent queries. This can be changed and history can be sorted by date or by data source name in ascending or descending order. It is possible to sort queries in "Query history" and "Starred" tab. If you are in split mode, chosen sorting mode is applied only to currently active panel.
+By default query history shows you the most recent queries. This can be changed and you can sort your history in **Query history** and **Starred** tab by date or by data source name in ascending or descending order.
 
-#### Filter query history
+1. Click the **Sort queries by** field.
+2. Select one of the following options:
+   - Time ascending
+   - Time descending
+   - Data source A-Z
+   - Data source Z-A
 
-Filter query history in "Query history" and "Starred" tab by data source name. In "Query history" tab is is also possible to filter queries by date using the slider. If you are in split mode, filters are applied only to your currently active panel.
+> Note: If you are in split mode, chosen sorting mode is applied only to currently active panel.
 
-#### Query history settings
+### Filter query history
+
+Filter query history in **Query history** and **Starred** tab by data source name:
+
+1. Click the **Filter queries for specific data source(s)** field
+2. Select data source for which you would like to filter your history. You can select multiple data sources.
+
+In **Query history** tab is is also possible to filter queries by date using the slider:
+
+1. Use vertical slider to filter queries by date.
+2. By dragging top handle, adjust start date.
+3. By dragging top handle, adjust end day.
+
+> Note: If you are in split mode, filters are applied only to your currently active panel.
+
+### Query history settings
 
 Query history can be customized by:
 
-- Selecting the period of time for which Grafana will save your query history. Default time is 1 week.
-- Selecting if "Query history" to "Starred" will be your default active tab. Default is "Query history".
-- Selecting if all queries in your history history are always displayed, or if queries for data source currently active in Explore are displayed. Default is all queries.
-- Delete all of your query history.
+| Settings                                                      | Default value     |
+| ------------------------------------------------------------- | ----------------- |
+| Period of time for which Grafana will save your query history | 1 week            |
+| Change the default active tab                                 | Query history tab |
+| Only show queries for datasource currently active in Explore  | false             |
 
-Query history settings are global, and applied to both panels in split mode.
+In query history settings you can also delete all of your query history by clicking on **Clear query history** button. Your history will be deleted permanently.
+
+> Note: Query history settings are global, and applied to both panels in split mode.
 
 ## Prometheus-specific Features
 
