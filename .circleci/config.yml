@@ -96,7 +96,7 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "chore/new-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
-                --variants << parameters.variant >> v6.7.0-test
+                --variants << parameters.variant >> v6.7.0-beta1
             else
               echo "Unknown branch trigger: $CIRCLE_BRANCH"
               exit 1
@@ -361,7 +361,7 @@ jobs:
               /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
             elif [[ $CIRCLE_BRANCH == "chore/new-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/workspace/bin/grabpl package --edition enterprise v6.7.0-test
+              /tmp/workspace/bin/grabpl package --edition enterprise v6.7.0-beta1
             else
               echo "Unknown branch trigger: $CIRCLE_BRANCH"
               exit 1
