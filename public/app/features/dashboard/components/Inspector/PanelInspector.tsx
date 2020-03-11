@@ -33,6 +33,7 @@ export enum InspectTab {
   Meta = 'meta', // When result metadata exists
   Error = 'error',
   Stats = 'stats',
+  PanelJson = 'paneljson',
 }
 
 interface State {
@@ -288,6 +289,14 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 
+  renderJsonModelTab() {
+    return (
+      <CustomScrollbar>
+        <JSONFormatter json={this.props.panel.getSaveModel()} open={2} />
+      </CustomScrollbar>
+    );
+  }
+
   drawerHeader = () => {
     const { tab, last, stats } = this.state;
     const error = last?.error;
@@ -299,6 +308,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     tabs.push({ label: 'Stats', value: InspectTab.Stats });
     tabs.push({ label: 'Request', value: InspectTab.Request });
+    tabs.push({ label: 'Panel JSON', value: InspectTab.PanelJson });
 
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
@@ -345,6 +355,7 @@ export class PanelInspector extends PureComponent<Props, State> {
                     {tab === InspectTab.Request && this.renderRequestTab()}
                     {tab === InspectTab.Error && this.renderErrorTab(error)}
                     {tab === InspectTab.Stats && this.renderStatsTab()}
+                    {tab === InspectTab.PanelJson && this.renderJsonModelTab()}
                   </div>
                 );
               }}
