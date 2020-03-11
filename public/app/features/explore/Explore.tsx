@@ -382,7 +382,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                         </>
                       )}
-                      {showRichHistory && <RichHistoryContainer width={width} exploreId={exploreId} />}
+                      {showRichHistory && (
+                        <RichHistoryContainer
+                          width={width}
+                          exploreId={exploreId}
+                          onClose={this.toggleShowRichHistory}
+                        />
+                      )}
                     </ErrorBoundaryAlert>
                   </main>
                 );

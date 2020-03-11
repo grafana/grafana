@@ -41,11 +41,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     drawerActive: css`
       opacity: 1;
-      transition: transform 0.3s ease-in;
+      transition: transform 0.5s ease-in;
     `,
     drawerNotActive: css`
       opacity: 0;
-      transform: translateY(150px);
+      transform: translateY(400px);
     `,
     rzHandle: css`
       background: ${bgColor};
@@ -84,6 +84,7 @@ interface Props {
   richHistory: RichHistoryQuery[];
   firstTab: Tabs;
   deleteRichHistory: typeof deleteRichHistory;
+  onClose: () => void;
 }
 
 function RichHistoryContainer(props: Props) {
@@ -91,11 +92,11 @@ function RichHistoryContainer(props: Props) {
 
   /* To create sliding animation for rich history drawer */
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 100);
+    const timer = setTimeout(() => setVisible(true), 10);
     return () => clearTimeout(timer);
   }, []);
 
-  const { richHistory, width, firstTab, activeDatasourceInstance, exploreId, deleteRichHistory } = props;
+  const { richHistory, width, firstTab, activeDatasourceInstance, exploreId, deleteRichHistory, onClose } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
   const drawerWidth = `${width + 31.5}px`;
@@ -125,6 +126,7 @@ function RichHistoryContainer(props: Props) {
         activeDatasourceInstance={activeDatasourceInstance}
         exploreId={exploreId}
         deleteRichHistory={deleteRichHistory}
+        onClose={onClose}
       />
     </Resizable>
   );

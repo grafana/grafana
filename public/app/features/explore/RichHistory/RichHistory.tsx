@@ -36,6 +36,7 @@ interface RichHistoryProps extends Themeable {
   firstTab: Tabs;
   exploreId: ExploreId;
   deleteRichHistory: () => void;
+  onClose: () => void;
 }
 
 interface RichHistoryState {
@@ -59,6 +60,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     tabContent: css`
       background-color: ${tabContentBg};
       padding: ${theme.spacing.md};
+    `,
+    close: css`
+      position: absolute;
+      right: ${theme.spacing.sm};
+      cursor: pointer;
     `,
     tabs: css`
       background-color: ${tabBarBg};
@@ -150,7 +156,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       activeDatasourceOnly,
       retentionPeriod,
     } = this.state;
-    const { theme, richHistory, exploreId, deleteRichHistory } = this.props;
+    const { theme, richHistory, exploreId, deleteRichHistory, onClose } = this.props;
     const styles = getStyles(theme);
 
     const QueriesTab = {
@@ -219,6 +225,9 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
               icon={t.icon}
             />
           ))}
+          <div className={styles.close} onClick={onClose}>
+            <i className="fa fa-times" title="Close query history" />
+          </div>
         </TabsBar>
         <CustomScrollbar
           className={css`
