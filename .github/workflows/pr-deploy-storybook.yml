@@ -9,7 +9,8 @@ jobs:
     name: Deploy Storybook
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
+      - name: Builing commit ${GITHUB_SHA}
       - uses: actions/setup-node@v1
         with:
           node-version: 12.x
