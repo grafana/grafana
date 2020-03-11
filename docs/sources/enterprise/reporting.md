@@ -36,7 +36,7 @@ Currently only Organization Admins can create reports.
    * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email. 
    * **Custom message -** (optional) Message body in the email with the report.
 1. **Preview** the report to make sure it appears as you expect. Update if necessary
-1. Select the layout option for generated report. By default it is set to **Portrait** but it's also possible to select **Landscape**.  
+1. Select the layout option for generated report: **Portrait** or **Landscape**.  
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
 
