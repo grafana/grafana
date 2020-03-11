@@ -5,7 +5,7 @@ import { Forms } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { createNewFolder } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from '../../../types';
+import { StoreState } from 'app/types';
 
 interface OwnProps {}
 
@@ -34,6 +34,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
     return (
       <Page navModel={this.props.navModel}>
         <Page.Contents>
+          <h3>New Dashboard Folder</h3>
           <Forms.Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
             {({ register, errors }) => (
               <>
