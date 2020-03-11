@@ -123,12 +123,18 @@ export function RichHistoryCard(props: Props) {
             <Forms.TextArea
               value={comment}
               placeholder={comment ? undefined : 'add comment'}
-              onChange={e => setComment(e.currentTarget.value)}
+              onChange={e => {
+                setComment(e.currentTarget.value);
+              }}
+              onClick={e => {
+                e.stopPropagation();
+              }}
             />
             <div className={styles.buttonRow}>
               <Forms.Button
                 onClick={e => {
                   e.preventDefault();
+                  e.stopPropagation();
                   updateRichHistory(query.ts, 'comment', comment);
                   toggleActiveUpdateComment();
                 }}
@@ -140,7 +146,8 @@ export function RichHistoryCard(props: Props) {
                 className={css`
                   margin-left: 8px;
                 `}
-                onClick={() => {
+                onClick={e => {
+                  e.stopPropagation();
                   toggleActiveUpdateComment();
                   setComment(query.comment);
                 }}
