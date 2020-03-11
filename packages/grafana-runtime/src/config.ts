@@ -30,6 +30,7 @@ interface LicenseInfo {
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  minRefreshInterval = '';
   appSubUrl = '';
   windowTitlePrefix = '';
   buildInfo: BuildInfo = {} as BuildInfo;
@@ -49,11 +50,14 @@ export class GrafanaBootConfig {
   exploreEnabled = false;
   ldapEnabled = false;
   samlEnabled = false;
+  autoAssignOrg = true;
+  verifyEmailEnabled = false;
   oauth: any;
   disableUserSignUp = false;
   loginHint: any;
   passwordHint: any;
   loginError: any;
+  navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
@@ -98,6 +102,7 @@ export class GrafanaBootConfig {
 const bootData = (window as any).grafanaBootData || {
   settings: {},
   user: {},
+  navTree: [],
 };
 
 const options = bootData.settings;

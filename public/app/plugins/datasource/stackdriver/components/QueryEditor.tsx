@@ -1,14 +1,12 @@
 import React from 'react';
-import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { Aggregations, Metrics, Filters, GroupBys, Alignments, AlignmentPeriods, AliasBy, Help } from './';
+import { Project, Aggregations, Metrics, Filters, GroupBys, Alignments, AlignmentPeriods, AliasBy, Help } from './';
 import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData, toOption } from '../functions';
 import StackdriverDatasource from '../datasource';
-import { TimeSeries, SelectableValue } from '@grafana/data';
-import { PanelEvents } from '@grafana/data';
+import { PanelEvents, SelectableValue, TimeSeries } from '@grafana/data';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;
@@ -30,7 +28,7 @@ interface State extends StackdriverQuery {
 }
 
 export const DefaultTarget: State = {
-  defaultProject: 'loading project...',
+  projectName: '',
   metricType: '',
   metricKind: '',
   valueType: '',
@@ -58,23 +56,35 @@ export class QueryEditor extends React.Component<Props, State> {
 
   async componentDidMount() {
     const { events, target, templateSrv, datasource } = this.props;
+    await datasource.ensureGCEDefaultProject();
+    if (!target.projectName) {
+      target.projectName = datasource.getDefaultProject();
+    }
+
     events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     events.on(PanelEvents.dataError, this.onDataError.bind(this));
+
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
     const variableOptionGroup = {
       label: 'Template Variables',
       expanded: false,
       options: datasource.variables.map(toOption),
     };
-    this.setState({
+
+    const state: Partial<State> = {
       ...this.props.target,
+      projectName: target.projectName,
       alignOptions,
       perSeriesAligner,
       variableOptionGroup,
       variableOptions: variableOptionGroup.options,
-    });
+    };
 
-    datasource.getLabels(target.metricType, target.refId, target.groupBys).then(labels => this.setState({ labels }));
+    this.setState(state);
+
+    datasource
+      .getLabels(target.metricType, target.refId, target.projectName, target.groupBys)
+      .then(labels => this.setState({ labels }));
   }
 
   componentWillUnmount() {
@@ -118,7 +128,7 @@ export class QueryEditor extends React.Component<Props, State> {
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
       templateSrv
     );
-    const labels = await this.props.datasource.getLabels(type, target.refId, target.groupBys);
+    const labels = await this.props.datasource.getLabels(type, target.refId, this.state.projectName, target.groupBys);
     this.setState(
       {
         alignOptions,
@@ -131,7 +141,9 @@ export class QueryEditor extends React.Component<Props, State> {
       },
       () => {
         onQueryChange(this.state);
-        onExecuteQuery();
+        if (this.state.projectName !== null) {
+          onExecuteQuery();
+        }
       }
     );
   };
@@ -142,24 +154,28 @@ export class QueryEditor extends React.Component<Props, State> {
       this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
     });
-    datasource.getLabels(target.metricType, target.refId, value).then(labels => this.setState({ labels }));
+    datasource
+      .getLabels(target.metricType, target.refId, this.state.projectName, value)
+      .then(labels => this.setState({ labels }));
   }
 
-  onPropertyChange(prop: string, value: string[]) {
+  onPropertyChange(prop: string, value: any) {
     this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
-      this.props.onExecuteQuery();
+      if (this.state.projectName !== null) {
+        this.props.onExecuteQuery();
+      }
     });
   }
 
   render() {
     const {
+      groupBys = [],
+      filters = [],
       usedAlignmentPeriod,
-      defaultProject,
+      projectName,
       metricType,
       crossSeriesReducer,
-      groupBys,
-      filters,
       perSeriesAligner,
       alignOptions,
       alignmentPeriod,
@@ -169,14 +185,24 @@ export class QueryEditor extends React.Component<Props, State> {
       labels,
       variableOptionGroup,
       variableOptions,
+      refId,
     } = this.state;
     const { datasource, templateSrv } = this.props;
 
     return (
       <>
+        <Project
+          templateVariableOptions={variableOptions}
+          projectName={projectName}
+          datasource={datasource}
+          onChange={value => {
+            this.onPropertyChange('projectName', value);
+            datasource.getLabels(metricType, refId, value, groupBys).then(labels => this.setState({ labels }));
+          }}
+        />
         <Metrics
           templateSrv={templateSrv}
-          defaultProject={defaultProject}
+          projectName={projectName}
           metricType={metricType}
           templateVariableOptions={variableOptions}
           datasource={datasource}
@@ -223,7 +249,7 @@ export class QueryEditor extends React.Component<Props, State> {
                 onChange={value => this.onPropertyChange('alignmentPeriod', value)}
               />
               <AliasBy value={aliasBy} onChange={value => this.onPropertyChange('aliasBy', value)} />
-              <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />
+              <Help rawQuery={lastQuery} lastQueryError={lastQueryError} />
             </>
           )}
         </Metrics>

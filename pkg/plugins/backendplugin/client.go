@@ -102,25 +102,15 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 }
 
 type DiagnosticsPlugin interface {
-	CollectMetrics(ctx context.Context, req *pluginv2.CollectMetrics_Request) (*pluginv2.CollectMetrics_Response, error)
-	CheckHealth(ctx context.Context, req *pluginv2.CheckHealth_Request) (*pluginv2.CheckHealth_Response, error)
-}
-
-type DatasourcePlugin interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
+	plugin.DiagnosticsServer
 }
 
 type CorePlugin interface {
-	CallResource(ctx context.Context, req *pluginv2.CallResource_Request) (*pluginv2.CallResource_Response, error)
-	DatasourcePlugin
-}
-
-type TransformCallBack interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error)
+	plugin.CoreClient
 }
 
 type TransformPlugin interface {
-	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callback TransformCallBack) (*pluginv2.DataQueryResponse, error)
+	DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callback plugin.TransformCallBack) (*pluginv2.DataQueryResponse, error)
 }
 
 // LegacyClient client for communicating with a plugin using the old plugin protocol.
@@ -131,6 +121,6 @@ type LegacyClient struct {
 
 // Client client for communicating with a plugin using the current plugin protocol.
 type Client struct {
-	DatasourcePlugin DatasourcePlugin
-	TransformPlugin  TransformPlugin
+	CorePlugin      CorePlugin
+	TransformPlugin TransformPlugin
 }

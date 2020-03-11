@@ -8,6 +8,32 @@ Array [
     <span
       className="gf-form-label width-9 query-keyword"
     >
+      Project
+    </span>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part query-placeholder"
+      >
+        Select Project
+      </a>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <div
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
+  <div
+    className="gf-form-inline"
+  >
+    <span
+      className="gf-form-label width-9 query-keyword"
+    >
       Service
     </span>
     <div
@@ -194,29 +220,6 @@ Array [
   <div
     className="gf-form-inline"
   >
-    <div
-      className="gf-form"
-    >
-      <span
-        className="gf-form-label width-9 query-keyword"
-      >
-        Project
-      </span>
-      <div
-        style={
-          Object {
-            "flexGrow": 1,
-          }
-        }
-      >
-        <input
-          className="gf-form-input gf-form-input width-15"
-          disabled={true}
-          type="text"
-          value="Loading project..."
-        />
-      </div>
-    </div>
     <div
       className="gf-form"
       onClick={[Function]}

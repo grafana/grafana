@@ -1,33 +1,42 @@
 <div class="gf-form-group">
   <div class="grafana-info-box">
     <h4>Stackdriver Authentication</h4>
-    <p>There are two ways to authenticate the Stackdriver plugin - either by uploading a Service Account key file, or by
-      automatically retrieving credentials from the Google metadata server. The latter option is only available
-      when running Grafana on a GCE virtual machine.</p>
+    <p>
+      There are two ways to authenticate the Stackdriver plugin - either by uploading a Service Account key file, or by
+      automatically retrieving credentials from the Google metadata server. The latter option is only available when
+      running Grafana on a GCE virtual machine.
+    </p>
 
     <h5>Uploading a Service Account Key File</h5>
     <p>
-      First you need to create a Google Cloud Platform (GCP) Service Account for
-      the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to
-      visualize data from multiple GCP Projects then you need to create one datasource per GCP Project.
+      First you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for.
+      A Grafana datasource integrates with one GCP Project. If you want to visualize data from multiple GCP Projects
+      then you need to create one datasource per GCP Project.
     </p>
     <p>
       The <strong>Monitoring Viewer</strong> role provides all the permissions that Grafana needs. The following API
-      needs to be enabled on GCP for the datasource to work: <a class="external-link" target="_blank" href="https://console.cloud.google.com/apis/library/monitoring.googleapis.com">Monitoring
-        API</a>
+      needs to be enabled on GCP for the datasource to work:
+      <a
+        class="external-link"
+        target="_blank"
+        href="https://console.cloud.google.com/apis/library/monitoring.googleapis.com"
+        >Monitoring API</a
+      >
     </p>
 
     <h5>GCE Default Service Account</h5>
     <p>
       If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to
-      automatically retrieve the default project id and authentication token from the metadata server. In order for this to
-      work, you need to make sure that you have a service account that is setup as the default account for the virtual
-      machine and that the service account has been given read access to the Stackdriver Monitoring API.
+      automatically retrieve the default project id and authentication token from the metadata server. In order for this
+      to work, you need to make sure that you have a service account that is setup as the default account for the
+      virtual machine and that the service account has been given read access to the Stackdriver Monitoring API.
     </p>
 
-    <p>Detailed instructions on how to create a Service Account can be found <a class="external-link" target="_blank"
-        href="http://docs.grafana.org/datasources/stackdriver/">in
-        the documentation.</a>
+    <p>
+      Detailed instructions on how to create a Service Account can be found
+      <a class="external-link" target="_blank" href="http://docs.grafana.org/datasources/stackdriver/"
+        >in the documentation.</a
+      >
     </p>
   </div>
 </div>
@@ -35,20 +44,42 @@
 <div class="gf-form-group">
   <div class="gf-form">
     <h3>Authentication</h3>
-    <info-popover mode="header">Upload your Service Account key file or paste in the contents of the file. The file
-      contents will be encrypted and saved in the Grafana database.</info-popover>
+    <info-popover mode="header"
+      >Upload your Service Account key file or paste in the contents of the file. The file contents will be encrypted
+      and saved in the Grafana database.</info-popover
+    >
   </div>
 
   <div class="gf-form-inline">
     <div class="gf-form max-width-30">
       <span class="gf-form-label width-10">Authentication Type</span>
       <div class="gf-form-select-wrapper max-width-24">
-        <select class="gf-form-input" ng-model="ctrl.current.jsonData.authenticationType" ng-options="f.key as f.value for f in ctrl.authenticationTypes"></select>
+        <select
+          class="gf-form-input"
+          ng-change="ctrl.gceError = ''"
+          ng-model="ctrl.current.jsonData.authenticationType"
+          ng-options="f.key as f.value for f in ctrl.authenticationTypes"
+        ></select>
       </div>
     </div>
   </div>
 
-  <div ng-if="ctrl.current.jsonData.authenticationType === ctrl.defaultAuthenticationType && !ctrl.current.jsonData.clientEmail && !ctrl.inputDataValid">
+  <div class="gf-form-inline" ng-if="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Project</span>
+      <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.gceDefaultProject" />
+    </div>
+
+    <div class="gf-form width-18">
+      <a class="btn btn-secondary gf-form-btn" style="margin-top: 2px;" href="#" ng-click="ctrl.loadGCEDefaultAccount()"
+        >{{ctrl.current.jsonData.gceDefaultProject ? 'Reload project name' : 'Load project name'}}
+      </a>
+    </div>
+  </div>
+
+  <div
+    ng-if="ctrl.current.jsonData.authenticationType === ctrl.defaultAuthenticationType && !ctrl.current.jsonData.clientEmail && !ctrl.inputDataValid"
+  >
     <div class="gf-form-group" ng-if="!ctrl.inputDataValid">
       <div class="gf-form">
         <form>
@@ -59,7 +90,13 @@
     <div class="gf-form-group">
       <h5 class="section-heading" ng-if="!ctrl.inputDataValid">Or paste Service Account key JSON</h5>
       <div class="gf-form" ng-if="!ctrl.inputDataValid">
-        <textarea rows="10" data-share-panel-url="" class="gf-form-input" ng-model="ctrl.jsonText" ng-paste="ctrl.onPasteJwt($event)"></textarea>
+        <textarea
+          rows="10"
+          data-share-panel-url=""
+          class="gf-form-input"
+          ng-model="ctrl.jsonText"
+          ng-paste="ctrl.onPasteJwt($event)"
+        ></textarea>
       </div>
       <div ng-repeat="valError in ctrl.validationErrors" class="text-error p-l-1">
         <i class="fa fa-warning"></i>
@@ -69,7 +106,10 @@
   </div>
 </div>
 
-<div class="gf-form-group" ng-if="ctrl.current.jsonData.authenticationType === ctrl.defaultAuthenticationType && (ctrl.inputDataValid || ctrl.current.jsonData.clientEmail)">
+<div
+  class="gf-form-group"
+  ng-if="ctrl.current.jsonData.authenticationType === ctrl.defaultAuthenticationType && (ctrl.inputDataValid || ctrl.current.jsonData.clientEmail)"
+>
   <h6>Uploaded Key Details</h6>
 
   <div class="gf-form">
@@ -82,24 +122,44 @@
   </div>
   <div class="gf-form">
     <span class="gf-form-label width-10">Token URI</span>
-    <input class="gf-form-input width-40" disabled type="text" ng-model='ctrl.current.jsonData.tokenUri' />
+    <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.tokenUri" />
   </div>
   <div class="gf-form" ng-if="ctrl.current.secureJsonFields.privateKey">
     <span class="gf-form-label width-10">Private Key</span>
-    <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
+    <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured" />
   </div>
 
-  <div class="gf-form width-18">
-    <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()">Reset Service
-      Account Key </a>
+  <div class="gf-form width-18" style="margin-top: 24px;">
+    <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()"
+      >Reset Service Account Key
+    </a>
     <info-popover mode="right-normal">
       Reset to clear the uploaded key and upload a new file.
     </info-popover>
   </div>
 </div>
 
-<p class="gf-form-label" ng-hide="ctrl.current.secureJsonFields.privateKey || ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType"><i
-    class="fa fa-save"></i> Do not forget to save your changes after uploading a file.</p>
+<p
+  class="gf-form-label"
+  ng-hide="ctrl.current.secureJsonFields.privateKey || ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType"
+>
+  <i class="fa fa-save"></i> Do not forget to save your changes after uploading a file.
+</p>
 
-<p class="gf-form-label" ng-show="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType"><i class="fa fa-save"></i>
-  Verify GCE default service account by clicking Save & Test</p>
+<p
+  class="gf-form-label"
+  ng-show="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType && !ctrl.current.jsonData.gceDefaultProject"
+>
+  <i class="fa fa-warning"></i> Before saving, load the Project name that is associated with the default service account
+</p>
+
+<div class="gf-form" ng-if="ctrl.gceError">
+  <pre class="gf-form-pre alert alert-error">{{ctrl.gceError}}</pre>
+</div>
+
+<p
+  class="gf-form-label"
+  ng-show="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType && ctrl.current.jsonData.gceDefaultProject"
+>
+  <i class="fa fa-save"></i> Verify GCE default service account by clicking Save & Test
+</p>

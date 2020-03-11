@@ -1,13 +1,19 @@
+import { Controller as InputControl } from 'react-hook-form';
 import { getFormStyles } from './getFormStyles';
 import { Label } from './Label';
 import { Input } from './Input/Input';
-import { Select } from './Select/Select';
+import { ButtonSelect } from './Select/ButtonSelect';
+import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
+import { AsyncSelect, Select } from './Select/Select';
 import { Form } from './Form';
 import { Field } from './Field';
 import { Button, LinkButton } from './Button';
-import { Controller as InputControl } from 'react-hook-form';
+import { Switch } from './Switch';
+import { TextArea } from './TextArea/TextArea';
 
 const Forms = {
+  RadioButtonGroup,
+  Switch,
   getFormStyles,
   Label,
   Input,
@@ -16,7 +22,11 @@ const Forms = {
   Button,
   LinkButton,
   Select,
+  ButtonSelect,
   InputControl,
+  AsyncSelect,
+  TextArea,
 };
 
+export { ButtonVariant } from './Button';
 export default Forms;

@@ -10,15 +10,17 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git"
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-runtime"
   },
   "main": "src/index.ts",
   "scripts": {
-    "tslint": "tslint -c tslint.json --project tsconfig.json",
-    "typecheck": "tsc --noEmit",
-    "clean": "rimraf ./dist ./compiled",
+    "build": "grafana-toolkit package:build --scope=runtime",
     "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=runtime"
+    "clean": "rimraf ./dist ./compiled",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "lint": "eslint src/ --ext=.js,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@grafana/data": "6.7.0-pre",
@@ -27,6 +29,7 @@
     "systemjs-plugin-css": "0.1.37"
   },
   "devDependencies": {
+    "@grafana/tsconfig": "^1.0.0-rc1",
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.15",
     "pretty-format": "24.9.0",

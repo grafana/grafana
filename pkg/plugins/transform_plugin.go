@@ -53,9 +53,9 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
 	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
-	if client.DatasourcePlugin != nil {
+	if client.CorePlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, client.DatasourcePlugin), nil
+			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.CorePlugin), nil
 		})
 	}
 
@@ -122,9 +122,15 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
 
+	datasourceID := int64(0)
+
+	if req.Config.DatasourceConfig != nil {
+		datasourceID = req.Config.DatasourceConfig.Id
+	}
+
 	getDsInfo := &models.GetDataSourceByIdQuery{
-		Id:    req.Config.Id,
 		OrgId: req.Config.OrgId,
+		Id:    datasourceID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {

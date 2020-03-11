@@ -5,25 +5,25 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func Search(c *m.ReqContext) Response {
+func Search(c *models.ReqContext) Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
 	limit := c.QueryInt64("limit")
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
-	permission := m.PERMISSION_VIEW
+	permission := models.PERMISSION_VIEW
 
 	if limit > 5000 {
 		return Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
-		permission = m.PERMISSION_EDIT
+		permission = models.PERMISSION_EDIT
 	}
 
 	dbIDs := make([]int64, 0)

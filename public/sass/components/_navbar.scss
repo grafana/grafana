@@ -2,7 +2,7 @@
   position: relative;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
-  padding: 0 20px 0 60px;
+  padding: 0 16px 0 60px;
   display: flex;
   flex-grow: 1;
   border-bottom: 1px solid transparent;
@@ -205,28 +205,6 @@ i.navbar-page-btn__search {
   height: $navbarHeight;
   align-items: center;
   padding-right: 13px;
-}
-
-.navbar-edit__back-btn {
-  background: transparent;
-  border: 2px solid $text-color;
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  transition: transform 0.1s ease 0.1s;
-  color: $text-color;
-
-  i {
-    font-size: $font-size-lg;
-    position: relative;
-    top: 1px;
-    right: 1px;
-  }
-
-  &:hover {
-    color: $text-color-strong;
-    border-color: $text-color-strong;
-  }
 }
 
 .navbar-settings-title {

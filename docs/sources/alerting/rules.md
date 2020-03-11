@@ -11,14 +11,10 @@ weight = 1
 
 # Alerting Engine and Rules Guide
 
-> Alerting is only available in Grafana v4.0 and above.
-
-## Introduction
-
-{{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
-
 Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard
 Grafana will extract the alert rules into a separate alert rule storage and schedule them for evaluation.
+
+{{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
 
 In the alert tab of the graph panel you can configure how often the alert rule should be evaluated
 and the conditions that need to be met for the alert to change state and trigger its
@@ -28,11 +24,9 @@ and the conditions that need to be met for the alert to change state and trigger
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
 of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
-`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle` and `Azure Data Explorer`.
+`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`.
 
-> Alerting support for Azure Monitor is only available in Grafana v6.0 and above.
-
-### Clustering
+## Clustering
 
 Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
 
@@ -66,7 +60,6 @@ Below you can see an example timeline of an alert using the `For` setting. At ~1
 
 Currently the only condition type that exists is a `Query` condition that allows you to
 specify a query letter, time range and an aggregation function.
-
 
 ### Query condition example
 

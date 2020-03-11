@@ -3,7 +3,6 @@ import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
 import { ThresholdsEditor } from './ThresholdsEditor';
-import { getTheme } from '../../themes';
 import { ThresholdsMode, ThresholdsConfig } from '@grafana/data';
 
 const ThresholdsEditorStories = storiesOf('Panel/ThresholdsEditor', module);
@@ -16,11 +15,9 @@ const thresholds: ThresholdsConfig = {
 };
 
 ThresholdsEditorStories.add('default', () => {
-  return (
-    <ThresholdsEditor theme={getTheme()} thresholds={{} as ThresholdsConfig} onChange={action('Thresholds changed')} />
-  );
+  return <ThresholdsEditor thresholds={{} as ThresholdsConfig} onChange={action('Thresholds changed')} />;
 });
 
 ThresholdsEditorStories.add('with thresholds', () => {
-  return <ThresholdsEditor theme={getTheme()} thresholds={thresholds} onChange={action('Thresholds changed')} />;
+  return <ThresholdsEditor thresholds={thresholds} onChange={action('Thresholds changed')} />;
 });

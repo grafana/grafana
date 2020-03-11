@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -71,7 +72,7 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		if rawBackend != nil {
 			if plugin, ok := rawBackend.(CorePlugin); ok {
 				p.core = plugin
-				client.DatasourcePlugin = plugin
+				client.CorePlugin = plugin
 			}
 		}
 
@@ -185,8 +186,8 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
 				return &pluginv2.CheckHealth_Response{
-					Status: pluginv2.CheckHealth_Response_UNKNOWN,
-					Info:   "Health check not implemented",
+					Status:  pluginv2.CheckHealth_Response_UNKNOWN,
+					Message: "Health check not implemented",
 				}, nil
 			}
 		}
@@ -196,28 +197,68 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealth_
 	return res, nil
 }
 
-func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (*CallResourceResult, error) {
+func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceRequest) (callResourceResultStream, error) {
 	p.logger.Debug("Calling resource", "path", req.Path, "method", req.Method)
+
+	if p.core == nil || p.client == nil || p.client.Exited() {
+		return nil, errors.New("plugin not running, cannot call resource")
+	}
 
 	reqHeaders := map[string]*pluginv2.CallResource_StringList{}
 	for k, v := range req.Headers {
 		reqHeaders[k] = &pluginv2.CallResource_StringList{Values: v}
 	}
 
+	jsonDataBytes, err := req.Config.JSONData.ToDB()
+	if err != nil {
+		return nil, err
+	}
+
 	protoReq := &pluginv2.CallResource_Request{
-		Config:  &pluginv2.PluginConfig{},
+		Config: &pluginv2.PluginConfig{
+			OrgId:                   req.Config.OrgID,
+			PluginId:                req.Config.PluginID,
+			PluginType:              req.Config.PluginType,
+			JsonData:                jsonDataBytes,
+			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
+			UpdatedMS:               req.Config.Updated.UnixNano() / int64(time.Millisecond),
+		},
 		Path:    req.Path,
 		Method:  req.Method,
 		Url:     req.URL,
 		Headers: reqHeaders,
 		Body:    req.Body,
 	}
-	protoResp, err := p.core.CallResource(ctx, protoReq)
+
+	if req.User != nil {
+		protoReq.User = &pluginv2.User{
+			Name:  req.User.Name,
+			Login: req.User.Login,
+			Email: req.User.Email,
+			Role:  string(req.User.OrgRole),
+		}
+	}
+
+	if req.Config.DataSourceConfig != nil {
+		protoReq.Config.DatasourceConfig = &pluginv2.DataSourceConfig{
+			Id:               req.Config.DataSourceConfig.ID,
+			Name:             req.Config.DataSourceConfig.Name,
+			Url:              req.Config.DataSourceConfig.URL,
+			Database:         req.Config.DataSourceConfig.Database,
+			User:             req.Config.DataSourceConfig.User,
+			BasicAuthEnabled: req.Config.DataSourceConfig.BasicAuthEnabled,
+			BasicAuthUser:    req.Config.DataSourceConfig.BasicAuthUser,
+		}
+	}
+
+	protoStream, err := p.core.CallResource(ctx, protoReq)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
-				return &CallResourceResult{
-					Status: http.StatusNotImplemented,
+				return &singleCallResourceResult{
+					result: &CallResourceResult{
+						Status: http.StatusNotImplemented,
+					},
 				}, nil
 			}
 		}
@@ -225,15 +266,8 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		return nil, errutil.Wrap("Failed to call resource", err)
 	}
 
-	respHeaders := map[string][]string{}
-	for key, values := range protoResp.Headers {
-		respHeaders[key] = values.Values
-	}
-
-	return &CallResourceResult{
-		Headers: respHeaders,
-		Body:    protoResp.Body,
-		Status:  int(protoResp.Code),
+	return &callResourceResultStreamImpl{
+		stream: protoStream,
 	}, nil
 }
 
