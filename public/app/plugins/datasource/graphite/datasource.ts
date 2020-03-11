@@ -7,13 +7,14 @@ import {
   DataQueryRequest,
   toDataFrame,
   DataSourceApi,
+  QueryResultMetaNotice,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
+import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankSeriesMeta } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
@@ -108,17 +109,21 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     if (!result || !result.data) {
       return { data };
     }
+
     // Series are either at the root or under a node called 'series'
     const series = result.data.series || result.data;
+
     if (!_.isArray(series)) {
       throw { message: 'Missing series in result', data: result };
     }
 
     for (let i = 0; i < series.length; i++) {
       const s = series[i];
+
       for (let y = 0; y < s.datapoints.length; y++) {
         s.datapoints[y][1] *= 1000;
       }
+
       const frame = toDataFrame(s);
 
       // Metrictank metadata
@@ -128,12 +133,51 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
             request: result.data.meta, // info for the whole request
             info: s.meta, // Array of metadata
           },
+          notices: this.getRollupNotices(s.meta),
         };
       }
+
       data.push(frame);
     }
+
     return { data };
   };
+
+  getRollupNotices(metaList: MetricTankSeriesMeta[]): QueryResultMetaNotice[] {
+    const notices: QueryResultMetaNotice[] = [];
+
+    for (const meta of metaList) {
+      const rollUpArchiveRead = meta['archive-read'] > 0;
+      const runtimeAggregation = meta['aggnum-rc'] > 0;
+
+      if (rollUpArchiveRead && runtimeAggregation) {
+        notices.push({
+          text: `Your looking at roll-up data using ${meta['consolidate-normfetch']} and runtime consolidated data using ${meta['consolidate-rc']}`,
+          severity: 'info',
+          link: 'inspect',
+        });
+        continue;
+      }
+
+      if (rollUpArchiveRead) {
+        notices.push({
+          text: `Your looking at roll-up data using ${meta['consolidate-normfetch']}`,
+          severity: 'info',
+          link: 'inspect',
+        });
+      }
+
+      if (runtimeAggregation) {
+        notices.push({
+          text: `Your looking at aggregated data using runtime consoldation ${meta['consolidate-rc']}`,
+          severity: 'info',
+          link: 'inspect',
+        });
+      }
+    }
+
+    return notices;
+  }
 
   parseTags(tagString: string) {
     let tags: string[] = [];
@@ -278,7 +322,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return date.unix();
   }
 
-  metricFindQuery(query: string, optionalOptions: any) {
+  metricFindQuery(query: string, optionalOptions?: any) {
     const options: any = optionalOptions || {};
     let interpolatedQuery = this.templateSrv.replace(
       query,
@@ -573,7 +617,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return getBackendSrv().datasourceRequest(options);
   }
 
-  buildGraphiteParams(options: any, scopedVars: ScopedVars): string[] {
+  buildGraphiteParams(options: any, scopedVars?: ScopedVars): string[] {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
       targets: any = {};

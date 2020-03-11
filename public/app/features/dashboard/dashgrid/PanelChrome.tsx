@@ -340,14 +340,13 @@ export class PanelChrome extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={data.request ? data.request.timeInfo : undefined}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
-          isLoading={data.state === LoadingState.Loading}
+          data={data}
         />
         <ErrorBoundary>
           {({ error }) => {

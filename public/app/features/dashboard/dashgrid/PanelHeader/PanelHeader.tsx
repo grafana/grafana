@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
-import { DataLink, ScopedVars, PanelMenuItem } from '@grafana/data';
+import { DataLink, ScopedVars, PanelMenuItem, PanelData, LoadingState, QueryResultMetaNotice } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
-import { ClickOutsideWrapper } from '@grafana/ui';
+import { ClickOutsideWrapper, Tooltip } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
@@ -18,7 +18,6 @@ import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  timeInfo?: string;
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
@@ -26,7 +25,7 @@ export interface Props {
   links?: DataLink[];
   error?: string;
   isFullscreen: boolean;
-  isLoading: boolean;
+  data: PanelData;
 }
 
 interface ClickCoordinates {
@@ -93,7 +92,7 @@ export class PanelHeader extends Component<Props, State> {
   }
 
   render() {
-    const { panel, timeInfo, scopedVars, error, isFullscreen, isLoading } = this.props;
+    const { panel, scopedVars, error, isFullscreen, data } = this.props;
     const { menuItems } = this.state;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
@@ -102,9 +101,20 @@ export class PanelHeader extends Component<Props, State> {
       'grid-drag-handle': !isFullscreen,
     });
 
+    // away to dedupe them
+    const notices: Record<string, QueryResultMetaNotice> = {};
+
+    for (const series of data.series) {
+      if (series.meta && series.meta.notices) {
+        for (const notice of series.meta.notices) {
+          notices[notice.text] = notice;
+        }
+      }
+    }
+
     return (
       <>
-        {isLoading && this.renderLoadingState()}
+        {data.state === LoadingState.Loading && this.renderLoadingState()}
         <div className={panelHeaderClass}>
           <PanelHeaderCorner
             panel={panel}
@@ -121,6 +131,16 @@ export class PanelHeader extends Component<Props, State> {
             aria-label={e2e.pages.Dashboard.Panels.Panel.selectors.title(title)}
           >
             <div className="panel-title">
+              {Object.values(notices).map(notice => {
+                return (
+                  <Tooltip content={notice.text}>
+                    <span
+                      className="fa fa-info-circle"
+                      style={{ marginRight: '8px', color: 'orange', cursor: 'pointer' }}
+                    />
+                  </Tooltip>
+                );
+              })}
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">
                 {title} <span className="fa fa-caret-down panel-menu-toggle" />
@@ -130,9 +150,9 @@ export class PanelHeader extends Component<Props, State> {
                   <PanelHeaderMenu items={menuItems} />
                 </ClickOutsideWrapper>
               )}
-              {timeInfo && (
+              {data.request && data.request.timeInfo && (
                 <span className="panel-time-info">
-                  <i className="fa fa-clock-o" /> {timeInfo}
+                  <i className="fa fa-clock-o" /> {data.request.timeInfo}
                 </span>
               )}
             </div>

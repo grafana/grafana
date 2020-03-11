@@ -219,7 +219,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={data.request ? data.request.timeInfo : undefined}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
@@ -227,7 +226,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
-          isLoading={data.state === LoadingState.Loading}
+          data={data}
         />
         <div className={panelContentClassNames}>
           <div ref={element => (this.element = element)} className="panel-height-helper" />

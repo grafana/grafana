@@ -50,7 +50,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
     // Hack to fix font awesome icons
     > .fa {
       position: relative;
-      top: 2px;
+      top: 1px;
     }
   `;
 

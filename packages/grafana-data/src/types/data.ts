@@ -1,3 +1,5 @@
+import { FieldConfig } from './dataFrame';
+
 export type KeyValue<T = any> = { [s: string]: T };
 
 export enum LoadingState {
@@ -9,19 +11,39 @@ export enum LoadingState {
 }
 
 export interface QueryResultMeta {
-  [key: string]: any;
-
-  // Match the result to the query
-  requestId?: string;
-
-  // Used in Explore for highlighting
-  searchWords?: string[];
-
-  // Used in Explore to show limit applied to search result
-  limit?: number;
-
-  // DatasSource Specific Values
+  /** DatasSource Specific Values */
   custom?: Record<string, any>;
+
+  /** Stats */
+  stats?: QueryResultMetaStat[];
+
+  /** Meta Notices */
+  notices?: QueryResultMetaNotice[];
+
+  /** Used to track transformation ids that where part of the processing */
+  transformations?: string[];
+
+  /**
+   * Legacy data source specific, should be moved to custom
+   * */
+  gmdMeta?: any[]; // used by cloudwatch
+  rawQuery?: string; // used by stackdriver
+  alignmentPeriod?: string; // used by stackdriver
+  query?: string; // used by azure log
+  searchWords?: string[]; // used by log models and loki
+  limit?: number; // used by log models and loki
+  json?: boolean; // used to keep track of old json doc values
+}
+
+export interface QueryResultMetaStat extends FieldConfig {
+  title: string;
+  value: number;
+}
+
+export interface QueryResultMetaNotice {
+  severity: 'info' | 'warning' | 'error';
+  text: string;
+  link: string;
 }
 
 export interface QueryResultBase {
