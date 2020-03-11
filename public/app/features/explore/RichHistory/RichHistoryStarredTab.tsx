@@ -124,6 +124,7 @@ export function RichHistoryStarredTab(props: Props) {
           <div className={styles.sort}>
             <Select
               options={sortOrderOptions}
+              value={sortOrderOptions.filter(order => order.value === sortOrder)}
               placeholder="Sort queries by"
               onChange={e => onChangeSortOrder(e.value as SortOrder)}
             />
