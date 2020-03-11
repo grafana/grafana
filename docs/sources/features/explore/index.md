@@ -55,7 +55,7 @@ You can close the newly created query by clicking on the Close Split button.
 
 > BETA: Query history is a beta feature.
 
-Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the "Query history" button in Explore.
+Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click **Query history** in Explore.
 
 #### View query history
 
