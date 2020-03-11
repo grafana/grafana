@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Builing commit ${GITHUB_SHA}
+      - name: Building commit ${GITHUB_SHA}
+        run: echo ${GITHUB_SHA}
       - uses: actions/setup-node@v1
         with:
           node-version: 12.x
