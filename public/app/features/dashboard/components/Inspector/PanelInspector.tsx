@@ -64,7 +64,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       data: [],
       selected: 0,
       tab: props.selectedTab || InspectTab.Data,
-      drawerWidth: '40%',
+      drawerWidth: '50%',
       stats: { requestTime: 0, queries: 0, dataSources: 0, processingTime: 0 },
     };
   }
@@ -166,11 +166,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     if (!metaDS || !metaDS.components?.MetadataInspector) {
       return <div>No Metadata Inspector</div>;
     }
-    return (
-      <CustomScrollbar>
-        <metaDS.components.MetadataInspector datasource={metaDS} data={data} />
-      </CustomScrollbar>
-    );
+    return <metaDS.components.MetadataInspector datasource={metaDS} data={data} />;
   }
 
   renderDataTab() {
@@ -235,56 +231,44 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 
-  renderIssueTab() {
-    return <CustomScrollbar>TODO: show issue form</CustomScrollbar>;
-  }
-
   renderErrorTab(error?: DataQueryError) {
     if (!error) {
       return null;
     }
     if (error.data) {
       return (
-        <CustomScrollbar>
+        <>
           <h3>{error.data.message}</h3>
-          <pre>
-            <code>{error.data.error}</code>
-          </pre>
-        </CustomScrollbar>
+          <JSONFormatter json={error} open={2} />
+        </>
       );
     }
     return <div>{error.message}</div>;
   }
 
   renderRequestTab() {
-    return (
-      <CustomScrollbar>
-        <JSONFormatter json={this.state.last} open={2} />
-      </CustomScrollbar>
-    );
+    return <JSONFormatter json={this.state.last} open={3} />;
   }
 
   renderStatsTab() {
     const { stats } = this.state;
     return (
-      <CustomScrollbar>
-        <table className="filter-table">
-          <tbody>
-            <tr>
-              <td>Query time</td>
-              <td>{`${stats.requestTime === -1 ? 'N/A' : stats.requestTime + 'ms'}`}</td>
-            </tr>
-            <tr>
-              <td>Data processing time</td>
-              <td>{`${
-                stats.processingTime === -1
-                  ? 'N/A'
-                  : Math.round((stats.processingTime + Number.EPSILON) * 100) / 100 + 'ms'
-              }`}</td>
-            </tr>
-          </tbody>
-        </table>
-      </CustomScrollbar>
+      <table className="filter-table width-30">
+        <tbody>
+          <tr>
+            <td>Query time</td>
+            <td>{`${stats.requestTime === -1 ? 'N/A' : stats.requestTime + 'ms'}`}</td>
+          </tr>
+          <tr>
+            <td>Data processing time</td>
+            <td>{`${
+              stats.processingTime === -1
+                ? 'N/A'
+                : Math.round((stats.processingTime + Number.EPSILON) * 100) / 100 + 'ms'
+            }`}</td>
+          </tr>
+        </tbody>
+      </table>
     );
   }
 
@@ -330,26 +314,13 @@ export class PanelInspector extends PureComponent<Props, State> {
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
         <TabContent className={styles.tabContent}>
-          {tab === InspectTab.Data ? (
-            this.renderDataTab()
-          ) : (
-            <AutoSizer>
-              {({ width, height }) => {
-                if (width === 0) {
-                  return null;
-                }
-                return (
-                  <div style={{ width, height }}>
-                    {tab === InspectTab.Meta && this.renderMetadataInspector()}
-                    {tab === InspectTab.Issue && this.renderIssueTab()}
-                    {tab === InspectTab.Request && this.renderRequestTab()}
-                    {tab === InspectTab.Error && this.renderErrorTab(error)}
-                    {tab === InspectTab.Stats && this.renderStatsTab()}
-                  </div>
-                );
-              }}
-            </AutoSizer>
-          )}
+          <CustomScrollbar autoHeightMin="100%">
+            {tab === InspectTab.Data && this.renderDataTab()}
+            {tab === InspectTab.Meta && this.renderMetadataInspector()}
+            {tab === InspectTab.Request && this.renderRequestTab()}
+            {tab === InspectTab.Error && this.renderErrorTab(error)}
+            {tab === InspectTab.Stats && this.renderStatsTab()}
+          </CustomScrollbar>
         </TabContent>
       </Drawer>
     );
