@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
@@ -106,6 +106,14 @@ export function RichHistoryCard(props: Props) {
       changeQueries();
     }
   };
+
+  useEffect(() => {
+    setStared(query.starred);
+  }, [query.starred]);
+
+  useEffect(() => {
+    setComment(query.comment);
+  }, [query.comment]);
 
   return (
     <div className={styles.queryCard}>
