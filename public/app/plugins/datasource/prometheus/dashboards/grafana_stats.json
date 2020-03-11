@@ -51,7 +51,7 @@
     "list": []
   },
   "revision": "1.0",
-  "version": 1,
+  "version": 3,
   "title": "Grafana metrics",
   "tags": ["grafana", "prometheus"],
   "description": "Metrics about Grafana",

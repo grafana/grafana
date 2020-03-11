@@ -14,7 +14,7 @@
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 0,
-  "version": 1,
+  "version": 2,
   "panels": [
     {
       "cacheTimeout": null,
