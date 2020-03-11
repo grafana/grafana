@@ -14,7 +14,7 @@ If your license has expired most of Grafana keeps working as normal. Some enterp
 
 > Replace your license as soon as possible. Running Grafana Enterprise with an expired license is unsupported and can lead to unexpected consequences.
 
-## Replacing your license
+## Update your license
 
 1. Locate your current `license.jwt` file. In a standard installation it is stored inside Grafana's data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration](https://grafana.com/docs/grafana/latest/installation/configuration/)
 ```
@@ -31,19 +31,19 @@ The configuration file's location may also be overridden by the `GF_ENTERPRISE_L
 
 Your current data source permissions will keep working as expected, but you'll be unable to add new data source permissions until the license has been renewed.
 
-## Reporting
+## LDAP authentication
 
-- You're unable to configure new reports or generate previews.
-- Scheduled reports are not generated or sent.
+* LDAP synchronization is not affected by an expired license.
+* Enhanced LDAP debugging is unavailable.
 
 ## SAML authentication
 
-SAML is not affected by an expired license.
+SAML authentication is not affected by an expired license.
 
-## LDAP authentication
+## Reporting
 
-- LDAP synchronization is not affected by an expired license.
-- Enhanced LDAP debugging is unavailable.
+* You're unable to configure new reports or generate previews.
+* Scheduled reports are not generated or sent.
 
 ## Enterprise plugins
 

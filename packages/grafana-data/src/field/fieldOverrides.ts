@@ -226,7 +226,6 @@ function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, c
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
   if (defaults) {
     const keys = Object.keys(defaults);
-
     for (const key of keys) {
       if (key === 'custom') {
         if (!context.custom) {
@@ -259,6 +258,11 @@ const processFieldConfigValue = (
   const currentConfig = destination[key];
   if (currentConfig === null || currentConfig === undefined) {
     const item = registry.getIfExists(key);
+    if (!item) {
+      console.warn(`No processor available for ${key} config  property`);
+      return;
+    }
+
     if (item && item.shouldApply(context.field!)) {
       const val = item.process(source[key], context, item.settings);
       if (val !== undefined && val !== null) {

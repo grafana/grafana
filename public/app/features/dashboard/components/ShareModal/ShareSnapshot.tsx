@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { Button, Select, LinkButton, Input, ClipboardButton } from '@grafana/ui';
-import { SelectableValue, AppEvents } from '@grafana/data';
+import { Button, ClipboardButton, Input, LinkButton, Select } from '@grafana/ui';
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -139,7 +139,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     });
 
     // remove template queries
-    dash.templating.list.forEach(variable => {
+    dash.getVariables().forEach(variable => {
       variable.query = '';
       variable.options = variable.current;
       variable.refresh = false;

@@ -10,12 +10,12 @@ import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
-  SeriesColorPickerPopoverWithTheme,
-  SecretFormField,
-  UnitPicker,
   DataLinksEditor,
   DataSourceHttpSettings,
   GraphContextMenu,
+  SecretFormField,
+  SeriesColorPickerPopoverWithTheme,
+  UnitPicker,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
@@ -28,6 +28,7 @@ import {
   SaveDashboardAsButtonConnected,
   SaveDashboardButtonConnected,
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
+import { VariableEditorContainer } from '../features/templating/editor/VariableEditorContainer';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -158,6 +159,7 @@ export function registerAngularDirectives() {
   react2AngularDirective('saveDashboardButton', SaveDashboardButtonConnected, [
     ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
     ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
+    ['dashboard', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
     'variant',
@@ -165,4 +167,5 @@ export function registerAngularDirectives() {
     ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
     ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
   ]);
+  react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
 }

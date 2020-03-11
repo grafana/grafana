@@ -1,5 +1,5 @@
 import React from 'react';
-import { Forms, HorizontalGroup, Button } from '@grafana/ui';
+import { Button, Forms, HorizontalGroup } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
@@ -13,7 +13,7 @@ interface SaveDashboardAsFormDTO {
 }
 
 const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
-  const clone = dashboard.getSaveModelClone();
+  const clone: any = dashboard.getSaveModelClone();
   clone.id = null;
   clone.uid = '';
   clone.title += ' Copy';

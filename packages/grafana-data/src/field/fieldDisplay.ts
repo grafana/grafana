@@ -259,6 +259,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
     display: {
       text,
       numeric: 0,
+      color: display.color,
     },
   };
 }
