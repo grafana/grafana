@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import groupBy from 'lodash/groupBy';
-import { from, of, Observable, merge } from 'rxjs';
+import { from, of, Observable, forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 import {
@@ -105,7 +105,19 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       observables.push(observable);
     }
 
-    return merge(...observables);
+    return forkJoin(observables).pipe(
+      map(responses => {
+        const data = responses.reduce((result, response) => {
+          return [...result, ...response.data];
+        }, []);
+
+        return {
+          data,
+          key: request.requestId,
+          state: LoadingState.Done,
+        };
+      })
+    );
   }
 
   testDatasource() {
