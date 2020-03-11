@@ -29,12 +29,6 @@ Grafana 6.7 comes with a lot of new features and enhancements:
 
 ## General features
 
-### Enforce minimum dashboard refresh interval
-
-Allowing a low dashboard refresh interval can cause severe load on data sources and Grafana. Grafana v6.7 allows you to restrict the dashboard refresh interval so it cannot be set lower than a given interval. This provides a way for administrators to control dashboard refresh behavior on a global level.
-
-Refer to min_refresh_interval in [Configuration]({{< relref "../administration/configuration/#min-refresh-interval" >}}) for further information and how to enable this.
-
 ### Query history
 > BETA: Query history is a beta feature. It is local to your browser and is not shared with others.
 
@@ -47,6 +41,12 @@ Learn more about query history in [documentation]({{< relref "../features/explor
 ### Azure OAuth
 Grafana 6.7 comes with a new OAuth integration for Microsoft Azure Active Directory. It’s possible to assign Users and Groups to Grafana roles from the Azure Portal. Learn how to enable and configure it in the [documentation]({{< relref "../auth/azuread/" >}}).
 
+### Enforce minimum dashboard refresh interval
+
+Allowing a low dashboard refresh interval can cause severe load on data sources and Grafana. Grafana v6.7 allows you to restrict the dashboard refresh interval so it cannot be set lower than a given interval. This provides a way for administrators to control dashboard refresh behavior on a global level.
+
+Refer to min_refresh_interval in [Configuration]({{< relref "../administration/configuration/#min-refresh-interval" >}}) for further information and how to enable this.
+
 ### Stackdriver Project Selector
 A Stackdriver data source in Grafana is configured for one service account only. That service account is always associated with a default project in Google Cloud Platform (GCP). Depending on your setup in GCP, the service account might be granted access to more projects than just the default project. 
 
@@ -56,7 +56,6 @@ In Grafana 6.7, the query editor has been enhanced with a project selector that 
 
 ### White Labeling for application title
 This release adds a new white labeling option to customize the application title. Learn how to configure it in the [documentation]({{< relref "../enterprise/white-labeling/" >}}).
-
 
 ```
 [white_labeling]
