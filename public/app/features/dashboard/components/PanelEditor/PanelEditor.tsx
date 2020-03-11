@@ -27,6 +27,7 @@ import { FieldConfigEditor } from './FieldConfigEditor';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
+import { AngularPanelOptions } from './AngularPanelOptions';
 
 enum Pane {
   Right,
@@ -99,12 +100,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  renderFieldOptions() {
-    const { plugin, panel, data } = this.props;
+  renderFieldOptions(plugin: PanelPlugin) {
+    const { panel, data } = this.props;
 
     const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
 
-    if (!fieldOptions || !plugin) {
+    if (!fieldOptions) {
       return null;
     }
 
@@ -123,16 +124,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  /**
-   * The existing visualization tab
-   */
-  renderVisSettings() {
-    const { data, panel } = this.props;
-    const { plugin } = this.props;
-
-    if (!plugin) {
-      return null;
-    }
+  renderPanelSettings(plugin: PanelPlugin) {
+    const { data, panel, dashboard } = this.props;
 
     if (plugin.editor && panel) {
       return (
@@ -142,7 +135,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       );
     }
 
-    return <div>No editor (angular?)</div>;
+    return <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />;
   }
 
   onDragFinished = (pane: Pane, size: number) => {
@@ -260,11 +253,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderOptionsPane(styles: any) {
+    const { plugin } = this.props;
+
     return (
       <div className={styles.panelOptionsPane}>
         <CustomScrollbar>
-          {this.renderFieldOptions()}
-          <OptionsGroup title="Old settings">{this.renderVisSettings()}</OptionsGroup>
+          {plugin && (
+            <>
+              {this.renderFieldOptions(plugin)}
+              <OptionsGroup title={`${plugin.meta.name} options`}>{this.renderPanelSettings(plugin)}</OptionsGroup>
+            </>
+          )}
         </CustomScrollbar>
       </div>
     );

@@ -12,8 +12,6 @@ import './components/VersionHistory';
 import './components/DashboardSettings';
 import './components/SubMenu';
 import './components/UnsavedChangesModal';
-import './components/SaveModals';
-import './components/ShareModal';
 import './components/AdHocFilters';
 import './components/RowOptions';
 

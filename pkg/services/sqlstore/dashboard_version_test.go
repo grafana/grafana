@@ -7,14 +7,14 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func updateTestDashboard(dashboard *m.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(dashboard *models.Dashboard, data map[string]interface{}) {
 	data["id"] = dashboard.Id
 
-	saveCmd := m.SaveDashboardCommand{
+	saveCmd := models.SaveDashboardCommand{
 		OrgId:     dashboard.OrgId,
 		Overwrite: true,
 		Dashboard: simplejson.NewFromAny(data),
@@ -31,7 +31,7 @@ func TestGetDashboardVersion(t *testing.T) {
 		Convey("Get a Dashboard ID and version ID", func() {
 			savedDash := insertTestDashboard("test dash 26", 1, 0, false, "diff")
 
-			query := m.GetDashboardVersionQuery{
+			query := models.GetDashboardVersionQuery{
 				DashboardId: savedDash.Id,
 				Version:     savedDash.Version,
 				OrgId:       1,
@@ -42,7 +42,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			So(savedDash.Id, ShouldEqual, query.DashboardId)
 			So(savedDash.Version, ShouldEqual, query.Version)
 
-			dashCmd := m.GetDashboardQuery{
+			dashCmd := models.GetDashboardQuery{
 				OrgId: savedDash.OrgId,
 				Uid:   savedDash.Uid,
 			}
@@ -54,7 +54,7 @@ func TestGetDashboardVersion(t *testing.T) {
 		})
 
 		Convey("Attempt to get a version that doesn't exist", func() {
-			query := m.GetDashboardVersionQuery{
+			query := models.GetDashboardVersionQuery{
 				DashboardId: int64(999),
 				Version:     123,
 				OrgId:       1,
@@ -62,7 +62,7 @@ func TestGetDashboardVersion(t *testing.T) {
 
 			err := GetDashboardVersion(&query)
 			So(err, ShouldNotBeNil)
-			So(err, ShouldEqual, m.ErrDashboardVersionNotFound)
+			So(err, ShouldEqual, models.ErrDashboardVersionNotFound)
 		})
 	})
 }
@@ -73,7 +73,7 @@ func TestGetDashboardVersions(t *testing.T) {
 		savedDash := insertTestDashboard("test dash 43", 1, 0, false, "diff-all")
 
 		Convey("Get all versions for a given Dashboard ID", func() {
-			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
 
 			err := GetDashboardVersions(&query)
 			So(err, ShouldBeNil)
@@ -81,11 +81,11 @@ func TestGetDashboardVersions(t *testing.T) {
 		})
 
 		Convey("Attempt to get the versions for a non-existent Dashboard ID", func() {
-			query := m.GetDashboardVersionsQuery{DashboardId: int64(999), OrgId: 1}
+			query := models.GetDashboardVersionsQuery{DashboardId: int64(999), OrgId: 1}
 
 			err := GetDashboardVersions(&query)
 			So(err, ShouldNotBeNil)
-			So(err, ShouldEqual, m.ErrNoVersionsForDashboardId)
+			So(err, ShouldEqual, models.ErrNoVersionsForDashboardId)
 			So(len(query.Result), ShouldEqual, 0)
 		})
 
@@ -94,7 +94,7 @@ func TestGetDashboardVersions(t *testing.T) {
 				"tags": "different-tag",
 			})
 
-			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
 			err := GetDashboardVersions(&query)
 
 			So(err, ShouldBeNil)
@@ -118,10 +118,10 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		}
 
 		Convey("Clean up old dashboard versions", func() {
-			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
 			So(err, ShouldBeNil)
 
-			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
 			err = GetDashboardVersions(&query)
 			So(err, ShouldBeNil)
 
@@ -134,10 +134,10 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		Convey("Don't delete anything if there're no expired versions", func() {
 			setting.DashboardVersionsToKeep = versionsToWrite
 
-			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
 			So(err, ShouldBeNil)
 
-			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
+			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
 			err = GetDashboardVersions(&query)
 			So(err, ShouldBeNil)
 
@@ -152,10 +152,10 @@ func TestDeleteExpiredVersions(t *testing.T) {
 				})
 			}
 
-			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			err := DeleteExpiredVersions(&models.DeleteExpiredVersionsCommand{})
 			So(err, ShouldBeNil)
 
-			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
+			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
 			err = GetDashboardVersions(&query)
 			So(err, ShouldBeNil)
 
