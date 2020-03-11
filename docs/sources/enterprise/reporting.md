@@ -43,7 +43,7 @@ Currently only Organization Admins can create reports.
 
 ## Rendering configuration
 
-When Grafana generates a report, it will render each panel separatly and then put them together in a PDF file. You can configure the per-panel rendering request timeout and the maximum number of concurrent calls to the rendering service. These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
+When Grafana generates a report, it will render each panel separately and then put them together in a PDF file. You can configure the per-panel rendering request timeout and the maximum number of concurrent calls to the rendering service. These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
 
 ```ini
 [reporting]
