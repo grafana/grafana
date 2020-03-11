@@ -541,3 +541,8 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 export function deduplicateLogRowsById(rows: LogRowModel[]) {
   return _.uniqBy(rows, 'uid');
 }
+
+export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]) => {
+  const refId = getValueWithRefId(queryErrors);
+  return refId ? null : getFirstQueryErrorWithoutRefId(queryErrors);
+};
