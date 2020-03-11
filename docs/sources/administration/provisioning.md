@@ -270,7 +270,7 @@ Alert Notification Channels can be provisioned by adding one or more yaml config
 
 Each config file can contain the following top-level fields:
 - `notifiers`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
-- `delete_notifiers`, a list of alert notifications to be deleted before before inserting/updating those in the `notifiers` list.
+- `delete_notifiers`, a list of alert notifications to be deleted before inserting/updating those in the `notifiers` list.
 
 Provisioning looks up alert notifications by uid, and will update any existing notification with the provided uid.
 
