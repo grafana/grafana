@@ -75,7 +75,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin: ${theme.spacing.md};
     `,
     tabsBar: css`
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${theme.spacing.md};
     `,
     iconWrapper: css`
       cursor: pointer;
