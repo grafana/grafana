@@ -5,23 +5,23 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
 
 func getDashboardURLBySlug(orgID int64, slug string) (string, error) {
-	query := m.GetDashboardQuery{Slug: slug, OrgId: orgID}
+	query := models.GetDashboardQuery{Slug: slug, OrgId: orgID}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return "", m.ErrDashboardNotFound
+		return "", models.ErrDashboardNotFound
 	}
 
-	return m.GetDashboardUrl(query.Result.Uid, query.Result.Slug), nil
+	return models.GetDashboardUrl(query.Result.Uid, query.Result.Slug), nil
 }
 
 func RedirectFromLegacyDashboardURL() macaron.Handler {
-	return func(c *m.ReqContext) {
+	return func(c *models.ReqContext) {
 		slug := c.Params("slug")
 
 		if slug != "" {
@@ -35,7 +35,7 @@ func RedirectFromLegacyDashboardURL() macaron.Handler {
 }
 
 func RedirectFromLegacyDashboardSoloURL() macaron.Handler {
-	return func(c *m.ReqContext) {
+	return func(c *models.ReqContext) {
 		slug := c.Params("slug")
 		renderRequest := c.QueryBool("render")
 

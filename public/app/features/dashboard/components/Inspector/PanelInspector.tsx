@@ -219,6 +219,7 @@ export class PanelInspector extends PureComponent<Props, State> {
               if (width === 0) {
                 return null;
               }
+
               return (
                 <div style={{ width, height }}>
                   <Table width={width} height={height} data={processed[selected]} />

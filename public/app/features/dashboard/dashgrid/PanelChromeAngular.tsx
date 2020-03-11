@@ -2,16 +2,22 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
+
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { getAngularLoader } from '@grafana/runtime';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
+import { setPanelAngularComponent } from '../state/reducers';
+
 // Types
 import { DashboardModel, PanelModel } from '../state';
+import { StoreState } from 'app/types';
 import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin, PanelEvents } from '@grafana/data';
 
-export interface Props {
+interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
@@ -20,6 +26,16 @@ export interface Props {
   width: number;
   height: number;
 }
+
+interface ConnectedProps {
+  angularComponent: AngularComponent;
+}
+
+interface DispatchProps {
+  setPanelAngularComponent: typeof setPanelAngularComponent;
+}
+
+export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export interface State {
   data: PanelData;
@@ -36,7 +52,7 @@ interface AngularScopeProps {
   };
 }
 
-export class PanelChromeAngular extends PureComponent<Props, State> {
+export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
   timeSrv: TimeSrv = getTimeSrv();
   scopeProps?: AngularScopeProps;
@@ -127,10 +143,10 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   }
 
   loadAngularPanel() {
-    const { panel, dashboard, height, width } = this.props;
+    const { panel, dashboard, height, width, setPanelAngularComponent } = this.props;
 
     // if we have no element or already have loaded the panel return
-    if (!this.element || panel.angularPanel) {
+    if (!this.element) {
       return;
     }
 
@@ -143,19 +159,23 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
       size: { width, height },
     };
 
-    // compile angular template and get back handle to scope
-    panel.setAngularPanel(loader.load(this.element, this.scopeProps, template));
+    setPanelAngularComponent({
+      panelId: panel.id,
+      angularComponent: loader.load(this.element, this.scopeProps, template),
+    });
 
     // need to to this every time we load an angular as all events are unsubscribed when panel is destroyed
     this.subscribeToRenderEvent();
   }
 
   cleanUpAngularPanel() {
-    const { panel } = this.props;
+    const { angularComponent, setPanelAngularComponent, panel } = this.props;
 
-    if (panel.angularPanel) {
-      panel.setAngularPanel(undefined);
+    if (angularComponent) {
+      angularComponent.destroy();
     }
+
+    setPanelAngularComponent({ panelId: panel.id, angularComponent: null });
   }
 
   hasOverlayHeader() {
@@ -176,7 +196,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, plugin } = this.props;
+    const { dashboard, panel, isFullscreen, plugin, angularComponent } = this.props;
     const { errorMessage, data, alertState } = this.state;
     const { transparent } = panel;
 
@@ -203,6 +223,7 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
+          angularComponent={angularComponent}
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
@@ -215,3 +236,13 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     );
   }
 }
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  return {
+    angularComponent: state.dashboard.panels[props.panel.id].angularComponent,
+  };
+};
+
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent };
+
+export const PanelChromeAngular = connect(mapStateToProps, mapDispatchToProps)(PanelChromeAngularUnconnected);

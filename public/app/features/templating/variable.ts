@@ -1,6 +1,8 @@
 import _ from 'lodash';
-import { assignModelProperties } from 'app/core/utils/model_utils';
 import { ScopedVars } from '@grafana/data';
+
+import { assignModelProperties } from 'app/core/utils/model_utils';
+import { Deferred } from '../../core/utils/deferred';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -52,8 +54,8 @@ export enum VariableRefresh {
 
 export enum VariableHide {
   dontHide,
-  hideVariable,
   hideLabel,
+  hideVariable,
 }
 
 export enum VariableSort {
@@ -67,7 +69,10 @@ export enum VariableSort {
 }
 
 export interface VariableTag {
+  selected: boolean;
   text: string | string[];
+  values?: any[];
+  valuesText?: string;
 }
 
 export interface VariableOption {
@@ -75,6 +80,7 @@ export interface VariableOption {
   text: string | string[];
   value: string | string[];
   isNone?: boolean;
+  tags?: VariableTag[];
 }
 
 export type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom';
@@ -87,21 +93,8 @@ export interface AdHocVariableFilter {
 }
 
 export interface AdHocVariableModel extends VariableModel {
-  datasource: string;
+  datasource: string | null;
   filters: AdHocVariableFilter[];
-}
-
-export interface CustomVariableModel extends VariableWithOptions {
-  allValue: string;
-  includeAll: boolean;
-  multi: boolean;
-}
-
-export interface DataSourceVariableModel extends VariableWithOptions {
-  includeAll: boolean;
-  multi: boolean;
-  refresh: VariableRefresh;
-  regex: string;
 }
 
 export interface IntervalVariableModel extends VariableWithOptions {
@@ -111,24 +104,33 @@ export interface IntervalVariableModel extends VariableWithOptions {
   refresh: VariableRefresh;
 }
 
-export interface QueryVariableModel extends VariableWithOptions {
-  allValue: string;
-  datasource: string;
-  definition: string;
-  includeAll: boolean;
-  multi: boolean;
+export interface CustomVariableModel extends VariableWithMultiSupport {}
+
+export interface DataSourceVariableModel extends VariableWithMultiSupport {
   refresh: VariableRefresh;
   regex: string;
+}
+
+export interface QueryVariableModel extends DataSourceVariableModel {
+  datasource: string | null;
+  definition: string;
   sort: VariableSort;
   tags: VariableTag[];
   tagsQuery: string;
   tagValuesQuery: string;
   useTags: boolean;
+  queryValue?: string;
 }
 
 export interface TextBoxVariableModel extends VariableWithOptions {}
 
 export interface ConstantVariableModel extends VariableWithOptions {}
+
+export interface VariableWithMultiSupport extends VariableWithOptions {
+  multi: boolean;
+  includeAll: boolean;
+  allValue?: string | null;
+}
 
 export interface VariableWithOptions extends VariableModel {
   current: VariableOption;
@@ -137,11 +139,15 @@ export interface VariableWithOptions extends VariableModel {
 }
 
 export interface VariableModel {
+  uuid?: string; // only exists for variables in redux state
+  global?: boolean; // only exists for variables in redux state
   type: VariableType;
   name: string;
-  label: string;
+  label: string | null;
   hide: VariableHide;
   skipUrlSync: boolean;
+  index?: number;
+  initLock?: Deferred | null;
 }
 
 export interface VariableActions {

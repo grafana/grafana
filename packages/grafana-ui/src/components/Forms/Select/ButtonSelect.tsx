@@ -1,13 +1,14 @@
 import React from 'react';
+import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 
 import { Button, ButtonVariant, ButtonProps } from '../Button';
 import { ButtonSize } from '../../Button/types';
-import { SelectCommonProps, SelectBase, CustomControlProps } from './SelectBase';
-import { css } from 'emotion';
+import { SelectCommonProps, CustomControlProps } from './types';
+import { SelectBase } from './SelectBase';
 import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { IconType } from '../../Icon/types';
-import { GrafanaTheme } from '@grafana/data';
 
 interface ButtonSelectProps<T> extends Omit<SelectCommonProps<T>, 'renderControl' | 'size' | 'prefix'> {
   icon?: IconType;

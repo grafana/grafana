@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -109,7 +109,7 @@ func (ss *SqlStore) Init() error {
 
 func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-		systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
+		systemUserCountQuery := models.GetSystemUserCountStatsQuery{}
 		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
 		if err != nil {
 			return fmt.Errorf("Could not determine if admin user exists: %v", err)
@@ -121,7 +121,7 @@ func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
-			cmd := m.CreateUserCommand{}
+			cmd := models.CreateUserCommand{}
 			cmd.Login = setting.AdminUser
 			cmd.Email = setting.AdminUser + "@localhost"
 			cmd.Password = setting.AdminPassword

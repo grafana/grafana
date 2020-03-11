@@ -15,9 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/context/ctxhttp"
-	"golang.org/x/oauth2/google"
-
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -27,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/net/context/ctxhttp"
+	"golang.org/x/oauth2/google"
 )
 
 var (
@@ -81,8 +80,10 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
-	case "ensureDefaultProjectQuery":
-		result, err = e.ensureDefaultProject(ctx, tsdbQuery)
+	case "getProjectsListQuery":
+		result, err = e.getProjectList(ctx, tsdbQuery)
+	case "getGCEDefaultProject":
+		result, err = e.getGCEDefaultProject(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -92,19 +93,27 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	return result, err
 }
 
-func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *StackdriverExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
+	refId := tsdbQuery.Queries[0].RefId
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: refId}
 
-	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
-	if authenticationType == gceAuthentication {
-		defaultProject, err := e.getDefaultProject(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
-		}
+	gceDefaultProject, err := e.getDefaultProject(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+	}
 
-		e.dsInfo.JsonData.Set("defaultProject", defaultProject)
+	queryResult.Meta.Set("defaultProject", gceDefaultProject)
+	result.Results[refId] = queryResult
+
+	return result, nil
+}
+
+func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
 	}
 
 	queries, err := e.buildQueries(tsdbQuery)
@@ -170,11 +179,12 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		aliasBy := query.Model.Get("aliasBy").MustString()
 
 		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
-			Target:   target,
-			Params:   params,
-			RefID:    query.RefId,
-			GroupBys: groupBysAsStrings,
-			AliasBy:  aliasBy,
+			Target:      target,
+			Params:      params,
+			RefID:       query.RefId,
+			GroupBys:    groupBysAsStrings,
+			AliasBy:     aliasBy,
+			ProjectName: query.Model.Get("projectName").MustString(""),
 		})
 	}
 
@@ -278,8 +288,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
-
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+query.ProjectName+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, StackdriverResponse{}, nil
@@ -345,6 +354,28 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 	if err != nil {
 		slog.Error("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
 		return StackdriverResponse{}, err
+	}
+
+	return data, nil
+}
+
+func (e *StackdriverExecutor) unmarshalResourceResponse(res *http.Response) (ResourceManagerProjectList, error) {
+	body, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		return ResourceManagerProjectList{}, err
+	}
+
+	if res.StatusCode/100 != 2 {
+		slog.Error("Request failed", "status", res.Status, "body", string(body))
+		return ResourceManagerProjectList{}, fmt.Errorf(string(body))
+	}
+
+	var data ResourceManagerProjectList
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		slog.Error("Failed to unmarshal Resource manager response", "error", err, "status", res.Status, "body", string(body))
+		return ResourceManagerProjectList{}, err
 	}
 
 	return data, nil
@@ -584,7 +615,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query *StackdriverQuery, proxyPass string) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
@@ -611,10 +642,40 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 		}
 	}
 
-	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
-	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
-
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
+
+	return req, nil
+}
+
+func (e *StackdriverExecutor) createRequestResourceManager(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+	u, _ := url.Parse(dsInfo.Url)
+	u.Path = path.Join(u.Path, "render")
+
+	req, err := http.NewRequest(http.MethodGet, "https://cloudresourcemanager.googleapis.com/", nil)
+	if err != nil {
+		slog.Error("Failed to create request", "error", err)
+		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
+	// find plugin
+	plugin, ok := plugins.DataSources[dsInfo.Type]
+	if !ok {
+		return nil, errors.New("Unable to find datasource plugin Stackdriver")
+	}
+
+	var resourceManagerRoute *plugins.AppPluginRoute
+	for _, route := range plugin.Routes {
+		if route.Path == "cloudresourcemanager" {
+			resourceManagerRoute = route
+			break
+		}
+	}
+	proxyPass := "v1/projects"
+
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, resourceManagerRoute, dsInfo)
 
 	return req, nil
 }
@@ -626,7 +687,67 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 		if err != nil {
 			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
 		}
+		token, err := defaultCredentials.TokenSource.Token()
+		if err != nil {
+			return "", fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
+		}
+		if !token.Valid() {
+			return "", errors.New("Failed to validate GCP credentials")
+		}
+
 		return defaultCredentials.ProjectID, nil
 	}
 	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
+}
+
+func (e *StackdriverExecutor) getProjectList(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: tsdbQuery.Queries[0].RefId}
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
+	}
+	projectsList, err := e.getProjects(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	queryResult.Meta.Set("projectsList", projectsList)
+	result.Results[tsdbQuery.Queries[0].RefId] = queryResult
+	return result, nil
+}
+
+func (e *StackdriverExecutor) getProjects(ctx context.Context) ([]ResourceManagerProjectSelect, error) {
+	var projects []ResourceManagerProjectSelect
+
+	req, err := e.createRequestResourceManager(ctx, e.dsInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "resource manager query")
+	span.SetTag("datasource_id", e.dsInfo.Id)
+	span.SetTag("org_id", e.dsInfo.OrgId)
+
+	defer span.Finish()
+
+	if err := opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
+		return nil, err
+	}
+
+	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := e.unmarshalResourceResponse(res)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, project := range data.Projects {
+		projects = append(projects, ResourceManagerProjectSelect{Label: project.ProjectID, Value: project.ProjectID})
+	}
+	return projects, nil
 }
