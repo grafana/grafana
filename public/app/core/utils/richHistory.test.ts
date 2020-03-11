@@ -6,7 +6,6 @@ import {
   createDateStringFromTs,
   createQueryHeading,
   createDataQuery,
-  createUrlFromRichHistory,
 } from './richHistory';
 
 import { SortOrder } from './explore';
