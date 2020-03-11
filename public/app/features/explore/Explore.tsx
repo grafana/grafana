@@ -295,6 +295,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const styles = getStyles();
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+
+    // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
     const refId = getValueWithRefId(queryErrors);
     const queryError = refId ? null : getFirstQueryErrorWithoutRefId(queryErrors);
