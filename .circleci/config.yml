@@ -1002,6 +1002,29 @@ jobs:
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
+  build-grafana-packages:
+    docker:
+      - image: circleci/node:12
+    steps:
+      - checkout
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: Build packages
+          command: yarn packages:build
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
+
   release-packages:
     docker:
       - image: circleci/node:12
