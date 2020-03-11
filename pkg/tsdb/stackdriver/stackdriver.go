@@ -178,14 +178,21 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 				groupBysAsStrings = append(groupBysAsStrings, groupBy.(string))
 			}
 		} else if metricType == sloQueryType {
-			// params.Add("view", "FULL")
 			sloQuery := query.Model.Get("sloQuery").MustMap()
-			params.Add("aggregation.perSeriesAligner", sloQuery["perSeriesAligner"].(string))
+
 			alignmentPeriod := sloQuery["alignmentPeriod"].(string)
 			params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(alignmentPeriod, query.IntervalMs, durationSeconds))
 			projectName = sloQuery["projectName"].(string)
-			params.Add("filter", sloQuery["filter"].(string))
+			selectorName := sloQuery["selectorName"].(string)
+			serviceID := sloQuery["serviceId"].(string)
+			sloID := sloQuery["sloId"].(string)
+			params.Add("filter", buildSLOFilterExpression(projectName, selectorName, serviceID, sloID))
 			aliasBy = sloQuery["aliasBy"].(string)
+			if selectorName == "select_slo_health" {
+				params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
+			} else {
+				params.Add("aggregation.perSeriesAligner", "ALIGN_NEXT_OLDER")
+			}
 		}
 
 		target = params.Encode()
@@ -260,6 +267,10 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 	}
 
 	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
+}
+
+func buildSLOFilterExpression(projectName string, selectorName string, serviceId string, sloId string) string {
+	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, selectorName, projectName, serviceId, sloId)
 }
 
 func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
@@ -410,6 +421,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		seriesLabels := make(map[string]string)
 		defaultMetricName := series.Metric.Type
 		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
+		seriesLabels["resource.type"] = series.Resource.Type
 
 		for key, value := range series.Metric.Labels {
 			if _, ok := labels["metric.label."+key]; !ok {

@@ -5,7 +5,6 @@ import StackdriverDatasource from '../datasource';
 import { SelectableValue } from '@grafana/data';
 
 export interface Props {
-  refId: string;
   usedAlignmentPeriod: string;
   variableOptionGroup: SelectableValue<string>;
   onChange: (query: SLOQuery) => void;
@@ -14,15 +13,16 @@ export interface Props {
   datasource: StackdriverDatasource;
 }
 
-export const defaultQuery: Partial<SLOQuery> = {
+export const defaultQuery: SLOQuery = {
+  projectName: '',
   alignmentPeriod: 'stackdriver-auto',
-  perSeriesAligner: 'ALIGN_MEAN',
-  slo: '',
   aliasBy: '',
+  selectorName: 'select_slo_health',
+  serviceId: '',
+  sloId: '',
 };
 
 export function SLOQueryEditor({
-  refId,
   query,
   datasource,
   onChange,
@@ -37,12 +37,17 @@ export function SLOQueryEditor({
         datasource={datasource}
         onChange={projectName => onChange({ ...query, projectName })}
       />
-      <SLOFilter value={query.slo} onChange={slo => onChange({ ...query, slo })} />
+      <SLOFilter
+        templateVariableOptions={variableOptionGroup.options}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+      />
       <AlignmentPeriods
         templateSrv={datasource.templateSrv}
         templateVariableOptions={variableOptionGroup.options}
         alignmentPeriod={query.alignmentPeriod}
-        perSeriesAligner={query.perSeriesAligner}
+        perSeriesAligner={query.selectorName === 'select_slo_health' ? 'ALIGN_MEAN' : 'ALIGN_NEXT_OLDER'}
         usedAlignmentPeriod={usedAlignmentPeriod}
         onChange={alignmentPeriod => onChange({ ...query, alignmentPeriod })}
       />

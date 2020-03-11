@@ -1,71 +1,91 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent } from 'react';
 import _ from 'lodash';
-import { css, cx } from 'emotion';
-import { SegmentInput } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Segment, SegmentAsync } from '@grafana/ui';
+import StackdriverDatasource from '../datasource';
+import { SLOQuery } from '../types';
 
 export interface Props {
-  value: string;
-  onChange: (slo: string) => void;
+  query: SLOQuery;
+  onChange: (slo: SLOQuery) => void;
+  templateVariableOptions: Array<SelectableValue<string>>;
+  datasource: StackdriverDatasource;
 }
 
-const closeButtonStyle = css`
-  border: 0;
-  background: transparent;
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  font-size: 12px;
-`;
+const selectors = [
+  { label: 'SLI Value', value: 'select_slo_health' },
+  { label: 'SLO Compliance', value: 'select_slo_compliance' },
+  { label: 'SLO Error Budget Remaining ', value: 'select_slo_budget' },
+];
 
-export const SLOFilter: FunctionComponent<Props> = ({ onChange, value = '' }) => {
-  const [showSlo, setShowSlo] = useState(!!value);
-  const [autofocus, setAutofocus] = useState(false);
-
+export const SLOFilter: FunctionComponent<Props> = ({ templateVariableOptions, query, onChange, datasource }) => {
   return (
-    <div className="gf-form-inline">
-      <label className="gf-form-label query-keyword width-9">Filter</label>
-      {showSlo && (
-        <SegmentInput
-          Component={
-            <a className="gf-form-label query-part">
-              <button
-                title="Remove filter"
-                onClick={e => {
-                  e.stopPropagation();
-                  onChange('');
-                  setShowSlo(false);
-                }}
-                className={cx(closeButtonStyle)}
-              >
-                <i className={cx('fa fa-close')}></i>
-              </button>
-              {value}
-            </a>
+    <>
+      <div className="gf-form-inline">
+        <label className="gf-form-label query-keyword width-9">Selector</label>
+        <Segment
+          allowCustomValue
+          value={[...selectors, ...templateVariableOptions].find(s => s.value === query?.selectorName ?? '')}
+          options={[
+            {
+              label: 'Template Variables',
+              options: templateVariableOptions,
+            },
+            ...selectors,
+          ]}
+          onChange={({ value: selectorName }) => onChange({ ...query, selectorName })}
+        />
+        <div className="gf-form gf-form--grow">
+          <label className="gf-form-label gf-form-label--grow"></label>
+        </div>
+      </div>
+      <div className="gf-form-inline">
+        <label className="gf-form-label query-keyword width-9">Service</label>
+
+        <SegmentAsync
+          allowCustomValue
+          value={query?.serviceId}
+          placeholder="Select service"
+          loadOptions={() =>
+            datasource.getSLOServices(query.projectName).then(services => [
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...services,
+            ])
           }
-          value={value}
-          autofocus={autofocus}
-          placeholder="Enter custom filter"
-          onChange={value => {
-            setShowSlo(!!value);
-            onChange(value as string);
+          onChange={({ value: serviceId }) => {
+            console.log({ serviceId });
+            onChange({ ...query, serviceId });
           }}
         />
-      )}
-
-      {!showSlo && (
-        <a
-          onClick={() => {
-            setShowSlo(true);
-            setAutofocus(true);
-          }}
-          className="gf-form-label query-part"
-        >
-          <i className="fa fa-plus" />
-        </a>
-      )}
-      <div className="gf-form gf-form--grow">
-        <label className="gf-form-label gf-form-label--grow"></label>
+        <div className="gf-form gf-form--grow">
+          <label className="gf-form-label gf-form-label--grow"></label>
+        </div>
       </div>
-    </div>
+
+      <div className="gf-form-inline">
+        <label className="gf-form-label query-keyword width-9">Service</label>
+        <SegmentAsync
+          allowCustomValue
+          value={query?.sloId}
+          placeholder="Select SLO"
+          loadOptions={() =>
+            datasource.getServiceLevelObjectives(query.projectName, query.serviceId).then(sloIds => [
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...sloIds,
+            ])
+          }
+          onChange={({ value: sloId }) => onChange({ ...query, sloId })}
+        />
+        <div className="gf-form gf-form--grow">
+          <label className="gf-form-label gf-form-label--grow"></label>
+        </div>
+      </div>
+    </>
   );
 };

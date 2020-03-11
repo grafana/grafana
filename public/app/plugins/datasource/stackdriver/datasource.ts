@@ -89,7 +89,9 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           ),
           sloQuery: {
             projectName: this.templateSrv.replace(sloQuery?.projectName ?? '', options.scopedVars),
-            filter: this.templateSrv.replace(sloQuery?.slo ?? '', options.scopedVars),
+            selectorName: this.templateSrv.replace(sloQuery?.selectorName ?? '', options.scopedVars),
+            serviceId: this.templateSrv.replace(sloQuery?.serviceId ?? '', options.scopedVars),
+            sloId: this.templateSrv.replace(sloQuery?.sloId ?? '', options.scopedVars),
             alignmentPeriod: this.templateSrv.replace(sloQuery?.alignmentPeriod ?? '', options.scopedVars || {}),
             aliasBy: this.templateSrv.replace(sloQuery?.aliasBy ?? '', options.scopedVars || {}),
             perSeriesAligner: this.templateSrv.replace(sloQuery?.perSeriesAligner ?? '', options.scopedVars || {}),
@@ -420,7 +422,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       this.sloServicesCache[interpolatedProject] = data.services.map(
         ({ name, displayName }: { name: string; displayName: string }) => ({
           value: name.match(/([^\/]*)\/*$/)[1],
-          label: displayName.match(/([^\/]*)\/*$/)[1],
+          label: name.match(/([^\/]*)\/*$/)[1],
+          // label: displayName.match(/([^\/]*)\/*$/)[1],
         })
       );
 
@@ -433,7 +436,6 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
 
   async getServiceLevelObjectives(projectName: string, serviceId: string): Promise<Array<SelectableValue<string>>> {
     try {
-      serviceId = 'gae:stack-doctor_default';
       const interpolatedProject = this.templateSrv.replace(projectName);
       const interpolatedServiceId = this.templateSrv.replace(serviceId);
       const cacheKey = `${interpolatedProject}-${interpolatedServiceId}`;
@@ -448,7 +450,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       this.sloCache[cacheKey] = data.serviceLevelObjectives.map(
         ({ name, displayName }: { name: string; displayName: string }) => ({
           value: name.match(/([^\/]*)\/*$/)[1],
-          label: displayName.match(/([^\/]*)\/*$/)[1],
+          label: name.match(/([^\/]*)\/*$/)[1],
+          // label: displayName.match(/([^\/]*)\/*$/)[1],
         })
       );
 

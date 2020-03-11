@@ -51,7 +51,10 @@ export class QueryEditor extends PureComponent<Props> {
         <QueryTypeSelector
           value={queryType}
           templateVariableOptions={variableOptionGroup.options}
-          onChange={(queryType: QueryType) => onChange({ ...query, queryType })}
+          onChange={(queryType: QueryType) => {
+            onChange({ ...query, queryType });
+            onRunQuery();
+          }}
         ></QueryTypeSelector>
 
         {queryType === QueryType.METRICS && (
@@ -69,7 +72,6 @@ export class QueryEditor extends PureComponent<Props> {
         {queryType === QueryType.SLO && (
           <SLOQueryEditor
             variableOptionGroup={variableOptionGroup}
-            refId={query.refId}
             usedAlignmentPeriod={usedAlignmentPeriod}
             onChange={(query: SLOQuery) => this.onQueryChange('sloQuery', query)}
             onRunQuery={onRunQuery}

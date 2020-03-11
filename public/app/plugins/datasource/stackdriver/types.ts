@@ -72,6 +72,9 @@ export interface SLOQuery {
   slo?: string;
   aliasBy?: string;
   datasourceId?: number;
+  selectorName: string;
+  serviceId: string;
+  sloId: string;
 }
 
 export interface StackdriverQuery extends DataQuery {
