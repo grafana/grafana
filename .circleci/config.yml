@@ -734,6 +734,8 @@ jobs:
             docker tag "grafana/grafana-enterprise:master-ubuntu" \
               "grafana/grafana-enterprise-dev:master-${CIRCLE_SHA1}"
             docker push "grafana/grafana-enterprise-dev:master-${CIRCLE_SHA1}"
+            # deploy to kubernetes
+            ./packaging/docker/deploy_to_k8s.sh "grafana/grafana-enterprise-dev:master-${CIRCLE_SHA1}"
       - run:
           name: Publish Docker manifest
           command: |
@@ -935,7 +937,7 @@ jobs:
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
-          command: 'echo -e "unknwon\nreferer\nerrorstring" > words_to_ignore.txt'
+          command: 'echo -e "unknwon\nreferer\nerrorstring\neror" > words_to_ignore.txt'
       - run:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'

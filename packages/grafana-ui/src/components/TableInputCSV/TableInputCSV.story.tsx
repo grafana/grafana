@@ -6,7 +6,7 @@ import { action } from '@storybook/addon-actions';
 import { DataFrame } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-const TableInputStories = storiesOf('General/Table/Input', module);
+const TableInputStories = storiesOf('General/Experimental/TableInputCSV', module);
 
 TableInputStories.addDecorator(withCenteredStory);
 

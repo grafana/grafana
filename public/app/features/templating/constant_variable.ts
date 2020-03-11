@@ -22,7 +22,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   defaults: ConstantVariableModel = {
     type: 'constant',
     name: '',
-    hide: VariableHide.hideLabel,
+    hide: VariableHide.hideVariable,
     label: '',
     query: '',
     current: {} as VariableOption,
