@@ -66,7 +66,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	if target == "" {
-        glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
+		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
 		return nil, errors.New("No query target found for the alert rule")
 	}
 
