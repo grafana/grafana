@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "6.8.0-pre.0",
+  "version": "7.0.0-pre.0",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
