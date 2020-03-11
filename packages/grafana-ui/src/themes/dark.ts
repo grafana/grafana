@@ -79,14 +79,15 @@ const darkTheme: GrafanaTheme = {
 
     // Next-gen forms functional colors
     formLabel: basicColors.gray70,
-    formDescription: basicColors.gray70,
+    formDescription: basicColors.gray60,
     formLegend: basicColors.gray85,
-    formInputBg: basicColors.gray15,
+    formInputBg: basicColors.gray05,
     formInputBgDisabled: basicColors.gray10,
     formInputBorder: basicColors.gray25,
     formInputBorderHover: basicColors.gray33,
     formInputBorderActive: basicColors.blue95,
     formInputBorderInvalid: basicColors.red88,
+    formInputPlaceholderText: basicColors.gray33,
     formInputText: basicColors.gray85,
     formInputDisabledText: basicColors.gray70,
     formInputTextStrong: basicColors.gray85,
