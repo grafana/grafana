@@ -66,7 +66,8 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	if target == "" {
-		return nil, fmt.Errorf("No query target found: %v", strings.Join(emptyQueries, "\n"))
+        glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
+		return nil, errors.New("No query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
