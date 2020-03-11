@@ -42,6 +42,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
     `,
     queryCardRight: css`
       width: 150px;
+      height: ${theme.height.sm};
       display: flex;
       justify-content: flex-end;
 
