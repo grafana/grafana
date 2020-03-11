@@ -109,7 +109,7 @@ export function RichHistoryCard(props: Props) {
 
   return (
     <div className={styles.queryCard}>
-      <div className={styles.queryCardLeft} onClick={() => onChangeQuery(query)}>
+      <div className={styles.queryCardLeft} title="Add queries to query editor" onClick={() => onChangeQuery(query)}>
         {query.queries.map((q, i) => {
           return (
             <div key={`${q}-${i}`} className={styles.queryRow}>
