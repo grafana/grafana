@@ -148,14 +148,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   }
 
   render() {
-    const {
-      datasourceFilters,
-      sortOrder,
-      activeTab,
-      starredTabAsFirstTab,
-      activeDatasourceOnly,
-      retentionPeriod,
-    } = this.state;
+    const { datasourceFilters, sortOrder, activeTab, activeDatasourceOnly, retentionPeriod } = this.state;
     const { theme, richHistory, exploreId, deleteRichHistory, onClose } = this.props;
     const styles = getStyles(theme);
 
@@ -212,7 +205,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     };
 
     let tabs = [QueriesTab, StarredTab, SettingsTab];
-
     return (
       <div className={styles.container}>
         <TabsBar className={styles.tabs}>
