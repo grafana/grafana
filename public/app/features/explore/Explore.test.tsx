@@ -8,9 +8,9 @@ import {
   DataQueryRequest,
   CoreApp,
 } from '@grafana/data';
+import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreId } from 'app/types/explore';
-import { shallow, render } from 'enzyme';
-import { act } from 'react-dom/test-utils';
+import { shallow } from 'enzyme';
 import { Explore, ExploreProps } from './Explore';
 import { scanStopAction } from './state/actionTypes';
 import { toggleGraph } from './state/actions';
@@ -128,33 +128,38 @@ const setup = (renderMethod: any, propOverrides?: object) => {
   );
 };
 
+const setupErrors = (hasRefId?: boolean) => {
+  return [
+    {
+      message: 'Error message',
+      status: '400',
+      statusText: 'Bad Request',
+      refId: hasRefId ? 'A' : '',
+    },
+  ];
+};
+
 describe('Explore', () => {
-  it('should render component', async () => {
-    const wrapper = await setup(shallow);
+  it('should render component', () => {
+    const wrapper = setup(shallow);
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should render a query-row-specific error', async () => {
-    await act(async () => {
-      const wrapper = await setup(render, {
-        message: 'Error message',
-        status: 400,
-        statusText: 'Bad Request',
-        refId: 'A',
-      });
-      expect(wrapper.find('.explore-container > div > .alert-container'));
-    });
+  it('should filter out a query-row-specific error when looking for non-query-row-specific errors', async () => {
+    const queryErrors = setupErrors(true);
+    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
+    expect(queryError).toBeNull();
   });
 
-  it('should render non-query-specific error', async () => {
-    await act(async () => {
-      const wrapper = await setup(render, {
-        message: 'Error message',
-        status: 400,
-        statusText: 'Bad Request',
-        refId: 'A',
-      });
-      expect(wrapper.find('.query-row > .alert-container')).toHave('Error message');
+  it('should not filter out a generic error when looking for non-query-row-specific errors', async () => {
+    const queryErrors = setupErrors();
+    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
+    expect(queryError).not.toBeNull();
+    expect(queryError).toEqual({
+      message: 'Error message',
+      status: '400',
+      statusText: 'Bad Request',
+      refId: '',
     });
   });
 });
