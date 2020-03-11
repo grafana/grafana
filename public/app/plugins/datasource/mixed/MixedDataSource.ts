@@ -82,7 +82,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     return query && Array.isArray(query.targets) && query.targets.length > 0;
   }
 
-  private markAsDone(responses: Array<DataQueryResponse>): Array<DataQueryResponse> {
+  private markAsDone(responses: DataQueryResponse[]): DataQueryResponse[] {
     const { length } = responses;
 
     if (length === 0) {
