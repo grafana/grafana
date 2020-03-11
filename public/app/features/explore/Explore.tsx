@@ -50,8 +50,7 @@ import {
   getTimeRangeFromUrl,
   getTimeRange,
   lastUsedDatasourceKeyForOrgId,
-  getFirstQueryErrorWithoutRefId,
-  getValueWithRefId,
+  getFirstNonQueryRowSpecificError,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -298,8 +297,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
-    const refId = getValueWithRefId(queryErrors);
-    const queryError = refId ? null : getFirstQueryErrorWithoutRefId(queryErrors);
+    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     return (
       <div className={exploreClass} ref={this.getRef}>
