@@ -6,6 +6,7 @@ import Page from 'app/core/components/Page/Page';
 import { createNewFolder } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
+import validationSrv from '../../manage-dashboards/services/ValidationSrv';
 
 interface OwnProps {}
 
@@ -30,20 +31,43 @@ export class NewDashboardsFolder extends PureComponent<Props> {
     this.props.createNewFolder(formData.folderName);
   };
 
+  validateFolderName = (folderName: string) => {
+    return validationSrv
+      .validateNewFolderName(folderName)
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        return 'Folder already exists.';
+      });
+  };
+
   render() {
     return (
       <Page navModel={this.props.navModel}>
         <Page.Contents>
           <h3>New Dashboard Folder</h3>
           <Forms.Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
-            {({ register, errors }) => (
-              <>
-                <Forms.Field label="Folder name" invalid={!!errors.folderName} error="Folder name is required.">
-                  <Forms.Input name="folderName" ref={register({ required: true })} />
-                </Forms.Field>
-                <Forms.Button type="submit">Create</Forms.Button>
-              </>
-            )}
+            {({ register, errors }) =>
+              (console.log(errors) as any) || (
+                <>
+                  <Forms.Field
+                    label="Folder name"
+                    invalid={!!errors.folderName}
+                    error={errors.folderName && errors.folderName.message}
+                  >
+                    <Forms.Input
+                      name="folderName"
+                      ref={register({
+                        required: 'Folder name is required.',
+                        validate: async v => await this.validateFolderName(v),
+                      })}
+                    />
+                  </Forms.Field>
+                  <Forms.Button type="submit">Create</Forms.Button>
+                </>
+              )
+            }
           </Forms.Form>
         </Page.Contents>
       </Page>
