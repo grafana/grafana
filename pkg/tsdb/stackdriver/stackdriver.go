@@ -43,6 +43,8 @@ var (
 const (
 	gceAuthentication string = "gce"
 	jwtAuthentication string = "jwt"
+	metricQueryType   string = "metrics"
+	sloQueryType      string = "slo"
 )
 
 // StackdriverExecutor executes queries for the Stackdriver datasource
@@ -154,17 +156,37 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	for _, query := range tsdbQuery.Queries {
 		var target string
 
-		metricType := query.Model.Get("metricType").MustString()
-		filterParts := query.Model.Get("filters").MustArray()
-		slo := query.Model.Get("slo").MustString()
-		service := query.Model.Get("service").MustString()
-
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
-		params.Add("filter", buildFilterString(metricType, filterParts, service, slo))
-		params.Add("view", query.Model.Get("view").MustString("FULL"))
-		setAggParams(&params, query, durationSeconds)
+
+		metricType := query.Model.Get("queryType").MustString(metricQueryType)
+		projectName := ""
+		aliasBy := ""
+		groupBysAsStrings := make([]string, 0)
+
+		if metricType == metricQueryType {
+			metricType := query.Model.Get("metricType").MustString()
+			filterParts := query.Model.Get("filters").MustArray()
+			params.Add("filter", buildFilterString(metricType, filterParts))
+			params.Add("view", query.Model.Get("view").MustString("FULL"))
+			setAggParams(&params, query, durationSeconds)
+			projectName = query.Model.Get("projectName").MustString("")
+			aliasBy = query.Model.Get("aliasBy").MustString()
+			groupBys := query.Model.Get("groupBys").MustArray()
+			for _, groupBy := range groupBys {
+				groupBysAsStrings = append(groupBysAsStrings, groupBy.(string))
+			}
+		} else if metricType == sloQueryType {
+			// params.Add("view", "FULL")
+			sloQuery := query.Model.Get("sloQuery").MustMap()
+			params.Add("aggregation.perSeriesAligner", sloQuery["perSeriesAligner"].(string))
+			alignmentPeriod := sloQuery["alignmentPeriod"].(string)
+			params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(alignmentPeriod, query.IntervalMs, durationSeconds))
+			projectName = sloQuery["projectName"].(string)
+			params.Add("filter", sloQuery["filter"].(string))
+			aliasBy = sloQuery["aliasBy"].(string)
+		}
 
 		target = params.Encode()
 
@@ -172,21 +194,13 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 			slog.Debug("Stackdriver request", "params", params)
 		}
 
-		groupBys := query.Model.Get("groupBys").MustArray()
-		groupBysAsStrings := make([]string, 0)
-		for _, groupBy := range groupBys {
-			groupBysAsStrings = append(groupBysAsStrings, groupBy.(string))
-		}
-
-		aliasBy := query.Model.Get("aliasBy").MustString()
-
 		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
 			Target:      target,
 			Params:      params,
 			RefID:       query.RefId,
 			GroupBys:    groupBysAsStrings,
 			AliasBy:     aliasBy,
-			ProjectName: query.Model.Get("projectName").MustString(""),
+			ProjectName: projectName,
 		})
 	}
 
@@ -224,11 +238,7 @@ func interpolateFilterWildcards(value string) string {
 	return value
 }
 
-func buildFilterString(metricType string, filterParts []interface{}, service string, slo string) string {
-	if service == "slo" {
-		return slo
-	}
-
+func buildFilterString(metricType string, filterParts []interface{}) string {
 	filterString := ""
 	for i, part := range filterParts {
 		mod := i % 4
@@ -265,8 +275,21 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 		perSeriesAligner = "ALIGN_MEAN"
 	}
 
+	params.Add("aggregation.crossSeriesReducer", crossSeriesReducer)
+	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
+	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(alignmentPeriod, query.IntervalMs, durationSeconds))
+
+	groupBys := query.Model.Get("groupBys").MustArray()
+	if len(groupBys) > 0 {
+		for i := 0; i < len(groupBys); i++ {
+			params.Add("aggregation.groupByFields", groupBys[i].(string))
+		}
+	}
+}
+
+func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, durationSeconds int) string {
 	if alignmentPeriod == "grafana-auto" || alignmentPeriod == "" {
-		alignmentPeriodValue := int(math.Max(float64(query.IntervalMs)/1000, 60.0))
+		alignmentPeriodValue := int(math.Max(float64(intervalMs)/1000, 60.0))
 		alignmentPeriod = "+" + strconv.Itoa(alignmentPeriodValue) + "s"
 	}
 
@@ -281,16 +304,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 		}
 	}
 
-	params.Add("aggregation.crossSeriesReducer", crossSeriesReducer)
-	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
-	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
-
-	groupBys := query.Model.Get("groupBys").MustArray()
-	if len(groupBys) > 0 {
-		for i := 0; i < len(groupBys); i++ {
-			params.Add("aggregation.groupByFields", groupBys[i].(string))
-		}
-	}
+	return alignmentPeriod
 }
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
