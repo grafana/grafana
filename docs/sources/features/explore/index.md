@@ -95,7 +95,7 @@ In **Query history** tab is is also possible to filter queries by date using the
 
 1. Use vertical slider to filter queries by date.
 2. By dragging top handle, adjust start date.
-3. By dragging top handle, adjust end day.
+3. By dragging top handle, adjust end date.
 
 > Note: If you are in split mode, filters are applied only to your currently active panel.
 
