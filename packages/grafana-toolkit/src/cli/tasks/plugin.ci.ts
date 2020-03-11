@@ -57,7 +57,7 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
     for (const name of ['dist', 'coverage']) {
       const dir = path.resolve(process.cwd(), name);
       if (fs.existsSync(dir)) {
-        fs.renameSync(dir, path.resolve(workDir, name));
+        fs.moveSync(dir, path.resolve(workDir, name));
       }
     }
     writeJobStats(start, workDir);
