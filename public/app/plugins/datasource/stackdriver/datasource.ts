@@ -9,6 +9,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   ScopedVars,
+  SelectableValue,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -23,6 +24,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   queryPromise: Promise<any>;
   metricTypesCache: { [key: string]: MetricDescriptor[] };
   gceDefaultProject: string;
+  sloServicesCache: { [key: string]: Array<SelectableValue<string>> };
+  sloCache: { [key: string]: Array<SelectableValue<string>> };
 
   /** @ngInject */
   constructor(
@@ -35,6 +38,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     this.url = instanceSettings.url!;
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.metricTypesCache = {};
+    this.sloServicesCache = {};
+    this.sloCache = {};
   }
 
   get variables() {
@@ -61,9 +66,10 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         return !target.hide;
       })
       .map((t: StackdriverQuery) => {
-        const { metricQuery, refId } = this.migrateQuery(t);
+        const { metricQuery, refId, queryType, sloQuery } = this.migrateQuery(t);
         return {
           refId,
+          queryType,
           intervalMs: options.intervalMs,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(metricQuery.metricType, options.scopedVars || {}),
@@ -76,13 +82,18 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], options.scopedVars),
           view: metricQuery.view || 'FULL',
           filters: this.interpolateFilters(metricQuery.filters || [], options.scopedVars),
-          service: this.templateSrv.replace(metricQuery.service ?? '', options.scopedVars || {}),
-          slo: this.templateSrv.replace(metricQuery.slo || '', options.scopedVars || {}),
           aliasBy: this.templateSrv.replace(metricQuery.aliasBy!, options.scopedVars || {}),
           type: 'timeSeriesQuery',
           projectName: this.templateSrv.replace(
             metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject()
           ),
+          sloQuery: {
+            projectName: this.templateSrv.replace(sloQuery?.projectName ?? '', options.scopedVars),
+            filter: this.templateSrv.replace(sloQuery?.slo ?? '', options.scopedVars),
+            alignmentPeriod: this.templateSrv.replace(sloQuery?.alignmentPeriod ?? '', options.scopedVars || {}),
+            aliasBy: this.templateSrv.replace(sloQuery?.aliasBy ?? '', options.scopedVars || {}),
+            perSeriesAligner: this.templateSrv.replace(sloQuery?.perSeriesAligner ?? '', options.scopedVars || {}),
+          },
         };
       });
 
@@ -130,6 +141,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         {
           refId,
           datasourceId: this.id,
+          queryType: QueryType.METRICS,
           metricQuery: {
             projectName: this.templateSrv.replace(projectName),
             metricType: this.templateSrv.replace(metricType),
@@ -386,6 +398,61 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       });
 
       return this.metricTypesCache[interpolatedProject];
+    } catch (error) {
+      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
+      return [];
+    }
+  }
+
+  async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
+    try {
+      if (!projectName) {
+        return [];
+      }
+
+      const interpolatedProject = this.templateSrv.replace(projectName);
+      if (this.sloServicesCache[interpolatedProject]) {
+        return this.sloServicesCache[interpolatedProject];
+      }
+
+      const { data } = await this.doRequest(`${this.baseUrl}v3/projects/${interpolatedProject}/services`);
+      console.log({ data });
+      this.sloServicesCache[interpolatedProject] = data.services.map(
+        ({ name, displayName }: { name: string; displayName: string }) => ({
+          value: name.match(/([^\/]*)\/*$/)[1],
+          label: displayName.match(/([^\/]*)\/*$/)[1],
+        })
+      );
+
+      return this.sloServicesCache[interpolatedProject];
+    } catch (error) {
+      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
+      return [];
+    }
+  }
+
+  async getServiceLevelObjectives(projectName: string, serviceId: string): Promise<Array<SelectableValue<string>>> {
+    try {
+      serviceId = 'gae:stack-doctor_default';
+      const interpolatedProject = this.templateSrv.replace(projectName);
+      const interpolatedServiceId = this.templateSrv.replace(serviceId);
+      const cacheKey = `${interpolatedProject}-${interpolatedServiceId}`;
+      if (this.sloCache[cacheKey]) {
+        return this.sloCache[cacheKey];
+      }
+
+      const { data } = await this.doRequest(
+        `${this.baseUrl}v3/projects/${interpolatedProject}/services/${interpolatedServiceId}/serviceLevelObjectives`
+      );
+      console.log({ data });
+      this.sloCache[cacheKey] = data.serviceLevelObjectives.map(
+        ({ name, displayName }: { name: string; displayName: string }) => ({
+          value: name.match(/([^\/]*)\/*$/)[1],
+          label: displayName.match(/([^\/]*)\/*$/)[1],
+        })
+      );
+
+      return this.sloCache[cacheKey];
     } catch (error) {
       appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
       return [];

@@ -39,6 +39,7 @@ export class QueryEditor extends PureComponent<Props> {
     const sloQuery = { ...defaultSLOQuery, projectName: datasource.getDefaultProject(), ...query.sloQuery };
     const queryType = query.queryType || QueryType.METRICS;
     const meta = this.props.data?.series.length ? this.props.data?.series[0].meta : {};
+    const usedAlignmentPeriod = meta?.alignmentPeriod as string;
     const variableOptionGroup = {
       label: 'Template Variables',
       expanded: false,
@@ -57,7 +58,7 @@ export class QueryEditor extends PureComponent<Props> {
           <MetricQueryEditor
             refId={query.refId}
             variableOptionGroup={variableOptionGroup}
-            usedAlignmentPeriod={meta.alignmentPeriod as string}
+            usedAlignmentPeriod={usedAlignmentPeriod}
             onChange={(query: MetricQuery) => this.onQueryChange('metricQuery', query)}
             onRunQuery={onRunQuery}
             datasource={datasource}
@@ -69,7 +70,7 @@ export class QueryEditor extends PureComponent<Props> {
           <SLOQueryEditor
             variableOptionGroup={variableOptionGroup}
             refId={query.refId}
-            usedAlignmentPeriod={meta.alignmentPeriod as string}
+            usedAlignmentPeriod={usedAlignmentPeriod}
             onChange={(query: SLOQuery) => this.onQueryChange('sloQuery', query)}
             onRunQuery={onRunQuery}
             datasource={datasource}
