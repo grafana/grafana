@@ -8,10 +8,12 @@ jobs:
   build:
     name: Deploy Storybook
     runs-on: ubuntu-latest
+    env:
+      GIT_HASH: git rev-parse --short HEAD
     steps:
       - uses: actions/checkout@v1
-      - name: Building commit ${GITHUB_SHA}
-        run: echo ${GITHUB_SHA}
+      - name: Building commit
+        run: echo ${GIT_HASH}
       - uses: actions/setup-node@v1
         with:
           node-version: 12.x
@@ -27,7 +29,7 @@ jobs:
           APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_STORYBOOK_SERVICE_ACCOUNT }}
           CLI: gsutil
         with:
-          args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook  gs://grafana-storybook/${GITHUB_SHA}
+          args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook  gs://grafana-storybook/${GIT_HASH}
       - name: Deploy URL
-        run: echo https://storage.googleapis.com/grafana-storybook/${GITHUB_SHA}/index.html
+        run: echo https://storage.googleapis.com/grafana-storybook/${GIT_HASH}/index.html
       
