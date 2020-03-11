@@ -47,7 +47,7 @@ Learn more about query history in [documentation]({{< relref "../features/explor
 ### Azure OAuth
 Grafana 6.7 comes with a new OAuth integration for Microsoft Azure Active Directory. It’s possible to assign Users and Groups to Grafana roles from the Azure Portal. Learn how to enable and configure it in the [documentation]({{< relref "../auth/azuread/" >}}).
 
-### Project Selector
+### Stackdriver Project Selector
 A Stackdriver data source in Grafana is configured for one service account only. That service account is always associated with a default project in Google Cloud Platform (GCP). Depending on your setup in GCP, the service account might be granted access to more projects than just the default project. 
 
 In Grafana 6.7, the query editor has been enhanced with a project selector that makes it possible to query different projects without changing datasource. Many thanks [Eraac](https://github.com/Eraac), [eliaslaouiti](https://github.com/eliaslaouiti) and [NaurisSadovskis](https://github.com/NaurisSadovskis) for making this happen! 
@@ -85,4 +85,3 @@ You can now use either portrait or landscape mode in your reports. Portrait will
 ### Azure OAuth Team Sync support
 When setting up OAuth with Microsoft Azure AD it’s now possible to sync Azure groups with Teams in Grafana.
 [Learn more]({{< relref "../auth/azuread/#team-sync-enterprise-only" >}}).
-
