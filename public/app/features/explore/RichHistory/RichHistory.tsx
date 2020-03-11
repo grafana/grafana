@@ -211,7 +211,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       icon: 'gicon gicon-preferences',
     };
 
-    let tabs = starredTabAsFirstTab ? [StarredTab, QueriesTab, SettingsTab] : [QueriesTab, StarredTab, SettingsTab];
+    let tabs = [QueriesTab, StarredTab, SettingsTab];
 
     return (
       <div className={styles.container}>
