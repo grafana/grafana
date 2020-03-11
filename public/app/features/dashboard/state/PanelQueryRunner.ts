@@ -68,26 +68,23 @@ export class PanelQueryRunner {
    */
   getData(transform = true): Observable<PanelData> {
     return this.subject.pipe(
-      // apply overrides
       map((data: PanelData) => {
-        if (this.fieldOverrideOptions) {
-          const series = applyFieldOverrides({ data: data.series, ...this.fieldOverrideOptions });
-          return {
-            ...data,
-            series,
-          };
-        }
-        return data;
-      }),
-      // apply transformations
-      map((data: PanelData) => {
+        let processedData = data;
+        // apply transformations
         if (transform && this.hasTransformations()) {
-          return {
-            ...data,
+          processedData = {
+            ...processedData,
             series: transformDataFrame(this.transformations, data.series),
           };
         }
-        return data;
+        // apply overrides
+        if (this.fieldOverrideOptions) {
+          processedData = {
+            ...processedData,
+            series: applyFieldOverrides({ data: processedData.series, ...this.fieldOverrideOptions }),
+          };
+        }
+        return processedData;
       })
     );
   }

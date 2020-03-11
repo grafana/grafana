@@ -8,6 +8,9 @@ import { Echo } from '../../../core/services/echo/Echo';
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/core/config', () => ({
   config: { featureToggles: { transformations: true } },
+  getConfig: () => ({
+    featureToggles: {},
+  }),
 }));
 
 const dashboardModel = new DashboardModel({
