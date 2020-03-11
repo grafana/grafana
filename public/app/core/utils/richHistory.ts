@@ -13,9 +13,9 @@ import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 
 export const RICH_HISTORY_SETTING_KEYS = {
-  retentionPeriod: `${RICH_HISTORY_KEY}.retentionPeriod`,
-  starredTabAsFirstTab: `${RICH_HISTORY_KEY}.starredTabAsFirstTab`,
-  activeDatasourceOnly: `${RICH_HISTORY_KEY}.activeDatasourceOnly`,
+  retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
+  starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
+  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
 };
 
 /*
