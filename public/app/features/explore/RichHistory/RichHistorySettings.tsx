@@ -78,10 +78,10 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
           <div className={styles.label}>Change the default active tab from “Query history” to “Starred”</div>
         </div>
       </Forms.Field>
-      <Forms.Field label="Datasource behaviour" description=" " className="space-between">
+      <Forms.Field label="Data source behaviour" description=" " className="space-between">
         <div className={styles.switch}>
           <Forms.Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Forms.Switch>
-          <div className={styles.label}>Only show queries for datasource currently active in Explore</div>
+          <div className={styles.label}>Only show queries for data source currently active in Explore</div>
         </div>
       </Forms.Field>
       <div

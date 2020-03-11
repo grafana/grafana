@@ -116,7 +116,7 @@ export function RichHistoryStarredTab(props: Props) {
                 isMulti={true}
                 options={exploreDatasources}
                 value={datasourceFilters}
-                placeholder="Filter queries for specific datasources(s)"
+                placeholder="Filter queries for specific data sources(s)"
                 onChange={onSelectDatasourceFilters}
               />
             </div>
