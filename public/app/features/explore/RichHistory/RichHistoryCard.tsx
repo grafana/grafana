@@ -10,7 +10,7 @@ import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
 
 import { changeQuery, changeDatasource, clearQueries, updateRichHistory } from '../state/actions';
-interface Props {
+export interface Props {
   query: RichHistoryQuery;
   changeQuery: typeof changeQuery;
   changeDatasource: typeof changeDatasource;
@@ -117,7 +117,7 @@ export function RichHistoryCard(props: Props) {
       <div className={styles.queryCardLeft} onClick={() => onChangeQuery(query)}>
         {query.queries.map((q, i) => {
           return (
-            <div key={`${q}-${i}`} className={styles.queryRow}>
+            <div title="query" key={`${q}-${i}`} className={styles.queryRow}>
               {q}
             </div>
           );
