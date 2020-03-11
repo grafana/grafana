@@ -28,3 +28,6 @@ jobs:
           CLI: gsutil
         with:
           args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook  gs://grafana-storybook/${GITHUB_SHA}
+      - name: Deploy URL
+        run: echo https://storage.googleapis.com/grafana-storybook/${GITHUB_SHA}/index.html
+      
