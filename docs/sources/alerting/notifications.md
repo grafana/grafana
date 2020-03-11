@@ -105,7 +105,7 @@ Integration Key | Integration key for PagerDuty.
 Severity | Level for dynamic notifications, default is `critical`
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
 
-**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef).  If an alert panel defines these tag keys they will be transposed to the root of the event sent to Pagerduty.  This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert will override the global Severity set on the notification channel if it's a valid level.
+**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef). If an alert panel defines these tag keys, then they are transposed to the root of the event sent to Pagerduty. This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert overrides the global Severity set on the notification channel if it's a valid level.
 
 ### Webhook
 
