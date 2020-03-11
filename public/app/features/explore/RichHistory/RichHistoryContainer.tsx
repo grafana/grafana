@@ -22,12 +22,12 @@ import { RichHistory, Tabs } from './RichHistory';
 import { deleteRichHistory } from '../state/actions';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.gray15;
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const handleHover = theme.isLight ? theme.colors.gray10 : theme.colors.gray33;
+  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.gray15;
   const handleDots = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
-  const handleDotsHover = theme.isLight ? theme.colors.gray33 : theme.colors.dark7;
+  const handleHover = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
+  const handleDotsHover = theme.isLight ? theme.colors.gray5 : theme.colors.dark7;
 
   return {
     container: css`
