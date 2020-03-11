@@ -181,7 +181,6 @@ export const mapNumbertoTimeInSlider = (num: number) => {
     default:
       str = `${num} days ago`;
   }
-
   return str;
 };
 
