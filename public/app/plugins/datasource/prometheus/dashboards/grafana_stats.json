@@ -71,13 +71,15 @@
     {
       "icon": "external link",
       "tags": [],
+      "targetBlank": true,
       "title": "Grafana docs",
       "type": "link",
-      "url": "http://docs.grafana.org/"
+      "url": "https://grafana.com/docs/grafana/latest/"
     },
     {
       "icon": "external link",
       "tags": [],
+      "targetBlank": true,
       "title": "Prometheus docs",
       "type": "link",
       "url": "http://prometheus.io/docs/introduction/overview/"
@@ -101,7 +103,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
+        "w": 5,
         "x": 0,
         "y": 0
       },
@@ -179,8 +181,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 4,
+        "w": 5,
+        "x": 5,
         "y": 0
       },
       "id": 8,
@@ -257,8 +259,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 8,
+        "w": 5,
+        "x": 10,
         "y": 0
       },
       "id": 9,
@@ -335,8 +337,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 12,
+        "w": 5,
+        "x": 15,
         "y": 0
       },
       "id": 10,
@@ -404,7 +406,7 @@
       "gridPos": {
         "h": 5,
         "w": 4,
-        "x": 16,
+        "x": 20,
         "y": 0
       },
       "id": 17,
@@ -451,22 +453,6 @@
       "title": "Grafana version",
       "transform": "timeseries_to_rows",
       "type": "table"
-    },
-    {
-      "content": "<br />\n<br />\n<center>\n<img src=\"public/img/grafana_icon.svg\"  style=\"height: 60px;\">\n<span style=\"color: red;font-size:3rem;line-height: 2rem;\">💖</span>\n<img src=\"public/app/plugins/datasource/prometheus/img/prometheus_logo.svg\" alt=\"Prometheus logo\" style=\"height: 60px;\">\n</center>",
-      "datasource": null,
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 20,
-        "y": 0
-      },
-      "id": 16,
-      "links": [],
-      "mode": "html",
-      "title": "",
-      "transparent": true,
-      "type": "text"
     },
     {
       "aliasColors": {
