@@ -14,7 +14,7 @@ jobs:
       - name: Setting git short
         uses: srt32/git-actions@v0.0.3
         with:
-          run: echo "::set-env name=GIT_HASH:${{GIT_HASH}}"
+          run: echo "::set-env name=GIT_HASH:$(git rev-parse --short HEAD)"
       - uses: actions/checkout@v1
       - name: Building commit
         run: echo "Building from commit ${GIT_HASH} on branch ${GITHUB_REF}"
