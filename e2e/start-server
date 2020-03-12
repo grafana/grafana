@@ -10,24 +10,22 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-ls dist/*
-
 if [ -f dist/grafana-latest.linux-x64.tar.gz ]; then
   echo "Found built tar file"
   tar zxf dist/grafana-latest.linux-x64.tar.gz -C $RUNDIR
-  mv $RUNDIR/grafana-*/**/* $RUNDIR
+  mv $RUNDIR/grafana-*/* $RUNDIR
 else
   echo "Copying local dev files"
 
-  cp -r ./bin/grafana-server $RUNDIR
+  cp -r ./bin $RUNDIR
   cp -r ./public $RUNDIR
+
+  mkdir $RUNDIR/conf
+  cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
+  cp ./conf/sample.ini $RUNDIR/conf/custom.ini
 fi
 
-mkdir $RUNDIR/conf
-cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
-cp ./e2e/conf/scenario1.ini $RUNDIR/conf/custom.ini
-
-$RUNDIR/grafana-server \
+$RUNDIR/bin/grafana-server \
   --homepath=$RUNDIR \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \
