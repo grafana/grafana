@@ -762,7 +762,6 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker
-      - run: ./e2e/start-server
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
@@ -775,7 +774,7 @@ jobs:
             - node_modules
       - run:
           name: Run end-to-end tests
-          command: ./e2e/run-suite
+          command: ./e2e/start-server && ./e2e/run-suite
           no_output_timeout: 5m
       - store_artifacts:
           path: public/e2e-tests/screenShots/theTruth
