@@ -80,6 +80,7 @@ describe('LokiExploreQueryEditor', () => {
   });
 
   it('should render LokiQueryField with ExtraFieldElement when ExploreMode is set to Logs', async () => {
+    // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
       const wrapper = setup(mount);
       expect(wrapper.find(LokiExploreExtraField).length).toBe(1);
@@ -87,6 +88,7 @@ describe('LokiExploreQueryEditor', () => {
   });
 
   it('should render LokiQueryField with no ExtraFieldElement when ExploreMode is not Logs', async () => {
+    // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
       const wrapper = setup(mount, { exploreMode: ExploreMode.Metrics });
       expect(wrapper.find(LokiExploreExtraField).length).toBe(0);

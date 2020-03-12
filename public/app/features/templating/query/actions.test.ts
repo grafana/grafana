@@ -2,23 +2,23 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getTemplatingRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableSort, VariableRefresh } from '../variable';
-import { toVariablePayload, ALL_VARIABLE_VALUE, ALL_VARIABLE_TEXT } from '../state/types';
-import { setCurrentVariableValue, changeVariableProp } from '../state/sharedReducer';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../variable';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
+import { changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { initDashboardTemplating } from '../state/actions';
 import { TemplatingState } from '../state/reducers';
 import {
-  updateQueryVariableOptions,
-  initQueryVariableEditor,
   changeQueryVariableDataSource,
   changeQueryVariableQuery,
+  initQueryVariableEditor,
+  updateQueryVariableOptions,
 } from './actions';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import {
-  setIdInEditor,
-  removeVariableEditorError,
   addVariableEditorError,
   changeVariableEditorExtended,
+  removeVariableEditorError,
+  setIdInEditor,
 } from '../editor/reducer';
 import DefaultVariableQueryEditor from '../DefaultVariableQueryEditor';
 import { expect } from 'test/lib/common';
@@ -163,7 +163,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -185,12 +185,12 @@ describe('query actions', () => {
       const variable = createVariable({ includeAll: true, useTags: false });
       const error = { message: 'failed to fetch metrics' };
 
-      mocks[variable.datasource].metricFindQuery = jest.fn(() => Promise.reject(error));
+      mocks[variable.datasource!].metricFindQuery = jest.fn(() => Promise.reject(error));
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionPredicateShouldEqual(actions => {
@@ -241,7 +241,7 @@ describe('query actions', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
       const defaultMetricSource = { name: '', value: '', meta: {}, sort: '' };
-      const testMetricSource = { name: 'test', value: null as string, meta: {}, sort: '' };
+      const testMetricSource = { name: 'test', value: (null as unknown) as string, meta: {}, sort: '' };
       const editor = {};
 
       mocks.datasourceSrv.getMetricSources = jest.fn().mockReturnValue([testMetricSource]);
@@ -521,7 +521,7 @@ function mockDatasourceMetrics(variable: QueryVariableModel, optionsMetrics: any
     [variable.tagsQuery]: tagsMetrics,
   };
 
-  const { metricFindQuery } = mocks[variable.datasource];
+  const { metricFindQuery } = mocks[variable.datasource!];
 
   metricFindQuery.mockReset();
   metricFindQuery.mockImplementation((query: string) => Promise.resolve(metrics[query] ?? []));
