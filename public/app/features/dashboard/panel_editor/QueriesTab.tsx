@@ -169,7 +169,7 @@ export class QueriesTab extends PureComponent<Props, State> {
           </button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
-        {config.featureToggles.expressions && (
+        {config.featureToggles.transformations && (
           <button className="btn navbar-button" onClick={this.onAddExpressionClick}>
             Add Expression
           </button>
