@@ -22,19 +22,19 @@ import { RichHistory, Tabs } from './RichHistory';
 import { deleteRichHistory } from '../state/actions';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
-  const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.gray15;
+  const containerBackground = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
+  const containerBorderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
+  const handleBackground = theme.isLight ? theme.colors.gray5 : theme.colors.gray15;
   const handleDots = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
-  const handleHover = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
+  const handleBackgroundHover = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
   const handleDotsHover = theme.isLight ? theme.colors.gray5 : theme.colors.dark7;
 
   return {
     container: css`
       position: fixed !important;
       bottom: 0;
-      background: ${bg};
-      border-top: 1px solid ${borderColor};
+      background: ${containerBackground};
+      border-top: 1px solid ${containerBorderColor};
       margin: 0px;
       margin-right: -${theme.spacing.md};
       margin-left: -${theme.spacing.md};
@@ -48,7 +48,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       transform: translateY(400px);
     `,
     rzHandle: css`
-      background: ${bgColor};
+      background: ${handleBackground};
       transition: 0.3s background ease-in-out;
       position: relative;
       width: 200px !important;
@@ -57,7 +57,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border-radius: 4px;
 
       &:hover {
-        background-color: ${handleHover};
+        background-color: ${handleBackgroundHover};
 
         &:after {
           border-color: ${handleDotsHover};
