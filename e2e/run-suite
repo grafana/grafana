@@ -2,9 +2,11 @@
 
 . e2e/variables
 
+cat $RUNDIR/output.log
+
 echo -e "Waiting for grafana-server to finish starting"
 
-while ! timeout 1 bash -c "echo > /dev/tcp/localhost/$PORT"; do sleep 1; done
+timeout 200 bash -c 'until nc -z $0 $1; do sleep 1; done' localhost $PORT
 
 echo -e "Starting Cypress scenarios"
 
