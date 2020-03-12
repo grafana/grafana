@@ -71,6 +71,8 @@ export class GrafanaBootConfig {
     expressions: false,
     newEdit: false,
     meta: false,
+    newVariables: false,
+    tracing_integration: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   phantomJSRenderer = false;
