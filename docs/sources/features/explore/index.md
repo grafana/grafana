@@ -103,13 +103,12 @@ In **Query history** tab is is also possible to filter queries by date using the
 
 You can customize the query history in the Settings tab. Options are described in the table below. 
 
-| Setting                                                      | Default value     |
-| ------------------------------------------------------------- | ----------------- |
-| Period of time for which Grafana will save your query history | 1 week            |
-| Change the default active tab                                 | Query history tab |
-| Only show queries for datasource currently active in Explore  | false             |
-
-In query history settings you can also delete all of your query history by clicking on **Clear query history** button. Your history will be deleted permanently.
+| Setting                                                                                                | Default value                                              |
+| ------------------------------------------------------------- | --------------------------------------  |
+| Period of time for which Grafana will save your query history   | 1 week                                                         |
+| Change the default active tab                                                         | Query history tab                                      |
+| Only show queries for datasource currently active in Explore  | false                                                              |
+| Clear query history                                                                           | Permanently deletes all stored queries.  |
 
 > Note: Query history settings are global, and applied to both panels in split mode.
 
