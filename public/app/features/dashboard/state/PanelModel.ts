@@ -123,7 +123,7 @@ export class PanelModel {
   options: {
     [key: string]: any;
   };
-  fieldConfig?: FieldConfigSource;
+  fieldConfig: FieldConfigSource;
 
   maxDataPoints?: number;
   interval?: string;

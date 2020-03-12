@@ -90,6 +90,7 @@ export function sharedSingleStatPanelChangedHandler(
       defaults.min = panel.gauge.minValue;
       defaults.max = panel.gauge.maxValue;
     }
+
     return options;
   }
 
@@ -159,6 +160,15 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     }
 
     validateFieldConfig(defaults);
+  }
+
+  if (previousVersion < 7.0) {
+    panel.fieldConfig = {
+      defaults: options.fieldOptions.defaults || {},
+      overrides: options.fieldOptions.overrides || [],
+    };
+    delete options.fieldOptions.defaults;
+    delete options.fieldOptions.overrides;
   }
 
   return options as SingleStatBaseOptions;

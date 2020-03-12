@@ -61,6 +61,7 @@ export interface PanelEditorProps<T = any> {
 export interface PanelModel<TOptions = any> {
   id: number;
   options: TOptions;
+  fieldConfig: FieldConfigSource;
   pluginVersion?: string;
   scopedVars?: ScopedVars;
 }

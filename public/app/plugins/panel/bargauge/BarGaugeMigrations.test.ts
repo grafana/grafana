@@ -43,8 +43,8 @@ describe('BarGauge Panel Migrations', () => {
       targets: [],
       title: 'Usage',
       type: 'bargauge',
-    } as PanelModel;
+    } as Omit<PanelModel, 'fieldConfig'>;
 
-    expect(barGaugePanelMigrationHandler(panel)).toMatchSnapshot();
+    expect(barGaugePanelMigrationHandler(panel as PanelModel)).toMatchSnapshot();
   });
 });
