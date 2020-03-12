@@ -65,7 +65,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
         bottom: 10px;
         height: ${sliderHeight};
         width: 127px;
-        padding: ${theme.spacing.xs} 0;
+        padding: ${theme.spacing.sm} 0;
       }
     `,
     slider: css`
