@@ -31,6 +31,3 @@ $RUNDIR/bin/grafana-server \
   cfg:server.http_port=$PORT \
   2>&1 > $RUNDIR/output.log &
 
-sleep 1
-
-cat $RUNDIR/output.log

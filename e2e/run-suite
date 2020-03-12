@@ -2,8 +2,6 @@
 
 . e2e/variables
 
-cat $RUNDIR/output.log
-
 echo -e "Waiting for grafana-server to finish starting"
 
 timeout 200 bash -c 'until nc -z $0 $1; do sleep 1; done' localhost $PORT
@@ -12,3 +10,4 @@ echo -e "Starting Cypress scenarios"
 
 env BASE_URL=http://localhost:$PORT yarn e2e-tests
 
+cat $RUNDIR/output.log
