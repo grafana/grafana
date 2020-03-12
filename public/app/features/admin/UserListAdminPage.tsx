@@ -2,10 +2,10 @@ import React, { useEffect } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
+import { getTagColorsFromName } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { getTagColorsFromName } from '@grafana/ui';
 import { fetchUsers, changeQuery } from './state/actions';
 
 interface OwnProps {}
@@ -41,7 +41,6 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({ navModel, users, query,
                 tabIndex={1}
                 autoFocus={true}
                 value={query}
-                ng-model-options="{ debounce: 500 }"
                 spellCheck={false}
                 onChange={event => changeQuery(event.target.value)}
               />

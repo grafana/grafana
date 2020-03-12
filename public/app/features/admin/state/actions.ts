@@ -253,9 +253,7 @@ export function fetchUsers(): ThunkResult<void> {
   };
 }
 
-const fetchUsersWithDebounce = debounce(dispatch => {
-  dispatch(fetchUsers());
-}, 500);
+const fetchUsersWithDebounce = debounce(dispatch => dispatch(fetchUsers()), 500);
 
 export function changeQuery(query: string): ThunkResult<void> {
   return async dispatch => {
