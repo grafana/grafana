@@ -11,8 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{github.event.pull_request.head.sha}}
-          run: echo "::set-env name=GIT_HASH::$(git rev-parse --short HEAD)" 
+          ref: ${{github.event.pull_request.head.sha}} 
+      - uses: srt32/git-actions@v0.0.3
+        with:
+          args: echo "::set-env name=GIT_HASH::$(git rev-parse --short HEAD)"
       - name: Building commit
         run: echo "Building from commit ${GIT_HASH} on branch ${GITHUB_REF}"
       - uses: actions/setup-node@v1
