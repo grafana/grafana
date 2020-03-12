@@ -69,7 +69,7 @@ Query history lets you view the history of your querying. For each individual qu
 
 ### Manage favorite queries
 
-All queries that have been starred in **Query history** tab by clicking on star icon are displayed in **Starred** tab as well. This allows you to access your favourite queries faster, and to reuse these queries without typing them from scratch.
+All queries that have been starred in the Query history tab are displayed in the Starred. This allows you to access your favorite queries faster and to reuse these queries without typing them from scratch.
 
 ### Sort query history
 
