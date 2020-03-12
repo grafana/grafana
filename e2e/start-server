@@ -14,20 +14,20 @@ ls dist/*
 
 if [ -f dist/grafana-latest.linux-x64.tar.gz ]; then
   echo "Found built tar file"
-  tar zxvf dist/grafana-latest.linux-x64.tar.gz e2e/tmp
+  tar zxf dist/grafana-latest.linux-x64.tar.gz -C $RUNDIR
+  mv $RUNDIR/grafana-*/**/* $RUNDIR
 else
   echo "Copying local dev files"
 
-  cp -r ./bin $RUNDIR
+  cp -r ./bin/grafana-server $RUNDIR
   cp -r ./public $RUNDIR
-
-  mkdir $RUNDIR/conf
 fi
 
+mkdir $RUNDIR/conf
 cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 cp ./e2e/conf/scenario1.ini $RUNDIR/conf/custom.ini
 
-$RUNDIR/bin/grafana-server \
+$RUNDIR/grafana-server \
   --homepath=$RUNDIR \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \
