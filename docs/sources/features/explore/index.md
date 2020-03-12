@@ -103,7 +103,7 @@ In **Query history** tab is is also possible to filter queries by date using the
 
 You can customize the query history in the Settings tab. Options are described in the table below. 
 
-| Settings                                                      | Default value     |
+| Setting                                                      | Default value     |
 | ------------------------------------------------------------- | ----------------- |
 | Period of time for which Grafana will save your query history | 1 week            |
 | Change the default active tab                                 | Query history tab |
