@@ -12,6 +12,7 @@ import { profiler } from 'app/core/profiler';
 import { getProcessedDataFrames } from '../state/runRequest';
 import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
+import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
@@ -38,6 +39,7 @@ export interface Props {
   isInEditMode?: boolean;
   width: number;
   height: number;
+  updateLocation: typeof updateLocation;
 }
 
 export interface State {
@@ -45,8 +47,6 @@ export interface State {
   renderCounter: number;
   errorMessage?: string;
   refreshWhenInView: boolean;
-
-  // Current state of all events
   data: PanelData;
 }
 
@@ -324,7 +324,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, width, height } = this.props;
+    const { dashboard, panel, isFullscreen, width, height, updateLocation } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -347,6 +347,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           error={errorMessage}
           isFullscreen={isFullscreen}
           data={data}
+          updateLocation={updateLocation}
         />
         <ErrorBoundary>
           {({ error }) => {

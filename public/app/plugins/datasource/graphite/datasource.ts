@@ -16,6 +16,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankSeriesMeta } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
+import { parseSchemaRetentions } from 'app/plugins/datasource/graphite/meta';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -147,32 +148,20 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     const notices: QueryResultMetaNotice[] = [];
 
     for (const meta of metaList) {
-      const rollUpArchiveRead = meta['archive-read'] > 0;
-      const runtimeAggregation = meta['aggnum-rc'] > 0;
+      const archiveIndex = meta['archive-read'];
+      const runtimeNr = meta['aggnum-rc'];
 
-      if (rollUpArchiveRead && runtimeAggregation) {
+      if (archiveIndex > 0) {
+        const schema = parseSchemaRetentions(meta['schema-retentions']);
+        const intervalString = schema[archiveIndex].interval;
+        const func = meta['consolidate-normfetch'].replace('Consolidator', '');
+
         notices.push({
-          text: `Your looking at roll-up data using ${meta['consolidate-normfetch']} and runtime consolidated data using ${meta['consolidate-rc']}`,
+          text: `Data is rolled up data, aggregated over ${intervalString} using ${func} function`,
           severity: 'info',
           link: 'inspect',
         });
         continue;
-      }
-
-      if (rollUpArchiveRead) {
-        notices.push({
-          text: `Your looking at roll-up data using ${meta['consolidate-normfetch']}`,
-          severity: 'info',
-          link: 'inspect',
-        });
-      }
-
-      if (runtimeAggregation) {
-        notices.push({
-          text: `Your looking at aggregated data using runtime consoldation ${meta['consolidate-rc']}`,
-          severity: 'info',
-          link: 'inspect',
-        });
       }
     }
 

@@ -14,6 +14,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
+import { updateLocation } from 'app/core/actions';
 
 export interface Props {
   panel: PanelModel;
@@ -26,6 +27,7 @@ export interface Props {
   error?: string;
   isFullscreen: boolean;
   data: PanelData;
+  updateLocation: typeof updateLocation;
 }
 
 interface ClickCoordinates {
@@ -91,6 +93,33 @@ export class PanelHeader extends Component<Props, State> {
     );
   }
 
+  openInspect = (e: React.SyntheticEvent) => {
+    const { updateLocation, panel } = this.props;
+
+    e.stopPropagation();
+
+    updateLocation({
+      query: { inspect: panel.id },
+      partial: true,
+    });
+  };
+
+  renderNotice = (notice: QueryResultMetaNotice) => {
+    return (
+      <Tooltip content={notice.text} key={notice.severity}>
+        {notice.link === 'inspect' ? (
+          <div className="panel-info-notice" onClick={this.openInspect}>
+            <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
+          </div>
+        ) : (
+          <a className="panel-info-notice" href={notice.link} target="_blank">
+            <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
+          </a>
+        )}
+      </Tooltip>
+    );
+  };
+
   render() {
     const { panel, scopedVars, error, isFullscreen, data } = this.props;
     const { menuItems } = this.state;
@@ -101,13 +130,13 @@ export class PanelHeader extends Component<Props, State> {
       'grid-drag-handle': !isFullscreen,
     });
 
-    // away to dedupe them
+    // dedupe on severity
     const notices: Record<string, QueryResultMetaNotice> = {};
 
     for (const series of data.series) {
       if (series.meta && series.meta.notices) {
         for (const notice of series.meta.notices) {
-          notices[notice.text] = notice;
+          notices[notice.severity] = notice;
         }
       }
     }
@@ -131,16 +160,7 @@ export class PanelHeader extends Component<Props, State> {
             aria-label={e2e.pages.Dashboard.Panels.Panel.selectors.title(title)}
           >
             <div className="panel-title">
-              {Object.values(notices).map(notice => {
-                return (
-                  <Tooltip content={notice.text}>
-                    <span
-                      className="fa fa-info-circle"
-                      style={{ marginRight: '8px', color: 'orange', cursor: 'pointer' }}
-                    />
-                  </Tooltip>
-                );
-              })}
+              {Object.values(notices).map(this.renderNotice)}
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">
                 {title} <span className="fa fa-caret-down panel-menu-toggle" />

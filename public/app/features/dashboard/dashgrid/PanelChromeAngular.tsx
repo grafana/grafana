@@ -16,6 +16,7 @@ import { setPanelAngularComponent } from '../state/reducers';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin, PanelEvents } from '@grafana/data';
+import { updateLocation } from 'app/core/actions';
 
 interface OwnProps {
   panel: PanelModel;
@@ -33,6 +34,7 @@ interface ConnectedProps {
 
 interface DispatchProps {
   setPanelAngularComponent: typeof setPanelAngularComponent;
+  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -196,7 +198,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, plugin, angularComponent } = this.props;
+    const { dashboard, panel, isFullscreen, plugin, angularComponent, updateLocation } = this.props;
     const { errorMessage, data, alertState } = this.state;
     const { transparent } = panel;
 
@@ -227,6 +229,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           error={errorMessage}
           isFullscreen={isFullscreen}
           data={data}
+          updateLocation={updateLocation}
         />
         <div className={panelContentClassNames}>
           <div ref={element => (this.element = element)} className="panel-height-helper" />
@@ -242,6 +245,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent, updateLocation };
 
 export const PanelChromeAngular = connect(mapStateToProps, mapDispatchToProps)(PanelChromeAngularUnconnected);
