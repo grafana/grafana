@@ -322,7 +322,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                   ['explore-active-button']: showRichHistory,
                 })}
                 onClick={this.toggleShowRichHistory}
-                disabled={isLive}
               >
                 <i className={'fa fa-fw fa-history icon-margin-right '} />
                 <span className="btn-title">{'\xA0' + 'Query history'}</span>
