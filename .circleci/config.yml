@@ -758,9 +758,9 @@ jobs:
     docker:
       - image: circleci/node:12-browsers
     steps:
+      - checkout
       - attach_workspace:
           at: .
-      - checkout
       - setup_remote_docker
       - run: ./e2e/start-server
       - restore_cache:
