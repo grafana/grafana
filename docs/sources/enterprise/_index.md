@@ -52,7 +52,7 @@ Supported auth providers:
 
 ## Export dashboard as PDF
 
-[Export dashboard as PDF]({{< relref "export-pdf.md" >}}) allows you to export dashboard as a PDF document.
+[Export dashboard as PDF]({{< relref "export-pdf.md" >}}) allows you to export a dashboard as a PDF document.
 
 ## White labeling
 
