@@ -762,8 +762,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - setup_remote_docker
-      - run: ./e2e/start-e2e.sh
-      - run: dockerize -wait tcp://127.0.0.1:3001 -timeout 120s
+      - run: ./e2e/start-server
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
@@ -776,7 +775,7 @@ jobs:
             - node_modules
       - run:
           name: Run end-to-end tests
-          command: env BASE_URL=http://127.0.0.1:3001 yarn e2e-tests
+          command: ./e2e/run-suite
           no_output_timeout: 5m
       - store_artifacts:
           path: public/e2e-tests/screenShots/theTruth
@@ -2190,7 +2189,7 @@ workflows:
         - end-to-end-tests:
             filters: *filter-not-release-or-master
             requires:
-              - grafana-docker-pr
+              - build-fast-package
         - build-docs-website:
             filters: *filter-not-release-or-master
   nightly:
