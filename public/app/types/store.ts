@@ -18,7 +18,7 @@ import { LdapState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
 import { PanelEditorStateNew } from '../features/dashboard/components/PanelEditor/state/reducers';
 import { ApiKeysState } from './apiKeys';
-import { TemplatingState } from '../features/templating/state/reducers';
+import { TemplatingState } from '../features/variables/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;
