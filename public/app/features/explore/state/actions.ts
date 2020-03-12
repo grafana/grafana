@@ -38,6 +38,14 @@ import {
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
+import {
+  addToRichHistory,
+  deleteAllFromRichHistory,
+  updateStarredInRichHistory,
+  updateCommentInRichHistory,
+  getQueryDisplayText,
+  getRichHistory,
+} from 'app/core/utils/richHistory';
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
 
@@ -53,6 +61,7 @@ import {
   ChangeSizePayload,
   clearQueriesAction,
   historyUpdatedAction,
+  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -281,6 +290,8 @@ export function initializeExplore(
       })
     );
     dispatch(updateTime({ exploreId }));
+    const richHistory = getRichHistory();
+    dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }
 
@@ -399,6 +410,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
+    const richHistory = getState().explore.richHistory;
     const exploreItemState = getState().explore[exploreId];
     const {
       datasourceInstance,
@@ -441,6 +453,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
     };
 
     const datasourceId = datasourceInstance.meta.id;
+    const datasourceName = exploreItemState.requestedDatasourceName;
+
     const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
 
     let firstResponse = true;
@@ -457,7 +471,23 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
+          const arrayOfStringifiedQueries = queries.map(query =>
+            datasourceInstance?.getQueryDisplayText
+              ? datasourceInstance.getQueryDisplayText(query)
+              : getQueryDisplayText(query)
+          );
+
+          const nextRichHistory = addToRichHistory(
+            richHistory || [],
+            datasourceId,
+            datasourceName,
+            arrayOfStringifiedQueries,
+            false,
+            '',
+            ''
+          );
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+          dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
           // We save queries to the URL here so that only successfully run queries change the URL.
           dispatch(stateSave());
@@ -481,6 +511,27 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       });
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
+  };
+};
+
+export const updateRichHistory = (ts: number, property: string, updatedProperty?: string): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    // Side-effect: Saving rich history in localstorage
+    let nextRichHistory;
+    if (property === 'starred') {
+      nextRichHistory = updateStarredInRichHistory(getState().explore.richHistory, ts);
+    }
+    if (property === 'comment') {
+      nextRichHistory = updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
+    }
+    dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+  };
+};
+
+export const deleteRichHistory = (): ThunkResult<void> => {
+  return dispatch => {
+    deleteAllFromRichHistory();
+    dispatch(richHistoryUpdatedAction({ richHistory: [] }));
   };
 };
 

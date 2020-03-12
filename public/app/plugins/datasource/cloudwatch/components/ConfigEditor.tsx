@@ -130,7 +130,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
                 options={authProviderOptions}
                 defaultValue={options.jsonData.authType}
-                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType')}
+                onChange={option => {
+                  if (options.jsonData.authType === 'arn' && option.value !== 'arn') {
+                    delete this.props.options.jsonData.assumeRoleArn;
+                  }
+                  onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType')(option);
+                }}
               />
             </div>
           </div>
