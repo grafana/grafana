@@ -82,7 +82,7 @@ concurrent_render_limit = 10
 
 ### Export dashboard as PDF
 
-This feature allows you to export a dashboard as a PDF document. All dashboard panels will be rendered as images and added into the PDF document.
+This feature allows you to export a dashboard as a PDF document. All dashboard panels will be rendered as images and added into the PDF document. Learn more in [Export dashboard as PDF]({{< relref "../enterprise/export-pdf/" >}}).
 
 ### Report landscape mode
 
