@@ -10,5 +10,5 @@ timeout 200 bash -c 'until nc -z $0 $1; do sleep 1; done' localhost $PORT
 
 echo -e "Starting Cypress scenarios"
 
-env BASE_URL=http://127.0.0.1:$PORT yarn e2e-tests
+env BASE_URL=http://localhost:$PORT yarn e2e-tests
 
