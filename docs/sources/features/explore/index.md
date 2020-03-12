@@ -73,7 +73,7 @@ All queries that have been starred in the Query history tab are displayed in the
 
 ### Sort query history
 
-By default query history shows you the most recent queries. This can be changed and you can sort your history in **Query history** and **Starred** tab by date or by data source name in ascending or descending order.
+By default, query history shows you the most recent queries. You can sort your history in by date or by data source name in ascending or descending order.
 
 1. Click the **Sort queries by** field.
 2. Select one of the following options:
