@@ -2,10 +2,9 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, ExploreMode, AppEvents } from '@grafana/data';
+import { DataQuery, ExploreMode } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
-import appEvents from 'app/core/app_events';
 import { serializeStateToUrlParam, SortOrder } from './explore';
 
 // Types
