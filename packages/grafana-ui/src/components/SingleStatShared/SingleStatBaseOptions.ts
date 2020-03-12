@@ -96,7 +96,7 @@ export function sharedSingleStatPanelChangedHandler(
 
   for (const k of optionsToKeep) {
     if (prevOptions.hasOwnProperty(k)) {
-      panel.options[k] = cloneDeep(prevOptions[k]);
+      options[k] = cloneDeep(prevOptions[k]);
     }
   }
   return options;
