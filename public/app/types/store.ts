@@ -9,7 +9,7 @@ import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
 import { DataSourceSettingsState, DataSourcesState } from './datasources';
 import { ExploreState } from './explore';
-import { UserAdminState, UsersState, UserState } from './user';
+import { UserAdminState, UserListAdminState, UsersState, UserState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
@@ -42,6 +42,7 @@ export interface StoreState {
   ldap: LdapState;
   apiKeys: ApiKeysState;
   userAdmin: UserAdminState;
+  userListAdmin: UserListAdminState;
   templating: TemplatingState;
 }
 

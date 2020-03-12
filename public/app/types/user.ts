@@ -101,3 +101,12 @@ export interface UserAdminError {
   title: string;
   body: string;
 }
+
+export interface UserListAdminState {
+  users: UserDTO[];
+  query: string;
+  perPage: number;
+  page: number;
+  totalPages: number;
+  showPaging: boolean;
+}
