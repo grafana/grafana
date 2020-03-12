@@ -27,15 +27,16 @@ export interface SingleStatBaseOptions {
 const optionsToKeep = ['fieldOptions', 'orientation'];
 
 export function sharedSingleStatPanelChangedHandler(
-  options: Partial<SingleStatBaseOptions> | any,
+  panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) {
+  let options = panel.options;
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
     const panel = prevOptions.angular;
     const reducer = fieldReducers.getIfExists(panel.valueName);
-    const options = {
+    options = {
       fieldOptions: {
         defaults: {} as FieldConfig,
         overrides: [] as ConfigOverrideRule[],
@@ -95,7 +96,7 @@ export function sharedSingleStatPanelChangedHandler(
 
   for (const k of optionsToKeep) {
     if (prevOptions.hasOwnProperty(k)) {
-      options[k] = cloneDeep(prevOptions[k]);
+      panel.options[k] = cloneDeep(prevOptions[k]);
     }
   }
   return options;
