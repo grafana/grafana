@@ -86,7 +86,7 @@ By default, query history shows you the most recent queries. You can sort your h
 
 ### Filter query history
 
-Filter query history in **Query history** and **Starred** tab by data source name:
+Filter query history in Query history and Starred tab by data source name:
 
 1. Click the **Filter queries for specific data source(s)** field
 2. Select data source for which you would like to filter your history. You can select multiple data sources.
