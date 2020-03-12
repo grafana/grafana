@@ -1,0 +1,5 @@
+#!/bin/bash
+
+RUNDIR=e2e/tmp
+PIDFILE=$RUNDIR/pid
+PORT=3001

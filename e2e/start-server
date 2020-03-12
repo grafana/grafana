@@ -1,0 +1,34 @@
+#!/bin/bash
+
+. e2e/variables
+
+echo -e "Starting Grafana Server E2E Scenario"
+
+./e2e/kill-server
+
+mkdir $RUNDIR
+
+echo -e "Copying grafana backend files to temp dir..."
+
+if [ -f /tmp/workspace/dist ]; then
+  ls /tmp/workspace/dist/*
+  echo "Found built tar file"
+  tar zxvf /tmp/workspace/dist/grafana-latest.linux-x64.tar.gz e2e/tmp
+else
+  echo "Copying local dev files"
+
+  cp -r ./bin $RUNDIR
+  cp -r ./public $RUNDIR
+
+  mkdir $RUNDIR/conf
+fi
+
+cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
+cp ./e2e/conf/scenario1.ini $RUNDIR/conf/custom.ini
+
+$RUNDIR/bin/grafana-server \
+  --homepath=$RUNDIR \
+  --pidfile=$RUNDIR/pid \
+  cfg:server.http_port=$PORT \
+  2>&1 > $RUNDIR/output.log &
+

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+. e2e/variables
+
+echo -e "Waiting for grafana-server to finish starting"
+
+while ! timeout 1 bash -c "echo > /dev/tcp/localhost/$PORT"; do sleep 1; done
+
+echo -e "Starting Cypress scenarios"
+
+env BASE_URL=http://127.0.0.1:$PORT yarn e2e-tests
+
