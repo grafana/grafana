@@ -14,6 +14,7 @@ if [ -f dist/grafana-latest.linux-x64.tar.gz ]; then
   echo "Found built tar file"
   tar zxf dist/grafana-latest.linux-x64.tar.gz -C $RUNDIR
   mv $RUNDIR/grafana-*/* $RUNDIR
+  ls $RUNDIR/public/views
 else
   echo "Copying local dev files"
 
