@@ -101,7 +101,7 @@ In **Query history** tab is is also possible to filter queries by date using the
 
 ### Query history settings
 
-Query history can be customised in **Settings** tab: 
+You can customize the query history in the Settings tab. Options are described in the table below. 
 
 | Settings                                                      | Default value     |
 | ------------------------------------------------------------- | ----------------- |
