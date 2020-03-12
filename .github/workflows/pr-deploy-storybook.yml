@@ -1,4 +1,4 @@
-name: Build Grafana Storybook (test action)
+name: Build Grafana Storybook
 
 on:
   pull_request:
