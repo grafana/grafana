@@ -1,4 +1,4 @@
-import angular, { auto, IQService } from 'angular';
+import angular, { auto } from 'angular';
 import _ from 'lodash';
 import { InfluxQueryBuilder } from './query_builder';
 import InfluxQueryModel from './influx_query_model';
@@ -25,7 +25,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
     $scope: any,
     $injector: auto.IInjectorService,
     private templateSrv: TemplateSrv,
-    private $q: IQService,
     private uiSegmentSrv: any
   ) {
     super($scope, $injector);
@@ -180,7 +179,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         break;
       }
       case 'get-part-actions': {
-        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+        return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
   }
@@ -204,7 +203,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         break;
       }
       case 'get-part-actions': {
-        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+        return Promise.resolve([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
   }
@@ -285,14 +284,14 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   getTagsOrValues(segment: { type: string }, index: number) {
     if (segment.type === 'condition') {
-      return this.$q.when([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
+      return Promise.resolve([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
     }
     if (segment.type === 'operator') {
       const nextValue = this.tagSegments[index + 1].value;
       if (/^\/.*\/$/.test(nextValue)) {
-        return this.$q.when(this.uiSegmentSrv.newOperators(['=~', '!~']));
+        return Promise.resolve(this.uiSegmentSrv.newOperators(['=~', '!~']));
       } else {
-        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
+        return Promise.resolve(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
       }
     }
 

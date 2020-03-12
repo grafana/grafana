@@ -1,0 +1,187 @@
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Form } from './Form';
+
+<Meta title="MDX|Form" component={Form} />
+
+# Form
+
+Form component provides a way to build simple forms at Grafana. It is built on top of [react-hook-form](https://react-hook-form.com/) library and incorporates the same concepts while adjusting the API slightly.
+
+## Usage
+
+```jsx
+import { Forms } from '@grafana/ui';
+
+interface UserDTO {
+  name: string;
+  email: string;
+  //...
+}
+
+const defaultUser: Partial<UserDTO> = {
+  name: 'Roger Waters',
+  // ...
+}
+
+<Forms.Form
+  defaultValues={defaultUser}
+  onSubmit={async (user: UserDTO) => await createUser(user)}
+>{({register, errors}) => {
+  return (
+    <Forms.Field>
+      <Forms.Input name="name" ref={register}/>
+      <Forms.Input type="email" name="email" ref={register({required: true})}/>
+      <Button type="submit">Create User</Button>
+    </Forms.Field>
+  )
+}}</Forms.Form>
+```
+
+### Form API
+
+`Form` component exposes API via render prop. Three properties are exposed: `register`, `errors` and `control`
+
+#### `register`
+
+`register` allows to register form elements(inputs, selects, radios, etc) in the form. In order to do that you need to pass `register` as a `ref` property to the form input. For example:
+
+```jsx
+<Forms.Input name="inputName" ref={register} />
+```
+
+Register accepts an object which describes validation rules for a given input:
+
+```jsx
+<Forms.Input
+  name="inputName"
+  ref={register({
+    required: true,
+    minLength: 10,
+    validate: v => { // custom validation rule }
+  })}
+/>
+```
+
+#### `errors`
+
+`errors` is an object that contains validation errors of the form. To show error message and invalid input indication in your form, wrap input element with `<Forms.Field ...>` component and pass `invalid` and `error` props to it:
+
+```jsx
+<Forms.Field label="Name" invalid={!!errors.name} error='Name is required'>
+  <Forms.Input name="name" ref={register({ required: true })} />
+</Forms.Field>
+```
+
+#### `control`
+
+By default `Form` component assumes form elements are uncontrolled (https://reactjs.org/docs/glossary.html#controlled-vs-uncontrolled-components).
+There are some components like `RadioButton` or `Select` that are controlled-only and require some extra work. To make
+them work with the form, you need to render those using `Forms.InputControl` component:
+
+```jsx
+import { Forms } from '@grafana/ui';
+
+// render function
+<Forms.Form ...>{({register, errors, control}) => (
+  <>
+    <Field label="RadioButtonExample">
+      <Forms.InputControl
+        {/* Render InputControl as controlled input (RadioButtonGroup) */}
+        as={RadioButtonGroup}
+        {/* Pass control exposed from Form render prop */}
+        control={control}
+        name="radio"
+        options={...}
+      />
+    </Field>
+
+    <Field label="SelectExample">
+      <Forms.InputControl
+        {/* Render InputControl as controlled input (Select) */}
+        as={Select}
+        {/* Pass control exposed from Form render prop */}
+        control={control}
+        name="select"
+        options={...}
+      />
+    </Field>
+  </>
+)}
+</Forms.Form>
+```
+Note that when using `Forms.InputControl`, it expects the name of the prop that handles input change to be called `onChange`.
+If the property is named differently for any specific component, additional `onChangeName` prop has to be provided, specifying the name.
+Additionally, the `onChange` arguments passed as an array. Check [react-hook-form docs](https://react-hook-form.com/api/#Controller)
+for more prop options.
+
+```jsx
+{/* DashboardPicker has onSelected prop instead of onChange */}
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+
+{/* In case of Select the value has to be returned as an object with a `value` key for the value to be saved to form data */}
+const onSelectChange = ([value]) => {
+  // ...
+  return { value };
+}
+
+<Field label="SelectExample">
+  <Forms.InputControl
+    as={DashboardPicker}
+    control={control}
+    name="select"
+    onSelected={onSelectChange}
+    {/* Pass the name of the onChange handler */}
+    onChangeName='onSelected'
+  />
+</Field>
+
+```
+
+### Default values
+
+Default values of the form can be passed either via `defaultValues` property on the `Form` element, or directly on
+form's input via `defaultValue` prop.
+Note that changing/updating `defaultValues` passed to the form will reset the form's state, which might be undesirable in
+case it has both controlled and uncontrolled components. In that case it's better to pass `defaultValue` to each form component separately.
+
+```jsx
+// Passing default values to the Form
+
+interface FormDTO {
+  name: string;
+  isAdmin: boolean;
+}
+
+const defaultValues: FormDto {
+  name: 'Roger Waters',
+  isAdmin: false,
+}
+
+<Forms.Form defaultValues={defaultValues} ...>{...}</Forms.Form>
+```
+
+```jsx
+// Passing default value directly to form inputs
+
+interface FormDTO {
+  name: string;
+  isAdmin: boolean;
+}
+
+const defaultValues: FormDto {
+  name: 'Roger Waters',
+  isAdmin: false,
+}
+
+<Forms.Form ...>{
+  ({register}) => (
+    <>
+      <Forms.Input defaultValue={default.name} name="name" ref={register} />
+    </>
+  )}
+</Forms.Form>
+```
+
+### Props
+
+<Props of={Form} />

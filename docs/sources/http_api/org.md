@@ -2,7 +2,7 @@
 title = "Organization HTTP API "
 description = "Grafana Organization HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "organization"]
-aliases = ["/http_api/organization/"]
+aliases = ["/docs/grafana/latest/http_api/organization/"]
 type = "docs"
 [menu.docs]
 name = "Organization"
@@ -337,7 +337,7 @@ Accept: application/json
 Content-Type: application/json
 ```
 Note: The api will only work when you pass the admin name and password
-to the request HTTP url, like http://admin:admin@localhost:3000/api/orgs
+to the request HTTP URL, like http://admin:admin@localhost:3000/api/orgs
 
 **Example Response**:
 
@@ -417,7 +417,7 @@ Accept: application/json
 Content-Type: application/json
 ```
 Note: The api will only work when you pass the admin name and password
-to the request HTTP url, like http://admin:admin@localhost:3000/api/orgs/1/users
+to the request HTTP URL, like http://admin:admin@localhost:3000/api/orgs/1/users
 
 
 **Example Response**:

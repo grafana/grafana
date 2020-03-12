@@ -64,18 +64,25 @@ const lightTheme: GrafanaTheme = {
     critical: basicColors.redShade,
     bodyBg: basicColors.gray7,
     pageBg: basicColors.gray7,
+
+    // Text colors
     body: basicColors.gray1,
     text: basicColors.gray1,
     textStrong: basicColors.dark2,
     textWeak: basicColors.gray2,
     textEmphasis: basicColors.dark5,
     textFaint: basicColors.dark4,
+
+    // Link colors
     link: basicColors.gray1,
     linkDisabled: basicColors.gray3,
     linkHover: basicColors.dark1,
     linkExternal: basicColors.blueLight,
     headingColor: basicColors.gray1,
     pageHeaderBorder: basicColors.gray4,
+
+    // panel
+    panelBg: basicColors.white,
 
     // Next-gen forms functional colors
     formLabel: basicColors.gray33,
@@ -88,6 +95,7 @@ const lightTheme: GrafanaTheme = {
     formInputBorderActive: basicColors.blue77,
     formInputBorderInvalid: basicColors.red88,
     formInputText: basicColors.gray25,
+    formInputPlaceholderText: basicColors.gray70,
     formInputDisabledText: basicColors.gray33,
     formInputTextStrong: basicColors.gray25,
     formInputTextWhite: basicColors.white,
@@ -100,6 +108,10 @@ const lightTheme: GrafanaTheme = {
     formSwitchBgActiveHover: basicColors.blueBase,
     formSwitchBgDisabled: basicColors.gray4,
     formSwitchDot: basicColors.white,
+    formCheckboxBg: basicColors.white,
+    formCheckboxBgChecked: basicColors.blueShade,
+    formCheckboxBgCheckedHover: basicColors.blueBase,
+    formCheckboxCheckmark: basicColors.white,
   },
   background: {
     dropdown: basicColors.white,

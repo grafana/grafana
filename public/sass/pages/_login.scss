@@ -10,8 +10,6 @@ $login-border: #8daac5;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url(../img/heatmap_bg_test.svg);
-  background-size: cover;
   color: #d8d9da;
 
   & a {
@@ -117,12 +115,13 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: center;
   flex-grow: 0;
-  padding-top: $space-xl;
+  padding: $space-xl;
+}
 
-  .logo-icon {
-    width: 70px;
-    margin-bottom: 15px;
-  }
+.login-logo {
+  width: 100%;
+  max-width: 250px;
+  margin-bottom: 15px;
 }
 
 .app-grafana {
@@ -287,10 +286,6 @@ select:-webkit-autofill:focus {
 @include media-breakpoint-up(sm) {
   .login-branding {
     padding: $space-md;
-
-    .logo-icon {
-      width: 80px;
-    }
   }
 }
 
@@ -311,10 +306,6 @@ select:-webkit-autofill:focus {
     padding: $space-xl;
     flex-grow: 1;
     border-right: 1px solid $login-border;
-
-    .logo-icon {
-      width: 130px;
-    }
   }
 
   .login-button-group {

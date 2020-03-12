@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
 import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
-import { getFocusStyle } from './commonStyles';
+import { getFocusStyle, getPropertiesForButtonSize } from './commonStyles';
 import { ButtonSize, StyleDeps } from '../Button/types';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -20,38 +20,6 @@ const buttonVariantStyles = (from: string, to: string, textColor: string) => css
     outline: none;
   }
 `;
-
-const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
-  switch (size) {
-    case 'sm':
-      return {
-        padding: `0 ${theme.spacing.sm}`,
-        fontSize: theme.typography.size.sm,
-        height: theme.height.sm,
-      };
-
-    case 'md':
-      return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.md,
-        height: `${theme.spacing.formButtonHeight}px`,
-      };
-
-    case 'lg':
-      return {
-        padding: `0 ${theme.spacing.lg}`,
-        fontSize: theme.typography.size.lg,
-        height: theme.height.lg,
-      };
-
-    default:
-      return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.base,
-        height: theme.height.md,
-      };
-  }
-};
 
 const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) => {
   switch (variant) {
@@ -70,7 +38,7 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
       ) as string;
 
       return {
-        borderColor: selectThemeVariant({ light: theme.colors.gray70, dark: theme.colors.gray33 }, theme.type),
+        borderColor: selectThemeVariant({ light: theme.colors.gray85, dark: theme.colors.gray25 }, theme.type),
         background: buttonVariantStyles(
           from,
           to,
@@ -84,6 +52,17 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
         background: buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white),
       };
 
+    case 'link':
+      return {
+        borderColor: 'transparent',
+        background: buttonVariantStyles('transparent', 'transparent', theme.colors.linkExternal),
+        variantStyles: css`
+          &:focus {
+            outline: none;
+            box-shadow: none;
+          }
+        `,
+      };
     case 'primary':
     default:
       return {
@@ -95,26 +74,26 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 
 // Need to do this because of mismatch between variants in standard buttons and here
 type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
+
 export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
-  const { padding, fontSize, height } = getPropertiesForSize(theme, size);
-  const { background, borderColor } = getPropertiesForVariant(theme, variant);
+  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
+  const { background, borderColor, variantStyles } = getPropertiesForVariant(theme, variant);
 
   return {
     button: cx(
       css`
-        position: relative;
         label: button;
         display: inline-flex;
         align-items: center;
         font-weight: ${theme.typography.weight.semibold};
-        font-size: ${fontSize};
         font-family: ${theme.typography.fontFamily.sansSerif};
         line-height: ${theme.typography.lineHeight.sm};
+        font-size: ${fontSize};
         padding: ${padding};
+        height: ${height};
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};
-        height: ${height};
         border-radius: ${theme.border.radius.sm};
         ${background};
 
@@ -125,18 +104,29 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
           box-shadow: none;
         }
       `,
-      getFocusStyle(theme)
+      getFocusStyle(theme),
+      css`
+        ${variantStyles}
+      `
     ),
+    buttonWithIcon: css`
+      padding-left: ${theme.spacing.sm};
+    `,
+    // used for buttons with icon only
+    iconButton: css`
+      padding-right: 0;
+    `,
     iconWrap: css`
       label: button-icon-wrap;
-      display: flex;
-      align-items: center;
+      & + * {
+        margin-left: ${theme.spacing.sm};
+      }
     `,
   };
 });
 
-// These are different from the standard Button where there are 5 variants.
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
+// These are different from the standard Button where there are more variants.
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 
 // These also needs to be different because the ButtonVariant is different
 type CommonProps = {
@@ -146,25 +136,25 @@ type CommonProps = {
   className?: string;
 };
 
-type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
+export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const Button = (props: ButtonProps) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ variant, ...otherProps }, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
-    size: props.size || 'md',
-    variant: props.variant || 'primary',
+    size: otherProps.size || 'md',
+    variant: variant || 'primary',
   });
-  return <DefaultButton {...props} styles={styles} />;
-};
+  return <DefaultButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
+});
 
 type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
-export const LinkButton = (props: ButtonLinkProps) => {
+export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(({ variant, ...otherProps }, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
-    size: props.size || 'md',
-    variant: props.variant || 'primary',
+    size: otherProps.size || 'md',
+    variant: variant || 'primary',
   });
-  return <DefaultLinkButton {...props} styles={styles} />;
-};
+  return <DefaultLinkButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
+});

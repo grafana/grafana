@@ -2,6 +2,8 @@
 
 This style guide applies to all documentation created for Grafana products.
 
+For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
+
 ## Contributing
 
 The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
@@ -81,7 +83,30 @@ Always give the reader some idea of what to expect in the reference. Avoid blind
 When possible, use the exact title of the page or section you are linking to as the link text.
 
 **Example**
-* Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
+Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
+
+### Command line examples
+
+* Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
+
+* Do not add `$` before commands. Make it easy for users to copy and paste commands.
+
+  * **Wrong:** `$ sudo yum install grafana`
+  * **Right:** `sudo yum install grafana`
+
+* Include `sudo` before commands that require `sudo` to work.
+
+For terminal examples and Grafana configuration, use a `bash` code block:
+```bash
+sudo yum install grafana
+```
+For HTTP request/response, use an `http` code block:
+```http
+GET /api/dashboards/id/1/permissions HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 ### Word usage
 
@@ -103,7 +128,6 @@ Two words, not one
 **Exceptions:**
 * "datasource" used as an identifier
 * "datasource" in a URL
-* "Open source" should be hyphenated when used as an adjective, e.g. *open-source software*. The open form should be preferred when used as a noun, e.g. *Grafana is open source*.
 * Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
 * Spell out "repository" and avoid the shorter "repo."
 * Use "Unix" as the preferred spelling (as opposed to "UNIX", or "unix") when referring to the family of operating systems.
@@ -115,9 +139,13 @@ Two words, not one
 * Correct, but passive voice: Your list of active alarms is displayed.
 * Incorrect: The list of active alarms displays.
 
+#### metadata
+
+One word, not two.
+
 #### open source, open-source
 
-Hyphenate when used as an adjective. For example: _open-source software._ 
+Do not hyphenate when used as an adjective unless the lack of hyphen would cause confusion. For example: _Open source software design is the most open open-source system I can imagine._ 
 
 Do not hyphenate when it is used as a noun. For example: _Open source is the best way to develop software._
 

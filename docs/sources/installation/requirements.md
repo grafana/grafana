@@ -10,36 +10,41 @@ parent = "installation"
 weight = 100
 +++
 
-# Requirements
+# Grafana requirements
 
-This page includes useful information on the supported Operating Systems as well as the hardware requirements that are needed to install and use Grafana.
+This page lists the minimum hardware and software requirements to install Grafana.
+
+To run Grafana, you must have a supported operating system, hardware that meets or exceeds minimum requirements, a supported database, and a supported browser
 
 ## Supported operating systems
 
 The following operating systems are supported for Grafana installation:
 
-- [Debian / Ubuntu](/installation/debian)
-- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](/installation/rpm)
-- [macOS](/installation/mac)
-- [Windows](/installation/windows)
+- [Debian / Ubuntu]({{< relref "debian" >}})
+- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)]({{< relref "rpm" >}})
+- [macOS]({{< relref "mac" >}})
+- [Windows]({{< relref "windows" >}})
 
-## Unsupported operating systems
+While you can install Grafana on other operating systems, we do not recommend doing so and do not provide support for that use case.
 
-Installation of Grafana on other operating systems is possible, but not supported. Please see the [building from source](/project/building_from_source/#building-grafana-from-source) guide for more information.
+Installation of Grafana on other operating systems is possible, but not supported.
 
-## Hardware requirements
+## Hardware recommendations
 
-Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. Minimum recommendation is 255mb of memory and 1 CPU.
+Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. 
 
-Depending on what features are being used and to what extent the requirements varies. Features that consume and requires more resources:
+Minimum recommended memory: 255 MB
+Minimum recommended CPU: 1
 
-- [Server side rendering of images](/administration/image_rendering/#requirements)
-- [Alerting](/alerting/rules/)
+Some features might require more memory or CPUs. Features require more resources include:
+
+- [Server side rendering of images]({{< relref "../administration/image_rendering/#requirements" >}})
+- [Alerting]({{< relref "../alerting/rules" >}})
 - Data source proxy
 
-## Database
+## Supported databases
 
-Grafana requires a database to store its configuration data, e.g. users, data sources and dashboards. The exact requirements depend on the size of the Grafana installation (e.g. the number of users, data sources, dashboards, features in use etc).
+Grafana requires a database to store its configuration data, such as users, data sources, and dashboards. The exact requirements depend on the size of the Grafana installation and features used.
 
 Grafana supports the following databases:
 
@@ -47,7 +52,7 @@ Grafana supports the following databases:
 - MySQL
 - PostgreSQL
 
-Per default Grafana ships with and uses SQLite, which is an embedded database stored on disk in Grafana's installation location.
+By default, Grafana installs with and uses SQLite, which is an embedded database stored in the Grafana installation location.
 
 ## Supported web browsers
 

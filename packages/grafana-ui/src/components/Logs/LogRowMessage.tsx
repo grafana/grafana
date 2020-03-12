@@ -21,6 +21,7 @@ interface Props extends Themeable {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
   showContext: boolean;
+  wrapLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   highlighterExpressions?: string[];
@@ -28,8 +29,6 @@ interface Props extends Themeable {
   onToggleContext: () => void;
   updateLimit?: () => void;
 }
-
-interface State {}
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const outlineColor = selectThemeVariant(
@@ -57,10 +56,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: whiteSpacePreWrap;
       white-space: pre-wrap;
     `,
+    horizontalScroll: css`
+      label: verticalScroll;
+      white-space: nowrap;
+    `,
   };
 });
 
-class UnThemedLogRowMessage extends PureComponent<Props, State> {
+class UnThemedLogRowMessage extends PureComponent<Props> {
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
     this.props.onToggleContext();
@@ -76,9 +79,10 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       updateLimit,
       context,
       showContext,
+      wrapLogMessage,
       onToggleContext,
     } = this.props;
-    const {} = this.state;
+
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
 
@@ -90,8 +94,8 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
     return (
-      <div className={style.logsRowMessage}>
-        <div className={styles.positionRelative}>
+      <td className={style.logsRowMessage}>
+        <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
           {showContext && context && (
             <LogRowContext
               row={row}
@@ -127,7 +131,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
             </span>
           )}
         </div>
-      </div>
+      </td>
     );
   }
 }

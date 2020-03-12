@@ -1,24 +1,29 @@
 import AzureMonitorDatasource from '../datasource';
-// @ts-ignore
-import Q from 'q';
+
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { toUtc, DataFrame } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('AzureMonitorDatasource', () => {
   const ctx: any = {
-    backendSrv: {},
     templateSrv: new TemplateSrv(),
   };
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
   beforeEach(() => {
-    ctx.$q = Q;
+    jest.clearAllMocks();
     ctx.instanceSettings = {
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f' },
       cloudName: 'azuremonitor',
     };
 
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
   });
 
   describe('When performing testDatasource', () => {
@@ -37,9 +42,7 @@ describe('AzureMonitorDatasource', () => {
       beforeEach(() => {
         ctx.instanceSettings.jsonData.tenantId = 'xxx';
         ctx.instanceSettings.jsonData.clientId = 'xxx';
-        ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.reject(error);
-        };
+        datasourceRequestMock.mockImplementation(() => Promise.reject(error));
       });
 
       it('should return error status and a detailed error message', () => {
@@ -64,9 +67,7 @@ describe('AzureMonitorDatasource', () => {
       beforeEach(() => {
         ctx.instanceSettings.jsonData.tenantId = 'xxx';
         ctx.instanceSettings.jsonData.clientId = 'xxx';
-        ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when({ data: response, status: 200 });
-        };
+        datasourceRequestMock.mockImplementation(() => Promise.resolve({ data: response, status: 200 }));
       });
 
       it('should return success status', () => {
@@ -126,10 +127,10 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         expect(options.url).toContain('/api/tsdb/query');
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+        return Promise.resolve({ data: response, status: 200 });
+      });
     });
 
     it('should return a list of datapoints', () => {
@@ -159,9 +160,7 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when(response);
-        };
+        datasourceRequestMock.mockImplementation((options: { url: string }) => Promise.resolve(response));
       });
 
       it('should return a list of subscriptions', () => {
@@ -185,9 +184,7 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when(response);
-        };
+        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       });
 
       it('should return a list of resource groups', () => {
@@ -211,10 +208,10 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of resource groups', () => {
@@ -245,12 +242,12 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of namespaces', () => {
@@ -279,12 +276,12 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of namespaces', () => {
@@ -317,12 +314,12 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of resource names', () => {
@@ -355,12 +352,12 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of resource names', () => {
@@ -399,7 +396,7 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(
@@ -407,8 +404,8 @@ describe('AzureMonitorDatasource', () => {
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
               'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of metric names', () => {
@@ -448,7 +445,7 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
           expect(options.url).toBe(
@@ -456,8 +453,8 @@ describe('AzureMonitorDatasource', () => {
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
               'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of metric names', () => {
@@ -499,15 +496,15 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(
             baseUrl +
               '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
           );
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of metric names', () => {
@@ -547,15 +544,15 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
           expect(options.url).toBe(
             baseUrl +
               '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
           );
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return a list of metric namespaces', () => {
@@ -603,9 +600,7 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = () => {
-        return ctx.$q.when(response);
-      };
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
     });
 
     it('should return list of Resource Groups', () => {
@@ -627,9 +622,7 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = () => {
-        return ctx.$q.when(response);
-      };
+      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
     });
 
     it('should return list of Resource Groups', () => {
@@ -676,12 +669,12 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         const baseUrl =
           'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
         expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
-        return ctx.$q.when(response);
-      };
+        return Promise.resolve(response);
+      });
     });
 
     it('should return list of Metric Definitions with no duplicates and no unsupported namespaces', () => {
@@ -727,12 +720,12 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return list of Resource Names', () => {
@@ -765,12 +758,12 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
-        };
+          return Promise.resolve(response);
+        });
       });
 
       it('should return list of Resource Names', () => {
@@ -830,7 +823,7 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         const baseUrl =
           'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
         const expected =
@@ -838,8 +831,8 @@ describe('AzureMonitorDatasource', () => {
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
-        return ctx.$q.when(response);
-      };
+        return Promise.resolve(response);
+      });
     });
 
     it('should return list of Metric Definitions', () => {
@@ -902,7 +895,7 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         const baseUrl =
           'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
         const expected =
@@ -910,8 +903,8 @@ describe('AzureMonitorDatasource', () => {
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
-        return ctx.$q.when(response);
-      };
+        return Promise.resolve(response);
+      });
     });
 
     it('should return Aggregation metadata for a Metric', () => {
@@ -976,7 +969,7 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         const baseUrl =
           'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
         const expected =
@@ -984,8 +977,8 @@ describe('AzureMonitorDatasource', () => {
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
-        return ctx.$q.when(response);
-      };
+        return Promise.resolve(response);
+      });
     });
 
     it('should return dimensions for a Metric that has dimensions', () => {

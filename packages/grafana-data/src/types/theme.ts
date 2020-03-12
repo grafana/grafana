@@ -19,7 +19,6 @@ export interface GrafanaThemeCommons {
       monospace: string;
     };
     size: {
-      root: string;
       base: string;
       xs: string;
       sm: string;
@@ -207,6 +206,9 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     textFaint: string;
     textEmphasis: string;
 
+    // panel
+    panelBg: string;
+
     // TODO: move to background section
     bodyBg: string;
     pageBg: string;
@@ -227,6 +229,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formFocusOutline: string;
     formInputText: string;
     formInputDisabledText: string;
+    formInputPlaceholderText: string;
     formInputTextStrong: string;
     formInputTextWhite: string;
     formValidationMessageText: string;
@@ -237,6 +240,10 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formSwitchBgHover: string;
     formSwitchBgDisabled: string;
     formSwitchDot: string;
+    formCheckboxBg: string;
+    formCheckboxBgChecked: string;
+    formCheckboxBgCheckedHover: string;
+    formCheckboxCheckmark: string;
   };
   shadow: {
     pageHeader: string;

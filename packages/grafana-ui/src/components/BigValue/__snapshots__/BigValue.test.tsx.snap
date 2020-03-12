@@ -27,19 +27,22 @@ exports[`BigValue Render with basic options should render 1`] = `
       }
     }
   >
-    <div
+    <FormattedDisplayValue
       style={
         Object {
-          "color": "#EEE",
-          "fontSize": "230px",
+          "color": "white",
+          "fontSize": 230,
           "fontWeight": 500,
           "lineHeight": 1.2,
-          "textShadow": "#333 0px 0px 1px",
         }
       }
-    >
-      25
-    </div>
+      value={
+        Object {
+          "numeric": 25,
+          "text": "25",
+        }
+      }
+    />
   </div>
 </div>
 `;

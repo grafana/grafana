@@ -2,13 +2,12 @@ import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 import { ElasticsearchAggregation } from './types';
-import { IQService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
 export class ElasticMetricAggCtrl {
   /** @ngInject */
-  constructor($scope: any, uiSegmentSrv: any, $q: IQService, $rootScope: GrafanaRootScope) {
+  constructor($scope: any, uiSegmentSrv: any, $rootScope: GrafanaRootScope) {
     const metricAggs: ElasticsearchAggregation[] = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;

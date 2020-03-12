@@ -6,6 +6,7 @@ export const commonColorsPalette = {
   gray95: '#e9edf2',
   gray85: '#c7d0d9',
   gray70: '#9fa7b3',
+  gray60: '#7B8087',
   gray33: '#464c54',
   gray25: '#343b40',
   gray15: '#202226',
@@ -31,8 +32,7 @@ const theme: GrafanaThemeCommons = {
       monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace",
     },
     size: {
-      root: '14px',
-      base: '13px',
+      base: '14px',
       xs: '10px',
       sm: '12px',
       md: '14px',
@@ -55,8 +55,8 @@ const theme: GrafanaThemeCommons = {
     lineHeight: {
       xs: 1,
       sm: 1.1,
-      md: 4 / 3,
-      lg: 1.5,
+      md: 1.5,
+      lg: 2,
     },
     link: {
       decoration: 'none',

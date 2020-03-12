@@ -1,24 +1,29 @@
 import { MssqlDatasource } from '../datasource';
 import { TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-// @ts-ignore
-import q from 'q';
+
 import { dateTime } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('MSSQLDatasource', () => {
   const templateSrv: TemplateSrv = new TemplateSrv();
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
   const ctx: any = {
-    backendSrv: {},
     timeSrv: new TimeSrvStub(),
   };
 
   beforeEach(() => {
-    ctx.$q = q;
-    ctx.instanceSettings = { name: 'mssql' };
+    jest.clearAllMocks();
 
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, templateSrv, ctx.timeSrv);
+    ctx.instanceSettings = { name: 'mssql' };
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, templateSrv, ctx.timeSrv);
   });
 
   describe('When performing annotationQuery', () => {
@@ -56,9 +61,7 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
 
       return ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
@@ -104,9 +107,7 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
@@ -145,9 +146,7 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
@@ -188,10 +187,7 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
-
+      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
       return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -231,10 +227,10 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       ctx.timeSrv.setTime(time);
 
-      ctx.backendSrv.datasourceRequest = (options: any) => {
+      datasourceRequestMock.mockImplementation((options: any) => {
         results = options.data;
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+        return Promise.resolve({ data: response, status: 200 });
+      });
 
       return ctx.ds.metricFindQuery(query);
     });

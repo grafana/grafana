@@ -66,7 +66,7 @@
   "panels": [
     {
       "collapsed": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -83,7 +83,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "fill": 0,
       "fillGradient": 0,
       "gridPos": {
@@ -182,7 +182,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "fill": 0,
       "fillGradient": 0,
       "gridPos": {
@@ -281,7 +281,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "fill": 0,
       "fillGradient": 0,
       "gridPos": {
@@ -378,7 +378,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -392,7 +392,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -491,7 +491,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -590,7 +590,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -689,7 +689,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -789,7 +789,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -888,7 +888,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -987,7 +987,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -1086,7 +1086,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -1185,7 +1185,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -1284,7 +1284,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
@@ -1384,7 +1384,7 @@
     },
     {
       "collapsed": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1398,7 +1398,7 @@
     },
     {
       "content": "For more information about the available Amazon RDS metrics, please visit the [Amazon RDS documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MonitoringOverview.html#rds-metrics).",
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 2,
         "w": 24,

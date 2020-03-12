@@ -25,9 +25,9 @@ For backend authentication to work, the external/third-party API must either hav
 
 You can specify routes in the `plugin.json` file for your data source plugin. [Here is an example](https://github.com/grafana/azure-monitor-datasource/blob/d74c82145c0a4af07a7e96cc8dde231bfd449bd9/src/plugin.json#L30-L95) with lots of routes (though most plugins will just have one route).
 
-When you build your url to the third-party API in your data source class, the url should start with the text specified in the path field for a route. The proxy will strip out the path text and replace it with the value in the url field.
+When you build your URL to the third-party API in your data source class, the URL should start with the text specified in the path field for a route. The proxy will strip out the path text and replace it with the value in the URL field.
 
-For example, if my code makes a call to url `azuremonitor/foo/bar` with this code:
+For example, if my code makes a call to URL `azuremonitor/foo/bar` with this code:
 
 ```js
 this.backendSrv.datasourceRequest({

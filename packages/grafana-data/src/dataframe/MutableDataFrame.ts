@@ -231,11 +231,6 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
           field.parse = makeFieldParser(val, field);
         }
         val = field.parse(val);
-      } else if (field.type === FieldType.time && isArray(val)) {
-        if (!field.parse) {
-          field.parse = (val: any[]) => val[0] || undefined;
-        }
-        val = field.parse(val);
       }
 
       if (val === undefined) {

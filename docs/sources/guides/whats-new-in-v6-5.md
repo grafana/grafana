@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.5"
+title = "What's new in Grafana v6.5"
 description = "Feature and improvement highlights for Grafana v6.5"
-keywords = ["grafana", "new", "documentation", "6.5"]
+keywords = ["grafana", "new", "documentation", "6.5", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.5"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -16
 +++
 
-# What's New in Grafana v6.5
+# What's new in Grafana v6.5
 
-For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Highlights
 
@@ -34,7 +34,7 @@ Grafana 6.5 comes with a lot of new features and enhancements:
 
 ### Ubuntu-based Docker images
 
-In Grafana [v6.4](/guides/whats-new-in-v6-4/#alpine-based-docker-image), we switched the Grafana Docker image from Ubuntu to Alpine. This change provides a more secure and lightweight Docker image.
+In Grafana [v6.4]({{< relref "whats-new-in-v6-4/#alpine-based-docker-image" >}}), we switched the Grafana Docker image from Ubuntu to Alpine. This change provides a more secure and lightweight Docker image.
 
 This change has received both negative and positive feedback as well as some bug reports. We learned that switching to an Alpine-based Docker image was a big breaking change for a lot of users. We should have more clearly highlighted this in blog post, release notes, changelog, and the [Docker Hub readme](https://hub.docker.com/r/grafana/grafana).
 
@@ -42,7 +42,7 @@ We also broke the Docker images for ARM, but this is fixed in Grafana v6.5.
 
 Grafana Docker images should be as secure as possible by default and that’s why the Alpine-based Docker images will continue to be the Grafana default (`grafana/grafana:<version>`). With that said, it’s good to give users options, and that’s why starting from Grafana v6.5, Ubuntu-based Docker images are also (`grafana/grafana:<version>-ubuntu`) available.
 
-Read more about [Installing using Docker](/installation/docker/).
+Read more about [Installing using Docker]({{< relref "../installation/docker/" >}}).
 
 ### CloudWatch data source improvements
 
@@ -120,7 +120,7 @@ TagValues
 tag_values(server, server=~${__searchFilter:regex})
 ```
 
-This feature is currently only supported by [Graphite](/features/datasources/graphite/#using-searchfilter-to-filter-results-in-query-variable), [MySQL](/features/datasources/mysql/#using-searchfilter-to-filter-results-in-query-variable) and [Postgres](/features/datasources/postgres/#using-searchfilter-to-filter-results-in-query-variable) data sources.
+This feature is currently only supported by [Graphite]({{< relref "../features/datasources/graphite/#using-searchfilter-to-filter-results-in-query-variable" >}}), [MySQL]({{< relref "../features/datasources/mysql/#using-searchfilter-to-filter-results-in-query-variable" >}}) and [Postgres]({{< relref "../features/datasources/postgres/#using-searchfilter-to-filter-results-in-query-variable" >}}) data sources.
 
 ### Graphite: Support for additional Metrictank functionality
 
@@ -174,37 +174,37 @@ In the Explore split view, you can now link the two timepickers so that if you c
 
 ### Alerting support for Azure Application Insights
 
-The [Azure Monitor](/features/datasources/azuremonitor/) data source supports multiple services in the Azure cloud. Before Grafana v6.5, only the Azure Monitor service had support for [Grafana Alerting](/alerting/rules). In Grafana 6.5, alerting support has been implemented for the [Application Insights service](/features/datasources/azuremonitor/#querying-the-application-insights-service).
+The [Azure Monitor]({{< relref "../features/datasources/azuremonitor/" >}}) data source supports multiple services in the Azure cloud. Before Grafana v6.5, only the Azure Monitor service had support for [Grafana Alerting]({{< relref "../alerting/rules" >}}). In Grafana 6.5, alerting support has been implemented for the [Application Insights service]({{< relref "../features/datasources/azuremonitor/#querying-the-application-insights-service" >}}).
 
 ### Allow saving of provisioned dashboards from UI
 
 Historically it has been possible to make changes to a provisioned dashboard in the Grafana UI. However, it hasn't been possible to save the changes without manual intervention. In Grafana 6.5 we introduce a new dashboard provisioning setting named `allowUiUpdates`. If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can save the dashboard and the changes will be persisted to the Grafana database.
 
-Read more about this new feature in [Provisioning Grafana](/administration/provisioning/#making-changes-to-a-provisioned-dashboard).
+Read more about this new feature in [Provisioning Grafana]({{< relref "../administration/provisioning/#making-changes-to-a-provisioned-dashboard" >}}).
 
 ### Mix auth proxy with Grafana login token and session cookie
 
 With the new setting, `enable_login_token`, set to true Grafana will, after successful auth proxy header validation, assign the user a login token and cookie. You only have to configure your auth proxy to provide headers for the /login route. Requests via other routes will be authenticated using the cookie.
 
-Read more about this new feature in [Auth Proxy Authentication](/auth/auth-proxy/#login-token-and-session-cookie)
+Read more about this new feature in [Auth Proxy Authentication]({{< relref "../auth/auth-proxy/#login-token-and-session-cookie" >}})
 
 ### Generic OAuth role mapping
 
-Grafana 6.5 makes it possible to configure Generic OAuth to map a certain response from OAuth provider to a certain Grafana organization role, similar to the existing [LDAP Group Mappings](/auth/ldap/#group-mappings) feature. The new setting is named `role_attribute_path` and expects a [JMESPath](http://jmespath.org/) expression.
+Grafana 6.5 makes it possible to configure Generic OAuth to map a certain response from OAuth provider to a certain Grafana organization role, similar to the existing [LDAP Group Mappings]({{< relref "../auth/ldap/#group-mappings" >}}) feature. The new setting is named `role_attribute_path` and expects a [JMESPath](http://jmespath.org/) expression.
 
-Read more about this new feature in [Generic OAuth Authentication](/auth/generic-oauth/) and make sure to check out the [JMESPath examples](/auth/generic-oauth/#jmespath-examples).
+Read more about this new feature in [Generic OAuth Authentication]({{< relref "../auth/generic-oauth/" >}}) and make sure to check out the [JMESPath examples]({{< relref "../auth/generic-oauth/#jmespath-examples" >}}).
 
 ### Image renderer plugin
 
-Since we announced the deprecation of PhantomJS and the new [Image Renderer Plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) in Grafana [6.4](/guides/whats-new-in-v6-4/#phantomjs-deprecation), we’ve received bug reports and valuable feedback.
+Since we announced the deprecation of PhantomJS and the new [Image Renderer Plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) in Grafana [6.4]({{< relref "../guides/whats-new-in-v6-4/#phantomjs-deprecation" >}}), we’ve received bug reports and valuable feedback.
 
-In Grafana 6.5 we’ve updated documentation to make it easier to understand how to install and troubleshoot possible problems. Read more about [Image Rendering](/administration/image_rendering/).
+In Grafana 6.5 we’ve updated documentation to make it easier to understand how to install and troubleshoot possible problems. Read more about [Image Rendering]({{< relref "../administration/image_rendering/" >}}).
 
 Please try the [Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) and let us know what you think.
 
 ## Upgrading
 
-See [upgrade notes](/installation/upgrading/#upgrading-to-v6-5).
+See [upgrade notes]({{< relref "../installation/upgrading/#upgrading-to-v6-5" >}}).
 
 ## Changelog
 

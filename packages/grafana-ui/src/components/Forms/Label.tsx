@@ -20,7 +20,10 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       max-width: 480px;
     `,
     description: css`
+      color: ${theme.colors.formDescription};
+      font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.weight.regular};
+      display: block;
     `,
   };
 });
@@ -31,8 +34,10 @@ export const Label: React.FC<LabelProps> = ({ children, description, className, 
 
   return (
     <div className={cx(styles.label, className)}>
-      <label {...labelProps}>{children}</label>
-      {description && <div className={styles.description}>{description}</div>}
+      <label {...labelProps}>
+        {children}
+        {description && <span className={styles.description}>{description}</span>}
+      </label>
     </div>
   );
 };

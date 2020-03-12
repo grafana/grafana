@@ -1,22 +1,19 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { PanelData, DataQueryRequest, dateTime, ScopedVars } from '@grafana/data';
-import { PanelModel } from './PanelModel';
+import { DataQueryRequest, dateTime, PanelData, ScopedVars } from '@grafana/data';
+import { DashboardModel } from './index';
+import { setEchoSrv } from '@grafana/runtime';
+import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
 
-// Defined within setup functions
-const panelsForCurrentDashboardMock: { [key: number]: PanelModel } = {};
+const dashboardModel = new DashboardModel({
+  panels: [{ id: 1, type: 'graph' }],
+});
 
 jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
   getDashboardSrv: () => {
     return {
-      getCurrent: () => {
-        return {
-          getPanelById: (id: number) => {
-            return panelsForCurrentDashboardMock[id];
-          },
-        };
-      },
+      getCurrent: () => dashboardModel,
     };
   },
 }));
@@ -68,6 +65,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
     };
 
     beforeEach(async () => {
+      setEchoSrv(new Echo());
       setupFn();
 
       const datasource: any = {
@@ -99,16 +97,9 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       ctx.runner.getData().subscribe({
         next: (data: PanelData) => {
           ctx.res = data;
-          ctx.events.push(data);
+          ctx.events?.push(data);
         },
       });
-
-      panelsForCurrentDashboardMock[1] = {
-        id: 1,
-        getQueryRunner: () => {
-          return ctx.runner;
-        },
-      } as PanelModel;
 
       ctx.events = [];
       ctx.runner.run(args);
@@ -121,17 +112,17 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
 describe('PanelQueryRunner', () => {
   describeQueryRunnerScenario('simple scenario', ctx => {
     it('should set requestId on request', async () => {
-      expect(ctx.queryCalledWith.requestId).toBe('Q100');
+      expect(ctx.queryCalledWith?.requestId).toBe('Q100');
     });
 
     it('should set datasource name on request', async () => {
-      expect(ctx.queryCalledWith.targets[0].datasource).toBe('TestDB');
+      expect(ctx.queryCalledWith?.targets[0].datasource).toBe('TestDB');
     });
 
     it('should pass scopedVars to datasource with interval props', async () => {
-      expect(ctx.queryCalledWith.scopedVars.server.text).toBe('Server1');
-      expect(ctx.queryCalledWith.scopedVars.__interval.text).toBe('5m');
-      expect(ctx.queryCalledWith.scopedVars.__interval_ms.text).toBe('300000');
+      expect(ctx.queryCalledWith?.scopedVars.server.text).toBe('Server1');
+      expect(ctx.queryCalledWith?.scopedVars.__interval.text).toBe('5m');
+      expect(ctx.queryCalledWith?.scopedVars.__interval_ms.text).toBe('300000');
     });
   });
 
@@ -142,20 +133,20 @@ describe('PanelQueryRunner', () => {
     });
 
     it('should return data', async () => {
-      expect(ctx.res.error).toBeUndefined();
-      expect(ctx.res.series.length).toBe(1);
+      expect(ctx.res?.error).toBeUndefined();
+      expect(ctx.res?.series.length).toBe(1);
     });
 
     it('should use widthPixels as maxDataPoints', async () => {
-      expect(ctx.queryCalledWith.maxDataPoints).toBe(200);
+      expect(ctx.queryCalledWith?.maxDataPoints).toBe(200);
     });
 
     it('should calculate interval based on width', async () => {
-      expect(ctx.queryCalledWith.interval).toBe('5m');
+      expect(ctx.queryCalledWith?.interval).toBe('5m');
     });
 
     it('fast query should only publish 1 data events', async () => {
-      expect(ctx.events.length).toBe(1);
+      expect(ctx.events?.length).toBe(1);
     });
   });
 
@@ -166,7 +157,7 @@ describe('PanelQueryRunner', () => {
     });
 
     it('should limit interval to data source min interval', async () => {
-      expect(ctx.queryCalledWith.interval).toBe('15s');
+      expect(ctx.queryCalledWith?.interval).toBe('15s');
     });
   });
 
@@ -178,7 +169,7 @@ describe('PanelQueryRunner', () => {
     });
 
     it('should limit interval to panel min interval', async () => {
-      expect(ctx.queryCalledWith.interval).toBe('30s');
+      expect(ctx.queryCalledWith?.interval).toBe('30s');
     });
   });
 
@@ -188,7 +179,7 @@ describe('PanelQueryRunner', () => {
     });
 
     it('should pass maxDataPoints if specified', async () => {
-      expect(ctx.queryCalledWith.maxDataPoints).toBe(10);
+      expect(ctx.queryCalledWith?.maxDataPoints).toBe(10);
     });
   });
 });

@@ -3,7 +3,7 @@ title = "Auth Proxy"
 description = "Grafana Auth Proxy Guide "
 keywords = ["grafana", "configuration", "documentation", "proxy"]
 type = "docs"
-aliases = ["/tutorials/authproxy/"]
+aliases = ["/docs/grafana/latest/tutorials/authproxy/"]
 [menu.docs]
 name = "Auth Proxy"
 identifier = "auth-proxy"
@@ -37,7 +37,7 @@ whitelist =
 # Optionally define more headers to sync other user attributes
 # Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
-# Checkout docs on this for more details on the below setting
+# Check out docs on this for more details on the below setting
 enable_login_token = false
 ```
 
@@ -238,7 +238,7 @@ headers = "Groups:X-WEBAUTH-GROUPS"
 
 You use the `X-WEBAUTH-GROUPS` header to send the team information for each user. Specifically, the set of Grafana's group IDs that the user belongs to.
 
-First, we need to set up the mapping between your authentication provider and Grafana. Follow [these instructions]({{< relref "auth/team-sync.md#enable-synchronization-for-a-team" >}}) to add groups to a team within Grafana.
+First, we need to set up the mapping between your authentication provider and Grafana. Follow [these instructions]({{< relref "team-sync.md#enable-synchronization-for-a-team" >}}) to add groups to a team within Grafana.
 
 Once that's done. You can verify your mappings by querying the API.
 
@@ -296,7 +296,7 @@ curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem
 
 With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
 
-[Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
+[Learn more about Team Sync]({{< relref "team-sync.md" >}})
 
 
 ## Login token and session cookie
@@ -306,4 +306,4 @@ a login token and cookie. You only have to configure your auth proxy to provide 
 Requests via other routes will be authenticated using the cookie.
 
 Use settings `login_maximum_inactive_lifetime_days` and `login_maximum_lifetime_days` under `[auth]` to control session
-lifetime. [Read more about login tokens](/auth/overview/#login-and-short-lived-tokens)
+lifetime. [Read more about login tokens]({{< relref "overview/#login-and-short-lived-tokens" >}})

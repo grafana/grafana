@@ -1,6 +1,11 @@
-import { stringToJsRegex, stringToMs } from './string';
+import { escapeStringForRegex, stringToJsRegex, stringToMs, unEscapeStringFromRegex } from './string';
 
 describe('stringToJsRegex', () => {
+  it('should just return string as RegEx if it does not start as a regex', () => {
+    const output = stringToJsRegex('validRegexp');
+    expect(output).toBeInstanceOf(RegExp);
+  });
+
   it('should parse the valid regex value', () => {
     const output = stringToJsRegex('/validRegexp/');
     expect(output).toBeInstanceOf(RegExp);
@@ -49,5 +54,37 @@ describe('stringToMs', () => {
     expect(() => {
       stringToMs('1y');
     }).toThrow();
+  });
+});
+
+describe('escapeStringForRegex', () => {
+  describe('when using a string with special chars', () => {
+    it('then all special chars should be escaped', () => {
+      const result = escapeStringForRegex('([{}])|*+-.?<>#&^$');
+      expect(result).toBe('\\(\\[\\{\\}\\]\\)\\|\\*\\+\\-\\.\\?\\<\\>\\#\\&\\^\\$');
+    });
+  });
+
+  describe('when using a string without special chars', () => {
+    it('then nothing should change', () => {
+      const result = escapeStringForRegex('some string 123');
+      expect(result).toBe('some string 123');
+    });
+  });
+});
+
+describe('unEscapeStringFromRegex', () => {
+  describe('when using a string with escaped special chars', () => {
+    it('then all special chars should be unescaped', () => {
+      const result = unEscapeStringFromRegex('\\(\\[\\{\\}\\]\\)\\|\\*\\+\\-\\.\\?\\<\\>\\#\\&\\^\\$');
+      expect(result).toBe('([{}])|*+-.?<>#&^$');
+    });
+  });
+
+  describe('when using a string without escaped special chars', () => {
+    it('then nothing should change', () => {
+      const result = unEscapeStringFromRegex('some string 123');
+      expect(result).toBe('some string 123');
+    });
   });
 });

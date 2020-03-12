@@ -161,6 +161,10 @@ type Config struct {
 	// on GetObject API calls.
 	S3DisableContentMD5Validation *bool
 
+	// Set this to `true` to have the S3 service client to use the region specified
+	// in the ARN, when an ARN is provided as an argument to a bucket parameter.
+	S3UseARNRegion *bool
+
 	// Set this to `true` to disable the EC2Metadata client from overriding the
 	// default http.Client's Timeout. This is helpful if you do not want the
 	// EC2Metadata client to create a new http.Client. This options is only
@@ -385,6 +389,13 @@ func (c *Config) WithS3DisableContentMD5Validation(enable bool) *Config {
 
 }
 
+// WithS3UseARNRegion sets a config S3UseARNRegion value and
+// returning a Config pointer for chaining
+func (c *Config) WithS3UseARNRegion(enable bool) *Config {
+	c.S3UseARNRegion = &enable
+	return c
+}
+
 // WithUseDualStack sets a config UseDualStack value returning a Config
 // pointer for chaining.
 func (c *Config) WithUseDualStack(enable bool) *Config {
@@ -511,6 +522,10 @@ func mergeInConfig(dst *Config, other *Config) {
 
 	if other.S3DisableContentMD5Validation != nil {
 		dst.S3DisableContentMD5Validation = other.S3DisableContentMD5Validation
+	}
+
+	if other.S3UseARNRegion != nil {
+		dst.S3UseARNRegion = other.S3UseARNRegion
 	}
 
 	if other.UseDualStack != nil {

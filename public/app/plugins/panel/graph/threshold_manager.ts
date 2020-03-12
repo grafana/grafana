@@ -60,8 +60,7 @@ export class ThresholdManager {
       model.value = graphValue;
 
       handleElem.off('mousemove', dragging);
-      handleElem.off('mouseup', dragging);
-      handleElem.off('mouseleave', dragging);
+      document.removeEventListener('mouseup', stopped);
 
       // trigger digest and render
       panelCtrl.$scope.$apply(() => {
@@ -77,8 +76,7 @@ export class ThresholdManager {
     posTop = handleElem.position().top;
 
     handleElem.on('mousemove', dragging);
-    handleElem.on('mouseup', stopped);
-    handleElem.on('mouseleave', stopped);
+    document.addEventListener('mouseup', stopped);
   }
 
   cleanUp() {

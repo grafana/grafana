@@ -1,17 +1,32 @@
 import {
   DataFrame,
-  LoadingState,
-  dateTime,
-  PanelData,
-  DataSourceApi,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceApi,
+  dateTime,
+  LoadingState,
+  PanelData,
 } from '@grafana/data';
-import { Subscriber, Observable, Subscription } from 'rxjs';
+import { Observable, Subscriber, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
+import { DashboardModel } from './DashboardModel';
+import { setEchoSrv } from '@grafana/runtime';
+import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
+
+const dashboardModel = new DashboardModel({
+  panels: [{ id: 1, type: 'graph' }],
+});
+
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => {
+    return {
+      getCurrent: () => dashboardModel,
+    };
+  },
+}));
 
 class ScenarioCtx {
   ds: DataSourceApi;
@@ -22,7 +37,7 @@ class ScenarioCtx {
   results: PanelData[];
   subscription: Subscription;
   wasStarted = false;
-  error: Error = null;
+  error: Error | null = null;
   toStartTime = dateTime();
   fromStartTime = dateTime();
 
@@ -84,6 +99,7 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
     const ctx = new ScenarioCtx();
 
     beforeEach(() => {
+      setEchoSrv(new Echo());
       ctx.reset();
       return ctx.setupFn();
     });
@@ -187,7 +203,7 @@ describe('runRequest', () => {
     });
 
     it('should emit 1 error result', () => {
-      expect(ctx.results[0].error.message).toBe('Ohh no');
+      expect(ctx.results[0].error?.message).toBe('Ohh no');
       expect(ctx.results[0].state).toBe(LoadingState.Error);
     });
   });
@@ -207,7 +223,7 @@ describe('runRequest', () => {
     it('should add the correct timeRange property and the request range should not be mutated', () => {
       expect(ctx.results[0].timeRange.to.valueOf()).toBeDefined();
       expect(ctx.results[0].timeRange.to.valueOf()).not.toBe(ctx.toStartTime.valueOf());
-      expect(ctx.results[0].timeRange.to.valueOf()).not.toBe(ctx.results[0].request.range.to.valueOf());
+      expect(ctx.results[0].timeRange.to.valueOf()).not.toBe(ctx.results[0].request?.range?.to.valueOf());
 
       expectThatRangeHasNotMutated(ctx);
     });
@@ -215,8 +231,8 @@ describe('runRequest', () => {
 
   runRequestScenario('If time range is not relative', ctx => {
     ctx.setup(async () => {
-      ctx.request.range.raw.from = ctx.fromStartTime;
-      ctx.request.range.raw.to = ctx.toStartTime;
+      ctx.request.range!.raw.from = ctx.fromStartTime;
+      ctx.request.range!.raw.to = ctx.toStartTime;
       // any changes to ctx.request.range will throw and state would become LoadingState.Error
       deepFreeze(ctx.request.range);
       ctx.start();
@@ -230,7 +246,7 @@ describe('runRequest', () => {
     it('should add the correct timeRange property and the request range should not be mutated', () => {
       expect(ctx.results[0].timeRange).toBeDefined();
       expect(ctx.results[0].timeRange.to.valueOf()).toBe(ctx.toStartTime.valueOf());
-      expect(ctx.results[0].timeRange.to.valueOf()).toBe(ctx.results[0].request.range.to.valueOf());
+      expect(ctx.results[0].timeRange.to.valueOf()).toBe(ctx.results[0].request?.range?.to.valueOf());
 
       expectThatRangeHasNotMutated(ctx);
     });
@@ -239,7 +255,7 @@ describe('runRequest', () => {
 
 const expectThatRangeHasNotMutated = (ctx: ScenarioCtx) => {
   // Make sure that the range for request is not changed and that deepfreeze hasn't thrown
-  expect(ctx.results[0].request.range.to.valueOf()).toBe(ctx.toStartTime.valueOf());
+  expect(ctx.results[0].request?.range?.to.valueOf()).toBe(ctx.toStartTime.valueOf());
   expect(ctx.results[0].error).not.toBeDefined();
   expect(ctx.results[0].state).toBe(LoadingState.Done);
 };

@@ -25,6 +25,7 @@ describe('GraphCtrl', () => {
   GraphCtrl.prototype.panel = {
     events: {
       on: () => {},
+      emit: () => {},
     },
     gridPos: {
       w: 100,
@@ -118,15 +119,24 @@ describe('GraphCtrl', () => {
       const data = [
         {
           target: 'test.normal',
-          datapoints: [[10, 1], [10, 2]],
+          datapoints: [
+            [10, 1],
+            [10, 2],
+          ],
         },
         {
           target: 'test.nulls',
-          datapoints: [[null, 1], [null, 2]],
+          datapoints: [
+            [null, 1],
+            [null, 2],
+          ],
         },
         {
           target: 'test.zeros',
-          datapoints: [[0, 1], [0, 2]],
+          datapoints: [
+            [0, 1],
+            [0, 2],
+          ],
         },
       ];
       ctx.ctrl.onDataSnapshotLoad(data);

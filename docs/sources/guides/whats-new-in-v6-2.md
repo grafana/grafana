@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.2"
+title = "What's new in Grafana v6.2"
 description = "Feature and improvement highlights for Grafana v6.2"
-keywords = ["grafana", "new", "documentation", "6.2"]
+keywords = ["grafana", "new", "documentation", "6.2", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.2"
@@ -10,13 +10,13 @@ parent = "whatsnew"
 weight = -13
 +++
 
-# What's New in Grafana v6.2
+# What's new in Grafana v6.2
 
-For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 If you use a password for your data sources please read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2).
 
-Checkout the [demo dashboard](https://play.grafana.org/d/ZvPm55mWk/new-features-in-v6-2?orgId=1) of some the new features in v6.2.
+Check out the [demo dashboard](https://play.grafana.org/d/ZvPm55mWk/new-features-in-v6-2?orgId=1) of some the new features in v6.2.
 
 ## Improved security
 
@@ -87,7 +87,7 @@ This release contains a lot of small features and fixes:
 - CloudWatch - Important fix for default alias disappearing in v6.1.
 - Search - Works in a scope of dashboard's folder by default when viewing dashboard.
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
 
 A huge thanks to our community for all the reported issues, bug fixes and feedback.
 

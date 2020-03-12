@@ -580,6 +580,14 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config,
 		cfg.Credentials = creds
 	}
 
+	cfg.S3UseARNRegion = userCfg.S3UseARNRegion
+	if cfg.S3UseARNRegion == nil {
+		cfg.S3UseARNRegion = &envCfg.S3UseARNRegion
+	}
+	if cfg.S3UseARNRegion == nil {
+		cfg.S3UseARNRegion = &sharedCfg.S3UseARNRegion
+	}
+
 	return nil
 }
 
@@ -643,6 +651,7 @@ func (s *Session) ClientConfig(service string, cfgs ...*aws.Config) client.Confi
 	return client.Config{
 		Config:             s.Config,
 		Handlers:           s.Handlers,
+		PartitionID:        resolved.PartitionID,
 		Endpoint:           resolved.URL,
 		SigningRegion:      resolved.SigningRegion,
 		SigningNameDerived: resolved.SigningNameDerived,

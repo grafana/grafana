@@ -16,7 +16,7 @@ To enable the GitHub OAuth2 you must register your application with GitHub. GitH
 
 ## Configure GitHub OAuth application
 
-You need to create a GitHub OAuth application (you find this under the GitHub
+You need to create a GitHub OAuth application (you  will find this under the GitHub
 settings page). When you create the application you will need to specify
 a callback URL. Specify this as callback:
 
@@ -113,4 +113,4 @@ Your GitHub teams can be referenced in two ways:
 
 Example: `@grafana/developers`
 
-[Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
+[Learn more about Team Sync]({{< relref "team-sync.md" >}})

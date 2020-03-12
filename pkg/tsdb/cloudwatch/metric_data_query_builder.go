@@ -78,7 +78,7 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
-		values := escape(knownDimensions[key])
+		values := escapeDoubleQuotes(knownDimensions[key])
 		valueExpression := join(values, " OR ", `"`, `"`)
 		if len(knownDimensions[key]) > 1 {
 			valueExpression = fmt.Sprintf(`(%s)`, valueExpression)
@@ -91,7 +91,7 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 		schema := query.Namespace
 		if len(dimensionNames) > 0 {
 			sort.Strings(dimensionNames)
-			schema += fmt.Sprintf(",%s", join(dimensionNames, ",", "", ""))
+			schema += fmt.Sprintf(",%s", join(dimensionNames, ",", `"`, `"`))
 		}
 
 		return fmt.Sprintf("REMOVE_EMPTY(SEARCH('{%s} %s', '%s', %s))", schema, searchTerm, stat, strconv.Itoa(query.Period))
@@ -102,12 +102,9 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('Namespace="%s" %s', '%s', %s))`, query.Namespace, searchTerm, stat, strconv.Itoa(query.Period))
 }
 
-func escape(arr []string) []string {
+func escapeDoubleQuotes(arr []string) []string {
 	result := []string{}
 	for _, value := range arr {
-		value = strings.ReplaceAll(value, `\`, `\\`)
-		value = strings.ReplaceAll(value, ")", `\)`)
-		value = strings.ReplaceAll(value, "(", `\(`)
 		value = strings.ReplaceAll(value, `"`, `\"`)
 		result = append(result, value)
 	}

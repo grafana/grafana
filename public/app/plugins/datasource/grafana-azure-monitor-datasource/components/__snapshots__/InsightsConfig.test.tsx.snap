@@ -59,7 +59,6 @@ exports[`Render should disable insights api key input 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
             value="cddcc020-2c94-460a-a3d0-df3147ffa792"
           />
         </div>
@@ -95,7 +94,6 @@ exports[`Render should enable insights api key input 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
             placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
             value="e7f3f661-a933-4b3f-8176-51c4f982ec48"
           />
@@ -118,7 +116,6 @@ exports[`Render should enable insights api key input 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
             value="cddcc020-2c94-460a-a3d0-df3147ffa792"
           />
         </div>
@@ -154,9 +151,8 @@ exports[`Render should render component 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
             placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            value="e7f3f661-a933-4b3f-8176-51c4f982ec48"
+            value=""
           />
         </div>
       </div>
@@ -177,8 +173,7 @@ exports[`Render should render component 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
-            value="cddcc020-2c94-460a-a3d0-df3147ffa792"
+            value=""
           />
         </div>
       </div>

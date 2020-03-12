@@ -10,7 +10,7 @@ import { Typeahead } from '../components/Typeahead/Typeahead';
 import { CompletionItem, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../types/completion';
 import { makeFragment } from '../utils/slate';
 
-export const TYPEAHEAD_DEBOUNCE = 100;
+export const TYPEAHEAD_DEBOUNCE = 250;
 
 // Commands added to the editor by this plugin.
 interface SuggestionsPluginCommands {

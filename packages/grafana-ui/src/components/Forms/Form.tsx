@@ -1,22 +1,24 @@
-/**
- * This is a stub implementation only for correct styles to be applied
- */
+import React, { useEffect } from 'react';
+import { useForm, Mode, OnSubmit, DeepPartial, FormContextValues } from 'react-hook-form';
 
-import React from 'react';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+type FormAPI<T> = Pick<FormContextValues<T>, 'register' | 'errors' | 'control'>;
 
-const getFormStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    form: css`
-      margin-bottom: ${theme.spacing.formMargin};
-    `,
-  };
-});
+interface FormProps<T> {
+  validateOn?: Mode;
+  defaultValues?: DeepPartial<T>;
+  onSubmit: OnSubmit<T>;
+  children: (api: FormAPI<T>) => React.ReactNode;
+}
 
-export const Form: React.FC = ({ children }) => {
-  const theme = useTheme();
-  const styles = getFormStyles(theme);
-  return <div className={styles.form}>{children}</div>;
-};
+export function Form<T>({ defaultValues, onSubmit, children, validateOn = 'onSubmit' }: FormProps<T>) {
+  const { handleSubmit, register, errors, control, reset, getValues } = useForm<T>({
+    mode: validateOn,
+    defaultValues,
+  });
+
+  useEffect(() => {
+    reset({ ...getValues(), ...defaultValues });
+  }, [defaultValues]);
+
+  return <form onSubmit={handleSubmit(onSubmit)}>{children({ register, errors, control })}</form>;
+}

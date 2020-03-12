@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.0"
+title = "What's new in Grafana v6.0"
 description = "Feature and improvement highlights for Grafana v6.0"
-keywords = ["grafana", "new", "documentation", "6.0"]
+keywords = ["grafana", "new", "documentation", "6.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.0"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -11
 +++
 
-# What's New in Grafana v6.0
+# What's new in Grafana v6.0
 
 This update to Grafana introduces a new way of exploring your data, support for log data, and tons of other features.
 
@@ -173,4 +173,4 @@ See [upgrade notes](/installation/upgrading/#upgrading-to-v6-0).
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.

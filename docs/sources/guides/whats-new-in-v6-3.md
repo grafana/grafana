@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.3"
+title = "What's new in Grafana v6.3"
 description = "Feature and improvement highlights for Grafana v6.3"
-keywords = ["grafana", "new", "documentation", "6.3"]
+keywords = ["grafana", "new", "documentation", "6.3", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.3"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -14
 +++
 
-# What's New in Grafana v6.3
+# What's new in Grafana v6.3
 
-For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Highlights
 
@@ -124,23 +124,23 @@ wait for the user to logout or the session to expire for the Grafana permissions
 With active sync the user would be automatically removed from the corresponding team in Grafana or even logged out and disabled if no longer
 belonging to an LDAP group that gives them access to Grafana.
 
-[Read more](/auth/enhanced_ldap/#active-ldap-synchronization)
+[Read more](/auth/enhanced_ldap/#active-ldap-synchronization).
 
 ### SAML Authentication
 
 Built-in support for SAML is now available in Grafana Enterprise.
 
-[See docs]({{< relref "auth/saml.md" >}})
+[See docs]({{< relref "../auth/saml.md" >}})
 
 ### Team Sync for GitHub OAuth
 
 When setting up OAuth with GitHub it's now possible to sync GitHub teams with Teams in Grafana.
 
-[See docs]({{< relref "auth/github.md" >}})
+[See docs]({{< relref "../auth/github.md" >}})
 
 ### Team Sync for Auth Proxy
 
 We've added support for enriching the Auth Proxy headers with Teams information, which makes it possible
 to use Team Sync with Auth Proxy.
 
-[See docs](/auth/auth-proxy/#auth-proxy-authentication)
+[See docs](/auth/auth-proxy/#auth-proxy-authentication).

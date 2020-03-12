@@ -10,7 +10,14 @@ import {
   PanelOptionsGroup,
   DataLinksEditor,
 } from '@grafana/ui';
-import { PanelEditorProps, FieldDisplayOptions, Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
+import {
+  PanelEditorProps,
+  FieldDisplayOptions,
+  ThresholdsConfig,
+  ValueMapping,
+  FieldConfig,
+  DataLink,
+} from '@grafana/data';
 
 import { GaugeOptions } from './types';
 import {
@@ -30,7 +37,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       showThresholdMarkers: !this.props.options.showThresholdMarkers,
     });
 
-  onThresholdsChanged = (thresholds: Threshold[]) => {
+  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,

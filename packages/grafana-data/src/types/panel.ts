@@ -1,10 +1,11 @@
 import { ComponentClass, ComponentType } from 'react';
-import { DataQueryError, DataQueryRequest } from './datasource';
+import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { FieldConfigEditorRegistry } from './fieldOverrides';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -18,6 +19,7 @@ export interface PanelData {
   state: LoadingState;
   series: DataFrame[];
   request?: DataQueryRequest;
+  timings?: DataQueryTimings;
   error?: DataQueryError;
   // Contains the range from the request or a shifted time range if a request uses relative time
   timeRange: TimeRange;
@@ -52,6 +54,7 @@ export interface PanelModel<TOptions = any> {
   id: number;
   options: TOptions;
   pluginVersion?: string;
+  scopedVars?: ScopedVars;
 }
 
 /**
@@ -60,7 +63,7 @@ export interface PanelModel<TOptions = any> {
 export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
 
 /**
- * Called before a panel is initalized
+ * Called before a panel is initialized
  */
 export type PanelTypeChangedHandler<TOptions = any> = (
   options: Partial<TOptions>,
@@ -71,6 +74,7 @@ export type PanelTypeChangedHandler<TOptions = any> = (
 export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
+  customFieldConfigs?: FieldConfigEditorRegistry;
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -120,11 +124,11 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
     this.onPanelTypeChanged = handler;
     return this;
   }
-}
 
-export interface PanelSize {
-  width: number;
-  height: number;
+  setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
+    this.customFieldConfigs = registry;
+    return this;
+  }
 }
 
 export interface PanelMenuItem {
@@ -133,6 +137,7 @@ export interface PanelMenuItem {
   iconClassName?: string;
   onClick?: (event: React.MouseEvent<any>) => void;
   shortcut?: string;
+  href?: string;
   subMenu?: PanelMenuItem[];
 }
 

@@ -276,6 +276,19 @@ describe('TimeSeries', () => {
       });
     });
 
+    describe('fillGradient', () => {
+      beforeEach(() => {
+        series.alias = 'test';
+        series.applySeriesOverrides([{ alias: 'test', fill: 10, fillGradient: 10 }]);
+      });
+
+      it('should set fillcolor to gradient', () => {
+        expect(series.lines.fillColor).toMatchObject({
+          colors: [{ opacity: 0.0 }, { opacity: 1 }],
+        });
+      });
+    });
+
     describe('series option overrides, bars, true & lines false', () => {
       beforeEach(() => {
         series.alias = 'test';

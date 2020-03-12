@@ -1,5 +1,6 @@
 import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from './query_hints';
-//////
+import { PrometheusDatasource } from './datasource';
+
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {
     expect(getQueryHints('', [])).toEqual(null);
@@ -9,35 +10,7 @@ describe('getQueryHints()', () => {
     expect(getQueryHints('', [{ datapoints: [] }])).toEqual(null);
   });
 
-  it('returns no hint for a monotonically decreasing series', () => {
-    const series = [
-      {
-        datapoints: [
-          [23, 1000],
-          [22, 1001],
-        ],
-      },
-    ];
-    const hints = getQueryHints('metric', series);
-    expect(hints).toEqual(null);
-  });
-
-  it('returns no hint for a flat series', () => {
-    const series = [
-      {
-        datapoints: [
-          [null, 1000],
-          [23, 1001],
-          [null, 1002],
-          [23, 1003],
-        ],
-      },
-    ];
-    const hints = getQueryHints('metric', series);
-    expect(hints).toEqual(null);
-  });
-
-  it('returns a rate hint for a monotonically increasing series', () => {
+  it('returns a rate hint for a counter metric', () => {
     const series = [
       {
         datapoints: [
@@ -46,21 +19,21 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const hints = getQueryHints('metric', series);
+    const hints = getQueryHints('metric_total', series);
 
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
-      label: 'Time series is monotonically increasing.',
+      label: 'Metric metric_total looks like a counter.',
       fix: {
         action: {
           type: 'ADD_RATE',
-          query: 'metric',
+          query: 'metric_total',
         },
       },
     });
   });
 
-  it('returns no rate hint for a monotonically increasing series that already has a rate', () => {
+  it('returns a certain rate hint for a counter metric', () => {
     const series = [
       {
         datapoints: [
@@ -69,11 +42,40 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const hints = getQueryHints('rate(metric[1m])', series);
+    const mock: unknown = { languageProvider: { metricsMetadata: { foo: [{ type: 'counter' }] } } };
+    const datasource = mock as PrometheusDatasource;
+
+    let hints = getQueryHints('foo', series, datasource);
+    expect(hints!.length).toBe(1);
+    expect(hints![0]).toMatchObject({
+      label: 'Metric foo is a counter.',
+      fix: {
+        action: {
+          type: 'ADD_RATE',
+          query: 'foo',
+        },
+      },
+    });
+
+    // Test substring match not triggering hint
+    hints = getQueryHints('foo_foo', series, datasource);
+    expect(hints).toBe(null);
+  });
+
+  it('returns no rate hint for a counter metric that already has a rate', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const hints = getQueryHints('rate(metric_total[1m])', series);
     expect(hints).toEqual(null);
   });
 
-  it('returns a rate hint w/o action for a complex monotonically increasing series', () => {
+  it('returns no rate hint for a counter metric that already has an increase', () => {
     const series = [
       {
         datapoints: [
@@ -82,33 +84,23 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const hints = getQueryHints('sum(metric)', series);
+    const hints = getQueryHints('increase(metric_total[1m])', series);
+    expect(hints).toEqual(null);
+  });
+
+  it('returns a rate hint w/o action for a complex counter metric', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const hints = getQueryHints('sum(metric_total)', series);
     expect(hints!.length).toBe(1);
     expect(hints![0].label).toContain('rate()');
     expect(hints![0].fix).toBeUndefined();
-  });
-
-  it('returns a rate hint for a monotonically increasing series with missing data', () => {
-    const series = [
-      {
-        datapoints: [
-          [23, 1000],
-          [null, 1001],
-          [24, 1002],
-        ],
-      },
-    ];
-    const hints = getQueryHints('metric', series);
-    expect(hints!.length).toBe(1);
-    expect(hints![0]).toMatchObject({
-      label: 'Time series is monotonically increasing.',
-      fix: {
-        action: {
-          type: 'ADD_RATE',
-          query: 'metric',
-        },
-      },
-    });
   });
 
   it('returns a histogram hint for a bucket series', () => {
@@ -147,47 +139,6 @@ describe('getQueryHints()', () => {
           preventSubmit: true,
         },
       },
-    });
-  });
-
-  describe('when called without datapoints in series', () => {
-    it('then it should use rows instead and return correct hint', () => {
-      const series = [
-        {
-          fields: [
-            {
-              name: 'Some Name',
-            },
-          ],
-          rows: [[1], [2]],
-        },
-      ];
-
-      const result = getQueryHints('up', series);
-      expect(result).toEqual([
-        {
-          fix: { action: { query: 'up', type: 'ADD_RATE' }, label: 'Fix by adding rate().' },
-          label: 'Time series is monotonically increasing.',
-          type: 'APPLY_RATE',
-        },
-      ]);
-    });
-  });
-
-  describe('when called without datapoints and rows in series', () => {
-    it('then it should use an empty array and return null', () => {
-      const series = [
-        {
-          fields: [
-            {
-              name: 'Some Name',
-            },
-          ],
-        },
-      ];
-
-      const result = getQueryHints('up', series);
-      expect(result).toEqual(null);
     });
   });
 });

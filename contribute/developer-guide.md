@@ -72,6 +72,10 @@ Log in using the default credentials:
 
 When you log in for the first time, Grafana asks you to change your password.
 
+#### Building on Windows
+
+The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+
 ## Test Grafana
 
 The test suite consists of three types of tests: _Frontend tests_, _backend tests_, and _end-to-end tests_.
@@ -94,7 +98,9 @@ go test -v ./pkg/...
 
 ### Run end-to-end tests
 
-The end-to-end tests in Grafana uses [puppeteer](https://github.com/GoogleChrome/puppeteer) to run automated scripts in a headless Chrome browser. To run the tests:
+The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md). 
+
+To run the tests:
 
 ```
 yarn e2e-tests
@@ -106,10 +112,10 @@ By default, the end-to-end tests assumes Grafana is available on `localhost:3000
 BASE_URL=http://localhost:3333 yarn e2e-tests
 ```
 
-To follow the tests in the browser while they're running, add the `BROWSER` and `SLOWMO` environment variables:
+To follow the tests in the browser while they're running, use the `yarn e2e-tests:debug` instead.
 
 ```
-BROWSER=1 SLOWMO=1 yarn e2e-tests
+yarn e2e-tests:debug
 ```
 
 ## Configure Grafana for development

@@ -1,4 +1,4 @@
-import { DataQueryRequest, DataQuery } from '@grafana/data';
+import { DataQueryRequest, DataQuery, CoreApp } from '@grafana/data';
 import { dateTime } from '@grafana/data';
 
 export function getQueryOptions<TQuery extends DataQuery>(
@@ -9,6 +9,7 @@ export function getQueryOptions<TQuery extends DataQuery>(
 
   const defaults: DataQueryRequest<TQuery> = {
     requestId: 'TEST',
+    app: CoreApp.Dashboard,
     range: range,
     targets: [],
     scopedVars: {},

@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.2"
+title = "What's new in Grafana v5.2"
 description = "Feature and improvement highlights for Grafana v5.2"
-keywords = ["grafana", "new", "documentation", "5.2"]
+keywords = ["grafana", "new", "documentation", "5.2", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.2"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -8
 +++
 
-# What's New in Grafana v5.2
+# What's new in Grafana v5.2
 
 Grafana v5.2 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -97,5 +97,5 @@ user that has editor role in an organization or the edit permission in at least 
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.

@@ -1,32 +1,6 @@
-import { Organization, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
-
-export enum ActionTypes {
-  LoadOrganization = 'LOAD_ORGANIZATION',
-  SetOrganizationName = 'SET_ORGANIZATION_NAME',
-}
-
-interface LoadOrganizationAction {
-  type: ActionTypes.LoadOrganization;
-  payload: Organization;
-}
-
-interface SetOrganizationNameAction {
-  type: ActionTypes.SetOrganizationName;
-  payload: string;
-}
-
-const organizationLoaded = (organization: Organization) => ({
-  type: ActionTypes.LoadOrganization,
-  payload: organization,
-});
-
-export const setOrganizationName = (orgName: string) => ({
-  type: ActionTypes.SetOrganizationName,
-  payload: orgName,
-});
-
-export type Action = LoadOrganizationAction | SetOrganizationNameAction;
+import { organizationLoaded } from './reducers';
 
 export function loadOrganization(): ThunkResult<any> {
   return async dispatch => {

@@ -1,7 +1,7 @@
 package notifications
 
 import (
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,6 +14,7 @@ type AttachedFile struct {
 // Message is representation of the email message
 type Message struct {
 	To            []string
+	SingleEmail   bool
 	From          string
 	Subject       string
 	Body          string
@@ -23,7 +24,7 @@ type Message struct {
 	AttachedFiles []*AttachedFile
 }
 
-func setDefaultTemplateData(data map[string]interface{}, u *m.User) {
+func setDefaultTemplateData(data map[string]interface{}, u *models.User) {
 	data["AppUrl"] = setting.AppUrl
 	data["BuildVersion"] = setting.BuildVersion
 	data["BuildStamp"] = setting.BuildStamp

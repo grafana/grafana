@@ -101,6 +101,7 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   $scope.addOverrideOption('Bars', 'bars', [true, false]);
   $scope.addOverrideOption('Lines', 'lines', [true, false]);
   $scope.addOverrideOption('Line fill', 'fill', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  $scope.addOverrideOption('Fill gradient', 'fillGradient', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   $scope.addOverrideOption('Line width', 'linewidth', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   $scope.addOverrideOption('Null point mode', 'nullPointMode', ['connected', 'null', 'null as zero']);
   $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());

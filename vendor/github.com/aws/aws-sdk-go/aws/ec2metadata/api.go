@@ -31,7 +31,7 @@ func (c *EC2Metadata) getToken(duration time.Duration) (tokenOutput, error) {
 	// Swap the unmarshalMetadataHandler with unmarshalTokenHandler on this request.
 	req.Handlers.Unmarshal.Swap(unmarshalMetadataHandlerName, unmarshalTokenHandler)
 
-	ttl := strconv.FormatInt(int64(duration / time.Second),10)
+	ttl := strconv.FormatInt(int64(duration/time.Second), 10)
 	req.HTTPRequest.Header.Set(ttlHeader, ttl)
 
 	err := req.Send()
@@ -145,17 +145,17 @@ func (c *EC2Metadata) IAMInfo() (EC2IAMInfo, error) {
 
 // Region returns the region the instance is running in.
 func (c *EC2Metadata) Region() (string, error) {
-	resp, err := c.GetMetadata("placement/availability-zone")
+	ec2InstanceIdentityDocument, err := c.GetInstanceIdentityDocument()
 	if err != nil {
 		return "", err
 	}
-
-	if len(resp) == 0 {
-		return "", awserr.New("EC2MetadataError", "invalid Region response", nil)
+	// extract region from the ec2InstanceIdentityDocument
+	region := ec2InstanceIdentityDocument.Region
+	if len(region) == 0 {
+		return "", awserr.New("EC2MetadataError", "invalid region received for ec2metadata instance", nil)
 	}
-
-	// returns region without the suffix. Eg: us-west-2a becomes us-west-2
-	return resp[:len(resp)-1], nil
+	// returns region
+	return region, nil
 }
 
 // Available returns if the application has access to the EC2 Metadata service.

@@ -3,7 +3,7 @@ title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
 type = "docs"
-aliases = ["/installation/provisioning"]
+aliases = ["/docs/grafana/latest/installation/provisioning"]
 [menu.docs]
 parent = "admin"
 weight = 8
@@ -15,7 +15,7 @@ In previous versions of Grafana, you could only use the API for provisioning dat
 
 ## Config File
 
-Checkout the [configuration](/installation/configuration) page for more information on what you can configure in `grafana.ini`
+Check out the [configuration]({{< relref "../installation/configuration" >}}) page for more information on what you can configure in `grafana.ini`
 
 ### Config File Locations
 
@@ -171,7 +171,7 @@ Since not all datasources have the same configuration settings we only have the 
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
-Secure json data is a map of settings that will be encrypted with [secret key](/installation/configuration/#secret-key) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../installation/configuration/#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
 | Name | Type | Datasource | Description |
 | ----| ---- | ---- | --- |
@@ -253,9 +253,9 @@ Note: The JSON definition in the input field when using `Copy JSON to Clipboard`
                                                                                                                                                                  
 {{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-### Reusable Dashboard Urls
+### Reusable Dashboard URLs
 
-If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifier.
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the URLs given since the new dashboard URL uses the uid as identifier.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
 By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
@@ -270,7 +270,7 @@ Alert Notification Channels can be provisioned by adding one or more yaml config
 
 Each config file can contain the following top-level fields:
 - `notifiers`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
-- `delete_notifiers`, a list of alert notifications to be deleted before before inserting/updating those in the `notifiers` list.
+- `delete_notifiers`, a list of alert notifications to be deleted before inserting/updating those in the `notifiers` list.
 
 Provisioning looks up alert notifications by uid, and will update any existing notification with the provided uid.
 
@@ -348,10 +348,12 @@ The following sections detail the supported settings for each alert notification
 | url |
 | recipient |
 | username |
-| iconEmoji |
-| iconUrl |
+| icon_emoji |
+| icon_url |
 | uploadImage |
-| mention |
+| mentionUsers |
+| mentionGroups |
+| mentionChannel |
 | token |
 
 #### Alert notification `victorops`
@@ -430,6 +432,7 @@ The following sections detail the supported settings for each alert notification
 | apiKey |
 | apiUrl |
 | autoClose |
+| overridePriority |
 
 #### Alert notification `telegram`
 
@@ -437,6 +440,7 @@ The following sections detail the supported settings for each alert notification
 | ---- |
 | bottoken |
 | chatid |
+| uploadImage |
 
 #### Alert notification `threema`
 

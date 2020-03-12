@@ -1,25 +1,29 @@
-import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
+import isEmpty from 'lodash/isEmpty';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
-import { FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
-import { InterpolateFunction } from '../types/panel';
+import {
+  FieldConfig,
+  DataFrame,
+  FieldType,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
+  FieldConfigSource,
+  InterpolateFunction,
+} from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
-import { DisplayValue, DisplayValueAlignmentFactors } from '../types/displayValue';
 import { GrafanaTheme } from '../types/theme';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
+import { applyFieldOverrides } from './fieldOverrides';
 
-export interface FieldDisplayOptions {
+export interface FieldDisplayOptions extends FieldConfigSource {
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
-
-  defaults: FieldConfig; // Use these values unless otherwise stated
-  override: FieldConfig; // Set these values regardless of the source
 }
 
 // TODO: use built in variables, same as for data links?
@@ -75,33 +79,27 @@ export interface GetFieldDisplayValuesOptions {
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
+  autoMinMax?: boolean;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { data, replaceVariables, fieldOptions } = options;
-  const { defaults, override } = fieldOptions;
+  const { replaceVariables, fieldOptions } = options;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
 
-  if (data) {
+  if (options.data) {
+    const data = applyFieldOverrides(options);
+
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const defaultTitle = getTitleTemplate(fieldOptions.defaults.title, calcs, data);
     const scopedVars: ScopedVars = {};
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
-      let series = data[s];
-      if (!series.name) {
-        series = {
-          ...series,
-          name: series.refId ? series.refId : `Series[${s}]`,
-        };
-      }
-
-      scopedVars['__series'] = { text: 'Series', value: { name: series.name } };
+      const series = data[s]; // Name is already set
 
       const { timeField } = getTimeField(series);
       const view = new DataFrameView(series);
@@ -113,20 +111,14 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         if (field.type !== FieldType.number) {
           continue;
         }
-        const config = getFieldProperties(defaults, field.config || {}, override);
+        const config = field.config; // already set by the prepare task
 
-        let name = field.name;
-        if (!name) {
-          name = `Field[${s}]`;
-        }
-
-        scopedVars['__field'] = { text: 'Field', value: { name } };
-
-        const display = getDisplayProcessor({
-          config,
-          theme: options.theme,
-          type: field.type,
-        });
+        const display =
+          field.display ??
+          getDisplayProcessor({
+            field,
+            theme: options.theme,
+          });
 
         const title = config.title ? config.title : defaultTitle;
         // Show all rows
@@ -145,9 +137,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                 };
               }
             }
-
             const displayValue = display(field.values.get(j));
-            displayValue.title = replaceVariables(title, scopedVars);
+            displayValue.title = replaceVariables(title, {
+              ...field.config.scopedVars, // series and field scoped vars
+              ...scopedVars,
+            });
+
             values.push({
               name,
               field: config,
@@ -180,7 +175,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           for (const calc of calcs) {
             scopedVars[VAR_CALC] = { value: calc, text: calc };
             const displayValue = display(results[calc]);
-            displayValue.title = replaceVariables(title, scopedVars);
+            displayValue.title = replaceVariables(title, {
+              ...field.config.scopedVars, // series and field scoped vars
+              ...scopedVars,
+            });
             values.push({
               name: calc,
               field: config,
@@ -196,16 +194,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   }
 
   if (values.length === 0) {
-    values.push({
-      name: 'No data',
-      field: {
-        ...defaults,
-      },
-      display: {
-        numeric: 0,
-        text: 'No data',
-      },
-    });
+    values.push(createNoValuesFieldDisplay(options));
   } else if (values.length === 1 && !fieldOptions.defaults.title) {
     // Don't show title for single item
     values[0].display.title = undefined;
@@ -214,80 +203,18 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   return values;
 };
 
-const numericFieldProps: any = {
-  decimals: true,
-  min: true,
-  max: true,
-};
-
-/**
- * Returns a version of the field with the overries applied.  Any property with
- * value: null | undefined | empty string are skipped.
- *
- * For numeric values, only valid numbers will be applied
- * for units, 'none' will be skipped
- */
-export function applyFieldProperties(field: FieldConfig, props?: FieldConfig): FieldConfig {
-  if (!props) {
-    return field;
-  }
-  const keys = Object.keys(props);
-  if (!keys.length) {
-    return field;
-  }
-  const copy = { ...field } as any; // make a copy that we will manipulate directly
-  for (const key of keys) {
-    const val = (props as any)[key];
-    if (val === null || val === undefined) {
-      continue;
-    }
-
-    if (numericFieldProps[key]) {
-      const num = toNumber(val);
-      if (!isNaN(num)) {
-        copy[key] = num;
-      }
-    } else if (val) {
-      // skips empty string
-      if (key === 'unit' && val === 'none') {
-        continue;
-      }
-      copy[key] = val;
-    }
-  }
-  return copy as FieldConfig;
-}
-
-export function getFieldProperties(...props: FieldConfig[]): FieldConfig {
-  let field = props[0] as FieldConfig;
-  for (let i = 1; i < props.length; i++) {
-    field = applyFieldProperties(field, props[i]);
-  }
-
-  // First value is always -Infinity
-  if (field.thresholds && field.thresholds.length) {
-    field.thresholds[0].value = -Infinity;
-  }
-
-  // Verify that max > min
-  if (field.hasOwnProperty('min') && field.hasOwnProperty('max') && field.min! > field.max!) {
-    return {
-      ...field,
-      min: field.max,
-      max: field.min,
-    };
-  }
-  return field;
-}
-
 export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): DisplayValueAlignmentFactors {
   const info: DisplayValueAlignmentFactors = {
     title: '',
     text: '',
   };
 
+  let prefixLength = 0;
+  let suffixLength = 0;
+
   for (let i = 0; i < values.length; i++) {
     const v = values[i].display;
+
     if (v.text && v.text.length > info.text.length) {
       info.text = v.text;
     }
@@ -295,6 +222,52 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
     if (v.title && v.title.length > info.title.length) {
       info.title = v.title;
     }
+
+    if (v.prefix && v.prefix.length > prefixLength) {
+      info.prefix = v.prefix;
+      prefixLength = v.prefix.length;
+    }
+
+    if (v.suffix && v.suffix.length > suffixLength) {
+      info.suffix = v.suffix;
+      suffixLength = v.suffix.length;
+    }
   }
   return info;
+}
+
+function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
+  const displayName = 'No data';
+  const { fieldOptions } = options;
+  const { defaults } = fieldOptions;
+
+  const displayProcessor = getDisplayProcessor({
+    field: {
+      type: FieldType.other,
+      config: defaults,
+    },
+    theme: options.theme,
+  });
+
+  const display = displayProcessor(null);
+  const text = getDisplayText(display, displayName);
+
+  return {
+    name: displayName,
+    field: {
+      ...defaults,
+    },
+    display: {
+      text,
+      numeric: 0,
+      color: display.color,
+    },
+  };
+}
+
+function getDisplayText(display: DisplayValue, fallback: string): string {
+  if (!display || isEmpty(display.text)) {
+    return fallback;
+  }
+  return display.text;
 }

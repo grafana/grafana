@@ -2,8 +2,8 @@ package api
 
 import (
 	"encoding/hex"
-	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -27,6 +27,31 @@ var getViewIndex = func() string {
 	return ViewIndex
 }
 
+func (hs *HTTPServer) validateRedirectTo(redirectTo string) error {
+	to, err := url.Parse(redirectTo)
+	if err != nil {
+		return login.ErrInvalidRedirectTo
+	}
+	if to.IsAbs() {
+		return login.ErrAbsoluteRedirectTo
+	}
+	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
+	// will send the user to the wrong location
+	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
+		return login.ErrInvalidRedirectTo
+	}
+	return nil
+}
+
+func (hs *HTTPServer) cookieOptionsFromCfg() middleware.CookieOptions {
+	return middleware.CookieOptions{
+		Path:             hs.Cfg.AppSubUrl + "/",
+		Secure:           hs.Cfg.CookieSecure,
+		SameSiteDisabled: hs.Cfg.CookieSameSiteDisabled,
+		SameSiteMode:     hs.Cfg.CookieSameSiteMode,
+	}
+}
+
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
@@ -47,7 +72,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		//therefore the loginError should be passed to the view data
 		//and the view should return immediately before attempting
 		//to login again via OAuth and enter to a redirect loop
-		deleteCookie(c, LoginErrorCookieName)
+		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.cookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
 		return
@@ -64,7 +89,13 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		}
 
 		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-			c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+			if err := hs.validateRedirectTo(redirectTo); err != nil {
+				// the user is already logged so instead of rendering the login page with error
+				// it should be redirected to the home page.
+				log.Debug("Ignored invalid redirect_to cookie value: %v", redirectTo)
+				redirectTo = hs.Cfg.AppSubUrl + "/"
+			}
+			middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
 			c.Redirect(redirectTo)
 			return
 		}
@@ -73,7 +104,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	c.HTML(200, ViewIndex, viewData)
+	c.HTML(200, getViewIndex(), viewData)
 }
 
 func (hs *HTTPServer) loginAuthProxyUser(c *models.ReqContext) {
@@ -147,8 +178,12 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		result["redirectUrl"] = redirectTo
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		if err := hs.validateRedirectTo(redirectTo); err == nil {
+			result["redirectUrl"] = redirectTo
+		} else {
+			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
+		}
+		middleware.DeleteCookie(c.Resp, "redirect_to", hs.cookieOptionsFromCfg)
 	}
 
 	metrics.MApiLoginPost.Inc()
@@ -198,28 +233,13 @@ func tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, b
 	return string(decryptedError), err == nil
 }
 
-func deleteCookie(ctx *models.ReqContext, cookieName string) {
-	ctx.SetCookie(cookieName, "", -1, setting.AppSubUrl+"/")
-}
-
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
 	encryptedError, err := util.Encrypt([]byte(value), setting.SecretKey)
 	if err != nil {
 		return err
 	}
 
-	cookie := http.Cookie{
-		Name:     cookieName,
-		MaxAge:   60,
-		Value:    hex.EncodeToString(encryptedError),
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.CookieSecure,
-	}
-	if hs.Cfg.CookieSameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = hs.Cfg.CookieSameSite
-	}
-	http.SetCookie(ctx.Resp, &cookie)
+	middleware.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.cookieOptionsFromCfg)
 
 	return nil
 }

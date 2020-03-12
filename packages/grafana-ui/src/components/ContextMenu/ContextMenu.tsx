@@ -25,7 +25,7 @@ export interface ContextMenuProps {
   y: number;
   onClose: () => void;
   items?: ContextMenuGroup[];
-  renderHeader?: () => JSX.Element;
+  renderHeader?: () => React.ReactNode;
 }
 
 const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -135,7 +135,7 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
     groupLabel: css`
       color: ${groupLabelColor};
       font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.lineHeight.lg};
+      line-height: ${theme.typography.lineHeight.md};
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
     `,
     icon: css`
@@ -181,10 +181,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
   });
 
   const styles = getContextMenuStyles(theme);
+  const header = renderHeader && renderHeader();
   return (
     <Portal>
       <div ref={menuRef} style={positionStyles} className={styles.wrapper}>
-        {renderHeader && <div className={styles.header}>{renderHeader()}</div>}
+        {header && <div className={styles.header}>{header}</div>}
         <List
           items={items || []}
           renderItem={(item, index) => {

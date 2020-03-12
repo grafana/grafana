@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.4"
+title = "What's new in Grafana v5.4"
 description = "Feature and improvement highlights for Grafana v5.4"
-keywords = ["grafana", "new", "documentation", "5.4"]
+keywords = ["grafana", "new", "documentation", "5.4", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.4"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -10
 +++
 
-# What's New in Grafana v5.4
+# What's new in Grafana v5.4
 
 Grafana v5.4 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -79,5 +79,5 @@ Grafana v5.4 adds support for customizing home dashboard, timezone and theme for
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.

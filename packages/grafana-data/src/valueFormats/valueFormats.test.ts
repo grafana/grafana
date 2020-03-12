@@ -1,6 +1,93 @@
-import { toFixed, getValueFormat, scaledUnits } from './valueFormats';
+import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
+import { DecimalCount } from '../types/displayValue';
+import { TimeZone } from '../types';
+import { dateTime } from '../datetime';
+
+interface ValueFormatTest {
+  id: string;
+  decimals?: DecimalCount;
+  scaledDecimals?: DecimalCount;
+  timeZone?: TimeZone;
+  value: number;
+  result: string;
+}
+
+const formatTests: ValueFormatTest[] = [
+  // Currancy
+  { id: 'currencyUSD', decimals: 2, value: 1532.82, result: '$1.53K' },
+  { id: 'currencyKRW', decimals: 2, value: 1532.82, result: '₩1.53K' },
+
+  // Standard
+  { id: 'ms', decimals: 4, value: 0.0024, result: '0.0024 ms' },
+  { id: 'ms', decimals: 0, value: 100, result: '100 ms' },
+  { id: 'ms', decimals: 2, value: 1250, result: '1.25 s' },
+  { id: 'ms', decimals: 1, value: 10000086.123, result: '2.8 hour' },
+  { id: 'ms', decimals: 0, value: 1200, result: '1 s' },
+  { id: 'short', decimals: 0, scaledDecimals: -1, value: 98765, result: '98.77 K' },
+  { id: 'short', decimals: 0, scaledDecimals: 0, value: 9876543, result: '9.876543 Mil' },
+  { id: 'kbytes', decimals: 3, value: 10000000, result: '9.537 GiB' },
+  { id: 'deckbytes', decimals: 3, value: 10000000, result: '10.000 GB' },
+  { id: 'megwatt', decimals: 3, value: 1000, result: '1.000 GW' },
+  { id: 'kohm', decimals: 3, value: 1000, result: '1.000 MΩ' },
+  { id: 'Mohm', decimals: 3, value: 1000, result: '1.000 GΩ' },
+
+  { id: 'farad', decimals: 3, value: 1000, result: '1.000 kF' },
+  { id: 'µfarad', decimals: 3, value: 1000, result: '1.000 mF' },
+  { id: 'nfarad', decimals: 3, value: 1000, result: '1.000 µF' },
+  { id: 'pfarad', decimals: 3, value: 1000, result: '1.000 nF' },
+  { id: 'ffarad', decimals: 3, value: 1000, result: '1.000 pF' },
+
+  { id: 'henry', decimals: 3, value: 1000, result: '1.000 kH' },
+  { id: 'mhenry', decimals: 3, value: 1000, result: '1.000 H' },
+  { id: 'µhenry', decimals: 3, value: 1000, result: '1.000 mH' },
+
+  // Suffix (unknown units append to the end)
+  { id: 'a', decimals: 0, value: 1532.82, result: '1533 a' },
+  { id: 'b', decimals: 0, value: 1532.82, result: '1533 b' },
+
+  // Prefix (unknown units append to the end)
+  { id: 'prefix:b', value: 1532.82, result: 'b1533' },
+
+  // SI Units
+  { id: 'si:µF', value: 1234, decimals: 2, result: '1.23 mF' },
+  { id: 'si:µF', value: 1234000000, decimals: 2, result: '1.23 kF' },
+  { id: 'si:µF', value: 1234000000000000, decimals: 2, result: '1.23 GF' },
+
+  // Counts (suffix)
+  { id: 'count:xpm', value: 1234567, decimals: 2, result: '1.23M xpm' },
+  { id: 'count:x/min', value: 1234, decimals: 2, result: '1.23K x/min' },
+
+  // Currency (prefix)
+  { id: 'currency:@', value: 1234567, decimals: 2, result: '@1.23M' },
+  { id: 'currency:@', value: 1234, decimals: 2, result: '@1.23K' },
+
+  // Time format
+  { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999, 6, 2)).valueOf(), result: '1999' },
+  { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
+];
 
 describe('valueFormats', () => {
+  it('Manually check a format', () => {
+    // helpful for adding tests one at a time with the debugger
+    const tests: ValueFormatTest[] = [
+      { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
+    ];
+    const test = tests[0];
+    const result = getValueFormat(test.id)(test.value, test.decimals, test.scaledDecimals);
+    const full = formattedValueToString(result);
+    expect(full).toBe(test.result);
+  });
+
+  for (const test of formatTests) {
+    describe(`value format: ${test.id}`, () => {
+      it(`should translate ${test.value} as ${test.result}`, () => {
+        const result = getValueFormat(test.id)(test.value, test.decimals, test.scaledDecimals);
+        const full = formattedValueToString(result);
+        expect(full).toBe(test.result);
+      });
+    });
+  }
+
   describe('normal cases', () => {
     it('toFixed should handle number correctly if decimal is null', () => {
       expect(toFixed(100)).toBe('100');
@@ -18,28 +105,6 @@ describe('valueFormats', () => {
       expect(toFixed(100.4, 2)).toBe('100.40');
       expect(toFixed(100.5, 2)).toBe('100.50');
     });
-
-    it('scaledUnit should handle number correctly if scaledDecimals is not null', () => {
-      const units = ['', 'K', 'M', 'B', 'T'];
-      const scaler = scaledUnits(1000, units);
-
-      expect(scaler(98765, 0, 0)).toBe('98.765K');
-      expect(scaler(98765, 0, -1)).toBe('98.77K');
-
-      expect(scaler(9876543, 0, 0)).toBe('9.876543M');
-      expect(scaler(9876543, 0, -1)).toBe('9.87654M');
-    });
-
-    it('scaledUnit should handle number correctly if scaledDecimals is null', () => {
-      const units = ['', 'K', 'M', 'B', 'T'];
-      const scaler = scaledUnits(1000, units);
-
-      expect(scaler(98765, 1, null)).toBe('98.8K');
-      expect(scaler(98765, 2, null)).toBe('98.77K');
-
-      expect(scaler(9876543, 2, null)).toBe('9.88M');
-      expect(scaler(9876543, 3, null)).toBe('9.877M');
-    });
   });
 
   describe('format edge cases', () => {
@@ -54,9 +119,9 @@ describe('valueFormats', () => {
 
     it('scaledUnits should handle non number input gracefully', () => {
       const disp = scaledUnits(5, ['a', 'b', 'c']);
-      expect(disp(NaN)).toBe('NaN');
-      expect(disp(Number.NEGATIVE_INFINITY)).toBe(negInf);
-      expect(disp(Number.POSITIVE_INFINITY)).toBe(posInf);
+      expect(disp(NaN).text).toBe('NaN');
+      expect(disp(Number.NEGATIVE_INFINITY).text).toBe(negInf);
+      expect(disp(Number.POSITIVE_INFINITY).text).toBe(posInf);
     });
   });
 
@@ -67,108 +132,11 @@ describe('valueFormats', () => {
     });
   });
 
-  describe('ms format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('ms')(10000086.123, 1, null);
-      expect(str).toBe('2.8 hour');
-    });
-  });
-
-  describe('kbytes format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('kbytes')(10000000, 3, null);
-      expect(str).toBe('9.537 GiB');
-    });
-  });
-
-  describe('deckbytes format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('deckbytes')(10000000, 3, null);
-      expect(str).toBe('10.000 GB');
-    });
-  });
-
-  describe('ms format when scaled decimals is 0', () => {
-    it('should use scaledDecimals and add 3', () => {
-      const str = getValueFormat('ms')(1200, 0, 0);
-      expect(str).toBe('1.200 s');
-    });
-  });
-
-  describe('megawatt format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('megwatt')(1000, 3, null);
-      expect(str).toBe('1.000 GW');
-    });
-  });
-
-  describe('kiloohm format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('kohm')(1000, 3, null);
-      expect(str).toBe('1.000 MΩ');
-    });
-  });
-
-  describe('megaohm format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('Mohm')(1000, 3, null);
-      expect(str).toBe('1.000 GΩ');
-    });
-  });
-
-  describe('farad format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('farad')(1000, 3, null);
-      expect(str).toBe('1.000 kF');
-    });
-  });
-
-  describe('microfarad format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('µfarad')(1000, 3, null);
-      expect(str).toBe('1.000 mF');
-    });
-  });
-
-  describe('nanofarad format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('nfarad')(1000, 3, null);
-      expect(str).toBe('1.000 µF');
-    });
-  });
-
-  describe('picofarad format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('pfarad')(1000, 3, null);
-      expect(str).toBe('1.000 nF');
-    });
-  });
-
-  describe('femtofarad format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('ffarad')(1000, 3, null);
-      expect(str).toBe('1.000 pF');
-    });
-  });
-
-  describe('henry format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('henry')(1000, 3, null);
-      expect(str).toBe('1.000 kH');
-    });
-  });
-
-  describe('millihenry format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('mhenry')(1000, 3, null);
-      expect(str).toBe('1.000 H');
-    });
-  });
-
-  describe('microhenry format when scaled decimals is null do not use it', () => {
-    it('should use specified decimals', () => {
-      const str = getValueFormat('µhenry')(1000, 3, null);
-      expect(str).toBe('1.000 mH');
+  describe('Resolve old units', () => {
+    it('resolve farenheit', () => {
+      const fmt0 = getValueFormat('farenheit');
+      const fmt1 = getValueFormat('fahrenheit');
+      expect(fmt0).toEqual(fmt1);
     });
   });
 });

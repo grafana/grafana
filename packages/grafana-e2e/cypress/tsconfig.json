@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "declaration": false,
+    "module": "commonjs",
+    "types": ["cypress"]
+  },
+  "extends": "@grafana/tsconfig",
+  "include": ["**/*.ts"]
+}

@@ -1,23 +1,28 @@
 import Datasource from '../datasource';
 import { DataFrame, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-// @ts-ignore
-import Q from 'q';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('AppInsightsDatasource', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
   const ctx: any = {
-    backendSrv: {},
     templateSrv: new TemplateSrv(),
   };
 
   beforeEach(() => {
-    ctx.$q = Q;
+    jest.clearAllMocks();
     ctx.instanceSettings = {
       jsonData: { appInsightsAppId: '3ad4400f-ea7d-465d-a8fb-43fb20555d85' },
       url: 'http://appinsightsapi',
     };
 
-    ctx.ds = new Datasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+    ctx.ds = new Datasource(ctx.instanceSettings, ctx.templateSrv);
   });
 
   describe('When performing testDatasource', () => {
@@ -41,9 +46,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when({ data: response, status: 200 });
-        };
+        datasourceRequestMock.mockImplementation(() => {
+          return Promise.resolve({ data: response, status: 200 });
+        });
       });
 
       it('should return success status', () => {
@@ -66,9 +71,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.reject(error);
-        };
+        datasourceRequestMock.mockImplementation(() => {
+          return Promise.reject(error);
+        });
       });
 
       it('should return error status and a detailed error message', () => {
@@ -94,9 +99,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.reject(error);
-        };
+        datasourceRequestMock.mockImplementation(() => {
+          return Promise.reject(error);
+        });
       });
 
       it('should return error status and a detailed error message', () => {
@@ -130,7 +135,7 @@ describe('AppInsightsDatasource', () => {
             rawQueryString: queryString,
             timeColumn: 'timestamp',
             valueColumn: 'max',
-            segmentColumn: undefined as string,
+            segmentColumn: (undefined as unknown) as string,
           },
         },
       ],
@@ -154,7 +159,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: any) => {
+        datasourceRequestMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
@@ -162,8 +167,8 @@ describe('AppInsightsDatasource', () => {
           expect(options.data.queries[0].appInsights.timeColumn).toEqual('timestamp');
           expect(options.data.queries[0].appInsights.valueColumn).toEqual('max');
           expect(options.data.queries[0].appInsights.segmentColumn).toBeUndefined();
-          return ctx.$q.when({ data: response, status: 200 });
-        };
+          return Promise.resolve({ data: response, status: 200 });
+        });
       });
 
       it('should return a list of datapoints', () => {
@@ -197,7 +202,7 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         options.targets[0].appInsights.segmentColumn = 'partition';
-        ctx.backendSrv.datasourceRequest = (options: any) => {
+        datasourceRequestMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
@@ -205,8 +210,8 @@ describe('AppInsightsDatasource', () => {
           expect(options.data.queries[0].appInsights.timeColumn).toEqual('timestamp');
           expect(options.data.queries[0].appInsights.valueColumn).toEqual('max');
           expect(options.data.queries[0].appInsights.segmentColumn).toEqual('partition');
-          return ctx.$q.when({ data: response, status: 200 });
-        };
+          return Promise.resolve({ data: response, status: 200 });
+        });
       });
 
       it('should return a list of datapoints', () => {
@@ -260,14 +265,14 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: any) => {
+        datasourceRequestMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
-          return ctx.$q.when({ data: response, status: 200 });
-        };
+          return Promise.resolve({ data: response, status: 200 });
+        });
       });
 
       it('should return a single datapoint', () => {
@@ -303,14 +308,14 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         options.targets[0].appInsights.timeGrain = 'PT30M';
-        ctx.backendSrv.datasourceRequest = (options: any) => {
+        datasourceRequestMock.mockImplementation((options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
           expect(options.data.queries[0].appInsights.timeGrain).toBe('PT30M');
-          return ctx.$q.when({ data: response, status: 200 });
-        };
+          return Promise.resolve({ data: response, status: 200 });
+        });
       });
 
       it('should return a list of datapoints', () => {
@@ -358,13 +363,13 @@ describe('AppInsightsDatasource', () => {
         beforeEach(() => {
           options.targets[0].appInsights.dimension = 'client/city';
 
-          ctx.backendSrv.datasourceRequest = (options: any) => {
+          datasourceRequestMock.mockImplementation((options: any) => {
             expect(options.url).toContain('/api/tsdb/query');
             expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
             expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
             expect(options.data.queries[0].appInsights.dimension).toBe('client/city');
-            return ctx.$q.when({ data: response, status: 200 });
-          };
+            return Promise.resolve({ data: response, status: 200 });
+          });
         });
 
         it('should return a list of datapoints', () => {
@@ -400,10 +405,10 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           expect(options.url).toContain('/metrics/metadata');
-          return ctx.$q.when({ data: response, status: 200 });
-        };
+          return Promise.resolve({ data: response, status: 200 });
+        });
       });
 
       it('should return a list of metric names', () => {
@@ -438,10 +443,10 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           expect(options.url).toContain('/metrics/metadata');
-          return ctx.$q.when({ data: response, status: 200 });
-        };
+          return Promise.resolve({ data: response, status: 200 });
+        });
       });
 
       it('should return a list of group bys', () => {
@@ -466,10 +471,10 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         expect(options.url).toContain('/metrics/metadata');
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+        return Promise.resolve({ data: response, status: 200 });
+      });
     });
 
     it('should return a list of metric names', () => {
@@ -504,10 +509,10 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         expect(options.url).toContain('/metrics/metadata');
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+        return Promise.resolve({ data: response, status: 200 });
+      });
     });
 
     it('should return a list of group bys', () => {

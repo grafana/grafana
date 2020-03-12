@@ -1,9 +1,9 @@
 import _ from 'lodash';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { Plugin } from 'slate';
 import {
-  Cascader,
+  ButtonCascader,
   CascaderOption,
   SlatePrism,
   TypeaheadInput,
@@ -15,7 +15,7 @@ import {
 import Prism from 'prismjs';
 
 // dom also includes Element polyfills
-import { PromQuery, PromContext, PromOptions } from '../types';
+import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
@@ -23,7 +23,6 @@ import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
 
 const HISTOGRAM_GROUP = '__histograms__';
-const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
@@ -37,7 +36,16 @@ function getChooserText(hasSyntax: boolean, metrics: string[]) {
   return 'Metrics';
 }
 
-export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): CascaderOption[] {
+function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CascaderOption {
+  const option: CascaderOption = { label: metric, value: metric };
+  if (metadata && metadata[metric]) {
+    const { type = '', help } = metadata[metric][0];
+    option.title = [metric, type.toUpperCase(), help].join('\n');
+  }
+  return option;
+}
+
+export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
   // Filter out recording rules and insert as first option
   const ruleRegex = /:\w+:/;
   const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
@@ -52,13 +60,14 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
 
   const options = ruleNames.length > 0 ? [rulesOption] : [];
 
+  const delimiter = '_';
   const metricsOptions = _.chain(metrics)
     .filter((metric: string) => !ruleRegex.test(metric))
     .groupBy((metric: string) => metric.split(delimiter)[0])
     .map(
       (metricsForPrefix: string[], prefix: string): CascaderOption => {
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
+        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
         return {
           children,
           label: prefix,
@@ -101,6 +110,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
 
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
   history: Array<HistoryItem<PromQuery>>;
+  ExtraFieldElement?: ReactNode;
 }
 
 interface PromQueryFieldState {
@@ -138,6 +148,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
+      Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
       this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
     }
     this.refreshHint();
@@ -178,9 +189,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
         remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
       })
       .then(() => this.onUpdateLanguage())
-      .catch(({ isCanceled }) => {
-        if (isCanceled) {
-          console.warn('PromQueryField has unmounted, language provider intialization was canceled');
+      .catch(err => {
+        if (!err.isCanceled) {
+          throw err;
         }
       });
   };
@@ -210,7 +221,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     // Send text change to parent
     const { query, onChange, onRunQuery } = this.props;
     if (onChange) {
-      const nextQuery: PromQuery = { ...query, expr: value, context: PromContext.Explore };
+      const nextQuery: PromQuery = { ...query, expr: value };
       onChange(nextQuery);
 
       if (override && onRunQuery) {
@@ -228,19 +239,19 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onUpdateLanguage = () => {
-    const { histogramMetrics, metrics } = this.languageProvider;
+    const {
+      histogramMetrics,
+      metrics,
+      metricsMetadata,
+      lookupsDisabled,
+      lookupMetricsThreshold,
+    } = this.languageProvider;
     if (!metrics) {
       return;
     }
 
-    Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
-    Prism.languages[PRISM_SYNTAX][METRIC_MARK] = {
-      alias: 'variable',
-      pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
-    };
-
     // Build metrics tree
-    const metricsByPrefix = groupMetricsByPrefix(metrics);
+    const metricsByPrefix = groupMetricsByPrefix(metrics, metricsMetadata);
     const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
       histogramMetrics.length > 0
@@ -250,7 +261,16 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           ]
         : metricsByPrefix;
 
-    this.setState({ metricsOptions, syntaxLoaded: true });
+    // Hint for big disabled lookups
+    let hint: QueryHint;
+    if (lookupsDisabled) {
+      hint = {
+        label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
+        type: 'INFO',
+      };
+    }
+
+    this.setState({ hint, metricsOptions, syntaxLoaded: true });
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
@@ -272,24 +292,19 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { data, query } = this.props;
+    const { query, ExtraFieldElement } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, metricsOptions);
     const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
-    const showError = data && data.error && data.error.refId === query.refId;
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--nowrap">
+        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form flex-shrink-0">
-            <Cascader
-              options={metricsOptions}
-              buttonText={chooserText}
-              disabled={buttonDisabled}
-              onChange={this.onChangeMetrics}
-              expandIcon={null}
-            />
+            <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
+              {chooserText}
+            </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
@@ -306,16 +321,18 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               syntaxLoaded={syntaxLoaded}
             />
           </div>
+          {ExtraFieldElement}
         </div>
-        {showError ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
         {hint ? (
-          <div className="prom-query-field-info text-warning">
-            {hint.label}{' '}
-            {hint.fix ? (
-              <a className="text-link muted" onClick={this.onClickHintFix}>
-                {hint.fix.label}
-              </a>
-            ) : null}
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-warning">
+              {hint.label}{' '}
+              {hint.fix ? (
+                <a className="text-link muted" onClick={this.onClickHintFix}>
+                  {hint.fix.label}
+                </a>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </>

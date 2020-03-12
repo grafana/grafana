@@ -13,7 +13,6 @@ import {
   VAR_CALC,
   VAR_CELL_PREFIX,
   toIntegerOrUndefined,
-  SelectableValue,
   FieldConfig,
   toFloatOrUndefined,
   toNumberString,
@@ -62,8 +61,8 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     [value.max, onChange]
   );
 
-  const onUnitChange = (unit: SelectableValue<string>) => {
-    onChange({ ...value, unit: unit.value });
+  const onUnitChange = (unit?: string) => {
+    onChange({ ...value, unit });
   };
 
   const commitChanges = useCallback(() => {
@@ -73,7 +72,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
       min: toFloatOrUndefined(min),
       max: toFloatOrUndefined(max),
     });
-  }, [min, max, decimals]);
+  }, [min, max, decimals, value]);
 
   const titleTooltip = (
     <div>
@@ -97,12 +96,13 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
           value={title}
           tooltip={titleTooltip}
           placeholder="Auto"
+          aria-label="Field properties editor title input"
         />
       )}
 
       <div className="gf-form">
         <FormLabel width={labelWidth}>Unit</FormLabel>
-        <UnitPicker defaultValue={unit} onChange={onUnitChange} />
+        <UnitPicker value={unit} onChange={onUnitChange} />
       </div>
       {showMinMax && (
         <>
@@ -112,7 +112,9 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
             onChange={onMinChange}
             onBlur={commitChanges}
             value={min}
+            placeholder="Auto"
             type="number"
+            aria-label="Field properties editor min input"
           />
           <FormField
             label="Max"
@@ -121,6 +123,8 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
             onBlur={commitChanges}
             value={max}
             type="number"
+            placeholder="Auto"
+            aria-label="Field properties editor max input"
           />
         </>
       )}

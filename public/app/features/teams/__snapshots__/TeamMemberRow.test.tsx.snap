@@ -48,9 +48,10 @@ exports[`Render should render team members when sync enabled 1`] = `
   <td
     className="text-right"
   >
-    <DeleteButton
+    <Component
       disabled={true}
       onConfirm={[Function]}
+      size="sm"
     />
   </td>
 </tr>
@@ -137,9 +138,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
   <td
     className="text-right"
   >
-    <DeleteButton
+    <Component
       disabled={false}
       onConfirm={[Function]}
+      size="sm"
     />
   </td>
 </tr>
@@ -226,9 +228,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
   <td
     className="text-right"
   >
-    <DeleteButton
+    <Component
       disabled={false}
       onConfirm={[Function]}
+      size="sm"
     />
   </td>
 </tr>
@@ -273,9 +276,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
   <td
     className="text-right"
   >
-    <DeleteButton
+    <Component
       disabled={true}
       onConfirm={[Function]}
+      size="sm"
     />
   </td>
 </tr>

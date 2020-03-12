@@ -3,7 +3,7 @@ title = "AWS CloudWatch"
 description = "Guide for using CloudWatch in Grafana"
 keywords = ["grafana", "cloudwatch", "guide"]
 type = "docs"
-aliases = ["/datasources/cloudwatch"]
+aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
 [menu.docs]
 name = "AWS Cloudwatch"
 identifier = "cloudwatch"
@@ -145,6 +145,12 @@ You can create new time series metrics by operating on top of CloudWatch metrics
 As an example, if you want to apply arithmetic operations on a metric, you can do it by giving an id (a unique string) to the raw metric as shown below. You can then use this id and apply arithmetic operations to it in the Expression field of the new metric.
 
 Please note that in the case you use the expression field to reference another query, like `queryA * 2`, it will not be possible to create an alert rule based on that query.
+
+### Period
+
+A period is the length of time associated with a specific Amazon CloudWatch statistic. Periods are defined in numbers of seconds, and valid values for period are 1, 5, 10, 30, or any multiple of 60.
+
+If the period field is left blank or set to `auto`, then it calculates automatically based on the time range. The formula used is `time range in seconds / 2000`, and then it snaps to the next higher value in an array of predefined periods `[60, 300, 900, 3600, 21600, 86400]`. By clicking `Show Query Preview` in the query editor, you can see what period Grafana used.
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
@@ -306,7 +312,7 @@ Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.co
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 

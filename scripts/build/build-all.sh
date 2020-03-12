@@ -93,21 +93,18 @@ go run build.go -goos linux -pkg-arch amd64 -libc musl ${OPT} -skipRpm -skipDeb 
 #removing amd64 phantomjs bin for armv7/arm64 packages
 rm tools/phantomjs/phantomjs
 
-# build only amd64 for enterprise
-if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
-  go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
-  go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
-  go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
-  go run build.go -goos linux -pkg-arch armv7 -libc musl ${OPT} -skipRpm -skipDeb package-only
-  go run build.go -goos linux -pkg-arch arm64 -libc musl ${OPT} -skipRpm -skipDeb package-only
+go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
+go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
+go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+go run build.go -goos linux -pkg-arch armv7 -libc musl ${OPT} -skipRpm -skipDeb package-only
+go run build.go -goos linux -pkg-arch arm64 -libc musl ${OPT} -skipRpm -skipDeb package-only
 
-  if [ -d '/tmp/phantomjs/darwin' ]; then
-    cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
-  else
-    echo 'PhantomJS binaries for darwin missing!'
-  fi
-  go run build.go -goos darwin -pkg-arch amd64 ${OPT} package-only
+if [ -d '/tmp/phantomjs/darwin' ]; then
+  cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
+else
+  echo 'PhantomJS binaries for darwin missing!'
 fi
+go run build.go -goos darwin -pkg-arch amd64 ${OPT} package-only
 
 if [ -d '/tmp/phantomjs/windows' ]; then
   cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
@@ -115,6 +112,9 @@ if [ -d '/tmp/phantomjs/windows' ]; then
 else
     echo 'PhantomJS binaries for Windows missing!'
 fi
+
+cp /usr/local/go/lib/time/zoneinfo.zip tools/zoneinfo.zip
 go run build.go -goos windows -pkg-arch amd64 ${OPT} package-only
+rm tools/zoneinfo.zip
 
 go run build.go latest

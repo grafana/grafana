@@ -66,7 +66,7 @@
   "panels": [
     {
       "collapsed": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -300,7 +300,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -711,7 +711,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -722,7 +722,7 @@
       "panels": [
         {
           "content": "",
-          "datasource": "${DS_CLOUDWATCH}",
+          "datasource": "$datasource",
           "gridPos": {
             "h": 1,
             "w": 24,
@@ -1140,7 +1140,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1455,7 +1455,7 @@
     },
     {
       "collapsed": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1469,7 +1469,7 @@
     },
     {
       "content": "For more information about avaialble metrics from Amazon EC2, visit the [List of Available CloudWatch Metrics for Your EC2 Instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/viewing_metrics_with_cloudwatch.html) in the Amazon documentation.\n\nFor additional metrics and 1-minute granularity, enable [Detailed Monitoring](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html) for your Amazon EC2 instances.\n\nThis dashboard has been optimized for 1-minute metrics.",
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 4,
         "w": 24,

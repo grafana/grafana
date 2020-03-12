@@ -415,7 +415,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -834,7 +834,7 @@
     },
     {
       "collapsed": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -848,7 +848,7 @@
     },
     {
       "content": "For more information about the available metrics for AWS Lambda, visit the [AWS Lambda documentation](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-metrics.html).",
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -907,7 +907,7 @@
           "text": "default",
           "value": "default"
         },
-        "datasource": "${DS_CLOUDWATCH}",
+        "datasource": "$datasource",
         "definition": "regions()",
         "hide": 0,
         "includeAll": false,

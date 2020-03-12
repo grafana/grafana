@@ -1,7 +1,6 @@
 import { colors } from '@grafana/ui';
 import {
   getFlotPairs,
-  getColorFromHexRgbOrName,
   getDisplayProcessor,
   NullValueMode,
   reduceField,
@@ -16,6 +15,8 @@ import {
   hasMsResolution,
   MS_DATE_TIME_FORMAT,
   DEFAULT_DATE_TIME_FORMAT,
+  FieldColor,
+  FieldColorMode,
 } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';
@@ -32,8 +33,11 @@ export const getGraphSeriesModel = (
   const graphs: GraphSeriesXY[] = [];
 
   const displayProcessor = getDisplayProcessor({
-    config: {
-      decimals: legendOptions.decimals,
+    field: {
+      config: {
+        unit: fieldOptions?.defaults?.unit,
+        decimals: legendOptions.decimals,
+      },
     },
   });
 
@@ -68,21 +72,26 @@ export const getGraphSeriesModel = (
 
             return {
               ...statDisplayValue,
-              text: statDisplayValue.text,
               title: stat,
             };
           });
         }
 
-        let seriesColor;
+        let color: FieldColor;
         if (seriesOptions[field.name] && seriesOptions[field.name].color) {
           // Case when panel has settings provided via SeriesOptions, i.e. graph panel
-          seriesColor = getColorFromHexRgbOrName(seriesOptions[field.name].color);
+          color = {
+            mode: FieldColorMode.Fixed,
+            fixedColor: seriesOptions[field.name].color,
+          };
         } else if (field.config && field.config.color) {
           // Case when color settings are set on field, i.e. Explore logs histogram (see makeSeriesForLogs)
-          seriesColor = field.config.color;
+          color = field.config.color;
         } else {
-          seriesColor = colors[graphs.length % colors.length];
+          color = {
+            mode: FieldColorMode.Fixed,
+            fixedColor: colors[graphs.length % colors.length],
+          };
         }
 
         field.config = fieldOptions
@@ -90,28 +99,31 @@ export const getGraphSeriesModel = (
               ...field.config,
               unit: fieldOptions.defaults.unit,
               decimals: fieldOptions.defaults.decimals,
-              color: seriesColor,
+              color,
             }
-          : { ...field.config, color: seriesColor };
+          : { ...field.config, color };
 
-        field.display = getDisplayProcessor({ config: { ...field.config }, type: field.type });
+        field.display = getDisplayProcessor({ field });
 
         // Time step is used to determine bars width when graph is rendered as bar chart
         const timeStep = getSeriesTimeStep(timeField);
         const useMsDateFormat = hasMsResolution(timeField);
 
         timeField.display = getDisplayProcessor({
-          type: timeField.type,
-          isUtc: timeZone === 'utc',
-          config: {
-            dateDisplayFormat: useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT,
+          timeZone,
+          field: {
+            ...timeField,
+            type: timeField.type,
+            config: {
+              unit: `time:${useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT}`,
+            },
           },
         });
 
         graphs.push({
           label: field.name,
           data: points,
-          color: seriesColor,
+          color: field.config.color?.fixedColor,
           info: statsDisplayValues,
           isVisible: true,
           yAxis: {

@@ -11,9 +11,15 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
+import {
+  getColorFromHexRgbOrName,
+  PanelEvents,
+  DataFrame,
+  DataLink,
+  DateTimeInput,
+  VariableSuggestion,
+} from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -79,7 +85,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     lines: true,
     // fill factor
     fill: 1,
-    // fill factor
+    // fill gradient
     fillGradient: 0,
     // line width in pixels
     linewidth: 1,
@@ -158,6 +164,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
     this.onDataLinksChange = this.onDataLinksChange.bind(this);
+    this.annotationsPromise = Promise.resolve({ annotations: [] });
   }
 
   onInitEditMode() {
@@ -244,6 +251,13 @@ class GraphCtrl extends MetricsPanelCtrl {
         this.loading = false;
         this.alertState = result.alertState;
         this.annotations = result.annotations;
+
+        // Temp alerting & react hack
+        // Add it to the seriesList so react can access it
+        if (this.alertState) {
+          (this.seriesList as any).alertState = this.alertState.state;
+        }
+
         this.render(this.seriesList);
       },
       () => {
