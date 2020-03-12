@@ -10,10 +10,11 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-if [ -f /tmp/workspace/dist ]; then
-  ls /tmp/workspace/dist/*
+ls dist/*
+
+if [ -f dist/grafana-latest.linux-x64.tar.gz ]; then
   echo "Found built tar file"
-  tar zxvf /tmp/workspace/dist/grafana-latest.linux-x64.tar.gz e2e/tmp
+  tar zxvf dist/grafana-latest.linux-x64.tar.gz e2e/tmp
 else
   echo "Copying local dev files"
 
