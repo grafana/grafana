@@ -10,4 +10,3 @@ echo -e "Starting Cypress scenarios"
 
 env BASE_URL=http://localhost:$PORT yarn e2e-tests
 
-cat $RUNDIR/output.log

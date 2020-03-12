@@ -786,7 +786,7 @@ jobs:
           path: public/e2e-tests/videos
           destination: output-videos
       - store_artifacts:
-          path: e2e/tmp/output
+          path: e2e/tmp/data/log
           destination: logs
 
   mysql-integration-test:

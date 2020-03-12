@@ -29,5 +29,6 @@ $RUNDIR/bin/grafana-server \
   --homepath=$RUNDIR \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \
+  cfg:log.level=debug \
   2>&1 > $RUNDIR/output.log &
 
