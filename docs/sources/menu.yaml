@@ -14,15 +14,15 @@
   children:
   - name: Requirements
     link: /installation/requirements/
-  - name: Install on Ubuntu / Debian
+  - name: Install on Ubuntu/Debian
     link: /installation/debian/
-  - name: Install on Centos / Redhat
+  - name: Install on Centos/RedHat/SUSE
     link: /installation/rpm/
   - name: Install on Windows
     link: /installation/windows/
   - name: Install on macOS
     link: /installation/mac/
-  - name: Install using Docker
+  - name: Run Docker image
     link: /installation/docker/
   - name: Upgrade Grafana
     link: /installation/upgrading/
@@ -109,7 +109,7 @@
       name: Dashboard list
     - link: /features/panels/text/
       name: Text
-  - name: Dashboard Features
+  - name: Dashboard features
     link: /features/dashboard/
     children:
     - link: /features/dashboard/dashboards/
@@ -140,7 +140,7 @@
       name: JSON Model
     - link: /reference/scripting/
       name: Scripted dashboards
-  - name: Data Sources
+  - name: Data sources
     link: /features/datasources/
     children:
     - link: /features/datasources/add-data-source/
@@ -192,9 +192,11 @@
     link: /features/reporting/
   - name: Navigation links
     link: /features/navigation-links/
-- name: What's New In Grafana
+- name: What's new In Grafana
   link: /whatsnew/
   children:
+  - name: Version 6.7
+    link: /guides/whats-new-in-v6-7/
   - name: Version 6.6
     link: /guides/whats-new-in-v6-6/
   - name: Version 6.5
@@ -245,12 +247,12 @@
   children:
   - name: Overview
     link: /enterprise/
-  - name: Reporting
-    link: /enterprise/reporting/
   - name: Data source permissions
     link: /enterprise/datasource_permissions/
   - name: Enhanced LDAP
     link: /enterprise/enhanced_ldap/
+  - name: Reporting
+    link: /enterprise/reporting/
   - name: SAML authentication
     link: /enterprise/saml/
   - name: Team sync

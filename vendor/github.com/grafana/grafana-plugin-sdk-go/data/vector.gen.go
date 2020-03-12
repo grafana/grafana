@@ -2,7 +2,7 @@
 // Any changes will be lost if this file is regenerated.
 // see https://github.com/cheekybits/genny
 
-package dataframe
+package data
 
 import "time"
 
@@ -35,8 +35,18 @@ func (v *uint8Vector) Len() int {
 	return len((*v))
 }
 
-func (v *uint8Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *uint8Vector) CopyAt(i int) interface{} {
+	var g uint8
+	g = (*v)[i]
+	return g
+}
+
+func (v *uint8Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *uint8Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *uint8Vector) Extend(i int) {
@@ -72,8 +82,18 @@ func (v *uint16Vector) Len() int {
 	return len((*v))
 }
 
-func (v *uint16Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *uint16Vector) CopyAt(i int) interface{} {
+	var g uint16
+	g = (*v)[i]
+	return g
+}
+
+func (v *uint16Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *uint16Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *uint16Vector) Extend(i int) {
@@ -109,8 +129,18 @@ func (v *uint32Vector) Len() int {
 	return len((*v))
 }
 
-func (v *uint32Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *uint32Vector) CopyAt(i int) interface{} {
+	var g uint32
+	g = (*v)[i]
+	return g
+}
+
+func (v *uint32Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *uint32Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *uint32Vector) Extend(i int) {
@@ -146,8 +176,18 @@ func (v *uint64Vector) Len() int {
 	return len((*v))
 }
 
-func (v *uint64Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *uint64Vector) CopyAt(i int) interface{} {
+	var g uint64
+	g = (*v)[i]
+	return g
+}
+
+func (v *uint64Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *uint64Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *uint64Vector) Extend(i int) {
@@ -183,8 +223,18 @@ func (v *int8Vector) Len() int {
 	return len((*v))
 }
 
-func (v *int8Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *int8Vector) CopyAt(i int) interface{} {
+	var g int8
+	g = (*v)[i]
+	return g
+}
+
+func (v *int8Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *int8Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *int8Vector) Extend(i int) {
@@ -220,8 +270,18 @@ func (v *int16Vector) Len() int {
 	return len((*v))
 }
 
-func (v *int16Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *int16Vector) CopyAt(i int) interface{} {
+	var g int16
+	g = (*v)[i]
+	return g
+}
+
+func (v *int16Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *int16Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *int16Vector) Extend(i int) {
@@ -257,8 +317,18 @@ func (v *int32Vector) Len() int {
 	return len((*v))
 }
 
-func (v *int32Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *int32Vector) CopyAt(i int) interface{} {
+	var g int32
+	g = (*v)[i]
+	return g
+}
+
+func (v *int32Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *int32Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *int32Vector) Extend(i int) {
@@ -294,8 +364,18 @@ func (v *int64Vector) Len() int {
 	return len((*v))
 }
 
-func (v *int64Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *int64Vector) CopyAt(i int) interface{} {
+	var g int64
+	g = (*v)[i]
+	return g
+}
+
+func (v *int64Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *int64Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *int64Vector) Extend(i int) {
@@ -331,8 +411,18 @@ func (v *float32Vector) Len() int {
 	return len((*v))
 }
 
-func (v *float32Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *float32Vector) CopyAt(i int) interface{} {
+	var g float32
+	g = (*v)[i]
+	return g
+}
+
+func (v *float32Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *float32Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *float32Vector) Extend(i int) {
@@ -368,8 +458,18 @@ func (v *float64Vector) Len() int {
 	return len((*v))
 }
 
-func (v *float64Vector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *float64Vector) CopyAt(i int) interface{} {
+	var g float64
+	g = (*v)[i]
+	return g
+}
+
+func (v *float64Vector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *float64Vector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *float64Vector) Extend(i int) {
@@ -405,8 +505,18 @@ func (v *stringVector) Len() int {
 	return len((*v))
 }
 
-func (v *stringVector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *stringVector) CopyAt(i int) interface{} {
+	var g string
+	g = (*v)[i]
+	return g
+}
+
+func (v *stringVector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *stringVector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *stringVector) Extend(i int) {
@@ -442,8 +552,18 @@ func (v *boolVector) Len() int {
 	return len((*v))
 }
 
-func (v *boolVector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *boolVector) CopyAt(i int) interface{} {
+	var g bool
+	g = (*v)[i]
+	return g
+}
+
+func (v *boolVector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *boolVector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *boolVector) Extend(i int) {
@@ -479,8 +599,18 @@ func (v *timeTimeVector) Len() int {
 	return len((*v))
 }
 
-func (v *timeTimeVector) PrimitiveType() VectorPType {
-	return vectorPType(v)
+func (v *timeTimeVector) CopyAt(i int) interface{} {
+	var g time.Time
+	g = (*v)[i]
+	return g
+}
+
+func (v *timeTimeVector) ConcreteAt(i int) (interface{}, bool) {
+	return v.At(i), true
+}
+
+func (v *timeTimeVector) Type() FieldType {
+	return vectorFieldType(v)
 }
 
 func (v *timeTimeVector) Extend(i int) {

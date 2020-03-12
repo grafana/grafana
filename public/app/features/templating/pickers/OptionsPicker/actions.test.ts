@@ -2,25 +2,25 @@ import { reduxTester } from '../../../../../test/core/redux/reduxTester';
 import { getTemplatingRootReducer } from '../../state/helpers';
 import { initDashboardTemplating } from '../../state/actions';
 import { TemplatingState } from '../../state/reducers';
-import { VariableHide, VariableSort, VariableRefresh, QueryVariableModel } from '../../variable';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../variable';
 import {
-  showOptions,
   hideOptions,
+  showOptions,
   toggleOption,
-  updateSearchQuery,
-  updateOptionsAndFilter,
   toggleTag,
+  updateOptionsAndFilter,
+  updateSearchQuery,
 } from './reducer';
 import {
-  navigateOptions,
-  filterOrSearchOptions,
   commitChangesToVariable,
-  toggleOptionByHighlight,
+  filterOrSearchOptions,
+  navigateOptions,
   toggleAndFetchTag,
+  toggleOptionByHighlight,
 } from './actions';
 import { NavigationKey } from '../types';
 import { toVariablePayload } from '../../state/types';
-import { setCurrentVariableValue, changeVariableProp } from '../../state/sharedReducer';
+import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
 
@@ -374,6 +374,8 @@ describe('options picker actions', () => {
       const variable = createVariable({ options, includeAll: false, tags: [tag] });
 
       datasource.metricFindQuery.mockReset();
+      // @ts-ignore couldn't wrap my head around this
+      // error TS2345: Argument of type '() => Promise<{ value: string; text: string; }[]>' is not assignable to parameter of type '() => Promise<never[]>'.
       datasource.metricFindQuery.mockImplementation(() => Promise.resolve(values));
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
