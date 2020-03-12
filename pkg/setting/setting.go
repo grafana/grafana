@@ -1161,11 +1161,3 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 	return &DynamicSection{cfg.Raw.Section(s), cfg.Logger}
 }
-
-func IsExpressionsEnabled() bool {
-	v, ok := FeatureToggles["expressions"]
-	if !ok {
-		return false
-	}
-	return v
-}

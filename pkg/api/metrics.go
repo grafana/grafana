@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -19,10 +18,6 @@ import (
 // QueryMetricsV2 returns query metrics
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
-	if !setting.IsExpressionsEnabled() {
-		return Error(404, "Expressions feature toggle is not enabled", nil)
-	}
-
 	if len(reqDto.Queries) == 0 {
 		return Error(500, "No queries found in query", nil)
 	}
