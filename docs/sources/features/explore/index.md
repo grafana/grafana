@@ -63,7 +63,7 @@ Query history lets you view the history of your querying. For each individual qu
 
 - Replace Explore query for selected query by clicking on the query card.
 - Create and/or edit a comment.
-- Copy query to clipboard.
+- Copy a query to the clipboard.
 - Copy URL link with the query to clipboard.
 - Star query.
 
