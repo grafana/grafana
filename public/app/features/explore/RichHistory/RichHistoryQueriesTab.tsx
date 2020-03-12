@@ -30,15 +30,17 @@ interface Props {
   datasourceFilters: SelectableValue[] | null;
   retentionPeriod: number;
   exploreId: ExploreId;
+  height: number;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
   onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
   const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
 
   /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
   const cardWidth = '100% - 134px';
+  const sliderHeight = `${height - 200}px`;
   return {
     container: css`
       display: flex;
@@ -61,7 +63,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-right: ${theme.spacing.sm};
       .slider {
         bottom: 10px;
-        height: 200px;
+        height: ${sliderHeight};
         width: 127px;
         padding: ${theme.spacing.xs} 0;
       }
@@ -127,12 +129,13 @@ export function RichHistoryQueriesTab(props: Props) {
     activeDatasourceOnly,
     retentionPeriod,
     exploreId,
+    height,
   } = props;
 
   const [sliderRetentionFilter, setSliderRetentionFilter] = useState<[number, number]>([0, retentionPeriod]);
 
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, height);
   const listOfDsNamesWithQueries = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
 
   /* Display only explore datasoources, that have saved queries */

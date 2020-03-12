@@ -89,6 +89,7 @@ interface Props {
 
 function RichHistoryContainer(props: Props) {
   const [visible, setVisible] = useState(false);
+  const [height, setHeight] = useState(400);
 
   /* To create sliding animation for rich history drawer */
   useEffect(() => {
@@ -119,6 +120,9 @@ function RichHistoryContainer(props: Props) {
       maxHeight="100vh"
       maxWidth={drawerWidth}
       minWidth={drawerWidth}
+      onResize={(e, dir, ref) => {
+        setHeight(Number(ref.style.height.slice(0, -2)));
+      }}
     >
       <RichHistory
         richHistory={richHistory}
@@ -127,6 +131,7 @@ function RichHistoryContainer(props: Props) {
         exploreId={exploreId}
         deleteRichHistory={deleteRichHistory}
         onClose={onClose}
+        height={height}
       />
     </Resizable>
   );
