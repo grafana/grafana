@@ -1,6 +1,6 @@
 import React from 'react';
 import { JaegerDatasource, JaegerQuery } from './datasource';
-import { Cascader, CascaderOption } from '@grafana/ui';
+import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import { ExploreQueryFieldProps } from '@grafana/data';
 
@@ -59,7 +59,6 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
       const allOperationsOption: CascaderOption = {
         label: '[ALL]',
         value: ALL_OPERATIONS_KEY,
-        isLeaf: false,
       };
       const operationOptions: CascaderOption[] = [
         allOperationsOption,
@@ -169,20 +168,14 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
   render() {
     const { query, onChange } = this.props;
     const { serviceOptions } = this.state;
-    const buttonDisabled = serviceOptions.length === 0;
 
     return (
       <>
         <div className="gf-form-inline gf-form-inline--nowrap">
           <div className="gf-form flex-shrink-0">
-            <Cascader
-              options={serviceOptions}
-              buttonText="Traces"
-              disabled={buttonDisabled}
-              onChange={this.onSelectTrace}
-              loadData={this.onLoadOptions}
-              expandIcon={null}
-            />
+            <ButtonCascader options={serviceOptions} onChange={this.onSelectTrace} loadData={this.onLoadOptions}>
+              Traces
+            </ButtonCascader>
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <div className={'slate-query-field__wrapper'}>

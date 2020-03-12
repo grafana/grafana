@@ -5,7 +5,6 @@ import { css, cx } from 'emotion';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
-import cx from 'classnames';
 
 // Services & Utils
 import store from 'app/core/store';
