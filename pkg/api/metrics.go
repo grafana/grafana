@@ -71,6 +71,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 			return Error(500, "Metric request error", err)
 		}
 	} else {
+		if !setting.IsExpressionsEnabled() {
+			return Error(404, "Expressions feature toggle is not enabled", nil)
+		}
+
 		resp, err = plugins.Transform.Transform(c.Req.Context(), request)
 		if err != nil {
 			return Error(500, "Transform request error", err)
