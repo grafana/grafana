@@ -32,9 +32,6 @@ executors:
   windows-installer:
     docker:
       - image: grafana/wix-toolset-ci:v3
-orbs:
-  cypress: cypress-io/cypress@1
-
 jobs:
   install-grabpl:
     description: Install the Grafana Build Pipeline tool
@@ -763,6 +760,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - setup_remote_docker
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
