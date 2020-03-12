@@ -35,6 +35,7 @@ export interface UserDTO {
   theme?: string;
   avatarUrl?: string;
   orgId?: number;
+  lastSeenAtAge?: string;
 }
 
 export interface Invitee {

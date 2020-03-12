@@ -2,11 +2,11 @@ import React, { useEffect } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { getTagColorsFromName } from '@grafana/ui';
+import { getTagColorsFromName, Pagination } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { fetchUsers, changeQuery } from './state/actions';
+import { fetchUsers, changeQuery, changePage } from './state/actions';
 
 interface OwnProps {}
 
@@ -14,22 +14,26 @@ interface ConnectedProps {
   navModel: NavModel;
   users: UserDTO[];
   query: string;
+  showPaging: boolean;
+  totalPages: number;
+  page: number;
 }
 
 interface DispatchProps {
   fetchUsers: typeof fetchUsers;
   changeQuery: typeof changeQuery;
+  changePage: typeof changePage;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-const UserListAdminPageUnConnected: React.FC<Props> = ({ navModel, users, query, fetchUsers, changeQuery }) => {
+const UserListAdminPageUnConnected: React.FC<Props> = props => {
   useEffect(() => {
-    fetchUsers();
+    props.fetchUsers();
   }, []);
 
   return (
-    <Page navModel={navModel}>
+    <Page navModel={props.navModel}>
       <Page.Contents>
         <>
           <div className="page-action-bar">
@@ -40,7 +44,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({ navModel, users, query,
                 placeholder="Find user by name/login/email"
                 tabIndex={1}
                 autoFocus={true}
-                value={query}
+                value={props.query}
                 spellCheck={false}
                 onChange={event => changeQuery(event.target.value)}
               />
@@ -67,23 +71,15 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({ navModel, users, query,
                   <th style={{ width: '1%' }}></th>
                 </tr>
               </thead>
-              <tbody>{users.map(renderUser)}</tbody>
+              <tbody>{props.users.map(renderUser)}</tbody>
             </table>
           </div>
-
-          <div className="admin-list-paging" ng-if="ctrl.showPaging">
-            <ol>
-              <li ng-repeat="page in ctrl.pages">
-                <button
-                  className="btn btn-small"
-                  ng-className="{'btn-secondary': page.current, 'btn-inverse': !page.current}"
-                  ng-click="ctrl.navigateToPage(page)"
-                >
-                  {/* {{page.page}} */}
-                </button>
-              </li>
-            </ol>
-          </div>
+          <Pagination
+            visible={props.showPaging}
+            numberOfPages={props.totalPages}
+            currentPage={props.page}
+            onNavigate={props.changePage}
+          />
         </>
       </Page.Contents>
     </Page>
@@ -106,12 +102,19 @@ const renderUser = (user: UserDTO) => {
       <td className="link-td">
         <a href={editUrl}>{user.email}</a>
       </td>
-      <td className="link-td">{/* <a href={editUrl}>{user.lastSeenAtAge}</a> */}</td>
+      <td className="link-td">{renderLastSeen(user, editUrl)}</td>
       <td className="link-td">{renderAdminIcon(user, editUrl)}</td>
       <td className="text-right">{renderAuthLabel(user)}</td>
       <td className="text-right">{renderDisabled(user)}</td>
     </tr>
   );
+};
+
+const renderLastSeen = (user: UserDTO, editUrl: string) => {
+  if (!user || !user.lastSeenAtAge) {
+    return null;
+  }
+  return <a href={editUrl}>{user.lastSeenAtAge}</a>;
 };
 
 const renderAdminIcon = (user: UserDTO, editUrl: string) => {
@@ -163,12 +166,16 @@ const renderDisabled = (user: UserDTO) => {
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   fetchUsers,
   changeQuery,
+  changePage,
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
   navModel: getNavModel(state.navIndex, 'global-users'),
   users: state.userListAdmin.users,
   query: state.userListAdmin.query,
+  showPaging: state.userListAdmin.showPaging,
+  totalPages: state.userListAdmin.totalPages,
+  page: state.userListAdmin.page,
 });
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserListAdminPageUnConnected));

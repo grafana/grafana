@@ -153,16 +153,18 @@ export const userListAdminSlice = createSlice({
         showPaging: totalPages > 1,
       };
     },
-    queryChanged: (state, action: PayloadAction<string>) => {
-      return {
-        ...state,
-        query: action.payload,
-      };
-    },
+    queryChanged: (state, action: PayloadAction<string>) => ({
+      ...state,
+      query: action.payload,
+    }),
+    pageChanged: (state, action: PayloadAction<number>) => ({
+      ...state,
+      page: action.payload,
+    }),
   },
 });
 
-export const { usersFetched, queryChanged } = userListAdminSlice.actions;
+export const { usersFetched, queryChanged, pageChanged } = userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 
 export default {

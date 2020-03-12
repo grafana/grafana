@@ -19,6 +19,7 @@ import {
   ldapFailedAction,
   usersFetched,
   queryChanged,
+  pageChanged,
 } from './reducers';
 import { debounce } from 'lodash';
 
@@ -259,5 +260,12 @@ export function changeQuery(query: string): ThunkResult<void> {
   return async dispatch => {
     dispatch(queryChanged(query));
     fetchUsersWithDebounce(dispatch);
+  };
+}
+
+export function changePage(page: number): ThunkResult<void> {
+  return async dispatch => {
+    dispatch(pageChanged(page));
+    dispatch(fetchUsers());
   };
 }
