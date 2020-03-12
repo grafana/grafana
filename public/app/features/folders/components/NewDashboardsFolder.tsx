@@ -48,27 +48,24 @@ export class NewDashboardsFolder extends PureComponent<Props> {
         <Page.Contents>
           <h3>New Dashboard Folder</h3>
           <Forms.Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
-            {({ register, errors }) =>
-              (console.log(errors) as any) || (
-                <>
-                  <Forms.Field
-                    label="Folder name"
-                    invalid={!!errors.folderName}
-                    error={errors.folderName && errors.folderName.message}
-                  >
-                    <Forms.Input
-                      name="folderName"
-                      size="md"
-                      ref={register({
-                        required: 'Folder name is required.',
-                        validate: async v => await this.validateFolderName(v),
-                      })}
-                    />
-                  </Forms.Field>
-                  <Forms.Button type="submit">Create</Forms.Button>
-                </>
-              )
-            }
+            {({ register, errors }) => (
+              <>
+                <Forms.Field
+                  label="Folder name"
+                  invalid={!!errors.folderName}
+                  error={errors.folderName && errors.folderName.message}
+                >
+                  <Forms.Input
+                    name="folderName"
+                    ref={register({
+                      required: 'Folder name is required.',
+                      validate: async v => await this.validateFolderName(v),
+                    })}
+                  />
+                </Forms.Field>
+                <Forms.Button type="submit">Create</Forms.Button>
+              </>
+            )}
           </Forms.Form>
         </Page.Contents>
       </Page>
