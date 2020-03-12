@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { getTagColorsFromName, Pagination, Forms, ActionBar, ActionBarSpacing } from '@grafana/ui';
+import { getTagColorsFromName, Pagination, Forms, ActionBar, ActionBarSpacing, Tooltip } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -63,7 +63,9 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                   <th>Email</th>
                   <th>
                     Seen
-                    {/* <tip>Time since user was seen using Grafana</tip> */}
+                    <Tooltip placement="top" content="Time since user was seen using Grafana">
+                      <i className="fa fa-question-circle" />
+                    </Tooltip>
                   </th>
                   <th></th>
                   <th style={{ width: '1%' }}></th>
@@ -100,30 +102,19 @@ const renderUser = (user: UserDTO) => {
       <td className="link-td">
         <a href={editUrl}>{user.email}</a>
       </td>
-      <td className="link-td">{renderLastSeen(user, editUrl)}</td>
-      <td className="link-td">{renderAdminIcon(user, editUrl)}</td>
+      <td className="link-td">{user.lastSeenAtAge && <a href={editUrl}>{user.lastSeenAtAge}</a>}</td>
+      <td className="link-td">
+        {user.isAdmin && (
+          <a href={editUrl}>
+            <i className="fa fa-shield" bs-tooltip="'Grafana Admin'" />
+          </a>
+        )}
+      </td>
       <td className="text-right">{renderAuthLabel(user)}</td>
-      <td className="text-right">{renderDisabled(user)}</td>
+      <td className="text-right">
+        {user.isDisabled && <span className="label label-tag label-tag--gray">Disabled</span>}
+      </td>
     </tr>
-  );
-};
-
-const renderLastSeen = (user: UserDTO, editUrl: string) => {
-  if (!user || !user.lastSeenAtAge) {
-    return null;
-  }
-  return <a href={editUrl}>{user.lastSeenAtAge}</a>;
-};
-
-const renderAdminIcon = (user: UserDTO, editUrl: string) => {
-  if (!user || !user.isAdmin) {
-    return null;
-  }
-
-  return (
-    <a href={editUrl}>
-      <i className="fa fa-shield" bs-tooltip="'Grafana Admin'" />
-    </a>
   );
 };
 
@@ -153,13 +144,6 @@ const getAuthLabelStyle = (label: string) => {
     backgroundColor: color,
     borderColor: borderColor,
   };
-};
-
-const renderDisabled = (user: UserDTO) => {
-  if (!user || !user.isDisabled) {
-    return null;
-  }
-  return <span className="label label-tag label-tag--gray">Disabled</span>;
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
