@@ -8,7 +8,8 @@ import (
 //ServeOpts options for serving plugins.
 type ServeOpts struct {
 	DiagnosticsServer DiagnosticsServer
-	CoreServer        CoreServer
+	ResourceServer    ResourceServer
+	DataServer        DataServer
 	TransformServer   TransformServer
 
 	// GRPCServer factory method for creating GRPC server.
@@ -27,9 +28,15 @@ func Serve(opts ServeOpts) error {
 		}
 	}
 
-	if opts.CoreServer != nil {
-		pSet["backend"] = &CoreGRPCPlugin{
-			CoreServer: opts.CoreServer,
+	if opts.ResourceServer != nil {
+		pSet["resource"] = &ResourceGRPCPlugin{
+			ResourceServer: opts.ResourceServer,
+		}
+	}
+
+	if opts.DataServer != nil {
+		pSet["data"] = &DataGRPCPlugin{
+			DataServer: opts.DataServer,
 		}
 	}
 
