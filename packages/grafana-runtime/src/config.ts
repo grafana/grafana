@@ -15,6 +15,7 @@ export interface BuildInfo {
 interface FeatureToggles {
   transformations: boolean;
   inspect: boolean;
+  expressions: boolean;
   newEdit: boolean;
   meta: boolean;
   newVariables: boolean;
@@ -66,6 +67,7 @@ export class GrafanaBootConfig {
   featureToggles: FeatureToggles = {
     transformations: false,
     inspect: false,
+    expressions: false,
     newEdit: false,
     meta: false,
     newVariables: false,
