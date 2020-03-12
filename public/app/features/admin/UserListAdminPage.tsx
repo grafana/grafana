@@ -2,10 +2,10 @@ import React, { useEffect } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { getTagColorsFromName, Pagination } from '@grafana/ui';
+import { getTagColorsFromName, Pagination, Forms, ActionBar, ActionBarSpacing } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
-import { getNavModel } from '../../core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
+import { getNavModel } from '../../core/selectors/navModel';
 import { fetchUsers, changeQuery, changePage } from './state/actions';
 
 interface OwnProps {}
@@ -36,25 +36,23 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
     <Page navModel={props.navModel}>
       <Page.Contents>
         <>
-          <div className="page-action-bar">
-            <label className="gf-form gf-form--grow gf-form--has-input-icon">
-              <input
-                type="text"
-                className="gf-form-input max-width-30"
-                placeholder="Find user by name/login/email"
-                tabIndex={1}
-                autoFocus={true}
-                value={props.query}
-                spellCheck={false}
-                onChange={event => changeQuery(event.target.value)}
-              />
-              <i className="gf-form-input-icon fa fa-search"></i>
-            </label>
-            <div className="page-action-bar__spacer"></div>
-            <a className="btn btn-primary" href="admin/users/create">
+          <ActionBar>
+            <Forms.Input
+              size="md"
+              type="text"
+              placeholder="Find user by name/login/email"
+              tabIndex={1}
+              autoFocus={true}
+              value={props.query}
+              spellCheck={false}
+              onChange={event => props.changeQuery(event.currentTarget.value)}
+              prefix={<i className="fa fa-search" />}
+            />
+            <ActionBarSpacing />
+            <Forms.LinkButton href="admin/users/create" variant="primary">
               New user
-            </a>
-          </div>
+            </Forms.LinkButton>
+          </ActionBar>
 
           <div className="admin-list-table">
             <table className="filter-table form-inline filter-table--hover">
@@ -118,9 +116,10 @@ const renderLastSeen = (user: UserDTO, editUrl: string) => {
 };
 
 const renderAdminIcon = (user: UserDTO, editUrl: string) => {
-  if (!user || !user.isGrafanaAdmin) {
+  if (!user || !user.isAdmin) {
     return null;
   }
+
   return (
     <a href={editUrl}>
       <i className="fa fa-shield" bs-tooltip="'Grafana Admin'" />

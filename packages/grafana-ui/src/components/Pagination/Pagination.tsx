@@ -1,8 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory } from '../../themes';
-import { Button } from '../Button/Button';
-import { ButtonVariant } from '../Button/types';
+import { Button, ButtonVariant } from '../Forms/Button';
 
 interface Props {
   visible?: boolean;
@@ -37,7 +36,7 @@ export const Pagination: React.FC<Props> = ({ visible = true, currentPage, numbe
       <ol>
         {pages.map(pageIndex => {
           const page = pageIndex + 1;
-          const variant: ButtonVariant = page === currentPage ? 'secondary' : 'inverse';
+          const variant: ButtonVariant = page === currentPage ? 'primary' : 'secondary';
 
           return (
             <li key={page} className={styles.item}>
