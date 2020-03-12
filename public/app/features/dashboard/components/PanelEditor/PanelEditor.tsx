@@ -89,7 +89,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.updateLocation({ query: { tab: tab.id }, partial: true });
   };
 
-  onFieldConfigsChange = (config: FieldConfigSource) => {
+  onFieldConfigChange = (config: FieldConfigSource) => {
     const { panel } = this.props;
 
     panel.updateFieldConfig({
@@ -107,7 +107,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <FieldConfigEditor config={fieldConfig} plugin={plugin} onChange={this.onFieldConfigsChange} data={data.series} />
+      <FieldConfigEditor config={fieldConfig} plugin={plugin} onChange={this.onFieldConfigChange} data={data.series} />
     );
   }
 

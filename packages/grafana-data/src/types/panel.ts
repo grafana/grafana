@@ -36,7 +36,10 @@ export interface PanelProps<T = any> {
   timeZone: TimeZone;
   options: T;
   onOptionsChange: (options: T) => void;
-  fieldConfig?: FieldConfigSource;
+  /** Panel fields configuration */
+  fieldConfig: FieldConfigSource;
+  /** Enables panel field config manipulation */
+  onFieldConfigChange: (config: FieldConfigSource) => void;
   renderCounter: number;
   transparent: boolean;
   width: number;

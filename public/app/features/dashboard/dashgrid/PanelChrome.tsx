@@ -293,6 +293,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             renderCounter={renderCounter}
             replaceVariables={panel.replaceVariables}
             onOptionsChange={this.onOptionsChange}
+            onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
           />
         </div>
