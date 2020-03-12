@@ -107,7 +107,7 @@ You can customize the query history in the Settings tab. Options are described i
 | ------------------------------------------------------------- | --------------------------------------- |
 | Period of time for which Grafana will save your query history | 1 week                                  |
 | Change the default active tab                                 | Query history tab                       |
-| Only show queries for datasource currently active in Explore  | false                                   |
+| Only show queries for datasource currently active in Explore  | False                                   |
 | Clear query history                                           | Permanently deletes all stored queries. |
 
 > Note: Query history settings are global, and applied to both panels in split mode.
