@@ -46,6 +46,8 @@ You can test your plugin with the `master` branch version of Grafana.
   * **Stackdriver**: Project selector. [#22447](https://github.com/grafana/grafana/pull/22447), [@sunker](https://github.com/sunker)
   * **TablePanel**: display multi-line text. [#20210](https://github.com/grafana/grafana/pull/20210), [@michael-az](https://github.com/michael-az)
   * **Templating**: Add new global built-in variables. [#21790](https://github.com/grafana/grafana/pull/21790), [@dcastanier](https://github.com/dcastanier)
+  * **Reporting**: add concurrent render limit to settings (Enterprise)
+  * **Reporting**: Add rendering timeout in settings (Enterprise)
 
   ### Bug Fixes
   * **API**: Fix redirect issues. [#22285](https://github.com/grafana/grafana/pull/22285), [@papagian](https://github.com/papagian)
