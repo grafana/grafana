@@ -62,7 +62,7 @@ Query history is a list of queries that you have used in Explore. The history is
 Query history lets you view the history of your querying. For each individual query, you can:
 
 - Replace Explore query for selected query by clicking on the query card.
-- Create and/or edit comment.
+- Create and/or edit a comment.
 - Copy query to clipboard.
 - Copy URL link with the query to clipboard.
 - Star query.
