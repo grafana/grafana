@@ -1165,6 +1165,7 @@ jobs:
           root: .
           paths:
             - public/build/*
+            - public/views/*
             - tools/phantomjs/*
       - run:
           name: ci job failed
