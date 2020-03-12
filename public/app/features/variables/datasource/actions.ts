@@ -10,11 +10,15 @@ import templateSrv from '../../templating/template_srv';
 import _ from 'lodash';
 import { changeVariableEditorExtended } from '../editor/reducer';
 
-export const updateDataSourceVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
-  const sources = getDatasourceSrv().getMetricSources({ skipVariables: true });
+export interface DataSourceVariableActionDependencies {
+  getDatasourceSrv: typeof getDatasourceSrv;
+}
+
+export const updateDataSourceVariableOptions = (
+  identifier: VariableIdentifier,
+  dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
+): ThunkResult<void> => async (dispatch, getState) => {
+  const sources = dependencies.getDatasourceSrv().getMetricSources({ skipVariables: true });
   const variableInState = getVariable<DataSourceVariableModel>(identifier.uuid!, getState());
   let regex;
 
@@ -27,12 +31,8 @@ export const updateDataSourceVariableOptions = (identifier: VariableIdentifier):
   await dispatch(validateVariableSelectionState(identifier));
 };
 
-export interface InitDataSourceVariableEditorDependencies {
-  getDatasourceSrv: typeof getDatasourceSrv;
-}
-
 export const initDataSourceVariableEditor = (
-  dependencies: InitDataSourceVariableEditorDependencies = { getDatasourceSrv: getDatasourceSrv }
+  dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => async dispatch => {
   const dataSources: DataSourceSelectItem[] = dependencies
     .getDatasourceSrv()
