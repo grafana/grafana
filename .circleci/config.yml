@@ -755,12 +755,11 @@ jobs:
 
   end-to-end-tests:
     docker:
-      - image: cypress/base:12.16.1
+      - image: circleci/node:12-browsers
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
