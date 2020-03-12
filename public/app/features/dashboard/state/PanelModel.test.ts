@@ -1,6 +1,5 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelEvents } from '@grafana/data';
 
 class TablePanelCtrl {}
 
@@ -144,22 +143,6 @@ describe('PanelModel', () => {
       it('panelQueryRunner should be cleared', () => {
         const panelQueryRunner = (model as any).queryRunner;
         expect(panelQueryRunner).toBeFalsy();
-      });
-    });
-
-    describe('when changing from angular panel', () => {
-      let tearDownPublished = false;
-
-      beforeEach(() => {
-        model.events.on(PanelEvents.panelTeardown, () => {
-          tearDownPublished = true;
-        });
-        model.changePlugin(getPanelPlugin({ id: 'graph' }));
-      });
-
-      it('should teardown / destroy panel so angular panels event subscriptions are removed', () => {
-        expect(tearDownPublished).toBe(true);
-        expect(model.events.getEventCount()).toBe(0);
       });
     });
 

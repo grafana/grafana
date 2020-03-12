@@ -3,7 +3,7 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
 import { connect } from 'react-redux';
-import { AutoSizer } from 'react-virtualized';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import cx from 'classnames';
 
@@ -23,6 +23,7 @@ import {
   scanStart,
   setQueries,
   toggleGraph,
+  addQueryRow,
   updateTimeRange,
 } from './state/actions';
 // Types
@@ -33,24 +34,20 @@ import {
   GraphSeriesXY,
   PanelData,
   RawTimeRange,
+  TimeRange,
   TimeZone,
   LoadingState,
+  ExploreMode,
 } from '@grafana/data';
 
-import {
-  ExploreId,
-  ExploreItemState,
-  ExploreMode,
-  ExploreUIState,
-  ExploreUpdateState,
-  ExploreUrlState,
-} from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUIState, ExploreUpdateState, ExploreUrlState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
   ensureQueries,
   getTimeRangeFromUrl,
+  getTimeRange,
   lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -67,6 +64,9 @@ const getStyles = stylesFactory(() => {
       label: logsMain;
       // Is needed for some transition animations to work.
       position: relative;
+    `,
+    exploreAddButton: css`
+      margin-top: 1em;
     `,
     // Utility class for iframe parents so that we can show iframe content with reasonable height instead of squished
     // or some random explicit height.
@@ -102,7 +102,7 @@ interface ExploreProps {
   queryKeys: string[];
   initialDatasource: string;
   initialQueries: DataQuery[];
-  initialRange: RawTimeRange;
+  initialRange: TimeRange;
   mode: ExploreMode;
   initialUI: ExploreUIState;
   isLive: boolean;
@@ -118,6 +118,7 @@ interface ExploreProps {
   toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
+  addQueryRow: typeof addQueryRow;
 }
 
 /**
@@ -212,6 +213,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.onModifyQueries({ type: 'ADD_FILTER_OUT', key, value });
   };
 
+  onClickAddQueryRowButton = () => {
+    const { exploreId, queryKeys } = this.props;
+    this.props.addQueryRow(exploreId, queryKeys.length);
+  };
+
   onModifyQueries = (action: any, index?: number) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance?.modifyQuery) {
@@ -276,6 +282,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       timeZone,
       queryResponse,
       syncedTimes,
+      isLive,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
@@ -289,6 +296,17 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+            <div className="gf-form">
+              <button
+                aria-label="Add row button"
+                className={`gf-form-label gf-form-label--btn ${styles.exploreAddButton}`}
+                onClick={this.onClickAddQueryRowButton}
+                disabled={isLive}
+              >
+                <i className={'fa fa-fw fa-plus icon-margin-right'} />
+                <span className="btn-title">{'\xA0' + 'Add query'}</span>
+              </button>
+            </div>
             <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
             <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
               {({ width }) => {
@@ -328,7 +346,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                             />
                           )}
                           {mode === ExploreMode.Metrics && (
-                            <TableContainer exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
+                            <TableContainer width={width} exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
                           )}
                           {mode === ExploreMode.Logs && (
                             <LogsContainer
@@ -397,7 +415,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
-  const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
+  const initialRange = urlRange
+    ? getTimeRangeFromUrlMemoized(urlRange, timeZone)
+    : getTimeRange(timeZone, DEFAULT_RANGE);
 
   let newMode: ExploreMode | undefined;
 
@@ -453,6 +473,7 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   setQueries,
   updateTimeRange,
   toggleGraph,
+  addQueryRow,
 };
 
 export default hot(module)(

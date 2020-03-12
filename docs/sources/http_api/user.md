@@ -2,7 +2,7 @@
 title = "User HTTP API "
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/http_api/user/"]
+aliases = ["/docs/grafana/latest/http_api/user/"]
 type = "docs"
 [menu.docs]
 name = "Users"
@@ -63,7 +63,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be url encoded e.g. `query=Jane%20Doe`.
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be URL encoded e.g. `query=Jane%20Doe`.
 
 Requires basic authentication and that the authenticated user is a Grafana Admin.
 
@@ -330,6 +330,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {"message":"User password changed"}
+```
+
+**Change Password with a Script**
+
+If you need to change a password with a script, here is an example of changing the Admin password using curl with basic auth:
+
+```bash
+curl -X PUT -H "Content-Type: application/json" -d '{
+  "oldPassword": "oldpass",
+  "newPassword": "newpass",
+  "confirmNew": "newpass"
+}' http://admin:oldpass@<your_grafana_host>:3000/api/user/password
 ```
 
 ## Switch user context for a specified user

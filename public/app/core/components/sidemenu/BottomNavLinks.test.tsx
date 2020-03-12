@@ -48,6 +48,7 @@ describe('Render', () => {
       },
     });
 
+    wrapper.find('.sidemenu-org-switcher a').simulate('click');
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -89,11 +90,9 @@ describe('Render', () => {
 describe('Functions', () => {
   describe('item clicked', () => {
     const wrapper = setup();
-    const mockEvent = { preventDefault: jest.fn() };
     it('should emit show modal event if url matches shortcut', () => {
-      const child = { url: '/shortcuts', text: 'hello' };
       const instance = wrapper.instance() as BottomNavLinks;
-      instance.itemClicked(mockEvent as any, child);
+      instance.onOpenShortcuts();
 
       expect(appEvents.emit).toHaveBeenCalledWith(CoreEvents.showModal, { templateHtml: '<help-modal></help-modal>' });
     });

@@ -186,6 +186,7 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
   };
 }
 
+/** @ngInject */
 export function metricSegmentModel(uiSegmentSrv: any) {
   return {
     template:

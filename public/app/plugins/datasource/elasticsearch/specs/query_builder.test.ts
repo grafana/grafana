@@ -476,7 +476,6 @@ describe('ElasticQueryBuilder', () => {
 
         it('should set correct explicit sorting', () => {
           const order = testGetTermsQuery({ order: 'desc' });
-          console.log({ order });
           checkSort(order, 'desc');
           expect(order._count).toBeUndefined();
         });
@@ -496,11 +495,68 @@ describe('ElasticQueryBuilder', () => {
         });
       });
 
-      it('getTermsQuery should request documents and date histogram', () => {
-        const query = builder.getLogsQuery({}, '');
-        console.log({ query });
-        expect(query).toHaveProperty('query.bool.filter');
-        expect(query.aggs['2']).toHaveProperty('date_histogram');
+      describe('getLogsQuery', () => {
+        it('should return query with defaults', () => {
+          const query = builder.getLogsQuery({}, null, '*');
+
+          expect(query.size).toEqual(500);
+
+          const expectedQuery = {
+            bool: {
+              filter: [{ range: { '@timestamp': { gte: '$timeFrom', lte: '$timeTo', format: 'epoch_millis' } } }],
+            },
+          };
+          expect(query.query).toEqual(expectedQuery);
+
+          expect(query.sort).toEqual({ '@timestamp': { order: 'desc', unmapped_type: 'boolean' } });
+
+          const expectedAggs = {
+            2: {
+              aggs: {},
+              date_histogram: {
+                extended_bounds: { max: '$timeTo', min: '$timeFrom' },
+                field: '@timestamp',
+                format: 'epoch_millis',
+                interval: '$__interval',
+                min_doc_count: 0,
+              },
+            },
+          };
+          expect(query.aggs).toMatchObject(expectedAggs);
+        });
+
+        it('with querystring', () => {
+          const query = builder.getLogsQuery({ query: 'foo' }, null, 'foo');
+
+          const expectedQuery = {
+            bool: {
+              filter: [
+                { range: { '@timestamp': { gte: '$timeFrom', lte: '$timeTo', format: 'epoch_millis' } } },
+                { query_string: { analyze_wildcard: true, query: 'foo' } },
+              ],
+            },
+          };
+          expect(query.query).toEqual(expectedQuery);
+        });
+
+        it('with adhoc filters', () => {
+          const adhocFilters = [
+            { key: 'key1', operator: '=', value: 'value1' },
+            { key: 'key2', operator: '!=', value: 'value2' },
+            { key: 'key3', operator: '<', value: 'value3' },
+            { key: 'key4', operator: '>', value: 'value4' },
+            { key: 'key5', operator: '=~', value: 'value5' },
+            { key: 'key6', operator: '!~', value: 'value6' },
+          ];
+          const query = builder.getLogsQuery({}, adhocFilters, '*');
+
+          expect(query.query.bool.must[0].match_phrase['key1'].query).toBe('value1');
+          expect(query.query.bool.must_not[0].match_phrase['key2'].query).toBe('value2');
+          expect(query.query.bool.filter[1].range['key3'].lt).toBe('value3');
+          expect(query.query.bool.filter[2].range['key4'].gt).toBe('value4');
+          expect(query.query.bool.filter[3].regexp['key5']).toBe('value5');
+          expect(query.query.bool.filter[4].bool.must_not.regexp['key6']).toBe('value6');
+        });
       });
     });
   });

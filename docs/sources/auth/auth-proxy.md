@@ -3,7 +3,7 @@ title = "Auth Proxy"
 description = "Grafana Auth Proxy Guide "
 keywords = ["grafana", "configuration", "documentation", "proxy"]
 type = "docs"
-aliases = ["/tutorials/authproxy/"]
+aliases = ["/docs/grafana/latest/tutorials/authproxy/"]
 [menu.docs]
 name = "Auth Proxy"
 identifier = "auth-proxy"

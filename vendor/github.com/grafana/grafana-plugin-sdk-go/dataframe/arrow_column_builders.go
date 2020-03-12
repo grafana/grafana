@@ -10,7 +10,7 @@ func buildStringColumn(pool memory.Allocator, field arrow.Field, vec *stringVect
 	builder := array.NewStringBuilder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		builder.Append(v)
 	}
 
@@ -24,7 +24,7 @@ func buildNullableStringColumn(pool memory.Allocator, field arrow.Field, vec *nu
 	builder := array.NewStringBuilder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		if v == nil {
 			builder.AppendNull()
 			continue
@@ -38,11 +38,107 @@ func buildNullableStringColumn(pool memory.Allocator, field arrow.Field, vec *nu
 	return array.NewColumn(field, chunked)
 }
 
-func buildIntColumn(pool memory.Allocator, field arrow.Field, vec *intVector) *array.Column {
+func buildInt8Column(pool memory.Allocator, field arrow.Field, vec *int8Vector) *array.Column {
+	builder := array.NewInt8Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		builder.Append(v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildNullableInt8Column(pool memory.Allocator, field arrow.Field, vec *nullableInt8Vector) *array.Column {
+	builder := array.NewInt8Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(*v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildInt16Column(pool memory.Allocator, field arrow.Field, vec *int16Vector) *array.Column {
+	builder := array.NewInt16Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		builder.Append(v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildNullableInt16Column(pool memory.Allocator, field arrow.Field, vec *nullableInt16Vector) *array.Column {
+	builder := array.NewInt16Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(*v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildInt32Column(pool memory.Allocator, field arrow.Field, vec *int32Vector) *array.Column {
+	builder := array.NewInt32Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		builder.Append(v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildNullableInt32Column(pool memory.Allocator, field arrow.Field, vec *nullableInt32Vector) *array.Column {
+	builder := array.NewInt32Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(*v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildInt64Column(pool memory.Allocator, field arrow.Field, vec *int64Vector) *array.Column {
 	builder := array.NewInt64Builder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		builder.Append(v)
 	}
 
@@ -52,11 +148,11 @@ func buildIntColumn(pool memory.Allocator, field arrow.Field, vec *intVector) *a
 	return array.NewColumn(field, chunked)
 }
 
-func buildNullableIntColumn(pool memory.Allocator, field arrow.Field, vec *nullableIntVector) *array.Column {
+func buildNullableInt64Column(pool memory.Allocator, field arrow.Field, vec *nullableInt64Vector) *array.Column {
 	builder := array.NewInt64Builder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		if v == nil {
 			builder.AppendNull()
 			continue
@@ -70,11 +166,11 @@ func buildNullableIntColumn(pool memory.Allocator, field arrow.Field, vec *nulla
 	return array.NewColumn(field, chunked)
 }
 
-func buildUIntColumn(pool memory.Allocator, field arrow.Field, vec *uintVector) *array.Column {
-	builder := array.NewUint64Builder(pool)
+func buildUInt8Column(pool memory.Allocator, field arrow.Field, vec *uint8Vector) *array.Column {
+	builder := array.NewUint8Builder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		builder.Append(v)
 	}
 
@@ -84,11 +180,11 @@ func buildUIntColumn(pool memory.Allocator, field arrow.Field, vec *uintVector) 
 	return array.NewColumn(field, chunked)
 }
 
-func buildNullableUIntColumn(pool memory.Allocator, field arrow.Field, vec *nullableUintVector) *array.Column {
-	builder := array.NewUint64Builder(pool)
+func buildNullableUInt8Column(pool memory.Allocator, field arrow.Field, vec *nullableUint8Vector) *array.Column {
+	builder := array.NewUint8Builder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		if v == nil {
 			builder.AppendNull()
 			continue
@@ -102,11 +198,11 @@ func buildNullableUIntColumn(pool memory.Allocator, field arrow.Field, vec *null
 	return array.NewColumn(field, chunked)
 }
 
-func buildFloatColumn(pool memory.Allocator, field arrow.Field, vec *floatVector) *array.Column {
-	builder := array.NewFloat64Builder(pool)
+func buildUInt16Column(pool memory.Allocator, field arrow.Field, vec *uint16Vector) *array.Column {
+	builder := array.NewUint16Builder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		builder.Append(v)
 	}
 
@@ -116,11 +212,139 @@ func buildFloatColumn(pool memory.Allocator, field arrow.Field, vec *floatVector
 	return array.NewColumn(field, chunked)
 }
 
-func buildNullableFloatColumn(pool memory.Allocator, field arrow.Field, vec *nullableFloatVector) *array.Column {
+func buildNullableUInt16Column(pool memory.Allocator, field arrow.Field, vec *nullableUint16Vector) *array.Column {
+	builder := array.NewUint16Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(*v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildUInt32Column(pool memory.Allocator, field arrow.Field, vec *uint32Vector) *array.Column {
+	builder := array.NewUint32Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		builder.Append(v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildNullableUInt32Column(pool memory.Allocator, field arrow.Field, vec *nullableUint32Vector) *array.Column {
+	builder := array.NewUint32Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(*v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildUInt64Column(pool memory.Allocator, field arrow.Field, vec *uint64Vector) *array.Column {
+	builder := array.NewUint64Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		builder.Append(v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildNullableUInt64Column(pool memory.Allocator, field arrow.Field, vec *nullableUint64Vector) *array.Column {
+	builder := array.NewUint64Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(*v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildFloat32Column(pool memory.Allocator, field arrow.Field, vec *float32Vector) *array.Column {
+	builder := array.NewFloat32Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		builder.Append(v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildNullableFloat32Column(pool memory.Allocator, field arrow.Field, vec *nullableFloat32Vector) *array.Column {
+	builder := array.NewFloat32Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(*v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildFloat64Column(pool memory.Allocator, field arrow.Field, vec *float64Vector) *array.Column {
 	builder := array.NewFloat64Builder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
+		builder.Append(v)
+	}
+
+	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
+	defer chunked.Release()
+
+	return array.NewColumn(field, chunked)
+}
+
+func buildNullableFloat64Column(pool memory.Allocator, field arrow.Field, vec *nullableFloat64Vector) *array.Column {
+	builder := array.NewFloat64Builder(pool)
+	defer builder.Release()
+
+	for _, v := range (*vec) {
 		if v == nil {
 			builder.AppendNull()
 			continue
@@ -138,7 +362,7 @@ func buildBoolColumn(pool memory.Allocator, field arrow.Field, vec *boolVector) 
 	builder := array.NewBooleanBuilder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		builder.Append(v)
 	}
 
@@ -152,7 +376,7 @@ func buildNullableBoolColumn(pool memory.Allocator, field arrow.Field, vec *null
 	builder := array.NewBooleanBuilder(pool)
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		if v == nil {
 			builder.AppendNull()
 			continue
@@ -166,13 +390,13 @@ func buildNullableBoolColumn(pool memory.Allocator, field arrow.Field, vec *null
 	return array.NewColumn(field, chunked)
 }
 
-func buildTimeColumn(pool memory.Allocator, field arrow.Field, vec *timeVector) *array.Column {
+func buildTimeColumn(pool memory.Allocator, field arrow.Field, vec *timeTimeVector) *array.Column {
 	builder := array.NewTimestampBuilder(pool, &arrow.TimestampType{
 		Unit: arrow.Nanosecond,
 	})
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		builder.Append(arrow.Timestamp((v).UnixNano()))
 	}
 
@@ -182,13 +406,13 @@ func buildTimeColumn(pool memory.Allocator, field arrow.Field, vec *timeVector) 
 	return array.NewColumn(field, chunked)
 }
 
-func buildNullableTimeColumn(pool memory.Allocator, field arrow.Field, vec *nullableTimeVector) *array.Column {
+func buildNullableTimeColumn(pool memory.Allocator, field arrow.Field, vec *nullableTimeTimeVector) *array.Column {
 	builder := array.NewTimestampBuilder(pool, &arrow.TimestampType{
 		Unit: arrow.Nanosecond,
 	})
 	defer builder.Release()
 
-	for _, v := range *vec {
+	for _, v := range (*vec) {
 		if v == nil {
 			builder.AppendNull()
 			continue

@@ -1,23 +1,18 @@
 // Libaries
 import _ from 'lodash';
-
 // Constants
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
-
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 // Utils & Services
 import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
-
 // Types
-import { PanelModel, GridPos, panelAdded, panelRemoved } from './PanelModel';
+import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { TimeRange, TimeZone, AppEvent } from '@grafana/data';
+import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
-import { PanelEvents } from '@grafana/data';
-import { KIOSK_MODE_TV, DashboardMeta, CoreEvents } from 'app/types';
-import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
+import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -50,6 +45,7 @@ export class DashboardModel {
   links: any;
   gnetId: any;
   panels: PanelModel[];
+  panelInEdit?: PanelModel;
 
   // ------------------
   // not persisted
@@ -67,6 +63,7 @@ export class DashboardModel {
     templating: true, // needs special handling
     originalTime: true,
     originalTemplating: true,
+    panelInEdit: true,
   };
 
   constructor(data: any, meta?: DashboardMeta) {
@@ -226,6 +223,11 @@ export class DashboardModel {
   startRefresh() {
     this.events.emit(PanelEvents.refresh);
 
+    if (this.panelInEdit) {
+      this.panelInEdit.refresh();
+      return;
+    }
+
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
         panel.refresh();
@@ -244,13 +246,28 @@ export class DashboardModel {
   panelInitialized(panel: PanelModel) {
     panel.initialized();
 
+    // refresh new panels unless we are in fullscreen / edit mode
     if (!this.otherPanelInFullscreen(panel)) {
+      panel.refresh();
+    }
+
+    // refresh if panel is in edit mode and there is no last result
+    if (this.panelInEdit === panel && !this.panelInEdit.getQueryRunner().getLastResult()) {
       panel.refresh();
     }
   }
 
   otherPanelInFullscreen(panel: PanelModel) {
-    return this.meta.fullscreen && !panel.fullscreen;
+    return (this.meta.fullscreen && !panel.fullscreen) || this.panelInEdit;
+  }
+
+  initPanelEditor(sourcePanel: PanelModel): PanelModel {
+    this.panelInEdit = sourcePanel.getEditClone();
+    return this.panelInEdit;
+  }
+
+  exitPanelEditor() {
+    this.panelInEdit = undefined;
   }
 
   private ensureListExist(data: any) {
@@ -296,6 +313,14 @@ export class DashboardModel {
       }
     }
     return null;
+  }
+
+  canEditPanel(panel?: PanelModel): boolean {
+    return this.meta.canEdit && panel && !panel.repeatPanelId;
+  }
+
+  canEditPanelById(id: number): boolean {
+    return this.canEditPanel(this.getPanelById(id));
   }
 
   addPanel(panelData: any) {
@@ -660,6 +685,7 @@ export class DashboardModel {
 
       return false;
     })();
+    this.events.emit(CoreEvents.submenuVisibilityChanged, this.meta.submenuEnabled);
   }
 
   getPanelInfoById(panelId: number) {

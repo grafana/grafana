@@ -2,9 +2,9 @@ import _ from 'lodash';
 
 import config from 'app/core/config';
 import { DashboardModel } from '../../state/DashboardModel';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { PanelPluginMeta } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 interface Input {
   name: string;
@@ -35,8 +35,6 @@ interface DataSources {
 }
 
 export class DashboardExporter {
-  constructor(private datasourceSrv: DatasourceSrv) {}
-
   makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
@@ -73,36 +71,38 @@ export class DashboardExporter {
       }
 
       promises.push(
-        this.datasourceSrv.get(datasource).then(ds => {
-          if (ds.meta.builtIn) {
-            return;
-          }
+        getDataSourceSrv()
+          .get(datasource)
+          .then(ds => {
+            if (ds.meta?.builtIn) {
+              return;
+            }
 
-          // add data source type to require list
-          requires['datasource' + ds.meta.id] = {
-            type: 'datasource',
-            id: ds.meta.id,
-            name: ds.meta.name,
-            version: ds.meta.info.version || '1.0.0',
-          };
+            // add data source type to require list
+            requires['datasource' + ds.meta?.id] = {
+              type: 'datasource',
+              id: ds.meta?.id,
+              name: ds.meta?.name,
+              version: ds.meta?.info.version || '1.0.0',
+            };
 
-          // if used via variable we can skip templatizing usage
-          if (datasourceVariable) {
-            return;
-          }
+            // if used via variable we can skip templatizing usage
+            if (datasourceVariable) {
+              return;
+            }
 
-          const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
-          datasources[refName] = {
-            name: refName,
-            label: ds.name,
-            description: '',
-            type: 'datasource',
-            pluginId: ds.meta.id,
-            pluginName: ds.meta.name,
-          };
+            const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+            datasources[refName] = {
+              name: refName,
+              label: ds.name,
+              description: '',
+              type: 'datasource',
+              pluginId: ds.meta?.id,
+              pluginName: ds.meta?.name,
+            };
 
-          obj.datasource = '${' + refName + '}';
-        })
+            obj.datasource = '${' + refName + '}';
+          })
       );
     };
 

@@ -11,10 +11,16 @@ import {
   FormLabel,
   Select,
   DataLinksEditor,
+  Switch,
 } from '@grafana/ui';
-import { FieldDisplayOptions, FieldConfig, DataLink, PanelEditorProps } from '@grafana/data';
-
-import { Threshold, ValueMapping } from '@grafana/data';
+import {
+  ThresholdsConfig,
+  ValueMapping,
+  FieldDisplayOptions,
+  FieldConfig,
+  DataLink,
+  PanelEditorProps,
+} from '@grafana/data';
 import { BarGaugeOptions, displayModes } from './types';
 import { orientationOptions } from '../gauge/types';
 import {
@@ -23,7 +29,7 @@ import {
 } from 'app/features/panel/panellinks/link_srv';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) => {
+  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,
@@ -54,6 +60,9 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
 
   onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
   onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
+  onToggleShowUnfilled = () => {
+    this.props.onOptionsChange({ ...this.props.options, showUnfilled: !this.props.options.showUnfilled });
+  };
 
   onDataLinksChanged = (links: DataLink[]) => {
     this.onDefaultsChange({
@@ -96,6 +105,14 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
                 value={displayModes.find(item => item.value === options.displayMode)}
               />
             </div>
+            {options.displayMode !== 'lcd' && (
+              <Switch
+                label="Unfilled"
+                labelClass={`width-${labelWidth}`}
+                checked={options.showUnfilled}
+                onChange={this.onToggleShowUnfilled}
+              />
+            )}
           </PanelOptionsGroup>
           <PanelOptionsGroup title="Field">
             <FieldPropertiesEditor

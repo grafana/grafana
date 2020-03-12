@@ -442,11 +442,22 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
   const fields: FieldDTO[] = data.fields.map(f => {
+    let values = f.values.toArray();
+    if (!Array.isArray(values)) {
+      // Apache arrow will pack objects into typed arrays
+      // Float64Array, etc
+      // TODO: Float64Array could be used directly
+      values = [];
+      for (let i = 0; i < f.values.length; i++) {
+        values.push(f.values.get(i));
+      }
+    }
+
     return {
       name: f.name,
       type: f.type,
       config: f.config,
-      values: f.values.toArray(),
+      values,
       labels: f.labels,
     };
   });

@@ -1,4 +1,4 @@
-import React, { FC, HTMLProps, ReactNode } from 'react';
+import React, { HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusStyle, inputSizes, sharedInputStyle } from '../commonStyles';
@@ -12,6 +12,8 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
   prefix?: JSX.Element | string | null;
+  /** Show an icon as a suffix in the input */
+  suffix?: JSX.Element | string | null;
   /** Show a loading indicator as a suffix in the input */
   loading?: boolean;
   /** Add a component as an addon before the input  */
@@ -62,6 +64,19 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
           .input {
             border-color: ${invalid ? colors.redBase : colors.formInputBorder};
           }
+
+          // only show number buttons on hover
+          input[type='number'] {
+            -moz-appearance: number-input;
+            -webkit-appearance: number-input;
+            appearance: textfield;
+          }
+
+          input[type='number']::-webkit-inner-spin-button,
+          input[type='number']::-webkit-outer-spin-button {
+            -webkit-appearance: inner-spin-button !important;
+            opacity: 1;
+          }
         }
       `
     ),
@@ -110,12 +125,15 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         &:not(:last-child) {
           padding-right: ${prefixSuffixStaticWidth};
         }
+        &[readonly] {
+          cursor: default;
+        }
       }
     `,
 
     input: cx(
       getFocusStyle(theme),
-      sharedInputStyle(theme),
+      sharedInputStyle(theme, invalid),
       css`
         label: input-input;
         position: relative;
@@ -124,25 +142,12 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         border-radius: ${borderRadius};
         height: 100%;
         width: 100%;
-        padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
-        font-size: ${theme.typography.size.md};
-
-        /*
-         Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in
-         https://github.com/grafana/grafana/commit/488fe62f158a9e0a0bced2b678ada5d43cf3998e.
-         */
-
-        &[type='number']::-webkit-outer-spin-button,
-        &[type='number']::-webkit-inner-spin-button {
-          -webkit-appearance: inner-spin-button !important;
-          opacity: 1;
-        }
-
-        &[type='number'] {
-          -moz-appearance: number-input;
-        }
       `
     ),
+    inputDisabled: css`
+      background-color: ${colors.formInputBgDisabled};
+      color: ${colors.formInputDisabledText};
+    `,
     addon: css`
         label: input-addon;
         display: flex;
@@ -184,7 +189,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         border-right: none;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
-        left: 0;
       `
     ),
     suffix: cx(
@@ -199,11 +203,16 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         right: 0;
       `
     ),
+    loadingIndicator: css`
+      & + * {
+        margin-left: ${theme.spacing.xs};
+      }
+    `,
   };
 });
 
-export const Input: FC<Props> = props => {
-  const { addonAfter, addonBefore, prefix, invalid, loading, size = 'auto', ...restProps } = props;
+export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+  const { addonAfter, addonBefore, prefix, suffix, invalid, loading, size = 'auto', ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -211,8 +220,8 @@ export const Input: FC<Props> = props => {
    */
   const [prefixRect, prefixRef] = useClientRect<HTMLDivElement>();
   const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
-  const theme = useTheme();
 
+  const theme = useTheme();
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (
@@ -227,6 +236,7 @@ export const Input: FC<Props> = props => {
         )}
 
         <input
+          ref={ref}
           className={styles.input}
           {...restProps}
           style={{
@@ -235,9 +245,10 @@ export const Input: FC<Props> = props => {
           }}
         />
 
-        {loading && (
+        {(suffix || loading) && (
           <div className={styles.suffix} ref={suffixRef}>
-            <Icon name="spinner" className="fa-spin" />
+            {loading && <Icon name="spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
+            {suffix}
           </div>
         )}
       </div>
@@ -245,4 +256,4 @@ export const Input: FC<Props> = props => {
       {!!addonAfter && <div className={styles.addon}>{addonAfter}</div>}
     </div>
   );
-};
+});

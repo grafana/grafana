@@ -1,4 +1,4 @@
-import { countBy, chain } from 'lodash';
+import { countBy, chain, escapeRegExp } from 'lodash';
 
 import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser } from '../types/logs';
 import { DataFrame, FieldType } from '../types/index';
@@ -8,7 +8,7 @@ import { ArrayVector } from '../vector/ArrayVector';
 // first a label from start of the string or first white space, then any word chars until "="
 // second either an empty quotes, or anything that starts with quote and ends with unescaped quote,
 // or any non whitespace chars that do not start with qoute
-const LOGFMT_REGEXP = /(?:^|\s)(\w+)=(""|(?:".*?[^\\]"|[^"\s]\S*))/;
+const LOGFMT_REGEXP = /(?:^|\s)([\w\(\)\[\]\{\}]+)=(""|(?:".*?[^\\]"|[^"\s]\S*))/;
 
 /**
  * Returns the log level of a log line.
@@ -20,20 +20,25 @@ export function getLogLevel(line: string): LogLevel {
   if (!line) {
     return LogLevel.unknown;
   }
+  let level = LogLevel.unknown;
+  let currentIndex: number | undefined = undefined;
+
   for (const key of Object.keys(LogLevel)) {
     const regexp = new RegExp(`\\b${key}\\b`, 'i');
-    if (regexp.test(line)) {
-      const level = (LogLevel as any)[key];
-      if (level) {
-        return level;
+    const result = regexp.exec(line);
+
+    if (result) {
+      if (currentIndex === undefined || result.index < currentIndex) {
+        level = (LogLevel as any)[key];
+        currentIndex = result.index;
       }
     }
   }
-  return LogLevel.unknown;
+  return level;
 }
 
 export function getLogLevelFromKey(key: string): LogLevel {
-  const level = (LogLevel as any)[key];
+  const level = (LogLevel as any)[key.toLowerCase()];
   if (level) {
     return level;
   }
@@ -85,7 +90,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   },
 
   logfmt: {
-    buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
+    buildMatcher: label => new RegExp(`(?:^|\\s)${escapeRegExp(label)}=("[^"]*"|\\S+)`),
     getFields: line => {
       const fields: string[] = [];
       line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {

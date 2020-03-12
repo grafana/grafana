@@ -3,13 +3,12 @@ import React from 'react';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
 // @ts-ignore
-import AsyncSelect from '@torkelo/react-select/lib/Async';
-
+import AsyncSelect from '@torkelo/react-select/async';
+import { escapeStringForRegex } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import { NoOptionsMessage, IndicatorsContainer, resetSelectStyles } from '@grafana/ui';
-import { escapeStringForRegex } from '../FilterInput/FilterInput';
+import { IndicatorsContainer, NoOptionsMessage, resetSelectStyles } from '@grafana/ui';
 
 export interface TermCount {
   term: string;

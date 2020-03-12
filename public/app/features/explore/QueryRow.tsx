@@ -9,7 +9,7 @@ import { connect } from 'react-redux';
 import QueryEditor from './QueryEditor';
 import { QueryRowActions } from './QueryRowActions';
 // Actions
-import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
+import { changeQuery, modifyQueries, runQueries } from './state/actions';
 // Types
 import { StoreState } from 'app/types';
 import {
@@ -20,12 +20,12 @@ import {
   TimeRange,
   AbsoluteTimeRange,
   LoadingState,
+  ExploreMode,
 } from '@grafana/data';
 
-import { ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
+import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
-import QueryStatus from './QueryStatus';
 
 interface PropsFromParent {
   exploreId: ExploreId;
@@ -34,7 +34,6 @@ interface PropsFromParent {
 }
 
 interface QueryRowProps extends PropsFromParent {
-  addQueryRow: typeof addQueryRow;
   changeQuery: typeof changeQuery;
   className?: string;
   exploreId: ExploreId;
@@ -48,8 +47,8 @@ interface QueryRowProps extends PropsFromParent {
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
-  latency: number;
   mode: ExploreMode;
+  latency: number;
 }
 
 interface QueryRowState {
@@ -81,11 +80,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   componentWillUnmount() {
     console.log('QueryRow will unmount');
   }
-
-  onClickAddButton = () => {
-    const { exploreId, index } = this.props;
-    this.props.addQueryRow(exploreId, index);
-  };
 
   onClickToggleDisabled = () => {
     const { exploreId, index, query } = this.props;
@@ -124,8 +118,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       range,
       absoluteRange,
       queryResponse,
-      latency,
       mode,
+      latency,
     } = this.props;
 
     const canToggleEditorModes =
@@ -155,6 +149,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               onChange={this.onChange}
               data={queryResponse}
               absoluteRange={absoluteRange}
+              exploreMode={mode}
             />
           ) : (
             <QueryEditor
@@ -169,16 +164,13 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
             />
           )}
         </div>
-        <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={query.hide ? 0 : latency} />
-        </div>
         <QueryRowActions
           canToggleEditorModes={canToggleEditorModes}
           isDisabled={query.hide}
           isNotStarted={isNotStarted}
+          latency={latency}
           onClickToggleEditorMode={this.onClickToggleEditorMode}
           onClickToggleDisabled={this.onClickToggleDisabled}
-          onClickAddButton={this.onClickAddButton}
           onClickRemoveButton={this.onClickRemoveButton}
         />
       </div>
@@ -189,7 +181,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, range, absoluteRange, latency, mode, queryResponse } = item;
+  const { datasourceInstance, history, queries, range, absoluteRange, mode, queryResponse, latency } = item;
   const query = queries[index];
 
   return {
@@ -199,13 +191,12 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     range,
     absoluteRange,
     queryResponse,
-    latency,
     mode,
+    latency,
   };
 }
 
 const mapDispatchToProps = {
-  addQueryRow,
   changeQuery,
   highlightLogsExpressionAction,
   modifyQueries,

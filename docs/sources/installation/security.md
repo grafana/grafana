@@ -12,29 +12,31 @@ weight = 2
 
 # Security
 
-## Data source proxy and protecting internal services
+If you run non-Grafana web services on your Grafana server or within its local network, then they might be vulnerable to exploitation through the Grafana data source proxy or other methods.
 
-If you have non-Grafana web services running on your Grafana server or within its local network, these may be vulnerable to exploitation via the Grafana data source proxy.
+To prevent this type of exploitation from happening, we recommend that you apply one or more of the precautions listed below.
 
-To prevent this type of exploitation from happening we explain a couple of different solutions  below.
+## Limit IP addresses/hostnames for data source URL
 
-### Configure Grafana to only allow certain IP addresses/hostnames to be used as data source url
+You can configure Grafana to only allow certain IP addresses or hostnames to be used as data source URLs and proxied through the Grafana data source proxy. Refer to [data_source_proxy_whitelist]({{< relref "configuration/#data-source-proxy-whitelist" >}}) for usage instructions.
 
-You can configure Grafana to only allow certain IP addresses/hostnames to be used as data source url and by that proxied through the Grafana data source proxy. See [data_source_proxy_whitelist]({{< relref "configuration/#data-source-proxy-whitelist" >}}) for usage instructions.
+## Firewall rules
 
-### Firewall rules
+Configure a firewall to restrict Grafana from making network requests to sensitive internal web services. 
 
-You should be able to configure a firewall, for example using iptables, to restrict Grafana from making network requests to certain internal web services.
+There are many firewall tools available, refer to the documentation for your specific security tool. For example, Linux users can use [iptables](https://en.wikipedia.org/wiki/Iptables).
 
-### Proxy server
+## Proxy server
 
-You should be able to require all network requests being made by Grafana to go through a proxy server.
+Require all network requests being made by Grafana to go through a proxy server.
 
-## Viewer query permissions
+## Limit Viewer query permissions
 
-Important to understand that users with Viewer role can still issue any possible query to all data sources available in the **organization**. Not just the queries that are defined on the dashboards the user with Viewer role has permissions to view.
+Users with the Viewer role can enter *any possible query* in *any* of the data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
 
-There are a couple of ways you can restrict data source query access:
+**For example:** In a Grafana instance with one data source, one dashboard, and one panel that has one query defined, you might assume that a Viewer can only see the result of the query defined in that panel. Actually, the Viewer has access to send any query to the data source. With a command-line tool like curl (there are lots of tools for this), the Viewer can make their own query to the data source and potentially access sensitive data.
+
+To address this vulnerability, you can restrict data source query access in the following ways:
 
 - Create multiple data sources with some restrictions added in data source config that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "../permissions/datasource_permissions.md" >}}) Enterprise feature to restrict user access to the data source in Grafana.
-- Create a separate Grafana organization and in that organization create a separate data source. Make sure the data source has some option/user/credentials setting that limits access to a subset of the data. Not all data sources have an option to limit access.
+- Create a separate Grafana organization, and in that organization, create a separate data source. Make sure the data source has some option/user/credentials setting that limits access to a subset of the data. Not all data sources have an option to limit access.

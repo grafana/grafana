@@ -38,7 +38,7 @@ type Tracer struct {
 	serviceName string
 	hostIPv4    uint32 // this is for zipkin endpoint conversion
 
-	sampler  Sampler
+	sampler  SamplerV2
 	reporter Reporter
 	metrics  Metrics
 	logger   log.Logger
@@ -47,15 +47,15 @@ type Tracer struct {
 	randomNumber func() uint64
 
 	options struct {
-		poolSpans            bool
-		gen128Bit            bool // whether to generate 128bit trace IDs
-		zipkinSharedRPCSpan  bool
-		highTraceIDGenerator func() uint64 // custom high trace ID generator
-		maxTagValueLength    int
+		gen128Bit                   bool // whether to generate 128bit trace IDs
+		zipkinSharedRPCSpan         bool
+		highTraceIDGenerator        func() uint64 // custom high trace ID generator
+		maxTagValueLength           int
+		noDebugFlagOnForcedSampling bool
 		// more options to come
 	}
-	// pool for Span objects
-	spanPool sync.Pool
+	// allocator of Span objects
+	spanAllocator SpanAllocator
 
 	injectors  map[interface{}]Injector
 	extractors map[interface{}]Extractor
@@ -74,6 +74,7 @@ type Tracer struct {
 // NewTracer creates Tracer implementation that reports tracing to Jaeger.
 // The returned io.Closer can be used in shutdown hooks to ensure that the internal
 // queue of the Reporter is drained and all buffered spans are submitted to collectors.
+// TODO (breaking change) return *Tracer only, without closer.
 func NewTracer(
 	serviceName string,
 	sampler Sampler,
@@ -81,15 +82,13 @@ func NewTracer(
 	options ...TracerOption,
 ) (opentracing.Tracer, io.Closer) {
 	t := &Tracer{
-		serviceName: serviceName,
-		sampler:     sampler,
-		reporter:    reporter,
-		injectors:   make(map[interface{}]Injector),
-		extractors:  make(map[interface{}]Extractor),
-		metrics:     *NewNullMetrics(),
-		spanPool: sync.Pool{New: func() interface{} {
-			return &Span{}
-		}},
+		serviceName:   serviceName,
+		sampler:       samplerV1toV2(sampler),
+		reporter:      reporter,
+		injectors:     make(map[interface{}]Injector),
+		extractors:    make(map[interface{}]Extractor),
+		metrics:       *NewNullMetrics(),
+		spanAllocator: simpleSpanAllocator{},
 	}
 
 	for _, option := range options {
@@ -148,7 +147,15 @@ func NewTracer(
 	if hostname, err := os.Hostname(); err == nil {
 		t.tags = append(t.tags, Tag{key: TracerHostnameTagKey, value: hostname})
 	}
-	if ip, err := utils.HostIP(); err == nil {
+	if ipval, ok := t.getTag(TracerIPTagKey); ok {
+		ipv4, err := utils.ParseIPToUint32(ipval.(string))
+		if err != nil {
+			t.hostIPv4 = 0
+			t.logger.Error("Unable to convert the externally provided ip to uint32: " + err.Error())
+		} else {
+			t.hostIPv4 = ipv4
+		}
+	} else if ip, err := utils.HostIP(); err == nil {
 		t.tags = append(t.tags, Tag{key: TracerIPTagKey, value: ip.String()})
 		t.hostIPv4 = utils.PackIPAsUint32(ip)
 	} else {
@@ -217,20 +224,30 @@ func (t *Tracer) startSpanWithOptions(
 	var references []Reference
 	var parent SpanContext
 	var hasParent bool // need this because `parent` is a value, not reference
+	var ctx SpanContext
+	var isSelfRef bool
 	for _, ref := range options.References {
-		ctx, ok := ref.ReferencedContext.(SpanContext)
+		ctxRef, ok := ref.ReferencedContext.(SpanContext)
 		if !ok {
 			t.logger.Error(fmt.Sprintf(
 				"Reference contains invalid type of SpanReference: %s",
 				reflect.ValueOf(ref.ReferencedContext)))
 			continue
 		}
-		if !isValidReference(ctx) {
+		if !isValidReference(ctxRef) {
 			continue
 		}
-		references = append(references, Reference{Type: ref.Type, Context: ctx})
+
+		if ref.Type == selfRefType {
+			isSelfRef = true
+			ctx = ctxRef
+			continue
+		}
+
+		references = append(references, Reference{Type: ref.Type, Context: ctxRef})
+
 		if !hasParent {
-			parent = ctx
+			parent = ctxRef
 			hasParent = ref.Type == opentracing.ChildOfRef
 		}
 	}
@@ -245,60 +262,77 @@ func (t *Tracer) startSpanWithOptions(
 		rpcServer = (v == ext.SpanKindRPCServerEnum || v == string(ext.SpanKindRPCServerEnum))
 	}
 
-	var samplerTags []Tag
-	var ctx SpanContext
+	var internalTags []Tag
 	newTrace := false
-	if !hasParent || !parent.IsValid() {
-		newTrace = true
-		ctx.traceID.Low = t.randomID()
-		if t.options.gen128Bit {
-			ctx.traceID.High = t.options.highTraceIDGenerator()
-		}
-		ctx.spanID = SpanID(ctx.traceID.Low)
-		ctx.parentID = 0
-		ctx.flags = byte(0)
-		if hasParent && parent.isDebugIDContainerOnly() && t.isDebugAllowed(operationName) {
-			ctx.flags |= (flagSampled | flagDebug)
-			samplerTags = []Tag{{key: JaegerDebugHeader, value: parent.debugID}}
-		} else if sampled, tags := t.sampler.IsSampled(ctx.traceID, operationName); sampled {
-			ctx.flags |= flagSampled
-			samplerTags = tags
-		}
-	} else {
-		ctx.traceID = parent.traceID
-		if rpcServer && t.options.zipkinSharedRPCSpan {
-			// Support Zipkin's one-span-per-RPC model
-			ctx.spanID = parent.spanID
-			ctx.parentID = parent.parentID
+	if !isSelfRef {
+		if !hasParent || !parent.IsValid() {
+			newTrace = true
+			ctx.traceID.Low = t.randomID()
+			if t.options.gen128Bit {
+				ctx.traceID.High = t.options.highTraceIDGenerator()
+			}
+			ctx.spanID = SpanID(ctx.traceID.Low)
+			ctx.parentID = 0
+			ctx.samplingState = &samplingState{
+				localRootSpan: ctx.spanID,
+			}
+			if hasParent && parent.isDebugIDContainerOnly() && t.isDebugAllowed(operationName) {
+				ctx.samplingState.setDebugAndSampled()
+				internalTags = append(internalTags, Tag{key: JaegerDebugHeader, value: parent.debugID})
+			}
 		} else {
-			ctx.spanID = SpanID(t.randomID())
-			ctx.parentID = parent.spanID
+			ctx.traceID = parent.traceID
+			if rpcServer && t.options.zipkinSharedRPCSpan {
+				// Support Zipkin's one-span-per-RPC model
+				ctx.spanID = parent.spanID
+				ctx.parentID = parent.parentID
+			} else {
+				ctx.spanID = SpanID(t.randomID())
+				ctx.parentID = parent.spanID
+			}
+			ctx.samplingState = parent.samplingState
+			if parent.remote {
+				ctx.samplingState.setFinal()
+				ctx.samplingState.localRootSpan = ctx.spanID
+			}
 		}
-		ctx.flags = parent.flags
-	}
-	if hasParent {
-		// copy baggage items
-		if l := len(parent.baggage); l > 0 {
-			ctx.baggage = make(map[string]string, len(parent.baggage))
-			for k, v := range parent.baggage {
-				ctx.baggage[k] = v
+		if hasParent {
+			// copy baggage items
+			if l := len(parent.baggage); l > 0 {
+				ctx.baggage = make(map[string]string, len(parent.baggage))
+				for k, v := range parent.baggage {
+					ctx.baggage[k] = v
+				}
 			}
 		}
 	}
 
 	sp := t.newSpan()
 	sp.context = ctx
+	sp.tracer = t
+	sp.operationName = operationName
+	sp.startTime = options.StartTime
+	sp.duration = 0
+	sp.references = references
+	sp.firstInProcess = rpcServer || sp.context.parentID == 0
+
+	if !sp.isSamplingFinalized() {
+		decision := t.sampler.OnCreateSpan(sp)
+		sp.applySamplingDecision(decision, false)
+	}
 	sp.observer = t.observer.OnStartSpan(sp, operationName, options)
-	return t.startSpanInternal(
-		sp,
-		operationName,
-		options.StartTime,
-		samplerTags,
-		options.Tags,
-		newTrace,
-		rpcServer,
-		references,
-	)
+
+	if tagsTotalLength := len(options.Tags) + len(internalTags); tagsTotalLength > 0 {
+		if sp.tags == nil || cap(sp.tags) < tagsTotalLength {
+			sp.tags = make([]Tag, 0, tagsTotalLength)
+		}
+		sp.tags = append(sp.tags, internalTags...)
+		for k, v := range options.Tags {
+			sp.setTagInternal(k, v, false)
+		}
+	}
+	t.emitNewSpanMetrics(sp, newTrace)
+	return sp
 }
 
 // Inject implements Inject() method of opentracing.Tracer
@@ -323,6 +357,7 @@ func (t *Tracer) Extract(
 		if err != nil {
 			return nil, err // ensure returned spanCtx is nil
 		}
+		spanCtx.remote = true
 		return spanCtx, nil
 	}
 	return nil, opentracing.ErrUnsupportedFormat
@@ -333,10 +368,10 @@ func (t *Tracer) Close() error {
 	t.reporter.Close()
 	t.sampler.Close()
 	if mgr, ok := t.baggageRestrictionManager.(io.Closer); ok {
-		mgr.Close()
+		_ = mgr.Close()
 	}
 	if throttler, ok := t.debugThrottler.(io.Closer); ok {
-		throttler.Close()
+		_ = throttler.Close()
 	}
 	return nil
 }
@@ -350,55 +385,38 @@ func (t *Tracer) Tags() []opentracing.Tag {
 	return tags
 }
 
+// getTag returns the value of specific tag, if not exists, return nil.
+// TODO only used by tests, move there.
+func (t *Tracer) getTag(key string) (interface{}, bool) {
+	for _, tag := range t.tags {
+		if tag.key == key {
+			return tag.value, true
+		}
+	}
+	return nil, false
+}
+
 // newSpan returns an instance of a clean Span object.
 // If options.PoolSpans is true, the spans are retrieved from an object pool.
 func (t *Tracer) newSpan() *Span {
-	if !t.options.poolSpans {
-		return &Span{}
-	}
-	sp := t.spanPool.Get().(*Span)
-	sp.context = emptyContext
-	sp.tracer = nil
-	sp.tags = nil
-	sp.logs = nil
-	return sp
+	return t.spanAllocator.Get()
 }
 
-func (t *Tracer) startSpanInternal(
-	sp *Span,
-	operationName string,
-	startTime time.Time,
-	internalTags []Tag,
-	tags opentracing.Tags,
-	newTrace bool,
-	rpcServer bool,
-	references []Reference,
-) *Span {
-	sp.tracer = t
-	sp.operationName = operationName
-	sp.startTime = startTime
-	sp.duration = 0
-	sp.references = references
-	sp.firstInProcess = rpcServer || sp.context.parentID == 0
-	if len(tags) > 0 || len(internalTags) > 0 {
-		sp.tags = make([]Tag, len(internalTags), len(tags)+len(internalTags))
-		copy(sp.tags, internalTags)
-		for k, v := range tags {
-			sp.observer.OnSetTag(k, v)
-			if k == string(ext.SamplingPriority) && !setSamplingPriority(sp, v) {
-				continue
-			}
-			sp.setTagNoLocking(k, v)
+// emitNewSpanMetrics generates metrics on the number of started spans and traces.
+// newTrace param: we cannot simply check for parentID==0 because in Zipkin model the
+// server-side RPC span has the exact same trace/span/parent IDs as the
+// calling client-side span, but obviously the server side span is
+// no longer a root span of the trace.
+func (t *Tracer) emitNewSpanMetrics(sp *Span, newTrace bool) {
+	if !sp.isSamplingFinalized() {
+		t.metrics.SpansStartedDelayedSampling.Inc(1)
+		if newTrace {
+			t.metrics.TracesStartedDelayedSampling.Inc(1)
 		}
-	}
-	// emit metrics
-	if sp.context.IsSampled() {
+		// joining a trace is not possible, because sampling decision inherited from upstream is final
+	} else if sp.context.IsSampled() {
 		t.metrics.SpansStartedSampled.Inc(1)
 		if newTrace {
-			// We cannot simply check for parentID==0 because in Zipkin model the
-			// server-side RPC span has the exact same trace/span/parent IDs as the
-			// calling client-side span, but obviously the server side span is
-			// no longer a root span of the trace.
 			t.metrics.TracesStartedSampled.Inc(1)
 		} else if sp.firstInProcess {
 			t.metrics.TracesJoinedSampled.Inc(1)
@@ -411,17 +429,25 @@ func (t *Tracer) startSpanInternal(
 			t.metrics.TracesJoinedNotSampled.Inc(1)
 		}
 	}
-	return sp
 }
 
 func (t *Tracer) reportSpan(sp *Span) {
-	t.metrics.SpansFinished.Inc(1)
+	if !sp.isSamplingFinalized() {
+		t.metrics.SpansFinishedDelayedSampling.Inc(1)
+	} else if sp.context.IsSampled() {
+		t.metrics.SpansFinishedSampled.Inc(1)
+	} else {
+		t.metrics.SpansFinishedNotSampled.Inc(1)
+	}
+
+	// Note: if the reporter is processing Span asynchronously then it needs to Retain() the span,
+	// and then Release() it when no longer needed.
+	// Otherwise, the span may be reused for another trace and its data may be overwritten.
 	if sp.context.IsSampled() {
 		t.reporter.Report(sp)
 	}
-	if t.options.poolSpans {
-		t.spanPool.Put(sp)
-	}
+
+	sp.Release()
 }
 
 // randomID generates a random trace/span ID, using tracer.random() generator.
@@ -442,4 +468,19 @@ func (t *Tracer) setBaggage(sp *Span, key, value string) {
 // (NB) span must hold the lock before making this call
 func (t *Tracer) isDebugAllowed(operation string) bool {
 	return t.debugThrottler.IsAllowed(operation)
+}
+
+// Sampler returns the sampler given to the tracer at creation.
+func (t *Tracer) Sampler() SamplerV2 {
+	return t.sampler
+}
+
+// SelfRef creates an opentracing compliant SpanReference from a jaeger
+// SpanContext. This is a factory function in order to encapsulate jaeger specific
+// types.
+func SelfRef(ctx SpanContext) opentracing.SpanReference {
+	return opentracing.SpanReference{
+		Type:              selfRefType,
+		ReferencedContext: ctx,
+	}
 }

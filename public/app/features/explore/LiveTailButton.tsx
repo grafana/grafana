@@ -24,7 +24,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     liveButton: css`
       label: liveButton;
-      transition: background-color 1s, border-color 1s, color 1s;
       margin: 0;
     `,
     isLive: css`
@@ -84,7 +83,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: stopButtonEnterActive;
       opacity: 1;
       width: 32px;
-      transition: opacity 500ms ease-in 50ms, width 500ms ease-in 50ms;
     `,
     stopButtonExit: css`
       label: stopButtonExit;
@@ -96,7 +94,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: stopButtonExitActive;
       opacity: 0;
       width: 0;
-      transition: opacity 500ms ease-in 50ms, width 500ms ease-in 50ms;
     `,
   };
 });
@@ -127,7 +124,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         <ResponsiveButton
           splitted={splitted}
           buttonClassName={classNames('btn navbar-button', styles.liveButton, {
-            [`btn--radius-right-0 explore-active-button-glow ${styles.noRightBorderStyle}`]: isLive,
+            [`btn--radius-right-0 explore-active-button ${styles.noRightBorderStyle}`]: isLive,
             [styles.isLive]: isLive && !isPaused,
             [styles.isPaused]: isLive && isPaused,
           })}
@@ -154,7 +151,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
       >
         <div>
           <button
-            className={`btn navbar-button navbar-button--attached explore-active-button-glow ${styles.isLive}`}
+            className={`btn navbar-button navbar-button--attached explore-active-button ${styles.isLive}`}
             onClick={stop}
           >
             <i className={classNames('fa fa-stop icon-brand-gradient')} />

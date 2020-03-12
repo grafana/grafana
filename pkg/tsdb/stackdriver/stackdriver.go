@@ -15,9 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/context/ctxhttp"
-	"golang.org/x/oauth2/google"
-
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -27,12 +24,20 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/net/context/ctxhttp"
+	"golang.org/x/oauth2/google"
 )
 
 var (
-	slog             log.Logger
-	legendKeyFormat  *regexp.Regexp
-	metricNameFormat *regexp.Regexp
+	slog log.Logger
+)
+
+var (
+	matchAllCap       = regexp.MustCompile("(.)([A-Z][a-z]*)")
+	legendKeyFormat   = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	metricNameFormat  = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
+	wildcardRegexRe   = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+	alignmentPeriodRe = regexp.MustCompile("[0-9]+")
 )
 
 const (
@@ -62,8 +67,6 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 func init() {
 	slog = log.New("tsdb.stackdriver")
 	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
-	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	metricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
 }
 
 // Query takes in the frontend queries, parses them into the Stackdriver query format
@@ -77,8 +80,10 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
-	case "ensureDefaultProjectQuery":
-		result, err = e.ensureDefaultProject(ctx, tsdbQuery)
+	case "getProjectsListQuery":
+		result, err = e.getProjectList(ctx, tsdbQuery)
+	case "getGCEDefaultProject":
+		result, err = e.getGCEDefaultProject(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -88,19 +93,29 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	return result, err
 }
 
-func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *StackdriverExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
+	refId := tsdbQuery.Queries[0].RefId
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: refId}
 
-	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
-	if authenticationType == gceAuthentication {
-		defaultProject, err := e.getDefaultProject(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
-		}
+	gceDefaultProject, err := e.getDefaultProject(ctx)
+	if err != nil {
+		slog.Debug("Stackdriver", "Auth", "Failed to use GCE auth: ", err)
+		return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+	}
+	slog.Debug("Stackdriver", "Auth", "Successfully use GCE auth: ", gceDefaultProject)
 
-		e.dsInfo.JsonData.Set("defaultProject", defaultProject)
+	queryResult.Meta.Set("defaultProject", gceDefaultProject)
+	result.Results[refId] = queryResult
+
+	return result, nil
+}
+
+func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
 	}
 
 	queries, err := e.buildQueries(tsdbQuery)
@@ -166,11 +181,12 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		aliasBy := query.Model.Get("aliasBy").MustString()
 
 		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
-			Target:   target,
-			Params:   params,
-			RefID:    query.RefId,
-			GroupBys: groupBysAsStrings,
-			AliasBy:  aliasBy,
+			Target:      target,
+			Params:      params,
+			RefID:       query.RefId,
+			GroupBys:    groupBysAsStrings,
+			AliasBy:     aliasBy,
+			ProjectName: query.Model.Get("projectName").MustString(""),
 		})
 	}
 
@@ -197,8 +213,7 @@ func interpolateFilterWildcards(value string) string {
 		value = reverse(strings.Replace(reverse(value), "*", "", 1))
 		value = fmt.Sprintf(`starts_with("%s")`, value)
 	} else if matches != 0 {
-		re := regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
-		value = string(re.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
+		value = string(wildcardRegexRe.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
 		}))
 		value = strings.Replace(value, "*", ".*", -1)
@@ -275,8 +290,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
-
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+query.ProjectName+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, StackdriverResponse{}, nil
@@ -287,8 +301,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
 
 	if ok {
-		re := regexp.MustCompile("[0-9]+")
-		seconds, err := strconv.ParseInt(re.FindString(alignmentPeriod[0]), 10, 64)
+		seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
 		if err == nil {
 			queryResult.Meta.Set("alignmentPeriod", seconds)
 		}
@@ -333,8 +346,6 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 		return StackdriverResponse{}, err
 	}
 
-	// slog.Info("stackdriver", "response", string(body))
-
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
 		return StackdriverResponse{}, fmt.Errorf(string(body))
@@ -350,40 +361,86 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 	return data, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
-	metricLabels := make(map[string][]string)
-	resourceLabels := make(map[string][]string)
-	var resourceTypes []string
-
-	for _, series := range data.TimeSeries {
-		if !containsLabel(resourceTypes, series.Resource.Type) {
-			resourceTypes = append(resourceTypes, series.Resource.Type)
-		}
+func (e *StackdriverExecutor) unmarshalResourceResponse(res *http.Response) (ResourceManagerProjectList, error) {
+	body, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		return ResourceManagerProjectList{}, err
 	}
+
+	if res.StatusCode/100 != 2 {
+		slog.Error("Request failed", "status", res.Status, "body", string(body))
+		return ResourceManagerProjectList{}, fmt.Errorf(string(body))
+	}
+
+	var data ResourceManagerProjectList
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		slog.Error("Failed to unmarshal Resource manager response", "error", err, "status", res.Status, "body", string(body))
+		return ResourceManagerProjectList{}, err
+	}
+
+	return data, nil
+}
+
+func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
+	labels := make(map[string]map[string]bool)
 
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
-
+		seriesLabels := make(map[string]string)
 		defaultMetricName := series.Metric.Type
-		if len(resourceTypes) > 1 {
-			defaultMetricName += " " + series.Resource.Type
-		}
+		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
 
 		for key, value := range series.Metric.Labels {
-			if !containsLabel(metricLabels[key], value) {
-				metricLabels[key] = append(metricLabels[key], value)
+			if _, ok := labels["metric.label."+key]; !ok {
+				labels["metric.label."+key] = map[string]bool{}
 			}
+			labels["metric.label."+key][value] = true
+			seriesLabels["metric.label."+key] = value
+
 			if len(query.GroupBys) == 0 || containsLabel(query.GroupBys, "metric.label."+key) {
 				defaultMetricName += " " + value
 			}
 		}
 
 		for key, value := range series.Resource.Labels {
-			if !containsLabel(resourceLabels[key], value) {
-				resourceLabels[key] = append(resourceLabels[key], value)
+			if _, ok := labels["resource.label."+key]; !ok {
+				labels["resource.label."+key] = map[string]bool{}
 			}
+			labels["resource.label."+key][value] = true
+			seriesLabels["resource.label."+key] = value
+
 			if containsLabel(query.GroupBys, "resource.label."+key) {
 				defaultMetricName += " " + value
+			}
+		}
+
+		for labelType, labelTypeValues := range series.MetaData {
+			for labelKey, labelValue := range labelTypeValues {
+				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
+				if _, ok := labels[key]; !ok {
+					labels[key] = map[string]bool{}
+				}
+
+				switch v := labelValue.(type) {
+				case string:
+					labels[key][v] = true
+					seriesLabels[key] = v
+				case bool:
+					strVal := strconv.FormatBool(v)
+					labels[key][strVal] = true
+					seriesLabels[key] = strVal
+				case []interface{}:
+					for _, v := range v {
+						strVal := v.(string)
+						labels[key][strVal] = true
+						if len(seriesLabels[key]) > 0 {
+							strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
+						}
+						seriesLabels[key] = strVal
+					}
+				}
 			}
 		}
 
@@ -411,7 +468,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 				points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
 			}
 
-			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, make(map[string]string), query)
+			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, query)
 
 			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 				Name:   metricName,
@@ -437,7 +494,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
 						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, query),
 							Points: make([]tsdb.TimePoint, 0),
 						}
 						if maxKey < i {
@@ -453,7 +510,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
 						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, query),
 							Points: make([]tsdb.TimePoint, 0),
 						}
 					}
@@ -465,12 +522,21 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		}
 	}
 
-	queryRes.Meta.Set("resourceLabels", resourceLabels)
-	queryRes.Meta.Set("metricLabels", metricLabels)
+	labelsByKey := make(map[string][]string)
+	for key, values := range labels {
+		for value := range values {
+			labelsByKey[key] = append(labelsByKey[key], value)
+		}
+	}
+
+	queryRes.Meta.Set("labels", labelsByKey)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
-	queryRes.Meta.Set("resourceTypes", resourceTypes)
 
 	return nil
+}
+
+func toSnakeCase(str string) string {
+	return strings.ToLower(matchAllCap.ReplaceAllString(str, "${1}_${2}"))
 }
 
 func containsLabel(labels []string, newLabel string) bool {
@@ -482,7 +548,7 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func formatLegendKeys(metricType string, defaultMetricName string, resourceType string, metricLabels map[string]string, resourceLabels map[string]string, additionalLabels map[string]string, query *StackdriverQuery) string {
+func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string, additionalLabels map[string]string, query *StackdriverQuery) string {
 	if query.AliasBy == "" {
 		return defaultMetricName
 	}
@@ -496,25 +562,13 @@ func formatLegendKeys(metricType string, defaultMetricName string, resourceType 
 			return []byte(metricType)
 		}
 
-		if metaPartName == "resource.type" && resourceType != "" {
-			return []byte(resourceType)
-		}
-
 		metricPart := replaceWithMetricPart(metaPartName, metricType)
 
 		if metricPart != nil {
 			return metricPart
 		}
 
-		metaPartName = strings.Replace(metaPartName, "metric.label.", "", 1)
-
-		if val, exists := metricLabels[metaPartName]; exists {
-			return []byte(val)
-		}
-
-		metaPartName = strings.Replace(metaPartName, "resource.label.", "", 1)
-
-		if val, exists := resourceLabels[metaPartName]; exists {
+		if val, exists := labels[metaPartName]; exists {
 			return []byte(val)
 		}
 
@@ -533,8 +587,8 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	shortMatches := metricNameFormat.FindStringSubmatch(metricType)
 
 	if metaPartName == "metric.name" {
-		if len(shortMatches) > 0 {
-			return []byte(shortMatches[2])
+		if len(shortMatches) > 2 {
+			return []byte(shortMatches[3])
 		}
 	}
 
@@ -563,7 +617,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query *StackdriverQuery, proxyPass string) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
@@ -590,10 +644,40 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 		}
 	}
 
-	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
-	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
-
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
+
+	return req, nil
+}
+
+func (e *StackdriverExecutor) createRequestResourceManager(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+	u, _ := url.Parse(dsInfo.Url)
+	u.Path = path.Join(u.Path, "render")
+
+	req, err := http.NewRequest(http.MethodGet, "https://cloudresourcemanager.googleapis.com/", nil)
+	if err != nil {
+		slog.Error("Failed to create request", "error", err)
+		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
+	// find plugin
+	plugin, ok := plugins.DataSources[dsInfo.Type]
+	if !ok {
+		return nil, errors.New("Unable to find datasource plugin Stackdriver")
+	}
+
+	var resourceManagerRoute *plugins.AppPluginRoute
+	for _, route := range plugin.Routes {
+		if route.Path == "cloudresourcemanager" {
+			resourceManagerRoute = route
+			break
+		}
+	}
+	proxyPass := "v1/projects"
+
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, resourceManagerRoute, dsInfo)
 
 	return req, nil
 }
@@ -605,7 +689,67 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 		if err != nil {
 			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
 		}
+		token, err := defaultCredentials.TokenSource.Token()
+		if err != nil {
+			return "", fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
+		}
+		if !token.Valid() {
+			return "", errors.New("Failed to validate GCP credentials")
+		}
+
 		return defaultCredentials.ProjectID, nil
 	}
 	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
+}
+
+func (e *StackdriverExecutor) getProjectList(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: tsdbQuery.Queries[0].RefId}
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
+	}
+	projectsList, err := e.getProjects(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	queryResult.Meta.Set("projectsList", projectsList)
+	result.Results[tsdbQuery.Queries[0].RefId] = queryResult
+	return result, nil
+}
+
+func (e *StackdriverExecutor) getProjects(ctx context.Context) ([]ResourceManagerProjectSelect, error) {
+	var projects []ResourceManagerProjectSelect
+
+	req, err := e.createRequestResourceManager(ctx, e.dsInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "resource manager query")
+	span.SetTag("datasource_id", e.dsInfo.Id)
+	span.SetTag("org_id", e.dsInfo.OrgId)
+
+	defer span.Finish()
+
+	if err := opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
+		return nil, err
+	}
+
+	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := e.unmarshalResourceResponse(res)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, project := range data.Projects {
+		projects = append(projects, ResourceManagerProjectSelect{Label: project.ProjectID, Value: project.ProjectID})
+	}
+	return projects, nil
 }

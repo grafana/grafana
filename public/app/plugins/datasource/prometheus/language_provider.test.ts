@@ -12,6 +12,57 @@ describe('Language completion provider', () => {
     getTimeRange: () => ({ start: 0, end: 1 }),
   } as any) as PrometheusDatasource;
 
+  describe('cleanText', () => {
+    const cleanText = new LanguageProvider(datasource).cleanText;
+    it('does not remove metric or label keys', () => {
+      expect(cleanText('foo')).toBe('foo');
+      expect(cleanText('foo_bar')).toBe('foo_bar');
+    });
+
+    it('keeps trailing space but removes leading', () => {
+      expect(cleanText('foo ')).toBe('foo ');
+      expect(cleanText(' foo')).toBe('foo');
+    });
+
+    it('removes label syntax', () => {
+      expect(cleanText('foo="bar')).toBe('bar');
+      expect(cleanText('foo!="bar')).toBe('bar');
+      expect(cleanText('foo=~"bar')).toBe('bar');
+      expect(cleanText('foo!~"bar')).toBe('bar');
+      expect(cleanText('{bar')).toBe('bar');
+    });
+
+    it('removes previous operators', () => {
+      expect(cleanText('foo + bar')).toBe('bar');
+      expect(cleanText('foo+bar')).toBe('bar');
+      expect(cleanText('foo - bar')).toBe('bar');
+      expect(cleanText('foo * bar')).toBe('bar');
+      expect(cleanText('foo / bar')).toBe('bar');
+      expect(cleanText('foo % bar')).toBe('bar');
+      expect(cleanText('foo ^ bar')).toBe('bar');
+      expect(cleanText('foo and bar')).toBe('bar');
+      expect(cleanText('foo or bar')).toBe('bar');
+      expect(cleanText('foo unless bar')).toBe('bar');
+      expect(cleanText('foo == bar')).toBe('bar');
+      expect(cleanText('foo != bar')).toBe('bar');
+      expect(cleanText('foo > bar')).toBe('bar');
+      expect(cleanText('foo < bar')).toBe('bar');
+      expect(cleanText('foo >= bar')).toBe('bar');
+      expect(cleanText('foo <= bar')).toBe('bar');
+      expect(cleanText('memory')).toBe('memory');
+    });
+
+    it('removes aggregation syntax', () => {
+      expect(cleanText('(bar')).toBe('bar');
+      expect(cleanText('(foo,bar')).toBe('bar');
+      expect(cleanText('(foo, bar')).toBe('bar');
+    });
+
+    it('removes range syntax', () => {
+      expect(cleanText('[1m')).toBe('1m');
+    });
+  });
+
   describe('empty query suggestions', () => {
     it('returns no suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
@@ -96,8 +147,9 @@ describe('Language completion provider', () => {
           query: { refId: '1', expr: 'metric' },
         },
       ];
-      let value = Plain.deserialize('a');
+      let value = Plain.deserialize('m');
       value = value.setSelection({ anchor: { offset: 1 }, focus: { offset: 1 } });
+      // Even though no metric with `m` is present, we still get metric completion items, filtering is done by the consumer
       const result = await instance.provideCompletionItems(
         { text: 'm', prefix: 'm', value, wrapperClasses: [] },
         { history }
@@ -249,7 +301,7 @@ describe('Language completion provider', () => {
       instance.lookupsDisabled = false;
       const value = Plain.deserialize('{job!=}');
       const ed = new SlateEditor({ value });
-      const valueWithSelection = ed.moveForward(8).value;
+      const valueWithSelection = ed.moveForward(6).value;
       const result = await instance.provideCompletionItems({
         text: '!=',
         prefix: '',
@@ -526,9 +578,11 @@ describe('Language completion provider', () => {
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
       await instance.start();
       expect(instance.lookupsDisabled).toBeTruthy();
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(1);
+      // Capture request count to metadata
+      const callCount = (datasource.metadataRequest as Mock).mock.calls.length;
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
       await instance.provideCompletionItems(args);
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(1);
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(callCount);
     });
   });
 });

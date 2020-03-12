@@ -1,15 +1,22 @@
 import angular from 'angular';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataFrame,
+  ScopedVars,
+} from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/data';
 import * as queryDef from './query_def';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
   basicAuth: string;
@@ -25,11 +32,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   indexPattern: IndexPattern;
   logMessageField?: string;
   logLevelField?: string;
+  dataLinks: DataLinkConfig[];
 
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
@@ -52,6 +59,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
+    this.dataLinks = settingsData.dataLinks || [];
 
     if (this.logMessageField === '') {
       this.logMessageField = null;
@@ -78,14 +86,22 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       };
     }
 
-    return this.backendSrv.datasourceRequest(options);
+    return getBackendSrv().datasourceRequest(options);
   }
 
+  /**
+   * Sends a GET request to the specified url on the newest matching and available index.
+   *
+   * When multiple indices span the provided time range, the request is sent starting from the newest index,
+   * and then going backwards until an index is found.
+   *
+   * @param url the url to query the index on, for example `/_mapping`.
+   */
   private get(url: string) {
     const range = this.timeSrv.timeRange();
     const indexList = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
     if (_.isArray(indexList) && indexList.length) {
-      return this.request('GET', indexList[0] + url).then((results: any) => {
+      return this.requestAllIndices(indexList, url).then((results: any) => {
         results.data.$$config = results.config;
         return results.data;
       });
@@ -94,6 +110,20 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         results.data.$$config = results.config;
         return results.data;
       });
+    }
+  }
+
+  private async requestAllIndices(indexList: string[], url: string): Promise<any> {
+    const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
+    const listLen = indexList.length;
+    for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
+      try {
+        return await this.request('GET', indexList[listLen - i - 1] + url);
+      } catch (err) {
+        if (err.status !== 404 || i === maxTraversals - 1) {
+          throw err;
+        }
+      }
     }
   }
 
@@ -115,7 +145,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       });
   }
 
-  annotationQuery(options: any) {
+  annotationQuery(options: any): Promise<any> {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
@@ -256,14 +286,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[]): ElasticsearchQuery[] {
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query, {}, 'lucene'),
+          query: this.templateSrv.replace(query.query, scopedVars, 'lucene'),
         };
         return expandedQuery;
       });
@@ -336,7 +366,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         target.metrics = [queryDef.defaultMetricAgg()];
         // Setting this for metrics queries that are typed as logs
         target.isLogsQuery = true;
-        queryObj = this.queryBuilder.getLogsQuery(target, queryString);
+        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
       } else {
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
@@ -360,8 +390,12 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       return Promise.resolve({ data: [] });
     }
 
-    payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf().toString());
-    payload = payload.replace(/\$timeTo/g, options.range.to.valueOf().toString());
+    // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
+    // it as an integer not as string with digits. This is because elastic will convert the string only if the time
+    // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
+    // and then sending string will error out.
+    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
+    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
     const url = this.getMultiSearchUrl();
@@ -369,7 +403,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return this.post(url, payload).then((res: any) => {
       const er = new ElasticResponse(sentTargets, res);
       if (sentTargets.some(target => target.isLogsQuery)) {
-        return er.getLogs(this.logMessageField, this.logLevelField);
+        const response = er.getLogs(this.logMessageField, this.logLevelField);
+        for (const dataFrame of response.data) {
+          this.enhanceDataFrame(dataFrame);
+        }
+        return response;
       }
 
       return er.getTimeSeries();
@@ -499,20 +537,20 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   metricFindQuery(query: any) {
     query = angular.fromJson(query);
-    if (!query) {
-      return Promise.resolve([]);
+    if (query) {
+      if (query.find === 'fields') {
+        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+        return this.getFields(query);
+      }
+
+      if (query.find === 'terms') {
+        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+        query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
+        return this.getTerms(query);
+      }
     }
 
-    if (query.find === 'fields') {
-      query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-      return this.getFields(query);
-    }
-
-    if (query.find === 'terms') {
-      query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-      query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
-      return this.getTerms(query);
-    }
+    return Promise.resolve([]);
   }
 
   getTagKeys() {
@@ -545,6 +583,24 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
 
     return false;
+  }
+
+  enhanceDataFrame(dataFrame: DataFrame) {
+    if (this.dataLinks.length) {
+      for (const field of dataFrame.fields) {
+        const dataLink = this.dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
+        if (dataLink) {
+          field.config = field.config || {};
+          field.config.links = [
+            ...(field.config.links || []),
+            {
+              url: dataLink.url,
+              title: '',
+            },
+          ];
+        }
+      }
+    }
   }
 
   private isPrimitive(obj: any) {

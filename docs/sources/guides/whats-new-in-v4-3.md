@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v4.3"
+title = "What's new in Grafana v4.3"
 description = "Feature and improvement highlights for Grafana v4.3"
-keywords = ["grafana", "new", "documentation", "4.3.0"]
+keywords = ["grafana", "new", "documentation", "4.3.0", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 4.3"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -2
 +++
 
-## What's New in Grafana v4.3
+## What's new in Grafana v4.3
 
 Grafana v4.3 Beta is now [available for download](https://grafana.com/grafana/download/4.3.0-beta1).
 
@@ -23,7 +23,7 @@ Grafana v4.3 Beta is now [available for download](https://grafana.com/grafana/do
 - New [MySQL Data Source](http://docs.grafana.org/features/datasources/mysql/) (alpha version to get some early feedback)
 - 60+ small fixes and improvements, most of them contributed by our fantastic community!
 
-Check out the [New Features in v4.3 Dashboard](http://play.grafana.org/dashboard/db/new-features-in-v4-3?orgId=1) on the Grafana Play site for a showcase of these new features.
+Check out the [New Features in v4.3 Dashboard](https://play.grafana.org/dashboard/db/new-features-in-v4-3?orgId=1) on the Grafana Play site for a showcase of these new features.
 
 ## Histogram Support
 
@@ -102,4 +102,3 @@ Head to the [v4.3 download page](https://grafana.com/grafana/download) for downl
 ## Thanks
 
 A big thanks to all the Grafana users who contribute by submitting PRs, bug reports, helping out on our [community site](https://community.grafana.com/) and providing feedback!
-

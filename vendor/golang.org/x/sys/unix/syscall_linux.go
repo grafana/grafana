@@ -1631,6 +1631,17 @@ func Getpgrp() (pid int) {
 //sysnb	Settimeofday(tv *Timeval) (err error)
 //sys	Setns(fd int, nstype int) (err error)
 
+// PrctlRetInt performs a prctl operation specified by option and further
+// optional arguments arg2 through arg5 depending on option. It returns a
+// non-negative integer that is returned by the prctl syscall.
+func PrctlRetInt(option int, arg2 uintptr, arg3 uintptr, arg4 uintptr, arg5 uintptr) (int, error) {
+	ret, _, err := Syscall6(SYS_PRCTL, uintptr(option), uintptr(arg2), uintptr(arg3), uintptr(arg4), uintptr(arg5), 0)
+	if err != 0 {
+		return 0, err
+	}
+	return int(ret), nil
+}
+
 // issue 1435.
 // On linux Setuid and Setgid only affects the current thread, not the process.
 // This does not match what most callers expect so we must return an error
@@ -1666,6 +1677,123 @@ func Signalfd(fd int, sigmask *Sigset_t, flags int) (newfd int, err error) {
 //sys	exitThread(code int) (err error) = SYS_EXIT
 //sys	readlen(fd int, p *byte, np int) (n int, err error) = SYS_READ
 //sys	writelen(fd int, p *byte, np int) (n int, err error) = SYS_WRITE
+//sys	readv(fd int, iovs []Iovec) (n int, err error) = SYS_READV
+//sys	writev(fd int, iovs []Iovec) (n int, err error) = SYS_WRITEV
+//sys	preadv(fd int, iovs []Iovec, offs_l uintptr, offs_h uintptr) (n int, err error) = SYS_PREADV
+//sys	pwritev(fd int, iovs []Iovec, offs_l uintptr, offs_h uintptr) (n int, err error) = SYS_PWRITEV
+//sys	preadv2(fd int, iovs []Iovec, offs_l uintptr, offs_h uintptr, flags int) (n int, err error) = SYS_PREADV2
+//sys	pwritev2(fd int, iovs []Iovec, offs_l uintptr, offs_h uintptr, flags int) (n int, err error) = SYS_PWRITEV2
+
+func bytes2iovec(bs [][]byte) []Iovec {
+	iovecs := make([]Iovec, len(bs))
+	for i, b := range bs {
+		iovecs[i].SetLen(len(b))
+		if len(b) > 0 {
+			iovecs[i].Base = &b[0]
+		} else {
+			iovecs[i].Base = (*byte)(unsafe.Pointer(&_zero))
+		}
+	}
+	return iovecs
+}
+
+// offs2lohi splits offs into its lower and upper unsigned long. On 64-bit
+// systems, hi will always be 0. On 32-bit systems, offs will be split in half.
+// preadv/pwritev chose this calling convention so they don't need to add a
+// padding-register for alignment on ARM.
+func offs2lohi(offs int64) (lo, hi uintptr) {
+	return uintptr(offs), uintptr(uint64(offs) >> SizeofLong)
+}
+
+func Readv(fd int, iovs [][]byte) (n int, err error) {
+	iovecs := bytes2iovec(iovs)
+	n, err = readv(fd, iovecs)
+	readvRacedetect(iovecs, n, err)
+	return n, err
+}
+
+func Preadv(fd int, iovs [][]byte, offset int64) (n int, err error) {
+	iovecs := bytes2iovec(iovs)
+	lo, hi := offs2lohi(offset)
+	n, err = preadv(fd, iovecs, lo, hi)
+	readvRacedetect(iovecs, n, err)
+	return n, err
+}
+
+func Preadv2(fd int, iovs [][]byte, offset int64, flags int) (n int, err error) {
+	iovecs := bytes2iovec(iovs)
+	lo, hi := offs2lohi(offset)
+	n, err = preadv2(fd, iovecs, lo, hi, flags)
+	readvRacedetect(iovecs, n, err)
+	return n, err
+}
+
+func readvRacedetect(iovecs []Iovec, n int, err error) {
+	if !raceenabled {
+		return
+	}
+	for i := 0; n > 0 && i < len(iovecs); i++ {
+		m := int(iovecs[i].Len)
+		if m > n {
+			m = n
+		}
+		n -= m
+		if m > 0 {
+			raceWriteRange(unsafe.Pointer(iovecs[i].Base), m)
+		}
+	}
+	if err == nil {
+		raceAcquire(unsafe.Pointer(&ioSync))
+	}
+}
+
+func Writev(fd int, iovs [][]byte) (n int, err error) {
+	iovecs := bytes2iovec(iovs)
+	if raceenabled {
+		raceReleaseMerge(unsafe.Pointer(&ioSync))
+	}
+	n, err = writev(fd, iovecs)
+	writevRacedetect(iovecs, n)
+	return n, err
+}
+
+func Pwritev(fd int, iovs [][]byte, offset int64) (n int, err error) {
+	iovecs := bytes2iovec(iovs)
+	if raceenabled {
+		raceReleaseMerge(unsafe.Pointer(&ioSync))
+	}
+	lo, hi := offs2lohi(offset)
+	n, err = pwritev(fd, iovecs, lo, hi)
+	writevRacedetect(iovecs, n)
+	return n, err
+}
+
+func Pwritev2(fd int, iovs [][]byte, offset int64, flags int) (n int, err error) {
+	iovecs := bytes2iovec(iovs)
+	if raceenabled {
+		raceReleaseMerge(unsafe.Pointer(&ioSync))
+	}
+	lo, hi := offs2lohi(offset)
+	n, err = pwritev2(fd, iovecs, lo, hi, flags)
+	writevRacedetect(iovecs, n)
+	return n, err
+}
+
+func writevRacedetect(iovecs []Iovec, n int) {
+	if !raceenabled {
+		return
+	}
+	for i := 0; n > 0 && i < len(iovecs); i++ {
+		m := int(iovecs[i].Len)
+		if m > n {
+			m = n
+		}
+		n -= m
+		if m > 0 {
+			raceReadRange(unsafe.Pointer(iovecs[i].Base), m)
+		}
+	}
+}
 
 // mmap varies by architecture; see syscall_linux_*.go.
 //sys	munmap(addr uintptr, length uintptr) (err error)

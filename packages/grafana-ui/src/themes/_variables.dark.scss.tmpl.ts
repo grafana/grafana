@@ -1,4 +1,4 @@
-/* tslint:disable:max-line-length */
+/* eslint-disable max-len */
 
 import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
@@ -91,7 +91,7 @@ $textShadow: none;
 // gradients
 $brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
 $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
-$page-gradient: linear-gradient(180deg, $dark-5 10px, dark-2 100px);
+$page-gradient: linear-gradient(180deg, $dark-5 10px, $dark-2 100px);
 $edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 
 // Links
@@ -111,7 +111,7 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: $dark-4;
+$panel-bg: ${theme.colors.panelBg};
 $panel-border: solid 1px $dark-1;
 $panel-header-hover-bg: $dark-9;
 $panel-corner: $panel-bg;

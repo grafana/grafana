@@ -3,7 +3,7 @@ title = "Using Loki in Grafana"
 description = "Guide for using Loki in Grafana"
 keywords = ["grafana", "loki", "logging", "guide"]
 type = "docs"
-aliases = ["/datasources/loki"]
+aliases = ["/docs/grafana/latest/datasources/loki"]
 [menu.docs]
 name = "Loki"
 parent = "datasources"
@@ -69,7 +69,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 <div class="medium-6 columns">
   <video width="800" height="500" controls>
-    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
+    <source src="https://grafana.com/static/assets/videos/explore_loki.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>

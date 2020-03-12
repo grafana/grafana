@@ -1,9 +1,9 @@
 # End to end test framework
-Grafana Labs uses a minimal home grown solution built on top of Cypress for our end to end (e2e) tests. 
+Grafana Labs uses a minimal home grown solution built on top of Cypress for our end to end (e2e) tests.
 
 ## Basic concepts
 Here is a good introduction to e2e best practices: https://martinfowler.com/bliki/PageObject.html.
-- `Selector`: A unique identifier that is used from the e2e framework to retrieve an element from the Browser 
+- `Selector`: A unique identifier that is used from the e2e framework to retrieve an element from the Browser
 - `Page`: An abstraction for an object that contains one or more `Selectors`
 - `Flow`: An abstraction that contains a sequence of actions on one or more `Pages` that can be reused and shared between tests
 
@@ -49,20 +49,24 @@ export const Pages = {
 };
 
 ```
-Now that we have a `Page` called `Login` in our `Pages` const we can use that to add a selector in our html like shown below and now this really signals to future developers that it is part of an e2e test.   
+Now that we have a `Page` called `Login` in our `Pages` const we can use that to add a selector in our html like shown below and now this really signals to future developers that it is part of an e2e test.
 ```jsx harmony
 <div>
     <input type="text" className="gf-form-input login-form-input" aria-label={e2e.pages.Login.selectors.username}/>
 </div>
 ```
 
-The last step in our example is to use our `Login` page as part of a test. The `pageFactory` function we used before gives us two things: 
+The last step in our example is to use our `Login` page as part of a test. The `pageFactory` function we used before gives us two things:
 - The `url` property is used whenever we call the `visit` function and is equivalent to the Cypress function [cy.visit()](https://docs.cypress.io/api/commands/visit.html#Syntax).
-- Any defined selector in the `selectors` property can be accessed from the `Login` page by invoking it and this is equivalent to the result of the Cypress function [cy.get(...)](https://docs.cypress.io/api/commands/get.html#Syntax).
+> Best practice after calling `visit` is to always call `should` on a selector to prevent flaky tests when you try to access an element that isn't ready. For more information, refer to [Commands vs. assertions](https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions).
+- Any defined selector in the `selectors` property can be accessed from the `Login` page by invoking it. This is equivalent to the result of the Cypress function [cy.get(...)](https://docs.cypress.io/api/commands/get.html#Syntax).
 ```ecmascript 6
 describe('Login test', () => {
   it('Should pass', () => {
     e2e.pages.Login.visit();
+    // To prevent flaky tests, always do a .should on any selector that you expect to be in the DOM.
+    // Read more here: https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions
+    e2e.pages.Login.username().should('be.visible');
     e2e.pages.Login.username().type('admin');
   });
 });
@@ -86,7 +90,7 @@ Let's take a look at an example that uses the same `selector` for multiple items
 ```
 ```
 
-Just as before in the basic example we'll start by creating a page abstraction using the `pageFactory` function: 
+Just as before in the basic example we'll start by creating a page abstraction using the `pageFactory` function:
 ```typescript
 export const DataSources = pageFactory({
   url: '/datasources',
@@ -129,12 +133,36 @@ When this list is rendered with the data sources with names `A`, `B`, `C` the re
 </div>
 ```
 
-Now we can go ahead and write our test and the one thing that differs from the `Basic example` is that we pass in which data source we want to click on as an argument to the selector function:
+Now we can write our test. The one thing that differs from the `Basic example` is that we pass in which data source we want to click on as an argument to the selector function:
+> Best practice after calling `visit` is to always call `should` on a selector to prevent flaky tests when you try to access an element that isn't ready. For more information, refer to [Commands vs. assertions](https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions).
 ```ecmascript 6
 describe('List test', () => {
   it('Clicking on data source named B', () => {
     e2e.pages.DataSources.visit();
+    // To prevent flaky tests, always do a .should on any selector that you expect to be in the DOM.
+    // Read more here: https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions
+    e2e.pages.DataSources.dataSources('B').should('be.visible');
     e2e.pages.DataSources.dataSources('B').click();
   });
 });
 ```
+
+
+## Debugging PhantomJS image rendering
+
+### Common Error
+The most common error with PhantomJs image rendering is when a PR introduces an import that has functionality that's not supported by PhantomJs. To quickly identify which new import causes this you can use a tool like `es-check`.
+   
+1. Run > `npx es-check es5 './public/build/*.js'`
+2. Check the output for files that break es5 compatibility.
+3. Lazy load the failing imports if possible. 
+
+### Debugging
+There is no easy or comprehensive way to debug PhantomJS smoke test (image rendering) failures. However, PhantomJS exposes remote debugging interface which can give you a sense of what is going wrong in the smoke test. Before performing the steps described below make sure your local Grafana instance is running:
+
+1. Go to `tools/phantomjs` directory
+2. Execute `phantomjs` binary against `render.js` file: `./phantomjs --remote-debugger-port=9009 --remote-debugger-autorun=yes ./render.js url="http://localhost:3000"`
+3. In your browser navigate to `http://localhost:9009/`
+4. Select `http://localhost:3000/login` from the list. You will get access to Webkit's inspector to see the console's output from the smoke test.
+
+The method described above is not perfect, but is helpful to evaluate smoke tests breaking due to bundle errors.

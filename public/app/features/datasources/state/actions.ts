@@ -1,47 +1,113 @@
-import { ThunkAction } from 'redux-thunk';
 import config from '../../../core/config';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
+import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
-import { StoreState } from 'app/types';
-import { LocationUpdate } from '@grafana/runtime';
-import { actionCreatorFactory } from 'app/core/redux';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+import { DataSourcePluginCategory, ThunkResult, ThunkDispatch } from 'app/types';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import {
+  dataSourceLoaded,
+  dataSourceMetaLoaded,
+  dataSourcePluginsLoad,
+  dataSourcePluginsLoaded,
+  dataSourcesLoaded,
+  initDataSourceSettingsFailed,
+  initDataSourceSettingsSucceeded,
+  testDataSourceStarting,
+  testDataSourceSucceeded,
+  testDataSourceFailed,
+} from './reducers';
+import { buildCategories } from './buildCategories';
+import { getDataSource, getDataSourceMeta } from './selectors';
+import { getDataSourceSrv } from '@grafana/runtime';
 
-export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
+export interface DataSourceTypesLoadedPayload {
+  plugins: DataSourcePluginMeta[];
+  categories: DataSourcePluginCategory[];
+}
 
-export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
+export interface InitDataSourceSettingDependencies {
+  loadDataSource: typeof loadDataSource;
+  getDataSource: typeof getDataSource;
+  getDataSourceMeta: typeof getDataSourceMeta;
+  importDataSourcePlugin: typeof importDataSourcePlugin;
+}
 
-export const dataSourceMetaLoaded = actionCreatorFactory<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META').create();
+export interface TestDataSourceDependencies {
+  getDatasourceSrv: typeof getDataSourceSrv;
+  getBackendSrv: typeof getBackendSrv;
+}
 
-export const dataSourceTypesLoad = actionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
+export const initDataSourceSettings = (
+  pageId: number,
+  dependencies: InitDataSourceSettingDependencies = {
+    loadDataSource,
+    getDataSource,
+    getDataSourceMeta,
+    importDataSourcePlugin,
+  }
+): ThunkResult<void> => {
+  return async (dispatch: ThunkDispatch, getState) => {
+    if (isNaN(pageId)) {
+      dispatch(initDataSourceSettingsFailed(new Error('Invalid ID')));
+      return;
+    }
 
-export const dataSourceTypesLoaded = actionCreatorFactory<DataSourcePluginMeta[]>('LOADED_DATA_SOURCE_TYPES').create();
+    try {
+      await dispatch(dependencies.loadDataSource(pageId));
+      if (getState().dataSourceSettings.plugin) {
+        return;
+      }
 
-export const setDataSourcesSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCES_SEARCH_QUERY').create();
+      const dataSource = dependencies.getDataSource(getState().dataSources, pageId);
+      const dataSourceMeta = dependencies.getDataSourceMeta(getState().dataSources, dataSource.type);
+      const importedPlugin = await dependencies.importDataSourcePlugin(dataSourceMeta);
 
-export const setDataSourcesLayoutMode = actionCreatorFactory<LayoutMode>('SET_DATA_SOURCES_LAYOUT_MODE').create();
+      dispatch(initDataSourceSettingsSucceeded(importedPlugin));
+    } catch (err) {
+      console.log('Failed to import plugin module', err);
+      dispatch(initDataSourceSettingsFailed(err));
+    }
+  };
+};
 
-export const setDataSourceTypeSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCE_TYPE_SEARCH_QUERY').create();
+export const testDataSource = (
+  dataSourceName: string,
+  dependencies: TestDataSourceDependencies = {
+    getDatasourceSrv,
+    getBackendSrv,
+  }
+): ThunkResult<void> => {
+  return async (dispatch: ThunkDispatch, getState) => {
+    const dsApi = await dependencies.getDatasourceSrv().get(dataSourceName);
 
-export const setDataSourceName = actionCreatorFactory<string>('SET_DATA_SOURCE_NAME').create();
+    if (!dsApi.testDatasource) {
+      return;
+    }
 
-export const setIsDefault = actionCreatorFactory<boolean>('SET_IS_DEFAULT').create();
+    dispatch(testDataSourceStarting());
 
-export type Action =
-  | UpdateNavIndexAction
-  | ActionOf<DataSourceSettings>
-  | ActionOf<DataSourceSettings[]>
-  | ActionOf<DataSourcePluginMeta>
-  | ActionOf<DataSourcePluginMeta[]>
-  | ActionOf<LocationUpdate>;
+    dependencies.getBackendSrv().withNoBackendCache(async () => {
+      try {
+        const result = await dsApi.testDatasource();
 
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
+        dispatch(testDataSourceSucceeded(result));
+      } catch (err) {
+        let message = '';
+
+        if (err.statusText) {
+          message = 'HTTP Error ' + err.statusText;
+        } else {
+          message = err.message;
+        }
+
+        dispatch(testDataSourceFailed({ message }));
+      }
+    });
+  };
+};
 
 export function loadDataSources(): ThunkResult<void> {
   return async dispatch => {
@@ -84,11 +150,12 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
   };
 }
 
-export function loadDataSourceTypes(): ThunkResult<void> {
+export function loadDataSourcePlugins(): ThunkResult<void> {
   return async dispatch => {
-    dispatch(dataSourceTypesLoad());
-    const result = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
-    dispatch(dataSourceTypesLoaded(result as DataSourcePluginMeta[]));
+    dispatch(dataSourcePluginsLoad());
+    const plugins = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
+    const categories = buildCategories(plugins);
+    dispatch(dataSourcePluginsLoaded({ plugins, categories }));
   };
 }
 
@@ -144,7 +211,7 @@ export function findNewName(dataSources: ItemWithName[], name: string) {
 function updateFrontendSettings() {
   return getBackendSrv()
     .get('/api/frontend/settings')
-    .then(settings => {
+    .then((settings: any) => {
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;
       getDatasourceSrv().init();

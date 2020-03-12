@@ -12,11 +12,16 @@ import:
   - metrics
 - package: github.com/pkg/errors
   version: ~0.8.0
+- package: go.uber.org/zap
+  source: https://github.com/uber-go/zap.git
+  version: ^1
+- package: github.com/uber-go/atomic
+  version: ^1
+- package: github.com/prometheus/client_golang
+  version: ^1
 testImport:
 - package: github.com/stretchr/testify
   subpackages:
   - assert
   - require
   - suite
-- package: github.com/prometheus/client_golang
-  version: v0.8.0

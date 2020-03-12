@@ -3,14 +3,14 @@ package rendering
 import (
 	"context"
 	"fmt"
-	plugin "github.com/hashicorp/go-plugin"
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
-	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -19,19 +19,29 @@ import (
 )
 
 func init() {
+	remotecache.Register(&RenderUser{})
 	registry.RegisterService(&RenderingService{})
+}
+
+var IsPhantomJSEnabled = false
+
+const renderKeyPrefix = "render-%s"
+
+type RenderUser struct {
+	OrgID   int64
+	UserID  int64
+	OrgRole string
 }
 
 type RenderingService struct {
 	log             log.Logger
-	pluginClient    *plugin.Client
-	grpcPlugin      pluginModel.RendererPlugin
 	pluginInfo      *plugins.RendererPlugin
 	renderAction    renderFunc
 	domain          string
 	inProgressCount int
 
-	Cfg *setting.Cfg `inject:""`
+	Cfg                *setting.Cfg             `inject:""`
+	RemoteCacheService *remotecache.RemoteCache `inject:""`
 }
 
 func (rs *RenderingService) Init() error {
@@ -59,6 +69,7 @@ func (rs *RenderingService) Init() error {
 
 func (rs *RenderingService) Run(ctx context.Context) error {
 	if rs.Cfg.RendererUrl != "" {
+		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
 		<-ctx.Done()
@@ -66,14 +77,18 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	if plugins.Renderer == nil {
+		rs.log = rs.log.New("renderer", "phantomJS")
 		rs.log.Info("Backend rendering via phantomJS")
 		rs.log.Warn("phantomJS is deprecated and will be removed in a future release. " +
-			"You should consider migrating from phantomJS to grafana-image-renderer plugin.")
+			"You should consider migrating from phantomJS to grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 		rs.renderAction = rs.renderViaPhantomJS
+		IsPhantomJSEnabled = true
 		<-ctx.Done()
 		return nil
 	}
 
+	rs.log = rs.log.New("renderer", "plugin")
 	rs.pluginInfo = plugins.Renderer
 
 	if err := rs.startPlugin(ctx); err != nil {
@@ -81,15 +96,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	rs.renderAction = rs.renderViaPlugin
-
-	err := rs.watchAndRestartPlugin(ctx)
-
-	if rs.pluginClient != nil {
-		rs.log.Debug("Killing renderer plugin process")
-		rs.pluginClient.Kill()
-	}
-
-	return err
+	<-ctx.Done()
+	return nil
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
@@ -107,16 +115,38 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 		}, nil
 	}
 
-	defer func() {
-		rs.inProgressCount -= 1
-	}()
-
-	rs.inProgressCount += 1
-
 	if rs.renderAction != nil {
-		return rs.renderAction(ctx, opts)
+		rs.log.Info("Rendering", "path", opts.Path)
+		renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+		if err != nil {
+			return nil, err
+		}
+
+		defer rs.deleteRenderKey(renderKey)
+
+		defer func() {
+			rs.inProgressCount--
+		}()
+
+		rs.inProgressCount++
+		return rs.renderAction(ctx, renderKey, opts)
 	}
 	return nil, fmt.Errorf("No renderer found")
+}
+
+func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
+	val, err := rs.RemoteCacheService.Get(fmt.Sprintf(renderKeyPrefix, key))
+	if err != nil {
+		rs.log.Error("Failed to get render key from cache", "error", err)
+	}
+
+	if val != nil {
+		if user, ok := val.(*RenderUser); ok {
+			return user, true
+		}
+	}
+
+	return nil, false
 }
 
 func (rs *RenderingService) getFilePathForNewImage() (string, error) {
@@ -142,10 +172,40 @@ func (rs *RenderingService) getURL(path string) string {
 		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
 
 	}
+
+	protocol := setting.Protocol
+	switch setting.Protocol {
+	case setting.HTTP:
+		protocol = "http"
+	case setting.HTTP2, setting.HTTPS:
+		protocol = "https"
+	}
+
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, rs.domain, setting.HttpPort, path)
+	return fmt.Sprintf("%s://%s:%s/%s&render=1", protocol, rs.domain, setting.HttpPort, path)
 }
 
-func (rs *RenderingService) getRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
-	return middleware.AddRenderAuthKey(orgId, userId, orgRole)
+func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
+	key, err := util.GetRandomString(32)
+	if err != nil {
+		return "", err
+	}
+
+	err = rs.RemoteCacheService.Set(fmt.Sprintf(renderKeyPrefix, key), &RenderUser{
+		OrgID:   orgId,
+		UserID:  userId,
+		OrgRole: string(orgRole),
+	}, 5*time.Minute)
+	if err != nil {
+		return "", err
+	}
+
+	return key, nil
+}
+
+func (rs *RenderingService) deleteRenderKey(key string) {
+	err := rs.RemoteCacheService.Delete(fmt.Sprintf(renderKeyPrefix, key))
+	if err != nil {
+		rs.log.Error("Failed to delete render key", "error", err)
+	}
 }

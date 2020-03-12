@@ -26,11 +26,9 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
               value={display}
               width={width}
               height={height}
-              thresholds={field.thresholds}
+              field={field}
               showThresholdLabels={options.showThresholdLabels}
               showThresholdMarkers={options.showThresholdMarkers}
-              minValue={field.min}
-              maxValue={field.max}
               theme={config.theme}
               onClick={openMenu}
               className={targetClassName}
@@ -48,6 +46,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
+      autoMinMax: true,
     });
   };
 

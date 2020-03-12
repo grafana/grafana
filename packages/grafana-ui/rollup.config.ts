@@ -16,6 +16,7 @@ const buildCjsPackage = ({ env }) => {
         name: libraryName,
         format: 'cjs',
         sourcemap: true,
+        strict: false,
         exports: 'named',
         globals: {
           react: 'React',
@@ -23,7 +24,7 @@ const buildCjsPackage = ({ env }) => {
         },
       },
     ],
-    external: ['react', 'react-dom', '@grafana/data'],
+    external: ['react', 'react-dom', '@grafana/data', 'moment'],
     plugins: [
       commonjs({
         include: /node_modules/,

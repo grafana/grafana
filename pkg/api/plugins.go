@@ -2,15 +2,19 @@ package api
 
 import (
 	"sort"
+	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func (hs *HTTPServer) GetPluginList(c *m.ReqContext) Response {
+func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
@@ -83,7 +87,7 @@ func (hs *HTTPServer) GetPluginList(c *m.ReqContext) Response {
 	return JSON(200, result)
 }
 
-func GetPluginSettingByID(c *m.ReqContext) Response {
+func GetPluginSettingByID(c *models.ReqContext) Response {
 	pluginID := c.Params(":pluginId")
 
 	def, exists := plugins.Plugins[pluginID]
@@ -106,9 +110,9 @@ func GetPluginSettingByID(c *m.ReqContext) Response {
 		State:         def.State,
 	}
 
-	query := m.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
+	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
 	if err := bus.Dispatch(&query); err != nil {
-		if err != m.ErrPluginSettingNotFound {
+		if err != models.ErrPluginSettingNotFound {
 			return Error(500, "Failed to get login settings", nil)
 		}
 	} else {
@@ -120,7 +124,7 @@ func GetPluginSettingByID(c *m.ReqContext) Response {
 	return JSON(200, dto)
 }
 
-func UpdatePluginSetting(c *m.ReqContext, cmd m.UpdatePluginSettingCmd) Response {
+func UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) Response {
 	pluginID := c.Params(":pluginId")
 
 	cmd.OrgId = c.OrgId
@@ -137,7 +141,7 @@ func UpdatePluginSetting(c *m.ReqContext, cmd m.UpdatePluginSettingCmd) Response
 	return Success("Plugin settings updated")
 }
 
-func GetPluginDashboards(c *m.ReqContext) Response {
+func GetPluginDashboards(c *models.ReqContext) Response {
 	pluginID := c.Params(":pluginId")
 
 	list, err := plugins.GetPluginDashboards(c.OrgId, pluginID)
@@ -152,7 +156,7 @@ func GetPluginDashboards(c *m.ReqContext) Response {
 	return JSON(200, list)
 }
 
-func GetPluginMarkdown(c *m.ReqContext) Response {
+func GetPluginMarkdown(c *models.ReqContext) Response {
 	pluginID := c.Params(":pluginId")
 	name := c.Params(":name")
 
@@ -178,7 +182,10 @@ func GetPluginMarkdown(c *m.ReqContext) Response {
 	return resp
 }
 
-func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Response {
+func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) Response {
+	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
+		return Error(422, "Dashboard must be set", nil)
+	}
 
 	cmd := plugins.ImportDashboardCommand{
 		OrgId:     c.OrgId,
@@ -192,8 +199,96 @@ func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Respon
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to import dashboard", err)
+		return dashboardSaveErrorToApiResponse(err)
 	}
 
 	return JSON(200, cmd.Result)
+}
+
+// /api/plugins/:pluginId/health
+func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
+	pluginID := c.Params("pluginId")
+	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pluginID)
+	if err != nil {
+		if err == backendplugin.ErrPluginNotRegistered {
+			return Error(404, "Plugin not found", err)
+		}
+
+		// Return status unknown instead?
+		if err == backendplugin.ErrDiagnosticsNotSupported {
+			return Error(404, "Health check not implemented", err)
+		}
+
+		// Return status unknown or error instead?
+		if err == backendplugin.ErrHealthCheckFailed {
+			return Error(500, "Plugin health check failed", err)
+		}
+	}
+
+	payload := map[string]interface{}{
+		"status": resp.Status.String(),
+		"info":   resp.Info,
+	}
+
+	if resp.Status != backendplugin.HealthStatusOk {
+		return JSON(503, payload)
+	}
+
+	return JSON(200, payload)
+}
+
+// /api/plugins/:pluginId/resources/*
+func (hs *HTTPServer) CallResource(c *models.ReqContext) {
+	pluginID := c.Params("pluginId")
+	plugin, exists := plugins.Plugins[pluginID]
+	if !exists {
+		c.JsonApiErr(404, "Plugin not found, no installed plugin with that id", nil)
+		return
+	}
+
+	var jsonData *simplejson.Json
+	var decryptedSecureJSONData map[string]string
+	var updated time.Time
+
+	ps, err := hs.getCachedPluginSettings(pluginID, c.SignedInUser)
+	if err != nil {
+		if err != models.ErrPluginSettingNotFound {
+			c.JsonApiErr(500, "Failed to get plugin settings", err)
+			return
+		}
+		jsonData = simplejson.New()
+		decryptedSecureJSONData = make(map[string]string)
+	} else {
+		decryptedSecureJSONData = ps.DecryptedValues()
+		updated = ps.Updated
+	}
+
+	config := backendplugin.PluginConfig{
+		OrgID:                   c.OrgId,
+		PluginID:                plugin.Id,
+		PluginType:              plugin.Type,
+		JSONData:                jsonData,
+		DecryptedSecureJSONData: decryptedSecureJSONData,
+		Updated:                 updated,
+	}
+	hs.BackendPluginManager.CallResource(config, c, c.Params("*"))
+}
+
+func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {
+	cacheKey := "plugin-setting-" + pluginID
+
+	if cached, found := hs.CacheService.Get(cacheKey); found {
+		ps := cached.(*models.PluginSetting)
+		if ps.OrgId == user.OrgId {
+			return ps, nil
+		}
+	}
+
+	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: user.OrgId}
+	if err := hs.Bus.Dispatch(&query); err != nil {
+		return nil, err
+	}
+
+	hs.CacheService.Set(cacheKey, query.Result, time.Second*5)
+	return query.Result, nil
 }

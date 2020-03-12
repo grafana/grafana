@@ -26,18 +26,13 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
-func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	filePath, err := rs.getFilePathForNewImage()
 	if err != nil {
 		return nil, err
 	}
 
 	rendererUrl, err := url.Parse(rs.Cfg.RendererUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	renderKey, err := rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
 	if err != nil {
 		return nil, err
 	}
@@ -60,10 +55,13 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
+	// gives service some additional time to timeout and return possible errors.
 	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
 	req = req.WithContext(reqContext)
+
+	rs.log.Debug("calling remote rendering service", "url", rendererUrl)
 
 	// make request to renderer server
 	resp, err := netClient.Do(req)

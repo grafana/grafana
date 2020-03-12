@@ -55,7 +55,7 @@ const (
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom}
+	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread"}
 )
 
 func NewOAuthService() {
@@ -65,35 +65,28 @@ func NewOAuthService() {
 	for _, name := range allOauthes {
 		sec := setting.Raw.Section("auth." + name)
 		info := &setting.OAuthInfo{
-			ClientId:                     sec.Key("client_id").String(),
-			ClientSecret:                 sec.Key("client_secret").String(),
-			Scopes:                       util.SplitString(sec.Key("scopes").String()),
-			AuthUrl:                      sec.Key("auth_url").String(),
-			TokenUrl:                     sec.Key("token_url").String(),
-			ApiUrl:                       sec.Key("api_url").String(),
-			Enabled:                      sec.Key("enabled").MustBool(),
-			EmailAttributeName:           sec.Key("email_attribute_name").String(),
-			EmailAttributePath:           sec.Key("email_attribute_path").String(),
-			RoleAttributePath:            sec.Key("role_attribute_path").String(),
-			AllowedDomains:               util.SplitString(sec.Key("allowed_domains").String()),
-			HostedDomain:                 sec.Key("hosted_domain").String(),
-			AllowSignup:                  sec.Key("allow_sign_up").MustBool(),
-			Name:                         sec.Key("name").MustString(name),
-			TlsClientCert:                sec.Key("tls_client_cert").String(),
-			TlsClientKey:                 sec.Key("tls_client_key").String(),
-			TlsClientCa:                  sec.Key("tls_client_ca").String(),
-			TlsSkipVerify:                sec.Key("tls_skip_verify_insecure").MustBool(),
-			SendClientCredentialsViaPost: sec.Key("send_client_credentials_via_post").MustBool(),
+			ClientId:           sec.Key("client_id").String(),
+			ClientSecret:       sec.Key("client_secret").String(),
+			Scopes:             util.SplitString(sec.Key("scopes").String()),
+			AuthUrl:            sec.Key("auth_url").String(),
+			TokenUrl:           sec.Key("token_url").String(),
+			ApiUrl:             sec.Key("api_url").String(),
+			Enabled:            sec.Key("enabled").MustBool(),
+			EmailAttributeName: sec.Key("email_attribute_name").String(),
+			EmailAttributePath: sec.Key("email_attribute_path").String(),
+			RoleAttributePath:  sec.Key("role_attribute_path").String(),
+			AllowedDomains:     util.SplitString(sec.Key("allowed_domains").String()),
+			HostedDomain:       sec.Key("hosted_domain").String(),
+			AllowSignup:        sec.Key("allow_sign_up").MustBool(),
+			Name:               sec.Key("name").MustString(name),
+			TlsClientCert:      sec.Key("tls_client_cert").String(),
+			TlsClientKey:       sec.Key("tls_client_key").String(),
+			TlsClientCa:        sec.Key("tls_client_ca").String(),
+			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
 		}
 
 		if !info.Enabled {
 			continue
-		}
-
-		// handle the clients that do not properly support Basic auth headers and require passing client_id/client_secret via POST payload
-		if info.SendClientCredentialsViaPost {
-			// TODO: Fix the staticcheck error
-			oauth2.RegisterBrokenAuthHeaderProvider(info.TokenUrl) //nolint:staticcheck
 		}
 
 		if name == "grafananet" {
@@ -106,8 +99,9 @@ func NewOAuthService() {
 			ClientID:     info.ClientId,
 			ClientSecret: info.ClientSecret,
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  info.AuthUrl,
-				TokenURL: info.TokenUrl,
+				AuthURL:   info.AuthUrl,
+				TokenURL:  info.TokenUrl,
+				AuthStyle: oauth2.AuthStyleAutoDetect,
 			},
 			RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
@@ -158,6 +152,19 @@ func NewOAuthService() {
 			}
 		}
 
+		// AzureAD.
+		if name == "azuread" {
+			SocialMap["azuread"] = &SocialAzureAD{
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
+				allowedDomains: info.AllowedDomains,
+				allowedGroups:  util.SplitString(sec.Key("allowed_groups").String()),
+				allowSignup:    info.AllowSignup,
+			}
+		}
+
 		// Generic - Uses the same scheme as Github.
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &SocialGenericOAuth{
@@ -181,8 +188,9 @@ func NewOAuthService() {
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:  setting.GrafanaComUrl + "/oauth2/authorize",
-					TokenURL: setting.GrafanaComUrl + "/api/oauth2/token",
+					AuthURL:   setting.GrafanaComUrl + "/oauth2/authorize",
+					TokenURL:  setting.GrafanaComUrl + "/api/oauth2/token",
+					AuthStyle: oauth2.AuthStyleInHeader,
 				},
 				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,

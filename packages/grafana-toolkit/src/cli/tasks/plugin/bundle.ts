@@ -1,7 +1,7 @@
 import webpack = require('webpack');
 import formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
 import clearConsole = require('react-dev-utils/clearConsole');
-import { getWebpackConfig } from '../../../config/webpack.plugin.config';
+import { loadWebpackConfig } from '../../../config/webpack.plugin.config';
 
 export interface PluginBundleOptions {
   watch: boolean;
@@ -12,7 +12,7 @@ export interface PluginBundleOptions {
 // export const bundlePlugin = useSpinner<PluginBundleOptions>('Bundle plugin', ({ watch }) => {
 export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) => {
   const compiler = webpack(
-    getWebpackConfig({
+    await loadWebpackConfig({
       watch,
       production,
     })

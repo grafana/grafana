@@ -1,6 +1,23 @@
 // Libraries
 import { map, throttleTime } from 'rxjs/operators';
 import { identity } from 'rxjs';
+import { ActionCreatorWithPayload, PayloadAction } from '@reduxjs/toolkit';
+import { DataSourceSrv } from '@grafana/runtime';
+import { RefreshPicker } from '@grafana/ui';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  DataSourceApi,
+  dateTimeForTimeZone,
+  isDateTime,
+  LoadingState,
+  LogsDedupStrategy,
+  PanelData,
+  QueryFixAction,
+  RawTimeRange,
+  TimeRange,
+  ExploreMode,
+} from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -23,22 +40,8 @@ import {
 } from 'app/core/utils/explore';
 // Types
 import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
-import { RefreshPicker } from '@grafana/ui';
 
-import {
-  AbsoluteTimeRange,
-  DataQuery,
-  DataSourceApi,
-  dateTimeForTimeZone,
-  isDateTime,
-  LoadingState,
-  LogsDedupStrategy,
-  PanelData,
-  QueryFixAction,
-  RawTimeRange,
-  TimeRange,
-} from '@grafana/data';
-import { ExploreId, ExploreMode, ExploreUIState, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
   changeModeAction,
@@ -48,7 +51,6 @@ import {
   ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
-  clearOriginAction,
   clearQueriesAction,
   historyUpdatedAction,
   initializeExploreAction,
@@ -74,14 +76,12 @@ import {
   updateDatasourceInstanceAction,
   updateUIStateAction,
 } from './actionTypes';
-import { ActionCreator, ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
-import { DataSourceSrv } from '@grafana/runtime';
 import { getExploreDatasources } from './selectors';
 
 /**
@@ -153,7 +153,6 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
  */
 export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
   return dispatch => {
-    dispatch(clearQueriesAction({ exploreId }));
     dispatch(changeModeAction({ exploreId, mode }));
   };
 }
@@ -190,7 +189,7 @@ export function changeQuery(
 export function changeSize(
   exploreId: ExploreId,
   { height, width }: { height: number; width: number }
-): ActionOf<ChangeSizePayload> {
+): PayloadAction<ChangeSizePayload> {
   return changeSizeAction({ exploreId, height, width });
 }
 
@@ -218,7 +217,7 @@ export const updateTimeRange = (options: {
 export function changeRefreshInterval(
   exploreId: ExploreId,
   refreshInterval: string
-): ActionOf<ChangeRefreshIntervalPayload> {
+): PayloadAction<ChangeRefreshIntervalPayload> {
   return changeRefreshIntervalAction({ exploreId, refreshInterval });
 }
 
@@ -230,12 +229,6 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
     dispatch(scanStopAction({ exploreId }));
     dispatch(clearQueriesAction({ exploreId }));
     dispatch(stateSave());
-  };
-}
-
-export function clearOrigin(): ThunkResult<void> {
-  return dispatch => {
-    dispatch(clearOriginAction({ exploreId: ExploreId.left }));
   };
 }
 
@@ -266,7 +259,7 @@ export function initializeExplore(
   exploreId: ExploreId,
   datasourceName: string,
   queries: DataQuery[],
-  rawRange: RawTimeRange,
+  range: TimeRange,
   mode: ExploreMode,
   containerWidth: number,
   eventBridge: Emitter,
@@ -274,8 +267,6 @@ export function initializeExplore(
   originPanelId: number
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const timeZone = getTimeZone(getState().user);
-    const range = getTimeRange(timeZone, rawRange);
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
     dispatch(
       initializeExploreAction({
@@ -300,7 +291,7 @@ export const loadDatasourceReady = (
   exploreId: ExploreId,
   instance: DataSourceApi,
   orgId: number
-): ActionOf<LoadDatasourceReadyPayload> => {
+): PayloadAction<LoadDatasourceReadyPayload> => {
   const historyKey = `grafana.explore.history.${instance.meta.id}`;
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
@@ -438,9 +429,11 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     const queryOptions: QueryOptions = {
       minInterval,
-      // This is used for logs streaming for buffer size, with undefined it falls back to datasource config if it
-      // supports that.
-      maxDataPoints: mode === ExploreMode.Logs ? undefined : containerWidth,
+      // maxDataPoints is used in:
+      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
+      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
+      // Influx - used to correctly display logs in graph
+      maxDataPoints: mode === ExploreMode.Logs && datasourceInstance.name === 'Loki' ? undefined : containerWidth,
       liveStreaming: live,
       showingGraph,
       showingTable,
@@ -691,7 +684,7 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
  * queries won't be run
  */
 const togglePanelActionCreator = (
-  actionCreator: ActionCreator<ToggleGraphPayload> | ActionCreator<ToggleTablePayload>
+  actionCreator: ActionCreatorWithPayload<ToggleGraphPayload> | ActionCreatorWithPayload<ToggleTablePayload>
 ) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
   return dispatch => {
     let uiFragmentStateUpdate: Partial<ExploreUIState>;

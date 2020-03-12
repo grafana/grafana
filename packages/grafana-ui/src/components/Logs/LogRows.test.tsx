@@ -13,6 +13,7 @@ describe('LogRows', () => {
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
+        showLabels={false}
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
@@ -33,6 +34,7 @@ describe('LogRows', () => {
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
+        showLabels={false}
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
@@ -62,6 +64,7 @@ describe('LogRows', () => {
         deduplicatedRows={dedupedRows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
+        showLabels={false}
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
@@ -81,6 +84,7 @@ describe('LogRows', () => {
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
+        showLabels={false}
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
@@ -105,7 +109,6 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     hasAnsi: false,
     labels: {},
     raw: entry,
-    timestamp: '',
     timeFromNow: '',
     timeEpochMs: 1,
     timeLocal: '',

@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: type-ahead-item-group-title;
     color: ${theme.colors.textWeak};
     font-size: ${theme.typography.size.sm};
-    line-height: ${theme.typography.lineHeight.lg};
+    line-height: ${theme.typography.lineHeight.md};
     padding: ${theme.spacing.sm};
   `,
 });

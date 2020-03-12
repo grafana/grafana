@@ -178,7 +178,7 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must have a column named `time` that returns either a sql datetime or any numeric datatype representing Unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you omit the `metric` column, the name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you omit the `metric` column, the name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
 If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
 
 Resultsets of time series queries need to be sorted by time.
@@ -380,7 +380,8 @@ Read more about variable formatting options in the [Variables]({{< relref "../..
 
 Name | Description
 ------------ | -------------
-time | The name of the date/time field. Could be a column with a native sql date/time data type or epoch value.
+time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
+timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
@@ -410,7 +411,7 @@ WHERE
 ORDER BY 1
 ```
 
-**Example query using time column of native sql date/time data type:**
+**Example query using time column of native SQL date/time data type:**
 
 ```sql
 SELECT

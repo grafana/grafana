@@ -13,11 +13,13 @@ import {
   DataTransformerConfig,
   ScopedVars,
 } from '@grafana/data';
+import { EDIT_PANEL_ID } from 'app/core/constants';
 
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { eventFactory } from '@grafana/data';
+import { take } from 'rxjs/operators';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -83,9 +85,11 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
+  options: {},
 };
 
 export class PanelModel {
+  /* persisted id, used in URL to identify a panel */
   id: number;
   gridPos: GridPos;
   type: string;
@@ -131,15 +135,19 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
+
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
     this.events = new Emitter();
-
     // should not be part of defaults as defaults are removed in save model and
     // this should not be removed in save model as exporter needs to templatize it
     this.datasource = null;
+    this.restoreModel(model);
+  }
 
+  /** Given a persistened PanelModel restores property values */
+  restoreModel(model: any) {
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
@@ -267,6 +275,7 @@ export class PanelModel {
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
+
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;
@@ -281,11 +290,6 @@ export class PanelModel {
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
     const wasAngular = !!this.plugin.angularPanelCtrl;
-
-    // for angular panels we must remove all events and let angular panels do some cleanup
-    if (wasAngular) {
-      this.destroy();
-    }
 
     // remove panel type specific  options
     for (const key of _.keys(this)) {
@@ -341,6 +345,24 @@ export class PanelModel {
     });
   }
 
+  getEditClone() {
+    const sourceModel = this.getSaveModel();
+
+    // Temporary id for the clone, restored later in redux action when changes are saved
+    sourceModel.id = EDIT_PANEL_ID;
+
+    const clone = new PanelModel(sourceModel);
+    const sourceQueryRunner = this.getQueryRunner();
+
+    // pipe last result to new clone query runner
+    sourceQueryRunner
+      .getData()
+      .pipe(take(1))
+      .subscribe(val => clone.getQueryRunner().pipeDataToSubject(val));
+
+    return clone;
+  }
+
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
       this.queryRunner = new PanelQueryRunner();
@@ -358,7 +380,6 @@ export class PanelModel {
   }
 
   destroy() {
-    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {

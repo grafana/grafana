@@ -1,9 +1,8 @@
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import config from 'app/core/config';
-import { getDataSourceSrv, getLocationSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getLocationSrv, AngularComponent } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
-
 import { copyPanel, duplicatePanel, editPanelJson, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -11,8 +10,13 @@ import { contextSrv } from '../../../core/services/context_srv';
 import { navigateToExplore } from '../../explore/state/actions';
 import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
+import { PanelCtrl } from '../../panel/panel_ctrl';
 
-export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
+export function getPanelMenu(
+  dashboard: DashboardModel,
+  panel: PanelModel,
+  angularComponent?: AngularComponent
+): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     store.dispatch(
@@ -35,6 +39,18 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
           panelId: panel.id,
           edit: true,
           fullscreen: true,
+        },
+        partial: true,
+      })
+    );
+  };
+
+  const onNewEditPanel = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    store.dispatch(
+      updateLocation({
+        query: {
+          editPanel: panel.id,
         },
         partial: true,
       })
@@ -95,7 +111,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     shortcut: 'v',
   });
 
-  if (dashboard.meta.canEdit) {
+  if (dashboard.canEditPanel(panel)) {
     menu.push({
       text: 'Edit',
       iconClassName: 'gicon gicon-editor',
@@ -111,7 +127,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     shortcut: 'p s',
   });
 
-  if (contextSrv.hasAccessToExplore() && panel.datasource) {
+  if (contextSrv.hasAccessToExplore() && !panel.plugin.meta.skipDataQuery) {
     menu.push({
       text: 'Explore',
       iconClassName: 'gicon gicon-explore',
@@ -119,6 +135,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
       onClick: onNavigateToExplore,
     });
   }
+
   if (config.featureToggles.inspect) {
     menu.push({
       text: 'Inspect',
@@ -128,9 +145,18 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     });
   }
 
+  if (config.featureToggles.newEdit) {
+    menu.push({
+      text: 'New edit',
+      iconClassName: 'gicon gicon-editor',
+      onClick: onNewEditPanel,
+      shortcut: 'p i',
+    });
+  }
+
   const subMenu: PanelMenuItem[] = [];
 
-  if (!panel.fullscreen && dashboard.meta.canEdit) {
+  if (!panel.fullscreen && dashboard.canEditPanel(panel)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -148,6 +174,29 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     onClick: onEditPanelJson,
   });
 
+  // add old angular panel options
+  if (angularComponent) {
+    const scope = angularComponent.getScope();
+    const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
+    const angularMenuItems = panelCtrl.getExtendedMenu();
+
+    for (const item of angularMenuItems) {
+      const reactItem: PanelMenuItem = {
+        text: item.text,
+        href: item.href,
+        shortcut: item.shortcut,
+      };
+
+      if (item.click) {
+        reactItem.onClick = () => {
+          scope.$eval(item.click, { ctrl: panelCtrl });
+        };
+      }
+
+      subMenu.push(reactItem);
+    }
+  }
+
   menu.push({
     type: 'submenu',
     text: 'More...',
@@ -156,7 +205,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     onClick: onMore,
   });
 
-  if (dashboard.meta.canEdit) {
+  if (dashboard.canEditPanel(panel)) {
     menu.push({ type: 'divider' });
 
     menu.push({
@@ -168,4 +217,4 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   }
 
   return menu;
-};
+}

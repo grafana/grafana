@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import { Button, FormField, VariableSuggestion, DataLinkInput, stylesFactory, Switch } from '@grafana/ui';
+import { Button, FormField, DataLinkInput, stylesFactory, Switch } from '@grafana/ui';
+import { VariableSuggestion } from '@grafana/data';
 import { DerivedFieldConfig } from '../types';
 import DataSourcePicker from '../../../../core/components/Select/DataSourcePicker';
 import { getDatasourceSrv } from '../../../../features/plugins/datasource_srv';

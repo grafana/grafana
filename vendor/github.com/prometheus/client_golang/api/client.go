@@ -11,8 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build go1.7
-
 // Package api provides clients for the HTTP APIs.
 package api
 
@@ -119,8 +117,8 @@ func (c *httpClient) Do(ctx context.Context, req *http.Request) (*http.Response,
 
 	select {
 	case <-ctx.Done():
-		err = resp.Body.Close()
 		<-done
+		err = resp.Body.Close()
 		if err == nil {
 			err = ctx.Err()
 		}

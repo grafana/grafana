@@ -1,74 +1,8 @@
-import { StoreState } from 'app/types';
-import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from '@grafana/runtime';
-import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
-import { PluginDashboard } from '../../../types/plugins';
-import { PluginMeta } from '@grafana/data';
-
-export enum ActionTypes {
-  LoadPlugins = 'LOAD_PLUGINS',
-  LoadPluginDashboards = 'LOAD_PLUGIN_DASHBOARDS',
-  LoadedPluginDashboards = 'LOADED_PLUGIN_DASHBOARDS',
-  SetPluginsSearchQuery = 'SET_PLUGIN_SEARCH_QUERY',
-  SetLayoutMode = 'SET_LAYOUT_MODE',
-}
-
-export interface LoadPluginsAction {
-  type: ActionTypes.LoadPlugins;
-  payload: PluginMeta[];
-}
-
-export interface LoadPluginDashboardsAction {
-  type: ActionTypes.LoadPluginDashboards;
-}
-
-export interface LoadedPluginDashboardsAction {
-  type: ActionTypes.LoadedPluginDashboards;
-  payload: PluginDashboard[];
-}
-
-export interface SetPluginsSearchQueryAction {
-  type: ActionTypes.SetPluginsSearchQuery;
-  payload: string;
-}
-
-export interface SetLayoutModeAction {
-  type: ActionTypes.SetLayoutMode;
-  payload: LayoutMode;
-}
-
-export const setPluginsLayoutMode = (mode: LayoutMode): SetLayoutModeAction => ({
-  type: ActionTypes.SetLayoutMode,
-  payload: mode,
-});
-
-export const setPluginsSearchQuery = (query: string): SetPluginsSearchQueryAction => ({
-  type: ActionTypes.SetPluginsSearchQuery,
-  payload: query,
-});
-
-const pluginsLoaded = (plugins: PluginMeta[]): LoadPluginsAction => ({
-  type: ActionTypes.LoadPlugins,
-  payload: plugins,
-});
-
-const pluginDashboardsLoad = (): LoadPluginDashboardsAction => ({
-  type: ActionTypes.LoadPluginDashboards,
-});
-
-const pluginDashboardsLoaded = (dashboards: PluginDashboard[]): LoadedPluginDashboardsAction => ({
-  type: ActionTypes.LoadedPluginDashboards,
-  payload: dashboards,
-});
-
-export type Action =
-  | LoadPluginsAction
-  | LoadPluginDashboardsAction
-  | LoadedPluginDashboardsAction
-  | SetPluginsSearchQueryAction
-  | SetLayoutModeAction;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
+import { PanelPlugin } from '@grafana/data';
+import { ThunkResult } from 'app/types';
+import { pluginDashboardsLoad, pluginDashboardsLoaded, pluginsLoaded, panelPluginLoaded } from './reducers';
+import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 
 export function loadPlugins(): ThunkResult<void> {
   return async dispatch => {
@@ -83,5 +17,22 @@ export function loadPluginDashboards(): ThunkResult<void> {
     const dataSourceType = getStore().dataSources.dataSource.type;
     const response = await getBackendSrv().get(`api/plugins/${dataSourceType}/dashboards`);
     dispatch(pluginDashboardsLoaded(response));
+  };
+}
+
+export function loadPanelPlugin(pluginId: string): ThunkResult<Promise<PanelPlugin>> {
+  return async (dispatch, getStore) => {
+    let plugin = getStore().plugins.panels[pluginId];
+
+    if (!plugin) {
+      plugin = await importPanelPlugin(pluginId);
+
+      // second check to protect against raise condition
+      if (!getStore().plugins.panels[pluginId]) {
+        dispatch(panelPluginLoaded(plugin));
+      }
+    }
+
+    return plugin;
   };
 }

@@ -2,17 +2,17 @@ package plugins
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
-func GetPluginSettings(orgId int64) (map[string]*m.PluginSettingInfoDTO, error) {
-	query := m.GetPluginSettingsQuery{OrgId: orgId}
+func GetPluginSettings(orgId int64) (map[string]*models.PluginSettingInfoDTO, error) {
+	query := models.GetPluginSettingsQuery{OrgId: orgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
 
-	pluginMap := make(map[string]*m.PluginSettingInfoDTO)
+	pluginMap := make(map[string]*models.PluginSettingInfoDTO)
 	for _, plug := range query.Result {
 		pluginMap[plug.PluginId] = plug
 	}
@@ -24,7 +24,7 @@ func GetPluginSettings(orgId int64) (map[string]*m.PluginSettingInfoDTO, error) 
 		}
 
 		// default to enabled true
-		opt := &m.PluginSettingInfoDTO{
+		opt := &models.PluginSettingInfoDTO{
 			PluginId: pluginDef.Id,
 			OrgId:    orgId,
 			Enabled:  true,

@@ -4,10 +4,22 @@ import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { KustoSchema } from '../types';
 import { toUtc } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('AzureLogAnalyticsDatasource', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    datasourceRequestMock.mockImplementation(jest.fn());
+  });
+
   const ctx: any = {
-    backendSrv: {},
     templateSrv: new TemplateSrv(),
   };
 
@@ -17,7 +29,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       url: 'http://azureloganalyticsapi',
     };
 
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
   });
 
   describe('When the config option "Same as Azure Monitor" has been chosen', () => {
@@ -56,9 +68,9 @@ describe('AzureLogAnalyticsDatasource', () => {
       ctx.instanceSettings.jsonData.tenantId = 'xxx';
       ctx.instanceSettings.jsonData.clientId = 'xxx';
       ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
-      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.templateSrv);
 
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           workspacesUrl = options.url;
           return Promise.resolve({ data: workspaceResponse, status: 200 });
@@ -66,14 +78,14 @@ describe('AzureLogAnalyticsDatasource', () => {
           azureLogAnalyticsUrl = options.url;
           return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
         }
-      };
+      });
 
       await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
     });
 
-    it('should use the sameasloganalyticsazure plugin route', () => {
+    it('should use the loganalyticsazure plugin route', () => {
       expect(workspacesUrl).toContain('azuremonitor');
-      expect(azureLogAnalyticsUrl).toContain('sameasloganalyticsazure');
+      expect(azureLogAnalyticsUrl).toContain('loganalyticsazure');
     });
   });
 
@@ -94,9 +106,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         ctx.instanceSettings.jsonData.logAnalyticsSubscriptionId = 'xxx';
         ctx.instanceSettings.jsonData.logAnalyticsTenantId = 'xxx';
         ctx.instanceSettings.jsonData.logAnalyticsClientId = 'xxx';
-        ctx.backendSrv.datasourceRequest = () => {
-          return Promise.reject(error);
-        };
+        datasourceRequestMock.mockImplementation(() => Promise.reject(error));
       });
 
       it('should return error status and a detailed error message', () => {
@@ -166,10 +176,10 @@ describe('AzureLogAnalyticsDatasource', () => {
     describe('in time series format', () => {
       describe('and the data is valid (has time, metric and value columns)', () => {
         beforeEach(() => {
-          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+          datasourceRequestMock.mockImplementation((options: { url: string }) => {
             expect(options.url).toContain('query=AzureActivity');
             return Promise.resolve({ data: response, status: 200 });
-          };
+          });
         });
 
         it('should return a list of datapoints', () => {
@@ -205,10 +215,11 @@ describe('AzureLogAnalyticsDatasource', () => {
               },
             ],
           };
-          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+
+          datasourceRequestMock.mockImplementation((options: { url: string }) => {
             expect(options.url).toContain('query=AzureActivity');
             return Promise.resolve({ data: invalidResponse, status: 200 });
-          };
+          });
         });
 
         it('should throw an exception', () => {
@@ -222,10 +233,10 @@ describe('AzureLogAnalyticsDatasource', () => {
     describe('in tableformat', () => {
       beforeEach(() => {
         options.targets[0].azureLogAnalytics.resultFormat = 'table';
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
           expect(options.url).toContain('query=AzureActivity');
           return Promise.resolve({ data: response, status: 200 });
-        };
+        });
       });
 
       it('should return a list of columns and rows', () => {
@@ -249,10 +260,10 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   describe('When performing getSchema', () => {
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         expect(options.url).toContain('metadata');
         return Promise.resolve({ data: FakeSchemaData.getlogAnalyticsFakeMetadata(), status: 200 });
-      };
+      });
     });
 
     it('should return a schema with a table and rows', () => {
@@ -302,13 +313,13 @@ describe('AzureLogAnalyticsDatasource', () => {
     let queryResults: any[];
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           return Promise.resolve({ data: workspaceResponse, status: 200 });
         } else {
           return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
         }
-      };
+      });
 
       queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
     });
@@ -364,13 +375,13 @@ describe('AzureLogAnalyticsDatasource', () => {
     let annotationResults: any[];
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+      datasourceRequestMock.mockImplementation((options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           return Promise.resolve({ data: workspaceResponse, status: 200 });
         } else {
           return Promise.resolve({ data: tableResponse, status: 200 });
         }
-      };
+      });
 
       annotationResults = await ctx.ds.annotationQuery({
         annotation: {

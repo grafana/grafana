@@ -12,10 +12,13 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
   return isDivider ? (
     <li className="divider" />
   ) : (
-    <li className={isSubMenu ? 'dropdown-submenu' : null}>
-      <a onClick={props.onClick}>
+    <li className={isSubMenu ? 'dropdown-submenu' : undefined}>
+      <a onClick={props.onClick} href={props.href}>
         {props.iconClassName && <i className={props.iconClassName} />}
-        <span className="dropdown-item-text" aria-label={e2e.pages.Panels.Panel.selectors.headerItems(props.text)}>
+        <span
+          className="dropdown-item-text"
+          aria-label={e2e.pages.Dashboard.Panels.Panel.selectors.headerItems(props.text)}
+        >
           {props.text}
         </span>
         {props.shortcut && <span className="dropdown-menu-item-shortcut">{props.shortcut}</span>}

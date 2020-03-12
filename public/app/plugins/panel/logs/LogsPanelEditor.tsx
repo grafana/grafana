@@ -13,6 +13,13 @@ const sortOrderOptions = [
 ];
 
 export class LogsPanelEditor extends PureComponent<PanelEditorProps<Options>> {
+  onToggleLabels = () => {
+    const { options, onOptionsChange } = this.props;
+    const { showLabels } = options;
+
+    onOptionsChange({ ...options, showLabels: !showLabels });
+  };
+
   onToggleTime = () => {
     const { options, onOptionsChange } = this.props;
     const { showTime } = options;
@@ -33,7 +40,7 @@ export class LogsPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   };
 
   render() {
-    const { showTime, wrapLogMessage, sortOrder } = this.props.options;
+    const { showLabels, showTime, wrapLogMessage, sortOrder } = this.props.options;
     const value = sortOrderOptions.filter(option => option.value === sortOrder)[0];
 
     return (
@@ -41,6 +48,7 @@ export class LogsPanelEditor extends PureComponent<PanelEditorProps<Options>> {
         <PanelOptionsGrid>
           <PanelOptionsGroup title="Columns">
             <Switch label="Time" labelClass="width-10" checked={showTime} onChange={this.onToggleTime} />
+            <Switch label="Unique labels" labelClass="width-10" checked={showLabels} onChange={this.onToggleLabels} />
             <Switch
               label="Wrap lines"
               labelClass="width-10"

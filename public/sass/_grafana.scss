@@ -1,6 +1,3 @@
-// DEPENDENCIES
-@import '../../node_modules/react-table/react-table.css';
-
 // MIXINS
 @import 'mixins/mixins';
 @import 'mixins/animations';
@@ -106,7 +103,6 @@
 @import 'pages/alerting';
 @import 'pages/history';
 @import 'pages/signup';
-@import 'pages/styleguide';
 @import 'pages/errorpage';
 @import 'pages/explore';
 @import 'pages/plugins';

@@ -78,7 +78,7 @@ export const promptPluginDetails = async (name?: string) => {
     // Try using git specified username
     promptConfirm('author', `Author (${username})`, username, username !== ''),
     // Prompt for manual author entry if no git user.name specifed
-    promptInput('author', `Author`, true, undefined, answers => !answers.author || username === ''),
+    promptInput('author', `Author`, true, undefined, (answers: any) => !answers.author || username === ''),
     promptInput('url', 'Your URL (i.e. organisation url)'),
   ]);
 
@@ -136,6 +136,7 @@ export const prepareJsonFiles = useSpinner<{ pluginDetails: PluginDetails; plugi
 
 export const removeGitFiles = useSpinner('Cleaning', async pluginPath => rmdir(`${path.resolve(pluginPath, '.git')}`));
 
+/* eslint-disable no-console */
 export const formatPluginDetails = (details: PluginDetails) => {
   console.group();
   console.log();
@@ -151,3 +152,4 @@ export const formatPluginDetails = (details: PluginDetails) => {
   console.log();
   console.groupEnd();
 };
+/* eslint-enable no-console */

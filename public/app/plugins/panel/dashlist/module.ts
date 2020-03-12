@@ -1,10 +1,11 @@
 import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
 import impressionSrv from 'app/core/services/impression_srv';
-import { auto } from 'angular';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { auto, IScope } from 'angular';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelEvents } from '@grafana/data';
+import { promiseToDigest } from '../../../core/utils/promiseToDigest';
 
 class DashListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -25,12 +26,7 @@ class DashListCtrl extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor(
-    $scope: any,
-    $injector: auto.IInjectorService,
-    private backendSrv: BackendSrv,
-    private dashboardSrv: DashboardSrv
-  ) {
+  constructor($scope: IScope, $injector: auto.IInjectorService, private dashboardSrv: DashboardSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -97,9 +93,11 @@ class DashListCtrl extends PanelCtrl {
       type: 'dash-db',
     };
 
-    return this.backendSrv.search(params).then(result => {
-      this.groups[2].list = result;
-    });
+    return promiseToDigest(this.$scope)(
+      backendSrv.search(params).then(result => {
+        this.groups[2].list = result;
+      })
+    );
   }
 
   getStarred() {
@@ -109,9 +107,11 @@ class DashListCtrl extends PanelCtrl {
     }
 
     const params = { limit: this.panel.limit, starred: 'true' };
-    return this.backendSrv.search(params).then(result => {
-      this.groups[0].list = result;
-    });
+    return promiseToDigest(this.$scope)(
+      backendSrv.search(params).then(result => {
+        this.groups[0].list = result;
+      })
+    );
   }
 
   starDashboard(dash: any, evt: any) {
@@ -132,23 +132,25 @@ class DashListCtrl extends PanelCtrl {
     }
 
     const dashIds = _.take(impressionSrv.getDashboardOpened(), this.panel.limit);
-    return this.backendSrv.search({ dashboardIds: dashIds, limit: this.panel.limit }).then(result => {
-      this.groups[1].list = dashIds
-        .map(orderId => {
-          return _.find(result, dashboard => {
-            return dashboard.id === orderId;
+    return promiseToDigest(this.$scope)(
+      backendSrv.search({ dashboardIds: dashIds, limit: this.panel.limit }).then(result => {
+        this.groups[1].list = dashIds
+          .map(orderId => {
+            return _.find(result, dashboard => {
+              return dashboard.id === orderId;
+            });
+          })
+          .filter(el => {
+            return el !== undefined;
           });
-        })
-        .filter(el => {
-          return el !== undefined;
-        });
-    });
+      })
+    );
   }
 
-  onFolderChange(folder: any) {
+  onFolderChange = (folder: any) => {
     this.panel.folderId = folder.id;
     this.refresh();
-  }
+  };
 }
 
 export { DashListCtrl, DashListCtrl as PanelCtrl };

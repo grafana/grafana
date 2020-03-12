@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -120,7 +120,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
-				notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
@@ -128,7 +128,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			})
 
 			Convey("One notification in database with same name and uid", func() {
-				existingNotificationCmd := m.CreateAlertNotificationCommand{
+				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel1",
 					OrgId: 1,
 					Uid:   "notifier1",
@@ -137,7 +137,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
 				So(err, ShouldBeNil)
 				So(existingNotificationCmd.Result, ShouldNotBeNil)
-				notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
@@ -171,7 +171,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				err := dc.applyChanges(doubleNotificationsConfig)
 				Convey("should both be inserted", func() {
 					So(err, ShouldBeNil)
-					notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
+					notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 					So(err, ShouldBeNil)
 					So(notificationsQuery.Result, ShouldNotBeNil)
@@ -185,7 +185,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Two configured notification", func() {
 			Convey("two other notifications in database", func() {
-				existingNotificationCmd := m.CreateAlertNotificationCommand{
+				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel0",
 					OrgId: 1,
 					Uid:   "notifier0",
@@ -193,7 +193,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				}
 				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
 				So(err, ShouldBeNil)
-				existingNotificationCmd = m.CreateAlertNotificationCommand{
+				existingNotificationCmd = models.CreateAlertNotificationCommand{
 					Name:  "channel3",
 					OrgId: 1,
 					Uid:   "notifier3",
@@ -202,7 +202,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				err = sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
 				So(err, ShouldBeNil)
 
-				notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
@@ -214,7 +214,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
-					notificationsQuery = m.GetAllAlertNotificationsQuery{OrgId: 1}
+					notificationsQuery = models.GetAllAlertNotificationsQuery{OrgId: 1}
 					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 					So(err, ShouldBeNil)
 					So(notificationsQuery.Result, ShouldNotBeNil)
@@ -224,16 +224,16 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Can read correct properties with orgName instead of orgId", func() {
-			existingOrg1 := m.CreateOrgCommand{Name: "Main Org. 1"}
+			existingOrg1 := models.CreateOrgCommand{Name: "Main Org. 1"}
 			err := sqlstore.CreateOrg(&existingOrg1)
 			So(err, ShouldBeNil)
 			So(existingOrg1.Result, ShouldNotBeNil)
-			existingOrg2 := m.CreateOrgCommand{Name: "Main Org. 2"}
+			existingOrg2 := models.CreateOrgCommand{Name: "Main Org. 2"}
 			err = sqlstore.CreateOrg(&existingOrg2)
 			So(err, ShouldBeNil)
 			So(existingOrg2.Result, ShouldNotBeNil)
 
-			existingNotificationCmd := m.CreateAlertNotificationCommand{
+			existingNotificationCmd := models.CreateAlertNotificationCommand{
 				Name:  "default-notification-delete",
 				OrgId: existingOrg2.Result.Id,
 				Uid:   "notifier2",
@@ -248,7 +248,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				t.Fatalf("applyChanges return an error %v", err)
 			}
 
-			notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: existingOrg2.Result.Id}
+			notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: existingOrg2.Result.Id}
 			err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 			So(err, ShouldBeNil)
 			So(notificationsQuery.Result, ShouldNotBeNil)
@@ -279,7 +279,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
-				notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldBeEmpty)

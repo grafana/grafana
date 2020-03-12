@@ -6,10 +6,11 @@
 import { e2eScenario, ScenarioArguments } from './support/scenario';
 import { Pages } from './pages';
 import { Flows } from './flows';
+import { scenarioContext } from './support/scenarioContext';
 
-export type SelectorFunction = (text?: string) => Cypress.Chainable<any>;
+export type SelectorFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
 export type SelectorObject<S> = {
-  visit: () => Cypress.Chainable<any>;
+  visit: (args?: string) => Cypress.Chainable<Window>;
   selectors: S;
 };
 
@@ -19,6 +20,7 @@ const e2eObject = {
   blobToBase64String: (blob: any) => Cypress.Blob.blobToBase64String(blob),
   imgSrcToBlob: (url: string) => Cypress.Blob.imgSrcToBlob(url),
   scenario: (args: ScenarioArguments) => e2eScenario(args),
+  context: scenarioContext,
   pages: Pages,
   flows: Flows,
 };

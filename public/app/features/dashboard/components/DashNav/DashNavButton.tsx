@@ -19,7 +19,7 @@ export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSu
         <button
           className={`btn navbar-button navbar-button--${classSuffix}`}
           onClick={onClick}
-          aria-label={e2e.pages.Dashboard.selectors.toolbarItems(tooltip)}
+          aria-label={e2e.pages.Dashboard.Toolbar.selectors.toolbarItems(tooltip)}
         >
           <i className={icon} />
         </button>

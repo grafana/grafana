@@ -35,6 +35,7 @@ export interface Props {
   plugin: PanelPlugin;
   isFullscreen: boolean;
   isInView: boolean;
+  isInEditMode?: boolean;
   width: number;
   height: number;
 }
@@ -42,7 +43,7 @@ export interface Props {
 export interface State {
   isFirstLoad: boolean;
   renderCounter: number;
-  errorMessage: string | null;
+  errorMessage?: string;
   refreshWhenInView: boolean;
 
   // Current state of all events
@@ -55,10 +56,10 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
+
     this.state = {
       isFirstLoad: true,
       renderCounter: 0,
-      errorMessage: null,
       refreshWhenInView: false,
       data: {
         state: LoadingState.NotStarted,
@@ -69,7 +70,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, isInEditMode } = this.props;
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
     dashboard.panelInitialized(this.props.panel);
@@ -84,8 +85,19 @@ export class PanelChrome extends PureComponent<Props, State> {
         },
         isFirstLoad: false,
       });
-    } else if (!this.wantsQueryExecution) {
-      this.setState({ isFirstLoad: false });
+    } else {
+      if (isInEditMode) {
+        this.querySubscription = panel
+          .getQueryRunner()
+          .getData()
+          .subscribe({
+            next: data => this.onDataUpdate(data),
+          });
+      }
+
+      if (!this.wantsQueryExecution) {
+        this.setState({ isFirstLoad: false });
+      }
     }
   }
 
@@ -95,7 +107,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
-      this.querySubscription = null;
     }
   }
 
@@ -109,9 +120,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         if (this.state.refreshWhenInView) {
           this.onRefresh();
         }
-      } else if (this.querySubscription) {
-        this.querySubscription.unsubscribe();
-        this.querySubscription = null;
       }
     }
   }
@@ -119,51 +127,48 @@ export class PanelChrome extends PureComponent<Props, State> {
   // Updates the response with information from the stream
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
-  panelDataObserver = {
-    next: (data: PanelData) => {
-      if (!this.props.isInView) {
-        // Ignore events when not visible.
-        // The call will be repeated when the panel comes into view
-        return;
-      }
+  onDataUpdate(data: PanelData) {
+    if (!this.props.isInView) {
+      // Ignore events when not visible.
+      // The call will be repeated when the panel comes into view
+      return;
+    }
 
-      let { isFirstLoad } = this.state;
-      let errorMessage: string | null = null;
+    let { isFirstLoad } = this.state;
+    let errorMessage: string | undefined;
 
-      switch (data.state) {
-        case LoadingState.Loading:
-          // Skip updating state data if it is already in loading state
-          // This is to avoid rendering partial loading responses
-          if (this.state.data.state === LoadingState.Loading) {
-            return;
+    switch (data.state) {
+      case LoadingState.Loading:
+        // Skip updating state data if it is already in loading state
+        // This is to avoid rendering partial loading responses
+        if (this.state.data.state === LoadingState.Loading) {
+          return;
+        }
+        break;
+      case LoadingState.Error:
+        const { error } = data;
+        if (error) {
+          if (errorMessage !== error.message) {
+            errorMessage = error.message;
           }
-          break;
-        case LoadingState.Error:
-          const { error } = data;
-          if (error) {
-            if (errorMessage !== error.message) {
-              errorMessage = error.message;
-            }
-          }
-          break;
-        case LoadingState.Done:
-          // If we are doing a snapshot save data in panel model
-          if (this.props.dashboard.snapshot) {
-            this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
-          }
-          if (isFirstLoad) {
-            isFirstLoad = false;
-          }
-          break;
-      }
+        }
+        break;
+      case LoadingState.Done:
+        // If we are doing a snapshot save data in panel model
+        if (this.props.dashboard.snapshot) {
+          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
+        }
+        if (isFirstLoad) {
+          isFirstLoad = false;
+        }
+        break;
+    }
 
-      this.setState({ isFirstLoad, errorMessage, data });
-    },
-  };
+    this.setState({ isFirstLoad, errorMessage, data });
+  }
 
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
-
     if (!isInView) {
       console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
@@ -182,7 +187,9 @@ export class PanelChrome extends PureComponent<Props, State> {
       const queryRunner = panel.getQueryRunner();
 
       if (!this.querySubscription) {
-        this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
+        this.querySubscription = queryRunner.getData().subscribe({
+          next: data => this.onDataUpdate(data),
+        });
       }
 
       queryRunner.run({
@@ -232,6 +239,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
+  panelHasLastResult = () => {
+    return !!this.props.panel.getQueryRunner().getLastResult();
+  };
+
   get wantsQueryExecution() {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
@@ -243,7 +254,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
-  renderPanel(width: number, height: number): JSX.Element {
+  renderPanel(width: number, height: number) {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
     const { theme } = config;
@@ -257,7 +268,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
-      return this.renderLoadingState();
+      return null;
     }
 
     const PanelComponent = plugin.panel;
@@ -275,7 +286,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     return (
       <>
-        {loading === LoadingState.Loading && this.renderLoadingState()}
         <div className={panelContentClassNames}>
           <PanelComponent
             id={panel.id}
@@ -293,14 +303,6 @@ export class PanelChrome extends PureComponent<Props, State> {
           />
         </div>
       </>
-    );
-  }
-
-  private renderLoadingState(): JSX.Element {
-    return (
-      <div className="panel-loading">
-        <i className="fa fa-spinner fa-spin" />
-      </div>
     );
   }
 
@@ -338,17 +340,18 @@ export class PanelChrome extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={data.request ? data.request.timeInfo : null}
+          timeInfo={data.request ? data.request.timeInfo : undefined}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
+          isLoading={data.state === LoadingState.Loading}
         />
         <ErrorBoundary>
-          {({ error, errorInfo }) => {
-            if (errorInfo) {
+          {({ error }) => {
+            if (error) {
               this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
               return null;
             }
