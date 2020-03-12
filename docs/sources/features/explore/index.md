@@ -82,7 +82,7 @@ By default, query history shows you the most recent queries. You can sort your h
    - Data source A-Z
    - Data source Z-A
 
-> Note: If you are in split mode, chosen sorting mode is applied only to currently active panel.
+> Note: If you are in split mode, then the chosen sorting mode applies only to the active panel.
 
 ### Filter query history
 
