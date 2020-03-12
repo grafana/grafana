@@ -32,6 +32,8 @@ executors:
   windows-installer:
     docker:
       - image: grafana/wix-toolset-ci:v3
+orbs:
+  cypress: cypress-io/cypress@1
 
 jobs:
   install-grabpl:
@@ -756,12 +758,11 @@ jobs:
 
   end-to-end-tests:
     docker:
-      - image: circleci/node:12-browsers
+      - image: cypress/base:12.16.1
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
