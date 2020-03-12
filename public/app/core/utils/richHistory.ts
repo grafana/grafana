@@ -2,9 +2,10 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, ExploreMode } from '@grafana/data';
+import { DataQuery, ExploreMode, AppEvents } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
+import appEvents from 'app/core/app_events';
 import { serializeStateToUrlParam, SortOrder } from './explore';
 
 // Types
@@ -60,8 +61,14 @@ export function addToRichHistory(
     ];
 
     /* Combine all queries of a datasource type into one rich history */
-    store.setObject(RICH_HISTORY_KEY, newHistory);
-    return newHistory;
+    const isSaved = store.setObject(RICH_HISTORY_KEY, newHistory);
+
+    /* If newHistory is succesfully saved, return it. Otherwise return not updated richHistory.  */
+    if (isSaved) {
+      return newHistory;
+    } else {
+      return richHistory;
+    }
   }
 
   return richHistory;
