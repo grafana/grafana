@@ -1,9 +1,10 @@
-import { PanelQueryRunner } from './PanelQueryRunner';
+import { PanelConfig, PanelQueryRunner } from './PanelQueryRunner';
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
 import { DashboardModel } from './index';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
+import { GrafanaTheme } from '@grafana/data';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/core/config', () => ({
@@ -44,16 +45,19 @@ interface ScenarioContext {
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
 
-function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn) {
+function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn, panelConfig?: PanelConfig) {
   describe(description, () => {
     let setupFn = () => {};
-
+    const defaultPanelConfig: PanelConfig = {
+      getFieldOverrideOptions: () => undefined,
+      getTransformations: () => undefined,
+    };
     const ctx: ScenarioContext = {
       widthPixels: 200,
       scopedVars: {
         server: { text: 'Server1', value: 'server-1' },
       },
-      runner: new PanelQueryRunner(),
+      runner: new PanelQueryRunner(panelConfig || defaultPanelConfig),
       setup: (fn: () => void) => {
         setupFn = fn;
       },
@@ -100,7 +104,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         queries: [{ refId: 'A', test: 1 }],
       };
 
-      ctx.runner = new PanelQueryRunner();
+      ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
       ctx.runner.getData().subscribe({
         next: (data: grafanaData.PanelData) => {
           ctx.res = data;
@@ -190,50 +194,55 @@ describe('PanelQueryRunner', () => {
     });
   });
 
-  describeQueryRunnerScenario('field overrides', ctx => {
-    it('should apply when field override options are set', async () => {
-      const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
-      ctx.runner.getData().subscribe({
-        next: (data: grafanaData.PanelData) => {
-          return data;
-        },
+  describeQueryRunnerScenario(
+    'field overrides',
+    ctx => {
+      it('should apply when field override options are set', async () => {
+        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
+
+        ctx.runner.getData().subscribe({
+          next: (data: grafanaData.PanelData) => {
+            return data;
+          },
+        });
+        expect(spy).toBeCalled();
       });
-      expect(spy).not.toBeCalled();
-      ctx.runner.setFieldOverrides({
+    },
+    {
+      getFieldOverrideOptions: () => ({
         fieldOptions: {
           defaults: {
             unit: 'm/s',
           },
           // @ts-ignore
-          overrides: [{}],
+          overrides: [],
         },
-      });
-      ctx.runner.getData().subscribe({
-        next: (data: grafanaData.PanelData) => {
-          return data;
-        },
-      });
-      expect(spy).toBeCalled();
-    });
-  });
+        replaceVariables: v => v,
+        theme: {} as GrafanaTheme,
+      }),
+      getTransformations: () => undefined,
+    }
+  );
 
-  describeQueryRunnerScenario('transformations', ctx => {
-    it('should apply when transformations are set', async () => {
-      const spy = jest.spyOn(grafanaData, 'transformDataFrame');
-      ctx.runner.getData().subscribe({
-        next: (data: grafanaData.PanelData) => {
-          return data;
-        },
+  describeQueryRunnerScenario(
+    'transformations',
+    ctx => {
+      it('should apply when transformations are set', async () => {
+        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+
+        ctx.runner.getData().subscribe({
+          next: (data: grafanaData.PanelData) => {
+            return data;
+          },
+        });
+
+        expect(spy).toBeCalled();
       });
-      expect(spy).not.toBeCalled();
+    },
+    {
+      getFieldOverrideOptions: () => undefined,
       // @ts-ignore
-      ctx.runner.setTransformations([{}]);
-      ctx.runner.getData().subscribe({
-        next: (data: grafanaData.PanelData) => {
-          return data;
-        },
-      });
-      expect(spy).toBeCalled();
-    });
-  });
+      getTransformations: () => [{}],
+    }
+  );
 });

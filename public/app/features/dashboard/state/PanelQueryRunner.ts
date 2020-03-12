@@ -52,15 +52,20 @@ function getNextRequestId() {
   return 'Q' + counter++;
 }
 
+export interface PanelConfig {
+  getTransformations: () => DataTransformerConfig[] | undefined;
+  getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
+}
+
 export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
-  private transformations?: DataTransformerConfig[];
-  private fieldOverrideOptions?: ApplyFieldOverrideOptions;
   private lastResult?: PanelData;
+  private panelConfig: PanelConfig;
 
-  constructor() {
+  constructor(panelConfig: PanelConfig) {
     this.subject = new ReplaySubject(1);
+    this.panelConfig = panelConfig;
   }
 
   /**
@@ -74,14 +79,17 @@ export class PanelQueryRunner {
         if (transform && this.hasTransformations()) {
           processedData = {
             ...processedData,
-            series: transformDataFrame(this.transformations, data.series),
+            series: transformDataFrame(this.panelConfig.getTransformations(), data.series),
           };
         }
         // apply overrides
-        if (this.fieldOverrideOptions) {
+        if (this.hasFieldOverrideOptions()) {
           processedData = {
             ...processedData,
-            series: applyFieldOverrides({ data: processedData.series, ...this.fieldOverrideOptions }),
+            series: applyFieldOverrides({
+              data: processedData.series,
+              ...this.panelConfig.getFieldOverrideOptions(),
+            }),
           };
         }
         return processedData;
@@ -89,9 +97,14 @@ export class PanelQueryRunner {
     );
   }
 
-  hasTransformations() {
-    return config.featureToggles.transformations && this.transformations && this.transformations.length > 0;
-  }
+  hasTransformations = () => {
+    const transformations = this.panelConfig.getTransformations();
+    return config.featureToggles.transformations && transformations && transformations.length > 0;
+  };
+
+  hasFieldOverrideOptions = () => {
+    return this.panelConfig.getFieldOverrideOptions();
+  };
 
   async run(options: QueryRunnerOptions) {
     const {
@@ -187,14 +200,6 @@ export class PanelQueryRunner {
     if (this.lastResult) {
       this.subject.next(this.lastResult);
     }
-  };
-
-  setTransformations(transformations?: DataTransformerConfig[]) {
-    this.transformations = transformations;
-  }
-
-  setFieldOverrides = (options?: ApplyFieldOverrideOptions) => {
-    this.fieldOverrideOptions = options;
   };
 
   /**

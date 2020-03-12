@@ -43,6 +43,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   replaceVariables: true,
+  getDatasourceConfig: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -371,10 +372,26 @@ export class PanelModel {
     return clone;
   }
 
+  getDatasourceConfig() {
+    return {
+      getTransformations: () => this.transformations,
+      getFieldOverrideOptions: () => {
+        if (!this.plugin) {
+          return undefined;
+        }
+
+        return {
+          fieldOptions: this.options.fieldOptions,
+          replaceVariables: this.replaceVariables,
+          custom: this.plugin.customFieldConfigs,
+          theme: config.theme,
+        };
+      },
+    };
+  }
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner();
-      this.setTransformations(this.transformations);
+      this.queryRunner = new PanelQueryRunner(this.getDatasourceConfig());
     }
     return this.queryRunner;
   }
@@ -398,7 +415,6 @@ export class PanelModel {
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
-    this.getQueryRunner().setTransformations(transformations);
   }
 
   replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
@@ -413,13 +429,6 @@ export class PanelModel {
     if (!this.plugin) {
       return;
     }
-
-    this.getQueryRunner().setFieldOverrides({
-      fieldOptions: this.options.fieldOptions,
-      replaceVariables: this.replaceVariables,
-      custom: this.plugin.customFieldConfigs,
-      theme: config.theme,
-    });
 
     this.getQueryRunner().resendLastResult();
   }
