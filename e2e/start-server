@@ -31,5 +31,6 @@ $RUNDIR/bin/grafana-server \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \
   cfg:log.level=debug \
+  cfg:app_mode=development \
   2>&1 > $RUNDIR/output.log &
 
