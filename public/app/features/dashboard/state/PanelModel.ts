@@ -82,6 +82,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   pluginVersion: true,
   queryRunner: true,
   transformations: true,
+  fieldConfig: true,
 };
 
 const defaults: any = {
@@ -188,6 +189,7 @@ export class PanelModel {
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
+
     this.updateQueryRunnerFieldOverrides();
     this.render();
   }
@@ -400,7 +402,7 @@ export class PanelModel {
         }
 
         return {
-          fieldOptions: this.options.fieldOptions,
+          fieldOptions: this.fieldConfig,
           replaceVariables: this.replaceVariables,
           custom: this.plugin.customFieldConfigs,
           theme: config.theme,

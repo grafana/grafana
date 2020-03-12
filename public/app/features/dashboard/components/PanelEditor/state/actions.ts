@@ -53,12 +53,6 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       // Resend last query result on source panel query runner
       // But do this after the panel edit editor exit process has completed
       setTimeout(() => {
-        sourcePanel.getQueryRunner().setFieldOverrides({
-          fieldOptions: { ...panel.fieldConfig },
-          replaceVariables: sourcePanel.replaceVariables,
-          custom: sourcePanel.plugin.customFieldConfigs,
-          theme: config.theme,
-        });
         sourcePanel.getQueryRunner().pipeDataToSubject(panel.getQueryRunner().getLastResult());
       }, 20);
     }
