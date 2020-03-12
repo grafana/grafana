@@ -29,10 +29,11 @@ require (
 	github.com/go-xorm/xorm v0.7.1
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.3.1
+	github.com/google/gops v0.3.7 // indirect
 	github.com/gorilla/websocket v1.4.1
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.21.0
+	github.com/grafana/grafana-plugin-sdk-go v0.28.0
 	github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/hashicorp/go-version v1.1.0
@@ -44,6 +45,7 @@ require (
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/lib/pq v1.2.0
 	github.com/linkedin/goavro/v2 v2.9.7
+	github.com/magefile/mage v1.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.11.0
