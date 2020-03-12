@@ -9,11 +9,11 @@ jobs:
     name: Deploy Storybook
     runs-on: ubuntu-latest
     env:
-      GIT_HASH: git rev-parse --short HEAD
+      GIT_HASH: ${{git rev-parse --short HEAD}}
     steps:
       - uses: actions/checkout@v1
       - name: Building commit
-        run: echo ${GIT_HASH}
+        run: echo "Building from commit ${GIT_HASH} on branch ${GITHUB_REF}"
       - uses: actions/setup-node@v1
         with:
           node-version: 12.x
