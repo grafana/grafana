@@ -65,7 +65,7 @@ Query history lets you view the history of your querying. For each individual qu
 - Create and/or edit a comment.
 - Copy a query to the clipboard.
 - Copy URL link with the query to clipboard.
-- Star query.
+- Star a query.
 
 ### Manage favorite queries
 
