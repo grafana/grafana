@@ -9,7 +9,7 @@ jobs:
     name: Deploy Storybook
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
         with:
           ref: ${{github.event.pull_request.head.sha}}
           run: echo "::set-env name=GIT_HASH::$(git rev-parse --short HEAD)" 
