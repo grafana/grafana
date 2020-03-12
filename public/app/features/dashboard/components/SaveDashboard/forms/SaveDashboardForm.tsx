@@ -31,7 +31,12 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
       {({ register, errors }) => (
         <>
           <Forms.Field label="Changes description">
-            <Forms.TextArea name="message" ref={register} placeholder="Add a note to describe your changes..." />
+            <Forms.TextArea
+              name="message"
+              ref={register}
+              placeholder="Add a note to describe your changes..."
+              autoFocus
+            />
           </Forms.Field>
           {hasTimeChanged && (
             <Forms.Field label="Save current time range" description="Dashboard time range has changed">

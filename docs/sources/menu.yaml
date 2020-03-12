@@ -261,6 +261,8 @@
     link: /enterprise/white-labeling/
   - name: License expiration
     link: /enterprise/license-expiration/
+  - name: Export dashboard as PDF
+    link: /enterprise/export-pdf/
 - name: Tutorials
   link: /tutorials/
   children:
