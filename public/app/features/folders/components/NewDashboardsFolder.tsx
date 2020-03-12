@@ -58,6 +58,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
                   >
                     <Forms.Input
                       name="folderName"
+                      size="md"
                       ref={register({
                         required: 'Folder name is required.',
                         validate: async v => await this.validateFolderName(v),
