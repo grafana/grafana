@@ -12,7 +12,6 @@ import {
   VizOrientation,
   PanelModel,
   FieldDisplayOptions,
-  ConfigOverrideRule,
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
@@ -32,20 +31,24 @@ export function sharedSingleStatPanelChangedHandler(
   prevOptions: any
 ) {
   let options = panel.options;
+  // Mutating passed panel
+  panel.fieldConfig = panel.fieldConfig || {
+    defaults: {},
+    overrides: [],
+  };
+
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
     const prevPanel = prevOptions.angular;
     const reducer = fieldReducers.getIfExists(prevPanel.valueName);
     options = {
       fieldOptions: {
-        defaults: {} as FieldConfig,
-        overrides: [] as ConfigOverrideRule[],
         calcs: [reducer ? reducer.id : ReducerID.mean],
       },
       orientation: VizOrientation.Horizontal,
     };
 
-    const defaults = options.fieldOptions.defaults;
+    const defaults: FieldConfig = {};
     if (prevPanel.format) {
       defaults.unit = prevPanel.format;
     }
@@ -91,7 +94,7 @@ export function sharedSingleStatPanelChangedHandler(
       defaults.min = prevPanel.gauge.minValue;
       defaults.max = prevPanel.gauge.maxValue;
     }
-
+    panel.fieldConfig.defaults = defaults;
     return options;
   }
 
