@@ -254,7 +254,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		return
 	}
 
-	plugin, ok := plugins.DataSources[ds.Type]
+	plugin, ok := hs.PluginManager.GetDatasource(ds.Type)
 	if !ok {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
