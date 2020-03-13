@@ -239,6 +239,8 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	return JSON(200, payload)
 }
 
+// CheckDatasourceHealth sends a health check request to the plugin datasource
+// /api/datasource/:id/health
 func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 	datasourceID := c.ParamsInt64("id")
 
