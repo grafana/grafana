@@ -105,6 +105,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "_eventsCount": 6,
             },
           },
+          "getVariables": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -251,6 +252,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
+          "variables": Object {
+            "list": Array [],
+          },
           "version": 0,
         }
       }
@@ -347,6 +351,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "_eventsCount": 6,
             },
           },
+          "getVariables": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -493,6 +498,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
+          "variables": Object {
+            "list": Array [],
+          },
           "version": 0,
         }
       }
@@ -589,6 +597,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "_eventsCount": 6,
             },
           },
+          "getVariables": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -735,6 +744,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
+          "variables": Object {
+            "list": Array [],
+          },
           "version": 0,
         }
       }
@@ -831,6 +843,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
               "_eventsCount": 6,
             },
           },
+          "getVariables": [Function],
           "gnetId": null,
           "graphTooltip": 0,
           "id": null,
@@ -977,6 +990,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "timezone": "",
           "title": "My dashboard",
           "uid": null,
+          "variables": Object {
+            "list": Array [],
+          },
           "version": 0,
         }
       }

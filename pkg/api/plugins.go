@@ -205,6 +205,7 @@ func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) R
 	return JSON(200, cmd.Result)
 }
 
+// CheckHealth returns the health of a plugin.
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	pluginID := c.Params("pluginId")
@@ -226,8 +227,9 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	}
 
 	payload := map[string]interface{}{
-		"status":  resp.Status.String(),
-		"message": resp.Message,
+		"status":      resp.Status.String(),
+		"message":     resp.Message,
+		"jsonDetails": resp.JSONDetails,
 	}
 
 	if resp.Status != backendplugin.HealthStatusOk {
@@ -266,7 +268,6 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	config := backendplugin.PluginConfig{
 		OrgID:                   c.OrgId,
 		PluginID:                plugin.Id,
-		PluginType:              plugin.Type,
 		JSONData:                jsonData,
 		DecryptedSecureJSONData: decryptedSecureJSONData,
 		Updated:                 updated,

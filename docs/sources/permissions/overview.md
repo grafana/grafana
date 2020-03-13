@@ -28,11 +28,11 @@ Grafana supports a wide variety of internal and external ways for users to authe
 
 ## Grafana Admin
 
-This admin flag makes a user a `Super Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
+This admin flag makes user a `Super Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
 
 ## Organization Roles
 
-Users can be belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do
+Users can belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do
 in that organization. Grafana supports multiple *organizations* in order to support a wide variety of deployment models, including using a single Grafana instance to provide service to multiple potentially untrusted organizations.
 
 In most cases, Grafana is deployed with a single organization.
@@ -48,7 +48,7 @@ Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" 
 
 ## Dashboard and Folder Permissions
 
-Dashboard and folder permissions allows you to remove the default role based permissions for Editors and Viewers and assign permissions to specific **Users** and **Teams**. Learn more about [Dashboard and Folder Permissions]({{< relref "dashboard_folder_permissions.md" >}}).
+Dashboard and folder permissions allow you to remove the default role based permissions for Editors and Viewers and assign permissions to specific **Users** and **Teams**. Learn more about [Dashboard and Folder Permissions]({{< relref "dashboard_folder_permissions.md" >}}).
 
 ## Data source permissions
 
