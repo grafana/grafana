@@ -8,10 +8,9 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 // Utils
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { getExploreDatasources } from '../state/selectors';
 
 import { SortOrder } from '../../../core/utils/explore';
-import { sortQueries } from '../../../core/utils/richHistory';
+import { sortQueries, createDatasourceListWithImages } from '../../../core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
@@ -92,18 +91,17 @@ export function RichHistoryStarredTab(props: Props) {
 
   const theme = useTheme();
   const styles = getStyles(theme);
-  const listOfDsNamesWithQueries = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
-  const exploreDatasources = getExploreDatasources()
-    ?.filter(ds => listOfDsNamesWithQueries.includes(ds.name))
-    .map(d => {
-      return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
-    });
+
+  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
+  const listOfDatasources = createDatasourceListWithImages(datasourcesRetrievedFromQueryHistory);
+
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   const starredQueries = queries.filter(q => q.starred === true);
   const starredQueriesFilteredByDatasource = datasourceFilters
     ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
     : starredQueries;
+
   const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
 
   return (
@@ -114,7 +112,7 @@ export function RichHistoryStarredTab(props: Props) {
             <div className={styles.multiselect}>
               <Select
                 isMulti={true}
-                options={exploreDatasources}
+                options={listOfDatasources}
                 value={datasourceFilters}
                 placeholder="Filter queries for specific datasources(s)"
                 onChange={onSelectDatasourceFilters}

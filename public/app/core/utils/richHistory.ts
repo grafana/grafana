@@ -6,6 +6,7 @@ import { DataQuery, ExploreMode } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import { serializeStateToUrlParam, SortOrder } from './explore';
+import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
 import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
@@ -250,4 +251,23 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   });
 
   return mappedQueriesToHeadings;
+}
+
+export function createDatasourceListWithImages(queriesDatasources: string[]) {
+  const exploreDatasources = getExploreDatasources();
+  const datasources: Array<{ label: string; value: string; imgUrl?: string }> = [];
+
+  queriesDatasources.forEach(queryDsName => {
+    const index = exploreDatasources.findIndex(exploreDs => exploreDs.name === queryDsName);
+    if (index !== -1) {
+      datasources.push({
+        label: queryDsName,
+        value: queryDsName,
+        imgUrl: exploreDatasources[index].meta.info.logos.small,
+      });
+    } else {
+      datasources.push({ label: queryDsName, value: queryDsName, imgUrl: 'public/img/icn-datasource.svg' });
+    }
+  });
+  return datasources;
 }
