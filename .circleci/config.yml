@@ -517,13 +517,13 @@ jobs:
           command: ./e2e/run-suite
           no_output_timeout: 5m
       - store_artifacts:
-          path: public/e2e-tests/screenShots/theTruth
+          path: e2e/suite1/screenshots/expected
           destination: expected-screenshots
       - store_artifacts:
-          path: public/e2e-tests/screenShots/theOutput
-          destination: output-screenshots
+          path: e2e/suite1/screenshots/received
+          destination: received-screenshots
       - store_artifacts:
-          path: public/e2e-tests/videos
+          path: e2e/suite1/videos
           destination: output-videos
       - store_artifacts:
           path: e2e/tmp/data/log
