@@ -271,6 +271,8 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 		if err == backendplugin.ErrHealthCheckFailed {
 			return Error(500, "Plugin health check failed", err)
 		}
+
+		return Error(500, "Plugin healthcheck returned an unknown error", err)
 	}
 
 	payload := map[string]interface{}{
