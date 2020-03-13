@@ -1,5 +1,6 @@
 FROM circleci/node:12
-WORKDIR /tmp
+RUN mkdir -pv /home/circleci/tmp
+WORKDIR /home/circleci/tmp
 
 # Install Go
 RUN curl -fLO https://dl.google.com/go/go1.14.linux-amd64.tar.gz
@@ -15,7 +16,10 @@ RUN sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
 RUN sudo ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 
 # Install Mage
-RUN mkdir -p ~/go/bin
-RUN git clone https://github.com/magefile/mage.git /tmp/mage 
-RUN cd /tmp/mage && go run bootstrap.go
+RUN mkdir -pv ~/go/bin
+RUN mkdir -pv ~/bin
+RUN git clone https://github.com/magefile/mage.git /home/circleci/tmp/mage
+RUN cd /home/circleci/tmp/mage && go run bootstrap.go
+RUN sudo ln -s /home/circlci/go/bin/mage /home/circleci/bin/mage
 
+COPY --chown=3434:3434 bashrc /home/circleci/.bashrc
