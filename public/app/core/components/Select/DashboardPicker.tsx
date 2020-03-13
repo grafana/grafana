@@ -24,13 +24,20 @@ const getDashboards = (query = '') => {
   });
 };
 
-export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size = 'md', isClearable = false }) => {
+export const DashboardPicker: FC<Props> = ({
+  onSelected,
+  currentDashboard,
+  size = 'md',
+  isClearable = false,
+  ...rest
+}) => {
   const debouncedSearch = debounce(getDashboards, 300, {
     leading: true,
     trailing: true,
   });
 
   const [state, searchDashboards] = useAsyncFn(debouncedSearch, []);
+  console.log('r', rest);
 
   return (
     <Forms.AsyncSelect
@@ -43,6 +50,7 @@ export const DashboardPicker: FC<Props> = ({ onSelected, currentDashboard, size 
       placeholder="Select dashboard"
       noOptionsMessage="No dashboards found"
       value={currentDashboard}
+      {...rest}
     />
   );
 };
