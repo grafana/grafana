@@ -319,7 +319,7 @@ export class PanelModel implements DataConfigSource {
         old = oldOptions.options;
       }
       this.options = this.options || {};
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, old));
     }
 
     // switch
