@@ -62,6 +62,67 @@ Register accepts an object which describes validation rules for a given input:
 />
 ```
 
+##### Custom validation rules
+
+When registering a form element it is possible to supply custom validation rules. `validate` property of `register` (as well as of `rules`) accepts
+a callback function or an object of callbacks that apply custom validation rules.
+
+The type signature of `validate` callback is:
+```jsx
+type ValidateResult = string | boolean | undefined;
+type Validate = (data: any) => ValidateResult | Promise<ValidateResult>;
+```
+
+According to this signature, validation callback can also return a string, used as an error message.
+Some examples of custom validation (taken from react-hook-form [documentation](https://react-hook-form.com/api/#register)):
+```jsx
+// callback function
+<input
+  name="test"
+  ref={
+    register({
+      validate: value => value === '1' || 'error message';
+    })
+  }
+/>
+// object of callback functions
+<input
+  name="test1"
+  ref={
+    register({
+      validate: {
+        positive: value => parseInt(value, 10) > 0 || 'should be greater than 0',
+        lessThanTen: value => parseInt(value, 10) < 10 || 'should be lower than 10'
+      }
+    })
+  }
+/>
+// you can do asynchronous validation as well
+<input
+  name="test2"
+  ref={
+    register({
+      validate: async value => await fetch(url) || 'error message';
+    })
+  }
+/>
+```
+Put together with `Forms.Field`, custom validation with errors will look as follows:
+```jsx
+<Forms.Field label="Access code" invalid={!!errors.code} error={errors.code?.message}>
+  <Forms.Input
+    name="code"
+    ref={register({
+      required: 'Code is required',
+      validate: {
+         positive: value => parseInt(value, 10) > 0 || 'Code should be greater than 0',
+         lessThanTen: value => parseInt(value, 10) < 10 || 'Code should be lower than 10'
+      },
+    })}
+/>
+```
+
+
 #### `errors`
 
 `errors` is an object that contains validation errors of the form. To show error message and invalid input indication in your form, wrap input element with `<Forms.Field ...>` component and pass `invalid` and `error` props to it:
