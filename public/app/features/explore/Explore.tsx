@@ -5,6 +5,7 @@ import { css, cx } from 'emotion';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
+import { TraceTimelineViewer, Trace, Span, Log, KeyValuePair, Link } from '@jaegertracing/jaeger-ui-components';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -59,6 +60,8 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+import { ViewRangeTimeUpdate } from '@jaegertracing/jaeger-ui-components/dist/TraceTimelineViewer/types';
+import TTraceTimeline from '@jaegertracing/jaeger-ui-components/dist/types/TTraceTimeline';
 
 const getStyles = stylesFactory(() => {
   return {
@@ -393,16 +396,46 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             />
                           )}
                           {mode === ExploreMode.Tracing && (
-                            <div className={styles.fullHeight}>
-                              {queryResponse &&
-                                !!queryResponse.series.length &&
-                                queryResponse.series[0].fields[0].values.get(0) && (
-                                  <iframe
-                                    className={styles.iframe}
-                                    src={queryResponse.series[0].fields[0].values.get(0)}
-                                  />
-                                )}
-                            </div>
+                            <TraceTimelineViewer
+                              registerAccessors={() => {}}
+                              scrollToFirstVisibleSpan={() => {}}
+                              findMatchesIDs={null}
+                              trace={makeTrace()}
+                              traceTimeline={
+                                {
+                                  childrenHiddenIDs: {},
+                                  detailStates: {},
+                                  hoverIndentGuideIds: {},
+                                  shouldScrollToFirstUiFindMatch: false,
+                                  spanNameColumnWidth: 0.25,
+                                  traceID: '50b96206cf81dd64',
+                                } as TTraceTimeline
+                              }
+                              updateNextViewRangeTime={(update: ViewRangeTimeUpdate) => {}}
+                              updateViewRangeTime={() => {}}
+                              viewRange={{ time: { current: [0, 1], cursor: null } }}
+                              focusSpan={() => {}}
+                              createLinkToExternalSpan={() => ''}
+                              setSpanNameColumnWidth={(width: number) => {}}
+                              collapseAll={(spans: Span[]) => {}}
+                              collapseOne={(spans: Span[]) => {}}
+                              expandAll={() => {}}
+                              expandOne={(spans: Span[]) => {}}
+                              childrenToggle={(spanID: string) => {}}
+                              clearShouldScrollToFirstUiFindMatch={() => {}}
+                              detailLogItemToggle={(spanID: string, log: Log) => {}}
+                              detailLogsToggle={(spanID: string) => {}}
+                              detailWarningsToggle={(spanID: string) => {}}
+                              detailReferencesToggle={(spanID: string) => {}}
+                              detailProcessToggle={(spanID: string) => {}}
+                              detailTagsToggle={(spanID: string) => {}}
+                              detailToggle={(spanID: string) => {}}
+                              setTrace={(trace: Trace | null, uiFind: string | null) => {}}
+                              addHoverIndentGuideId={(spanID: string) => {}}
+                              removeHoverIndentGuideId={(spanID: string) => {}}
+                              linksGetter={(span: Span, items: KeyValuePair[], itemIndex: number) => [] as Link[]}
+                              uiFind={undefined}
+                            />
                           )}
                         </>
                       )}
@@ -417,6 +450,131 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       </div>
     );
   }
+}
+
+function makeTrace(): Trace {
+  return {
+    services: [{ name: 'loki-all', numberOfSpans: 3 }],
+    spans: [
+      {
+        traceID: '50b96206cf81dd64',
+        spanID: '50b96206cf81dd64',
+        operationName: 'HTTP POST - api_prom_push',
+        references: [] as any,
+        startTime: 1584051626572058,
+        duration: 763,
+        tags: [
+          { key: 'component', value: 'net/http' },
+          { key: 'http.method', value: 'POST' },
+          { key: 'http.status_code', value: 204 },
+          { key: 'http.url', value: '/api/prom/push' },
+          { key: 'internal.span.format', value: 'proto' },
+          { key: 'sampler.param', value: true },
+          { key: 'sampler.type', value: 'const' },
+          { key: 'span.kind', value: 'server' },
+        ],
+        logs: [
+          {
+            timestamp: 1584051626572105,
+            fields: [{ key: 'event', value: 'util.ParseProtoRequest[start reading]' }],
+          },
+          {
+            timestamp: 1584051626572118,
+            fields: [
+              { key: 'event', value: 'util.ParseProtoRequest[decompress]' },
+              { key: 'size', value: 330 },
+            ],
+          },
+          {
+            timestamp: 1584051626572122,
+            fields: [
+              { key: 'event', value: 'util.ParseProtoRequest[unmarshal]' },
+              { key: 'size', value: 500 },
+            ],
+          },
+        ],
+        processID: 'p1',
+        warnings: [] as any,
+        process: {
+          serviceName: 'loki-all',
+          tags: [
+            { key: 'client-uuid', value: '36e1d270cb524d68' },
+            { key: 'hostname', value: '33dc62b13c67' },
+            { key: 'ip', value: '172.18.0.5' },
+            { key: 'jaeger.version', value: 'Go-2.20.1' },
+          ],
+        },
+        relativeStartTime: 0,
+        depth: 0,
+        hasChildren: true,
+        subsidiarilyReferencedBy: [] as any,
+      },
+      {
+        traceID: '50b96206cf81dd64',
+        spanID: '53cdf5cabb2f1390',
+        operationName: '/logproto.Pusher/Push',
+        references: [{ refType: 'CHILD_OF', traceID: '50b96206cf81dd64', spanID: '50b96206cf81dd64', span: undefined }],
+        startTime: 1584051626572235,
+        duration: 550,
+        tags: [
+          { key: 'component', value: 'gRPC' },
+          { key: 'internal.span.format', value: 'proto' },
+          { key: 'span.kind', value: 'client' },
+        ],
+        logs: [] as any,
+        processID: 'p1',
+        warnings: [] as any,
+        relativeStartTime: 177,
+        depth: 1,
+        hasChildren: true,
+        subsidiarilyReferencedBy: [] as any,
+        process: {
+          serviceName: 'loki-all',
+          tags: [
+            { key: 'client-uuid', value: '36e1d270cb524d68' },
+            { key: 'hostname', value: '33dc62b13c67' },
+            { key: 'ip', value: '172.18.0.5' },
+            { key: 'jaeger.version', value: 'Go-2.20.1' },
+          ],
+        },
+      },
+      {
+        traceID: '50b96206cf81dd64',
+        spanID: '0eca9ed08e8477ae',
+        operationName: '/logproto.Pusher/Push',
+        references: [{ refType: 'CHILD_OF', traceID: '50b96206cf81dd64', spanID: '53cdf5cabb2f1390', span: undefined }],
+        startTime: 1584051626572582,
+        duration: 32,
+        tags: [
+          { key: 'component', value: 'gRPC' },
+          { key: 'internal.span.format', value: 'proto' },
+          { key: 'span.kind', value: 'server' },
+        ],
+        logs: [],
+        processID: 'p1',
+        warnings: [],
+        relativeStartTime: 524,
+        depth: 2,
+        hasChildren: false,
+        subsidiarilyReferencedBy: [] as any,
+        process: {
+          serviceName: 'loki-all',
+          tags: [
+            { key: 'client-uuid', value: '36e1d270cb524d68' },
+            { key: 'hostname', value: '33dc62b13c67' },
+            { key: 'ip', value: '172.18.0.5' },
+            { key: 'jaeger.version', value: 'Go-2.20.1' },
+          ],
+        },
+      },
+    ],
+    traceID: '50b96206cf81dd64',
+    traceName: 'loki-all: HTTP POST - api_prom_push',
+    processes: {},
+    duration: 763,
+    startTime: 1584051626572058,
+    endTime: 1584051626572821,
+  };
 }
 
 const ensureQueriesMemoized = memoizeOne(ensureQueries);
