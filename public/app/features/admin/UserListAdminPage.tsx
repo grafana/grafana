@@ -2,11 +2,12 @@ import React, { useEffect } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { getTagColorsFromName, Pagination, Forms, ActionBar, ActionBarSpacing, Tooltip } from '@grafana/ui';
+import { Pagination, Forms, ActionBar, ActionBarSpacing, Tooltip } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
 import { fetchUsers, changeQuery, changePage } from './state/actions';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 interface OwnProps {}
 
@@ -62,7 +63,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                   <th>Login</th>
                   <th>Email</th>
                   <th>
-                    Seen
+                    Seen&nbsp;
                     <Tooltip placement="top" content="Time since user was seen using Grafana">
                       <i className="fa fa-question-circle" />
                     </Tooltip>
@@ -110,40 +111,16 @@ const renderUser = (user: UserDTO) => {
           </a>
         )}
       </td>
-      <td className="text-right">{renderAuthLabel(user)}</td>
+      <td className="text-right">
+        {Array.isArray(user.authLabels) && user.authLabels.length > 0 && (
+          <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} onClick={() => {}} />
+        )}
+      </td>
       <td className="text-right">
         {user.isDisabled && <span className="label label-tag label-tag--gray">Disabled</span>}
       </td>
     </tr>
   );
-};
-
-const renderAuthLabel = (user: UserDTO) => {
-  if (!user || !Array.isArray(user.authLabels) || user.authLabels.length === 0) {
-    return null;
-  }
-
-  const label = user.authLabels[0];
-  const style = getAuthLabelStyle(label);
-
-  return (
-    <span style={style} className="label label-tag">
-      {label}
-    </span>
-  );
-};
-
-const getAuthLabelStyle = (label: string) => {
-  if (label === 'LDAP' || !label) {
-    return {};
-  }
-
-  const { color, borderColor } = getTagColorsFromName(label);
-
-  return {
-    backgroundColor: color,
-    borderColor: borderColor,
-  };
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
