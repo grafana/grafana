@@ -50,6 +50,7 @@ import {
   getTimeRangeFromUrl,
   getTimeRange,
   lastUsedDatasourceKeyForOrgId,
+  getFirstNonQueryRowSpecificError,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -72,7 +73,7 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-interface ExploreProps {
+export interface ExploreProps {
   changeSize: typeof changeSize;
   datasourceInstance: DataSourceApi;
   datasourceMissing: boolean;
@@ -294,6 +295,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
+    // gets an error without a refID, so non-query-row-related error, like a connection error
+    const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
+    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
+
     return (
       <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
@@ -323,7 +328,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 <span className="btn-title">{'\xA0' + 'Query history'}</span>
               </button>
             </div>
-            <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
+            <ErrorContainer queryError={queryError} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {

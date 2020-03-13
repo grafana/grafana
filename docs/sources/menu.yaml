@@ -14,15 +14,15 @@
   children:
   - name: Requirements
     link: /installation/requirements/
-  - name: Install on Ubuntu / Debian
+  - name: Install on Ubuntu/Debian
     link: /installation/debian/
-  - name: Install on Centos / Redhat
+  - name: Install on Centos/RedHat/SUSE
     link: /installation/rpm/
   - name: Install on Windows
     link: /installation/windows/
   - name: Install on macOS
     link: /installation/mac/
-  - name: Install using Docker
+  - name: Run Docker image
     link: /installation/docker/
   - name: Upgrade Grafana
     link: /installation/upgrading/
@@ -77,6 +77,8 @@
     link: /administration/metrics/
   - name: Provisioning
     link: /administration/provisioning/
+  - name: Set up Grafana for high availability
+    link: /tutorials/ha_setup/
   - name: Troubleshooting
     link: /installation/troubleshooting/
 - name: Features
@@ -109,7 +111,7 @@
       name: Dashboard list
     - link: /features/panels/text/
       name: Text
-  - name: Dashboard Features
+  - name: Dashboard features
     link: /features/dashboard/
     children:
     - link: /features/dashboard/dashboards/
@@ -140,7 +142,7 @@
       name: JSON Model
     - link: /reference/scripting/
       name: Scripted dashboards
-  - name: Data Sources
+  - name: Data sources
     link: /features/datasources/
     children:
     - link: /features/datasources/add-data-source/
@@ -192,9 +194,11 @@
     link: /features/reporting/
   - name: Navigation links
     link: /features/navigation-links/
-- name: What's New In Grafana
+- name: What's new in Grafana
   link: /whatsnew/
   children:
+  - name: Version 6.7
+    link: /guides/whats-new-in-v6-7/
   - name: Version 6.6
     link: /guides/whats-new-in-v6-6/
   - name: Version 6.5
@@ -209,19 +213,19 @@
     link: /guides/whats-new-in-v6-1/
   - name: Version 6.0
     link: /guides/whats-new-in-v6-0/
-  - name: Version 5.4
-    link: /guides/whats-new-in-v5-4/
-  - name: Version 5.3
-    link: /guides/whats-new-in-v5-3/
-  - name: Version 5.2
-    link: /guides/whats-new-in-v5-2/
-  - name: Version 5.1
-    link: /guides/whats-new-in-v5-1/
-  - name: Version 5.0
-    link: /guides/whats-new-in-v5/
   - name: Old versions
     link: /whatsnew/
     children:
+    - name: Version 5.4
+      link: /guides/whats-new-in-v5-4/
+    - name: Version 5.3
+      link: /guides/whats-new-in-v5-3/
+    - name: Version 5.2
+      link: /guides/whats-new-in-v5-2/
+    - name: Version 5.1
+      link: /guides/whats-new-in-v5-1/
+    - name: Version 5.0
+      link: /guides/whats-new-in-v5/
     - name: Version 4.6
       link: /guides/whats-new-in-v4-6/
     - name: Version 4.5
@@ -245,12 +249,12 @@
   children:
   - name: Overview
     link: /enterprise/
-  - name: Reporting
-    link: /enterprise/reporting/
   - name: Data source permissions
     link: /enterprise/datasource_permissions/
   - name: Enhanced LDAP
     link: /enterprise/enhanced_ldap/
+  - name: Reporting
+    link: /enterprise/reporting/
   - name: SAML authentication
     link: /enterprise/saml/
   - name: Team sync
@@ -259,19 +263,17 @@
     link: /enterprise/white-labeling/
   - name: License expiration
     link: /enterprise/license-expiration/
+  - name: Export dashboard as PDF
+    link: /enterprise/export-pdf/
 - name: Tutorials
   link: /tutorials/
   children:
   - name: Run Grafana behind a reverse proxy
     link: /installation/behind_proxy/
-  - name: 'API Tutorial: How To Create API Tokens And Dashboards For A Specific Organization'
-    link: /tutorials/api_org_token_howto/
   - name: Run Grafana with IIS Reverse Proxy on Windows
     link: /tutorials/iis/
   - name: Integrate Hubot and Grafana
     link: /tutorials/hubot_howto/
-  - name: Set up Grafana for High availability
-    link: /tutorials/ha_setup/
 - name: Plugins
   link: /plugins/
   children:
@@ -302,50 +304,52 @@
       name: Snapshot Mode
     - link: /plugins/developing/plugin.json/
       name: plugin.json Schema
-- name: HTTP API
+- name: HTTP APIs
   link: /http_api/
   children:
   - name: API Authentication
     link: /http_api/auth/
-  - name: Admin
+  - name: Create API Tokens and Dashboards for a Specific Organization
+    link: /tutorials/api_org_token_howto/
+  - name: Admin API
     link: /http_api/admin/
-  - name: Alerting
+  - name: Alerting API
     link: /http_api/alerting/
-  - name: Alerting Notification Channels
+  - name: Alerting Notifications API
     link: /http_api/alerting_notification_channels/
-  - name: Annotations
+  - name: Annotations API
     link: /http_api/annotations/
-  - name: Dashboard
+  - name: Dashboard API
     link: /http_api/dashboard/
-  - name: Dashboard Permissions
+  - name: Dashboard Permissions API
     link: /http_api/dashboard_permissions/
-  - name: Dashboard Versions
+  - name: Dashboard Versions API
     link: /http_api/dashboard_versions/
-  - name: Data source
+  - name: Data Source API
     link: /http_api/data_source/
-  - name: Datasource Permissions
+  - name: Data source Permissions API
     link: /http_api/datasource_permissions/
-  - name: External Group Sync
+  - name: External Group Sync API
     link: /http_api/external_group_sync/
-  - name: Folder
+  - name: Folder API
     link: /http_api/folder/
-  - name: Folder Permissions
+  - name: Folder Permissions API
     link: /http_api/folder_permissions/
-  - name: Folder/dashboard search
+  - name: Folder/Dashboard Search API
     link: /http_api/folder_dashboard_search/
-  - name: Organization
+  - name: Organization API
     link: /http_api/org/
-  - name: Other
+  - name: Other APIs
     link: /http_api/other/
-  - name: Playlist
+  - name: Playlist API
     link: /http_api/playlist/
-  - name: Preferences
+  - name: Preferences API
     link: /http_api/preferences/
-  - name: Snapshot
+  - name: Snapshot API
     link: /http_api/snapshot/
-  - name: Teams
+  - name: Teams API
     link: /http_api/team/
-  - name: Users
+  - name: Users API
     link: /http_api/user/
 - name: Developers
   link: /developers/

@@ -23,7 +23,7 @@ const buildCjsPackage = ({ env }) => ({
         { src: 'bin/**/*.*', dest: 'dist/bin/' },
         { src: 'cli.js', dest: 'dist/' },
         { src: 'cypress.json', dest: 'dist/' },
-        { src: 'cypress/**/*.+(js|ts)', dest: 'dist/cypress/' },
+        { src: 'cypress/**/*.*', dest: 'dist/cypress/' },
       ],
     }),
     commonjs({

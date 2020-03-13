@@ -223,9 +223,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.cookieOptionsFromCfg)
-		ctx.Redirect(redirectTo)
-		return
+		if err := hs.validateRedirectTo(redirectTo); err == nil {
+			middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.cookieOptionsFromCfg)
+			ctx.Redirect(redirectTo)
+			return
+		}
+		log.Debug("Ignored invalid redirect_to cookie value: %v", redirectTo)
 	}
 
 	ctx.Redirect(setting.AppSubUrl + "/")
