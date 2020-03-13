@@ -38,14 +38,14 @@ export class Store {
     try {
       json = JSON.stringify(value);
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, [`Could not stringify object: ${key}. [${error}]`]);
+      console.error(`Could not stringify object: ${key}. [${error}]`);
       return false;
     }
     try {
       this.set(key, json);
     } catch (error) {
       // Likely hitting storage quota
-      appEvents.emit(AppEvents.alertError, [`Could not save item in localStorage: ${key}. [${error}]`]);
+      console.error(`Could not save item in localStorage: ${key}. [${error}]`);
       return false;
     }
     return true;
