@@ -20743,10 +20743,10 @@ react-highlight-words@0.11.0:
     highlight-words-core "^1.2.0"
     prop-types "^15.5.8"
 
-react-hook-form@4.5.3:
-  version "4.5.3"
-  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-4.5.3.tgz#3f9abac7bd78eedf0624d02aa9e1f8487d729e18"
-  integrity sha512-oQB6s3zzXbFwM8xaWEkZJZR+5KD2LwUUYTexQbpdUuFzrfs41Qg0UE3kzfzxG8shvVlzADdkYKLMXqOLWQSS/Q==
+react-hook-form@5.0.3:
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-5.0.3.tgz#106a76148278f54f67be9a8fa61a4bbca531187d"
+  integrity sha512-6EqRWATbyXTJdtoaUDp6/2WbH9NOaPUAjsygw12nbU1yK6+x12paMJPf1eLxqT1muSvVe2G8BPqdeidqIL7bmg==
 
 react-hot-loader@4.8.0:
   version "4.8.0"
