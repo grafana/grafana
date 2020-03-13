@@ -955,15 +955,6 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  store-build-artifacts:
-    docker:
-      - image: circleci/node:12
-    steps:
-      - attach_workspace:
-          at: .
-      - store_artifacts:
-          path: ./dist
-
   build-grafana-packages:
     docker:
       - image: circleci/node:12
@@ -1278,7 +1269,6 @@ workflows:
           filters: *filter-only-release
           requires:
             - end-to-end-tests
-            # TODO: Do we have more dependencies?
       - publish-packages:
           filters: *filter-master-or-release
           name: publish-oss-packages
@@ -1396,7 +1386,7 @@ workflows:
       - cache-server-test:
           filters: *filter-not-release-or-master
       - end-to-end-tests:
-          filters: *filter-master-or-release
+          filters: *filter-not-release-or-master
           requires:
             - build-fast-package
             - test-backend
@@ -1415,18 +1405,6 @@ workflows:
             - cache-server-test
           filters: *filter-not-release-or-master
       - grafana-docker-ubuntu-pr:
-          requires:
-            - build-fast-package
-            - test-backend
-            - test-frontend
-            - codespell
-            - lint-go
-            - shellcheck
-            - mysql-integration-test
-            - postgres-integration-test
-            - cache-server-test
-          filters: *filter-not-release-or-master
-      - store-build-artifacts:
           requires:
             - build-fast-package
             - test-backend
