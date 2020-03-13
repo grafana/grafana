@@ -18,7 +18,7 @@ export const updateDataSourceVariableOptions = (
   identifier: VariableIdentifier,
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const sources = dependencies.getDatasourceSrv().getMetricSources({ skipVariables: true });
+  const sources = await dependencies.getDatasourceSrv().getMetricSources({ skipVariables: true });
   const variableInState = getVariable<DataSourceVariableModel>(identifier.uuid!, getState());
   let regex;
 
@@ -34,12 +34,9 @@ export const updateDataSourceVariableOptions = (
 export const initDataSourceVariableEditor = (
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => async dispatch => {
-  const dataSources: DataSourceSelectItem[] = dependencies
-    .getDatasourceSrv()
-    .getMetricSources()
-    .filter(ds => !ds.meta.mixed && ds.value !== null);
-
-  const dataSourceTypes = _(dataSources)
+  const dataSources: DataSourceSelectItem[] = await dependencies.getDatasourceSrv().getMetricSources();
+  const filtered = dataSources.filter(ds => !ds.meta.mixed && ds.value !== null);
+  const dataSourceTypes = _(filtered)
     .uniqBy('meta.id')
     .map((ds: any) => {
       return { text: ds.meta.name, value: ds.meta.id };

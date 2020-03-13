@@ -106,6 +106,11 @@ export const variableMockBuilder = (type: VariableType) => {
     return instance;
   };
 
+  const withRegEx = (regex: any) => {
+    model.regex = regex;
+    return instance;
+  };
+
   const create = () => model;
 
   const instance = {
@@ -116,6 +121,7 @@ export const variableMockBuilder = (type: VariableType) => {
     withRefresh,
     withQuery,
     withMulti,
+    withRegEx,
     create,
   };
 
