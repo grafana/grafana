@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from 'emotion';
 import { Modal } from '@grafana/ui';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
@@ -10,10 +10,17 @@ export const SaveDashboardAsModal: React.FC<SaveDashboardModalProps & {
   isNew?: boolean;
 }> = ({ dashboard, onDismiss, isNew }) => {
   const { state, onDashboardSave } = useDashboardSave(dashboard);
-
+  const [dashboardSaveModelClone, setDashboardSaveModelClone] = useState();
   return (
     <>
-      {state.error && <SaveDashboardErrorProxy error={state.error} dashboard={dashboard} onDismiss={onDismiss} />}
+      {state.error && (
+        <SaveDashboardErrorProxy
+          error={state.error}
+          dashboard={dashboard}
+          dashboardSaveModel={dashboardSaveModelClone}
+          onDismiss={onDismiss}
+        />
+      )}
       {!state.error && (
         <Modal
           isOpen={true}
@@ -28,7 +35,10 @@ export const SaveDashboardAsModal: React.FC<SaveDashboardModalProps & {
             dashboard={dashboard}
             onCancel={onDismiss}
             onSuccess={onDismiss}
-            onSubmit={onDashboardSave}
+            onSubmit={(clone, options, dashboard) => {
+              setDashboardSaveModelClone(clone);
+              return onDashboardSave(clone, options, dashboard);
+            }}
             isNew={isNew}
           />
         </Modal>

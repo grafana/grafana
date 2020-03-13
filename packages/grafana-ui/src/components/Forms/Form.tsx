@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useForm, Mode, OnSubmit, DeepPartial, FormContextValues } from 'react-hook-form';
 
-type FormAPI<T> = Pick<FormContextValues<T>, 'register' | 'errors' | 'control'>;
+type FormAPI<T> = Pick<FormContextValues<T>, 'register' | 'errors' | 'control' | 'formState'>;
 
 interface FormProps<T> {
   validateOn?: Mode;
@@ -10,9 +10,9 @@ interface FormProps<T> {
   children: (api: FormAPI<T>) => React.ReactNode;
 }
 
-export function Form<T>({ validateOn, defaultValues, onSubmit, children }: FormProps<T>) {
-  const { handleSubmit, register, errors, control, reset, getValues } = useForm<T>({
-    mode: validateOn || 'onSubmit',
+export function Form<T>({ defaultValues, onSubmit, children, validateOn = 'onSubmit' }: FormProps<T>) {
+  const { handleSubmit, register, errors, control, reset, getValues, formState } = useForm<T>({
+    mode: validateOn,
     defaultValues,
   });
 
@@ -20,5 +20,5 @@ export function Form<T>({ validateOn, defaultValues, onSubmit, children }: FormP
     reset({ ...getValues(), ...defaultValues });
   }, [defaultValues]);
 
-  return <form onSubmit={handleSubmit(onSubmit)}>{children({ register, errors, control })}</form>;
+  return <form onSubmit={handleSubmit(onSubmit)}>{children({ register, errors, control, formState })}</form>;
 }

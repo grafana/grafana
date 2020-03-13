@@ -72,7 +72,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
       min: toFloatOrUndefined(min),
       max: toFloatOrUndefined(max),
     });
-  }, [min, max, decimals]);
+  }, [min, max, decimals, value]);
 
   const titleTooltip = (
     <div>
@@ -96,6 +96,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
           value={title}
           tooltip={titleTooltip}
           placeholder="Auto"
+          aria-label="Field properties editor title input"
         />
       )}
 
@@ -113,6 +114,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
             value={min}
             placeholder="Auto"
             type="number"
+            aria-label="Field properties editor min input"
           />
           <FormField
             label="Max"
@@ -122,6 +124,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
             value={max}
             type="number"
             placeholder="Auto"
+            aria-label="Field properties editor max input"
           />
         </>
       )}

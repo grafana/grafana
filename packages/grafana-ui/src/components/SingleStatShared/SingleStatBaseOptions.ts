@@ -27,15 +27,16 @@ export interface SingleStatBaseOptions {
 const optionsToKeep = ['fieldOptions', 'orientation'];
 
 export function sharedSingleStatPanelChangedHandler(
-  options: Partial<SingleStatBaseOptions> | any,
+  panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) {
+  let options = panel.options;
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
-    const panel = prevOptions.angular;
-    const reducer = fieldReducers.getIfExists(panel.valueName);
-    const options = {
+    const prevPanel = prevOptions.angular;
+    const reducer = fieldReducers.getIfExists(prevPanel.valueName);
+    options = {
       fieldOptions: {
         defaults: {} as FieldConfig,
         overrides: [] as ConfigOverrideRule[],
@@ -45,28 +46,28 @@ export function sharedSingleStatPanelChangedHandler(
     };
 
     const defaults = options.fieldOptions.defaults;
-    if (panel.format) {
-      defaults.unit = panel.format;
+    if (prevPanel.format) {
+      defaults.unit = prevPanel.format;
     }
-    if (panel.nullPointMode) {
-      defaults.nullValueMode = panel.nullPointMode;
+    if (prevPanel.nullPointMode) {
+      defaults.nullValueMode = prevPanel.nullPointMode;
     }
-    if (panel.nullText) {
-      defaults.noValue = panel.nullText;
+    if (prevPanel.nullText) {
+      defaults.noValue = prevPanel.nullText;
     }
-    if (panel.decimals || panel.decimals === 0) {
-      defaults.decimals = panel.decimals;
+    if (prevPanel.decimals || prevPanel.decimals === 0) {
+      defaults.decimals = prevPanel.decimals;
     }
 
     // Convert thresholds and color values
-    if (panel.thresholds && panel.colors) {
-      const levels = panel.thresholds.split(',').map((strVale: string) => {
+    if (prevPanel.thresholds && prevPanel.colors) {
+      const levels = prevPanel.thresholds.split(',').map((strVale: string) => {
         return Number(strVale.trim());
       });
 
       // One more color than threshold
       const thresholds: Threshold[] = [];
-      for (const color of panel.colors) {
+      for (const color of prevPanel.colors) {
         const idx = thresholds.length - 1;
         if (idx >= 0) {
           thresholds.push({ value: levels[idx], color });
@@ -81,14 +82,14 @@ export function sharedSingleStatPanelChangedHandler(
     }
 
     // Convert value mappings
-    const mappings = convertOldAngularValueMapping(panel);
+    const mappings = convertOldAngularValueMapping(prevPanel);
     if (mappings && mappings.length) {
       defaults.mappings = mappings;
     }
 
-    if (panel.gauge && panel.gauge.show) {
-      defaults.min = panel.gauge.minValue;
-      defaults.max = panel.gauge.maxValue;
+    if (prevPanel.gauge && prevPanel.gauge.show) {
+      defaults.min = prevPanel.gauge.minValue;
+      defaults.max = prevPanel.gauge.maxValue;
     }
     return options;
   }

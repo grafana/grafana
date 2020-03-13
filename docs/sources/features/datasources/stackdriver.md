@@ -88,11 +88,11 @@ Read more about creating and enabling service accounts for GCE VM instances [her
 
 ## Metric Query Editor
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/img/docs/v67/stackriver-query-editor.png" max-width= "400px" class="docs-image--right" >}}
 
 The Stackdriver query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
-Begin by choosing a `Service` and then a metric from the `Metric` dropdown. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses.
+Begin by choosing a `Project`. Then select a `Service` and then a metric from the `Metric` dropdown. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses.
 
 Stackdriver metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
 

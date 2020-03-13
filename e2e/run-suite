@@ -1,0 +1,15 @@
+#!/bin/bash
+
+. e2e/variables
+
+echo -e "Waiting for grafana-server to finish starting"
+
+timeout 60 bash -c 'until nc -z $0 $1; do sleep 1; done' localhost $PORT
+
+echo -e "Starting Cypress scenarios"
+
+cd packages/grafana-e2e
+
+yarn start --env BASE_URL=http://localhost:$PORT,CIRCLE_SHA1=$CIRCLE_SHA1,SLOWMO=$SLOWMO \
+  --config integrationFolder=../../e2e/suite1/specs,screenshotsFolder=../../e2e/suite1/screenshots,videosFolder=../../e2e/suite1/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false \
+  "$@"

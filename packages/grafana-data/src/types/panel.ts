@@ -1,5 +1,5 @@
 import { ComponentClass, ComponentType } from 'react';
-import { DataQueryError, DataQueryRequest } from './datasource';
+import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
@@ -19,6 +19,7 @@ export interface PanelData {
   state: LoadingState;
   series: DataFrame[];
   request?: DataQueryRequest;
+  timings?: DataQueryTimings;
   error?: DataQueryError;
   // Contains the range from the request or a shifted time range if a request uses relative time
   timeRange: TimeRange;
@@ -62,10 +63,10 @@ export interface PanelModel<TOptions = any> {
 export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
 
 /**
- * Called before a panel is initialized
+ * Called before a panel is initialized. Allows panel inspection for any updates before changing the panel type.
  */
 export type PanelTypeChangedHandler<TOptions = any> = (
-  options: Partial<TOptions>,
+  panel: PanelModel<TOptions>,
   prevPluginId: string,
   prevOptions: any
 ) => Partial<TOptions>;
@@ -116,8 +117,12 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   }
 
   /**
-   * This function is called when the visualization was changed.  This
-   * passes in the options that were used in the previous visualization
+   * This function is called when the visualization was changed. This
+   * passes in the panel model for previous visualisation options inspection
+   * and panel model updates.
+   *
+   * This is useful for supporting PanelModel API updates when changing
+   * between Angular and React panels.
    */
   setPanelChangeHandler(handler: PanelTypeChangedHandler) {
     this.onPanelTypeChanged = handler;
