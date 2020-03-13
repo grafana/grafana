@@ -8,6 +8,7 @@ import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
+
 interface CascaderProps {
   /** The seperator between levels in the search */
   separator?: string;
@@ -184,7 +185,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onChange={this.onSelect}
             onBlur={this.onBlur}
             options={searchableOptions}
-            size={size || 'md'}
+            size={size}
             onCreateOption={this.onCreateOption}
             formatCreateLabel={this.props.formatCreateLabel}
           />
@@ -205,7 +206,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           >
             <div className={disableDivFocus}>
               <Input
-                size={size || 'md'}
+                size={size}
                 placeholder={placeholder}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}

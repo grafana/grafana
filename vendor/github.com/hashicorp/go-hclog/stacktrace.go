@@ -40,13 +40,12 @@ var (
 	}
 )
 
-// CapturedStacktrace represents a stacktrace captured by a previous call
-// to log.Stacktrace. If passed to a logging function, the stacktrace
-// will be appended.
+// A stacktrace gathered by a previous call to log.Stacktrace. If passed
+// to a logging function, the stacktrace will be appended.
 type CapturedStacktrace string
 
-// Stacktrace captures a stacktrace of the current goroutine and returns
-// it to be passed to a logging function.
+// Gather a stacktrace of the current goroutine and return it to be passed
+// to a logging function.
 func Stacktrace() CapturedStacktrace {
 	return CapturedStacktrace(takeStacktrace())
 }

@@ -6,8 +6,25 @@ import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
 import { MappingType, FieldConfig } from '../types';
 import { validateFieldConfig } from './fieldOverrides';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 describe('FieldDisplay', () => {
+  beforeAll(() => {
+    // Since FieldConfigEditors belong to grafana-ui we need to mock those here
+    // as grafana-ui code cannot be imported in grafana-data.
+    // TODO: figure out a way to share standard editors between data/ui tests
+    const mappings = {
+      id: 'mappings', // Match field properties
+      process: (value: any) => value,
+      shouldApply: () => true,
+    } as any;
+
+    console.log('Init tegistry');
+    standardFieldConfigEditorRegistry.setInit(() => {
+      return [mappings];
+    });
+  });
+
   it('show first numeric values', () => {
     const options = createDisplayOptions({
       fieldOptions: {
@@ -147,6 +164,58 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].display.numeric).toEqual(0);
+  });
+
+  describe('Value mapping', () => {
+    it('should apply value mapping', () => {
+      const options = createDisplayOptions({
+        fieldOptions: {
+          calcs: [ReducerID.first],
+          override: {},
+          defaults: {
+            mappings: [
+              {
+                id: 1,
+                operator: '',
+                text: 'Value mapped to text',
+                type: MappingType.ValueToText,
+                value: 1,
+              },
+            ],
+          },
+        },
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.text).toEqual('Value mapped to text');
+    });
+    it('should apply range value mapping', () => {
+      const mappedValue = 'Range mapped to text';
+      const options = createDisplayOptions({
+        fieldOptions: {
+          values: true,
+          override: {},
+          defaults: {
+            mappings: [
+              {
+                id: 1,
+                operator: '',
+                text: mappedValue,
+                type: MappingType.RangeToText,
+                value: 1,
+                from: 1,
+                to: 3,
+              },
+            ],
+          },
+        },
+      });
+      const result = getFieldDisplayValues(options);
+
+      expect(result[0].display.text).toEqual(mappedValue);
+      expect(result[2].display.text).toEqual('5');
+      expect(result[3].display.text).toEqual(mappedValue);
+    });
   });
 });
 

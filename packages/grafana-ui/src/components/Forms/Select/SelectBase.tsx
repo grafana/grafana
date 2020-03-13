@@ -65,44 +65,44 @@ const CustomControl = (props: any) => {
 };
 
 export function SelectBase<T>({
-  value,
-  defaultValue,
-  inputValue,
-  onInputChange,
-  onCreateOption,
-  options = [],
-  onChange,
-  onBlur,
-  onKeyDown,
-  onCloseMenu,
-  onOpenMenu,
-  placeholder = 'Choose',
-  getOptionValue,
-  getOptionLabel,
-  isSearchable = true,
-  disabled = false,
-  isClearable = false,
-  isMulti = false,
-  isLoading = false,
-  isOpen,
-  autoFocus = false,
-  openMenuOnFocus = false,
-  maxMenuHeight = 300,
-  noOptionsMessage = 'No options found',
-  tabSelectsValue = true,
-  backspaceRemovesValue = true,
   allowCustomValue = false,
-  size = 'auto',
-  prefix,
+  autoFocus = false,
+  backspaceRemovesValue = true,
+  components,
+  defaultOptions,
+  defaultValue,
+  disabled = false,
   formatCreateLabel,
+  getOptionLabel,
+  getOptionValue,
+  inputValue,
+  invalid,
+  isClearable = false,
+  isLoading = false,
+  isMulti = false,
+  isOpen,
+  isSearchable = true,
   loadOptions,
   loadingMessage = 'Loading options...',
-  defaultOptions,
-  renderControl,
-  width,
-  invalid,
-  components,
+  maxMenuHeight = 300,
   menuPosition,
+  noOptionsMessage = 'No options found',
+  onBlur,
+  onChange,
+  onCloseMenu,
+  onCreateOption,
+  onInputChange,
+  onKeyDown,
+  onOpenMenu,
+  openMenuOnFocus = false,
+  options = [],
+  placeholder = 'Choose',
+  prefix,
+  renderControl,
+  size = 'auto',
+  tabSelectsValue = true,
+  value,
+  width,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
@@ -113,7 +113,7 @@ export function SelectBase<T>({
       }
       onChange(value);
     },
-    [isMulti]
+    [isMulti, value, onChange]
   );
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
@@ -141,39 +141,39 @@ export function SelectBase<T>({
 
   const commonSelectProps = {
     autoFocus,
-    placeholder,
-    isSearchable,
-    // Passing isDisabled as react-select accepts this prop
-    isDisabled: disabled,
+    backspaceRemovesValue,
+    captureMenuScroll: false,
+    defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
-    invalid,
-    prefix,
-    isClearable,
-    isLoading,
-    menuIsOpen: isOpen,
-    defaultValue,
-    inputValue,
-    onInputChange,
-    value: isMulti ? selectedValue : selectedValue[0],
     getOptionLabel,
     getOptionValue,
-    openMenuOnFocus,
-    maxMenuHeight,
+    inputValue,
+    invalid,
+    isClearable,
+    // Passing isDisabled as react-select accepts this prop
+    isDisabled: disabled,
+    isLoading,
     isMulti,
-    backspaceRemovesValue,
-    onMenuOpen: onOpenMenu,
-    onMenuClose: onCloseMenu,
-    tabSelectsValue,
-    options,
-    onChange: onChangeWithEmpty,
-    onBlur,
-    onKeyDown,
-    menuShouldScrollIntoView: false,
-    renderControl,
-    captureMenuScroll: false,
+    isSearchable,
+    maxMenuHeight,
+    menuIsOpen: isOpen,
     menuPlacement: 'auto',
     menuPosition,
+    menuShouldScrollIntoView: false,
+    onBlur,
+    onChange: onChangeWithEmpty,
+    onInputChange,
+    onKeyDown,
+    onMenuClose: onCloseMenu,
+    onMenuOpen: onOpenMenu,
+    openMenuOnFocus,
+    options,
+    placeholder,
+    prefix,
+    renderControl,
+    tabSelectsValue,
+    value: isMulti ? selectedValue : selectedValue[0],
   };
 
   // width property is deprecated in favor of size or className
@@ -212,7 +212,7 @@ export function SelectBase<T>({
                 css(props.getStyles('placeholder', props)),
                 css`
                   display: inline-block;
-                  color: hsl(0, 0%, 50%);
+                  color: ${theme.colors.formInputPlaceholderText};
                   position: absolute;
                   top: 50%;
                   transform: translateY(-50%);

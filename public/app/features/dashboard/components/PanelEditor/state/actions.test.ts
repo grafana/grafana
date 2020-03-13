@@ -1,9 +1,8 @@
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
-import { initialState } from './reducers';
+import { closeCompleted, initialState, PanelEditorStateNew } from './reducers';
 import { initPanelEditor, panelEditorCleanUp } from './actions';
-import { PanelEditorStateNew, closeCompleted } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
-import { PanelModel, DashboardModel } from '../../../state';
+import { DashboardModel, PanelModel } from '../../../state';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 describe('panelEditor actions', () => {
@@ -38,7 +37,7 @@ describe('panelEditor actions', () => {
       panel.updateOptions({ prop: true });
 
       const state: PanelEditorStateNew = {
-        ...initialState,
+        ...initialState(),
         getPanel: () => panel,
         getSourcePanel: () => sourcePanel,
         querySubscription: { unsubscribe: jest.fn() },
@@ -72,7 +71,7 @@ describe('panelEditor actions', () => {
       panel.updateOptions({ prop: true });
 
       const state: PanelEditorStateNew = {
-        ...initialState,
+        ...initialState(),
         getPanel: () => panel,
         getSourcePanel: () => sourcePanel,
         querySubscription: { unsubscribe: jest.fn() },
@@ -101,7 +100,7 @@ describe('panelEditor actions', () => {
       panel.updateOptions({ prop: true });
 
       const state: PanelEditorStateNew = {
-        ...initialState,
+        ...initialState(),
         shouldDiscardChanges: true,
         getPanel: () => panel,
         getSourcePanel: () => sourcePanel,

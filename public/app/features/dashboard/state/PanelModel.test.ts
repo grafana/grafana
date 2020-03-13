@@ -1,5 +1,7 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { PanelProps } from '@grafana/data';
+import { ComponentClass } from 'react';
 
 class TablePanelCtrl {}
 
@@ -58,7 +60,7 @@ describe('PanelModel', () => {
         {
           id: 'table',
         },
-        null, // react
+        (null as unknown) as ComponentClass<PanelProps>, // react
         TablePanelCtrl // angular
       );
       panelPlugin.setDefaults(defaultOptionsMock);
