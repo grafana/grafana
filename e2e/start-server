@@ -2,8 +2,6 @@
 
 . e2e/variables
 
-echo -e "Starting Grafana Server E2E Scenario"
-
 ./e2e/kill-server
 
 mkdir $RUNDIR
@@ -35,6 +33,8 @@ cp devenv/datasources.yaml $PROV_DIR/datasources
 cp devenv/dashboards.yaml $PROV_DIR/dashboards
 
 cp -r devenv $RUNDIR
+
+echo -e "Starting Grafana Server"
 
 $RUNDIR/bin/grafana-server \
   --homepath=$RUNDIR \

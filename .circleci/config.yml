@@ -771,9 +771,6 @@ jobs:
           paths:
             - node_modules
       - run:
-          name: Listing packages
-          command: ls oss/dist
-      - run:
           name: Start grafana-server
           command: ./e2e/start-server
           background: true
@@ -2004,6 +2001,8 @@ workflows:
             - package-enterprise
       - end-to-end-tests:
           filters: *filter-only-master
+          requires:
+            - package-oss
       - publish-docker-oss-master:
           filters: *filter-only-master
           requires:
@@ -2190,6 +2189,11 @@ workflows:
             filters: *filter-not-release-or-master
             requires:
               - build-fast-package
+              - test-backend
+              - test-frontend
+              - codespell
+              - lint-go
+              - shellcheck
         - build-docs-website:
             filters: *filter-not-release-or-master
   nightly:
