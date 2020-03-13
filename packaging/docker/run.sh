@@ -26,24 +26,29 @@ if [ ! -d "$GF_PATHS_PLUGINS" ]; then
 fi
 
 if [ ! -z ${GF_AWS_PROFILES+x} ]; then
-    > "$GF_PATHS_HOME/.aws/credentials"
+    credential_file=".aws/credentials"
+    > "$GF_PATHS_HOME/$credential_file"
 
     for profile in ${GF_AWS_PROFILES}; do
         access_key_varname="GF_AWS_${profile}_ACCESS_KEY_ID"
         secret_key_varname="GF_AWS_${profile}_SECRET_ACCESS_KEY"
+        session_token_key_varname="GF_AWS_${profile}_SESSION_TOKEN"
         region_varname="GF_AWS_${profile}_REGION"
 
         if [ ! -z "${!access_key_varname}" -a ! -z "${!secret_key_varname}" ]; then
-            echo "[${profile}]" >> "$GF_PATHS_HOME/.aws/credentials"
-            echo "aws_access_key_id = ${!access_key_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
-            echo "aws_secret_access_key = ${!secret_key_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
+            echo "[${profile}]" >> "$GF_PATHS_HOME/$credential_file"
+            echo "aws_access_key_id = ${!access_key_varname}" >> "$GF_PATHS_HOME/$credential_file"
+            echo "aws_secret_access_key = ${!secret_key_varname}" >> "$GF_PATHS_HOME/$credential_file"
+            if [ ! -z "${!session_token_key_varname}" ]; then
+                echo "aws_session_token = ${!session_token_key_varname}" >> "$GF_PATHS_HOME/$credential_file"
+            fi
             if [ ! -z "${!region_varname}" ]; then
-                echo "region = ${!region_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
+                echo "region = ${!region_varname}" >> "$GF_PATHS_HOME/$credential_file"
             fi
         fi
     done
 
-    chmod 600 "$GF_PATHS_HOME/.aws/credentials"
+    chmod 600 "$GF_PATHS_HOME/$credential_file"
 fi
 
 # Convert all environment variables with names ending in __FILE into the content of
