@@ -190,7 +190,7 @@ func (pm *PluginManager) scan(pluginDir string) error {
 
 // GetDatasource returns a datasource based on passed pluginID if it exists
 //
-// This function fetches the Datasource from the global variable in the plugins package.
+// This function fetches the datasource from the global variable DataSources in this package.
 // Rather then refactor all dependencies on the global variable we can use this as an transition.
 func (pm *PluginManager) GetDatasource(pluginID string) (*DataSourcePlugin, bool) {
 	ds, exist := DataSources[pluginID]
