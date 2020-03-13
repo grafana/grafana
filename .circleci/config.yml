@@ -771,8 +771,12 @@ jobs:
           paths:
             - node_modules
       - run:
+          name: Start grafana-server
+          command: ./e2e/start-server
+          background: true
+      - run:
           name: Run end-to-end tests
-          command: ./e2e/start-server && ./e2e/run-suite
+          command: ./e2e/run-suite
           no_output_timeout: 5m
       - store_artifacts:
           path: public/e2e-tests/screenShots/theTruth
@@ -1238,7 +1242,7 @@ jobs:
       - persist_to_workspace:
           root: /go/src/github.com/grafana/grafana
           paths:
-            - dist/*
+            - oss/dist/*
       - run:
           name: ci job failed
           command: './scripts/ci-job-failed.sh'
@@ -1321,12 +1325,6 @@ jobs:
           name: Build Docker images
           command: |
             pushd packaging/docker && ./build.sh --fast "pr-${CIRCLE_SHA1}" && popd
-            mkdir docker
-            docker save -o docker/grafana-oss-amd64.tar "grafana/grafana:pr-${CIRCLE_SHA1}"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - docker/grafana-oss*.tar
 
   grafana-docker-ubuntu-pr:
     machine:
@@ -2003,8 +2001,6 @@ workflows:
             - package-enterprise
       - end-to-end-tests:
           filters: *filter-only-master
-          requires:
-            - docker-oss-master
       - publish-docker-oss-master:
           filters: *filter-only-master
           requires:
