@@ -495,9 +495,9 @@ jobs:
     docker:
       - image: circleci/node:12-browsers
     steps:
-      - checkout
       - attach_workspace:
-          at: .
+          at: /tmp/workspace
+      - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
@@ -836,13 +836,16 @@ jobs:
       - run:
           name: sha-sum packages
           command: "go run build.go sha-dist"
+     - run:
+          name: Move artifacts
+          command: mkdir -p oss && mv dist oss
       - run:
           name: Test Grafana.com release publisher
           command: "cd scripts/build/release_publisher && go test ."
       - persist_to_workspace:
-          root: /go/src/github.com/grafana/grafana
+          root: .
           paths:
-            - dist/*
+            - oss/dist/*
       - run:
           name: ci job failed
           command: "./scripts/ci-job-failed.sh"
@@ -921,7 +924,7 @@ jobs:
           at: .
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cp oss/dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
       - run:
           name: ci job failed
