@@ -45,17 +45,8 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
           {({ register, errors }) => {
             return (
               <>
-                <Forms.Field
-                  label="Organization name"
-                  invalid={!!errors.name}
-                  error={!!errors.name && errors.name.message}
-                >
-                  <Forms.Input
-                    size="md"
-                    placeholder="Org. name"
-                    name="name"
-                    ref={register({ required: 'Organization name is required' })}
-                  />
+                <Forms.Field label="Organization name" invalid={!!errors.name} error="Organization name is required">
+                  <Forms.Input size="md" placeholder="Org. name" name="name" ref={register({ required: true })} />
                 </Forms.Field>
                 <Forms.Button type="submit">Create</Forms.Button>
               </>
