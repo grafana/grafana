@@ -5,5 +5,6 @@ module.exports = {
     '@storybook/addon-actions',
     '@storybook/addon-docs',
     'storybook-dark-mode/register',
+    '@storybook/addon-storysource',
   ],
 };

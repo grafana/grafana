@@ -28,4 +28,5 @@ const Forms = {
   TextArea,
 };
 
+export { ButtonVariant } from './Button';
 export default Forms;

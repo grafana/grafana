@@ -1,5 +1,7 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { PanelProps } from '@grafana/data';
+import { ComponentClass } from 'react';
 
 class TablePanelCtrl {}
 
@@ -58,7 +60,7 @@ describe('PanelModel', () => {
         {
           id: 'table',
         },
-        null, // react
+        (null as unknown) as ComponentClass<PanelProps>, // react
         TablePanelCtrl // angular
       );
       panelPlugin.setDefaults(defaultOptionsMock);
@@ -143,23 +145,6 @@ describe('PanelModel', () => {
       it('panelQueryRunner should be cleared', () => {
         const panelQueryRunner = (model as any).queryRunner;
         expect(panelQueryRunner).toBeFalsy();
-      });
-    });
-
-    describe('when changing from angular panel', () => {
-      const angularPanel = {
-        scope: {},
-        destroy: jest.fn(),
-      };
-
-      beforeEach(() => {
-        model.angularPanel = angularPanel;
-        model.changePlugin(getPanelPlugin({ id: 'graph' }));
-      });
-
-      it('should set angularPanel to undefined and call destory', () => {
-        expect(angularPanel.destroy.mock.calls.length).toBe(1);
-        expect(model.angularPanel).toBe(undefined);
       });
     });
 

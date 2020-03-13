@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
@@ -22,7 +22,7 @@ func TestDashboardImport(t *testing.T) {
 			PluginId: "test-app",
 			Path:     "dashboards/connections.json",
 			OrgId:    1,
-			User:     &m.SignedInUser{UserId: 1, OrgRole: m.ROLE_ADMIN},
+			User:     &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN},
 			Inputs: []ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
 			},
