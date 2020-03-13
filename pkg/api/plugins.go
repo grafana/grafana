@@ -295,6 +295,9 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 			c.JsonApiErr(500, "Plugin health check failed", err)
 			return
 		}
+
+		c.JsonApiErr(500, "Plugin healthcheck returned an unknown error", err)
+		return
 	}
 
 	payload := map[string]interface{}{
