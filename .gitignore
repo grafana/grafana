@@ -11,6 +11,7 @@ awsconfig
 /public/views/error.html
 /emails/dist
 /reports
+/e2e/tmp
 .yarnrc
 .yarn/
 
