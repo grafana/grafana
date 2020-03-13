@@ -214,12 +214,12 @@ One important thing to note is that if you want to provide different error messa
 <Forms.Form ...>{
   ({register, errors}) => (
     <>
-      <Forms.Field invalid={!!errors.name} error={errors.name && 'Name is required'}
+      <Forms.Field invalid={!!errors.name} error={errors.name?.message }
       <Forms.Input
         defaultValue={default.name}
         name="name"
         ref={register({
-          required: true,
+          required: 'Name is required',
           validation: v => {
             return v !== 'John' && 'Name must be John'
           },
@@ -255,12 +255,12 @@ validateAsync = (newValue: string) => {
 <Forms.Form ...>{
   ({register, errors}) => (
     <>
-      <Forms.Field invalid={!!errors.name} error={errors.name && 'Name is required'}
+      <Forms.Field invalid={!!errors.name} error={errors.name?.message}
       <Forms.Input
         defaultValue={default.name}
         name="name"
         ref={register({
-          required: true,
+          required: 'Name is required',
           validation: async v => {
             return  await validateAsync(v);
           },
