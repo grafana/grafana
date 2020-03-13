@@ -3,7 +3,9 @@ name: Grafana UI Canary Storybook
 on:
   push:
     branches:
-    - master
+      - master
+  pull_request:
+    types: [opened, synchronize, labeled]
 
 jobs:
   build:
@@ -37,4 +39,3 @@ jobs:
           args: -m cp -r ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook  gs://grafana-storybook/canary
       - name: Deploy URL
         run: echo https://storage.googleapis.com/grafana-storybook/canary/index.html
-      
