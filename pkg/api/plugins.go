@@ -19,7 +19,7 @@ import (
 // ErrPluginNotFound is returned when an requested plugin is not installed.
 var ErrPluginNotFound error = errors.New("plugin not found, no installed plugin with that id")
 
-func (hs *HTTPServer) getPluginConfig(pluginID string, user *models.SignedInUser, orgID int64) (backendplugin.PluginConfig, error) {
+func (hs *HTTPServer) getPluginConfig(pluginID string, user *models.SignedInUser) (backendplugin.PluginConfig, error) {
 	pluginConfig := backendplugin.PluginConfig{}
 	plugin, exists := plugins.Plugins[pluginID]
 	if !exists {
@@ -43,7 +43,7 @@ func (hs *HTTPServer) getPluginConfig(pluginID string, user *models.SignedInUser
 	}
 
 	return backendplugin.PluginConfig{
-		OrgID:                   orgID,
+		OrgID:                   user.OrgId,
 		PluginID:                plugin.Id,
 		JSONData:                jsonData,
 		DecryptedSecureJSONData: decryptedSecureJSONData,
@@ -247,7 +247,7 @@ func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) R
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	pluginID := c.Params("pluginId")
 
-	config, err := hs.getPluginConfig(pluginID, c.SignedInUser, c.OrgId)
+	config, err := hs.getPluginConfig(pluginID, c.SignedInUser)
 	if err != nil {
 		if err == ErrPluginNotFound {
 			return Error(404, "Plugin not found, no installed plugin with that id", nil)
@@ -294,7 +294,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 
-	config, err := hs.getPluginConfig(pluginID, c.SignedInUser, c.OrgId)
+	config, err := hs.getPluginConfig(pluginID, c.SignedInUser)
 	if err != nil {
 		if err == ErrPluginNotFound {
 			c.JsonApiErr(404, "Plugin not found, no installed plugin with that id", nil)
