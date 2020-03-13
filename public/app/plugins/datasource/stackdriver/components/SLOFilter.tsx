@@ -22,26 +22,7 @@ export const SLOFilter: FunctionComponent<Props> = ({ templateVariableOptions, q
   return (
     <>
       <div className="gf-form-inline">
-        <label className="gf-form-label query-keyword width-9">Selector</label>
-        <Segment
-          allowCustomValue
-          value={[...selectors, ...templateVariableOptions].find(s => s.value === query?.selectorName ?? '')}
-          options={[
-            {
-              label: 'Template Variables',
-              options: templateVariableOptions,
-            },
-            ...selectors,
-          ]}
-          onChange={({ value: selectorName }) => onChange({ ...query, selectorName })}
-        />
-        <div className="gf-form gf-form--grow">
-          <label className="gf-form-label gf-form-label--grow"></label>
-        </div>
-      </div>
-      <div className="gf-form-inline">
         <label className="gf-form-label query-keyword width-9">Service</label>
-
         <SegmentAsync
           allowCustomValue
           value={query?.serviceId}
@@ -66,7 +47,7 @@ export const SLOFilter: FunctionComponent<Props> = ({ templateVariableOptions, q
       </div>
 
       <div className="gf-form-inline">
-        <label className="gf-form-label query-keyword width-9">Service</label>
+        <label className="gf-form-label query-keyword width-9">SLO</label>
         <SegmentAsync
           allowCustomValue
           value={query?.sloId}
@@ -81,6 +62,25 @@ export const SLOFilter: FunctionComponent<Props> = ({ templateVariableOptions, q
             ])
           }
           onChange={({ value: sloId }) => onChange({ ...query, sloId })}
+        />
+        <div className="gf-form gf-form--grow">
+          <label className="gf-form-label gf-form-label--grow"></label>
+        </div>
+      </div>
+
+      <div className="gf-form-inline">
+        <label className="gf-form-label query-keyword width-9">Selector</label>
+        <Segment
+          allowCustomValue
+          value={[...selectors, ...templateVariableOptions].find(s => s.value === query?.selectorName ?? '')}
+          options={[
+            {
+              label: 'Template Variables',
+              options: templateVariableOptions,
+            },
+            ...selectors,
+          ]}
+          onChange={({ value: selectorName }) => onChange({ ...query, selectorName })}
         />
         <div className="gf-form gf-form--grow">
           <label className="gf-form-label gf-form-label--grow"></label>
