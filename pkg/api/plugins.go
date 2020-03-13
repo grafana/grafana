@@ -250,7 +250,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 			c.JsonApiErr(403, "Access denied to datasource", err)
 			return
 		}
-		c.JsonApiErr(500, "Unable to load datasource meta data", err)
+		c.JsonApiErr(500, "Unable to load datasource metadata", err)
 		return
 	}
 
