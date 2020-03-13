@@ -3,6 +3,10 @@ import { EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { VariablesState, initialVariablesState } from '../state/variablesReducer';
 
+export interface AdHocVariableEditorState {
+  dataSourceTypes: Array<{ text: string; value: string }>;
+}
+
 export const initialAdHocVariableModelState: AdHocVariableModel = {
   uuid: EMPTY_UUID,
   global: false,

@@ -5,8 +5,8 @@ import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { OptionsPicker } from '../pickers';
 import { toVariableIdentifier } from '../state/types';
-import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer';
+import { AdHocVariableEditor } from './AdHocVariableEditor';
 
 export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel> => {
   return {
