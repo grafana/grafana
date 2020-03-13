@@ -836,7 +836,7 @@ jobs:
       - run:
           name: sha-sum packages
           command: "go run build.go sha-dist"
-     - run:
+      - run:
           name: Move artifacts
           command: mkdir -p oss && mv dist oss
       - run:
