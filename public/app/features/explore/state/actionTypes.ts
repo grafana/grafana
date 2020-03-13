@@ -296,6 +296,8 @@ export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/s
 export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen');
 
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
+
+export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */
