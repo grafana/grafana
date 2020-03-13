@@ -771,6 +771,9 @@ jobs:
           paths:
             - node_modules
       - run:
+          name: Listing packages
+          command: ls oss/dist
+      - run:
           name: Start grafana-server
           command: ./e2e/start-server
           background: true
@@ -1242,7 +1245,7 @@ jobs:
       - persist_to_workspace:
           root: /go/src/github.com/grafana/grafana
           paths:
-            - oss/dist/*
+            - dist/*
       - run:
           name: ci job failed
           command: './scripts/ci-job-failed.sh'
