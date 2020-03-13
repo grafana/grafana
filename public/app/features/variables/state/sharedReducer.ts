@@ -100,8 +100,12 @@ const sharedReducerSlice = createSlice({
     },
     setCurrentVariableValue: (
       state: VariablesState,
-      action: PayloadAction<VariablePayload<{ option: VariableOption }>>
+      action: PayloadAction<VariablePayload<{ option: VariableOption | undefined }>>
     ) => {
+      if (!action.payload.data.option) {
+        return;
+      }
+
       const instanceState = getInstanceState<VariableWithOptions>(state, action.payload.uuid);
       const current = { ...action.payload.data.option };
 

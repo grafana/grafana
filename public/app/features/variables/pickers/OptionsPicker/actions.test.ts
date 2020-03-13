@@ -374,6 +374,7 @@ describe('options picker actions', () => {
       const variable = createVariable({ options, includeAll: false, tags: [tag] });
 
       datasource.metricFindQuery.mockReset();
+      // @ts-ignore strict null error TS2345: Argument of type '() => Promise<{ value: string; text: string; }[]>' is not assignable to parameter of type '() => Promise<never[]>'
       datasource.metricFindQuery.mockImplementation(() => Promise.resolve(values));
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
