@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
@@ -82,7 +82,6 @@ export function RichHistoryCard(props: Props) {
     clearQueries,
     datasourceInstance,
   } = props;
-  const [starred, setStared] = useState(query.starred);
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
 
@@ -106,14 +105,6 @@ export function RichHistoryCard(props: Props) {
       changeQueries();
     }
   };
-
-  useEffect(() => {
-    setStared(query.starred);
-  }, [query.starred]);
-
-  useEffect(() => {
-    setComment(query.comment);
-  }, [query.comment]);
 
   return (
     <div className={styles.queryCard}>
@@ -194,10 +185,9 @@ export function RichHistoryCard(props: Props) {
           title="Copy link to clipboard"
         ></i>
         <i
-          className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
+          className={cx('fa fa-fw', query.starred ? 'fa-star starred' : 'fa-star-o')}
           onClick={() => {
             updateRichHistory(query.ts, 'starred');
-            setStared(!starred);
           }}
           title={query.starred ? 'Unstar query' : 'Star query'}
         ></i>
