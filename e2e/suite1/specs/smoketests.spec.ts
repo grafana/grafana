@@ -40,8 +40,8 @@ e2e.scenario({
         return;
       }
 
-      const theOutputImage = `${e2e.config().screenshotsFolder}/theOutput/smoke-test-scenario.png`;
-      const theTruthImage = `${e2e.config().screenshotsFolder}/theTruth/smoke-test-scenario.png`;
+      const theOutputImage = `${e2e.config().screenshotsFolder}/received/smoke-test-scenario.png`;
+      const theTruthImage = `${e2e.config().screenshotsFolder}/expected/smoke-test-scenario.png`;
 
       e2e().wrap(
         e2e.imgSrcToBlob(url).then((blob: any) => {
