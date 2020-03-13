@@ -6,6 +6,7 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
+  DataConfigSource,
   DataLink,
   DataQuery,
   DataQueryResponseData,
@@ -43,7 +44,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   replaceVariables: true,
-  getDatasourceConfig: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -91,7 +91,7 @@ const defaults: any = {
   options: {},
 };
 
-export class PanelModel {
+export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
   id: number;
   gridPos: GridPos;
@@ -180,7 +180,7 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
-    this.updateQueryRunnerFieldOverrides();
+    this.resendLastResult();
     this.render();
   }
 
@@ -288,7 +288,7 @@ export class PanelModel {
     }
 
     this.applyPluginOptionDefaults(plugin);
-    this.updateQueryRunnerFieldOverrides();
+    this.resendLastResult();
   }
 
   changePlugin(newPlugin: PanelPlugin) {
@@ -372,26 +372,26 @@ export class PanelModel {
     return clone;
   }
 
-  getDatasourceConfig() {
-    return {
-      getTransformations: () => this.transformations,
-      getFieldOverrideOptions: () => {
-        if (!this.plugin) {
-          return undefined;
-        }
+  getTransformations() {
+    return this.transformations;
+  }
 
-        return {
-          fieldOptions: this.options.fieldOptions,
-          replaceVariables: this.replaceVariables,
-          custom: this.plugin.customFieldConfigs,
-          theme: config.theme,
-        };
-      },
+  getFieldOverrideOptions() {
+    if (!this.plugin) {
+      return undefined;
+    }
+
+    return {
+      fieldOptions: this.options.fieldOptions,
+      replaceVariables: this.replaceVariables,
+      custom: this.plugin.customFieldConfigs,
+      theme: config.theme,
     };
   }
+
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner(this.getDatasourceConfig());
+      this.queryRunner = new PanelQueryRunner(this);
     }
     return this.queryRunner;
   }
@@ -425,7 +425,7 @@ export class PanelModel {
     return templateSrv.replace(value, vars, format);
   }
 
-  updateQueryRunnerFieldOverrides() {
+  resendLastResult() {
     if (!this.plugin) {
       return;
     }

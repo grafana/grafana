@@ -1,10 +1,10 @@
-import { PanelConfig, PanelQueryRunner } from './PanelQueryRunner';
+import { PanelQueryRunner } from './PanelQueryRunner';
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
 import { DashboardModel } from './index';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
-import { GrafanaTheme } from '@grafana/data';
+import { DataConfigSource, DataQueryRequest, GrafanaTheme, PanelData, ScopedVars } from '@grafana/data';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/core/config', () => ({
@@ -34,21 +34,21 @@ interface ScenarioContext {
   widthPixels: number;
   dsInterval?: string;
   minInterval?: string;
-  scopedVars: grafanaData.ScopedVars;
+  scopedVars: ScopedVars;
 
   // Filled in by the Scenario runner
-  events?: grafanaData.PanelData[];
-  res?: grafanaData.PanelData;
-  queryCalledWith?: grafanaData.DataQueryRequest;
+  events?: PanelData[];
+  res?: PanelData;
+  queryCalledWith?: DataQueryRequest;
   runner: PanelQueryRunner;
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
 
-function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn, panelConfig?: PanelConfig) {
+function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn, panelConfig?: DataConfigSource) {
   describe(description, () => {
     let setupFn = () => {};
-    const defaultPanelConfig: PanelConfig = {
+    const defaultPanelConfig: DataConfigSource = {
       getFieldOverrideOptions: () => undefined,
       getTransformations: () => undefined,
     };
@@ -82,7 +82,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       const datasource: any = {
         name: 'TestDB',
         interval: ctx.dsInterval,
-        query: (options: grafanaData.DataQueryRequest) => {
+        query: (options: DataQueryRequest) => {
           ctx.queryCalledWith = options;
           return Promise.resolve(response);
         },
@@ -106,7 +106,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
 
       ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
       ctx.runner.getData().subscribe({
-        next: (data: grafanaData.PanelData) => {
+        next: (data: PanelData) => {
           ctx.res = data;
           ctx.events.push(data);
         },
@@ -201,7 +201,7 @@ describe('PanelQueryRunner', () => {
         const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
 
         ctx.runner.getData().subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: PanelData) => {
             return data;
           },
         });
@@ -231,7 +231,7 @@ describe('PanelQueryRunner', () => {
         const spy = jest.spyOn(grafanaData, 'transformDataFrame');
 
         ctx.runner.getData().subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: PanelData) => {
             return data;
           },
         });

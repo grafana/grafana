@@ -23,8 +23,8 @@ import {
   DataTransformerConfig,
   transformDataFrame,
   ScopedVars,
-  ApplyFieldOverrideOptions,
   applyFieldOverrides,
+  DataConfigSource,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -52,20 +52,15 @@ function getNextRequestId() {
   return 'Q' + counter++;
 }
 
-export interface PanelConfig {
-  getTransformations: () => DataTransformerConfig[] | undefined;
-  getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
-}
-
 export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
-  private panelConfig: PanelConfig;
+  private dataConfigSource: DataConfigSource;
 
-  constructor(panelConfig: PanelConfig) {
+  constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
-    this.panelConfig = panelConfig;
+    this.dataConfigSource = dataConfigSource;
   }
 
   /**
@@ -79,7 +74,7 @@ export class PanelQueryRunner {
         if (transform && this.hasTransformations()) {
           processedData = {
             ...processedData,
-            series: transformDataFrame(this.panelConfig.getTransformations(), data.series),
+            series: transformDataFrame(this.dataConfigSource.getTransformations(), data.series),
           };
         }
         // apply overrides
@@ -88,7 +83,7 @@ export class PanelQueryRunner {
             ...processedData,
             series: applyFieldOverrides({
               data: processedData.series,
-              ...this.panelConfig.getFieldOverrideOptions(),
+              ...this.dataConfigSource.getFieldOverrideOptions(),
             }),
           };
         }
@@ -98,12 +93,12 @@ export class PanelQueryRunner {
   }
 
   hasTransformations = () => {
-    const transformations = this.panelConfig.getTransformations();
+    const transformations = this.dataConfigSource.getTransformations();
     return config.featureToggles.transformations && transformations && transformations.length > 0;
   };
 
   hasFieldOverrideOptions = () => {
-    return this.panelConfig.getFieldOverrideOptions();
+    return this.dataConfigSource.getFieldOverrideOptions();
   };
 
   async run(options: QueryRunnerOptions) {
