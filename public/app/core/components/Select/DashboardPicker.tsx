@@ -37,7 +37,6 @@ export const DashboardPicker: FC<Props> = ({
   });
 
   const [state, searchDashboards] = useAsyncFn(debouncedSearch, []);
-  console.log('r', rest);
 
   return (
     <Forms.AsyncSelect
