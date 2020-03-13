@@ -13,6 +13,18 @@ import { getBackendSrv } from '../services';
 // Ideally internal (exported for consistency)
 const ExpressionDatasourceID = '__expr__';
 
+export enum HealthStatus {
+  UNKNOWN = 'UNKNOWN',
+  OK = 'OK',
+  ERROR = 'ERROR',
+}
+
+export interface HealthCheckResult {
+  status: HealthStatus;
+  message: string;
+  details?: Record<string, any>;
+}
+
 export class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
@@ -22,7 +34,7 @@ export class DataSourceWithBackend<
   }
 
   /**
-   * Ideally final -- any other implementation would be wrong!
+   * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest): Observable<DataQueryResponse> {
     const { targets, intervalMs, maxDataPoints, range } = request;
@@ -101,8 +113,29 @@ export class DataSourceWithBackend<
     return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
   }
 
-  testDatasource() {
-    // TODO, this will call the backend healthcheck endpoint
-    return Promise.resolve({});
+  /**
+   * Run the datasource healthcheck
+   */
+  async callHealthCheck(): Promise<HealthCheckResult> {
+    // TODO: if the service is ERROR it returns 503... this causes a popup
+    return getBackendSrv().get(`/api/datasources/${this.id}/health`);
+  }
+
+  /**
+   * Checks the plugin health
+   */
+  async testDatasource(): Promise<any> {
+    return this.callHealthCheck().then(res => {
+      if (res.status === HealthStatus.OK) {
+        return {
+          status: 'success',
+          message: res.message,
+        };
+      }
+      return {
+        status: 'fail',
+        message: res.message,
+      };
+    });
   }
 }
