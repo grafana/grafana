@@ -53,51 +53,66 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         refId,
         hide,
         queryType: QueryType.METRICS,
-        metricQuery: rest,
+        metricQuery: {
+          ...rest,
+          view: rest.view || 'FULL',
+          projectName: this.templateSrv.replace(rest.projectName ? rest.projectName : this.getDefaultProject()),
+        },
       };
     }
     return query;
   }
 
-  async getTimeSeries(options: any) {
+  interpolateQueryProps(object: { [key: string]: any } = {}, scopedVars: ScopedVars) {
+    return Object.entries(object).reduce((acc, [key, value]) => {
+      return {
+        ...acc,
+        [key]: value && _.isString(value) ? this.templateSrv.replace(value, scopedVars || {}) : value,
+      };
+    }, {});
+  }
+
+  shouldRunQuery(query: StackdriverQuery): boolean {
+    if (query.hide) {
+      return false;
+    }
+
+    if (query.queryType && query.queryType === QueryType.SLO) {
+      const { selectorName, serviceId, sloId, projectName } = query.sloQuery;
+      return !!selectorName && !!serviceId && !!sloId && !!projectName;
+    }
+
+    const { metricType, projectName } = query.metricQuery;
+
+    return !!metricType && !!projectName;
+  }
+
+  prepareTimeSeriesQuery(
+    { metricQuery, refId, queryType, sloQuery }: StackdriverQuery,
+    { scopedVars, intervalMs }: DataQueryRequest<StackdriverQuery>
+  ) {
+    return {
+      datasourceId: this.id,
+      refId,
+      queryType,
+      intervalMs: intervalMs,
+      type: 'timeSeriesQuery',
+      metricQuery: {
+        ...this.interpolateQueryProps(metricQuery, scopedVars),
+        filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
+        groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
+        view: metricQuery.view || 'FULL',
+      },
+      sloQuery: this.interpolateQueryProps(sloQuery, scopedVars),
+    };
+  }
+
+  async getTimeSeries(options: DataQueryRequest<StackdriverQuery>) {
     await this.ensureGCEDefaultProject();
     const queries = options.targets
-      .filter((target: StackdriverQuery) => {
-        return !target.hide;
-      })
-      .map((t: StackdriverQuery) => {
-        const { metricQuery, refId, queryType, sloQuery } = this.migrateQuery(t);
-        return {
-          refId,
-          queryType,
-          intervalMs: options.intervalMs,
-          datasourceId: this.id,
-          metricType: this.templateSrv.replace(metricQuery.metricType, options.scopedVars || {}),
-          crossSeriesReducer: this.templateSrv.replace(
-            metricQuery.crossSeriesReducer || 'REDUCE_MEAN',
-            options.scopedVars || {}
-          ),
-          perSeriesAligner: this.templateSrv.replace(metricQuery.perSeriesAligner, options.scopedVars || {}),
-          alignmentPeriod: this.templateSrv.replace(metricQuery.alignmentPeriod!, options.scopedVars || {}),
-          groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], options.scopedVars),
-          view: metricQuery.view || 'FULL',
-          filters: this.interpolateFilters(metricQuery.filters || [], options.scopedVars),
-          aliasBy: this.templateSrv.replace(metricQuery.aliasBy!, options.scopedVars || {}),
-          type: 'timeSeriesQuery',
-          projectName: this.templateSrv.replace(
-            metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject()
-          ),
-          sloQuery: {
-            projectName: this.templateSrv.replace(sloQuery?.projectName ?? '', options.scopedVars),
-            selectorName: this.templateSrv.replace(sloQuery?.selectorName ?? '', options.scopedVars),
-            serviceId: this.templateSrv.replace(sloQuery?.serviceId ?? '', options.scopedVars),
-            sloId: this.templateSrv.replace(sloQuery?.sloId ?? '', options.scopedVars),
-            alignmentPeriod: this.templateSrv.replace(sloQuery?.alignmentPeriod ?? '', options.scopedVars || {}),
-            aliasBy: this.templateSrv.replace(sloQuery?.aliasBy ?? '', options.scopedVars || {}),
-            perSeriesAligner: this.templateSrv.replace(sloQuery?.perSeriesAligner ?? '', options.scopedVars || {}),
-          },
-        };
-      });
+      .map(this.migrateQuery)
+      .filter(this.shouldRunQuery)
+      .map(q => this.prepareTimeSeriesQuery(q, options));
 
     if (queries.length > 0) {
       const { data } = await getBackendSrv().datasourceRequest({
@@ -154,7 +169,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         },
       ],
       range: this.timeSrv.timeRange(),
-    });
+    } as DataQueryRequest<StackdriverQuery>);
     const result = response.results[refId];
     return result && result.meta ? result.meta.labels : {};
   }

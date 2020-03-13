@@ -29,7 +29,6 @@ export const defaultQuery: MetricQuery = {
   metricType: '',
   metricKind: '',
   valueType: '',
-  service: '',
   unit: '',
   crossSeriesReducer: 'REDUCE_MEAN',
   alignmentPeriod: 'stackdriver-auto',

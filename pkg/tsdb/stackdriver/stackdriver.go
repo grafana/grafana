@@ -154,41 +154,37 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
 	for _, query := range tsdbQuery.Queries {
+		migrateLegacyQueryModel(query)
+		q := GrafanaQuery{}
+		model, _ := query.Model.MarshalJSON()
+		if err := json.Unmarshal(model, &q); err != nil {
+			return nil, fmt.Errorf("could not unmarshal StackdriverQuery json: %w", err)
+		}
 		var target string
-
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 
-		metricType := query.Model.Get("queryType").MustString(metricQueryType)
-		projectName := ""
-		aliasBy := ""
-		groupBysAsStrings := make([]string, 0)
+		sq := &StackdriverQuery{
+			RefID:    query.RefId,
+			GroupBys: []string{},
+		}
 
-		if metricType == metricQueryType {
-			metricType := query.Model.Get("metricType").MustString()
-			filterParts := query.Model.Get("filters").MustArray()
-			params.Add("filter", buildFilterString(metricType, filterParts))
-			params.Add("view", query.Model.Get("view").MustString("FULL"))
-			setAggParams(&params, query, durationSeconds)
-			projectName = query.Model.Get("projectName").MustString("")
-			aliasBy = query.Model.Get("aliasBy").MustString()
-			groupBys := query.Model.Get("groupBys").MustArray()
-			for _, groupBy := range groupBys {
-				groupBysAsStrings = append(groupBysAsStrings, groupBy.(string))
+		if q.QueryType == metricQueryType {
+			params.Add("filter", buildFilterString(q.MetricQuery.MetricType, q.MetricQuery.Filters))
+			params.Add("view", q.MetricQuery.View)
+			setAggParams(&params, &q.MetricQuery, durationSeconds, query.IntervalMs)
+			for _, groupBy := range q.MetricQuery.GroupBys {
+				sq.GroupBys = append(sq.GroupBys, groupBy)
 			}
-		} else if metricType == sloQueryType {
-			sloQuery := query.Model.Get("sloQuery").MustMap()
-
-			alignmentPeriod := sloQuery["alignmentPeriod"].(string)
-			params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(alignmentPeriod, query.IntervalMs, durationSeconds))
-			projectName = sloQuery["projectName"].(string)
-			selectorName := sloQuery["selectorName"].(string)
-			serviceID := sloQuery["serviceId"].(string)
-			sloID := sloQuery["sloId"].(string)
-			params.Add("filter", buildSLOFilterExpression(projectName, selectorName, serviceID, sloID))
-			aliasBy = sloQuery["aliasBy"].(string)
-			if selectorName == "select_slo_health" {
+			sq.AliasBy = q.MetricQuery.AliasBy
+			sq.ProjectName = q.MetricQuery.ProjectName
+		} else if q.QueryType == sloQueryType {
+			sq.AliasBy = q.SloQuery.AliasBy
+			sq.ProjectName = q.SloQuery.ProjectName
+			params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(q.SloQuery.AlignmentPeriod, query.IntervalMs, durationSeconds))
+			params.Add("filter", buildSLOFilterExpression(q.SloQuery))
+			if q.SloQuery.SelectorName == "select_slo_health" {
 				params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
 			} else {
 				params.Add("aggregation.perSeriesAligner", "ALIGN_NEXT_OLDER")
@@ -196,22 +192,28 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		}
 
 		target = params.Encode()
+		sq.Target = target
+		sq.Params = params
 
 		if setting.Env == setting.DEV {
 			slog.Debug("Stackdriver request", "params", params)
 		}
 
-		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
-			Target:      target,
-			Params:      params,
-			RefID:       query.RefId,
-			GroupBys:    groupBysAsStrings,
-			AliasBy:     aliasBy,
-			ProjectName: projectName,
-		})
+		stackdriverQueries = append(stackdriverQueries, sq)
 	}
 
 	return stackdriverQueries, nil
+}
+
+func migrateLegacyQueryModel(query *tsdb.Query) {
+	mq := query.Model.Get("metricQuery").MustMap()
+	if mq == nil {
+		migratedModel := simplejson.NewFromAny(map[string]interface{}{
+			"queryType":   metricQueryType,
+			"metricQuery": query.Model,
+		})
+		query.Model = migratedModel
+	}
 }
 
 func reverse(s string) string {
@@ -245,7 +247,7 @@ func interpolateFilterWildcards(value string) string {
 	return value
 }
 
-func buildFilterString(metricType string, filterParts []interface{}) string {
+func buildFilterString(metricType string, filterParts []string) string {
 	filterString := ""
 	for i, part := range filterParts {
 		mod := i % 4
@@ -256,45 +258,38 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 			if operator == "=~" || operator == "!=~" {
 				filterString = reverse(strings.Replace(reverse(filterString), "~", "", 1))
 				filterString += fmt.Sprintf(`monitoring.regex.full_match("%s")`, part)
-			} else if strings.Contains(part.(string), "*") {
-				filterString += interpolateFilterWildcards(part.(string))
+			} else if strings.Contains(part, "*") {
+				filterString += interpolateFilterWildcards(part)
 			} else {
 				filterString += fmt.Sprintf(`"%s"`, part)
 			}
 		} else {
-			filterString += part.(string)
+			filterString += part
 		}
 	}
 
 	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
 }
 
-func buildSLOFilterExpression(projectName string, selectorName string, serviceId string, sloId string) string {
-	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, selectorName, projectName, serviceId, sloId)
+func buildSLOFilterExpression(q SLOQuery) string {
+	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, q.SelectorName, q.ProjectName, q.ServiceId, q.SloId)
 }
 
-func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
-	crossSeriesReducer := query.Model.Get("crossSeriesReducer").MustString()
-	perSeriesAligner := query.Model.Get("perSeriesAligner").MustString()
-	alignmentPeriod := query.Model.Get("alignmentPeriod").MustString()
-
-	if crossSeriesReducer == "" {
-		crossSeriesReducer = "REDUCE_NONE"
+func setAggParams(params *url.Values, query *MetricQuery, durationSeconds int, intervalMs int64) {
+	if query.CrossSeriesReducer == "" {
+		query.CrossSeriesReducer = "REDUCE_NONE"
 	}
 
-	if perSeriesAligner == "" {
-		perSeriesAligner = "ALIGN_MEAN"
+	if query.PerSeriesAligner == "" {
+		query.PerSeriesAligner = "ALIGN_MEAN"
 	}
 
-	params.Add("aggregation.crossSeriesReducer", crossSeriesReducer)
-	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
-	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(alignmentPeriod, query.IntervalMs, durationSeconds))
+	params.Add("aggregation.crossSeriesReducer", query.CrossSeriesReducer)
+	params.Add("aggregation.perSeriesAligner", query.PerSeriesAligner)
+	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds))
 
-	groupBys := query.Model.Get("groupBys").MustArray()
-	if len(groupBys) > 0 {
-		for i := 0; i < len(groupBys); i++ {
-			params.Add("aggregation.groupByFields", groupBys[i].(string))
-		}
+	for _, groupBy := range query.GroupBys {
+		params.Add("aggregation.groupByFields", groupBy)
 	}
 }
 

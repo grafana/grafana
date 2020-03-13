@@ -19,7 +19,7 @@ func TestStackdriver(t *testing.T) {
 	Convey("Stackdriver", t, func() {
 		executor := &StackdriverExecutor{}
 
-		Convey("Parse queries from frontend and build Stackdriver API queries", func() {
+		Convey("Parse migrated queries from frontend and build Stackdriver API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
@@ -206,6 +206,72 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 			})
 
+		})
+
+		Convey("Parse queries from frontend and build Stackdriver API queries", func() {
+			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+			tsdbQuery := &tsdb.TsdbQuery{
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+				},
+				Queries: []*tsdb.Query{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"queryType": metricQueryType,
+							"metricQuery": map[string]interface{}{
+								"metricType": "a/metric/type",
+								"view":       "FULL",
+								"aliasBy":    "testalias",
+								"type":       "timeSeriesQuery",
+							},
+						}),
+						RefId: "A",
+					},
+				},
+			}
+
+			Convey("and query type is metrics", func() {
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+
+				So(len(queries), ShouldEqual, 1)
+				So(queries[0].RefID, ShouldEqual, "A")
+				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_NONE&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
+				So(len(queries[0].Params), ShouldEqual, 7)
+				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
+				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
+				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
+				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
+				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
+				So(queries[0].AliasBy, ShouldEqual, "testalias")
+			})
+
+			Convey("and query type is SLOs", func() {
+				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+				// 	"queryType": sloQueryType,
+				// 	"sloQuery": map[string]interface{}{
+				// 		"metricType": "a/metric/type",
+				// 		"view":       "FULL",
+				// 		"aliasBy":    "testalias",
+				// 		"type":       "timeSeriesQuery",
+				// 	},
+				// })
+
+				// queries, err := executor.buildQueries(tsdbQuery)
+				// So(err, ShouldBeNil)
+
+				// So(len(queries), ShouldEqual, 1)
+				// So(queries[0].RefID, ShouldEqual, "A")
+				// So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_NONE&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
+				// So(len(queries[0].Params), ShouldEqual, 7)
+				// So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
+				// So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
+				// So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
+				// So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
+				// So(queries[0].Params["view"][0], ShouldEqual, "FULL")
+				// So(queries[0].AliasBy, ShouldEqual, "testalias")
+			})
 		})
 
 		Convey("Parse stackdriver response in the time series format", func() {
@@ -550,20 +616,20 @@ func TestStackdriver(t *testing.T) {
 		Convey("when building filter string", func() {
 			Convey("and theres no regex operator", func() {
 				Convey("and there are wildcards in a filter value", func() {
-					filterParts := []interface{}{"zone", "=", "*-central1*"}
+					filterParts := []string{"zone", "=", "*-central1*"}
 					value := buildFilterString("somemetrictype", filterParts)
 					So(value, ShouldEqual, `metric.type="somemetrictype" zone=has_substring("-central1")`)
 				})
 
 				Convey("and there are no wildcards in any filter value", func() {
-					filterParts := []interface{}{"zone", "!=", "us-central1-a"}
+					filterParts := []string{"zone", "!=", "us-central1-a"}
 					value := buildFilterString("somemetrictype", filterParts)
 					So(value, ShouldEqual, `metric.type="somemetrictype" zone!="us-central1-a"`)
 				})
 			})
 
 			Convey("and there is a regex operator", func() {
-				filterParts := []interface{}{"zone", "=~", "us-central1-a~"}
+				filterParts := []string{"zone", "=~", "us-central1-a~"}
 				value := buildFilterString("somemetrictype", filterParts)
 				Convey("it should remove the ~ character from the operator that belongs to the value", func() {
 					So(value, ShouldNotContainSubstring, `=~`)

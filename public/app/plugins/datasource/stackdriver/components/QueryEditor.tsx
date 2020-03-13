@@ -52,7 +52,7 @@ export class QueryEditor extends PureComponent<Props> {
           value={queryType}
           templateVariableOptions={variableOptionGroup.options}
           onChange={(queryType: QueryType) => {
-            onChange({ ...query, queryType });
+            onChange({ ...query, sloQuery, queryType });
             onRunQuery();
           }}
         ></QueryTypeSelector>

@@ -16,6 +16,39 @@ type (
 		ProjectName string
 	}
 
+	MetricQuery struct {
+		ProjectName        string
+		Unit               string
+		MetricType         string
+		CrossSeriesReducer string
+		AlignmentPeriod    string
+		PerSeriesAligner   string
+		GroupBys           []string
+		Filters            []string
+		AliasBy            string
+		MetricKind         string
+		ValueType          string
+		View               string
+	}
+
+	SLOQuery struct {
+		ProjectName      string
+		AlignmentPeriod  string
+		PerSeriesAligner string
+		AliasBy          string
+		SelectorName     string
+		ServiceId        string
+		SloId            string
+	}
+
+	GrafanaQuery struct {
+		DatasourceId int
+		RefId        string
+		QueryType    string
+		MetricQuery  MetricQuery
+		SloQuery     SLOQuery
+	}
+
 	StackdriverBucketOptions struct {
 		LinearBuckets *struct {
 			NumFiniteBuckets int64 `json:"numFiniteBuckets"`
