@@ -9,16 +9,24 @@ import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from '../../core/selectors/navModel';
 
-const createOrg = (newOrg: { name: string }) => {
-  getBackendSrv()
-    .post('/api/orgs/', newOrg)
-    .then((result: any) => {
-      getBackendSrv()
-        .post('/api/user/using/' + result.orgId)
-        .then(() => {
-          window.location.href = getConfig().appSubUrl + '/org';
-        });
-    });
+const createOrg = async (newOrg: { name: string }) => {
+  const result = await getBackendSrv().post('/api/orgs/', newOrg);
+
+  await getBackendSrv().post('/api/user/using/' + result.orgId);
+  window.location.href = getConfig().appSubUrl + '/org';
+};
+
+const validateOrg = async (orgName: string) => {
+  try {
+    await getBackendSrv().get(`api/orgs/name/${encodeURI(orgName)}`);
+  } catch (error) {
+    if (error.status === 404) {
+      error.isHandled = true;
+      return true;
+    }
+    return 'Something went wrong';
+  }
+  return 'Org already exists';
 };
 
 interface PropsWithState {
@@ -45,8 +53,20 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
           {({ register, errors }) => {
             return (
               <>
-                <Forms.Field label="Organization name" invalid={!!errors.name} error="Organization name is required">
-                  <Forms.Input size="md" placeholder="Org. name" name="name" ref={register({ required: true })} />
+                <Forms.Field
+                  label="Organization name"
+                  invalid={!!errors.name}
+                  error={!!errors.name && errors.name.message}
+                >
+                  <Forms.Input
+                    size="md"
+                    placeholder="Org. name"
+                    name="name"
+                    ref={register({
+                      required: 'Organization name is required',
+                      validate: async orgName => await validateOrg(orgName),
+                    })}
+                  />
                 </Forms.Field>
                 <Forms.Button type="submit">Create</Forms.Button>
               </>
