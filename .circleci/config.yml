@@ -304,9 +304,13 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/workspace/bin/grabpl package --edition oss v6.7.0-beta1
-            else
-              # A master or PR build
+            elif [[ $CIRCLE_BRANCH == "master" ]]; then
+              # A master build
               /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID
+            else
+              # A PR build
+              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
           name: Move artifacts
@@ -347,9 +351,13 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/workspace/bin/grabpl package --edition enterprise v6.7.0-beta1
-            else
-              # A master or PR build
+            elif [[ $CIRCLE_BRANCH == "master" ]]; then
+              # A master build
               /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
+            else
+              # A PR build
+              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
           name: Move artifacts
