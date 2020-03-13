@@ -25,9 +25,6 @@ const setup = (propOverrides?: Partial<Props>) => {
 };
 
 describe('RichHistoryContainer', () => {
-  it('should render without errors', () => {
-    setup();
-  });
   it('should render reseizable component', () => {
     const wrapper = setup();
     expect(wrapper.find(Resizable)).toHaveLength(1);

@@ -24,9 +24,6 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
 };
 
 describe('RichHistory', () => {
-  it('should render component without errors', () => {
-    setup();
-  });
   it('should correctly render all tabs in tab bar', () => {
     const wrapper = setup();
     expect(wrapper.html()).toContain('Query history');

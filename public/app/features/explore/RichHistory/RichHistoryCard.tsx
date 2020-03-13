@@ -117,7 +117,7 @@ export function RichHistoryCard(props: Props) {
       <div className={styles.queryCardLeft} onClick={() => onChangeQuery(query)}>
         {query.queries.map((q, i) => {
           return (
-            <div title="query" key={`${q}-${i}`} className={styles.queryRow}>
+            <div key={`${q}-${i}`} className={styles.queryRow}>
               {q}
             </div>
           );

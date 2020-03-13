@@ -24,25 +24,22 @@ const setup = (propOverrides?: Partial<Props>) => {
 };
 
 describe('RichHistoryStarredTab', () => {
-  it('should render without errors', () => {
-    setup();
-  });
   describe('sorter', () => {
     it('should render sorter', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="sort queries"');
+      expect(wrapper.html()).toContain('aria-label="Sort queries"');
     });
   });
 
   describe('select datasource', () => {
     it('should render select datasource if activeDatasourceOnly is false', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="filter datasources"');
+      expect(wrapper.html()).toContain('aria-label="Filter datasources"');
     });
 
     it('should not render select datasource if activeDatasourceOnly is true', () => {
       const wrapper = setup({ activeDatasourceOnly: true });
-      expect(wrapper.html()).not.toContain('aria-label="filter datasources"');
+      expect(wrapper.html()).not.toContain('aria-label="Filter datasources"');
     });
   });
 });

@@ -25,14 +25,10 @@ const setup = (propOverrides?: Partial<Props>) => {
 };
 
 describe('RichHistoryQueriesTab', () => {
-  it('should render without errors', () => {
-    setup();
-  });
-
   describe('slider', () => {
     it('should render slider', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="slider');
+      expect(wrapper.html()).toContain('aria-label="Slider');
     });
     it('should render slider with correct timerange', () => {
       const wrapper = setup();
@@ -44,14 +40,14 @@ describe('RichHistoryQueriesTab', () => {
   describe('sort options', () => {
     it('should render sorter', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="sort queries"');
+      expect(wrapper.html()).toContain('aria-label="Sort queries"');
     });
   });
 
   describe('select datasource', () => {
     it('should render select datasource if activeDatasourceOnly is false', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="filter datasources"');
+      expect(wrapper.html()).toContain('aria-label="Filter datasources"');
     });
 
     it('should not render select datasource if activeDatasourceOnly is true', () => {

@@ -40,9 +40,6 @@ const starredQueryWithComment = {
 };
 
 describe('RichHistoryCard', () => {
-  it('should render without errors', () => {
-    setup();
-  });
   it('should render all queries', () => {
     const wrapper = setup();
     expect(wrapper.html()).toContain('query1');

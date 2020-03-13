@@ -162,7 +162,7 @@ export function RichHistoryQueriesTab(props: Props) {
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
-        <div className={styles.slider} aria-label="slider">
+        <div className={styles.slider} aria-label="Slider">
           <div className="label-slider">
             Filter history <br />
             between
@@ -187,7 +187,7 @@ export function RichHistoryQueriesTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div className={styles.multiselect} aria-label="filter datasources">
+            <div className={styles.multiselect} aria-label="Filter datasources">
               <Select
                 isMulti={true}
                 options={datasources}
@@ -197,7 +197,7 @@ export function RichHistoryQueriesTab(props: Props) {
               />
             </div>
           )}
-          <div className={styles.sort} aria-label="sort queries">
+          <div className={styles.sort} aria-label="Sort queries">
             <Select
               options={sortOrderOptions}
               placeholder="Sort queries by"

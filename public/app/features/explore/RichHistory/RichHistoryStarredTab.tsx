@@ -111,7 +111,7 @@ export function RichHistoryStarredTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div className={styles.multiselect} aria-label="filter datasources">
+            <div className={styles.multiselect} aria-label="Filter datasources">
               <Select
                 isMulti={true}
                 options={exploreDatasources}
@@ -121,7 +121,7 @@ export function RichHistoryStarredTab(props: Props) {
               />
             </div>
           )}
-          <div className={styles.sort} aria-label="sort queries">
+          <div className={styles.sort} aria-label="Sort queries">
             <Select
               options={sortOrderOptions}
               placeholder="Sort queries by"
