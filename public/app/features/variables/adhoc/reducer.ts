@@ -4,7 +4,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { VariablesState, initialVariablesState } from '../state/variablesReducer';
 
 export interface AdHocVariableEditorState {
-  dataSourceTypes: Array<{ text: string; value: string }>;
+  dataSources: Array<{ text: string; value: string }>;
 }
 
 export const initialAdHocVariableModelState: AdHocVariableModel = {

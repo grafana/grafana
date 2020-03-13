@@ -3,7 +3,7 @@ import { AdHocVariableModel } from '../../templating/variable';
 import { VariableEditorProps } from '../editor/types';
 import { VariableEditorState } from '../editor/reducer';
 import { AdHocVariableEditorState } from './reducer';
-import { initAdHocVariableEditor } from './actions';
+import { initAdHocVariableEditor, changeVariableDatasource } from './actions';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
@@ -16,6 +16,7 @@ interface ConnectedProps {
 
 interface DispatchProps {
   initAdHocVariableEditor: typeof initAdHocVariableEditor;
+  changeVariableDatasource: typeof changeVariableDatasource;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -25,8 +26,13 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
     this.props.initAdHocVariableEditor();
   }
 
+  onDatasourceChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    this.props.changeVariableDatasource(event.target.value);
+  };
+
   render() {
-    const { extended } = this.props.editor;
+    const { variable, editor } = this.props;
+    const dataSources = editor.extended?.dataSources ?? [];
 
     return (
       <div className="gf-form-group">
@@ -36,17 +42,16 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
           <div className="gf-form-select-wrapper max-width-14">
             <select
               className="gf-form-input"
-              ng-model="current.datasource"
               required
-              ng-change="validate()"
+              onChange={this.onDatasourceChanged}
+              value={variable.datasource ?? ''}
               aria-label="Variable editor Form AdHoc DataSource select"
             >
-              {extended?.dataSourceTypes?.length &&
-                extended?.dataSourceTypes?.map(ds => (
-                  <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.text}>
-                    {ds.text}
-                  </option>
-                ))}
+              {dataSources.map(ds => (
+                <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.text}>
+                  {ds.text}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -61,6 +66,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   initAdHocVariableEditor,
+  changeVariableDatasource,
 };
 
 export const AdHocVariableEditor = connectWithStore(

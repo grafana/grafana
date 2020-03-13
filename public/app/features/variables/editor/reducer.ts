@@ -8,6 +8,7 @@ export interface VariableEditorState<ExtendedProps extends {} = {}> {
   errors: Record<string, string>;
   isValid: boolean;
   extended: VariableEditorExtension<ExtendedProps> | null;
+  infoText?: string;
 }
 
 export const initialVariableEditorState: VariableEditorState = {
@@ -16,6 +17,7 @@ export const initialVariableEditorState: VariableEditorState = {
   errors: {},
   name: '',
   extended: null,
+  infoText: '',
 };
 
 const variableEditorReducerSlice = createSlice({
@@ -67,6 +69,10 @@ const variableEditorReducerSlice = createSlice({
         [action.payload.propName]: action.payload.propValue,
       };
     },
+    changeEditorInfoText: (state, action: PayloadAction<string>) => ({
+      ...state,
+      infoText: action.payload,
+    }),
   },
 });
 
@@ -82,4 +88,5 @@ export const {
   changeVariableEditorExtended,
   addVariableEditorError,
   removeVariableEditorError,
+  changeEditorInfoText,
 } = variableEditorReducerSlice.actions;
