@@ -56,7 +56,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
                 <Forms.Field
                   label="Organization name"
                   invalid={!!errors.name}
-                  error={!!errors.name && errors.name.message}
+                  error={errors.name && errors.name.message}
                 >
                   <Forms.Input
                     size="md"
