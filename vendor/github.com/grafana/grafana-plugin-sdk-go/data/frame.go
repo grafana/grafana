@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 // Frame represents a columnar storage with optional labels.
@@ -45,6 +46,15 @@ func (f *Frame) AppendRow(vals ...interface{}) {
 	}
 }
 
+// RowCopy returns an interface slice that contains the values of each Field for the given rowIdx.
+func (f *Frame) RowCopy(rowIdx int) []interface{} {
+	vals := make([]interface{}, len(f.Fields))
+	for i := range f.Fields {
+		vals[i] = f.CopyAt(i, rowIdx)
+	}
+	return vals
+}
+
 // AppendWarning adds warnings to the data frame.
 func (f *Frame) AppendWarning(message string, details string) {
 	f.Warnings = append(f.Warnings, Warning{Message: message, Details: details})
@@ -74,6 +84,44 @@ func (f *Frame) AppendRowSafe(vals ...interface{}) error {
 		f.Fields[i].vector.Append(v)
 	}
 	return nil
+}
+
+// FilterRowsByField returns a copy of frame f (as per EmptyCopy()) that includes rows
+// where the filter returns true and no error. If filter returns an error, then an error is returned.
+func (f *Frame) FilterRowsByField(fieldIdx int, filter func(i interface{}) (bool, error)) (*Frame, error) {
+	filteredFrame := f.EmptyCopy()
+	rowLen, err := f.RowLen()
+	if err != nil {
+		return nil, err
+	}
+	for inRowIdx := 0; inRowIdx < rowLen; inRowIdx++ {
+		match, err := filter(f.At(fieldIdx, inRowIdx))
+		if err != nil {
+			return nil, err
+		}
+		if !match {
+			continue
+		}
+		filteredFrame.AppendRow(f.RowCopy(inRowIdx)...)
+	}
+	return filteredFrame, nil
+}
+
+// EmptyCopy returns a copy of Frame f but with Fields of zero length, and no copy of the FieldConfigs, Metadata, or Warnings.
+func (f *Frame) EmptyCopy() *Frame {
+	newFrame := &Frame{
+		Name:   f.Name,
+		RefID:  f.RefID,
+		Fields: make(Fields, 0, len(f.Fields)),
+	}
+
+	for _, field := range f.Fields {
+		copy := NewFieldFromFieldType(field.Type(), 0)
+		copy.Name = field.Name
+		copy.Labels = field.Labels.Copy()
+		newFrame.Fields = append(newFrame.Fields, copy)
+	}
+	return newFrame
 }
 
 // TypeIndices returns a slice of Field index positions for the given pTypes.
@@ -319,6 +367,15 @@ func (l Labels) Equals(arg Labels) bool {
 	return true
 }
 
+// Copy returns a copy of the labels.
+func (l Labels) Copy() Labels {
+	c := make(Labels, len(l))
+	for k, v := range l {
+		c[k] = v
+	}
+	return c
+}
+
 // Contains returns true if all k=v pairs of the argument are in the receiver.
 func (l Labels) Contains(arg Labels) bool {
 	if len(arg) > len(l) {
@@ -483,5 +540,5 @@ func FrameTestCompareOptions() []cmp.Option {
 	})
 
 	unexportedField := cmp.AllowUnexported(Field{})
-	return []cmp.Option{confFloats, unexportedField}
+	return []cmp.Option{confFloats, unexportedField, cmpopts.EquateEmpty()}
 }
