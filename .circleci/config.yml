@@ -867,6 +867,9 @@ jobs:
           name: sha-sum packages
           command: "go run build.go sha-dist"
       - run:
+          name: Move artifacts
+          command: mkdir -p oss && mv dist oss
+      - run:
           name: Test Grafana.com release publisher
           command: "cd scripts/build/release_publisher && go test ."
       - persist_to_workspace:
@@ -1419,7 +1422,6 @@ workflows:
           filters: *filter-not-release-or-master
       - end-to-end-tests:
           filters: *filter-not-release-or-master
-      - grafana-docker-pr:
           requires:
             - build-fast-package
             - test-backend
@@ -1427,6 +1429,9 @@ workflows:
             - lint-go
       - grafana-docker-pr:
           requires:
+            - build-fast-package
+            - test-backend
+            - test-frontend
             - codespell
             - lint-go
             - shellcheck
