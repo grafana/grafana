@@ -1,4 +1,4 @@
-import { DataLink, FieldPropertyEditorItem, FieldType, ThresholdsConfig } from '@grafana/data';
+import { DataLink, FieldPropertyEditorItem, FieldType, ThresholdsConfig, ValueMapping } from '@grafana/data';
 import { StringFieldConfigSettings, StringOverrideEditor, stringOverrideProcessor, StringValueEditor } from './string';
 import { NumberFieldConfigSettings, NumberOverrideEditor, numberOverrideProcessor, NumberValueEditor } from './number';
 import { UnitOverrideEditor, UnitValueEditor } from './units';
@@ -9,6 +9,12 @@ import {
   ThresholdsValueEditor,
 } from './thresholds';
 import { DataLinksOverrideEditor, dataLinksOverrideProcessor, DataLinksValueEditor } from './links';
+import {
+  ValueMappingFieldConfigSettings,
+  ValueMappingsOverrideEditor,
+  valueMappingsOverrideProcessor,
+  ValueMappingsValueEditor,
+} from './mappings';
 
 export const getStandardFieldConfigs = () => {
   const title: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
@@ -108,6 +114,21 @@ export const getStandardFieldConfigs = () => {
     shouldApply: field => field.type === FieldType.number,
   };
 
+  const mappings: FieldPropertyEditorItem<ValueMapping[], ValueMappingFieldConfigSettings> = {
+    id: 'mappings', // Match field properties
+    name: 'Value mappings',
+    description: 'Manage value mappings',
+
+    editor: ValueMappingsValueEditor,
+    override: ValueMappingsOverrideEditor,
+    process: valueMappingsOverrideProcessor,
+    settings: {
+      // ??
+    },
+
+    shouldApply: field => field.type === FieldType.number,
+  };
+
   const noValue: FieldPropertyEditorItem<string, StringFieldConfigSettings> = {
     id: 'noValue', // Match field properties
     name: 'No Value',
@@ -137,5 +158,5 @@ export const getStandardFieldConfigs = () => {
     shouldApply: () => true,
   };
 
-  return [unit, min, max, decimals, thresholds, title, noValue, links];
+  return [unit, min, max, decimals, thresholds, mappings, title, noValue, links];
 };

@@ -6,7 +6,7 @@ type = "docs"
 [menu.docs]
 name = "Grafana Enterprise"
 identifier = "enterprise"
-weight = 30
+weight = 100
 +++
 
 # Grafana Enterprise
@@ -17,58 +17,66 @@ Building on everything you already know and love about Grafana, Grafana Enterpri
 
 Grafana Enterprise includes all of the features found in the open source edition and more.
 
-## Enhanced LDAP Integration
+[Learn more about Grafana Enterprise.](https://grafana.com/enterprise)
 
-With Grafana Enterprise you can set up synchronization between LDAP Groups and Teams. [Learn More]({{< relref "../auth/enhanced_ldap.md" >}}).
+## Enhanced security features
 
-## SAML Authentication
+Grafana Enterprise includes integrations with more ways to authenticate your users and enhanced authorization capabilities.
 
-Enables your Grafana Enterprise users to authenticate with SAML. [Learn More]({{< relref "saml.md" >}}).
+### Data source permissions
 
-## Team Sync
+[Data source permissions]({{< relref "datasource_permissions.md" >}}) allow you to restrict query access to only specific teams and users.
 
-Team Sync allows you to setup synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team. [Learn More]({{< relref "team-sync.md" >}}).
+### Enhanced LDAP integration
+
+With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you can set up synchronization between LDAP groups and Grafana teams.
+
+### SAML authentication
+
+[SAML authentication]({{< relref "saml.md" >}}) enables your Grafana Enterprise users to authenticate with SAML.
+
+### Team sync
+
+[Team sync]({{< relref "team-sync.md" >}}) allows you to set up synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team.
 
 Supported auth providers:
 
-* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
 * [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
 * [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
-* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
-
-## White labeling
-
-White labeling makes it possible to customize the logos and footer links of Grafana. [Learn More]({{< relref "white-labeling.md" >}}).
-
-## Data source permissions
-
-Data source permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "datasource_permissions.md" >}}).
+* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 
 ## Reporting
 
-Reporting makes it possible to take any dashboard, generate a PDF report, and set up a schedule to have it delivered. [Learn More]({{< relref "reporting.md" >}}).
+[Reporting]({{< relref "reporting.md" >}}) allows you to take any dashboard, generate a PDF report, and set up a schedule to have it emailed to whoever you choose.
 
-## Enterprise Plugins
+## Export dashboard as PDF
 
-With a Grafana Enterprise license you will get access to enterprise plugins, including:
+[Export dashboard as PDF]({{< relref "export-pdf.md" >}}) allows you to export a dashboard as a PDF document.
 
-* [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
+## White labeling
+
+[White labeling]({{< relref "white-labeling.md" >}}) allows you to replace the Grafana brand and logo with your own corporate brand and logo. You can also change footer links to point to your custom resources.
+
+## Enterprise plugins
+
+With a Grafana Enterprise license, you get access to premium plugins, including:
+
+* [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
 * [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
 * [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
 * [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
 * [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
-* [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
 * [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
+* [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
 
 ## Try Grafana Enterprise
 
-You can learn more about Grafana Enterprise [here](https://grafana.com/enterprise). To purchase or obtain a trial license contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
+To purchase or obtain a trial license contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
 
 ## License file management
 
-To download your Grafana Enterprise license log in to your [Grafana.com](https://grafana.com) account and go to your **Org
-Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license
-details page there is **Download Token** link that will download the *license.jwt* file containing your license.
+To download your Grafana Enterprise license log in to your [Grafana.com](https://grafana.com) account and go to your **Org Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license details page there is **Download Token** link that will download the *license.jwt* file containing your license.
 
 Place the *license.jwt* file in Grafana's data folder. This is usually located at `/var/lib/grafana/data` on Linux systems.
 
@@ -79,6 +87,4 @@ You can also configure a custom location for the license file via the ini settin
 license_path = /company/secrets/license.jwt
 ```
 
-This setting can also be set via ENV variable which is useful if you're running Grafana via docker and have a custom
-volume where you have placed the license file. In this case set the ENV variable `GF_ENTERPRISE_LICENSE_PATH` to point
-to the location of your license file.
+This setting can also be set with an environment variable, which is useful if you're running Grafana with Docker and have a custom volume where you have placed the license file. In this case, set the environment variable `GF_ENTERPRISE_LICENSE_PATH` to point to the location of your license file.

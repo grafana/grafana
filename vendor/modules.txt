@@ -127,7 +127,6 @@ github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
-github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
@@ -135,6 +134,7 @@ github.com/golang/snappy
 github.com/google/flatbuffers/go
 # github.com/google/go-cmp v0.3.1
 github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
@@ -148,11 +148,11 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.19.0
+# github.com/grafana/grafana-plugin-sdk-go v0.28.0
 github.com/grafana/grafana-plugin-sdk-go/backend/plugin
-github.com/grafana/grafana-plugin-sdk-go/dataframe
+github.com/grafana/grafana-plugin-sdk-go/data
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
-# github.com/hashicorp/go-hclog v0.8.0
+# github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-plugin v1.0.1
 github.com/hashicorp/go-plugin
@@ -186,9 +186,9 @@ github.com/lib/pq/scram
 github.com/linkedin/goavro/v2
 # github.com/mattetti/filebuffer v1.0.0
 github.com/mattetti/filebuffer
-# github.com/mattn/go-colorable v0.1.4
+# github.com/mattn/go-colorable v0.1.6
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.10
+# github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
 # github.com/mattn/go-sqlite3 v1.11.0
 github.com/mattn/go-sqlite3
@@ -318,7 +318,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20191220142924-d4481acd189f
+# golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.2

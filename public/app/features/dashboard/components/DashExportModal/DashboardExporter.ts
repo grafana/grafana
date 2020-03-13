@@ -54,7 +54,7 @@ export class DashboardExporter {
     const promises: Array<Promise<void>> = [];
     const variableLookup: { [key: string]: any } = {};
 
-    for (const variable of saveModel.templating.list) {
+    for (const variable of saveModel.getVariables()) {
       variableLookup[variable.name] = variable;
     }
 
@@ -143,7 +143,7 @@ export class DashboardExporter {
     }
 
     // templatize template vars
-    for (const variable of saveModel.templating.list) {
+    for (const variable of saveModel.getVariables()) {
       if (variable.type === 'query') {
         templateizeDatasourceUsage(variable);
         variable.options = [];
@@ -172,7 +172,7 @@ export class DashboardExporter {
         });
 
         // templatize constants
-        for (const variable of saveModel.templating.list) {
+        for (const variable of saveModel.getVariables()) {
           if (variable.type === 'constant') {
             const refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
             inputs.push({

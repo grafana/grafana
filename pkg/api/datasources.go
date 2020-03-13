@@ -275,20 +275,19 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	}
 
 	config := backendplugin.PluginConfig{
-		OrgID:                   c.OrgId,
-		PluginID:                plugin.Id,
-		PluginType:              plugin.Type,
-		JSONData:                ds.JsonData,
-		DecryptedSecureJSONData: ds.DecryptedValues(),
-		Updated:                 ds.Updated,
+		OrgID:    c.OrgId,
+		PluginID: plugin.Id,
 		DataSourceConfig: &backendplugin.DataSourceConfig{
-			ID:               ds.Id,
-			Name:             ds.Name,
-			URL:              ds.Url,
-			Database:         ds.Database,
-			User:             ds.User,
-			BasicAuthEnabled: ds.BasicAuth,
-			BasicAuthUser:    ds.BasicAuthUser,
+			ID:                      ds.Id,
+			Name:                    ds.Name,
+			URL:                     ds.Url,
+			Database:                ds.Database,
+			User:                    ds.User,
+			BasicAuthEnabled:        ds.BasicAuth,
+			BasicAuthUser:           ds.BasicAuthUser,
+			JSONData:                ds.JsonData,
+			DecryptedSecureJSONData: ds.DecryptedValues(),
+			Updated:                 ds.Updated,
 		},
 	}
 	hs.BackendPluginManager.CallResource(config, c, c.Params("*"))
@@ -323,4 +322,79 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 	}
 
 	return dto
+}
+
+// CheckDatasourceHealth sends a health check request to the plugin datasource
+// /api/datasource/:id/health
+func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
+	datasourceID := c.ParamsInt64("id")
+
+	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		if err == models.ErrDataSourceAccessDenied {
+			c.JsonApiErr(403, "Access denied to datasource", err)
+			return
+		}
+		c.JsonApiErr(500, "Unable to load datasource metadata", err)
+		return
+	}
+
+	plugin, ok := hs.PluginManager.GetDatasource(ds.Type)
+	if !ok {
+		c.JsonApiErr(500, "Unable to find datasource plugin", err)
+		return
+	}
+
+	config := &backendplugin.PluginConfig{
+		OrgID:    c.OrgId,
+		PluginID: plugin.Id,
+		DataSourceConfig: &backendplugin.DataSourceConfig{
+			ID:                      ds.Id,
+			Name:                    ds.Name,
+			URL:                     ds.Url,
+			Database:                ds.Database,
+			User:                    ds.User,
+			BasicAuthEnabled:        ds.BasicAuth,
+			BasicAuthUser:           ds.BasicAuthUser,
+			JSONData:                ds.JsonData,
+			DecryptedSecureJSONData: ds.DecryptedValues(),
+			Updated:                 ds.Updated,
+		},
+	}
+
+	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), config)
+	if err != nil {
+		if err == backendplugin.ErrPluginNotRegistered {
+			c.JsonApiErr(404, "Plugin not found", err)
+			return
+		}
+
+		// Return status unknown instead?
+		if err == backendplugin.ErrDiagnosticsNotSupported {
+			c.JsonApiErr(404, "Health check not implemented", err)
+			return
+		}
+
+		// Return status unknown or error instead?
+		if err == backendplugin.ErrHealthCheckFailed {
+			c.JsonApiErr(500, "Plugin health check failed", err)
+			return
+		}
+
+		c.JsonApiErr(500, "Plugin healthcheck returned an unknown error", err)
+		return
+	}
+
+	payload := map[string]interface{}{
+		"status":      resp.Status.String(),
+		"message":     resp.Message,
+		"jsonDetails": resp.JSONDetails,
+	}
+
+	if resp.Status != backendplugin.HealthStatusOk {
+		c.JSON(503, payload)
+		return
+	}
+
+	c.JSON(200, payload)
 }
