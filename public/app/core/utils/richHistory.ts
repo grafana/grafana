@@ -255,7 +255,7 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
 
 export function createDatasourceListWithImages(queriesDatasources: string[]) {
   const exploreDatasources = getExploreDatasources();
-  const datasources: Array<{ label: string; value: string; imgUrl?: string }> = [];
+  const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
 
   queriesDatasources.forEach(queryDsName => {
     const index = exploreDatasources.findIndex(exploreDs => exploreDs.name === queryDsName);
@@ -264,9 +264,15 @@ export function createDatasourceListWithImages(queriesDatasources: string[]) {
         label: queryDsName,
         value: queryDsName,
         imgUrl: exploreDatasources[index].meta.info.logos.small,
+        isRemoved: false,
       });
     } else {
-      datasources.push({ label: queryDsName, value: queryDsName, imgUrl: 'public/img/icn-datasource.svg' });
+      datasources.push({
+        label: queryDsName,
+        value: queryDsName,
+        imgUrl: 'public/img/icn-datasource.svg',
+        isRemoved: true,
+      });
     }
   });
   return datasources;

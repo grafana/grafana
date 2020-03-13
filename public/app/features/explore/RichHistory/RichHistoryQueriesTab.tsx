@@ -206,9 +206,18 @@ export function RichHistoryQueriesTab(props: Props) {
               <div className={styles.heading}>
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
-              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => (
-                <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />
-              ))}
+              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
+                const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+                return (
+                  <RichHistoryCard
+                    query={q}
+                    key={q.ts}
+                    exploreId={exploreId}
+                    dsImg={listOfDatasources[idx].imgUrl}
+                    isRemoved={listOfDatasources[idx].isRemoved}
+                  />
+                );
+              })}
             </div>
           );
         })}

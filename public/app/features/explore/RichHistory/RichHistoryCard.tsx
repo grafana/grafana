@@ -12,6 +12,8 @@ import { StoreState } from 'app/types';
 import { changeQuery, changeDatasource, clearQueries, updateRichHistory } from '../state/actions';
 interface Props {
   query: RichHistoryQuery;
+  dsImg: string;
+  isRemoved: boolean;
   changeQuery: typeof changeQuery;
   changeDatasource: typeof changeDatasource;
   clearQueries: typeof clearQueries;
@@ -75,6 +77,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
 export function RichHistoryCard(props: Props) {
   const {
     query,
+    dsImg,
+    isRemoved,
     updateRichHistory,
     changeQuery,
     changeDatasource,

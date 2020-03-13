@@ -128,7 +128,16 @@ export function RichHistoryStarredTab(props: Props) {
           </div>
         </div>
         {sortedStarredQueries.map(q => {
-          return <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />;
+          const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+          return (
+            <RichHistoryCard
+              query={q}
+              key={q.ts}
+              exploreId={exploreId}
+              dsImg={listOfDatasources[idx].imgUrl}
+              isRemoved={listOfDatasources[idx].isRemoved}
+            />
+          );
         })}
       </div>
     </div>
