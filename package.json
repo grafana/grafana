@@ -158,7 +158,7 @@
     "e2e:debug": "SLOWMO=1 && ./e2e/start-and-run-suite --headed --no-exit",
     "jest": "jest --notify --watch",
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit --maxWorkers 2",
-    "lint": "eslint public/app e2e/cypress/specs public/test --ext=.js,.ts,.tsx",
+    "lint": "eslint public/app e2e/suite1 public/test --ext=.js,.ts,.tsx",
     "lint:fix": "yarn lint --fix",
     "packages:build": "lerna run clean && lerna run build",
     "packages:docsExtract": "rm -rf ./scripts/docs && lerna run docsExtract",
