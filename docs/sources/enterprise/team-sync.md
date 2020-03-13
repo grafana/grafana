@@ -48,4 +48,5 @@ If you have already grouped some users into a team, then you can synchronize tha
 * [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
 * [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
 * [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
+* [Azure AD]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
 * [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})

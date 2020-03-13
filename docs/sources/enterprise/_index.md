@@ -50,6 +50,10 @@ Supported auth providers:
 
 [Reporting]({{< relref "reporting.md" >}}) allows you to take any dashboard, generate a PDF report, and set up a schedule to have it emailed to whoever you choose.
 
+## Export dashboard as PDF
+
+[Export dashboard as PDF]({{< relref "export-pdf.md" >}}) allows you to export a dashboard as a PDF document.
+
 ## White labeling
 
 [White labeling]({{< relref "white-labeling.md" >}}) allows you to replace the Grafana brand and logo with your own corporate brand and logo. You can also change footer links to point to your custom resources.
