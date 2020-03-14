@@ -436,7 +436,15 @@ jobs:
       - run:
           name: Build Docker images
           command: |
-            /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
+            if [[ -n $CIRCLE_TAG -o $CIRCLE_BRANCH == "chore/test-release-pipeline" -o $CIRCLE_BRANCH == "master" ]]; then
+              # It's a full build
+              /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
+                --ubuntu=<< parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
+            else
+              # We're testing a branch
+              /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
+                --ubuntu=<< parameters.ubuntu >> --archs amd64 $CIRCLE_WORKFLOW_ID
+            fi
             mkdir -p << parameters.edition >>/docker
             mv docker/*.tar << parameters.edition >>/docker/
       - persist_to_workspace:
