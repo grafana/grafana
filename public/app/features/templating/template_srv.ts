@@ -202,7 +202,7 @@ export class TemplateSrv {
         return `"${_.replace(value, regExp, '\\"')}"`;
       }
       case 'sqlstring': {
-        // escape single quotes in by pairing them
+        // escape single quotes by pairing them
         const regExp = new RegExp(`'`, 'g');
         if (_.isArray(value)) {
           return _.map(value, v => `'${_.replace(v, regExp, "''")}'`).join(',');
