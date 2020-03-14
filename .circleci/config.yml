@@ -436,7 +436,7 @@ jobs:
       - run:
           name: Build Docker images
           command: |
-            if [[ -n $CIRCLE_TAG -o $CIRCLE_BRANCH == "chore/test-release-pipeline" -o $CIRCLE_BRANCH == "master" ]]; then
+            if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
                 --ubuntu=<< parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
