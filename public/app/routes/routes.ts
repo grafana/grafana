@@ -162,7 +162,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/*webpackChunkName: NewDashboardsFolder*/ 'app/features/folders/components/NewDashboardsFolder')
+            import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
           ),
       },
     })
