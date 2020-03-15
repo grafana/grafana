@@ -11,6 +11,7 @@ awsconfig
 /public/views/error.html
 /emails/dist
 /reports
+/e2e/tmp
 .yarnrc
 .yarn/
 
@@ -103,6 +104,6 @@ compilation-stats.json
 /packages/grafana-e2e/cypress/screenshots
 /packages/grafana-e2e/cypress/videos
 /packages/grafana-e2e/cypress/logs
-/public/e2e-test/screenShots/theOutput
-/public/e2e-tests/screenShots/theOutput/*.png
-/public/e2e-tests/videos
+/e2e/server.log
+/e2e/suite1/screenshots/received
+/e2e/suite1/videos/*
