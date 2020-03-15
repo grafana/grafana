@@ -12,7 +12,7 @@ import (
 
 func TestAlertNotificationSQLAccess(t *testing.T) {
 	Convey("Testing Alert notification sql access", t, func() {
-		ss := InitTestDB(t)
+		InitTestDB(t)
 
 		Convey("Alert notification state", func() {
 			var alertID int64 = 7
@@ -323,7 +323,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		})
 
 		Convey("Notification Uid by Id Caching", func() {
-			ss.CacheService.Flush()
+			ss := InitTestDB(t)
 
 			notification := &models.CreateAlertNotificationCommand{Uid: "aNotificationUid", OrgId: 1, Name: "aNotificationUid"}
 			err := CreateAlertNotificationCommand(notification)
