@@ -3,8 +3,16 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelEditorProps } from '@grafana/data';
-import { Switch, LegendOptions, GraphTooltipOptions, PanelOptionsGrid, PanelOptionsGroup, Select } from '@grafana/ui';
+import { FieldConfig, PanelEditorProps } from '@grafana/data';
+import {
+  Switch,
+  LegendOptions,
+  GraphTooltipOptions,
+  PanelOptionsGrid,
+  PanelOptionsGroup,
+  Select,
+  FieldPropertiesEditor,
+} from '@grafana/ui';
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
 
@@ -39,6 +47,13 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
     this.onGraphOptionsChange({ showPoints: !this.props.options.graph.showPoints });
   };
 
+  onDefaultsChange = (field: FieldConfig, event?: React.SyntheticEvent<HTMLElement>, callback?: () => void) => {
+    this.props.onFieldConfigChange({
+      ...this.props.fieldConfig,
+      defaults: field,
+    });
+  };
+
   render() {
     const {
       graph: { showBars, showPoints, showLines },
@@ -54,6 +69,13 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
           <Switch label="Points" labelClass="width-5" checked={showPoints} onChange={this.onTogglePoints} />
         </div>
         <PanelOptionsGrid>
+          <PanelOptionsGroup title="Field">
+            <FieldPropertiesEditor
+              showMinMax={false}
+              onChange={this.onDefaultsChange}
+              value={this.props.fieldConfig.defaults}
+            />
+          </PanelOptionsGroup>
           <PanelOptionsGroup title="Tooltip">
             <Select
               value={{ value: mode, label: mode === 'single' ? 'Single' : 'All series' }}

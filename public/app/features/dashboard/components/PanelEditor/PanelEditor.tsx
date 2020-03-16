@@ -122,7 +122,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     if (plugin.editor && panel) {
       return (
         <div style={{ marginTop: '10px' }}>
-          <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />
+          <plugin.editor
+            data={data}
+            options={panel.getOptions()}
+            onOptionsChange={this.onPanelOptionsChanged}
+            fieldConfig={panel.getFieldConfig()}
+            onFieldConfigChange={this.onFieldConfigChange}
+          />
         </div>
       );
     }

@@ -57,6 +57,17 @@ export interface PanelEditorProps<T = any> {
     callback?: () => void
   ) => void;
   data: PanelData;
+
+  /**
+   * Panel fields configuration - temporart solution
+   * TODO[FieldConfig]: Remove when we switch old editor to new
+   */
+  fieldConfig: FieldConfigSource;
+  /**
+   * Enables panel field config manipulation
+   * TODO[FieldConfig]: Remove when we switch old editor to new
+   */
+  onFieldConfigChange: (config: FieldConfigSource) => void;
 }
 
 export interface PanelModel<TOptions = any> {

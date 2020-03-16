@@ -180,6 +180,9 @@ export class PanelModel implements DataConfigSource {
   getOptions() {
     return this.options;
   }
+  getFieldConfig() {
+    return this.fieldConfig;
+  }
 
   updateOptions(options: object) {
     this.options = options;
