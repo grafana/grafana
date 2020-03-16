@@ -9,7 +9,7 @@ import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
 import { DataSourceSettingsState, DataSourcesState } from './datasources';
 import { ExploreState } from './explore';
-import { UserAdminState, UsersState, UserState } from './user';
+import { UserAdminState, UserListAdminState, UsersState, UserState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
@@ -18,7 +18,7 @@ import { LdapState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
 import { PanelEditorStateNew } from '../features/dashboard/components/PanelEditor/state/reducers';
 import { ApiKeysState } from './apiKeys';
-import { TemplatingState } from '../features/templating/state/reducers';
+import { TemplatingState } from '../features/variables/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -42,6 +42,7 @@ export interface StoreState {
   ldap: LdapState;
   apiKeys: ApiKeysState;
   userAdmin: UserAdminState;
+  userListAdmin: UserListAdminState;
   templating: TemplatingState;
 }
 
