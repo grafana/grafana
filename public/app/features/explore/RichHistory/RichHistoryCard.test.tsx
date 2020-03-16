@@ -42,44 +42,61 @@ const starredQueryWithComment = {
 describe('RichHistoryCard', () => {
   it('should render all queries', () => {
     const wrapper = setup();
-    expect(wrapper.html()).toContain('query1');
-    expect(wrapper.html()).toContain('query2');
-    expect(wrapper.html()).toContain('query3');
+    expect(wrapper.find({ 'aria-label': 'Query text' })).toHaveLength(3);
+    expect(
+      wrapper
+        .find({ 'aria-label': 'Query text' })
+        .at(0)
+        .text()
+    ).toEqual('query1');
+    expect(
+      wrapper
+        .find({ 'aria-label': 'Query text' })
+        .at(1)
+        .text()
+    ).toEqual('query2');
+    expect(
+      wrapper
+        .find({ 'aria-label': 'Query text' })
+        .at(2)
+        .text()
+    ).toEqual('query3');
   });
 
   describe('commenting', () => {
     it('should render comment, if comment present', () => {
       const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.html()).toContain('test comment');
+      expect(wrapper.find({ 'aria-label': 'Query comment' })).toHaveLength(1);
+      expect(wrapper.find({ 'aria-label': 'Query comment' }).text()).toEqual('test comment');
     });
     it('should have title "Edit comment" at comment icon, if comment present', () => {
       const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.html()).toContain('Edit comment');
+      expect(wrapper.find({ title: 'Edit comment' })).toHaveLength(1);
+      expect(wrapper.find({ title: 'Add comment' })).toHaveLength(0);
     });
     it('should have title "Add comment" at comment icon, if no comment present', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('Add comment');
+      expect(wrapper.find({ title: 'Add comment' })).toHaveLength(1);
+      expect(wrapper.find({ title: 'Edit comment' })).toHaveLength(0);
     });
   });
 
   describe('starring', () => {
-    it('should render fa-star-o icon, if not starred', () => {
-      const wrapper = setup();
-      expect(wrapper.html()).toContain('fa-star-o');
-    });
     it('should have title "Star query", if not starred', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('Star query');
+      expect(wrapper.find({ title: 'Star query' })).toHaveLength(1);
     });
-
-    it('should have fa-star icon, if starred', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.html()).toContain('fa-star');
+    it('should render fa-star-o icon, if not starred', () => {
+      const wrapper = setup();
+      expect(wrapper.find({ title: 'Star query' }).hasClass('fa-star-o')).toBe(true);
     });
-
-    it('should have title "Unstar query", if starred', () => {
+    it('should have title "Unstar query", if not starred', () => {
       const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.html()).toContain('Unstar query');
+      expect(wrapper.find({ title: 'Unstar query' })).toHaveLength(1);
+    });
+    it('should have fa-star icon, if not starred', () => {
+      const wrapper = setup({ query: starredQueryWithComment });
+      expect(wrapper.find({ title: 'Unstar query' }).hasClass('fa-star')).toBe(true);
     });
   });
 });

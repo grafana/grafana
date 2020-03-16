@@ -31,10 +31,10 @@ describe('RichHistoryContainer', () => {
   });
   it('should render component with correct width', () => {
     const wrapper = setup();
-    expect(wrapper.html()).toContain('width: 531.5px');
+    expect(wrapper.getDOMNode().getAttribute('style')).toContain('width: 531.5px');
   });
   it('should render component with correct height', () => {
     const wrapper = setup();
-    expect(wrapper.html()).toContain('height: 400px');
+    expect(wrapper.getDOMNode().getAttribute('style')).toContain('height: 400px');
   });
 });

@@ -162,7 +162,7 @@ export function RichHistoryQueriesTab(props: Props) {
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
-        <div className={styles.slider} aria-label="Slider">
+        <div className={styles.slider}>
           <div className="label-slider">
             Filter history <br />
             between

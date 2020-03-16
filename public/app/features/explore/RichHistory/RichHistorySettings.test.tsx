@@ -1,6 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { RichHistorySettings, RichHistorySettingsProps } from './RichHistorySettings';
+import { Forms } from '@grafana/ui';
 
 const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
   const props: RichHistorySettingsProps = {
@@ -20,19 +21,26 @@ const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
 };
 
 describe('RichHistorySettings', () => {
-  it('whould render without errors', () => {
-    setup();
-  });
   it('should render component with correct retention period', () => {
     const wrapper = setup();
-    expect(wrapper.html()).toContain('2 weeks');
+    expect(wrapper.find(Forms.Select).text()).toEqual('2 weeks');
   });
   it('should render component with correctly checked starredTabAsFirstTab settings', () => {
     const wrapper = setup();
-    expect(wrapper.html()).toContain('<input type="checkbox" id="switch-5" checked="">');
+    expect(
+      wrapper
+        .find(Forms.Switch)
+        .at(0)
+        .prop('value')
+    ).toBe(true);
   });
   it('should render component with correctly not checked toggleactiveDatasourceOnly settings', () => {
     const wrapper = setup();
-    expect(wrapper.html()).toContain('<input type="checkbox" id="switch-8">');
+    expect(
+      wrapper
+        .find(Forms.Switch)
+        .at(1)
+        .prop('value')
+    ).toBe(false);
   });
 });

@@ -117,12 +117,16 @@ export function RichHistoryCard(props: Props) {
       <div className={styles.queryCardLeft} onClick={() => onChangeQuery(query)}>
         {query.queries.map((q, i) => {
           return (
-            <div key={`${q}-${i}`} className={styles.queryRow}>
+            <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
               {q}
             </div>
           );
         })}
-        {!activeUpdateComment && query.comment && <div className={styles.comment}>{query.comment}</div>}
+        {!activeUpdateComment && query.comment && (
+          <div aria-label="Query comment" className={styles.comment}>
+            {query.comment}
+          </div>
+        )}
         {activeUpdateComment && (
           <div>
             <Forms.TextArea

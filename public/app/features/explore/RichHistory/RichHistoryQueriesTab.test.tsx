@@ -3,6 +3,7 @@ import { mount } from 'enzyme';
 import { ExploreId } from '../../../types/explore';
 import { SortOrder } from 'app/core/utils/explore';
 import { RichHistoryQueriesTab, Props } from './RichHistoryQueriesTab';
+import { Slider } from '@grafana/ui';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
@@ -28,31 +29,40 @@ describe('RichHistoryQueriesTab', () => {
   describe('slider', () => {
     it('should render slider', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="Slider');
+      expect(wrapper.find(Slider)).toHaveLength(1);
     });
     it('should render slider with correct timerange', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('today');
-      expect(wrapper.html()).toContain('two weeks ago');
+      expect(
+        wrapper
+          .find('.label-slider')
+          .at(1)
+          .text()
+      ).toEqual('today');
+      expect(
+        wrapper
+          .find('.label-slider')
+          .at(2)
+          .text()
+      ).toEqual('two weeks ago');
     });
   });
 
   describe('sort options', () => {
     it('should render sorter', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="Sort queries"');
+      expect(wrapper.find({ 'aria-label': 'Sort queries' })).toHaveLength(1);
     });
   });
 
   describe('select datasource', () => {
     it('should render select datasource if activeDatasourceOnly is false', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="Filter datasources"');
+      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(1);
     });
-
     it('should not render select datasource if activeDatasourceOnly is true', () => {
       const wrapper = setup({ activeDatasourceOnly: true });
-      expect(wrapper.html()).not.toContain('aria-label="filter datasources"');
+      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(0);
     });
   });
 });

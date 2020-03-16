@@ -27,19 +27,19 @@ describe('RichHistoryStarredTab', () => {
   describe('sorter', () => {
     it('should render sorter', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="Sort queries"');
+      expect(wrapper.find({ 'aria-label': 'Sort queries' })).toHaveLength(1);
     });
   });
 
   describe('select datasource', () => {
     it('should render select datasource if activeDatasourceOnly is false', () => {
       const wrapper = setup();
-      expect(wrapper.html()).toContain('aria-label="Filter datasources"');
+      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(1);
     });
 
     it('should not render select datasource if activeDatasourceOnly is true', () => {
       const wrapper = setup({ activeDatasourceOnly: true });
-      expect(wrapper.html()).not.toContain('aria-label="Filter datasources"');
+      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(0);
     });
   });
 });
