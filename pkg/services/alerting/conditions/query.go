@@ -167,8 +167,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		if v.Error != nil {
 			return nil, fmt.Errorf("tsdb.HandleRequest() response error %v", v)
 		}
-
-		if v.Dataframes != nil && v.Series == nil {
+		if v.Dataframes != nil && (v.Series == nil || len(v.Series) == 0) {
 			frames, err := tsdb.FramesFromBytes(v.Dataframes)
 			if err != nil {
 				return nil, err // TODO: wrap
@@ -187,7 +186,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		queryResultData := map[string]interface{}{}
 
 		if context.IsTestRun {
-			queryResultData["series"] = v.Series
+			queryResultData["series"] = result
 		}
 
 		if context.IsDebug && v.Meta != nil {
