@@ -87,9 +87,7 @@ describe('graphiteDatasource', () => {
       expect(result.data[1].name).toBe('seriesB');
       expect(result.data[0].length).toBe(2);
       expect(result.data[0].meta.notices.length).toBe(1);
-      expect(result.data[0].meta.notices[0].text).toBe(
-        'Your looking at roll-up data using AverageConsolidator and runtime consolidated data using AverageConsolidator'
-      );
+      expect(result.data[0].meta.notices[0].text).toBe('Data is rolled up, aggregated over 2h using Average function');
       expect(result.data[1].meta.notices.length).toBe(0);
     });
   });

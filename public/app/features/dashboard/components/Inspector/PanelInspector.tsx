@@ -95,17 +95,10 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     // Find the first DataSource wanting to show custom metadata
     if (data && targets.length) {
-      const queries: Record<string, DataQuery> = {};
-
-      for (const target of targets) {
-        queries[target.refId] = target;
-      }
-
       for (const frame of data) {
-        const q = queries[frame.refId];
-
-        if (q && frame.meta && frame.meta.custom) {
-          const dataSource = await getDataSourceSrv().get(q.datasource);
+        if (frame.meta && frame.meta.custom) {
+          // get data source from first query
+          const dataSource = await getDataSourceSrv().get(targets[0].datasource);
 
           if (dataSource && dataSource.components?.MetadataInspector) {
             metaDS = dataSource;

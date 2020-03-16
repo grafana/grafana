@@ -93,13 +93,15 @@ export class PanelHeader extends Component<Props, State> {
     );
   }
 
-  openInspect = (e: React.SyntheticEvent) => {
+  openInspect = (e: React.SyntheticEvent, notice: QueryResultMetaNotice) => {
     const { updateLocation, panel } = this.props;
 
     e.stopPropagation();
 
+    const tab = notice.link.replace('inspect/', '');
+
     updateLocation({
-      query: { inspect: panel.id },
+      query: { inspect: panel.id, tab },
       partial: true,
     });
   };
@@ -107,8 +109,8 @@ export class PanelHeader extends Component<Props, State> {
   renderNotice = (notice: QueryResultMetaNotice) => {
     return (
       <Tooltip content={notice.text} key={notice.severity}>
-        {notice.link === 'inspect' ? (
-          <div className="panel-info-notice" onClick={this.openInspect}>
+        {notice.link && notice.link.startsWith('inspect') ? (
+          <div className="panel-info-notice" onClick={e => this.openInspect(e, notice)}>
             <span className="fa fa-info-circle" style={{ marginRight: '8px', cursor: 'pointer' }} />
           </div>
         ) : (

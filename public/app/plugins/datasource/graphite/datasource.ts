@@ -149,7 +149,6 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
     for (const meta of metaList) {
       const archiveIndex = meta['archive-read'];
-      const runtimeNr = meta['aggnum-rc'];
 
       if (archiveIndex > 0) {
         const schema = parseSchemaRetentions(meta['schema-retentions']);
@@ -157,11 +156,28 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         const func = meta['consolidate-normfetch'].replace('Consolidator', '');
 
         notices.push({
-          text: `Data is rolled up data, aggregated over ${intervalString} using ${func} function`,
+          text: `Data is rolled up, aggregated over ${intervalString} using ${func} function`,
           severity: 'info',
-          link: 'inspect',
+          link: 'inspect/meta',
         });
-        continue;
+
+        return notices;
+      }
+    }
+
+    for (const meta of metaList) {
+      const runtimeNr = meta['aggnum-rc'];
+
+      if (runtimeNr > 0) {
+        const func = meta['consolidate-rc'].replace('Consolidator', '');
+
+        notices.push({
+          text: `Data is runtime consolidated, ${runtimeNr} datapoints combined using ${func} function`,
+          severity: 'info',
+          link: 'inspect/meta',
+        });
+
+        return notices;
       }
     }
 
