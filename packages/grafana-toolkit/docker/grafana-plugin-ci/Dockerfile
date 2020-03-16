@@ -36,7 +36,8 @@ RUN mkdir -pv ${HOME}/plugin ${HOME}/go/bin ${HOME}/bin ${HOME}/src ${HOME}/tmp
 # Install grafana release with yarn
 RUN git clone https://github.com/grafana/grafana.git ${HOME}/src/grafana
 WORKDIR /home/circleci/src/grafana
-RUN yarn install
+RUN git checkout tags/v$(curl -s https://raw.githubusercontent.com/grafana/grafana/master/latest.json | jq -r '.stable')
+RUN yarn cache clean && yarn install --frozen-lockfile
 
 # Install Mage
 RUN git clone https://github.com/magefile/mage.git ${HOME}/src/mage 
