@@ -83,17 +83,14 @@ jobs:
               # A release build
               /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
                 --variants << parameters.variant >> $CIRCLE_TAG
-            elif [[ $CIRCLE_BRANCH == "master" ]]; then
-              # A master build
-              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
-                --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
                 --variants << parameters.variant >> v6.7.0-beta1
             else
-              echo "Unknown branch trigger: $CIRCLE_BRANCH"
-              exit 1
+              # A master or PR build
+              /tmp/workspace/bin/grabpl build-backend --edition << parameters.edition >> \
+                --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
           name: Move artifacts
@@ -174,7 +171,7 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
-  shellcheck-grabpl:
+  shellcheck:
     machine: true
     steps:
       - attach_workspace:
@@ -304,15 +301,16 @@ jobs:
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
               /tmp/workspace/bin/grabpl package --edition oss $CIRCLE_TAG
-            elif [[ $CIRCLE_BRANCH == "master" ]]; then
-              # A master build
-              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/workspace/bin/grabpl package --edition oss v6.7.0-beta1
+            elif [[ $CIRCLE_BRANCH == "master" ]]; then
+              # A master build
+              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID
             else
-              echo "Unknown branch trigger: $CIRCLE_BRANCH"
-              exit 1
+              # A PR build
+              /tmp/workspace/bin/grabpl package --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
           name: Move artifacts
@@ -350,15 +348,16 @@ jobs:
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
               /tmp/workspace/bin/grabpl package --edition enterprise $CIRCLE_TAG
-            elif [[ $CIRCLE_BRANCH == "master" ]]; then
-              # A master build
-              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/workspace/bin/grabpl package --edition enterprise v6.7.0-beta1
+            elif [[ $CIRCLE_BRANCH == "master" ]]; then
+              # A master build
+              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID
             else
-              echo "Unknown branch trigger: $CIRCLE_BRANCH"
-              exit 1
+              # A PR build
+              /tmp/workspace/bin/grabpl package --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
+                linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
           name: Move artifacts
@@ -467,7 +466,15 @@ jobs:
       - run:
           name: Build Docker images
           command: |
-            /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
+            if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
+              # It's a full build
+              /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
+                --ubuntu=<< parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
+            else
+              # We're testing a branch
+              /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
+                --ubuntu=<< parameters.ubuntu >> --archs amd64 $CIRCLE_WORKFLOW_ID
+            fi
             mkdir -p << parameters.edition >>/docker
             mv docker/*.tar << parameters.edition >>/docker/
       - persist_to_workspace:
@@ -620,31 +627,6 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  cache-server-test:
-    docker:
-      - image: circleci/golang:1.13.4
-      - image: circleci/redis:4-alpine
-      - image: memcached
-    working_directory: /go/src/github.com/grafana/grafana
-    steps:
-      - checkout
-      - run:
-          name: ci job started
-          command: "./scripts/ci-job-started.sh"
-      - run: dockerize -wait tcp://127.0.0.1:11211 -timeout 120s
-      - run: dockerize -wait tcp://127.0.0.1:6379 -timeout 120s
-      - run:
-          name: cache server tests
-          command: "./scripts/circle-test-cache-servers.sh"
-      - run:
-          name: ci job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
   codespell:
     docker:
       - image: circleci/python
@@ -673,15 +655,6 @@ jobs:
       - run:
           name: Lint Go
           command: "make lint-go"
-
-  shellcheck:
-    machine: true
-    working_directory: ~/go/src/github.com/grafana/grafana
-    steps:
-      - checkout
-      - run:
-          name: ShellCheck
-          command: "make shellcheck"
 
   test-frontend:
     docker:
@@ -736,80 +709,6 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  build-fast-backend:
-    docker:
-      - image: grafana/build-container:1.2.13
-    working_directory: /go/src/github.com/grafana/grafana
-    steps:
-      - checkout
-      - run:
-          name: prepare build tools
-          command: "/tmp/bootstrap.sh"
-      - run:
-          name: ci job started
-          command: "./scripts/ci-job-started.sh"
-      - run:
-          name: build grafana backend
-          command: "./scripts/build/build.sh --fast --backend-only"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - bin/*
-      - run:
-          name: ci job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
-  build-fast-frontend:
-    docker:
-      - image: grafana/build-container:1.2.13
-    working_directory: /go/src/github.com/grafana/grafana
-    steps:
-      - checkout
-      - run:
-          name: Increase node memory
-          command: |
-            export NODE_OPTIONS=--max_old_space_size=4096
-      - run:
-          name: prepare build tools
-          command: "/tmp/bootstrap.sh"
-      - run:
-          name: ci job started
-          command: "./scripts/ci-job-started.sh"
-      - restore_cache:
-          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
-      - run:
-          name: build grafana frontend
-          command: "./scripts/build/build.sh --fast --frontend-only"
-      - run:
-          name: es-check install
-          command: "yarn global add es-check"
-      - run:
-          name: es-check run
-          command: "es-check es5 ./public/build/*.js"
-      - save_cache:
-          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
-          paths:
-            - node_modules
-      - persist_to_workspace:
-          root: .
-          paths:
-            - public/build/*
-            - public/views/*
-            - tools/phantomjs/*
-      - run:
-          name: ci job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
   build-docs-website:
     docker:
       - image: grafana/build-container:1.2.13
@@ -842,173 +741,6 @@ jobs:
       - run:
           name: ci job succeeded
           command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh"
-          when: on_success
-
-  build-fast-package:
-    docker:
-      - image: grafana/build-container:1.2.13
-    working_directory: /go/src/github.com/grafana/grafana
-    steps:
-      - checkout
-      - run:
-          name: ci job started
-          command: "./scripts/ci-job-started.sh"
-      - attach_workspace:
-          at: .
-      - restore_cache:
-          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
-      - run:
-          name: prepare build tools
-          command: "/tmp/bootstrap.sh"
-      - run:
-          name: package grafana
-          command: "./scripts/build/build.sh --fast --package-only"
-      - run:
-          name: sha-sum packages
-          command: "go run build.go sha-dist"
-      - run:
-          name: Move artifacts
-          command: mkdir -p oss && mv dist oss
-      - run:
-          name: Test Grafana.com release publisher
-          command: "cd scripts/build/release_publisher && go test ."
-      - persist_to_workspace:
-          root: .
-          paths:
-            - oss/dist/*
-      - run:
-          name: ci job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
-  build-fast-save:
-    docker:
-      - image: grafana/build-container:1.2.13
-    working_directory: /go/src/github.com/grafana/grafana
-    steps:
-      - checkout
-      - run:
-          name: ci job started
-          command: "./scripts/ci-job-started.sh"
-      - attach_workspace:
-          at: .
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-      - run:
-          name: debug cache
-          command: "ls -al /go/src/github.com/grafana/grafana/node_modules"
-      - run:
-          name: prepare build tools
-          command: "/tmp/bootstrap.sh"
-      - run:
-          name: build grafana backend
-          command: "./scripts/build/build.sh --fast --backend-only"
-      - run:
-          name: build grafana frontend
-          command: "./scripts/build/build.sh --fast --frontend-only"
-      - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-          paths:
-            - /go/src/github.com/grafana/grafana/node_modules
-      - run:
-          name: package grafana
-          command: "./scripts/build/build.sh --fast --package-only"
-      - run:
-          name: Prepare GPG private key
-          command: "./scripts/build/prepare_signing_key.sh"
-      - run:
-          name: sign packages
-          command: "./scripts/build/sign_packages.sh dist/*.rpm"
-      - run:
-          name: sha-sum packages
-          command: "go run build.go sha-dist"
-      - run:
-          name: Test Grafana.com release publisher
-          command: "cd scripts/build/release_publisher && go test ."
-      - persist_to_workspace:
-          root: .
-          paths:
-            - dist/*
-      - run:
-          name: ci job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
-  grafana-docker-pr:
-    machine:
-      image: circleci/classic:201808-01
-    steps:
-      - checkout
-      - run:
-          name: ci job started
-          command: "./scripts/ci-job-started.sh"
-      - attach_workspace:
-          at: .
-      - run: docker info
-      - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run: cp oss/dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
-      - run:
-          name: ci job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
-  grafana-docker-ubuntu-pr:
-    machine:
-      image: circleci/classic:201808-01
-    steps:
-      - checkout
-      - run:
-          name: ci job started
-          command: "./scripts/ci-job-started.sh"
-      - attach_workspace:
-          at: .
-      - run: docker info
-      - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run: cp oss/dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build.sh --fast --ubuntu "${CIRCLE_SHA1}"
-      - run:
-          name: ci job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
-  build-grafana-packages:
-    docker:
-      - image: circleci/node:12
-    steps:
-      - checkout
-      - run:
-          name: ci job started
-          command: "./scripts/ci-job-started.sh"
-      - run:
-          name: Boostrap lerna
-          command: "npx lerna bootstrap"
-      - run:
-          name: Build packages
-          command: yarn packages:build
-      - run:
-          name: ci job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
   release-packages:
@@ -1073,8 +805,8 @@ jobs:
 workflows:
   build-pipeline:
     jobs:
-      - install-grabpl:
-          filters: *filter-master-or-release
+      # No filters, meaning this job runs for all branches
+      - install-grabpl
       - build-backend:
           filters: *filter-master-or-release
           edition: oss
@@ -1111,35 +843,35 @@ workflows:
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
             - install-grabpl
       - build-frontend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-oss-frontend
           edition: oss
           requires:
@@ -1180,35 +912,35 @@ workflows:
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
           requires:
             - install-grabpl
       - build-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
           requires:
             - install-grabpl
       - build-frontend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-enterprise-frontend
           edition: enterprise
           requires:
@@ -1216,38 +948,38 @@ workflows:
       - build-release-publisher:
           filters: *filter-master-or-release
       - codespell:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
       - lint-go:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
-      - shellcheck-grabpl:
-          filters: *filter-master-or-release
+      - shellcheck:
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
       - test-backend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
             - lint-go
       - test-frontend:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
       - mysql-integration-test:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
             - lint-go
       - postgres-integration-test:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
             - lint-go
       - package-oss:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
             - build-oss-backend-armv6
@@ -1263,11 +995,11 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - shellcheck-grabpl
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
       - package-enterprise:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - install-grabpl
             - build-enterprise-backend-armv6
@@ -1283,15 +1015,15 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - shellcheck-grabpl
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
       - build-oss-windows-installer:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - package-oss
       - build-enterprise-windows-installer:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - package-enterprise
       - release-next-packages:
@@ -1323,7 +1055,7 @@ workflows:
       - publish-storybook:
           filters: *filter-master-or-release
       - build-docker-images:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-oss-docker-images
           edition: oss
           ubuntu: false
@@ -1331,7 +1063,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-oss-ubuntu-docker-images
           edition: oss
           ubuntu: true
@@ -1339,7 +1071,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-enterprise-docker-images
           edition: enterprise
           ubuntu: false
@@ -1347,7 +1079,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           name: build-enterprise-ubuntu-docker-images
           edition: enterprise
           ubuntu: true
@@ -1355,7 +1087,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
-          filters: *filter-master-or-release
+          # No filters, meaning this job runs for all branches
           requires:
             - package-oss
       - publish-docker-images:
@@ -1390,67 +1122,6 @@ workflows:
           requires:
             - build-enterprise-ubuntu-docker-images
             - end-to-end-tests
-
-  build-branches-and-prs:
-    jobs:
-      - build-fast-backend:
-          filters: *filter-not-release-or-master
-      - build-fast-frontend:
-          filters: *filter-not-release-or-master
-      - build-grafana-packages:
-          filters: *filter-not-release-or-master
-      - build-fast-package:
-          filters: *filter-not-release-or-master
-          requires:
-            - build-fast-backend
-            - build-fast-frontend
-      - codespell:
-          filters: *filter-not-release-or-master
-      - lint-go:
-          filters: *filter-not-release-or-master
-      - shellcheck:
-          filters: *filter-not-release-or-master
-      - test-frontend:
-          filters: *filter-not-release-or-master
-      - test-backend:
-          filters: *filter-not-release-or-master
-      - mysql-integration-test:
-          filters: *filter-not-release-or-master
-      - postgres-integration-test:
-          filters: *filter-not-release-or-master
-      - cache-server-test:
-          filters: *filter-not-release-or-master
-      - end-to-end-tests:
-          filters: *filter-not-release-or-master
-          requires:
-            - build-fast-package
-            - test-backend
-            - test-frontend
-            - lint-go
-      - grafana-docker-pr:
-          requires:
-            - build-fast-package
-            - test-backend
-            - test-frontend
-            - codespell
-            - lint-go
-            - shellcheck
-            - mysql-integration-test
-            - postgres-integration-test
-            - cache-server-test
-          filters: *filter-not-release-or-master
-      - grafana-docker-ubuntu-pr:
-          requires:
-            - build-fast-package
-            - test-backend
-            - test-frontend
-            - codespell
-            - lint-go
-            - shellcheck
-            - mysql-integration-test
-            - postgres-integration-test
-            - cache-server-test
-          filters: *filter-not-release-or-master
       - build-docs-website:
           filters: *filter-not-release-or-master
   nightly:
