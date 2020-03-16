@@ -22,7 +22,7 @@ export const FieldConfigItemHeaderTitle: React.FC<FieldConfigItemHeaderTitleProp
   const theme = useTheme();
   const styles = getFieldConfigItemHeaderTitleStyles(theme);
   return (
-    <div className={!transparent && styles.headerWrapper}>
+    <div className={!transparent ? styles.headerWrapper : ''}>
       <div className={styles.header}>
         <Forms.Label description={description}>{title}</Forms.Label>
         <div className={styles.remove} onClick={() => onRemove()} aria-label="FieldConfigItemHeaderTitle remove button">

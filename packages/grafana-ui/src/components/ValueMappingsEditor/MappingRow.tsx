@@ -85,11 +85,10 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
             isSearchable={false}
             options={MAPPING_OPTIONS}
             value={MAPPING_OPTIONS.find(o => o.value === type)}
-            onChange={type => onMappingTypeChange(type.value)}
+            onChange={type => onMappingTypeChange(type.value!)}
           />
         </div>
       </FieldConfigItemHeaderTitle>
-
       <div className={styles.content}>{renderRow()}</div>
     </div>
   );
