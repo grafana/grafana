@@ -57,7 +57,7 @@ describe('custom actions', () => {
         .whenActionIsDispatched(initDashboardTemplating([variable]))
         .whenAsyncActionIsDispatched(updateCustomVariableOptions(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [createAction, setCurrentAction] = actions;
         const expectedNumberOfActions = 2;
 

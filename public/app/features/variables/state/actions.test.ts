@@ -30,7 +30,7 @@ describe('shared actions', () => {
       reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating(list))
-        .thenDispatchedActionPredicateShouldEqual(dispatchedActions => {
+        .thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
           expect(dispatchedActions.length).toEqual(8);
           expect(dispatchedActions[0]).toEqual(
             addVariable(toVariablePayload(query, { global: false, index: 0, model: query }))
@@ -85,7 +85,7 @@ describe('shared actions', () => {
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
 
-      await tester.thenDispatchedActionPredicateShouldEqual(dispatchedActions => {
+      await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
         expect(dispatchedActions.length).toEqual(8);
 
         expect(dispatchedActions[0]).toEqual(
@@ -142,7 +142,7 @@ describe('shared actions', () => {
         .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
         .whenAsyncActionIsDispatched(setOptionFromUrl(toVariableIdentifier(custom), urlValue), true);
 
-      await tester.thenDispatchedActionShouldEqual(
+      await tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(
           toVariablePayload(
             { type: 'custom', uuid: '0' },
@@ -191,7 +191,7 @@ describe('shared actions', () => {
             true
           );
 
-        await tester.thenDispatchedActionPredicateShouldEqual(dispatchedActions => {
+        await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
           const expectedActions: AnyAction[] = !withOptions
             ? []
             : [
@@ -249,7 +249,7 @@ describe('shared actions', () => {
               true
             );
 
-          await tester.thenDispatchedActionPredicateShouldEqual(dispatchedActions => {
+          await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
             const expectedActions: AnyAction[] = !withOptions
               ? []
               : [

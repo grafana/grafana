@@ -111,6 +111,21 @@ export const variableMockBuilder = (type: VariableType) => {
     return instance;
   };
 
+  const withAuto = (auto: boolean) => {
+    model.auto = auto;
+    return instance;
+  };
+
+  const withAutoCount = (autoCount: number) => {
+    model.auto_count = autoCount;
+    return instance;
+  };
+
+  const withAutoMin = (autoMin: string) => {
+    model.auto_min = autoMin;
+    return instance;
+  };
+
   const create = () => model;
 
   const instance = {
@@ -122,6 +137,9 @@ export const variableMockBuilder = (type: VariableType) => {
     withQuery,
     withMulti,
     withRegEx,
+    withAuto,
+    withAutoCount,
+    withAutoMin,
     create,
   };
 
