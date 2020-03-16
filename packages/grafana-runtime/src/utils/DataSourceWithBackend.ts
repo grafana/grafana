@@ -48,19 +48,22 @@ export class DataSourceWithBackend<
 
     let expressionCount = 0;
     const queries = targets.map(q => {
+      const common = {
+        datasourceId: this.id,
+        datasourceName: q.datasource,
+        refId: q.refId,
+        from: rangeFrom,
+        to: rangeTo,
+        intervalMs,
+        maxDataPoints,
+      };
+
       if (q.datasource === ExpressionDatasourceID) {
         expressionCount++;
         return {
-          datasourceId: this.id,
-          datasourceName: q.datasource,
-          refId: q.refId,
-          from: rangeFrom,
-          to: rangeTo,
-          intervalMs,
-          maxDataPoints,
+          ...common,
           model: {
-            ...q,
-            datasourceId: this.id,
+            ...this.applyTemplateVariables(q),
           },
         };
       }
@@ -70,16 +73,10 @@ export class DataSourceWithBackend<
         throw new Error('Unknown Datasource: ' + q.datasource);
       }
       return {
+        ...common,
         datasourceId: ds.id,
-        datasourceName: q.datasource,
-        refId: q.refId,
-        from: rangeFrom,
-        to: rangeTo,
-        intervalMs,
-        maxDataPoints,
         model: {
           ...this.applyTemplateVariables(q),
-          datasourceId: ds.id,
         },
       };
     });
