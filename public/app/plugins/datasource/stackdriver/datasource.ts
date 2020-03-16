@@ -229,6 +229,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     let status, message;
     const defaultErrorMessage = 'Cannot connect to Stackdriver API';
     try {
+      this.ensureGCEDefaultProject();
       const path = `v3/projects/${this.getDefaultProject()}/metricDescriptors`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
       if (response.status === 200) {
