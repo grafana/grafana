@@ -40,6 +40,7 @@ export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
+export { Pagination } from './Pagination/Pagination';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';

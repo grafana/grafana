@@ -47,11 +47,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
-    // Hack to fix font awesome icons
-    > .fa {
-      position: relative;
-      top: 2px;
-    }
   `;
 
   return {
