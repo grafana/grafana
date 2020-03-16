@@ -144,6 +144,7 @@ export {
   SelectOverrideEditor,
   SelectFieldConfigSettings,
 } from './FieldConfigs/select';
+export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
 export { default as Forms, ButtonVariant } from './Forms';

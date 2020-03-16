@@ -39,6 +39,12 @@ export class ValueMappingsOverrideEditor extends React.PureComponent<
   }
 
   render() {
-    return <div>VALUE MAPPINGS OVERRIDE EDITOR {this.props.item.name}</div>;
+    const { onChange } = this.props;
+    let value = this.props.value;
+    if (!value) {
+      value = [];
+    }
+
+    return <ValueMappingsEditor valueMappings={value} onChange={onChange} />;
   }
 }
