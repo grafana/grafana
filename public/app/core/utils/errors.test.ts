@@ -1,7 +1,7 @@
 import { getMessageFromError } from 'app/core/utils/errors';
 
 describe('errors functions', () => {
-  let message: string;
+  let message: string | null;
 
   describe('when getMessageFromError gets an error string', () => {
     beforeEach(() => {

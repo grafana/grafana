@@ -1,18 +1,20 @@
 // Libraries
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 
 // Services & Utils
 import store from 'app/core/store';
+
 // Components
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
+import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 // Actions
 import {
   changeSize,
@@ -48,6 +50,7 @@ import {
   getTimeRangeFromUrl,
   getTimeRange,
   lastUsedDatasourceKeyForOrgId,
+  getFirstNonQueryRowSpecificError,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -57,20 +60,20 @@ import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 
-const getStyles = memoizeOne(() => {
+const getStyles = stylesFactory(() => {
   return {
     logsMain: css`
       label: logsMain;
       // Is needed for some transition animations to work.
       position: relative;
     `,
-    exploreAddButton: css`
-      margin-top: 1em;
+    button: css`
+      margin: 1em 4px 0 0;
     `,
   };
 });
 
-interface ExploreProps {
+export interface ExploreProps {
   changeSize: typeof changeSize;
   datasourceInstance: DataSourceApi;
   datasourceMissing: boolean;
@@ -108,6 +111,10 @@ interface ExploreProps {
   addQueryRow: typeof addQueryRow;
 }
 
+interface ExploreState {
+  showRichHistory: boolean;
+}
+
 /**
  * Explore provides an area for quick query iteration for a given datasource.
  * Once a datasource is selected it populates the query section at the top.
@@ -132,13 +139,16 @@ interface ExploreProps {
  * The result viewers determine some of the query options sent to the datasource, e.g.,
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
-export class Explore extends React.PureComponent<ExploreProps> {
+export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
   exploreEvents: Emitter;
 
   constructor(props: ExploreProps) {
     super(props);
     this.exploreEvents = new Emitter();
+    this.state = {
+      showRichHistory: false,
+    };
   }
 
   componentDidMount() {
@@ -237,6 +247,14 @@ export class Explore extends React.PureComponent<ExploreProps> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  toggleShowRichHistory = () => {
+    this.setState(state => {
+      return {
+        showRichHistory: !state.showRichHistory,
+      };
+    });
+  };
+
   refreshExplore = () => {
     const { exploreId, update } = this.props;
 
@@ -271,10 +289,15 @@ export class Explore extends React.PureComponent<ExploreProps> {
       syncedTimes,
       isLive,
     } = this.props;
+    const { showRichHistory } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+
+    // gets an error without a refID, so non-query-row-related error, like a connection error
+    const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
+    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -286,15 +309,26 @@ export class Explore extends React.PureComponent<ExploreProps> {
             <div className="gf-form">
               <button
                 aria-label="Add row button"
-                className={`gf-form-label gf-form-label--btn ${styles.exploreAddButton}`}
+                className={`gf-form-label gf-form-label--btn ${styles.button}`}
                 onClick={this.onClickAddQueryRowButton}
                 disabled={isLive}
               >
                 <i className={'fa fa-fw fa-plus icon-margin-right'} />
                 <span className="btn-title">{'\xA0' + 'Add query'}</span>
               </button>
+              <button
+                aria-label="Rich history button"
+                className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
+                  ['explore-active-button']: showRichHistory,
+                })}
+                onClick={this.toggleShowRichHistory}
+                disabled={isLive}
+              >
+                <i className={'fa fa-fw fa-history icon-margin-right '} />
+                <span className="btn-title">{'\xA0' + 'Query history'}</span>
+              </button>
             </div>
-            <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
+            <ErrorContainer queryError={queryError} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
@@ -305,7 +339,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                   <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
-                        <div className="grafana-info-box grafana-info-box--max-lg">
+                        <div className={'grafana-info-box grafana-info-box--max-lg'}>
                           <StartPage
                             onClickExample={this.onClickExample}
                             datasource={datasourceInstance}
@@ -348,6 +382,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                           )}
                         </>
                       )}
+                      {showRichHistory && <RichHistoryContainer width={width} exploreId={exploreId} />}
                     </ErrorBoundaryAlert>
                   </main>
                 );
