@@ -168,7 +168,21 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 			return nil, fmt.Errorf("tsdb.HandleRequest() response error %v", v)
 		}
 
-		result = append(result, v.Series...)
+		if v.Dataframes != nil && v.Series == nil {
+			frames, err := tsdb.FramesFromBytes(v.Dataframes)
+			if err != nil {
+				return nil, err // TODO: wrap
+			}
+			for _, frame := range frames {
+				ss, err := tsdb.FrameToSeries(frame)
+				if err != nil {
+					return nil, err // TODO: wrap
+				}
+				result = append(result, ss...)
+			}
+		} else {
+			result = append(result, v.Series...)
+		}
 
 		queryResultData := map[string]interface{}{}
 
