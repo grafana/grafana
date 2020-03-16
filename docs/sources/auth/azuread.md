@@ -1,6 +1,6 @@
 +++
-title = "Azure AD OAuth2 Authentication"
-description = "Grafana OAuthentication Guide "
+title = "Azure AD OAuth2 authentication"
+description = "Grafana Azure AD OAuth Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
 type = "docs"
 [menu.docs]
@@ -10,15 +10,15 @@ parent = "authentication"
 weight = 3
 +++
 
-# Azure AD OAuth2 Authentication
+# Azure AD OAuth2 authentication
 
-The Azure AD authentication provides the possibility to use an Azure Active Directory tenant as an identity provider for Grafana.
+> Only available in Grafana v6.7+
 
-By using Azure AD Application Roles it is also possible to assign Users and Groups to Grafana roles from the Azure Portal.
+The Azure AD authentication provides the possibility to use an Azure Active Directory tenant as an identity provider for Grafana. By using Azure AD Application Roles it is also possible to assign Users and Groups to Grafana roles from the Azure Portal.
+
+## Create the Azure AD application
 
 To enable the Azure AD OAuth2 you must register your application with Azure AD.
-
-# Create Azure AD application
 
 1. Log in to [Azure Portal](https://portal.azure.com) and click **Azure Active Directory** in the side menu.
 
@@ -92,6 +92,8 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Click on **Users and groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
+## Enable Azure AD Oauth in Grafana
+
 1. Add the following to the [Grafana configuration file]({{< relref "../installation/configuration.md#config-file-locations" >}}):
 
 ```ini
@@ -104,6 +106,35 @@ client_secret = CLIENT_SECRET
 scopes = openid email profile
 auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
 token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
+allowed_domains =
+allowed_groups =
 ```
 
 > Note: Ensure that the [root_url]({{< relref "../installation/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
+
+### Configure allowed groups and domains
+
+To limit access to authenticated users that are members of one or more groups, set `allowed_groups`
+to a comma- or space-separated list of group Object Ids. Object Id for a specific group can be found on the Azure portal: go to Azure Active Directory -> Groups. For instance, if you want to
+only give access to members of the group `example` which has Id `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, set
+
+```ini
+allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
+```
+
+The `allowed_domains` option limits access to the users belonging to the specific domains. Domains should be separated by space or comma.
+
+```ini
+allowed_domains = mycompany.com mycompany.org
+```
+
+### Team Sync (Enterprise only)
+
+>  Only available in Grafana Enterprise v6.7+
+
+With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
+the correct teams.
+
+Azure AD groups can be referenced by group Object Id, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
+
+[Learn more about Team Sync]({{< relref "team-sync.md" >}})

@@ -10,12 +10,12 @@ import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
-  SeriesColorPickerPopoverWithTheme,
-  SecretFormField,
-  UnitPicker,
   DataLinksEditor,
   DataSourceHttpSettings,
   GraphContextMenu,
+  SecretFormField,
+  SeriesColorPickerPopoverWithTheme,
+  UnitPicker,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
@@ -24,6 +24,11 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import {
+  SaveDashboardAsButtonConnected,
+  SaveDashboardButtonConnected,
+} from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
+import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
@@ -151,4 +156,16 @@ export function registerAngularDirectives() {
     ['onLoad', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
+  react2AngularDirective('saveDashboardButton', SaveDashboardButtonConnected, [
+    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
+    ['dashboard', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
+    'variant',
+    'useNewForms',
+    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
 }

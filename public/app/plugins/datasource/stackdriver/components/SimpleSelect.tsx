@@ -2,7 +2,7 @@ import React, { ChangeEvent, FC } from 'react';
 
 interface Props {
   onValueChange: (e: ChangeEvent<HTMLSelectElement>) => void;
-  options: any[];
+  options: Array<{ value: string; name: string }>;
   value: string;
   label: string;
 }

@@ -16,7 +16,7 @@ parent = "http_api"
 The identifier (id) of a dashboard is an auto-incrementing numeric value and is only unique per Grafana install.
 
 The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
-It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URL's for accessing
+It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing
 dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "../administration/provisioning.md#dashboards" >}})
 for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
 
@@ -284,7 +284,7 @@ Please note that these resource have been deprecated and will be removed in a fu
 
 `GET /api/dashboards/db/:slug`
 
-Will return the dashboard given the dashboard slug. Slug is the url friendly version of the dashboard title.
+Will return the dashboard given the dashboard slug. Slug is the URL friendly version of the dashboard title.
 If there exists multiple dashboards with the same slug, one of them will be returned in the response.
 
 **Example Request**:
@@ -332,7 +332,7 @@ Status Codes:
 
 `DELETE /api/dashboards/db/:slug`
 
-Will delete the dashboard given the specified slug. Slug is the url friendly version of the dashboard title.
+Will delete the dashboard given the specified slug. Slug is the URL friendly version of the dashboard title.
 
 **Example Request**:
 

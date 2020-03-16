@@ -5,12 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetFolderPermissionList(c *m.ReqContext) Response {
+func GetFolderPermissionList(c *models.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
@@ -21,7 +21,7 @@ func GetFolderPermissionList(c *m.ReqContext) Response {
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return toFolderError(m.ErrFolderAccessDenied)
+		return toFolderError(models.ErrFolderAccessDenied)
 	}
 
 	acl, err := g.GetAcl()
@@ -40,14 +40,14 @@ func GetFolderPermissionList(c *m.ReqContext) Response {
 		}
 
 		if perm.Slug != "" {
-			perm.Url = m.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 	}
 
 	return JSON(200, acl)
 }
 
-func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
@@ -62,14 +62,14 @@ func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclComm
 	}
 
 	if !canAdmin {
-		return toFolderError(m.ErrFolderAccessDenied)
+		return toFolderError(models.ErrFolderAccessDenied)
 	}
 
-	cmd := m.UpdateDashboardAclCommand{}
+	cmd := models.UpdateDashboardAclCommand{}
 	cmd.DashboardId = folder.Id
 
 	for _, item := range apiCmd.Items {
-		cmd.Items = append(cmd.Items, &m.DashboardAcl{
+		cmd.Items = append(cmd.Items, &models.DashboardAcl{
 			OrgId:       c.OrgId,
 			DashboardId: folder.Id,
 			UserId:      item.UserId,
@@ -81,7 +81,7 @@ func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclComm
 		})
 	}
 
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
 			if err == guardian.ErrGuardianPermissionExists ||
 				err == guardian.ErrGuardianOverride {
@@ -95,14 +95,14 @@ func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclComm
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrDashboardAclInfoMissing {
-			err = m.ErrFolderAclInfoMissing
+		if err == models.ErrDashboardAclInfoMissing {
+			err = models.ErrFolderAclInfoMissing
 		}
-		if err == m.ErrDashboardPermissionDashboardEmpty {
-			err = m.ErrFolderPermissionFolderEmpty
+		if err == models.ErrDashboardPermissionDashboardEmpty {
+			err = models.ErrFolderPermissionFolderEmpty
 		}
 
-		if err == m.ErrFolderAclInfoMissing || err == m.ErrFolderPermissionFolderEmpty {
+		if err == models.ErrFolderAclInfoMissing || err == models.ErrFolderPermissionFolderEmpty {
 			return Error(409, err.Error(), err)
 		}
 

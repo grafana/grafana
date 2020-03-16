@@ -10,6 +10,12 @@ import { CustomVariable } from './custom_variable';
 import { ConstantVariable } from './constant_variable';
 import { AdhocVariable } from './adhoc_variable';
 import { TextBoxVariable } from './TextBoxVariable';
+import { variableAdapters } from '../variables/adapters';
+import { createQueryVariableAdapter } from '../variables/query/adapter';
+import { createCustomVariableAdapter } from '../variables/custom/adapter';
+import { createTextBoxVariableAdapter } from '../variables/textbox/adapter';
+import { createConstantVariableAdapter } from '../variables/constant/adapter';
+import { createDataSourceVariableAdapter } from '../variables/datasource/adapter';
 
 coreModule.factory('templateSrv', () => templateSrv);
 
@@ -23,3 +29,9 @@ export {
   AdhocVariable,
   TextBoxVariable,
 };
+
+variableAdapters.set('query', createQueryVariableAdapter());
+variableAdapters.set('custom', createCustomVariableAdapter());
+variableAdapters.set('textbox', createTextBoxVariableAdapter());
+variableAdapters.set('constant', createConstantVariableAdapter());
+variableAdapters.set('datasource', createDataSourceVariableAdapter());

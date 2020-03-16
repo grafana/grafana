@@ -648,7 +648,8 @@ export type IconType =
   | 'snowflake-o'
   | 'superpowers'
   | 'wpexplorer'
-  | 'meetup';
+  | 'meetup'
+  | 'copy';
 
 export const getAvailableIcons = (): IconType[] => [
   'glass',
