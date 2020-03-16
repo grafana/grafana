@@ -29,7 +29,7 @@ executors:
       - image: grafana/build-container:1.2.13
   grafana-publish:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.3
+      - image: grafana/grafana-ci-deploy:1.2.4
   docker:
     machine:
       image: circleci/classic:201808-01
