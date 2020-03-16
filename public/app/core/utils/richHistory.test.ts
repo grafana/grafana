@@ -6,11 +6,52 @@ import {
   createDateStringFromTs,
   createQueryHeading,
   createDataQuery,
+  deleteAllFromRichHistory,
 } from './richHistory';
-
+import store from 'app/core/store';
 import { SortOrder } from './explore';
 
+const mock: any = {
+  history: [
+    {
+      comment: '',
+      datasourceId: 'datasource historyId',
+      datasourceName: 'datasource history name',
+      queries: ['query1', 'query2'],
+      sessionName: '',
+      starred: true,
+      ts: 1,
+    },
+  ],
+  comment: '',
+  datasourceId: 'datasourceId',
+  datasourceName: 'datasourceName',
+  queries: ['query3'],
+  sessionName: '',
+  starred: false,
+};
+
+const key = 'grafana.explore.richHistory';
+
 describe('addToRichHistory', () => {
+  beforeEach(() => {
+    deleteAllFromRichHistory();
+    expect(store.exists(key)).toBeFalsy();
+  });
+
+  const expectedResult = [
+    {
+      comment: mock.comment,
+      datasourceId: mock.datasourceId,
+      datasourceName: mock.datasourceName,
+      queries: mock.queries,
+      sessionName: mock.sessionName,
+      starred: mock.starred,
+      ts: 2,
+    },
+    mock.history[0],
+  ];
+
   it('should append query to query history', () => {
     Date.now = jest.fn(() => 2);
     const newHistory = addToRichHistory(
@@ -22,19 +63,25 @@ describe('addToRichHistory', () => {
       mock.comment,
       mock.sessionName
     );
-    expect(newHistory).toEqual([
-      {
-        comment: mock.comment,
-        datasourceId: mock.datasourceId,
-        datasourceName: mock.datasourceName,
-        queries: mock.queries,
-        sessionName: mock.sessionName,
-        starred: mock.starred,
-        ts: 2,
-      },
-      mock.history[0],
-    ]);
+    expect(newHistory).toEqual(expectedResult);
   });
+
+  it('should save query history to localStorage', () => {
+    Date.now = jest.fn(() => 2);
+
+    addToRichHistory(
+      mock.history,
+      mock.datasourceId,
+      mock.datasourceName,
+      mock.queries,
+      mock.starred,
+      mock.comment,
+      mock.sessionName
+    );
+    expect(store.exists(key)).toBeTruthy();
+    expect(store.getObject(key)).toMatchObject(expectedResult);
+  });
+
   it('should not append duplicated query to query history', () => {
     Date.now = jest.fn(() => 2);
     const newHistory = addToRichHistory(
@@ -48,6 +95,20 @@ describe('addToRichHistory', () => {
     );
     expect(newHistory).toEqual([mock.history[0]]);
   });
+
+  it('should not save duplicated query to localStorage', () => {
+    Date.now = jest.fn(() => 2);
+    addToRichHistory(
+      mock.history,
+      mock.history[0].datasourceId,
+      mock.history[0].datasourceName,
+      mock.history[0].queries,
+      mock.starred,
+      mock.comment,
+      mock.sessionName
+    );
+    expect(store.exists(key)).toBeFalsy();
+  });
 });
 
 describe('updateStarredInRichHistory', () => {
@@ -55,12 +116,22 @@ describe('updateStarredInRichHistory', () => {
     const updatedStarred = updateStarredInRichHistory(mock.history, 1);
     expect(updatedStarred[0].starred).toEqual(false);
   });
+  it('should update starred in localStorage', () => {
+    updateStarredInRichHistory(mock.history, 1);
+    expect(store.exists(key)).toBeTruthy();
+    expect(store.getObject(key)[0].starred).toEqual(false);
+  });
 });
 
 describe('updateCommentInRichHistory', () => {
   it('should update comment in query in history', () => {
     const updatedComment = updateCommentInRichHistory(mock.history, 1, 'new comment');
     expect(updatedComment[0].comment).toEqual('new comment');
+  });
+  it('should update comment in localStorage', () => {
+    updateCommentInRichHistory(mock.history, 1, 'new comment');
+    expect(store.exists(key)).toBeTruthy();
+    expect(store.getObject(key)[0].comment).toEqual('new comment');
   });
 });
 
@@ -95,23 +166,3 @@ describe('createDataQuery', () => {
     expect(dataQuery).toEqual({ datasource: 'datasource history name', expr: 'query3', refId: 'A' });
   });
 });
-
-const mock: any = {
-  history: [
-    {
-      comment: '',
-      datasourceId: 'datasource historyId',
-      datasourceName: 'datasource history name',
-      queries: ['query1', 'query2'],
-      sessionName: '',
-      starred: true,
-      ts: 1,
-    },
-  ],
-  comment: '',
-  datasourceId: 'datasourceId',
-  datasourceName: 'datasourceName',
-  queries: ['query3'],
-  sessionName: '',
-  starred: false,
-};
