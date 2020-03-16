@@ -26,7 +26,6 @@ export class Store {
         console.error(`Error parsing store object: ${key}. Returning default: ${def}. [${error}]`);
       }
     }
-
     return ret;
   }
 
