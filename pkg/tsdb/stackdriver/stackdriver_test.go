@@ -248,29 +248,52 @@ func TestStackdriver(t *testing.T) {
 			})
 
 			Convey("and query type is SLOs", func() {
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"queryType": sloQueryType,
-				// 	"sloQuery": map[string]interface{}{
-				// 		"metricType": "a/metric/type",
-				// 		"view":       "FULL",
-				// 		"aliasBy":    "testalias",
-				// 		"type":       "timeSeriesQuery",
-				// 	},
-				// })
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"queryType":   sloQueryType,
+					"metricQuery": map[string]interface{}{},
+					"sloQuery": map[string]interface{}{
+						"projectName":      "test-proj",
+						"alignmentPeriod":  "stackdriver-auto",
+						"perSeriesAligner": "ALIGN_NEXT_OLDER",
+						"aliasBy":          "",
+						"selectorName":     "select_slo_health",
+						"serviceId":        "test-service",
+						"sloId":            "test-slo",
+					},
+				})
 
-				// queries, err := executor.buildQueries(tsdbQuery)
-				// So(err, ShouldBeNil)
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
 
-				// So(len(queries), ShouldEqual, 1)
-				// So(queries[0].RefID, ShouldEqual, "A")
-				// So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_NONE&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
-				// So(len(queries[0].Params), ShouldEqual, 7)
-				// So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
-				// So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
-				// So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
-				// So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
-				// So(queries[0].Params["view"][0], ShouldEqual, "FULL")
-				// So(queries[0].AliasBy, ShouldEqual, "testalias")
+				So(len(queries), ShouldEqual, 1)
+				So(queries[0].RefID, ShouldEqual, "A")
+				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
+				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
+				So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+				So(queries[0].AliasBy, ShouldEqual, "")
+				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
+				So(queries[0].Target, ShouldEqual, `aggregation.alignmentPeriod=%2B60s&aggregation.perSeriesAligner=ALIGN_MEAN&filter=select_slo_health%28%22projects%2Ftest-proj%2Fservices%2Ftest-service%2FserviceLevelObjectives%2Ftest-slo%22%29&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z`)
+				So(len(queries[0].Params), ShouldEqual, 5)
+
+				Convey("and perSeriesAligner is inferred by SLO selector", func() {
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"queryType":   sloQueryType,
+						"metricQuery": map[string]interface{}{},
+						"sloQuery": map[string]interface{}{
+							"projectName":      "test-proj",
+							"alignmentPeriod":  "stackdriver-auto",
+							"perSeriesAligner": "ALIGN_NEXT_OLDER",
+							"aliasBy":          "",
+							"selectorName":     "select_slo_compliance",
+							"serviceId":        "test-service",
+							"sloId":            "test-slo",
+						},
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_NEXT_OLDER")
+				})
 			})
 		})
 
