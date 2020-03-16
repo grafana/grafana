@@ -97,7 +97,7 @@ If you are using the token for a slack bot, then you have to invite the bot to t
 
 ### PagerDuty
 
-To set up PagerDuty, all you have to do is to provide an API key.
+To set up PagerDuty, all you have to do is to provide an integration key.
 
 Setting | Description
 ---------- | -----------

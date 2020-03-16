@@ -39,7 +39,8 @@ const manifestRunner: TaskRunner<ManifestOptions> = async ({ folder }) => {
   // Call a signing service
   const GRAFANA_API_KEY = process.env.GRAFANA_API_KEY;
   if (GRAFANA_API_KEY) {
-    const plugin = require('plugin.json');
+    const pluginPath = path.join(folder, 'plugin.json');
+    const plugin = require(pluginPath);
     const url = `https://grafana.com/api/plugins/${plugin.id}/sign`;
     console.log(`TODO: sign and save: ${url}`);
   }

@@ -14,6 +14,7 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
+import { githubPublishTask } from './tasks/plugin.utils';
 import {
   ciBuildPluginTask,
   ciBuildPluginDocsTask,
@@ -205,6 +206,22 @@ export const run = (includeInternalScripts = false) => {
     .action(async cmd => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
+      });
+    });
+
+  program
+    .command('plugin:github-publish')
+    .option('--dryrun', 'Do a dry run only', false)
+    .option('--verbose', 'Print verbose', false)
+    .option('--commitHash <hashKey>', 'Specify the commit hash')
+    .option('--recreate', 'Recreate the release if already present')
+    .description('Publish to github ... etc etc etc')
+    .action(async cmd => {
+      await execTask(githubPublishTask)({
+        dryrun: cmd.dryrun,
+        verbose: cmd.verbose,
+        commitHash: cmd.commitHash,
+        recreate: cmd.recreate,
       });
     });
 

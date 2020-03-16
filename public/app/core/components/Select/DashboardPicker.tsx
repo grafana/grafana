@@ -1,5 +1,6 @@
-import React, { PureComponent } from 'react';
+import React, { FC } from 'react';
 import { debounce } from 'lodash';
+import { useAsyncFn } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { Forms } from '@grafana/ui';
 import { FormInputSize } from '@grafana/ui/src/components/Forms/types';
@@ -8,64 +9,47 @@ import { DashboardSearchHit, DashboardDTO } from 'app/types';
 
 export interface Props {
   onSelected: (dashboard: DashboardDTO) => void;
-  currentDashboardId?: SelectableValue<number>;
+  currentDashboard?: SelectableValue<number>;
   size?: FormInputSize;
+  isClearable?: boolean;
 }
 
-export interface State {
-  isLoading: boolean;
-}
+const getDashboards = (query = '') => {
+  return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
+    return result.map((item: DashboardSearchHit) => ({
+      id: item.id,
+      value: item.id,
+      label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
+    }));
+  });
+};
 
-export class DashboardPicker extends PureComponent<Props, State> {
-  debouncedSearch: any;
+export const DashboardPicker: FC<Props> = ({
+  onSelected,
+  currentDashboard,
+  size = 'md',
+  isClearable = false,
+  ...rest
+}) => {
+  const debouncedSearch = debounce(getDashboards, 300, {
+    leading: true,
+    trailing: true,
+  });
 
-  static defaultProps = {
-    size: 'md',
-  };
+  const [state, searchDashboards] = useAsyncFn(debouncedSearch, []);
 
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      isLoading: false,
-    };
-
-    this.debouncedSearch = debounce(this.getDashboards, 300, {
-      leading: true,
-      trailing: true,
-    });
-  }
-
-  getDashboards = (query = '') => {
-    this.setState({ isLoading: true });
-    return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
-      const dashboards = result.map((item: DashboardSearchHit) => ({
-        id: item.id,
-        value: item.id,
-        label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
-      }));
-
-      this.setState({ isLoading: false });
-      return dashboards;
-    });
-  };
-
-  render() {
-    const { size, onSelected, currentDashboardId } = this.props;
-    const { isLoading } = this.state;
-
-    return (
-      <Forms.AsyncSelect
-        size={size}
-        isLoading={isLoading}
-        isClearable={true}
-        defaultOptions={true}
-        loadOptions={this.debouncedSearch}
-        onChange={onSelected}
-        placeholder="Select dashboard"
-        noOptionsMessage={'No dashboards found'}
-        value={currentDashboardId}
-      />
-    );
-  }
-}
+  return (
+    <Forms.AsyncSelect
+      size={size}
+      isLoading={state.loading}
+      isClearable={isClearable}
+      defaultOptions={true}
+      loadOptions={searchDashboards}
+      onChange={onSelected}
+      placeholder="Select dashboard"
+      noOptionsMessage="No dashboards found"
+      value={currentDashboard}
+      {...rest}
+    />
+  );
+};

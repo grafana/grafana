@@ -14,6 +14,8 @@ import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { Select } from './Select/Select';
 import Forms from './index';
 import mdx from './Form.mdx';
+import { ValidateResult } from 'react-hook-form';
+import { boolean } from '@storybook/addon-knobs';
 
 export default {
   title: 'Forms/Test forms',
@@ -98,7 +100,7 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
             <Forms.InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
           </Field>
 
-          <Field label="Select" invalid={!!errors.select}>
+          <Field label="Select" invalid={!!errors.select} error="Select is required">
             <Forms.InputControl
               name="select"
               control={control}
@@ -157,4 +159,56 @@ export const defaultValues = () => {
       </Button>
     </>
   );
+};
+
+export const asyncValidation = () => {
+  const passAsyncValidation = boolean('Pass username validation', true);
+  return (
+    <>
+      <Form
+        onSubmit={(data: FormDTO) => {
+          alert('Submitted successfully!');
+        }}
+      >
+        {({ register, control, errors, formState }) =>
+          (console.log(errors) as any) || (
+            <>
+              <Legend>Edit user</Legend>
+
+              <Field label="Name" invalid={!!errors.name} error="Username is already taken">
+                <Input
+                  name="name"
+                  placeholder="Roger Waters"
+                  size="md"
+                  ref={register({ validate: validateAsync(passAsyncValidation) })}
+                />
+              </Field>
+
+              <Button type="submit" disabled={formState.isSubmitting}>
+                Submit
+              </Button>
+            </>
+          )
+        }
+      </Form>
+    </>
+  );
+};
+
+const validateAsync = (shouldPass: boolean) => async () => {
+  try {
+    await new Promise<ValidateResult>((resolve, reject) => {
+      setTimeout(() => {
+        if (shouldPass) {
+          resolve();
+        } else {
+          reject('Something went wrong...');
+        }
+      }, 2000);
+    });
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
 };

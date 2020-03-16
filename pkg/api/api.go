@@ -265,6 +265,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/:id/resources", hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/resources/*", hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/:id/health", hs.CheckDatasourceHealth)
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
