@@ -4,16 +4,16 @@ Grafana Labs uses a minimal home grown solution built on top of Cypress for our 
 
 ## Commands
 
-- `yarn e2e` Creates an isolated grafana-server home under /e2e/tmp with provisioned data sources and dashboards. This
+- `yarn e2e` Creates an isolated grafana-server home under `<repo-root>/e2e/tmp` with provisioned data sources and dashboards. This
   copies locally build binary and frontned assets from your repo root so you need to have a built backend and frontend
   for this to run locally. The server starts on port 3001 so it does not conflict with your normal dev server.
 - `yarn e2e:debug` Same as above but runs the tests in chrome and does not shutdown after completion.
 - `yarn e2e:dev` Same as above but does not run any tests on startup. It lets you pick a test first.
 
-The above commands use some utils scripts under /e2e that can also be used for more control.
+The above commands use some utils scripts under `<repo-root>/e2e` that can also be used for more control.
 
 - `./e2e/start-server` This creates a fresh new grafana server working dir, setup's config and starts the server. It
-  will also kill any previously started server that is still running using pid file at `e2e/tmp/pid`.
+  will also kill any previously started server that is still running using pid file at `<repo-root>/e2e/tmp/pid`.
 - `./e2e/run-suite <debug|dev|noarg>` Starts cypress in different modes.
 
 ## Test Suites
