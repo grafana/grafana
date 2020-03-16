@@ -16,7 +16,7 @@ RUN sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
 RUN sudo ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 
 # Install dependencies
-RUN sudo apt-get install -y adduser libfontconfig1
+RUN sudo apt-get install -y adduser libfontconfig1 updatedb
 
 # Install code climate
 ADD https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 /usr/local/bin/cc-test-reporter
