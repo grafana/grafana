@@ -76,8 +76,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     super(props);
     this.state = {
       activeTab: this.props.firstTab,
-      datasourceFilters: null,
       sortOrder: SortOrder.Descending,
+      datasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, null),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
       activeDatasourceOnly: store.getBool(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
@@ -108,6 +108,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   };
 
   onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
+    store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
     this.setState({ datasourceFilters: value });
   };
 
@@ -126,7 +127,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       ? this.onSelectDatasourceFilters([
           { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
         ])
-      : this.onSelectDatasourceFilters(null);
+      : this.onSelectDatasourceFilters(this.state.datasourceFilters);
   }
 
   componentDidMount() {

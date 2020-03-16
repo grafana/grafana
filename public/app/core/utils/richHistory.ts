@@ -17,6 +17,7 @@ export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: `${RICH_HISTORY_KEY}.retentionPeriod`,
   starredTabAsFirstTab: `${RICH_HISTORY_KEY}.starredTabAsFirstTab`,
   activeDatasourceOnly: `${RICH_HISTORY_KEY}.activeDatasourceOnly`,
+  datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };
 
 /*
