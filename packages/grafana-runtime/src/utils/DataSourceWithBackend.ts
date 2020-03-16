@@ -13,6 +13,18 @@ import { getBackendSrv } from '../services';
 // Ideally internal (exported for consistency)
 const ExpressionDatasourceID = '__expr__';
 
+export enum HealthStatus {
+  Unknown = 'UNKNOWN',
+  OK = 'OK',
+  Error = 'ERROR',
+}
+
+export interface HealthCheckResult {
+  status: HealthStatus;
+  message: string;
+  details?: Record<string, any>;
+}
+
 export class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
@@ -22,7 +34,7 @@ export class DataSourceWithBackend<
   }
 
   /**
-   * Ideally final -- any other implementation would be wrong!
+   * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest): Observable<DataQueryResponse> {
     const { targets, intervalMs, maxDataPoints, range } = request;
@@ -44,7 +56,7 @@ export class DataSourceWithBackend<
         throw new Error('Unknown Datasource: ' + q.datasource);
       }
       return {
-        ...q,
+        ...this.applyTemplateVariables(q),
         datasourceId: ds.id,
         intervalMs,
         maxDataPoints,
@@ -71,7 +83,14 @@ export class DataSourceWithBackend<
   }
 
   /**
-   * This makes the arrow libary loading async.
+   * Override to apply template variables
+   */
+  applyTemplateVariables(query: DataQuery) {
+    return query;
+  }
+
+  /**
+   * This makes the arrow library loading async.
    */
   async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
     const { resultsToDataFrames } = await import(
@@ -80,8 +99,50 @@ export class DataSourceWithBackend<
     return { data: resultsToDataFrames(rsp) };
   }
 
-  testDatasource() {
-    // TODO, this will call the backend healthcheck endpoint
-    return Promise.resolve({});
+  /**
+   * Make a GET request to the datasource resource path
+   */
+  async getResource(path: string, params?: any): Promise<Record<string, any>> {
+    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params);
+  }
+
+  /**
+   * Send a POST request to the datasource resource path
+   */
+  async postResource(path: string, body?: any): Promise<Record<string, any>> {
+    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
+  }
+
+  /**
+   * Run the datasource healthcheck
+   */
+  async callHealthCheck(): Promise<HealthCheckResult> {
+    return getBackendSrv()
+      .get(`/api/datasources/${this.id}/health`)
+      .then(v => {
+        return v as HealthCheckResult;
+      })
+      .catch(err => {
+        err.isHandled = true; // Avoid extra popup warning
+        return err.data as HealthCheckResult;
+      });
+  }
+
+  /**
+   * Checks the plugin health
+   */
+  async testDatasource(): Promise<any> {
+    return this.callHealthCheck().then(res => {
+      if (res.status === HealthStatus.OK) {
+        return {
+          status: 'success',
+          message: res.message,
+        };
+      }
+      return {
+        status: 'fail',
+        message: res.message,
+      };
+    });
   }
 }

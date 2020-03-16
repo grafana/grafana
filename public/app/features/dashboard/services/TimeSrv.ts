@@ -19,6 +19,10 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { appEvents } from '../../../core/core';
+import { CoreEvents } from '../../../types';
+
+import { config } from 'app/core/config';
 
 export class TimeSrv {
   time: any;
@@ -40,8 +44,8 @@ export class TimeSrv {
     // default time
     this.time = DefaultTimeRange.raw;
 
-    $rootScope.$on('zoom-out', this.zoomOut.bind(this));
-    $rootScope.$on('shift-time', this.shiftTime.bind(this));
+    appEvents.on(CoreEvents.zoomOut, this.zoomOut.bind(this));
+    appEvents.on(CoreEvents.shiftTime, this.shiftTime.bind(this));
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
 
     document.addEventListener('visibilitychange', () => {
@@ -68,6 +72,19 @@ export class TimeSrv {
     if (this.refresh) {
       this.setAutoRefresh(this.refresh);
     }
+  }
+
+  getValidIntervals(intervals: string[]): string[] {
+    if (!this.contextSrv.minRefreshInterval) {
+      return intervals;
+    }
+
+    const validIntervals = intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
+
+    if (validIntervals.indexOf(this.contextSrv.minRefreshInterval) === -1) {
+      validIntervals.unshift(this.contextSrv.minRefreshInterval);
+    }
+    return validIntervals;
   }
 
   private parseTime() {
@@ -136,7 +153,11 @@ export class TimeSrv {
     }
     // but if refresh explicitly set then use that
     if (params.refresh) {
-      this.refresh = params.refresh || this.refresh;
+      if (!this.contextSrv.isAllowedInterval(params.refresh)) {
+        this.refresh = config.minRefreshInterval;
+      } else {
+        this.refresh = params.refresh || this.refresh;
+      }
     }
   }
 
@@ -168,7 +189,8 @@ export class TimeSrv {
     this.cancelNextRefresh();
 
     if (interval) {
-      const intervalMs = kbn.interval_to_ms(interval);
+      const validInterval = this.contextSrv.getValidInterval(interval);
+      const intervalMs = kbn.interval_to_ms(validInterval);
 
       this.refreshTimer = this.timer.register(
         this.$timeout(() => {
@@ -182,7 +204,7 @@ export class TimeSrv {
     this.$timeout(() => {
       const params = this.$location.search();
       if (interval) {
-        params.refresh = interval;
+        params.refresh = this.contextSrv.getValidInterval(interval);
         this.$location.search(params);
       } else if (params.refresh) {
         delete params.refresh;
@@ -266,14 +288,14 @@ export class TimeSrv {
     };
   }
 
-  zoomOut(e: any, factor: number) {
+  zoomOut(factor: number) {
     const range = this.timeRange();
     const { from, to } = getZoomedTimeRange(range, factor);
 
     this.setTime({ from: toUtc(from), to: toUtc(to) });
   }
 
-  shiftTime(e: any, direction: number) {
+  shiftTime(direction: number) {
     const range = this.timeRange();
     const { from, to } = getShiftedTimeRange(direction, range);
 

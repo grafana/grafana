@@ -11,10 +11,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware"
 )
 
-func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	var executable = "phantomjs"
 	if runtime.GOOS == "windows" {
 		executable = executable + ".exe"
@@ -32,12 +31,6 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	if err != nil {
 		return nil, err
 	}
-
-	renderKey, err := middleware.AddRenderAuthKey(opts.OrgId, opts.UserId, opts.OrgRole)
-	if err != nil {
-		return nil, err
-	}
-	defer middleware.RemoveRenderAuthKey(renderKey)
 
 	phantomDebugArg := "--debug=false"
 	if log.GetLogLevelFor("rendering") >= log.LvlDebug {

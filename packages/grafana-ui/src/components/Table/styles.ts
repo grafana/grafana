@@ -31,10 +31,13 @@ export const getTableStyles = stylesFactory(
       cellHeightInner: bodyFontSize * lineHeight,
       rowHeight: cellHeight + 2,
       table: css`
+        height: 100%;
+        width: 100%;
         overflow: auto;
-        border-spacing: 0;
+        display: flex;
       `,
       thead: css`
+        label: thead;
         overflow-y: auto;
         overflow-x: hidden;
         background: ${headerBg};
@@ -46,6 +49,7 @@ export const getTableStyles = stylesFactory(
         color: ${colors.blue};
       `,
       row: css`
+        label: row;
         border-bottom: 2px solid ${colors.bodyBg};
       `,
       tableCell: css`

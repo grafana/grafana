@@ -24,9 +24,5 @@ export * from './theme';
 export * from './orgs';
 export * from './flot';
 
-import * as AppEvents from './appEvents';
-import { AppEvent } from './appEvents';
-export { AppEvent, AppEvents };
-
-import * as PanelEvents from './panelEvents';
-export { PanelEvents };
+export { AppEvent, AppEvents } from './appEvents';
+export { PanelEvents } from './panelEvents';

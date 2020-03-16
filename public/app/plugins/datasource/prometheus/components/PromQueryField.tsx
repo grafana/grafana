@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { Plugin } from 'slate';
 import {
@@ -110,6 +110,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
 
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
   history: Array<HistoryItem<PromQuery>>;
+  ExtraFieldElement?: ReactNode;
 }
 
 interface PromQueryFieldState {
@@ -291,12 +292,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { data, query, children } = this.props;
+    const { query, ExtraFieldElement } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, metricsOptions);
     const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
-    const showError = data && data.error && data.error.refId === query.refId;
 
     return (
       <>
@@ -321,13 +321,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {children}
+          {ExtraFieldElement}
         </div>
-        {showError ? (
-          <div className="query-row-break">
-            <div className="prom-query-field-info text-error">{data.error.message}</div>
-          </div>
-        ) : null}
         {hint ? (
           <div className="query-row-break">
             <div className="prom-query-field-info text-warning">

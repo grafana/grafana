@@ -13,8 +13,9 @@ import {
   PanelData,
   QueryFixAction,
   TimeRange,
+  ExploreMode,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreUIState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUIState } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
@@ -295,6 +296,8 @@ export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/s
 export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen');
 
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
+
+export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */

@@ -27,7 +27,6 @@ import {
   getDataLinksVariableSuggestions,
   getCalculationValueDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
-import { config } from 'app/core/config';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
   onThresholdsChanged = (thresholds: ThresholdsConfig) => {
@@ -124,12 +123,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor
-            onChange={this.onThresholdsChanged}
-            thresholds={defaults.thresholds}
-            theme={config.theme}
-            showAlphaUI={config.featureToggles.newEdit}
-          />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />

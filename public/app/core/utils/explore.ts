@@ -21,6 +21,7 @@ import {
   TimeRange,
   TimeZone,
   toUtc,
+  ExploreMode,
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
@@ -28,7 +29,7 @@ import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { ExploreMode, ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -107,8 +108,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments) {
     const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
     url = renderUrl('/explore', { left: exploreState });
   }
-  const finalUrl = config.appSubUrl + url;
-  return finalUrl;
+  return url;
 }
 
 export function buildQueryTransaction(
@@ -500,6 +500,8 @@ const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
 export enum SortOrder {
   Descending = 'Descending',
   Ascending = 'Ascending',
+  DatasourceAZ = 'Datasource A-Z',
+  DatasourceZA = 'Datasource Z-A',
 }
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
@@ -539,3 +541,8 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 export function deduplicateLogRowsById(rows: LogRowModel[]) {
   return _.uniqBy(rows, 'uid');
 }
+
+export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]) => {
+  const refId = getValueWithRefId(queryErrors);
+  return refId ? null : getFirstQueryErrorWithoutRefId(queryErrors);
+};

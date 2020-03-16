@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/toolkit",
-  "version": "6.7.0-pre",
+  "version": "7.0.0-pre.0",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
@@ -12,27 +12,31 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git"
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-toolkit"
   },
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
   },
   "scripts": {
-    "tslint": "tslint -c tslint.json --project tsconfig.json",
-    "typecheck": "tsc --noEmit",
-    "precommit": "npm run tslint & npm run typecheck",
+    "build": "grafana-toolkit toolkit:build",
     "clean": "rimraf ./dist ./compiled",
-    "build": "grafana-toolkit toolkit:build"
+    "lint": "eslint src/ --ext=.js,.ts,.tsx",
+    "precommit": "npm run lint & npm run typecheck",
+    "typecheck": "tsc --noEmit"
   },
   "main": "src/index.ts",
   "dependencies": {
     "@babel/core": "7.8.3",
     "@babel/preset-env": "7.8.3",
-    "@grafana/data": "6.7.0-pre",
-    "@grafana/ui": "6.7.0-pre",
+    "@grafana/data": "7.0.0-pre.0",
+    "@grafana/eslint-config": "^1.0.0-rc1",
+    "@grafana/tsconfig": "^1.0.0-rc1",
+    "@grafana/ui": "7.0.0-pre.0",
     "@types/command-exists": "^1.2.0",
     "@types/execa": "^0.9.0",
     "@types/expect-puppeteer": "3.3.1",
+    "@types/fs-extra": "^8.1.0",
     "@types/inquirer": "^6.0.3",
     "@types/jest": "24.0.13",
     "@types/jest-cli": "^23.6.0",
@@ -44,6 +48,8 @@
     "@types/semver": "^6.0.0",
     "@types/tmp": "^0.1.0",
     "@types/webpack": "4.4.34",
+    "@typescript-eslint/eslint-plugin": "2.19.2",
+    "@typescript-eslint/parser": "2.19.2",
     "axios": "0.19.0",
     "babel-jest": "24.8.0",
     "babel-loader": "8.0.6",
@@ -54,9 +60,14 @@
     "concurrently": "4.1.0",
     "copy-webpack-plugin": "5.0.3",
     "css-loader": "^3.0.0",
+    "eslint": "6.7.2",
+    "eslint-config-prettier": "6.7.0",
+    "eslint-plugin-jsdoc": "18.4.1",
+    "eslint-plugin-prettier": "3.1.1",
     "execa": "^1.0.0",
     "expect-puppeteer": "4.1.1",
     "file-loader": "^4.0.0",
+    "fs-extra": "^8.1.0",
     "globby": "^10.0.1",
     "html-loader": "0.5.5",
     "html-webpack-plugin": "^3.2.0",
@@ -94,8 +105,6 @@
     "ts-loader": "6.2.1",
     "ts-node": "8.5.0",
     "tslib": "1.10.0",
-    "tslint": "5.20.1",
-    "tslint-config-prettier": "^1.18.0",
     "typescript": "3.7.2",
     "url-loader": "^2.0.1",
     "webpack": "4.35.0"

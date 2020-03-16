@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Legend } from './Legend';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -14,9 +14,11 @@ import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { Select } from './Select/Select';
 import Forms from './index';
 import mdx from './Form.mdx';
+import { ValidateResult } from 'react-hook-form';
+import { boolean } from '@storybook/addon-knobs';
 
 export default {
-  title: 'UI/Forms/Test forms',
+  title: 'Forms/Test forms',
   decorators: [withStoryContainer, withCenteredStory],
   parameters: {
     docs: {
@@ -98,7 +100,7 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
             <Forms.InputControl name="radio" control={control} options={selectOptions} as={RadioButtonGroup} />
           </Field>
 
-          <Field label="RadioButton" invalid={!!errors.select}>
+          <Field label="Select" invalid={!!errors.select} error="Select is required">
             <Forms.InputControl
               name="select"
               control={control}
@@ -122,17 +124,91 @@ export const basic = () => {
 };
 
 export const defaultValues = () => {
+  const defaultValues = [
+    {
+      name: 'Roger Waters',
+      nested: {
+        path: 'Nested path default value',
+      },
+      radio: 'option2',
+      select: 'option1',
+      switch: true,
+    },
+    {
+      name: 'John Waters',
+      nested: {
+        path: 'Nested path default value updated',
+      },
+      radio: 'option1',
+      select: 'option2',
+      switch: false,
+    },
+  ];
+  const [defaultsIdx, setDefaultsIdx] = useState(0);
+
   return (
     <>
-      {renderForm({
-        name: 'Roger Waters',
-        nested: {
-          path: 'Nested path default value',
-        },
-        radio: 'option2',
-        select: 'option1',
-        switch: true,
-      })}
+      {renderForm(defaultValues[defaultsIdx])}
+      <Button
+        onClick={() => {
+          setDefaultsIdx(s => (s + 1) % 2);
+        }}
+        variant="secondary"
+      >
+        Change default values
+      </Button>
     </>
   );
+};
+
+export const asyncValidation = () => {
+  const passAsyncValidation = boolean('Pass username validation', true);
+  return (
+    <>
+      <Form
+        onSubmit={(data: FormDTO) => {
+          alert('Submitted successfully!');
+        }}
+      >
+        {({ register, control, errors, formState }) =>
+          (console.log(errors) as any) || (
+            <>
+              <Legend>Edit user</Legend>
+
+              <Field label="Name" invalid={!!errors.name} error="Username is already taken">
+                <Input
+                  name="name"
+                  placeholder="Roger Waters"
+                  size="md"
+                  ref={register({ validate: validateAsync(passAsyncValidation) })}
+                />
+              </Field>
+
+              <Button type="submit" disabled={formState.isSubmitting}>
+                Submit
+              </Button>
+            </>
+          )
+        }
+      </Form>
+    </>
+  );
+};
+
+const validateAsync = (shouldPass: boolean) => async () => {
+  try {
+    await new Promise<ValidateResult>((resolve, reject) => {
+      setTimeout(() => {
+        if (shouldPass) {
+          resolve();
+        } else {
+          reject('Something went wrong...');
+        }
+      }, 2000);
+    });
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
 };

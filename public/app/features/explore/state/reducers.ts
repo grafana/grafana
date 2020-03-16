@@ -11,6 +11,7 @@ import {
   PanelEvents,
   TimeZone,
   toLegacyResponseData,
+  ExploreMode,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -25,7 +26,7 @@ import {
   sortLogsResult,
   stopQueryState,
 } from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUpdateState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
   addQueryRowAction,
   changeLoadingStateAction,
@@ -37,6 +38,7 @@ import {
   clearQueriesAction,
   highlightLogsExpressionAction,
   historyUpdatedAction,
+  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -131,10 +133,11 @@ export const createEmptyQueryResponse = (): PanelData => ({
  */
 export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
-  split: null,
+  split: false,
   syncedTimes: false,
   left: initialExploreItemState,
   right: initialExploreItemState,
+  richHistory: [],
 };
 
 /**
@@ -636,6 +639,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
 
   if (syncTimesAction.match(action)) {
     return { ...state, syncedTimes: action.payload.syncedTimes };
+  }
+
+  if (richHistoryUpdatedAction.match(action)) {
+    return {
+      ...state,
+      richHistory: action.payload.richHistory,
+    };
   }
 
   if (resetExploreAction.match(action)) {

@@ -2,8 +2,8 @@ import React, { FC } from 'react';
 
 export const AnnotationsHelp: FC = () => {
   return (
-    <div className="gf-form grafana-info-box" style={{ padding: 0 }}>
-      <pre className="gf-form-pre alert alert-info" style={{ marginRight: 0 }}>
+    <div className="gf-form grafana-info-box alert-info">
+      <div>
         <h5>Annotation Query Format</h5>
         <p>
           An annotation is an event that is overlaid on top of graphs. Annotation rendering is expensive so it is
@@ -38,7 +38,7 @@ export const AnnotationsHelp: FC = () => {
         <p>
           <code>{`${'{{resource.label.label_name}}'}`}</code> = Resource label metadata e.g. resource.label.zone
         </p>
-      </pre>
+      </div>
     </div>
   );
 };

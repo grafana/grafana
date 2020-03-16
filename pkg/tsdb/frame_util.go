@@ -3,19 +3,19 @@ package tsdb
 import (
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // SeriesToFrame converts a TimeSeries to a sdk Frame
-func SeriesToFrame(series *TimeSeries) (*dataframe.Frame, error) {
+func SeriesToFrame(series *TimeSeries) (*data.Frame, error) {
 	timeVec := make([]*time.Time, len(series.Points))
 	floatVec := make([]*float64, len(series.Points))
 	for idx, point := range series.Points {
 		timeVec[idx], floatVec[idx] = convertTSDBTimePoint(point)
 	}
-	frame := dataframe.New(series.Name,
-		dataframe.NewField("time", nil, timeVec),
-		dataframe.NewField("value", dataframe.Labels(series.Tags), floatVec),
+	frame := data.NewFrame(series.Name,
+		data.NewField("time", nil, timeVec),
+		data.NewField("value", data.Labels(series.Tags), floatVec),
 	)
 
 	return frame, nil

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,13 +23,13 @@ func TestPluginProxy(t *testing.T) {
 
 		setting.SecretKey = "password"
 
-		bus.AddHandler("test", func(query *m.GetPluginSettingByIdQuery) error {
+		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
 			key, err := util.Encrypt([]byte("123"), "password")
 			if err != nil {
 				return err
 			}
 
-			query.Result = &m.PluginSetting{
+			query.Result = &models.PluginSetting{
 				SecureJsonData: map[string][]byte{
 					"key": key,
 				},
@@ -47,8 +47,8 @@ func TestPluginProxy(t *testing.T) {
 
 	Convey("When SendUserHeader config is enabled", t, func() {
 		req := getPluginProxiedRequest(
-			&m.ReqContext{
-				SignedInUser: &m.SignedInUser{
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
 			},
@@ -64,8 +64,8 @@ func TestPluginProxy(t *testing.T) {
 
 	Convey("When SendUserHeader config is disabled", t, func() {
 		req := getPluginProxiedRequest(
-			&m.ReqContext{
-				SignedInUser: &m.SignedInUser{
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
 			},
@@ -80,8 +80,8 @@ func TestPluginProxy(t *testing.T) {
 
 	Convey("When SendUserHeader config is enabled but user is anonymous", t, func() {
 		req := getPluginProxiedRequest(
-			&m.ReqContext{
-				SignedInUser: &m.SignedInUser{IsAnonymous: true},
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{IsAnonymous: true},
 			},
 			&setting.Cfg{SendUserHeader: true},
 			nil,
@@ -99,8 +99,8 @@ func TestPluginProxy(t *testing.T) {
 			Method: "GET",
 		}
 
-		bus.AddHandler("test", func(query *m.GetPluginSettingByIdQuery) error {
-			query.Result = &m.PluginSetting{
+		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+			query.Result = &models.PluginSetting{
 				JsonData: map[string]interface{}{
 					"dynamicUrl": "https://dynamic.grafana.com",
 				},
@@ -109,8 +109,8 @@ func TestPluginProxy(t *testing.T) {
 		})
 
 		req := getPluginProxiedRequest(
-			&m.ReqContext{
-				SignedInUser: &m.SignedInUser{
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
 				},
 			},
@@ -133,13 +133,13 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(ctx *m.ReqContext, cfg *setting.Cfg, route *plugins.AppPluginRoute) *http.Request {
+func getPluginProxiedRequest(ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.AppPluginRoute) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.AppPluginRoute{
 			Path:    "api/v4/",
 			Url:     "https://www.google.com",
-			ReqRole: m.ROLE_EDITOR,
+			ReqRole: models.ROLE_EDITOR,
 		}
 	}
 	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)

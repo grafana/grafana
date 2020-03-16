@@ -8,7 +8,7 @@ import { stylesFactory, useTheme, selectThemeVariant } from '../../themes';
 export interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
-  title?: string;
+  title?: (() => JSX.Element) | string;
   /** Should the Drawer be closable by clicking on the mask */
   closeOnMaskClick?: boolean;
   /** Render the drawer inside a container on the page */
@@ -43,7 +43,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
     titleWrapper: css`
       font-size: ${theme.typography.size.lg};
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
       border-bottom: 1px solid ${borderColor};
       padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
@@ -94,12 +94,15 @@ export const Drawer: FC<Props> = ({
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
       className={drawerStyles.drawer}
     >
-      <div className={drawerStyles.titleWrapper}>
-        <div>{title}</div>
-        <div className={drawerStyles.close} onClick={onClose}>
-          <i className="fa fa-close" />
+      {typeof title === 'string' && (
+        <div className={drawerStyles.titleWrapper}>
+          <div>{title}</div>
+          <div className={drawerStyles.close} onClick={onClose}>
+            <i className="fa fa-close" />
+          </div>
         </div>
-      </div>
+      )}
+      {typeof title === 'function' && title()}
       <div className={drawerStyles.content}>
         {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
       </div>
