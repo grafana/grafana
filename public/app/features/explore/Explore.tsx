@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { TraceTimelineViewer, Trace, Span, Log, KeyValuePair, Link } from '@jaegertracing/jaeger-ui-components';
+// import * as t from 'testpackage';
 
 // Services & Utils
 import store from 'app/core/store';
