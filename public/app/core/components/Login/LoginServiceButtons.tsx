@@ -33,6 +33,10 @@ const loginServices: () => LoginServices = () => {
       hrefName: 'grafana_com',
       icon: 'grafana_com',
     },
+    okta: {
+      enabled: config.oauth.okta,
+      name: 'Okta',
+    },
     oauth: {
       enabled: oauthEnabled && config.oauth.generic_oauth,
       name: oauthEnabled && config.oauth.generic_oauth ? config.oauth.generic_oauth.name : 'OAuth',

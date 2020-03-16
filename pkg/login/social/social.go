@@ -55,7 +55,7 @@ const (
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread"}
+	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
 )
 
 func NewOAuthService() {
@@ -162,6 +162,21 @@ func NewOAuthService() {
 				allowedDomains: info.AllowedDomains,
 				allowedGroups:  util.SplitString(sec.Key("allowed_groups").String()),
 				allowSignup:    info.AllowSignup,
+			}
+		}
+
+		// Okta
+		if name == "okta" {
+			SocialMap["okta"] = &SocialOkta{
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
+				apiUrl:            info.ApiUrl,
+				allowedDomains:    info.AllowedDomains,
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				allowSignup:       info.AllowSignup,
+				roleAttributePath: info.RoleAttributePath,
 			}
 		}
 

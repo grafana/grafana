@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/jmespath/go-jmespath"
 	"golang.org/x/oauth2"
 )
 
@@ -262,37 +261,6 @@ func (s *SocialGenericOAuth) extractName(data *UserInfoJson) string {
 		return data.DisplayName
 	}
 
-	return ""
-}
-
-// searchJSONForAttr searches the provided JSON response for the given attribute
-// using the configured  attribute path associated with the generic OAuth
-// provider.
-// Returns an empty string if an attribute is not found.
-func (s *SocialGenericOAuth) searchJSONForAttr(attributePath string, data []byte) string {
-	if attributePath == "" {
-		s.log.Error("No attribute path specified")
-		return ""
-	}
-	if len(data) == 0 {
-		s.log.Error("Empty user info JSON response provided")
-		return ""
-	}
-	var buf interface{}
-	if err := json.Unmarshal(data, &buf); err != nil {
-		s.log.Error("Failed to unmarshal user info JSON response", "err", err.Error())
-		return ""
-	}
-	val, err := jmespath.Search(attributePath, buf)
-	if err != nil {
-		s.log.Error("Failed to search user info JSON response with provided path", "attributePath", attributePath, "err", err.Error())
-		return ""
-	}
-	strVal, ok := val.(string)
-	if ok {
-		return strVal
-	}
-	s.log.Error("Attribute not found when searching JSON with provided path", "attributePath", attributePath)
 	return ""
 }
 
