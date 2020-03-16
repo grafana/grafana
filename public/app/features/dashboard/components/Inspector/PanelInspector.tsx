@@ -16,7 +16,6 @@ import {
   toCSV,
   DataQueryError,
   PanelData,
-  DataQuery,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 

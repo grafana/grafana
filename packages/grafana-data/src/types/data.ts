@@ -48,7 +48,8 @@ export interface QueryResultMetaStat extends FieldConfig {
 export interface QueryResultMetaNotice {
   severity: 'info' | 'warning' | 'error';
   text: string;
-  link: string;
+  url?: string;
+  inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
 export interface QueryResultBase {

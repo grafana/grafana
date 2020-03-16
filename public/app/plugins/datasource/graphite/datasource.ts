@@ -158,7 +158,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         notices.push({
           text: `Data is rolled up, aggregated over ${intervalString} using ${func} function`,
           severity: 'info',
-          link: 'inspect/meta',
+          inspect: 'meta',
         });
 
         return notices;
@@ -174,7 +174,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         notices.push({
           text: `Data is runtime consolidated, ${runtimeNr} datapoints combined using ${func} function`,
           severity: 'info',
-          link: 'inspect/meta',
+          inspect: 'meta',
         });
 
         return notices;
