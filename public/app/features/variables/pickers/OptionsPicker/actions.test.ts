@@ -62,7 +62,7 @@ describe('options picker actions', () => {
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [setCurrentValue, changeQueryValue, updateOption, hideAction] = actions;
         const expectedNumberOfActions = 4;
 
@@ -93,7 +93,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, false))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [toggleOptionAction] = actions;
         const expectedNumberOfActions = 1;
 
@@ -118,7 +118,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [toggleOptionAction] = actions;
         const expectedNumberOfActions = 1;
 
@@ -145,7 +145,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [toggleOptionAction] = actions;
         const expectedNumberOfActions = 1;
 
@@ -173,7 +173,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveUp, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [toggleOptionAction] = actions;
         const expectedNumberOfActions = 1;
 
@@ -208,7 +208,7 @@ describe('options picker actions', () => {
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [toggleOptionAction, setCurrentValue, changeQueryValue, updateOption, hideAction] = actions;
         const expectedNumberOfActions = 5;
 
@@ -237,7 +237,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(filterOrSearchOptions(filter), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [updateQueryValue, updateAndFilter] = actions;
         const expectedNumberOfActions = 2;
 
@@ -267,7 +267,7 @@ describe('options picker actions', () => {
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [setCurrentValue, changeQueryValue, hideAction] = actions;
         const expectedNumberOfActions = 3;
 
@@ -303,7 +303,7 @@ describe('options picker actions', () => {
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [setCurrentValue, changeQueryValue, updateOption, hideAction] = actions;
         const expectedNumberOfActions = 4;
 
@@ -334,7 +334,7 @@ describe('options picker actions', () => {
 
       const option = createOption('A');
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [toggleOptionAction] = actions;
         const expectedNumberOfActions = 1;
 
@@ -356,7 +356,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(toggleAndFetchTag(tag), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [toggleTagAction] = actions;
         const expectedNumberOfActions = 1;
 
@@ -383,7 +383,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(toggleAndFetchTag(tag), true);
 
-      tester.thenDispatchedActionPredicateShouldEqual(actions => {
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [toggleTagAction] = actions;
         const expectedNumberOfActions = 1;
 
