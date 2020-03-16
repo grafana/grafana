@@ -26,7 +26,7 @@ const validateOrg = async (orgName: string) => {
     }
     return 'Something went wrong';
   }
-  return 'Org already exists';
+  return 'Organization already exists';
 };
 
 interface PropsWithState {
