@@ -1,7 +1,7 @@
 import { coreModule } from 'app/core/core';
 import { VariableSrv } from 'app/features/templating/variable_srv';
 import { getConfig } from '../../core/config';
-import { getVariables } from '../templating/state/selectors';
+import { getVariables } from '../variables/state/selectors';
 
 const template = `
 <div class="gf-form-select-wrapper max-width-18">
