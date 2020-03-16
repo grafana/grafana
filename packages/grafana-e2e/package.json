@@ -42,6 +42,8 @@
     "rollup-plugin-terser": "5.3.0",
     "rollup-plugin-typescript2": "0.26.0",
     "rollup-plugin-visualizer": "3.3.1",
+    "ts-loader": "6.2.1",
+    "typescript": "3.7.5",
     "ts-node": "8.5.0"
   },
   "types": "src/index.ts",
