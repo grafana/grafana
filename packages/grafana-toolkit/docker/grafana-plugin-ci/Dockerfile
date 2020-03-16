@@ -15,11 +15,33 @@ RUN sudo mv golangci-lint-1.23.7-linux-amd64/golangci-lint /usr/local/bin
 RUN sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
 RUN sudo ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 
-# Install Mage
+# Install dependencies
+RUN sudo apt-get install -y adduser libfontconfig1
+
+# Install code climate
+ADD https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 /usr/local/bin/cc-test-reporter
+RUN chmod +x /usr/local/bin/cc-test-reporter
+
+# Download, but don't install previous grafana releases
+RUN mkdir -pv /usr/local/grafana/deb
+ADD https://dl.grafana.com/oss/release/grafana_6.6.2_amd64.deb /usr/local/grafana/deb
+ADD https://dl.grafana.com/oss/release/grafana_6.5.3_amd64.deb /usr/local/grafana/deb
+ADD https://dl.grafana.com/oss/release/grafana_6.4.5_amd64.deb /usr/local/grafana/deb
+ADD https://dl.grafana.com/oss/release/grafana_6.3.7_amd64.deb /usr/local/grafana/deb
+
+# Perform user specific initialization
 USER circleci
-RUN mkdir -pv ${HOME}/plugin ${HOME}/go/bin ${HOME}/bin
-RUN git clone https://github.com/magefile/mage.git ${HOME}/tmp/mage 
-RUN cd ${HOME}/tmp/mage && go run bootstrap.go
+RUN mkdir -pv ${HOME}/plugin ${HOME}/go/bin ${HOME}/bin ${HOME}/src ${HOME}/tmp
+
+# Install grafana release with yarn
+RUN git clone https://github.com/grafana/grafana.git ${HOME}/src/grafana
+WORKDIR /home/circleci/src/grafana
+RUN yarn install
+
+# Install Mage
+RUN git clone https://github.com/magefile/mage.git ${HOME}/src/mage 
+WORKDIR /home/circleci/src/mage
+RUN go run bootstrap.go
 
 ENV PATH /home/circleci/go/bin:/usr/local/go/bin:/home/circleci/.local/bin:/home/circleci/bin:${PATH}
 WORKDIR /home/circleci/plugin
