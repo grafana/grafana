@@ -248,9 +248,13 @@ export function clearUserMappingInfo(): ThunkResult<void> {
 
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const { perPage, page, query } = getState().userListAdmin;
-    const result = await getBackendSrv().get(`/api/users/search?perpage=${perPage}&page=${page}&query=${query}`);
-    dispatch(usersFetched(result));
+    try {
+      const { perPage, page, query } = getState().userListAdmin;
+      const result = await getBackendSrv().get(`/api/users/search?perpage=${perPage}&page=${page}&query=${query}`);
+      dispatch(usersFetched(result));
+    } catch (error) {
+      console.error(error);
+    }
   };
 }
 

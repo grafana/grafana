@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
+import { css, cx } from 'emotion';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Pagination, Forms, ActionBar, ActionBarSpacing, Tooltip } from '@grafana/ui';
+import { Pagination, Forms, Tooltip, HorizontalGroup, stylesFactory } from '@grafana/ui';
 import { StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -29,6 +30,8 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 const UserListAdminPageUnConnected: React.FC<Props> = props => {
+  const styles = getStyles();
+
   useEffect(() => {
     props.fetchUsers();
   }, []);
@@ -37,25 +40,26 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
     <Page navModel={props.navModel}>
       <Page.Contents>
         <>
-          <ActionBar>
-            <Forms.Input
-              size="md"
-              type="text"
-              placeholder="Find user by name/login/email"
-              tabIndex={1}
-              autoFocus={true}
-              value={props.query}
-              spellCheck={false}
-              onChange={event => props.changeQuery(event.currentTarget.value)}
-              prefix={<i className="fa fa-search" />}
-            />
-            <ActionBarSpacing />
-            <Forms.LinkButton href="admin/users/create" variant="primary">
-              New user
-            </Forms.LinkButton>
-          </ActionBar>
+          <div>
+            <HorizontalGroup justify="space-between">
+              <Forms.Input
+                size="md"
+                type="text"
+                placeholder="Find user by name/login/email"
+                tabIndex={1}
+                autoFocus={true}
+                value={props.query}
+                spellCheck={false}
+                onChange={event => props.changeQuery(event.currentTarget.value)}
+                prefix={<i className="fa fa-search" />}
+              />
+              <Forms.LinkButton href="admin/users/create" variant="primary">
+                New user
+              </Forms.LinkButton>
+            </HorizontalGroup>
+          </div>
 
-          <div className="admin-list-table">
+          <div className={cx(styles.table, 'admin-list-table')}>
             <table className="filter-table form-inline filter-table--hover">
               <thead>
                 <tr>
@@ -75,12 +79,9 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
               <tbody>{props.users.map(renderUser)}</tbody>
             </table>
           </div>
-          <Pagination
-            visible={props.showPaging}
-            numberOfPages={props.totalPages}
-            currentPage={props.page}
-            onNavigate={props.changePage}
-          />
+          {props.showPaging && (
+            <Pagination numberOfPages={props.totalPages} currentPage={props.page} onNavigate={props.changePage} />
+          )}
         </>
       </Page.Contents>
     </Page>
@@ -107,13 +108,15 @@ const renderUser = (user: UserDTO) => {
       <td className="link-td">
         {user.isAdmin && (
           <a href={editUrl}>
-            <i className="fa fa-shield" bs-tooltip="'Grafana Admin'" />
+            <Tooltip placement="top" content="Grafana Admin">
+              <i className="fa fa-shield" />
+            </Tooltip>
           </a>
         )}
       </td>
       <td className="text-right">
         {Array.isArray(user.authLabels) && user.authLabels.length > 0 && (
-          <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} onClick={() => {}} />
+          <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} />
         )}
       </td>
       <td className="text-right">
@@ -122,6 +125,14 @@ const renderUser = (user: UserDTO) => {
     </tr>
   );
 };
+
+const getStyles = stylesFactory(() => {
+  return {
+    table: css`
+      margin-top: 28px;
+    `,
+  };
+});
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   fetchUsers,
