@@ -589,12 +589,10 @@ export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
   const method = options.method;
-  const headers = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json, text/plain, */*',
-    ...options.headers,
-  };
-  const body = parseBody({ ...options, headers });
+  const headers = parseHeaders(options);
+  const isAppJson = isContentTypeApplicationJson(headers);
+  const body = parseBody(options, isAppJson);
+
   return {
     method,
     headers,
@@ -602,14 +600,42 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
   };
 };
 
-const parseBody = (options: BackendSrvRequest) => {
+export const parseHeaders = (options: BackendSrvRequest) => {
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    Accept: 'application/json, text/plain, */*',
+  });
+
+  if (options && options.headers) {
+    Object.keys(options.headers).forEach(key => {
+      headers.set(key, options.headers[key]);
+    });
+  }
+
+  return headers;
+};
+
+export const isContentTypeApplicationJson = (headers: Headers) => {
+  if (!headers) {
+    return false;
+  }
+
+  const contentType = headers.get('content-type');
+  if (contentType && contentType.toLowerCase() === 'application/json') {
+    return true;
+  }
+
+  return false;
+};
+
+export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
+  if (!options) {
+    return options;
+  }
+
   if (!options.data || typeof options.data === 'string') {
     return options.data;
   }
 
-  if (options.headers['Content-Type'] === 'application/json') {
-    return JSON.stringify(options.data);
-  }
-
-  return new URLSearchParams(options.data);
+  return isAppJson ? JSON.stringify(options.data) : new URLSearchParams(options.data);
 };

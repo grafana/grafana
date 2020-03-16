@@ -51,6 +51,11 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
       background-color: ${colors.formInputBgDisabled};
       color: ${colors.formInputDisabledText};
     }
+
+    &::placeholder {
+      color: ${colors.formInputPlaceholderText};
+      opacity: 1;
+    }
   `;
 };
 

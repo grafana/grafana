@@ -1,5 +1,5 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 import copy from 'rollup-plugin-copy';
 import sourceMaps from 'rollup-plugin-sourcemaps';
 import { terser } from 'rollup-plugin-terser';
@@ -20,10 +20,10 @@ const buildCjsPackage = ({ env }) => ({
     copy({
       flatten: false,
       targets: [
-        { src: 'compiled/bin/**/*.*', dest: 'dist/' },
-        { src: 'compiled/cli/**/*.*', dest: 'dist/' },
+        { src: 'bin/**/*.*', dest: 'dist/bin/' },
+        { src: 'cli.js', dest: 'dist/' },
         { src: 'cypress.json', dest: 'dist/' },
-        { src: 'cypress/**/*.+(js|ts)', dest: 'dist/cypress/' },
+        { src: 'cypress/**/*.*', dest: 'dist/cypress/' },
       ],
     }),
     commonjs({

@@ -18,7 +18,6 @@ import { GrafanaTheme } from '../types/theme';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
-import { applyFieldOverrides } from './fieldOverrides';
 
 export interface FieldDisplayOptions extends FieldConfigSource {
   values?: boolean; // If true show each row value
@@ -91,8 +90,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const values: FieldDisplay[] = [];
 
   if (options.data) {
-    const data = applyFieldOverrides(options);
-
+    // Field overrides are applied already
+    const data = options.data;
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const defaultTitle = getTitleTemplate(fieldOptions.defaults.title, calcs, data);
@@ -260,6 +259,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
     display: {
       text,
       numeric: 0,
+      color: display.color,
     },
   };
 }
