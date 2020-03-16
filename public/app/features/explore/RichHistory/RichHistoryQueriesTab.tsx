@@ -135,7 +135,6 @@ export function RichHistoryQueriesTab(props: Props) {
   const styles = getStyles(theme);
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
   const listOfDatasources = createDatasourceListWithImages(datasourcesRetrievedFromQueryHistory);
-  /* Display only explore datasoources, that have saved queries */
 
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
   const filteredQueriesByDatasource = datasourceFilters

@@ -260,6 +260,9 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   return mappedQueriesToHeadings;
 }
 
+/* Create datasource list with images. If specific datasource retrieved from Rich history is not part of
+ * exploreDatasources add generic datasource image and add property isRemoved = true.
+ */
 export function createDatasourceListWithImages(queriesDatasources: string[]) {
   const exploreDatasources = getExploreDatasources();
   const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];

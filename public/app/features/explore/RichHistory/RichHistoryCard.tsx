@@ -22,10 +22,13 @@ interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
-  /* Artifically selected so all buttons and icons on right side of card are aligned */
+  /* Hard-coded value so all buttons and icons on right side of card are aligned */
   const rigtColumnWidth = '240px';
+  const rigtColumnContentWidth = '170px';
 
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.gray25;
+
+  /* If datasource was removed, card will have inactive color */
   const cardColor = theme.isLight
     ? isRemoved
       ? theme.colors.gray95
@@ -71,7 +74,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       font-weight: ${theme.typography.weight.bold};
     `,
     queryActionButtons: css`
-      width: 160px;
+      max-width: ${rigtColumnContentWidth};
       display: flex;
       justify-content: flex-end;
       font-size: ${theme.typography.size.base};
@@ -119,7 +122,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     runButton: css`
-      max-width: 170px;
+      max-width: ${rigtColumnContentWidth};
       display: flex;
       justify-content: flex-end;
       button {
