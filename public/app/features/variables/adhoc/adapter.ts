@@ -3,7 +3,7 @@ import { AdHocVariableModel } from '../../templating/variable';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
-import { OptionsPicker } from '../pickers';
+import { AdHocPicker } from '../pickers';
 import { toVariableIdentifier } from '../state/types';
 import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer';
 import { AdHocVariableEditor } from './AdHocVariableEditor';
@@ -14,7 +14,7 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     label: 'Ad hoc filters',
     initialState: initialAdHocVariableModelState,
     reducer: adHocVariableReducer,
-    picker: OptionsPicker,
+    picker: AdHocPicker,
     editor: AdHocVariableEditor,
     dependsOn: () => {
       return false;
