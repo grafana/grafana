@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import { ValueMappingsEditor, Props } from './ValueMappingsEditor';
+import { LegacyValueMappingsEditor, Props } from './LegacyValueMappingsEditor';
 import { MappingType } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
@@ -15,9 +15,9 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<ValueMappingsEditor {...props} />);
+  const wrapper = shallow(<LegacyValueMappingsEditor {...props} />);
 
-  const instance = wrapper.instance() as ValueMappingsEditor;
+  const instance = wrapper.instance() as LegacyValueMappingsEditor;
 
   return {
     instance,

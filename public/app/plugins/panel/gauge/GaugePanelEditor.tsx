@@ -7,7 +7,7 @@ import {
   PanelOptionsGroup,
   FieldPropertiesEditor,
   ThresholdsEditor,
-  ValueMappingsEditor,
+  LegacyValueMappingsEditor,
   DataLinksEditor,
 } from '@grafana/ui';
 import {
@@ -133,7 +133,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
           </PanelOptionsGroup>
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+        <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
 
         <PanelOptionsGroup title="Data links">
           <DataLinksEditor

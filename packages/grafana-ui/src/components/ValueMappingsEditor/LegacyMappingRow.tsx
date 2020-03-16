@@ -28,7 +28,7 @@ const mappingOptions = [
   { value: MappingType.RangeToText, label: 'Range' },
 ];
 
-export default class MappingRow extends PureComponent<Props, State> {
+export default class LegacyMappingRow extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 

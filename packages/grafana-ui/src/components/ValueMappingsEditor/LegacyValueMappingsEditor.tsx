@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import MappingRow from './MappingRow';
+import LegacyMappingRow from './LegacyMappingRow';
 import { MappingType, ValueMapping } from '@grafana/data';
 import { Button } from '../Button/Button';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
@@ -15,7 +15,7 @@ interface State {
   nextIdToAdd: number;
 }
 
-export class ValueMappingsEditor extends PureComponent<Props, State> {
+export class LegacyValueMappingsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -91,7 +91,7 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
         <div>
           {valueMappings.length > 0 &&
             valueMappings.map((valueMapping, index) => (
-              <MappingRow
+              <LegacyMappingRow
                 key={`${valueMapping.text}-${index}`}
                 valueMapping={valueMapping}
                 updateValueMapping={this.updateGauge}

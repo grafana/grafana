@@ -4,7 +4,7 @@ import {
   FieldDisplayEditor,
   PanelOptionsGroup,
   FieldPropertiesEditor,
-  ValueMappingsEditor,
+  LegacyValueMappingsEditor,
 } from '@grafana/ui';
 import { PanelEditorProps, FieldDisplayOptions, ValueMapping, FieldConfig } from '@grafana/data';
 
@@ -60,7 +60,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
             onFieldConfigChange={onFieldConfigChange}
           />
         </PanelOptionsGrid>
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+        <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
       </>
     );
   }

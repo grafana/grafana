@@ -10,7 +10,7 @@ import {
   Switch,
   FieldPropertiesEditor,
   ThresholdsEditor,
-  ValueMappingsEditor,
+  LegacyValueMappingsEditor,
   DataLinksEditor,
 } from '@grafana/ui';
 import {
@@ -137,7 +137,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+        <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
 
         <PanelOptionsGroup title="Data links">
           <DataLinksEditor
