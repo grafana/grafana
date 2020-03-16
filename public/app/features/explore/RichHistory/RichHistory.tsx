@@ -30,7 +30,7 @@ export const sortOrderOptions = [
   { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
 ];
 
-interface RichHistoryProps extends Themeable {
+export interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
   activeDatasourceInstance: string;
   firstTab: Tabs;

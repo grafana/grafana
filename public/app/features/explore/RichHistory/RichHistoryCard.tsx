@@ -21,14 +21,17 @@ interface Props {
   datasourceInstance: DataSourceApi;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved?: boolean) => {
-  const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
+  /* Artifically selected so all buttons and icons on right side of card are aligned */
+  const rigtColumnWidth = '240px';
+
+  const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.gray25;
   const cardColor = theme.isLight
     ? isRemoved
-      ? theme.colors.gray6
+      ? theme.colors.gray95
       : theme.colors.white
     : isRemoved
-    ? theme.colors.dark10
+    ? theme.colors.gray15
     : theme.colors.dark7;
   const cardBoxShadow = theme.isLight ? `0px 2px 2px ${borderColor}` : `0px 2px 4px black`;
 
@@ -44,17 +47,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved?: boolean) => {
       .starred {
         color: ${theme.colors.orange};
       }
-      .lower-card-row {
-        border-bottom: none;
-        padding: ${theme.spacing.sm};
-      }
     `,
     cardRow: css`
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid ${borderColor};
-      padding: ${theme.spacing.xs} ${theme.spacing.sm};
+      padding: ${theme.spacing.sm};
+      border-bottom: none;
+      :first-of-type {
+        border-bottom: 1px solid ${borderColor};
+        padding: ${theme.spacing.xs} ${theme.spacing.sm};
+      }
       img {
         height: ${theme.typography.size.base};
         max-width: ${theme.typography.size.base};
@@ -79,7 +82,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved?: boolean) => {
     `,
     queryContainer: css`
       font-weight: ${theme.typography.weight.bold};
-      width: calc(100% - 176px);
+      width: calc(100% - ${rigtColumnWidth});
     `,
     queryRow: css`
       border-top: 1px solid ${borderColor};
@@ -90,6 +93,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved?: boolean) => {
         padding: 0 0 4px 0;
       }
     `,
+    updateCommentContainer: css`
+      width: calc(100% + ${rigtColumnWidth});
+      margin-top: ${theme.spacing.sm};
+    `,
     comment: css`
       overflow-wrap: break-word;
       font-size: ${theme.typography.size.sm};
@@ -98,7 +105,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved?: boolean) => {
     `,
     commentButtonRow: css`
       > * {
-        margin-right: ${theme.spacing.xs};
+        margin-right: ${theme.spacing.sm};
       }
     `,
     textArea: css`
@@ -106,14 +113,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved?: boolean) => {
       background: inherit;
       color: inherit;
       width: 100%;
-      margin: ${theme.spacing.sm} 0;
       font-size: ${theme.typography.size.sm};
       &placeholder {
-        padding: 0 ${theme.spacing.xs};
+        padding: 0 ${theme.spacing.sm};
       }
     `,
     runButton: css`
-      width: 160px;
+      max-width: 170px;
       display: flex;
       justify-content: flex-end;
       button {
@@ -146,7 +152,7 @@ export function RichHistoryCard(props: Props) {
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
 
-  const onRunQuery = async (query: RichHistoryQuery) => {
+  const onRunQuery = async () => {
     const dataQueries = query.queries.map((q, i) => createDataQuery(query, q, i));
     if (query.datasourceName !== datasourceInstance?.name) {
       await changeDatasource(exploreId, query.datasourceName);
@@ -156,85 +162,70 @@ export function RichHistoryCard(props: Props) {
     }
   };
 
-  const queryActions = (
-    <div className={styles.queryActionButtons}>
-      <i
-        className="fa fa-fw fa-comment-o"
-        onClick={() => {
-          toggleActiveUpdateComment();
-        }}
-        title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
-      ></i>
-      <i
-        className="fa fa-fw fa-copy"
-        onClick={() => {
-          const queries = query.queries.join('\n\n');
-          copyStringToClipboard(queries);
-          appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
-        }}
-        title="Copy query to clipboard"
-      ></i>
-      {!isRemoved && (
-        <i
-          className="fa fa-fw fa-link"
-          onClick={() => {
-            const url = createUrlFromRichHistory(query);
-            copyStringToClipboard(url);
-            appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
-          }}
-          title="Copy link to clipboard"
-        ></i>
-      )}
-      <i
-        className={'fa fa-trash'}
-        title={'Delete query'}
-        onClick={() => {
-          updateRichHistory(query.ts, 'delete');
-          appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
-        }}
-      ></i>
-      <i
-        className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
-        onClick={() => {
-          updateRichHistory(query.ts, 'starred');
-          setStared(!starred);
-        }}
-        title={query.starred ? 'Unstar query' : 'Star query'}
-      ></i>
-    </div>
-  );
+  const onCopyQuery = () => {
+    const queries = query.queries.join('\n\n');
+    copyStringToClipboard(queries);
+    appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
+  };
+
+  const onCreateLink = () => {
+    const url = createUrlFromRichHistory(query);
+    copyStringToClipboard(url);
+    appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
+  };
+
+  const onDeleteQuery = () => {
+    updateRichHistory(query.ts, 'delete');
+    appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+  };
+
+  const onStarrQuery = () => {
+    updateRichHistory(query.ts, 'starred');
+    setStared(!starred);
+  };
+
+  const onUpdateComment = () => {
+    updateRichHistory(query.ts, 'comment', comment);
+    toggleActiveUpdateComment();
+  };
+
+  const onCancelUpdateComment = () => {
+    toggleActiveUpdateComment();
+    setComment(query.comment);
+  };
 
   const updateComment = (
-    <div>
+    <div className={styles.updateCommentContainer}>
       <Forms.TextArea
         value={comment}
-        placeholder={comment ? undefined : 'Add optional comment of what query does'}
+        placeholder={comment ? undefined : 'An optional description of what the query does.'}
         onChange={e => setComment(e.currentTarget.value)}
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
-        <Forms.Button
-          onClick={e => {
-            e.preventDefault();
-            updateRichHistory(query.ts, 'comment', comment);
-            toggleActiveUpdateComment();
-          }}
-        >
-          Save
-        </Forms.Button>
-        <Forms.Button
-          variant="secondary"
-          className={css`
-            margin-left: 8px;
-          `}
-          onClick={() => {
-            toggleActiveUpdateComment();
-            setComment(query.comment);
-          }}
-        >
+        <Forms.Button onClick={onUpdateComment}>Save</Forms.Button>
+        <Forms.Button variant="secondary" onClick={onCancelUpdateComment}>
           Cancel
         </Forms.Button>
       </div>
+    </div>
+  );
+
+  const queryActionButtons = (
+    <div className={styles.queryActionButtons}>
+      <i
+        className="fa fa-fw fa-comment-o"
+        onClick={toggleActiveUpdateComment}
+        title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
+      ></i>
+      <i className="fa fa-fw fa-copy" onClick={onCopyQuery} title="Copy query to clipboard"></i>
+      {!isRemoved && <i className="fa fa-fw fa-link" onClick={onCreateLink} title="Copy link to clipboard"></i>}
+      <i className={'fa fa-trash'} title={'Delete query'} onClick={onDeleteQuery}></i>
+      <i
+        className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
+        onClick={onStarrQuery}
+        title={query.starred ? 'Unstar query' : 'Star query'}
+      ></i>
     </div>
   );
 
@@ -245,9 +236,9 @@ export function RichHistoryCard(props: Props) {
           <img src={dsImg} aria-label="Data source icon" />
           <div>{isRemoved ? 'Not linked to existing datasource' : query.datasourceName}</div>
         </div>
-        {queryActions}
+        {queryActionButtons}
       </div>
-      <div className={cx(styles.cardRow, 'lower-card-row')}>
+      <div className={cx(styles.cardRow)}>
         <div className={styles.queryContainer}>
           {query.queries.map((q, i) => {
             return (
@@ -259,18 +250,13 @@ export function RichHistoryCard(props: Props) {
           {!activeUpdateComment && query.comment && <div className={styles.comment}>{query.comment}</div>}
           {activeUpdateComment && updateComment}
         </div>
-        <div className={styles.runButton}>
-          <Forms.Button
-            variant="secondary"
-            onClick={e => {
-              e.preventDefault();
-              onRunQuery(query);
-            }}
-            disabled={isRemoved}
-          >
-            {datasourceInstance?.name === query.datasourceName ? 'Run query' : 'Switch data source and run query'}
-          </Forms.Button>
-        </div>
+        {!activeUpdateComment && (
+          <div className={styles.runButton}>
+            <Forms.Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
+              {datasourceInstance?.name === query.datasourceName ? 'Run query' : 'Switch data source and run query'}
+            </Forms.Button>
+          </div>
+        )}
       </div>
     </div>
   );
