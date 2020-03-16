@@ -92,6 +92,10 @@ describe('panelEditor actions', () => {
 
     it('should discard changes when shouldDiscardChanges is true', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
+      sourcePanel.plugin = {
+        customFieldConfigs: {},
+      } as any;
+
       const dashboard = new DashboardModel({
         panels: [{ id: 12, type: 'graph' }],
       });

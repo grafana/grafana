@@ -23,13 +23,13 @@ export interface VariableAdapter<Model extends VariableModel> {
 }
 
 const allVariableAdapters: Record<VariableType, VariableAdapter<any> | null> = {
+  interval: null,
   query: null,
-  textbox: null,
-  constant: null,
   datasource: null,
   custom: null,
-  interval: null,
+  constant: null,
   adhoc: null,
+  textbox: null,
 };
 
 export interface VariableAdapters {
