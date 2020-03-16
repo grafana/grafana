@@ -203,7 +203,7 @@ export function RichHistoryCard(props: Props) {
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
-        <Forms.Button onClick={onUpdateComment}>Save</Forms.Button>
+        <Forms.Button onClick={onUpdateComment}>Save comment</Forms.Button>
         <Forms.Button variant="secondary" onClick={onCancelUpdateComment}>
           Cancel
         </Forms.Button>
