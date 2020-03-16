@@ -1,8 +1,10 @@
 import React from 'react';
-import { Project, SLOFilter, AlignmentPeriods, AliasBy } from '.';
+import { Segment, SegmentAsync } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { selectors } from '../constants';
+import { Project, AlignmentPeriods, AliasBy, QueryInlineField } from '.';
 import { SLOQuery } from '../types';
 import StackdriverDatasource from '../datasource';
-import { SelectableValue } from '@grafana/data';
 
 export interface Props {
   usedAlignmentPeriod: string;
@@ -37,12 +39,57 @@ export function SLOQueryEditor({
         datasource={datasource}
         onChange={projectName => onChange({ ...query, projectName })}
       />
-      <SLOFilter
-        templateVariableOptions={variableOptionGroup.options}
-        onChange={onChange}
-        datasource={datasource}
-        query={query}
-      />
+      <QueryInlineField label="Service">
+        <SegmentAsync
+          allowCustomValue
+          value={query?.serviceId}
+          placeholder="Select service"
+          loadOptions={() =>
+            datasource.getSLOServices(query.projectName).then(services => [
+              {
+                label: 'Template Variables',
+                options: variableOptionGroup.options,
+              },
+              ...services,
+            ])
+          }
+          onChange={({ value: serviceId }) => onChange({ ...query, serviceId })}
+        />
+      </QueryInlineField>
+
+      <QueryInlineField label="SLO">
+        <SegmentAsync
+          allowCustomValue
+          value={query?.sloId}
+          placeholder="Select SLO"
+          loadOptions={() =>
+            datasource.getServiceLevelObjectives(query.projectName, query.serviceId).then(sloIds => [
+              {
+                label: 'Template Variables',
+                options: variableOptionGroup.options,
+              },
+              ...sloIds,
+            ])
+          }
+          onChange={({ value: sloId }) => onChange({ ...query, sloId })}
+        />
+      </QueryInlineField>
+
+      <QueryInlineField label="Selector">
+        <Segment
+          allowCustomValue
+          value={[...selectors, ...variableOptionGroup.options].find(s => s.value === query?.selectorName ?? '')}
+          options={[
+            {
+              label: 'Template Variables',
+              options: variableOptionGroup.options,
+            },
+            ...selectors,
+          ]}
+          onChange={({ value: selectorName }) => onChange({ ...query, selectorName })}
+        />
+      </QueryInlineField>
+
       <AlignmentPeriods
         templateSrv={datasource.templateSrv}
         templateVariableOptions={variableOptionGroup.options}
