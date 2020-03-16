@@ -30,6 +30,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@cypress/webpack-preprocessor": "4.1.3",
+    "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-node-resolve": "7.1.1",
     "@types/node": "13.7.7",
@@ -40,6 +42,8 @@
     "rollup-plugin-terser": "5.3.0",
     "rollup-plugin-typescript2": "0.26.0",
     "rollup-plugin-visualizer": "3.3.1",
+    "ts-loader": "6.2.1",
+    "typescript": "3.7.5",
     "ts-node": "8.5.0"
   },
   "types": "src/index.ts",

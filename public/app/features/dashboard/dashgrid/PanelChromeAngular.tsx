@@ -11,12 +11,14 @@ import { PanelHeader } from './PanelHeader/PanelHeader';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { setPanelAngularComponent } from '../state/reducers';
+import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin, PanelEvents } from '@grafana/data';
 import { updateLocation } from 'app/core/actions';
+import { PANEL_BORDER } from 'app/core/constants';
 
 interface OwnProps {
   panel: PanelModel;
@@ -137,15 +139,32 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     if (prevProps.width !== width || prevProps.height !== height) {
       if (this.scopeProps) {
-        this.scopeProps.size.height = height;
-        this.scopeProps.size.width = width;
+        this.scopeProps.size.height = this.getInnerPanelHeight();
+        this.scopeProps.size.width = this.getInnerPanelWidth();
         panel.events.emit(PanelEvents.panelSizeChanged);
       }
     }
   }
 
+  getInnerPanelHeight() {
+    const { plugin, height } = this.props;
+    const { theme } = config;
+
+    const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
+    const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
+    return height - headerHeight - chromePadding * 2 - PANEL_BORDER;
+  }
+
+  getInnerPanelWidth() {
+    const { plugin, width } = this.props;
+    const { theme } = config;
+
+    const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
+    return width - chromePadding * 2 - PANEL_BORDER;
+  }
+
   loadAngularPanel() {
-    const { panel, dashboard, height, width, setPanelAngularComponent } = this.props;
+    const { panel, dashboard, setPanelAngularComponent } = this.props;
 
     // if we have no element or already have loaded the panel return
     if (!this.element) {
@@ -158,7 +177,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     this.scopeProps = {
       panel: panel,
       dashboard: dashboard,
-      size: { width, height },
+      size: { width: this.getInnerPanelWidth(), height: this.getInnerPanelHeight() },
     };
 
     setPanelAngularComponent({
