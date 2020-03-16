@@ -49,6 +49,7 @@ export function sharedSingleStatPanelChangedHandler(
     };
 
     const defaults: FieldConfig = {};
+
     if (prevPanel.format) {
       defaults.unit = prevPanel.format;
     }

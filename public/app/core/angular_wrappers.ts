@@ -28,7 +28,7 @@ import {
   SaveDashboardAsButtonConnected,
   SaveDashboardButtonConnected,
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
-import { VariableEditorContainer } from '../features/templating/editor/VariableEditorContainer';
+import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);

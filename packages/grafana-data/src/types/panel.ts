@@ -1,5 +1,5 @@
 import { ComponentClass, ComponentType } from 'react';
-import { DataQueryError, DataQueryRequest } from './datasource';
+import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
@@ -22,6 +22,7 @@ export interface PanelData {
    */
   series: DataFrame[];
   request?: DataQueryRequest;
+  timings?: DataQueryTimings;
   error?: DataQueryError;
   /**
    *  Contains the range from the request or a shifted time range if a request uses relative time
