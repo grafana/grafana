@@ -15,8 +15,8 @@ import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { VariableModel } from '../../templating/variable';
 import { getConfig } from '../../../core/config';
-import { getVariables } from 'app/features/templating/state/selectors';
-import { variableAdapters } from 'app/features/templating/adapters';
+import { getVariables } from 'app/features/variables/state/selectors';
+import { variableAdapters } from 'app/features/variables/adapters';
 
 export interface CloneOptions {
   saveVariables?: boolean;

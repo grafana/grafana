@@ -7,12 +7,12 @@ import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportC
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import SignupPage from 'app/features/profile/SignupPage';
+import { LoginPage } from 'app/core/components/Login/LoginPage';
 
 import config from 'app/core/config';
 import { ILocationProvider, route } from 'angular';
 // Types
 import { DashboardRouteInfo } from 'app/types';
-import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 
 /** @ngInject */
@@ -162,7 +162,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/*webpackChunkName: NewDashboardsFolder*/ 'app/features/folders/components/NewDashboardsFolder')
+            import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
           ),
       },
     })
@@ -304,9 +304,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/admin/users', {
-      templateUrl: 'public/app/features/admin/partials/users.html',
-      controller: 'AdminListUsersCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')),
+      },
     })
     .when('/admin/users/create', {
       template: '<react-container />',
