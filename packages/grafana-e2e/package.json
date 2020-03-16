@@ -30,6 +30,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@cypress/webpack-preprocessor": "4.1.3",
+    "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-node-resolve": "7.1.1",
     "@types/node": "13.7.7",
