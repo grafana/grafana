@@ -15,7 +15,7 @@ export enum GraphiteType {
 }
 
 export interface MetricTankRequestMeta {
-  [key: string]: any; // TODO -- fill this with real values from metrictank
+  [key: string]: any;
 }
 
 export interface MetricTankSeriesMeta {

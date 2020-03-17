@@ -8,13 +8,14 @@ import {
   toDataFrame,
   DataSourceApi,
   QueryResultMetaNotice,
+  QueryResultMetaStat,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankSeriesMeta } from './types';
+import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankSeriesMeta, MetricTankRequestMeta } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 import { parseSchemaRetentions } from 'app/plugins/datasource/graphite/meta';
 
@@ -136,6 +137,12 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           },
           notices: this.getRollupNotices(s.meta),
         };
+
+        // only add the request stats to the first frame
+        if (i === 0) {
+          frame.meta.stats = this.getRequestStats(result.data.meta);
+          console.log('frame.meta.stats', frame.meta);
+        }
       }
 
       data.push(frame);
@@ -143,6 +150,22 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
     return { data };
   };
+
+  getRequestStats(meta: MetricTankRequestMeta): QueryResultMetaStat[] {
+    const stats: QueryResultMetaStat[] = [];
+
+    for (const key in meta.stats) {
+      let unit: string | undefined = undefined;
+
+      if (key.endsWith('.ms')) {
+        unit = 'ms';
+      }
+
+      stats.push({ title: key, value: meta.stats[key], unit });
+    }
+
+    return stats;
+  }
 
   getRollupNotices(metaList: MetricTankSeriesMeta[]): QueryResultMetaNotice[] {
     const notices: QueryResultMetaNotice[] = [];
