@@ -73,6 +73,7 @@ type HTTPServer struct {
 	Login                *login.LoginService      `inject:""`
 	License              models.Licensing         `inject:""`
 	BackendPluginManager backendplugin.Manager    `inject:""`
+	PluginManager        *plugins.PluginManager   `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

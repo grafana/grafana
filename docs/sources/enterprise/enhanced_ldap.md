@@ -7,40 +7,39 @@ type = "docs"
 name = "Enhanced LDAP"
 identifier = "enhanced-ldap"
 parent = "enterprise"
-weight = 3
+weight = 300
 +++
 
 # Enhanced LDAP integration
 
-> Only available in Grafana Enterprise.
+The enhanced LDAP integration adds additional functionality on top of the [LDAP integration]({{< relref "../auth/ldap.md" >}}) available in the open source edition of Grafana.
 
-The enhanced LDAP integration adds additional functionality on top of the existing [LDAP integration]({{< relref "../auth/ldap.md" >}}).
+> Enhanced LDAP integration is only available in Grafana Enterprise.
 
-## LDAP Group Synchronization for Teams
+## LDAP group synchronization for teams
 
 {{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
-With the enhanced LDAP integration it's possible to setup synchronization between LDAP groups and teams. This enables LDAP users which are members
-of certain LDAP groups to automatically be added/removed as members to certain teams in Grafana. Currently the synchronization will only happen every
-time a user logs in, unless Grafana v6.3 (or later) is used with active background synchronization enabled.
+With enhanced LDAP integration, you can set up synchronization between LDAP groups and teams. This enables LDAP users that are members
+of certain LDAP groups to automatically be added or removed as members to certain teams in Grafana.
 
-Grafana keeps track of all synchronized users in teams and you can see which users have been synchronized from LDAP in the team members list, see `LDAP` label in screenshot.
-This mechanism allows Grafana to remove an existing synchronized user from a team when its LDAP group membership changes. This mechanism also enables you to manually add
-a user as member of a team and it will not be removed when the user signs in. This gives you flexibility to combine LDAP group memberships and Grafana team memberships.
+Grafana keeps track of all synchronized users in teams, and you can see which users have been synchronized from LDAP in the team members list, see `LDAP` label in screenshot.
+This mechanism allows Grafana to remove an existing synchronized user from a team when its LDAP group membership changes. This mechanism also allows you to manually add
+a user as member of a team, and it will not be removed when the user signs in. This gives you flexibility to combine LDAP group memberships and Grafana team memberships.
 
-[Learn more about Team Sync]({{< relref "team-sync.md">}})
+[Learn more about team sync.]({{< relref "team-sync.md">}})
 
 <div class="clearfix"></div>
 
-## Active LDAP Synchronization
+## Active LDAP synchronization
 
-> Only available in Grafana Enterprise v6.3+
+In the open source version of Grafana, user data from LDAP is synchronized only during the login process when authenticating using LDAP.
 
-In the open source version of Grafana, user data from LDAP will be synchronized only during the login process when authenticating using LDAP.
+With active LDAP synchronization, available in Grafana Enterprise v6.3+, you can configure Grafana to actively sync users with LDAP servers in the background. Only users that have logged into Grafana at least once are synchronized.
 
-With this feature you can configure Grafana to actively sync users with LDAP servers in the background. Only users that have logged into Grafana at least once will be synchronized.
 Users with updated role and team membership will need to refresh the page to get access to the new features.
-Removed users will be automatically logged out and their account disabled. They will be displayed in the Server Admin / Users page with a `disabled` label. Disabled users will keep their custom permissions on dashboards, folders and datasources so if you add them back in your LDAP database, they will have access to the application with the same custom permissions as before.
+
+Removed users are automatically logged out and their account disabled. These accounts are displayed in the Server Admin > Users page with a `disabled` label. Disabled users keep their custom permissions on dashboards, folders, and data sources, so if you add them back in your LDAP database, they have access to the application with the same custom permissions as before.
 
 ```bash
 [auth.ldap]
@@ -61,6 +60,4 @@ sync_cron = "0 0 1 * * *" # This is default value (At 1 am every day)
 active_sync_enabled = true # enabled by default
 ```
 
-### Not compatible with Single Bind
-
-Single Bind configuration (as in the [Single Bind Example]({{< relref "../auth/ldap.md#single-bind-example">}})) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.
+Single bind configuration (as in the [Single bind example]({{< relref "../auth/ldap.md#single-bind-example">}})) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.

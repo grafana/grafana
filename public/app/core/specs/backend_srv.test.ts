@@ -1,10 +1,20 @@
-import { BackendSrv, getBackendSrv, parseInitFromOptions, parseUrlFromOptions } from '../services/backend_srv';
+import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
+import { Observable, of } from 'rxjs';
+import { delay } from 'rxjs/operators';
+import { AppEvents } from '@grafana/data';
+
+import {
+  BackendSrv,
+  getBackendSrv,
+  isContentTypeApplicationJson,
+  parseBody,
+  parseHeaders,
+  parseInitFromOptions,
+  parseUrlFromOptions,
+} from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
-import { Observable, of } from 'rxjs';
-import { AppEvents } from '@grafana/data';
 import { CoreEvents } from '../../types';
-import { delay } from 'rxjs/operators';
 
 const getTestContext = (overides?: object) => {
   const defaults = {
@@ -174,7 +184,9 @@ describe('backendSrv', () => {
             statusText: 'Ok',
             text: () => Promise.resolve(JSON.stringify(slowData)),
             headers: {
-              'Content-Type': 'application/json',
+              map: {
+                'content-type': 'application/json',
+              },
             },
             redirected: false,
             type: 'basic',
@@ -189,7 +201,9 @@ describe('backendSrv', () => {
           statusText: 'Ok',
           text: () => Promise.resolve(JSON.stringify(fastData)),
           headers: {
-            'Content-Type': 'application/json',
+            map: {
+              'content-type': 'application/json',
+            },
           },
           redirected: false,
           type: 'basic',
@@ -358,8 +372,10 @@ describe('backendSrv', () => {
             method: 'GET',
             body: undefined,
             headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json, text/plain, */*',
+              map: {
+                'content-type': 'application/json',
+                accept: 'application/json, text/plain, */*',
+              },
             },
           },
         });
@@ -389,8 +405,10 @@ describe('backendSrv', () => {
             method: 'GET',
             body: undefined as any,
             headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json, text/plain, */*',
+              map: {
+                'content-type': 'application/json',
+                accept: 'application/json, text/plain, */*',
+              },
             },
           },
         };
@@ -415,7 +433,9 @@ describe('backendSrv', () => {
             statusText: 'Ok',
             text: () => Promise.resolve(JSON.stringify(slowData)),
             headers: {
-              'Content-Type': 'application/json',
+              map: {
+                'content-type': 'application/json',
+              },
             },
             redirected: false,
             type: 'basic',
@@ -430,7 +450,9 @@ describe('backendSrv', () => {
           statusText: 'Ok',
           text: () => Promise.resolve(JSON.stringify(fastData)),
           headers: {
-            'Content-Type': 'application/json',
+            map: {
+              'content-type': 'application/json',
+            },
           },
           redirected: false,
           type: 'basic',
@@ -448,7 +470,9 @@ describe('backendSrv', () => {
         expect(fastResponse).toEqual({
           data: { message: 'Fast Request' },
           headers: {
-            'Content-Type': 'application/json',
+            map: {
+              'content-type': 'application/json',
+            },
           },
           ok: true,
           redirected: false,
@@ -461,8 +485,10 @@ describe('backendSrv', () => {
             method: 'GET',
             body: undefined,
             headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json, text/plain, */*',
+              map: {
+                'content-type': 'application/json',
+                accept: 'application/json, text/plain, */*',
+              },
             },
           },
         });
@@ -477,8 +503,10 @@ describe('backendSrv', () => {
             method: 'GET',
             body: undefined,
             headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json, text/plain, */*',
+              map: {
+                'content-type': 'application/json',
+                accept: 'application/json, text/plain, */*',
+              },
             },
           },
         });
@@ -634,22 +662,65 @@ describe('parseUrlFromOptions', () => {
 
 describe('parseInitFromOptions', () => {
   it.each`
-    method       | headers                                                                       | data                               | expected
-    ${undefined} | ${undefined}                                                                  | ${undefined}                       | ${{ method: undefined, headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-    ${'GET'}     | ${undefined}                                                                  | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: undefined }}
-    ${'GET'}     | ${undefined}                                                                  | ${null}                            | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*' }, body: null }}
-    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${undefined}                       | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
-    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${{ data: { test: 'Some data' } }} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
-    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${'some data'}                     | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
-    ${'GET'}     | ${{ Auth: 'Some Auth' }}                                                      | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'GET', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
-    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${undefined}                       | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: undefined }}
-    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${{ data: 'Some data' }}           | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: new URLSearchParams({ data: 'Some data' }) }}
-    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${'some data'}                     | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: 'some data' }}
-    ${'POST'}    | ${{ Auth: 'Some Auth', 'Content-Type': 'application/x-www-form-urlencoded' }} | ${'{"data":{"test":"Some data"}}'} | ${{ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json, text/plain, */*', Auth: 'Some Auth' }, body: '{"data":{"test":"Some data"}}' }}
+    method       | expected
+    ${undefined} | ${{ method: undefined, headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
+    ${'GET'}     | ${{ method: 'GET', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
+    ${'POST'}    | ${{ method: 'POST', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
+    ${'monkey'}  | ${{ method: 'monkey', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
   `(
     "when called with method: '$method', headers: '$headers' and data: '$data' then result should be '$expected'",
-    ({ method, headers, data, expected }) => {
-      expect(parseInitFromOptions({ method, headers, data, url: '' })).toEqual(expected);
+    ({ method, expected }) => {
+      expect(parseInitFromOptions({ method, data: { id: '0' }, url: '' })).toEqual(expected);
+    }
+  );
+});
+
+describe('parseHeaders', () => {
+  it.each`
+    options                                                                 | expected
+    ${undefined}                                                            | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
+    ${{ propKey: 'some prop value' }}                                       | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
+    ${{ headers: { 'content-type': 'application/json' } }}                  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
+    ${{ headers: { 'cOnTent-tYpe': 'application/json' } }}                  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
+    ${{ headers: { 'content-type': 'AppLiCatIon/JsOn' } }}                  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'AppLiCatIon/JsOn' } }}
+    ${{ headers: { 'cOnTent-tYpe': 'AppLiCatIon/JsOn' } }}                  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'AppLiCatIon/JsOn' } }}
+    ${{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }} | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/x-www-form-urlencoded' } }}
+    ${{ headers: { Accept: 'text/plain' } }}                                | ${{ map: { accept: 'text/plain', 'content-type': 'application/json' } }}
+    ${{ headers: { Auth: 'Basic asdasdasd' } }}                             | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json', auth: 'Basic asdasdasd' } }}
+  `("when called with options: '$options' then the result should be '$expected'", ({ options, expected }) => {
+    expect(parseHeaders(options)).toEqual(expected);
+  });
+});
+
+describe('isContentTypeApplicationJson', () => {
+  it.each`
+    headers                                                                 | expected
+    ${undefined}                                                            | ${false}
+    ${new Headers({ 'cOnTent-tYpe': 'application/json' })}                  | ${true}
+    ${new Headers({ 'content-type': 'AppLiCatIon/JsOn' })}                  | ${true}
+    ${new Headers({ 'cOnTent-tYpe': 'AppLiCatIon/JsOn' })}                  | ${true}
+    ${new Headers({ 'content-type': 'application/x-www-form-urlencoded' })} | ${false}
+    ${new Headers({ auth: 'Basic akdjasdkjalksdjasd' })}                    | ${false}
+  `("when called with headers: 'headers' then the result should be '$expected'", ({ headers, expected }) => {
+    expect(isContentTypeApplicationJson(headers)).toEqual(expected);
+  });
+});
+
+describe('parseBody', () => {
+  it.each`
+    options                  | isAppJson | expected
+    ${undefined}             | ${false}  | ${undefined}
+    ${undefined}             | ${true}   | ${undefined}
+    ${{ data: undefined }}   | ${false}  | ${undefined}
+    ${{ data: undefined }}   | ${true}   | ${undefined}
+    ${{ data: 'some data' }} | ${false}  | ${'some data'}
+    ${{ data: 'some data' }} | ${true}   | ${'some data'}
+    ${{ data: { id: '0' } }} | ${false}  | ${new URLSearchParams({ id: '0' })}
+    ${{ data: { id: '0' } }} | ${true}   | ${'{"id":"0"}'}
+  `(
+    "when called with options: '$options' and isAppJson: '$isAppJson' then the result should be '$expected'",
+    ({ options, isAppJson, expected }) => {
+      expect(parseBody(options, isAppJson)).toEqual(expected);
     }
   );
 });

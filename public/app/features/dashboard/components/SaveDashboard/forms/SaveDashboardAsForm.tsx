@@ -1,5 +1,5 @@
 import React from 'react';
-import { Forms, HorizontalGroup, Button } from '@grafana/ui';
+import { Button, Forms, HorizontalGroup } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
@@ -13,7 +13,7 @@ interface SaveDashboardAsFormDTO {
 }
 
 const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
-  const clone = dashboard.getSaveModelClone();
+  const clone: any = dashboard.getSaveModelClone();
   clone.id = null;
   clone.uid = '';
   clone.title += ' Copy';
@@ -75,7 +75,12 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
       {({ register, control, errors }) => (
         <>
           <Forms.Field label="Dashboard name" invalid={!!errors.title} error="Dashboard name is required">
-            <Forms.Input name="title" ref={register({ required: true })} aria-label="Save dashboard title field" />
+            <Forms.Input
+              name="title"
+              ref={register({ required: true })}
+              aria-label="Save dashboard title field"
+              autoFocus
+            />
           </Forms.Field>
           <Forms.Field label="Folder">
             <Forms.InputControl

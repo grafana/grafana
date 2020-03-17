@@ -15,7 +15,7 @@ Array [
       onClick={[Function]}
     >
       <a
-        className="gf-form-label query-part"
+        className="gf-form-label query-part query-placeholder"
       >
         Select Project
       </a>
