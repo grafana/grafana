@@ -57,6 +57,11 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
 
 export const changeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
+    const variableInState = getVariable(identifier.id, getState());
+    if (newName === variableInState.name) {
+      return;
+    }
+
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
@@ -75,17 +80,35 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
 
     if (errorText) {
       dispatch(changeVariableNameFailed({ newName, errorText }));
+      return;
     }
 
-    if (!errorText) {
-      dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
-      if (identifier.id === NEW_VARIABLE_ID) {
-        return;
-      }
-      const renamedVariable = getVariable(newName, getState());
-      dispatch(switchToEditMode(toVariableIdentifier(renamedVariable)));
-    }
+    const thunkToCall = identifier.id === NEW_VARIABLE_ID ? completeChangeNewVariableName : completeChangeVariableName;
+    dispatch(thunkToCall(identifier, newName));
   };
+};
+
+export const completeChangeNewVariableName = (
+  identifier: VariableIdentifier,
+  newName: string
+): ThunkResult<void> => dispatch => {
+  dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
+};
+
+export const completeChangeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => (
+  dispatch,
+  getState
+) => {
+  const originalVariable = getVariable(identifier.id, getState());
+  const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
+  const global = originalVariable.global;
+  const index = originalVariable.index;
+  const renamedIdentifier = toVariableIdentifier(model);
+
+  dispatch(addVariable(toVariablePayload(renamedIdentifier, { global, index, model })));
+  dispatch(changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName })));
+  dispatch(switchToEditMode(renamedIdentifier));
+  dispatch(removeVariable(toVariablePayload(identifier, { reIndex: false })));
 };
 
 export const switchToNewMode = (): ThunkResult<void> => (dispatch, getState) => {
