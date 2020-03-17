@@ -49,11 +49,11 @@ jobs:
           name: Install Grafana Build Pipeline
           command: |
             echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
 
             mkdir bin
-            /opt/google-cloud-sdk/bin/gsutil cp gs://grafana-build-pipeline/grafana-build-pipeline-0.0.2/grabpl \
-              bin/grabpl
+            gsutil cp gs://grafana-build-pipeline/grafana-build-pipeline-0.0.2/grabpl bin/grabpl
+            chmod +x bin/grabpl
       - persist_to_workspace:
           root: .
           paths:
