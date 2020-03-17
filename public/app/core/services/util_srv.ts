@@ -7,6 +7,7 @@ import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AngularModalProxy } from '../components/modals/AngularModalProxy';
+import { provideTheme } from '../utils/ConfigProvider';
 
 export class UtilSrv {
   modalScope: any;
@@ -36,7 +37,7 @@ export class UtilSrv {
       },
     };
 
-    const elem = React.createElement(AngularModalProxy, modalProps);
+    const elem = React.createElement(provideTheme(AngularModalProxy), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
     return ReactDOM.render(elem, this.reactModalNode);
   }

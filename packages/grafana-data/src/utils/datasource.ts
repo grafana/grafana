@@ -27,6 +27,14 @@ export const onUpdateDatasourceJsonDataOptionSelect = <J, S, K extends keyof J>(
   updateDatasourcePluginJsonDataOption(props, key, selected.value);
 };
 
+export const onUpdateDatasourceJsonDataOptionChecked = <J, S, K extends keyof J>(
+  props: DataSourcePluginOptionsEditorProps<J, S>,
+  key: K,
+  val: boolean
+) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
+  updateDatasourcePluginJsonDataOption(props, key, val);
+};
+
 export const onUpdateDatasourceSecureJsonDataOptionSelect = <J, S extends {} = KeyValue>(
   props: DataSourcePluginOptionsEditorProps<J, S>,
   key: string
@@ -85,7 +93,10 @@ export const updateDatasourcePluginSecureJsonDataOption = <J, S extends {} = Key
   });
 };
 
-export function updateDatasourcePluginResetOption(props: DataSourcePluginOptionsEditorProps, key: string) {
+export const updateDatasourcePluginResetOption = <J, S extends {} = KeyValue>(
+  props: DataSourcePluginOptionsEditorProps,
+  key: string
+) => {
   const config = props.options;
 
   props.onOptionsChange({
@@ -99,4 +110,4 @@ export function updateDatasourcePluginResetOption(props: DataSourcePluginOptions
       [key]: false,
     },
   });
-}
+};

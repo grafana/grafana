@@ -1,4 +1,4 @@
-import React, { Component, RefObject } from 'react';
+import React, { Component } from 'react';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
@@ -17,7 +17,6 @@ interface Props {
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
-  scrollRef?: RefObject<Scrollbars>;
 }
 
 /**
@@ -38,7 +37,7 @@ export class CustomScrollbar extends Component<Props> {
 
   constructor(props: Props) {
     super(props);
-    this.ref = props.scrollRef || React.createRef<Scrollbars>();
+    this.ref = React.createRef<Scrollbars>();
   }
 
   updateScroll() {
@@ -52,6 +51,7 @@ export class CustomScrollbar extends Component<Props> {
 
   componentDidMount() {
     this.updateScroll();
+
     // this logic is to make scrollbar visible when content is added body after mount
     if (this.props.updateAfterMountMs) {
       setTimeout(() => this.updateAfterMount(), this.props.updateAfterMountMs);
