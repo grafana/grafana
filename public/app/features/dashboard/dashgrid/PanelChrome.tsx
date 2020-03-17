@@ -10,14 +10,12 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import { getProcessedDataFrames } from '../state/runRequest';
-import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   LoadingState,
-  ScopedVars,
   AbsoluteTimeRange,
   DefaultTimeRange,
   toUtc,
@@ -212,20 +210,11 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onRender = () => {
     const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
-
     this.setState(stateUpdate);
   };
 
   onOptionsChange = (options: any) => {
     this.props.panel.updateOptions(options);
-  };
-
-  replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
-    let vars = this.props.panel.scopedVars;
-    if (extraVars) {
-      vars = vars ? { ...vars, ...extraVars } : extraVars;
-    }
-    return templateSrv.replace(value, vars, format);
   };
 
   onPanelError = (message: string) => {
@@ -273,16 +262,15 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     const PanelComponent = plugin.panel;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
-
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
     const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
     const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER;
-
     const panelContentClassNames = classNames({
       'panel-content': true,
       'panel-content--no-padding': plugin.noPadding,
     });
+    const panelOptions = panel.getOptions();
 
     return (
       <>
@@ -292,12 +280,12 @@ export class PanelChrome extends PureComponent<Props, State> {
             data={data}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
-            options={panel.getOptions()}
+            options={panelOptions}
             transparent={panel.transparent}
             width={panelWidth}
             height={innerPanelHeight}
             renderCounter={renderCounter}
-            replaceVariables={this.replaceVariables}
+            replaceVariables={panel.replaceVariables}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
           />

@@ -13,7 +13,7 @@ import usersReducers from 'app/features/users/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
-import templatingReducers from 'app/features/templating/state/reducers';
+import templatingReducers from 'app/features/variables/state/reducers';
 
 const rootReducers = {
   ...sharedReducers,
