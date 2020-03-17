@@ -5,7 +5,7 @@ import { GrafanaTheme, AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 
-export interface RichHistorySettingsProps {
+interface RichHistorySettingsProps {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourceOnly: boolean;
