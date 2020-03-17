@@ -188,6 +188,15 @@ func (pm *PluginManager) scan(pluginDir string) error {
 	return nil
 }
 
+// GetDatasource returns a datasource based on passed pluginID if it exists
+//
+// This function fetches the datasource from the global variable DataSources in this package.
+// Rather then refactor all dependencies on the global variable we can use this as an transition.
+func (pm *PluginManager) GetDatasource(pluginID string) (*DataSourcePlugin, bool) {
+	ds, exist := DataSources[pluginID]
+	return ds, exist
+}
+
 func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
 	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
