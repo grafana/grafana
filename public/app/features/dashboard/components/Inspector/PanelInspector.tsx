@@ -265,8 +265,8 @@ export class PanelInspector extends PureComponent<Props, State> {
 
     return (
       <>
-        {this.renderStatsTable('General stats', stats)}
-        {this.renderStatsTable('Query stats', dataStats)}
+        {this.renderStatsTable('Stats', stats)}
+        {dataStats.length && this.renderStatsTable('Data source stats', dataStats)}
       </>
     );
   }

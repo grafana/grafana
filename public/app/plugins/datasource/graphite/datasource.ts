@@ -132,8 +132,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       if (s.meta) {
         frame.meta = {
           custom: {
-            request: result.data.meta, // info for the whole request
-            info: s.meta, // Array of metadata
+            requestMetaList: result.data.meta, // info for the whole request
+            seriesMetaList: s.meta, // Array of metadata
           },
           notices: this.getRollupNotices(s.meta),
         };

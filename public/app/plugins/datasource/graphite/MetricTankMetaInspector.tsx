@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import { MetadataInspectorProps, DataFrame } from '@grafana/data';
+import { MetadataInspectorProps } from '@grafana/data';
 import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteOptions, MetricTankMeta, MetricTankSeriesMeta } from './types';
+import { GraphiteQuery, GraphiteOptions, MetricTankSeriesMeta } from './types';
 import { parseSchemaRetentions } from './meta';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
@@ -11,13 +11,11 @@ export interface State {
 }
 
 export class MetricTankMetaInspector extends PureComponent<Props, State> {
-  state = { index: 0 };
+  renderMeta(meta: MetricTankSeriesMeta) {
+    const buckets = parseSchemaRetentions(meta['schema-retentions']);
 
-  renderInfo = (info: MetricTankSeriesMeta, frame: DataFrame) => {
-    const buckets = parseSchemaRetentions(info['schema-retentions']);
     return (
       <div>
-        <h3>Info</h3>
         <table>
           <tbody>
             {buckets.map(row => (
@@ -31,28 +29,30 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
             ))}
           </tbody>
         </table>
-        <pre>{JSON.stringify(info, null, 2)}</pre>
       </div>
     );
-  };
+  }
 
   render() {
     const { data } = this.props;
-    if (!data || !data.length) {
-      return <div>No Metadata</div>;
+
+    // away to dedupe them
+    const seriesMetas: Record<string, MetricTankSeriesMeta> = {};
+
+    for (const series of data) {
+      if (series.meta && series.meta.custom) {
+        for (const metaItem of series.meta.custom.seriesMetaList as MetricTankSeriesMeta[]) {
+          // key is to dedupe as many series will have identitical meta
+          const key = `${metaItem['schema-name']}-${metaItem['archive-read']}`;
+          seriesMetas[key] = metaItem;
+        }
+      }
     }
 
-    const frame = data[this.state.index];
-    const meta = frame.meta?.custom as MetricTankMeta;
-    if (!meta || !meta.info) {
-      return <>No Metadatata on DataFrame</>;
+    if (Object.keys(seriesMetas).length === 0) {
+      return <div>No response meta data</div>;
     }
-    return (
-      <div>
-        <h3>MetricTank Request</h3>
-        <pre>{JSON.stringify(meta.request, null, 2)}</pre>
-        {meta.info.map(info => this.renderInfo(info, frame))}
-      </div>
-    );
+
+    return <div>{Object.values(seriesMetas).map(meta => this.renderMeta(meta))}</div>;
   }
 }
