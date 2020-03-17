@@ -22,6 +22,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   authenticationType: string;
   queryPromise: Promise<any>;
   metricTypesCache: { [key: string]: MetricDescriptor[] };
+  gceDefaultProject: string;
 
   /** @ngInject */
   constructor(
@@ -324,7 +325,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   getDefaultProject(): string {
     const { defaultProject, authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
     if (authenticationType === 'gce') {
-      return gceDefaultProject || '';
+      return gceDefaultProject || this.gceDefaultProject;
     }
 
     return defaultProject || '';
@@ -333,7 +334,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   async ensureGCEDefaultProject() {
     const { authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
     if (authenticationType === 'gce' && !gceDefaultProject) {
-      this.instanceSettings.jsonData.gceDefaultProject = await this.getGCEDefaultProject();
+      this.gceDefaultProject = await this.getGCEDefaultProject();
     }
   }
 
