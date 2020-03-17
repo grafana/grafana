@@ -9,7 +9,6 @@ import {
   VariableOption,
   VariableRefresh,
   VariableWithOptions,
-  VariableWithRefresh,
 } from '../../templating/variable';
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
@@ -100,7 +99,7 @@ export const processVariable = (identifier: VariableIdentifier, queryParams: Url
     }
 
     if (variable.hasOwnProperty('refresh')) {
-      const refreshableVariable = variable as VariableModel & VariableWithRefresh;
+      const refreshableVariable = variable as QueryVariableModel;
       if (
         refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
         refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
@@ -340,7 +339,7 @@ export const onTimeRangeUpdated = (
   dependencies.templateSrv.updateTimeRange(timeRange);
   const variablesThatNeedRefresh = getVariables(getState()).filter(variable => {
     if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
-      const variableWithRefresh = (variable as unknown) as VariableModel & VariableWithRefresh;
+      const variableWithRefresh = (variable as unknown) as QueryVariableModel;
       return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
     }
 
