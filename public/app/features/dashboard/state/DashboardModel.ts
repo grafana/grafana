@@ -15,7 +15,7 @@ import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { VariableModel } from '../../templating/variable';
 import { getConfig } from '../../../core/config';
-import { getVariables } from 'app/features/variables/state/selectors';
+import { getVariableClones, getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 
 export interface CloneOptions {
@@ -241,7 +241,7 @@ export class DashboardModel {
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
     const originalVariables = this.variables.list;
-    const currentVariables = getVariables();
+    const currentVariables = getVariableClones();
 
     copy.variables = {
       list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
