@@ -1,6 +1,4 @@
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import StackdriverDatasource from './datasource';
 import { AuthType, authTypes } from './types';
 
 export interface JWT {
