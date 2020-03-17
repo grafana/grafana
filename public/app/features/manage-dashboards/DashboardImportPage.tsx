@@ -4,9 +4,9 @@ import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
 import { Forms, stylesFactory } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { ImportDashboardForm } from './ImportDashboardForm';
-import { DashboardFileUpload } from './DashboardFileUpload';
-import { fetchGcomDashboard, importDashboardJson } from '../state/actions';
+import { ImportDashboardOverview } from './components/ImportDashboardOverview';
+import { DashboardFileUpload } from './components/DashboardFileUpload';
+import { fetchGcomDashboard, importDashboardJson } from './state/actions';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
@@ -158,7 +158,7 @@ class DashboardImportUnConnected extends PureComponent<Props, State> {
     const { isLoaded, navModel } = this.props;
     return (
       <Page navModel={navModel}>
-        <Page.Contents>{isLoaded ? <ImportDashboardForm /> : this.renderImportForm()}</Page.Contents>
+        <Page.Contents>{isLoaded ? <ImportDashboardOverview /> : this.renderImportForm()}</Page.Contents>
       </Page>
     );
   }
@@ -174,6 +174,6 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
   importDashboardJson,
 };
 
-export const DashboardImport = connect(mapStateToProps, mapDispatchToProps)(DashboardImportUnConnected);
-export default DashboardImport;
-DashboardImport.displayName = 'DashboardImport';
+export const DashboardImportPage = connect(mapStateToProps, mapDispatchToProps)(DashboardImportUnConnected);
+export default DashboardImportPage;
+DashboardImportPage.displayName = 'DashboardImport';

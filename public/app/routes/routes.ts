@@ -119,7 +119,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/components/DashboardImport')
+            import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
           ),
       },
     })
