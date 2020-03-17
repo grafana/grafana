@@ -8,9 +8,8 @@ import { OperatorSegment } from './OperatorSegment';
 import { SelectableValue } from '@grafana/data';
 import { AdHocFilterBuilder } from './AdHocFilterBuilder';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { filterAdded, filterUpdated, filterRemoved } from '../../adhoc/reducer';
-import { toVariablePayload } from '../../state/types';
 import { ConditionSegment } from './ConditionSegment';
+import { addFilter, removeFilter, changeFilter } from '../../adhoc/actions';
 
 const REMOVE_FILTER_KEY = '-- remove filter --';
 
@@ -19,9 +18,9 @@ interface OwnProps extends VariablePickerProps<AdHocVariableModel> {}
 interface ConnectedProps {}
 
 interface DispatchProps {
-  filterAdded: typeof filterAdded;
-  filterRemoved: typeof filterRemoved;
-  filterUpdated: typeof filterUpdated;
+  addFilter: typeof addFilter;
+  removeFilter: typeof removeFilter;
+  changeFilter: typeof changeFilter;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -29,20 +28,25 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 const removeValue = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 export class AdHocPickerUnconnected extends PureComponent<Props> {
   onChange = (index: number, prop: string) => (key: SelectableValue<string>) => {
-    const { variable } = this.props;
+    const { uuid, filters } = this.props.variable;
     const { value } = key;
 
     if (key.value === REMOVE_FILTER_KEY) {
-      return this.props.filterRemoved(toVariablePayload(variable, index));
+      return this.props.removeFilter(uuid, index);
     }
 
-    const data = { index, filter: { ...variable.filters[index], [prop]: value } };
-    return this.props.filterUpdated(toVariablePayload(variable, data));
+    return this.props.changeFilter(uuid, {
+      index,
+      filter: {
+        ...filters[index],
+        [prop]: value,
+      },
+    });
   };
 
   appendFilterToVariable = (filter: AdHocVariableFilter) => {
-    const { variable } = this.props;
-    this.props.filterAdded(toVariablePayload(variable, filter));
+    const { uuid } = this.props.variable;
+    this.props.addFilter(uuid, filter);
   };
 
   fetchFilterKeys = async () => {
@@ -125,9 +129,9 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
 }
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  filterAdded,
-  filterRemoved,
-  filterUpdated,
+  addFilter,
+  removeFilter,
+  changeFilter,
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({});

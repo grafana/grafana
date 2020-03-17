@@ -3,7 +3,34 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { changeVariableEditorExtended, changeEditorInfoText } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
 import { getVariable } from '../state/selectors';
-import { toVariablePayload } from '../state/types';
+import { toVariablePayload, toVariableIdentifier } from '../state/types';
+import { AdHocVariabelFilterUpdate, filterRemoved, filterUpdated, filterAdded } from './reducer';
+import { AdHocVariableFilter } from 'app/features/templating/variable';
+import { variableUpdated } from '../state/actions';
+
+export const changeFilter = (uuid: string, update: AdHocVariabelFilterUpdate): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const variable = getVariable(uuid, getState());
+    dispatch(filterUpdated(toVariablePayload(variable, update)));
+    dispatch(variableUpdated(toVariableIdentifier(variable), true));
+  };
+};
+
+export const removeFilter = (uuid: string, index: number): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const variable = getVariable(uuid, getState());
+    dispatch(filterRemoved(toVariablePayload(variable, index)));
+    dispatch(variableUpdated(toVariableIdentifier(variable), true));
+  };
+};
+
+export const addFilter = (uuid: string, filter: AdHocVariableFilter): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const variable = getVariable(uuid, getState());
+    dispatch(filterAdded(toVariablePayload(variable, filter)));
+    dispatch(variableUpdated(toVariableIdentifier(variable), true));
+  };
+};
 
 export const changeVariableDatasource = (datasource: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
