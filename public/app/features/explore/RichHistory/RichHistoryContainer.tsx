@@ -25,15 +25,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
   const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const handleShadow = theme.isLight ? `0px 0px 2px ${bgColor}` : `0px 0px 2px black`;
-  const containerShadow = theme.isLight ? `0px 0px 4px ${bgColor}` : `0px 0px 4px black`;
+  const handleShadow = theme.isLight ? `0px 2px 2px ${bgColor}` : `0px 2px 4px black`;
   return {
     container: css`
       position: fixed !important;
       bottom: 0;
       background: ${bg};
       border-top: 1px solid ${borderColor};
-      box-shadow: ${containerShadow};
       margin: 0px;
       margin-right: -${theme.spacing.md};
       margin-left: -${theme.spacing.md};
