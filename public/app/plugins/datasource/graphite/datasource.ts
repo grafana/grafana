@@ -14,10 +14,10 @@ import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-//Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankSeriesMeta, MetricTankRequestMeta } from './types';
+// Types
+import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
-import { parseSchemaRetentions } from 'app/plugins/datasource/graphite/meta';
+import { getRollupNotice } from 'app/plugins/datasource/graphite/meta';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -135,13 +135,16 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
             requestMetaList: result.data.meta, // info for the whole request
             seriesMetaList: s.meta, // Array of metadata
           },
-          notices: this.getRollupNotices(s.meta),
         };
+
+        const notice = getRollupNotice(s.meta);
+        if (notice) {
+          frame.meta.notices = [notice];
+        }
 
         // only add the request stats to the first frame
         if (i === 0) {
           frame.meta.stats = this.getRequestStats(result.data.meta);
-          console.log('frame.meta.stats', frame.meta);
         }
       }
 
@@ -165,46 +168,6 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
 
     return stats;
-  }
-
-  getRollupNotices(metaList: MetricTankSeriesMeta[]): QueryResultMetaNotice[] {
-    const notices: QueryResultMetaNotice[] = [];
-
-    for (const meta of metaList) {
-      const archiveIndex = meta['archive-read'];
-
-      if (archiveIndex > 0) {
-        const schema = parseSchemaRetentions(meta['schema-retentions']);
-        const intervalString = schema[archiveIndex].interval;
-        const func = meta['consolidate-normfetch'].replace('Consolidator', '');
-
-        notices.push({
-          text: `Data is rolled up, aggregated over ${intervalString} using ${func} function`,
-          severity: 'info',
-          inspect: 'meta',
-        });
-
-        return notices;
-      }
-    }
-
-    for (const meta of metaList) {
-      const runtimeNr = meta['aggnum-rc'];
-
-      if (runtimeNr > 0) {
-        const func = meta['consolidate-rc'].replace('Consolidator', '');
-
-        notices.push({
-          text: `Data is runtime consolidated, ${runtimeNr} datapoints combined using ${func} function`,
-          severity: 'info',
-          inspect: 'meta',
-        });
-
-        return notices;
-      }
-    }
-
-    return notices;
   }
 
   parseTags(tagString: string) {
