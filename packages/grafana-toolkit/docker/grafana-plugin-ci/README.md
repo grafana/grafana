@@ -15,7 +15,7 @@ The home directory will be `/home/circleci`
 
 ## Go
 - Go 1.14 is installed in `/usr/local/bin/go`
-- golangci 1.23.7 is installed in `/usr/local/bin/golangci-lint`
+- golangci-lint 1.23.7 is installed in `/usr/local/bin/golangci-lint`
 - mage is installed in `/home/circleci/go/bin/mage`
 
 All of the above directories are in the path, so there is no need to specify fully qualified paths.
@@ -49,4 +49,3 @@ To build, cd to `<srcroot>/packages/grafana-toolkit/docker/grafana-plugin-ci`
 ```
 docker build .
 ```
-
