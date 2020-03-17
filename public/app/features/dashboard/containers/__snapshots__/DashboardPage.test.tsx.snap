@@ -60,6 +60,10 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "_eventsCount": 0,
               },
             },
+            "fieldConfig": Object {
+              "defaults": Object {},
+              "overrides": Array [],
+            },
             "gridPos": Object {
               "h": 1,
               "w": 1,
@@ -178,6 +182,10 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                       "_eventsCount": 0,
                     },
                   },
+                  "fieldConfig": Object {
+                    "defaults": Object {},
+                    "overrides": Array [],
+                  },
                   "gridPos": Object {
                     "h": 1,
                     "w": 1,
@@ -275,6 +283,10 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                       "_events": Object {},
                       "_eventsCount": 0,
                     },
+                  },
+                  "fieldConfig": Object {
+                    "defaults": Object {},
+                    "overrides": Array [],
                   },
                   "gridPos": Object {
                     "h": 1,
@@ -406,6 +418,10 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "_eventsCount": 0,
               },
             },
+            "fieldConfig": Object {
+              "defaults": Object {},
+              "overrides": Array [],
+            },
             "gridPos": Object {
               "h": 1,
               "w": 1,
@@ -522,6 +538,10 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "_eventsCount": 0,
                   },
                 },
+                "fieldConfig": Object {
+                  "defaults": Object {},
+                  "overrides": Array [],
+                },
                 "gridPos": Object {
                   "h": 1,
                   "w": 1,
@@ -623,6 +643,10 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                       "_eventsCount": 0,
                     },
                   },
+                  "fieldConfig": Object {
+                    "defaults": Object {},
+                    "overrides": Array [],
+                  },
                   "gridPos": Object {
                     "h": 1,
                     "w": 1,
@@ -720,6 +744,10 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                       "_events": Object {},
                       "_eventsCount": 0,
                     },
+                  },
+                  "fieldConfig": Object {
+                    "defaults": Object {},
+                    "overrides": Array [],
                   },
                   "gridPos": Object {
                     "h": 1,

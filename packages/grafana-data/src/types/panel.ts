@@ -3,7 +3,7 @@ import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
-import { DataFrame, FieldConfig } from './dataFrame';
+import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { FieldConfigEditorRegistry, FieldConfigSource } from './fieldOverrides';
 
@@ -162,11 +162,13 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   /**
    * Enables configuration of panel's default field config
    */
-  setFieldConfigDefaults(defaults: FieldConfig) {
+  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource>) {
     this.fieldConfigDefaults = {
-      defaults,
+      defaults: {},
       overrides: [],
+      ...defaultConfig,
     };
+
     return this;
   }
 }

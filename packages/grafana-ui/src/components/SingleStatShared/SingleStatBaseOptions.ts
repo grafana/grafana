@@ -168,6 +168,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
   }
 
   if (previousVersion < 7.0) {
+    panel.fieldConfig = panel.fieldConfig || { defaults: {}, overrides: [] };
     panel.fieldConfig = {
       defaults:
         options.fieldOptions && options.fieldOptions.defaults
