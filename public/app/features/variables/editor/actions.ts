@@ -79,6 +79,9 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
 
     if (!errorText) {
       dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
+      if (identifier.id === NEW_VARIABLE_ID) {
+        return;
+      }
       const renamedVariable = getVariable(newName, getState());
       dispatch(switchToEditMode(toVariableIdentifier(renamedVariable)));
     }

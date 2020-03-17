@@ -155,6 +155,11 @@ const sharedReducerSlice = createSlice({
   },
   extraReducers: builder =>
     builder.addCase(changeVariableNameSucceeded, (state, action) => {
+      if (action.payload.id === NEW_VARIABLE_ID) {
+        state[NEW_VARIABLE_ID].name = action.payload.data.newName;
+        return;
+      }
+
       const oldName = action.payload.id;
       const newName = action.payload.data.newName;
       const variableBeforeRename = cloneDeep(state[oldName]);
