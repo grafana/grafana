@@ -77,7 +77,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-interface Props {
+export interface Props {
   width: number;
   exploreId: ExploreId;
   activeDatasourceInstance: string;
@@ -87,7 +87,7 @@ interface Props {
   onClose: () => void;
 }
 
-function RichHistoryContainer(props: Props) {
+export function RichHistoryContainer(props: Props) {
   const [visible, setVisible] = useState(false);
   const [height, setHeight] = useState(400);
 
