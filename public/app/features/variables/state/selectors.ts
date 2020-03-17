@@ -5,9 +5,16 @@ import { VariableModel } from '../../templating/variable';
 import { getState } from '../../../store/store';
 import { NEW_VARIABLE_ID } from './types';
 
-export const getVariable = <T extends VariableModel = VariableModel>(id: string, state: StoreState = getState()): T => {
+export const getVariable = <T extends VariableModel = VariableModel>(
+  id: string,
+  state: StoreState = getState(),
+  throwWhenMissing = true
+): T => {
   if (!state.templating.variables[id]) {
-    throw new Error(`Couldn't find variable with id:${id}`);
+    if (throwWhenMissing) {
+      throw new Error(`Couldn't find variable with id:${id}`);
+    }
+    return undefined;
   }
 
   return state.templating.variables[id] as T;

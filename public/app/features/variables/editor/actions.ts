@@ -9,7 +9,13 @@ import {
   variableEditorUnMounted,
 } from './reducer';
 import { variableAdapters } from '../adapters';
-import { AddVariable, NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
+import {
+  AddVariable,
+  NEW_VARIABLE_ID,
+  toVariableIdentifier,
+  toVariablePayload,
+  VariableIdentifier,
+} from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '../../templating/variable';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
@@ -73,6 +79,8 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
 
     if (!errorText) {
       dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
+      const renamedVariable = getVariable(newName, getState());
+      dispatch(switchToEditMode(toVariableIdentifier(renamedVariable)));
     }
   };
 };
