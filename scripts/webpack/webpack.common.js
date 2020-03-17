@@ -30,7 +30,7 @@ module.exports = {
       // this alias maps that dependency to core-js@t3
       'core-js/library/fn': 'core-js/stable',
     },
-    modules: [path.resolve('public'), path.resolve('node_modules')],
+    modules: [path.resolve('public'), 'node_modules'],
   },
   stats: {
     children: false,
