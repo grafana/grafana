@@ -29,7 +29,7 @@ executors:
       - image: grafana/build-container:1.2.13
   grafana-publish:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.3
+      - image: grafana/grafana-ci-deploy:1.2.4
   docker:
     machine:
       image: circleci/classic:201808-01
@@ -524,11 +524,8 @@ jobs:
           command: ./e2e/run-suite
           no_output_timeout: 5m
       - store_artifacts:
-          path: e2e/suite1/screenshots/expected
-          destination: expected-screenshots
-      - store_artifacts:
-          path: e2e/suite1/screenshots/received
-          destination: received-screenshots
+          path: e2e/suite1/screenshots
+          destination: screenshots
       - store_artifacts:
           path: e2e/suite1/videos
           destination: output-videos

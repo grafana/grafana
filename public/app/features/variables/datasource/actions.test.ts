@@ -52,7 +52,7 @@ describe('data source actions', () => {
             true
           );
 
-        await tester.thenDispatchedActionShouldEqual(
+        await tester.thenDispatchedActionsShouldEqual(
           createDataSourceOptions(
             toVariablePayload({ type: 'datasource', uuid: '0' }, { sources, regex: (undefined as unknown) as RegExp })
           ),
@@ -103,7 +103,7 @@ describe('data source actions', () => {
             true
           );
 
-        await tester.thenDispatchedActionShouldEqual(
+        await tester.thenDispatchedActionsShouldEqual(
           createDataSourceOptions(
             toVariablePayload({ type: 'datasource', uuid: '0' }, { sources, regex: /.*(second-name).*/ })
           ),
@@ -157,7 +157,7 @@ describe('data source actions', () => {
         .givenRootReducer(getTemplatingRootReducer())
         .whenAsyncActionIsDispatched(initDataSourceVariableEditor(dependencies));
 
-      await tester.thenDispatchedActionShouldEqual(
+      await tester.thenDispatchedActionsShouldEqual(
         changeVariableEditorExtended({
           propName: 'dataSourceTypes',
           propValue: [
