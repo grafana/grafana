@@ -230,7 +230,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     let status, message;
     const defaultErrorMessage = 'Cannot connect to Stackdriver API';
     try {
-      this.ensureGCEDefaultProject();
+      await this.ensureGCEDefaultProject();
       const path = `v3/projects/${this.getDefaultProject()}/metricDescriptors`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
       if (response.status === 200) {
@@ -325,7 +325,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   getDefaultProject(): string {
     const { defaultProject, authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
     if (authenticationType === 'gce') {
-      return gceDefaultProject || this.gceDefaultProject;
+      return gceDefaultProject || '';
     }
 
     return defaultProject || '';
@@ -334,7 +334,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   async ensureGCEDefaultProject() {
     const { authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
     if (authenticationType === 'gce' && !gceDefaultProject) {
-      this.gceDefaultProject = await this.getGCEDefaultProject();
+      this.instanceSettings.jsonData.gceDefaultProject = await this.getGCEDefaultProject();
     }
   }
 
