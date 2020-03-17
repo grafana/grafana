@@ -287,16 +287,22 @@ export class PanelModel implements DataConfigSource {
       }
     });
 
-    this.fieldConfig = _.mergeWith(
-      {},
-      plugin.fieldConfigDefaults,
-      this.fieldConfig || {},
-      (objValue: any, srcValue: any): any => {
-        if (_.isArray(srcValue)) {
-          return srcValue;
+    this.fieldConfig = {
+      defaults: _.mergeWith(
+        {},
+        plugin.fieldConfigDefaults.defaults,
+        this.fieldConfig ? this.fieldConfig.defaults : {},
+        (objValue: any, srcValue: any): any => {
+          if (_.isArray(srcValue)) {
+            return srcValue;
+          }
         }
-      }
-    );
+      ),
+      overrides: [
+        ...plugin.fieldConfigDefaults.overrides,
+        ...(this.fieldConfig && this.fieldConfig.overrides ? this.fieldConfig.overrides : []),
+      ],
+    };
   }
 
   pluginLoaded(plugin: PanelPlugin) {
