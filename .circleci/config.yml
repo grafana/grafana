@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Install Grafana Build Pipeline
           command: |
-            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.0.2/grabpl
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.0.3/grabpl
             chmod +x grabpl
             mkdir bin
             mv grabpl bin/
@@ -530,11 +530,11 @@ jobs:
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
-                --ubuntu=<< parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
+                --ubuntu=<< parameters.ubuntu >>
             else
               # We're testing a branch
               /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
-                --ubuntu=<< parameters.ubuntu >> --archs amd64 $CIRCLE_WORKFLOW_ID
+                --ubuntu=<< parameters.ubuntu >> --archs amd64
             fi
             mkdir -p << parameters.edition >>/docker
             mv docker/*.tar << parameters.edition >>/docker/
