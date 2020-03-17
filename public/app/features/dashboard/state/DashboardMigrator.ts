@@ -499,6 +499,10 @@ export class DashboardMigrator {
     //
     if (oldVersion < 23) {
       panelUpgrades.push((panel: any) => {
+        panel.fieldConfig = {
+          defaults: {},
+          overrides: [],
+        };
         if (panel.options && panel.options.fieldOptions) {
           panel.fieldConfig = {
             defaults: panel.options.fieldOptions.defaults || {},
