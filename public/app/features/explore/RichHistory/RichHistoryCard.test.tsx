@@ -42,7 +42,6 @@ const starredQueryWithComment = {
 describe('RichHistoryCard', () => {
   it('should render all queries', () => {
     const wrapper = setup();
-    console.log(wrapper.html());
     expect(wrapper.find({ 'aria-label': 'Query text' })).toHaveLength(3);
     expect(
       wrapper
