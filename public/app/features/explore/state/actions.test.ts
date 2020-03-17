@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc, ExploreMode } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
 
 import * as Actions from './actions';
 import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';
@@ -289,7 +289,7 @@ describe('loading datasource', () => {
   });
 });
 
-const getNavigateToExploreContext = async (openInNewWindow: (url: string) => void = undefined) => {
+const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = 'http://www.someurl.com';
   const panel: Partial<PanelModel> = {
     datasource: 'mocked datasource',
@@ -320,7 +320,7 @@ const getNavigateToExploreContext = async (openInNewWindow: (url: string) => voi
 describe('navigateToExplore', () => {
   describe('when navigateToExplore thunk is dispatched', () => {
     describe('and openInNewWindow is undefined', () => {
-      const openInNewWindow: (url: string) => void = undefined;
+      const openInNewWindow: (url: string) => void = (undefined as unknown) as (url: string) => void;
       it('then it should dispatch correct actions', async () => {
         const { dispatchedActions, url } = await getNavigateToExploreContext(openInNewWindow);
 

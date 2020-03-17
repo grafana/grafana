@@ -185,14 +185,27 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context, ch chan<- prometheus
 	return nil
 }
 
-func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealthResponse, error) {
+func (p *BackendPlugin) checkHealth(ctx context.Context, config *PluginConfig) (*pluginv2.CheckHealthResponse, error) {
 	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
 		return &pluginv2.CheckHealthResponse{
 			Status: pluginv2.CheckHealthResponse_UNKNOWN,
 		}, nil
 	}
 
-	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{})
+	jsonDataBytes, err := config.JSONData.ToDB()
+	if err != nil {
+		return nil, err
+	}
+
+	pconfig := &pluginv2.PluginConfig{
+		OrgId:                   config.OrgID,
+		PluginId:                config.PluginID,
+		JsonData:                jsonDataBytes,
+		DecryptedSecureJsonData: config.DecryptedSecureJSONData,
+		LastUpdatedMS:           config.Updated.UnixNano() / int64(time.Millisecond),
+	}
+
+	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{Config: pconfig})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {
@@ -229,10 +242,9 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 		Config: &pluginv2.PluginConfig{
 			OrgId:                   req.Config.OrgID,
 			PluginId:                req.Config.PluginID,
-			PluginType:              req.Config.PluginType,
 			JsonData:                jsonDataBytes,
 			DecryptedSecureJsonData: req.Config.DecryptedSecureJSONData,
-			UpdatedMS:               req.Config.Updated.UnixNano() / int64(time.Millisecond),
+			LastUpdatedMS:           req.Config.Updated.UnixNano() / int64(time.Millisecond),
 		},
 		Path:    req.Path,
 		Method:  req.Method,
@@ -251,14 +263,22 @@ func (p *BackendPlugin) callResource(ctx context.Context, req CallResourceReques
 	}
 
 	if req.Config.DataSourceConfig != nil {
+		datasourceJSONData, err := req.Config.DataSourceConfig.JSONData.ToDB()
+		if err != nil {
+			return nil, err
+		}
+
 		protoReq.Config.DatasourceConfig = &pluginv2.DataSourceConfig{
-			Id:               req.Config.DataSourceConfig.ID,
-			Name:             req.Config.DataSourceConfig.Name,
-			Url:              req.Config.DataSourceConfig.URL,
-			Database:         req.Config.DataSourceConfig.Database,
-			User:             req.Config.DataSourceConfig.User,
-			BasicAuthEnabled: req.Config.DataSourceConfig.BasicAuthEnabled,
-			BasicAuthUser:    req.Config.DataSourceConfig.BasicAuthUser,
+			Id:                      req.Config.DataSourceConfig.ID,
+			Name:                    req.Config.DataSourceConfig.Name,
+			Url:                     req.Config.DataSourceConfig.URL,
+			Database:                req.Config.DataSourceConfig.Database,
+			User:                    req.Config.DataSourceConfig.User,
+			BasicAuthEnabled:        req.Config.DataSourceConfig.BasicAuthEnabled,
+			BasicAuthUser:           req.Config.DataSourceConfig.BasicAuthUser,
+			JsonData:                datasourceJSONData,
+			DecryptedSecureJsonData: req.Config.DataSourceConfig.DecryptedSecureJSONData,
+			LastUpdatedMS:           req.Config.DataSourceConfig.Updated.UnixNano() / int64(time.Millisecond),
 		}
 	}
 
