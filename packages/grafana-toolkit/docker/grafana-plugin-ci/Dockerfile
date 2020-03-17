@@ -14,6 +14,7 @@ RUN tar xf golangci-lint-1.23.7-linux-amd64.tar.gz
 RUN sudo mv golangci-lint-1.23.7-linux-amd64/golangci-lint /usr/local/bin
 RUN sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
 RUN sudo ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+RUN chmod 755 /usr/local/bin/golangci-lint
 
 # Install dependencies
 RUN sudo apt-get install -y adduser libfontconfig1 updatedb

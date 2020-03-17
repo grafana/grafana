@@ -15,7 +15,7 @@ The home directory will be `/home/circleci`
 
 ## Go
 - Go 1.14 is installed in `/usr/local/bin/go`
-- golangci 1.23.7 is installed in `/usr/local/bin/gofmt`
+- golangci 1.23.7 is installed in `/usr/local/bin/golangci-lint`
 - mage is installed in `/home/circleci/go/bin/mage`
 
 All of the above directories are in the path, so there is no need to specify fully qualified paths.
@@ -31,21 +31,23 @@ There are 4 previous versions pre-downloaded to /usr/local/grafana. These versio
 3. 6.4.5
 4. 6.3.7
 
-To test, your circle-ci config will need a run section with something similar to the following
+To test, your CircleCI config will need a run section with something similar to the following
 ```
 - run:
         name: Setup Grafana (local install)
         command: |
           sudo dpkg -i /usr/local/grafana/deb/grafana_6.6.2_amd64.deb
+          sudo updatedb
+          sudo locate grafana
           sudo cp ci/grafana-test-env/custom.ini /usr/share/grafana/conf/custom.ini
           sudo cp ci/grafana-test-env/custom.ini /etc/grafana/grafana.ini
           sudo service grafana-server start
-          sudo grafana-cli --version
+          grafana-cli --version
 ```
 
 
 # Building
-To build cd to `<srcroot>/packages/grafana-toolkit/docker/grafana-plugin-ci`
+To build, cd to `<srcroot>/packages/grafana-toolkit/docker/grafana-plugin-ci`
 ```
 docker build .
 ```
