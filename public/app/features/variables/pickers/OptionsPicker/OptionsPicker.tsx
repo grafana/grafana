@@ -39,11 +39,17 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
   onHideOptions = () => this.props.commitChangesToVariable();
 
   onToggleOption = (option: VariableOption, clearOthers: boolean) => {
-    this.props.toggleOption({
-      option,
-      clearOthers,
-      forceSelect: false,
-    });
+    const toggleFunc = this.props.variable.multi ? this.onToggleMultiValueVariable : this.onToggleSingleValueVariable;
+    toggleFunc(option, clearOthers);
+  };
+
+  onToggleSingleValueVariable = (option: VariableOption, clearOthers: boolean) => {
+    this.props.toggleOption({ option, clearOthers, forceSelect: false });
+    this.onHideOptions();
+  };
+
+  onToggleMultiValueVariable = (option: VariableOption, clearOthers: boolean) => {
+    this.props.toggleOption({ option, clearOthers, forceSelect: false });
   };
 
   render() {

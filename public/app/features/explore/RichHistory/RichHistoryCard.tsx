@@ -147,7 +147,6 @@ export function RichHistoryCard(props: Props) {
     datasourceInstance,
     setQueries,
   } = props;
-  const [starred, setStared] = useState(query.starred);
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
 
@@ -184,7 +183,6 @@ export function RichHistoryCard(props: Props) {
 
   const onStarrQuery = () => {
     updateRichHistory(query.ts, 'starred');
-    setStared(!starred);
   };
 
   const onUpdateComment = () => {
@@ -225,7 +223,7 @@ export function RichHistoryCard(props: Props) {
       {!isRemoved && <i className="fa fa-fw fa-link" onClick={onCreateLink} title="Copy link to clipboard"></i>}
       <i className={'fa fa-trash'} title={'Delete query'} onClick={onDeleteQuery}></i>
       <i
-        className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
+        className={cx('fa fa-fw', query.starred ? 'fa-star starred' : 'fa-star-o')}
         onClick={onStarrQuery}
         title={query.starred ? 'Unstar query' : 'Star query'}
       ></i>

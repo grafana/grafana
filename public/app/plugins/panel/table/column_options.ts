@@ -73,9 +73,11 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  setUnitFormat(column: any, subItem: any) {
-    column.unit = subItem.value;
-    this.panelCtrl.render();
+  setUnitFormat(column: any) {
+    return (value: any) => {
+      column.unit = value;
+      this.panelCtrl.render();
+    };
   }
 
   addColumnStyle() {

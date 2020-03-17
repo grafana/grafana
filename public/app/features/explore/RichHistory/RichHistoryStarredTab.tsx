@@ -114,7 +114,7 @@ export function RichHistoryStarredTab(props: Props) {
                 isMulti={true}
                 options={listOfDatasources}
                 value={datasourceFilters}
-                placeholder="Filter queries for specific datasources(s)"
+                placeholder="Filter queries for specific data sources(s)"
                 onChange={onSelectDatasourceFilters}
               />
             </div>
@@ -122,6 +122,7 @@ export function RichHistoryStarredTab(props: Props) {
           <div className={styles.sort}>
             <Select
               options={sortOrderOptions}
+              value={sortOrderOptions.filter(order => order.value === sortOrder)}
               placeholder="Sort queries by"
               onChange={e => onChangeSortOrder(e.value as SortOrder)}
             />

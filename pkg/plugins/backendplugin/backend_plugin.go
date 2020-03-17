@@ -205,6 +205,26 @@ func (p *BackendPlugin) checkHealth(ctx context.Context, config *PluginConfig) (
 		LastUpdatedMS:           config.Updated.UnixNano() / int64(time.Millisecond),
 	}
 
+	if config.DataSourceConfig != nil {
+		datasourceJSONData, err := config.DataSourceConfig.JSONData.ToDB()
+		if err != nil {
+			return nil, err
+		}
+
+		pconfig.DatasourceConfig = &pluginv2.DataSourceConfig{
+			Id:                      config.DataSourceConfig.ID,
+			Name:                    config.DataSourceConfig.Name,
+			Url:                     config.DataSourceConfig.URL,
+			User:                    config.DataSourceConfig.User,
+			Database:                config.DataSourceConfig.Database,
+			BasicAuthEnabled:        config.DataSourceConfig.BasicAuthEnabled,
+			BasicAuthUser:           config.DataSourceConfig.BasicAuthUser,
+			JsonData:                datasourceJSONData,
+			DecryptedSecureJsonData: config.DataSourceConfig.DecryptedSecureJSONData,
+			LastUpdatedMS:           config.DataSourceConfig.Updated.Unix() / int64(time.Millisecond),
+		}
+	}
+
 	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{Config: pconfig})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
