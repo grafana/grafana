@@ -8,14 +8,13 @@ import { changeVariableNameSucceeded } from '../editor/reducer';
 import { Deferred } from '../../../core/utils/deferred';
 import { initialVariablesState, VariablesState } from './variablesReducer';
 import { isQuery } from '../guard';
-import { v4 } from 'uuid';
 
 const sharedReducerSlice = createSlice({
   name: 'templating/shared',
   initialState: initialVariablesState,
   reducers: {
     addVariable: (state: VariablesState, action: PayloadAction<VariablePayload<AddVariable>>) => {
-      const id = action.payload.id ?? v4(); // for testing purposes we can call this with an id
+      const id = action.payload.id ?? action.payload.data.model.name; // for testing purposes we can call this with an id
       state[id] = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...action.payload.data.model,
@@ -47,15 +46,15 @@ const sharedReducerSlice = createSlice({
         variableStates[index].index = index;
       }
     },
-    duplicateVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ newUuid: string }>>) => {
-      const newUuid = action.payload.data?.newUuid ?? v4();
+    duplicateVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ newId: string }>>) => {
       const original = cloneDeep<VariableModel>(state[action.payload.id]);
-      const index = Object.keys(state).length;
       const name = `copy_of_${original.name}`;
-      state[newUuid] = {
+      const newId = action.payload.data?.newId ?? name;
+      const index = Object.keys(state).length;
+      state[newId] = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...original,
-        id: newUuid,
+        id: newId,
         name,
         index,
       };
@@ -156,8 +155,8 @@ const sharedReducerSlice = createSlice({
   },
   extraReducers: builder =>
     builder.addCase(changeVariableNameSucceeded, (state, action) => {
-      const instanceState = getInstanceState(state, action.payload.id);
-      instanceState.name = action.payload.data;
+      const instanceState = getInstanceState<VariableModel>(state, action.payload.id);
+      instanceState.name = action.payload.data.newName;
     }),
 });
 

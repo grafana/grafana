@@ -9,7 +9,6 @@ import {
   variableEditorUnMounted,
 } from './reducer';
 import { variableAdapters } from '../adapters';
-import { v4 } from 'uuid';
 import { AddVariable, NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '../../templating/variable';
@@ -40,7 +39,8 @@ export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void
 
 export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const id = v4();
+    const newVariableInState = getVariable(NEW_VARIABLE_ID, getState());
+    const id = newVariableInState.name;
     dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, id })));
     const variableInState = getVariable(id, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
@@ -72,7 +72,7 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
     }
 
     if (!errorText) {
-      dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, newName)));
+      dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
     }
   };
 };

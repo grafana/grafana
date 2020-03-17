@@ -108,7 +108,7 @@ describe('sharedReducer', () => {
     it('then state should be correct', () => {
       variableAdapters.set('query', createQueryVariableAdapter());
       const initialState: VariablesState = getVariableState(3);
-      const payload = toVariablePayload({ id: '1', type: 'query' }, { newUuid: '11' });
+      const payload = toVariablePayload({ id: '1', type: 'query' }, { newId: '11' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, initialState)
         .whenActionIsDispatched(duplicateVariable(payload))

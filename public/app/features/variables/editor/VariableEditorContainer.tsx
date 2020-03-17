@@ -53,7 +53,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   onDuplicateVariable = (identifier: VariableIdentifier) => {
-    this.props.duplicateVariable(toVariablePayload(identifier, { newUuid: (undefined as unknown) as string }));
+    this.props.duplicateVariable(toVariablePayload(identifier, { newId: (undefined as unknown) as string }));
   };
 
   onRemoveVariable = (identifier: VariableIdentifier) => {
