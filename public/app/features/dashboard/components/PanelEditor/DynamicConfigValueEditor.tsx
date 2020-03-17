@@ -22,6 +22,11 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   const theme = useTheme();
   const styles = getStyles(theme);
   const item = editorsRegistry?.getIfExists(property.prop);
+
+  if (!item) {
+    return null;
+  }
+
   return (
     <div className={styles.wrapper}>
       <OverrideHeader onRemove={onRemove} title={item.name} description={item.description} />

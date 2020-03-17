@@ -43,7 +43,7 @@ type Manager interface {
 	// StartPlugin starts a non-managed backend plugin
 	StartPlugin(ctx context.Context, pluginID string) error
 	// CheckHealth checks the health of a registered backend plugin.
-	CheckHealth(ctx context.Context, pluginID string) (*CheckHealthResult, error)
+	CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error)
 	// CallResource calls a plugin resource.
 	CallResource(pluginConfig PluginConfig, ctx *models.ReqContext, path string)
 }
@@ -151,9 +151,9 @@ func (m *manager) stop() {
 }
 
 // CheckHealth checks the health of a registered backend plugin.
-func (m *manager) CheckHealth(ctx context.Context, pluginID string) (*CheckHealthResult, error) {
+func (m *manager) CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error) {
 	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginID]
+	p, registered := m.plugins[pluginConfig.PluginID]
 	m.pluginsMu.RUnlock()
 
 	if !registered {
@@ -164,7 +164,7 @@ func (m *manager) CheckHealth(ctx context.Context, pluginID string) (*CheckHealt
 		return nil, ErrDiagnosticsNotSupported
 	}
 
-	res, err := p.checkHealth(ctx)
+	res, err := p.checkHealth(ctx, pluginConfig)
 	if err != nil {
 		p.logger.Error("Failed to check plugin health", "error", err)
 		return nil, ErrHealthCheckFailed

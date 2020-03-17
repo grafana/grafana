@@ -18,7 +18,7 @@ import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { Select } from '@grafana/ui';
 
-interface Props {
+export interface Props {
   queries: RichHistoryQuery[];
   sortOrder: SortOrder;
   activeDatasourceOnly: boolean;
@@ -111,19 +111,20 @@ export function RichHistoryStarredTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div className={styles.multiselect}>
+            <div className={styles.multiselect} aria-label="Filter datasources">
               <Select
                 isMulti={true}
                 options={exploreDatasources}
                 value={datasourceFilters}
-                placeholder="Filter queries for specific datasources(s)"
+                placeholder="Filter queries for specific data sources(s)"
                 onChange={onSelectDatasourceFilters}
               />
             </div>
           )}
-          <div className={styles.sort}>
+          <div className={styles.sort} aria-label="Sort queries">
             <Select
               options={sortOrderOptions}
+              value={sortOrderOptions.filter(order => order.value === sortOrder)}
               placeholder="Sort queries by"
               onChange={e => onChangeSortOrder(e.value as SortOrder)}
             />
