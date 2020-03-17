@@ -23,7 +23,7 @@ import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { Select, Slider } from '@grafana/ui';
 
-interface Props {
+export interface Props {
   queries: RichHistoryQuery[];
   sortOrder: SortOrder;
   activeDatasourceOnly: boolean;
@@ -190,7 +190,7 @@ export function RichHistoryQueriesTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div className={styles.multiselect}>
+            <div aria-label="Filter datasources" className={styles.multiselect}>
               <Select
                 isMulti={true}
                 options={datasources}
@@ -200,7 +200,7 @@ export function RichHistoryQueriesTab(props: Props) {
               />
             </div>
           )}
-          <div className={styles.sort}>
+          <div aria-label="Sort queries" className={styles.sort}>
             <Select
               value={sortOrderOptions.filter(order => order.value === sortOrder)}
               options={sortOrderOptions}
