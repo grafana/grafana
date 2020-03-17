@@ -1,5 +1,14 @@
 import { ComponentType } from 'react';
-import { MatcherConfig, FieldConfig, Field, DataFrame, VariableSuggestionsScope, VariableSuggestion } from '../types';
+import {
+  MatcherConfig,
+  FieldConfig,
+  Field,
+  DataFrame,
+  VariableSuggestionsScope,
+  VariableSuggestion,
+  GrafanaTheme,
+  TimeZone,
+} from '../types';
 import { Registry, RegistryItem } from '../utils';
 import { InterpolateFunction } from './panel';
 
@@ -62,3 +71,14 @@ export interface FieldPropertyEditorItem<TValue = any, TSettings = any> extends 
 }
 
 export type FieldConfigEditorRegistry = Registry<FieldPropertyEditorItem>;
+
+export interface ApplyFieldOverrideOptions {
+  data?: DataFrame[];
+  fieldOptions: FieldConfigSource;
+  replaceVariables: InterpolateFunction;
+  theme: GrafanaTheme;
+  timeZone?: TimeZone;
+  autoMinMax?: boolean;
+  standard?: FieldConfigEditorRegistry;
+  custom?: FieldConfigEditorRegistry;
+}

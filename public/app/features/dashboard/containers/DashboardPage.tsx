@@ -12,11 +12,10 @@ import { Branding } from 'app/core/components/Branding/Branding';
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
-import { SubMenu } from '../components/SubMenu';
+import { AngularSubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { CustomScrollbar, Alert, Portal } from '@grafana/ui';
-
+import { Alert, CustomScrollbar, Portal } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/reducers';
@@ -32,6 +31,8 @@ import {
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
+import { getConfig } from '../../../core/config';
+import { SubMenu } from '../components/SubMenu/SubMenu';
 
 export interface Props {
   urlUid?: string;
@@ -315,7 +316,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              <SubMenu dashboard={dashboard} />
+              {!getConfig().featureToggles.newVariables && <AngularSubMenu dashboard={dashboard} />}
+              {getConfig().featureToggles.newVariables && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 isEditing={isEditing}

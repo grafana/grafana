@@ -41,6 +41,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async getTimeSeries(options: DataQueryRequest<StackdriverQuery>) {
+    await this.ensureGCEDefaultProject();
     const queries = options.targets
       .filter((target: StackdriverQuery) => {
         return !target.hide && target.metricType;
@@ -173,6 +174,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async annotationQuery(options: any) {
+    await this.ensureGCEDefaultProject();
     const annotation = options.annotation;
     const queries = [
       {
@@ -218,6 +220,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async metricFindQuery(query: VariableQueryData) {
+    await this.ensureGCEDefaultProject();
     const stackdriverMetricFindQuery = new StackdriverMetricFindQuery(this);
     return stackdriverMetricFindQuery.execute(query);
   }
@@ -320,10 +323,17 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   getDefaultProject(): string {
     const { defaultProject, authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
     if (authenticationType === 'gce') {
-      return gceDefaultProject || defaultProject || '';
+      return gceDefaultProject || '';
     }
 
     return defaultProject || '';
+  }
+
+  async ensureGCEDefaultProject() {
+    const { authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
+    if (authenticationType === 'gce' && !gceDefaultProject) {
+      this.instanceSettings.jsonData.gceDefaultProject = await this.getGCEDefaultProject();
+    }
   }
 
   async getMetricTypes(projectName: string): Promise<MetricDescriptor[]> {

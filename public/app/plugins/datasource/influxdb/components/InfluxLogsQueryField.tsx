@@ -7,7 +7,7 @@ import { AdHocFilterField, KeyValuePair } from 'app/features/explore/AdHocFilter
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import InfluxDatasource from '../datasource';
 import { InfluxQueryBuilder } from '../query_builder';
-import { InfluxQuery, InfluxOptions } from '../types';
+import { InfluxOptions, InfluxQuery } from '../types';
 
 export interface Props extends ExploreQueryFieldProps<InfluxDatasource, InfluxQuery, InfluxOptions> {}
 
@@ -49,7 +49,12 @@ function getChooserText({ measurement, field, error }: ChooserOptions): string {
 
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
-  state: State = { measurements: [], measurement: null, field: null, error: null };
+  state: State = {
+    measurements: [],
+    measurement: (null as unknown) as string,
+    field: (null as unknown) as string,
+    error: (null as unknown) as string,
+  };
 
   async componentDidMount() {
     const { datasource } = this.props;

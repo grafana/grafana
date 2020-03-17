@@ -12,7 +12,7 @@ describe('flatten', () => {
           },
         },
       },
-      null
+      (null as unknown) as { delimiter?: any; maxDepth?: any; safe?: any }
     );
 
     expect(flattened['level1']).toBe('level1-value');

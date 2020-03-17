@@ -339,11 +339,11 @@ var (
 
 		<!-- Overview -->
 		{{ if .Old }}
-			<div class="diff-label">{{ .Old }}</div>
+			<div class="diff-label" ng-non-bindable>{{ .Old }}</div>
 			<i class="diff-arrow fa fa-long-arrow-right"></i>
 		{{ end }}
 		{{ if .New }}
-				<div class="diff-label">{{ .New }}</div>
+				<div class="diff-label" ng-non-bindable>{{ .New }}</div>
 		{{ end }}
 
 		{{ if .LineStart }}
@@ -380,11 +380,11 @@ var (
 
 		<div class="diff-change-item">
 			{{ if .Old }}
-				<div class="diff-label">{{ .Old }}</div>
+				<div class="diff-label" ng-non-bindable>{{ .Old }}</div>
 				<i class="diff-arrow fa fa-long-arrow-right"></i>
 			{{ end }}
 			{{ if .New }}
-					<div class="diff-label">{{ .New }}</div>
+					<div class="diff-label" ng-non-bindable>{{ .New }}</div>
 			{{ end }}
 		</div>
 
