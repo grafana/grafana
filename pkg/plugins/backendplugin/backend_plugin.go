@@ -185,14 +185,47 @@ func (p *BackendPlugin) CollectMetrics(ctx context.Context, ch chan<- prometheus
 	return nil
 }
 
-func (p *BackendPlugin) checkHealth(ctx context.Context) (*pluginv2.CheckHealthResponse, error) {
+func (p *BackendPlugin) checkHealth(ctx context.Context, config *PluginConfig) (*pluginv2.CheckHealthResponse, error) {
 	if p.diagnostics == nil || p.client == nil || p.client.Exited() {
 		return &pluginv2.CheckHealthResponse{
 			Status: pluginv2.CheckHealthResponse_UNKNOWN,
 		}, nil
 	}
 
-	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{})
+	jsonDataBytes, err := config.JSONData.ToDB()
+	if err != nil {
+		return nil, err
+	}
+
+	pconfig := &pluginv2.PluginConfig{
+		OrgId:                   config.OrgID,
+		PluginId:                config.PluginID,
+		JsonData:                jsonDataBytes,
+		DecryptedSecureJsonData: config.DecryptedSecureJSONData,
+		LastUpdatedMS:           config.Updated.UnixNano() / int64(time.Millisecond),
+	}
+
+	if config.DataSourceConfig != nil {
+		datasourceJSONData, err := config.DataSourceConfig.JSONData.ToDB()
+		if err != nil {
+			return nil, err
+		}
+
+		pconfig.DatasourceConfig = &pluginv2.DataSourceConfig{
+			Id:                      config.DataSourceConfig.ID,
+			Name:                    config.DataSourceConfig.Name,
+			Url:                     config.DataSourceConfig.URL,
+			User:                    config.DataSourceConfig.User,
+			Database:                config.DataSourceConfig.Database,
+			BasicAuthEnabled:        config.DataSourceConfig.BasicAuthEnabled,
+			BasicAuthUser:           config.DataSourceConfig.BasicAuthUser,
+			JsonData:                datasourceJSONData,
+			DecryptedSecureJsonData: config.DataSourceConfig.DecryptedSecureJSONData,
+			LastUpdatedMS:           config.DataSourceConfig.Updated.Unix() / int64(time.Millisecond),
+		}
+	}
+
+	res, err := p.diagnostics.CheckHealth(ctx, &pluginv2.CheckHealthRequest{Config: pconfig})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unimplemented {

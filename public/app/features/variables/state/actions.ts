@@ -1,5 +1,7 @@
 import castArray from 'lodash/castArray';
 import { UrlQueryMap, UrlQueryValue } from '@grafana/runtime';
+import { AppEvents, TimeRange } from '@grafana/data';
+import angular from 'angular';
 
 import {
   QueryVariableModel,
@@ -15,6 +17,8 @@ import { Graph } from '../../../core/utils/dag';
 import { updateLocation } from 'app/core/actions';
 import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
+import { appEvents } from '../../../core/core';
+import templateSrv from '../../templating/template_srv';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -321,6 +325,45 @@ export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents
       }
     });
   };
+};
+
+export interface OnTimeRangeUpdatedDependencies {
+  templateSrv: typeof templateSrv;
+  appEvents: typeof appEvents;
+}
+
+export const onTimeRangeUpdated = (
+  timeRange: TimeRange,
+  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrv, appEvents: appEvents }
+): ThunkResult<void> => async (dispatch, getState) => {
+  dependencies.templateSrv.updateTimeRange(timeRange);
+  const variablesThatNeedRefresh = getVariables(getState()).filter(variable => {
+    if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
+      const variableWithRefresh = (variable as unknown) as QueryVariableModel;
+      return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
+    }
+
+    return false;
+  });
+
+  const promises = variablesThatNeedRefresh.map(async (variable: VariableWithOptions) => {
+    const previousOptions = variable.options.slice();
+    await variableAdapters.get(variable.type).updateOptions(variable);
+    const updatedVariable = getVariable<VariableWithOptions>(variable.uuid!, getState());
+    if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
+      const dashboard = getState().dashboard.getModel();
+      dashboard?.templateVariableValueUpdated();
+    }
+  });
+
+  try {
+    await Promise.all(promises);
+    const dashboard = getState().dashboard.getModel();
+    dashboard?.startRefresh();
+  } catch (error) {
+    console.error(error);
+    dependencies.appEvents.emit(AppEvents.alertError, ['Template variable service failed', error.message]);
+  }
 };
 
 const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {

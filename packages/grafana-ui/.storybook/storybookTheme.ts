@@ -38,8 +38,8 @@ const createTheme = (theme: GrafanaTheme) => {
     inputBorderRadius: 4,
 
     brandTitle: 'Grafana UI',
-    brandUrl: '/',
-    brandImage: '/grafana_icon.svg',
+    brandUrl: './',
+    brandImage: './grafana_icon.svg',
   });
 };
 

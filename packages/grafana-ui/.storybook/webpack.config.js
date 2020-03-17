@@ -35,7 +35,8 @@ module.exports = ({ config, mode }) => {
     test: /\.scss$/,
     use: [
       {
-        loader: 'style-loader/useable',
+        loader: 'style-loader',
+        options: { injectType: 'lazyStyleTag' }
       },
       {
         loader: 'css-loader',
@@ -77,5 +78,6 @@ module.exports = ({ config, mode }) => {
   config.stats = {
     warningsFilter: /export .* was not found in/,
   };
+
   return config;
 };
