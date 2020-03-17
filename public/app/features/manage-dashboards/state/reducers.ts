@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DashboardDTO } from 'app/types';
 
 export enum DashboardSource {
   Gcom = 0,
@@ -13,10 +12,6 @@ export interface ImportDashboardState {
   inputs: any[];
   gcomError: string;
   isLoaded: boolean;
-  uidExists: boolean;
-  uidError: string;
-  titleExists: boolean;
-  titleErrorMessage: string;
 }
 
 const initialImportDashboardState: ImportDashboardState = {
@@ -26,10 +21,6 @@ const initialImportDashboardState: ImportDashboardState = {
   inputs: [],
   gcomError: '',
   isLoaded: false,
-  uidExists: false,
-  uidError: '',
-  titleExists: false,
-  titleErrorMessage: '',
 };
 
 const importDashboardSlice = createSlice({
@@ -66,25 +57,6 @@ const importDashboardSlice = createSlice({
         isLoaded: false,
       };
     },
-    dashboardUidExists: (
-      state,
-      action: PayloadAction<{ state: boolean; dashboard?: DashboardDTO }>
-    ): ImportDashboardState => {
-      const dashboard = action.payload.dashboard;
-
-      return {
-        ...state,
-        uidExists: action.payload.state,
-        uidError: `Dashboard named '${dashboard?.dashboard.title}' in folder '${dashboard?.meta.folderTitle}' has the same uid`,
-      };
-    },
-    dashboardTitleExists: (state, action: PayloadAction<{ state: boolean; error: string }>): ImportDashboardState => {
-      return {
-        ...state,
-        titleExists: action.payload.state,
-        titleErrorMessage: action.payload.error,
-      };
-    },
     setGcomError: (state, action: PayloadAction<string>): ImportDashboardState => ({
       ...state,
       gcomError: action.payload,
@@ -102,8 +74,6 @@ export const {
   setGcomDashboard,
   setJsonDashboard,
   setGcomError,
-  dashboardUidExists,
-  dashboardTitleExists,
 } = importDashboardSlice.actions;
 
 export const importDashboardReducer = importDashboardSlice.reducer;

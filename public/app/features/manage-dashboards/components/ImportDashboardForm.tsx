@@ -2,12 +2,12 @@ import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { Forms, HorizontalGroup } from '@grafana/ui';
 import { dateTime } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { resetDashboard, saveDashboard, validateUid, validateDashboardTitle } from '../state/actions';
+import { resetDashboard, saveDashboard } from '../state/actions';
 import { DashboardSource } from '../state/reducers';
-import { StoreState } from '../../../types';
-import { getBackendSrv } from '@grafana/runtime';
+import { StoreState } from 'app/types';
 import validationSrv from '../services/ValidationSrv';
 
 interface ImportDashboardDTO {
@@ -30,9 +30,7 @@ interface ConnectedProps {
 
 interface DispatchProps {
   resetDashboard: typeof resetDashboard;
-  validateDashboardTitle: typeof validateDashboardTitle;
   saveDashboard: typeof saveDashboard;
-  validateUid: typeof validateUid;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -41,9 +39,7 @@ interface State {
   folderId: number;
   uidReset: boolean;
   titleExists: boolean;
-  titleExistError: string;
   uidExists: boolean;
-  uidExistsError: string;
 }
 
 class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
@@ -51,16 +47,8 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
     folderId: 0,
     uidReset: false,
     titleExists: false,
-    titleExistError: '',
     uidExists: false,
-    uidExistsError: '',
   };
-
-  componentDidMount() {
-    this.setState({
-      folderId: this.props.folderId,
-    });
-  }
 
   onSubmit = (form: ImportDashboardDTO) => {
     this.props.saveDashboard(form.title, form.uid, this.state.folderId);
@@ -70,37 +58,31 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
     this.props.resetDashboard();
   };
 
-  validateTitle = async (newTitle: string) => {
+  validateTitle = (newTitle: string) => {
     const { folderId } = this.state;
-    let state = false;
-
-    await validationSrv
+    console.log('poke1');
+    return validationSrv
       .validateNewDashboardName(folderId, newTitle)
       .then(() => {
-        this.setState({ titleExists: false, titleExistError: '' });
+        return true;
       })
       .catch(error => {
         if (error.type === 'EXISTING') {
-          this.setState({ titleExists: true, titleExistError: error.message });
-          state = true;
+          return error.message;
         }
       });
-
-    return state;
   };
 
-  validateUid = async (value: string) => {
-    let existingDashboard;
-    try {
-      existingDashboard = await getBackendSrv().get(`/api/dashboards/uid/${value}`);
-      this.setState({
-        uidExistsError: `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same uid`,
+  validateUid = (value: string) => {
+    return getBackendSrv()
+      .get(`/api/dashboards/uid/${value}`)
+      .then(existingDashboard => {
+        return `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same uid`;
+      })
+      .catch(error => {
+        error.isHandled = true;
+        return false;
       });
-    } catch (error) {
-      error.isHandled = true;
-    }
-
-    return !existingDashboard;
   };
 
   onUidReset = () => {
@@ -109,7 +91,7 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, inputs, meta, source } = this.props;
-    const { uidReset, titleExists, uidExists, uidExistsError } = this.state;
+    const { uidReset, titleExists, uidExists } = this.state;
 
     const buttonVariant = uidExists || titleExists ? 'destructive' : 'primary';
     const buttonText = uidExists || titleExists ? 'Import (Overwrite)' : 'Import';
@@ -146,21 +128,15 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
         )}
         <Forms.Form onSubmit={this.onSubmit} defaultValues={dashboard} validateOnMount>
           {({ register, errors, control }) => {
-            /*
-              How should we handle two types of errors on
-              title? Is required and duplicate Title.
-           */
-            const titleError = !!errors.title && 'Title is required';
-
             return (
               <>
                 <Forms.Legend>Options</Forms.Legend>
-                <Forms.Field label="Name" invalid={!errors.title} error={titleError}>
+                <Forms.Field label="Name" invalid={!!errors.title} error={errors.title && errors.title.message}>
                   <Forms.Input
                     name="title"
                     size="md"
                     type="text"
-                    ref={register({ required: true, validate: async v => await this.validateTitle(v) })}
+                    ref={register({ required: 'Name is required', validate: async v => await this.validateTitle(v) })}
                   />
                 </Forms.Field>
                 <Forms.Field label="Folder">
@@ -178,14 +154,15 @@ class ImportDashboardFormUnConnected extends PureComponent<Props, State> {
                 The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will not break any
                 bookmarked links to that dashboard."
                   invalid={!!errors.uid}
-                  error={uidExistsError}
+                  error={errors.uid && errors.uid.message}
                 >
                   <>
                     {!uidReset ? (
                       <Forms.Input
                         size="md"
-                        defaultValue="Value set"
+                        name="uid"
                         disabled
+                        ref={register({ validate: async v => await this.validateUid(v) })}
                         addonAfter={
                           !this.state.uidReset && <Forms.Button onClick={this.onUidReset}>Change uid</Forms.Button>
                         }
@@ -235,14 +212,12 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   meta: state.importDashboard.meta,
   source: state.importDashboard.source,
   inputs: state.importDashboard.inputs,
-  folderId: state.location.routeParams.folderId ? Number(state.location.routeParams.folderId) || 0 : null,
+  folderId: state.location.routeParams.folderId ? Number(state.location.routeParams.folderId) : 0,
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  validateDashboardTitle,
   resetDashboard,
   saveDashboard,
-  validateUid,
 };
 
 export const ImportDashboardForm = connect(mapStateToProps, mapDispatchToProps)(ImportDashboardFormUnConnected);

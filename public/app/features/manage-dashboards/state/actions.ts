@@ -1,16 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
-import {
-  clearDashboard,
-  setInputs,
-  setGcomDashboard,
-  setJsonDashboard,
-  setGcomError,
-  dashboardUidExists,
-  dashboardTitleExists,
-} from './reducers';
-import validationSrv from '../services/ValidationSrv';
+import { clearDashboard, setInputs, setGcomDashboard, setJsonDashboard, setGcomError } from './reducers';
 import { ThunkResult } from 'app/types';
 import { updateLocation } from '../../../core/actions';
 import locationUtil from '../../../core/utils/location_util';
@@ -29,37 +20,8 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
 
 export function importDashboardJson(dashboard: any): ThunkResult<void> {
   return async dispatch => {
-    await getBackendSrv()
-      .get(`/api/dashboards/uid/${dashboard.uid}`)
-      .then(result => {
-        dispatch(dashboardUidExists(result));
-      })
-      .catch(error => {
-        error.isHandled = true;
-      });
-
-    dispatch(validateDashboardTitle(dashboard.title));
-
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));
-  };
-}
-
-export function validateDashboardTitle(dashboardName: string): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const routeParams = getStore().location.routeParams;
-    const folderId = routeParams.folderId ? Number(routeParams.folderId) : 0 || null;
-
-    await validationSrv
-      .validateNewDashboardName(folderId, dashboardName)
-      .then(() => {
-        dispatch(dashboardTitleExists({ state: false, error: '' }));
-      })
-      .catch(error => {
-        if (error.type === 'EXISTING') {
-          dispatch(dashboardTitleExists({ state: true, error: error.message }));
-        }
-      });
   };
 }
 
@@ -88,20 +50,6 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
       });
       dispatch(setInputs(inputs));
     }
-  };
-}
-
-export function validateUid(uid: string): ThunkResult<void> {
-  return async dispatch => {
-    await getBackendSrv()
-      .get(`/api/dashboards/uid/${uid}`)
-      .then(existingDashboard => {
-        dispatch(dashboardUidExists({ state: true, dashboard: existingDashboard }));
-      })
-      .catch(error => {
-        error.isHandled = true;
-        dispatch(dashboardUidExists({ state: false }));
-      });
   };
 }
 
