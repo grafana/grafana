@@ -37,8 +37,6 @@ To test, your CircleCI config will need a run section with something similar to 
         name: Setup Grafana (local install)
         command: |
           sudo dpkg -i /usr/local/grafana/deb/grafana_6.6.2_amd64.deb
-          sudo updatedb
-          sudo locate grafana
           sudo cp ci/grafana-test-env/custom.ini /usr/share/grafana/conf/custom.ini
           sudo cp ci/grafana-test-env/custom.ini /etc/grafana/grafana.ini
           sudo service grafana-server start

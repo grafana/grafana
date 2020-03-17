@@ -5,22 +5,23 @@ WORKDIR /tmp
 # Install Go
 ADD https://dl.google.com/go/go1.14.linux-amd64.tar.gz /tmp
 RUN echo 08df79b46b0adf498ea9f320a0f23d6ec59e9003660b4c9c1ce8e5e2c6f823ca go1.14.linux-amd64.tar.gz | sha256sum --check --status
-RUN sudo tar -C /usr/local -xf go1.14.linux-amd64.tar.gz
+RUN tar -C /usr/local -xf go1.14.linux-amd64.tar.gz
 
 # Install golangci-lint
 ADD https://github.com/golangci/golangci-lint/releases/download/v1.23.7/golangci-lint-1.23.7-linux-amd64.tar.gz /tmp
 RUN echo 34df1794a2ea8e168b3c98eed3cc0f3e13ed4cba735e4e40ef141df5c41bc086 golangci-lint-1.23.7-linux-amd64.tar.gz | sha256sum --check --status
 RUN tar xf golangci-lint-1.23.7-linux-amd64.tar.gz
-RUN sudo mv golangci-lint-1.23.7-linux-amd64/golangci-lint /usr/local/bin
-RUN sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
-RUN sudo ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+RUN mv golangci-lint-1.23.7-linux-amd64/golangci-lint /usr/local/bin
+RUN ln -s /usr/local/go/bin/go /usr/local/bin/go
+RUN ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 RUN chmod 755 /usr/local/bin/golangci-lint
 
 # Install dependencies
-RUN sudo apt-get install -y adduser libfontconfig1 updatedb
+RUN apt-get update -y && apt-get install -y adduser libfontconfig1 locate && /bin/rm -rf /var/lib/apt/lists/*
 
 # Install code climate
 ADD https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 /usr/local/bin/cc-test-reporter
+RUN echo 38f2442892027f61a07f52c845818750261b2ba58bffb043a582495339d37c05 /usr/local/bin/cc-test-reporter | sha256sum --check --status
 RUN chmod +x /usr/local/bin/cc-test-reporter
 
 # Download, but don't install previous grafana releases
