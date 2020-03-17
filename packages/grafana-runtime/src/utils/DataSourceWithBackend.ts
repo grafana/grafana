@@ -37,13 +37,10 @@ export class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest): Observable<DataQueryResponse> {
-    const { targets, intervalMs, maxDataPoints, range } = request;
-
-    let expressionCount = 0;
+    const { targets, intervalMs, maxDataPoints, range, requestId } = request;
     const orgId = config.bootData.user.orgId;
     const queries = targets.map(q => {
       if (q.datasource === ExpressionDatasourceID) {
-        expressionCount++;
         return {
           ...q,
           datasourceId: this.id,
@@ -65,7 +62,6 @@ export class DataSourceWithBackend<
     });
 
     const body: any = {
-      expressionCount,
       queries,
     };
     if (range) {
@@ -75,10 +71,16 @@ export class DataSourceWithBackend<
     }
 
     const req: Promise<DataQueryResponse> = getBackendSrv()
-      .post('/api/ds/query', body)
+      .datasourceRequest({
+        url: '/api/ds/query',
+        method: 'POST',
+        data: body,
+        requestId,
+      })
       .then((rsp: any) => {
-        return this.toDataQueryResponse(rsp);
+        return this.toDataQueryResponse(rsp?.data);
       });
+
     return from(req);
   }
 
