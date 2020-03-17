@@ -1,7 +1,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { AdHocVariableModel } from '../../templating/variable';
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
+import { setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { AdHocPicker } from '../pickers';
 import { toVariableIdentifier } from '../state/types';
@@ -19,15 +19,11 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     dependsOn: () => {
       return false;
     },
-    setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
-    },
+    setValue: async (variable, option, emitChanges = false) => {},
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
-      //await dispatch(updateConstantVariableOptions(toVariableIdentifier(variable)));
-    },
+    updateOptions: async variable => {},
     getSaveModel: variable => {
       const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
       return rest;

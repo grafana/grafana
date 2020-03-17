@@ -1,0 +1,71 @@
+import React, { FC, useState } from 'react';
+import { SegmentAsync } from '@grafana/ui';
+import { OperatorSegment } from './OperatorSegment';
+import { AdHocVariableFilter } from 'app/features/templating/variable';
+import { SelectableValue } from '@grafana/data';
+
+interface Props {
+  onLoadKeys: () => Promise<Array<SelectableValue<string>>>;
+  onLoadValues: (key: string) => Promise<Array<SelectableValue<string>>>;
+  onCompleted: (filter: AdHocVariableFilter) => void;
+  appendBefore?: React.ReactNode;
+}
+
+export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoadKeys, onLoadValues }) => {
+  const [key, setKey] = useState<string>(null);
+  const [operator, setOperator] = useState<string>('=');
+
+  if (key === null) {
+    return (
+      <div className="gf-form">
+        <SegmentAsync
+          className="query-segment-key"
+          Component={
+            key ? null : (
+              <a className="gf-form-label query-part">
+                <i className="fa fa-plus" />
+              </a>
+            )
+          }
+          value={key}
+          onChange={({ value }) => setKey(value)}
+          loadOptions={onLoadKeys}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {appendBefore}
+      <div className="gf-form">
+        <SegmentAsync
+          className="query-segment-key"
+          value={key}
+          onChange={({ value }) => setKey(value)}
+          loadOptions={onLoadKeys}
+        />
+      </div>
+      <div className="gf-form">
+        <OperatorSegment value={operator} onChange={({ value }) => setOperator(value)} />
+      </div>
+      <div className="gf-form">
+        <SegmentAsync
+          className="query-segment-value"
+          placeholder="select value"
+          onChange={({ value }) => {
+            onCompleted({
+              value: value,
+              operator: operator,
+              condition: '',
+              key: key,
+            });
+            setKey(null);
+            setOperator('=');
+          }}
+          loadOptions={() => onLoadValues(key)}
+        />
+      </div>
+    </>
+  );
+};

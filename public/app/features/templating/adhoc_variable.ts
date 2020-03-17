@@ -90,6 +90,7 @@ export class AdhocVariable implements AdHocVariableModel, VariableActions {
 
   setFilters(filters: any[]) {
     this.filters = filters;
+    console.log('filters: ', this.filters);
   }
 }
 
