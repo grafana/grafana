@@ -65,22 +65,6 @@
   </div>
 
   <div
-    class="gf-form-inline"
-    ng-if="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType && ctrl.current.jsonData.gceDefaultProject"
-  >
-    <div class="gf-form">
-      <span class="gf-form-label width-10">Project</span>
-      <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.gceDefaultProject" />
-    </div>
-
-    <div class="gf-form width-18">
-      <a class="btn btn-secondary gf-form-btn" style="margin-top: 2px;" href="#" ng-click="ctrl.loadGCEDefaultAccount()"
-        >Reload project name
-      </a>
-    </div>
-  </div>
-
-  <div
     ng-if="ctrl.current.jsonData.authenticationType === ctrl.defaultAuthenticationType && !ctrl.current.jsonData.clientEmail && !ctrl.inputDataValid"
   >
     <div class="gf-form-group" ng-if="!ctrl.inputDataValid">

@@ -21,10 +21,9 @@ export class StackdriverConfigCtrl {
   authenticationTypes: Array<{ key: AuthType; value: string }>;
   defaultAuthenticationType: string;
   name: string;
-  gceError: string;
 
   /** @ngInject */
-  constructor(datasourceSrv: DatasourceSrv, private $scope: any) {
+  constructor(datasourceSrv: DatasourceSrv) {
     this.defaultAuthenticationType = AuthType.JWT;
     this.datasourceSrv = datasourceSrv;
     this.name = this.meta.name;
@@ -97,20 +96,5 @@ export class StackdriverConfigCtrl {
     this.current.jsonData = Object.assign({}, { authenticationType: this.current.jsonData.authenticationType });
     this.current.secureJsonData = {};
     this.current.secureJsonFields = {};
-  }
-
-  async loadGCEDefaultAccount() {
-    this.gceError = '';
-    const ds = (await getDatasourceSrv().loadDatasource(this.name)) as StackdriverDatasource;
-    try {
-      const defaultProject = await ds.getGCEDefaultProject();
-      this.$scope.$apply(() => {
-        this.current.jsonData.gceDefaultProject = defaultProject;
-      });
-    } catch (error) {
-      this.$scope.$apply(() => {
-        this.gceError = error;
-      });
-    }
   }
 }
