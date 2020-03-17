@@ -361,6 +361,7 @@ export const onTimeRangeUpdated = (
     const dashboard = getState().dashboard.getModel();
     dashboard?.startRefresh();
   } catch (error) {
+    console.error(error);
     dependencies.appEvents.emit(AppEvents.alertError, ['Template variable service failed', error.message]);
   }
 };
