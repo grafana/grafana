@@ -97,17 +97,15 @@ export interface AdHocVariableModel extends VariableModel {
   filters: AdHocVariableFilter[];
 }
 
-export interface IntervalVariableModel extends VariableWithOptions {
+export interface IntervalVariableModel extends VariableWithOptions, VariableWithRefresh {
   auto: boolean;
   auto_min: string;
   auto_count: number;
-  refresh: VariableRefresh;
 }
 
 export interface CustomVariableModel extends VariableWithMultiSupport {}
 
-export interface DataSourceVariableModel extends VariableWithMultiSupport {
-  refresh: VariableRefresh;
+export interface DataSourceVariableModel extends VariableWithMultiSupport, VariableWithRefresh {
   regex: string;
 }
 
@@ -120,6 +118,10 @@ export interface QueryVariableModel extends DataSourceVariableModel {
   tagValuesQuery: string;
   useTags: boolean;
   queryValue?: string;
+}
+
+export interface VariableWithRefresh {
+  refresh: VariableRefresh;
 }
 
 export interface TextBoxVariableModel extends VariableWithOptions {}
