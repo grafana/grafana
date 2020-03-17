@@ -14,6 +14,8 @@ import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 import { Select } from './Select/Select';
 import Forms from './index';
 import mdx from './Form.mdx';
+import { boolean } from '@storybook/addon-knobs';
+import { TextArea } from './TextArea/TextArea';
 
 export default {
   title: 'Forms/Test forms',
@@ -48,6 +50,7 @@ interface FormDTO {
   switch: boolean;
   radio: string;
   select: string;
+  text: string;
   nested: {
     path: string;
   };
@@ -84,6 +87,10 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
           </Field>
           <Field label="Nested object">
             <Input name="nested.path" placeholder="Nested path" size="md" ref={register} />
+          </Field>
+
+          <Field label="Textarea" invalid={!!errors.text} error="Text is required">
+            <TextArea name="text" placeholder="Long text" size="md" ref={register({ required: true })} />
           </Field>
 
           <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
