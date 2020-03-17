@@ -40,7 +40,7 @@ func (hs HealthStatus) String() string {
 type CheckHealthResult struct {
 	Status      HealthStatus
 	Message     string
-	JSONDetails string
+	JSONDetails []byte
 }
 
 func checkHealthResultFromProto(protoResp *pluginv2.CheckHealthResponse) *CheckHealthResult {
