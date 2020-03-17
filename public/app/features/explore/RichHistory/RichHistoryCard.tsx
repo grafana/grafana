@@ -10,7 +10,7 @@ import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
 
 import { changeQuery, changeDatasource, clearQueries, updateRichHistory } from '../state/actions';
-export interface Props {
+interface Props {
   query: RichHistoryQuery;
   changeQuery: typeof changeQuery;
   changeDatasource: typeof changeDatasource;
@@ -111,16 +111,12 @@ export function RichHistoryCard(props: Props) {
       <div className={styles.queryCardLeft} title="Add queries to query editor" onClick={() => onChangeQuery(query)}>
         {query.queries.map((q, i) => {
           return (
-            <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
+            <div key={`${q}-${i}`} className={styles.queryRow}>
               {q}
             </div>
           );
         })}
-        {!activeUpdateComment && query.comment && (
-          <div aria-label="Query comment" className={styles.comment}>
-            {query.comment}
-          </div>
-        )}
+        {!activeUpdateComment && query.comment && <div className={styles.comment}>{query.comment}</div>}
         {activeUpdateComment && (
           <div>
             <Forms.TextArea
