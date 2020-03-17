@@ -206,7 +206,6 @@ func (p *BackendPlugin) checkHealth(ctx context.Context, config *PluginConfig) (
 	}
 
 	if config.DataSourceConfig != nil {
-
 		datasourceJSONData, err := config.DataSourceConfig.JSONData.ToDB()
 		if err != nil {
 			return nil, err
