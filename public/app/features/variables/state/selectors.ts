@@ -20,8 +20,8 @@ export const getVariable = <T extends VariableModel = VariableModel>(
   return state.templating.variables[id] as T;
 };
 
-export const getVariableWithName = (name: string, state: StoreState = getState()) => {
-  return Object.values(state.templating.variables).find(variable => variable.name === name);
+export const getVariableWithName = (name: string) => {
+  return getVariable(name, getState(), false);
 };
 
 export const getVariables = (state: StoreState = getState()): VariableModel[] => {
