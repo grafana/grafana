@@ -1,7 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 
-import { EMPTY_UUID } from './types';
+import { NEW_VARIABLE_ID } from './types';
 import { VariableHide, VariableModel, VariableRefresh, VariableType } from '../../templating/variable';
 import { variablesReducer, VariablesState } from './variablesReducer';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
@@ -18,7 +18,7 @@ export const getVariableState = (
 
   for (let index = 0; index < noOfVariables; index++) {
     variables[index] = {
-      uuid: index.toString(),
+      id: index.toString(),
       type: 'query',
       name: `Name-${index}`,
       hide: VariableHide.dontHide,
@@ -29,13 +29,13 @@ export const getVariableState = (
   }
 
   if (includeEmpty) {
-    variables[EMPTY_UUID] = {
-      uuid: EMPTY_UUID,
+    variables[NEW_VARIABLE_ID] = {
+      id: NEW_VARIABLE_ID,
       type: 'query',
-      name: `Name-${EMPTY_UUID}`,
+      name: `Name-${NEW_VARIABLE_ID}`,
       hide: VariableHide.dontHide,
       index: noOfVariables,
-      label: `Label-${EMPTY_UUID}`,
+      label: `Label-${NEW_VARIABLE_ID}`,
       skipUrlSync: false,
     };
   }
@@ -49,7 +49,7 @@ export const getVariableTestContext = <Model extends VariableModel>(
 ) => {
   const defaultVariable = {
     ...adapter.initialState,
-    uuid: '0',
+    id: '0',
     index: 0,
     name: '0',
   };
@@ -65,11 +65,11 @@ export const variableMockBuilder = (type: VariableType) => {
   const initialState = variableAdapters.contains(type)
     ? cloneDeep(variableAdapters.get(type).initialState)
     : { name: type, type, label: '', hide: VariableHide.dontHide, skipUrlSync: false };
-  const { uuid, index, global, ...rest } = initialState;
+  const { id, index, global, ...rest } = initialState;
   const model = { ...rest, name: type };
 
-  const withUuid = (uuid: string) => {
-    model.uuid = uuid;
+  const withId = (id: string) => {
+    model.id = id;
     return instance;
   };
 
@@ -129,7 +129,7 @@ export const variableMockBuilder = (type: VariableType) => {
   const create = () => model;
 
   const instance = {
-    withUuid,
+    withId,
     withName,
     withOptions,
     withCurrent,

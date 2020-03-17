@@ -23,7 +23,7 @@ describe('interval actions', () => {
   describe('when updateIntervalVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const interval = variableMockBuilder('interval')
-        .withUuid('0')
+        .withId('0')
         .withQuery('1s,1m,1h,1d')
         .withAuto(false)
         .create();
@@ -34,10 +34,10 @@ describe('interval actions', () => {
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        createIntervalOptions({ type: 'interval', uuid: '0', data: undefined }),
+        createIntervalOptions({ type: 'interval', id: '0', data: undefined }),
         setCurrentVariableValue({
           type: 'interval',
-          uuid: '0',
+          id: '0',
           data: { option: { text: '1s', value: '1s', selected: false } },
         })
       );
@@ -61,7 +61,7 @@ describe('interval actions', () => {
       const originalTimeSrv = getTimeSrv();
       setTimeSrv(timeSrvMock);
       const interval = variableMockBuilder('interval')
-        .withUuid('0')
+        .withId('0')
         .withQuery('1s,1m,1h,1d')
         .withAuto(true)
         .withAutoMin('1') // illegal interval string
@@ -89,7 +89,7 @@ describe('interval actions', () => {
     describe('and auto is false', () => {
       it('then no dependencies are called', async () => {
         const interval = variableMockBuilder('interval')
-          .withUuid('0')
+          .withId('0')
           .withAuto(false)
           .create();
 
@@ -128,7 +128,7 @@ describe('interval actions', () => {
     describe('and auto is true', () => {
       it('then correct dependencies are called', async () => {
         const interval = variableMockBuilder('interval')
-          .withUuid('0')
+          .withId('0')
           .withName('intervalName')
           .withAuto(true)
           .withAutoCount(33)

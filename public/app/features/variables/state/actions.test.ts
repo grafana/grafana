@@ -48,16 +48,16 @@ describe('shared actions', () => {
           // because uuid are dynamic we need to get the uuid from the resulting state
           // an alternative would be to add our own uuids in the model above instead
           expect(dispatchedActions[4]).toEqual(
-            addInitLock(toVariablePayload({ ...query, uuid: dispatchedActions[4].payload.uuid }))
+            addInitLock(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
           );
           expect(dispatchedActions[5]).toEqual(
-            addInitLock(toVariablePayload({ ...constant, uuid: dispatchedActions[5].payload.uuid }))
+            addInitLock(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
           );
           expect(dispatchedActions[6]).toEqual(
-            addInitLock(toVariablePayload({ ...custom, uuid: dispatchedActions[6].payload.uuid }))
+            addInitLock(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
           );
           expect(dispatchedActions[7]).toEqual(
-            addInitLock(toVariablePayload({ ...textbox, uuid: dispatchedActions[7].payload.uuid }))
+            addInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
           );
 
           return true;
@@ -89,29 +89,29 @@ describe('shared actions', () => {
         expect(dispatchedActions.length).toEqual(8);
 
         expect(dispatchedActions[0]).toEqual(
-          resolveInitLock(toVariablePayload({ ...query, uuid: dispatchedActions[0].payload.uuid }))
+          resolveInitLock(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
         expect(dispatchedActions[1]).toEqual(
-          resolveInitLock(toVariablePayload({ ...constant, uuid: dispatchedActions[1].payload.uuid }))
+          resolveInitLock(toVariablePayload({ ...constant, id: dispatchedActions[1].payload.id }))
         );
         expect(dispatchedActions[2]).toEqual(
-          resolveInitLock(toVariablePayload({ ...custom, uuid: dispatchedActions[2].payload.uuid }))
+          resolveInitLock(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.id }))
         );
         expect(dispatchedActions[3]).toEqual(
-          resolveInitLock(toVariablePayload({ ...textbox, uuid: dispatchedActions[3].payload.uuid }))
+          resolveInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
         );
 
         expect(dispatchedActions[4]).toEqual(
-          removeInitLock(toVariablePayload({ ...query, uuid: dispatchedActions[4].payload.uuid }))
+          removeInitLock(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
         );
         expect(dispatchedActions[5]).toEqual(
-          removeInitLock(toVariablePayload({ ...constant, uuid: dispatchedActions[5].payload.uuid }))
+          removeInitLock(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
         );
         expect(dispatchedActions[6]).toEqual(
-          removeInitLock(toVariablePayload({ ...custom, uuid: dispatchedActions[6].payload.uuid }))
+          removeInitLock(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
         );
         expect(dispatchedActions[7]).toEqual(
-          removeInitLock(toVariablePayload({ ...textbox, uuid: dispatchedActions[7].payload.uuid }))
+          removeInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
         );
 
         return true;
@@ -132,7 +132,7 @@ describe('shared actions', () => {
     `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
       variableAdapters.set('custom', createCustomVariableAdapter());
       const custom = variableMockBuilder('custom')
-        .withUuid('0')
+        .withId('0')
         .withOptions('A', 'B', 'C')
         .withCurrent('A')
         .create();
@@ -145,7 +145,7 @@ describe('shared actions', () => {
       await tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(
           toVariablePayload(
-            { type: 'custom', uuid: '0' },
+            { type: 'custom', id: '0' },
             { option: { text: expected, value: expected, selected: false } }
           )
         )
@@ -169,7 +169,7 @@ describe('shared actions', () => {
 
         if (!withOptions) {
           custom = variableMockBuilder('custom')
-            .withUuid('0')
+            .withId('0')
             .withCurrent(withCurrent)
             .create();
           custom.options = undefined;
@@ -177,7 +177,7 @@ describe('shared actions', () => {
 
         if (withOptions) {
           custom = variableMockBuilder('custom')
-            .withUuid('0')
+            .withId('0')
             .withOptions(...withOptions)
             .withCurrent(withCurrent)
             .create();
@@ -197,7 +197,7 @@ describe('shared actions', () => {
             : [
                 setCurrentVariableValue(
                   toVariablePayload(
-                    { type: 'custom', uuid: '0' },
+                    { type: 'custom', id: '0' },
                     { option: { text: expected, value: expected, selected: false } }
                   )
                 ),
@@ -225,7 +225,7 @@ describe('shared actions', () => {
 
           if (!withOptions) {
             custom = variableMockBuilder('custom')
-              .withUuid('0')
+              .withId('0')
               .withMulti()
               .withCurrent(withCurrent)
               .create();
@@ -234,7 +234,7 @@ describe('shared actions', () => {
 
           if (withOptions) {
             custom = variableMockBuilder('custom')
-              .withUuid('0')
+              .withId('0')
               .withMulti()
               .withOptions(...withOptions)
               .withCurrent(withCurrent)
@@ -255,7 +255,7 @@ describe('shared actions', () => {
               : [
                   setCurrentVariableValue(
                     toVariablePayload(
-                      { type: 'custom', uuid: '0' },
+                      { type: 'custom', id: '0' },
                       { option: { text: expectedText, value: expectedText, selected: expectedSelected } }
                     )
                   ),

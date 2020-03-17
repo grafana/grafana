@@ -41,7 +41,7 @@ describe('data source actions', () => {
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
         const datasource = variableMockBuilder('datasource')
-          .withUuid('0')
+          .withId('0')
           .withQuery('mock-data-id')
           .create();
         const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -54,11 +54,11 @@ describe('data source actions', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           createDataSourceOptions(
-            toVariablePayload({ type: 'datasource', uuid: '0' }, { sources, regex: (undefined as unknown) as RegExp })
+            toVariablePayload({ type: 'datasource', id: '0' }, { sources, regex: (undefined as unknown) as RegExp })
           ),
           setCurrentVariableValue(
             toVariablePayload(
-              { type: 'datasource', uuid: '0' },
+              { type: 'datasource', id: '0' },
               { option: { text: 'first-name', value: 'first-name', selected: false } }
             )
           )
@@ -91,7 +91,7 @@ describe('data source actions', () => {
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
         const datasource = variableMockBuilder('datasource')
-          .withUuid('0')
+          .withId('0')
           .withQuery('mock-data-id')
           .withRegEx('/.*(second-name).*/')
           .create();
@@ -105,11 +105,11 @@ describe('data source actions', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           createDataSourceOptions(
-            toVariablePayload({ type: 'datasource', uuid: '0' }, { sources, regex: /.*(second-name).*/ })
+            toVariablePayload({ type: 'datasource', id: '0' }, { sources, regex: /.*(second-name).*/ })
           ),
           setCurrentVariableValue(
             toVariablePayload(
-              { type: 'datasource', uuid: '0' },
+              { type: 'datasource', id: '0' },
               { option: { text: 'second-name', value: 'second-name', selected: false } }
             )
           )

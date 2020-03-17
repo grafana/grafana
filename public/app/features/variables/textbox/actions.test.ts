@@ -23,7 +23,7 @@ describe('textbox actions', () => {
 
       const variable: TextBoxVariableModel = {
         type: 'textbox',
-        uuid: '0',
+        id: '0',
         global: false,
         current: {
           value: '',
