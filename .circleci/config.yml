@@ -422,6 +422,8 @@ jobs:
       - run:
           name: Publish Storybook
           command: |
+            echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+            gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
             yarn install --frozen-lockfile --no-progress
             yarn storybook:build
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
