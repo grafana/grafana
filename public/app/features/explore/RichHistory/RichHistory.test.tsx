@@ -12,10 +12,12 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
   const props: RichHistoryProps = {
     theme: {} as GrafanaTheme,
     exploreId: ExploreId.left,
+    height: 100,
     activeDatasourceInstance: 'Test datasource',
     richHistory: [],
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
+    onClose: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

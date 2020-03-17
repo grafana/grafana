@@ -16,6 +16,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     richHistory: [],
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
+    onClose: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
