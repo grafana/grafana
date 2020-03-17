@@ -48,6 +48,10 @@ export function getRollupNotice(metaList: MetricTankSeriesMeta[]): QueryResultMe
     }
   }
 
+  return null;
+}
+
+export function getRuntimeConsolidationNotice(metaList: MetricTankSeriesMeta[]): QueryResultMetaNotice | null {
   for (const meta of metaList) {
     const runtimeNr = meta['aggnum-rc'];
 

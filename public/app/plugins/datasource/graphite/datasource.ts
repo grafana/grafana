@@ -17,7 +17,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 // Types
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
-import { getRollupNotice } from 'app/plugins/datasource/graphite/meta';
+import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -137,13 +137,17 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           },
         };
 
-        const notice = getRollupNotice(s.meta);
-        if (notice) {
-          frame.meta.notices = [notice];
+        const rollupNotice = getRollupNotice(s.meta);
+        const runtimeNotice = getRuntimeConsolidationNotice(s.meta);
+
+        if (rollupNotice) {
+          frame.meta.notices = [rollupNotice];
+        } else if (runtimeNotice) {
+          frame.meta.notices = [runtimeNotice];
         }
 
         // only add the request stats to the first frame
-        if (i === 0) {
+        if (i === 0 && result.data.meta.stats) {
           frame.meta.stats = this.getRequestStats(result.data.meta);
         }
       }

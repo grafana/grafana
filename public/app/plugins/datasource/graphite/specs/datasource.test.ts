@@ -33,9 +33,11 @@ describe('graphiteDatasource', () => {
     it('should transform regular result', () => {
       const result = ctx.ds.convertResponseToDataFrames({
         data: {
-          stats: {
-            'executeplan.cache-hit-partial.count': 5,
-            'executeplan.cache-hit.count': 10,
+          meta: {
+            stats: {
+              'executeplan.cache-hit-partial.count': 5,
+              'executeplan.cache-hit.count': 10,
+            },
           },
           series: [
             {
@@ -88,7 +90,7 @@ describe('graphiteDatasource', () => {
       expect(result.data[0].length).toBe(2);
       expect(result.data[0].meta.notices.length).toBe(1);
       expect(result.data[0].meta.notices[0].text).toBe('Data is rolled up, aggregated over 2h using Average function');
-      expect(result.data[1].meta.notices.length).toBe(0);
+      expect(result.data[1].meta.notices).toBeUndefined();
     });
   });
 
