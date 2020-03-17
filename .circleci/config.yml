@@ -310,14 +310,6 @@ jobs:
   package-oss:
     executor: grafana-build
     steps:
-      - run:
-          # Don't run for forked PRs since we require $GPG_PRIV_KEY
-          name: Exit if forked PR
-          command: |
-            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              echo "Nothing to do for forked PRs, so marking this step successful"
-              circleci step halt
-            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -330,6 +322,11 @@ jobs:
       - run:
           name: Package Grafana
           command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo Using test GPG key pair since building a forked PR
+              source scripts/build/gpg-test-vars.sh
+            fi
+
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
               /tmp/workspace/bin/grabpl package --edition oss $CIRCLE_TAG
