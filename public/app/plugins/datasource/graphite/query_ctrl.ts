@@ -209,7 +209,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       const tag = removeTagPrefix(segment.value);
       this.pause();
       this.addSeriesByTagFunc(tag);
-      return;
+      return null;
     }
 
     if (segment.expandable) {
@@ -225,6 +225,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     this.setSegmentFocus(segmentIndex + 1);
     this.targetChanged();
+
+    return null;
   }
 
   spliceSegments(index: any) {

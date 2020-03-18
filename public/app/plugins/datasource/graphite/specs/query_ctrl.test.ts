@@ -5,7 +5,7 @@ import { TemplateSrvStub } from 'test/specs/helpers';
 
 jest.mock('app/core/utils/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {
-    return p => p;
+    return (p: Promise<any>) => p;
   },
 }));
 
