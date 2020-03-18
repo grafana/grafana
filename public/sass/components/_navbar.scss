@@ -129,7 +129,7 @@ i.navbar-page-btn__search {
 }
 
 .navbar-button {
-  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
+  background-color: $panel-bg;
 
   display: flex;
   align-items: center;

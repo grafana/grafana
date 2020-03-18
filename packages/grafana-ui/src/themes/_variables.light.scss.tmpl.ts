@@ -83,8 +83,6 @@ $text-shadow-faint: none;
 // gradients
 $brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
 $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
-$page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
-$edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
@@ -104,7 +102,7 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: ${theme.colors.panelBg};
-$panel-border: solid 1px $gray-5;
+$panel-border: 1px solid ${theme.colors.panelBorder};
 $panel-header-hover-bg: $gray-6;
 $panel-corner: $gray-4;
 
@@ -240,7 +238,8 @@ $navbar-button-border: $gray-4;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg: $dark-1;
+$side-menu-bg: ${theme.colors.gray15};
+$side-menu-border: 1px solid ${theme.colors.gray25};
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: $gray-1;
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;

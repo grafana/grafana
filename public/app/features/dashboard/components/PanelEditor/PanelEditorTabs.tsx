@@ -71,7 +71,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.pageBg};
+      background: ${theme.colors.panelBg};
 
       .toolbar {
         background: transparent;

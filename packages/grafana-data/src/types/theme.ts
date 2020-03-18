@@ -208,6 +208,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
 
     // panel
     panelBg: string;
+    panelBorder: string;
 
     // TODO: move to background section
     bodyBg: string;
