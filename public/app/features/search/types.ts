@@ -9,6 +9,7 @@ export interface DashboardSection {
   hideHeader: boolean;
   checked: boolean;
   items: DashboardSectionItem[];
+  toggle?: (section: DashboardSection) => Promise<DashboardSection>;
 }
 
 export interface DashboardSectionItem {

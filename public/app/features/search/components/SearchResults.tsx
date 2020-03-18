@@ -22,7 +22,19 @@ export const SearchResults: FC<Props> = ({
   selectors,
 }) => {
   const toggleSelection = () => {};
-  const toggleFolderExpand = (section: DashboardSection) => {};
+  const toggleFolderExpand = (section: DashboardSection) => {
+    if (section.toggle) {
+      if (!section.expanded && typeof onFolderExpanding === 'function') {
+        onFolderExpanding();
+      }
+
+      section.toggle(section).then(() => {
+        if (typeof onSelectionChanged === 'function') {
+          onSelectionChanged();
+        }
+      });
+    }
+  };
   const onItemClick = (item: DashboardSectionItem) => {};
 
   // Remove 'fa' prefixes from icon names
