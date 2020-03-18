@@ -6,6 +6,7 @@ import { ScopedVars, TimeRange } from '@grafana/data';
 import { getVariableWithName } from '../variables/state/selectors';
 import { getState } from '../../store/store';
 import { getConfig } from 'app/core/config';
+import { isAdHoc } from '../variables/guard';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -79,20 +80,12 @@ export class TemplateSrv {
   getAdhocFilters(datasourceName: string) {
     let filters: any = [];
 
-    if (this.variables) {
-      for (let i = 0; i < this.variables.length; i++) {
-        const variable = this.variables[i];
-        if (variable.type !== 'adhoc') {
-          continue;
-        }
-
-        // null is the "default" datasource
-        if (variable.datasource === null || variable.datasource === datasourceName) {
+    for (const variable of this.getAdHocVariables()) {
+      if (variable.datasource === null || variable.datasource === datasourceName) {
+        filters = filters.concat(variable.filters);
+      } else if (variable.datasource.indexOf('$') === 0) {
+        if (this.replace(variable.datasource) === datasourceName) {
           filters = filters.concat(variable.filters);
-        } else if (variable.datasource.indexOf('$') === 0) {
-          if (this.replace(variable.datasource) === datasourceName) {
-            filters = filters.concat(variable.filters);
-          }
         }
       }
     }
@@ -389,6 +382,16 @@ export class TemplateSrv {
     }
 
     return this.index[name];
+  };
+
+  private getAdHocVariables = (): any[] => {
+    if (getConfig().featureToggles.newVariables) {
+      return Object.values(getState().templating.variables).filter(isAdHoc);
+    }
+    if (Array.isArray(this.variables)) {
+      return this.variables.filter(isAdHoc);
+    }
+    return [];
   };
 }
 
