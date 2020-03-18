@@ -25,6 +25,7 @@ export interface ReduxTesterThen<State> {
   thenDispatchedActionsPredicateShouldEqual: (
     predicate: (dispatchedActions: AnyAction[]) => boolean
   ) => ReduxTesterWhen<State>;
+  thenNoActionsWhereDispatched: () => ReduxTesterWhen<State>;
 }
 
 export interface ReduxTesterArguments<State> {
@@ -109,12 +110,22 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
     return instance;
   };
 
+  const thenNoActionsWhereDispatched = (): ReduxTesterWhen<State> => {
+    if (debug) {
+      console.log('Dispatched Actions', JSON.stringify(dispatchedActions, null, 2));
+    }
+
+    expect(dispatchedActions.length).toBe(0);
+    return instance;
+  };
+
   const instance = {
     givenRootReducer,
     whenActionIsDispatched,
     whenAsyncActionIsDispatched,
     thenDispatchedActionsShouldEqual,
     thenDispatchedActionsPredicateShouldEqual,
+    thenNoActionsWhereDispatched,
   };
 
   return instance;

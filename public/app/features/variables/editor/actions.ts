@@ -72,9 +72,9 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
     }
 
     const variables = getVariables(getState());
-    const stateVariables = variables.filter(v => v.name === newName && v.id !== identifier.id);
+    const foundVariables = variables.filter(v => v.name === newName && v.id !== identifier.id);
 
-    if (stateVariables.length) {
+    if (foundVariables.length) {
       errorText = 'Variable with the same name already exists';
     }
 

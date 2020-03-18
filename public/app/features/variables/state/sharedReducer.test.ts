@@ -22,6 +22,7 @@ import { initialQueryVariableModelState } from '../query/reducer';
 import { Deferred } from '../../../core/utils/deferred';
 import { getVariableState, getVariableTestContext } from './helpers';
 import { initialVariablesState, VariablesState } from './variablesReducer';
+import { changeVariableNameSucceeded } from '../editor/reducer';
 
 describe('sharedReducer', () => {
   describe('when addVariable is dispatched', () => {
@@ -417,8 +418,8 @@ describe('sharedReducer', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
       const { initialState } = getVariableTestContext(adapter);
-      const propName = 'name';
-      const propValue = 'Updated name';
+      const propName = 'label';
+      const propValue = 'Updated label';
       const payload = toVariablePayload({ id: '0', type: 'query' }, { propName, propValue });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
@@ -427,7 +428,26 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': {
             ...initialState[0],
-            name: 'Updated name',
+            label: 'Updated label',
+          },
+        });
+    });
+  });
+
+  describe('when changeVariableNameSucceeded is dispatched', () => {
+    it('then state should be correct', () => {
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter);
+      const newName = 'A new name';
+      const payload = toVariablePayload({ id: '0', type: 'query' }, { newName });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(changeVariableNameSucceeded(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': {
+            ...initialState[0],
+            name: 'A new name',
           },
         });
     });
