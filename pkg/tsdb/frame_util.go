@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // SeriesToFrame converts a TimeSeries to a sdk Frame
@@ -38,9 +39,9 @@ func convertTSDBTimePoint(point TimePoint) (t *time.Time, f *float64) {
 	return
 }
 
-// FrameToSeries converts a frame that is a valid time series as per data.TimeSeriesSchema()
+// FrameToSeriesSlice converts a frame that is a valid time series as per data.TimeSeriesSchema()
 // to a TimeSeriesSlice.
-func FrameToSeries(frame *data.Frame) (TimeSeriesSlice, error) {
+func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		return nil, fmt.Errorf("input frame is not recognized as a time series")
@@ -50,38 +51,43 @@ func FrameToSeries(frame *data.Frame) (TimeSeriesSlice, error) {
 		var err error
 		frame, err = data.LongToWide(frame)
 		if err != nil {
-			return nil, err // TODO: Kyle needs to figure out error wrapping and get with times.
+			return nil, errutil.Wrap("failed to convert long to wide series when converting from dataframe", err)
 		}
 		tsSchema = frame.TimeSeriesSchema()
 	}
+
 	seriesCount := len(tsSchema.ValueIndices)
 	seriesSlice := make(TimeSeriesSlice, 0, seriesCount)
 	timeField := frame.Fields[tsSchema.TimeIndex]
 	timeNullFloatSlice := make([]null.Float, timeField.Len())
-	for i := 0; i < timeField.Len(); i++ {
+
+	for i := 0; i < timeField.Len(); i++ { // built slice of time as epoch ms in null floats
 		tStamp, err := timeField.FloatAt(i)
 		if err != nil {
 			return nil, err
 		}
 		timeNullFloatSlice[i] = null.FloatFrom(tStamp)
 	}
-	for _, fieldIdx := range tsSchema.ValueIndices {
+
+	for _, fieldIdx := range tsSchema.ValueIndices { // create a TimeSeries for each value Field
 		field := frame.Fields[fieldIdx]
 		ts := &TimeSeries{
 			Name:   field.Name,
 			Tags:   field.Labels.Copy(),
 			Points: make(TimeSeriesPoints, field.Len()),
 		}
-		for rowIdx := 0; rowIdx < field.Len(); rowIdx++ {
+
+		for rowIdx := 0; rowIdx < field.Len(); rowIdx++ { // for each value in the field, make a TimePoint
 			val, err := field.FloatAt(rowIdx)
 			if err != nil {
-				return nil, err // TODO: wrap...
+				return nil, errutil.Wrapf(err, "failed to convert frame to tsdb.series, can not convert value %v to float", field.At(rowIdx))
 			}
 			ts.Points[rowIdx] = TimePoint{
 				null.FloatFrom(val),
 				timeNullFloatSlice[rowIdx],
 			}
 		}
+
 		seriesSlice = append(seriesSlice, ts)
 	}
 
@@ -96,7 +102,7 @@ func FramesFromBytes(bFrames [][]byte) ([]*data.Frame, error) {
 		var err error
 		frames[i], err = data.UnmarshalArrow(bFrame)
 		if err != nil {
-			return nil, err // TODO: wrap
+			return nil, err
 		}
 	}
 	return frames, nil

@@ -13,7 +13,7 @@ import (
 	"github.com/xorcare/pointer"
 )
 
-func TestFrameToSeries(t *testing.T) {
+func TestFrameToSeriesSlice(t *testing.T) {
 	tests := []struct {
 		name        string
 		frame       *data.Frame
@@ -129,7 +129,7 @@ func TestFrameToSeries(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			seriesSlice, err := FrameToSeries(tt.frame)
+			seriesSlice, err := FrameToSeriesSlice(tt.frame)
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.seriesSlice, seriesSlice, cmpopts.EquateNaNs()); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
