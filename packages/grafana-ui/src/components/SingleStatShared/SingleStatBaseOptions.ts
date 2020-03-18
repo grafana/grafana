@@ -31,7 +31,7 @@ export function sharedSingleStatPanelChangedHandler(
   prevOptions: any
 ) {
   let options = panel.options;
-  // Mutating passed panel
+
   panel.fieldConfig = panel.fieldConfig || {
     defaults: {},
     overrides: [],
@@ -39,64 +39,7 @@ export function sharedSingleStatPanelChangedHandler(
 
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
-    const prevPanel = prevOptions.angular;
-    const reducer = fieldReducers.getIfExists(prevPanel.valueName);
-    options = {
-      fieldOptions: {
-        calcs: [reducer ? reducer.id : ReducerID.mean],
-      },
-      orientation: VizOrientation.Horizontal,
-    };
-
-    const defaults: FieldConfig = {};
-
-    if (prevPanel.format) {
-      defaults.unit = prevPanel.format;
-    }
-    if (prevPanel.nullPointMode) {
-      defaults.nullValueMode = prevPanel.nullPointMode;
-    }
-    if (prevPanel.nullText) {
-      defaults.noValue = prevPanel.nullText;
-    }
-    if (prevPanel.decimals || prevPanel.decimals === 0) {
-      defaults.decimals = prevPanel.decimals;
-    }
-
-    // Convert thresholds and color values
-    if (prevPanel.thresholds && prevPanel.colors) {
-      const levels = prevPanel.thresholds.split(',').map((strVale: string) => {
-        return Number(strVale.trim());
-      });
-
-      // One more color than threshold
-      const thresholds: Threshold[] = [];
-      for (const color of prevPanel.colors) {
-        const idx = thresholds.length - 1;
-        if (idx >= 0) {
-          thresholds.push({ value: levels[idx], color });
-        } else {
-          thresholds.push({ value: -Infinity, color });
-        }
-      }
-      defaults.thresholds = {
-        mode: ThresholdsMode.Absolute,
-        steps: thresholds,
-      };
-    }
-
-    // Convert value mappings
-    const mappings = convertOldAngularValueMapping(prevPanel);
-    if (mappings && mappings.length) {
-      defaults.mappings = mappings;
-    }
-
-    if (prevPanel.gauge && prevPanel.gauge.show) {
-      defaults.min = prevPanel.gauge.minValue;
-      defaults.max = prevPanel.gauge.maxValue;
-    }
-    panel.fieldConfig.defaults = defaults;
-    return options;
+    return migrateFromAngularSinglestat(panel, prevOptions);
   }
 
   for (const k of optionsToKeep) {
@@ -104,6 +47,70 @@ export function sharedSingleStatPanelChangedHandler(
       options[k] = cloneDeep(prevOptions[k]);
     }
   }
+
+  return options;
+}
+
+function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
+  const prevPanel = prevOptions.angular;
+  const reducer = fieldReducers.getIfExists(prevPanel.valueName);
+  const options = {
+    fieldOptions: {
+      calcs: [reducer ? reducer.id : ReducerID.mean],
+    },
+    orientation: VizOrientation.Horizontal,
+  };
+
+  const defaults: FieldConfig = {};
+
+  if (prevPanel.format) {
+    defaults.unit = prevPanel.format;
+  }
+  if (prevPanel.nullPointMode) {
+    defaults.nullValueMode = prevPanel.nullPointMode;
+  }
+  if (prevPanel.nullText) {
+    defaults.noValue = prevPanel.nullText;
+  }
+  if (prevPanel.decimals || prevPanel.decimals === 0) {
+    defaults.decimals = prevPanel.decimals;
+  }
+
+  // Convert thresholds and color values
+  if (prevPanel.thresholds && prevPanel.colors) {
+    const levels = prevPanel.thresholds.split(',').map((strVale: string) => {
+      return Number(strVale.trim());
+    });
+
+    // One more color than threshold
+    const thresholds: Threshold[] = [];
+    for (const color of prevPanel.colors) {
+      const idx = thresholds.length - 1;
+      if (idx >= 0) {
+        thresholds.push({ value: levels[idx], color });
+      } else {
+        thresholds.push({ value: -Infinity, color });
+      }
+    }
+    defaults.thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: thresholds,
+    };
+  }
+
+  // Convert value mappings
+  const mappings = convertOldAngularValueMapping(prevPanel);
+  if (mappings && mappings.length) {
+    defaults.mappings = mappings;
+  }
+
+  if (prevPanel.gauge && prevPanel.gauge.show) {
+    defaults.min = prevPanel.gauge.minValue;
+    defaults.max = prevPanel.gauge.maxValue;
+  }
+
+  panel.fieldConfig.defaults = defaults;
+
   return options;
 }
 

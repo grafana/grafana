@@ -496,7 +496,7 @@ export class DashboardMigrator {
         });
       });
     }
-    //
+
     if (oldVersion < 23) {
       panelUpgrades.push((panel: any) => {
         panel.fieldConfig = {
