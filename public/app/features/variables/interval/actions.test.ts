@@ -128,7 +128,7 @@ describe('interval actions', () => {
     describe('and auto is true', () => {
       it('then correct dependencies are called', async () => {
         const interval = variableMockBuilder('interval')
-          .withId('0')
+          .withId('intervalName')
           .withName('intervalName')
           .withAuto(true)
           .withAutoCount(33)
