@@ -15,7 +15,7 @@ import {
   mapNumbertoTimeInSlider,
   createRetentionPeriodBoundary,
   mapQueriesToHeadings,
-  createDatasourceListWithImages,
+  createDatasourcesList,
 } from 'app/core/utils/richHistory';
 
 // Components
@@ -137,7 +137,7 @@ export function RichHistoryQueriesTab(props: Props) {
   const theme = useTheme();
   const styles = getStyles(theme, height);
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
-  const listOfDatasources = createDatasourceListWithImages(datasourcesRetrievedFromQueryHistory);
+  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
   const filteredQueriesByDatasource = datasourceFilters

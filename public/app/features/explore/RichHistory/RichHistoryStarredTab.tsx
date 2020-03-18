@@ -10,7 +10,7 @@ import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { SortOrder } from '../../../core/utils/explore';
-import { sortQueries, createDatasourceListWithImages } from '../../../core/utils/richHistory';
+import { sortQueries, createDatasourcesList } from '../../../core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
@@ -93,7 +93,7 @@ export function RichHistoryStarredTab(props: Props) {
   const styles = getStyles(theme);
 
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
-  const listOfDatasources = createDatasourceListWithImages(datasourcesRetrievedFromQueryHistory);
+  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 

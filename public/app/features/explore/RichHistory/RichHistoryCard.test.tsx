@@ -63,6 +63,18 @@ describe('RichHistoryCard', () => {
         .text()
     ).toEqual('query3');
   });
+  it('should render data source icon', () => {
+    const wrapper = setup();
+    expect(wrapper.find({ 'aria-label': 'Data source icon' })).toHaveLength(1);
+  });
+  it('should render data source name', () => {
+    const wrapper = setup();
+    expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Test datasource');
+  });
+  it('should render "Not linked to existing data source" if removed data source', () => {
+    const wrapper = setup({ isRemoved: true });
+    expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Not linked to existing data source');
+  });
 
   describe('commenting', () => {
     it('should render comment, if comment present', () => {

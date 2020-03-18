@@ -235,7 +235,9 @@ export function RichHistoryCard(props: Props) {
       <div className={styles.cardRow}>
         <div className={styles.datasourceContainer}>
           <img src={dsImg} aria-label="Data source icon" />
-          <div>{isRemoved ? 'Not linked to existing data source' : query.datasourceName}</div>
+          <div aria-label="Data source name">
+            {isRemoved ? 'Not linked to existing data source' : query.datasourceName}
+          </div>
         </div>
         {queryActionButtons}
       </div>
