@@ -32,6 +32,7 @@ const getTextAreaStyle = stylesFactory((theme: GrafanaTheme, invalid = false) =>
         border-radius: ${theme.border.radius.sm};
         padding: ${theme.spacing.formSpacingBase / 4}px ${theme.spacing.formSpacingBase}px;
         width: 100%;
+        border-color: ${invalid ? theme.colors.redBase : theme.colors.formInputBorder};
       `
     ),
   };

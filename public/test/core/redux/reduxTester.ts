@@ -55,6 +55,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
       middleware: [logActionsMiddleWare, thunk],
       preloadedState,
     });
+
     setStore(store as any);
 
     return instance;
@@ -67,6 +68,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
     if (clearPreviousActions) {
       dispatchedActions.length = 0;
     }
+
     store.dispatch(action);
 
     return instance;

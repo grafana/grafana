@@ -13,9 +13,9 @@ import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 
 export const RICH_HISTORY_SETTING_KEYS = {
-  retentionPeriod: `${RICH_HISTORY_KEY}.retentionPeriod`,
-  starredTabAsFirstTab: `${RICH_HISTORY_KEY}.starredTabAsFirstTab`,
-  activeDatasourceOnly: `${RICH_HISTORY_KEY}.activeDatasourceOnly`,
+  retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
+  starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
+  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
 };
 
 /*
@@ -60,8 +60,14 @@ export function addToRichHistory(
     ];
 
     /* Combine all queries of a datasource type into one rich history */
-    store.setObject(RICH_HISTORY_KEY, newHistory);
-    return newHistory;
+    const isSaved = store.setObject(RICH_HISTORY_KEY, newHistory);
+
+    /* If newHistory is succesfully saved, return it. Otherwise return not updated richHistory.  */
+    if (isSaved) {
+      return newHistory;
+    } else {
+      return richHistory;
+    }
   }
 
   return richHistory;
