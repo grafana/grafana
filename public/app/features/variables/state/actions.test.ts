@@ -30,10 +30,12 @@ import { dateTime, TimeRange } from '@grafana/data';
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
     it('then correct actions are dispatched', () => {
-      variableAdapters.set('query', createQueryVariableAdapter());
-      variableAdapters.set('custom', createCustomVariableAdapter());
-      variableAdapters.set('textbox', createTextBoxVariableAdapter());
-      variableAdapters.set('constant', createConstantVariableAdapter());
+      variableAdapters.setInit(() => [
+        createQueryVariableAdapter(),
+        createCustomVariableAdapter(),
+        createTextBoxVariableAdapter(),
+        createConstantVariableAdapter(),
+      ]);
       const query = variableMockBuilder('query').create();
       const constant = variableMockBuilder('constant').create();
       const datasource = variableMockBuilder('datasource').create();
@@ -81,10 +83,12 @@ describe('shared actions', () => {
 
   describe('when processVariables is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      variableAdapters.set('query', createQueryVariableAdapter());
-      variableAdapters.set('custom', createCustomVariableAdapter());
-      variableAdapters.set('textbox', createTextBoxVariableAdapter());
-      variableAdapters.set('constant', createConstantVariableAdapter());
+      variableAdapters.setInit(() => [
+        createQueryVariableAdapter(),
+        createCustomVariableAdapter(),
+        createTextBoxVariableAdapter(),
+        createConstantVariableAdapter(),
+      ]);
       const query = variableMockBuilder('query').create();
       const constant = variableMockBuilder('constant').create();
       const datasource = variableMockBuilder('datasource').create();
@@ -144,7 +148,7 @@ describe('shared actions', () => {
       ${null}       | ${[null]}
       ${undefined}  | ${[undefined]}
     `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
-      variableAdapters.set('custom', createCustomVariableAdapter());
+      variableAdapters.setInit(() => [createCustomVariableAdapter()]);
       const custom = variableMockBuilder('custom')
         .withUuid('0')
         .withOptions('A', 'B', 'C')
@@ -178,7 +182,7 @@ describe('shared actions', () => {
         ${['A', 'B', 'C']} | ${'X'}       | ${'C'}       | ${'C'}
         ${undefined}       | ${'B'}       | ${undefined} | ${'A'}
       `('then correct actions are dispatched', async ({ withOptions, withCurrent, defaultValue, expected }) => {
-        variableAdapters.set('custom', createCustomVariableAdapter());
+        variableAdapters.setInit(() => [createCustomVariableAdapter()]);
         let custom;
 
         if (!withOptions) {
@@ -234,7 +238,7 @@ describe('shared actions', () => {
       `(
         'then correct actions are dispatched',
         async ({ withOptions, withCurrent, defaultValue, expectedText, expectedSelected }) => {
-          variableAdapters.set('custom', createCustomVariableAdapter());
+          variableAdapters.setInit(() => [createCustomVariableAdapter()]);
           let custom;
 
           if (!withOptions) {
@@ -282,87 +286,86 @@ describe('shared actions', () => {
     });
   });
 
-  describe('when onTimeRangeUpdated is dispatched', () => {
-    const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean }) => {
-      const range: TimeRange = {
-        from: dateTime(new Date().getTime()).subtract(1, 'minutes'),
-        to: dateTime(new Date().getTime()),
-        raw: {
-          from: 'now-1m',
-          to: 'now',
-        },
-      };
-      const updateTimeRangeMock = jest.fn();
-      const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
-      const emitMock = jest.fn();
-      const appEventsMock = ({ emit: emitMock } as unknown) as Emitter;
-      const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, appEvents: appEventsMock };
-      const templateVariableValueUpdatedMock = jest.fn();
-      const dashboard = ({
-        getModel: () =>
-          (({
-            templateVariableValueUpdated: templateVariableValueUpdatedMock,
-            startRefresh: startRefreshMock,
-          } as unknown) as DashboardModel),
-      } as unknown) as DashboardState;
-      const startRefreshMock = jest.fn();
-      const adapter = createIntervalVariableAdapter();
-      adapter.updateOptions = args.throw
-        ? jest.fn().mockRejectedValue('Something broke')
-        : jest.fn().mockResolvedValue({});
-      variableAdapters.set('interval', adapter);
-      variableAdapters.set('constant', createConstantVariableAdapter());
+  const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean }) => {
+    const range: TimeRange = {
+      from: dateTime(new Date().getTime()).subtract(1, 'minutes'),
+      to: dateTime(new Date().getTime()),
+      raw: {
+        from: 'now-1m',
+        to: 'now',
+      },
+    };
+    const updateTimeRangeMock = jest.fn();
+    const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
+    const emitMock = jest.fn();
+    const appEventsMock = ({ emit: emitMock } as unknown) as Emitter;
+    const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, appEvents: appEventsMock };
+    const templateVariableValueUpdatedMock = jest.fn();
+    const dashboard = ({
+      getModel: () =>
+        (({
+          templateVariableValueUpdated: templateVariableValueUpdatedMock,
+          startRefresh: startRefreshMock,
+        } as unknown) as DashboardModel),
+    } as unknown) as DashboardState;
+    const startRefreshMock = jest.fn();
+    const adapter = createIntervalVariableAdapter();
+    adapter.updateOptions = args.throw
+      ? jest.fn().mockRejectedValue('Something broke')
+      : jest.fn().mockResolvedValue({});
+    variableAdapters.setInit(() => [adapter, createConstantVariableAdapter()]);
 
-      // initial variable state
-      const initialVariable = variableMockBuilder('interval')
-        .withUuid('0')
-        .withName('interval-0')
-        .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
-        .withCurrent('1m')
-        .withRefresh(VariableRefresh.onTimeRangeChanged)
-        .create();
+    // initial variable state
+    const initialVariable = variableMockBuilder('interval')
+      .withUuid('0')
+      .withName('interval-0')
+      .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
+      .withCurrent('1m')
+      .withRefresh(VariableRefresh.onTimeRangeChanged)
+      .create();
 
-      // the constant variable should be filtered out
-      const constant = variableMockBuilder('constant')
-        .withUuid('1')
-        .withName('constant-1')
-        .withOptions('a constant')
-        .withCurrent('a constant')
-        .create();
-      const initialState = {
-        templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
-        dashboard,
-      };
-
-      // updated variable state
-      const updatedVariable = variableMockBuilder('interval')
-        .withUuid('0')
-        .withName('interval-0')
-        .withOptions('1m')
-        .withCurrent('1m')
-        .withRefresh(VariableRefresh.onTimeRangeChanged)
-        .create();
-
-      const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
-      const state = { templating: { variables: { '0': variable, '1': { ...constant } } }, dashboard };
-      const getStateMock = jest
-        .fn()
-        .mockReturnValueOnce(initialState)
-        .mockReturnValue(state);
-      const dispatchMock = jest.fn();
-
-      return {
-        range,
-        dependencies,
-        dispatchMock,
-        getStateMock,
-        updateTimeRangeMock,
-        templateVariableValueUpdatedMock,
-        startRefreshMock,
-        emitMock,
-      };
+    // the constant variable should be filtered out
+    const constant = variableMockBuilder('constant')
+      .withUuid('1')
+      .withName('constant-1')
+      .withOptions('a constant')
+      .withCurrent('a constant')
+      .create();
+    const initialState = {
+      templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
+      dashboard,
     };
 
+    // updated variable state
+    const updatedVariable = variableMockBuilder('interval')
+      .withUuid('0')
+      .withName('interval-0')
+      .withOptions('1m')
+      .withCurrent('1m')
+      .withRefresh(VariableRefresh.onTimeRangeChanged)
+      .create();
+
+    const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
+    const state = { templating: { variables: { '0': variable, '1': { ...constant } } }, dashboard };
+    const getStateMock = jest
+      .fn()
+      .mockReturnValueOnce(initialState)
+      .mockReturnValue(state);
+    const dispatchMock = jest.fn();
+
+    return {
+      range,
+      dependencies,
+      dispatchMock,
+      getStateMock,
+      updateTimeRangeMock,
+      templateVariableValueUpdatedMock,
+      startRefreshMock,
+      emitMock,
+    };
+  };
+
+  describe('when onTimeRangeUpdated is dispatched', () => {
     describe('and options are changed by update', () => {
       it('then correct dependencies are called', async () => {
         const {

@@ -65,8 +65,7 @@ describe('processVariable', () => {
   // queryDependsOnCustom depends on custom
   // queryNoDepends doesn't depend on any other variable
   const getAndSetupProcessVariableContext = () => {
-    variableAdapters.set('custom', createCustomVariableAdapter());
-    variableAdapters.set('query', createQueryVariableAdapter());
+    variableAdapters.setInit(() => [createCustomVariableAdapter(), createQueryVariableAdapter()]);
     const custom = variableMockBuilder('custom')
       .withUuid('0')
       .withQuery('A,B,C')

@@ -1,6 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cleanUpDashboard } from 'app/features/dashboard/state/reducers';
-import { VariableHide, VariableModel } from '../../templating/variable';
+import { ConstantVariableModel, QueryVariableModel, VariableHide } from '../../templating/variable';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
 import { variablesReducer, VariablesState } from './variablesReducer';
@@ -91,12 +91,13 @@ describe('variablesReducer', () => {
           skipUrlSync: false,
         },
       };
-      const variableAdapter: VariableAdapter<VariableModel> = {
-        label: 'Mock label',
+      const variableAdapter: VariableAdapter<QueryVariableModel> = {
+        id: 'mock',
+        name: 'Mock label',
         description: 'Mock description',
         dependsOn: jest.fn(),
         updateOptions: jest.fn(),
-        initialState: {} as VariableModel,
+        initialState: {} as QueryVariableModel,
         reducer: jest.fn().mockReturnValue(initialState),
         getValueForUrl: jest.fn(),
         getSaveModel: jest.fn(),
@@ -105,7 +106,7 @@ describe('variablesReducer', () => {
         setValue: jest.fn(),
         setValueFromUrl: jest.fn(),
       };
-      variableAdapters.set('query', variableAdapter);
+      variableAdapters.setInit(() => [{ ...variableAdapter }]);
       const mockAction = createAction<VariablePayload>('mockAction');
       reducerTester<VariablesState>()
         .givenReducer(variablesReducer, initialState)
@@ -132,12 +133,13 @@ describe('variablesReducer', () => {
           skipUrlSync: false,
         },
       };
-      const variableAdapter: VariableAdapter<VariableModel> = {
-        label: 'Mock label',
+      const variableAdapter: VariableAdapter<QueryVariableModel> = {
+        id: 'mock',
+        name: 'Mock label',
         description: 'Mock description',
         dependsOn: jest.fn(),
         updateOptions: jest.fn(),
-        initialState: {} as VariableModel,
+        initialState: {} as QueryVariableModel,
         reducer: jest.fn().mockReturnValue(initialState),
         getValueForUrl: jest.fn(),
         getSaveModel: jest.fn(),
@@ -146,7 +148,7 @@ describe('variablesReducer', () => {
         setValue: jest.fn(),
         setValueFromUrl: jest.fn(),
       };
-      variableAdapters.set('query', variableAdapter);
+      variableAdapters.setInit(() => [{ ...variableAdapter }]);
       const mockAction = createAction<VariablePayload>('mockAction');
       reducerTester<VariablesState>()
         .givenReducer(variablesReducer, initialState)
@@ -169,12 +171,13 @@ describe('variablesReducer', () => {
           skipUrlSync: false,
         },
       };
-      const variableAdapter: VariableAdapter<VariableModel> = {
-        label: 'Mock label',
+      const variableAdapter: VariableAdapter<ConstantVariableModel> = {
+        id: 'mock',
+        name: 'Mock label',
         description: 'Mock description',
         dependsOn: jest.fn(),
         updateOptions: jest.fn(),
-        initialState: {} as VariableModel,
+        initialState: {} as ConstantVariableModel,
         reducer: jest.fn().mockReturnValue(initialState),
         getValueForUrl: jest.fn(),
         getSaveModel: jest.fn(),
@@ -183,7 +186,7 @@ describe('variablesReducer', () => {
         setValue: jest.fn(),
         setValueFromUrl: jest.fn(),
       };
-      variableAdapters.set('query', variableAdapter);
+      variableAdapters.setInit(() => [{ ...variableAdapter }]);
       const mockAction = createAction<string>('mockAction');
       reducerTester<VariablesState>()
         .givenReducer(variablesReducer, initialState)

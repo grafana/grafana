@@ -17,7 +17,7 @@ import { setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
 
 describe('data source actions', () => {
-  variableAdapters.set('datasource', createDataSourceVariableAdapter());
+  variableAdapters.setInit(() => [createDataSourceVariableAdapter()]);
 
   describe('when updateDataSourceVariableOptions is dispatched', () => {
     describe('and there is no regex', () => {

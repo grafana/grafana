@@ -12,8 +12,9 @@ import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
+    id: 'query',
     description: 'Variable values are fetched from a datasource query',
-    label: 'Query',
+    name: 'Query',
     initialState: initialQueryVariableModelState,
     reducer: queryVariableReducer,
     picker: OptionsPicker,

@@ -62,11 +62,11 @@ export const getVariableTestContext = <Model extends VariableModel>(
 };
 
 export const variableMockBuilder = (type: VariableType) => {
-  const initialState = variableAdapters.contains(type)
+  const initialState = variableAdapters.getIfExists(type)
     ? cloneDeep(variableAdapters.get(type).initialState)
     : { name: type, type, label: '', hide: VariableHide.dontHide, skipUrlSync: false };
-  const { uuid, index, global, ...rest } = initialState;
-  const model = { ...rest, name: type };
+  const { index, global, ...rest } = initialState;
+  const model: any = { ...rest, name: type };
 
   const withUuid = (uuid: string) => {
     model.uuid = uuid;

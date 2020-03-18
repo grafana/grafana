@@ -19,7 +19,7 @@ import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSr
 import { TemplateSrv } from '../../templating/template_srv';
 
 describe('interval actions', () => {
-  variableAdapters.set('interval', createIntervalVariableAdapter());
+  variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
   describe('when updateIntervalVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const interval = variableMockBuilder('interval')

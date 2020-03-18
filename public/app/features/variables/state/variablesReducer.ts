@@ -27,7 +27,7 @@ export const variablesReducer = (
     return variables;
   }
 
-  if (action?.payload?.type && variableAdapters.contains(action?.payload?.type)) {
+  if (action?.payload?.type && variableAdapters.getIfExists(action?.payload?.type)) {
     // Now that we know we are dealing with a payload that is addressed for an adapted variable let's reduce state:
     // Firstly call the sharedTemplatingReducer that handles all shared actions between variable types
     // Secondly call the specific variable type's reducer

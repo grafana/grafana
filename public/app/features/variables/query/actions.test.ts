@@ -47,7 +47,7 @@ jest.mock('../../plugins/plugin_loader', () => ({
 }));
 
 describe('query actions', () => {
-  variableAdapters.set('query', createQueryVariableAdapter());
+  variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when updateQueryVariableOptions is dispatched for variable with tags and includeAll', () => {
     it('then correct actions are dispatched', async () => {
