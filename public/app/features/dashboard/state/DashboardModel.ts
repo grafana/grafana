@@ -17,6 +17,8 @@ import { VariableModel } from '../../templating/variable';
 import { getConfig } from '../../../core/config';
 import { getVariableClones, getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
+import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
+import { dispatch } from '../../../store/store';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -276,6 +278,7 @@ export class DashboardModel {
 
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
+    dispatch(onTimeRangeUpdated(timeRange));
   }
 
   startRefresh() {

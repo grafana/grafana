@@ -86,8 +86,8 @@ export const variableMockBuilder = (type: VariableType) => {
     return instance;
   };
 
-  const withCurrent = (text: string | string[]) => {
-    model.current = { text, value: text, selected: true };
+  const withCurrent = (text: string | string[], value?: string | string[]) => {
+    model.current = { text, value: value ?? text, selected: true };
     return instance;
   };
 

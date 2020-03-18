@@ -107,8 +107,8 @@ export interface IntervalVariableModel extends VariableWithOptions {
 export interface CustomVariableModel extends VariableWithMultiSupport {}
 
 export interface DataSourceVariableModel extends VariableWithMultiSupport {
-  refresh: VariableRefresh;
   regex: string;
+  refresh: VariableRefresh;
 }
 
 export interface QueryVariableModel extends DataSourceVariableModel {
