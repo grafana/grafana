@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 	"sort"
 	"time"
 
@@ -240,6 +241,39 @@ func ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) R
 	}
 
 	return JSON(200, cmd.Result)
+}
+
+// CollectPluginMetrics collect metrics from a plugin.
+//
+// /api/plugins/:pluginId/metrics
+func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) Response {
+	pluginID := c.Params("pluginId")
+	plugin, exists := plugins.Plugins[pluginID]
+	if !exists {
+		return Error(404, "Plugin not found, no installed plugin with that id", nil)
+	}
+
+	resp, err := hs.BackendPluginManager.CollectMetrics(c.Req.Context(), plugin.Id)
+	if err != nil {
+		if err == backendplugin.ErrPluginNotRegistered {
+			return Error(404, "Plugin not found", err)
+		}
+
+		if err == backendplugin.ErrDiagnosticsNotSupported {
+			return Error(404, "Health check not implemented", err)
+		}
+
+		return Error(500, "Collect plugin metrics failed", err)
+	}
+
+	headers := make(http.Header)
+	headers.Set("Content-Type", "text/plain")
+
+	return &NormalResponse{
+		header: headers,
+		body:   resp.PrometheusMetrics,
+		status: http.StatusOK,
+	}
 }
 
 // CheckHealth returns the health of a plugin.
