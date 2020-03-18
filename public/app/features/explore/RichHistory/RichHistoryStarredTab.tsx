@@ -32,17 +32,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       display: flex;
-      .label-slider {
-        font-size: ${theme.typography.size.sm};
-        &:last-of-type {
-          margin-top: ${theme.spacing.lg};
-        }
-        &:first-of-type {
-          margin-top: ${theme.spacing.sm};
-          font-weight: ${theme.typography.weight.semibold};
-          margin-bottom: ${theme.spacing.xs};
-        }
-      }
     `,
     containerContent: css`
       width: 100%;
@@ -62,18 +51,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     sort: css`
       width: 170px;
     `,
-    sessionName: css`
-      display: flex;
-      align-items: flex-start;
-      justify-content: flex-start;
+    feedback: css`
+      height: 60px;
       margin-top: ${theme.spacing.lg};
-      h4 {
-        margin: 0 10px 0 0;
+      display: flex;
+      justify-content: center;
+      font-weight: ${theme.typography.weight.light};
+      font-size: ${theme.typography.size.sm};
+      a {
+        font-weight: ${theme.typography.weight.semibold};
+        margin-left: ${theme.spacing.xxs};
       }
-    `,
-    heading: css`
-      font-size: ${theme.typography.heading.h4};
-      margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
     `,
   };
 });
@@ -140,6 +128,10 @@ export function RichHistoryStarredTab(props: Props) {
             />
           );
         })}
+        <div className={styles.feedback}>
+          Query history is a beta feature. The history is local to your browser and is not shared with others.
+          <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
+        </div>
       </div>
     </div>
   );
