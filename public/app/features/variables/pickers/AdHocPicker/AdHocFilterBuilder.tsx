@@ -12,10 +12,10 @@ interface Props {
 }
 
 export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoadKeys, onLoadValues }) => {
-  const [key, setKey] = useState<string>('');
+  const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 
-  if (key === '') {
+  if (key === null) {
     return (
       <div className="gf-form">
         <SegmentAsync
@@ -54,7 +54,7 @@ export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoa
               condition: '',
               key: key,
             });
-            setKey('');
+            setKey(null);
             setOperator('=');
           }}
           loadOptions={() => onLoadValues(key)}
@@ -64,10 +64,12 @@ export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoa
   );
 };
 
-function renderAddButton(key: string): ReactElement {
-  return key !== '' ? (
-    undefined
-  ) : (
+function renderAddButton(key: string | null): ReactElement | undefined {
+  if (key !== null) {
+    return undefined;
+  }
+
+  return (
     <a className="gf-form-label query-part">
       <i className="fa fa-plus" />
     </a>

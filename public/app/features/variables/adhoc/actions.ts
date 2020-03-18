@@ -41,11 +41,11 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
     if (index === -1) {
       const { value, key, operator } = options;
       const filter = { value, key, operator, condition: '' };
-      return dispatch(addFilter(variable!.uuid, filter));
+      return dispatch(addFilter(variable.uuid!, filter));
     }
 
     const filter = { ...variable.filters[index], operator: options.operator };
-    return dispatch(changeFilter(variable!.uuid, { index, filter }));
+    return dispatch(changeFilter(variable.uuid!, { index, filter }));
   };
 };
 
