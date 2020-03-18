@@ -1,8 +1,8 @@
-import { AnyAction, configureStore, EnhancedStore, Reducer } from '@reduxjs/toolkit';
 import { Dispatch, Middleware, MiddlewareAPI } from 'redux';
+import thunk from 'redux-thunk';
+import { AnyAction, configureStore, EnhancedStore, Reducer } from '@reduxjs/toolkit';
 
 import { StoreState } from '../../../app/types';
-import thunk from 'redux-thunk';
 import { setStore } from '../../../app/store/store';
 
 export interface ReduxTesterGiven<State> {
