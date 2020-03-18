@@ -6,7 +6,7 @@ import { NewsOptions, DEFAULT_FEED_URL } from './types';
 const PROXY_PREFIX = 'https://cors-anywhere.herokuapp.com/';
 
 interface State {
-  feedUrl: string;
+  feedUrl?: string;
 }
 
 export class NewsPanelEditor extends PureComponent<PanelEditorProps<NewsOptions>, State> {
@@ -41,27 +41,29 @@ export class NewsPanelEditor extends PureComponent<PanelEditorProps<NewsOptions>
     return (
       <>
         <PanelOptionsGroup title="Feed">
-          <div className="gf-form">
-            <FormField
-              label="URL"
-              labelWidth={7}
-              inputWidth={30}
-              value={feedUrl || ''}
-              placeholder={DEFAULT_FEED_URL}
-              onChange={this.onFeedUrlChange}
-              tooltip="Only RSS feed formats are supported (not Atom)."
-              onBlur={this.onUpdatePanel}
-            />
-          </div>
-          {suggestProxy && (
-            <div>
-              <br />
-              <div>If the feed is unable to connect, consider a CORS proxy</div>
-              <Button variant="inverse" onClick={this.onSetProxyPrefix}>
-                Use Proxy
-              </Button>
+          <>
+            <div className="gf-form">
+              <FormField
+                label="URL"
+                labelWidth={7}
+                inputWidth={30}
+                value={feedUrl || ''}
+                placeholder={DEFAULT_FEED_URL}
+                onChange={this.onFeedUrlChange}
+                tooltip="Only RSS feed formats are supported (not Atom)."
+                onBlur={this.onUpdatePanel}
+              />
             </div>
-          )}
+            {suggestProxy && (
+              <div>
+                <br />
+                <div>If the feed is unable to connect, consider a CORS proxy</div>
+                <Button variant="inverse" onClick={this.onSetProxyPrefix}>
+                  Use Proxy
+                </Button>
+              </div>
+            )}
+          </>
         </PanelOptionsGroup>
       </>
     );

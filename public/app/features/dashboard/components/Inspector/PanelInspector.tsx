@@ -16,7 +16,9 @@ import {
   toCSV,
   DataQueryError,
   PanelData,
-  DataQuery,
+  getValueFormat,
+  formattedValueToString,
+  QueryResultMetaStat,
 } from '@grafana/data';
 import { config } from 'app/core/config';
 
@@ -28,17 +30,18 @@ interface Props {
 
 export enum InspectTab {
   Data = 'data',
-  Raw = 'raw',
+  Request = 'request',
   Issue = 'issue',
   Meta = 'meta', // When result metadata exists
   Error = 'error',
+  Stats = 'stats',
 }
 
 interface State {
   // The last raw response
   last: PanelData;
 
-  // Data frem the last response
+  // Data from the last response
   data: DataFrame[];
 
   // The selected data frame
@@ -49,8 +52,6 @@ interface State {
 
   // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
-
-  stats: { requestTime: number; queries: number; dataSources: number };
 
   drawerWidth: string;
 }
@@ -63,8 +64,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       data: [],
       selected: 0,
       tab: props.selectedTab || InspectTab.Data,
-      drawerWidth: '40%',
-      stats: { requestTime: 0, queries: 0, dataSources: 0 },
+      drawerWidth: '50%',
     };
   }
 
@@ -88,22 +88,13 @@ export class PanelInspector extends PureComponent<Props, State> {
     const error = lastResult.error;
 
     const targets = lastResult.request?.targets || [];
-    const requestTime = lastResult.request?.endTime ? lastResult.request?.endTime - lastResult.request.startTime : -1;
-    const dataSources = new Set(targets.map(t => t.datasource)).size;
 
     // Find the first DataSource wanting to show custom metadata
     if (data && targets.length) {
-      const queries: Record<string, DataQuery> = {};
-
-      for (const target of targets) {
-        queries[target.refId] = target;
-      }
-
       for (const frame of data) {
-        const q = queries[frame.refId];
-
-        if (q && frame.meta && frame.meta.custom) {
-          const dataSource = await getDataSourceSrv().get(q.datasource);
+        if (frame.meta && frame.meta.custom) {
+          // get data source from first query
+          const dataSource = await getDataSourceSrv().get(targets[0].datasource);
 
           if (dataSource && dataSource.components?.MetadataInspector) {
             metaDS = dataSource;
@@ -119,11 +110,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       data,
       metaDS,
       tab: error ? InspectTab.Error : prevState.tab,
-      stats: {
-        requestTime,
-        queries: targets.length,
-        dataSources,
-      },
     }));
   }
 
@@ -163,11 +149,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     if (!metaDS || !metaDS.components?.MetadataInspector) {
       return <div>No Metadata Inspector</div>;
     }
-    return (
-      <CustomScrollbar>
-        <metaDS.components.MetadataInspector datasource={metaDS} data={data} />
-      </CustomScrollbar>
-    );
+    return <metaDS.components.MetadataInspector datasource={metaDS} data={data} />;
   }
 
   renderDataTab() {
@@ -185,7 +167,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       };
     });
 
-    // Apply dummy styles
     const processed = applyFieldOverrides({
       data,
       theme: config.theme,
@@ -232,43 +213,95 @@ export class PanelInspector extends PureComponent<Props, State> {
     );
   }
 
-  renderIssueTab() {
-    return <CustomScrollbar>TODO: show issue form</CustomScrollbar>;
-  }
-
   renderErrorTab(error?: DataQueryError) {
     if (!error) {
       return null;
     }
     if (error.data) {
       return (
-        <CustomScrollbar>
+        <>
           <h3>{error.data.message}</h3>
-          <pre>
-            <code>{error.data.error}</code>
-          </pre>
-        </CustomScrollbar>
+          <JSONFormatter json={error} open={2} />
+        </>
       );
     }
     return <div>{error.message}</div>;
   }
 
-  renderRawJsonTab(last: PanelData) {
+  renderRequestTab() {
+    return <JSONFormatter json={this.state.last} open={3} />;
+  }
+
+  renderStatsTab() {
+    const { last } = this.state;
+    const { request } = last;
+
+    if (!request) {
+      return null;
+    }
+
+    let stats: QueryResultMetaStat[] = [];
+
+    const requestTime = request.endTime ? request.endTime - request.startTime : -1;
+    const processingTime = last.timings?.dataProcessingTime || -1;
+    let dataRows = 0;
+
+    for (const frame of last.series) {
+      dataRows += frame.length;
+    }
+
+    stats.push({ title: 'Total request time', value: requestTime, unit: 'ms' });
+    stats.push({ title: 'Data processing time', value: processingTime, unit: 'ms' });
+    stats.push({ title: 'Number of queries', value: request.targets.length });
+    stats.push({ title: 'Total number rows', value: dataRows });
+
+    let dataStats: QueryResultMetaStat[] = [];
+
+    for (const series of last.series) {
+      if (series.meta && series.meta.stats) {
+        dataStats = dataStats.concat(series.meta.stats);
+      }
+    }
+
     return (
-      <CustomScrollbar>
-        <JSONFormatter json={last} open={2} />
-      </CustomScrollbar>
+      <>
+        {this.renderStatsTable('Stats', stats)}
+        {dataStats.length && this.renderStatsTable('Data source stats', dataStats)}
+      </>
+    );
+  }
+
+  renderStatsTable(name: string, stats: QueryResultMetaStat[]) {
+    return (
+      <div style={{ paddingBottom: '16px' }}>
+        <div className="section-heading">{name}</div>
+        <table className="filter-table width-30">
+          <tbody>
+            {stats.map(stat => {
+              return (
+                <tr>
+                  <td>{stat.title}</td>
+                  <td style={{ textAlign: 'right' }}>{formatStat(stat.value, stat.unit)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     );
   }
 
   drawerHeader = () => {
-    const { tab, last, stats } = this.state;
+    const { tab, last } = this.state;
     const error = last?.error;
     const tabs = [];
 
     if (last && last?.series?.length > 0) {
       tabs.push({ label: 'Data', value: InspectTab.Data });
     }
+
+    tabs.push({ label: 'Stats', value: InspectTab.Stats });
+    tabs.push({ label: 'Request', value: InspectTab.Request });
 
     if (this.state.metaDS) {
       tabs.push({ label: 'Meta Data', value: InspectTab.Meta });
@@ -278,13 +311,11 @@ export class PanelInspector extends PureComponent<Props, State> {
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
 
-    tabs.push({ label: 'Raw JSON', value: InspectTab.Raw });
-
     return (
       <InspectHeader
         tabs={tabs}
         tab={tab}
-        stats={stats}
+        panelData={last}
         onSelectTab={this.onSelectTab}
         onClose={this.onDismiss}
         panel={this.props.panel}
@@ -302,28 +333,24 @@ export class PanelInspector extends PureComponent<Props, State> {
     return (
       <Drawer title={this.drawerHeader} width={drawerWidth} onClose={this.onDismiss}>
         <TabContent className={styles.tabContent}>
-          {tab === InspectTab.Data ? (
-            this.renderDataTab()
-          ) : (
-            <AutoSizer>
-              {({ width, height }) => {
-                if (width === 0) {
-                  return null;
-                }
-                return (
-                  <div style={{ width, height }}>
-                    {tab === InspectTab.Meta && this.renderMetadataInspector()}
-                    {tab === InspectTab.Issue && this.renderIssueTab()}
-                    {tab === InspectTab.Raw && this.renderRawJsonTab(last)}
-                    {tab === InspectTab.Error && this.renderErrorTab(error)}
-                  </div>
-                );
-              }}
-            </AutoSizer>
-          )}
+          <CustomScrollbar autoHeightMin="100%">
+            {tab === InspectTab.Data && this.renderDataTab()}
+            {tab === InspectTab.Meta && this.renderMetadataInspector()}
+            {tab === InspectTab.Request && this.renderRequestTab()}
+            {tab === InspectTab.Error && this.renderErrorTab(error)}
+            {tab === InspectTab.Stats && this.renderStatsTab()}
+          </CustomScrollbar>
         </TabContent>
       </Drawer>
     );
+  }
+}
+
+function formatStat(value: any, unit?: string): string {
+  if (unit) {
+    return formattedValueToString(getValueFormat(unit)(value));
+  } else {
+    return value;
   }
 }
 

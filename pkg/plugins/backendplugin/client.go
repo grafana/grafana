@@ -101,7 +101,7 @@ func NewRendererPluginDescriptor(pluginID, executablePath string, startFns Plugi
 }
 
 type DiagnosticsPlugin interface {
-	plugin.DiagnosticsServer
+	plugin.DiagnosticsClient
 }
 
 type ResourcePlugin interface {

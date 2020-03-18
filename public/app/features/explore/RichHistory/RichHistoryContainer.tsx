@@ -22,80 +22,91 @@ import { RichHistory, Tabs } from './RichHistory';
 import { deleteRichHistory } from '../state/actions';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
-  const bg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
-  const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const handleShadow = theme.isLight ? `0px 2px 2px ${bgColor}` : `0px 2px 4px black`;
+  const containerBackground = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
+  const containerBorderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
+  const handleBackground = theme.isLight ? theme.colors.gray5 : theme.colors.gray15;
+  const handleDots = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
+  const handleBackgroundHover = theme.isLight ? theme.colors.gray70 : theme.colors.gray33;
+  const handleDotsHover = theme.isLight ? theme.colors.gray5 : theme.colors.dark7;
+
   return {
     container: css`
       position: fixed !important;
       bottom: 0;
-      background: ${bg};
-      border-top: 1px solid ${borderColor};
+      background: ${containerBackground};
+      border-top: 1px solid ${containerBorderColor};
       margin: 0px;
       margin-right: -${theme.spacing.md};
       margin-left: -${theme.spacing.md};
     `,
     drawerActive: css`
       opacity: 1;
-      transition: transform 0.3s ease-in;
+      transition: transform 0.5s ease-in;
     `,
     drawerNotActive: css`
       opacity: 0;
-      transform: translateY(150px);
+      transform: translateY(400px);
     `,
-    handle: css`
-      background-color: ${borderColor};
-      height: 10px;
-      width: 202px;
-      border-radius: 10px;
-      position: absolute;
-      top: -5px;
-      left: calc(50% - 101px);
-      padding: ${theme.spacing.xs};
-      box-shadow: ${handleShadow};
+    rzHandle: css`
+      background: ${handleBackground};
+      transition: 0.3s background ease-in-out;
+      position: relative;
+      width: 200px !important;
+      left: calc(50% - 100px) !important;
       cursor: grab;
-      hr {
-        border-top: 2px dotted ${theme.colors.gray70};
-        margin: 0;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: ${handleBackgroundHover};
+
+        &:after {
+          border-color: ${handleDotsHover};
+        }
+      }
+
+      &:after {
+        content: '';
+        display: block;
+        height: 2px;
+        position: relative;
+        top: 4px;
+        border-top: 4px dotted ${handleDots};
+        margin: 0 4px;
       }
     `,
   };
 });
 
-interface Props {
+export interface Props {
   width: number;
   exploreId: ExploreId;
   activeDatasourceInstance: string;
   richHistory: RichHistoryQuery[];
   firstTab: Tabs;
   deleteRichHistory: typeof deleteRichHistory;
+  onClose: () => void;
 }
 
-function RichHistoryContainer(props: Props) {
+export function RichHistoryContainer(props: Props) {
   const [visible, setVisible] = useState(false);
+  const [height, setHeight] = useState(400);
 
   /* To create sliding animation for rich history drawer */
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 100);
+    const timer = setTimeout(() => setVisible(true), 10);
     return () => clearTimeout(timer);
   }, []);
 
-  const { richHistory, width, firstTab, activeDatasourceInstance, exploreId, deleteRichHistory } = props;
+  const { richHistory, width, firstTab, activeDatasourceInstance, exploreId, deleteRichHistory, onClose } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
   const drawerWidth = `${width + 31.5}px`;
-
-  const drawerHandle = (
-    <div className={styles.handle}>
-      <hr />
-    </div>
-  );
 
   return (
     <Resizable
       className={cx(styles.container, visible ? styles.drawerActive : styles.drawerNotActive)}
       defaultSize={{ width: drawerWidth, height: '400px' }}
+      handleClasses={{ top: styles.rzHandle }}
       enable={{
         top: true,
         right: false,
@@ -109,14 +120,18 @@ function RichHistoryContainer(props: Props) {
       maxHeight="100vh"
       maxWidth={drawerWidth}
       minWidth={drawerWidth}
+      onResize={(e, dir, ref) => {
+        setHeight(Number(ref.style.height.slice(0, -2)));
+      }}
     >
-      {drawerHandle}
       <RichHistory
         richHistory={richHistory}
         firstTab={firstTab}
         activeDatasourceInstance={activeDatasourceInstance}
         exploreId={exploreId}
         deleteRichHistory={deleteRichHistory}
+        onClose={onClose}
+        height={height}
       />
     </Resizable>
   );

@@ -58,7 +58,7 @@
     <div ng-if="style.type === 'number'">
       <div class="gf-form">
         <label class="gf-form-label width-10">Unit</label>
-        <div class="gf-form-dropdown-typeahead width-16" ng-model="style.unit" dropdown-typeahead2="editor.unitFormats" dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)"></div>
+        <unit-picker onChange="editor.setUnitFormat(style)" value="style.unit" width="16"></unit-picker>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-10">Decimals</label>
