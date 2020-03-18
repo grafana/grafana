@@ -10,7 +10,7 @@ import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
 
 import { changeDatasource, updateRichHistory, setQueries } from '../state/actions';
-interface Props {
+export interface Props {
   query: RichHistoryQuery;
   dsImg: string;
   isRemoved: boolean;
@@ -243,12 +243,16 @@ export function RichHistoryCard(props: Props) {
         <div className={styles.queryContainer}>
           {query.queries.map((q, i) => {
             return (
-              <div key={`${q}-${i}`} className={styles.queryRow}>
+              <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
                 {q}
               </div>
             );
           })}
-          {!activeUpdateComment && query.comment && <div className={styles.comment}>{query.comment}</div>}
+          {!activeUpdateComment && query.comment && (
+            <div aria-label="Query comment" className={styles.comment}>
+              {query.comment}
+            </div>
+          )}
           {activeUpdateComment && updateComment}
         </div>
         {!activeUpdateComment && (
