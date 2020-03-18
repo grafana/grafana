@@ -30,7 +30,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 23;
+    this.dashboard.schemaVersion = 22;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -494,24 +494,6 @@ export class DashboardMigrator {
         _.each(panel.styles, style => {
           style.align = 'auto';
         });
-      });
-    }
-
-    if (oldVersion < 23) {
-      panelUpgrades.push((panel: any) => {
-        panel.fieldConfig = {
-          defaults: {},
-          overrides: [],
-        };
-        if (panel.options && panel.options.fieldOptions) {
-          panel.fieldConfig = {
-            defaults: panel.options.fieldOptions.defaults || {},
-            overrides: panel.options.fieldOptions.overrides || [],
-          };
-
-          delete panel.options.fieldOptions.defaults;
-          delete panel.options.fieldOptions.overrides;
-        }
       });
     }
 
