@@ -106,3 +106,25 @@ export const stringArrayToFilters = (filterArray: string[]) =>
   }));
 
 export const toOption = (value: string) => ({ label: value, value } as SelectableValue<string>);
+
+export const formatStackdriverError = (error: any) => {
+  let message = 'Stackdriver: ';
+  message += error.statusText ? error.statusText + ': ' : '';
+  if (error.data && error.data.error) {
+    try {
+      const res = JSON.parse(error.data.error);
+      message += res.error.code + '. ' + res.error.message;
+    } catch (err) {
+      message += error.data.error;
+    }
+  } else if (error.data && error.data.message) {
+    try {
+      message = JSON.parse(error.data.message).error.message;
+    } catch (err) {
+      error.error;
+    }
+  } else {
+    message += 'Cannot connect to Stackdriver API';
+  }
+  return message;
+};

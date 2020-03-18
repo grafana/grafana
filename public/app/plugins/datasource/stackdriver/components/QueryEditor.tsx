@@ -5,7 +5,7 @@ import { MetricQueryEditor, QueryTypeSelector, SLOQueryEditor, Help } from './';
 import { StackdriverQuery, MetricQuery, QueryType, SLOQuery } from '../types';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
-import { toOption } from '../functions';
+import { toOption, formatStackdriverError } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { ExploreQueryFieldProps } from '@grafana/data';
 
@@ -51,7 +51,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   onDataError(error: any) {
-    this.setState({ lastQueryError: this.props.datasource.formatStackdriverError(error) });
+    this.setState({ lastQueryError: formatStackdriverError(error) });
   }
 
   onQueryChange(prop: string, value: any) {
