@@ -9,6 +9,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -27,7 +28,7 @@ type SocialConnector interface {
 	Type() int
 	UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
-	IsRoleAllowed(role string) bool
+	IsRoleAllowed(role models.RoleType) bool
 	IsSignupAllowed() bool
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string

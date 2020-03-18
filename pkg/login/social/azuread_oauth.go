@@ -36,7 +36,7 @@ func (s *SocialAzureAD) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
 
-func (s *SocialAzureAD) IsRoleAllowed(role string) bool {
+func (s *SocialAzureAD) IsRoleAllowed(role models.RoleType) bool {
 	return true
 }
 

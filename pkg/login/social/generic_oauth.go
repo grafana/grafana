@@ -37,7 +37,7 @@ func (s *SocialGenericOAuth) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
 
-func (s *SocialGenericOAuth) IsRoleAllowed(role string) bool {
+func (s *SocialGenericOAuth) IsRoleAllowed(role models.RoleType) bool {
 	s.log.Debug("Checking if role is allowed", "role", role, "s.roleRequired", s.roleRequired)
 	if !s.roleRequired {
 		return true
@@ -45,9 +45,9 @@ func (s *SocialGenericOAuth) IsRoleAllowed(role string) bool {
 
 	switch role {
 	case
-		"Viewer",
-		"Editor",
-		"Admin":
+		models.ROLE_VIEWER,
+		models.ROLE_EDITOR,
+		models.ROLE_ADMIN:
 		return true
 	}
 	return false

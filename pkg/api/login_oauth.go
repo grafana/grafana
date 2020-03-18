@@ -184,7 +184,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	}
 
 	// validate that the role is allowed to login to grafana
-	if !connect.IsRoleAllowed(userInfo.Role) {
+	if !connect.IsRoleAllowed(models.RoleType(userInfo.Role)) {
 		hs.redirectWithError(ctx, login.ErrRoleNotAllowed)
 		return
 	}

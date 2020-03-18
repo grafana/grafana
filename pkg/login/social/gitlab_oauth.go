@@ -27,7 +27,7 @@ func (s *SocialGitlab) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
 
-func (s *SocialGitlab) IsRoleAllowed(role string) bool {
+func (s *SocialGitlab) IsRoleAllowed(role models.RoleType) bool {
 	return true
 }
 

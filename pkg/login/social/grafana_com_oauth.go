@@ -29,7 +29,7 @@ func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }
 
-func (s *SocialGrafanaCom) IsRoleAllowed(role string) bool {
+func (s *SocialGrafanaCom) IsRoleAllowed(role models.RoleType) bool {
 	return true
 }
 

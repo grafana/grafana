@@ -26,7 +26,7 @@ func (s *SocialGoogle) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
 
-func (s *SocialGoogle) IsRoleAllowed(role string) bool {
+func (s *SocialGoogle) IsRoleAllowed(role models.RoleType) bool {
 	return true
 }
 
