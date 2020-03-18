@@ -1,4 +1,6 @@
 import React, { PureComponent } from 'react';
+import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
 import { MetricQueryEditor, QueryTypeSelector, SLOQueryEditor, Help } from './';
 import { StackdriverQuery, MetricQuery, QueryType, SLOQuery } from '../types';
 import { defaultQuery } from './MetricQueryEditor';
@@ -9,7 +11,13 @@ import { ExploreQueryFieldProps } from '@grafana/data';
 
 export type Props = ExploreQueryFieldProps<StackdriverDatasource, StackdriverQuery>;
 
-export class QueryEditor extends PureComponent<Props> {
+interface State {
+  lastQueryError: string;
+}
+
+export class QueryEditor extends PureComponent<Props, State> {
+  state: State = { lastQueryError: '' };
+
   async componentWillMount() {
     const { datasource, query } = this.props;
 
@@ -26,6 +34,25 @@ export class QueryEditor extends PureComponent<Props> {
     if (!query.metricQuery.projectName) {
       this.props.query.metricQuery.projectName = datasource.getDefaultProject();
     }
+  }
+
+  componentDidMount() {
+    appEvents.on(CoreEvents.dsRequestError, this.onDataError.bind(this));
+    appEvents.on(CoreEvents.dsRequestResponse, this.onDataResponse.bind(this));
+  }
+
+  componentWillUnmount() {
+    appEvents.off(CoreEvents.dsRequestResponse, this.onDataResponse);
+    appEvents.on(CoreEvents.dsRequestError, this.onDataError);
+  }
+
+  onDataResponse(response: any) {
+    console.log({ response });
+    this.setState({ lastQueryError: '' });
+  }
+
+  onDataError(error: any) {
+    this.setState({ lastQueryError: this.props.datasource.formatStackdriverError(error) });
   }
 
   onQueryChange(prop: string, value: any) {
@@ -79,7 +106,7 @@ export class QueryEditor extends PureComponent<Props> {
             query={sloQuery}
           ></SLOQueryEditor>
         )}
-        <Help rawQuery={decodeURIComponent(meta.rawQuery ?? '')} lastQueryError={''} />
+        <Help rawQuery={decodeURIComponent(meta.rawQuery ?? '')} lastQueryError={this.state.lastQueryError} />
       </>
     );
   }
