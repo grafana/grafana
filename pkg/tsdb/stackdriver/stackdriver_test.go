@@ -572,6 +572,25 @@ func TestStackdriver(t *testing.T) {
 					So(res.Series[2].Name, ShouldEqual, "testvalue")
 				})
 			})
+
+			Convey("when data from query returns slo and alias by is defined", func() {
+				data, err := loadTestFile("./test-data/6-series-response-slo.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				Convey("and alias by is expanded", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &StackdriverQuery{
+						ProjectName: "test-proj",
+						Selector:    "select_slo_compliance",
+						Service:     "test-service",
+						Slo:         "test-slo",
+						AliasBy:     "{{project}} - {{service}} - {{slo}} - {{selector}}"}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(res.Series[0].Name, ShouldEqual, "test-proj - test-service - test-slo - select_slo_compliance")
+				})
+			})
 		})
 
 		Convey("when interpolating filter wildcards", func() {

@@ -182,6 +182,9 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		} else if q.QueryType == sloQueryType {
 			sq.AliasBy = q.SloQuery.AliasBy
 			sq.ProjectName = q.SloQuery.ProjectName
+			sq.Selector = q.SloQuery.SelectorName
+			sq.Service = q.SloQuery.ServiceId
+			sq.Slo = q.SloQuery.SloId
 			params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(q.SloQuery.AlignmentPeriod, query.IntervalMs, durationSeconds))
 			params.Add("filter", buildSLOFilterExpression(q.SloQuery))
 			if q.SloQuery.SelectorName == "select_slo_health" {
@@ -600,6 +603,22 @@ func formatLegendKeys(metricType string, defaultMetricName string, labels map[st
 
 		if val, exists := additionalLabels[metaPartName]; exists {
 			return []byte(val)
+		}
+
+		if metaPartName == "project" && query.ProjectName != "" {
+			return []byte(query.ProjectName)
+		}
+
+		if metaPartName == "service" && query.Service != "" {
+			return []byte(query.Service)
+		}
+
+		if metaPartName == "slo" && query.Slo != "" {
+			return []byte(query.Slo)
+		}
+
+		if metaPartName == "selector" && query.Selector != "" {
+			return []byte(query.Selector)
 		}
 
 		return in
