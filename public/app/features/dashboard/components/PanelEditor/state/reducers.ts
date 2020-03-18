@@ -1,7 +1,7 @@
 import { Unsubscribable } from 'rxjs';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PanelModel } from '../../../state/PanelModel';
-import { PanelData, LoadingState, DefaultTimeRange } from '@grafana/data';
+import { DefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { DisplayMode } from '../types';
 import store from '../../../../../core/store';
 
@@ -15,11 +15,13 @@ export const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
 };
 
 export interface PanelEditorUIState {
+  /* Visualization options pane visibility */
   isPanelOptionsVisible: boolean;
-  // annotating as number or string since size can be expressed as static value or percentage
+  /* Pixels or percentage */
   rightPaneSize: number | string;
-  // annotating as number or string since size can be expressed as static value or percentage
+  /* Pixels or percentage */
   topPaneSize: number | string;
+  /* Visualization size mode */
   mode: DisplayMode;
 }
 
@@ -36,21 +38,23 @@ export interface PanelEditorStateNew {
   ui: PanelEditorUIState;
 }
 
-export const initialState: PanelEditorStateNew = {
-  getPanel: () => new PanelModel({}),
-  getSourcePanel: () => new PanelModel({}),
-  getData: () => ({
-    state: LoadingState.NotStarted,
-    series: [],
-    timeRange: DefaultTimeRange,
-  }),
-  initDone: false,
-  shouldDiscardChanges: false,
-  isOpen: false,
-  ui: {
-    ...DEFAULT_PANEL_EDITOR_UI_STATE,
-    ...store.getObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, DEFAULT_PANEL_EDITOR_UI_STATE),
-  },
+export const initialState = (): PanelEditorStateNew => {
+  return {
+    getPanel: () => new PanelModel({}),
+    getSourcePanel: () => new PanelModel({}),
+    getData: () => ({
+      state: LoadingState.NotStarted,
+      series: [],
+      timeRange: DefaultTimeRange,
+    }),
+    initDone: false,
+    shouldDiscardChanges: false,
+    isOpen: false,
+    ui: {
+      ...DEFAULT_PANEL_EDITOR_UI_STATE,
+      ...store.getObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, DEFAULT_PANEL_EDITOR_UI_STATE),
+    },
+  };
 };
 
 interface InitEditorPayload {
@@ -61,7 +65,7 @@ interface InitEditorPayload {
 
 const pluginsSlice = createSlice({
   name: 'panelEditorNew',
-  initialState,
+  initialState: initialState(),
   reducers: {
     updateEditorInitState: (state, action: PayloadAction<InitEditorPayload>) => {
       state.getPanel = () => action.payload.panel;

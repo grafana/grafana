@@ -44,6 +44,10 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right: ExploreItemState;
+  /**
+   * History of all queries
+   */
+  richHistory: RichHistoryQuery[];
 }
 
 export interface ExploreItemState {
@@ -230,3 +234,14 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
+
+export type RichHistoryQuery = {
+  ts: number;
+  datasourceName: string;
+  datasourceId: string;
+  starred: boolean;
+  comment: string;
+  queries: string[];
+  sessionName: string;
+  timeRange?: string;
+};
