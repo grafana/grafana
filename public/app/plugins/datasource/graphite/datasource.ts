@@ -7,7 +7,6 @@ import {
   DataQueryRequest,
   toDataFrame,
   DataSourceApi,
-  QueryResultMetaNotice,
   QueryResultMetaStat,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
@@ -26,6 +25,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   graphiteVersion: any;
   supportsTags: boolean;
   isMetricTank: boolean;
+  rollupIndicatorEnabled: boolean;
   cacheTimeout: any;
   withCredentials: boolean;
   funcDefs: any = null;
@@ -42,6 +42,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
+    this.rollupIndicatorEnabled = instanceSettings.jsonData.rollupIndicatorEnabled;
     this.withCredentials = instanceSettings.withCredentials;
     this.funcDefs = null;
     this.funcDefsPromise = null;
@@ -137,13 +138,15 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           },
         };
 
-        const rollupNotice = getRollupNotice(s.meta);
-        const runtimeNotice = getRuntimeConsolidationNotice(s.meta);
+        if (this.rollupIndicatorEnabled) {
+          const rollupNotice = getRollupNotice(s.meta);
+          const runtimeNotice = getRuntimeConsolidationNotice(s.meta);
 
-        if (rollupNotice) {
-          frame.meta.notices = [rollupNotice];
-        } else if (runtimeNotice) {
-          frame.meta.notices = [runtimeNotice];
+          if (rollupNotice) {
+            frame.meta.notices = [rollupNotice];
+          } else if (runtimeNotice) {
+            frame.meta.notices = [runtimeNotice];
+          }
         }
 
         // only add the request stats to the first frame

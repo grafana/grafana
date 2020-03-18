@@ -23,7 +23,13 @@ describe('graphiteDatasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const instanceSettings = { url: '/api/datasources/proxy/1', name: 'graphiteProd', jsonData: {} };
+    const instanceSettings = {
+      url: '/api/datasources/proxy/1',
+      name: 'graphiteProd',
+      jsonData: {
+        rollupIndicatorEnabled: true,
+      },
+    };
     const templateSrv = new TemplateSrv();
     const ds = new GraphiteDatasource(instanceSettings, templateSrv);
     ctx = { templateSrv, ds };

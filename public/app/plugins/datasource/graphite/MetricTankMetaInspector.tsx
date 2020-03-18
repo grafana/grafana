@@ -4,7 +4,7 @@ import { MetadataInspectorProps } from '@grafana/data';
 import { GraphiteDatasource } from './datasource';
 import { GraphiteQuery, GraphiteOptions, MetricTankSeriesMeta } from './types';
 import { parseSchemaRetentions, getRollupNotice, getRuntimeConsolidationNotice } from './meta';
-import { stylesFactory, Tooltip, Icon } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import kbn from 'app/core/utils/kbn';
 

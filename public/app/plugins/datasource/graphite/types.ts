@@ -7,6 +7,7 @@ export interface GraphiteQuery extends DataQuery {
 export interface GraphiteOptions extends DataSourceJsonData {
   graphiteVersion: string;
   graphiteType: GraphiteType;
+  rollupIndicatorEnabled?: boolean;
 }
 
 export enum GraphiteType {
