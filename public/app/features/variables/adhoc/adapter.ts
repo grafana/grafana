@@ -8,6 +8,8 @@ import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { setFiltersFromUrl } from './actions';
 import * as urlParser from './urlParser';
 
+const noop = async () => {};
+
 export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel> => {
   return {
     description: 'Add key/value filters on the fly',
@@ -16,15 +18,13 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     reducer: adHocVariableReducer,
     picker: AdHocPicker,
     editor: AdHocVariableEditor,
-    dependsOn: () => {
-      return false;
-    },
-    setValue: async () => {},
+    dependsOn: () => false,
+    setValue: noop,
     setValueFromUrl: async (variable, urlValue) => {
       const filters = urlParser.toFilters(urlValue);
       await dispatch(setFiltersFromUrl(variable.uuid, filters));
     },
-    updateOptions: async () => {},
+    updateOptions: noop,
     getSaveModel: variable => {
       const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
       return rest;
