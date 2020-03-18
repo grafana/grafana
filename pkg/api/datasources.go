@@ -388,9 +388,9 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 
 	var jsonDetails map[string]interface{}
 	payload := map[string]interface{}{
-		"status":      resp.Status.String(),
-		"message":     resp.Message,
-		"jsonDetails": jsonDetails,
+		"status":  resp.Status.String(),
+		"message": resp.Message,
+		"details": jsonDetails,
 	}
 
 	// Unmarshal JSONDetails if it's not empty.
@@ -401,7 +401,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 			return
 		}
 
-		payload["jsonDetails"] = jsonDetails
+		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backendplugin.HealthStatusOk {
