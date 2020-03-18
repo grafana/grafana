@@ -16,8 +16,6 @@ import ldapReducers from 'app/features/admin/state/reducers';
 import templatingReducers from 'app/features/templating/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 
-const addedReducers = {};
-
 const rootReducers = {
   ...sharedReducers,
   ...alertingReducers,
@@ -35,6 +33,8 @@ const rootReducers = {
   ...templatingReducers,
   ...importDashboardReducers,
 };
+
+const addedReducers = {};
 
 export const addReducer = (newReducers: any) => {
   Object.assign(addedReducers, newReducers);
