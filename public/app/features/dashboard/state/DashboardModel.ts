@@ -278,7 +278,9 @@ export class DashboardModel {
 
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
-    dispatch(onTimeRangeUpdated(timeRange));
+    if (getConfig().featureToggles.newVariables) {
+      dispatch(onTimeRangeUpdated(timeRange));
+    }
   }
 
   startRefresh() {
