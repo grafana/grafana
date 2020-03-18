@@ -199,12 +199,6 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 
           <VariableValuesPreview variable={this.props.variable} />
 
-          {this.props.editor.infoText && (
-            <div className="alert alert-info gf-form-group" aria-label="Variable editor Form Alert">
-              {this.props.editor.infoText}
-            </div>
-          )}
-
           <div className="gf-form-button-row p-y-0">
             {!newVariable && (
               <button

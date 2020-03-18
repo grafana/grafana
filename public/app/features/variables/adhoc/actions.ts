@@ -1,6 +1,6 @@
 import { ThunkResult, StoreState } from 'app/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { changeVariableEditorExtended, changeEditorInfoText } from '../editor/reducer';
+import { changeVariableEditorExtended } from '../editor/reducer';
 import { changeVariableProp, addVariable } from '../state/sharedReducer';
 import { getVariable } from '../state/selectors';
 import { toVariablePayload, toVariableIdentifier, AddVariable, VariableIdentifier } from '../state/types';
@@ -87,13 +87,23 @@ export const changeVariableDatasource = (datasource: string): ThunkResult<void> 
 
     const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
 
-    dispatch(changeEditorInfoText(loadingText));
+    dispatch(
+      changeVariableEditorExtended({
+        propName: 'infoText',
+        propValue: loadingText,
+      })
+    );
     dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })));
 
     const ds = await getDatasourceSrv().get(datasource);
 
     if (!ds || !ds.getTagKeys) {
-      dispatch(changeEditorInfoText('This datasource does not support adhoc filters yet.'));
+      dispatch(
+        changeVariableEditorExtended({
+          propName: 'infoText',
+          propValue: 'This datasource does not support adhoc filters yet.',
+        })
+      );
     }
   };
 };

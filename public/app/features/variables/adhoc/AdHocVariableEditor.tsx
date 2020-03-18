@@ -33,29 +33,38 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
   render() {
     const { variable, editor } = this.props;
     const dataSources = editor.extended?.dataSources ?? [];
+    const infoText = editor.extended?.infoText ?? null;
 
     return (
-      <div className="gf-form-group">
-        <h5 className="section-heading">Options</h5>
-        <div className="gf-form max-width-21">
-          <span className="gf-form-label width-8">Data source</span>
-          <div className="gf-form-select-wrapper max-width-14">
-            <select
-              className="gf-form-input"
-              required
-              onChange={this.onDatasourceChanged}
-              value={variable.datasource ?? ''}
-              aria-label="Variable editor Form AdHoc DataSource select"
-            >
-              {dataSources.map(ds => (
-                <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.text}>
-                  {ds.text}
-                </option>
-              ))}
-            </select>
+      <>
+        <div className="gf-form-group">
+          <h5 className="section-heading">Options</h5>
+          <div className="gf-form max-width-21">
+            <span className="gf-form-label width-8">Data source</span>
+            <div className="gf-form-select-wrapper max-width-14">
+              <select
+                className="gf-form-input"
+                required
+                onChange={this.onDatasourceChanged}
+                value={variable.datasource ?? ''}
+                aria-label="Variable editor Form AdHoc DataSource select"
+              >
+                {dataSources.map(ds => (
+                  <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.text}>
+                    {ds.text}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
-      </div>
+
+        {infoText && (
+          <div className="alert alert-info gf-form-group" aria-label="Variable editor Form Alert">
+            {infoText}
+          </div>
+        )}
+      </>
     );
   }
 }

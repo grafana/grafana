@@ -8,6 +8,7 @@ export interface AdHocVariabelFilterUpdate {
   filter: AdHocVariableFilter;
 }
 export interface AdHocVariableEditorState {
+  infoText: string;
   dataSources: Array<{ text: string; value: string }>;
 }
 
