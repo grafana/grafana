@@ -1,13 +1,11 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Forms, HorizontalGroup } from '@grafana/ui';
-import { FormContextValues, OnSubmit } from 'react-hook-form';
+import { Forms, FormAPI, HorizontalGroup } from '@grafana/ui';
+import { OnSubmit } from 'react-hook-form';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
 import { ImportDashboardDTO } from './ImportDashboardOverview';
 
-type FormAPI<T> = Pick<FormContextValues<T>, 'register' | 'errors' | 'control' | 'getValues'>;
-
-interface Props extends FormAPI<ImportDashboardDTO> {
+interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState'> {
   uidReset: boolean;
   inputs: any[];
   uidExists: boolean;
