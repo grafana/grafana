@@ -1,5 +1,5 @@
-import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
-import { Form } from './Form';
+import { Meta, Story, Preview, Props } from "@storybook/addon-docs/blocks";
+import { Form } from "./Form";
 
 <Meta title="MDX|Form" component={Form} />
 
@@ -62,12 +62,14 @@ Register accepts an object which describes validation rules for a given input:
 />
 ```
 
+See [Validation](#validation) for examples on validation and validation rules.
+
 #### `errors`
 
 `errors` is an object that contains validation errors of the form. To show error message and invalid input indication in your form, wrap input element with `<Forms.Field ...>` component and pass `invalid` and `error` props to it:
 
 ```jsx
-<Forms.Field label="Name" invalid={!!errors.name} error='Name is required'>
+<Forms.Field label="Name" invalid={!!errors.name} error="Name is required">
   <Forms.Input name="name" ref={register({ required: true })} />
 </Forms.Field>
 ```
@@ -109,6 +111,7 @@ import { Forms } from '@grafana/ui';
 )}
 </Forms.Form>
 ```
+
 Note that when using `Forms.InputControl`, it expects the name of the prop that handles input change to be called `onChange`.
 If the property is named differently for any specific component, additional `onChangeName` prop has to be provided, specifying the name.
 Additionally, the `onChange` arguments passed as an array. Check [react-hook-form docs](https://react-hook-form.com/api/#Controller)
@@ -177,6 +180,92 @@ const defaultValues: FormDto {
   ({register}) => (
     <>
       <Forms.Input defaultValue={default.name} name="name" ref={register} />
+    </>
+  )}
+</Forms.Form>
+```
+
+### Validation
+
+Validation can be performed either synchronously or asynchronously. What's important here is that the validation function must return either a `boolean` or a `string`.
+
+#### Basic required example
+
+```jsx
+<Forms.Form ...>{
+  ({register, errors}) => (
+    <>
+      <Forms.Field invalid={!!errors.name} error={errors.name && 'Name is required'}
+      <Forms.Input
+        defaultValue={default.name}
+        name="name"
+        ref={register({ required: true })}
+      />
+    </>
+  )}
+</Forms.Form>
+```
+
+#### Required with synchronous custom validation
+
+One important thing to note is that if you want to provide different error messages for different kind of validation errors you'll need to return a `string` instead of a `boolean`.
+
+```jsx
+<Forms.Form ...>{
+  ({register, errors}) => (
+    <>
+      <Forms.Field invalid={!!errors.name} error={errors.name?.message }
+      <Forms.Input
+        defaultValue={default.name}
+        name="name"
+        ref={register({
+          required: 'Name is required',
+          validation: v => {
+            return v !== 'John' && 'Name must be John'
+          },
+        )}
+      />
+    </>
+  )}
+</Forms.Form>
+```
+
+#### Asynchronous validation
+
+For cases when you might want to validate fields asynchronously (on the backend or via some service) you can provide an asynchronous function to the field.
+
+Consider this function that simulates a call to some service. Remember, if you want to display an error message replace `return true` or `return false` with `return 'your error message'`.
+
+```jsx
+validateAsync = (newValue: string) => {
+  try {
+    await new Promise<ValidateResult>((resolve, reject) => {
+      setTimeout(() => {
+        reject('Something went wrong...');
+      }, 2000);
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+```
+
+```jsx
+<Forms.Form ...>{
+  ({register, errors}) => (
+    <>
+      <Forms.Field invalid={!!errors.name} error={errors.name?.message}
+      <Forms.Input
+        defaultValue={default.name}
+        name="name"
+        ref={register({
+          required: 'Name is required',
+          validation: async v => {
+            return  await validateAsync(v);
+          },
+        )}
+      />
     </>
   )}
 </Forms.Form>

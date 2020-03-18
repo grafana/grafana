@@ -3,8 +3,10 @@ import _ from 'lodash';
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
+  DataConfigSource,
   DataLink,
   DataQuery,
   DataQueryResponseData,
@@ -41,6 +43,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
+  replaceVariables: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -88,7 +91,7 @@ const defaults: any = {
   options: {},
 };
 
-export class PanelModel {
+export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
   id: number;
   gridPos: GridPos;
@@ -144,6 +147,7 @@ export class PanelModel {
     // this should not be removed in save model as exporter needs to templatize it
     this.datasource = null;
     this.restoreModel(model);
+    this.replaceVariables = this.replaceVariables.bind(this);
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -176,6 +180,7 @@ export class PanelModel {
 
   updateOptions(options: object) {
     this.options = options;
+    this.resendLastResult();
     this.render();
   }
 
@@ -283,6 +288,7 @@ export class PanelModel {
     }
 
     this.applyPluginOptionDefaults(plugin);
+    this.resendLastResult();
   }
 
   changePlugin(newPlugin: PanelPlugin) {
@@ -313,12 +319,15 @@ export class PanelModel {
         old = oldOptions.options;
       }
       this.options = this.options || {};
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, old));
     }
 
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
+
+    // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
+    this.replaceVariables = this.replaceVariables.bind(this);
     this.applyPluginOptionDefaults(newPlugin);
 
     if (newPlugin.onPanelMigration) {
@@ -363,10 +372,26 @@ export class PanelModel {
     return clone;
   }
 
+  getTransformations() {
+    return this.transformations;
+  }
+
+  getFieldOverrideOptions() {
+    if (!this.plugin) {
+      return undefined;
+    }
+
+    return {
+      fieldOptions: this.options.fieldOptions,
+      replaceVariables: this.replaceVariables,
+      custom: this.plugin.customFieldConfigs,
+      theme: config.theme,
+    };
+  }
+
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner();
-      this.setTransformations(this.transformations);
+      this.queryRunner = new PanelQueryRunner(this);
     }
     return this.queryRunner;
   }
@@ -390,7 +415,22 @@ export class PanelModel {
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
-    this.getQueryRunner().setTransformations(transformations);
+  }
+
+  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+    let vars = this.scopedVars;
+    if (extraVars) {
+      vars = vars ? { ...vars, ...extraVars } : extraVars;
+    }
+    return templateSrv.replace(value, vars, format);
+  }
+
+  resendLastResult() {
+    if (!this.plugin) {
+      return;
+    }
+
+    this.getQueryRunner().resendLastResult();
   }
 }
 

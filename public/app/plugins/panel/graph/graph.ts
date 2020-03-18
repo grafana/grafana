@@ -102,7 +102,7 @@ class GraphElement {
 
     this.annotations = this.ctrl.annotations || [];
     this.buildFlotPairs(this.data);
-    const graphHeight = this.elem.height();
+    const graphHeight = this.ctrl.height;
     updateLegendValues(this.data, this.panel, graphHeight);
 
     if (!this.panel.legend.show) {
