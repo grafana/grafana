@@ -48,7 +48,7 @@ export class DashboardSettings extends PureComponent<Props> {
 
     return (
       <div className="dashboard-settings">
-        <div className="navbar">
+        <div className="navbar navbar--shadow">
           <div className="navbar-edit">
             <BackButton onClick={this.onClose} aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow} />
           </div>

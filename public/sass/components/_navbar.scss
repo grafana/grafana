@@ -14,6 +14,10 @@
     padding-left: $dashboard-padding;
     margin-left: 0;
   }
+
+  &--shadow {
+    box-shadow: $side-menu-shadow;
+  }
 }
 
 @mixin navbar-alt-look() {
