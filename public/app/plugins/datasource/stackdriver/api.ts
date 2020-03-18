@@ -15,14 +15,15 @@ export default class Api {
 
   async resourceCache(
     path: string,
-    mapFunc: (res: any) => SelectableValue<string> | MetricDescriptor
+    mapFunc: (res: any) => SelectableValue<string> | MetricDescriptor,
+    baseUrl = this.baseUrl
   ): Promise<Array<SelectableValue<string>> | MetricDescriptor[]> {
     try {
       if (this.cache[path]) {
         return this.cache[path];
       }
 
-      const { data } = await this.get(path);
+      const { data } = await this.get(path, 1, baseUrl);
       this.cache[path] = (data[path.match(/([^\/]*)\/*$/)[1]] || []).map(mapFunc);
 
       return this.cache[path];

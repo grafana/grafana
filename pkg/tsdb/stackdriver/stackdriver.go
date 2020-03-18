@@ -82,8 +82,6 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
-	case "getProjectsListQuery":
-		result, err = e.getProjectList(ctx, tsdbQuery)
 	case "getGCEDefaultProject":
 		result, err = e.getGCEDefaultProject(ctx, tsdbQuery)
 	case "timeSeriesQuery":
@@ -389,28 +387,6 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 	return data, nil
 }
 
-func (e *StackdriverExecutor) unmarshalResourceResponse(res *http.Response) (ResourceManagerProjectList, error) {
-	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
-	if err != nil {
-		return ResourceManagerProjectList{}, err
-	}
-
-	if res.StatusCode/100 != 2 {
-		slog.Error("Request failed", "status", res.Status, "body", string(body))
-		return ResourceManagerProjectList{}, fmt.Errorf(string(body))
-	}
-
-	var data ResourceManagerProjectList
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		slog.Error("Failed to unmarshal Resource manager response", "error", err, "status", res.Status, "body", string(body))
-		return ResourceManagerProjectList{}, err
-	}
-
-	return data, nil
-}
-
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
 	labels := make(map[string]map[string]bool)
 
@@ -694,39 +670,6 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	return req, nil
 }
 
-func (e *StackdriverExecutor) createRequestResourceManager(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
-	u, _ := url.Parse(dsInfo.Url)
-	u.Path = path.Join(u.Path, "render")
-
-	req, err := http.NewRequest(http.MethodGet, "https://cloudresourcemanager.googleapis.com/", nil)
-	if err != nil {
-		slog.Error("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-
-	// find plugin
-	plugin, ok := plugins.DataSources[dsInfo.Type]
-	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Stackdriver")
-	}
-
-	var resourceManagerRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == "cloudresourcemanager" {
-			resourceManagerRoute = route
-			break
-		}
-	}
-	proxyPass := "v1/projects"
-
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, resourceManagerRoute, dsInfo)
-
-	return req, nil
-}
-
 func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, error) {
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
@@ -745,56 +688,4 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 		return defaultCredentials.ProjectID, nil
 	}
 	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
-}
-
-func (e *StackdriverExecutor) getProjectList(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: tsdbQuery.Queries[0].RefId}
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
-	}
-	projectsList, err := e.getProjects(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	queryResult.Meta.Set("projectsList", projectsList)
-	result.Results[tsdbQuery.Queries[0].RefId] = queryResult
-	return result, nil
-}
-
-func (e *StackdriverExecutor) getProjects(ctx context.Context) ([]ResourceManagerProjectSelect, error) {
-	var projects []ResourceManagerProjectSelect
-
-	req, err := e.createRequestResourceManager(ctx, e.dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	span, ctx := opentracing.StartSpanFromContext(ctx, "resource manager query")
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
-
-	defer span.Finish()
-
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return nil, err
-	}
-
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := e.unmarshalResourceResponse(res)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, project := range data.Projects {
-		projects = append(projects, ResourceManagerProjectSelect{Label: project.ProjectID, Value: project.ProjectID})
-	}
-	return projects, nil
 }

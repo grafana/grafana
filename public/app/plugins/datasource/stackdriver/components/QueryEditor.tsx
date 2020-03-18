@@ -42,11 +42,11 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    appEvents.off(CoreEvents.dsRequestResponse, this.onDataResponse);
-    appEvents.on(CoreEvents.dsRequestError, this.onDataError);
+    appEvents.off(CoreEvents.dsRequestResponse, this.onDataResponse.bind(this));
+    appEvents.on(CoreEvents.dsRequestError, this.onDataError.bind(this));
   }
 
-  onDataResponse(response: any) {
+  onDataResponse() {
     this.setState({ lastQueryError: '' });
   }
 

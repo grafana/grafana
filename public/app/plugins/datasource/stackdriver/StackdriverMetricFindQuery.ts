@@ -2,6 +2,7 @@ import isString from 'lodash/isString';
 import { alignmentPeriods, ValueTypes, MetricKind, selectors } from './constants';
 import StackdriverDatasource from './datasource';
 import { MetricFindQueryTypes, VariableQueryData } from './types';
+import { SelectableValue } from '@grafana/data';
 import {
   getMetricTypesByService,
   getAlignmentOptionsByMetric,
@@ -55,7 +56,7 @@ export default class StackdriverMetricFindQuery {
 
   async handleProjectsQuery() {
     const projects = await this.datasource.getProjects();
-    return projects.map((s: { label: string; value: string }) => ({
+    return (projects as SelectableValue<string>).map((s: { label: string; value: string }) => ({
       text: s.label,
       value: s.value,
       expandable: true,

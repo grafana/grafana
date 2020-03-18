@@ -8,14 +8,11 @@ import {
   ScopedVars,
   SelectableValue,
 } from '@grafana/data';
-import { CoreEvents } from 'app/types';
-import appEvents from 'app/core/app_events';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { StackdriverQuery, MetricDescriptor, StackdriverOptions, Filter, VariableQueryData, QueryType } from './types';
 import { stackdriverUnitMappings } from './constants';
-import { formatStackdriverError } from './functions';
 import API from './api';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
 
@@ -208,24 +205,6 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       });
   }
 
-  async getProjects() {
-    try {
-      const { data } = await this.api.post({
-        queries: [
-          {
-            refId: 'getProjectsListQuery',
-            type: 'getProjectsListQuery',
-            datasourceId: this.id,
-          },
-        ],
-      });
-      return data.results.getProjectsListQuery.meta.projectsList;
-    } catch (error) {
-      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: formatStackdriverError(error) } } });
-      return [];
-    }
-  }
-
   getDefaultProject(): string {
     const { defaultProject, authenticationType, gceDefaultProject } = this.instanceSettings.jsonData;
     if (authenticationType === 'gce') {
@@ -272,6 +251,17 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       value: name.match(/([^\/]*)\/*$/)[1],
       label: name.match(/([^\/]*)\/*$/)[1],
     }));
+  }
+
+  async getProjects() {
+    return this.api.resourceCache(
+      `projects`,
+      ({ projectId, name }: { projectId: string; name: string }) => ({
+        value: projectId,
+        label: name,
+      }),
+      `${this.instanceSettings.url!}/cloudresourcemanager/v1/`
+    );
   }
 
   migrateQuery(query: StackdriverQuery): StackdriverQuery {
