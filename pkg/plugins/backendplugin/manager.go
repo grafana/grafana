@@ -10,10 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/collector"
 	"github.com/grafana/grafana/pkg/registry"
 	plugin "github.com/hashicorp/go-plugin"
 	"golang.org/x/xerrors"
@@ -42,6 +39,8 @@ type Manager interface {
 	Register(descriptor PluginDescriptor) error
 	// StartPlugin starts a non-managed backend plugin
 	StartPlugin(ctx context.Context, pluginID string) error
+	// CollectMetrics collects metrics from a registered backend plugin.
+	CollectMetrics(ctx context.Context, pluginID string) (*CollectMetricsResult, error)
 	// CheckHealth checks the health of a registered backend plugin.
 	CheckHealth(ctx context.Context, pluginConfig *PluginConfig) (*CheckHealthResult, error)
 	// CallResource calls a plugin resource.
@@ -49,17 +48,14 @@ type Manager interface {
 }
 
 type manager struct {
-	pluginsMu       sync.RWMutex
-	plugins         map[string]*BackendPlugin
-	pluginCollector collector.PluginCollector
-	logger          log.Logger
+	pluginsMu sync.RWMutex
+	plugins   map[string]*BackendPlugin
+	logger    log.Logger
 }
 
 func (m *manager) Init() error {
 	m.plugins = make(map[string]*BackendPlugin)
 	m.logger = log.New("plugins.backend")
-	m.pluginCollector = collector.NewPluginCollector()
-	prometheus.MustRegister(m.pluginCollector)
 
 	return nil
 }
@@ -111,11 +107,6 @@ func (m *manager) start(ctx context.Context) {
 			p.logger.Error("Failed to start plugin", "error", err)
 			continue
 		}
-
-		if p.supportsDiagnostics() {
-			p.logger.Debug("Registering metrics collector")
-			m.pluginCollector.Register(p.id, p)
-		}
 	}
 }
 
@@ -148,6 +139,28 @@ func (m *manager) stop() {
 			p.logger.Debug("Plugin stopped")
 		}(p)
 	}
+}
+
+// CollectMetrics collects metrics from a registered backend plugin.
+func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*CollectMetricsResult, error) {
+	m.pluginsMu.RLock()
+	p, registered := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
+	if !registered {
+		return nil, ErrPluginNotRegistered
+	}
+
+	if !p.supportsDiagnostics() {
+		return nil, ErrDiagnosticsNotSupported
+	}
+
+	res, err := p.CollectMetrics(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return collectMetricsResultFromProto(res), nil
 }
 
 // CheckHealth checks the health of a registered backend plugin.

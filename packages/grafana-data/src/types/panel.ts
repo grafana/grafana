@@ -16,14 +16,31 @@ export interface PanelPluginMeta extends PluginMeta {
 }
 
 export interface PanelData {
+  /**
+   * State of the data (loading, done, error, streaming)
+   */
   state: LoadingState;
+
   /**
    * Contains data frames with field overrides applied
    */
   series: DataFrame[];
+
+  /**
+   * Request contains the queries and properties sent to the datasource
+   */
   request?: DataQueryRequest;
+
+  /**
+   * Timing measurements
+   */
   timings?: DataQueryTimings;
+
+  /**
+   * Any query errors
+   */
   error?: DataQueryError;
+
   /**
    *  Contains the range from the request or a shifted time range if a request uses relative time
    */

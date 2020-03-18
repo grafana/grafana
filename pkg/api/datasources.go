@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -385,10 +386,22 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		return
 	}
 
+	var jsonDetails map[string]interface{}
 	payload := map[string]interface{}{
-		"status":      resp.Status.String(),
-		"message":     resp.Message,
-		"jsonDetails": resp.JSONDetails,
+		"status":  resp.Status.String(),
+		"message": resp.Message,
+		"details": jsonDetails,
+	}
+
+	// Unmarshal JSONDetails if it's not empty.
+	if len(resp.JSONDetails) > 0 {
+		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
+		if err != nil {
+			c.JsonApiErr(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return
+		}
+
+		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backendplugin.HealthStatusOk {

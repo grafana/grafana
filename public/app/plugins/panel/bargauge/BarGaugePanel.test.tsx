@@ -9,6 +9,7 @@ import {
   LoadingState,
   dateTime,
   FieldConfigSource,
+  toDataFrame,
 } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
 
@@ -26,6 +27,27 @@ describe('BarGaugePanel', () => {
     it('should render with title "No data"', () => {
       const displayValue = wrapper.find('div.bar-gauge__value').text();
       expect(displayValue).toBe('No data');
+    });
+  });
+
+  describe('when there is data', () => {
+    const wrapper = createBarGaugePanelWithData({
+      series: [
+        toDataFrame({
+          target: 'test',
+          datapoints: [
+            [100, 1000],
+            [100, 200],
+          ],
+        }),
+      ],
+      timeRange: createTimeRange(),
+      state: LoadingState.Done,
+    });
+
+    it('should render with title "No data"', () => {
+      const displayValue = wrapper.find('div.bar-gauge__value').text();
+      expect(displayValue).toBe('100');
     });
   });
 });
