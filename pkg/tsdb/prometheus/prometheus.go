@@ -11,6 +11,7 @@ import (
 
 	"net/http"
 
+	gdata "github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -118,7 +119,7 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 			return nil, err
 		}
 
-		queryResult, err := parseResponse(value, query)
+		queryResult, err := parseResponseToDataFrame(value, query)
 		if err != nil {
 			return nil, err
 		}
@@ -213,6 +214,44 @@ func parseResponse(value model.Value, query *PrometheusQuery) (*tsdb.QueryResult
 		}
 
 		queryRes.Series = append(queryRes.Series, &series)
+	}
+
+	return queryRes, nil
+}
+
+func parseResponseToDataFrame(value model.Value, query *PrometheusQuery) (*tsdb.QueryResult, error) {
+	queryRes := &tsdb.QueryResult{}
+
+	data, ok := value.(model.Matrix)
+	if !ok {
+		return queryRes, fmt.Errorf("Unsupported result format: %s", value.Type().String())
+	}
+
+	for _, v := range data {
+		labels := make(gdata.Labels, len(v.Metric))
+		for k, v := range v.Metric {
+			labels[string(k)] = string(v)
+		}
+
+		frame := gdata.NewFrame(formatLegend(v.Metric, query),
+			gdata.NewField("time", nil, make([]time.Time, len(v.Values))),
+			gdata.NewField(v.Metric.String(), labels, make([]float64, len(v.Values))))
+
+		addPoint := func(idx int, t time.Time, f float64) {
+			frame.Set(0, idx, t)
+			frame.Set(1, idx, f)
+		}
+
+		for i, sample := range v.Values {
+			addPoint(i, sample.Timestamp.Time(), float64(sample.Value))
+		}
+
+		byteFrame, err := gdata.MarshalArrow(frame)
+		if err != nil {
+			return nil, err
+		}
+
+		queryRes.Dataframes = append(queryRes.Dataframes, byteFrame)
 	}
 
 	return queryRes, nil
