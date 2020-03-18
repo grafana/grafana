@@ -265,7 +265,9 @@ export class DashboardPage extends PureComponent<Props, State> {
       urlEditPanel,
       inspectTab,
       isNewEditorOpen,
+      updateLocation,
     } = this.props;
+
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
@@ -311,8 +313,6 @@ export class DashboardPage extends PureComponent<Props, State> {
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
-            {editview && <DashboardSettings dashboard={dashboard} />}
-
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
@@ -333,6 +333,11 @@ export class DashboardPage extends PureComponent<Props, State> {
         {editPanel && (
           <Portal>
             <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />
+          </Portal>
+        )}
+        {editview && (
+          <Portal>
+            <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />
           </Portal>
         )}
       </div>

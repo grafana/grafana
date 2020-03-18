@@ -22,6 +22,17 @@ $green-base: ${theme.colors.greenBase};
 $green-shade: ${theme.colors.greenShade};
 $orange-dark: ${theme.colors.orangeDark};
 
+$gray98: ${theme.colors.gray98};
+$gray95: ${theme.colors.gray95};
+$gray85: ${theme.colors.gray85};
+$gray70: ${theme.colors.gray70};
+$gray60: ${theme.colors.gray60};
+$gray33: ${theme.colors.gray33};
+$gray25: ${theme.colors.gray25};
+$gray15: ${theme.colors.gray15};
+$gray10: ${theme.colors.gray10};
+$gray05: ${theme.colors.gray05};
+
 // Grays
 // -------------------------
 $black: ${theme.colors.black};

@@ -86,6 +86,7 @@
 .navbar-page-btn__folder {
   color: $text-color-weak;
   display: none;
+  padding-right: 8px;
 
   @include media-breakpoint-up(lg) {
     display: inline-block;
