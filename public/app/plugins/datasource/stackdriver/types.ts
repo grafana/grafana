@@ -21,6 +21,9 @@ export enum MetricFindQueryTypes {
   Aggregations = 'aggregations',
   Aligners = 'aligners',
   AlignmentPeriods = 'alignmentPeriods',
+  Selectors = 'selectors',
+  SLOServices = 'sloServices',
+  SLO = 'slo',
 }
 
 export interface VariableQueryData {
@@ -28,11 +31,13 @@ export interface VariableQueryData {
   metricDescriptors: MetricDescriptor[];
   selectedService: string;
   selectedMetricType: string;
+  selectedSLOService: string;
   labels: string[];
   labelKey: string;
   metricTypes: Array<{ value: string; name: string }>;
   services: Array<{ value: string; name: string }>;
   projects: Array<{ value: string; name: string }>;
+  sloServices: Array<{ value: string; name: string }>;
   projectName: string;
 }
 

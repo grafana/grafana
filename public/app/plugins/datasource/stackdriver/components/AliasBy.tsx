@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useState } from 'react';
 import { debounce } from 'lodash';
-import { Input } from '@grafana/ui';
 import { QueryInlineField } from '.';
 
 export interface Props {
@@ -20,7 +19,7 @@ export const AliasBy: FunctionComponent<Props> = ({ value = '', onChange }) => {
 
   return (
     <QueryInlineField label="Alias By">
-      <Input type="text" className="gf-form-input width-16" value={alias} onChange={onChange} />
+      <input type="text" className="gf-form-input width-26" value={alias} onChange={onChange} />
     </QueryInlineField>
   );
 };

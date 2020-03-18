@@ -1,5 +1,5 @@
 import isString from 'lodash/isString';
-import { alignmentPeriods, ValueTypes, MetricKind } from './constants';
+import { alignmentPeriods, ValueTypes, MetricKind, selectors } from './constants';
 import StackdriverDatasource from './datasource';
 import { MetricFindQueryTypes, VariableQueryData } from './types';
 import {
@@ -38,6 +38,12 @@ export default class StackdriverMetricFindQuery {
           return this.handleAlignmentPeriodQuery();
         case MetricFindQueryTypes.Aggregations:
           return this.handleAggregationQuery(query);
+        case MetricFindQueryTypes.SLOServices:
+          return this.handleSLOServicesQuery(query);
+        case MetricFindQueryTypes.SLO:
+          return this.handleSLOQuery(query);
+        case MetricFindQueryTypes.Selectors:
+          return this.handleSelectorQuery();
         default:
           return [];
       }
@@ -128,6 +134,20 @@ export default class StackdriverMetricFindQuery {
       (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
     return getAggregationOptionsByMetric(valueType as ValueTypes, metricKind as MetricKind).map(this.toFindQueryResult);
+  }
+
+  async handleSLOServicesQuery({ projectName }: VariableQueryData) {
+    const services = await this.datasource.getSLOServices(projectName);
+    return services.map(this.toFindQueryResult);
+  }
+
+  async handleSLOQuery({ selectedSLOService, projectName }: VariableQueryData) {
+    const slos = await this.datasource.getServiceLevelObjectives(projectName, selectedSLOService);
+    return slos.map(this.toFindQueryResult);
+  }
+
+  async handleSelectorQuery() {
+    return selectors.map(this.toFindQueryResult);
   }
 
   handleAlignmentPeriodQuery() {

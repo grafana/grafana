@@ -14,6 +14,9 @@ type (
 		GroupBys    []string
 		AliasBy     string
 		ProjectName string
+		Selector    string
+		Service     string
+		Slo         string
 	}
 
 	MetricQuery struct {

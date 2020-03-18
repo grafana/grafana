@@ -404,7 +404,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       const metricsApiPath = `v3/projects/${interpolatedProject}/metricDescriptors`;
       const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
 
-      this.metricTypesCache[interpolatedProject] = data.metricDescriptors.map((m: any) => {
+      this.metricTypesCache[interpolatedProject] = (data.metricDescriptors || []).map((m: any) => {
         const [service] = m.type.split('/');
         const [serviceShortName] = service.split('.');
         m.service = service;
@@ -433,8 +433,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       }
 
       const { data } = await this.doRequest(`${this.baseUrl}v3/projects/${interpolatedProject}/services`);
-      console.log({ data });
-      this.sloServicesCache[interpolatedProject] = data.services.map(
+      this.sloServicesCache[interpolatedProject] = (data.services || []).map(
         ({ name, displayName }: { name: string; displayName: string }) => ({
           value: name.match(/([^\/]*)\/*$/)[1],
           label: name.match(/([^\/]*)\/*$/)[1],
@@ -462,7 +461,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         `${this.baseUrl}v3/projects/${interpolatedProject}/services/${interpolatedServiceId}/serviceLevelObjectives`
       );
       console.log({ data });
-      this.sloCache[cacheKey] = data.serviceLevelObjectives.map(
+      this.sloCache[cacheKey] = (data.serviceLevelObjectives || []).map(
         ({ name, displayName }: { name: string; displayName: string }) => ({
           value: name.match(/([^\/]*)\/*$/)[1],
           label: name.match(/([^\/]*)\/*$/)[1],
