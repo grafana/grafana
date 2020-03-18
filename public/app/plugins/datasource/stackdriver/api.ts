@@ -6,46 +6,49 @@ import { getBackendSrv } from '@grafana/runtime';
 import { formatStackdriverError } from './functions';
 import { MetricDescriptor } from './types';
 
+interface Options {
+  responseMap?: (res: any) => SelectableValue<string> | MetricDescriptor;
+  baseUrl?: string;
+  useCache?: boolean;
+}
+
 export default class Api {
   cache: { [key: string]: Array<SelectableValue<string>> };
+  defaultOptions: Options;
 
   constructor(private baseUrl: string) {
     this.cache = {};
+    this.defaultOptions = {
+      useCache: true,
+      responseMap: (res: any) => res,
+      baseUrl: this.baseUrl,
+    };
   }
 
-  async resourceCache(
-    path: string,
-    mapFunc: (res: any) => SelectableValue<string> | MetricDescriptor,
-    baseUrl = this.baseUrl
-  ): Promise<Array<SelectableValue<string>> | MetricDescriptor[]> {
+  async get(path: string, options: Options): Promise<Array<SelectableValue<string>> | MetricDescriptor[]> {
     try {
-      if (this.cache[path]) {
+      const { useCache, responseMap, baseUrl } = { ...this.defaultOptions, ...options };
+
+      if (useCache && this.cache[path]) {
         return this.cache[path];
       }
 
-      const { data } = await this.get(path, 1, baseUrl);
-      this.cache[path] = (data[path.match(/([^\/]*)\/*$/)[1]] || []).map(mapFunc);
+      const { data } = await getBackendSrv().datasourceRequest({
+        url: baseUrl + path,
+        method: 'GET',
+      });
 
-      return this.cache[path];
+      const res = (data[path.match(/([^\/]*)\/*$/)[1]] || []).map(responseMap);
+
+      if (useCache) {
+        this.cache[path] = res;
+      }
+
+      return res;
     } catch (error) {
       appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: formatStackdriverError(error) } } });
       return [];
     }
-  }
-
-  async get(path: string, maxRetries = 1, baseUrl = this.baseUrl): Promise<any> {
-    return getBackendSrv()
-      .datasourceRequest({
-        url: baseUrl + path,
-        method: 'GET',
-      })
-      .catch((error: any) => {
-        if (maxRetries > 0) {
-          return this.get(path, maxRetries - 1);
-        }
-
-        throw error;
-      });
   }
 
   async post(data: { [key: string]: any }) {
@@ -53,6 +56,13 @@ export default class Api {
       url: '/api/tsdb/query',
       method: 'POST',
       data,
+    });
+  }
+
+  async test(projectName: string) {
+    return getBackendSrv().datasourceRequest({
+      url: `${this.baseUrl}${projectName}/metricDescriptors`,
+      method: 'GET',
     });
   }
 }
