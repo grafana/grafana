@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 // @ts-ignore
 import tinycolor from 'tinycolor2';
-import { SearchQuery } from './search';
+import { SearchQuery } from '../../../core/components/search/search';
 import { css, cx } from 'emotion';
 import { ThemeContext, selectThemeVariant } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
