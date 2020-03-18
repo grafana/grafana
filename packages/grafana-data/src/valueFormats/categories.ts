@@ -257,7 +257,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'length',
+    name: 'Length',
     formats: [
       { name: 'millimeter (mm)', id: 'lengthmm', fn: decimalSIPrefix('m', -1) },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
