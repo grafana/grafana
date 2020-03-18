@@ -11,6 +11,7 @@ import {
   TextBoxVariableModel,
   VariableModel,
   VariableOption,
+  VariableType,
 } from '../templating/variable';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
@@ -24,7 +25,7 @@ import { createDataSourceVariableAdapter } from './datasource/adapter';
 import { createIntervalVariableAdapter } from './interval/adapter';
 
 export interface VariableAdapter<Model extends VariableModel> {
-  id: string;
+  id: VariableType;
   description: string;
   name: string;
   initialState: Model;

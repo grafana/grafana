@@ -7,7 +7,7 @@ import { variablesReducer, VariablesState } from './variablesReducer';
 import { toVariablePayload, VariablePayload } from './types';
 
 const variableAdapter: VariableAdapter<QueryVariableModel> = {
-  id: 'mock',
+  id: ('mock' as unknown) as VariableType,
   name: 'Mock label',
   description: 'Mock description',
   dependsOn: jest.fn(),
