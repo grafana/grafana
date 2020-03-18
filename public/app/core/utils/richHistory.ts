@@ -2,10 +2,11 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, ExploreMode } from '@grafana/data';
+import { DataQuery, ExploreMode, AppEvents } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import { serializeStateToUrlParam, SortOrder } from './explore';
+import appEvents from 'app/core/app_events';
 
 // Types
 import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
@@ -59,13 +60,12 @@ export function addToRichHistory(
       ...queriesToKeep,
     ];
 
-    /* Combine all queries of a datasource type into one rich history */
-    const isSaved = store.setObject(RICH_HISTORY_KEY, newHistory);
-
     /* If newHistory is succesfully saved, return it. Otherwise return not updated richHistory.  */
-    if (isSaved) {
+    try {
+      store.setObject(RICH_HISTORY_KEY, newHistory);
       return newHistory;
-    } else {
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, [error]);
       return richHistory;
     }
   }
@@ -92,8 +92,13 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
     return query;
   });
 
-  store.setObject(RICH_HISTORY_KEY, updatedQueries);
-  return updatedQueries;
+  try {
+    store.setObject(RICH_HISTORY_KEY, updatedQueries);
+    return updatedQueries;
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, [error]);
+    return richHistory;
+  }
 }
 
 export function updateCommentInRichHistory(
@@ -109,8 +114,13 @@ export function updateCommentInRichHistory(
     return query;
   });
 
-  store.setObject(RICH_HISTORY_KEY, updatedQueries);
-  return updatedQueries;
+  try {
+    store.setObject(RICH_HISTORY_KEY, updatedQueries);
+    return updatedQueries;
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, [error]);
+    return richHistory;
+  }
 }
 
 export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => {

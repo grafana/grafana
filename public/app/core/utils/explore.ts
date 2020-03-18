@@ -23,6 +23,7 @@ import {
   toUtc,
   ExploreMode,
 } from '@grafana/data';
+
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
@@ -355,7 +356,11 @@ export function updateHistory<T extends DataQuery = any>(
 
   // Combine all queries of a datasource type into one history
   const historyKey = `grafana.explore.history.${datasourceId}`;
-  store.setObject(historyKey, history);
+  try {
+    store.setObject(historyKey, history);
+  } catch (error) {
+    console.error(error);
+  }
   return history;
 }
 
