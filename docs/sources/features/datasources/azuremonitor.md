@@ -288,14 +288,16 @@ types of template variables.
 
 Example variable queries:
 
-- Returns a list of Azure subscriptions: `subscriptions()`
-- Returns a list of workspaces for default subscription: `workspaces()`
-- Returns a list of workspaces for a specified subscription: `workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")`
-- With template variable for the subscription parameter: `workspaces("$subscription")`
-- Returns a list of Virtual Machines: `workspace("myWorkspace").Heartbeat | distinct Computer`
-- Returns alist of Virtual Machines with template variable: `workspace("$workspace").Heartbeat | distinct Computer`
-- Returns a list of objects from the Perf table: `workspace("$workspace").Perf | distinct ObjectName`
-- Returns a list of metric names from the Perf table: `workspace("$workspace").Perf | where ObjectName == "$object" | distinct CounterName`
+| Query                                                                                   | Description                                               |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| _subscriptions()_                                                                       | Returns a list of Azure subscriptions                     |
+| _workspaces()_                                                                          | Returns a list of workspaces for default subscription     |
+| _workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")_                                    | Returns a list of workspaces for a specified subscription |
+| _workspaces("\$subscription")_                                                          | With template variable for the subscription parameter     |
+| _workspace("myWorkspace").Heartbeat \| distinct Computer_                               | Returns a list of Virtual Machines                        |
+| _workspace("\$workspace").Heartbeat \| distinct Computer_                               | Returns a list of Virtual Machines with template variable |
+| _workspace("\$workspace").Perf \| distinct ObjectName_                                  | Returns a list of objects from the Perf table             |
+| _workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName_ | Returns a list of metric names from the Perf table        |
 
 Example of a time series query using variables:
 
