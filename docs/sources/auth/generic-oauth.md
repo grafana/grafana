@@ -190,6 +190,47 @@ allowed_organizations =
 
 > Note: It's important to ensure that the [root_url]({{< relref "../installation/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
 
+## Set up OAuth2 with Active Directory Federation Services
+
+1.  Log into your ADFS management console and browse to "Application Groups".
+
+2.  Click "Add Application Group...", enter a name and select the "Server application accessing a web API" template, click "Next".
+
+3.  Make a note of the auto-generated Client Identifier and enter the following, then click "Add":
+
+    - Name: Grafana Instance
+    - Redirect URI: `https://<grafana domain>/login/generic_oauth`
+
+4.  Click "Next" and tick the "Generate a shared secret" tickbox. Make a note of the secret and click "Next".
+
+5.  Enter the following on the "Configure Web API" page
+
+    - Name: Grafana API
+    - Identifier: <Client Identifier from step 3>
+    
+6. Click "Next" and choose your Access Control Policy, click "Next".
+
+7.  If you wish to modify the claims included in the id_token (to map roles for example), select 'openid' AND 'allatclaims' under "Permitted scopes".
+
+8.  Click "Next" and complete the wizard.
+
+9.  Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = ADFS
+    enabled = true
+    allow_sign_up = true
+    client_id = <client identifier from step 3>
+    client_secret = <secret from step 4>
+    scopes = openid email name
+    auth_url = https://<your public ADFS FQDN>/oauth2/authorize
+    token_url = https://<your public ADFS FQDN>/oauth2/token
+    api_url =
+    team_ids =
+    allowed_organizations =
+    ```
+
 ## Set up OAuth2 with Centrify
 
 1.  Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
