@@ -3,6 +3,12 @@ import gfunc from '../gfunc';
 import { GraphiteQueryCtrl } from '../query_ctrl';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
+jest.mock('app/core/utils/promiseToDigest', () => ({
+  promiseToDigest: (scope: any) => {
+    return p => p;
+  },
+}));
+
 describe('GraphiteQueryCtrl', () => {
   const ctx = {
     datasource: {
