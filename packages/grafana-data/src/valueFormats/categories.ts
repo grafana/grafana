@@ -303,7 +303,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Revolutions per minute (rpm)', id: 'rotrpm', fn: toFixedUnit('rpm') },
       { name: 'Hertz (Hz)', id: 'rothz', fn: decimalSIPrefix('Hz') },
       { name: 'Radians per second (rad/s)', id: 'rotrads', fn: toFixedUnit('rad/s') },
-      { name: 'Degrees per second (°/s)', id: 'rotrads', fn: toFixedUnit('°/s') },
+      { name: 'Degrees per second (°/s)', id: 'rotdegs', fn: toFixedUnit('°/s') },
     ],
   },
   {
