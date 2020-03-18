@@ -67,7 +67,6 @@ class DashboardImportUnConnected extends PureComponent<Props, State> {
         try {
           dashboard = JSON.parse(e.target.result);
         } catch (error) {
-          console.log(error);
           appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
           return;
         }

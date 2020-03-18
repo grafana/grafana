@@ -2,9 +2,9 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { clearDashboard, setInputs, setGcomDashboard, setJsonDashboard, setGcomError } from './reducers';
+import locationUtil from 'app/core/utils/location_util';
+import { updateLocation } from 'app/core/actions';
 import { ThunkResult } from 'app/types';
-import { updateLocation } from '../../../core/actions';
-import locationUtil from '../../../core/utils/location_util';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async dispatch => {
