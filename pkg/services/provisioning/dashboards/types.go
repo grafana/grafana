@@ -73,13 +73,13 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 	return dash, nil
 }
 
-func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig, error) {
+func mapV0ToDashboardsAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig, error) {
 	var r []*DashboardsAsConfig
 	seen := make(map[string]bool)
 
 	for _, v := range v0 {
 		if _, ok := seen[v.Name]; ok {
-			return nil, fmt.Errorf("name %s is not unique", v.Name)
+			return nil, fmt.Errorf("dashboard name %q is not unique", v.Name)
 		}
 		seen[v.Name] = true
 
@@ -100,13 +100,13 @@ func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) ([]*DashboardsAsConfig
 	return r, nil
 }
 
-func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() ([]*DashboardsAsConfig, error) {
+func (dc *DashboardAsConfigV1) mapToDashboardsAsConfig() ([]*DashboardsAsConfig, error) {
 	var r []*DashboardsAsConfig
 	seen := make(map[string]bool)
 
 	for _, v := range dc.Providers {
 		if _, ok := seen[v.Name.Value()]; ok {
-			return nil, fmt.Errorf("name %s is not unique", v.Name.Value())
+			return nil, fmt.Errorf("dashboards name %q is not unique", v.Name.Value())
 		}
 		seen[v.Name.Value()] = true
 
