@@ -190,7 +190,7 @@ export function RichHistoryQueriesTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div className={styles.multiselect} aria-label="Filter datasources">
+            <div aria-label="Filter datasources" className={styles.multiselect}>
               <Select
                 isMulti={true}
                 options={datasources}
@@ -200,7 +200,7 @@ export function RichHistoryQueriesTab(props: Props) {
               />
             </div>
           )}
-          <div className={styles.sort} aria-label="Sort queries">
+          <div aria-label="Sort queries" className={styles.sort}>
             <Select
               value={sortOrderOptions.filter(order => order.value === sortOrder)}
               options={sortOrderOptions}
