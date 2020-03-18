@@ -107,7 +107,7 @@ func extractEmail(claims azureClaims) string {
 
 func extractRole(claims azureClaims) models.RoleType {
 	if len(claims.Roles) == 0 {
-		return models.ROLE_VIEWER
+		return ""
 	}
 
 	roleOrder := []models.RoleType{
@@ -122,7 +122,7 @@ func extractRole(claims azureClaims) models.RoleType {
 		}
 	}
 
-	return models.ROLE_VIEWER
+	return ""
 }
 
 func hasRole(roles []string, role models.RoleType) bool {
