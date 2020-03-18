@@ -9,7 +9,7 @@ import { DashboardSearchHit } from '../../../types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
-  enableCreateNew: boolean;
+  enableCreateNew?: boolean;
   rootName?: string;
   enableReset?: boolean;
   dashboardId?: any;

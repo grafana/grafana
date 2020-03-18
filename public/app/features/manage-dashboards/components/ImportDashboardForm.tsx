@@ -95,6 +95,7 @@ export const ImportDashboardForm: FC<Props> = ({
                 name="dataSource"
                 datasources={input.options}
                 control={control}
+                current={null}
               />
             </Forms.Field>
           );
