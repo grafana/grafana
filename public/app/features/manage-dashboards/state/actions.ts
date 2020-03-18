@@ -1,10 +1,11 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { AppEvents, DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
-import { clearDashboard, setInputs, setGcomDashboard, setJsonDashboard, setGcomError } from './reducers';
+import { clearDashboard, setInputs, setGcomDashboard, setJsonDashboard } from './reducers';
 import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
 import { ThunkResult } from 'app/types';
+import { appEvents } from '../../../core/core';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async dispatch => {
@@ -13,7 +14,7 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
       dispatch(setGcomDashboard(dashboard));
       dispatch(processInputs(dashboard.json));
     } catch (error) {
-      dispatch(setGcomError(error.data.message || error));
+      appEvents.emit(AppEvents.alertError, [error.data.message || error]);
     }
   };
 }

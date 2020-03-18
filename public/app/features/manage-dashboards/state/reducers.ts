@@ -10,7 +10,6 @@ export interface ImportDashboardState {
   dashboard: any;
   source: DashboardSource;
   inputs: any[];
-  gcomError: string;
   isLoaded: boolean;
 }
 
@@ -19,7 +18,6 @@ const initialImportDashboardState: ImportDashboardState = {
   dashboard: {},
   source: DashboardSource.Json,
   inputs: [],
-  gcomError: '',
   isLoaded: false,
 };
 
@@ -57,10 +55,6 @@ const importDashboardSlice = createSlice({
         isLoaded: false,
       };
     },
-    setGcomError: (state, action: PayloadAction<string>): ImportDashboardState => ({
-      ...state,
-      gcomError: action.payload,
-    }),
     setInputs: (state, action: PayloadAction<any[]>): ImportDashboardState => ({
       ...state,
       inputs: action.payload,
@@ -68,13 +62,7 @@ const importDashboardSlice = createSlice({
   },
 });
 
-export const {
-  clearDashboard,
-  setInputs,
-  setGcomDashboard,
-  setJsonDashboard,
-  setGcomError,
-} = importDashboardSlice.actions;
+export const { clearDashboard, setInputs, setGcomDashboard, setJsonDashboard } = importDashboardSlice.actions;
 
 export const importDashboardReducer = importDashboardSlice.reducer;
 

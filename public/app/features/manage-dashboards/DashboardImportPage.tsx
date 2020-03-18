@@ -25,37 +25,7 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-interface State {
-  gcomDashboard: string;
-  dashboardJson: string;
-  dashboardFile: any;
-  gcomError: string;
-}
-
-const importStyles = stylesFactory(() => {
-  return {
-    option: css`
-      margin-bottom: 32px;
-    `,
-  };
-});
-
-class DashboardImportUnConnected extends PureComponent<Props, State> {
-  state: State = {
-    gcomDashboard: '',
-    dashboardJson: '',
-    dashboardFile: '',
-    gcomError: '',
-  };
-
-  onGcomDashboardChange = (event: FormEvent<HTMLInputElement>) => {
-    this.setState({ gcomDashboard: event.currentTarget.value });
-  };
-
-  onDashboardJsonChange = (event: FormEvent<HTMLTextAreaElement>) => {
-    this.setState({ dashboardJson: event.currentTarget.value });
-  };
-
+class DashboardImportUnConnected extends PureComponent<Props> {
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
     const { importDashboardJson } = this.props;
     const file = event.currentTarget.files[0];
@@ -77,38 +47,33 @@ class DashboardImportUnConnected extends PureComponent<Props, State> {
     reader.readAsText(file);
   };
 
-  onDashboardJsonLoad = () => {
-    const { dashboardJson } = this.state;
-    const { importDashboardJson } = this.props;
-
-    if (!dashboardJson) {
-      return;
-    }
-    let dashboard: any;
+  validateDashboardJson = (json: string) => {
     try {
-      dashboard = JSON.parse(dashboardJson);
-      importDashboardJson(dashboard);
+      JSON.parse(json);
+      return true;
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
-      return;
+      return 'Not valid JSON';
     }
   };
 
-  getGcomDashboard = () => {
-    const { gcomDashboard } = this.state;
-
+  validateGcomDashboard = (gcomDashboard: string) => {
     // From DashboardImportCtrl
     const match = /(^\d+$)|dashboards\/(\d+)/.exec(gcomDashboard);
-    let dashboardId;
 
+    return match && (match[1] || match[2]) ? true : 'Could not find a valid Grafana.com id';
+  };
+
+  getDashboardFromJson = (formData: { dashboardJson: string }) => {
+    this.props.importDashboardJson(JSON.parse(formData.dashboardJson));
+  };
+
+  getGcomDashboard = (formData: { gcomDashboard: string }) => {
+    let dashboardId;
+    const match = /(^\d+$)|dashboards\/(\d+)/.exec(formData.gcomDashboard);
     if (match && match[1]) {
       dashboardId = match[1];
     } else if (match && match[2]) {
       dashboardId = match[2];
-    } else {
-      this.setState({
-        gcomError: 'Could not find dashboard',
-      });
     }
 
     if (dashboardId) {
@@ -117,7 +82,6 @@ class DashboardImportUnConnected extends PureComponent<Props, State> {
   };
 
   renderImportForm() {
-    const { gcomDashboard, dashboardJson } = this.state;
     const styles = importStyles();
 
     return (
@@ -127,27 +91,49 @@ class DashboardImportUnConnected extends PureComponent<Props, State> {
         </div>
         <div className={styles.option}>
           <Forms.Legend>Import via grafana.com</Forms.Legend>
-          <Forms.Field>
-            <Forms.Input
-              size="md"
-              placeholder="Grafana.com dashboard url or id"
-              onChange={this.onGcomDashboardChange}
-              addonAfter={
-                <Forms.Button disabled={gcomDashboard === ''} onClick={this.getGcomDashboard}>
-                  Load
-                </Forms.Button>
-              }
-            />
-          </Forms.Field>
+          <Forms.Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
+            {({ register, errors }) => (
+              <Forms.Field
+                invalid={!!errors.gcomDashboard}
+                error={errors.gcomDashboard && errors.gcomDashboard.message}
+              >
+                <Forms.Input
+                  size="md"
+                  name="gcomDashboard"
+                  placeholder="Grafana.com dashboard url or id"
+                  type="text"
+                  ref={register({
+                    required: 'A Grafana dashboard url or id is required',
+                    validate: v => this.validateGcomDashboard(v),
+                  })}
+                  addonAfter={<Forms.Button type="submit">Load</Forms.Button>}
+                />
+              </Forms.Field>
+            )}
+          </Forms.Form>
         </div>
         <div className={styles.option}>
           <Forms.Legend>Import via panel json</Forms.Legend>
-          <Forms.Field>
-            <Forms.TextArea rows={10} onChange={this.onDashboardJsonChange} />
-          </Forms.Field>
-          <Forms.Button disabled={dashboardJson === ''} onClick={this.onDashboardJsonLoad}>
-            Load
-          </Forms.Button>
+          <Forms.Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
+            {({ register, errors }) => (
+              <>
+                <Forms.Field
+                  invalid={!!errors.dashboardJson}
+                  error={errors.dashboardJson && errors.dashboardJson.message}
+                >
+                  <Forms.TextArea
+                    name="dashboardJson"
+                    ref={register({
+                      required: 'Need a dashboard json model',
+                      validate: v => this.validateDashboardJson(v),
+                    })}
+                    rows={10}
+                  />
+                </Forms.Field>
+                <Forms.Button type="submit">Load</Forms.Button>
+              </>
+            )}
+          </Forms.Form>
         </div>
       </>
     );
@@ -176,3 +162,11 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, Props> = {
 export const DashboardImportPage = connect(mapStateToProps, mapDispatchToProps)(DashboardImportUnConnected);
 export default DashboardImportPage;
 DashboardImportPage.displayName = 'DashboardImport';
+
+const importStyles = stylesFactory(() => {
+  return {
+    option: css`
+      margin-bottom: 32px;
+    `,
+  };
+});
