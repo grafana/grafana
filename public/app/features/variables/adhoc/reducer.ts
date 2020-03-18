@@ -45,8 +45,12 @@ export const adHocVariableSlice = createSlice({
 
       instanceState.filters[index] = filter;
     },
+    filtersRestored: (state: VariablesState, action: PayloadAction<VariablePayload<AdHocVariableFilter[]>>) => {
+      const instanceState = getInstanceState<AdHocVariableModel>(state, action.payload.uuid);
+      instanceState.filters = action.payload.data;
+    },
   },
 });
 
-export const { filterAdded, filterRemoved, filterUpdated } = adHocVariableSlice.actions;
+export const { filterAdded, filterRemoved, filterUpdated, filtersRestored } = adHocVariableSlice.actions;
 export const adHocVariableReducer = adHocVariableSlice.reducer;

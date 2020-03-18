@@ -4,7 +4,7 @@ import { changeVariableEditorExtended, changeEditorInfoText } from '../editor/re
 import { changeVariableProp } from '../state/sharedReducer';
 import { getVariable } from '../state/selectors';
 import { toVariablePayload, toVariableIdentifier } from '../state/types';
-import { AdHocVariabelFilterUpdate, filterRemoved, filterUpdated, filterAdded } from './reducer';
+import { AdHocVariabelFilterUpdate, filterRemoved, filterUpdated, filterAdded, filtersRestored } from './reducer';
 import { AdHocVariableFilter } from 'app/features/templating/variable';
 import { variableUpdated } from '../state/actions';
 
@@ -28,6 +28,14 @@ export const addFilter = (uuid: string, filter: AdHocVariableFilter): ThunkResul
   return (dispatch, getState) => {
     const variable = getVariable(uuid, getState());
     dispatch(filterAdded(toVariablePayload(variable, filter)));
+    dispatch(variableUpdated(toVariableIdentifier(variable), true));
+  };
+};
+
+export const setFiltersFromUrl = (uuid: string, filters: AdHocVariableFilter[]): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const variable = getVariable(uuid, getState());
+    dispatch(filtersRestored(toVariablePayload(variable, filters)));
     dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
 };
