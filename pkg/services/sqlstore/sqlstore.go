@@ -99,6 +99,7 @@ func (ss *SqlStore) Init() error {
 
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
+	ss.addAlertNotificationUidByIdHandler()
 
 	if ss.skipEnsureDefaultOrgAndUser {
 		return nil

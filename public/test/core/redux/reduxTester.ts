@@ -21,8 +21,8 @@ export interface ReduxTesterWhen<State> {
 }
 
 export interface ReduxTesterThen<State> {
-  thenDispatchedActionShouldEqual: (...dispatchedAction: AnyAction[]) => ReduxTesterWhen<State>;
-  thenDispatchedActionPredicateShouldEqual: (
+  thenDispatchedActionsShouldEqual: (...dispatchedActions: AnyAction[]) => ReduxTesterWhen<State>;
+  thenDispatchedActionsPredicateShouldEqual: (
     predicate: (dispatchedActions: AnyAction[]) => boolean
   ) => ReduxTesterWhen<State>;
 }
@@ -55,6 +55,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
       middleware: [logActionsMiddleWare, thunk],
       preloadedState,
     });
+
     setStore(store as any);
 
     return instance;
@@ -67,6 +68,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
     if (clearPreviousActions) {
       dispatchedActions.length = 0;
     }
+
     store.dispatch(action);
 
     return instance;
@@ -85,7 +87,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
     return instance;
   };
 
-  const thenDispatchedActionShouldEqual = (...actions: AnyAction[]): ReduxTesterWhen<State> => {
+  const thenDispatchedActionsShouldEqual = (...actions: AnyAction[]): ReduxTesterWhen<State> => {
     if (debug) {
       console.log('Dispatched Actions', JSON.stringify(dispatchedActions, null, 2));
     }
@@ -98,7 +100,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
     return instance;
   };
 
-  const thenDispatchedActionPredicateShouldEqual = (
+  const thenDispatchedActionsPredicateShouldEqual = (
     predicate: (dispatchedActions: AnyAction[]) => boolean
   ): ReduxTesterWhen<State> => {
     if (debug) {
@@ -113,8 +115,8 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
     givenRootReducer,
     whenActionIsDispatched,
     whenAsyncActionIsDispatched,
-    thenDispatchedActionShouldEqual,
-    thenDispatchedActionPredicateShouldEqual,
+    thenDispatchedActionsShouldEqual,
+    thenDispatchedActionsPredicateShouldEqual,
   };
 
   return instance;

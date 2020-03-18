@@ -23,8 +23,8 @@ import { DashboardDTO, DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResul
 import { DashboardModel } from './DashboardModel';
 import { DataQuery } from '@grafana/data';
 import { getConfig } from '../../../core/config';
-import { initDashboardTemplating, processVariables } from '../../templating/state/actions';
-import { variableAdapters } from '../../templating/adapters';
+import { initDashboardTemplating, processVariables } from '../../variables/state/actions';
+import { variableAdapters } from '../../variables/adapters';
 
 export interface InitDashboardArgs {
   $injector: any;
