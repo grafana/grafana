@@ -394,7 +394,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 	}
 
 	// Unmarshal JSONDetails if it's not empty.
-	if len(resp.JSONDetails) > 1 {
+	if len(resp.JSONDetails) > 0 {
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
 			c.JsonApiErr(500, "Failed to unmarshal detailed response from backend plugin", err)
