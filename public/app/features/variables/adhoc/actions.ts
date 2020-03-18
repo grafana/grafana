@@ -1,3 +1,5 @@
+import { v4 } from 'uuid';
+import { cloneDeep } from 'lodash';
 import { ThunkResult, StoreState } from 'app/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
@@ -15,7 +17,6 @@ import {
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/variable';
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
-import { cloneDeep } from 'lodash';
 
 interface AdHocTableOptions {
   datasource: string;
@@ -40,11 +41,11 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
     if (index === -1) {
       const { value, key, operator } = options;
       const filter = { value, key, operator, condition: '' };
-      return dispatch(addFilter(variable.uuid, filter));
+      return dispatch(addFilter(variable!.uuid, filter));
     }
 
     const filter = { ...variable.filters[index], operator: options.operator };
-    return dispatch(changeFilter(variable.uuid, { index, filter }));
+    return dispatch(changeFilter(variable!.uuid, { index, filter }));
   };
 };
 
@@ -144,7 +145,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 
     const global = false;
     const index = Object.values(getState().templating.variables).length;
-    const identifier: VariableIdentifier = { type: 'adhoc', uuid: null };
+    const identifier: VariableIdentifier = { type: 'adhoc', uuid: v4() };
 
     dispatch(
       addVariable(

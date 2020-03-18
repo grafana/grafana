@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, ReactElement } from 'react';
 import { SegmentAsync } from '@grafana/ui';
 import { OperatorSegment } from './OperatorSegment';
 import { AdHocVariableFilter } from 'app/features/templating/variable';
@@ -12,23 +12,17 @@ interface Props {
 }
 
 export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoadKeys, onLoadValues }) => {
-  const [key, setKey] = useState<string>(null);
+  const [key, setKey] = useState<string>('');
   const [operator, setOperator] = useState<string>('=');
 
-  if (key === null) {
+  if (key === '') {
     return (
       <div className="gf-form">
         <SegmentAsync
           className="query-segment-key"
-          Component={
-            key ? null : (
-              <a className="gf-form-label query-part">
-                <i className="fa fa-plus" />
-              </a>
-            )
-          }
+          Component={renderAddButton(key)}
           value={key}
-          onChange={({ value }) => setKey(value)}
+          onChange={({ value }) => setKey(value ?? '')}
           loadOptions={onLoadKeys}
         />
       </div>
@@ -42,12 +36,12 @@ export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoa
         <SegmentAsync
           className="query-segment-key"
           value={key}
-          onChange={({ value }) => setKey(value)}
+          onChange={({ value }) => setKey(value ?? '')}
           loadOptions={onLoadKeys}
         />
       </div>
       <div className="gf-form">
-        <OperatorSegment value={operator} onChange={({ value }) => setOperator(value)} />
+        <OperatorSegment value={operator} onChange={({ value }) => setOperator(value ?? '')} />
       </div>
       <div className="gf-form">
         <SegmentAsync
@@ -55,12 +49,12 @@ export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoa
           placeholder="select value"
           onChange={({ value }) => {
             onCompleted({
-              value: value,
+              value: value ?? '',
               operator: operator,
               condition: '',
               key: key,
             });
-            setKey(null);
+            setKey('');
             setOperator('=');
           }}
           loadOptions={() => onLoadValues(key)}
@@ -69,3 +63,13 @@ export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoa
     </>
   );
 };
+
+function renderAddButton(key: string): ReactElement {
+  return key !== '' ? (
+    undefined
+  ) : (
+    <a className="gf-form-label query-part">
+      <i className="fa fa-plus" />
+    </a>
+  );
+}

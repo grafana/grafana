@@ -5,7 +5,7 @@ import { AdHocVariableModel, AdHocVariableFilter } from 'app/features/templating
 import { SegmentAsync } from '@grafana/ui';
 import { VariablePickerProps } from '../types';
 import { OperatorSegment } from './OperatorSegment';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, MetricFindValue } from '@grafana/data';
 import { AdHocFilterBuilder } from './AdHocFilterBuilder';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ConditionSegment } from './ConditionSegment';
@@ -32,10 +32,10 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
     const { value } = key;
 
     if (key.value === REMOVE_FILTER_KEY) {
-      return this.props.removeFilter(uuid, index);
+      return this.props.removeFilter(uuid!, index);
     }
 
-    return this.props.changeFilter(uuid, {
+    return this.props.changeFilter(uuid!, {
       index,
       filter: {
         ...filters[index],
@@ -46,12 +46,12 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
 
   appendFilterToVariable = (filter: AdHocVariableFilter) => {
     const { uuid } = this.props.variable;
-    this.props.addFilter(uuid, filter);
+    this.props.addFilter(uuid!, filter);
   };
 
   fetchFilterKeys = async () => {
     const { variable } = this.props;
-    const ds = await getDatasourceSrv().get(variable.datasource);
+    const ds = await getDatasourceSrv().get(variable.datasource!);
 
     if (!ds || !ds.getTagKeys) {
       return [removeValue];
@@ -65,14 +65,14 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
 
   fetchFilterValues = async (key: string) => {
     const { variable } = this.props;
-    const ds = await getDatasourceSrv().get(variable.datasource);
+    const ds = await getDatasourceSrv().get(variable.datasource!);
 
     if (!ds || !ds.getTagValues) {
       return [];
     }
 
     const metrics = await ds.getTagValues({ key });
-    return metrics.map(m => ({ label: m.text, value: m.text }));
+    return metrics.map((m: MetricFindValue) => ({ label: m.text, value: m.text }));
   };
 
   render() {

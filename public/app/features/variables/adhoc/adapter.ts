@@ -21,6 +21,9 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     dependsOn: () => false,
     setValue: noop,
     setValueFromUrl: async (variable, urlValue) => {
+      if (!variable) {
+        return;
+      }
       const filters = urlParser.toFilters(urlValue);
       await dispatch(setFiltersFromUrl(variable.uuid, filters));
     },

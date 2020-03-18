@@ -13,11 +13,11 @@ export const toUrl = (filters: AdHocVariableFilter[]): string[] => {
 export const toFilters = (value: UrlQueryValue): AdHocVariableFilter[] => {
   if (isArray(value)) {
     const values = value as any[];
-    return values.map(toFilter).filter(f => f !== null);
+    return values.map(toFilter).filter(f => !!f);
   }
 
   const filter = toFilter(value);
-  return filter === null ? [] : [filter];
+  return !filter ? [] : [filter];
 };
 
 function escapeDelimiter(value: string) {
@@ -34,7 +34,7 @@ function toArray(filter: AdHocVariableFilter): string[] {
 
 function toFilter(value: string | number | boolean | undefined | null): AdHocVariableFilter {
   if (!isString(value) || value.length === 0) {
-    return null;
+    return undefined;
   }
 
   const parts = value.split('|').map(unescapeDelimiter);
