@@ -54,13 +54,16 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
     const ds = await getDatasourceSrv().get(variable.datasource!);
 
     if (!ds || !ds.getTagKeys) {
-      return [removeValue];
+      return [];
     }
 
     const metrics = await ds.getTagKeys();
-    const values = metrics.map(m => ({ label: m.text, value: m.text }));
+    return metrics.map(m => ({ label: m.text, value: m.text }));
+  };
 
-    return [removeValue, ...values];
+  fetchFilterKeysWithRemove = async () => {
+    const keys = await this.fetchFilterKeys();
+    return [removeValue, ...keys];
   };
 
   fetchFilterValues = async (key: string) => {
@@ -109,7 +112,7 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
             className="query-segment-key"
             value={filter.key}
             onChange={this.onChange(index, 'key')}
-            loadOptions={this.fetchFilterKeys}
+            loadOptions={this.fetchFilterKeysWithRemove}
           />
         </div>
         <div className="gf-form">
