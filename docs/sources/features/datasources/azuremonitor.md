@@ -278,7 +278,7 @@ There are also some Grafana variables that can be used in Azure Log Analytics qu
 
 Any Log Analytics query that returns a list of values can be used in the `Query` field in the Variable edit view. There is also one Grafana function for Log Analytics that returns a list of workspaces.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Refer to the [Variables]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 | Name                                               | Description                                                                                            |
