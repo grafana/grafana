@@ -272,6 +272,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Millibars', id: 'pressurembar', fn: decimalSIPrefix('bar', -1) },
       { name: 'Bars', id: 'pressurebar', fn: decimalSIPrefix('bar') },
       { name: 'Kilobars', id: 'pressurekbar', fn: decimalSIPrefix('bar', 1) },
+      { name: 'Pascals', id: 'pressurepa', fn: decimalSIPrefix('Pa') },
       { name: 'Hectopascals', id: 'pressurehpa', fn: toFixedUnit('hPa') },
       { name: 'Kilopascals', id: 'pressurekpa', fn: toFixedUnit('kPa') },
       { name: 'Inches of mercury', id: 'pressurehg', fn: toFixedUnit('"Hg') },
@@ -294,6 +295,15 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Sievert/hour (Sv/h)', id: 'radsvh', fn: decimalSIPrefix('Sv/h') },
       { name: 'milliSievert/hour (mSv/h)', id: 'radmsvh', fn: decimalSIPrefix('Sv/h', -1) },
       { name: 'microSievert/hour (µSv/h)', id: 'radusvh', fn: decimalSIPrefix('Sv/h', -2) },
+    ],
+  },
+  {
+    name: 'Rotational Speed',
+    formats: [
+      { name: 'Revolutions per minute (rpm)', id: 'rotrpm', fn: toFixedUnit('rpm') },
+      { name: 'Hertz (Hz)', id: 'rothz', fn: decimalSIPrefix('Hz') },
+      { name: 'Radians per second (rad/s)', id: 'rotrads', fn: toFixedUnit('rad/s') },
+      { name: 'Degrees per second (°/s)', id: 'rotrads', fn: toFixedUnit('°/s') },
     ],
   },
   {
