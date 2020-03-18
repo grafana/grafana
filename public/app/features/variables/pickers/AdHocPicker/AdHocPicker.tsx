@@ -106,7 +106,7 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
 
   renderFilterSegments(filter: AdHocVariableFilter, index: number) {
     return (
-      <>
+      <React.Fragment key={`filter-${index}`}>
         <div className="gf-form">
           <SegmentAsync
             className="query-segment-key"
@@ -126,7 +126,7 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
             loadOptions={() => this.fetchFilterValues(filter.key)}
           />
         </div>
-      </>
+      </React.Fragment>
     );
   }
 }
