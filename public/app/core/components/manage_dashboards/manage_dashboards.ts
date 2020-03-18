@@ -143,7 +143,7 @@ export class ManageDashboardsCtrl {
     }
   }
 
-  selectionChanged() {
+  selectionChanged = () => {
     let selectedDashboards = 0;
 
     if (this.sections) {
@@ -155,7 +155,7 @@ export class ManageDashboardsCtrl {
       this.canMove = selectedDashboards > 0;
       this.canDelete = selectedDashboards > 0 || selectedFolders > 0;
     }
-  }
+  };
 
   getFoldersAndDashboardsToDelete(): FoldersAndDashboardUids {
     const selectedDashboards: FoldersAndDashboardUids = {

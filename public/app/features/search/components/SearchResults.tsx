@@ -37,17 +37,6 @@ export const SearchResults: FC<Props> = ({
   };
   const onItemClick = (item: DashboardSectionItem) => {};
 
-  // Remove 'fa' prefixes from icon names
-  // TODO this should be probably handled on backend
-  const parseIconName = (name: string) => {
-    if (name) {
-      const splitName = name.split('-');
-      return splitName.slice(1).join('-');
-    }
-
-    return '';
-  };
-
   return !results ? (
     <p>No results</p>
   ) : (
@@ -62,7 +51,7 @@ export const SearchResults: FC<Props> = ({
               <div onClick={toggleSelection} className="center-vh">
                 {editable && <Forms.Checkbox value={section.checked} onChange={onSelectionChanged} />}
               </div>
-              <Icon className="search-section__header__icon" name={parseIconName(section.icon) as IconType} />
+              <Icon className="search-section__header__icon" name={section.icon as IconType} />
 
               <span className="search-section__header__text">{section.title}</span>
               {section.url && (
