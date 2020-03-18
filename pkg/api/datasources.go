@@ -393,7 +393,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) {
 		"jsonDetails": jsonDetails,
 	}
 
-	// Unmarshal JSONDetails if its not empty.
+	// Unmarshal JSONDetails if it's not empty.
 	if len(resp.JSONDetails) > 1 {
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
