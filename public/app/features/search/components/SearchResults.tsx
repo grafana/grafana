@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { e2e } from '@grafana/e2e';
 import { Forms, Icon } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
-import { DashboardSection } from '../types';
+import { DashboardSection, DashboardSectionItem } from '../types';
 
 interface Props {
   results: DashboardSection[] | undefined;
@@ -22,7 +22,8 @@ export const SearchResults: FC<Props> = ({
   selectors,
 }) => {
   const toggleSelection = () => {};
-  const toggleFolderExpand = (section: any) => {};
+  const toggleFolderExpand = (section: DashboardSection) => {};
+  const onItemClick = (item: DashboardSectionItem) => {};
 
   // Remove 'fa' prefixes from icon names
   // TODO this should be probably handled on backend
@@ -44,7 +45,7 @@ export const SearchResults: FC<Props> = ({
           {!section.hideHeader ? (
             <div
               className={`search-section__header pointer ${section.checked ? 'selected' : ''}`}
-              onClick={toggleFolderExpand}
+              onClick={() => toggleFolderExpand(section)}
             >
               <div onClick={toggleSelection} className="center-vh">
                 {editable && <Forms.Checkbox value={section.checked} onChange={onSelectionChanged} />}
@@ -66,6 +67,30 @@ export const SearchResults: FC<Props> = ({
           ) : (
             <div className="search-section__header" />
           )}
+          {section.expanded &&
+            section.items.map(item => (
+              <div key={item.id}>
+                <a className={`search-item search-item--indent  ${item.checked ? 'selected' : ''}`} href={item.url}>
+                  <div onClick={toggleSelection} className="center-vh">
+                    {editable && <Forms.Checkbox value={item.checked} onChange={onSelectionChanged} />}
+                  </div>
+                  <span className="search-item__icon">
+                    <Icon name="th-large" />
+                  </span>
+                  <span className="search-item__body" onClick={() => onItemClick(item)}>
+                    <div className="search-item__body-title">{item.title}</div>
+                    <span className="search-item__body-folder-title">{item.folderTitle}</span>
+                  </span>
+                  <span className="search-item__tags">
+                    {item.tags.map(tag => (
+                      <span key={tag} onClick={() => onTagSelected(tag)} className="label label-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </span>
+                </a>
+              </div>
+            ))}
         </div>
       ))}
     </>
