@@ -44,7 +44,7 @@ export const InspectHeader: FC<Props> = ({
         <h3>{panel.title}</h3>
         <div>{formatStats(stats)}</div>
       </div>
-      <TabsBar>
+      <TabsBar className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
             <Tab
@@ -67,13 +67,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background-color: ${headerBackground};
       z-index: 1;
       flex-grow: 0;
-      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
     `,
     actions: css`
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      margin-bottom: ${theme.spacing.md};
+      margin: ${theme.spacing.md};
+    `,
+    tabsBar: css`
+      padding-left: ${theme.spacing.md};
     `,
     iconWrapper: css`
       cursor: pointer;
@@ -88,6 +90,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     titleWrapper: css`
       margin-bottom: ${theme.spacing.lg};
+      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.lg};
     `,
   };
 });

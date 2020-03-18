@@ -3,8 +3,9 @@ import { css } from 'emotion';
 import { stylesFactory, useTheme, Forms } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
 
-interface RichHistorySettingsProps {
+export interface RichHistorySettingsProps {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourceOnly: boolean;
@@ -57,6 +58,19 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
   const styles = getStyles(theme);
   const selectedOption = retentionPeriodOptions.find(v => v.value === retentionPeriod);
 
+  const onDelete = () => {
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Delete',
+      text: 'Are you sure you want to permanently delete your query history?',
+      yesText: 'Delete',
+      icon: 'fa-trash',
+      onConfirm: () => {
+        deleteRichHistory();
+        appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
+      },
+    });
+  };
+
   return (
     <div className={styles.container}>
       <Forms.Field
@@ -78,10 +92,10 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
           <div className={styles.label}>Change the default active tab from “Query history” to “Starred”</div>
         </div>
       </Forms.Field>
-      <Forms.Field label="Datasource behaviour" description=" " className="space-between">
+      <Forms.Field label="Data source behaviour" description=" " className="space-between">
         <div className={styles.switch}>
           <Forms.Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Forms.Switch>
-          <div className={styles.label}>Only show queries for datasource currently active in Explore</div>
+          <div className={styles.label}>Only show queries for data source currently active in Explore</div>
         </div>
       </Forms.Field>
       <div
@@ -98,13 +112,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
       >
         Delete all of your query history, permanently.
       </div>
-      <Forms.Button
-        variant="destructive"
-        onClick={() => {
-          deleteRichHistory();
-          appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
-        }}
-      >
+      <Forms.Button variant="destructive" onClick={onDelete}>
         Clear query history
       </Forms.Button>
     </div>

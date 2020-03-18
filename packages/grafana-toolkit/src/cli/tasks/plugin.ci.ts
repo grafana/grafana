@@ -8,7 +8,7 @@ import { PluginMeta } from '@grafana/data';
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs from 'fs';
+import fs from 'fs-extra';
 import { getPackageDetails, findImagesInFolder, getGrafanaVersions, readGitLog } from '../../plugins/utils';
 import {
   job,
@@ -57,7 +57,7 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
     for (const name of ['dist', 'coverage']) {
       const dir = path.resolve(process.cwd(), name);
       if (fs.existsSync(dir)) {
-        fs.renameSync(dir, path.resolve(workDir, name));
+        fs.moveSync(dir, path.resolve(workDir, name));
       }
     }
     writeJobStats(start, workDir);

@@ -35,11 +35,24 @@ Currently only Organization Admins can create reports.
    * **Recipients -** Enter the emails of the people or teams that you want to receive the report.
    * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email. 
    * **Custom message -** (optional) Message body in the email with the report.
-1. **Preview** the report to make sure it appears as you expect. Update if necessary.
+1. **Preview** the report to make sure it appears as you expect. Update if necessary
+1. Select the layout option for generated report: **Portrait** or **Landscape**.  
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+
+## Rendering configuration
+
+When Grafana generates a report, it will render each panel separately and then put them together in a PDF file. You can configure the per-panel rendering request timeout and the maximum number of concurrent calls to the rendering service. These options are available in the [configuration]({{< relref "../installation/configuration.md">}}) file.
+
+```ini
+[reporting]
+# Set timeout for each panel rendering request
+rendering_timeout = 10s
+# Set maximum number of concurrent calls to the rendering service
+concurrent_render_limit = 10
+```
 
 ## Troubleshoot reporting
 

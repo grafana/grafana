@@ -134,6 +134,7 @@ github.com/golang/snappy
 github.com/google/flatbuffers/go
 # github.com/google/go-cmp v0.3.1
 github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
@@ -147,7 +148,7 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.24.0
+# github.com/grafana/grafana-plugin-sdk-go v0.30.0
 github.com/grafana/grafana-plugin-sdk-go/backend/plugin
 github.com/grafana/grafana-plugin-sdk-go/data
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
