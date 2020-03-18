@@ -105,11 +105,24 @@ export class Help extends React.Component<Props, State> {
                   <code>{`${'{{bucket}}'}`}</code> = bucket boundary for distribution metrics when using a heatmap in
                   Grafana
                 </li>
+                <li>
+                  <code>{`${'{{project}}'}`}</code> = The project name that was specified in the query editor
+                </li>
+                <li>
+                  <code>{`${'{{service}}'}`}</code> = The service id that was specified in the SLO query editor
+                </li>
+                <li>
+                  <code>{`${'{{slo}}'}`}</code> = The SLO id that was specified in the SLO query editor
+                </li>
+                <li>
+                  <code>{`${'{{selector}}'}`}</code> = The Selector function that was specified in the SLO query editor
+                </li>
               </ul>
             </div>
           </div>
         )}
 
+        {console.log({ lastQueryError })}
         {lastQueryError && (
           <div className="gf-form">
             <pre className="gf-form-pre alert alert-error">{lastQueryError}</pre>
