@@ -17,7 +17,6 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CoreEvents } from 'app/types';
 
 export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
-  url: string;
   baseUrl: string;
   projectList: Array<{ label: string; value: string }>;
   authenticationType: string;
@@ -34,8 +33,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     private timeSrv: TimeSrv
   ) {
     super(instanceSettings);
-    this.baseUrl = `/stackdriver/`;
-    this.url = instanceSettings.url!;
+    this.baseUrl = `${instanceSettings.url!}/stackdriver/v3/projects/`;
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.metricTypesCache = {};
     this.sloServicesCache = {};
@@ -63,11 +61,11 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     return query;
   }
 
-  interpolateQueryProps(object: { [key: string]: any } = {}, scopedVars: ScopedVars) {
+  interpolateProps(object: { [key: string]: any } = {}, scopedVars: ScopedVars = {}): { [key: string]: any } {
     return Object.entries(object).reduce((acc, [key, value]) => {
       return {
         ...acc,
-        [key]: value && _.isString(value) ? this.templateSrv.replace(value, scopedVars || {}) : value,
+        [key]: value && _.isString(value) ? this.templateSrv.replace(value, scopedVars) : value,
       };
     }, {});
   }
@@ -98,12 +96,12 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       intervalMs: intervalMs,
       type: 'timeSeriesQuery',
       metricQuery: {
-        ...this.interpolateQueryProps(metricQuery, scopedVars),
+        ...this.interpolateProps(metricQuery, scopedVars),
         filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
         view: metricQuery.view || 'FULL',
       },
-      sloQuery: this.interpolateQueryProps(sloQuery, scopedVars),
+      sloQuery: this.interpolateProps(sloQuery, scopedVars),
     };
   }
 
@@ -283,8 +281,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     const defaultErrorMessage = 'Cannot connect to Stackdriver API';
     try {
       await this.ensureGCEDefaultProject();
-      const path = `v3/projects/${this.getDefaultProject()}/metricDescriptors`;
-      const response = await this.doRequest(`${this.baseUrl}${path}`);
+      const response = await this.resource(`${this.getDefaultProject()}/metricDescriptors`);
       if (response.status === 200) {
         status = 'success';
         message = 'Successfully queried the Stackdriver API.';
@@ -346,6 +343,12 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       } catch (err) {
         message += error.data.error;
       }
+    } else if (error.data && error.data.message) {
+      try {
+        message = JSON.parse(error.data.message).error.message;
+      } catch (err) {
+        error.error;
+      }
     } else {
       message += 'Cannot connect to Stackdriver API';
     }
@@ -391,100 +394,65 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async getMetricTypes(projectName: string): Promise<MetricDescriptor[]> {
-    try {
-      if (!projectName) {
-        return [];
-      }
-
-      const interpolatedProject = this.templateSrv.replace(projectName);
-      if (this.metricTypesCache[interpolatedProject]) {
-        return this.metricTypesCache[interpolatedProject];
-      }
-
-      const metricsApiPath = `v3/projects/${interpolatedProject}/metricDescriptors`;
-      const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
-
-      this.metricTypesCache[interpolatedProject] = (data.metricDescriptors || []).map((m: any) => {
-        const [service] = m.type.split('/');
-        const [serviceShortName] = service.split('.');
-        m.service = service;
-        m.serviceShortName = serviceShortName;
-        m.displayName = m.displayName || m.type;
-
-        return m;
-      });
-
-      return this.metricTypesCache[interpolatedProject];
-    } catch (error) {
-      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
+    if (!projectName) {
       return [];
     }
+    return this.resourceCache(`${this.templateSrv.replace(projectName)}/metricDescriptors`, (m: any) => {
+      const [service] = m.type.split('/');
+      const [serviceShortName] = service.split('.');
+      m.service = service;
+      m.serviceShortName = serviceShortName;
+      m.displayName = m.displayName || m.type;
+
+      return m;
+    }) as Promise<MetricDescriptor[]>;
   }
 
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
-    try {
-      if (!projectName) {
-        return [];
-      }
-
-      const interpolatedProject = this.templateSrv.replace(projectName);
-      if (this.sloServicesCache[interpolatedProject]) {
-        return this.sloServicesCache[interpolatedProject];
-      }
-
-      const { data } = await this.doRequest(`${this.baseUrl}v3/projects/${interpolatedProject}/services`);
-      this.sloServicesCache[interpolatedProject] = (data.services || []).map(
-        ({ name, displayName }: { name: string; displayName: string }) => ({
-          value: name.match(/([^\/]*)\/*$/)[1],
-          label: name.match(/([^\/]*)\/*$/)[1],
-          // label: displayName.match(/([^\/]*)\/*$/)[1],
-        })
-      );
-
-      return this.sloServicesCache[interpolatedProject];
-    } catch (error) {
-      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
-      return [];
-    }
+    const interpolatedProject = this.templateSrv.replace(projectName);
+    return this.resourceCache(`${interpolatedProject}/services`, ({ name }: { name: string }) => ({
+      value: name.match(/([^\/]*)\/*$/)[1],
+      label: name.match(/([^\/]*)\/*$/)[1],
+    }));
   }
 
   async getServiceLevelObjectives(projectName: string, serviceId: string): Promise<Array<SelectableValue<string>>> {
+    let { projectName: p, serviceId: s } = this.interpolateProps({ projectName, serviceId });
+
+    return this.resourceCache(`${p}/services/${s}/serviceLevelObjectives`, ({ name }: { name: string }) => ({
+      value: name.match(/([^\/]*)\/*$/)[1],
+      label: name.match(/([^\/]*)\/*$/)[1],
+    }));
+  }
+
+  async resourceCache(
+    path: string,
+    mapFunc: (res: any) => SelectableValue<string> | MetricDescriptor
+  ): Promise<Array<SelectableValue<string>> | MetricDescriptor[]> {
     try {
-      const interpolatedProject = this.templateSrv.replace(projectName);
-      const interpolatedServiceId = this.templateSrv.replace(serviceId);
-      const cacheKey = `${interpolatedProject}-${interpolatedServiceId}`;
-      if (this.sloCache[cacheKey]) {
-        return this.sloCache[cacheKey];
+      if (this.sloCache[path]) {
+        return this.sloCache[path];
       }
 
-      const { data } = await this.doRequest(
-        `${this.baseUrl}v3/projects/${interpolatedProject}/services/${interpolatedServiceId}/serviceLevelObjectives`
-      );
-      console.log({ data });
-      this.sloCache[cacheKey] = (data.serviceLevelObjectives || []).map(
-        ({ name, displayName }: { name: string; displayName: string }) => ({
-          value: name.match(/([^\/]*)\/*$/)[1],
-          label: name.match(/([^\/]*)\/*$/)[1],
-          // label: displayName.match(/([^\/]*)\/*$/)[1],
-        })
-      );
+      const { data } = await this.resource(path);
+      this.sloCache[path] = (data[path.match(/([^\/]*)\/*$/)[1]] || []).map(mapFunc);
 
-      return this.sloCache[cacheKey];
+      return this.sloCache[path];
     } catch (error) {
       appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
       return [];
     }
   }
 
-  async doRequest(url: string, maxRetries = 1): Promise<any> {
+  async resource(path: string, maxRetries = 1): Promise<any> {
     return getBackendSrv()
       .datasourceRequest({
-        url: this.url + url,
+        url: this.baseUrl + path,
         method: 'GET',
       })
       .catch((error: any) => {
         if (maxRetries > 0) {
-          return this.doRequest(url, maxRetries - 1);
+          return this.resource(path, maxRetries - 1);
         }
 
         throw error;

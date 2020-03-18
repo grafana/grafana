@@ -122,7 +122,6 @@ export class Help extends React.Component<Props, State> {
           </div>
         )}
 
-        {console.log({ lastQueryError })}
         {lastQueryError && (
           <div className="gf-form">
             <pre className="gf-form-pre alert alert-error">{lastQueryError}</pre>

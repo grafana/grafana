@@ -47,7 +47,6 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   onDataResponse(response: any) {
-    console.log({ response });
     this.setState({ lastQueryError: '' });
   }
 
