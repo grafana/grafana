@@ -9,33 +9,20 @@ import { createTextBoxVariableAdapter } from '../textbox/adapter';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
-import {
-  initDashboardTemplating,
-  onTimeRangeUpdated,
-  OnTimeRangeUpdatedDependencies,
-  processVariables,
-  setOptionFromUrl,
-  validateVariableSelectionState,
-} from './actions';
+import { initDashboardTemplating, processVariables, setOptionFromUrl, validateVariableSelectionState } from './actions';
 import { addInitLock, addVariable, removeInitLock, resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
-import { TemplateSrv } from '../../templating/template_srv';
-import { Emitter } from '../../../core/core';
-import { createIntervalVariableAdapter } from '../interval/adapter';
-import { VariableRefresh } from '../../templating/variable';
-import { DashboardModel } from '../../dashboard/state';
-import { DashboardState } from '../../../types';
-import { dateTime, TimeRange } from '@grafana/data';
+
+variableAdapters.setInit(() => [
+  createQueryVariableAdapter(),
+  createCustomVariableAdapter(),
+  createTextBoxVariableAdapter(),
+  createConstantVariableAdapter(),
+]);
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
     it('then correct actions are dispatched', () => {
-      variableAdapters.setInit(() => [
-        createQueryVariableAdapter(),
-        createCustomVariableAdapter(),
-        createTextBoxVariableAdapter(),
-        createConstantVariableAdapter(),
-      ]);
       const query = variableMockBuilder('query').create();
       const constant = variableMockBuilder('constant').create();
       const datasource = variableMockBuilder('datasource').create();
@@ -83,12 +70,6 @@ describe('shared actions', () => {
 
   describe('when processVariables is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      variableAdapters.setInit(() => [
-        createQueryVariableAdapter(),
-        createCustomVariableAdapter(),
-        createTextBoxVariableAdapter(),
-        createConstantVariableAdapter(),
-      ]);
       const query = variableMockBuilder('query').create();
       const constant = variableMockBuilder('constant').create();
       const datasource = variableMockBuilder('datasource').create();
@@ -148,7 +129,6 @@ describe('shared actions', () => {
       ${null}       | ${[null]}
       ${undefined}  | ${[undefined]}
     `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
-      variableAdapters.setInit(() => [createCustomVariableAdapter()]);
       const custom = variableMockBuilder('custom')
         .withUuid('0')
         .withOptions('A', 'B', 'C')
@@ -182,7 +162,6 @@ describe('shared actions', () => {
         ${['A', 'B', 'C']} | ${'X'}       | ${'C'}       | ${'C'}
         ${undefined}       | ${'B'}       | ${undefined} | ${'A'}
       `('then correct actions are dispatched', async ({ withOptions, withCurrent, defaultValue, expected }) => {
-        variableAdapters.setInit(() => [createCustomVariableAdapter()]);
         let custom;
 
         if (!withOptions) {
@@ -238,7 +217,6 @@ describe('shared actions', () => {
       `(
         'then correct actions are dispatched',
         async ({ withOptions, withCurrent, defaultValue, expectedText, expectedSelected }) => {
-          variableAdapters.setInit(() => [createCustomVariableAdapter()]);
           let custom;
 
           if (!withOptions) {
@@ -283,162 +261,6 @@ describe('shared actions', () => {
           });
         }
       );
-    });
-  });
-
-  const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean }) => {
-    const range: TimeRange = {
-      from: dateTime(new Date().getTime()).subtract(1, 'minutes'),
-      to: dateTime(new Date().getTime()),
-      raw: {
-        from: 'now-1m',
-        to: 'now',
-      },
-    };
-    const updateTimeRangeMock = jest.fn();
-    const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
-    const emitMock = jest.fn();
-    const appEventsMock = ({ emit: emitMock } as unknown) as Emitter;
-    const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, appEvents: appEventsMock };
-    const templateVariableValueUpdatedMock = jest.fn();
-    const dashboard = ({
-      getModel: () =>
-        (({
-          templateVariableValueUpdated: templateVariableValueUpdatedMock,
-          startRefresh: startRefreshMock,
-        } as unknown) as DashboardModel),
-    } as unknown) as DashboardState;
-    const startRefreshMock = jest.fn();
-    const adapter = createIntervalVariableAdapter();
-    adapter.updateOptions = args.throw
-      ? jest.fn().mockRejectedValue('Something broke')
-      : jest.fn().mockResolvedValue({});
-    variableAdapters.setInit(() => [adapter, createConstantVariableAdapter()]);
-
-    // initial variable state
-    const initialVariable = variableMockBuilder('interval')
-      .withUuid('0')
-      .withName('interval-0')
-      .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
-      .withCurrent('1m')
-      .withRefresh(VariableRefresh.onTimeRangeChanged)
-      .create();
-
-    // the constant variable should be filtered out
-    const constant = variableMockBuilder('constant')
-      .withUuid('1')
-      .withName('constant-1')
-      .withOptions('a constant')
-      .withCurrent('a constant')
-      .create();
-    const initialState = {
-      templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
-      dashboard,
-    };
-
-    // updated variable state
-    const updatedVariable = variableMockBuilder('interval')
-      .withUuid('0')
-      .withName('interval-0')
-      .withOptions('1m')
-      .withCurrent('1m')
-      .withRefresh(VariableRefresh.onTimeRangeChanged)
-      .create();
-
-    const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
-    const state = { templating: { variables: { '0': variable, '1': { ...constant } } }, dashboard };
-    const getStateMock = jest
-      .fn()
-      .mockReturnValueOnce(initialState)
-      .mockReturnValue(state);
-    const dispatchMock = jest.fn();
-
-    return {
-      range,
-      dependencies,
-      dispatchMock,
-      getStateMock,
-      updateTimeRangeMock,
-      templateVariableValueUpdatedMock,
-      startRefreshMock,
-      emitMock,
-    };
-  };
-
-  describe('when onTimeRangeUpdated is dispatched', () => {
-    describe('and options are changed by update', () => {
-      it('then correct dependencies are called', async () => {
-        const {
-          range,
-          dependencies,
-          dispatchMock,
-          getStateMock,
-          updateTimeRangeMock,
-          templateVariableValueUpdatedMock,
-          startRefreshMock,
-          emitMock,
-        } = getOnTimeRangeUpdatedContext({ update: true });
-
-        await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
-
-        expect(dispatchMock).toHaveBeenCalledTimes(0);
-        expect(getStateMock).toHaveBeenCalledTimes(4);
-        expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
-        expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
-        expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(1);
-        expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(emitMock).toHaveBeenCalledTimes(0);
-      });
-    });
-
-    describe('and options are not changed by update', () => {
-      it('then correct dependencies are called', async () => {
-        const {
-          range,
-          dependencies,
-          dispatchMock,
-          getStateMock,
-          updateTimeRangeMock,
-          templateVariableValueUpdatedMock,
-          startRefreshMock,
-          emitMock,
-        } = getOnTimeRangeUpdatedContext({ update: false });
-
-        await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
-
-        expect(dispatchMock).toHaveBeenCalledTimes(0);
-        expect(getStateMock).toHaveBeenCalledTimes(3);
-        expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
-        expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
-        expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(0);
-        expect(startRefreshMock).toHaveBeenCalledTimes(1);
-        expect(emitMock).toHaveBeenCalledTimes(0);
-      });
-    });
-
-    describe('and updateOptions throws', () => {
-      it('then correct dependencies are called', async () => {
-        const {
-          range,
-          dependencies,
-          dispatchMock,
-          getStateMock,
-          updateTimeRangeMock,
-          templateVariableValueUpdatedMock,
-          startRefreshMock,
-          emitMock,
-        } = getOnTimeRangeUpdatedContext({ update: false, throw: true });
-
-        await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
-
-        expect(dispatchMock).toHaveBeenCalledTimes(0);
-        expect(getStateMock).toHaveBeenCalledTimes(1);
-        expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
-        expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
-        expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(0);
-        expect(startRefreshMock).toHaveBeenCalledTimes(0);
-        expect(emitMock).toHaveBeenCalledTimes(1);
-      });
     });
   });
 });

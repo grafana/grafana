@@ -65,7 +65,7 @@ export const variableMockBuilder = (type: VariableType) => {
   const initialState = variableAdapters.getIfExists(type)
     ? cloneDeep(variableAdapters.get(type).initialState)
     : { name: type, type, label: '', hide: VariableHide.dontHide, skipUrlSync: false };
-  const { index, global, ...rest } = initialState;
+  const { uuid, index, global, ...rest } = initialState;
   const model: any = { ...rest, name: type };
 
   const withUuid = (uuid: string) => {

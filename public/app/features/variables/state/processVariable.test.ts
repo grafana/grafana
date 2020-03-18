@@ -59,13 +59,14 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
   }),
 }));
 
+variableAdapters.setInit(() => [createCustomVariableAdapter(), createQueryVariableAdapter()]);
+
 describe('processVariable', () => {
   // these following processVariable tests will test the following base setup
   // custom doesn't depend on any other variable
   // queryDependsOnCustom depends on custom
   // queryNoDepends doesn't depend on any other variable
   const getAndSetupProcessVariableContext = () => {
-    variableAdapters.setInit(() => [createCustomVariableAdapter(), createQueryVariableAdapter()]);
     const custom = variableMockBuilder('custom')
       .withUuid('0')
       .withQuery('A,B,C')
