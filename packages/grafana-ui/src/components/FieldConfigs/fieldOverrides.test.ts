@@ -5,7 +5,6 @@ import {
   InterpolateFunction,
   GrafanaTheme,
   FieldMatcherID,
-  FieldDisplayOptions,
   MutableDataFrame,
   DataFrame,
   toDataFrame,
@@ -82,7 +81,7 @@ describe('FieldOverrides', () => {
   it('will apply field overrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
-      fieldOptions: src as FieldDisplayOptions, // defaults + overrides
+      fieldOptions: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       theme: (undefined as any) as GrafanaTheme,
     })[0];
@@ -108,7 +107,7 @@ describe('FieldOverrides', () => {
   it('will apply set min/max when asked', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
-      fieldOptions: src as FieldDisplayOptions, // defaults + overrides
+      fieldOptions: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       theme: (undefined as any) as GrafanaTheme,
       autoMinMax: true,

@@ -3,15 +3,15 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelEditorProps, FieldConfig } from '@grafana/data';
+import { FieldConfig, PanelEditorProps } from '@grafana/data';
 import {
   Switch,
   LegendOptions,
   GraphTooltipOptions,
   PanelOptionsGrid,
   PanelOptionsGroup,
-  FieldPropertiesEditor,
   Select,
+  FieldPropertiesEditor,
 } from '@grafana/ui';
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
@@ -47,13 +47,10 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
     this.onGraphOptionsChange({ showPoints: !this.props.options.graph.showPoints });
   };
 
-  onDefaultsChange = (field: FieldConfig) => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      fieldOptions: {
-        ...this.props.options.fieldOptions,
-        defaults: field,
-      },
+  onDefaultsChange = (field: FieldConfig, event?: React.SyntheticEvent<HTMLElement>, callback?: () => void) => {
+    this.props.onFieldConfigChange({
+      ...this.props.fieldConfig,
+      defaults: field,
     });
   };
 
@@ -76,7 +73,7 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
             <FieldPropertiesEditor
               showMinMax={false}
               onChange={this.onDefaultsChange}
-              value={this.props.options.fieldOptions.defaults}
+              value={this.props.fieldConfig.defaults}
             />
           </PanelOptionsGroup>
           <PanelOptionsGroup title="Tooltip">
