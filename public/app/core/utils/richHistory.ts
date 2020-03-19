@@ -6,6 +6,7 @@ import { DataQuery, ExploreMode } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import { serializeStateToUrlParam, SortOrder } from './explore';
+import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
 import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
@@ -16,6 +17,7 @@ export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
   starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
   activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
+  datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };
 
 /*
@@ -109,6 +111,12 @@ export function updateCommentInRichHistory(
     return query;
   });
 
+  store.setObject(RICH_HISTORY_KEY, updatedQueries);
+  return updatedQueries;
+}
+
+export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
+  const updatedQueries = richHistory.filter(query => query.ts !== ts);
   store.setObject(RICH_HISTORY_KEY, updatedQueries);
   return updatedQueries;
 }
@@ -256,4 +264,32 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   });
 
   return mappedQueriesToHeadings;
+}
+
+/* Create datasource list with images. If specific datasource retrieved from Rich history is not part of
+ * exploreDatasources add generic datasource image and add property isRemoved = true.
+ */
+export function createDatasourcesList(queriesDatasources: string[]) {
+  const exploreDatasources = getExploreDatasources();
+  const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
+
+  queriesDatasources.forEach(queryDsName => {
+    const index = exploreDatasources.findIndex(exploreDs => exploreDs.name === queryDsName);
+    if (index !== -1) {
+      datasources.push({
+        label: queryDsName,
+        value: queryDsName,
+        imgUrl: exploreDatasources[index].meta.info.logos.small,
+        isRemoved: false,
+      });
+    } else {
+      datasources.push({
+        label: queryDsName,
+        value: queryDsName,
+        imgUrl: 'public/img/icn-datasource.svg',
+        isRemoved: true,
+      });
+    }
+  });
+  return datasources;
 }
