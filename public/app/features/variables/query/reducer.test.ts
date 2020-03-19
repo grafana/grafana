@@ -1,6 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { queryVariableReducer, updateVariableOptions, updateVariableTags } from './reducer';
-import { QueryVariableModel, VariableOption } from '../../templating/variable';
+import { QueryVariableModel, VariableOption } from '../../templating/types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariablesState } from '../state/variablesReducer';
 import { getVariableTestContext } from '../state/helpers';

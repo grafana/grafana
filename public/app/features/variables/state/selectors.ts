@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { StoreState } from '../../../types';
-import { VariableModel } from '../../templating/variable';
+import { VariableModel } from '../../templating/types';
 import { getState } from '../../../store/store';
 import { EMPTY_UUID } from './types';
 

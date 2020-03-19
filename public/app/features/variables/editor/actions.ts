@@ -12,7 +12,7 @@ import { variableAdapters } from '../adapters';
 import { v4 } from 'uuid';
 import { AddVariable, EMPTY_UUID, toVariablePayload, VariableIdentifier } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
-import { VariableType } from '../../templating/variable';
+import { VariableType } from '../../templating/types';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {

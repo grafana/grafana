@@ -2,7 +2,7 @@ import { ComponentType } from 'react';
 import { Reducer } from 'redux';
 import { UrlQueryValue } from '@grafana/runtime';
 
-import { VariableModel, VariableOption, VariableType } from '../templating/variable';
+import { VariableModel, VariableOption, VariableType } from '../templating/types';
 import { VariableEditorProps } from './editor/types';
 import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';

@@ -1,11 +1,11 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { variableRegex } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
 import { getVariableWithName } from '../variables/state/selectors';
 import { getState } from '../../store/store';
 import { getConfig } from 'app/core/config';
+import { variableRegex } from './utils';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');

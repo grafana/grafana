@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/variable';
+import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 import { DataSourceSelectItem } from '@grafana/data';

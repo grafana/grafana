@@ -2,7 +2,7 @@ import { combineReducers } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 
 import { EMPTY_UUID } from './types';
-import { VariableHide, VariableModel, VariableRefresh, VariableType } from '../../templating/variable';
+import { VariableHide, VariableModel, VariableRefresh, VariableType } from '../../templating/types';
 import { variablesReducer, VariablesState } from './variablesReducer';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';

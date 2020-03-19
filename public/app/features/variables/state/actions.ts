@@ -9,7 +9,7 @@ import {
   VariableOption,
   VariableRefresh,
   VariableWithOptions,
-} from '../../templating/variable';
+} from '../../templating/types';
 import { StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';

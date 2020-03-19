@@ -1,4 +1,4 @@
-import { VariableModel, VariableType } from '../../templating/variable';
+import { VariableModel, VariableType } from '../../templating/types';
 import { VariablesState } from './variablesReducer';
 
 export const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';

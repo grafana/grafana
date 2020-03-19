@@ -9,7 +9,7 @@ import {
   VariableRefresh,
   VariableSort,
   VariableTag,
-} from '../../templating/variable';
+} from '../../templating/types';
 import templateSrv from '../../templating/template_srv';
 import {
   ALL_VARIABLE_TEXT,

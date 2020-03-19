@@ -22,7 +22,7 @@ import { toVariableIdentifier, toVariablePayload } from './types';
 import { TemplateSrv } from '../../templating/template_srv';
 import { Emitter } from '../../../core/core';
 import { createIntervalVariableAdapter } from '../interval/adapter';
-import { VariableRefresh } from '../../templating/variable';
+import { VariableRefresh } from '../../templating/types';
 import { DashboardModel } from '../../dashboard/state';
 import { DashboardState } from '../../../types';
 import { dateTime, TimeRange } from '@grafana/data';

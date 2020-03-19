@@ -5,7 +5,7 @@ import { validateVariableSelectionState } from '../state/actions';
 import { DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getVariable } from '../state/selectors';
-import { DataSourceVariableModel } from '../../templating/variable';
+import { DataSourceVariableModel } from '../../templating/types';
 import templateSrv from '../../templating/template_srv';
 import _ from 'lodash';
 import { changeVariableEditorExtended } from '../editor/reducer';

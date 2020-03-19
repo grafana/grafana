@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/variable';
+import { CustomVariableModel, VariableHide, VariableOption } from '../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
