@@ -33,15 +33,15 @@ export const OptionsPaneContent: React.FC<{
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
-      const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
+      const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldOptions) {
+      if (!fieldConfig) {
         return null;
       }
 
       return (
         <DefaultFieldConfigEditor
-          config={fieldOptions}
+          config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
           data={data.series}
@@ -52,15 +52,15 @@ export const OptionsPaneContent: React.FC<{
   );
   const renderFieldOverrideOptions = useCallback(
     (plugin: PanelPlugin) => {
-      const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
+      const fieldConfig = panel.getFieldConfig();
 
-      if (!fieldOptions) {
+      if (!fieldConfig) {
         return null;
       }
 
       return (
         <OverrideFieldConfigEditor
-          config={fieldOptions}
+          config={fieldConfig}
           plugin={plugin}
           onChange={onFieldConfigsChange}
           data={data.series}
