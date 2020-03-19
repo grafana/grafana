@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-_basedir=$(dirname $0)
+_basedir=$(dirname "$0")
 cd "$_basedir"
 
 docker_build () {
