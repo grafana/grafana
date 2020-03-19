@@ -1124,8 +1124,7 @@ workflows:
             - build-enterprise-windows-installer
             - end-to-end-tests
             - build-release-publisher
-      - publish-storybook:
-          filters: *filter-master-or-release
+      - publish-storybook
       - build-docker-images:
           # No filters, meaning this job runs for all branches
           name: build-oss-docker-images
