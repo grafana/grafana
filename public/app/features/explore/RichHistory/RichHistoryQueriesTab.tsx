@@ -8,7 +8,6 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 // Utils
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { getExploreDatasources } from '../state/selectors';
 
 import { SortOrder } from 'app/core/utils/explore';
 import {
@@ -16,6 +15,7 @@ import {
   mapNumbertoTimeInSlider,
   createRetentionPeriodBoundary,
   mapQueriesToHeadings,
+  createDatasourcesList,
 } from 'app/core/utils/richHistory';
 
 // Components
@@ -136,14 +136,8 @@ export function RichHistoryQueriesTab(props: Props) {
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
-  const listOfDsNamesWithQueries = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
-
-  /* Display only explore datasoources, that have saved queries */
-  const datasources = getExploreDatasources()
-    ?.filter(ds => listOfDsNamesWithQueries.includes(ds.name))
-    .map(d => {
-      return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
-    });
+  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
+  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
   const filteredQueriesByDatasource = datasourceFilters
@@ -193,7 +187,7 @@ export function RichHistoryQueriesTab(props: Props) {
             <div aria-label="Filter datasources" className={styles.multiselect}>
               <Select
                 isMulti={true}
-                options={datasources}
+                options={listOfDatasources}
                 value={datasourceFilters}
                 placeholder="Filter queries for specific data sources(s)"
                 onChange={onSelectDatasourceFilters}
@@ -215,9 +209,18 @@ export function RichHistoryQueriesTab(props: Props) {
               <div className={styles.heading}>
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
-              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => (
-                <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />
-              ))}
+              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
+                const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+                return (
+                  <RichHistoryCard
+                    query={q}
+                    key={q.ts}
+                    exploreId={exploreId}
+                    dsImg={listOfDatasources[idx].imgUrl}
+                    isRemoved={listOfDatasources[idx].isRemoved}
+                  />
+                );
+              })}
             </div>
           );
         })}
