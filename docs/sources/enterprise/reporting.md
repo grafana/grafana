@@ -60,5 +60,5 @@ To troubleshoot and get more log information, enable debug logging in the config
 
 ```bash
 [log]
-filters = saml.auth:debug
+filters = report:debug
 ```
