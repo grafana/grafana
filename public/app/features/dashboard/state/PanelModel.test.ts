@@ -1,6 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelProps } from '@grafana/data';
+import { ConfigOverrideRule, PanelProps } from '@grafana/data';
 import { ComponentClass } from 'react';
 
 class TablePanelCtrl {}
@@ -53,9 +53,31 @@ describe('PanelModel', () => {
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: persistedOptionsMock,
+        fieldConfig: {
+          defaults: {
+            unit: 'mpg',
+          },
+          overrides: [
+            {
+              matcher: {
+                id: '1',
+                options: {},
+              },
+              properties: [],
+            },
+          ],
+        },
       };
 
       model = new PanelModel(modelJson);
+      const overrideMock: ConfigOverrideRule = {
+        matcher: {
+          id: '2',
+          options: {},
+        },
+        properties: [],
+      };
+
       const panelPlugin = getPanelPlugin(
         {
           id: 'table',
@@ -64,6 +86,13 @@ describe('PanelModel', () => {
         TablePanelCtrl // angular
       );
       panelPlugin.setDefaults(defaultOptionsMock);
+      panelPlugin.setFieldConfigDefaults({
+        defaults: {
+          unit: 'flop',
+          decimals: 2,
+        },
+        overrides: [overrideMock],
+      });
       model.pluginLoaded(panelPlugin);
     });
 
@@ -77,6 +106,17 @@ describe('PanelModel', () => {
 
     it('should apply option defaults but not override if array is changed', () => {
       expect(model.getOptions().arrayWith2Values.length).toBe(1);
+    });
+
+    it('should merge override field config options', () => {
+      expect(model.getFieldOverrideOptions().fieldOptions.overrides.length).toBe(2);
+    });
+
+    it('should apply field config defaults', () => {
+      // default unit is overriden by model
+      expect(model.getFieldOverrideOptions().fieldOptions.defaults.unit).toBe('mpg');
+      // default decimals are aplied
+      expect(model.getFieldOverrideOptions().fieldOptions.defaults.decimals).toBe(2);
     });
 
     it('should set model props on instance', () => {
