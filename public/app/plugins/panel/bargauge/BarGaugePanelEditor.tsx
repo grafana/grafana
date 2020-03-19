@@ -116,14 +116,16 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
                 value={displayModes.find(item => item.value === options.displayMode)}
               />
             </div>
-            {options.displayMode !== 'lcd' && (
-              <Switch
-                label="Unfilled"
-                labelClass={`width-${labelWidth}`}
-                checked={options.showUnfilled}
-                onChange={this.onToggleShowUnfilled}
-              />
-            )}
+            <>
+              {options.displayMode !== 'lcd' && (
+                <Switch
+                  label="Unfilled"
+                  labelClass={`width-${labelWidth}`}
+                  checked={options.showUnfilled}
+                  onChange={this.onToggleShowUnfilled}
+                />
+              )}
+            </>
           </PanelOptionsGroup>
           <PanelOptionsGroup title="Field">
             <FieldPropertiesEditor

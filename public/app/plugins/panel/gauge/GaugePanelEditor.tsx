@@ -84,7 +84,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     });
   };
 
-  onDefaultsChange = (field: FieldConfig, event?: React.SyntheticEvent<HTMLElement>, callback?: () => void) => {
+  onDefaultsChange = (field: FieldConfig) => {
     this.props.onFieldConfigChange({
       ...this.props.fieldConfig,
       defaults: field,

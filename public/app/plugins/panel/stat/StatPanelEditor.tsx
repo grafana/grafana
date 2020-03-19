@@ -63,7 +63,7 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
   onJustifyModeChanged = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, justifyMode: value });
   onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
 
-  onDefaultsChange = (field: FieldConfig, event?: React.SyntheticEvent<HTMLElement>, callback?: () => void) => {
+  onDefaultsChange = (field: FieldConfig) => {
     this.props.onFieldConfigChange({
       ...this.props.fieldConfig,
       defaults: field,
