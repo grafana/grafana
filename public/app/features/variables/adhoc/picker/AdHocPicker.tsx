@@ -3,13 +3,13 @@ import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { AdHocVariableModel, AdHocVariableFilter } from 'app/features/templating/variable';
 import { SegmentAsync } from '@grafana/ui';
-import { VariablePickerProps } from '../types';
+import { VariablePickerProps } from '../../pickers/types';
 import { OperatorSegment } from './OperatorSegment';
 import { SelectableValue, MetricFindValue } from '@grafana/data';
 import { AdHocFilterBuilder } from './AdHocFilterBuilder';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ConditionSegment } from './ConditionSegment';
-import { addFilter, removeFilter, changeFilter } from '../../adhoc/actions';
+import { addFilter, removeFilter, changeFilter } from '../actions';
 
 const REMOVE_FILTER_KEY = '-- remove filter --';
 

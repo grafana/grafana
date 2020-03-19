@@ -2,7 +2,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { AdHocVariableModel } from '../../templating/variable';
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
-import { AdHocPicker } from '../pickers';
+import { AdHocPicker } from './picker/AdHocPicker';
 import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer';
 import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { setFiltersFromUrl } from './actions';
