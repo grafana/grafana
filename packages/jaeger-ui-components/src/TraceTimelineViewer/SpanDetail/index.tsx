@@ -29,6 +29,7 @@ import { KeyValuePair, Link, Log, Span } from '../../types/trace';
 import AccordianReferences from './AccordianReferences';
 import { createStyle } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
+import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
 
 const getStyles = createStyle(() => {
   return {
@@ -129,11 +130,11 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   return (
     <div>
-      <div className="ub-flex ub-items-center">
-        <h2 className="ub-flex-auto ub-m0">{operationName}</h2>
-        <LabeledList className="ub-tx-right-align" dividerClassName={styles.divider} items={overviewItems} />
+      <div className={cx(ubFlex, ubItemsCenter)}>
+        <h2 className={cx(ubFlexAuto, ubM0)}>{operationName}</h2>
+        <LabeledList className={ubTxRightAlign} dividerClassName={styles.divider} items={overviewItems} />
       </div>
-      <UIDivider className={cx(styles.divider, 'ub-my1')} />
+      <UIDivider className={cx(styles.divider, ubMy1)} />
       <div>
         <div>
           <AccordianKeyValues
@@ -145,7 +146,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           />
           {process.tags && (
             <AccordianKeyValues
-              className="ub-mb1"
+              className={ubMb1}
               data={process.tags}
               label="Process"
               linksGetter={linksGetter}

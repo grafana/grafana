@@ -14,14 +14,16 @@
 
 import * as React from 'react';
 import { css } from 'emotion';
+import cx from 'classnames';
 
 import TimelineCollapser from './TimelineCollapser';
 import TimelineColumnResizer from './TimelineColumnResizer';
 import TimelineViewingLayer from './TimelineViewingLayer';
 import Ticks from '../Ticks';
 import TimelineRow from '../TimelineRow';
-import { TUpdateViewRangeTimeFunction, IViewRangeTime, ViewRangeTimeUpdate } from '../types';
+import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 import { createStyle } from '../../Theme';
+import { ubFlex, ubPx2 } from '../../uberUtilityStyles';
 
 const getStyles = createStyle(() => {
   return {
@@ -55,7 +57,7 @@ type TimelineHeaderRowProps = {
   onExpandOne: () => void;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
-  viewRangeTime: IViewRangeTime;
+  viewRangeTime: ViewRangeTime;
 };
 
 export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
@@ -76,7 +78,7 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
   const styles = getStyles();
   return (
     <TimelineRow className={styles.TimelineHeaderRow} data-test-id="TimelineHeaderRow">
-      <TimelineRow.Cell className="ub-flex ub-px2" width={nameColumnWidth}>
+      <TimelineRow.Cell className={cx(ubFlex, ubPx2)} width={nameColumnWidth}>
         <h3 className={styles.TimelineHeaderRow}>Service &amp; Operation</h3>
         <TimelineCollapser
           onCollapseAll={onCollapseAll}

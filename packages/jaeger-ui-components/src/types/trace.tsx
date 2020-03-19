@@ -29,12 +29,12 @@ export type Link = {
 
 export type Log = {
   timestamp: number;
-  fields: Array<KeyValuePair>;
+  fields: KeyValuePair[];
 };
 
 export type Process = {
   serviceName: string;
-  tags: Array<KeyValuePair>;
+  tags: KeyValuePair[];
 };
 
 export type SpanReference = {
@@ -52,10 +52,10 @@ export type SpanData = {
   operationName: string;
   startTime: number;
   duration: number;
-  logs: Array<Log>;
-  tags?: Array<KeyValuePair>;
-  references?: Array<SpanReference>;
-  warnings?: Array<string> | null;
+  logs: Log[];
+  tags?: KeyValuePair[];
+  references?: SpanReference[];
+  warnings?: string[] | null;
 };
 
 export type Span = SpanData & {
@@ -66,7 +66,7 @@ export type Span = SpanData & {
   tags: NonNullable<SpanData['tags']>;
   references: NonNullable<SpanData['references']>;
   warnings: NonNullable<SpanData['warnings']>;
-  subsidiarilyReferencedBy: Array<SpanReference>;
+  subsidiarilyReferencedBy: SpanReference[];
 };
 
 export type TraceData = {
@@ -80,5 +80,5 @@ export type Trace = TraceData & {
   spans: Span[];
   startTime: number;
   traceName: string;
-  services: { name: string; numberOfSpans: number }[];
+  services: Array<{ name: string; numberOfSpans: number }>;
 };

@@ -95,7 +95,6 @@ export function KeyValuesSummary(props: { data?: KeyValuePair[] }) {
     <ul className={styles.summary}>
       {data.map((item, i) => (
         // `i` is necessary in the key because item.key can repeat
-        // eslint-disable-next-line react/no-array-index-key
         <li className={styles.summaryItem} key={`${item.key}-${i}`}>
           <span className={styles.summaryLabel}>{item.key}</span>
           <span className={styles.summaryDelim}>=</span>
@@ -116,7 +115,7 @@ export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
   const styles = getStyles();
   const iconCls = cx('u-align-icon', { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
-  let headerProps: Object | null = null;
+  let headerProps: {} | null = null;
   if (interactive) {
     arrow = isOpen ? <IoIosArrowDown className={iconCls} /> : <IoIosArrowRight className={iconCls} />;
     headerProps = {

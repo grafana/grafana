@@ -23,6 +23,7 @@ import { TNil } from '../../types';
 import { KeyValuePair, Link } from '../../types/trace';
 import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { createStyle } from '../../Theme';
+import { ubInlineBlock } from '../../uberUtilityStyles';
 
 export const getStyles = createStyle(() => {
   const copyIcon = css`
@@ -105,7 +106,6 @@ const linkValueList = (links: Link[]) => (
   <UIMenu>
     {links.map(({ text, url }, index) => (
       // `index` is necessary in the key because url can repeat
-      // eslint-disable-next-line react/no-array-index-key
       <UIMenuItem key={`${url}-${index}`}>
         <LinkValue href={url}>{text}</LinkValue>
       </UIMenuItem>
@@ -129,8 +129,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             const markup = {
               __html: jsonMarkup(parseIfComplexJson(row.value)),
             };
-            // eslint-disable-next-line react/no-danger
-            const jsonTable = <div className="ub-inline-block" dangerouslySetInnerHTML={markup} />;
+            const jsonTable = <div className={ubInlineBlock} dangerouslySetInnerHTML={markup} />;
             const links = linksGetter ? linksGetter(data, i) : null;
             let valueMarkup;
             if (links && links.length === 1) {
@@ -156,7 +155,6 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             }
             return (
               // `i` is necessary in the key because row.key can repeat
-              // eslint-disable-next-line react/no-array-index-key
               <tr className={styles.row} key={`${row.key}-${i}`}>
                 <td className={styles.keyColumn} data-test-id="KeyValueTable--keyColumn">
                   {row.key}

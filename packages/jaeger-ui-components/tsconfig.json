@@ -1,0 +1,4 @@
+{
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts*", "typings"]
+}

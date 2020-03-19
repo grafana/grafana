@@ -86,7 +86,7 @@ export const UIIcon: React.ComponentType<IconProps> = function UIIcon(props: Ico
 export type DropdownProps = {
   overlay: React.ReactNode;
   placement?: 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
-  trigger?: ('click' | 'hover' | 'contextMenu')[];
+  trigger?: Array<'click' | 'hover' | 'contextMenu'>;
   children?: React.ReactNode;
 };
 

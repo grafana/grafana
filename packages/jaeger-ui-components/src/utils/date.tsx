@@ -89,7 +89,7 @@ export function formatSecondTime(duration: number) {
  * 5000ms => 5s
  * 1000μs => 1ms
  */
-export function formatDuration(duration: number, inputUnit: string = 'microseconds'): string {
+export function formatDuration(duration: number, inputUnit = 'microseconds'): string {
   let d = duration;
   if (inputUnit === 'microseconds') {
     d = duration / 1000;
@@ -102,7 +102,7 @@ export function formatDuration(duration: number, inputUnit: string = 'microsecon
   return _round(d, 2) + units;
 }
 
-export function formatRelativeDate(value: any, fullMonthName: boolean = false) {
+export function formatRelativeDate(value: any, fullMonthName = false) {
   const m = moment.isMoment(value) ? value : moment(value);
   const monthFormat = fullMonthName ? 'MMMM' : 'MMM';
   const dt = new Date();

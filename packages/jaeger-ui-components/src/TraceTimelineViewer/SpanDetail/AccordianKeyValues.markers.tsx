@@ -12,5 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// eslint-disable-next-line import/prefer-default-export
 export const LABEL = 'label';

@@ -23,6 +23,7 @@ import { formatDuration } from '../utils';
 import { TNil } from '../../types';
 import { Log, KeyValuePair, Link } from '../../types/trace';
 import { createStyle } from '../../Theme';
+import { ubMb1 } from '../../uberUtilityStyles';
 
 const getStyles = createStyle(() => {
   return {
@@ -66,7 +67,7 @@ export default function AccordianLogs(props: AccordianLogsProps) {
   const { interactive, isOpen, linksGetter, logs, openedItems, onItemToggle, onToggle, timestamp } = props;
   let arrow: React.ReactNode | null = null;
   let HeaderComponent: 'span' | 'a' = 'span';
-  let headerProps: Object | null = null;
+  let headerProps: {} | null = null;
   if (interactive) {
     arrow = isOpen ? <IoIosArrowDown className="u-align-icon" /> : <IoIosArrowRight className="u-align-icon" />;
     HeaderComponent = 'a';
@@ -88,9 +89,8 @@ export default function AccordianLogs(props: AccordianLogsProps) {
           {_sortBy(logs, 'timestamp').map((log, i) => (
             <AccordianKeyValues
               // `i` is necessary in the key because timestamps can repeat
-              // eslint-disable-next-line react/no-array-index-key
               key={`${log.timestamp}-${i}`}
-              className={i < logs.length - 1 ? 'ub-mb1' : null}
+              className={i < logs.length - 1 ? ubMb1 : null}
               data={log.fields || []}
               highContrast
               interactive={interactive}

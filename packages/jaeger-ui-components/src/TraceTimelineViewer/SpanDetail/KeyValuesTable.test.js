@@ -19,6 +19,7 @@ import CopyIcon from '../../common/CopyIcon';
 
 import KeyValuesTable, { LinkValue, getStyles } from './KeyValuesTable';
 import { UIDropdown, UIIcon } from '../../uiElementsContext';
+import {ubInlineBlock} from "../../uberUtilityStyles";
 
 describe('LinkValue', () => {
   const title = 'titleValue';
@@ -139,7 +140,7 @@ describe('<KeyValuesTable>', () => {
   });
 
   it('renders a span value containing numeric string correctly', () => {
-    const el = wrapper.find('.ub-inline-block');
+    const el = wrapper.find(`.${ubInlineBlock}`);
     expect(el.length).toBe(data.length);
     el.forEach((valueDiv, i) => {
       if (data[i].key !== 'jsonkey') {

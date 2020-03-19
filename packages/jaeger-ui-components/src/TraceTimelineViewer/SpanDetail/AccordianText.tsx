@@ -49,12 +49,12 @@ type AccordianTextProps = {
 };
 
 export default function AccordianText(props: AccordianTextProps) {
-  const { className, data, headerClassName, highContrast, interactive, isOpen, label, onToggle } = props;
+  const { className, data, headerClassName, interactive, isOpen, label, onToggle } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
   const accordianKeyValuesStyles = getAccordianKeyValuesStyles();
   const iconCls = cx('u-align-icon', { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
-  let headerProps: Object | null = null;
+  let headerProps: {} | null = null;
   if (interactive) {
     arrow = isOpen ? <IoIosArrowDown className={iconCls} /> : <IoIosArrowRight className={iconCls} />;
     headerProps = {

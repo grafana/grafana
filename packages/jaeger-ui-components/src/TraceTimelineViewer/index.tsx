@@ -19,7 +19,7 @@ import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView from './VirtualizedTraceView';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
-import { TUpdateViewRangeTimeFunction, IViewRange, ViewRangeTimeUpdate } from './types';
+import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 import { TNil } from '../types';
 import { Span, Trace, Log, KeyValuePair, Link } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
@@ -73,7 +73,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   trace: Trace;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
-  viewRange: IViewRange;
+  viewRange: ViewRange;
   focusSpan: (uiFind: string) => void;
   createLinkToExternalSpan: (traceID: string, spanID: string) => string;
 

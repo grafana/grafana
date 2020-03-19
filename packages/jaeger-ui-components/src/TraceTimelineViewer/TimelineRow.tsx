@@ -16,6 +16,7 @@ import * as React from 'react';
 import { css } from 'emotion';
 import cx from 'classnames';
 import { createStyle } from '../Theme';
+import { ubRelative } from '../uberUtilityStyles';
 
 const getStyles = createStyle(() => {
   return {
@@ -32,11 +33,11 @@ type TTimelineRowProps = {
   className?: string;
 };
 
-interface ITimelineRowCellProps extends React.HTMLAttributes<HTMLDivElement> {
+interface TimelineRowCellProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   width: number;
-  style?: Object;
+  style?: {};
 }
 
 export default function TimelineRow(props: TTimelineRowProps) {
@@ -53,12 +54,12 @@ TimelineRow.defaultProps = {
   className: '',
 };
 
-export function TimelineRowCell(props: ITimelineRowCellProps) {
+export function TimelineRowCell(props: TimelineRowCellProps) {
   const { children, className = '', width, style, ...rest } = props;
   const widthPercent = `${width * 100}%`;
   const mergedStyle = { ...style, flexBasis: widthPercent, maxWidth: widthPercent };
   return (
-    <div className={`ub-relative ${className}`} style={mergedStyle} {...rest}>
+    <div className={cx(ubRelative, className)} style={mergedStyle} {...(rest as any)}>
       {children}
     </div>
   );

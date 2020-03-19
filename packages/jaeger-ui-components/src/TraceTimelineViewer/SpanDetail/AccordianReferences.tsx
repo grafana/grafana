@@ -118,18 +118,18 @@ export function References(props: ReferenceItemProps) {
 }
 
 export default class AccordianReferences extends React.PureComponent<AccordianReferencesProps> {
-  static defaultProps = {
+  static defaultProps: Partial<AccordianReferencesProps> = {
     highContrast: false,
     interactive: true,
     onToggle: null,
   };
 
   render() {
-    const { data, highContrast, interactive, isOpen, onToggle, focusSpan } = this.props;
+    const { data, interactive, isOpen, onToggle, focusSpan } = this.props;
     const isEmpty = !Array.isArray(data) || !data.length;
     const iconCls = 'u-align-icon';
     let arrow: React.ReactNode | null = null;
-    let headerProps: Object | null = null;
+    let headerProps: {} | null = null;
     if (interactive) {
       arrow = isOpen ? <IoIosArrowDown className={iconCls} /> : <IoIosArrowRight className={iconCls} />;
       headerProps = {

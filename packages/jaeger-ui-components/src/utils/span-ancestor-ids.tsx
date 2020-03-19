@@ -30,7 +30,9 @@ function getFirstAncestor(span: Span): Span | TNil {
 
 export default function spanAncestorIds(span: Span | TNil): string[] {
   const ancestorIDs: string[] = [];
-  if (!span) return ancestorIDs;
+  if (!span) {
+    return ancestorIDs;
+  }
   let ref = getFirstAncestor(span);
   while (ref) {
     ancestorIDs.push(ref.spanID);
