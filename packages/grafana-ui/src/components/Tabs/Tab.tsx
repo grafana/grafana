@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
 
 export interface TabProps {
   label: string;

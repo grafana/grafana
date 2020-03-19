@@ -7,7 +7,6 @@ import {
   Tab,
   TabContent,
   TabsBar,
-  Container,
   useTheme,
   Forms,
   DataLinksInlineEditor,
@@ -148,6 +147,7 @@ export const OptionsPaneContent: React.FC<{
               {activeTab === 'defaults' && renderFieldOptions(plugin)}
               {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
               {activeTab === 'panel' && renderPanelSettings()}
+              {activeTab === 'movetofirsttab' && renderCustomPanelSettings(plugin)}
             </CustomScrollbar>
           </TabContent>
         </div>
