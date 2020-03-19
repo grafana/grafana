@@ -46,7 +46,9 @@ export const SearchResults: FC<Props> = ({
   };
 
   return !results ? (
-    <p>No results</p>
+    <div className="search-results">
+      <em className="muted">No dashboards found.</em>
+    </div>
   ) : (
     <>
       {results.map(section => (
@@ -67,11 +69,7 @@ export const SearchResults: FC<Props> = ({
                   <Icon name="cog" />
                 </a>
               )}
-              {section.expanded ? (
-                <Icon name="angle-down" className="search-section__header__toggle" />
-              ) : (
-                <Icon name="angle-right" className="search-section__header__toggle" />
-              )}
+              <Icon name={section.expanded ? 'angle-down' : 'angle-right'} className="search-section__header__toggle" />
             </div>
           ) : (
             <div className="search-section__header" />
