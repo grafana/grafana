@@ -18,7 +18,7 @@ import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
 
-interface AdHocTableOptions {
+export interface AdHocTableOptions {
   datasource: string;
   key: string;
   value: string;
@@ -28,7 +28,7 @@ interface AdHocTableOptions {
 const filterTableName = 'Filters';
 
 export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     let variable = getVariableByOptions(options, getState());
 
     if (!variable) {
@@ -41,43 +41,43 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
     if (index === -1) {
       const { value, key, operator } = options;
       const filter = { value, key, operator, condition: '' };
-      return dispatch(addFilter(variable.uuid!, filter));
+      return await dispatch(addFilter(variable.uuid!, filter));
     }
 
     const filter = { ...variable.filters[index], operator: options.operator };
-    return dispatch(changeFilter(variable.uuid!, { index, filter }));
+    return await dispatch(changeFilter(variable.uuid!, { index, filter }));
   };
 };
 
 export const changeFilter = (uuid: string, update: AdHocVariabelFilterUpdate): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const variable = getVariable(uuid, getState());
     dispatch(filterUpdated(toVariablePayload(variable, update)));
-    dispatch(variableUpdated(toVariableIdentifier(variable), true));
+    await dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
 };
 
 export const removeFilter = (uuid: string, index: number): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const variable = getVariable(uuid, getState());
     dispatch(filterRemoved(toVariablePayload(variable, index)));
-    dispatch(variableUpdated(toVariableIdentifier(variable), true));
+    await dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
 };
 
 export const addFilter = (uuid: string, filter: AdHocVariableFilter): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const variable = getVariable(uuid, getState());
     dispatch(filterAdded(toVariablePayload(variable, filter)));
-    dispatch(variableUpdated(toVariableIdentifier(variable), true));
+    await dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
 };
 
 export const setFiltersFromUrl = (uuid: string, filters: AdHocVariableFilter[]): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const variable = getVariable(uuid, getState());
     dispatch(filtersRestored(toVariablePayload(variable, filters)));
-    dispatch(variableUpdated(toVariableIdentifier(variable), true));
+    await dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
 };
 
@@ -141,11 +141,12 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
       ...cloneDeep(initialAdHocVariableModelState),
       datasource: options.datasource,
       name: filterTableName,
+      uuid: v4(),
     };
 
     const global = false;
     const index = Object.values(getState().templating.variables).length;
-    const identifier: VariableIdentifier = { type: 'adhoc', uuid: v4() };
+    const identifier: VariableIdentifier = { type: 'adhoc', uuid: model.uuid };
 
     dispatch(
       addVariable(

@@ -20,7 +20,7 @@ export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoa
       <div className="gf-form">
         <SegmentAsync
           className="query-segment-key"
-          Component={renderAddButton(key)}
+          Component={filterAddButton(key)}
           value={key}
           onChange={({ value }) => setKey(value ?? '')}
           loadOptions={onLoadKeys}
@@ -30,7 +30,7 @@ export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoa
   }
 
   return (
-    <>
+    <React.Fragment key="filter-builder">
       {appendBefore}
       <div className="gf-form">
         <SegmentAsync
@@ -60,11 +60,11 @@ export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoa
           loadOptions={() => onLoadValues(key)}
         />
       </div>
-    </>
+    </React.Fragment>
   );
 };
 
-function renderAddButton(key: string | null): ReactElement | undefined {
+function filterAddButton(key: string | null): ReactElement | undefined {
   if (key !== null) {
     return undefined;
   }

@@ -17,7 +17,7 @@ export const getVariable = <T extends VariableModel = VariableModel>(
 };
 
 export const getFilteredVariables = (filter: (model: VariableModel) => boolean, state: StoreState = getState()) => {
-  return Object.values(getState().templating.variables).filter(filter);
+  return Object.values(state.templating.variables).filter(filter);
 };
 
 export const getVariableWithName = (name: string, state: StoreState = getState()) => {

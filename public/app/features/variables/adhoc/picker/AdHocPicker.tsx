@@ -11,8 +11,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ConditionSegment } from './ConditionSegment';
 import { addFilter, removeFilter, changeFilter } from '../actions';
 
-const REMOVE_FILTER_KEY = '-- remove filter --';
-
 interface OwnProps extends VariablePickerProps<AdHocVariableModel> {}
 
 interface ConnectedProps {}
@@ -25,7 +23,8 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-const removeValue = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
+const REMOVE_FILTER_KEY = '-- remove filter --';
+const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 export class AdHocPickerUnconnected extends PureComponent<Props> {
   onChange = (index: number, prop: string) => (key: SelectableValue<string>) => {
     const { uuid, filters } = this.props.variable;
@@ -63,7 +62,7 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
 
   fetchFilterKeysWithRemove = async () => {
     const keys = await this.fetchFilterKeys();
-    return [removeValue, ...keys];
+    return [REMOVE_VALUE, ...keys];
   };
 
   fetchFilterValues = async (key: string) => {

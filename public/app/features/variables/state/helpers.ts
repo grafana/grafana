@@ -8,6 +8,7 @@ import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';
 import { locationReducer } from '../../../core/reducers/location';
 import { VariableAdapter, variableAdapters } from '../adapters';
+import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -145,6 +146,17 @@ export const variableMockBuilder = (type: VariableType) => {
 
   return instance;
 };
+
+export const getRootReducer = () =>
+  combineReducers({
+    location: locationReducer,
+    dashboard: dashboardReducer,
+    templating: combineReducers({
+      optionsPicker: optionsPickerReducer,
+      editor: variableEditorReducer,
+      variables: variablesReducer,
+    }),
+  });
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
