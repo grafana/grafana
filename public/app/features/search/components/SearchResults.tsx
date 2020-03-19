@@ -13,8 +13,9 @@ interface Props {
   onFolderExpanding: any;
   onToggleSelection: (item: DashboardSectionItem | DashboardSection, event: any) => void;
   editable: boolean;
-  selectors: typeof e2e.pages.Dashboards.selectors;
 }
+
+const { selectors } = e2e.pages.Dashboards;
 
 export const SearchResults: FC<Props> = ({
   results,
@@ -23,7 +24,6 @@ export const SearchResults: FC<Props> = ({
   onFolderExpanding,
   onToggleSelection,
   editable,
-  selectors,
 }) => {
   const toggleFolderExpand = (section: DashboardSection) => {
     if (section.toggle) {
