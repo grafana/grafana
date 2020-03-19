@@ -40,7 +40,7 @@ func (hs HealthStatus) String() string {
 type CheckHealthResult struct {
 	Status      HealthStatus
 	Message     string
-	JSONDetails string
+	JSONDetails []byte
 }
 
 func checkHealthResultFromProto(protoResp *pluginv2.CheckHealthResponse) *CheckHealthResult {
@@ -57,6 +57,23 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealthResponse) *CheckH
 		Message:     protoResp.Message,
 		JSONDetails: protoResp.JsonDetails,
 	}
+}
+
+func collectMetricsResultFromProto(protoResp *pluginv2.CollectMetricsResponse) *CollectMetricsResult {
+	var prometheusMetrics []byte
+
+	if protoResp.Metrics != nil {
+		prometheusMetrics = protoResp.Metrics.Prometheus
+	}
+
+	return &CollectMetricsResult{
+		PrometheusMetrics: prometheusMetrics,
+	}
+}
+
+// CollectMetricsResult collect metrics result.
+type CollectMetricsResult struct {
+	PrometheusMetrics []byte
 }
 
 type DataSourceConfig struct {
