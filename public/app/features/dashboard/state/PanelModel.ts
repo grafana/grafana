@@ -15,6 +15,7 @@ import {
   PanelEvents,
   PanelPlugin,
   ScopedVars,
+  FieldConfigSource,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 
@@ -81,6 +82,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   pluginVersion: true,
   queryRunner: true,
   transformations: true,
+  fieldConfig: true,
 };
 
 const defaults: any = {
@@ -121,6 +123,7 @@ export class PanelModel implements DataConfigSource {
   options: {
     [key: string]: any;
   };
+  fieldConfig: FieldConfigSource;
 
   maxDataPoints?: number;
   interval?: string;
@@ -177,9 +180,19 @@ export class PanelModel implements DataConfigSource {
   getOptions() {
     return this.options;
   }
+  getFieldConfig() {
+    return this.fieldConfig;
+  }
 
   updateOptions(options: object) {
     this.options = options;
+
+    this.render();
+  }
+
+  updateFieldConfig(config: FieldConfigSource) {
+    this.fieldConfig = config;
+
     this.resendLastResult();
     this.render();
   }
@@ -273,6 +286,23 @@ export class PanelModel implements DataConfigSource {
         return srcValue;
       }
     });
+
+    this.fieldConfig = {
+      defaults: _.mergeWith(
+        {},
+        plugin.fieldConfigDefaults.defaults,
+        this.fieldConfig ? this.fieldConfig.defaults : {},
+        (objValue: any, srcValue: any): any => {
+          if (_.isArray(srcValue)) {
+            return srcValue;
+          }
+        }
+      ),
+      overrides: [
+        ...plugin.fieldConfigDefaults.overrides,
+        ...(this.fieldConfig && this.fieldConfig.overrides ? this.fieldConfig.overrides : []),
+      ],
+    };
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -382,7 +412,7 @@ export class PanelModel implements DataConfigSource {
     }
 
     return {
-      fieldOptions: this.options.fieldOptions,
+      fieldOptions: this.fieldConfig,
       replaceVariables: this.replaceVariables,
       custom: this.plugin.customFieldConfigs,
       theme: config.theme,
