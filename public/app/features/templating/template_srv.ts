@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { variableRegex } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
-import { getVariableWithName } from '../variables/state/selectors';
+import { getVariableWithName, getFilteredVariables } from '../variables/state/selectors';
 import { getState } from '../../store/store';
 import { getConfig } from 'app/core/config';
 import { isAdHoc } from '../variables/guard';
@@ -386,7 +386,7 @@ export class TemplateSrv {
 
   private getAdHocVariables = (): any[] => {
     if (getConfig().featureToggles.newVariables) {
-      return Object.values(getState().templating.variables).filter(isAdHoc);
+      return getFilteredVariables(isAdHoc);
     }
     if (Array.isArray(this.variables)) {
       return this.variables.filter(isAdHoc);
