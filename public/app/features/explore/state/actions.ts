@@ -43,6 +43,7 @@ import {
   deleteAllFromRichHistory,
   updateStarredInRichHistory,
   updateCommentInRichHistory,
+  deleteQueryInRichHistory,
   getQueryDisplayText,
   getRichHistory,
 } from 'app/core/utils/richHistory';
@@ -523,6 +524,9 @@ export const updateRichHistory = (ts: number, property: string, updatedProperty?
     }
     if (property === 'comment') {
       nextRichHistory = updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
+    }
+    if (property === 'delete') {
+      nextRichHistory = deleteQueryInRichHistory(getState().explore.richHistory, ts);
     }
     dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
   };
