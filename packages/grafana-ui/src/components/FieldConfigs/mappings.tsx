@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { FieldOverrideContext, FieldOverrideEditorProps, FieldConfigEditorProps, ValueMapping } from '@grafana/data';
-import { LegacyValueMappingsEditor } from '..';
+import { ValueMappingsEditor } from '../ValueMappingsEditor/ValueMappingsEditor';
 
 export interface ValueMappingFieldConfigSettings {}
 
@@ -27,7 +27,7 @@ export class ValueMappingsValueEditor extends React.PureComponent<
       value = [];
     }
 
-    return <LegacyValueMappingsEditor valueMappings={value} onChange={onChange} />;
+    return <ValueMappingsEditor valueMappings={value} onChange={onChange} />;
   }
 }
 
@@ -39,6 +39,12 @@ export class ValueMappingsOverrideEditor extends React.PureComponent<
   }
 
   render() {
-    return <div>VALUE MAPPINGS OVERRIDE EDITOR {this.props.item.name}</div>;
+    const { onChange } = this.props;
+    let value = this.props.value;
+    if (!value) {
+      value = [];
+    }
+
+    return <ValueMappingsEditor valueMappings={value} onChange={onChange} />;
   }
 }
