@@ -39,12 +39,17 @@ export const OptionsPaneContent: React.FC<{
       }
 
       return (
-        <DefaultFieldConfigEditor
-          config={fieldConfig}
-          plugin={plugin}
-          onChange={onFieldConfigsChange}
-          data={data.series}
-        />
+        <>
+          <OptionsGroup title="Common options">
+            <DefaultFieldConfigEditor
+              config={fieldConfig}
+              plugin={plugin}
+              onChange={onFieldConfigsChange}
+              data={data.series}
+            />
+          </OptionsGroup>
+          <OptionsGroup title="Panel options">{renderCustomPanelSettings(plugin)}</OptionsGroup>
+        </>
       );
     },
     [data, plugin, panel, onFieldConfigsChange]
@@ -73,7 +78,7 @@ export const OptionsPaneContent: React.FC<{
     (plugin: PanelPlugin) => {
       if (plugin.editor && panel) {
         return (
-          <div style={{ marginTop: '10px' }}>
+          <div className={styles.legacyOptions}>
             <plugin.editor
               data={data}
               options={panel.getOptions()}
@@ -85,7 +90,11 @@ export const OptionsPaneContent: React.FC<{
         );
       }
 
-      return <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />;
+      return (
+        <div className={styles.legacyOptions}>
+          <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />
+        </div>
+      );
     },
     [data, plugin, panel, onFieldConfigsChange]
   );
@@ -147,7 +156,6 @@ export const OptionsPaneContent: React.FC<{
               {activeTab === 'defaults' && renderFieldOptions(plugin)}
               {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
               {activeTab === 'panel' && renderPanelSettings()}
-              {activeTab === 'movetofirsttab' && renderCustomPanelSettings(plugin)}
             </CustomScrollbar>
           </TabContent>
         </div>
@@ -176,6 +184,28 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       min-height: 0;
       background: ${theme.colors.pageBg};
       border-left: 1px solid ${theme.colors.pageHeaderBorder};
+    `,
+    legacyOptions: css`
+      label: legacy-options;
+      .panel-options-grid {
+        display: flex;
+        flex-direction: column;
+      }
+      .panel-options-group {
+        margin-bottom: 0;
+      }
+      .panel-options-group__body {
+        padding: ${theme.spacing.md} 0;
+      }
+
+      .section {
+        display: block;
+        margin: ${theme.spacing.md} 0;
+
+        &:first-child {
+          margin-top: 0;
+        }
+      }
     `,
   };
 });

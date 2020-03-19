@@ -25,7 +25,6 @@ import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from '.
 import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
-import { AngularPanelOptions } from './AngularPanelOptions';
 import { OptionsPaneContent } from './OptionsPaneContent';
 
 enum Pane {
@@ -108,26 +107,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.panel.render();
     this.forceUpdate();
   };
-
-  renderPanelSettings(plugin: PanelPlugin) {
-    const { data, panel, dashboard } = this.props;
-
-    if (plugin.editor && panel) {
-      return (
-        <div style={{ marginTop: '10px' }}>
-          <plugin.editor
-            data={data}
-            options={panel.getOptions()}
-            onOptionsChange={this.onPanelOptionsChanged}
-            fieldConfig={panel.getFieldConfig()}
-            onFieldConfigChange={this.onFieldConfigChange}
-          />
-        </div>
-      );
-    }
-
-    return <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />;
-  }
 
   onDragFinished = (pane: Pane, size: number) => {
     document.body.style.cursor = 'auto';

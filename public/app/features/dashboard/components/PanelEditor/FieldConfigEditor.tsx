@@ -9,7 +9,7 @@ import {
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
-import { Forms, fieldMatchersUI, ValuePicker, Container, useTheme } from '@grafana/ui';
+import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OptionsGroup } from './OptionsGroup';
 import { OverrideEditor } from './OverrideEditor';
@@ -207,7 +207,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
           <OptionsGroup title="Field defaults">{renderStandardConfigs()}</OptionsGroup>
         </>
       ) : (
-        <Container padding="md">{renderStandardConfigs()}</Container>
+        <>{renderStandardConfigs()}</>
       )}
     </>
   );
