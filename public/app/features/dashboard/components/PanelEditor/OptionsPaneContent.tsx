@@ -103,7 +103,7 @@ export const OptionsPaneContent: React.FC<{
     console.log(panel.transparent);
     return (
       <div>
-        <OptionsGroup title="Basic settings">
+        <OptionsGroup title="Panel settings">
           <>
             <Forms.Field label="Panel title">
               <Forms.Input
