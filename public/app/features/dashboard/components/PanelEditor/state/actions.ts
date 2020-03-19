@@ -35,7 +35,6 @@ export function panelEditorCleanUp(): ThunkResult<void> {
   return (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, querySubscription, shouldDiscardChanges } = getStore().panelEditorNew;
-
     if (!shouldDiscardChanges) {
       const panel = getPanel();
       const modifiedSaveModel = panel.getSaveModel();

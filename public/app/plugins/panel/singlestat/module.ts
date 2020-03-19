@@ -175,7 +175,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     const distinct = getDistinctNames(frames);
-    let fieldInfo = distinct.byName[panel.tableColumn]; //
+    let fieldInfo: FieldInfo | undefined = distinct.byName[panel.tableColumn];
+
     this.fieldNames = distinct.names;
 
     if (!fieldInfo) {

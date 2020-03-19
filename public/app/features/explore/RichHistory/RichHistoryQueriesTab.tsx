@@ -8,7 +8,6 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 // Utils
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { getExploreDatasources } from '../state/selectors';
 
 import { SortOrder } from 'app/core/utils/explore';
 import {
@@ -16,6 +15,7 @@ import {
   mapNumbertoTimeInSlider,
   createRetentionPeriodBoundary,
   mapQueriesToHeadings,
+  createDatasourcesList,
 } from 'app/core/utils/richHistory';
 
 // Components
@@ -23,22 +23,24 @@ import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { Select, Slider } from '@grafana/ui';
 
-interface Props {
+export interface Props {
   queries: RichHistoryQuery[];
   sortOrder: SortOrder;
   activeDatasourceOnly: boolean;
   datasourceFilters: SelectableValue[] | null;
   retentionPeriod: number;
   exploreId: ExploreId;
+  height: number;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
   onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
   const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
 
   /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
   const cardWidth = '100% - 134px';
+  const sliderHeight = `${height - 200}px`;
   return {
     container: css`
       display: flex;
@@ -61,9 +63,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-right: ${theme.spacing.sm};
       .slider {
         bottom: 10px;
-        height: 200px;
+        height: ${sliderHeight};
         width: 127px;
-        padding: ${theme.spacing.xs} 0;
+        padding: ${theme.spacing.sm} 0;
       }
     `,
     slider: css`
@@ -127,20 +129,15 @@ export function RichHistoryQueriesTab(props: Props) {
     activeDatasourceOnly,
     retentionPeriod,
     exploreId,
+    height,
   } = props;
 
   const [sliderRetentionFilter, setSliderRetentionFilter] = useState<[number, number]>([0, retentionPeriod]);
 
   const theme = useTheme();
-  const styles = getStyles(theme);
-  const listOfDsNamesWithQueries = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
-
-  /* Display only explore datasoources, that have saved queries */
-  const datasources = getExploreDatasources()
-    ?.filter(ds => listOfDsNamesWithQueries.includes(ds.name))
-    .map(d => {
-      return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
-    });
+  const styles = getStyles(theme, height);
+  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
+  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
   const filteredQueriesByDatasource = datasourceFilters
@@ -187,18 +184,19 @@ export function RichHistoryQueriesTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div className={styles.multiselect}>
+            <div aria-label="Filter datasources" className={styles.multiselect}>
               <Select
                 isMulti={true}
-                options={datasources}
+                options={listOfDatasources}
                 value={datasourceFilters}
-                placeholder="Filter queries for specific datasources(s)"
+                placeholder="Filter queries for specific data sources(s)"
                 onChange={onSelectDatasourceFilters}
               />
             </div>
           )}
-          <div className={styles.sort}>
+          <div aria-label="Sort queries" className={styles.sort}>
             <Select
+              value={sortOrderOptions.filter(order => order.value === sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
               onChange={e => onChangeSortOrder(e.value as SortOrder)}
@@ -211,9 +209,18 @@ export function RichHistoryQueriesTab(props: Props) {
               <div className={styles.heading}>
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
-              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => (
-                <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />
-              ))}
+              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
+                const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+                return (
+                  <RichHistoryCard
+                    query={q}
+                    key={q.ts}
+                    exploreId={exploreId}
+                    dsImg={listOfDatasources[idx].imgUrl}
+                    isRemoved={listOfDatasources[idx].isRemoved}
+                  />
+                );
+              })}
             </div>
           );
         })}

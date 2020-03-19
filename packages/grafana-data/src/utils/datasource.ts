@@ -29,10 +29,9 @@ export const onUpdateDatasourceJsonDataOptionSelect = <J, S, K extends keyof J>(
 
 export const onUpdateDatasourceJsonDataOptionChecked = <J, S, K extends keyof J>(
   props: DataSourcePluginOptionsEditorProps<J, S>,
-  key: K,
-  val: boolean
-) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
-  updateDatasourcePluginJsonDataOption(props, key, val);
+  key: K
+) => (event: React.SyntheticEvent<HTMLInputElement>) => {
+  updateDatasourcePluginJsonDataOption(props, key, event.currentTarget.checked);
 };
 
 export const onUpdateDatasourceSecureJsonDataOptionSelect = <J, S extends {} = KeyValue>(

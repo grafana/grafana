@@ -28,7 +28,7 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
-export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
+export { LegacyValueMappingsEditor } from './ValueMappingsEditor/LegacyValueMappingsEditor';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
@@ -40,6 +40,7 @@ export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
+export { Pagination } from './Pagination/Pagination';
 
 export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
@@ -144,6 +145,7 @@ export {
   SelectOverrideEditor,
   SelectFieldConfigSettings,
 } from './FieldConfigs/select';
+export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
 // Next-gen forms
 export { default as Forms, ButtonVariant } from './Forms';

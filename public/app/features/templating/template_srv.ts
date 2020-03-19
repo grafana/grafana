@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { variableRegex } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
-import { getVariableWithName } from './state/selectors';
+import { getVariableWithName } from '../variables/state/selectors';
 import { getState } from '../../store/store';
 import { getConfig } from 'app/core/config';
 

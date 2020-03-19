@@ -26,7 +26,7 @@ func init() {
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
       </div>
       <div class="gf-form">
-        <span class="gf-form-label width-10">Severity</span>
+        <span class="gf-form-label width-14">Severity</span>
         <div class="gf-form-select-wrapper width-14">
           <select
             class="gf-form-input"
