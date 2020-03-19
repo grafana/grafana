@@ -75,7 +75,13 @@ export const OptionsPaneContent: React.FC<{
       if (plugin.editor && panel) {
         return (
           <div style={{ marginTop: '10px' }}>
-            <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
+            <plugin.editor
+              data={data}
+              options={panel.getOptions()}
+              onOptionsChange={onPanelOptionsChanged}
+              fieldConfig={panel.getFieldConfig()}
+              onFieldConfigChange={onFieldConfigsChange}
+            />
           </div>
         );
       }
@@ -105,7 +111,7 @@ export const OptionsPaneContent: React.FC<{
             </Forms.Field>
             <Forms.Field label="Transparent" description="Display panel without background">
               <Forms.Switch
-                checked={panel.transparent}
+                value={panel.transparent}
                 onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)}
               />
             </Forms.Field>

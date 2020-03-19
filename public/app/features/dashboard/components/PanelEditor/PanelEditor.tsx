@@ -256,7 +256,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         dashboard={dashboard}
         data={data}
         panel={panel}
-        onFieldConfigsChange={this.onFieldConfigsChange}
+        onFieldConfigsChange={this.onFieldConfigChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
         onPanelConfigChange={this.onPanelConfigChanged}
       />
