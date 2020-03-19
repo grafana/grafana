@@ -20,6 +20,9 @@ linters:
     - staticcheck
     - errcheck
 
-linter-settings:
+linters-settings:
   goconst:
-    ignore-tests: true
+    # minimal length of string constant, 3 by default
+    min-len: 5
+    # minimal occurrences count to trigger, 3 by default
+    min-occurrences: 5
