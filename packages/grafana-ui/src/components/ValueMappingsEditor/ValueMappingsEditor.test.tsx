@@ -19,14 +19,7 @@ const setup = (spy?: any, propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = mount(<ValueMappingsEditor {...props} />);
-
-  const instance = wrapper.instance() as ValueMappingsEditor;
-
-  return {
-    instance,
-    wrapper,
-  };
+  return mount(<ValueMappingsEditor {...props} />);
 };
 
 describe('Render', () => {
@@ -38,7 +31,7 @@ describe('Render', () => {
 describe('On remove mapping', () => {
   it('Should remove mapping at index 0', () => {
     const onChangeSpy = jest.fn();
-    const { wrapper } = setup(onChangeSpy);
+    const wrapper = setup(onChangeSpy);
     const remove = wrapper.find('*[aria-label="FieldConfigItemHeaderTitle remove button"]');
     remove.at(0).simulate('click');
     expect(onChangeSpy).toBeCalledWith([
@@ -48,7 +41,7 @@ describe('On remove mapping', () => {
 
   it('should remove mapping at index 1', () => {
     const onChangeSpy = jest.fn();
-    const { wrapper } = setup(onChangeSpy);
+    const wrapper = setup(onChangeSpy);
 
     const remove = wrapper.find('*[aria-label="FieldConfigItemHeaderTitle remove button"]');
     remove.at(1).simulate('click');
@@ -62,7 +55,7 @@ describe('On remove mapping', () => {
 describe('Next id to add', () => {
   it('should be 3', () => {
     const onChangeSpy = jest.fn();
-    const { wrapper } = setup(onChangeSpy);
+    const wrapper = setup(onChangeSpy);
 
     const add = wrapper.find('*[aria-label="ValueMappingsEditor add mapping button"]');
     add.at(0).simulate('click');
@@ -76,7 +69,7 @@ describe('Next id to add', () => {
 
   it('should default to 0', () => {
     const onChangeSpy = jest.fn();
-    const { wrapper } = setup(onChangeSpy, { valueMappings: [] });
+    const wrapper = setup(onChangeSpy, { valueMappings: [] });
     const add = wrapper.find('*[aria-label="ValueMappingsEditor add mapping button"]');
     add.at(0).simulate('click');
     expect(onChangeSpy).toBeCalledWith([
