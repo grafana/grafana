@@ -8,17 +8,16 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 // Utils
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { getExploreDatasources } from '../state/selectors';
 
 import { SortOrder } from '../../../core/utils/explore';
-import { sortQueries } from '../../../core/utils/richHistory';
+import { sortQueries, createDatasourcesList } from '../../../core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { Select } from '@grafana/ui';
 
-interface Props {
+export interface Props {
   queries: RichHistoryQuery[];
   sortOrder: SortOrder;
   activeDatasourceOnly: boolean;
@@ -33,17 +32,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       display: flex;
-      .label-slider {
-        font-size: ${theme.typography.size.sm};
-        &:last-of-type {
-          margin-top: ${theme.spacing.lg};
-        }
-        &:first-of-type {
-          margin-top: ${theme.spacing.sm};
-          font-weight: ${theme.typography.weight.semibold};
-          margin-bottom: ${theme.spacing.xs};
-        }
-      }
     `,
     containerContent: css`
       width: 100%;
@@ -63,18 +51,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     sort: css`
       width: 170px;
     `,
-    sessionName: css`
-      display: flex;
-      align-items: flex-start;
-      justify-content: flex-start;
+    feedback: css`
+      height: 60px;
       margin-top: ${theme.spacing.lg};
-      h4 {
-        margin: 0 10px 0 0;
+      display: flex;
+      justify-content: center;
+      font-weight: ${theme.typography.weight.light};
+      font-size: ${theme.typography.size.sm};
+      a {
+        font-weight: ${theme.typography.weight.semibold};
+        margin-left: ${theme.spacing.xxs};
       }
-    `,
-    heading: css`
-      font-size: ${theme.typography.heading.h4};
-      margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
     `,
   };
 });
@@ -92,18 +79,17 @@ export function RichHistoryStarredTab(props: Props) {
 
   const theme = useTheme();
   const styles = getStyles(theme);
-  const listOfDsNamesWithQueries = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
-  const exploreDatasources = getExploreDatasources()
-    ?.filter(ds => listOfDsNamesWithQueries.includes(ds.name))
-    .map(d => {
-      return { value: d.value!, label: d.value!, imgUrl: d.meta.info.logos.small };
-    });
+
+  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
+  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
+
   const listOfDatasourceFilters = datasourceFilters?.map(d => d.value);
 
   const starredQueries = queries.filter(q => q.starred === true);
   const starredQueriesFilteredByDatasource = datasourceFilters
     ? starredQueries?.filter(q => listOfDatasourceFilters?.includes(q.datasourceName))
     : starredQueries;
+
   const sortedStarredQueries = sortQueries(starredQueriesFilteredByDatasource, sortOrder);
 
   return (
@@ -111,27 +97,41 @@ export function RichHistoryStarredTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div className={styles.multiselect}>
+            <div aria-label="Filter datasources" className={styles.multiselect}>
               <Select
                 isMulti={true}
-                options={exploreDatasources}
+                options={listOfDatasources}
                 value={datasourceFilters}
-                placeholder="Filter queries for specific datasources(s)"
+                placeholder="Filter queries for specific data sources(s)"
                 onChange={onSelectDatasourceFilters}
               />
             </div>
           )}
-          <div className={styles.sort}>
+          <div aria-label="Sort queries" className={styles.sort}>
             <Select
               options={sortOrderOptions}
+              value={sortOrderOptions.filter(order => order.value === sortOrder)}
               placeholder="Sort queries by"
               onChange={e => onChangeSortOrder(e.value as SortOrder)}
             />
           </div>
         </div>
         {sortedStarredQueries.map(q => {
-          return <RichHistoryCard query={q} key={q.ts} exploreId={exploreId} />;
+          const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+          return (
+            <RichHistoryCard
+              query={q}
+              key={q.ts}
+              exploreId={exploreId}
+              dsImg={listOfDatasources[idx].imgUrl}
+              isRemoved={listOfDatasources[idx].isRemoved}
+            />
+          );
         })}
+        <div className={styles.feedback}>
+          Query history is a beta feature. The history is local to your browser and is not shared with others.
+          <a href="https://github.com/grafana/grafana/issues/new/choose">Feedback?</a>
+        </div>
       </div>
     </div>
   );
