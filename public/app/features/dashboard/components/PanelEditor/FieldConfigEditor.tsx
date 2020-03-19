@@ -9,7 +9,7 @@ import {
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
-import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
+import { Forms, fieldMatchersUI, ValuePicker, Container, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { OptionsGroup } from './OptionsGroup';
 import { OverrideEditor } from './OverrideEditor';
@@ -162,24 +162,27 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
     [config, onChange]
   );
 
-  const renderEditor = (item: FieldPropertyEditorItem, custom: boolean) => {
-    const defaults = config.defaults;
-    const value = custom ? (defaults.custom ? defaults.custom[item.id] : undefined) : (defaults as any)[item.id];
+  const renderEditor = useCallback(
+    (item: FieldPropertyEditorItem, custom: boolean) => {
+      const defaults = config.defaults;
+      const value = custom ? (defaults.custom ? defaults.custom[item.id] : undefined) : (defaults as any)[item.id];
 
-    return (
-      <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
-        <item.editor
-          item={item}
-          value={value}
-          onChange={v => setDefaultValue(item.id, v, custom)}
-          context={{
-            data,
-            getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
-          }}
-        />
-      </Forms.Field>
-    );
-  };
+      return (
+        <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
+          <item.editor
+            item={item}
+            value={value}
+            onChange={v => setDefaultValue(item.id, v, custom)}
+            context={{
+              data,
+              getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+            }}
+          />
+        </Forms.Field>
+      );
+    },
+    [config]
+  );
 
   const renderStandardConfigs = useCallback(() => {
     if (include) {
@@ -198,10 +201,14 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
 
   return (
     <>
-      {plugin.customFieldConfigs && (
-        <OptionsGroup title={`${plugin.meta.name} options`}>{renderCustomConfigs()}</OptionsGroup>
+      {plugin.customFieldConfigs ? (
+        <>
+          <OptionsGroup title={`${plugin.meta.name} options`}>{renderCustomConfigs()}</OptionsGroup>
+          <OptionsGroup title="Field defaults">{renderStandardConfigs()}</OptionsGroup>
+        </>
+      ) : (
+        <Container padding="md">{renderStandardConfigs()}</Container>
       )}
-      <OptionsGroup title="Field defaults">{renderStandardConfigs()}</OptionsGroup>
     </>
   );
 };

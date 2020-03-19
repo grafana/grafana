@@ -1,15 +1,6 @@
-import React, { PureComponent, useCallback, useState } from 'react';
+import React, { PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import {
-  CustomScrollbar,
-  Forms,
-  selectThemeVariant,
-  stylesFactory,
-  Tab,
-  TabContent,
-  TabsBar,
-  useTheme,
-} from '@grafana/ui';
+import { Forms, selectThemeVariant, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import config from 'app/core/config';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -32,10 +23,10 @@ import { LocationState } from 'app/types';
 import { calculatePanelSize } from './utils';
 import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
 import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
-import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { AngularPanelOptions } from './AngularPanelOptions';
+import { OptionsPaneContent } from './OptionsPaneContent';
 
 enum Pane {
   Right,
@@ -110,6 +101,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onPanelOptionsChanged = (options: any) => {
     this.props.panel.updateOptions(options);
+    this.forceUpdate();
+  };
+
+  onPanelConfigChanged = (configKey: string, value: any) => {
+    // @ts-ignore
+    this.props.panel[configKey] = value;
+    this.props.panel.render();
     this.forceUpdate();
   };
 
@@ -241,20 +239,22 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderOptionsPane(styles: any) {
+  renderOptionsPane() {
     const { plugin, dashboard, data, panel } = this.props;
 
     if (!plugin) {
       return null;
     }
+
     return (
-      <PanelEditorOptionsPaneContent
+      <OptionsPaneContent
         plugin={plugin}
         dashboard={dashboard}
         data={data}
         panel={panel}
         onFieldConfigsChange={this.onFieldConfigsChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
+        onPanelConfigChange={this.onPanelConfigChanged}
       />
     );
   }
@@ -274,7 +274,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Right, size)}
       >
         {this.renderHorizontalSplit(styles)}
-        {this.renderOptionsPane(styles)}
+        {this.renderOptionsPane()}
       </SplitPane>
     );
   }
@@ -394,12 +394,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       width: 100%;
     `,
-    panelOptionsPane: css`
-      height: 100%;
-      width: 100%;
 
-      border-bottom: none;
-    `,
     toolbar: css`
       display: flex;
       padding: ${theme.spacing.sm};
@@ -424,126 +419,3 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-const PanelEditorOptionsPaneContent: React.FC<{
-  plugin?: PanelPlugin;
-  panel: PanelModel;
-  data: PanelData;
-  dashboard: DashboardModel;
-  onFieldConfigsChange: (config: FieldConfigSource) => void;
-  onPanelOptionsChanged: (options: any) => void;
-}> = ({ plugin, panel, data, onFieldConfigsChange, onPanelOptionsChanged, dashboard }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
-  const renderFieldOptions = useCallback(
-    (plugin: PanelPlugin) => {
-      const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
-
-      if (!fieldOptions) {
-        return null;
-      }
-
-      return (
-        <DefaultFieldConfigEditor
-          config={fieldOptions}
-          plugin={plugin}
-          onChange={onFieldConfigsChange}
-          data={data.series}
-        />
-      );
-    },
-    [data, plugin, panel, onFieldConfigsChange]
-  );
-  const renderFieldOverrideOptions = useCallback(
-    (plugin: PanelPlugin) => {
-      const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
-
-      if (!fieldOptions) {
-        return null;
-      }
-
-      return (
-        <OverrideFieldConfigEditor
-          config={fieldOptions}
-          plugin={plugin}
-          onChange={onFieldConfigsChange}
-          data={data.series}
-        />
-      );
-    },
-    [data, plugin, panel, onFieldConfigsChange]
-  );
-
-  const renderPanelSettings = useCallback(
-    (plugin: PanelPlugin) => {
-      // const { data, panel, dashboard } = this.props;
-
-      if (plugin.editor && panel) {
-        return (
-          <div style={{ marginTop: '10px' }}>
-            <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
-          </div>
-        );
-      }
-
-      return <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} />;
-    },
-    [data, plugin, panel, onFieldConfigsChange]
-  );
-
-  const [activeTab, setActiveTab] = useState('defaults');
-
-  return (
-    <div className={styles.panelOptionsPane}>
-      {plugin && (
-        <>
-          <TabsLayout>
-            <TabsBar>
-              <Tab label="Defaults" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
-              <Tab label="Overrides" active={activeTab === 'overrides'} onChangeTab={() => setActiveTab('overrides')} />
-              <Tab label="Panel" active={activeTab === 'panel'} onChangeTab={() => setActiveTab('panel')} />
-            </TabsBar>
-            <TabContent
-              className={css`
-                padding: 0;
-                display: flex;
-                flex-direction: column;
-                flex-grow: 1;
-                min-height: 0;
-                background: ${theme.colors.pageBg};
-              `}
-            >
-              <CustomScrollbar>
-                {activeTab === 'defaults' && renderFieldOptions(plugin)}
-                {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
-                {activeTab === 'panel' && (
-                  <div
-                    className={css`
-                      padding: ${theme.spacing.md};
-                    `}
-                  >
-                    {renderPanelSettings(plugin)}
-                  </div>
-                )}
-              </CustomScrollbar>
-            </TabContent>
-          </TabsLayout>
-        </>
-      )}
-    </div>
-  );
-};
-
-const TabsLayout: React.FC = ({ children }) => {
-  return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-      `}
-    >
-      {children}
-    </div>
-  );
-};
