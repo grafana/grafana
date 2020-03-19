@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
+import { css, cx } from 'emotion';
 // @ts-ignore
 import tinycolor from 'tinycolor2';
-import { SearchQuery } from '../../../core/components/search/search';
-import { css, cx } from 'emotion';
 import { ThemeContext, selectThemeVariant } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
+import { SearchQuery } from 'app/core/components/search/search';
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
