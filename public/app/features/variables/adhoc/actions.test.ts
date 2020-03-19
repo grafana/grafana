@@ -12,19 +12,32 @@ import {
   addFilter,
   removeFilter,
   setFiltersFromUrl,
+  initAdHocVariableEditor,
+  changeVariableDatasource,
 } from './actions';
 import { omit } from 'lodash';
 import { filterAdded, filterUpdated, filterRemoved, filtersRestored } from './reducer';
-import { addVariable } from '../state/sharedReducer';
+import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { updateLocation } from 'app/core/actions';
 import { DashboardState } from 'app/types';
 import { toUrl } from './urlParser';
 import { VariableModel } from 'app/features/templating/variable';
+import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
+import { DataSourceSelectItem, DataSourcePluginMeta } from '@grafana/data';
 
 const uuid = '0';
+const getMetricSources = jest.fn().mockReturnValue([]);
+const getDatasource = jest.fn().mockResolvedValue({});
 
 jest.mock('uuid', () => ({
   v4: jest.fn(() => uuid),
+}));
+
+jest.mock('app/features/plugins/datasource_srv', () => ({
+  getDatasourceSrv: jest.fn(() => ({
+    get: getDatasource,
+    getMetricSources,
+  })),
 }));
 
 describe('adhoc actions', () => {
@@ -429,10 +442,139 @@ describe('adhoc actions', () => {
       });
     });
   });
+
+  describe('when initAdHocVariableEditor is dispatched', () => {
+    it('then correct actions are dispatched', async () => {
+      const datasources = [
+        createDatasource('elasticsearch-v1'),
+        createDatasource('loki', false),
+        createDatasource('influx'),
+        createDatasource('google-sheets', false),
+        createDatasource('elasticsearch-v7'),
+      ];
+
+      const selectable = [
+        createDatasource(''),
+        createDatasource('elasticsearch-v1'),
+        createDatasource('influx'),
+        createDatasource('elasticsearch-v7'),
+      ];
+
+      getMetricSources.mockRestore();
+      getMetricSources.mockReturnValue(datasources);
+
+      const tester = reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(initAdHocVariableEditor());
+
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
+        const [changeEditorAction] = actions;
+        const expectedNumberOfActions = 1;
+
+        expect(changeEditorAction).toEqual(
+          changeVariableEditorExtended({
+            propName: 'dataSources',
+            propValue: selectable.map(ds => ({ text: ds.name, value: ds.value })),
+          })
+        );
+
+        return actions.length === expectedNumberOfActions;
+      });
+    });
+  });
+
+  describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
+    it('then correct actions are dispatched', async () => {
+      const datasource = 'mysql';
+      const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+      const variable = variableBuilder
+        .adHocVariable()
+        .withUUID(uuid)
+        .withDatasource('influxdb')
+        .build();
+
+      getDatasource.mockRestore();
+      getDatasource.mockResolvedValue(null);
+
+      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(createAddVariableAction(variable))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
+
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
+        const [loadingTextAction, changePropAction, unsupportedTextAction] = actions;
+        const expectedNumberOfActions = 3;
+
+        expect(loadingTextAction).toEqual(
+          changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })
+        );
+        expect(changePropAction).toEqual(
+          changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
+        );
+        expect(unsupportedTextAction).toEqual(
+          changeVariableEditorExtended({
+            propName: 'infoText',
+            propValue: 'This datasource does not support adhoc filters yet.',
+          })
+        );
+
+        return actions.length === expectedNumberOfActions;
+      });
+    });
+  });
+
+  describe('when changeVariableDatasource is dispatched with datasource', () => {
+    it('then correct actions are dispatched', async () => {
+      const datasource = 'elasticsearch';
+      const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+      const variable = variableBuilder
+        .adHocVariable()
+        .withUUID(uuid)
+        .withDatasource('influxdb')
+        .build();
+
+      getDatasource.mockRestore();
+      getDatasource.mockResolvedValue({
+        getTagKeys: () => {},
+      });
+
+      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(createAddVariableAction(variable))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
+
+      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
+        const [loadingTextAction, changePropAction] = actions;
+        const expectedNumberOfActions = 2;
+
+        expect(loadingTextAction).toEqual(
+          changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })
+        );
+        expect(changePropAction).toEqual(
+          changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
+        );
+
+        return actions.length === expectedNumberOfActions;
+      });
+    });
+  });
 });
 
 function createAddVariableAction(variable: VariableModel, index = 0) {
   const identifier = toVariableIdentifier(variable);
   const data = { global: false, index, model: variable };
   return addVariable(toVariablePayload(identifier, data));
+}
+
+function createDatasource(name: string, selectable = true): DataSourceSelectItem {
+  return {
+    name,
+    value: name,
+    meta: {
+      mixed: !selectable,
+    } as DataSourcePluginMeta,
+    sort: '',
+  };
 }

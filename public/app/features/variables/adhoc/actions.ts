@@ -97,6 +97,7 @@ export const changeVariableDatasource = (datasource: string): ThunkResult<void> 
     dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })));
 
     const ds = await getDatasourceSrv().get(datasource);
+    console.log('ds', ds);
 
     if (!ds || !ds.getTagKeys) {
       dispatch(
@@ -109,8 +110,8 @@ export const changeVariableDatasource = (datasource: string): ThunkResult<void> 
   };
 };
 
-export const initAdHocVariableEditor = (): ThunkResult<void> => async dispatch => {
-  const dataSources = await getDatasourceSrv().getMetricSources();
+export const initAdHocVariableEditor = (): ThunkResult<void> => dispatch => {
+  const dataSources = getDatasourceSrv().getMetricSources();
   const selectable = dataSources.reduce(
     (all: Array<{ text: string; value: string }>, ds) => {
       if (ds.meta.mixed || ds.value === null) {
