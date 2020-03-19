@@ -507,7 +507,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load defaults
 	parsedFile, err := ini.Load(defaultConfigFile)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
+		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
 		os.Exit(1)
 		return nil, err
 	}
