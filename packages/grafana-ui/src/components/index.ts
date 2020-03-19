@@ -28,7 +28,7 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
-export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
+export { LegacyValueMappingsEditor } from './ValueMappingsEditor/LegacyValueMappingsEditor';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';

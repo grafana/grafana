@@ -5,7 +5,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { FieldConfigEditorRegistry } from './fieldOverrides';
+import { FieldConfigEditorRegistry, FieldConfigSource } from './fieldOverrides';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -54,6 +54,10 @@ export interface PanelProps<T = any> {
   timeZone: TimeZone;
   options: T;
   onOptionsChange: (options: T) => void;
+  /** Panel fields configuration */
+  fieldConfig: FieldConfigSource;
+  /** Enables panel field config manipulation */
+  onFieldConfigChange: (config: FieldConfigSource) => void;
   renderCounter: number;
   transparent: boolean;
   width: number;
@@ -70,11 +74,23 @@ export interface PanelEditorProps<T = any> {
     callback?: () => void
   ) => void;
   data: PanelData;
+
+  /**
+   * Panel fields configuration - temporart solution
+   * TODO[FieldConfig]: Remove when we switch old editor to new
+   */
+  fieldConfig: FieldConfigSource;
+  /**
+   * Enables panel field config manipulation
+   * TODO[FieldConfig]: Remove when we switch old editor to new
+   */
+  onFieldConfigChange: (config: FieldConfigSource) => void;
 }
 
 export interface PanelModel<TOptions = any> {
   id: number;
   options: TOptions;
+  fieldConfig: FieldConfigSource;
   pluginVersion?: string;
   scopedVars?: ScopedVars;
 }
@@ -98,6 +114,10 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   customFieldConfigs?: FieldConfigEditorRegistry;
   defaults?: TOptions;
+  fieldConfigDefaults?: FieldConfigSource = {
+    defaults: {},
+    overrides: [],
+  };
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
@@ -153,6 +173,19 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
 
   setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
     this.customFieldConfigs = registry;
+    return this;
+  }
+
+  /**
+   * Enables configuration of panel's default field config
+   */
+  setFieldConfigDefaults(defaultConfig: Partial<FieldConfigSource>) {
+    this.fieldConfigDefaults = {
+      defaults: {},
+      overrides: [],
+      ...defaultConfig,
+    };
+
     return this;
   }
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { FieldOverrideContext, FieldOverrideEditorProps, FieldConfigEditorProps, ValueMapping } from '@grafana/data';
-import { ValueMappingsEditor } from '..';
+import { ValueMappingsEditor } from '../ValueMappingsEditor/ValueMappingsEditor';
 
 export interface ValueMappingFieldConfigSettings {}
 
