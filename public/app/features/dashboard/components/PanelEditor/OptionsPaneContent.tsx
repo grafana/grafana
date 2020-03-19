@@ -138,21 +138,15 @@ export const OptionsPaneContent: React.FC<{
     <div className={styles.panelOptionsPane}>
       {plugin && (
         <div className={styles.wrapper}>
-          <TabsBar
-            className={css`
-              padding-left: ${theme.spacing.md};
-            `}
-          >
-            <Tab label="Defaults" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
+          <TabsBar>
+            <Tab label="Options" active={activeTab === 'defaults'} onChangeTab={() => setActiveTab('defaults')} />
             <Tab label="Overrides" active={activeTab === 'overrides'} onChangeTab={() => setActiveTab('overrides')} />
-            <Tab label="Custom" active={activeTab === 'custom'} onChangeTab={() => setActiveTab('custom')} />
             <Tab label="General" active={activeTab === 'panel'} onChangeTab={() => setActiveTab('panel')} />
           </TabsBar>
           <TabContent className={styles.tabContent}>
             <CustomScrollbar>
               {activeTab === 'defaults' && renderFieldOptions(plugin)}
               {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
-              {activeTab === 'custom' && <Container padding="md">{renderCustomPanelSettings(plugin)}</Container>}
               {activeTab === 'panel' && renderPanelSettings()}
             </CustomScrollbar>
           </TabContent>
@@ -181,6 +175,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-grow: 1;
       min-height: 0;
       background: ${theme.colors.pageBg};
+      border-left: 1px solid ${theme.colors.pageHeaderBorder};
     `,
   };
 });
