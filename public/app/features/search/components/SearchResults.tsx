@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { cx } from 'emotion';
 import { e2e } from '@grafana/e2e';
 import { Forms, Icon } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
@@ -38,6 +39,7 @@ export const SearchResults: FC<Props> = ({
       });
     }
   };
+
   const onItemClick = (item: DashboardSectionItem) => {
     //Check if one string can be found in the other
     if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
@@ -45,7 +47,7 @@ export const SearchResults: FC<Props> = ({
     }
   };
 
-  return !results ? (
+  return !results || !results.length ? (
     <div className="search-results">
       <em className="muted">No dashboards found.</em>
     </div>
@@ -55,7 +57,7 @@ export const SearchResults: FC<Props> = ({
         <div className="search-section" key={section.id}>
           {!section.hideHeader ? (
             <div
-              className={`search-section__header pointer ${section.checked ? 'selected' : ''}`}
+              className={cx('search-section__header pointer', { selected: section.checked })}
               onClick={() => toggleFolderExpand(section)}
             >
               <div onClick={e => onToggleSelection(section, e)} className="center-vh">
@@ -77,7 +79,7 @@ export const SearchResults: FC<Props> = ({
           {section.expanded &&
             section.items.map(item => (
               <div key={item.id} aria-label={selectors.dashboards(item.title)}>
-                <a className={`search-item search-item--indent  ${item.checked ? 'selected' : ''}`} href={item.url}>
+                <a className={cx('search-item search-item--indent', { selected: item.checked })} href={item.url}>
                   <div onClick={e => onToggleSelection(item, e)} className="center-vh">
                     {editable && <Forms.Checkbox value={item.checked} onChange={onSelectionChanged} />}
                   </div>
