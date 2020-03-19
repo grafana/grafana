@@ -321,5 +321,71 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 4)
 			})
 		})
+
+		Convey("Notification Uid by Id Caching", func() {
+			ss := InitTestDB(t)
+
+			notification := &models.CreateAlertNotificationCommand{Uid: "aNotificationUid", OrgId: 1, Name: "aNotificationUid"}
+			err := CreateAlertNotificationCommand(notification)
+			So(err, ShouldBeNil)
+
+			byUidQuery := &models.GetAlertNotificationsWithUidQuery{
+				Uid:   notification.Uid,
+				OrgId: notification.OrgId,
+			}
+
+			notificationByUidErr := GetAlertNotificationsWithUid(byUidQuery)
+			So(notificationByUidErr, ShouldBeNil)
+
+			Convey("Can cache notification Uid", func() {
+				byIdQuery := &models.GetAlertNotificationUidQuery{
+					Id:    byUidQuery.Result.Id,
+					OrgId: byUidQuery.Result.OrgId,
+				}
+
+				cacheKey := newAlertNotificationUidCacheKey(byIdQuery.OrgId, byIdQuery.Id)
+
+				resultBeforeCaching, foundBeforeCaching := ss.CacheService.Get(cacheKey)
+				So(foundBeforeCaching, ShouldBeFalse)
+				So(resultBeforeCaching, ShouldBeNil)
+
+				notificationByIdErr := ss.GetAlertNotificationUidWithId(byIdQuery)
+				So(notificationByIdErr, ShouldBeNil)
+
+				resultAfterCaching, foundAfterCaching := ss.CacheService.Get(cacheKey)
+				So(foundAfterCaching, ShouldBeTrue)
+				So(resultAfterCaching, ShouldEqual, notification.Uid)
+			})
+
+			Convey("Retrieves from cache when exists", func() {
+				query := &models.GetAlertNotificationUidQuery{
+					Id:    999,
+					OrgId: 100,
+				}
+				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
+				ss.CacheService.Set(cacheKey, "a-cached-uid", -1)
+
+				err := ss.GetAlertNotificationUidWithId(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldEqual, "a-cached-uid")
+			})
+
+			Convey("Returns an error without populating cache when the notification doesn't exist in the database", func() {
+				query := &models.GetAlertNotificationUidQuery{
+					Id:    -1,
+					OrgId: 100,
+				}
+
+				err := ss.GetAlertNotificationUidWithId(query)
+				So(query.Result, ShouldEqual, "")
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "Alert notification [ Id: -1, OrgId: 100 ] not found")
+
+				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
+				result, found := ss.CacheService.Get(cacheKey)
+				So(found, ShouldBeFalse)
+				So(result, ShouldBeNil)
+			})
+		})
 	})
 }
