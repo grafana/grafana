@@ -105,7 +105,7 @@ describe('adHocVariableReducer', () => {
         .thenStateShouldEqual({
           [uuid]: {
             ...initialState[uuid],
-            filters: [],
+            filters: [] as AdHocVariableFilter[],
           } as AdHocVariableModel,
         });
     });
