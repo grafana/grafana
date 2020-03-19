@@ -339,6 +339,11 @@ export class ManageDashboardsCtrl {
 
   // TODO handle this inside SearchResults component
   toggleSelection = (item: any, evt: any) => {
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+
     item.checked = !item.checked;
 
     if (item.items) {
@@ -349,11 +354,6 @@ export class ManageDashboardsCtrl {
 
     if (this.selectionChanged) {
       this.selectionChanged();
-    }
-
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
     }
   };
 }
