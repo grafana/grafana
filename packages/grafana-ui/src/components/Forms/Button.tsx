@@ -63,7 +63,6 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
           }
         `,
       };
-
     case 'primary':
     default:
       return {
@@ -139,23 +138,23 @@ type CommonProps = {
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ variant, ...otherProps }, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
-    size: props.size || 'md',
-    variant: props.variant || 'primary',
+    size: otherProps.size || 'md',
+    variant: variant || 'primary',
   });
-  return <DefaultButton {...props} styles={styles} ref={ref} />;
+  return <DefaultButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
 });
 
 type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
-export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>((props, ref) => {
+export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(({ variant, ...otherProps }, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
-    size: props.size || 'md',
-    variant: props.variant || 'primary',
+    size: otherProps.size || 'md',
+    variant: variant || 'primary',
   });
-  return <DefaultLinkButton {...props} styles={styles} ref={ref} />;
+  return <DefaultLinkButton {...otherProps} variant={variant} styles={styles} ref={ref} />;
 });

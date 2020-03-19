@@ -216,8 +216,13 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
   }
 
   // Make sure the data frames are properly formatted
+  const STARTTIME = performance.now();
+  const processedDataFrames = getProcessedDataFrames(series);
+  const STOPTIME = performance.now();
+
   return {
     ...data,
-    series: getProcessedDataFrames(series),
+    series: processedDataFrames,
+    timings: { dataProcessingTime: STOPTIME - STARTTIME },
   };
 }

@@ -12,6 +12,10 @@ type DiagnosticsServer interface {
 	pluginv2.DiagnosticsServer
 }
 
+type DiagnosticsClient interface {
+	pluginv2.DiagnosticsClient
+}
+
 // DiagnosticsGRPCPlugin implements the GRPCPlugin interface from github.com/hashicorp/go-plugin.
 type DiagnosticsGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
@@ -34,11 +38,11 @@ type diagnosticsGRPCServer struct {
 	server DiagnosticsServer
 }
 
-func (s *diagnosticsGRPCServer) CollectMetrics(ctx context.Context, req *pluginv2.CollectMetrics_Request) (*pluginv2.CollectMetrics_Response, error) {
+func (s *diagnosticsGRPCServer) CollectMetrics(ctx context.Context, req *pluginv2.CollectMetricsRequest) (*pluginv2.CollectMetricsResponse, error) {
 	return s.server.CollectMetrics(ctx, req)
 }
 
-func (s *diagnosticsGRPCServer) CheckHealth(ctx context.Context, req *pluginv2.CheckHealth_Request) (*pluginv2.CheckHealth_Response, error) {
+func (s *diagnosticsGRPCServer) CheckHealth(ctx context.Context, req *pluginv2.CheckHealthRequest) (*pluginv2.CheckHealthResponse, error) {
 	return s.server.CheckHealth(ctx, req)
 }
 
@@ -46,13 +50,13 @@ type diagnosticsGRPCClient struct {
 	client pluginv2.DiagnosticsClient
 }
 
-func (s *diagnosticsGRPCClient) CollectMetrics(ctx context.Context, req *pluginv2.CollectMetrics_Request) (*pluginv2.CollectMetrics_Response, error) {
-	return s.client.CollectMetrics(ctx, req)
+func (s *diagnosticsGRPCClient) CollectMetrics(ctx context.Context, req *pluginv2.CollectMetricsRequest, opts ...grpc.CallOption) (*pluginv2.CollectMetricsResponse, error) {
+	return s.client.CollectMetrics(ctx, req, opts...)
 }
 
-func (s *diagnosticsGRPCClient) CheckHealth(ctx context.Context, req *pluginv2.CheckHealth_Request) (*pluginv2.CheckHealth_Response, error) {
-	return s.client.CheckHealth(ctx, req)
+func (s *diagnosticsGRPCClient) CheckHealth(ctx context.Context, req *pluginv2.CheckHealthRequest, opts ...grpc.CallOption) (*pluginv2.CheckHealthResponse, error) {
+	return s.client.CheckHealth(ctx, req, opts...)
 }
 
 var _ DiagnosticsServer = &diagnosticsGRPCServer{}
-var _ DiagnosticsServer = &diagnosticsGRPCClient{}
+var _ DiagnosticsClient = &diagnosticsGRPCClient{}

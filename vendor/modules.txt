@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.34.0
+# cloud.google.com/go v0.38.0
 cloud.google.com/go/civil
 cloud.google.com/go/compute/metadata
 # github.com/BurntSushi/toml v0.3.1
@@ -127,7 +127,6 @@ github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
-github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
@@ -135,6 +134,7 @@ github.com/golang/snappy
 github.com/google/flatbuffers/go
 # github.com/google/go-cmp v0.3.1
 github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
@@ -148,11 +148,11 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.16.0
+# github.com/grafana/grafana-plugin-sdk-go v0.31.0
 github.com/grafana/grafana-plugin-sdk-go/backend/plugin
-github.com/grafana/grafana-plugin-sdk-go/dataframe
+github.com/grafana/grafana-plugin-sdk-go/data
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
-# github.com/hashicorp/go-hclog v0.8.0
+# github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-plugin v1.0.1
 github.com/hashicorp/go-plugin
@@ -186,9 +186,9 @@ github.com/lib/pq/scram
 github.com/linkedin/goavro/v2
 # github.com/mattetti/filebuffer v1.0.0
 github.com/mattetti/filebuffer
-# github.com/mattn/go-colorable v0.1.4
+# github.com/mattn/go-colorable v0.1.6
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.10
+# github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
 # github.com/mattn/go-sqlite3 v1.11.0
 github.com/mattn/go-sqlite3
@@ -285,6 +285,8 @@ github.com/uber/jaeger-lib/metrics
 github.com/unknwon/com
 # github.com/urfave/cli/v2 v2.1.1
 github.com/urfave/cli/v2
+# github.com/xorcare/pointer v1.1.0
+github.com/xorcare/pointer
 # github.com/yudai/gojsondiff v1.0.0
 github.com/yudai/gojsondiff
 github.com/yudai/gojsondiff/formatter
@@ -310,7 +312,7 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
+# golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
 golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
@@ -318,7 +320,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20191220142924-d4481acd189f
+# golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.2
@@ -345,7 +347,7 @@ google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
+# google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.23.1
 google.golang.org/grpc

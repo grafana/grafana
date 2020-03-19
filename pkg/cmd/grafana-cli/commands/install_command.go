@@ -20,8 +20,8 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
 func validateInput(c utils.CommandLine, pluginFolder string) error {
@@ -132,7 +132,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 
 	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
 
-	res, _ := s.ReadPlugin(pluginFolder, pluginName)
+	res, _ := services.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
 		if err := InstallPlugin(v.Id, "", c, client); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", v.Id)
@@ -150,7 +150,7 @@ func osAndArchString() string {
 	return osString + "-" + arch
 }
 
-func supportsCurrentArch(version *m.Version) bool {
+func supportsCurrentArch(version *models.Version) bool {
 	if version.Arch == nil {
 		return true
 	}
@@ -162,7 +162,7 @@ func supportsCurrentArch(version *m.Version) bool {
 	return false
 }
 
-func latestSupportedVersion(plugin *m.Plugin) *m.Version {
+func latestSupportedVersion(plugin *models.Plugin) *models.Version {
 	for _, ver := range plugin.Versions {
 		if supportsCurrentArch(&ver) {
 			return &ver
@@ -174,8 +174,8 @@ func latestSupportedVersion(plugin *m.Plugin) *m.Version {
 // SelectVersion returns latest version if none is specified or the specified version. If the version string is not
 // matched to existing version it errors out. It also errors out if version that is matched is not available for current
 // os and platform. It expects plugin.Versions to be sorted so the newest version is first.
-func SelectVersion(plugin *m.Plugin, version string) (*m.Version, error) {
-	var ver m.Version
+func SelectVersion(plugin *models.Plugin, version string) (*models.Version, error) {
+	var ver models.Version
 
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
