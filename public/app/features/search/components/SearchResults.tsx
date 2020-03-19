@@ -9,6 +9,7 @@ interface Props {
   onSelectionChanged: any;
   onTagSelected: any;
   onFolderExpanding: any;
+  onToggleSelection: (item: DashboardSectionItem | DashboardSection, event: any) => void;
   editable: boolean;
   selectors: typeof e2e.pages.Dashboards.selectors;
 }
@@ -18,10 +19,10 @@ export const SearchResults: FC<Props> = ({
   onSelectionChanged,
   onTagSelected,
   onFolderExpanding,
+  onToggleSelection,
   editable,
   selectors,
 }) => {
-  const toggleSelection = () => {};
   const toggleFolderExpand = (section: DashboardSection) => {
     if (section.toggle) {
       if (!section.expanded && typeof onFolderExpanding === 'function') {
@@ -48,7 +49,7 @@ export const SearchResults: FC<Props> = ({
               className={`search-section__header pointer ${section.checked ? 'selected' : ''}`}
               onClick={() => toggleFolderExpand(section)}
             >
-              <div onClick={toggleSelection} className="center-vh">
+              <div onClick={e => onToggleSelection(section, e)} className="center-vh">
                 {editable && <Forms.Checkbox value={section.checked} onChange={onSelectionChanged} />}
               </div>
               <Icon className="search-section__header__icon" name={section.icon as IconType} />
@@ -72,7 +73,7 @@ export const SearchResults: FC<Props> = ({
             section.items.map(item => (
               <div key={item.id}>
                 <a className={`search-item search-item--indent  ${item.checked ? 'selected' : ''}`} href={item.url}>
-                  <div onClick={toggleSelection} className="center-vh">
+                  <div onClick={e => onToggleSelection(item, e)} className="center-vh">
                     {editable && <Forms.Checkbox value={item.checked} onChange={onSelectionChanged} />}
                   </div>
                   <span className="search-item__icon">

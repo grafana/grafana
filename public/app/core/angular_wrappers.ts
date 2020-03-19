@@ -64,6 +64,7 @@ export function registerAngularDirectives() {
     ['onSelectionChanged', { watchDepth: 'reference' }],
     ['onTagSelected', { watchDepth: 'reference' }],
     ['onFolderExpanding', { watchDepth: 'reference' }],
+    ['onToggleSelection', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
