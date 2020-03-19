@@ -78,7 +78,7 @@ export const SearchResults: FC<Props> = ({
           )}
           {section.expanded &&
             section.items.map(item => (
-              <div key={item.id}>
+              <div key={item.id} aria-label={selectors.dashboards(item.title)}>
                 <a className={`search-item search-item--indent  ${item.checked ? 'selected' : ''}`} href={item.url}>
                   <div onClick={e => onToggleSelection(item, e)} className="center-vh">
                     {editable && <Forms.Checkbox value={item.checked} onChange={onSelectionChanged} />}
