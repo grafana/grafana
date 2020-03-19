@@ -38,7 +38,7 @@ export const adHocVariableSlice = createSlice({
       const instanceState = getInstanceState<AdHocVariableModel>(state, action.payload.uuid);
       const index = action.payload.data;
 
-      instanceState.filters = instanceState.filters.splice(index, 1);
+      instanceState.filters.splice(index, 1);
     },
     filterUpdated: (state: VariablesState, action: PayloadAction<VariablePayload<AdHocVariabelFilterUpdate>>) => {
       const instanceState = getInstanceState<AdHocVariableModel>(state, action.payload.uuid);
