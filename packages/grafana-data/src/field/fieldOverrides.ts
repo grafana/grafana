@@ -259,7 +259,6 @@ const processFieldConfigValue = (
   if (currentConfig === null || currentConfig === undefined) {
     const item = registry.getIfExists(key);
     if (!item) {
-      console.warn(`No processor available for ${key} config  property`);
       return;
     }
 

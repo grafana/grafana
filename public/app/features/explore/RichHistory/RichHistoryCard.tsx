@@ -10,7 +10,7 @@ import appEvents from 'app/core/app_events';
 import { StoreState } from 'app/types';
 
 import { changeQuery, changeDatasource, clearQueries, updateRichHistory } from '../state/actions';
-interface Props {
+export interface Props {
   query: RichHistoryQuery;
   changeQuery: typeof changeQuery;
   changeDatasource: typeof changeDatasource;
@@ -21,7 +21,7 @@ interface Props {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
-  const bgColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
+  const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark4;
   const cardBottomPadding = hasComment ? theme.spacing.sm : theme.spacing.xs;
 
   return {
@@ -30,7 +30,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
       display: flex;
       padding: ${theme.spacing.sm} ${theme.spacing.sm} ${cardBottomPadding};
       margin: ${theme.spacing.sm} 0;
-
       .starred {
         color: ${theme.colors.orange};
       }
@@ -42,6 +41,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
     `,
     queryCardRight: css`
       width: 150px;
+      height: ${theme.height.sm};
       display: flex;
       justify-content: flex-end;
 
@@ -51,7 +51,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hasComment?: boolean) => {
       }
     `,
     queryRow: css`
-      border-top: 1px solid ${bgColor};
+      border-top: 1px solid ${borderColor};
       word-break: break-all;
       padding: 4px 2px;
       :first-child {
@@ -82,7 +82,6 @@ export function RichHistoryCard(props: Props) {
     clearQueries,
     datasourceInstance,
   } = props;
-  const [starred, setStared] = useState(query.starred);
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
 
@@ -109,26 +108,36 @@ export function RichHistoryCard(props: Props) {
 
   return (
     <div className={styles.queryCard}>
-      <div className={styles.queryCardLeft} onClick={() => onChangeQuery(query)}>
+      <div className={styles.queryCardLeft} title="Add queries to query editor" onClick={() => onChangeQuery(query)}>
         {query.queries.map((q, i) => {
           return (
-            <div key={`${q}-${i}`} className={styles.queryRow}>
+            <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
               {q}
             </div>
           );
         })}
-        {!activeUpdateComment && query.comment && <div className={styles.comment}>{query.comment}</div>}
+        {!activeUpdateComment && query.comment && (
+          <div aria-label="Query comment" className={styles.comment}>
+            {query.comment}
+          </div>
+        )}
         {activeUpdateComment && (
           <div>
             <Forms.TextArea
               value={comment}
               placeholder={comment ? undefined : 'add comment'}
-              onChange={e => setComment(e.currentTarget.value)}
+              onChange={e => {
+                setComment(e.currentTarget.value);
+              }}
+              onClick={e => {
+                e.stopPropagation();
+              }}
             />
             <div className={styles.buttonRow}>
               <Forms.Button
                 onClick={e => {
                   e.preventDefault();
+                  e.stopPropagation();
                   updateRichHistory(query.ts, 'comment', comment);
                   toggleActiveUpdateComment();
                 }}
@@ -140,7 +149,8 @@ export function RichHistoryCard(props: Props) {
                 className={css`
                   margin-left: 8px;
                 `}
-                onClick={() => {
+                onClick={e => {
+                  e.stopPropagation();
                   toggleActiveUpdateComment();
                   setComment(query.comment);
                 }}
@@ -179,10 +189,9 @@ export function RichHistoryCard(props: Props) {
           title="Copy link to clipboard"
         ></i>
         <i
-          className={cx('fa fa-fw', starred ? 'fa-star starred' : 'fa-star-o')}
+          className={cx('fa fa-fw', query.starred ? 'fa-star starred' : 'fa-star-o')}
           onClick={() => {
             updateRichHistory(query.ts, 'starred');
-            setStared(!starred);
           }}
           title={query.starred ? 'Unstar query' : 'Star query'}
         ></i>

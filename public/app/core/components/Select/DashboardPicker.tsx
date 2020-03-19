@@ -12,6 +12,8 @@ export interface Props {
   currentDashboard?: SelectableValue<number>;
   size?: FormInputSize;
   isClearable?: boolean;
+  invalid?: boolean;
+  disabled?: boolean;
 }
 
 const getDashboards = (query = '') => {
@@ -29,7 +31,8 @@ export const DashboardPicker: FC<Props> = ({
   currentDashboard,
   size = 'md',
   isClearable = false,
-  ...rest
+  invalid,
+  disabled,
 }) => {
   const debouncedSearch = debounce(getDashboards, 300, {
     leading: true,
@@ -49,7 +52,8 @@ export const DashboardPicker: FC<Props> = ({
       placeholder="Select dashboard"
       noOptionsMessage="No dashboards found"
       value={currentDashboard}
-      {...rest}
+      invalid={invalid}
+      disabled={disabled}
     />
   );
 };
