@@ -112,8 +112,8 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     }
 
     const request = {
-      from: options.range.from.valueOf().toString(),
-      to: options.range.to.valueOf().toString(),
+      from: options?.range?.from.valueOf().toString(),
+      to: options?.range?.to.valueOf().toString(),
       queries: queries,
     };
 
