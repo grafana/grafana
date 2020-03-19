@@ -45,9 +45,9 @@ Grafana 6.7 comes with a new OAuth integration for Microsoft Azure Active Direct
 
 Allowing a low dashboard refresh interval can cause severe load on data sources and Grafana. Grafana v6.7 allows you to restrict the dashboard refresh interval so it cannot be set lower than a given interval. This provides a way for administrators to control dashboard refresh behavior on a global level.
 
-Refer to min_refresh_interval in [Configuration]({{< relref "../administration/configuration/#min-refresh-interval" >}}) for further information and how to enable this.
+Refer to min_refresh_interval in [Configuration]({{< relref "../installation/configuration#min-refresh-interval" >}}) for more information and how to enable this feature.
 
-### Stackdriver Project Selector
+### Stackdriver project selector
 A Stackdriver data source in Grafana is configured for one service account only. That service account is always associated with a default project in Google Cloud Platform (GCP). Depending on your setup in GCP, the service account might be granted access to more projects than just the default project. 
 
 In Grafana 6.7, the query editor has been enhanced with a project selector that makes it possible to query different projects without changing datasource. Many thanks [Eraac](https://github.com/Eraac), [eliaslaouiti](https://github.com/eliaslaouiti) and [NaurisSadovskis](https://github.com/NaurisSadovskis) for making this happen! 
