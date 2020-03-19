@@ -2,6 +2,8 @@ import React, { FC } from 'react';
 import { e2e } from '@grafana/e2e';
 import { Forms, Icon } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
+import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
 import { DashboardSection, DashboardSectionItem } from '../types';
 
 interface Props {
@@ -36,7 +38,12 @@ export const SearchResults: FC<Props> = ({
       });
     }
   };
-  const onItemClick = (item: DashboardSectionItem) => {};
+  const onItemClick = (item: DashboardSectionItem) => {
+    //Check if one string can be found in the other
+    if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
+      appEvents.emit(CoreEvents.hideDashSearch);
+    }
+  };
 
   return !results ? (
     <p>No results</p>
