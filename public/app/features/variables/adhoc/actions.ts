@@ -97,7 +97,6 @@ export const changeVariableDatasource = (datasource: string): ThunkResult<void> 
     dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })));
 
     const ds = await getDatasourceSrv().get(datasource);
-    console.log('ds', ds);
 
     if (!ds || !ds.getTagKeys) {
       dispatch(
