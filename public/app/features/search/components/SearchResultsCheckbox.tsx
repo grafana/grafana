@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { Forms } from '@grafana/ui';
 
 interface CheckboxProps {
@@ -7,23 +7,23 @@ interface CheckboxProps {
   onClick: any;
   editable?: boolean;
 }
+
 export const SearchResultsCheckbox: FC<CheckboxProps> = ({ checked, onClick, editable = false }) => {
+  const styles = getStyles();
   return (
     editable && (
-      <div
-        onClick={onClick}
-        className={cx(
-          'center-vh',
-          css`
-            height: 19px;
-            & > label {
-              height: 100%;
-            }
-          `
-        )}
-      >
+      <div onClick={onClick} className={styles.wrapper}>
         <Forms.Checkbox value={checked} />
       </div>
     )
   );
 };
+
+const getStyles = () => ({
+  wrapper: css`
+    height: 19px;
+    & > label {
+      height: 100%;
+    }
+  `,
+});
