@@ -2,24 +2,24 @@ import { GrafanaThemeCommons } from '@grafana/data';
 
 export const commonColorsPalette = {
   // New greys palette used by next-gen form elements
-  gray98: '#F7F8FA',
-  gray95: '#E9EDF2',
-  gray85: '#C7D0D9',
-  gray70: '#9FA7B3',
-  gray60: '#7B8087',
-  gray33: '#464C54',
-  gray25: '#343B40',
+  gray98: '#f7f8fa',
+  gray95: '#e9edf2',
+  gray85: '#c7d0d9',
+  gray70: '#9fa7b3',
+  gray60: '#7b8087',
+  gray33: '#464c54',
+  gray25: '#343b40',
   gray15: '#202226',
   gray10: '#141619',
-  gray05: '#0B0C0E',
+  gray05: '#0b0c0e',
 
-  // New bLUES PALETte used by next-gen form elements
-  blue95: '#5794F2',
-  blue85: '#3274D9',
-  blue77: '#1F60C4',
+  // New blues palette used by next-gen form elements
+  blue95: '#5794f2',
+  blue85: '#3274d9',
+  blue77: '#1f60c4',
 
-  // New rEDS PALETTe used by next-gen form elements
-  red88: '#E02F44',
+  // New reds palette used by next-gen form elements
+  red88: '#e02f44',
 };
 
 const SPACING_BASE = 8;
