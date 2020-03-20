@@ -240,7 +240,7 @@ When Grafana starts, it will update/insert all dashboards available in the confi
 It's possible to make changes to a provisioned dashboard in the Grafana UI. However, it is not possible to automatically save the changes back to the provisioning source.
 If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can `Save` the dashboard then changes will be persisted to the Grafana database.
 
-> **Note.**
+> **Note:**
 > If a provisioned dashboard is saved from the UI and then later updated from the source, the dashboard stored in the database will always be overwritten. The `version` property in the JSON file will not affect this, even if it is lower than the existing dashboard.
 >
 > If a provisioned dashboard is saved from the UI and the source is removed, the dashboard stored in the database will be deleted unless the configuration option `disableDeletion` is set to true.
@@ -464,4 +464,3 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | url |
-

@@ -81,9 +81,9 @@ Addresses | Email addresses to recipients. You can enter multiple email addresse
 {{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
 To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
-[their guide](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
+[Sending messages using Incoming Webhooks](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
 firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store)
-in Grafana, or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token
+in Grafana or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token
 provided (https://api.slack.com/bot-users), which starts with "xoxb".
 
 Setting | Description
