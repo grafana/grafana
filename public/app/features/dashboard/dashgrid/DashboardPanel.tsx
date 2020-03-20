@@ -72,10 +72,12 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   };
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isFullscreen, isInView, isInEditMode } = this.props;
+    const { dashboard, panel, isFullscreen, isEditing, isInView, isInEditMode } = this.props;
+
+    const autoSizerStyle = { height: isEditing ? '100%' : '' };
 
     return (
-      <AutoSizer>
+      <AutoSizer style={autoSizerStyle}>
         {({ width, height }) => {
           if (width === 0) {
             return null;
