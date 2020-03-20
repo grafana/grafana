@@ -19,7 +19,7 @@ import { omit } from 'lodash';
 import { filterAdded, filterUpdated, filterRemoved, filtersRestored } from './reducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { updateLocation } from 'app/core/actions';
-import { DashboardState } from 'app/types';
+import { DashboardState, LocationState } from 'app/types';
 import { toUrl } from './urlParser';
 import { VariableModel } from 'app/features/templating/variable';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
@@ -39,6 +39,12 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
     getMetricSources,
   })),
 }));
+
+type ReducersUsedInContext = {
+  templating: TemplatingState;
+  dashboard: DashboardState;
+  location: LocationState;
+};
 
 describe('adhoc actions', () => {
   variableAdapters.set('adhoc', createAdHocVariableAdapter());
@@ -67,7 +73,7 @@ describe('adhoc actions', () => {
         .withDatasource(options.datasource)
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
@@ -99,7 +105,7 @@ describe('adhoc actions', () => {
         operator: '=',
       };
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
@@ -147,7 +153,7 @@ describe('adhoc actions', () => {
         .withDatasource(options.datasource)
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
@@ -192,7 +198,7 @@ describe('adhoc actions', () => {
         .withDatasource(options.datasource)
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(existing))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
@@ -241,7 +247,7 @@ describe('adhoc actions', () => {
 
       const update = { index: 0, filter: updated };
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(changeFilter(uuid, update), true);
@@ -282,7 +288,7 @@ describe('adhoc actions', () => {
         .withDatasource('elasticsearch')
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(addFilter(uuid, adding), true);
@@ -318,7 +324,7 @@ describe('adhoc actions', () => {
         .withDatasource('elasticsearch')
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(addFilter(uuid, adding), true);
@@ -347,7 +353,7 @@ describe('adhoc actions', () => {
         .withDatasource('elasticsearch')
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(removeFilter(uuid, 0), true);
@@ -383,7 +389,7 @@ describe('adhoc actions', () => {
         .withDatasource('elasticsearch')
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(removeFilter(uuid, 0), true);
@@ -424,7 +430,7 @@ describe('adhoc actions', () => {
         { ...existing, name: 'value-2' },
       ];
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(setFiltersFromUrl(uuid, fromUrl), true);
@@ -463,7 +469,7 @@ describe('adhoc actions', () => {
       getMetricSources.mockRestore();
       getMetricSources.mockReturnValue(datasources);
 
-      const tester = reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(initAdHocVariableEditor());
 
@@ -496,7 +502,7 @@ describe('adhoc actions', () => {
       getDatasource.mockRestore();
       getDatasource.mockResolvedValue(null);
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
@@ -539,7 +545,7 @@ describe('adhoc actions', () => {
         getTagKeys: () => {},
       });
 
-      const tester = await reduxTester<{ templating: TemplatingState; dashboard: DashboardState }>()
+      const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
