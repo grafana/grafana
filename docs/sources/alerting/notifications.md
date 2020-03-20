@@ -71,14 +71,19 @@ external image destination if available or fallback to attaching the image to th
 Be aware that if you use the `local` image storage email servers and clients might not be
 able to access the image.
 
+Setting | Description
+---------- | -----------
+Single email | Send a single email to all recipients. Disabled per default.
+Addresses | Email addresses to recipients. You can enter multiple email addresses using a ";" separator.
+
 ### Slack
 
 {{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
-To set up Slack, you need to configure an incoming Slack webhook URL. You can follow 
-[their guide](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the 
-firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store) 
-in Grafana, or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token 
+To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
+[their guide](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
+firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store)
+in Grafana, or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token
 provided (https://api.slack.com/bot-users), which starts with "xoxb".
 
 Setting | Description
@@ -206,7 +211,7 @@ Webhook | `webhook` | yes, external only | yes
 
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure 
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
 
 Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
