@@ -6,7 +6,7 @@ import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { DashboardSectionItem } from '../types';
 import { e2e } from '@grafana/e2e';
-import { SearchResultsCheckbox } from './SearchResultsCheckbox';
+import { SearchCheckbox } from './SearchCheckbox';
 
 interface ResultsItemProps {
   item: DashboardSectionItem;
@@ -17,7 +17,7 @@ interface ResultsItemProps {
 
 const { selectors } = e2e.pages.Dashboards;
 
-export const SearchResultsItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelection, onTagSelected }) => {
+export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelection, onTagSelected }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme, item.checked);
 
@@ -34,7 +34,7 @@ export const SearchResultsItem: FC<ResultsItemProps> = ({ item, editable, onTogg
 
   return (
     <div aria-label={selectors.dashboards(item.title)} className={styles.wrapper} onClick={() => navigate(item)}>
-      <SearchResultsCheckbox
+      <SearchCheckbox
         editable={editable}
         checked={item.checked}
         onClick={(e: MouseEvent) => onToggleSelection(item, e)}

@@ -3,8 +3,8 @@ import { css, cx } from 'emotion';
 import { Icon } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
 import { DashboardSection, DashboardSectionItem } from '../types';
-import { SearchResultsItem } from './SearchResultsItem';
-import { SearchResultsCheckbox } from './SearchResultsCheckbox';
+import { SearchItem } from './SearchItem';
+import { SearchCheckbox } from './SearchCheckbox';
 
 type clickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
 interface Props {
@@ -51,7 +51,7 @@ export const SearchResults: FC<Props> = ({
               className={cx('search-section__header pointer', { selected: section.checked })}
               onClick={() => toggleFolderExpand(section)}
             >
-              <SearchResultsCheckbox
+              <SearchCheckbox
                 editable={editable}
                 checked={section.checked}
                 onClick={(e: MouseEvent) => onToggleSelection(section, e)}
@@ -77,7 +77,7 @@ export const SearchResults: FC<Props> = ({
           )}
           {section.expanded &&
             section.items.map(item => (
-              <SearchResultsItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
+              <SearchItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
             ))}
         </div>
       ))}

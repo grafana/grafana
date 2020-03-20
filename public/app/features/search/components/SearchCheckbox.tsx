@@ -8,7 +8,7 @@ interface CheckboxProps {
   editable?: boolean;
 }
 
-export const SearchResultsCheckbox: FC<CheckboxProps> = ({ checked, onClick, editable = false }) => {
+export const SearchCheckbox: FC<CheckboxProps> = ({ checked, onClick, editable = false }) => {
   const styles = getStyles();
   return (
     editable && (
