@@ -61,7 +61,6 @@ export interface Props {
 }
 
 export interface State {
-  isSettingsOpening: boolean;
   isEditing: boolean;
   isFullscreen: boolean;
   fullscreenPanel: PanelModel | null;
@@ -73,7 +72,6 @@ export interface State {
 
 export class DashboardPage extends PureComponent<Props, State> {
   state: State = {
-    isSettingsOpening: false,
     isEditing: false,
     isFullscreen: false,
     showLoadingState: false,
@@ -103,7 +101,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId, urlUid } = this.props;
+    const { dashboard, urlEdit, urlFullscreen, urlPanelId, urlUid } = this.props;
 
     if (!dashboard) {
       return;
@@ -118,14 +116,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     // Can remove this condition after we switch to react router
     if (prevProps.urlUid !== urlUid) {
       return;
-    }
-
-    // handle animation states when opening dashboard settings
-    if (!prevProps.editview && editview) {
-      this.setState({ isSettingsOpening: true });
-      setTimeout(() => {
-        this.setState({ isSettingsOpening: false });
-      }, 10);
     }
 
     // Sync url state with model
@@ -268,7 +258,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       updateLocation,
     } = this.props;
 
-    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
+    const { isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -276,11 +266,6 @@ export class DashboardPage extends PureComponent<Props, State> {
       }
       return null;
     }
-
-    const classes = classNames({
-      'dashboard-page--settings-opening': isSettingsOpening,
-      'dashboard-page--settings-open': !isSettingsOpening && editview,
-    });
 
     const gridWrapperClasses = classNames({
       'dashboard-container': true,
@@ -296,12 +281,11 @@ export class DashboardPage extends PureComponent<Props, State> {
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
 
     return (
-      <div className={classes}>
+      <div>
         <DashNav
           dashboard={dashboard}
           isEditing={isEditing}
           isFullscreen={isFullscreen}
-          editview={editview}
           $injector={$injector}
           onAddPanel={this.onAddPanel}
         />
