@@ -38,7 +38,7 @@ export default class Api {
         method: 'GET',
       });
 
-      const res = (data[path.match(/([^\/]*)\/*$/)[1]] || []).map(responseMap);
+      const res = (data ? data[path.match(/([^\/]*)\/*$/)[1]] : []).map(responseMap);
 
       if (useCache) {
         this.cache[path] = res;

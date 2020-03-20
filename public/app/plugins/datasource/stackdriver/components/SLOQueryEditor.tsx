@@ -53,7 +53,7 @@ export function SLOQueryEditor({
               ...services,
             ])
           }
-          onChange={({ value: serviceId }) => onChange({ ...query, serviceId })}
+          onChange={({ value: serviceId = '' }) => onChange({ ...query, serviceId })}
         />
       </QueryInlineField>
 
@@ -71,7 +71,7 @@ export function SLOQueryEditor({
               ...sloIds,
             ])
           }
-          onChange={({ value: sloId }) => onChange({ ...query, sloId })}
+          onChange={({ value: sloId = '' }) => onChange({ ...query, sloId })}
         />
       </QueryInlineField>
 
@@ -93,7 +93,7 @@ export function SLOQueryEditor({
       <AlignmentPeriods
         templateSrv={datasource.templateSrv}
         templateVariableOptions={variableOptionGroup.options}
-        alignmentPeriod={query.alignmentPeriod}
+        alignmentPeriod={query.alignmentPeriod || ''}
         perSeriesAligner={query.selectorName === 'select_slo_health' ? 'ALIGN_MEAN' : 'ALIGN_NEXT_OLDER'}
         usedAlignmentPeriod={usedAlignmentPeriod}
         onChange={alignmentPeriod => onChange({ ...query, alignmentPeriod })}

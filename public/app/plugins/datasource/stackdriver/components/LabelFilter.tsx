@@ -35,7 +35,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
             allowCustomValue
             value={key}
             options={options}
-            onChange={({ value: key }) => {
+            onChange={({ value: key = '' }) => {
               if (key === removeText) {
                 onChange(filtersToStringArray(filters.filter((_, i) => i !== index)));
               } else {
@@ -51,7 +51,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
             value={operator}
             className="gf-form-label query-segment-operator"
             options={operators.map(toOption)}
-            onChange={({ value: operator }) =>
+            onChange={({ value: operator = '=' }) =>
               onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, operator } : f))))
             }
           />
@@ -62,7 +62,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
             options={
               labels.hasOwnProperty(key) ? [variableOptionGroup, ...labels[key].map(toOption)] : [variableOptionGroup]
             }
-            onChange={({ value }) =>
+            onChange={({ value = '' }) =>
               onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, value } : f))))
             }
           />
@@ -80,7 +80,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
             </a>
           }
           options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
-          onChange={({ value: key }) =>
+          onChange={({ value: key = '' }) =>
             onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' } as Filter]))
           }
         />

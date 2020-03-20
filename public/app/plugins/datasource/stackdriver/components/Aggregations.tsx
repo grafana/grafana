@@ -91,7 +91,7 @@ export class Aggregations extends React.Component<Props, State> {
             </label>
           </div>
         </div>
-        {this.props.children(this.state.displayAdvancedOptions)}
+        {this.props.children && this.props.children(this.state.displayAdvancedOptions)}
       </>
     );
   }

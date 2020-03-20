@@ -23,7 +23,7 @@ export const QueryTypeSelector: FunctionComponent<Props> = ({ onChange, value, t
             options: templateVariableOptions,
           },
         ]}
-        onChange={({ value }: SelectableValue<QueryType>) => onChange(value)}
+        onChange={({ value }: SelectableValue<QueryType>) => onChange(value!)}
       />
 
       <div className="gf-form gf-form--grow">

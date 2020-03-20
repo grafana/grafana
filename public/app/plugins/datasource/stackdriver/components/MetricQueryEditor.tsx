@@ -93,13 +93,13 @@ function Editor({
           <>
             <LabelFilter
               labels={labels}
-              filters={query.filters}
+              filters={query.filters!}
               onChange={filters => onChange({ ...query, filters })}
               variableOptionGroup={variableOptionGroup}
             />
             <GroupBys
               groupBys={Object.keys(labels)}
-              values={query.groupBys}
+              values={query.groupBys!}
               onChange={groupBys => onChange({ ...query, groupBys })}
               variableOptionGroup={variableOptionGroup}
             />
@@ -107,7 +107,7 @@ function Editor({
               metricDescriptor={metric}
               templateVariableOptions={variableOptionGroup.options}
               crossSeriesReducer={query.crossSeriesReducer}
-              groupBys={query.groupBys}
+              groupBys={query.groupBys!}
               onChange={crossSeriesReducer => onChange({ ...query, crossSeriesReducer })}
             >
               {displayAdvancedOptions =>
@@ -115,7 +115,7 @@ function Editor({
                   <Alignments
                     alignOptions={alignOptions}
                     templateVariableOptions={variableOptionGroup.options}
-                    perSeriesAligner={perSeriesAligner}
+                    perSeriesAligner={perSeriesAligner || ''}
                     onChange={perSeriesAligner => onChange({ ...query, perSeriesAligner })}
                   />
                 )
@@ -124,12 +124,12 @@ function Editor({
             <AlignmentPeriods
               templateSrv={datasource.templateSrv}
               templateVariableOptions={variableOptionGroup.options}
-              alignmentPeriod={query.alignmentPeriod}
-              perSeriesAligner={query.perSeriesAligner}
+              alignmentPeriod={query.alignmentPeriod || ''}
+              perSeriesAligner={query.perSeriesAligner || ''}
               usedAlignmentPeriod={usedAlignmentPeriod}
               onChange={alignmentPeriod => onChange({ ...query, alignmentPeriod })}
             />
-            <AliasBy value={query.aliasBy} onChange={aliasBy => onChange({ ...query, aliasBy })} />
+            <AliasBy value={query.aliasBy || ''} onChange={aliasBy => onChange({ ...query, aliasBy })} />
           </>
         )}
       </Metrics>
