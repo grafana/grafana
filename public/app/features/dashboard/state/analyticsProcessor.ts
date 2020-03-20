@@ -2,7 +2,7 @@ import { getDashboardSrv } from '../services/DashboardSrv';
 
 import { PanelData, LoadingState, DataSourceApi } from '@grafana/data';
 
-import { reportMetaAnalytics, MetaAnalyticsEventPayload } from '@grafana/runtime';
+import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
 
 export function getAnalyticsProcessor(datasource: DataSourceApi) {
   let done = false;
@@ -16,16 +16,14 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
       return;
     }
 
-    const eventData: MetaAnalyticsEventPayload = {
+    const eventData: DataRequestEventPayload = {
+      eventName: MetaAnalyticsEventName.DataRequest,
       datasourceName: datasource.name,
       datasourceId: datasource.id,
       panelId: data.request.panelId,
       dashboardId: data.request.dashboardId,
-      // app: 'dashboard',
       dataSize: 0,
       duration: data.request.endTime - data.request.startTime,
-      eventName: 'data-request',
-      // sessionId: '',
     };
 
     // enrich with dashboard info
