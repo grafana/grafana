@@ -41,17 +41,6 @@ export const SearchResults: FC<Props> = ({
     }
   };
 
-  const onItemClick = (item: DashboardSectionItem) => {
-    //Check if one string can be found in the other
-    if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
-      appEvents.emit(CoreEvents.hideDashSearch);
-    }
-  };
-
-  const navigate = (item: DashboardSectionItem) => {
-    window.location.pathname = item.url;
-  };
-
   return !results || !results.length ? (
     <div className="search-results">
       <em className="muted">No dashboards found.</em>
@@ -91,32 +80,7 @@ export const SearchResults: FC<Props> = ({
           )}
           {section.expanded &&
             section.items.map(item => (
-              <div
-                key={item.id}
-                aria-label={selectors.dashboards(item.title)}
-                className={cx('search-item search-item--indent pointer', { selected: item.checked })}
-                onClick={() => navigate(item)}
-              >
-                <DashboardCheckbox
-                  editable={editable}
-                  checked={item.checked}
-                  onClick={(e: MouseEvent) => onToggleSelection(item, e)}
-                />
-                <span className="search-item__icon">
-                  <Icon name="th-large" />
-                </span>
-                <span className="search-item__body" onClick={() => onItemClick(item)}>
-                  <div className="search-item__body-title">{item.title}</div>
-                  <span className="search-item__body-folder-title">{item.folderTitle}</span>
-                </span>
-                <span className="search-item__tags">
-                  {item.tags.map(tag => (
-                    <span key={tag} onClick={() => onTagSelected(tag)} className="label label-tag">
-                      {tag}
-                    </span>
-                  ))}
-                </span>
-              </div>
+              <ResultsItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
             ))}
         </div>
       ))}
@@ -136,5 +100,53 @@ const DashboardCheckbox: FC<CheckboxProps> = ({ checked, onClick, editable = fal
         <Forms.Checkbox value={checked} />
       </div>
     )
+  );
+};
+
+interface ResultsItemProps {
+  item: DashboardSectionItem;
+  editable?: boolean;
+  onToggleSelection: any;
+  onTagSelected: any;
+}
+
+const ResultsItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelection, onTagSelected }) => {
+  const onItemClick = (item: DashboardSectionItem) => {
+    //Check if one string can be found in the other
+    if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
+      appEvents.emit(CoreEvents.hideDashSearch);
+    }
+  };
+
+  const navigate = (item: DashboardSectionItem) => {
+    window.location.pathname = item.url;
+  };
+
+  return (
+    <div
+      aria-label={selectors.dashboards(item.title)}
+      className={cx('search-item search-item--indent pointer', { selected: item.checked })}
+      onClick={() => navigate(item)}
+    >
+      <DashboardCheckbox
+        editable={editable}
+        checked={item.checked}
+        onClick={(e: MouseEvent) => onToggleSelection(item, e)}
+      />
+      <span className="search-item__icon">
+        <Icon name="th-large" />
+      </span>
+      <span className="search-item__body" onClick={() => onItemClick(item)}>
+        <div className="search-item__body-title">{item.title}</div>
+        <span className="search-item__body-folder-title">{item.folderTitle}</span>
+      </span>
+      <span className="search-item__tags">
+        {item.tags.map(tag => (
+          <span key={tag} onClick={() => onTagSelected(tag)} className="label label-tag">
+            {tag}
+          </span>
+        ))}
+      </span>
+    </div>
   );
 };
