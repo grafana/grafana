@@ -189,7 +189,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
       return <>{include.map(f => renderEditor(standardFieldConfigEditorRegistry.get(f), false))}</>;
     }
     return <>{standardFieldConfigEditorRegistry.list().map(f => renderEditor(f, false))}</>;
-  }, [plugin]);
+  }, [plugin, config]);
 
   const renderCustomConfigs = useCallback(() => {
     if (!plugin.customFieldConfigs) {
@@ -197,7 +197,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
     }
 
     return plugin.customFieldConfigs.list().map(f => renderEditor(f, true));
-  }, [plugin]);
+  }, [plugin, config]);
 
   return (
     <>
