@@ -8,10 +8,10 @@
     <a class="btn btn-primary" ng-href="{{ctrl.createDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
       New Dashboard
     </a>
-    <a class="btn btn-inverse" href="dashboards/folder/new" ng-if="!ctrl.folderId && ctrl.isEditor">
+    <a class="btn btn-primary" href="dashboards/folder/new" ng-if="!ctrl.folderId && ctrl.isEditor">
       New Folder
     </a>
-    <a class="btn btn-inverse" href="{{ctrl.importDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
+    <a class="btn btn-primary" href="{{ctrl.importDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
       Import
     </a>
   </div>
