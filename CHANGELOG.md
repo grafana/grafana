@@ -1,3 +1,12 @@
+# 6.7.1 (2020-03-20)
+
+### Bug Fixes
+* **Azure**: Fixed dropdowns not showing current value. [#22914](https://github.com/grafana/grafana/pull/22914), [@torkelo](https://github.com/torkelo)
+* **BackendSrv**: only add content-type on POST, PUT requests. [#22910](https://github.com/grafana/grafana/pull/22910), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Panels**: Fixed size issue with panel internal size when exiting panel edit mode. [#22912](https://github.com/grafana/grafana/pull/22912), [@torkelo](https://github.com/torkelo)
+* **Reporting**: fixes migrations compatibility with mysql (Enterprise)
+* **Reporting**: Reduce default concurrency limit to 4 (Enterprise)
+
 # 6.7.0 (2020-03-19)
 
 ### Features / Enhancements
