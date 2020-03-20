@@ -89,33 +89,25 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.updateLocation({ query: { tab: tab.id }, partial: true });
   };
 
-  onFieldConfigsChange = (fieldOptions: FieldConfigSource) => {
-    // NOTE: for now, assume this is from 'fieldOptions' -- TODO? put on panel model directly?
+  onFieldConfigChange = (config: FieldConfigSource) => {
     const { panel } = this.props;
-    const options = panel.getOptions();
-    panel.updateOptions({
-      ...options,
-      fieldOptions, // Assume it is from shared singlestat -- TODO own property?
+
+    panel.updateFieldConfig({
+      ...config,
     });
     this.forceUpdate();
   };
 
   renderFieldOptions(plugin: PanelPlugin) {
     const { panel, data } = this.props;
+    const { fieldConfig } = panel;
 
-    const fieldOptions = panel.options['fieldOptions'] as FieldConfigSource;
-
-    if (!fieldOptions) {
+    if (!fieldConfig) {
       return null;
     }
 
     return (
-      <FieldConfigEditor
-        config={fieldOptions}
-        plugin={plugin}
-        onChange={this.onFieldConfigsChange}
-        data={data.series}
-      />
+      <FieldConfigEditor config={fieldConfig} plugin={plugin} onChange={this.onFieldConfigChange} data={data.series} />
     );
   }
 
@@ -130,7 +122,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     if (plugin.editor && panel) {
       return (
         <div style={{ marginTop: '10px' }}>
-          <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={this.onPanelOptionsChanged} />
+          <plugin.editor
+            data={data}
+            options={panel.getOptions()}
+            onOptionsChange={this.onPanelOptionsChanged}
+            fieldConfig={panel.getFieldConfig()}
+            onFieldConfigChange={this.onFieldConfigChange}
+          />
         </div>
       );
     }
