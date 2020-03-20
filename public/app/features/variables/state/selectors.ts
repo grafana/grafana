@@ -35,3 +35,7 @@ export const getVariableClones = (state: StoreState = getState(), includeEmptyUu
   ).map(variable => cloneDeep(variable));
   return variables.sort((s1, s2) => s1.index! - s2.index!);
 };
+
+export const getNewVariabelIndex = (state: StoreState = getState()): number => {
+  return Object.values(state.templating.variables).length;
+};
