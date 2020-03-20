@@ -225,7 +225,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     dashboardSrv.setCurrent(dashboard);
 
     // send open dashboard event
-    handleDashboardViewEvent(dashboard);
+    if (args.routeInfo !== DashboardRouteInfo.New) {
+      handleDashboardViewEvent(dashboard);
+    }
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
