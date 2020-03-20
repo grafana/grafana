@@ -1,10 +1,16 @@
 import { getDashboardSrv } from '../services/DashboardSrv';
+import { DashboardModel } from './DashboardModel';
 
 import { PanelData, LoadingState, DataSourceApi } from '@grafana/data';
 
-import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
+import {
+  reportMetaAnalytics,
+  MetaAnalyticsEventName,
+  DataRequestEventPayload,
+  DashboardViewEventPayload,
+} from '@grafana/runtime';
 
-export function getAnalyticsProcessor(datasource: DataSourceApi) {
+export function handleDataRequestEvent(datasource: DataSourceApi) {
   let done = false;
 
   return (data: PanelData) => {
@@ -50,4 +56,16 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
     // there are multiple responses with done state
     done = true;
   };
+}
+
+export function handleDashboardViewEvent(dashboard: DashboardModel) {
+  const eventData: DashboardViewEventPayload = {
+    dashboardId: dashboard.id,
+    dashboardName: dashboard.title,
+    dashboardUid: dashboard.uid,
+    folderName: dashboard.meta.folderTitle,
+    eventName: MetaAnalyticsEventName.DashboardView,
+  };
+
+  reportMetaAnalytics(eventData);
 }

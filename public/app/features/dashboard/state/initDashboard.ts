@@ -25,7 +25,7 @@ import { DataQuery } from '@grafana/data';
 import { getConfig } from '../../../core/config';
 import { initDashboardTemplating, processVariables } from '../../variables/state/actions';
 import { variableAdapters } from '../../variables/adapters';
-import { reportMetaAnalytics, MetaAnalyticsEventName, DashboardViewEventPayload } from '@grafana/runtime';
+import { handleDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -225,14 +225,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     dashboardSrv.setCurrent(dashboard);
 
     // send open dashboard event
-    const eventData: DashboardViewEventPayload = {
-      dashboardId: dashboard.id,
-      dashboardName: dashboard.title,
-      dashboardUid: dashboard.uid,
-      folderName: dashboard.meta.folderTitle,
-      eventName: MetaAnalyticsEventName.DashboardView,
-    };
-    reportMetaAnalytics(eventData);
+    handleDashboardViewEvent(dashboard);
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
