@@ -57,6 +57,9 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
+// TODO[NewPanelEdit]: Remove when we switch to new panel editor
+export const NewPanelEditorContext = React.createContext(false);
+
 export class PanelEditorUnconnected extends PureComponent<Props> {
   querySubscription: Unsubscribable;
 
@@ -271,12 +274,14 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <div className={styles.wrapper}>
-        {this.renderToolbar()}
-        <div className={styles.panesWrapper}>
-          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+      <NewPanelEditorContext.Provider value={true}>
+        <div className={styles.wrapper}>
+          {this.renderToolbar()}
+          <div className={styles.panesWrapper}>
+            {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+          </div>
         </div>
-      </div>
+      </NewPanelEditorContext.Provider>
     );
   }
 }

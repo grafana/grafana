@@ -11,7 +11,6 @@ import {
 } from '@grafana/data';
 import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
-import { OptionsGroup } from './OptionsGroup';
 import { OverrideEditor } from './OverrideEditor';
 import { css } from 'emotion';
 
@@ -201,14 +200,8 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onCha
 
   return (
     <>
-      {plugin.customFieldConfigs ? (
-        <>
-          <OptionsGroup title={`${plugin.meta.name} options`}>{renderCustomConfigs()}</OptionsGroup>
-          <OptionsGroup title="Field defaults">{renderStandardConfigs()}</OptionsGroup>
-        </>
-      ) : (
-        <>{renderStandardConfigs()}</>
-      )}
+      {plugin.customFieldConfigs && renderCustomConfigs()}
+      {renderStandardConfigs()}
     </>
   );
 };

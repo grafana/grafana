@@ -10,6 +10,7 @@ import {
   useTheme,
   Forms,
   DataLinksInlineEditor,
+  Container,
 } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
@@ -39,17 +40,15 @@ export const OptionsPaneContent: React.FC<{
       }
 
       return (
-        <>
-          <OptionsGroup title="Common options">
-            <DefaultFieldConfigEditor
-              config={fieldConfig}
-              plugin={plugin}
-              onChange={onFieldConfigsChange}
-              data={data.series}
-            />
-          </OptionsGroup>
-          <OptionsGroup title="Panel options">{renderCustomPanelSettings(plugin)}</OptionsGroup>
-        </>
+        <Container padding="md">
+          {renderCustomPanelSettings(plugin)}
+          <DefaultFieldConfigEditor
+            config={fieldConfig}
+            plugin={plugin}
+            onChange={onFieldConfigsChange}
+            data={data.series}
+          />
+        </Container>
       );
     },
     [data, plugin, panel, onFieldConfigsChange]

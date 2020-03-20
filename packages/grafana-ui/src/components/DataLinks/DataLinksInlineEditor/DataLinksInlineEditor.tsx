@@ -61,7 +61,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
 
   return (
     <>
-      {links && (
+      {links && links.length > 0 && (
         <div className={styles.wrapper}>
           {links.map((l, i) => {
             return (
