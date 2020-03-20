@@ -225,6 +225,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     if (!projectName) {
       return [];
     }
+
     return this.api.get(`${this.templateSrv.replace(projectName)}/metricDescriptors`, {
       responseMap: (m: any) => {
         const [service] = m.type.split('/');
@@ -239,8 +240,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
-    const interpolatedProject = this.templateSrv.replace(projectName);
-    return this.api.get(`${interpolatedProject}/services`, {
+    return this.api.get(`${this.templateSrv.replace(projectName)}/services`, {
       responseMap: ({ name }: { name: string }) => ({
         value: name.match(/([^\/]*)\/*$/)[1],
         label: name.match(/([^\/]*)\/*$/)[1],
@@ -250,7 +250,6 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
 
   async getServiceLevelObjectives(projectName: string, serviceId: string): Promise<Array<SelectableValue<string>>> {
     let { projectName: p, serviceId: s } = this.interpolateProps({ projectName, serviceId });
-
     return this.api.get(`${p}/services/${s}/serviceLevelObjectives`, {
       responseMap: ({ name }: { name: string }) => ({
         value: name.match(/([^\/]*)\/*$/)[1],

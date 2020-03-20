@@ -25,7 +25,7 @@ export default class Api {
     };
   }
 
-  async get(path: string, options: Options): Promise<Array<SelectableValue<string>> | MetricDescriptor[]> {
+  async get(path: string, options?: Options): Promise<Array<SelectableValue<string>> | MetricDescriptor[]> {
     try {
       const { useCache, responseMap, baseUrl } = { ...this.defaultOptions, ...options };
 
