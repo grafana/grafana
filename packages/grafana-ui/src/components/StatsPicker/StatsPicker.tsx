@@ -58,7 +58,7 @@ export class StatsPicker extends PureComponent<Props> {
     if (isArray(item)) {
       onChange(item.map(v => v.value));
     } else {
-      onChange(item.value ? [item.value] : []);
+      onChange(item && item.value ? [item.value] : []);
     }
   };
 

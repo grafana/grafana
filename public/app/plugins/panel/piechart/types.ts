@@ -14,8 +14,5 @@ export const defaults: PieChartOptions = {
   fieldOptions: {
     ...standardFieldDisplayOptions,
     calcs: [ReducerID.last],
-    defaults: {
-      unit: 'short',
-    },
   },
 };
