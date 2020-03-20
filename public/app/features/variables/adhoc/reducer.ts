@@ -27,7 +27,7 @@ export const initialAdHocVariableModelState: AdHocVariableModel = {
 };
 
 export const adHocVariableSlice = createSlice({
-  name: 'templating/constant',
+  name: 'templating/adhoc',
   initialState: initialVariablesState,
   reducers: {
     filterAdded: (state: VariablesState, action: PayloadAction<VariablePayload<AdHocVariableFilter>>) => {
