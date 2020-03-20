@@ -74,7 +74,7 @@ const darkTheme: GrafanaTheme = {
     linkHover: basicColors.white,
     linkExternal: basicColors.blue,
     headingColor: basicColors.gray4,
-    pageHeaderBorder: basicColors.dark9,
+    pageHeaderBorder: basicColors.gray15,
     panelBg: basicColors.gray10,
     panelBorder: basicColors.gray15,
 

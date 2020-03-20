@@ -35,7 +35,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       : theme.colors.white
     : isRemoved
     ? theme.colors.gray15
-    : theme.colors.dark7;
+    : theme.colors.gray05;
   const cardBoxShadow = theme.isLight ? `0px 2px 2px ${borderColor}` : `0px 2px 4px black`;
 
   return {
@@ -46,7 +46,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       margin: ${theme.spacing.sm} 0;
       box-shadow: ${cardBoxShadow};
       background-color: ${cardColor};
-      border-radius: ${theme.border.radius};
+      border-radius: ${theme.border.radius.sm};
       .starred {
         color: ${theme.colors.orange};
       }
@@ -71,7 +71,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       display: flex;
       align-items: center;
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.bold};
+      font-weight: ${theme.typography.weight.semibold};
     `,
     queryActionButtons: css`
       max-width: ${rigtColumnContentWidth};
@@ -84,7 +84,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     queryContainer: css`
-      font-weight: ${theme.typography.weight.bold};
+      font-weight: ${theme.typography.weight.semibold};
       width: calc(100% - ${rigtColumnWidth});
     `,
     queryRow: css`
@@ -236,7 +236,7 @@ export function RichHistoryCard(props: Props) {
         <div className={styles.datasourceContainer}>
           <img src={dsImg} aria-label="Data source icon" />
           <div aria-label="Data source name">
-            {isRemoved ? 'Not linked to existing data source' : query.datasourceName}
+            {isRemoved ? 'Data source does not exist anymore' : query.datasourceName}
           </div>
         </div>
         {queryActionButtons}
