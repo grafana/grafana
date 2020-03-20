@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, selectThemeVariant as stv, useTheme } from '@grafana/ui';
+import { getTagColorsFromName, Icon, selectThemeVariant as stv, useTheme } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { DashboardSectionItem } from '../types';
@@ -46,9 +46,7 @@ export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelec
       </span>
       <span className="search-item__tags">
         {item.tags.map(tag => (
-          <span key={tag} onClick={() => onTagSelected(tag)} className="label label-tag">
-            {tag}
-          </span>
+          <SearchTag key={tag} tag={tag} onClick={onTagSelected} />
         ))}
       </span>
     </div>
@@ -110,3 +108,32 @@ const getResultsItemStyles = (theme: GrafanaTheme, selected: boolean) => ({
     padding: 1px 2px 0 10px;
   `,
 });
+
+interface SearchTagProps {
+  tag: string;
+  onClick?: any;
+}
+
+const SearchTag: FC<SearchTagProps> = ({ tag, onClick }) => {
+  const theme = useTheme();
+  const styles = getTagStyles(theme, tag);
+
+  return (
+    <span key={tag} onClick={() => onClick(tag)} className={styles.wrapper}>
+      {tag}
+    </span>
+  );
+};
+
+const getTagStyles = (theme: GrafanaTheme, name: string) => {
+  const { borderColor, color } = getTagColorsFromName(name);
+  return {
+    wrapper: cx(
+      css`
+        border-color: ${borderColor};
+        background-color: ${color};
+      `,
+      'label label-tag'
+    ),
+  };
+};
