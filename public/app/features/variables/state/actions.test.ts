@@ -1,7 +1,7 @@
 import { AnyAction } from 'redux';
 import { UrlQueryMap } from '@grafana/runtime';
 
-import { getTemplatingAndLocationRootReducer, getTemplatingRootReducer, variableMockBuilder } from './helpers';
+import { getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -26,6 +26,7 @@ import { VariableRefresh } from '../../templating/variable';
 import { DashboardModel } from '../../dashboard/state';
 import { DashboardState } from '../../../types';
 import { dateTime, TimeRange } from '@grafana/data';
+import * as variableBuilder from '../shared/testing/builders';
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
@@ -34,11 +35,11 @@ describe('shared actions', () => {
       variableAdapters.set('custom', createCustomVariableAdapter());
       variableAdapters.set('textbox', createTextBoxVariableAdapter());
       variableAdapters.set('constant', createConstantVariableAdapter());
-      const query = variableMockBuilder('query').create();
-      const constant = variableMockBuilder('constant').create();
-      const datasource = variableMockBuilder('datasource').create();
-      const custom = variableMockBuilder('custom').create();
-      const textbox = variableMockBuilder('textbox').create();
+      const query = variableBuilder.query().build();
+      const constant = variableBuilder.constant().build();
+      const datasource = variableBuilder.datasource().build();
+      const custom = variableBuilder.custom().build();
+      const textbox = variableBuilder.textbox().build();
       const list = [query, constant, datasource, custom, textbox];
 
       reduxTester<{ templating: TemplatingState }>()
@@ -85,11 +86,11 @@ describe('shared actions', () => {
       variableAdapters.set('custom', createCustomVariableAdapter());
       variableAdapters.set('textbox', createTextBoxVariableAdapter());
       variableAdapters.set('constant', createConstantVariableAdapter());
-      const query = variableMockBuilder('query').create();
-      const constant = variableMockBuilder('constant').create();
-      const datasource = variableMockBuilder('datasource').create();
-      const custom = variableMockBuilder('custom').create();
-      const textbox = variableMockBuilder('textbox').create();
+      const query = variableBuilder.query().build();
+      const constant = variableBuilder.constant().build();
+      const datasource = variableBuilder.datasource().build();
+      const custom = variableBuilder.custom().build();
+      const textbox = variableBuilder.textbox().build();
       const list = [query, constant, datasource, custom, textbox];
 
       const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
@@ -145,11 +146,12 @@ describe('shared actions', () => {
       ${undefined}  | ${[undefined]}
     `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
       variableAdapters.set('custom', createCustomVariableAdapter());
-      const custom = variableMockBuilder('custom')
-        .withUuid('0')
+      const custom = variableBuilder
+        .custom()
+        .withUUID('0')
         .withOptions('A', 'B', 'C')
         .withCurrent('A')
-        .create();
+        .build();
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
@@ -182,19 +184,21 @@ describe('shared actions', () => {
         let custom;
 
         if (!withOptions) {
-          custom = variableMockBuilder('custom')
-            .withUuid('0')
+          custom = variableBuilder
+            .custom()
+            .withUUID('0')
             .withCurrent(withCurrent)
-            .create();
+            .build();
           custom.options = undefined;
         }
 
         if (withOptions) {
-          custom = variableMockBuilder('custom')
-            .withUuid('0')
+          custom = variableBuilder
+            .custom()
+            .withUUID('0')
             .withOptions(...withOptions)
             .withCurrent(withCurrent)
-            .create();
+            .build();
         }
 
         const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -238,21 +242,23 @@ describe('shared actions', () => {
           let custom;
 
           if (!withOptions) {
-            custom = variableMockBuilder('custom')
-              .withUuid('0')
+            custom = variableBuilder
+              .custom()
+              .withUUID('0')
               .withMulti()
               .withCurrent(withCurrent)
-              .create();
+              .build();
             custom.options = undefined;
           }
 
           if (withOptions) {
-            custom = variableMockBuilder('custom')
-              .withUuid('0')
+            custom = variableBuilder
+              .custom()
+              .withUUID('0')
               .withMulti()
               .withOptions(...withOptions)
               .withCurrent(withCurrent)
-              .create();
+              .build();
           }
 
           const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -314,34 +320,37 @@ describe('shared actions', () => {
       variableAdapters.set('constant', createConstantVariableAdapter());
 
       // initial variable state
-      const initialVariable = variableMockBuilder('interval')
-        .withUuid('0')
+      const initialVariable = variableBuilder
+        .interval()
+        .withUUID('0')
         .withName('interval-0')
         .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
         .withCurrent('1m')
         .withRefresh(VariableRefresh.onTimeRangeChanged)
-        .create();
+        .build();
 
       // the constant variable should be filtered out
-      const constant = variableMockBuilder('constant')
-        .withUuid('1')
+      const constant = variableBuilder
+        .constant()
+        .withUUID('1')
         .withName('constant-1')
         .withOptions('a constant')
         .withCurrent('a constant')
-        .create();
+        .build();
       const initialState = {
         templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
         dashboard,
       };
 
       // updated variable state
-      const updatedVariable = variableMockBuilder('interval')
-        .withUuid('0')
+      const updatedVariable = variableBuilder
+        .interval()
+        .withUUID('0')
         .withName('interval-0')
         .withOptions('1m')
         .withCurrent('1m')
         .withRefresh(VariableRefresh.onTimeRangeChanged)
-        .create();
+        .build();
 
       const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
       const state = { templating: { variables: { '0': variable, '1': { ...constant } } }, dashboard };

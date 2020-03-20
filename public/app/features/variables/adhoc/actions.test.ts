@@ -4,7 +4,7 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { getRootReducer } from '../state/helpers';
 import { toVariablePayload, toVariableIdentifier } from '../state/types';
-import * as variableBuilder from '../testing/variableBuilder';
+import * as variableBuilder from '../shared/testing/builders';
 import {
   applyFilterFromTable,
   AdHocTableOptions,
@@ -66,7 +66,7 @@ describe('adhoc actions', () => {
       };
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withName('Filters')
         .withFilters([existingFilter])
         .withUUID(uuid)
@@ -110,7 +110,7 @@ describe('adhoc actions', () => {
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withName('Filters')
         .withUUID(uuid)
         .withDatasource(options.datasource)
@@ -146,7 +146,7 @@ describe('adhoc actions', () => {
       };
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withName('Filters')
         .withUUID(uuid)
         .withFilters([])
@@ -186,13 +186,13 @@ describe('adhoc actions', () => {
       };
 
       const existing = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withName('elastic-filter')
         .withDatasource('elasticsearch')
         .build();
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withName('Filters')
         .withUUID(uuid)
         .withDatasource(options.datasource)
@@ -238,7 +238,7 @@ describe('adhoc actions', () => {
       };
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withUUID(uuid)
         .withFilters([existing])
         .withName('elastic-filter')
@@ -281,7 +281,7 @@ describe('adhoc actions', () => {
       };
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withUUID(uuid)
         .withFilters([existing])
         .withName('elastic-filter')
@@ -317,7 +317,7 @@ describe('adhoc actions', () => {
       };
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withUUID(uuid)
         .withFilters([])
         .withName('elastic-filter')
@@ -346,7 +346,7 @@ describe('adhoc actions', () => {
   describe('when removeFilter is dispatched on variable with no existing filter', () => {
     it('then correct actions are dispatched', async () => {
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withUUID(uuid)
         .withFilters([])
         .withName('elastic-filter')
@@ -382,7 +382,7 @@ describe('adhoc actions', () => {
       };
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withUUID(uuid)
         .withFilters([filter])
         .withName('elastic-filter')
@@ -418,7 +418,7 @@ describe('adhoc actions', () => {
       };
 
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withUUID(uuid)
         .withFilters([existing])
         .withName('elastic-filter')
@@ -494,7 +494,7 @@ describe('adhoc actions', () => {
       const datasource = 'mysql';
       const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withUUID(uuid)
         .withDatasource('influxdb')
         .build();
@@ -535,7 +535,7 @@ describe('adhoc actions', () => {
       const datasource = 'elasticsearch';
       const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
       const variable = variableBuilder
-        .adHocVariable()
+        .adHoc()
         .withUUID(uuid)
         .withDatasource('influxdb')
         .build();
@@ -570,7 +570,8 @@ describe('adhoc actions', () => {
 
 function createAddVariableAction(variable: VariableModel, index = 0) {
   const identifier = toVariableIdentifier(variable);
-  const data = { global: false, index, model: variable };
+  const global = false;
+  const data = { global, index, model: { ...variable, index: -1, global } };
   return addVariable(toVariablePayload(identifier, data));
 }
 

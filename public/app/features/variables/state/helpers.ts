@@ -1,13 +1,12 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import cloneDeep from 'lodash/cloneDeep';
 
 import { EMPTY_UUID } from './types';
-import { VariableHide, VariableModel, VariableRefresh, VariableType } from '../../templating/variable';
+import { VariableHide, VariableModel } from '../../templating/variable';
 import { variablesReducer, VariablesState } from './variablesReducer';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
 import { variableEditorReducer } from '../editor/reducer';
 import { locationReducer } from '../../../core/reducers/location';
-import { VariableAdapter, variableAdapters } from '../adapters';
+import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 
 export const getVariableState = (
@@ -60,91 +59,6 @@ export const getVariableTestContext = <Model extends VariableModel>(
   };
 
   return { initialState };
-};
-
-export const variableMockBuilder = (type: VariableType) => {
-  const initialState = variableAdapters.contains(type)
-    ? cloneDeep(variableAdapters.get(type).initialState)
-    : { name: type, type, label: '', hide: VariableHide.dontHide, skipUrlSync: false };
-  const { uuid, index, global, ...rest } = initialState;
-  const model = { ...rest, name: type };
-
-  const withUuid = (uuid: string) => {
-    model.uuid = uuid;
-    return instance;
-  };
-
-  const withName = (name: string) => {
-    model.name = name;
-    return instance;
-  };
-
-  const withOptions = (...texts: string[]) => {
-    model.options = [];
-    for (let index = 0; index < texts.length; index++) {
-      model.options.push({ text: texts[index], value: texts[index], selected: false });
-    }
-    return instance;
-  };
-
-  const withCurrent = (text: string | string[], value?: string | string[]) => {
-    model.current = { text, value: value ?? text, selected: true };
-    return instance;
-  };
-
-  const withRefresh = (refresh: VariableRefresh) => {
-    model.refresh = refresh;
-    return instance;
-  };
-
-  const withQuery = (query: string) => {
-    model.query = query;
-    return instance;
-  };
-
-  const withMulti = () => {
-    model.multi = true;
-    return instance;
-  };
-
-  const withRegEx = (regex: any) => {
-    model.regex = regex;
-    return instance;
-  };
-
-  const withAuto = (auto: boolean) => {
-    model.auto = auto;
-    return instance;
-  };
-
-  const withAutoCount = (autoCount: number) => {
-    model.auto_count = autoCount;
-    return instance;
-  };
-
-  const withAutoMin = (autoMin: string) => {
-    model.auto_min = autoMin;
-    return instance;
-  };
-
-  const create = () => model;
-
-  const instance = {
-    withUuid,
-    withName,
-    withOptions,
-    withCurrent,
-    withRefresh,
-    withQuery,
-    withMulti,
-    withRegEx,
-    withAuto,
-    withAutoCount,
-    withAutoMin,
-    create,
-  };
-
-  return instance;
 };
 
 export const getRootReducer = () =>
