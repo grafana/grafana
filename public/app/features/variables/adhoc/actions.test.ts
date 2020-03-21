@@ -78,18 +78,15 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const addedFilter = {
-        ...omit(options, 'datasource'),
-        condition: '',
-      };
+      const expectedQuery = { 'var-Filters': ['filter-key|!=|filter-existing', 'filter-key|=|filter-value'] };
+      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [addFilterAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 2;
 
-        const query = { 'var-Filters': toUrl([existingFilter, addedFilter]) };
-        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, addedFilter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -116,20 +113,16 @@ describe('adhoc actions', () => {
         .withDatasource(options.datasource)
         .build();
 
-      const filter = {
-        ...omit(options, 'datasource'),
-        condition: '',
-      };
+      const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
+      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [addVariableAction, addFilterAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 3;
 
-        const query = { 'var-Filters': toUrl([filter]) };
-
         expect(addVariableAction).toEqual(createAddVariableAction(variable));
-        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, filter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -158,18 +151,15 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const filter = {
-        ...omit(options, 'datasource'),
-        condition: '',
-      };
+      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
+      const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [addFilterAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 2;
 
-        const query = { 'var-Filters': toUrl([filter]) };
-        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, filter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -203,20 +193,16 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(existing))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const filter = {
-        ...omit(options, 'datasource'),
-        condition: '',
-      };
+      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
+      const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [addVariableAction, addFilterAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 3;
 
-        const query = { 'var-Filters': toUrl([filter]) };
-
         expect(addVariableAction).toEqual(createAddVariableAction(variable, 1));
-        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, filter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -252,14 +238,15 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(changeFilter(uuid, update), true);
 
+      const expectedQuery = { 'var-elastic-filter': ['key|!=|value'] };
+      const expectedUpdate = { index: 0, filter: updated };
+
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [filterUpdatedAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 2;
 
-        const query = { [`var-${variable.name}`]: toUrl([updated]) };
-
-        expect(filterUpdatedAction).toEqual(filterUpdated(toVariablePayload(variable, update)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(filterUpdatedAction).toEqual(filterUpdated(toVariablePayload(variable, expectedUpdate)));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -293,14 +280,15 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(addFilter(uuid, adding), true);
 
+      const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|!=|value'] };
+      const expectedFilter = { key: 'key', value: 'value', operator: '!=', condition: '' };
+
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [filterAddAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 2;
 
-        const query = { [`var-${variable.name}`]: toUrl([existing, adding]) };
-
-        expect(filterAddAction).toEqual(filterAdded(toVariablePayload(variable, adding)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(filterAddAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -329,14 +317,14 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(addFilter(uuid, adding), true);
 
+      const expectedQuery = { 'var-elastic-filter': ['key|=|value'] };
+
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [filterAddAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 2;
 
-        const query = { [`var-${variable.name}`]: toUrl([adding]) };
-
         expect(filterAddAction).toEqual(filterAdded(toVariablePayload(variable, adding)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -358,14 +346,14 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(removeFilter(uuid, 0), true);
 
+      const expectedQuery = { 'var-elastic-filter': [] as string[] };
+
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [filterRemoveAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 2;
 
-        const query = { [`var-${variable.name}`]: toUrl([]) };
-
         expect(filterRemoveAction).toEqual(filterRemoved(toVariablePayload(variable, 0)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -394,14 +382,14 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(removeFilter(uuid, 0), true);
 
+      const expectedQuery = { 'var-elastic-filter': [] as string[] };
+
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [filterRemoveAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 2;
 
-        const query = { [`var-${variable.name}`]: toUrl([]) };
-
         expect(filterRemoveAction).toEqual(filterRemoved(toVariablePayload(variable, 0)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -435,14 +423,18 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(setFiltersFromUrl(uuid, fromUrl), true);
 
+      const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|=|value'] };
+      const expectedFilters = [
+        { key: 'key', value: 'value', operator: '=', condition: '>' },
+        { key: 'key', value: 'value', operator: '=', condition: '', name: 'value-2' },
+      ];
+
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [filterRestoredAction, updateLocationAction] = actions;
         const expectedNumberOfActions = 2;
 
-        const query = { [`var-${variable.name}`]: toUrl(fromUrl) };
-
-        expect(filterRestoredAction).toEqual(filtersRestored(toVariablePayload(variable, fromUrl)));
-        expect(updateLocationAction).toEqual(updateLocation({ query }));
+        expect(filterRestoredAction).toEqual(filtersRestored(toVariablePayload(variable, expectedFilters)));
+        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
 
         return actions.length === expectedNumberOfActions;
       });
@@ -459,19 +451,19 @@ describe('adhoc actions', () => {
         createDatasource('elasticsearch-v7'),
       ];
 
-      const selectable = [
-        createDatasource(''),
-        createDatasource('elasticsearch-v1'),
-        createDatasource('influx'),
-        createDatasource('elasticsearch-v7'),
-      ];
-
       getMetricSources.mockRestore();
       getMetricSources.mockReturnValue(datasources);
 
       const tester = reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(initAdHocVariableEditor());
+
+      const expectedDatasources = [
+        { text: '', value: '' },
+        { text: 'elasticsearch-v1', value: 'elasticsearch-v1' },
+        { text: 'influx', value: 'influx' },
+        { text: 'elasticsearch-v7', value: 'elasticsearch-v7' },
+      ];
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
         const [changeEditorAction] = actions;
@@ -480,7 +472,7 @@ describe('adhoc actions', () => {
         expect(changeEditorAction).toEqual(
           changeVariableEditorExtended({
             propName: 'dataSources',
-            propValue: selectable.map(ds => ({ text: ds.name, value: ds.value })),
+            propValue: expectedDatasources,
           })
         );
 
