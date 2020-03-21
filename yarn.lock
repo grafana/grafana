@@ -2228,6 +2228,15 @@
     "@babel/helper-plugin-utils" "^7.8.3"
     "@babel/plugin-syntax-typescript" "^7.8.3"
 
+"@babel/plugin-transform-typescript@^7.9.0":
+  version "7.9.0"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-transform-typescript/-/plugin-transform-typescript-7.9.0.tgz#8b52649c81cb7dee117f760952ab46675a258836"
+  integrity sha512-GRffJyCu16H3tEhbt9Q4buVFFBqrgS8FzTuhqSxlXNgmqD8aw2xmwtRwrvWXXlw7gHs664uqacsJymHJ9SUE/Q==
+  dependencies:
+    "@babel/helper-create-class-features-plugin" "^7.8.3"
+    "@babel/helper-plugin-utils" "^7.8.3"
+    "@babel/plugin-syntax-typescript" "^7.8.3"
+
 "@babel/plugin-transform-unicode-regex@^7.6.2":
   version "7.6.2"
   resolved "https://registry.yarnpkg.com/@babel/plugin-transform-unicode-regex/-/plugin-transform-unicode-regex-7.6.2.tgz#b692aad888a7e8d8b1b214be6b9dc03d5031f698"
@@ -2537,7 +2546,15 @@
     "@babel/plugin-transform-react-jsx-self" "^7.0.0"
     "@babel/plugin-transform-react-jsx-source" "^7.0.0"
 
-"@babel/preset-typescript@7.8.3", "@babel/preset-typescript@^7.1.0":
+"@babel/preset-typescript@7.9.0":
+  version "7.9.0"
+  resolved "https://registry.yarnpkg.com/@babel/preset-typescript/-/preset-typescript-7.9.0.tgz#87705a72b1f0d59df21c179f7c3d2ef4b16ce192"
+  integrity sha512-S4cueFnGrIbvYJgwsVFKdvOmpiL0XGw9MFW9D0vgRys5g36PBhZRL8NX8Gr2akz8XRtzq6HuDXPD/1nniagNUg==
+  dependencies:
+    "@babel/helper-plugin-utils" "^7.8.3"
+    "@babel/plugin-transform-typescript" "^7.9.0"
+
+"@babel/preset-typescript@^7.1.0":
   version "7.8.3"
   resolved "https://registry.yarnpkg.com/@babel/preset-typescript/-/preset-typescript-7.8.3.tgz#90af8690121beecd9a75d0cc26c6be39d1595d13"
   integrity sha512-qee5LgPGui9zQ0jR1TeU5/fP9L+ovoArklEqY12ek8P/wV5ZeM/VYSQYwICeoT6FfpJTekG9Ilay5PhwsOpMHA==

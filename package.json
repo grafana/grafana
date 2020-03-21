@@ -12,7 +12,7 @@
     "@babel/plugin-syntax-dynamic-import": "7.8.3",
     "@babel/preset-env": "7.9.0",
     "@babel/preset-react": "7.9.1",
-    "@babel/preset-typescript": "7.8.3",
+    "@babel/preset-typescript": "7.9.0",
     "@emotion/core": "10.0.27",
     "@grafana/api-documenter": "0.9.3",
     "@microsoft/api-extractor": "7.7.8",
