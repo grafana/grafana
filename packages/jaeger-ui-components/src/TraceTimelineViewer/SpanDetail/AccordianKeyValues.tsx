@@ -23,6 +23,7 @@ import KeyValuesTable from './KeyValuesTable';
 import { TNil } from '../../types';
 import { KeyValuePair, Link } from '../../types/trace';
 import { createStyle } from '../../Theme';
+import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 
 export const getStyles = createStyle(() => {
   return {
@@ -113,7 +114,7 @@ export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
   const { className, data, highContrast, interactive, isOpen, label, linksGetter, onToggle } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
   const styles = getStyles();
-  const iconCls = cx('u-align-icon', { [styles.emptyIcon]: isEmpty });
+  const iconCls = cx(uAlignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
   if (interactive) {
@@ -126,7 +127,7 @@ export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
   }
 
   return (
-    <div className={cx(className, 'u-tx-ellipsis')}>
+    <div className={cx(className, uTxEllipsis)}>
       <div
         className={cx(styles.header, {
           [styles.headerEmpty]: isEmpty,

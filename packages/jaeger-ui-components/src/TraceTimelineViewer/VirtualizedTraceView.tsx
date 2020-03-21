@@ -40,9 +40,6 @@ type TExtractUiFindFromStateReturn = {
 
 const getStyles = createStyle(() => {
   return {
-    spans: css`
-      padding-top: 38px;
-    `,
     rowsWrapper: css`
       width: 100%;
     `,
@@ -440,7 +437,7 @@ export default class VirtualizedTraceView extends React.Component<VirtualizedTra
   render() {
     const styles = getStyles();
     return (
-      <div className={styles.spans}>
+      <div>
         <ListView
           ref={this.setListView}
           dataLength={this.rowStates.length}

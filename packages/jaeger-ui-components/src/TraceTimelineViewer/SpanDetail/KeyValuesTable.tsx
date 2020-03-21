@@ -23,7 +23,7 @@ import { TNil } from '../../types';
 import { KeyValuePair, Link } from '../../types/trace';
 import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { createStyle } from '../../Theme';
-import { ubInlineBlock } from '../../uberUtilityStyles';
+import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
 export const getStyles = createStyle(() => {
   const copyIcon = css`
@@ -122,8 +122,8 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
   const { data, linksGetter } = props;
   const styles = getStyles();
   return (
-    <div className={cx(styles.KeyValueTable, 'u-simple-scrollbars')} data-test-id="KeyValueTable">
-      <table className="u-width-100">
+    <div className={cx(styles.KeyValueTable)} data-test-id="KeyValueTable">
+      <table className={uWidth100}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
             const markup = {

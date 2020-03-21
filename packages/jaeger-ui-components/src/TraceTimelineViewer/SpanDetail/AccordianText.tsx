@@ -21,6 +21,7 @@ import TextList from './TextList';
 import { TNil } from '../../types';
 import { getStyles as getAccordianKeyValuesStyles } from './AccordianKeyValues';
 import { createStyle } from '../../Theme';
+import { uAlignIcon } from '../../uberUtilityStyles';
 
 const getStyles = createStyle(() => {
   return {
@@ -52,7 +53,7 @@ export default function AccordianText(props: AccordianTextProps) {
   const { className, data, headerClassName, interactive, isOpen, label, onToggle } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
   const accordianKeyValuesStyles = getAccordianKeyValuesStyles();
-  const iconCls = cx('u-align-icon', { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
+  const iconCls = cx(uAlignIcon, { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
   if (interactive) {

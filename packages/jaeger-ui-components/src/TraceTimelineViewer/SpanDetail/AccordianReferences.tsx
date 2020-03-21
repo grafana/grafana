@@ -22,6 +22,7 @@ import { SpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
 
 import { createStyle } from '../../Theme';
+import { uAlignIcon } from '../../uberUtilityStyles';
 
 const getStyles = createStyle(() => {
   return {
@@ -84,7 +85,7 @@ export function References(props: ReferenceItemProps) {
   const styles = getStyles();
 
   return (
-    <div className={cx(styles.ReferencesList, 'u-simple-scrollbars')}>
+    <div className={cx(styles.ReferencesList)}>
       <ul className={styles.list}>
         {data.map(reference => {
           return (
@@ -127,7 +128,7 @@ export default class AccordianReferences extends React.PureComponent<AccordianRe
   render() {
     const { data, interactive, isOpen, onToggle, focusSpan } = this.props;
     const isEmpty = !Array.isArray(data) || !data.length;
-    const iconCls = 'u-align-icon';
+    const iconCls = uAlignIcon;
     let arrow: React.ReactNode | null = null;
     let headerProps: {} | null = null;
     if (interactive) {

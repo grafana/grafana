@@ -32,7 +32,6 @@ const getStyles = createStyle(() => {
       border-bottom: 1px solid #ccc;
       height: 38px;
       line-height: 38px;
-      position: fixed;
       width: 100%;
       z-index: 4;
     `,
@@ -96,7 +95,7 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
         />
         <Ticks numTicks={numTicks} startTime={viewStart * duration} endTime={viewEnd * duration} showLabels />
       </TimelineRow.Cell>
-      <TimelineColumnResizer position={nameColumnWidth} onChange={onColummWidthChange} min={0.15} max={0.85} />
+      <TimelineColumnResizer position={nameColumnWidth} onChange={onColummWidthChange} min={0.2} max={0.85} />
     </TimelineRow>
   );
 }

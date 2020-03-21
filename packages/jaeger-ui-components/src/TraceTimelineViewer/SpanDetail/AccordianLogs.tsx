@@ -23,7 +23,7 @@ import { formatDuration } from '../utils';
 import { TNil } from '../../types';
 import { Log, KeyValuePair, Link } from '../../types/trace';
 import { createStyle } from '../../Theme';
-import { ubMb1 } from '../../uberUtilityStyles';
+import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
 
 const getStyles = createStyle(() => {
   return {
@@ -69,7 +69,7 @@ export default function AccordianLogs(props: AccordianLogsProps) {
   let HeaderComponent: 'span' | 'a' = 'span';
   let headerProps: {} | null = null;
   if (interactive) {
-    arrow = isOpen ? <IoIosArrowDown className="u-align-icon" /> : <IoIosArrowRight className="u-align-icon" />;
+    arrow = isOpen ? <IoIosArrowDown className={uAlignIcon} /> : <IoIosArrowRight className="u-align-icon" />;
     HeaderComponent = 'a';
     headerProps = {
       'aria-checked': isOpen,

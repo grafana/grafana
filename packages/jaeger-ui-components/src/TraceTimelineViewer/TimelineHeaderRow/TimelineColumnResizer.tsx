@@ -41,6 +41,7 @@ export const getStyles = createStyle(() => {
       position: absolute;
       top: 0;
       width: 1px;
+      z-index: 10;
       &:hover {
         border-left: 2px solid rgba(0, 0, 0, 0.3);
       }

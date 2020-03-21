@@ -43,3 +43,15 @@ export const ubTxRightAlign = css`
 export const ubInlineBlock = css`
   display: inline-block;
 `;
+
+export const uAlignIcon = css`
+  margin: -0.2rem 0.25rem 0 0;
+`;
+
+export const uTxEllipsis = css`
+  text-overflow: ellipsis;
+`;
+
+export const uWidth100 = css`
+  width: 100%;
+`;

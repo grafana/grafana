@@ -48,7 +48,7 @@ export default function TextList(props: TextListProps) {
   const { data } = props;
   const styles = getStyles();
   return (
-    <div className={cx(styles.TextList, 'u-simple-scrollbars')} data-test-id="TextList">
+    <div className={cx(styles.TextList)} data-test-id="TextList">
       <ul className={styles.List}>
         {data.map((row, i) => {
           return (
