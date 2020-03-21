@@ -1,4 +1,4 @@
-import { VariableWithOptions } from 'app/features/templating/variable';
+import { VariableWithOptions, VariableOption } from 'app/features/templating/variable';
 import { VariableBuilder } from './variableBuilder';
 
 export class OptionsVariableBuilder<T extends VariableWithOptions> extends VariableBuilder<T> {
@@ -11,6 +11,11 @@ export class OptionsVariableBuilder<T extends VariableWithOptions> extends Varia
         selected: false,
       });
     }
+    return this;
+  }
+
+  withoutOptions() {
+    this.variable.options = (undefined as unknown) as VariableOption[];
     return this;
   }
 

@@ -188,11 +188,9 @@ describe('shared actions', () => {
             .custom()
             .withUUID('0')
             .withCurrent(withCurrent)
+            .withoutOptions()
             .build();
-          custom.options = undefined;
-        }
-
-        if (withOptions) {
+        } else {
           custom = variableBuilder
             .custom()
             .withUUID('0')
@@ -247,11 +245,9 @@ describe('shared actions', () => {
               .withUUID('0')
               .withMulti()
               .withCurrent(withCurrent)
+              .withoutOptions()
               .build();
-            custom.options = undefined;
-          }
-
-          if (withOptions) {
+          } else {
             custom = variableBuilder
               .custom()
               .withUUID('0')
