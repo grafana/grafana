@@ -60,8 +60,8 @@ class BottomNavLinks extends PureComponent<Props, State> {
             <li className="sidemenu-org-switcher">
               <a onClick={this.toggleSwitcherModal}>
                 <div>
+                  <div className="sidemenu-org-switcher__org-current">Current Org.:</div>
                   <div className="sidemenu-org-switcher__org-name">{user.orgName}</div>
-                  <div className="sidemenu-org-switcher__org-current">Current Org:</div>
                 </div>
                 <div className="sidemenu-org-switcher__switch">
                   <i className="fa fa-fw fa-random" />
