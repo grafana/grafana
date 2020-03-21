@@ -64,7 +64,7 @@
     "autoprefixer": "9.7.4",
     "axios": "0.19.2",
     "babel-jest": "24.8.0",
-    "babel-loader": "8.0.6",
+    "babel-loader": "8.1.0",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "clean-webpack-plugin": "3.0.0",
     "css-loader": "3.4.2",
