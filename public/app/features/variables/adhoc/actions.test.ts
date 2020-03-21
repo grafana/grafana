@@ -15,12 +15,10 @@ import {
   initAdHocVariableEditor,
   changeVariableDatasource,
 } from './actions';
-import { omit } from 'lodash';
 import { filterAdded, filterUpdated, filterRemoved, filtersRestored } from './reducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { updateLocation } from 'app/core/actions';
 import { DashboardState, LocationState } from 'app/types';
-import { toUrl } from './urlParser';
 import { VariableModel } from 'app/features/templating/variable';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { DataSourceSelectItem, DataSourcePluginMeta } from '@grafana/data';
