@@ -28,6 +28,7 @@ import {
   getCalculationValueDataLinksVariableSuggestions,
   getDataLinksVariableSuggestions,
 } from '../../../features/panel/panellinks/link_srv';
+import { NewPanelEditorContext } from '../../../features/dashboard/components/PanelEditor/PanelEditor';
 
 export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOptions>> {
   onThresholdsChanged = (thresholds: ThresholdsConfig) => {
@@ -91,73 +92,88 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
       : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
     return (
-      <>
-        <PanelOptionsGrid>
-          <PanelOptionsGroup title="Display">
-            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={8} />
-            <div className="form-field">
-              <FormLabel width={8}>Orientation</FormLabel>
-              <Select
-                width={12}
-                options={orientationOptions}
-                defaultValue={orientationOptions[0]}
-                onChange={this.onOrientationChange}
-                value={orientationOptions.find(item => item.value === options.orientation)}
-              />
-            </div>
-            <div className="form-field">
-              <FormLabel width={8}>Color</FormLabel>
-              <Select
-                width={12}
-                options={colorModes}
-                defaultValue={colorModes[0]}
-                onChange={this.onColorModeChanged}
-                value={colorModes.find(item => item.value === options.colorMode)}
-              />
-            </div>
-            <div className="form-field">
-              <FormLabel width={8}>Graph</FormLabel>
-              <Select
-                width={12}
-                options={graphModes}
-                defaultValue={graphModes[0]}
-                onChange={this.onGraphModeChanged}
-                value={graphModes.find(item => item.value === options.graphMode)}
-              />
-            </div>
-            <div className="form-field">
-              <FormLabel width={8}>Justify</FormLabel>
-              <Select
-                width={12}
-                options={justifyModes}
-                defaultValue={justifyModes[0]}
-                onChange={this.onJustifyModeChanged}
-                value={justifyModes.find(item => item.value === options.justifyMode)}
-              />
-            </div>
-          </PanelOptionsGroup>
-          <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor
-              showMinMax={true}
-              onChange={this.onDefaultsChange}
-              value={defaults}
-              showTitle={true}
-            />
-          </PanelOptionsGroup>
+      <NewPanelEditorContext.Consumer>
+        {useNewEditor => {
+          return (
+            <>
+              <PanelOptionsGrid>
+                <PanelOptionsGroup title="Display">
+                  <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={8} />
+                  <div className="form-field">
+                    <FormLabel width={8}>Orientation</FormLabel>
+                    <Select
+                      width={12}
+                      options={orientationOptions}
+                      defaultValue={orientationOptions[0]}
+                      onChange={this.onOrientationChange}
+                      value={orientationOptions.find(item => item.value === options.orientation)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <FormLabel width={8}>Color</FormLabel>
+                    <Select
+                      width={12}
+                      options={colorModes}
+                      defaultValue={colorModes[0]}
+                      onChange={this.onColorModeChanged}
+                      value={colorModes.find(item => item.value === options.colorMode)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <FormLabel width={8}>Graph</FormLabel>
+                    <Select
+                      width={12}
+                      options={graphModes}
+                      defaultValue={graphModes[0]}
+                      onChange={this.onGraphModeChanged}
+                      value={graphModes.find(item => item.value === options.graphMode)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <FormLabel width={8}>Justify</FormLabel>
+                    <Select
+                      width={12}
+                      options={justifyModes}
+                      defaultValue={justifyModes[0]}
+                      onChange={this.onJustifyModeChanged}
+                      value={justifyModes.find(item => item.value === options.justifyMode)}
+                    />
+                  </div>
+                </PanelOptionsGroup>
+                <>
+                  {!useNewEditor && (
+                    <>
+                      <PanelOptionsGroup title="Field">
+                        <FieldPropertiesEditor
+                          showMinMax={true}
+                          onChange={this.onDefaultsChange}
+                          value={defaults}
+                          showTitle={true}
+                        />
+                      </PanelOptionsGroup>
+                      <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+                    </>
+                  )}
+                </>
+              </PanelOptionsGrid>
+              {!useNewEditor && (
+                <>
+                  <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-        </PanelOptionsGrid>
-        <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
-
-        <PanelOptionsGroup title="Data links">
-          <DataLinksEditor
-            value={defaults.links}
-            onChange={this.onDataLinksChanged}
-            suggestions={suggestions}
-            maxLinks={10}
-          />
-        </PanelOptionsGroup>
-      </>
+                  <PanelOptionsGroup title="Data links">
+                    <DataLinksEditor
+                      value={defaults.links}
+                      onChange={this.onDataLinksChanged}
+                      suggestions={suggestions}
+                      maxLinks={10}
+                    />
+                  </PanelOptionsGroup>
+                </>
+              )}
+            </>
+          );
+        }}
+      </NewPanelEditorContext.Consumer>
     );
   }
 }

@@ -27,6 +27,7 @@ import {
   getCalculationValueDataLinksVariableSuggestions,
   getDataLinksVariableSuggestions,
 } from '../../../features/panel/panellinks/link_srv';
+import { NewPanelEditorContext } from '../../../features/dashboard/components/PanelEditor/PanelEditor';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
   onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
@@ -92,64 +93,84 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
       : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
     return (
-      <>
-        <PanelOptionsGrid>
-          <PanelOptionsGroup title="Display">
-            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={labelWidth} />
-            <div className="form-field">
-              <FormLabel width={labelWidth}>Orientation</FormLabel>
-              <Select
-                width={12}
-                options={orientationOptions}
-                defaultValue={orientationOptions[0]}
-                onChange={this.onOrientationChange}
-                value={orientationOptions.find(item => item.value === options.orientation)}
-              />
-            </div>
-            <div className="form-field">
-              <FormLabel width={labelWidth}>Mode</FormLabel>
-              <Select
-                width={12}
-                options={displayModes}
-                defaultValue={displayModes[0]}
-                onChange={this.onDisplayModeChange}
-                value={displayModes.find(item => item.value === options.displayMode)}
-              />
-            </div>
+      <NewPanelEditorContext.Consumer>
+        {useNewEditor => {
+          return (
             <>
-              {options.displayMode !== 'lcd' && (
-                <Switch
-                  label="Unfilled"
-                  labelClass={`width-${labelWidth}`}
-                  checked={options.showUnfilled}
-                  onChange={this.onToggleShowUnfilled}
-                />
+              <PanelOptionsGrid>
+                <PanelOptionsGroup title="Display">
+                  <FieldDisplayEditor
+                    onChange={this.onDisplayOptionsChanged}
+                    value={fieldOptions}
+                    labelWidth={labelWidth}
+                  />
+                  <div className="form-field">
+                    <FormLabel width={labelWidth}>Orientation</FormLabel>
+                    <Select
+                      width={12}
+                      options={orientationOptions}
+                      defaultValue={orientationOptions[0]}
+                      onChange={this.onOrientationChange}
+                      value={orientationOptions.find(item => item.value === options.orientation)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <FormLabel width={labelWidth}>Mode</FormLabel>
+                    <Select
+                      width={12}
+                      options={displayModes}
+                      defaultValue={displayModes[0]}
+                      onChange={this.onDisplayModeChange}
+                      value={displayModes.find(item => item.value === options.displayMode)}
+                    />
+                  </div>
+                  <>
+                    {options.displayMode !== 'lcd' && (
+                      <Switch
+                        label="Unfilled"
+                        labelClass={`width-${labelWidth}`}
+                        checked={options.showUnfilled}
+                        onChange={this.onToggleShowUnfilled}
+                      />
+                    )}
+                  </>
+                </PanelOptionsGroup>
+                <>
+                  {!useNewEditor && (
+                    <>
+                      <PanelOptionsGroup title="Field">
+                        <FieldPropertiesEditor
+                          showMinMax={true}
+                          showTitle={true}
+                          onChange={this.onDefaultsChange}
+                          value={defaults}
+                        />
+                      </PanelOptionsGroup>
+
+                      <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+                    </>
+                  )}
+                </>
+              </PanelOptionsGrid>
+
+              {!useNewEditor && (
+                <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+              )}
+
+              {!useNewEditor && (
+                <PanelOptionsGroup title="Data links">
+                  <DataLinksEditor
+                    value={defaults.links}
+                    onChange={this.onDataLinksChanged}
+                    suggestions={suggestions}
+                    maxLinks={10}
+                  />
+                </PanelOptionsGroup>
               )}
             </>
-          </PanelOptionsGroup>
-          <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor
-              showMinMax={true}
-              showTitle={true}
-              onChange={this.onDefaultsChange}
-              value={defaults}
-            />
-          </PanelOptionsGroup>
-
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-        </PanelOptionsGrid>
-
-        <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
-
-        <PanelOptionsGroup title="Data links">
-          <DataLinksEditor
-            value={defaults.links}
-            onChange={this.onDataLinksChanged}
-            suggestions={suggestions}
-            maxLinks={10}
-          />
-        </PanelOptionsGroup>
-      </>
+          );
+        }}
+      </NewPanelEditorContext.Consumer>
     );
   }
 }

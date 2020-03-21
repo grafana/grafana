@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
 
 export interface TabProps {
   label: string;
@@ -12,7 +12,6 @@ export interface TabProps {
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = theme.colors;
-  const tabBorderColor = selectThemeVariant({ dark: colors.dark9, light: colors.gray5 }, theme.type);
 
   return {
     tabItem: css`
@@ -42,7 +41,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     activeStyle: css`
-      border-color: ${colors.orange} ${tabBorderColor} transparent;
+      border-color: ${colors.orange} ${colors.pageHeaderBorder} transparent;
       background: ${colors.pageBg};
       color: ${colors.link};
       overflow: hidden;
