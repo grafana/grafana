@@ -417,7 +417,7 @@ select.gf-form-input ~ .gf-form-help-icon {
   padding: $space-lg;
   background-color: $empty-list-cta-bg;
   margin-bottom: $space-lg;
-  border-top: 3px solid $green-base;
+  @include brand-top-border();
 }
 
 .cta-form__close {
