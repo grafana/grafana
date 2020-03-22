@@ -351,14 +351,14 @@
   border-top: 0;
   border-right: 0;
   border-left: 0;
-  border-bottom-width: 1px;
+  border-bottom-width: 2px;
 }
 
 @mixin brand-top-border() {
   border-image: $brand-gradient-horizontal;
   border-image-slice: 1;
   border-style: solid;
-  border-top-width: 1px;
+  border-top-width: 2px;
   border-right: 0;
   border-left: 0;
   border-bottom: 0;
