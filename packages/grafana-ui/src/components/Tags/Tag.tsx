@@ -10,7 +10,6 @@ interface TagProps {
   onClick?: (name: string) => any;
   /** Custom styles for the wrapper component */
   className?: string;
-  [key: string]: any;
 }
 
 export const Tag: FC<TagProps> = ({ name, onClick, className, ...rest }) => {
@@ -18,7 +17,9 @@ export const Tag: FC<TagProps> = ({ name, onClick, className, ...rest }) => {
   const styles = getTagStyles(theme, name);
 
   const onTagClick = () => {
-    typeof onClick === 'function' && onClick(name);
+    if (onClick) {
+      onClick(name);
+    }
   };
 
   return (
