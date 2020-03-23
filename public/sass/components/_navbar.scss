@@ -26,28 +26,6 @@
   border-bottom: $navbarBorder;
 }
 
-.dashboard-page--settings-open {
-  .navbar {
-    @include navbar-alt-look();
-  }
-
-  .navbar-buttons--tv,
-  .navbar-button--add-panel,
-  .navbar-button--star,
-  .navbar-button--save,
-  .navbar-button--share,
-  .navbar-button--settings,
-  .navbar-page-btn .fa-caret-down,
-  .refresh-picker,
-  .time-picker {
-    display: none;
-  }
-
-  .navbar-buttons--close {
-    display: flex;
-  }
-}
-
 .panel-in-fullscreen,
 .panel-in-fullscreen.view-mode--tv {
   .navbar {
@@ -197,6 +175,12 @@ i.navbar-page-btn__search {
     @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
   }
 
+  &:hover {
+    .fa {
+      color: $text-color;
+    }
+  }
+
   @include media-breakpoint-down(lg) {
     .btn-title {
       margin-left: $space-xs;
@@ -210,13 +194,4 @@ i.navbar-page-btn__search {
   height: $navbarHeight;
   align-items: center;
   padding-right: 13px;
-}
-
-.navbar-settings-title {
-  display: block;
-  margin: 0;
-  color: $headings-color;
-  font-size: $font-size-lg;
-  min-height: $navbarHeight;
-  line-height: $navbarHeight;
 }

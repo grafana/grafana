@@ -207,7 +207,7 @@ li.sidemenu-org-switcher {
   height: $navbarHeight - 1px;
 
   &:hover {
-    background: $navbarButtonBackgroundHighlight;
+    background: lightOrDark($gray33, $gray25);
   }
 
   img {

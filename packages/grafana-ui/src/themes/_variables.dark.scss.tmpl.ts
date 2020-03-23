@@ -218,7 +218,6 @@ $placeholderText: darken($text-color, 25%);
 
 // Search
 $search-shadow: 0 0 30px 0 $black;
-$search-filter-box-bg: $gray-blue;
 
 // Typeahead
 $typeahead-shadow: 0 5px 10px 0 $black;
@@ -258,7 +257,7 @@ $navbar-button-border: #2f2f32;
 // -------------------------
 $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
-$side-menu-border: 1px solid ${theme.colors.panelBorder};
+$side-menu-border: none;
 $side-menu-item-hover-bg: $dark-3;
 $side-menu-shadow: 0 0 20px black;
 $side-menu-link-color: $link-color;
