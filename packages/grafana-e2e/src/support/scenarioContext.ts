@@ -1,14 +1,14 @@
 export interface ScenarioContext {
-  lastAddedDataSource: string;
   lastAddedDashboard: string;
   lastAddedDashboardUid: string;
+  lastAddedDataSource: string;
   [key: string]: any;
 }
 
 const scenarioContexts: ScenarioContext = {
-  lastAddedDataSource: '',
   lastAddedDashboard: '',
   lastAddedDashboardUid: '',
+  lastAddedDataSource: '',
 };
 
 export interface ScenarioContextApi {

@@ -5,7 +5,6 @@ export interface UrlApi {
   getDashboardUid: (url: string) => string;
 }
 
-const uidRegex = '\\/d\\/(.*)\\/';
 const getBaseUrl = () => e2e.env('BASE_URL') || e2e.config().baseUrl || 'http://localhost:3000';
 
 export const Url: UrlApi = {
@@ -15,7 +14,7 @@ export const Url: UrlApi = {
     return `${getBaseUrl()}${strippedUrl}`;
   },
   getDashboardUid: (url: string) => {
-    const matches = url.match(uidRegex);
+    const matches = url.match(/\/d\/(.*)\//);
     if (!matches) {
       throw new Error(`Couldn't parse uid from ${url}`);
     }
