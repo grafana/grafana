@@ -77,7 +77,7 @@
     "jest-cli": "^24.8.0",
     "jest-coverage-badges": "^1.1.2",
     "jest-junit": "^6.4.0",
-    "less": "^3.10.3",
+    "less": "^3.11.1",
     "less-loader": "^5.0.0",
     "lodash": "4.17.15",
     "md5-file": "^4.0.0",
