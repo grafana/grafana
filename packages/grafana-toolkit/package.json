@@ -84,7 +84,7 @@
     "mini-css-extract-plugin": "^0.7.0",
     "node-sass": "^4.12.0",
     "optimize-css-assets-webpack-plugin": "^5.0.3",
-    "ora": "^3.4.0",
+    "ora": "^4.0.3",
     "pixelmatch": "^5.1.0",
     "pngjs": "^3.4.0",
     "postcss-flexbugs-fixes": "4.2.0",
