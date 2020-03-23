@@ -33,12 +33,16 @@ export default class Api {
         return this.cache[path];
       }
 
-      const { data } = await getBackendSrv().datasourceRequest({
+      const response = await getBackendSrv().datasourceRequest({
         url: baseUrl + path,
         method: 'GET',
       });
 
-      const res = (data ? data[path.match(/([^\/]*)\/*$/)[1]] : []).map(responseMap);
+      const responsePropName = path.match(/([^\/]*)\/*$/)[1];
+      let res = [];
+      if (response && response.data && response.data[responsePropName]) {
+        res = response.data[responsePropName].map(responseMap);
+      }
 
       if (useCache) {
         this.cache[path] = res;

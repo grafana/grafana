@@ -123,8 +123,6 @@ export const formatStackdriverError = (error: any) => {
     } catch (err) {
       error.error;
     }
-  } else {
-    message += 'Cannot connect to Stackdriver API';
   }
   return message;
 };
