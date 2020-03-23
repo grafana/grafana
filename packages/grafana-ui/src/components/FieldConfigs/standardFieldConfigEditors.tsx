@@ -158,5 +158,5 @@ export const getStandardFieldConfigs = () => {
     shouldApply: () => true,
   };
 
-  return [unit, min, max, decimals, thresholds, mappings, title, noValue, links];
+  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links];
 };

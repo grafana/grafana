@@ -1,19 +1,16 @@
 import {
-  GrafanaTheme,
   DynamicConfigValue,
   FieldConfig,
-  InterpolateFunction,
   DataFrame,
   Field,
   FieldType,
-  FieldConfigSource,
   ThresholdsMode,
   FieldColorMode,
   ColorScheme,
-  TimeZone,
   FieldConfigEditorRegistry,
   FieldOverrideContext,
   ScopedVars,
+  ApplyFieldOverrideOptions,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -30,17 +27,6 @@ interface OverrideProps {
 interface GlobalMinMax {
   min: number;
   max: number;
-}
-
-export interface ApplyFieldOverrideOptions {
-  data?: DataFrame[];
-  fieldOptions: FieldConfigSource;
-  replaceVariables: InterpolateFunction;
-  theme: GrafanaTheme;
-  timeZone?: TimeZone;
-  autoMinMax?: boolean;
-  standard?: FieldConfigEditorRegistry;
-  custom?: FieldConfigEditorRegistry;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
@@ -273,7 +259,6 @@ const processFieldConfigValue = (
   if (currentConfig === null || currentConfig === undefined) {
     const item = registry.getIfExists(key);
     if (!item) {
-      console.warn(`No processor available for ${key} config  property`);
       return;
     }
 

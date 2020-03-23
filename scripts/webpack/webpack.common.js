@@ -30,7 +30,12 @@ module.exports = {
       // this alias maps that dependency to core-js@t3
       'core-js/library/fn': 'core-js/stable',
     },
-    modules: [path.resolve('public'), path.resolve('node_modules')],
+    modules: [
+      'node_modules',
+      path.resolve('public'),
+      // we need full path to root node_modules for grafana-enterprise symlink to work
+      path.resolve('node_modules'),
+    ],
   },
   stats: {
     children: false,

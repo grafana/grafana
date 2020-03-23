@@ -2,7 +2,7 @@ import { text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ValuePicker } from './ValuePicker';
 import React from 'react';
-import { generateOptions } from '../Forms/Select/Select.story';
+import { generateOptions } from '../Forms/Select/mockOptions';
 
 export default {
   title: 'General/ValuePicker',

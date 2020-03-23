@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 // Frame represents a columnar storage with optional labels.
@@ -45,6 +47,15 @@ func (f *Frame) AppendRow(vals ...interface{}) {
 	}
 }
 
+// RowCopy returns an interface slice that contains the values of each Field for the given rowIdx.
+func (f *Frame) RowCopy(rowIdx int) []interface{} {
+	vals := make([]interface{}, len(f.Fields))
+	for i := range f.Fields {
+		vals[i] = f.CopyAt(i, rowIdx)
+	}
+	return vals
+}
+
 // AppendWarning adds warnings to the data frame.
 func (f *Frame) AppendWarning(message string, details string) {
 	f.Warnings = append(f.Warnings, Warning{Message: message, Details: details})
@@ -74,6 +85,44 @@ func (f *Frame) AppendRowSafe(vals ...interface{}) error {
 		f.Fields[i].vector.Append(v)
 	}
 	return nil
+}
+
+// FilterRowsByField returns a copy of frame f (as per EmptyCopy()) that includes rows
+// where the filter returns true and no error. If filter returns an error, then an error is returned.
+func (f *Frame) FilterRowsByField(fieldIdx int, filter func(i interface{}) (bool, error)) (*Frame, error) {
+	filteredFrame := f.EmptyCopy()
+	rowLen, err := f.RowLen()
+	if err != nil {
+		return nil, err
+	}
+	for inRowIdx := 0; inRowIdx < rowLen; inRowIdx++ {
+		match, err := filter(f.At(fieldIdx, inRowIdx))
+		if err != nil {
+			return nil, err
+		}
+		if !match {
+			continue
+		}
+		filteredFrame.AppendRow(f.RowCopy(inRowIdx)...)
+	}
+	return filteredFrame, nil
+}
+
+// EmptyCopy returns a copy of Frame f but with Fields of zero length, and no copy of the FieldConfigs, Metadata, or Warnings.
+func (f *Frame) EmptyCopy() *Frame {
+	newFrame := &Frame{
+		Name:   f.Name,
+		RefID:  f.RefID,
+		Fields: make(Fields, 0, len(f.Fields)),
+	}
+
+	for _, field := range f.Fields {
+		copy := NewFieldFromFieldType(field.Type(), 0)
+		copy.Name = field.Name
+		copy.Labels = field.Labels.Copy()
+		newFrame.Fields = append(newFrame.Fields, copy)
+	}
+	return newFrame
 }
 
 // TypeIndices returns a slice of Field index positions for the given pTypes.
@@ -296,6 +345,151 @@ func (f *Field) Nullable() bool {
 	return f.Type().Nullable()
 }
 
+// FloatAt returns a float64 at the specified index idx.
+// It will panic if idx is out of range.
+// If the Field type is numeric and the value at idx is nil, NaN is returned. Precision may be lost on large numbers.
+// If the Field type is a bool then 0 is return if false or nil, and 1 if true.
+// If the Field type is time.Time, then the millisecond epoch representation of the time
+// is returned, or NaN is the value is nil.
+// If the Field type is a string, then strconv.ParseFloat is called on it and will return
+// an error if ParseFloat errors. If the value is nil, NaN is returned.
+func (f *Field) FloatAt(idx int) (float64, error) {
+	switch f.Type() {
+	case FieldTypeInt8:
+		return float64(f.At(idx).(int8)), nil
+	case FieldTypeNullableInt8:
+		iv := f.At(idx).(*int8)
+		if iv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*iv), nil
+
+	case FieldTypeInt16:
+		return float64(f.At(idx).(int16)), nil
+	case FieldTypeNullableInt16:
+		iv := f.At(idx).(*int16)
+		if iv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*iv), nil
+
+	case FieldTypeInt32:
+		return float64(f.At(idx).(int32)), nil
+	case FieldTypeNullableInt32:
+		iv := f.At(idx).(*int32)
+		if iv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*iv), nil
+
+	case FieldTypeInt64:
+		return float64(f.At(idx).(int64)), nil
+	case FieldTypeNullableInt64:
+		iv := f.At(idx).(*int64)
+		if iv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*iv), nil
+
+	case FieldTypeUint8:
+		return float64(f.At(idx).(uint8)), nil
+	case FieldTypeNullableUint8:
+		uiv := f.At(idx).(*uint8)
+		if uiv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*uiv), nil
+
+	case FieldTypeUint16:
+		return float64(f.At(idx).(uint16)), nil
+	case FieldTypeNullableUint16:
+		uiv := f.At(idx).(*uint16)
+		if uiv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*uiv), nil
+
+	case FieldTypeUint32:
+		return float64(f.At(idx).(uint32)), nil
+	case FieldTypeNullableUint32:
+		uiv := f.At(idx).(*uint32)
+		if uiv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*uiv), nil
+
+	// TODO: third param for loss of precision?
+	// Maybe something in math/big can help with this (also see https://github.com/golang/go/issues/29463).
+	case FieldTypeUint64:
+		return float64(f.At(idx).(uint64)), nil
+	case FieldTypeNullableUint64:
+		uiv := f.At(idx).(*uint64)
+		if uiv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*uiv), nil
+
+	case FieldTypeFloat32:
+		return float64(f.At(idx).(float32)), nil
+	case FieldTypeNullableFloat32:
+		fv := f.At(idx).(*float32)
+		if fv == nil {
+			return math.NaN(), nil
+		}
+		return float64(*fv), nil
+
+	case FieldTypeFloat64:
+		return f.At(idx).(float64), nil
+	case FieldTypeNullableFloat64:
+		fv := f.At(idx).(*float64)
+		if fv == nil {
+			return math.NaN(), nil
+		}
+		return *fv, nil
+
+	case FieldTypeString:
+		s := f.At(idx).(string)
+		ft, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return 0, err
+		}
+		return ft, nil
+	case FieldTypeNullableString:
+		s := f.At(idx).(*string)
+		if s == nil {
+			return math.NaN(), nil
+		}
+		ft, err := strconv.ParseFloat(*s, 64)
+		if err != nil {
+			return 0, err
+		}
+		return ft, nil
+
+	case FieldTypeBool:
+		if f.At(idx).(bool) {
+			return 1, nil
+		}
+		return 0, nil
+
+	case FieldTypeNullableBool:
+		b := f.At(idx).(*bool)
+		if b == nil || !*b {
+			return 0, nil
+		}
+		return 1, nil
+
+	case FieldTypeTime:
+		return float64(f.At(idx).(time.Time).UnixNano() / int64(time.Millisecond)), nil
+	case FieldTypeNullableTime:
+		t := f.At(idx).(*time.Time)
+		if t == nil {
+			return math.NaN(), nil
+		}
+		return float64(f.At(idx).(*time.Time).UnixNano() / int64(time.Millisecond)), nil
+	}
+	return 0, fmt.Errorf("unsupported field type %T", f.Type())
+}
+
 // SetConfig modifies the Field's Config property to
 // be set to conf and returns the Field.
 func (f *Field) SetConfig(conf *FieldConfig) *Field {
@@ -317,6 +511,15 @@ func (l Labels) Equals(arg Labels) bool {
 		}
 	}
 	return true
+}
+
+// Copy returns a copy of the labels.
+func (l Labels) Copy() Labels {
+	c := make(Labels, len(l))
+	for k, v := range l {
+		c[k] = v
+	}
+	return c
 }
 
 // Contains returns true if all k=v pairs of the argument are in the receiver.
@@ -450,6 +653,12 @@ func (f *Frame) RowLen() (int, error) {
 	return l, nil
 }
 
+// FloatAt returns a float64 representation of value of the specified fieldIdx and rowIdx as per Field.FloatAt().
+// It will panic if either the fieldIdx or rowIdx are out of range.
+func (f *Frame) FloatAt(fieldIdx int, rowIdx int) (float64, error) {
+	return f.Fields[fieldIdx].FloatAt(rowIdx)
+}
+
 // FrameTestCompareOptions returns go-cmp testing options to allow testing of Frame equivelnce.
 // The intent is to only use this for testing.
 func FrameTestCompareOptions() []cmp.Option {
@@ -481,7 +690,75 @@ func FrameTestCompareOptions() []cmp.Option {
 		}
 		return *x == *y
 	})
+	f64Ptrs := cmp.Comparer(func(x, y *float64) bool {
+		if x == nil && y == nil {
+			return true
+		}
+		if y == nil {
+			if math.IsNaN(float64(*x)) {
+				return true
+			}
+			if math.IsInf(float64(*x), 1) {
+				return true
+			}
+			if math.IsInf(float64(*x), -1) {
+				return true
+			}
+		}
+		if x == nil {
+			if math.IsNaN(float64(*y)) {
+				return true
+			}
+			if math.IsInf(float64(*y), 1) {
+				return true
+			}
+			if math.IsInf(float64(*y), -1) {
+				return true
+			}
+		}
+		return *x == *y
+	})
+	f64s := cmp.Comparer(func(x, y float64) bool {
+		return (math.IsNaN(x) && math.IsNaN(y)) ||
+			(math.IsInf(x, 1) && math.IsInf(y, 1)) ||
+			(math.IsInf(x, -1) && math.IsInf(y, -1)) ||
+			x == y
+	})
+	f32Ptrs := cmp.Comparer(func(x, y *float32) bool {
+		if x == nil && y == nil {
+			return true
+		}
+		if y == nil {
+			if math.IsNaN(float64(*x)) {
+				return true
+			}
+			if math.IsInf(float64(*x), 1) {
+				return true
+			}
+			if math.IsInf(float64(*x), -1) {
+				return true
+			}
+		}
+		if x == nil {
+			if math.IsNaN(float64(*y)) {
+				return true
+			}
+			if math.IsInf(float64(*y), 1) {
+				return true
+			}
+			if math.IsInf(float64(*y), -1) {
+				return true
+			}
+		}
+		return *x == *y
+	})
+	f32s := cmp.Comparer(func(x, y float32) bool {
+		return (math.IsNaN(float64(x)) && math.IsNaN(float64(y))) ||
+			(math.IsInf(float64(x), 1) && math.IsInf(float64(y), 1)) ||
+			(math.IsInf(float64(x), -1) && math.IsInf(float64(y), -1)) ||
+			x == y
+	})
 
 	unexportedField := cmp.AllowUnexported(Field{})
-	return []cmp.Option{confFloats, unexportedField}
+	return []cmp.Option{f32s, f32Ptrs, f64s, f64Ptrs, confFloats, unexportedField, cmpopts.EquateEmpty()}
 }

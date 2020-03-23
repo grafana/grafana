@@ -2,10 +2,11 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, ExploreMode } from '@grafana/data';
+import { DataQuery, ExploreMode, dateTime } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import { serializeStateToUrlParam, SortOrder } from './explore';
+import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
 import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
@@ -13,9 +14,10 @@ import { ExploreUrlState, RichHistoryQuery } from 'app/types/explore';
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 
 export const RICH_HISTORY_SETTING_KEYS = {
-  retentionPeriod: `${RICH_HISTORY_KEY}.retentionPeriod`,
-  starredTabAsFirstTab: `${RICH_HISTORY_KEY}.starredTabAsFirstTab`,
-  activeDatasourceOnly: `${RICH_HISTORY_KEY}.activeDatasourceOnly`,
+  retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
+  starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
+  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
+  datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };
 
 /*
@@ -60,8 +62,14 @@ export function addToRichHistory(
     ];
 
     /* Combine all queries of a datasource type into one rich history */
-    store.setObject(RICH_HISTORY_KEY, newHistory);
-    return newHistory;
+    const isSaved = store.setObject(RICH_HISTORY_KEY, newHistory);
+
+    /* If newHistory is succesfully saved, return it. Otherwise return not updated richHistory.  */
+    if (isSaved) {
+      return newHistory;
+    } else {
+      return richHistory;
+    }
   }
 
   return richHistory;
@@ -103,6 +111,12 @@ export function updateCommentInRichHistory(
     return query;
   });
 
+  store.setObject(RICH_HISTORY_KEY, updatedQueries);
+  return updatedQueries;
+}
+
+export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
+  const updatedQueries = richHistory.filter(query => query.ts !== ts);
   store.setObject(RICH_HISTORY_KEY, updatedQueries);
   return updatedQueries;
 }
@@ -198,10 +212,7 @@ export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) =
 };
 
 export function createDateStringFromTs(ts: number) {
-  const date = new Date(ts);
-  const month = date.toLocaleString('default', { month: 'long' });
-  const day = date.getDate();
-  return `${month} ${day}`;
+  return dateTime(ts).format('MMMM D');
 }
 
 export function getQueryDisplayText(query: DataQuery): string {
@@ -250,4 +261,32 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   });
 
   return mappedQueriesToHeadings;
+}
+
+/* Create datasource list with images. If specific datasource retrieved from Rich history is not part of
+ * exploreDatasources add generic datasource image and add property isRemoved = true.
+ */
+export function createDatasourcesList(queriesDatasources: string[]) {
+  const exploreDatasources = getExploreDatasources();
+  const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
+
+  queriesDatasources.forEach(queryDsName => {
+    const index = exploreDatasources.findIndex(exploreDs => exploreDs.name === queryDsName);
+    if (index !== -1) {
+      datasources.push({
+        label: queryDsName,
+        value: queryDsName,
+        imgUrl: exploreDatasources[index].meta.info.logos.small,
+        isRemoved: false,
+      });
+    } else {
+      datasources.push({
+        label: queryDsName,
+        value: queryDsName,
+        imgUrl: 'public/img/icn-datasource.svg',
+        isRemoved: true,
+      });
+    }
+  });
+  return datasources;
 }
