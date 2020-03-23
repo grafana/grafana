@@ -3,9 +3,8 @@ import { Tag } from './Tag';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Tag.mdx';
 
-// @ts-ignore
 export default {
-  title: 'General/Tag',
+  title: 'General/Tags',
   component: Tag,
   decorators: [withCenteredStory],
   parameters: {

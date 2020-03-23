@@ -1,0 +1,20 @@
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { TagList } from './TagList';
+
+<Meta title="MDX|TagList" component={TagList} />
+
+# TagList
+
+List of tags with predefined margins and positioning.
+
+### Usage
+
+```jsx
+import { TagList } from '@grafana/ui';
+const tags = ['datasource-test', 'gdev', 'mysql', 'mssql'];
+
+<TagList tags={tags} onClick={tag => console.log(tag)} />
+```
+
+### Props
+<Props of={TagList} />
