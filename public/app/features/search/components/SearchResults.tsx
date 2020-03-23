@@ -9,9 +9,9 @@ import { SearchCheckbox } from './SearchCheckbox';
 type clickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
 interface Props {
   results: DashboardSection[] | undefined;
-  onSelectionChanged: any;
-  onTagSelected: any;
-  onFolderExpanding: any;
+  onSelectionChanged: () => void;
+  onTagSelected: (name: string) => any;
+  onFolderExpanding: () => void;
   onToggleSelection: clickWithEvent;
   editable: boolean;
 }
@@ -26,12 +26,12 @@ export const SearchResults: FC<Props> = ({
 }) => {
   const toggleFolderExpand = (section: DashboardSection) => {
     if (section.toggle) {
-      if (!section.expanded && typeof onFolderExpanding === 'function') {
+      if (!section.expanded && onFolderExpanding) {
         onFolderExpanding();
       }
 
       section.toggle(section).then(() => {
-        if (typeof onSelectionChanged === 'function') {
+        if (onSelectionChanged) {
           onSelectionChanged();
         }
       });
