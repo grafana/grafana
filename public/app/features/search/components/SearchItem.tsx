@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
-import { Icon, selectThemeVariant as stv, useTheme, TagList } from '@grafana/ui';
+import { Icon, useTheme, TagList } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { DashboardSectionItem } from '../types';
@@ -19,6 +19,7 @@ const { selectors } = e2e.pages.Dashboards;
 
 export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelection, onTagSelected }) => {
   const theme = useTheme();
+  console.log('t', theme.isLight);
   const styles = getResultsItemStyles(theme, item.checked);
 
   const onItemClick = (item: DashboardSectionItem) => {
@@ -56,24 +57,17 @@ const getResultsItemStyles = (theme: GrafanaTheme, selected: boolean) => ({
       align-items: center;
       margin: ${theme.spacing.xxs};
       padding: 0 ${theme.spacing.sm};
-      background: ${stv(
-        {
-          light: theme.colors.white,
-          dark: theme.colors.dark4,
-        },
-        theme.type
-      )};
+      background: ${theme.isLight ? theme.colors.white : theme.colors.dark4};
       box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1),
-        1px 1px 0 0 ${stv({ light: 'rgba(0, 0, 0, 0.1)', dark: 'rgba(0, 0, 0, 0.3)' }, theme.type)};
+        1px 1px 0 0 ${theme.isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.3)'};
       color: ${theme.colors.text};
       border-radius: ${theme.border.radius.md};
       min-height: 37px;
       &:hover,
       &.selected {
-        background: ${stv(
-          { dark: `linear-gradient(135deg, ${theme.colors.dark9}, ${theme.colors.dark6})`, light: theme.colors.gray6 },
-          theme.type
-        )};
+        background: ${theme.isLight
+          ? theme.colors.gray6
+          : `linear-gradient(135deg, ${theme.colors.dark9}, ${theme.colors.dark6})`};
       }
     `,
     'pointer',
