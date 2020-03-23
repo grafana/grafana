@@ -1,17 +1,16 @@
-import { v4 } from 'uuid';
 import { cloneDeep } from 'lodash';
-import { ThunkResult, StoreState } from 'app/types';
+import { StoreState, ThunkResult } from 'app/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
-import { changeVariableProp, addVariable } from '../state/sharedReducer';
-import { getVariable, getNewVariabelIndex } from '../state/selectors';
-import { toVariablePayload, toVariableIdentifier, AddVariable, VariableIdentifier } from '../state/types';
+import { addVariable, changeVariableProp } from '../state/sharedReducer';
+import { getNewVariabelIndex, getVariable } from '../state/selectors';
+import { AddVariable, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import {
   AdHocVariabelFilterUpdate,
-  filterRemoved,
-  filterUpdated,
   filterAdded,
+  filterRemoved,
   filtersRestored,
+  filterUpdated,
   initialAdHocVariableModelState,
 } from './reducer';
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/variable';
@@ -41,41 +40,41 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
     if (index === -1) {
       const { value, key, operator } = options;
       const filter = { value, key, operator, condition: '' };
-      return await dispatch(addFilter(variable.uuid!, filter));
+      return await dispatch(addFilter(variable.id!, filter));
     }
 
     const filter = { ...variable.filters[index], operator: options.operator };
-    return await dispatch(changeFilter(variable.uuid!, { index, filter }));
+    return await dispatch(changeFilter(variable.id!, { index, filter }));
   };
 };
 
-export const changeFilter = (uuid: string, update: AdHocVariabelFilterUpdate): ThunkResult<void> => {
+export const changeFilter = (id: string, update: AdHocVariabelFilterUpdate): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(uuid, getState());
+    const variable = getVariable(id, getState());
     dispatch(filterUpdated(toVariablePayload(variable, update)));
     await dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
 };
 
-export const removeFilter = (uuid: string, index: number): ThunkResult<void> => {
+export const removeFilter = (id: string, index: number): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(uuid, getState());
+    const variable = getVariable(id, getState());
     dispatch(filterRemoved(toVariablePayload(variable, index)));
     await dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
 };
 
-export const addFilter = (uuid: string, filter: AdHocVariableFilter): ThunkResult<void> => {
+export const addFilter = (id: string, filter: AdHocVariableFilter): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(uuid, getState());
+    const variable = getVariable(id, getState());
     dispatch(filterAdded(toVariablePayload(variable, filter)));
     await dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
 };
 
-export const setFiltersFromUrl = (uuid: string, filters: AdHocVariableFilter[]): ThunkResult<void> => {
+export const setFiltersFromUrl = (id: string, filters: AdHocVariableFilter[]): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(uuid, getState());
+    const variable = getVariable(id, getState());
     dispatch(filtersRestored(toVariablePayload(variable, filters)));
     await dispatch(variableUpdated(toVariableIdentifier(variable), true));
   };
@@ -141,12 +140,12 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
       ...cloneDeep(initialAdHocVariableModelState),
       datasource: options.datasource,
       name: filterTableName,
-      uuid: v4(),
+      id: filterTableName,
     };
 
     const global = false;
     const index = getNewVariabelIndex(getState());
-    const identifier: VariableIdentifier = { type: 'adhoc', uuid: model.uuid };
+    const identifier: VariableIdentifier = { type: 'adhoc', id: model.id };
 
     dispatch(
       addVariable(

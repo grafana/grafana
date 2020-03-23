@@ -5,7 +5,7 @@ export class VariableBuilder<T extends VariableModel> {
   protected variable: T;
 
   constructor(initialState: T) {
-    const { uuid, index, global, ...rest } = initialState;
+    const { id, index, global, ...rest } = initialState;
     this.variable = cloneDeep({ ...rest, name: rest.type }) as T;
   }
 
@@ -14,8 +14,8 @@ export class VariableBuilder<T extends VariableModel> {
     return this;
   }
 
-  withUUID(uuid: string) {
-    this.variable.uuid = uuid;
+  withId(id: string) {
+    this.variable.id = id;
     return this;
   }
 

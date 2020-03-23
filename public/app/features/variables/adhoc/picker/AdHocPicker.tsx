@@ -1,15 +1,15 @@
 import React, { PureComponent, ReactNode } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
-import { AdHocVariableModel, AdHocVariableFilter } from 'app/features/templating/variable';
+import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/variable';
 import { SegmentAsync } from '@grafana/ui';
 import { VariablePickerProps } from '../../pickers/types';
 import { OperatorSegment } from './OperatorSegment';
-import { SelectableValue, MetricFindValue } from '@grafana/data';
+import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { AdHocFilterBuilder } from './AdHocFilterBuilder';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ConditionSegment } from './ConditionSegment';
-import { addFilter, removeFilter, changeFilter } from '../actions';
+import { addFilter, changeFilter, removeFilter } from '../actions';
 
 interface OwnProps extends VariablePickerProps<AdHocVariableModel> {}
 
@@ -27,14 +27,14 @@ const REMOVE_FILTER_KEY = '-- remove filter --';
 const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 export class AdHocPickerUnconnected extends PureComponent<Props> {
   onChange = (index: number, prop: string) => (key: SelectableValue<string>) => {
-    const { uuid, filters } = this.props.variable;
+    const { id, filters } = this.props.variable;
     const { value } = key;
 
     if (key.value === REMOVE_FILTER_KEY) {
-      return this.props.removeFilter(uuid!, index);
+      return this.props.removeFilter(id!, index);
     }
 
-    return this.props.changeFilter(uuid!, {
+    return this.props.changeFilter(id!, {
       index,
       filter: {
         ...filters[index],
@@ -44,8 +44,8 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
   };
 
   appendFilterToVariable = (filter: AdHocVariableFilter) => {
-    const { uuid } = this.props.variable;
-    this.props.addFilter(uuid!, filter);
+    const { id } = this.props.variable;
+    this.props.addFilter(id!, filter);
   };
 
   fetchFilterKeys = async () => {

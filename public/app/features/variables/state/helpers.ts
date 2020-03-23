@@ -1,6 +1,6 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
-import { EMPTY_UUID } from './types';
+import { NEW_VARIABLE_ID } from './types';
 import { VariableHide, VariableModel } from '../../templating/variable';
 import { variablesReducer, VariablesState } from './variablesReducer';
 import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
@@ -18,7 +18,7 @@ export const getVariableState = (
 
   for (let index = 0; index < noOfVariables; index++) {
     variables[index] = {
-      uuid: index.toString(),
+      id: index.toString(),
       type: 'query',
       name: `Name-${index}`,
       hide: VariableHide.dontHide,
@@ -29,13 +29,13 @@ export const getVariableState = (
   }
 
   if (includeEmpty) {
-    variables[EMPTY_UUID] = {
-      uuid: EMPTY_UUID,
+    variables[NEW_VARIABLE_ID] = {
+      id: NEW_VARIABLE_ID,
       type: 'query',
-      name: `Name-${EMPTY_UUID}`,
+      name: `Name-${NEW_VARIABLE_ID}`,
       hide: VariableHide.dontHide,
       index: noOfVariables,
-      label: `Label-${EMPTY_UUID}`,
+      label: `Label-${NEW_VARIABLE_ID}`,
       skipUrlSync: false,
     };
   }
@@ -49,7 +49,7 @@ export const getVariableTestContext = <Model extends VariableModel>(
 ) => {
   const defaultVariable = {
     ...adapter.initialState,
-    uuid: '0',
+    id: '0',
     index: 0,
     name: '0',
   };

@@ -1,35 +1,31 @@
+import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
+
 import { variableAdapters } from '../adapters';
 import { createAdHocVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { getRootReducer } from '../state/helpers';
-import { toVariablePayload, toVariableIdentifier } from '../state/types';
-import * as variableBuilder from '../shared/testing/builders';
+import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import {
-  applyFilterFromTable,
-  AdHocTableOptions,
-  changeFilter,
   addFilter,
+  AdHocTableOptions,
+  applyFilterFromTable,
+  changeFilter,
+  changeVariableDatasource,
+  initAdHocVariableEditor,
   removeFilter,
   setFiltersFromUrl,
-  initAdHocVariableEditor,
-  changeVariableDatasource,
 } from './actions';
-import { filterAdded, filterUpdated, filterRemoved, filtersRestored } from './reducer';
+import { filterAdded, filterRemoved, filtersRestored, filterUpdated } from './reducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { updateLocation } from 'app/core/actions';
 import { DashboardState, LocationState } from 'app/types';
 import { VariableModel } from 'app/features/templating/variable';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
-import { DataSourceSelectItem, DataSourcePluginMeta } from '@grafana/data';
+import { adHocBuilder } from '../shared/testing/builders';
 
-const uuid = '0';
 const getMetricSources = jest.fn().mockReturnValue([]);
 const getDatasource = jest.fn().mockResolvedValue({});
-
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => uuid),
-}));
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: jest.fn(() => ({
@@ -63,11 +59,10 @@ describe('adhoc actions', () => {
         condition: '',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
+        .withId('Filters')
         .withName('Filters')
         .withFilters([existingFilter])
-        .withUUID(uuid)
         .withDatasource(options.datasource)
         .build();
 
@@ -79,15 +74,10 @@ describe('adhoc actions', () => {
       const expectedQuery = { 'var-Filters': ['filter-key|!=|filter-existing', 'filter-key|=|filter-value'] };
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [addFilterAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        filterAdded(toVariablePayload(variable, expectedFilter)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -104,26 +94,20 @@ describe('adhoc actions', () => {
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
+        .withId('Filters')
         .withName('Filters')
-        .withUUID(uuid)
         .withDatasource(options.datasource)
         .build();
 
       const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [addVariableAction, addFilterAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 3;
-
-        expect(addVariableAction).toEqual(createAddVariableAction(variable));
-        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        createAddVariableAction(variable),
+        filterAdded(toVariablePayload(variable, expectedFilter)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -136,10 +120,9 @@ describe('adhoc actions', () => {
         operator: '=',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
+        .withId('Filters')
         .withName('Filters')
-        .withUUID(uuid)
         .withFilters([])
         .withDatasource(options.datasource)
         .build();
@@ -152,15 +135,10 @@ describe('adhoc actions', () => {
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
       const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [addFilterAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        filterAdded(toVariablePayload(variable, expectedFilter)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -173,16 +151,15 @@ describe('adhoc actions', () => {
         operator: '=',
       };
 
-      const existing = variableBuilder
-        .adHoc()
+      const existing = adHocBuilder()
+        .withId('elastic-filter')
         .withName('elastic-filter')
         .withDatasource('elasticsearch')
         .build();
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
+        .withId('Filters')
         .withName('Filters')
-        .withUUID(uuid)
         .withDatasource(options.datasource)
         .build();
 
@@ -192,18 +169,13 @@ describe('adhoc actions', () => {
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
-      const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
+      const expectedQuery = { 'var-elastic-filter': [] as string[], 'var-Filters': ['filter-key|=|filter-value'] };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [addVariableAction, addFilterAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 3;
-
-        expect(addVariableAction).toEqual(createAddVariableAction(variable, 1));
-        expect(addFilterAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        createAddVariableAction(variable, 1),
+        filterAdded(toVariablePayload(variable, expectedFilter)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -221,11 +193,10 @@ describe('adhoc actions', () => {
         operator: '!=',
       };
 
-      const variable = variableBuilder
-        .adHoc()
-        .withUUID(uuid)
-        .withFilters([existing])
+      const variable = adHocBuilder()
+        .withId('elastic-filter')
         .withName('elastic-filter')
+        .withFilters([existing])
         .withDatasource('elasticsearch')
         .build();
 
@@ -234,20 +205,15 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(changeFilter(uuid, update), true);
+        .whenAsyncActionIsDispatched(changeFilter('elastic-filter', update), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|!=|value'] };
       const expectedUpdate = { index: 0, filter: updated };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [filterUpdatedAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(filterUpdatedAction).toEqual(filterUpdated(toVariablePayload(variable, expectedUpdate)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        filterUpdated(toVariablePayload(variable, expectedUpdate)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -265,31 +231,25 @@ describe('adhoc actions', () => {
         operator: '!=',
       };
 
-      const variable = variableBuilder
-        .adHoc()
-        .withUUID(uuid)
-        .withFilters([existing])
+      const variable = adHocBuilder()
+        .withId('elastic-filter')
         .withName('elastic-filter')
+        .withFilters([existing])
         .withDatasource('elasticsearch')
         .build();
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(addFilter(uuid, adding), true);
+        .whenAsyncActionIsDispatched(addFilter('elastic-filter', adding), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|!=|value'] };
       const expectedFilter = { key: 'key', value: 'value', operator: '!=', condition: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [filterAddAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(filterAddAction).toEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        filterAdded(toVariablePayload(variable, expectedFilter)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -302,59 +262,47 @@ describe('adhoc actions', () => {
         condition: '',
       };
 
-      const variable = variableBuilder
-        .adHoc()
-        .withUUID(uuid)
-        .withFilters([])
+      const variable = adHocBuilder()
+        .withId('elastic-filter')
         .withName('elastic-filter')
+        .withFilters([])
         .withDatasource('elasticsearch')
         .build();
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(addFilter(uuid, adding), true);
+        .whenAsyncActionIsDispatched(addFilter('elastic-filter', adding), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value'] };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [filterAddAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(filterAddAction).toEqual(filterAdded(toVariablePayload(variable, adding)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        filterAdded(toVariablePayload(variable, adding)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
   describe('when removeFilter is dispatched on variable with no existing filter', () => {
     it('then correct actions are dispatched', async () => {
-      const variable = variableBuilder
-        .adHoc()
-        .withUUID(uuid)
-        .withFilters([])
+      const variable = adHocBuilder()
+        .withId('elastic-filter')
         .withName('elastic-filter')
+        .withFilters([])
         .withDatasource('elasticsearch')
         .build();
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(removeFilter(uuid, 0), true);
+        .whenAsyncActionIsDispatched(removeFilter('elastic-filter', 0), true);
 
       const expectedQuery = { 'var-elastic-filter': [] as string[] };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [filterRemoveAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(filterRemoveAction).toEqual(filterRemoved(toVariablePayload(variable, 0)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        filterRemoved(toVariablePayload(variable, 0)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -367,30 +315,24 @@ describe('adhoc actions', () => {
         condition: '',
       };
 
-      const variable = variableBuilder
-        .adHoc()
-        .withUUID(uuid)
-        .withFilters([filter])
+      const variable = adHocBuilder()
+        .withId('elastic-filter')
         .withName('elastic-filter')
+        .withFilters([filter])
         .withDatasource('elasticsearch')
         .build();
 
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(removeFilter(uuid, 0), true);
+        .whenAsyncActionIsDispatched(removeFilter('elastic-filter', 0), true);
 
       const expectedQuery = { 'var-elastic-filter': [] as string[] };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [filterRemoveAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(filterRemoveAction).toEqual(filterRemoved(toVariablePayload(variable, 0)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        filterRemoved(toVariablePayload(variable, 0)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -403,11 +345,10 @@ describe('adhoc actions', () => {
         condition: '',
       };
 
-      const variable = variableBuilder
-        .adHoc()
-        .withUUID(uuid)
-        .withFilters([existing])
+      const variable = adHocBuilder()
+        .withId('elastic-filter')
         .withName('elastic-filter')
+        .withFilters([existing])
         .withDatasource('elasticsearch')
         .build();
 
@@ -419,7 +360,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(setFiltersFromUrl(uuid, fromUrl), true);
+        .whenAsyncActionIsDispatched(setFiltersFromUrl('elastic-filter', fromUrl), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|=|value'] };
       const expectedFilters = [
@@ -427,15 +368,10 @@ describe('adhoc actions', () => {
         { key: 'key', value: 'value', operator: '=', condition: '', name: 'value-2' },
       ];
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [filterRestoredAction, updateLocationAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(filterRestoredAction).toEqual(filtersRestored(toVariablePayload(variable, expectedFilters)));
-        expect(updateLocationAction).toEqual(updateLocation({ query: expectedQuery }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        filtersRestored(toVariablePayload(variable, expectedFilters)),
+        updateLocation({ query: expectedQuery })
+      );
     });
   });
 
@@ -463,19 +399,9 @@ describe('adhoc actions', () => {
         { text: 'elasticsearch-v7', value: 'elasticsearch-v7' },
       ];
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [changeEditorAction] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(changeEditorAction).toEqual(
-          changeVariableEditorExtended({
-            propName: 'dataSources',
-            propValue: expectedDatasources,
-          })
-        );
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableEditorExtended({ propName: 'dataSources', propValue: expectedDatasources })
+      );
     });
   });
 
@@ -483,9 +409,9 @@ describe('adhoc actions', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'mysql';
       const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
-      const variable = variableBuilder
-        .adHoc()
-        .withUUID(uuid)
+      const variable = adHocBuilder()
+        .withId('Filters')
+        .withName('Filters')
         .withDatasource('influxdb')
         .build();
 
@@ -495,28 +421,17 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [loadingTextAction, changePropAction, unsupportedTextAction] = actions;
-        const expectedNumberOfActions = 3;
-
-        expect(loadingTextAction).toEqual(
-          changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })
-        );
-        expect(changePropAction).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
-        );
-        expect(unsupportedTextAction).toEqual(
-          changeVariableEditorExtended({
-            propName: 'infoText',
-            propValue: 'This datasource does not support adhoc filters yet.',
-          })
-        );
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })),
+        changeVariableEditorExtended({
+          propName: 'infoText',
+          propValue: 'This datasource does not support adhoc filters yet.',
+        })
+      );
     });
   });
 
@@ -524,9 +439,9 @@ describe('adhoc actions', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'elasticsearch';
       const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
-      const variable = variableBuilder
-        .adHoc()
-        .withUUID(uuid)
+      const variable = adHocBuilder()
+        .withId('Filters')
+        .withName('Filters')
         .withDatasource('influxdb')
         .build();
 
@@ -538,22 +453,13 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<ReducersUsedInContext>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [loadingTextAction, changePropAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(loadingTextAction).toEqual(
-          changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })
-        );
-        expect(changePropAction).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
-        );
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
+      );
     });
   });
 });

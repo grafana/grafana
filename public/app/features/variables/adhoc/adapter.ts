@@ -22,11 +22,11 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     setValue: noop,
     setValueFromUrl: async (variable, urlValue) => {
       const filters = urlParser.toFilters(urlValue);
-      await dispatch(setFiltersFromUrl(variable.uuid!, filters));
+      await dispatch(setFiltersFromUrl(variable.id!, filters));
     },
     updateOptions: noop,
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {

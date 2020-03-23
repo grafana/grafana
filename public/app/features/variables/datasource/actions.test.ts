@@ -15,7 +15,7 @@ import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { createDataSourceOptions } from './reducer';
 import { setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
-import * as variableBuilder from '../shared/testing/builders';
+import { datasourceBuilder } from '../shared/testing/builders';
 
 describe('data source actions', () => {
   variableAdapters.set('datasource', createDataSourceVariableAdapter());
@@ -41,9 +41,8 @@ describe('data source actions', () => {
         const getMetricSourcesMock = jest.fn().mockResolvedValue(sources);
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-        const datasource = variableBuilder
-          .datasource()
-          .withUUID('0')
+        const datasource = datasourceBuilder()
+          .withId('0')
           .withQuery('mock-data-id')
           .build();
 
@@ -57,11 +56,11 @@ describe('data source actions', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           createDataSourceOptions(
-            toVariablePayload({ type: 'datasource', uuid: '0' }, { sources, regex: (undefined as unknown) as RegExp })
+            toVariablePayload({ type: 'datasource', id: '0' }, { sources, regex: (undefined as unknown) as RegExp })
           ),
           setCurrentVariableValue(
             toVariablePayload(
-              { type: 'datasource', uuid: '0' },
+              { type: 'datasource', id: '0' },
               { option: { text: 'first-name', value: 'first-name', selected: false } }
             )
           )
@@ -93,9 +92,8 @@ describe('data source actions', () => {
         const getMetricSourcesMock = jest.fn().mockResolvedValue(sources);
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-        const datasource = variableBuilder
-          .datasource()
-          .withUUID('0')
+        const datasource = datasourceBuilder()
+          .withId('0')
           .withQuery('mock-data-id')
           .withRegEx('/.*(second-name).*/')
           .build();
@@ -109,11 +107,11 @@ describe('data source actions', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           createDataSourceOptions(
-            toVariablePayload({ type: 'datasource', uuid: '0' }, { sources, regex: /.*(second-name).*/ })
+            toVariablePayload({ type: 'datasource', id: '0' }, { sources, regex: /.*(second-name).*/ })
           ),
           setCurrentVariableValue(
             toVariablePayload(
-              { type: 'datasource', uuid: '0' },
+              { type: 'datasource', id: '0' },
               { option: { text: 'second-name', value: 'second-name', selected: false } }
             )
           )

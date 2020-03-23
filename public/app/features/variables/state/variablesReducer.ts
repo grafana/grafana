@@ -20,7 +20,7 @@ export const variablesReducer = (
     }
 
     const variables = globalVariables.reduce((allVariables, state) => {
-      allVariables[state.uuid!] = state;
+      allVariables[state.id!] = state;
       return allVariables;
     }, {} as Record<string, VariableModel>);
 
