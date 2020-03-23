@@ -48,7 +48,7 @@
     "@types/semver": "^6.0.0",
     "@types/tmp": "^0.1.0",
     "@types/webpack": "4.41.7",
-    "@typescript-eslint/eslint-plugin": "2.19.2",
+    "@typescript-eslint/eslint-plugin": "2.24.0",
     "@typescript-eslint/parser": "2.19.2",
     "axios": "0.19.2",
     "babel-jest": "24.8.0",
