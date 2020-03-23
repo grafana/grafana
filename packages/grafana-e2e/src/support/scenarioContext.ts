@@ -4,6 +4,7 @@ export interface ScenarioContext {
   lastAddedDashboard: string;
   lastAddedDashboardUid: string;
   lastAddedDataSource: string;
+  lastAddedDataSourceId: string;
   [key: string]: any;
 }
 
@@ -11,6 +12,7 @@ const scenarioContext: ScenarioContext = {
   lastAddedDashboard: '',
   lastAddedDashboardUid: '',
   lastAddedDataSource: '',
+  lastAddedDataSourceId: '',
 };
 
 // @todo this actually returns type `Cypress.Chainable`

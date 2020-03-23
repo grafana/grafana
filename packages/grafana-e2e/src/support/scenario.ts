@@ -24,7 +24,7 @@ export const e2eScenario = ({
       beforeEach(() => {
         e2e.flows.login('admin', 'admin');
         if (addScenarioDataSource) {
-          e2e.flows.addDataSource('TestData DB');
+          e2e.flows.addDataSource();
         }
         if (addScenarioDashBoard) {
           e2e.flows.addDashboard();
