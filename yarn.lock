@@ -22559,10 +22559,10 @@ storybook-chromatic@^2.2.2:
     tree-kill "^1.1.0"
     uuid "^3.3.2"
 
-storybook-dark-mode@0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/storybook-dark-mode/-/storybook-dark-mode-0.3.0.tgz#9a6ce2c55e68b2dfbd3e9af73f8c92cfcb87f23a"
-  integrity sha512-95uIZqncsCRdakqgO0roWn5orJixtTBIAtkDl8rrIsaEm4N2U68xodCe3VqQmCf646vmculel1sba7qgavN+Xw==
+storybook-dark-mode@0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/storybook-dark-mode/-/storybook-dark-mode-0.3.1.tgz#9d1ff2183babbf1fc41a295a46470230efc3321a"
+  integrity sha512-xtvnxO3X4W4siVRSS4YgrIrHRGGNINZ2pKFAxl5+Ao4fu3MALaZ3aYVwPU7iqKu0cEmJ7MlVLEEwGErGzKdPhg==
   dependencies:
     fast-deep-equal "^3.0.0"
     memoizerific "^1.11.3"
