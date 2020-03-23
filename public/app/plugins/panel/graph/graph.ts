@@ -308,6 +308,11 @@ class GraphElement {
 
     const ts = datapoint[0];
     const { timeField } = getTimeField(dataFrame);
+
+    if (!timeField || !timeField.values) {
+      return dataIndex;
+    }
+
     const field = timeField.values.get(dataIndex);
 
     if (field === ts) {
