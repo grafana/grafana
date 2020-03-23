@@ -719,7 +719,9 @@ jobs:
       - checkout
       - run:
           name: Lint Go
-          command: "make lint-go"
+          command: |
+            make scripts/go/bin/golangci-lint
+            ./scripts/go/bin/golangci-lint run --config scripts/go/configs/.golangci.yml -j 2 pkg
 
   test-frontend:
     docker:
