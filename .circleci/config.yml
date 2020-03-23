@@ -723,7 +723,7 @@ jobs:
           name: Lint Go
           command: |
             make scripts/go/bin/golangci-lint
-            ./scripts/go/bin/golangci-lint run --config scripts/go/configs/.golangci.yml -j 2 pkg
+            ./scripts/go/bin/golangci-lint run --config scripts/go/configs/.golangci.yml -j 2 ./pkg/...
 
   test-frontend:
     docker:
