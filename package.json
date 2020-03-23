@@ -20,7 +20,7 @@
     "@testing-library/react-hooks": "^3.2.1",
     "@types/angular": "1.6.56",
     "@types/angular-route": "1.7.0",
-    "@types/classnames": "2.2.9",
+    "@types/classnames": "2.2.10",
     "@types/clipboard": "2.0.1",
     "@types/d3": "5.7.2",
     "@types/d3-scale-chromatic": "1.3.1",
