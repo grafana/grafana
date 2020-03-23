@@ -1,7 +1,14 @@
-import { AppEvents, DataSourceInstanceSettings } from '@grafana/data';
+import { AppEvents, DataSourceInstanceSettings, DataSourceSelectItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
-import { clearDashboard, setInputs, setGcomDashboard, setJsonDashboard } from './reducers';
+import {
+  clearDashboard,
+  setInputs,
+  setGcomDashboard,
+  setJsonDashboard,
+  InputType,
+  ImportDashboardDTO,
+} from './reducers';
 import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
 import { ThunkResult } from 'app/types';
@@ -41,7 +48,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
           options: [],
         };
 
-        if (input.type === 'datasource') {
+        if (input.type === InputType.DataSource) {
           getDataSourceOptions(input, inputModel);
         } else if (!inputModel.info) {
           inputModel.info = 'Specify a string constant';
@@ -60,28 +67,40 @@ export function resetDashboard(): ThunkResult<void> {
   };
 }
 
-export function saveDashboard(title: string, uid: string, folderId: number): ThunkResult<void> {
+export function saveDashboard(importDashboardForm: ImportDashboardDTO): ThunkResult<void> {
   return async (dispatch, getState) => {
     const dashboard = getState().importDashboard.dashboard;
     const inputs = getState().importDashboard.inputs;
 
-    const inputsToPersist = inputs.map((input: any) => {
-      return {
+    let inputsToPersist = [] as any[];
+    importDashboardForm.dataSources.forEach((dataSource: DataSourceSelectItem, index: number) => {
+      const input = inputs.dataSources[index];
+      inputsToPersist.push({
         name: input.name,
         type: input.type,
         pluginId: input.pluginId,
-        value: input.value,
-      };
+        value: dataSource.value,
+      });
     });
 
-    const result = await getBackendSrv().post('api/dashboards/import', {
-      dashboard: { ...dashboard, title, uid },
-      overwrite: true,
-      inputs: inputsToPersist,
-      folderId,
+    importDashboardForm.constants.forEach((constant: any, index: number) => {
+      const input = inputs.constants[index];
+
+      inputsToPersist.push({
+        value: constant,
+        name: input.name,
+        type: input.type,
+      });
     });
-    const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
-    dispatch(updateLocation({ path: dashboardUrl }));
+
+    // const result = await getBackendSrv().post('api/dashboards/import', {
+    //   dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid },
+    //   overwrite: true,
+    //   inputs: inputsToPersist,
+    //   folderId: importDashboardForm.folderId,
+    // });
+    // const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
+    // dispatch(updateLocation({ path: dashboardUrl }));
   };
 }
 

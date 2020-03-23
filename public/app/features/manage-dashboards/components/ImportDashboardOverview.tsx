@@ -6,22 +6,14 @@ import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
 import validationSrv from '../services/ValidationSrv';
 import { resetDashboard, saveDashboard } from '../state/actions';
-import { DashboardSource } from '../state/reducers';
+import { DashboardInputs, DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
-
-export interface ImportDashboardDTO {
-  title: string;
-  uid: string;
-  gnetId: string;
-  folderId?: number;
-  inputs: Array<{ name: string; label: string; info: string; type: string; pluginId: string }>;
-}
 
 interface OwnProps {}
 
 interface ConnectedProps {
   dashboard: ImportDashboardDTO;
-  inputs: any[];
+  inputs: DashboardInputs;
   source: DashboardSource;
   meta?: any;
   folderId?: number;
@@ -35,7 +27,6 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 interface State {
-  folderId: number;
   uidReset: boolean;
   titleExists: boolean;
   uidExists: boolean;
@@ -43,14 +34,13 @@ interface State {
 
 class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   state: State = {
-    folderId: 0,
     uidReset: false,
     titleExists: false,
     uidExists: false,
   };
 
   onSubmit = (form: ImportDashboardDTO) => {
-    this.props.saveDashboard(form.title, form.uid, this.state.folderId);
+    this.props.saveDashboard(form);
   };
 
   onCancel = () => {
@@ -58,11 +48,11 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   validateTitle = (newTitle: string) => {
-    const { folderId } = this.state;
+    const { folderId } = this.props;
     return validationSrv
       .validateNewDashboardName(folderId, newTitle)
       .then(() => {
-        return false;
+        return true;
       })
       .catch(error => {
         if (error.type === 'EXISTING') {
@@ -85,7 +75,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
       })
       .catch(error => {
         error.isHandled = true;
-        return false;
+        return true;
       });
   };
 
@@ -94,7 +84,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, inputs, meta, source } = this.props;
+    const { dashboard, inputs, meta, source, folderId } = this.props;
     const { uidReset, titleExists, uidExists } = this.state;
 
     return (
@@ -127,7 +117,12 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
             </table>
           </div>
         )}
-        <Forms.Form onSubmit={this.onSubmit} defaultValues={dashboard} validateOnMount>
+        <Forms.Form
+          onSubmit={this.onSubmit}
+          defaultValues={{ ...dashboard, constants: [], dataSources: [], folderId }}
+          validateOnMount
+          validateFieldsOnMount={['title', 'uid']}
+        >
           {({ register, errors, control, getValues }) => (
             <ImportDashboardForm
               register={register}
@@ -143,6 +138,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               onSubmit={this.onSubmit}
               validateTitle={this.validateTitle}
               validateUid={this.validateUid}
+              initialFolderId={folderId}
             />
           )}
         </Forms.Form>

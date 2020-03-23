@@ -1,15 +1,45 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { DataSourceSelectItem } from '@grafana/data';
 
 export enum DashboardSource {
   Gcom = 0,
   Json = 1,
 }
 
+export interface ImportDashboardDTO {
+  title: string;
+  uid: string;
+  gnetId: string;
+  constants: string[];
+  dataSources: DataSourceSelectItem[];
+  folderId: number;
+}
+
+export enum InputType {
+  DataSource = 'datasource',
+  Constant = 'constant',
+}
+
+export interface DashboardInput {
+  name: string;
+  label: string;
+  info: string;
+  value: string | null;
+  type: InputType;
+  pluginId: string;
+  options?: any[];
+}
+
+export interface DashboardInputs {
+  dataSources: DashboardInput[];
+  constants: DashboardInput[];
+}
+
 export interface ImportDashboardState {
   meta: { updatedAt: string; orgName: string };
   dashboard: any;
   source: DashboardSource;
-  inputs: any[];
+  inputs: DashboardInputs;
   isLoaded: boolean;
 }
 
@@ -17,7 +47,7 @@ const initialImportDashboardState: ImportDashboardState = {
   meta: { updatedAt: '', orgName: '' },
   dashboard: {},
   source: DashboardSource.Json,
-  inputs: [],
+  inputs: {} as DashboardInputs,
   isLoaded: false,
 };
 
@@ -57,7 +87,10 @@ const importDashboardSlice = createSlice({
     },
     setInputs: (state, action: PayloadAction<any[]>): ImportDashboardState => ({
       ...state,
-      inputs: action.payload,
+      inputs: {
+        dataSources: action.payload.filter(p => p.type === InputType.DataSource),
+        constants: action.payload.filter(p => p.type === InputType.Constant),
+      },
     }),
   },
 });

@@ -5,6 +5,7 @@ import { FormAPI } from '../../types';
 interface FormProps<T> {
   validateOn?: Mode;
   validateOnMount?: boolean;
+  validateFieldsOnMount?: string[];
   defaultValues?: DeepPartial<T>;
   onSubmit: OnSubmit<T>;
   children: (api: FormAPI<T>) => React.ReactNode;
@@ -14,6 +15,7 @@ export function Form<T>({
   defaultValues,
   onSubmit,
   validateOnMount = false,
+  validateFieldsOnMount,
   children,
   validateOn = 'onSubmit',
 }: FormProps<T>) {
@@ -24,7 +26,7 @@ export function Form<T>({
 
   useEffect(() => {
     if (validateOnMount) {
-      triggerValidation();
+      triggerValidation(validateFieldsOnMount);
     }
   }, []);
 

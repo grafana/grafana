@@ -3,13 +3,14 @@ import { Forms, FormAPI, HorizontalGroup } from '@grafana/ui';
 import { OnSubmit } from 'react-hook-form';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { ImportDashboardDTO } from './ImportDashboardOverview';
+import { DashboardInput, DashboardInputs, ImportDashboardDTO } from '../state/reducers';
 
 interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState'> {
   uidReset: boolean;
-  inputs: any[];
+  inputs: DashboardInputs;
   uidExists: boolean;
   titleExists: boolean;
+  initialFolderId: number;
 
   onCancel: () => void;
   onUidReset: () => void;
@@ -27,6 +28,7 @@ export const ImportDashboardForm: FC<Props> = ({
   inputs,
   uidExists,
   titleExists,
+  initialFolderId,
   onUidReset,
   onCancel,
   onSubmit,
@@ -40,7 +42,7 @@ export const ImportDashboardForm: FC<Props> = ({
 
   useEffect(() => {
     if (isSubmitted && Object.keys(errors).length > 0) {
-      onSubmit(getValues(), {} as any);
+      onSubmit(getValues({ nest: true }), {} as any);
     }
   }, [errors]);
 
@@ -56,7 +58,13 @@ export const ImportDashboardForm: FC<Props> = ({
         />
       </Forms.Field>
       <Forms.Field label="Folder">
-        <Forms.InputControl as={FolderPicker} name="folderId" useNewForms initialFolderId={0} control={control} />
+        <Forms.InputControl
+          as={FolderPicker}
+          name="folderId"
+          useNewForms
+          initialFolderId={initialFolderId}
+          control={control}
+        />
       </Forms.Field>
       <Forms.Field
         label="Unique identifier (uid)"
@@ -84,22 +92,48 @@ export const ImportDashboardForm: FC<Props> = ({
           )}
         </>
       </Forms.Field>
-      {inputs.map((input: any, index: number) => {
-        if (input.type === 'datasource') {
+      {inputs.dataSources &&
+        inputs.dataSources.map((input: DashboardInput, index: number) => {
+          const dataSourceOption = `dataSources[${index}]`;
           return (
-            <Forms.Field label={input.label} key={`${input.label}-${index}`}>
+            <Forms.Field
+              label={input.label}
+              key={dataSourceOption}
+              invalid={errors.dataSources && !!errors.dataSources[index]}
+              error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
+            >
               <Forms.InputControl
                 as={DataSourcePicker}
-                name="dataSource"
+                name={`${dataSourceOption}`}
                 datasources={input.options}
                 control={control}
-                current={null}
+                placeholder={input.info}
+                rules={{ required: true }}
               />
             </Forms.Field>
           );
-        }
-        return null;
-      })}
+        })}
+      {inputs.constants &&
+        inputs.constants.map((input: DashboardInput, index) => {
+          const constantIndex = `constants[${index}]`;
+          return (
+            <fieldset name={constantIndex} key={constantIndex}>
+              <Forms.Field
+                label={input.label}
+                error={errors.constants && errors.constants[index] && `${input.label} needs a value`}
+                invalid={errors.constants && !!errors.constants[index]}
+                key={constantIndex}
+              >
+                <Forms.Input
+                  ref={register({ required: true })}
+                  name={`${constantIndex}`}
+                  size="md"
+                  defaultValue={input.value}
+                />
+              </Forms.Field>
+            </fieldset>
+          );
+        })}
       <HorizontalGroup>
         <Forms.Button
           type="submit"
