@@ -206,7 +206,6 @@
   "dependencies": {
     "@braintree/sanitize-url": "4.0.0",
     "@grafana/slate-react": "0.22.9-grafana",
-    "@iconscout/react-unicons": "^1.0.0",
     "@reduxjs/toolkit": "1.2.1",
     "@torkelo/react-select": "3.0.8",
     "@types/md5": "^2.1.33",
