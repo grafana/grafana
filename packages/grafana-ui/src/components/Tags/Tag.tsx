@@ -1,18 +1,16 @@
-import React, { FC } from 'react';
+import React, { forwardRef, HTMLAttributes } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { getTagColorsFromName } from '../../utils';
 
-interface TagProps {
+export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Name of the tag to display */
   name: string;
   onClick?: (name: string) => any;
-  /** Custom styles for the wrapper component */
-  className?: string;
 }
 
-export const Tag: FC<TagProps> = ({ name, onClick, className, ...rest }) => {
+export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, ...rest }, ref) => {
   const theme = useTheme();
   const styles = getTagStyles(theme, name);
 
@@ -23,11 +21,11 @@ export const Tag: FC<TagProps> = ({ name, onClick, className, ...rest }) => {
   };
 
   return (
-    <span key={name} onClick={onTagClick} className={cx(styles.wrapper, className)} {...rest}>
+    <span key={name} ref={ref} onClick={onTagClick} className={cx(styles.wrapper, className)} {...rest}>
       {name}
     </span>
   );
-};
+});
 
 const getTagStyles = (theme: GrafanaTheme, name: string) => {
   const { borderColor, color } = getTagColorsFromName(name);

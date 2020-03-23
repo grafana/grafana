@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { cx, css } from 'emotion';
 import { Tag } from './Tag';
 
-interface Props {
+export interface Props {
   tags: string[];
   onClick?: (name: string) => any;
   /** Custom styles for the wrapper component */
