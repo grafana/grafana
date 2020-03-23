@@ -105,5 +105,8 @@ const getResultsItemStyles = (theme: GrafanaTheme, selected: boolean) => ({
   `,
   tags: css`
     justify-content: flex-end;
+    @media only screen and (max-width: ${theme.breakpoints.md}) {
+      display: none;
+    }
   `,
 });
