@@ -10,7 +10,7 @@ import {
   DashboardViewEventPayload,
 } from '@grafana/runtime';
 
-export function handleDataRequestEvent(datasource: DataSourceApi) {
+export function emitDataRequestEvent(datasource: DataSourceApi) {
   let done = false;
 
   return (data: PanelData) => {
@@ -58,7 +58,7 @@ export function handleDataRequestEvent(datasource: DataSourceApi) {
   };
 }
 
-export function handleDashboardViewEvent(dashboard: DashboardModel) {
+export function emitDashboardViewEvent(dashboard: DashboardModel) {
   const eventData: DashboardViewEventPayload = {
     dashboardId: dashboard.id,
     dashboardName: dashboard.title,

@@ -25,7 +25,7 @@ import { DataQuery } from '@grafana/data';
 import { getConfig } from '../../../core/config';
 import { initDashboardTemplating, processVariables } from '../../variables/state/actions';
 import { variableAdapters } from '../../variables/adapters';
-import { handleDashboardViewEvent } from './analyticsProcessor';
+import { emitDashboardViewEvent } from './analyticsProcessor';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -226,7 +226,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // send open dashboard event
     if (args.routeInfo !== DashboardRouteInfo.New) {
-      handleDashboardViewEvent(dashboard);
+      emitDashboardViewEvent(dashboard);
     }
 
     // yay we are done
