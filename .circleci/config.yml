@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Install Grafana Build Pipeline
           command: |
-            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.0/grabpl
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.1/grabpl
             chmod +x grabpl
             mkdir bin
             mv grabpl bin/
@@ -830,6 +830,15 @@ jobs:
           command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh"
           when: on_success
 
+  deploy-to-kubernetes:
+    description: "Deploy Grafana master Docker image to Kubernetes"
+    executor: grafana-build
+    steps:
+      - run:
+          name: Deploy to Kubernetes
+          command: |
+            /tmp/workspace/bin/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
+
   release-packages:
     docker:
       - image: circleci/node:12
@@ -1217,6 +1226,11 @@ workflows:
             - end-to-end-tests
       - build-docs-website:
           filters: *filter-not-release-or-master
+      - deploy-to-kubernetes:
+          filters: *filter-only-master
+          requires:
+            - publish-oss-docker-images
+
   nightly:
     triggers:
       - schedule:
