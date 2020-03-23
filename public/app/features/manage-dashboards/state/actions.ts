@@ -93,14 +93,14 @@ export function saveDashboard(importDashboardForm: ImportDashboardDTO): ThunkRes
       });
     });
 
-    // const result = await getBackendSrv().post('api/dashboards/import', {
-    //   dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid },
-    //   overwrite: true,
-    //   inputs: inputsToPersist,
-    //   folderId: importDashboardForm.folderId,
-    // });
-    // const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
-    // dispatch(updateLocation({ path: dashboardUrl }));
+    const result = await getBackendSrv().post('api/dashboards/import', {
+      dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid },
+      overwrite: true,
+      inputs: inputsToPersist,
+      folderId: importDashboardForm.folderId,
+    });
+    const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
+    dispatch(updateLocation({ path: dashboardUrl }));
   };
 }
 
