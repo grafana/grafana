@@ -251,9 +251,10 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   async getServiceLevelObjectives(projectName: string, serviceId: string): Promise<Array<SelectableValue<string>>> {
     let { projectName: p, serviceId: s } = this.interpolateProps({ projectName, serviceId });
     return this.api.get(`${p}/services/${s}/serviceLevelObjectives`, {
-      responseMap: ({ name, displayName }: { name: string; displayName: string }) => ({
+      responseMap: ({ name, displayName, goal }: { name: string; displayName: string; goal: number }) => ({
         value: name.match(/([^\/]*)\/*$/)[1],
         label: displayName,
+        goal,
       }),
     });
   }

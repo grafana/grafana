@@ -74,6 +74,7 @@ export interface SLOQuery {
   selectorName: string;
   serviceId: string;
   sloId: string;
+  goal?: number;
 }
 
 export interface StackdriverQuery extends DataQuery {
