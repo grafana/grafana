@@ -12,15 +12,15 @@ weight = 500
 
 # SAML authentication
 
-SAML authentication integration allows your Grafana users to log in by using an external SAML Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
+SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
 The SAML single-sign-on (SSO) standard is varied and flexible. Our implementation contains the subset of features needed to provide a smooth authentication experience into Grafana.
 
-> Only available in Grafana Enterprise v6.3+. If you encounter any problems with our implementation, please don't hesitate to contact us.
+> Available in Grafana Enterprise v6.3+. If you encounter any problems with our implementation, please don't hesitate to contact us.
 
 ## Supported SAML
 
-Grafana supports the following SAML integrations.
+Grafana supports the following SAML 2.0 bindings:
 
 * From the Service Provider (SP) to the Identity Provider (IdP):
   - `HTTP-POST` binding
