@@ -73,7 +73,7 @@ export function SLOQueryEditor({
           }
           onChange={async ({ value: sloId = '' }) => {
             const slos = await datasource.getServiceLevelObjectives(query.projectName, query.serviceId);
-            const slo = slos.find(({ value }) => value === sloId);
+            const slo = slos.find(({ value }) => value === datasource.templateSrv.replace(sloId));
             onChange({ ...query, sloId, goal: slo?.goal });
           }}
         />
