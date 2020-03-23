@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import config from 'app/core/config';
+import config, { getConfig } from 'app/core/config';
 import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
@@ -9,6 +9,8 @@ import { TableRenderer } from './renderer';
 import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
+import { dispatch } from 'app/store/store';
+import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 
 export class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -257,7 +259,11 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
         operator: filterData.operator,
       };
 
-      ctrl.variableSrv.setAdhocFilter(options);
+      if (getConfig().featureToggles.newVariables) {
+        dispatch(applyFilterFromTable(options));
+      } else {
+        ctrl.variableSrv.setAdhocFilter(options);
+      }
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);

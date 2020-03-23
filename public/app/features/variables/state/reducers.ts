@@ -12,8 +12,8 @@ export interface TemplatingState {
 
 export default {
   templating: combineReducers({
-    optionsPicker: optionsPickerReducer,
     editor: variableEditorReducer,
     variables: variablesReducer,
+    optionsPicker: optionsPickerReducer,
   }),
 };
