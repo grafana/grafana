@@ -53,7 +53,7 @@ export function SLOQueryEditor({
               ...services,
             ])
           }
-          onChange={({ value: serviceId = '' }) => onChange({ ...query, serviceId })}
+          onChange={({ value: serviceId = '' }) => onChange({ ...query, serviceId, sloId: '' })}
         />
       </QueryInlineField>
 
