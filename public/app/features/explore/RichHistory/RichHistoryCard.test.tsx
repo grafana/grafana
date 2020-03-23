@@ -15,10 +15,11 @@ const setup = (propOverrides?: Partial<Props>) => {
       queries: ['query1', 'query2', 'query3'],
       sessionName: '',
     },
-    changeQuery: jest.fn(),
+    dsImg: '/app/img',
+    isRemoved: false,
     changeDatasource: jest.fn(),
-    clearQueries: jest.fn(),
     updateRichHistory: jest.fn(),
+    setQueries: jest.fn(),
     exploreId: ExploreId.left,
     datasourceInstance: { name: 'Datasource' } as DataSourceApi,
   };
@@ -61,6 +62,18 @@ describe('RichHistoryCard', () => {
         .at(2)
         .text()
     ).toEqual('query3');
+  });
+  it('should render data source icon', () => {
+    const wrapper = setup();
+    expect(wrapper.find({ 'aria-label': 'Data source icon' })).toHaveLength(1);
+  });
+  it('should render data source name', () => {
+    const wrapper = setup();
+    expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Test datasource');
+  });
+  it('should render "Data source does not exist anymore" if removed data source', () => {
+    const wrapper = setup({ isRemoved: true });
+    expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Data source does not exist anymore');
   });
 
   describe('commenting', () => {

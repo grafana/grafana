@@ -16,6 +16,7 @@ import { createCustomVariableAdapter } from '../variables/custom/adapter';
 import { createTextBoxVariableAdapter } from '../variables/textbox/adapter';
 import { createConstantVariableAdapter } from '../variables/constant/adapter';
 import { createDataSourceVariableAdapter } from '../variables/datasource/adapter';
+import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createIntervalVariableAdapter } from '../variables/interval/adapter';
 
 coreModule.factory('templateSrv', () => templateSrv);
@@ -36,4 +37,5 @@ variableAdapters.set('custom', createCustomVariableAdapter());
 variableAdapters.set('textbox', createTextBoxVariableAdapter());
 variableAdapters.set('constant', createConstantVariableAdapter());
 variableAdapters.set('datasource', createDataSourceVariableAdapter());
+variableAdapters.set('adhoc', createAdHocVariableAdapter());
 variableAdapters.set('interval', createIntervalVariableAdapter());

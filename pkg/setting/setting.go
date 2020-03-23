@@ -633,11 +633,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	PluginsPath = makeAbsolute(plugins, HomePath)
-	Provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	if err != nil {
 		return err
 	}
-	cfg.ProvisioningPath = makeAbsolute(Provisioning, HomePath)
+	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
 	if err != nil {

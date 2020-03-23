@@ -145,7 +145,7 @@
   - name: Data sources
     link: /features/datasources/
     children:
-    - link: /features/datasources/add-data-source/
+    - link: /features/datasources/add-a-data-source/
       name: Add data source
     - link: /features/datasources/cloudwatch/
       name: AWS Cloudwatch

@@ -1,6 +1,6 @@
 import { UrlQueryMap } from '@grafana/runtime';
 
-import { getTemplatingRootReducer, variableMockBuilder } from './helpers';
+import { getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -11,6 +11,7 @@ import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
 import { VariableRefresh } from '../../templating/variable';
 import { updateVariableOptions } from '../query/reducer';
+import * as variableBuilder from '../shared/testing/builders';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -67,29 +68,32 @@ describe('processVariable', () => {
   const getAndSetupProcessVariableContext = () => {
     variableAdapters.set('custom', createCustomVariableAdapter());
     variableAdapters.set('query', createQueryVariableAdapter());
-    const custom = variableMockBuilder('custom')
+    const custom = variableBuilder
+      .custom()
       .withId('custom')
       .withName('custom')
       .withQuery('A,B,C')
       .withOptions('A', 'B', 'C')
       .withCurrent('A')
-      .create();
+      .build();
 
-    const queryDependsOnCustom = variableMockBuilder('query')
+    const queryDependsOnCustom = variableBuilder
+      .query()
       .withId('queryDependsOnCustom')
       .withName('queryDependsOnCustom')
       .withQuery('$custom.*')
       .withOptions('AA', 'AB', 'AC')
       .withCurrent('AA')
-      .create();
+      .build();
 
-    const queryNoDepends = variableMockBuilder('query')
+    const queryNoDepends = variableBuilder
+      .query()
       .withId('queryNoDepends')
       .withName('queryNoDepends')
       .withQuery('*')
       .withOptions('A', 'B', 'C')
       .withCurrent('A')
-      .create();
+      .build();
 
     const list = [custom, queryDependsOnCustom, queryNoDepends];
 
