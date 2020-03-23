@@ -392,7 +392,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               onStopScanning={this.onStopScanning}
                             />
                           )}
-                          {mode === ExploreMode.Tracing && <TraceView />}
+                          {mode === ExploreMode.Tracing && (
+                            <TraceView trace={queryResponse.series[0].fields[0].values.get(0)[0] as any} />
+                          )}
                         </>
                       )}
                       {showRichHistory && (

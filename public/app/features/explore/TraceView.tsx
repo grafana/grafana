@@ -11,10 +11,15 @@ import {
   TTraceTimeline,
   UIElementsContext,
   ViewRangeTimeUpdate,
+  transformTraceData,
 } from '@jaegertracing/jaeger-ui-components';
 import React, { useState } from 'react';
 
-export function TraceView() {
+type Props = {
+  trace: Trace;
+};
+
+export function TraceView(props: Props) {
   const [detailStates, setDetailStates] = useState(new Map());
   const [childrenHiddenIDs, setChildrenHiddenIDs] = useState(new Set<string>());
   const [hoverIndentGuideIds, setHoverIndentGuideIds] = useState(new Set<string>());
@@ -128,6 +133,8 @@ export function TraceView() {
     });
   }
 
+  const traceProp = transformTraceData(props.trace);
+
   return (
     <UIElementsContext.Provider
       value={{
@@ -145,7 +152,7 @@ export function TraceView() {
         registerAccessors={() => {}}
         scrollToFirstVisibleSpan={() => {}}
         findMatchesIDs={null}
-        trace={makeTrace()}
+        trace={traceProp}
         traceTimeline={
           {
             childrenHiddenIDs,
