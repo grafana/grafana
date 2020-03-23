@@ -21,7 +21,7 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
     display: flex;
     background-color: ${theme.colors.formInputBg};
     position: relative;
-    box-shadow: ${theme.isLight ? theme.colors.gray85 : theme.colors.black}:;
+    box-shadow: 0 0 10px ${theme.isLight ? theme.colors.gray85 : theme.colors.black};
   `,
   input: css`
     max-width: 653px;

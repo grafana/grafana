@@ -226,10 +226,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $dark-6;
-$dropdownBorder: rgba(0, 0, 0, 0.2);
+$dropdownBackground: $panel-bg;
+$dropdownBorder: ${theme.colors.panelBorder};
 $dropdownDividerTop: transparent;
-$dropdownDividerBottom: #444;
+$dropdownDividerBottom: ${theme.colors.gray25};
 
 $dropdownLinkColor: $text-color;
 $dropdownLinkColorHover: $white;
