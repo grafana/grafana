@@ -37,7 +37,7 @@
     "@types/execa": "^0.9.0",
     "@types/expect-puppeteer": "4.4.0",
     "@types/fs-extra": "^8.1.0",
-    "@types/inquirer": "^6.0.3",
+    "@types/inquirer": "^6.5.0",
     "@types/jest": "24.0.13",
     "@types/jest-cli": "^23.6.0",
     "@types/node": "^13.9.3",
