@@ -18,7 +18,7 @@ interface State {
 export class QueryEditor extends PureComponent<Props, State> {
   state: State = { lastQueryError: '' };
 
-  async componentWillMount() {
+  async UNSAFE_componentWillMount() {
     const { datasource, query } = this.props;
 
     if (!this.props.query.hasOwnProperty('metricQuery')) {

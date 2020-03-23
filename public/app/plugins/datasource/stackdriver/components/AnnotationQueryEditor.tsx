@@ -41,7 +41,7 @@ const DefaultTarget: State = {
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
-  async componentWillMount() {
+  async UNSAFE_componentWillMount() {
     const { target, datasource } = this.props;
     if (!target.projectName) {
       target.projectName = datasource.getDefaultProject();
