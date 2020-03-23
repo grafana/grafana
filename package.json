@@ -139,7 +139,7 @@
     "terser-webpack-plugin": "2.3.5",
     "ts-jest": "24.1.0",
     "ts-node": "8.6.2",
-    "tslib": "1.10.0",
+    "tslib": "1.11.1",
     "typescript": "3.7.5",
     "webpack": "4.41.5",
     "webpack-bundle-analyzer": "3.6.0",
