@@ -143,9 +143,9 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     onChange={this.onTypeChange}
                     aria-label={e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors.generalTypeSelect}
                   >
-                    {variableAdapters.registeredTypes().map(item => (
-                      <option key={item.type} label={item.label} value={item.type}>
-                        {item.label}
+                    {variableAdapters.list().map(({ id, name }) => (
+                      <option key={id} label={name} value={id}>
+                        {name}
                       </option>
                     ))}
                   </select>

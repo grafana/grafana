@@ -11,8 +11,9 @@ import { toVariableIdentifier } from '../state/types';
 
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
+    id: 'constant',
     description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
-    label: 'Constant',
+    name: 'Constant',
     initialState: initialConstantVariableModelState,
     reducer: constantVariableReducer,
     picker: OptionsPicker,

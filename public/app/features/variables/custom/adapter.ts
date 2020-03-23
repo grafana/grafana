@@ -11,8 +11,9 @@ import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 
 export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableModel> => {
   return {
+    id: 'custom',
     description: 'Define variable values manually',
-    label: 'Custom',
+    name: 'Custom',
     initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,
     picker: OptionsPicker,

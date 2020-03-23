@@ -11,7 +11,7 @@ import { TemplatingState } from '../state/reducers';
 import { createCustomOptionsFromQuery } from './reducer';
 
 describe('custom actions', () => {
-  variableAdapters.set('custom', createCustomVariableAdapter());
+  variableAdapters.setInit(() => [createCustomVariableAdapter()]);
 
   describe('when updateCustomVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {

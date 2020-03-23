@@ -40,7 +40,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 describe('options picker actions', () => {
-  variableAdapters.set('query', createQueryVariableAdapter());
+  variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when navigateOptions is dispatched with navigation key cancel', () => {
     it('then correct actions are dispatched', async () => {

@@ -55,7 +55,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
     let orderIndex = 0;
     for (let index = 0; index < list.length; index++) {
       const model = list[index];
-      if (!variableAdapters.contains(model.type)) {
+      if (!variableAdapters.getIfExists(model.type)) {
         continue;
       }
 
@@ -76,7 +76,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
       continue;
     }
 
-    if (variableAdapters.contains(variable.type)) {
+    if (variableAdapters.getIfExists(variable.type)) {
       if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
         dependencies.push(otherVariable.initLock!.promise);
       }

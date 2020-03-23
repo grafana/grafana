@@ -18,7 +18,7 @@ import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
 
 describe('data source actions', () => {
-  variableAdapters.set('datasource', createDataSourceVariableAdapter());
+  variableAdapters.setInit(() => [createDataSourceVariableAdapter()]);
 
   describe('when updateDataSourceVariableOptions is dispatched', () => {
     describe('and there is no regex', () => {

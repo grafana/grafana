@@ -40,9 +40,9 @@ type ReducersUsedInContext = {
   location: LocationState;
 };
 
-describe('adhoc actions', () => {
-  variableAdapters.set('adhoc', createAdHocVariableAdapter());
+variableAdapters.setInit(() => [createAdHocVariableAdapter()]);
 
+describe('adhoc actions', () => {
   describe('when applyFilterFromTable is dispatched and filter already exist', () => {
     it('then correct actions are dispatched', async () => {
       const options: AdHocTableOptions = {

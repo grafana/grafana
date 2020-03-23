@@ -12,8 +12,9 @@ const noop = async () => {};
 
 export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel> => {
   return {
+    id: 'adhoc',
     description: 'Add key/value filters on the fly',
-    label: 'Ad hoc filters',
+    name: 'Ad hoc filters',
     initialState: initialAdHocVariableModelState,
     reducer: adHocVariableReducer,
     picker: AdHocPicker,

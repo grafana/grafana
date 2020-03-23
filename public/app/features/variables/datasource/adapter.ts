@@ -11,8 +11,9 @@ import { updateDataSourceVariableOptions } from './actions';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
+    id: 'datasource',
     description: 'Enabled you to dynamically switch the datasource for multiple panels',
-    label: 'Datasource',
+    name: 'Datasource',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
     picker: OptionsPicker,
