@@ -82,7 +82,7 @@
     "lodash": "4.17.15",
     "md5-file": "^4.0.0",
     "mini-css-extract-plugin": "^0.7.0",
-    "node-sass": "^4.12.0",
+    "node-sass": "^4.13.1",
     "optimize-css-assets-webpack-plugin": "^5.0.3",
     "ora": "^3.4.0",
     "pixelmatch": "^5.0.2",
