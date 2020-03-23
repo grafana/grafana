@@ -89,7 +89,7 @@ describe('ShareModal', () => {
         },
       };
       ctx.mount({
-        panel: { id: 22, options: {} },
+        panel: { id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } },
       });
     });
 
@@ -101,7 +101,7 @@ describe('ShareModal', () => {
     it('should generate render url', () => {
       mockLocationHref('http://dashboards.grafana.com/d/abcdefghi/my-dash');
       ctx.mount({
-        panel: { id: 22, options: {} },
+        panel: { id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } },
       });
 
       const state = ctx.wrapper?.state();
@@ -113,7 +113,7 @@ describe('ShareModal', () => {
     it('should generate render url for scripted dashboard', () => {
       mockLocationHref('http://dashboards.grafana.com/dashboard/script/my-dash.js');
       ctx.mount({
-        panel: { id: 22, options: {} },
+        panel: { id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } },
       });
 
       const state = ctx.wrapper?.state();
@@ -142,7 +142,7 @@ describe('ShareModal', () => {
     it('should remove fullscreen from image url when is first param in querystring and modeSharePanel is true', () => {
       mockLocationHref('http://server/#!/test?fullscreen&edit');
       ctx.mount({
-        panel: { id: 1, options: {} },
+        panel: { id: 1, options: {}, fieldConfig: { defaults: {}, overrides: [] } },
       });
 
       const state = ctx.wrapper?.state();
@@ -153,7 +153,7 @@ describe('ShareModal', () => {
     it('should remove edit from image url when is first param in querystring and modeSharePanel is true', () => {
       mockLocationHref('http://server/#!/test?edit&fullscreen');
       ctx.mount({
-        panel: { id: 1, options: {} },
+        panel: { id: 1, options: {}, fieldConfig: { defaults: {}, overrides: [] } },
       });
 
       const state = ctx.wrapper?.state();

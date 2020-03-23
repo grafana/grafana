@@ -397,7 +397,7 @@ describe('options picker actions', () => {
 function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
   return {
     type: 'query',
-    uuid: '0',
+    id: '0',
     global: false,
     current: createOption(''),
     options: [],

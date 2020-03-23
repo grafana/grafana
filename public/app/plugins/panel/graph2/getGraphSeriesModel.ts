@@ -9,7 +9,6 @@ import {
   GraphSeriesXY,
   getTimeField,
   DataFrame,
-  FieldDisplayOptions,
   getSeriesTimeStep,
   TimeZone,
   hasMsResolution,
@@ -17,6 +16,7 @@ import {
   DEFAULT_DATE_TIME_FORMAT,
   FieldColor,
   FieldColorMode,
+  FieldConfigSource,
 } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';
@@ -28,7 +28,7 @@ export const getGraphSeriesModel = (
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
   legendOptions: GraphLegendEditorLegendOptions,
-  fieldOptions?: FieldDisplayOptions
+  fieldOptions?: FieldConfigSource
 ) => {
   const graphs: GraphSeriesXY[] = [];
 

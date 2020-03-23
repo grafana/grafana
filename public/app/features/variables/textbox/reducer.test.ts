@@ -13,16 +13,16 @@ describe('textBoxVariableReducer', () => {
   describe('when createTextBoxOptions is dispatched', () => {
     it('then state should be correct', () => {
       const query = 'ABC';
-      const uuid = '0';
-      const { initialState } = getVariableTestContext(adapter, { uuid, query });
-      const payload = toVariablePayload({ uuid: '0', type: 'textbox' });
+      const id = '0';
+      const { initialState } = getVariableTestContext(adapter, { id, query });
+      const payload = toVariablePayload({ id: '0', type: 'textbox' });
 
       reducerTester<VariablesState>()
         .givenReducer(textBoxVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(createTextBoxOptions(payload))
         .thenStateShouldEqual({
-          [uuid]: {
-            ...initialState[uuid],
+          [id]: {
+            ...initialState[id],
             options: [
               {
                 text: query,
@@ -43,16 +43,16 @@ describe('textBoxVariableReducer', () => {
   describe('when createTextBoxOptions is dispatched and query contains spaces', () => {
     it('then state should be correct', () => {
       const query = '  ABC  ';
-      const uuid = '0';
-      const { initialState } = getVariableTestContext(adapter, { uuid, query });
-      const payload = toVariablePayload({ uuid: '0', type: 'textbox' });
+      const id = '0';
+      const { initialState } = getVariableTestContext(adapter, { id, query });
+      const payload = toVariablePayload({ id: '0', type: 'textbox' });
 
       reducerTester<VariablesState>()
         .givenReducer(textBoxVariableReducer, cloneDeep(initialState))
         .whenActionIsDispatched(createTextBoxOptions(payload))
         .thenStateShouldEqual({
-          [uuid]: {
-            ...initialState[uuid],
+          [id]: {
+            ...initialState[id],
             options: [
               {
                 text: query.trim(),
