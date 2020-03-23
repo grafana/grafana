@@ -45,7 +45,7 @@
     "@types/puppeteer-core": "2.0.0",
     "@types/react-dev-utils": "^9.0.1",
     "@types/rimraf": "^3.0.0",
-    "@types/semver": "^6.0.0",
+    "@types/semver": "^7.1.0",
     "@types/tmp": "^0.1.0",
     "@types/webpack": "4.41.7",
     "@typescript-eslint/eslint-plugin": "2.19.2",
