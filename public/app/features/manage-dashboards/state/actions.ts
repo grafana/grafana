@@ -73,7 +73,7 @@ export function saveDashboard(importDashboardForm: ImportDashboardDTO): ThunkRes
     const inputs = getState().importDashboard.inputs;
 
     let inputsToPersist = [] as any[];
-    importDashboardForm.dataSources.forEach((dataSource: DataSourceSelectItem, index: number) => {
+    importDashboardForm.dataSources?.forEach((dataSource: DataSourceSelectItem, index: number) => {
       const input = inputs.dataSources[index];
       inputsToPersist.push({
         name: input.name,
@@ -83,7 +83,7 @@ export function saveDashboard(importDashboardForm: ImportDashboardDTO): ThunkRes
       });
     });
 
-    importDashboardForm.constants.forEach((constant: any, index: number) => {
+    importDashboardForm.constants?.forEach((constant: any, index: number) => {
       const input = inputs.constants[index];
 
       inputsToPersist.push({

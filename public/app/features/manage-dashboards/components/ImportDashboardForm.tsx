@@ -41,7 +41,7 @@ export const ImportDashboardForm: FC<Props> = ({
   const [isSubmitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (isSubmitted && Object.keys(errors).length > 0) {
+    if (isSubmitted && (errors.title || errors.uid)) {
       onSubmit(getValues({ nest: true }), {} as any);
     }
   }, [errors]);
