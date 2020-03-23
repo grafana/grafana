@@ -211,7 +211,6 @@
     "@types/md5": "^2.1.33",
     "@types/react-loadable": "5.5.2",
     "@types/react-virtualized-auto-sizer": "1.0.0",
-    "@types/uuid": "3.4.7",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.6.9",
     "angular-bindonce": "0.3.1",
@@ -275,7 +274,6 @@
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
-    "uuid": "3.4.0",
     "whatwg-fetch": "3.0.0",
     "xss": "1.0.6"
   },
