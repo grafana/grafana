@@ -20,9 +20,9 @@ export const updateQueryVariableOptions = (
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(identifier.uuid!, getState());
+    const variableInState = getVariable<QueryVariableModel>(identifier.id!, getState());
     try {
-      if (getState().templating.editor.id === variableInState.uuid) {
+      if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
@@ -49,7 +49,7 @@ export const updateQueryVariableOptions = (
       if (err.data && err.data.message) {
         err.message = err.data.message;
       }
-      if (getState().templating.editor.id === variableInState.uuid) {
+      if (getState().templating.editor.id === variableInState.id) {
         dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
       }
       appEvents.emit(AppEvents.alertError, [
@@ -72,7 +72,7 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
   const allDataSources = [defaultDatasource].concat(dataSources);
   dispatch(changeVariableEditorExtended({ propName: 'dataSources', propValue: allDataSources }));
 
-  const variable = getVariable<QueryVariableModel>(identifier.uuid!, getState());
+  const variable = getVariable<QueryVariableModel>(identifier.id!, getState());
   if (!variable.datasource) {
     return;
   }
@@ -101,7 +101,7 @@ export const changeQueryVariableQuery = (
   query: any,
   definition: string
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const variableInState = getVariable<QueryVariableModel>(identifier.uuid!, getState());
+  const variableInState = getVariable<QueryVariableModel>(identifier.id!, getState());
   if (typeof query === 'string' && query.match(new RegExp('\\$' + variableInState.name + '(/| |$)'))) {
     const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
     dispatch(addVariableEditorError({ errorProp: 'query', errorText }));

@@ -12,8 +12,9 @@ import { containsVariable } from '../../templating/utils';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
+    id: 'datasource',
     description: 'Enabled you to dynamically switch the datasource for multiple panels',
-    label: 'Datasource',
+    name: 'Datasource',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
     picker: OptionsPicker,
@@ -34,7 +35,7 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
       await dispatch(updateDataSourceVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
       return { ...rest, options: [] };
     },
     getValueForUrl: variable => {

@@ -13,8 +13,9 @@ import { containsVariable } from '../../templating/utils';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
+    id: 'query',
     description: 'Variable values are fetched from a datasource query',
-    label: 'Query',
+    name: 'Query',
     initialState: initialQueryVariableModelState,
     reducer: queryVariableReducer,
     picker: OptionsPicker,
@@ -32,7 +33,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
       await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, queryValue, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, queryValue, ...rest } = cloneDeep(variable);
       // remove options
       if (variable.refresh !== VariableRefresh.never) {
         return { ...rest, options: [] };

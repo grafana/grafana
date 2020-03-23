@@ -11,7 +11,7 @@ import { setCurrentVariableValue } from '../state/sharedReducer';
 import { initDashboardTemplating } from '../state/actions';
 
 describe('constant actions', () => {
-  variableAdapters.set('constant', createConstantVariableAdapter());
+  variableAdapters.setInit(() => [createConstantVariableAdapter()]);
 
   describe('when updateConstantVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
@@ -23,7 +23,7 @@ describe('constant actions', () => {
 
       const variable: ConstantVariableModel = {
         type: 'constant',
-        uuid: '0',
+        id: '0',
         global: false,
         current: {
           value: '',

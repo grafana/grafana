@@ -2,10 +2,10 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
-import { getVariableWithName } from '../variables/state/selectors';
-import { getState } from '../../store/store';
+import { getVariableWithName, getFilteredVariables } from '../variables/state/selectors';
 import { getConfig } from 'app/core/config';
 import { variableRegex } from './utils';
+import { isAdHoc } from '../variables/guard';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -79,20 +79,12 @@ export class TemplateSrv {
   getAdhocFilters(datasourceName: string) {
     let filters: any = [];
 
-    if (this.variables) {
-      for (let i = 0; i < this.variables.length; i++) {
-        const variable = this.variables[i];
-        if (variable.type !== 'adhoc') {
-          continue;
-        }
-
-        // null is the "default" datasource
-        if (variable.datasource === null || variable.datasource === datasourceName) {
+    for (const variable of this.getAdHocVariables()) {
+      if (variable.datasource === null || variable.datasource === datasourceName) {
+        filters = filters.concat(variable.filters);
+      } else if (variable.datasource.indexOf('$') === 0) {
+        if (this.replace(variable.datasource) === datasourceName) {
           filters = filters.concat(variable.filters);
-        } else if (variable.datasource.indexOf('$') === 0) {
-          if (this.replace(variable.datasource) === datasourceName) {
-            filters = filters.concat(variable.filters);
-          }
         }
       }
     }
@@ -385,10 +377,20 @@ export class TemplateSrv {
     }
 
     if (getConfig().featureToggles.newVariables && !this.index[name]) {
-      return getVariableWithName(name, getState());
+      return getVariableWithName(name);
     }
 
     return this.index[name];
+  };
+
+  private getAdHocVariables = (): any[] => {
+    if (getConfig().featureToggles.newVariables) {
+      return getFilteredVariables(isAdHoc);
+    }
+    if (Array.isArray(this.variables)) {
+      return this.variables.filter(isAdHoc);
+    }
+    return [];
   };
 }
 

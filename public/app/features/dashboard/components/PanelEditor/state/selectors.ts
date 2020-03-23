@@ -18,12 +18,14 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     tabs.push({
       id: PanelEditorTabId.Queries,
       text: 'Queries',
+      icon: 'gicon gicon-datasources',
       active: false,
     });
 
     tabs.push({
       id: PanelEditorTabId.Transform,
       text: 'Transform',
+      icon: 'fa fa-exchange',
       active: false,
     });
   }
@@ -31,6 +33,7 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
   tabs.push({
     id: PanelEditorTabId.Visualization,
     text: 'Visualization',
+    icon: 'fa fa-bar-chart',
     active: false,
   });
 
@@ -38,6 +41,7 @@ export const getPanelEditorTabs = memoizeOne((location: LocationState, plugin?: 
     tabs.push({
       id: PanelEditorTabId.Alert,
       text: 'Alert',
+      icon: 'gicon gicon-alert',
       active: false,
     });
   }

@@ -34,8 +34,11 @@ const variableEditorReducerSlice = createSlice({
     variableEditorUnMounted: (state: VariableEditorState, action: PayloadAction<VariablePayload>) => {
       return initialVariableEditorState;
     },
-    changeVariableNameSucceeded: (state: VariableEditorState, action: PayloadAction<VariablePayload<string>>) => {
-      state.name = action.payload.data;
+    changeVariableNameSucceeded: (
+      state: VariableEditorState,
+      action: PayloadAction<VariablePayload<{ newName: string }>>
+    ) => {
+      state.name = action.payload.data.newName;
       delete state.errors['name'];
       state.isValid = Object.keys(state.errors).length === 0;
     },

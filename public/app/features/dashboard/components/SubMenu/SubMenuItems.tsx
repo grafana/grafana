@@ -22,7 +22,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
       {visibleVariables.map(variable => {
         return (
           <div
-            key={variable.uuid}
+            key={variable.id}
             className="submenu-item gf-form-inline"
             aria-label={e2e.pages.Dashboard.SubMenu.selectors.submenuItem}
           >

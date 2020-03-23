@@ -47,7 +47,7 @@ jest.mock('../../plugins/plugin_loader', () => ({
 }));
 
 describe('query actions', () => {
-  variableAdapters.set('query', createQueryVariableAdapter());
+  variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when updateQueryVariableOptions is dispatched for variable with tags and includeAll', () => {
     it('then correct actions are dispatched', async () => {
@@ -163,7 +163,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -190,7 +190,7 @@ describe('query actions', () => {
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(initDashboardTemplating([variable]))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.uuid! }))
+        .whenActionIsDispatched(setIdInEditor({ id: variable.id! }))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
@@ -530,7 +530,7 @@ function mockDatasourceMetrics(variable: QueryVariableModel, optionsMetrics: any
 function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
   return {
     type: 'query',
-    uuid: '0',
+    id: '0',
     global: false,
     current: createOption(''),
     options: [],

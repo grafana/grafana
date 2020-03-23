@@ -11,8 +11,9 @@ import { updateAutoValue, updateIntervalVariableOptions } from './actions';
 
 export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariableModel> => {
   return {
+    id: 'interval',
     description: 'Define a timespan interval (ex 1m, 1h, 1d)',
-    label: 'Interval',
+    name: 'Interval',
     initialState: initialIntervalVariableModelState,
     reducer: intervalVariableReducer,
     picker: OptionsPicker,
@@ -32,7 +33,7 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
       await dispatch(updateIntervalVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {

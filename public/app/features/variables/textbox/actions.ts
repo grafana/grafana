@@ -8,7 +8,7 @@ import { toVariablePayload, VariableIdentifier } from '../state/types';
 export const updateTextBoxVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
     await dispatch(createTextBoxOptions(toVariablePayload(identifier)));
-    const variableInState = getVariable<TextBoxVariableModel>(identifier.uuid!, getState());
+    const variableInState = getVariable<TextBoxVariableModel>(identifier.id!, getState());
     await variableAdapters.get(identifier.type).setValue(variableInState, variableInState.options[0], true);
   };
 };

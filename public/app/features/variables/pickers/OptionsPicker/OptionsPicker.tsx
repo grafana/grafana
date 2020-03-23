@@ -49,7 +49,7 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
 
   render() {
     const { variable, picker } = this.props;
-    const showOptions = picker.uuid === variable.uuid;
+    const showOptions = picker.id === variable.id;
 
     return (
       <div className="variable-link-wrapper">
