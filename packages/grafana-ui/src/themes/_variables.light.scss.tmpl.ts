@@ -118,7 +118,7 @@ $panel-header-hover-bg: $gray-6;
 $panel-corner: $gray-4;
 
 // Page header
-$page-header-bg: linear-gradient(90deg, $white, $gray-7);
+$page-header-bg: linear-gradient(90deg, $white, ${theme.colors.gray95});
 $page-header-shadow: inset 0px -3px 10px $gray-6;
 $page-header-border-color: $gray-4;
 
