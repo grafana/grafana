@@ -46,7 +46,7 @@
     "lodash": "4.17.15",
     "moment": "2.24.0",
     "papaparse": "4.6.3",
-    "rc-cascader": "0.17.5",
+    "rc-cascader": "1.0.1",
     "rc-drawer": "3.0.2",
     "rc-slider": "8.7.1",
     "rc-time-picker": "^3.7.2",
