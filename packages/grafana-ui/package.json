@@ -78,7 +78,7 @@
     "@types/common-tags": "^1.8.0",
     "@types/d3": "5.7.2",
     "@types/jest": "23.3.14",
-    "@types/jquery": "1.10.35",
+    "@types/jquery": "3.3.33",
     "@types/lodash": "4.14.149",
     "@types/node": "13.9.3",
     "@types/papaparse": "4.5.9",

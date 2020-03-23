@@ -5711,6 +5711,13 @@
   dependencies:
     "@types/sizzle" "*"
 
+"@types/jquery@3.3.33":
+  version "3.3.33"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.33.tgz#61d9cbd4004ffcdf6cf7e34720a87a5625a7d8e9"
+  integrity sha512-U6IdXYGkfUI42SR79vB2Spj+h1Ly3J3UZjpd8mi943lh126TK7CB+HZOxGh2nM3IySor7wqVQdemD/xtydsBKA==
+  dependencies:
+    "@types/sizzle" "*"
+
 "@types/json-schema@*":
   version "7.0.3"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.3.tgz#bdfd69d61e464dcc81b25159c270d75a73c1a636"
