@@ -23,7 +23,7 @@ describe('constant actions', () => {
 
       const variable: ConstantVariableModel = {
         type: 'constant',
-        uuid: '0',
+        id: '0',
         global: false,
         current: {
           value: '',

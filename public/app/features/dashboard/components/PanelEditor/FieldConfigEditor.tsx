@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   FieldConfigSource,
@@ -9,10 +9,10 @@ import {
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
-import { Forms, fieldMatchersUI, ValuePicker } from '@grafana/ui';
+import { Forms, fieldMatchersUI, ValuePicker, useTheme } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
-import { OptionsGroup } from './OptionsGroup';
 import { OverrideEditor } from './OverrideEditor';
+import { css } from 'emotion';
 
 interface Props {
   plugin: PanelPlugin;
@@ -26,50 +26,25 @@ interface Props {
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-export class FieldConfigEditor extends React.PureComponent<Props> {
-  private setDefaultValue = (name: string, value: any, custom: boolean) => {
-    const defaults = { ...this.props.config.defaults };
-    const remove = value === undefined || value === null || '';
+export const OverrideFieldConfigEditor: React.FC<Props> = props => {
+  const theme = useTheme();
 
-    if (custom) {
-      if (defaults.custom) {
-        if (remove) {
-          defaults.custom = { ...defaults.custom };
-          delete defaults.custom[name];
-        } else {
-          defaults.custom = { ...defaults.custom, [name]: value };
-        }
-      } else if (!remove) {
-        defaults.custom = { [name]: value };
-      }
-    } else if (remove) {
-      delete (defaults as any)[name];
-    } else {
-      (defaults as any)[name] = value;
-    }
-
-    this.props.onChange({
-      ...this.props.config,
-      defaults,
-    });
-  };
-
-  onOverrideChange = (index: number, override: any) => {
-    const { config } = this.props;
+  const onOverrideChange = (index: number, override: any) => {
+    const { config } = props;
     let overrides = cloneDeep(config.overrides);
     overrides[index] = override;
-    this.props.onChange({ ...config, overrides });
+    props.onChange({ ...config, overrides });
   };
 
-  onOverrideRemove = (overrideIndex: number) => {
-    const { config } = this.props;
+  const onOverrideRemove = (overrideIndex: number) => {
+    const { config } = props;
     let overrides = cloneDeep(config.overrides);
     overrides.splice(overrideIndex, 1);
-    this.props.onChange({ ...config, overrides });
+    props.onChange({ ...config, overrides });
   };
 
-  onOverrideAdd = (value: SelectableValue<string>) => {
-    const { onChange, config } = this.props;
+  const onOverrideAdd = (value: SelectableValue<string>) => {
+    const { onChange, config } = props;
     onChange({
       ...config,
       overrides: [
@@ -84,46 +59,8 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
     });
   };
 
-  renderEditor(item: FieldPropertyEditorItem, custom: boolean) {
-    const { data } = this.props;
-    const config = this.props.config.defaults;
-    const value = custom ? (config.custom ? config.custom[item.id] : undefined) : (config as any)[item.id];
-
-    return (
-      <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
-        <item.editor
-          item={item}
-          value={value}
-          onChange={v => this.setDefaultValue(item.id, v, custom)}
-          context={{
-            data,
-            getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
-          }}
-        />
-      </Forms.Field>
-    );
-  }
-
-  renderStandardConfigs() {
-    const { include } = this.props;
-    if (include) {
-      return include.map(f => this.renderEditor(standardFieldConfigEditorRegistry.get(f), false));
-    }
-    return standardFieldConfigEditorRegistry.list().map(f => this.renderEditor(f, false));
-  }
-
-  renderCustomConfigs() {
-    const { plugin } = this.props;
-
-    if (!plugin.customFieldConfigs) {
-      return null;
-    }
-
-    return plugin.customFieldConfigs.list().map(f => this.renderEditor(f, true));
-  }
-
-  renderOverrides() {
-    const { config, data, plugin } = this.props;
+  const renderOverrides = () => {
+    const { config, data, plugin } = props;
     const { customFieldConfigs } = plugin;
 
     if (config.overrides.length === 0) {
@@ -157,8 +94,8 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
               key={`${o.matcher.id}/${i}`}
               data={data}
               override={o}
-              onChange={value => this.onOverrideChange(i, value)}
-              onRemove={() => this.onOverrideRemove(i)}
+              onChange={value => onOverrideChange(i, value)}
+              onRemove={() => onOverrideRemove(i)}
               configPropertiesOptions={configPropertiesOptions}
               customPropertiesRegistry={customFieldConfigs}
             />
@@ -166,9 +103,9 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
         })}
       </div>
     );
-  }
+  };
 
-  renderAddOverride = () => {
+  const renderAddOverride = () => {
     return (
       <ValuePicker
         icon="plus"
@@ -176,29 +113,95 @@ export class FieldConfigEditor extends React.PureComponent<Props> {
         options={fieldMatchersUI
           .list()
           .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
-        onChange={value => this.onOverrideAdd(value)}
+        onChange={value => onOverrideAdd(value)}
       />
     );
   };
 
-  render() {
-    const { plugin } = this.props;
+  return (
+    <div
+      className={css`
+        padding: ${theme.spacing.md};
+      `}
+    >
+      {renderOverrides()}
+      {renderAddOverride()}
+    </div>
+  );
+};
 
-    return (
-      <div>
-        {plugin.customFieldConfigs && (
-          <OptionsGroup title={`${plugin.meta.name} options`}>{this.renderCustomConfigs()}</OptionsGroup>
-        )}
+export const DefaultFieldConfigEditor: React.FC<Props> = ({ include, data, onChange, config, plugin }) => {
+  const setDefaultValue = useCallback(
+    (name: string, value: any, custom: boolean) => {
+      const defaults = { ...config.defaults };
+      const remove = value === undefined || value === null || '';
 
-        <OptionsGroup title="Field defaults">{this.renderStandardConfigs()}</OptionsGroup>
+      if (custom) {
+        if (defaults.custom) {
+          if (remove) {
+            defaults.custom = { ...defaults.custom };
+            delete defaults.custom[name];
+          } else {
+            defaults.custom = { ...defaults.custom, [name]: value };
+          }
+        } else if (!remove) {
+          defaults.custom = { [name]: value };
+        }
+      } else if (remove) {
+        delete (defaults as any)[name];
+      } else {
+        (defaults as any)[name] = value;
+      }
 
-        <OptionsGroup title="Field overrides">
-          {this.renderOverrides()}
-          {this.renderAddOverride()}
-        </OptionsGroup>
-      </div>
-    );
-  }
-}
+      onChange({
+        ...config,
+        defaults,
+      });
+    },
+    [config, onChange]
+  );
 
-export default FieldConfigEditor;
+  const renderEditor = useCallback(
+    (item: FieldPropertyEditorItem, custom: boolean) => {
+      const defaults = config.defaults;
+      const value = custom ? (defaults.custom ? defaults.custom[item.id] : undefined) : (defaults as any)[item.id];
+
+      return (
+        <Forms.Field label={item.name} description={item.description} key={`${item.id}/${custom}`}>
+          <item.editor
+            item={item}
+            value={value}
+            onChange={v => setDefaultValue(item.id, v, custom)}
+            context={{
+              data,
+              getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+            }}
+          />
+        </Forms.Field>
+      );
+    },
+    [config]
+  );
+
+  const renderStandardConfigs = useCallback(() => {
+    if (include) {
+      return <>{include.map(f => renderEditor(standardFieldConfigEditorRegistry.get(f), false))}</>;
+    }
+    return <>{standardFieldConfigEditorRegistry.list().map(f => renderEditor(f, false))}</>;
+  }, [plugin, config]);
+
+  const renderCustomConfigs = useCallback(() => {
+    if (!plugin.customFieldConfigs) {
+      return null;
+    }
+
+    return plugin.customFieldConfigs.list().map(f => renderEditor(f, true));
+  }, [plugin, config]);
+
+  return (
+    <>
+      {plugin.customFieldConfigs && renderCustomConfigs()}
+      {renderStandardConfigs()}
+    </>
+  );
+};

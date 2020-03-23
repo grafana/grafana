@@ -23,7 +23,7 @@ describe('custom actions', () => {
 
       const variable: CustomVariableModel = {
         type: 'custom',
-        uuid: '0',
+        id: '0',
         global: false,
         current: {
           value: '',

@@ -32,7 +32,7 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
       await dispatch(updateTextBoxVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {

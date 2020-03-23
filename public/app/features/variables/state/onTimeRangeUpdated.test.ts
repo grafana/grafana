@@ -7,8 +7,8 @@ import { DashboardState } from '../../../types';
 import { createIntervalVariableAdapter } from '../interval/adapter';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
-import { variableMockBuilder } from './helpers';
 import { VariableRefresh } from '../../templating/variable';
+import { constantBuilder, intervalBuilder } from '../shared/testing/builders';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
 
@@ -39,37 +39,37 @@ const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean 
   adapter.updateOptions = args.throw ? jest.fn().mockRejectedValue('Something broke') : jest.fn().mockResolvedValue({});
 
   // initial variable state
-  const initialVariable = variableMockBuilder('interval')
-    .withUuid('0')
+  const initialVariable = intervalBuilder()
+    .withId('interval-0')
     .withName('interval-0')
     .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
     .withCurrent('1m')
     .withRefresh(VariableRefresh.onTimeRangeChanged)
-    .create();
+    .build();
 
   // the constant variable should be filtered out
-  const constant = variableMockBuilder('constant')
-    .withUuid('1')
+  const constant = constantBuilder()
+    .withId('constant-1')
     .withName('constant-1')
     .withOptions('a constant')
     .withCurrent('a constant')
-    .create();
+    .build();
   const initialState = {
     templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
     dashboard,
   };
 
   // updated variable state
-  const updatedVariable = variableMockBuilder('interval')
-    .withUuid('0')
+  const updatedVariable = intervalBuilder()
+    .withId('interval-0')
     .withName('interval-0')
     .withOptions('1m')
     .withCurrent('1m')
     .withRefresh(VariableRefresh.onTimeRangeChanged)
-    .create();
+    .build();
 
   const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
-  const state = { templating: { variables: { '0': variable, '1': { ...constant } } }, dashboard };
+  const state = { templating: { variables: { 'interval-0': variable, 'constant-1': { ...constant } } }, dashboard };
   const getStateMock = jest
     .fn()
     .mockReturnValueOnce(initialState)

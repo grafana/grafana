@@ -88,7 +88,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
 
 export const processVariable = (identifier: VariableIdentifier, queryParams: UrlQueryMap): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.uuid!, getState());
+    const variable = getVariable(identifier.id!, getState());
     await processVariableDependencies(variable, getState());
 
     const urlValue = queryParams['var-' + variable.name];
@@ -131,14 +131,14 @@ export const processVariables = (): ThunkResult<void> => {
 
 export const setOptionFromUrl = (identifier: VariableIdentifier, urlValue: UrlQueryValue): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.uuid!, getState());
+    const variable = getVariable(identifier.id!, getState());
     if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
       // updates options
       await variableAdapters.get(variable.type).updateOptions(variable);
     }
 
     // get variable from state
-    const variableFromState = getVariable<VariableWithOptions>(variable.uuid!, getState());
+    const variableFromState = getVariable<VariableWithOptions>(variable.id!, getState());
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -212,7 +212,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier.uuid!, getState());
+    const variableInState = getVariable<VariableWithOptions>(identifier.id!, getState());
     const current = variableInState.current || (({} as unknown) as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
@@ -296,7 +296,7 @@ const createGraph = (variables: VariableModel[]) => {
 export const variableUpdated = (identifier: VariableIdentifier, emitChangeEvents: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
-    const variable = getVariable(identifier.uuid!, getState());
+    const variable = getVariable(identifier.id!, getState());
     if (variable.initLock) {
       return Promise.resolve();
     }
@@ -349,7 +349,7 @@ export const onTimeRangeUpdated = (
   const promises = variablesThatNeedRefresh.map(async (variable: VariableWithOptions) => {
     const previousOptions = variable.options.slice();
     await variableAdapters.get(variable.type).updateOptions(variable);
-    const updatedVariable = getVariable<VariableWithOptions>(variable.uuid!, getState());
+    const updatedVariable = getVariable<VariableWithOptions>(variable.id!, getState());
     if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
       const dashboard = getState().dashboard.getModel();
       dashboard?.templateVariableValueUpdated();

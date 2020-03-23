@@ -1,4 +1,4 @@
-import { getTemplatingRootReducer, variableMockBuilder } from '../state/helpers';
+import { getTemplatingRootReducer } from '../state/helpers';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from '../state/reducers';
 import { initDashboardTemplating } from '../state/actions';
@@ -17,16 +17,17 @@ import { Emitter } from 'app/core/core';
 import { AppEvents, dateTime } from '@grafana/data';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { TemplateSrv } from '../../templating/template_srv';
+import { intervalBuilder } from '../shared/testing/builders';
 
 describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
   describe('when updateIntervalVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      const interval = variableMockBuilder('interval')
-        .withUuid('0')
+      const interval = intervalBuilder()
+        .withId('0')
         .withQuery('1s,1m,1h,1d')
         .withAuto(false)
-        .create();
+        .build();
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getTemplatingRootReducer())
@@ -34,10 +35,10 @@ describe('interval actions', () => {
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        createIntervalOptions({ type: 'interval', uuid: '0', data: undefined }),
+        createIntervalOptions({ type: 'interval', id: '0', data: undefined }),
         setCurrentVariableValue({
           type: 'interval',
-          uuid: '0',
+          id: '0',
           data: { option: { text: '1s', value: '1s', selected: false } },
         })
       );
@@ -60,12 +61,12 @@ describe('interval actions', () => {
       } as unknown) as TimeSrv;
       const originalTimeSrv = getTimeSrv();
       setTimeSrv(timeSrvMock);
-      const interval = variableMockBuilder('interval')
-        .withUuid('0')
+      const interval = intervalBuilder()
+        .withId('0')
         .withQuery('1s,1m,1h,1d')
         .withAuto(true)
         .withAutoMin('1') // illegal interval string
-        .create();
+        .build();
       const appEventMock = ({
         emit: jest.fn(),
       } as unknown) as Emitter;
@@ -88,10 +89,10 @@ describe('interval actions', () => {
   describe('when updateAutoValue is dispatched', () => {
     describe('and auto is false', () => {
       it('then no dependencies are called', async () => {
-        const interval = variableMockBuilder('interval')
-          .withUuid('0')
+        const interval = intervalBuilder()
+          .withId('0')
           .withAuto(false)
-          .create();
+          .build();
 
         const dependencies: UpdateAutoValueDependencies = {
           kbn: {
@@ -127,13 +128,13 @@ describe('interval actions', () => {
 
     describe('and auto is true', () => {
       it('then correct dependencies are called', async () => {
-        const interval = variableMockBuilder('interval')
-          .withUuid('0')
+        const interval = intervalBuilder()
+          .withId('0')
           .withName('intervalName')
           .withAuto(true)
           .withAutoCount(33)
           .withAutoMin('13s')
-          .create();
+          .build();
 
         const timeRangeMock = jest.fn().mockReturnValue({
           from: '2001-01-01',

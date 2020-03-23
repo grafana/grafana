@@ -3,6 +3,7 @@ import { Reducer } from 'redux';
 import { UrlQueryValue } from '@grafana/runtime';
 
 import {
+  AdHocVariableModel,
   ConstantVariableModel,
   CustomVariableModel,
   DataSourceVariableModel,
@@ -23,6 +24,7 @@ import { createTextBoxVariableAdapter } from './textbox/adapter';
 import { createConstantVariableAdapter } from './constant/adapter';
 import { createDataSourceVariableAdapter } from './datasource/adapter';
 import { createIntervalVariableAdapter } from './interval/adapter';
+import { createAdHocVariableAdapter } from './adhoc/adapter';
 
 export interface VariableAdapter<Model extends VariableModel> {
   id: VariableType;
@@ -46,7 +48,8 @@ export type VariableModels =
   | TextBoxVariableModel
   | ConstantVariableModel
   | DataSourceVariableModel
-  | IntervalVariableModel;
+  | IntervalVariableModel
+  | AdHocVariableModel;
 export type VariableTypeRegistry<Model extends VariableModel = VariableModel> = Registry<VariableAdapter<Model>>;
 
 export const getDefaultVariableAdapters = () => [
@@ -56,6 +59,7 @@ export const getDefaultVariableAdapters = () => [
   createConstantVariableAdapter(),
   createDataSourceVariableAdapter(),
   createIntervalVariableAdapter(),
+  createAdHocVariableAdapter(),
 ];
 
 export const variableAdapters: VariableTypeRegistry = new Registry<VariableAdapter<VariableModels>>();

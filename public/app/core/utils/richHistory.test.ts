@@ -7,6 +7,7 @@ import {
   createQueryHeading,
   createDataQuery,
   deleteAllFromRichHistory,
+  deleteQueryInRichHistory,
 } from './richHistory';
 import store from 'app/core/store';
 import { SortOrder } from './explore';
@@ -132,6 +133,18 @@ describe('updateCommentInRichHistory', () => {
     updateCommentInRichHistory(mock.history, 1, 'new comment');
     expect(store.exists(key)).toBeTruthy();
     expect(store.getObject(key)[0].comment).toEqual('new comment');
+  });
+});
+
+describe('deleteQueryInRichHistory', () => {
+  it('should delete query in query in history', () => {
+    const deletedHistory = deleteQueryInRichHistory(mock.history, 1);
+    expect(deletedHistory).toEqual([]);
+  });
+  it('should delete query in localStorage', () => {
+    deleteQueryInRichHistory(mock.history, 1);
+    expect(store.exists(key)).toBeTruthy();
+    expect(store.getObject(key)).toEqual([]);
   });
 });
 

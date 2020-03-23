@@ -1,6 +1,6 @@
 import { UrlQueryMap } from '@grafana/runtime';
 
-import { getTemplatingRootReducer, variableMockBuilder } from './helpers';
+import { getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -11,6 +11,9 @@ import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
 import { VariableRefresh } from '../../templating/variable';
 import { updateVariableOptions } from '../query/reducer';
+import { customBuilder, queryBuilder } from '../shared/testing/builders';
+
+'../shared/testing/builders';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -67,28 +70,29 @@ describe('processVariable', () => {
   // queryDependsOnCustom depends on custom
   // queryNoDepends doesn't depend on any other variable
   const getAndSetupProcessVariableContext = () => {
-    const custom = variableMockBuilder('custom')
-      .withUuid('0')
+    const custom = customBuilder()
+      .withId('custom')
+      .withName('custom')
       .withQuery('A,B,C')
       .withOptions('A', 'B', 'C')
       .withCurrent('A')
-      .create();
+      .build();
 
-    const queryDependsOnCustom = variableMockBuilder('query')
-      .withUuid('1')
+    const queryDependsOnCustom = queryBuilder()
+      .withId('queryDependsOnCustom')
       .withName('queryDependsOnCustom')
       .withQuery('$custom.*')
       .withOptions('AA', 'AB', 'AC')
       .withCurrent('AA')
-      .create();
+      .build();
 
-    const queryNoDepends = variableMockBuilder('query')
-      .withUuid('2')
+    const queryNoDepends = queryBuilder()
+      .withId('queryNoDepends')
       .withName('queryNoDepends')
       .withQuery('*')
       .withOptions('A', 'B', 'C')
       .withCurrent('A')
-      .create();
+      .build();
 
     const list = [custom, queryDependsOnCustom, queryNoDepends];
 
@@ -112,7 +116,7 @@ describe('processVariable', () => {
           .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
-          resolveInitLock(toVariablePayload({ type: 'custom', uuid: '0' }))
+          resolveInitLock(toVariablePayload({ type: 'custom', id: 'custom' }))
         );
       });
     });
@@ -128,9 +132,12 @@ describe('processVariable', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           setCurrentVariableValue(
-            toVariablePayload({ type: 'custom', uuid: '0' }, { option: { text: ['B'], value: ['B'], selected: false } })
+            toVariablePayload(
+              { type: 'custom', id: 'custom' },
+              { option: { text: ['B'], value: ['B'], selected: false } }
+            )
           ),
-          resolveInitLock(toVariablePayload({ type: 'custom', uuid: '0' }))
+          resolveInitLock(toVariablePayload({ type: 'custom', id: 'custom' }))
         );
       });
     });
@@ -152,7 +159,7 @@ describe('processVariable', () => {
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
           await tester.thenDispatchedActionsShouldEqual(
-            resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' }))
+            resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
           );
         });
       });
@@ -169,16 +176,19 @@ describe('processVariable', () => {
 
             await tester.thenDispatchedActionsShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', uuid: '2' }, [
+                toVariablePayload({ type: 'query', id: 'queryNoDepends' }, [
                   { value: 'A', text: 'A' },
                   { value: 'B', text: 'B' },
                   { value: 'C', text: 'C' },
                 ])
               ),
               setCurrentVariableValue(
-                toVariablePayload({ type: 'query', uuid: '2' }, { option: { text: 'A', value: 'A', selected: false } })
+                toVariablePayload(
+                  { type: 'query', id: 'queryNoDepends' },
+                  { option: { text: 'A', value: 'A', selected: false } }
+                )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' }))
+              resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
             );
           });
         });
@@ -201,11 +211,11 @@ describe('processVariable', () => {
           await tester.thenDispatchedActionsShouldEqual(
             setCurrentVariableValue(
               toVariablePayload(
-                { type: 'query', uuid: '2' },
+                { type: 'query', id: 'queryNoDepends' },
                 { option: { text: ['B'], value: ['B'], selected: false } }
               )
             ),
-            resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' }))
+            resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
           );
         });
       });
@@ -226,22 +236,25 @@ describe('processVariable', () => {
 
             await tester.thenDispatchedActionsShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', uuid: '2' }, [
+                toVariablePayload({ type: 'query', id: 'queryNoDepends' }, [
                   { value: 'A', text: 'A' },
                   { value: 'B', text: 'B' },
                   { value: 'C', text: 'C' },
                 ])
               ),
               setCurrentVariableValue(
-                toVariablePayload({ type: 'query', uuid: '2' }, { option: { text: 'A', value: 'A', selected: false } })
+                toVariablePayload(
+                  { type: 'query', id: 'queryNoDepends' },
+                  { option: { text: 'A', value: 'A', selected: false } }
+                )
               ),
               setCurrentVariableValue(
                 toVariablePayload(
-                  { type: 'query', uuid: '2' },
+                  { type: 'query', id: 'queryNoDepends' },
                   { option: { text: ['B'], value: ['B'], selected: false } }
                 )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', uuid: '2' }))
+              resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
             );
           });
         });
@@ -270,7 +283,7 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
-            resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' }))
+            resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
           );
         });
       });
@@ -292,7 +305,7 @@ describe('processVariable', () => {
 
             await tester.thenDispatchedActionsShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', uuid: '1' }, [
+                toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }, [
                   { value: 'AA', text: 'AA' },
                   { value: 'AB', text: 'AB' },
                   { value: 'AC', text: 'AC' },
@@ -300,11 +313,11 @@ describe('processVariable', () => {
               ),
               setCurrentVariableValue(
                 toVariablePayload(
-                  { type: 'query', uuid: '1' },
+                  { type: 'query', id: 'queryDependsOnCustom' },
                   { option: { text: 'AA', value: 'AA', selected: false } }
                 )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' }))
+              resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
             );
           });
         });
@@ -332,11 +345,11 @@ describe('processVariable', () => {
           await tester.thenDispatchedActionsShouldEqual(
             setCurrentVariableValue(
               toVariablePayload(
-                { type: 'query', uuid: '1' },
+                { type: 'query', id: 'queryDependsOnCustom' },
                 { option: { text: ['AB'], value: ['AB'], selected: false } }
               )
             ),
-            resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' }))
+            resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
           );
         });
       });
@@ -362,7 +375,7 @@ describe('processVariable', () => {
 
             await tester.thenDispatchedActionsShouldEqual(
               updateVariableOptions(
-                toVariablePayload({ type: 'query', uuid: '1' }, [
+                toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }, [
                   { value: 'AA', text: 'AA' },
                   { value: 'AB', text: 'AB' },
                   { value: 'AC', text: 'AC' },
@@ -370,17 +383,17 @@ describe('processVariable', () => {
               ),
               setCurrentVariableValue(
                 toVariablePayload(
-                  { type: 'query', uuid: '1' },
+                  { type: 'query', id: 'queryDependsOnCustom' },
                   { option: { text: 'AA', value: 'AA', selected: false } }
                 )
               ),
               setCurrentVariableValue(
                 toVariablePayload(
-                  { type: 'query', uuid: '1' },
+                  { type: 'query', id: 'queryDependsOnCustom' },
                   { option: { text: ['AB'], value: ['AB'], selected: false } }
                 )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', uuid: '1' }))
+              resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
             );
           });
         });

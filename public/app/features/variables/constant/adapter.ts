@@ -31,7 +31,7 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
       await dispatch(updateConstantVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, uuid, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {
