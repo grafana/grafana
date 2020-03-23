@@ -67,7 +67,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-node-resolve": "7.1.1",
-    "@storybook/addon-actions": "5.3.9",
+    "@storybook/addon-actions": "5.3.17",
     "@storybook/addon-docs": "5.3.9",
     "@storybook/addon-info": "5.3.9",
     "@storybook/addon-knobs": "5.3.9",
