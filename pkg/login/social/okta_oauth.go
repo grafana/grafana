@@ -83,7 +83,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 		Name:   claims.Name,
 		Email:  email,
 		Login:  email,
-		Role:   string(role),
+		Role:   role,
 		Groups: groups,
 	}, nil
 }
