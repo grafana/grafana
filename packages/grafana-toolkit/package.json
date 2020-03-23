@@ -42,7 +42,7 @@
     "@types/jest-cli": "^23.6.0",
     "@types/node": "^13.9.3",
     "@types/prettier": "^1.19.0",
-    "@types/puppeteer-core": "1.9.0",
+    "@types/puppeteer-core": "2.0.0",
     "@types/react-dev-utils": "^9.0.1",
     "@types/rimraf": "^2.0.3",
     "@types/semver": "^6.0.0",
