@@ -49,7 +49,7 @@
     "rc-cascader": "1.0.1",
     "rc-drawer": "3.1.3",
     "rc-slider": "8.7.1",
-    "rc-time-picker": "^3.7.2",
+    "rc-time-picker": "^3.7.3",
     "react": "16.12.0",
     "react-calendar": "2.19.2",
     "react-color": "2.17.0",
