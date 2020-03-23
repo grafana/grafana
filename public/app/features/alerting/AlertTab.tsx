@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { css } from 'emotion';
 import { Alert, Button } from '@grafana/ui';
 
@@ -21,12 +20,20 @@ import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/
 import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
 import { CoreEvents } from 'app/types';
 
-interface Props {
-  angularPanel?: AngularComponent;
+interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
+}
+
+interface ConnectedProps {
+  angularPanelComponent: AngularComponent;
+}
+
+interface DispatchProps {
   changePanelEditorTab: typeof changePanelEditorTab;
 }
+
+export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 interface State {
   validatonMessage: string;
@@ -42,19 +49,15 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
-    if (this.shouldLoadAlertTab()) {
-      this.loadAlertTab();
-    }
+    this.loadAlertTab();
   }
+
+  onAngularPanelUpdated = () => {
+    this.forceUpdate();
+  };
 
   componentDidUpdate(prevProps: Props) {
-    if (this.shouldLoadAlertTab()) {
-      this.loadAlertTab();
-    }
-  }
-
-  shouldLoadAlertTab() {
-    return this.props.angularPanel && this.element && !this.component;
+    this.loadAlertTab();
   }
 
   componentWillUnmount() {
@@ -64,9 +67,13 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 
   async loadAlertTab() {
-    const { angularPanel, panel } = this.props;
+    const { panel, angularPanelComponent } = this.props;
 
-    const scope = angularPanel.getScope();
+    if (!this.element || !angularPanelComponent || this.component) {
+      return;
+    }
+
+    const scope = angularPanelComponent.getScope();
 
     // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
     if (!scope.$$childHead) {
@@ -213,8 +220,12 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => ({});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  return {
+    angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+  };
+};
 
-const mapDispatchToProps = { changePanelEditorTab };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelEditorTab };
 
-export const AlertTab = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab));
+export const AlertTab = connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab);

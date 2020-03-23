@@ -213,13 +213,13 @@ const scenarios: GetSearchFilterScopedVarScenario[] = [
   {
     query: 'abc.$__searchFilter',
     wildcardChar: '',
-    options: null,
+    options: null as any,
     expected: { __searchFilter: { value: '', text: '' } },
   },
   {
     query: 'abc.$__searchFilter',
     wildcardChar: '*',
-    options: null,
+    options: null as any,
     expected: { __searchFilter: { value: '*', text: '' } },
   },
   // testing the no search filter at all

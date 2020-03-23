@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,7 +33,7 @@ func (e PluginNotFoundError) Error() string {
 }
 
 type PluginLoader interface {
-	Load(decoder *json.Decoder, pluginDir string) error
+	Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error
 }
 
 type PluginBase struct {
@@ -77,7 +78,7 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 
 	for _, include := range pb.Includes {
 		if include.Role == "" {
-			include.Role = m.ROLE_VIEWER
+			include.Role = models.ROLE_VIEWER
 		}
 	}
 
@@ -92,14 +93,14 @@ type PluginDependencies struct {
 }
 
 type PluginInclude struct {
-	Name       string     `json:"name"`
-	Path       string     `json:"path"`
-	Type       string     `json:"type"`
-	Component  string     `json:"component"`
-	Role       m.RoleType `json:"role"`
-	AddToNav   bool       `json:"addToNav"`
-	DefaultNav bool       `json:"defaultNav"`
-	Slug       string     `json:"slug"`
+	Name       string          `json:"name"`
+	Path       string          `json:"path"`
+	Type       string          `json:"type"`
+	Component  string          `json:"component"`
+	Role       models.RoleType `json:"role"`
+	AddToNav   bool            `json:"addToNav"`
+	DefaultNav bool            `json:"defaultNav"`
+	Slug       string          `json:"slug"`
 
 	Id string `json:"-"`
 }

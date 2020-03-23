@@ -14,9 +14,9 @@ jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
 }));
 
 import { ResultProcessor } from './ResultProcessor';
-import { ExploreItemState, ExploreMode } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, LogRowModel, toDataFrame, FieldType } from '@grafana/data';
+import { ExploreMode, FieldType, LogRowModel, TimeSeries, toDataFrame } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
@@ -131,11 +131,11 @@ describe('ResultProcessor', () => {
       it('then it should return correct table result', () => {
         const { resultProcessor } = testContext();
         let theResult = resultProcessor.getTableResult();
-        expect(theResult.fields[0].name).toEqual('value');
-        expect(theResult.fields[1].name).toEqual('time');
-        expect(theResult.fields[2].name).toEqual('message');
-        expect(theResult.fields[1].display).not.toBeNull();
-        expect(theResult.length).toBe(3);
+        expect(theResult?.fields[0].name).toEqual('value');
+        expect(theResult?.fields[1].name).toEqual('time');
+        expect(theResult?.fields[2].name).toEqual('message');
+        expect(theResult?.fields[1].display).not.toBeNull();
+        expect(theResult?.length).toBe(3);
 
         // Same data though a DataFrame
         theResult = toDataFrame(
@@ -187,7 +187,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 300,
               uid: '2',
               uniqueLabels: {},
             },
@@ -205,7 +204,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 200,
               uid: '1',
               uniqueLabels: {},
             },
@@ -223,7 +221,6 @@ describe('ResultProcessor', () => {
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 100,
               uid: '0',
               uniqueLabels: {},
             },

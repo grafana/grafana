@@ -2,12 +2,12 @@ import React, { ChangeEvent, FC } from 'react';
 
 interface Props {
   onValueChange: (e: ChangeEvent<HTMLSelectElement>) => void;
-  options: any[];
+  options: Array<{ value: string; name: string }>;
   value: string;
   label: string;
 }
 
-const SimpleSelect: FC<Props> = props => {
+export const SimpleSelect: FC<Props> = props => {
   const { label, onValueChange, value, options } = props;
   return (
     <div className="gf-form max-width-21">
@@ -24,5 +24,3 @@ const SimpleSelect: FC<Props> = props => {
     </div>
   );
 };
-
-export default SimpleSelect;

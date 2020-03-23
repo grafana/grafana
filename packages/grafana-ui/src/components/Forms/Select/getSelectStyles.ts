@@ -4,7 +4,7 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = stv({ light: theme.colors.white, dark: theme.colors.gray15 }, theme.type);
+  const bgColor = stv({ light: theme.colors.white, dark: theme.colors.formInputBg }, theme.type);
   const menuShadowColor = stv({ light: theme.colors.gray4, dark: theme.colors.black }, theme.type);
   const optionBgHover = stv({ light: theme.colors.gray7, dark: theme.colors.gray10 }, theme.type);
   const multiValueContainerBg = stv({ light: theme.colors.gray6, dark: theme.colors.gray05 }, theme.type);
@@ -14,8 +14,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     menu: css`
       background: ${bgColor};
       box-shadow: 0px 4px 4px ${menuShadowColor};
-      position: absolute;
+      position: relative;
       min-width: 100%;
+      z-index: 1;
     `,
     option: css`
       padding: 8px;
@@ -25,6 +26,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: row;
       white-space: nowrap;
       cursor: pointer;
+      border-left: 2px solid transparent;
       &:hover {
         background: ${optionBgHover};
       }

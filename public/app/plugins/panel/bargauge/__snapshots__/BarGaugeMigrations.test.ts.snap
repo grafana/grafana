@@ -7,37 +7,6 @@ Object {
     "calcs": Array [
       "mean",
     ],
-    "defaults": Object {
-      "color": Object {
-        "mode": "thresholds",
-      },
-      "decimals": null,
-      "mappings": Array [],
-      "max": 33,
-      "min": -22,
-      "thresholds": Object {
-        "mode": "absolute",
-        "steps": Array [
-          Object {
-            "color": "green",
-            "index": 0,
-            "value": -Infinity,
-          },
-          Object {
-            "color": "orange",
-            "index": 1,
-            "value": 40,
-          },
-          Object {
-            "color": "red",
-            "index": 2,
-            "value": 80,
-          },
-        ],
-      },
-      "unit": "watt",
-    },
-    "overrides": Array [],
     "thresholds": Array [
       Object {
         "color": "green",

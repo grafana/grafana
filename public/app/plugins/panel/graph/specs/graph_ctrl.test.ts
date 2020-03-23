@@ -25,6 +25,7 @@ describe('GraphCtrl', () => {
   GraphCtrl.prototype.panel = {
     events: {
       on: () => {},
+      emit: () => {},
     },
     gridPos: {
       w: 100,

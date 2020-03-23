@@ -23,10 +23,19 @@ export function SegmentSelect<T>({
   noOptionsMessage = '',
   allowCustomValue = false,
 }: React.PropsWithChildren<Props<T>>) {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useClickAway(ref, () => {
-    onClickOutside();
+    if (ref && ref.current) {
+      // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
+      // Unfortunately there's no other way of retrieving the (not yet) created new option
+      const input = ref.current.querySelector('input[id^="react-select-"]') as HTMLInputElement;
+      if (input && input.value) {
+        onChange({ value: input.value as any, label: input.value });
+      } else {
+        onClickOutside();
+      }
+    }
   });
 
   return (

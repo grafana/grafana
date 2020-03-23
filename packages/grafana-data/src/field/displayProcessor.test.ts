@@ -206,6 +206,18 @@ describe('Format value', () => {
     expect(instance(value).numeric).toEqual(1);
   });
 
+  it('With null value and thresholds should use base color', () => {
+    const instance = getDisplayProcessorFromConfig({
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ index: 0, value: -Infinity, color: '#AAA' }],
+      },
+    });
+    const disp = instance(null);
+    expect(disp.text).toEqual('');
+    expect(disp.color).toEqual('#AAA');
+  });
+
   //
   // Below is current behavior but it's clearly not working great
   //

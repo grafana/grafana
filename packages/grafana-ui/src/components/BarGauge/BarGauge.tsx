@@ -37,7 +37,7 @@ export interface Props extends Themeable {
   height: number;
   width: number;
   field: FieldConfig;
-  display: DisplayProcessor;
+  display?: DisplayProcessor;
   value: DisplayValue;
   orientation: VizOrientation;
   itemSpacing?: number;
@@ -131,7 +131,8 @@ export class BarGauge extends PureComponent<Props> {
       };
     }
 
-    const color = display(positionValue).color;
+    const color = display ? display(positionValue).color : null;
+
     if (color) {
       // if we are past real value the cell is not "on"
       if (value === null || (positionValue !== null && positionValue > value.numeric)) {

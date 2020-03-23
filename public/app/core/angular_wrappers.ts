@@ -1,6 +1,7 @@
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 import { QueryEditor as StackdriverQueryEditor } from 'app/plugins/datasource/stackdriver/components/QueryEditor';
 import { AnnotationQueryEditor as StackdriverAnnotationQueryEditor } from 'app/plugins/datasource/stackdriver/components/AnnotationQueryEditor';
+import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/plugins/datasource/cloudwatch/components/AnnotationQueryEditor';
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { TagFilter } from './components/TagFilter/TagFilter';
@@ -9,20 +10,28 @@ import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
-  SeriesColorPickerPopoverWithTheme,
-  SecretFormField,
-  UnitPicker,
   DataLinksEditor,
   DataSourceHttpSettings,
+  GraphContextMenu,
+  SecretFormField,
+  SeriesColorPickerPopoverWithTheme,
+  UnitPicker,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
-import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
+import { Footer } from './components/Footer/Footer';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import {
+  SaveDashboardAsButtonConnected,
+  SaveDashboardButtonConnected,
+} from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
+import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
 
 export function registerAngularDirectives() {
+  react2AngularDirective('footer', Footer, []);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
@@ -87,9 +96,13 @@ export function registerAngularDirectives() {
   react2AngularDirective('stackdriverAnnotationQueryEditor', StackdriverAnnotationQueryEditor, [
     'target',
     'onQueryChange',
-    'onExecuteQuery',
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('cloudwatchAnnotationQueryEditor', CloudWatchAnnotationQueryEditor, [
+    'query',
+    'onChange',
+    ['datasource', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('secretFormField', SecretFormField, [
     'value',
@@ -129,4 +142,30 @@ export function registerAngularDirectives() {
     'dataSourceConfig',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
+  react2AngularDirective('folderPicker', FolderPicker, [
+    'labelClass',
+    'rootName',
+    'enableCreateNew',
+    'enableReset',
+    'initialTitle',
+    'initialFolderId',
+    'dashboardId',
+    'onCreateFolder',
+    ['enterFolderCreation', { watchDepth: 'reference', wrapApply: true }],
+    ['exitFolderCreation', { watchDepth: 'reference', wrapApply: true }],
+    ['onLoad', { watchDepth: 'reference', wrapApply: true }],
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('saveDashboardButton', SaveDashboardButtonConnected, [
+    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
+    ['dashboard', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
+    'variant',
+    'useNewForms',
+    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
 }

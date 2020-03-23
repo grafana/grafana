@@ -37,8 +37,9 @@ const (
 )
 
 var (
-	paddingBytes [kArrowAlignment]byte
-	kEOS         = [4]byte{0, 0, 0, 0} // end of stream message
+	paddingBytes  [kArrowAlignment]byte
+	kEOS                 = [8]byte{0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0, 0} // end of stream message
+	kIPCContToken uint32 = 0xFFFFFFFF                                  // 32b continuation indicator for FlatBuffers 8b alignment
 )
 
 func paddedLength(nbytes int64, alignment int32) int64 {

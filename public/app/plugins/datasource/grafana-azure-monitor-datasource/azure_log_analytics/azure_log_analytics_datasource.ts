@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
-import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
+import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable } from '../types';
 import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class AzureLogAnalyticsDatasource {
@@ -18,7 +18,6 @@ export default class AzureLogAnalyticsDatasource {
   /** @ngInject */
   constructor(
     private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
@@ -48,7 +47,7 @@ export default class AzureLogAnalyticsDatasource {
     }
   }
 
-  getWorkspaces(subscription: string) {
+  getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
     const subscriptionId = this.templateSrv.replace(subscription || this.subscriptionId);
 
     const workspaceListUrl =
@@ -119,6 +118,16 @@ export default class AzureLogAnalyticsDatasource {
   }
 
   metricFindQuery(query: string) {
+    const workspacesQuery = query.match(/^workspaces\(\)/i);
+    if (workspacesQuery) {
+      return this.getWorkspaces(this.subscriptionId);
+    }
+
+    const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
+    if (workspacesQueryWithSub) {
+      return this.getWorkspaces((workspacesQueryWithSub[1] || '').trim());
+    }
+
     return this.getDefaultOrFirstWorkspace().then((workspace: any) => {
       const queries: any[] = this.buildQuery(query, null, workspace);
 
@@ -230,8 +239,8 @@ export default class AzureLogAnalyticsDatasource {
     });
   }
 
-  doRequest(url: string, maxRetries = 1) {
-    return this.backendSrv
+  doRequest(url: string, maxRetries = 1): Promise<any> {
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',
