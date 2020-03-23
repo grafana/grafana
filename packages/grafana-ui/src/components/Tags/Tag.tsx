@@ -5,8 +5,9 @@ import { useTheme } from '../../themes';
 import { getTagColorsFromName } from '../../utils';
 
 interface TagProps {
+  /** Name of the tag to display */
   name: string;
-  onClick?: any;
+  onClick?: (name: string) => any;
 }
 
 export const Tag: FC<TagProps> = ({ name, onClick, ...rest }) => {
@@ -14,7 +15,7 @@ export const Tag: FC<TagProps> = ({ name, onClick, ...rest }) => {
   const styles = getTagStyles(theme, name);
 
   const onTagClick = () => {
-    onClick(name);
+    typeof onClick === 'function' && onClick(name);
   };
 
   return (
@@ -30,7 +31,7 @@ const getTagStyles = (theme: GrafanaTheme, name: string) => {
     wrapper: cx(
       css`
         font-weight: ${theme.typography.weight.semibold};
-        font-size: ${theme.typography.size.base};
+        font-size: ${theme.typography.size.sm};
         line-height: ${theme.typography.lineHeight.xs};
         vertical-align: baseline;
         background-color: ${color};
@@ -40,6 +41,11 @@ const getTagStyles = (theme: GrafanaTheme, name: string) => {
         padding: 2px 6px;
         border: 1px solid ${borderColor};
         border-radius: ${theme.border.radius.md};
+
+        :hover {
+          opacity: 0.85;
+          cursor: pointer;
+        }
       `
     ),
   };
