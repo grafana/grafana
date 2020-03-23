@@ -5514,14 +5514,6 @@
   dependencies:
     "@types/node" "*"
 
-"@types/expect-puppeteer@3.3.1":
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/@types/expect-puppeteer/-/expect-puppeteer-3.3.1.tgz#46e5944bf425b86ea13a563c7c8b86901414988d"
-  integrity sha512-3raSnf28NelDtv0ksvQPZs410taJZ4d70vA8sVzmbRPV04fpmQm9/BOxUCloETD/ZI1EXRpv0pzOQKhPTbm4jg==
-  dependencies:
-    "@types/jest" "*"
-    "@types/puppeteer" "*"
-
 "@types/expect-puppeteer@4.4.0":
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/@types/expect-puppeteer/-/expect-puppeteer-4.4.0.tgz#8e1ee1e7ed7e12f36efcfe81c17d4d6b817cb3d2"
