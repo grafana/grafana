@@ -11,7 +11,9 @@ import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
 import { VariableRefresh } from '../../templating/variable';
 import { updateVariableOptions } from '../query/reducer';
-import * as variableBuilder from '../shared/testing/builders';
+import { customBuilder, queryBuilder } from '../shared/testing/builders';
+
+'../shared/testing/builders';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -68,8 +70,7 @@ describe('processVariable', () => {
   const getAndSetupProcessVariableContext = () => {
     variableAdapters.set('custom', createCustomVariableAdapter());
     variableAdapters.set('query', createQueryVariableAdapter());
-    const custom = variableBuilder
-      .custom()
+    const custom = customBuilder()
       .withId('custom')
       .withName('custom')
       .withQuery('A,B,C')
@@ -77,8 +78,7 @@ describe('processVariable', () => {
       .withCurrent('A')
       .build();
 
-    const queryDependsOnCustom = variableBuilder
-      .query()
+    const queryDependsOnCustom = queryBuilder()
       .withId('queryDependsOnCustom')
       .withName('queryDependsOnCustom')
       .withQuery('$custom.*')
@@ -86,8 +86,7 @@ describe('processVariable', () => {
       .withCurrent('AA')
       .build();
 
-    const queryNoDepends = variableBuilder
-      .query()
+    const queryNoDepends = queryBuilder()
       .withId('queryNoDepends')
       .withName('queryNoDepends')
       .withQuery('*')

@@ -35,7 +35,14 @@ import { Emitter } from '../../../core/core';
 import { VariableRefresh } from '../../templating/variable';
 import { DashboardModel } from '../../dashboard/state';
 import { DashboardState } from '../../../types';
-import * as variableBuilder from '../shared/testing/builders';
+import {
+  constantBuilder,
+  customBuilder,
+  datasourceBuilder,
+  intervalBuilder,
+  queryBuilder,
+  textboxBuilder,
+} from '../shared/testing/builders';
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
@@ -44,11 +51,11 @@ describe('shared actions', () => {
       variableAdapters.set('custom', createCustomVariableAdapter());
       variableAdapters.set('textbox', createTextBoxVariableAdapter());
       variableAdapters.set('constant', createConstantVariableAdapter());
-      const query = variableBuilder.query().build();
-      const constant = variableBuilder.constant().build();
-      const datasource = variableBuilder.datasource().build();
-      const custom = variableBuilder.custom().build();
-      const textbox = variableBuilder.textbox().build();
+      const query = queryBuilder().build();
+      const constant = constantBuilder().build();
+      const datasource = datasourceBuilder().build();
+      const custom = customBuilder().build();
+      const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
 
       reduxTester<{ templating: TemplatingState }>()
@@ -95,11 +102,11 @@ describe('shared actions', () => {
       variableAdapters.set('custom', createCustomVariableAdapter());
       variableAdapters.set('textbox', createTextBoxVariableAdapter());
       variableAdapters.set('constant', createConstantVariableAdapter());
-      const query = variableBuilder.query().build();
-      const constant = variableBuilder.constant().build();
-      const datasource = variableBuilder.datasource().build();
-      const custom = variableBuilder.custom().build();
-      const textbox = variableBuilder.textbox().build();
+      const query = queryBuilder().build();
+      const constant = constantBuilder().build();
+      const datasource = datasourceBuilder().build();
+      const custom = customBuilder().build();
+      const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
 
       const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
@@ -155,8 +162,7 @@ describe('shared actions', () => {
       ${undefined}  | ${[undefined]}
     `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected }) => {
       variableAdapters.set('custom', createCustomVariableAdapter());
-      const custom = variableBuilder
-        .custom()
+      const custom = customBuilder()
         .withId('0')
         .withOptions('A', 'B', 'C')
         .withCurrent('A')
@@ -193,15 +199,13 @@ describe('shared actions', () => {
         let custom;
 
         if (!withOptions) {
-          custom = variableBuilder
-            .custom()
+          custom = customBuilder()
             .withId('0')
             .withCurrent(withCurrent)
             .withoutOptions()
             .build();
         } else {
-          custom = variableBuilder
-            .custom()
+          custom = customBuilder()
             .withId('0')
             .withOptions(...withOptions)
             .withCurrent(withCurrent)
@@ -249,16 +253,14 @@ describe('shared actions', () => {
           let custom;
 
           if (!withOptions) {
-            custom = variableBuilder
-              .custom()
+            custom = customBuilder()
               .withId('0')
               .withMulti()
               .withCurrent(withCurrent)
               .withoutOptions()
               .build();
           } else {
-            custom = variableBuilder
-              .custom()
+            custom = customBuilder()
               .withId('0')
               .withMulti()
               .withOptions(...withOptions)
@@ -325,8 +327,7 @@ describe('shared actions', () => {
       variableAdapters.set('constant', createConstantVariableAdapter());
 
       // initial variable state
-      const initialVariable = variableBuilder
-        .interval()
+      const initialVariable = intervalBuilder()
         .withId('interval-0')
         .withName('interval-0')
         .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
@@ -335,8 +336,7 @@ describe('shared actions', () => {
         .build();
 
       // the constant variable should be filtered out
-      const constant = variableBuilder
-        .constant()
+      const constant = constantBuilder()
         .withId('constant-1')
         .withName('constant-1')
         .withOptions('a constant')
@@ -348,8 +348,7 @@ describe('shared actions', () => {
       };
 
       // updated variable state
-      const updatedVariable = variableBuilder
-        .interval()
+      const updatedVariable = intervalBuilder()
         .withId('interval-0')
         .withName('interval-0')
         .withOptions('1m')
@@ -455,13 +454,11 @@ describe('shared actions', () => {
 
   describe('when changeVariableName is dispatched with the same name', () => {
     it('then no actions are dispatched', () => {
-      const textbox = variableBuilder
-        .textbox()
+      const textbox = textboxBuilder()
         .withId('textbox')
         .withName('textbox')
         .build();
-      const constant = variableBuilder
-        .constant()
+      const constant = constantBuilder()
         .withId('constant')
         .withName('constant')
         .build();
@@ -477,13 +474,11 @@ describe('shared actions', () => {
 
   describe('when changeVariableName is dispatched with an unique name', () => {
     it('then the correct actions are dispatched', () => {
-      const textbox = variableBuilder
-        .textbox()
+      const textbox = textboxBuilder()
         .withId('textbox')
         .withName('textbox')
         .build();
-      const constant = variableBuilder
-        .constant()
+      const constant = constantBuilder()
         .withId('constant')
         .withName('constant')
         .build();
@@ -512,13 +507,11 @@ describe('shared actions', () => {
 
   describe('when changeVariableName is dispatched with an unique name for a new variable', () => {
     it('then the correct actions are dispatched', () => {
-      const textbox = variableBuilder
-        .textbox()
+      const textbox = textboxBuilder()
         .withId('textbox')
         .withName('textbox')
         .build();
-      const constant = variableBuilder
-        .constant()
+      const constant = constantBuilder()
         .withId(NEW_VARIABLE_ID)
         .withName('constant')
         .build();
@@ -536,13 +529,11 @@ describe('shared actions', () => {
 
   describe('when changeVariableName is dispatched with __newName', () => {
     it('then the correct actions are dispatched', () => {
-      const textbox = variableBuilder
-        .textbox()
+      const textbox = textboxBuilder()
         .withId('textbox')
         .withName('textbox')
         .build();
-      const constant = variableBuilder
-        .constant()
+      const constant = constantBuilder()
         .withId('constant')
         .withName('constant')
         .build();
@@ -563,13 +554,11 @@ describe('shared actions', () => {
 
   describe('when changeVariableName is dispatched with illegal characters', () => {
     it('then the correct actions are dispatched', () => {
-      const textbox = variableBuilder
-        .textbox()
+      const textbox = textboxBuilder()
         .withId('textbox')
         .withName('textbox')
         .build();
-      const constant = variableBuilder
-        .constant()
+      const constant = constantBuilder()
         .withId('constant')
         .withName('constant')
         .build();
@@ -590,13 +579,11 @@ describe('shared actions', () => {
 
   describe('when changeVariableName is dispatched with a name that is already used', () => {
     it('then the correct actions are dispatched', () => {
-      const textbox = variableBuilder
-        .textbox()
+      const textbox = textboxBuilder()
         .withId('textbox')
         .withName('textbox')
         .build();
-      const constant = variableBuilder
-        .constant()
+      const constant = constantBuilder()
         .withId('constant')
         .withName('constant')
         .build();

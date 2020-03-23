@@ -6,7 +6,6 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { getRootReducer } from '../state/helpers';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
-import * as variableBuilder from '../shared/testing/builders';
 import {
   addFilter,
   AdHocTableOptions,
@@ -23,6 +22,7 @@ import { updateLocation } from 'app/core/actions';
 import { DashboardState, LocationState } from 'app/types';
 import { VariableModel } from 'app/features/templating/variable';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
+import { adHocBuilder } from '../shared/testing/builders';
 
 const getMetricSources = jest.fn().mockReturnValue([]);
 const getDatasource = jest.fn().mockResolvedValue({});
@@ -59,8 +59,7 @@ describe('adhoc actions', () => {
         condition: '',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('Filters')
         .withName('Filters')
         .withFilters([existingFilter])
@@ -95,8 +94,7 @@ describe('adhoc actions', () => {
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('Filters')
         .withName('Filters')
         .withDatasource(options.datasource)
@@ -122,8 +120,7 @@ describe('adhoc actions', () => {
         operator: '=',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('Filters')
         .withName('Filters')
         .withFilters([])
@@ -154,15 +151,13 @@ describe('adhoc actions', () => {
         operator: '=',
       };
 
-      const existing = variableBuilder
-        .adHoc()
+      const existing = adHocBuilder()
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withDatasource('elasticsearch')
         .build();
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('Filters')
         .withName('Filters')
         .withDatasource(options.datasource)
@@ -198,8 +193,7 @@ describe('adhoc actions', () => {
         operator: '!=',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([existing])
@@ -237,8 +231,7 @@ describe('adhoc actions', () => {
         operator: '!=',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([existing])
@@ -269,8 +262,7 @@ describe('adhoc actions', () => {
         condition: '',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([])
@@ -293,8 +285,7 @@ describe('adhoc actions', () => {
 
   describe('when removeFilter is dispatched on variable with no existing filter', () => {
     it('then correct actions are dispatched', async () => {
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([])
@@ -324,8 +315,7 @@ describe('adhoc actions', () => {
         condition: '',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([filter])
@@ -355,8 +345,7 @@ describe('adhoc actions', () => {
         condition: '',
       };
 
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([existing])
@@ -420,8 +409,7 @@ describe('adhoc actions', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'mysql';
       const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('Filters')
         .withName('Filters')
         .withDatasource('influxdb')
@@ -451,8 +439,7 @@ describe('adhoc actions', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'elasticsearch';
       const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
-      const variable = variableBuilder
-        .adHoc()
+      const variable = adHocBuilder()
         .withId('Filters')
         .withName('Filters')
         .withDatasource('influxdb')

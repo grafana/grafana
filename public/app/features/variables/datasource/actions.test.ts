@@ -15,7 +15,7 @@ import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { createDataSourceOptions } from './reducer';
 import { setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
-import * as variableBuilder from '../shared/testing/builders';
+import { datasourceBuilder } from '../shared/testing/builders';
 
 describe('data source actions', () => {
   variableAdapters.set('datasource', createDataSourceVariableAdapter());
@@ -41,8 +41,7 @@ describe('data source actions', () => {
         const getMetricSourcesMock = jest.fn().mockResolvedValue(sources);
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-        const datasource = variableBuilder
-          .datasource()
+        const datasource = datasourceBuilder()
           .withId('0')
           .withQuery('mock-data-id')
           .build();
@@ -93,8 +92,7 @@ describe('data source actions', () => {
         const getMetricSourcesMock = jest.fn().mockResolvedValue(sources);
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-        const datasource = variableBuilder
-          .datasource()
+        const datasource = datasourceBuilder()
           .withId('0')
           .withQuery('mock-data-id')
           .withRegEx('/.*(second-name).*/')

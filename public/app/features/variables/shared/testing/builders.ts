@@ -11,10 +11,10 @@ import { initialCustomVariableModelState } from '../../custom/reducer';
 import { MultiVariableBuilder } from './multiVariableBuilder';
 import { initialConstantVariableModelState } from '../../constant/reducer';
 
-export const adHoc = () => new AdHocVariableBuilder(initialAdHocVariableModelState);
-export const interval = () => new IntervalVariableBuilder(initialIntervalVariableModelState);
-export const datasource = () => new DatasourceVariableBuilder(initialDataSourceVariableModelState);
-export const query = () => new DatasourceVariableBuilder(initialQueryVariableModelState);
-export const textbox = () => new OptionsVariableBuilder(initialTextBoxVariableModelState);
-export const custom = () => new MultiVariableBuilder(initialCustomVariableModelState);
-export const constant = () => new OptionsVariableBuilder(initialConstantVariableModelState);
+export const adHocBuilder = () => new AdHocVariableBuilder(initialAdHocVariableModelState);
+export const intervalBuilder = () => new IntervalVariableBuilder(initialIntervalVariableModelState);
+export const datasourceBuilder = () => new DatasourceVariableBuilder(initialDataSourceVariableModelState);
+export const queryBuilder = () => new DatasourceVariableBuilder(initialQueryVariableModelState);
+export const textboxBuilder = () => new OptionsVariableBuilder(initialTextBoxVariableModelState);
+export const customBuilder = () => new MultiVariableBuilder(initialCustomVariableModelState);
+export const constantBuilder = () => new OptionsVariableBuilder(initialConstantVariableModelState);
