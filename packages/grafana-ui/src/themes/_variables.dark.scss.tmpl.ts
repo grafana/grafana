@@ -244,13 +244,9 @@ $horizontalComponentOffset: 180px;
 // Navbar
 // -------------------------
 $navbarHeight: 55px;
-
-$navbarBackground: $panel-bg;
 $navbarBorder: 1px solid $dark-6;
 
-$navbarButtonBackground: $navbarBackground;
-$navbarButtonBackgroundHighlight: $body-bg;
-
+$navbarButtonBackground: $panel-bg;
 $navbar-button-border: #2f2f32;
 
 // Sidemenu
