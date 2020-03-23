@@ -54,7 +54,7 @@
     "babel-jest": "24.8.0",
     "babel-loader": "8.1.0",
     "babel-plugin-angularjs-annotate": "0.10.0",
-    "chalk": "^2.4.2",
+    "chalk": "^3.0.0",
     "command-exists": "^1.2.8",
     "commander": "^2.20.0",
     "concurrently": "4.1.0",
