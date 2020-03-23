@@ -277,5 +277,5 @@ export const systemLabels = [
 export const selectors = [
   { label: 'SLI Value', value: 'select_slo_health' },
   { label: 'SLO Compliance', value: 'select_slo_compliance' },
-  { label: 'SLO Error Budget Remaining ', value: 'select_slo_budget' },
+  { label: 'SLO Error Budget Remaining', value: 'select_slo_budget_fraction' },
 ];
