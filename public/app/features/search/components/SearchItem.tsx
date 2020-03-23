@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { getTagColorsFromName, Icon, selectThemeVariant as stv, useTheme } from '@grafana/ui';
+import { e2e } from '@grafana/e2e';
+import { Icon, selectThemeVariant as stv, useTheme, TagList } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { DashboardSectionItem } from '../types';
-import { e2e } from '@grafana/e2e';
 import { SearchCheckbox } from './SearchCheckbox';
 
 interface ResultsItemProps {
@@ -44,11 +44,7 @@ export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelec
         <div className={styles.title}>{item.title}</div>
         <span className={styles.folderTitle}>{item.folderTitle}</span>
       </span>
-      <span className="search-item__tags">
-        {item.tags.map(tag => (
-          <SearchTag key={tag} tag={tag} onClick={onTagSelected} />
-        ))}
-      </span>
+      <TagList tags={item.tags} onClick={onTagSelected} className={styles.tags} />
     </div>
   );
 };
@@ -107,37 +103,7 @@ const getResultsItemStyles = (theme: GrafanaTheme, selected: boolean) => ({
     height: auto;
     padding: 1px 2px 0 10px;
   `,
+  tags: css`
+    justify-content: flex-end;
+  `,
 });
-
-interface SearchTagProps {
-  tag: string;
-  onClick?: any;
-}
-
-const SearchTag: FC<SearchTagProps> = ({ tag, onClick }) => {
-  const theme = useTheme();
-  const styles = getTagStyles(theme, tag);
-
-  const onTagClick = () => {
-    onClick(tag);
-  };
-
-  return (
-    <span key={tag} onClick={onTagClick} className={styles.wrapper}>
-      {tag}
-    </span>
-  );
-};
-
-const getTagStyles = (theme: GrafanaTheme, name: string) => {
-  const { borderColor, color } = getTagColorsFromName(name);
-  return {
-    wrapper: cx(
-      css`
-        border-color: ${borderColor};
-        background-color: ${color};
-      `,
-      'label label-tag'
-    ),
-  };
-};
