@@ -41,6 +41,7 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
 import { getStandardFieldConfigs } from '@grafana/ui';
+import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -84,6 +85,7 @@ export class GrafanaApp {
 
     setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+    variableAdapters.setInit(getDefaultVariableAdapters);
 
     app.config(
       (

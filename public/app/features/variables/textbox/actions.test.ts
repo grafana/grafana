@@ -11,7 +11,7 @@ import { setCurrentVariableValue } from '../state/sharedReducer';
 import { initDashboardTemplating } from '../state/actions';
 
 describe('textbox actions', () => {
-  variableAdapters.set('textbox', createTextBoxVariableAdapter());
+  variableAdapters.setInit(() => [createTextBoxVariableAdapter()]);
 
   describe('when updateTextBoxVariableOptions is dispatched', () => {
     it('then correct actions are dispatched', async () => {
@@ -23,7 +23,7 @@ describe('textbox actions', () => {
 
       const variable: TextBoxVariableModel = {
         type: 'textbox',
-        uuid: '0',
+        id: '0',
         global: false,
         current: {
           value: '',

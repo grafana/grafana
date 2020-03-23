@@ -24,6 +24,7 @@ import {
   getCalculationValueDataLinksVariableSuggestions,
   getDataLinksVariableSuggestions,
 } from '../../../features/panel/panellinks/link_srv';
+import { NewPanelEditorContext } from '../../../features/dashboard/components/PanelEditor/PanelEditor';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -100,50 +101,67 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     const suggestions = fieldOptions.values
       ? getDataLinksVariableSuggestions(this.props.data.series)
       : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
+
     return (
-      <>
-        <PanelOptionsGrid>
-          <PanelOptionsGroup title="Display">
-            <FieldDisplayEditor
-              onChange={this.onDisplayOptionsChanged}
-              value={fieldOptions}
-              labelWidth={this.labelWidth}
-            />
-            <Switch
-              label="Labels"
-              labelClass={`width-${this.labelWidth}`}
-              checked={showThresholdLabels}
-              onChange={this.onToggleThresholdLabels}
-            />
-            <Switch
-              label="Markers"
-              labelClass={`width-${this.labelWidth}`}
-              checked={showThresholdMarkers}
-              onChange={this.onToggleThresholdMarkers}
-            />
-          </PanelOptionsGroup>
+      <NewPanelEditorContext.Consumer>
+        {useNewEditor => {
+          return (
+            <>
+              <PanelOptionsGrid>
+                <PanelOptionsGroup title="Display">
+                  <FieldDisplayEditor
+                    onChange={this.onDisplayOptionsChanged}
+                    value={fieldOptions}
+                    labelWidth={this.labelWidth}
+                  />
+                  <Switch
+                    label="Labels"
+                    labelClass={`width-${this.labelWidth}`}
+                    checked={showThresholdLabels}
+                    onChange={this.onToggleThresholdLabels}
+                  />
+                  <Switch
+                    label="Markers"
+                    labelClass={`width-${this.labelWidth}`}
+                    checked={showThresholdMarkers}
+                    onChange={this.onToggleThresholdMarkers}
+                  />
+                </PanelOptionsGroup>
 
-          <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor
-              showMinMax={true}
-              showTitle={true}
-              onChange={this.onDefaultsChange}
-              value={defaults}
-            />
-          </PanelOptionsGroup>
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
-        </PanelOptionsGrid>
-        <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+                <>
+                  {!useNewEditor && (
+                    <>
+                      <PanelOptionsGroup title="Field">
+                        <FieldPropertiesEditor
+                          showMinMax={true}
+                          showTitle={true}
+                          onChange={this.onDefaultsChange}
+                          value={defaults}
+                        />
+                      </PanelOptionsGroup>
 
-        <PanelOptionsGroup title="Data links">
-          <DataLinksEditor
-            value={defaults.links}
-            onChange={this.onDataLinksChanged}
-            suggestions={suggestions}
-            maxLinks={10}
-          />
-        </PanelOptionsGroup>
-      </>
+                      <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+                    </>
+                  )}
+                </>
+              </PanelOptionsGrid>
+              {!useNewEditor && (
+                <>
+                  <LegacyValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+                  <PanelOptionsGroup title="Data links">
+                    <DataLinksEditor
+                      value={defaults.links}
+                      onChange={this.onDataLinksChanged}
+                      suggestions={suggestions}
+                      maxLinks={10}
+                    />
+                  </PanelOptionsGroup>
+                </>
+              )}
+            </>
+          );
+        }}
+      </NewPanelEditorContext.Consumer>
     );
   }
 }

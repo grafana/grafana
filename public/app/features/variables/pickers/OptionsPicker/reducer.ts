@@ -17,7 +17,7 @@ export interface ToggleOption {
 }
 
 export interface OptionsPickerState {
-  uuid: string;
+  id: string;
   selectedValues: VariableOption[];
   selectedTags: VariableTag[];
   queryValue: string | null;
@@ -28,7 +28,7 @@ export interface OptionsPickerState {
 }
 
 export const initialState: OptionsPickerState = {
-  uuid: '',
+  id: '',
   highlightIndex: -1,
   queryValue: null,
   selectedTags: [],
@@ -76,7 +76,7 @@ const optionsPickerSlice = createSlice({
       state.options = cloneDeep(options);
       state.tags = getTags(action.payload);
       state.multi = multi ?? false;
-      state.uuid = action.payload.uuid!;
+      state.id = action.payload.id!;
       state.queryValue = '';
 
       if (isQuery(action.payload)) {
