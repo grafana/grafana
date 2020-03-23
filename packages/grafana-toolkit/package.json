@@ -59,7 +59,7 @@
     "commander": "^2.20.0",
     "concurrently": "4.1.0",
     "copy-webpack-plugin": "5.1.1",
-    "css-loader": "^3.0.0",
+    "css-loader": "^3.4.2",
     "eslint": "6.7.2",
     "eslint-config-prettier": "6.7.0",
     "eslint-plugin-jsdoc": "18.4.1",
