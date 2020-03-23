@@ -4,7 +4,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Tag.mdx';
 
 export default {
-  title: 'General/Tags',
+  title: 'General/Tags/Tag',
   component: Tag,
   decorators: [withCenteredStory],
   parameters: {
