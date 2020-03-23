@@ -66,6 +66,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                   <th></th>
                   <th>Login</th>
                   <th>Email</th>
+                  <th>Name</th>
                   <th>
                     Seen&nbsp;
                     <Tooltip placement="top" content="Time since user was seen using Grafana">
@@ -103,6 +104,9 @@ const renderUser = (user: UserDTO) => {
       </td>
       <td className="link-td">
         <a href={editUrl}>{user.email}</a>
+      </td>
+      <td className="link-td">
+        <a href={editUrl}>{user.name}</a>
       </td>
       <td className="link-td">{user.lastSeenAtAge && <a href={editUrl}>{user.lastSeenAtAge}</a>}</td>
       <td className="link-td">

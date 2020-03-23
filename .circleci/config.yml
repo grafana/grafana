@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Install Grafana Build Pipeline
           command: |
-            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.0.3/grabpl
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.0/grabpl
             chmod +x grabpl
             mkdir bin
             mv grabpl bin/
@@ -1124,8 +1124,7 @@ workflows:
             - build-enterprise-windows-installer
             - end-to-end-tests
             - build-release-publisher
-      - publish-storybook:
-          filters: *filter-master-or-release
+      - publish-storybook
       - build-docker-images:
           # No filters, meaning this job runs for all branches
           name: build-oss-docker-images

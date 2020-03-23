@@ -1,6 +1,6 @@
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from '../state/reducers';
-import { getTemplatingRootReducer, variableMockBuilder } from '../state/helpers';
+import { getTemplatingRootReducer } from '../state/helpers';
 import { initDashboardTemplating } from '../state/actions';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { variableAdapters } from '../adapters';
@@ -15,6 +15,7 @@ import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { createDataSourceOptions } from './reducer';
 import { setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
+import * as variableBuilder from '../shared/testing/builders';
 
 describe('data source actions', () => {
   variableAdapters.set('datasource', createDataSourceVariableAdapter());
@@ -40,10 +41,12 @@ describe('data source actions', () => {
         const getMetricSourcesMock = jest.fn().mockResolvedValue(sources);
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-        const datasource = variableMockBuilder('datasource')
-          .withUuid('0')
+        const datasource = variableBuilder
+          .datasource()
+          .withUUID('0')
           .withQuery('mock-data-id')
-          .create();
+          .build();
+
         const tester = await reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(initDashboardTemplating([datasource]))
@@ -90,11 +93,12 @@ describe('data source actions', () => {
         const getMetricSourcesMock = jest.fn().mockResolvedValue(sources);
         const getDatasourceSrvMock = jest.fn().mockReturnValue({ getMetricSources: getMetricSourcesMock });
         const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-        const datasource = variableMockBuilder('datasource')
-          .withUuid('0')
+        const datasource = variableBuilder
+          .datasource()
+          .withUUID('0')
           .withQuery('mock-data-id')
           .withRegEx('/.*(second-name).*/')
-          .create();
+          .build();
         const tester = await reduxTester<{ templating: TemplatingState }>()
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(initDashboardTemplating([datasource]))

@@ -1,6 +1,6 @@
 import { UrlQueryMap } from '@grafana/runtime';
 
-import { getTemplatingRootReducer, variableMockBuilder } from './helpers';
+import { getTemplatingRootReducer } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -11,6 +11,7 @@ import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
 import { VariableRefresh } from '../../templating/variable';
 import { updateVariableOptions } from '../query/reducer';
+import * as variableBuilder from '../shared/testing/builders';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -67,28 +68,31 @@ describe('processVariable', () => {
   const getAndSetupProcessVariableContext = () => {
     variableAdapters.set('custom', createCustomVariableAdapter());
     variableAdapters.set('query', createQueryVariableAdapter());
-    const custom = variableMockBuilder('custom')
-      .withUuid('0')
+    const custom = variableBuilder
+      .custom()
+      .withUUID('0')
       .withQuery('A,B,C')
       .withOptions('A', 'B', 'C')
       .withCurrent('A')
-      .create();
+      .build();
 
-    const queryDependsOnCustom = variableMockBuilder('query')
-      .withUuid('1')
+    const queryDependsOnCustom = variableBuilder
+      .query()
+      .withUUID('1')
       .withName('queryDependsOnCustom')
       .withQuery('$custom.*')
       .withOptions('AA', 'AB', 'AC')
       .withCurrent('AA')
-      .create();
+      .build();
 
-    const queryNoDepends = variableMockBuilder('query')
-      .withUuid('2')
+    const queryNoDepends = variableBuilder
+      .query()
+      .withUUID('2')
       .withName('queryNoDepends')
       .withQuery('*')
       .withOptions('A', 'B', 'C')
       .withCurrent('A')
-      .create();
+      .build();
 
     const list = [custom, queryDependsOnCustom, queryNoDepends];
 

@@ -51,7 +51,7 @@ When Grafana generates a report, it will render each panel separately and then p
 # Set timeout for each panel rendering request
 rendering_timeout = 10s
 # Set maximum number of concurrent calls to the rendering service
-concurrent_render_limit = 10
+concurrent_render_limit = 4
 ```
 
 ## Troubleshoot reporting
