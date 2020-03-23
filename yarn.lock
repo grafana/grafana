@@ -6195,10 +6195,10 @@
   resolved "https://registry.yarnpkg.com/@types/stacktrace-js/-/stacktrace-js-0.0.32.tgz#d23e4a36a5073d39487fbea8234cc6186862d389"
   integrity sha512-SdxmlrHfO0BxgbBP9HZWMUo2rima8lwMjPiWm6S0dyKkDa5CseamktFhXg8umu3TPVBkSlX6ZoB5uUDJK89yvg==
 
-"@types/systemjs@^0.20.6":
-  version "0.20.6"
-  resolved "https://registry.yarnpkg.com/@types/systemjs/-/systemjs-0.20.6.tgz#79838d2b4bce9c014330efa0b4c7b9345e830a72"
-  integrity sha512-p3yv9sBBJXi3noUG216BpUI7VtVBUAvBIfZNTiDROUY31YBfsFHM4DreS7XMekN8IjtX0ysvCnm6r3WnirnNeA==
+"@types/systemjs@^6.1.0":
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/@types/systemjs/-/systemjs-6.1.0.tgz#eb92e3181391b6f49b8310077fe65bfa3db9392a"
+  integrity sha512-akhlviqwowzRNiz3ooAbkjvyMO8cikBqap9z/0yfvMAb6vIsp91Rfox67qtgIhZosWP01MVSTwsgSFYWo4SWQA==
 
 "@types/tapable@*":
   version "1.0.4"
