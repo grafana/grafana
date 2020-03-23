@@ -69,8 +69,11 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
       dispatchedActions.length = 0;
     }
 
-    store.dispatch(action);
+    if (store === null) {
+      throw new Error('Store was not setup properly');
+    }
 
+    store.dispatch(action);
     return instance;
   };
 
@@ -82,8 +85,11 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
       dispatchedActions.length = 0;
     }
 
-    await store.dispatch(action);
+    if (store === null) {
+      throw new Error('Store was not setup properly');
+    }
 
+    await store.dispatch(action);
     return instance;
   };
 

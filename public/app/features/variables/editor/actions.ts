@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getVariable, getVariables } from '../state/selectors';
+import { getVariable, getVariables, getNewVariabelIndex } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -82,7 +82,7 @@ export const switchToNewMode = (): ThunkResult<void> => (dispatch, getState) => 
   const uuid = EMPTY_UUID;
   const global = false;
   const model = cloneDeep(variableAdapters.get(type).initialState);
-  const index = Object.values(getState().templating.variables).length;
+  const index = getNewVariabelIndex(getState());
   const identifier = { type, uuid };
   dispatch(
     addVariable(
