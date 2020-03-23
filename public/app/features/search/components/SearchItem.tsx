@@ -39,7 +39,7 @@ export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelec
         checked={item.checked}
         onClick={(e: MouseEvent) => onToggleSelection(item, e)}
       />
-      <Icon name="th-large" className={styles.icon} />
+      <Icon className={styles.icon} name="th-large" />
       <span className={styles.body} onClick={() => onItemClick(item)}>
         <div className={styles.title}>{item.title}</div>
         <span className={styles.folderTitle}>{item.folderTitle}</span>
@@ -118,8 +118,12 @@ const SearchTag: FC<SearchTagProps> = ({ tag, onClick }) => {
   const theme = useTheme();
   const styles = getTagStyles(theme, tag);
 
+  const onTagClick = () => {
+    onClick(tag);
+  };
+
   return (
-    <span key={tag} onClick={() => onClick(tag)} className={styles.wrapper}>
+    <span key={tag} onClick={onTagClick} className={styles.wrapper}>
       {tag}
     </span>
   );
