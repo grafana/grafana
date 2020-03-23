@@ -74,7 +74,7 @@
     "@storybook/addon-storysource": "5.3.14",
     "@storybook/react": "5.3.9",
     "@storybook/theming": "5.3.9",
-    "@types/classnames": "2.2.7",
+    "@types/classnames": "2.2.10",
     "@types/common-tags": "^1.8.0",
     "@types/d3": "5.7.2",
     "@types/jest": "23.3.14",
