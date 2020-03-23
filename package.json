@@ -77,7 +77,7 @@
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.10.0",
     "eslint-loader": "^3.0.3",
-    "eslint-plugin-jsdoc": "21.0.0",
+    "eslint-plugin-jsdoc": "22.1.0",
     "eslint-plugin-prettier": "3.1.2",
     "eslint-plugin-react": "7.18.3",
     "expect-puppeteer": "4.4.0",
