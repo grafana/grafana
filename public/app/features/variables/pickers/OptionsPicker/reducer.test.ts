@@ -14,7 +14,7 @@ import {
   updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { QueryVariableModel, VariableTag } from '../../../templating/variable';
+import { QueryVariableModel, VariableTag } from '../../../templating/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
@@ -283,7 +283,7 @@ describe('optionsPickerReducer', () => {
         query,
         options: [selected, { text: 'A', value: 'A', selected: false }, { text: 'B', value: 'B', selected: false }],
         multi: false,
-        uuid: '0',
+        id: '0',
         queryValue,
       } as QueryVariableModel;
 
@@ -294,7 +294,7 @@ describe('optionsPickerReducer', () => {
           ...initialState,
           options: payload.options,
           queryValue,
-          uuid: payload.uuid!,
+          id: payload.id!,
           multi: payload.multi,
           selectedValues: [selected],
         });
@@ -312,14 +312,14 @@ describe('optionsPickerReducer', () => {
         { text: 'B', value: 'B', selected: false },
       ];
       const { initialState } = getVariableTestContext({});
-      const payload = { type: 'query', uuid: '0', current, query, options, queryValue } as QueryVariableModel;
+      const payload = { type: 'query', id: '0', current, query, options, queryValue } as QueryVariableModel;
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
         .whenActionIsDispatched(showOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          uuid: '0',
+          id: '0',
           queryValue: '',
           selectedValues: [
             {
@@ -343,7 +343,7 @@ describe('optionsPickerReducer', () => {
         ],
         queryValue: 'a search',
         highlightIndex: 1,
-        uuid: '0',
+        id: '0',
       });
 
       reducerTester<OptionsPickerState>()

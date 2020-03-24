@@ -7,6 +7,7 @@ export interface GraphiteQuery extends DataQuery {
 export interface GraphiteOptions extends DataSourceJsonData {
   graphiteVersion: string;
   graphiteType: GraphiteType;
+  rollupIndicatorEnabled?: boolean;
 }
 
 export enum GraphiteType {
@@ -15,10 +16,10 @@ export enum GraphiteType {
 }
 
 export interface MetricTankRequestMeta {
-  [key: string]: any; // TODO -- fill this with real values from metrictank
+  [key: string]: any;
 }
 
-export interface MetricTankResultMeta {
+export interface MetricTankSeriesMeta {
   'schema-name': string;
   'schema-retentions': string; //"1s:35d:20min:5:1542274085,1min:38d:2h:1:true,10min:120d:6h:1:true,2h:2y:6h:2",
   'archive-read': number;
@@ -32,5 +33,5 @@ export interface MetricTankResultMeta {
 
 export interface MetricTankMeta {
   request: MetricTankRequestMeta;
-  info: MetricTankResultMeta[];
+  info: MetricTankSeriesMeta[];
 }

@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import {
   assignModelProperties,
-  containsVariable,
   QueryVariableModel,
   VariableActions,
   VariableHide,
@@ -11,12 +10,13 @@ import {
   VariableTag,
   VariableType,
   variableTypes,
-} from './variable';
+} from './types';
 import { DataSourceApi, stringToJsRegex } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { containsVariable } from './utils';
 
 function getNoneOption(): VariableOption {
   return { text: 'None', value: '', isNone: true, selected: false };

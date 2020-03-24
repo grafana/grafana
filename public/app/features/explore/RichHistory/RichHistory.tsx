@@ -51,24 +51,23 @@ interface RichHistoryState {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const borderColor = theme.isLight ? theme.colors.gray5 : theme.colors.dark6;
-  const tabBarBg = theme.isLight ? theme.colors.white : theme.colors.black;
-  const tabContentBg = theme.isLight ? theme.colors.gray7 : theme.colors.dark2;
+  const tabContentBg = theme.colors.pageBg;
   return {
     container: css`
       height: 100%;
-      background-color: ${tabContentBg};
     `,
     tabContent: css`
-      background-color: ${tabContentBg};
       padding: ${theme.spacing.md};
+      background-color: ${tabContentBg};
     `,
     close: css`
       position: absolute;
-      right: ${theme.spacing.sm};
+      right: 16px;
+      top: 5px;
       cursor: pointer;
+      font-size: ${theme.typography.size.lg};
     `,
     tabs: css`
-      background-color: ${tabBarBg};
       padding-top: ${theme.spacing.sm};
       border-color: ${borderColor};
       ul {
@@ -83,8 +82,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     super(props);
     this.state = {
       activeTab: this.props.firstTab,
-      datasourceFilters: null,
       sortOrder: SortOrder.Descending,
+      datasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, null),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
       activeDatasourceOnly: store.getBool(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
@@ -115,6 +114,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   };
 
   onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
+    store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
     this.setState({ datasourceFilters: value });
   };
 
@@ -133,7 +133,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       ? this.onSelectDatasourceFilters([
           { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
         ])
-      : this.onSelectDatasourceFilters(null);
+      : this.onSelectDatasourceFilters(this.state.datasourceFilters);
   }
 
   componentDidMount() {

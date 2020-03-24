@@ -188,7 +188,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         const list =
           dashboard.variables.list.length > 0
             ? dashboard.variables.list
-            : dashboard.templating.list.filter(v => variableAdapters.contains(v.type));
+            : dashboard.templating.list.filter(v => variableAdapters.getIfExists(v.type));
         await dispatch(initDashboardTemplating(list));
         await dispatch(processVariables());
       }

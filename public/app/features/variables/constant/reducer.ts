@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ConstantVariableModel, VariableHide, VariableOption } from '../../templating/variable';
-import { EMPTY_UUID, getInstanceState, VariablePayload } from '../state/types';
+import { ConstantVariableModel, VariableHide, VariableOption } from '../../templating/types';
+import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 export const initialConstantVariableModelState: ConstantVariableModel = {
-  uuid: EMPTY_UUID,
+  id: NEW_VARIABLE_ID,
   global: false,
   type: 'constant',
   name: '',
@@ -23,7 +23,7 @@ export const constantVariableSlice = createSlice({
   initialState: initialVariablesState,
   reducers: {
     createConstantOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<ConstantVariableModel>(state, action.payload.uuid);
+      const instanceState = getInstanceState<ConstantVariableModel>(state, action.payload.id);
       instanceState.options = [
         { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false },
       ];
