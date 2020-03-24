@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { VariableModel } from 'app/features/templating/variable';
+import { VariableModel } from 'app/features/templating/types';
 
 export class VariableBuilder<T extends VariableModel> {
   protected variable: T;

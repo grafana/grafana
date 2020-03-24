@@ -1,11 +1,6 @@
-import {
-  assignModelProperties,
-  containsSearchFilter,
-  containsVariable,
-  getSearchFilterScopedVar,
-  SEARCH_FILTER_VARIABLE,
-} from '../variable';
+import { assignModelProperties } from '../types';
 import { ScopedVars } from '@grafana/data';
+import { containsSearchFilter, containsVariable, getSearchFilterScopedVar, SEARCH_FILTER_VARIABLE } from '../utils';
 
 describe('containsVariable', () => {
   describe('when checking if a string contains a variable', () => {

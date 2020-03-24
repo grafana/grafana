@@ -4,7 +4,7 @@ import { FormLabel, Switch } from '@grafana/ui';
 
 import templateSrv from '../../templating/template_srv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../../templating/variable';
+import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../../templating/types';
 import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 import { VariableEditorState } from '../editor/reducer';

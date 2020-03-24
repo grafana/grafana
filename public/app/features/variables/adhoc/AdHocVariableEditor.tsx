@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
-import { AdHocVariableModel } from '../../templating/variable';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+
+import { AdHocVariableModel } from '../../templating/types';
 import { VariableEditorProps } from '../editor/types';
 import { VariableEditorState } from '../editor/reducer';
 import { AdHocVariableEditorState } from './reducer';
-import { initAdHocVariableEditor, changeVariableDatasource } from './actions';
+import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 
 export interface OwnProps extends VariableEditorProps<AdHocVariableModel> {}

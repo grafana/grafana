@@ -6,7 +6,7 @@ import {
   VariableOption,
   VariableType,
   variableTypes,
-} from './variable';
+} from './types';
 import { VariableSrv } from './variable_srv';
 
 export class TextBoxVariable implements TextBoxVariableModel, VariableActions {

@@ -1,4 +1,4 @@
-import { QueryVariableModel, VariableModel, AdHocVariableModel } from '../templating/variable';
+import { QueryVariableModel, VariableModel, AdHocVariableModel } from '../templating/types';
 
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
   return model.type === 'query';
