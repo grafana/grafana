@@ -41,7 +41,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     drawerActive: css`
       opacity: 1;
-      transition: transform 0.5s ease-in;
+      transition: transform 0.5s ease-out;
     `,
     drawerNotActive: css`
       opacity: 0;
