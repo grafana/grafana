@@ -8,7 +8,8 @@
       "sass": ["sass/"]
     },
     "rootDirs": ["public/"],
-    "typeRoots": ["node_modules/@types", "public/app/types"]
+    "typeRoots": ["node_modules/@types", "public/app/types"],
+    "allowJs": true
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": ["public/app/**/*.ts*", "public/e2e-test/**/*.ts", "public/test/**/*.ts", "public/vendor/**/*.ts"]
