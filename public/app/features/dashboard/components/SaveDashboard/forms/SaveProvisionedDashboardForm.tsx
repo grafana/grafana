@@ -61,9 +61,9 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
             Copy JSON to clipboard
           </CopyToClipboard>
           <Button onClick={saveToFile}>Save JSON to file</Button>
-          <Forms.Button variant="secondary" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel}>
             Cancel
-          </Forms.Button>
+          </Button>
         </HorizontalGroup>
       </VerticalGroup>
     </>

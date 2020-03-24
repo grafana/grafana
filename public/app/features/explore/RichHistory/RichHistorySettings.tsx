@@ -112,9 +112,9 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
       >
         Delete all of your query history, permanently.
       </div>
-      <Forms.Button variant="destructive" onClick={onDelete}>
+      <Button variant="destructive" onClick={onDelete}>
         Clear query history
-      </Forms.Button>
+      </Button>
     </div>
   );
 }

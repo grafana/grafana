@@ -4,7 +4,6 @@ import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 import { Button } from '../Forms/Button';
-import Forms from '../Forms';
 import { ButtonSize } from '../Button/types';
 import { ButtonVariant } from '../Forms/Button';
 
@@ -135,9 +134,9 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       <span className={styles.buttonContainer}>
         {typeof children === 'string' ? (
           <span className={buttonClass}>
-            <Forms.Button size={size} variant="link" onClick={onClick}>
+            <Button size={size} variant="link" onClick={onClick}>
               {children}
-            </Forms.Button>
+            </Button>
           </span>
         ) : (
           <span className={buttonClass} onClick={onClick}>

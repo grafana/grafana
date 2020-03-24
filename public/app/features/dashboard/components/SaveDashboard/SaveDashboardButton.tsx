@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from 'emotion';
-import { Button, Forms, ModalsController } from '@grafana/ui';
+import { Button, ModalsController } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { connectWithProvider } from 'app/core/utils/connectWithReduxStore';
 import { provideModalsContext } from 'app/routes/ReactContainer';
@@ -24,12 +24,11 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({
   getDashboard,
   useNewForms,
 }) => {
-  const ButtonComponent = useNewForms ? Forms.Button : Button;
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
         return (
-          <ButtonComponent
+          <Button
             onClick={() => {
               showModal(SaveDashboardModalProxy, {
                 // TODO[angular-migrations]: Remove tenary op when we migrate Dashboard Settings view to React
@@ -40,7 +39,7 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({
             }}
           >
             Save dashboard
-          </ButtonComponent>
+          </Button>
         );
       }}
     </ModalsController>
@@ -54,12 +53,11 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { varian
   useNewForms,
   variant,
 }) => {
-  const ButtonComponent = useNewForms ? Forms.Button : Button;
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
         return (
-          <ButtonComponent
+          <Button
             /* Styles applied here are specific to dashboard settings view */
             className={css`
               width: 100%;
@@ -79,7 +77,7 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { varian
             variant={variant as any}
           >
             Save As...
-          </ButtonComponent>
+          </Button>
         );
       }}
     </ModalsController>
