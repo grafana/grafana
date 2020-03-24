@@ -8,7 +8,7 @@ import { CoreEvents } from 'app/types';
 import { DashboardSectionItem } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 
-interface ResultsItemProps {
+export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
   onToggleSelection: any;
@@ -17,7 +17,7 @@ interface ResultsItemProps {
 
 const { selectors } = e2e.pages.Dashboards;
 
-export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelection, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTagSelected }) => {
   const theme = useTheme();
   const styles = getResultsItemStyles(theme, item.checked);
 
