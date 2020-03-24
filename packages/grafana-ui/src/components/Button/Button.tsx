@@ -2,11 +2,12 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'r
 import { ThemeContext } from '../../themes';
 import { getButtonStyles } from './styles';
 import { ButtonContent } from './ButtonContent';
-import { ButtonSize, ButtonStyles, ButtonVariant } from './types';
+import { ComponentSize } from '../../types/size';
+import { ButtonStyles, ButtonVariant } from './types';
 import { cx } from 'emotion';
 
 type CommonProps = {
-  size?: ButtonSize;
+  size?: ComponentSize;
   variant?: ButtonVariant;
   /**
    * icon prop is a temporary solution. It accepts legacy icon class names for the icon to be rendered.

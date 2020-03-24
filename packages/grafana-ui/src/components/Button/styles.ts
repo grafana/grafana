@@ -1,7 +1,8 @@
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { selectThemeVariant, stylesFactory } from '../../themes';
-import { StyleDeps, ButtonSize } from './types';
+import { ComponentSize } from '../../types/size';
+import { StyleDeps } from './types';
 import { GrafanaTheme } from '@grafana/data';
 
 const buttonVariantStyles = (
@@ -116,7 +117,7 @@ type ButtonMeasures = {
   fontWeight: number;
 };
 
-const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: boolean): ButtonMeasures => {
+const calculateMeasures = (theme: GrafanaTheme, size: ComponentSize, textAndIcon: boolean): ButtonMeasures => {
   switch (size) {
     case 'sm': {
       return {
