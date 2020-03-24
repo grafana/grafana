@@ -60,7 +60,7 @@ export const DerivedField = (props: Props) => {
           }
         />
         <Button
-          variant={'inverse'}
+          variant="destructive"
           title="Remove field"
           icon={'fa fa-times'}
           onClick={event => {

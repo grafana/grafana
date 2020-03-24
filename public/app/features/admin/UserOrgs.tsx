@@ -169,7 +169,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
             <div className="pull-right">
               <ConfirmButton
                 confirmText="Confirm removal"
-                confirmVariant="danger"
+                confirmVariant="destructive"
                 onClick={this.onOrgRemoveClick}
                 onCancel={this.onCancelClick}
                 onConfirm={this.onOrgRemove}

@@ -3,9 +3,10 @@ import { cx, css } from 'emotion';
 import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
-import { Button } from '../Button/Button';
+import { Button } from '../Forms/Button';
 import Forms from '../Forms';
-import { ButtonVariant, ButtonSize } from '../Button/types';
+import { ButtonSize } from '../Button/types';
+import { ButtonVariant } from '../Forms/Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -145,7 +146,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
         )}
         <span className={styles.confirmButtonContainer}>
           <span className={confirmButtonClass}>
-            <Button size={size} variant="transparent" onClick={this.onClickCancel}>
+            <Button size={size} variant="secondary" onClick={this.onClickCancel}>
               Cancel
             </Button>
             <Button size={size} variant={confirmButtonVariant} onClick={onConfirm}>
