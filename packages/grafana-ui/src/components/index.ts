@@ -124,7 +124,6 @@ export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
-export { Unicon } from './Unicon/Unicon';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 

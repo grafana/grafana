@@ -1,11 +1,18 @@
-import React from 'react';
-import { cx, css } from 'emotion';
-import { stylesFactory } from '../../themes';
+import React, { PureComponent, ComponentType } from 'react';
+import { css, cx } from 'emotion';
+
+import { stylesFactory, withTheme } from '../../themes';
+import { Themeable } from '../../types';
 import { IconType } from './types';
 
-export interface IconProps {
+type Size = 'xs' | 'sm' | 'base' | 'md' | 'lg';
+
+interface IconProps extends Themeable {
   name: IconType;
-  className?: string;
+  size?: Size;
+  color?: string;
+  type?: 'icon' | 'monochrome';
+  title?: string;
   onClick?: () => void;
   onMouseDown?: React.MouseEventHandler;
 }
@@ -14,20 +21,51 @@ const getIconStyles = stylesFactory(() => {
   return {
     icon: css`
       display: inline-block;
-      width: 16px;
-      height: 16px;
-      text-align: center;
-      font-size: 14px;
-      &:before {
+      * {
         vertical-align: middle;
+      }
+    `,
+    iconSvg: css`
+      svg {
+        fill: currentColor;
       }
     `,
   };
 });
 
-export const Icon: React.FC<IconProps> = ({ name, className, onClick, onMouseDown }) => {
-  const styles = getIconStyles();
-  return <i className={cx(styles.icon, 'fa', `fa-${name}`, className)} onClick={onClick} onMouseDown={onMouseDown} />;
-};
+export interface IconState {
+  module: null | ComponentType<{ color?: string; size?: number }>;
+}
 
-Icon.displayName = 'Icon';
+class UnThemedIcon extends PureComponent<IconProps, IconState> {
+  constructor(props: IconProps) {
+    super(props);
+    this.state = {
+      module: null,
+    };
+  }
+
+  componentDidMount() {
+    const { name } = this.props;
+    import(`@iconscout/react-unicons/icons/uil-${name}`).then(module => {
+      this.setState({ module: module.default });
+    });
+  }
+
+  render() {
+    const { color, size, theme } = this.props;
+    const { module: Component } = this.state;
+
+    /*Transform string with px to number*/
+    const svgSize = Number(theme.typography.size[size || 'base'].slice(0, -2));
+    const styles = getIconStyles();
+
+    return (
+      <div className={cx(styles.icon, { [styles.iconSvg]: !color })}>
+        {Component && <Component color={color} size={svgSize} />}
+      </div>
+    );
+  }
+}
+
+export const Icon = withTheme(UnThemedIcon);

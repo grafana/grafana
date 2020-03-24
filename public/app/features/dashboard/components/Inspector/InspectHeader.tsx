@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
-import { Icon, selectThemeVariant, stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
+import { css, cx } from 'emotion';
+import { selectThemeVariant, stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue, PanelData, getValueFormat, formattedValueToString } from '@grafana/data';
 import { InspectTab } from './PanelInspector';
 import { PanelModel } from '../../state';
@@ -33,10 +33,10 @@ export const InspectHeader: FC<Props> = ({
     <div className={styles.header}>
       <div className={styles.actions}>
         <div className={styles.iconWrapper} onClick={onToggleExpand}>
-          <Icon name={isExpanded ? 'chevron-right' : 'chevron-left'} className={styles.icon} />
+          <i className={cx(isExpanded ? 'fa fa-angle-right' : 'fa fa-angle-left', styles.icon)} />
         </div>
         <div className={styles.iconWrapper} onClick={onClose}>
-          <Icon name="times" className={styles.icon} />
+          <i className={cx('fa fa-times', styles.icon)} />
         </div>
       </div>
       <div className={styles.titleWrapper}>

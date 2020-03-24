@@ -43,7 +43,7 @@ const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
     }));
     const styles = getStyles(useTheme());
     const buttonIcon = `fa fa-${icon}`;
-    const caretIcon = isOpen ? 'caret-up' : 'caret-down';
+    const caretIcon = isOpen ? 'angle-up' : 'angle-down';
     return (
       <Button {...buttonProps} ref={ref} icon={buttonIcon}>
         <span className={styles.wrapper}>

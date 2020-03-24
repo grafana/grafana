@@ -26,7 +26,7 @@ export const FieldConfigItemHeaderTitle: React.FC<FieldConfigItemHeaderTitleProp
       <div className={styles.header}>
         <Forms.Label description={description}>{title}</Forms.Label>
         <div className={styles.remove} onClick={() => onRemove()} aria-label="FieldConfigItemHeaderTitle remove button">
-          <Icon name="trash" />
+          <Icon name="trash-alt" />
         </div>
       </div>
       {children}

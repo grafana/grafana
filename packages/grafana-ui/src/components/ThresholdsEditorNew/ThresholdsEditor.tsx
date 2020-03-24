@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import {
   Threshold,
   sortThresholds,
@@ -13,7 +13,6 @@ import { ThemeContext } from '../../themes/ThemeContext';
 import { Input } from '../Forms/Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory } from '../../themes';
-import { Icon } from '../Icon/Icon';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Field } from '../Forms/Field';
 import { Button } from '../Forms/Button';
@@ -182,7 +181,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             {isPercent && <div className={styles.percentIcon}>%</div>}
           </div>
         }
-        suffix={<Icon className={styles.trashIcon} name="trash" onClick={() => this.onRemoveThreshold(threshold)} />}
+        suffix={<i className={cx('fa fa-trash', styles.trashIcon)} onClick={() => this.onRemoveThreshold(threshold)} />}
       />
     );
   }
