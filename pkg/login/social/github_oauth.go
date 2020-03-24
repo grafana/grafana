@@ -14,7 +14,6 @@ import (
 
 type SocialGithub struct {
 	*SocialBase
-	allowedDomains       []string
 	allowedOrganizations []string
 	apiUrl               string
 	allowSignup          bool
@@ -37,10 +36,6 @@ var (
 
 func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
-}
-
-func (s *SocialGithub) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
 }
 
 func (s *SocialGithub) IsSignupAllowed() bool {

@@ -14,9 +14,8 @@ import (
 
 type SocialAzureAD struct {
 	*SocialBase
-	allowedDomains []string
-	allowedGroups  []string
-	allowSignup    bool
+	allowedGroups []string
+	allowSignup   bool
 }
 
 type azureClaims struct {

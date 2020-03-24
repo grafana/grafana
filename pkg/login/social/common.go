@@ -20,6 +20,10 @@ type HttpGetResponse struct {
 	Headers http.Header
 }
 
+func (s *SocialBase) IsEmailAllowed(email string) bool {
+	return isEmailAllowed(email, s.allowedDomains)
+}
+
 func isEmailAllowed(email string, allowedDomains []string) bool {
 	if len(allowedDomains) == 0 {
 		return true

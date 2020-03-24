@@ -17,7 +17,6 @@ import (
 
 type SocialGenericOAuth struct {
 	*SocialBase
-	allowedDomains       []string
 	allowedOrganizations []string
 	apiUrl               string
 	allowSignup          bool
@@ -29,10 +28,6 @@ type SocialGenericOAuth struct {
 
 func (s *SocialGenericOAuth) Type() int {
 	return int(models.GENERIC)
-}
-
-func (s *SocialGenericOAuth) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
 }
 
 func (s *SocialGenericOAuth) IsSignupAllowed() bool {

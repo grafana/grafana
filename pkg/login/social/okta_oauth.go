@@ -14,7 +14,6 @@ import (
 type SocialOkta struct {
 	*SocialBase
 	apiUrl            string
-	allowedDomains    []string
 	allowedGroups     []string
 	allowSignup       bool
 	roleAttributePath string
@@ -41,10 +40,6 @@ type OktaUserInfoJson struct {
 
 func (s *SocialOkta) Type() int {
 	return int(models.OKTA)
-}
-
-func (s *SocialOkta) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
 }
 
 func (s *SocialOkta) IsSignupAllowed() bool {

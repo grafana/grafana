@@ -37,7 +37,8 @@ type SocialConnector interface {
 
 type SocialBase struct {
 	*oauth2.Config
-	log log.Logger
+	log            log.Logger
+	allowedDomains []string
 }
 
 type Error struct {
@@ -113,10 +114,10 @@ func NewOAuthService() {
 		if name == "github" {
 			SocialMap["github"] = &SocialGithub{
 				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
+					Config:         &config,
+					log:            logger,
+					allowedDomains: info.AllowedDomains,
 				},
-				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
@@ -128,13 +129,13 @@ func NewOAuthService() {
 		if name == "gitlab" {
 			SocialMap["gitlab"] = &SocialGitlab{
 				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
+					Config:         &config,
+					log:            logger,
+					allowedDomains: info.AllowedDomains,
 				},
-				allowedDomains: info.AllowedDomains,
-				apiUrl:         info.ApiUrl,
-				allowSignup:    info.AllowSignup,
-				allowedGroups:  util.SplitString(sec.Key("allowed_groups").String()),
+				apiUrl:        info.ApiUrl,
+				allowSignup:   info.AllowSignup,
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 
@@ -142,13 +143,13 @@ func NewOAuthService() {
 		if name == "google" {
 			SocialMap["google"] = &SocialGoogle{
 				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
+					Config:         &config,
+					log:            logger,
+					allowedDomains: info.AllowedDomains,
 				},
-				allowedDomains: info.AllowedDomains,
-				hostedDomain:   info.HostedDomain,
-				apiUrl:         info.ApiUrl,
-				allowSignup:    info.AllowSignup,
+				hostedDomain: info.HostedDomain,
+				apiUrl:       info.ApiUrl,
+				allowSignup:  info.AllowSignup,
 			}
 		}
 
@@ -156,12 +157,12 @@ func NewOAuthService() {
 		if name == "azuread" {
 			SocialMap["azuread"] = &SocialAzureAD{
 				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
+					Config:         &config,
+					log:            logger,
+					allowedDomains: info.AllowedDomains,
 				},
-				allowedDomains: info.AllowedDomains,
-				allowedGroups:  util.SplitString(sec.Key("allowed_groups").String()),
-				allowSignup:    info.AllowSignup,
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				allowSignup:   info.AllowSignup,
 			}
 		}
 
@@ -169,11 +170,11 @@ func NewOAuthService() {
 		if name == "okta" {
 			SocialMap["okta"] = &SocialOkta{
 				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
+					Config:         &config,
+					log:            logger,
+					allowedDomains: info.AllowedDomains,
 				},
 				apiUrl:            info.ApiUrl,
-				allowedDomains:    info.AllowedDomains,
 				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
 				allowSignup:       info.AllowSignup,
 				roleAttributePath: info.RoleAttributePath,
@@ -184,10 +185,10 @@ func NewOAuthService() {
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &SocialGenericOAuth{
 				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
+					Config:         &config,
+					log:            logger,
+					allowedDomains: info.AllowedDomains,
 				},
-				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
 				emailAttributeName:   info.EmailAttributeName,
