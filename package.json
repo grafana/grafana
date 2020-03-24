@@ -15,6 +15,7 @@
     "@babel/preset-typescript": "7.8.3",
     "@emotion/core": "10.0.27",
     "@grafana/api-documenter": "0.9.3",
+    "@hot-loader/react-dom": "16.13.0",
     "@microsoft/api-extractor": "7.7.8",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/react-hooks": "^3.2.1",
