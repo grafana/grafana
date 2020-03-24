@@ -22,7 +22,7 @@ export const SearchCheckbox: FC<Props> = ({ checked, onClick, editable = false }
 const getStyles = () => ({
   // Vertically align absolutely positioned checkbox element
   wrapper: css`
-    height: 19px;
+    height: 21px;
     & > label {
       height: 100%;
     }

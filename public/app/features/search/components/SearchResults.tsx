@@ -117,13 +117,14 @@ const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onTogg
 };
 
 const getSectionHeaderStyles = (theme: GrafanaTheme, selected = false) => {
+  const { sm, xs } = theme.spacing;
   return {
     wrapper: cx(
       css`
         display: flex;
         flex-grow: 1;
         font-size: ${theme.typography.size.base};
-        padding: 7px 4px 3px 0;
+        padding: ${sm} ${xs} ${xs};
         color: ${theme.colors.textWeak};
 
         &:hover,
