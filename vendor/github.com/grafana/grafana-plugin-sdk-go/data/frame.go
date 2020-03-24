@@ -1,20 +1,28 @@
-// Package data provides data structures that Grafana recognizes. The Frame
-// object represents a Grafana Dataframe which can represent data such as tables
+// Package data provides data structures that Grafana recognizes.
+//
+// The Frame object represents a Grafana Dataframe which can represent data such as tables
 // and time series.
+//
+// Frames can be encoded using Apache Arrow (https://arrow.apache.org/) for transmission.
+//
+// The corresponding Grafana frontend package the @grafana/data package
+// (https://github.com/grafana/grafana/tree/master/packages/grafana-data).
 package data
 
 import (
 	"fmt"
 	"math"
-	"sort"
+	"reflect"
 	"strings"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/olekukonko/tablewriter"
 )
 
 // Frame represents a columnar storage with optional labels.
+// Each Field in Fields represents a column, all Fields
+// must be of the same the length.
 type Frame struct {
 	Name   string
 	Fields []*Field
@@ -23,17 +31,6 @@ type Frame struct {
 	Meta     *QueryResultMeta
 	Warnings []Warning
 }
-
-// Field represents a column of data with a specific type.
-type Field struct {
-	Name   string
-	Config *FieldConfig
-	vector vector // TODO? in the frontend, the variable is called "Values"
-	Labels Labels
-}
-
-// Fields is a slice of Field pointers.
-type Fields []*Field
 
 // AppendRow adds a new row to the Frame by appending to each element of vals to
 // the corresponding Field in the data.
@@ -124,16 +121,16 @@ func (f *Frame) EmptyCopy() *Frame {
 	return newFrame
 }
 
-// TypeIndices returns a slice of Field index positions for the given pTypes.
-func (f *Frame) TypeIndices(pTypes ...FieldType) []int {
+// TypeIndices returns a slice of Field index positions for the given fTypes.
+func (f *Frame) TypeIndices(fTypes ...FieldType) []int {
 	indices := []int{}
 	if f.Fields == nil {
 		return indices
 	}
 	for fieldIdx, f := range f.Fields {
 		vecType := f.Type()
-		for _, pType := range pTypes {
-			if pType == vecType {
+		for _, fType := range fTypes {
+			if fType == vecType {
 				indices = append(indices, fieldIdx)
 				break
 			}
@@ -142,295 +139,11 @@ func (f *Frame) TypeIndices(pTypes ...FieldType) []int {
 	return indices
 }
 
-// NewField returns a new instance of Field.
-func NewField(name string, labels Labels, values interface{}) *Field {
-	var vec vector
-	switch v := values.(type) {
-	case []int8:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*int8:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []int16:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*int16:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []int32:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*int32:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []int64:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*int64:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []uint8:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*uint8:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []uint16:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*uint16:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []uint32:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*uint32:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []uint64:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*uint64:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []float32:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*float32:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []float64:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*float64:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []string:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*string:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []bool:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*bool:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []time.Time:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	case []*time.Time:
-		vec = newVector(v, len(v))
-		for i := 0; i < len(v); i++ {
-			vec.Set(i, v[i])
-		}
-	default:
-		panic(fmt.Errorf("unsupported field type %T", v))
-	}
-
-	return &Field{
-		Name:   name,
-		vector: vec,
-		Labels: labels,
-	}
-}
-
-// Set sets the Field's value at index idx to val.
-// It will panic if idx is out of range.
-func (f *Field) Set(idx int, val interface{}) {
-	f.vector.Set(idx, val)
-}
-
-// Append appends element i to the Field.
-func (f *Field) Append(i interface{}) {
-	f.vector.Append(i)
-}
-
-// Extend extends the Field length by i.
-func (f *Field) Extend(i int) {
-	f.vector.Extend(i)
-}
-
-// At returns the the element at index idx of the Field.
-// It will panic if idx is out of range.
-func (f *Field) At(idx int) interface{} {
-	return f.vector.At(idx)
-}
-
-// Len returns the number of elements in the Field.
-func (f *Field) Len() int {
-	return f.vector.Len()
-}
-
-// Type returns the underlying primitive type of the Field.
-func (f *Field) Type() FieldType {
-	return f.vector.Type()
-}
-
-// PointerAt returns a pointer to the value at idx of the Field.
-// It will panic if idx is out of range.
-func (f *Field) PointerAt(idx int) interface{} {
-	return f.vector.PointerAt(idx)
-}
-
-// CopyAt returns a copy of the value of the specified index idx.
-// It will panic if idx is out of range.
-func (f *Field) CopyAt(idx int) interface{} {
-	return f.vector.CopyAt(idx)
-}
-
-// ConcreteAt returns the concrete value at the specified index idx.
-// A non-pointer type is returned regardless if the underlying vector is a pointer
-// type or not. If the value is a pointer type, and is nil, then the zero value
-// is returned and ok will be false.
-func (f *Field) ConcreteAt(idx int) (val interface{}, ok bool) {
-	return f.vector.ConcreteAt(idx)
-}
-
-// Nullable returns if the the Field's elements are nullable.
-func (f *Field) Nullable() bool {
-	return f.Type().Nullable()
-}
-
 // SetConfig modifies the Field's Config property to
 // be set to conf and returns the Field.
 func (f *Field) SetConfig(conf *FieldConfig) *Field {
 	f.Config = conf
 	return f
-}
-
-// Labels are used to add metadata to an object.
-type Labels map[string]string
-
-// Equals returns true if the argument has the same k=v pairs as the receiver.
-func (l Labels) Equals(arg Labels) bool {
-	if len(l) != len(arg) {
-		return false
-	}
-	for k, v := range l {
-		if argVal, ok := arg[k]; !ok || argVal != v {
-			return false
-		}
-	}
-	return true
-}
-
-// Copy returns a copy of the labels.
-func (l Labels) Copy() Labels {
-	c := make(Labels, len(l))
-	for k, v := range l {
-		c[k] = v
-	}
-	return c
-}
-
-// Contains returns true if all k=v pairs of the argument are in the receiver.
-func (l Labels) Contains(arg Labels) bool {
-	if len(arg) > len(l) {
-		return false
-	}
-	for k, v := range arg {
-		if argVal, ok := l[k]; !ok || argVal != v {
-			return false
-		}
-	}
-	return true
-}
-
-func (l Labels) String() string {
-	// Better structure, should be sorted, copy prom probably
-	keys := make([]string, len(l))
-	i := 0
-	for k := range l {
-		keys[i] = k
-		i++
-	}
-	sort.Strings(keys)
-
-	var sb strings.Builder
-
-	i = 0
-	for _, k := range keys {
-		sb.WriteString(k)
-		sb.WriteString("=")
-		sb.WriteString(l[k])
-		if i != len(keys)-1 {
-			sb.WriteString(", ")
-		}
-		i++
-	}
-	return sb.String()
-}
-
-// LabelsFromString parses the output of Labels.String() into
-// a Labels object. It probably has some flaws.
-func LabelsFromString(s string) (Labels, error) {
-	if s == "" {
-		return nil, nil
-	}
-	labels := make(map[string]string)
-
-	for _, rawKV := range strings.Split(s, ", ") {
-		kV := strings.SplitN(rawKV, "=", 2)
-		if len(kV) != 2 {
-			return nil, fmt.Errorf(`invalid label key=value pair "%v"`, rawKV)
-		}
-		labels[kV[0]] = kV[1]
-	}
-
-	return labels, nil
 }
 
 // NewFrame returns a new instance of a Frame.
@@ -507,7 +220,15 @@ func (f *Frame) RowLen() (int, error) {
 	return l, nil
 }
 
+// FloatAt returns a float64 representation of value of the specified fieldIdx and rowIdx as per Field.FloatAt().
+// It will panic if either the fieldIdx or rowIdx are out of range.
+func (f *Frame) FloatAt(fieldIdx int, rowIdx int) (float64, error) {
+	return f.Fields[fieldIdx].FloatAt(rowIdx)
+}
+
 // FrameTestCompareOptions returns go-cmp testing options to allow testing of Frame equivelnce.
+// Since the data within a Frame's Fields is not exported, this function allows the unexported
+// values to be tested.
 // The intent is to only use this for testing.
 func FrameTestCompareOptions() []cmp.Option {
 	confFloats := cmp.Comparer(func(x, y *ConfFloat64) bool {
@@ -538,7 +259,171 @@ func FrameTestCompareOptions() []cmp.Option {
 		}
 		return *x == *y
 	})
+	f64Ptrs := cmp.Comparer(func(x, y *float64) bool {
+		if x == nil && y == nil {
+			return true
+		}
+		if y == nil {
+			if math.IsNaN(float64(*x)) {
+				return true
+			}
+			if math.IsInf(float64(*x), 1) {
+				return true
+			}
+			if math.IsInf(float64(*x), -1) {
+				return true
+			}
+		}
+		if x == nil {
+			if math.IsNaN(float64(*y)) {
+				return true
+			}
+			if math.IsInf(float64(*y), 1) {
+				return true
+			}
+			if math.IsInf(float64(*y), -1) {
+				return true
+			}
+		}
+		return *x == *y
+	})
+	f64s := cmp.Comparer(func(x, y float64) bool {
+		return (math.IsNaN(x) && math.IsNaN(y)) ||
+			(math.IsInf(x, 1) && math.IsInf(y, 1)) ||
+			(math.IsInf(x, -1) && math.IsInf(y, -1)) ||
+			x == y
+	})
+	f32Ptrs := cmp.Comparer(func(x, y *float32) bool {
+		if x == nil && y == nil {
+			return true
+		}
+		if y == nil {
+			if math.IsNaN(float64(*x)) {
+				return true
+			}
+			if math.IsInf(float64(*x), 1) {
+				return true
+			}
+			if math.IsInf(float64(*x), -1) {
+				return true
+			}
+		}
+		if x == nil {
+			if math.IsNaN(float64(*y)) {
+				return true
+			}
+			if math.IsInf(float64(*y), 1) {
+				return true
+			}
+			if math.IsInf(float64(*y), -1) {
+				return true
+			}
+		}
+		return *x == *y
+	})
+	f32s := cmp.Comparer(func(x, y float32) bool {
+		return (math.IsNaN(float64(x)) && math.IsNaN(float64(y))) ||
+			(math.IsInf(float64(x), 1) && math.IsInf(float64(y), 1)) ||
+			(math.IsInf(float64(x), -1) && math.IsInf(float64(y), -1)) ||
+			x == y
+	})
 
 	unexportedField := cmp.AllowUnexported(Field{})
-	return []cmp.Option{confFloats, unexportedField, cmpopts.EquateEmpty()}
+	return []cmp.Option{f32s, f32Ptrs, f64s, f64Ptrs, confFloats, unexportedField, cmpopts.EquateEmpty()}
+}
+
+func (f *Frame) String() string {
+	s, err := f.StringTable(10, 10)
+	if err != nil {
+		return err.Error()
+	}
+	return s
+}
+
+// StringTable prints a human readable table of the Frame.
+// The table's width is limited to maxFields and the length is limited to maxRows.
+// If the width or length is excceded then last column or row displays "..." as the contents.
+func (f *Frame) StringTable(maxFields, maxRows int) (string, error) {
+	if maxFields < 2 {
+		return "", fmt.Errorf("maxWidth than 2")
+	}
+
+	rowLen, err := f.RowLen()
+	if err != nil {
+		return "", err
+	}
+
+	// calculate output column width (fields)
+	width := len(f.Fields)
+	exceedsWidth := width > maxFields
+	if exceedsWidth {
+		width = maxFields
+	}
+
+	// calculate output length (rows)
+	length := rowLen
+	exceedsLength := rowLen > maxRows
+	if exceedsLength {
+		length = maxRows + 1
+	}
+
+	sb := &strings.Builder{}
+	sb.WriteString(fmt.Sprintf("Name: %v\n", f.Name))
+	table := tablewriter.NewWriter(sb)
+
+	// table formatting options
+	table.SetAutoFormatHeaders(false)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoWrapText(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+
+	// (caption is below the table)
+	table.SetCaption(true, fmt.Sprintf("Field Count: %v\nRow Count: %v", len(f.Fields), rowLen))
+
+	// set table headers
+	headers := make([]string, width)
+	for colIdx, field := range f.Fields {
+		if exceedsWidth && colIdx == maxFields-1 { // if Frame has more Fields than output table width and last Field
+			headers[colIdx] = fmt.Sprintf("...+%v field...", len(f.Fields)-colIdx)
+			break
+		}
+		headers[colIdx] = fmt.Sprintf("Name: %v\nLabels: %s\nType: %s", field.Name, field.Labels, field.Type())
+	}
+	table.SetHeader(headers)
+
+	if maxRows == 0 {
+		table.Render()
+		return sb.String(), nil
+	}
+
+	for rowIdx := 0; rowIdx < length; rowIdx++ {
+		iRow := f.RowCopy(rowIdx)     // interface row (source)
+		sRow := make([]string, width) // string row (destination)
+
+		if exceedsLength && rowIdx == maxRows-1 { // if Frame has more rows than output table and last row
+			for i := range sRow {
+				sRow[i] = "..."
+			}
+			table.Append(sRow)
+			break
+		}
+
+		for colIdx, v := range iRow {
+			if exceedsWidth && colIdx == maxFields-1 { // if Frame has more Fields than output table width and last Field
+				sRow[colIdx] = "..."
+				break
+			}
+
+			val := reflect.Indirect(reflect.ValueOf(v))
+			if val.IsValid() {
+				sRow[colIdx] = fmt.Sprintf("%v", val)
+			} else {
+				sRow[colIdx] = "null"
+			}
+		}
+		table.Append(sRow)
+	}
+
+	table.Render()
+	return sb.String(), nil
 }

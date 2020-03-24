@@ -3,8 +3,10 @@ import _ from 'lodash';
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
+  DataConfigSource,
   DataLink,
   DataQuery,
   DataQueryResponseData,
@@ -13,6 +15,7 @@ import {
   PanelEvents,
   PanelPlugin,
   ScopedVars,
+  FieldConfigSource,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 
@@ -41,6 +44,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
+  replaceVariables: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -78,6 +82,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   pluginVersion: true,
   queryRunner: true,
   transformations: true,
+  fieldConfig: true,
 };
 
 const defaults: any = {
@@ -88,7 +93,7 @@ const defaults: any = {
   options: {},
 };
 
-export class PanelModel {
+export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
   id: number;
   gridPos: GridPos;
@@ -118,6 +123,7 @@ export class PanelModel {
   options: {
     [key: string]: any;
   };
+  fieldConfig: FieldConfigSource;
 
   maxDataPoints?: number;
   interval?: string;
@@ -144,6 +150,7 @@ export class PanelModel {
     // this should not be removed in save model as exporter needs to templatize it
     this.datasource = null;
     this.restoreModel(model);
+    this.replaceVariables = this.replaceVariables.bind(this);
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -173,9 +180,20 @@ export class PanelModel {
   getOptions() {
     return this.options;
   }
+  getFieldConfig() {
+    return this.fieldConfig;
+  }
 
   updateOptions(options: object) {
     this.options = options;
+
+    this.render();
+  }
+
+  updateFieldConfig(config: FieldConfigSource) {
+    this.fieldConfig = config;
+
+    this.resendLastResult();
     this.render();
   }
 
@@ -268,6 +286,23 @@ export class PanelModel {
         return srcValue;
       }
     });
+
+    this.fieldConfig = {
+      defaults: _.mergeWith(
+        {},
+        plugin.fieldConfigDefaults.defaults,
+        this.fieldConfig ? this.fieldConfig.defaults : {},
+        (objValue: any, srcValue: any): any => {
+          if (_.isArray(srcValue)) {
+            return srcValue;
+          }
+        }
+      ),
+      overrides: [
+        ...plugin.fieldConfigDefaults.overrides,
+        ...(this.fieldConfig && this.fieldConfig.overrides ? this.fieldConfig.overrides : []),
+      ],
+    };
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -283,6 +318,7 @@ export class PanelModel {
     }
 
     this.applyPluginOptionDefaults(plugin);
+    this.resendLastResult();
   }
 
   changePlugin(newPlugin: PanelPlugin) {
@@ -319,6 +355,9 @@ export class PanelModel {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
+
+    // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
+    this.replaceVariables = this.replaceVariables.bind(this);
     this.applyPluginOptionDefaults(newPlugin);
 
     if (newPlugin.onPanelMigration) {
@@ -363,10 +402,26 @@ export class PanelModel {
     return clone;
   }
 
+  getTransformations() {
+    return this.transformations;
+  }
+
+  getFieldOverrideOptions() {
+    if (!this.plugin) {
+      return undefined;
+    }
+
+    return {
+      fieldOptions: this.fieldConfig,
+      replaceVariables: this.replaceVariables,
+      custom: this.plugin.customFieldConfigs,
+      theme: config.theme,
+    };
+  }
+
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner();
-      this.setTransformations(this.transformations);
+      this.queryRunner = new PanelQueryRunner(this);
     }
     return this.queryRunner;
   }
@@ -390,7 +445,22 @@ export class PanelModel {
 
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
-    this.getQueryRunner().setTransformations(transformations);
+  }
+
+  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+    let vars = this.scopedVars;
+    if (extraVars) {
+      vars = vars ? { ...vars, ...extraVars } : extraVars;
+    }
+    return templateSrv.replace(value, vars, format);
+  }
+
+  resendLastResult() {
+    if (!this.plugin) {
+      return;
+    }
+
+    this.getQueryRunner().resendLastResult();
   }
 }
 

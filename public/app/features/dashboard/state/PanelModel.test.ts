@@ -1,6 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelProps } from '@grafana/data';
+import { ConfigOverrideRule, PanelProps } from '@grafana/data';
 import { ComponentClass } from 'react';
 
 class TablePanelCtrl {}
@@ -53,9 +53,31 @@ describe('PanelModel', () => {
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: persistedOptionsMock,
+        fieldConfig: {
+          defaults: {
+            unit: 'mpg',
+          },
+          overrides: [
+            {
+              matcher: {
+                id: '1',
+                options: {},
+              },
+              properties: [],
+            },
+          ],
+        },
       };
 
       model = new PanelModel(modelJson);
+      const overrideMock: ConfigOverrideRule = {
+        matcher: {
+          id: '2',
+          options: {},
+        },
+        properties: [],
+      };
+
       const panelPlugin = getPanelPlugin(
         {
           id: 'table',
@@ -64,6 +86,13 @@ describe('PanelModel', () => {
         TablePanelCtrl // angular
       );
       panelPlugin.setDefaults(defaultOptionsMock);
+      panelPlugin.setFieldConfigDefaults({
+        defaults: {
+          unit: 'flop',
+          decimals: 2,
+        },
+        overrides: [overrideMock],
+      });
       model.pluginLoaded(panelPlugin);
     });
 
@@ -77,6 +106,17 @@ describe('PanelModel', () => {
 
     it('should apply option defaults but not override if array is changed', () => {
       expect(model.getOptions().arrayWith2Values.length).toBe(1);
+    });
+
+    it('should merge override field config options', () => {
+      expect(model.getFieldOverrideOptions().fieldOptions.overrides.length).toBe(2);
+    });
+
+    it('should apply field config defaults', () => {
+      // default unit is overriden by model
+      expect(model.getFieldOverrideOptions().fieldOptions.defaults.unit).toBe('mpg');
+      // default decimals are aplied
+      expect(model.getFieldOverrideOptions().fieldOptions.defaults.decimals).toBe(2);
     });
 
     it('should set model props on instance', () => {
@@ -111,6 +151,25 @@ describe('PanelModel', () => {
       expect(saveModel.events).toBe(undefined);
     });
 
+    describe('variables interpolation', () => {
+      beforeEach(() => {
+        model.scopedVars = {
+          aaa: { value: 'AAA', text: 'upperA' },
+          bbb: { value: 'BBB', text: 'upperB' },
+        };
+      });
+      it('should interpolate variables', () => {
+        const out = model.replaceVariables('hello $aaa');
+        expect(out).toBe('hello AAA');
+      });
+
+      it('should prefer the local variable value', () => {
+        const extra = { aaa: { text: '???', value: 'XXX' } };
+        const out = model.replaceVariables('hello $aaa and $bbb', extra);
+        expect(out).toBe('hello XXX and BBB');
+      });
+    });
+
     describe('when changing panel type', () => {
       const newPanelPluginDefaults = {
         showThresholdLabels: false,
@@ -141,14 +200,33 @@ describe('PanelModel', () => {
         model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
       });
-
-      it('panelQueryRunner should be cleared', () => {
-        const panelQueryRunner = (model as any).queryRunner;
-        expect(panelQueryRunner).toBeFalsy();
-      });
     });
 
     describe('when changing to react panel from angular panel', () => {
+      let panelQueryRunner: any;
+
+      const onPanelTypeChanged = jest.fn();
+      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(onPanelTypeChanged as any);
+
+      beforeEach(() => {
+        model.changePlugin(reactPlugin);
+        panelQueryRunner = model.getQueryRunner();
+      });
+
+      it('should call react onPanelTypeChanged', () => {
+        expect(onPanelTypeChanged.mock.calls.length).toBe(1);
+        expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
+        expect(onPanelTypeChanged.mock.calls[0][2].angular).toBeDefined();
+      });
+
+      it('getQueryRunner() should return same instance after changing to another react panel', () => {
+        model.changePlugin(getPanelPlugin({ id: 'react2' }));
+        const sameQueryRunner = model.getQueryRunner();
+        expect(panelQueryRunner).toBe(sameQueryRunner);
+      });
+    });
+
+    describe('variables interpolation', () => {
       let panelQueryRunner: any;
 
       const onPanelTypeChanged = jest.fn();

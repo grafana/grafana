@@ -148,8 +148,8 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.28.0
-github.com/grafana/grafana-plugin-sdk-go/backend/plugin
+# github.com/grafana/grafana-plugin-sdk-go v0.33.0
+github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin
 github.com/grafana/grafana-plugin-sdk-go/data
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
 # github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
@@ -190,6 +190,8 @@ github.com/mattetti/filebuffer
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
+# github.com/mattn/go-runewidth v0.0.7
+github.com/mattn/go-runewidth
 # github.com/mattn/go-sqlite3 v1.11.0
 github.com/mattn/go-sqlite3
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
@@ -202,6 +204,8 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/oklog/run v1.0.0
 github.com/oklog/run
+# github.com/olekukonko/tablewriter v0.0.4
+github.com/olekukonko/tablewriter
 # github.com/opentracing/opentracing-go v1.1.0
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
@@ -285,6 +289,8 @@ github.com/uber/jaeger-lib/metrics
 github.com/unknwon/com
 # github.com/urfave/cli/v2 v2.1.1
 github.com/urfave/cli/v2
+# github.com/xorcare/pointer v1.1.0
+github.com/xorcare/pointer
 # github.com/yudai/gojsondiff v1.0.0
 github.com/yudai/gojsondiff
 github.com/yudai/gojsondiff/formatter

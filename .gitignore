@@ -105,5 +105,9 @@ compilation-stats.json
 /packages/grafana-e2e/cypress/videos
 /packages/grafana-e2e/cypress/logs
 /e2e/server.log
-/e2e/suite1/screenshots/received
+/e2e/suite1/screenshots
+!/e2e/suite1/screenshots/expeced/*
 /e2e/suite1/videos/*
+
+# report dumping the whole system env
+/report.*.json
