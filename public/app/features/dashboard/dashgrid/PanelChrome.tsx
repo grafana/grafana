@@ -11,6 +11,7 @@ import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import { getProcessedDataFrames } from '../state/runRequest';
 import config from 'app/core/config';
+import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
@@ -23,6 +24,7 @@ import {
   PanelEvents,
   PanelData,
   PanelPlugin,
+  FieldConfigSource,
 } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -36,6 +38,7 @@ export interface Props {
   isInEditMode?: boolean;
   width: number;
   height: number;
+  updateLocation: typeof updateLocation;
 }
 
 export interface State {
@@ -43,8 +46,6 @@ export interface State {
   renderCounter: number;
   errorMessage?: string;
   refreshWhenInView: boolean;
-
-  // Current state of all events
   data: PanelData;
 }
 
@@ -217,6 +218,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.props.panel.updateOptions(options);
   };
 
+  onFieldConfigChange = (config: FieldConfigSource) => {
+    this.props.panel.updateFieldConfig(config);
+  };
+
   onPanelError = (message: string) => {
     if (this.state.errorMessage !== message) {
       this.setState({ errorMessage: message });
@@ -281,12 +286,14 @@ export class PanelChrome extends PureComponent<Props, State> {
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panelOptions}
+            fieldConfig={panel.fieldConfig}
             transparent={panel.transparent}
             width={panelWidth}
             height={innerPanelHeight}
             renderCounter={renderCounter}
             replaceVariables={panel.replaceVariables}
             onOptionsChange={this.onOptionsChange}
+            onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
           />
         </div>
@@ -312,7 +319,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, width, height } = this.props;
+    const { dashboard, panel, isFullscreen, width, height, updateLocation } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -328,14 +335,14 @@ export class PanelChrome extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={data.request ? data.request.timeInfo : undefined}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}
           links={panel.links}
           error={errorMessage}
           isFullscreen={isFullscreen}
-          isLoading={data.state === LoadingState.Loading}
+          data={data}
+          updateLocation={updateLocation}
         />
         <ErrorBoundary>
           {({ error }) => {

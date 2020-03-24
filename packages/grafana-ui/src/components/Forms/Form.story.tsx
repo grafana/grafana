@@ -19,7 +19,7 @@ import { boolean } from '@storybook/addon-knobs';
 import { TextArea } from './TextArea/TextArea';
 
 export default {
-  title: 'Forms/Test forms',
+  title: 'Forms/Example forms',
   decorators: [withStoryContainer, withCenteredStory],
   parameters: {
     docs: {

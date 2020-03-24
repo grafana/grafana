@@ -9,13 +9,13 @@ import {
   VariableRefresh,
   VariableSort,
   VariableTag,
-} from '../../templating/variable';
+} from '../../templating/types';
 import templateSrv from '../../templating/template_srv';
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
-  EMPTY_UUID,
   getInstanceState,
+  NEW_VARIABLE_ID,
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
   VariablePayload,
@@ -31,7 +31,7 @@ export interface QueryVariableEditorState {
 }
 
 export const initialQueryVariableModelState: QueryVariableModel = {
-  uuid: EMPTY_UUID,
+  id: NEW_VARIABLE_ID,
   global: false,
   index: -1,
   type: 'query',
@@ -134,7 +134,7 @@ export const queryVariableSlice = createSlice({
   reducers: {
     updateVariableOptions: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
       const results = action.payload.data;
-      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.uuid);
+      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
       const { regex, includeAll, sort } = instanceState;
       const options = metricNamesToVariableValues(regex, sort, results);
 
@@ -148,7 +148,7 @@ export const queryVariableSlice = createSlice({
       instanceState.options = options;
     },
     updateVariableTags: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
-      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.uuid);
+      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
       const results = action.payload.data;
       const tags: VariableTag[] = [];
       for (let i = 0; i < results.length; i++) {

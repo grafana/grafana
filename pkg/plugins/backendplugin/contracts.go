@@ -59,6 +59,23 @@ func checkHealthResultFromProto(protoResp *pluginv2.CheckHealthResponse) *CheckH
 	}
 }
 
+func collectMetricsResultFromProto(protoResp *pluginv2.CollectMetricsResponse) *CollectMetricsResult {
+	var prometheusMetrics []byte
+
+	if protoResp.Metrics != nil {
+		prometheusMetrics = protoResp.Metrics.Prometheus
+	}
+
+	return &CollectMetricsResult{
+		PrometheusMetrics: prometheusMetrics,
+	}
+}
+
+// CollectMetricsResult collect metrics result.
+type CollectMetricsResult struct {
+	PrometheusMetrics []byte
+}
+
 type DataSourceConfig struct {
 	ID                      int64
 	Name                    string

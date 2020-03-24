@@ -43,6 +43,7 @@ import {
   deleteAllFromRichHistory,
   updateStarredInRichHistory,
   updateCommentInRichHistory,
+  deleteQueryInRichHistory,
   getQueryDisplayText,
   getRichHistory,
 } from 'app/core/utils/richHistory';
@@ -439,20 +440,21 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 
     stopQueryState(querySubscription);
 
+    const datasourceId = datasourceInstance.meta.id;
+
     const queryOptions: QueryOptions = {
       minInterval,
       // maxDataPoints is used in:
       // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
       // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
       // Influx - used to correctly display logs in graph
-      maxDataPoints: mode === ExploreMode.Logs && datasourceInstance.name === 'Loki' ? undefined : containerWidth,
+      maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
       liveStreaming: live,
       showingGraph,
       showingTable,
       mode,
     };
 
-    const datasourceId = datasourceInstance.meta.id;
     const datasourceName = exploreItemState.requestedDatasourceName;
 
     const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
@@ -523,6 +525,9 @@ export const updateRichHistory = (ts: number, property: string, updatedProperty?
     }
     if (property === 'comment') {
       nextRichHistory = updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
+    }
+    if (property === 'delete') {
+      nextRichHistory = deleteQueryInRichHistory(getState().explore.richHistory, ts);
     }
     dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
   };

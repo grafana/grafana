@@ -160,7 +160,7 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => Promise.resolve(response));
+        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       });
 
       it('should return a list of subscriptions', () => {

@@ -1,4 +1,4 @@
-import { VariableModel } from '../../templating/variable';
+import { VariableModel } from '../../templating/types';
 
 export interface VariablePickerProps<Model extends VariableModel = VariableModel> {
   variable: Model;

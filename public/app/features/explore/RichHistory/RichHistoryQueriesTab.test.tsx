@@ -14,6 +14,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     activeDatasourceOnly: false,
     datasourceFilters: null,
     retentionPeriod: 14,
+    height: 100,
     exploreId: ExploreId.left,
     onChangeSortOrder: jest.fn(),
     onSelectDatasourceFilters: jest.fn(),
