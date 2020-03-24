@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { css } from 'emotion';
 import { saveAs } from 'file-saver';
-import { CustomScrollbar, Forms, Button, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
+import { CustomScrollbar, Button, HorizontalGroup, JSONFormatter, VerticalGroup } from '@grafana/ui';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { SaveDashboardFormProps } from '../types';
 

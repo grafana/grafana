@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from 'emotion';
-import { stylesFactory, useTheme, Forms } from '@grafana/ui';
+import { stylesFactory, useTheme, Forms, Button } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
