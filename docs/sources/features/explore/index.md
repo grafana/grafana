@@ -51,6 +51,67 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 You can close the newly created query by clicking on the Close Split button.
 
+## Query history
+
+> BETA: Query history is a beta feature.
+
+Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
+
+### View query history
+
+Query history lets you view the history of your querying. For each individual query, you can:
+
+- Replace Explore query for selected query by clicking on the query card.
+- Create and/or edit a comment.
+- Copy a query to the clipboard.
+- Copy a URL link with the query to the clipboard.
+- Star a query.
+
+### Manage favorite queries
+
+All queries that have been starred in the Query history tab are displayed in the Starred. This allows you to access your favorite queries faster and to reuse these queries without typing them from scratch.
+
+### Sort query history
+
+By default, query history shows you the most recent queries. You can sort your history in by date or by data source name in ascending or descending order.
+
+1. Click the **Sort queries by** field.
+2. Select one of the following options:
+   - Time ascending
+   - Time descending
+   - Data source A-Z
+   - Data source Z-A
+
+> Note: If you are in split mode, then the chosen sorting mode applies only to the active panel.
+
+### Filter query history
+
+Filter query history in Query history and Starred tab by data source name:
+
+1. Click the **Filter queries for specific data source(s)** field
+2. Select the data source for which you would like to filter your history. You can select multiple data sources.
+
+In **Query history** tab is is also possible to filter queries by date using the slider:
+
+- Use vertical slider to filter queries by date.
+- By dragging top handle, adjust start date.
+- By dragging top handle, adjust end date.
+
+> Note: If you are in split mode, filters are applied only to your currently active panel.
+
+### Query history settings
+
+You can customize the query history in the Settings tab. Options are described in the table below.
+
+| Setting                                                       | Default value                           |
+| ------------------------------------------------------------- | --------------------------------------- |
+| Period of time for which Grafana will save your query history | 1 week                                  |
+| Change the default active tab                                 | Query history tab                       |
+| Only show queries for datasource currently active in Explore  | False                                   |
+| Clear query history                                           | Permanently deletes all stored queries. |
+
+> Note: Query history settings are global, and applied to both panels in split mode.
+
 ## Prometheus-specific Features
 
 The first version of Explore features a custom querying experience for Prometheus. When a query is executed, it actually executes two queries, a normal Prometheus query for the graph and an Instant Query for the table. An Instant Query returns the last value for each time series which shows a good summary of the data shown in the graph.
@@ -69,9 +130,9 @@ The autocomplete menu can be trigger by pressing Ctrl+Space. The Autocomplete me
 
 Suggestions can appear under the query field - click on them to update your query with the suggested change.
 
-* For counters (monotonically increasing metrics), a rate function will be suggested.
-* For buckets, a histogram function will be suggested.
-* For recording rules, possible to expand the rules.
+- For counters (monotonically increasing metrics), a rate function will be suggested.
+- For buckets, a histogram function will be suggested.
+- For recording rules, possible to expand the rules.
 
 ### Table Filters
 
@@ -80,30 +141,40 @@ Click on the filter button <span title="Filter for label" class="logs-label__ico
 ## Logs Integration
 
 Along with metrics, Explore allows you to investigate your logs with the following data sources:
+
 - [Loki](../datasources/loki)
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
 
-### Deduping
+### Visualization options
+
+You can customize how logs are displayed and select which columns are shown.
+
+#### Deduping
 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
 
-* `exact` Exact matches are done on the whole line, except for date fields.
-* `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
-* `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
+- `exact` Exact matches are done on the whole line, except for date fields.
+- `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
+- `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
-### Timestamp and Local time
+#### Time
 
-There are some other check boxes under the logging graph apart from the Deduping options.
+Shows or hides the time column. This is the timestamp associated with the log line as reported from the data source.
 
-* Timestamp: shows/hides the Timestamp column
-* Local time: shows/hides the Local time column
+#### Unique labels
+
+Shows or hides the unique labels column that includes only non-common labels. All common labels are displayed above.
+
+#### Wrap lines
+
+Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
 
 ### Labels and Parsed fields
 
-Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs. 
+Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
-### Loki-specific Features
+### Loki-specific features
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Grafana Loki [here](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 

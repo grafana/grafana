@@ -1,13 +1,17 @@
 import { Reducer } from 'redux';
-
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { PayloadAction } from '@reduxjs/toolkit';
 
 export interface Given<State> {
-  givenReducer: (reducer: Reducer<State, ActionOf<any>>, state: State, disableDeepFreeze?: boolean) => When<State>;
+  givenReducer: (
+    reducer: Reducer<State, PayloadAction<any>>,
+    state: State,
+    showDebugOutput?: boolean,
+    disableDeepFreeze?: boolean
+  ) => When<State>;
 }
 
 export interface When<State> {
-  whenActionIsDispatched: (action: ActionOf<any>) => Then<State>;
+  whenActionIsDispatched: (action: PayloadAction<any>) => Then<State>;
 }
 
 export interface Then<State> {
@@ -50,13 +54,15 @@ export const deepFreeze = <T>(obj: T): T => {
 interface ReducerTester<State> extends Given<State>, When<State>, Then<State> {}
 
 export const reducerTester = <State>(): Given<State> => {
-  let reducerUnderTest: Reducer<State, ActionOf<any>>;
+  let reducerUnderTest: Reducer<State, PayloadAction<any>>;
   let resultingState: State;
   let initialState: State;
+  let showDebugOutput = false;
 
   const givenReducer = (
-    reducer: Reducer<State, ActionOf<any>>,
+    reducer: Reducer<State, PayloadAction<any>>,
     state: State,
+    debug = false,
     disableDeepFreeze = false
   ): When<State> => {
     reducerUnderTest = reducer;
@@ -64,23 +70,30 @@ export const reducerTester = <State>(): Given<State> => {
     if (!disableDeepFreeze) {
       initialState = deepFreeze(initialState);
     }
+    showDebugOutput = debug;
 
     return instance;
   };
 
-  const whenActionIsDispatched = (action: ActionOf<any>): Then<State> => {
+  const whenActionIsDispatched = (action: PayloadAction<any>): Then<State> => {
     resultingState = reducerUnderTest(resultingState || initialState, action);
 
     return instance;
   };
 
   const thenStateShouldEqual = (state: State): When<State> => {
-    expect(state).toEqual(resultingState);
+    if (showDebugOutput) {
+      console.log(JSON.stringify(resultingState, null, 2));
+    }
+    expect(resultingState).toEqual(state);
 
     return instance;
   };
 
   const thenStatePredicateShouldEqual = (predicate: (resultingState: State) => boolean): When<State> => {
+    if (showDebugOutput) {
+      console.log(JSON.stringify(resultingState, null, 2));
+    }
     expect(predicate(resultingState)).toBe(true);
 
     return instance;

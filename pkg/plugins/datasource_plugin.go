@@ -2,22 +2,16 @@ package plugins
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"path"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
-	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
-	sdk "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
-	plugin "github.com/hashicorp/go-plugin"
 )
 
 // DataSourcePlugin contains all metadata about a datasource plugin
@@ -40,13 +34,9 @@ type DataSourcePlugin struct {
 	SDK        bool   `json:"sdk,omitempty"`
 }
 
-func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
+func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(p); err != nil {
 		return errutil.Wrapf(err, "Failed to decode datasource plugin")
-	}
-
-	if !p.isVersionOne() && !setting.IsExpressionsEnabled() {
-		return errors.New("A plugin version 2 was found, but expressions feature toggle is not enabled")
 	}
 
 	if err := p.registerPlugin(pluginDir); err != nil {
@@ -56,8 +46,11 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	if p.Backend {
 		cmd := ComposePluginStartCommmand(p.Executable)
 		fullpath := path.Join(p.PluginDir, cmd)
-		descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath)
-		if err := backendplugin.Register(descriptor, p.onPluginStart); err != nil {
+		descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
+			OnLegacyStart: p.onLegacyPluginStart,
+			OnStart:       p.onPluginStart,
+		})
+		if err := backendPluginManager.Register(descriptor); err != nil {
 			return errutil.Wrapf(err, "Failed to register backend plugin")
 		}
 	}
@@ -66,41 +59,20 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	return nil
 }
 
-func (p *DataSourcePlugin) isVersionOne() bool {
-	return !p.SDK
+func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *backendplugin.LegacyClient, logger log.Logger) error {
+	tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return wrapper.NewDatasourcePluginWrapper(logger, client.DatasourcePlugin), nil
+	})
+
+	return nil
 }
 
-func (p *DataSourcePlugin) onPluginStart(pluginID string, client *plugin.Client, logger log.Logger) error {
-	rpcClient, err := client.Client()
-	if err != nil {
-		return err
-	}
-
-	if client.NegotiatedVersion() == 1 {
-		raw, err := rpcClient.Dispense(pluginID)
-		if err != nil {
-			return err
-		}
-		plugin := raw.(datasourceV1.DatasourcePlugin)
-
+func (p *DataSourcePlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+	if client.DataPlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapper(logger, plugin), nil
+			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil
 		})
-		return nil
 	}
-
-	raw, err := rpcClient.Dispense("backend")
-	if err != nil {
-		return err
-	}
-	plugin, ok := raw.(sdk.BackendPlugin)
-	if !ok {
-		return fmt.Errorf("unexpected type %T, expected sdk.Plugin", raw)
-	}
-
-	tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return wrapper.NewDatasourcePluginWrapperV2(logger, plugin), nil
-	})
 
 	return nil
 }

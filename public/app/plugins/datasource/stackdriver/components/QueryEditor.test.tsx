@@ -1,6 +1,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import { QueryEditor, Props, DefaultTarget } from './QueryEditor';
+import { DefaultTarget, Props, QueryEditor } from './QueryEditor';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const props: Props = {
@@ -9,8 +9,12 @@ const props: Props = {
   target: DefaultTarget,
   events: { on: () => {} },
   datasource: {
-    getDefaultProject: () => Promise.resolve('project'),
+    getProjects: () => Promise.resolve([]),
+    getDefaultProject: () => Promise.resolve('projectName'),
+    ensureGCEDefaultProject: () => {},
     getMetricTypes: () => Promise.resolve([]),
+    getLabels: () => Promise.resolve([]),
+    variables: [],
   } as any,
   templateSrv: new TemplateSrv(),
 };

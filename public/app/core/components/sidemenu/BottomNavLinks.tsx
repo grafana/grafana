@@ -76,7 +76,7 @@ class BottomNavLinks extends PureComponent<Props, State> {
           {children.map((child, index) => {
             return (
               <li key={`${child.text}-${index}`}>
-                <a href={child.url} target="_blank" rel="noopener">
+                <a href={child.url} target={child.target} rel="noopener">
                   {child.icon && <i className={child.icon} />}
                   {child.text}
                 </a>

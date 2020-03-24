@@ -1,30 +1,21 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
-import { css } from 'emotion';
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup, TransformationsEditor, AlphaNotice } from '@grafana/ui';
+import { PanelOptionsGroup } from '@grafana/ui';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import {
-  LoadingState,
-  DataTransformerConfig,
-  DefaultTimeRange,
-  DataSourceSelectItem,
-  DataQuery,
-  PanelData,
-  PluginState,
-} from '@grafana/data';
+import { LoadingState, DefaultTimeRange, DataSourceSelectItem, DataQuery, PanelData } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
@@ -48,7 +39,7 @@ interface State {
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
-  backendSrv = getBackendSrv();
+  backendSrv = backendSrv;
   querySubscription: Unsubscribable;
 
   state: State = {
@@ -219,11 +210,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
-  onTransformersChange = (transformers: DataTransformerConfig[]) => {
-    this.props.panel.setTransformations(transformers);
-    this.forceUpdate();
-  };
-
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     this.setState({ scrollTop: target.scrollTop });
@@ -256,7 +242,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   render() {
-    const { scrollTop, data } = this.state;
+    const { scrollTop } = this.state;
     const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
       render: this.renderQueryInspector,
@@ -268,8 +254,6 @@ export class QueriesTab extends PureComponent<Props, State> {
       render: this.renderHelp,
     };
 
-    const enableTransformations = config.featureToggles.transformations;
-
     return (
       <EditorTabBody
         heading="Query"
@@ -278,33 +262,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         setScrollTop={this.setScrollTop}
         scrollTop={scrollTop}
       >
-        <>
-          {this.renderQueryBody()}
-
-          {enableTransformations && (
-            <PanelOptionsGroup
-              title={
-                <>
-                  Query results
-                  <AlphaNotice
-                    state={PluginState.alpha}
-                    className={css`
-                      margin-left: 16px;
-                    `}
-                  />
-                </>
-              }
-            >
-              {this.state.data.state !== LoadingState.NotStarted && (
-                <TransformationsEditor
-                  transformations={this.props.panel.transformations || []}
-                  onChange={this.onTransformersChange}
-                  dataFrames={data.series}
-                />
-              )}
-            </PanelOptionsGroup>
-          )}
-        </>
+        <>{this.renderQueryBody()}</>
       </EditorTabBody>
     );
   }

@@ -129,7 +129,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
-    optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
+    optimization.minimizer = [new TerserPlugin({ sourceMap: true }), new OptimizeCssAssetsPlugin()];
   } else if (options.watch) {
     plugins.push(new HtmlWebpackPlugin());
   }
@@ -198,6 +198,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
               options: {
                 presets: [['@babel/preset-env', { modules: false }]],
                 plugins: ['angularjs-annotate'],
+                sourceMaps: true,
               },
             },
             {
@@ -215,6 +216,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
               options: {
                 presets: [['@babel/preset-env', { modules: false }]],
                 plugins: ['angularjs-annotate'],
+                sourceMaps: true,
               },
             },
           ],

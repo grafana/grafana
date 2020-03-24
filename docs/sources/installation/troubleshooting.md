@@ -56,6 +56,18 @@ export GF_DIAGNOSTICS_PROFILING_PORT=8080
 
 Refer to [Go command pprof](https://golang.org/cmd/pprof/) for more information about how to collect and analyze profiling data.
 
+### Server side image rendering (RPM-based Linux)
+
+Server side image (png) rendering is a feature that is optional but very useful when sharing visualizations, for example in alert notifications.
+
+If the image is missing text make sure you have font packages installed.
+
+```bash
+sudo yum install fontconfig
+sudo yum install freetype*
+sudo yum install urw-fonts
+```
+
 ### Tracing
 
 The `grafana-server` can be started with the arguments `-tracing` to enable tracing and `-tracing-file` to override the default trace file (`trace.out`) where trace result is written to. For example:

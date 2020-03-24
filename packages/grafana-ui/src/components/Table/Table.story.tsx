@@ -5,13 +5,15 @@ import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
 import mdx from './Table.mdx';
 import {
+  applyFieldOverrides,
+  ConfigOverrideRule,
   DataFrame,
-  MutableDataFrame,
+  FieldMatcherID,
   FieldType,
   GrafanaTheme,
-  applyFieldOverrides,
-  FieldMatcherID,
-  ConfigOverrideRule,
+  MutableDataFrame,
+  ThresholdsConfig,
+  ThresholdsMode,
 } from '@grafana/data';
 
 export default {
@@ -56,7 +58,7 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
         config: {
           unit: 'percent',
           custom: {
-            width: 50,
+            width: 100,
           },
         },
       },
@@ -103,10 +105,10 @@ export const BarGaugeCell = () => {
     {
       matcher: { id: FieldMatcherID.byName, options: 'Progress' },
       properties: [
-        { path: 'custom.width', value: '200' },
-        { path: 'custom.displayMode', value: 'gradient-gauge' },
-        { path: 'min', value: '0' },
-        { path: 'max', value: '100' },
+        { prop: 'width', value: '200', custom: true },
+        { prop: 'displayMode', value: 'gradient-gauge', custom: true },
+        { prop: 'min', value: '0' },
+        { prop: 'max', value: '100' },
       ],
     },
   ]);
@@ -118,16 +120,19 @@ export const BarGaugeCell = () => {
   );
 };
 
-const defaultThresholds = [
-  {
-    color: 'blue',
-    value: -Infinity,
-  },
-  {
-    color: 'green',
-    value: 20,
-  },
-];
+const defaultThresholds: ThresholdsConfig = {
+  steps: [
+    {
+      color: 'blue',
+      value: -Infinity,
+    },
+    {
+      color: 'green',
+      value: 20,
+    },
+  ],
+  mode: ThresholdsMode.Absolute,
+};
 
 export const ColoredCells = () => {
   const theme = useTheme();
@@ -136,11 +141,11 @@ export const ColoredCells = () => {
     {
       matcher: { id: FieldMatcherID.byName, options: 'Progress' },
       properties: [
-        { path: 'custom.width', value: '80' },
-        { path: 'custom.displayMode', value: 'color-background' },
-        { path: 'min', value: '0' },
-        { path: 'max', value: '100' },
-        { path: 'thresholds', value: defaultThresholds },
+        { prop: 'width', value: '80', custom: true },
+        { prop: 'displayMode', value: 'color-background', custom: true },
+        { prop: 'min', value: '0' },
+        { prop: 'max', value: '100' },
+        { prop: 'thresholds', value: defaultThresholds },
       ],
     },
   ]);

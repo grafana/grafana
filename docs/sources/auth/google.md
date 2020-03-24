@@ -18,8 +18,8 @@ To enable the Google OAuth2 you must register your application with Google. Goog
 
 First, you need to create a Google OAuth Client:
 
-1. Go to https://console.developers.google.com/apis/credentials
-2. Click the 'Create Credentials' button, then click 'OAuth Client ID' in the menu that drops down
+1. Go to https://console.developers.google.com/apis/credentials.
+2. Click **Create Credentials**, then click **OAuth Client ID** in the drop-down menu
 3. Enter the following:
    - Application Type: Web Application
    - Name: Grafana

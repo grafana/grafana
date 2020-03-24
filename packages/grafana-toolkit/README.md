@@ -98,13 +98,13 @@ This command creates a production-ready build of your plugin.
 See [Grafana packages versioning guide](https://github.com/grafana/grafana/blob/master/packages/README.md#versioning).
 
 ### What tools does grafana-toolkit use?
-grafana-toolkit comes with Typescript, TSLint, Prettier, Jest, CSS and SASS support.
+grafana-toolkit comes with TypeScript, ESLint, Prettier, Jest, CSS and SASS support.
 
 ### How to start using grafana-toolkit in my plugin?
 See [Updating your plugin to use grafana-toolkit](#updating-your-plugin-to-use-grafana-toolkit).
 
-### Can I use Typescript to develop Grafana plugins?
-Yes! grafana-toolkit supports Typescript by default.
+### Can I use TypeScript to develop Grafana plugins?
+Yes! grafana-toolkit supports TypeScript by default.
 
 ### How can I test my plugin?
 grafana-toolkit comes with Jest as a test runner.
@@ -128,21 +128,18 @@ Currently we support following Jest configuration properties:
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
 ### How can I customize Webpack rules or plugins?
-You can provide your own webpack configuration.
-Provide a function implementing `CustomWebpackConfigurationGetter` in a file named `webpack.config.js`.
-
-You can import the correct interface and Options from `@grafana/toolkit/src/config`.
-
-Example
+You can provide your own `webpack.config.js` file that exports a `getWebpackConfig` function. We recommend that you extend the standard configuration, but you are free to create your own:
 
 ```js
-import CustomPlugin from 'custom-plugin';
+const CustomPlugin = require('custom-plugin');
 
-export const getWebpackConfig = (defaultConfig, options) => {
-    console.log('Custom config');
-    defaultConfig.plugins.push(new CustomPlugin())
-    return defaultConfig;
-};
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  plugins: [
+    ...config.plugins,
+    new CustomPlugin()
+  ]
+});
 ```
 
 ### How can I style my plugin?
@@ -172,7 +169,7 @@ loadPluginCss({
 });
 ```
 
-You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm instal @grafana/runtime`.
+You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm install @grafana/runtime`.
 
 > Note that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
 
@@ -182,7 +179,7 @@ Starting from Grafana 6.2 *our suggested way* for styling plugins is by using [E
 To start using Emotion, you first must add it to your plugin dependencies:
 
 ```
-  yarn add "@emotion/core"@10.0.14
+  yarn add "emotion"@10.0.27
 ```
 
 Then, import `css` function from Emotion:
@@ -202,7 +199,7 @@ To learn more about using Grafana theme please refer to [Theme usage guide](http
 
 > We do not support Emotion's `css` prop. Use className instead!
 
-### Can I adjust Typescript configuration to suit my needs?
+### Can I adjust TypeScript configuration to suit my needs?
 Yes! However, it's important that your `tsconfig.json` file contains the following lines:
 
 ```json
@@ -216,8 +213,8 @@ Yes! However, it's important that your `tsconfig.json` file contains the followi
 }
 ```
 
-### Can I adjust TSLint configuration to suit my needs?
-grafana-toolkit comes with [default config for TSLint](https://github.com/grafana/grafana/blob/master/packages/grafana-toolkit/src/config/tslint.plugin.json). For now, there is now way to customise TSLint config.
+### Can I adjust ESLint configuration to suit my needs?
+grafana-toolkit comes with [default config for ESLint](https://github.com/grafana/grafana/blob/master/packages/grafana-toolkit/src/config/eslint.plugin.json). For now, there is now way to customise ESLint config.
 
 ### How is Prettier integrated into grafana-toolkit workflow?
 When building plugin with [`grafana-toolkit plugin:build`](#building-plugin) task, grafana-toolkit performs Prettier check. If the check detects any Prettier issues, the build will not pass. To avoid such situation we suggest developing plugin with [`grafana-toolkit plugin:dev --watch`](#developing-plugin) task running. This task tries to fix Prettier issues automatically.
@@ -233,6 +230,9 @@ module.exports = {
 
 ### How do I add third-party dependencies that are not npm packages?
 Put them in the `static` directory in the root of your project. The `static` directory is copied when the plugin is built.
+
+### I am getting this message when I run yarn install: `Request failed \"404 Not Found\"`
+If you are using version `canary`, this error occurs because a `canary` release unpublishes previous versions leaving `yarn.lock` outdated. Remove `yarn.lock` and run `yarn install` again.
 
 ### I am getting this message when I run my plugin: `Unable to dynamically transpile ES module A loader plugin needs to be configured via SystemJS.config({ transpiler: 'transpiler-module' }).`
 This error occurs when you bundle your plugin using the `grafana-toolkit plugin:dev` task and your code comments include ES2016 code.

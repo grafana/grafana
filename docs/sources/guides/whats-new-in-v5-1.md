@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.1"
+title = "What's new in Grafana v5.1"
 description = "Feature and improvement highlights for Grafana v5.1"
-keywords = ["grafana", "new", "documentation", "5.1"]
+keywords = ["grafana", "new", "documentation", "5.1", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.1"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -7
 +++
 
-# What's New in Grafana v5.1
+# What's new in Grafana v5.1
 
 Grafana v5.1 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -29,7 +29,7 @@ the native scrolling functionality. Grafana v5.1 ships with a native scrollbar f
 the dashboard grid and panels that's not overriding the native scrolling functionality. We hope that these changes and improvements should
 make the Grafana user experience much better!
 
-## Improved docker image (breaking change)
+## Improved Docker image (breaking change)
 
 Grafana v5.1 brings an improved official docker image which should make it easier to run and use the Grafana docker image and at the same time give more control to the user how to use/run it.
 

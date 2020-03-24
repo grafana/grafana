@@ -6,7 +6,7 @@ import { select, text } from '@storybook/addon-knobs';
 import { Button } from '../Button/Button';
 import { action } from '@storybook/addon-actions';
 
-const CallToActionCardStories = storiesOf('UI/CallToActionCard', module);
+const CallToActionCardStories = storiesOf('General/CallToActionCard', module);
 
 CallToActionCardStories.add('default', () => {
   const ctaElements: { [key: string]: JSX.Element } = {

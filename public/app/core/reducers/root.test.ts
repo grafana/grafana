@@ -3,10 +3,9 @@ import { describe, expect } from '../../../test/lib/common';
 import { NavModelItem } from '@grafana/data';
 import { reducerTester } from '../../../test/core/redux/reducerTester';
 import { StoreState } from '../../types/store';
-import { ActionTypes } from '../../features/teams/state/actions';
 import { Team } from '../../types';
 import { cleanUpAction } from '../actions/cleanUp';
-import { initialTeamsState } from '../../features/teams/state/reducers';
+import { initialTeamsState, teamsLoaded } from '../../features/teams/state/reducers';
 
 jest.mock('@grafana/runtime', () => ({
   config: {
@@ -15,6 +14,7 @@ jest.mock('@grafana/runtime', () => ({
       user: {},
     },
   },
+  DataSourceWithBackend: jest.fn(),
 }));
 
 describe('recursiveCleanState', () => {
@@ -56,17 +56,14 @@ describe('rootReducer', () => {
 
   describe('when called with any action except cleanUpAction', () => {
     it('then it should not clean state', () => {
-      const teams = [{ id: 1 }];
+      const teams = [{ id: 1 } as Team];
       const state = {
         teams: { ...initialTeamsState },
       } as StoreState;
 
       reducerTester<StoreState>()
         .givenReducer(rootReducer, state)
-        .whenActionIsDispatched({
-          type: ActionTypes.LoadTeams,
-          payload: teams,
-        })
+        .whenActionIsDispatched(teamsLoaded(teams))
         .thenStatePredicateShouldEqual(resultingState => {
           expect(resultingState.teams).toEqual({
             hasFetched: true,
@@ -90,8 +87,8 @@ describe('rootReducer', () => {
       } as StoreState;
 
       reducerTester<StoreState>()
-        .givenReducer(rootReducer, state, true)
-        .whenActionIsDispatched(cleanUpAction({ stateSelector: storeState => storeState.teams }))
+        .givenReducer(rootReducer, state, false, true)
+        .whenActionIsDispatched(cleanUpAction({ stateSelector: (storeState: StoreState) => storeState.teams }))
         .thenStatePredicateShouldEqual(resultingState => {
           expect(resultingState.teams).toEqual({ ...initialTeamsState });
           return true;

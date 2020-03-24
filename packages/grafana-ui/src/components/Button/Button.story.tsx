@@ -7,7 +7,7 @@ import { ThemeableCombinationsRowRenderer } from '../../utils/storybook/Combinat
 import { boolean } from '@storybook/addon-knobs';
 import { getIconKnob } from '../../utils/storybook/knobs';
 
-const ButtonStories = storiesOf('UI/Button', module);
+const ButtonStories = storiesOf('General/Button', module);
 
 const defaultProps = {
   onClick: [action('Button clicked')],
@@ -16,7 +16,7 @@ const defaultProps = {
 
 const variants = {
   size: ['xs', 'sm', 'md', 'lg'],
-  variant: ['primary', 'secondary', 'danger', 'inverse', 'transparent'],
+  variant: ['primary', 'secondary', 'danger', 'inverse', 'transparent', 'link'],
 };
 const combinationOptions = {
   CombinationRenderer: ThemeableCombinationsRowRenderer,

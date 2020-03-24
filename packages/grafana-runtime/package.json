@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "6.6.0-pre",
+  "version": "7.0.0-pre.0",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -10,34 +10,38 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/grafana/grafana.git"
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-runtime"
   },
   "main": "src/index.ts",
   "scripts": {
-    "tslint": "tslint -c tslint.json --project tsconfig.json",
-    "typecheck": "tsc --noEmit",
-    "clean": "rimraf ./dist ./compiled",
+    "build": "grafana-toolkit package:build --scope=runtime",
     "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=runtime"
+    "clean": "rimraf ./dist ./compiled",
+    "docsExtract": "api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "lint": "eslint src/ --ext=.js,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@grafana/data": "^6.6.0-pre",
-    "@grafana/ui": "^6.6.0-pre",
+    "@grafana/data": "7.0.0-pre.0",
+    "@grafana/ui": "7.0.0-pre.0",
     "systemjs": "0.20.19",
     "systemjs-plugin-css": "0.1.37"
   },
   "devDependencies": {
+    "@grafana/tsconfig": "^1.0.0-rc1",
+    "@rollup/plugin-commonjs": "11.0.2",
+    "@rollup/plugin-node-resolve": "7.1.1",
+    "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.15",
-    "pretty-format": "24.9.0",
-    "rollup": "1.6.0",
-    "rollup-plugin-commonjs": "9.2.1",
-    "rollup-plugin-node-resolve": "4.0.1",
-    "rollup-plugin-sourcemaps": "0.4.2",
-    "rollup-plugin-terser": "4.0.4",
-    "rollup-plugin-typescript2": "0.19.3",
-    "rollup-plugin-visualizer": "0.9.2",
-    "typescript": "3.7.2"
+    "pretty-format": "25.1.0",
+    "rollup": "2.0.6",
+    "rollup-plugin-sourcemaps": "0.5.0",
+    "rollup-plugin-terser": "5.3.0",
+    "rollup-plugin-typescript2": "0.26.0",
+    "rollup-plugin-visualizer": "3.3.1",
+    "typescript": "3.7.5"
   },
   "types": "src/index.ts"
 }

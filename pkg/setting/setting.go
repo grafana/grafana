@@ -36,11 +36,10 @@ const (
 )
 
 const (
-	DEV                 = "development"
-	PROD                = "production"
-	TEST                = "test"
-	APP_NAME            = "Grafana"
-	APP_NAME_ENTERPRISE = "Grafana Enterprise"
+	DEV      = "development"
+	PROD     = "production"
+	TEST     = "test"
+	APP_NAME = "Grafana"
 )
 
 var (
@@ -101,7 +100,8 @@ var (
 	DataProxyWhiteList                map[string]bool
 	DisableBruteForceLoginProtection  bool
 	CookieSecure                      bool
-	CookieSameSite                    http.SameSite
+	CookieSameSiteDisabled            bool
+	CookieSameSiteMode                http.SameSite
 	AllowEmbedding                    bool
 	XSSProtectionHeader               bool
 	ContentTypeProtectionHeader       bool
@@ -119,6 +119,7 @@ var (
 
 	// Dashboard history
 	DashboardVersionsToKeep int
+	MinRefreshInterval      string
 
 	// User settings
 	AllowUserSignUp         bool
@@ -201,6 +202,7 @@ var (
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
 	AlertingMaxAttempts         int
+	AlertingMinInterval         int64
 
 	// Explore UI
 	ExploreEnabled bool
@@ -247,7 +249,8 @@ type Cfg struct {
 	DisableInitAdminCreation         bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
-	CookieSameSite                   http.SameSite
+	CookieSameSiteDisabled           bool
+	CookieSameSiteMode               http.SameSite
 
 	TempDataLifetime                 time.Duration
 	MetricsEndpointEnabled           bool
@@ -504,7 +507,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load defaults
 	parsedFile, err := ini.Load(defaultConfigFile)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
+		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
 		os.Exit(1)
 		return nil, err
 	}
@@ -616,9 +619,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	Raw = cfg.Raw
 
 	ApplicationName = APP_NAME
-	if IsEnterprise {
-		ApplicationName = APP_NAME_ENTERPRISE
-	}
 
 	Env, err = valueAsString(iniFile.Section(""), "app_mode", "development")
 	if err != nil {
@@ -633,11 +633,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	PluginsPath = makeAbsolute(plugins, HomePath)
-	Provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	provisioning, err := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	if err != nil {
 		return err
 	}
-	cfg.ProvisioningPath = makeAbsolute(Provisioning, HomePath)
+	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl, err = parseAppUrlAndSubUrl(server)
 	if err != nil {
@@ -718,18 +718,24 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
-	validSameSiteValues := map[string]http.SameSite{
-		"lax":    http.SameSiteLaxMode,
-		"strict": http.SameSiteStrictMode,
-		"none":   http.SameSiteDefaultMode,
-	}
 
-	if samesite, ok := validSameSiteValues[samesiteString]; ok {
-		CookieSameSite = samesite
-		cfg.CookieSameSite = CookieSameSite
+	if samesiteString == "disabled" {
+		CookieSameSiteDisabled = true
+		cfg.CookieSameSiteDisabled = CookieSameSiteDisabled
 	} else {
-		CookieSameSite = http.SameSiteLaxMode
-		cfg.CookieSameSite = CookieSameSite
+		validSameSiteValues := map[string]http.SameSite{
+			"lax":    http.SameSiteLaxMode,
+			"strict": http.SameSiteStrictMode,
+			"none":   http.SameSiteNoneMode,
+		}
+
+		if samesite, ok := validSameSiteValues[samesiteString]; ok {
+			CookieSameSiteMode = samesite
+			cfg.CookieSameSiteMode = CookieSameSiteMode
+		} else {
+			CookieSameSiteMode = http.SameSiteLaxMode
+			cfg.CookieSameSiteMode = CookieSameSiteMode
+		}
 	}
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
@@ -758,6 +764,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+	MinRefreshInterval, err = valueAsString(dashboards, "min_refresh_interval", "")
+	if err != nil {
+		return err
+	}
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -961,6 +971,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
+	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)

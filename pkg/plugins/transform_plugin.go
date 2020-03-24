@@ -7,17 +7,16 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	plugin "github.com/hashicorp/go-plugin"
 )
 
 type TransformPlugin struct {
@@ -28,44 +27,37 @@ type TransformPlugin struct {
 	*TransformWrapper
 }
 
-func (tp *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&tp); err != nil {
+func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+	if err := decoder.Decode(p); err != nil {
 		return err
 	}
 
-	if err := tp.registerPlugin(pluginDir); err != nil {
+	if err := p.registerPlugin(pluginDir); err != nil {
 		return err
 	}
 
-	cmd := ComposePluginStartCommmand(tp.Executable)
-	fullpath := path.Join(tp.PluginDir, cmd)
-	descriptor := backendplugin.NewBackendPluginDescriptor(tp.Id, fullpath)
-	if err := backendplugin.Register(descriptor, tp.onPluginStart); err != nil {
+	cmd := ComposePluginStartCommmand(p.Executable)
+	fullpath := path.Join(p.PluginDir, cmd)
+	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
+		OnStart: p.onPluginStart,
+	})
+	if err := backendPluginManager.Register(descriptor); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}
 
-	Transform = tp
+	Transform = p
 
 	return nil
 }
 
-func (p *TransformPlugin) onPluginStart(pluginID string, client *plugin.Client, logger log.Logger) error {
-	rpcClient, err := client.Client()
-	if err != nil {
-		return err
-	}
+func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
-	raw, err := rpcClient.Dispense("transform")
-	if err != nil {
-		return err
+	if client.DataPlugin != nil {
+		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil
+		})
 	}
-
-	plugin, ok := raw.(backend.TransformPlugin)
-	if !ok {
-		return fmt.Errorf("unexpected type %T, expected *backend.TransformPlugin", raw)
-	}
-
-	p.TransformWrapper = NewTransformWrapper(logger, plugin)
 
 	return nil
 }
@@ -74,18 +66,18 @@ func (p *TransformPlugin) onPluginStart(pluginID string, client *plugin.Client, 
 // Wrapper Code
 // ...
 
-func NewTransformWrapper(log log.Logger, plugin backend.TransformPlugin) *TransformWrapper {
+func NewTransformWrapper(log log.Logger, plugin backendplugin.TransformPlugin) *TransformWrapper {
 	return &TransformWrapper{plugin, log, &transformCallback{log}}
 }
 
 type TransformWrapper struct {
-	backend.TransformPlugin
+	backendplugin.TransformPlugin
 	logger   log.Logger
 	callback *transformCallback
 }
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	pbQuery := &pluginv2.DataQueryRequest{
+	pbQuery := &pluginv2.QueryDataRequest{
 		Config:  &pluginv2.PluginConfig{},
 		Queries: []*pluginv2.DataQuery{},
 	}
@@ -106,7 +98,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			},
 		})
 	}
-	pbRes, err := tw.TransformPlugin.DataQuery(ctx, pbQuery, tw.callback)
+	pbRes, err := tw.TransformPlugin.TransformData(ctx, pbQuery, tw.callback)
 	if err != nil {
 		return nil, err
 	}
@@ -125,14 +117,20 @@ type transformCallback struct {
 	logger log.Logger
 }
 
-func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
+func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
 
+	datasourceID := int64(0)
+
+	if req.Config.DatasourceConfig != nil {
+		datasourceID = req.Config.DatasourceConfig.Id
+	}
+
 	getDsInfo := &models.GetDataSourceByIdQuery{
-		Id:    req.Config.Id,
 		OrgId: req.Config.OrgId,
+		Id:    datasourceID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
@@ -191,12 +189,12 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 			if err != nil {
 				return nil, err
 			}
-			encFrame, err := dataframe.MarshalArrow(frame)
+			encFrame, err := data.MarshalArrow(frame)
 			if err != nil {
 				return nil, err
 			}
 			encodedFrames = append(encodedFrames, encFrame)
 		}
 	}
-	return &pluginv2.DataQueryResponse{Frames: encodedFrames}, nil
+	return &pluginv2.QueryDataResponse{Frames: encodedFrames}, nil
 }

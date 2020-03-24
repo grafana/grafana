@@ -1,24 +1,26 @@
 .dashboard-settings {
-  opacity: 0;
+  position: fixed;
   height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: $zindex-modal;
+  background: $body-bg;
+}
+
+.dashboard-settings__body1 {
+  height: calc(100% - #{$navbarHeight});
+  width: 100%;
+}
+
+.dashboard-settings__body2 {
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: row;
-}
-
-.dashboard-page--settings-opening {
-  .dashboard-container {
-    display: none;
-  }
-}
-
-.dashboard-page--settings-open {
-  .dashboard-settings {
-    opacity: 1;
-    transition: opacity 300ms ease-in-out;
-  }
-  .dashboard-container {
-    display: none;
-  }
+  background: $panel-bg;
 }
 
 .dashboard-settings__content {
@@ -31,7 +33,7 @@
 
 .dashboard-settings__aside {
   padding: 32px 0 0 32px;
-  background: $panel-bg;
+  background: lightOrDark($gray95, $gray15);
   display: flex;
   flex-direction: column;
 }

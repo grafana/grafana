@@ -5,7 +5,7 @@ import { RadioButtonSize } from './RadioButton';
 import { boolean, select } from '@storybook/addon-knobs';
 
 export default {
-  title: 'UI/Forms/RadioButtonGroup',
+  title: 'Forms/RadioButtonGroup',
   component: RadioButtonGroup,
   parameters: {
     docs: {
