@@ -86,58 +86,62 @@ If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is po
 
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
 
-## Metric Query Editor
+## Using the Query Editor
 
 {{< docs-imagebox img="/img/docs/v67/stackriver-query-editor.png" max-width= "400px" class="docs-image--right" >}}
 
-The Stackdriver query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
+The Stackdriver query editor allows you to build two types of queries - **Metric** and **Service Level Objective (SLO)**. Both types return time series data.
+
+### Metric Queries
+
+The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
 Begin by choosing a `Project`. Then select a `Service` and then a metric from the `Metric` dropdown. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses.
 
 Stackdriver metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
 
-### Filter
+#### Filter
 
 To add a filter, click the plus icon and choose a field to filter by and enter a filter value e.g. `instance_name = grafana-1`. You can remove the filter by clicking on the filter name and select `--remove filter--`.
 
-#### Simple wildcards
+##### Simple wildcards
 
 When the operator is set to `=` or `!=` it is possible to add wildcards to the filter value field. E.g `us-*` will capture all values that starts with "us-" and `*central-a` will capture all values that ends with "central-a". `*-central-*` captures all values that has the substring of -central-. Simple wildcards are less expensive than regular expressions.
 
-#### Regular expressions
+##### Regular expressions
 
 When the operator is set to `=~` or `!=~` it is possible to add regular expressions to the filter value field. E.g `us-central[1-3]-[af]` would match all values that starts with "us-central", is followed by a number in the range of 1 to 3, a dash and then either an "a" or an "f". Leading and trailing slashes are not needed when creating regular expressions.
 
-### Aggregation
+#### Aggregation
 
 The aggregation field lets you combine time series based on common statistics. Read more about this option [here](https://cloud.google.com/monitoring/charts/metrics-selector#aggregation-options).
 
 The `Aligner` field allows you to align multiple time series after the same group by time interval. Read more about how it works [here](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
 
-#### Alignment Period/Group by Time
+##### Alignment Period/Group by Time
 
 The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Stackdriver default groupings (which allows you to compare graphs in Grafana with graphs in the Stackdriver UI).
 The option is called `Stackdriver auto` and the defaults are:
 
-* 1m for time ranges < 23 hours
-* 5m for time ranges >= 23 hours and < 6 days
-* 1h for time ranges >= 6 days
+- 1m for time ranges < 23 hours
+- 5m for time ranges >= 23 hours and < 6 days
+- 1h for time ranges >= 6 days
 
 The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/reference/templating/#the-interval-variable).
 
 It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
 
-### Group By
+#### Group By
 
 Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
 
-#### Metadata labels
+##### Metadata labels
 
-Resource metadata labels contains information to uniquely identify a resource in Google cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels. 
+Resource metadata labels contains information to uniquely identify a resource in Google cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels.
 
 User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
 
-### Alias Patterns
+#### Alias Patterns
 
 The Alias By field allows you to control the format of the legend keys. The default is to show the metric name and labels. This can be long and hard to read. Using the following patterns in the alias field, you can format the legend key the way you want it.
 
@@ -173,6 +177,17 @@ It is also possible to resolve the name of the Monitored Resource Type.
 Example Alias By: `{{resource.type}} - {{metric.type}}`
 
 Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
+
+### SLO Queries
+
+To get an understanding of the basic concepts in service monitoring, please refer to Google Stackdriver's [official docs](https://cloud.google.com/monitoring/service-monitoring).
+
+The SLO query builder in the Stackdriver data source allows you to display SLO data in time series format. Begin by choosing a `Project`. Then select a `Service` and a `SLO`. Use the `Selector` field to specify which time series selector to use.
+
+#### Time series selectors
+
+Detailed descriptions about all the avaiable time series selectors can be found [here](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list).
+
 
 ## Templating
 
