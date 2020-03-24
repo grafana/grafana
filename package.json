@@ -256,7 +256,7 @@
     "react-redux": "7.1.1",
     "react-sizeme": "2.5.2",
     "react-split-pane": "0.1.89",
-    "react-transition-group": "2.6.1",
+    "react-transition-group": "4.3.0",
     "react-use": "12.8.0",
     "react-virtualized-auto-sizer": "1.0.2",
     "react-window": "1.7.1",
