@@ -248,6 +248,7 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 				So(queries[0].AliasBy, ShouldEqual, "testalias")
+				So(queries[0].GroupBys, ShouldResemble, []string{"metric.label.group1", "metric.label.group2"})
 			})
 
 			Convey("and query type is SLOs", func() {
