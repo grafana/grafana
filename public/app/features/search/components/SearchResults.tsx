@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { Icon } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
+import { Icon, useTheme } from '@grafana/ui';
 import { IconType } from '@grafana/ui/src/components/Icon/types';
 import { DashboardSection, DashboardSectionItem } from '../types';
 import { SearchItem } from './SearchItem';
@@ -24,6 +25,9 @@ export const SearchResults: FC<Props> = ({
   onToggleSelection,
   editable,
 }) => {
+  const theme = useTheme();
+  const styles = getSectionStyles(theme);
+
   const toggleFolderExpand = (section: DashboardSection) => {
     if (section.toggle) {
       if (!section.expanded && onFolderExpanding) {
@@ -38,49 +42,118 @@ export const SearchResults: FC<Props> = ({
     }
   };
 
-  return !results || !results.length ? (
-    <div className="search-results">
-      <em className="muted">No dashboards found.</em>
-    </div>
-  ) : (
-    <>
-      {results.map(section => (
-        <div className="search-section" key={section.id}>
-          {!section.hideHeader ? (
-            <div
-              className={cx('search-section__header pointer', { selected: section.checked })}
-              onClick={() => toggleFolderExpand(section)}
-            >
-              <SearchCheckbox
-                editable={editable}
-                checked={section.checked}
-                onClick={(e: MouseEvent) => onToggleSelection(section, e)}
-              />
-              <Icon
-                className={css`
-                  padding: 5px 0;
-                  width: 43px;
-                `}
-                name={section.icon as IconType}
-              />
+  // TODO display 'No results' messages when manage dashboards is refactored
+  if (!results) {
+    return null;
+  }
 
-              <span className="search-section__header__text">{section.title}</span>
-              {section.url && (
-                <a href={section.url} className="search-section__header__link">
-                  <Icon name="cog" />
-                </a>
-              )}
-              <Icon name={section.expanded ? 'angle-down' : 'angle-right'} className="search-section__header__toggle" />
-            </div>
-          ) : (
-            <div className="search-section__header" />
-          )}
+  return (
+    <ul className={styles.wrapper}>
+      {results.map(section => (
+        <li className={styles.section} key={section.id}>
+          <SectionHeader onSectionClick={toggleFolderExpand} {...{ onToggleSelection, editable, section }} />
           {section.expanded &&
             section.items.map(item => (
               <SearchItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
             ))}
-        </div>
+        </li>
       ))}
-    </>
+    </ul>
   );
+};
+
+const getSectionStyles = (theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      list-style: none;
+    `,
+    section: css`
+      background: ${theme.colors.panelBg};
+      border: solid 1px ${theme.isLight ? theme.colors.gray5 : theme.colors.dark1};
+      padding: 0px 4px 4px 4px;
+      margin-bottom: 3px;
+      border-radius: 5px;
+    `,
+  };
+};
+
+interface SectionHeaderProps {
+  section: DashboardSection;
+  onSectionClick: (section: DashboardSection) => void;
+  onToggleSelection: clickWithEvent;
+  editable: boolean;
+}
+
+const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleSelection, editable }) => {
+  const theme = useTheme();
+  const styles = getSectionHeaderStyles(theme, section.checked);
+
+  const expandSection = () => {
+    onSectionClick(section);
+  };
+
+  return !section.hideHeader ? (
+    <div className={styles.wrapper} onClick={expandSection}>
+      <SearchCheckbox
+        editable={editable}
+        checked={section.checked}
+        onClick={(e: MouseEvent) => onToggleSelection(section, e)}
+      />
+      <Icon className={styles.icon} name={section.icon as IconType} />
+
+      <span className={styles.text}>{section.title}</span>
+      {section.url && (
+        <a href={section.url} className={styles.link}>
+          <Icon name="cog" />
+        </a>
+      )}
+      <Icon name={section.expanded ? 'angle-down' : 'angle-right'} className={styles.toggle} />
+    </div>
+  ) : (
+    <div className={styles.wrapper} />
+  );
+};
+
+const getSectionHeaderStyles = (theme: GrafanaTheme, selected = false) => {
+  return {
+    wrapper: cx(
+      css`
+        display: flex;
+        flex-grow: 1;
+        font-size: ${theme.typography.size.base};
+        padding: 7px 4px 3px 0;
+        color: ${theme.colors.textWeak};
+
+        &:hover,
+        &.selected {
+          color: ${theme.colors.text};
+        }
+
+        &:hover {
+          a {
+            opacity: 1;
+          }
+        }
+      `,
+      'pointer',
+      { selected }
+    ),
+    icon: css`
+      padding: 5px 0;
+      width: 43px;
+    `,
+    text: css`
+      flex-grow: 1;
+      line-height: 24px;
+    `,
+    link: css`
+      padding: 2px 10px 0;
+      color: ${theme.colors.textWeak};
+      opacity: 0;
+      transition: opacity 150ms ease-in-out;
+    `,
+    toggle: css`
+      padding: 5px;
+    `,
+  };
 };

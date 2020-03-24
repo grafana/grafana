@@ -19,7 +19,6 @@ const { selectors } = e2e.pages.Dashboards;
 
 export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelection, onTagSelected }) => {
   const theme = useTheme();
-  console.log('t', theme.isLight);
   const styles = getResultsItemStyles(theme, item.checked);
 
   const onItemClick = (item: DashboardSectionItem) => {
