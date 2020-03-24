@@ -3,19 +3,6 @@ run:
 
 linters:
   disable-all: true
-  enable:
-    - deadcode
-    - gofmt
-    - gosimple
-    - ineffassign
-    - structcheck
-    - typecheck
-    - unconvert
-    - unused
-    - varcheck
-    - goconst
-    - staticcheck
-    - errcheck
 
 linters-settings:
   goconst:
