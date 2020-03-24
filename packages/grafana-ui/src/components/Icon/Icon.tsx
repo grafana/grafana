@@ -60,7 +60,7 @@ class UnThemedIcon extends PureComponent<IconProps, IconState> {
   }
 
   render() {
-    const { color, size, theme, type = 'icon' } = this.props;
+    const { color, size, theme, title, onClick, onMouseDown, type = 'icon' } = this.props;
     const { icon: Component } = this.state;
 
     /*Transform string with px to number*/
@@ -69,7 +69,12 @@ class UnThemedIcon extends PureComponent<IconProps, IconState> {
     const styles = getIconStyles();
 
     return (
-      <div className={cx(styles.icon, { [styles.currentFontColor]: !color && type === 'icon' })}>
+      <div
+        title={title}
+        onClick={onClick}
+        onMouseDown={onMouseDown}
+        className={cx(styles.icon, { [styles.currentFontColor]: !color && type === 'icon' })}
+      >
         {Component && <Component color={color ? color : defaultMonochromeColor} size={svgSize} />}
       </div>
     );
