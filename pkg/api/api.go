@@ -258,6 +258,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), Wrap(UpdatePluginSetting))
+			pluginRoute.Get("/:pluginId/metrics", Wrap(hs.CollectPluginMetrics))
 		}, reqOrgAdmin)
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)

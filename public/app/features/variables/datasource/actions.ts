@@ -19,7 +19,7 @@ export const updateDataSourceVariableOptions = (
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => async (dispatch, getState) => {
   const sources = await dependencies.getDatasourceSrv().getMetricSources({ skipVariables: true });
-  const variableInState = getVariable<DataSourceVariableModel>(identifier.uuid!, getState());
+  const variableInState = getVariable<DataSourceVariableModel>(identifier.id!, getState());
   let regex;
 
   if (variableInState.regex) {

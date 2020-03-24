@@ -46,16 +46,12 @@ jobs:
     executor: grafana-build
     steps:
       - run:
-          name: Clone repo
-          command: |
-            mkdir -p ~/.ssh
-            echo 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==' >> ~/.ssh/known_hosts
-            git clone git@github.com:grafana/build-pipeline.git
-      - run:
           name: Install Grafana Build Pipeline
           command: |
-            cd build-pipeline
-            go build -o ../bin/grabpl ./cmd/grabpl
+            curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.2.0/grabpl
+            chmod +x grabpl
+            mkdir bin
+            mv grabpl bin/
       - persist_to_workspace:
           root: .
           paths:
@@ -70,6 +66,13 @@ jobs:
         type: string
     executor: grafana-build
     steps:
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -115,6 +118,13 @@ jobs:
         type: string
     executor: grafana-build
     steps:
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -227,6 +237,13 @@ jobs:
   build-enterprise-windows-installer:
     executor: windows-installer
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -259,6 +276,13 @@ jobs:
   release-next-packages:
     executor: grafana-build
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -298,6 +322,11 @@ jobs:
       - run:
           name: Package Grafana
           command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo Using test GPG key pair since building a forked PR
+              source scripts/build/gpg-test-vars.sh
+            fi
+
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
               /tmp/workspace/bin/grabpl package --edition oss $CIRCLE_TAG
@@ -333,6 +362,13 @@ jobs:
   package-enterprise:
     executor: grafana-build
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -384,6 +420,13 @@ jobs:
         type: string
     executor: grafana-publish
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -411,6 +454,47 @@ jobs:
           command: ./scripts/ci-job-succeeded.sh
           when: on_success
 
+  publish-storybook:
+    description: "Publish Storybook"
+    executor: grafana-publish
+    steps:
+      - checkout
+      - run:
+          name: CI job started
+          command: ./scripts/ci-job-started.sh
+      - run:
+          name: Publish Storybook
+          command: |
+            yarn install --frozen-lockfile --no-progress
+            yarn storybook:build
+
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
+
+            if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              echo Testing release
+            elif [[ $CIRCLE_BRANCH == "master" ]]; then
+              echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+              gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
+            elif [[ -n $CIRCLE_TAG ]]; then
+              echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
+              gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
+              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$CIRCLE_TAG
+            fi
+      - run:
+          name: CI job failed
+          command: ./scripts/ci-job-failed.sh
+          when: on_fail
+      - run:
+          name: CI job succeeded
+          command: ./scripts/ci-job-succeeded.sh
+          when: on_success
+
   build-docker-images:
     description: "Build Docker images"
     parameters:
@@ -420,6 +504,13 @@ jobs:
         type: boolean
     executor: docker
     steps:
+      - run:
+          name: Exit if enterprise and forked PR
+          command: |
+            if [[ "<< parameters.edition >>" == "enterprise"  && -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -439,11 +530,11 @@ jobs:
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
-                --ubuntu=<< parameters.ubuntu >> $CIRCLE_WORKFLOW_ID
+                --ubuntu=<< parameters.ubuntu >>
             else
               # We're testing a branch
               /tmp/workspace/bin/grabpl build-docker --edition << parameters.edition >> \
-                --ubuntu=<< parameters.ubuntu >> --archs amd64 $CIRCLE_WORKFLOW_ID
+                --ubuntu=<< parameters.ubuntu >> --archs amd64
             fi
             mkdir -p << parameters.edition >>/docker
             mv docker/*.tar << parameters.edition >>/docker/
@@ -469,6 +560,13 @@ jobs:
         type: boolean
     executor: docker
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - attach_workspace:
           at: /tmp/workspace
       - checkout
@@ -616,12 +714,23 @@ jobs:
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
+          # Reduce golangci-lint memory usage (default is 100)
+          GOGC: 20
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
           name: Lint Go
-          command: "make lint-go"
+          command: |
+            # Build linters
+            make scripts/go/bin/golangci-lint scripts/go/bin/revive scripts/go/bin/gosec
+            go vet ./pkg/...
+            # Avoid golangci-lint concurrency since it tends to run out of memory
+            ./scripts/go/bin/golangci-lint run --config scripts/go/configs/.golangci.yml -j 1 ./pkg/...
+            ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
+            ./scripts/go/bin/revive -formatter stylish ./pkg/services/alerting/...
+            ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
+              -conf=./scripts/go/configs/gosec.json ./pkg/...
 
   test-frontend:
     docker:
@@ -629,7 +738,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: ci job started
+          name: CI job started
           command: "./scripts/ci-job-started.sh"
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
@@ -647,11 +756,11 @@ jobs:
       - store_test_results:
           path: reports/junit
       - run:
-          name: ci job failed
+          name: CI job failed
           command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
-          name: ci job succeeded
+          name: CI job succeeded
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
@@ -662,17 +771,17 @@ jobs:
     steps:
       - checkout
       - run:
-          name: ci job started
+          name: CI job started
           command: "./scripts/ci-job-started.sh"
       - run:
           name: build backend and run go tests
           command: "./scripts/circle-test-backend.sh"
       - run:
-          name: ci job failed
+          name: CI job failed
           command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
-          name: ci job succeeded
+          name: CI job succeeded
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
@@ -684,15 +793,15 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: ci job started
+          name: CI job started
           command: "./scripts/ci-job-started.sh"
       - run:
-          name: install docker
+          name: Install docker
           command: |
             apt-get update
             apt-get install -y docker.io
       - run:
-          name: build grafana docs website
+          name: Build grafana docs website
           command: |
             # https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
             # create a dummy container which will hold a volume with config
@@ -702,11 +811,11 @@ jobs:
             # start an application container using this volume
             docker run --volumes-from docs-website --rm -it grafana/docs-base:latest /bin/bash -c 'npm i && make prod'
       - run:
-          name: ci job failed
+          name: CI job failed
           command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
-          name: ci job succeeded
+          name: CI job succeeded
           command: "docker stop docs-website && docker rm docs-website && ./scripts/ci-job-succeeded.sh"
           when: on_success
 
@@ -714,12 +823,19 @@ jobs:
     docker:
       - image: circleci/node:12
     steps:
+      - run:
+          name: Exit if forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
       - checkout
       - run:
-          name: ci job started
+          name: CI job started
           command: "./scripts/ci-job-started.sh"
       - run:
-          name: Boostrap lerna
+          name: Bootstrap lerna
           command: "npx lerna bootstrap"
       - run:
           name: npm - Prepare auth token
@@ -728,11 +844,11 @@ jobs:
           name: Release packages
           command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
       - run:
-          name: ci job failed
+          name: CI job failed
           command: "./scripts/ci-job-failed.sh"
           when: on_fail
       - run:
-          name: ci job succeeded
+          name: CI job succeeded
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
@@ -1019,6 +1135,7 @@ workflows:
             - build-enterprise-windows-installer
             - end-to-end-tests
             - build-release-publisher
+      - publish-storybook
       - build-docker-images:
           # No filters, meaning this job runs for all branches
           name: build-oss-docker-images

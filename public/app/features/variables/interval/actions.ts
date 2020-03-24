@@ -42,7 +42,7 @@ export const updateAutoValue = (
     templateSrv: templateSrv,
   }
 ): ThunkResult<void> => (dispatch, getState) => {
-  const variableInState = getVariable<IntervalVariableModel>(identifier.uuid, getState());
+  const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
   if (variableInState.auto) {
     const res = dependencies.kbn.calculateInterval(
       dependencies.getTimeSrv().timeRange(),
