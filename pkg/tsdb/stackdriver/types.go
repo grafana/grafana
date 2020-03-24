@@ -21,7 +21,6 @@ type (
 
 	MetricQuery struct {
 		ProjectName        string
-		Unit               string
 		MetricType         string
 		CrossSeriesReducer string
 		AlignmentPeriod    string
@@ -29,8 +28,6 @@ type (
 		GroupBys           []string
 		Filters            []string
 		AliasBy            string
-		MetricKind         string
-		ValueType          string
 		View               string
 	}
 
