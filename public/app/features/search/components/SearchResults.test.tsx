@@ -8,6 +8,7 @@ const data = [
     uid: 'JB_zdOUWk',
     title: 'gdev dashboards',
     expanded: false,
+    //@ts-ignore
     items: [],
     url: '/dashboards/f/JB_zdOUWk/gdev-dashboards',
     icon: 'folder',
@@ -26,6 +27,7 @@ const data = [
         url: '/d/lBdLINUWk/prom-dash',
         slug: '',
         type: 'dash-db',
+        //@ts-ignore
         tags: [],
         isStarred: false,
         checked: false,
@@ -52,6 +54,7 @@ const data = [
 
 const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
   const props: Props = {
+    //@ts-ignore
     results: data,
     onSelectionChanged: () => {},
     onTagSelected: (name: string) => {},
@@ -63,7 +66,7 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
   Object.assign(props, propOverrides);
 
   const wrapper = renderMethod(<SearchResults {...props} />);
-  const instance = wrapper.instance() as SearchResults;
+  const instance = wrapper.instance();
 
   return {
     wrapper,
@@ -74,6 +77,6 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
 describe('SearchResults', () => {
   it('should render result items', () => {
     const { wrapper } = setup();
-    expect(wrapper.find({ type: 'li' })).toEqual(2);
+    expect(wrapper.find({ 'aria-label': 'Search section' })).toHaveLength(2);
   });
 });

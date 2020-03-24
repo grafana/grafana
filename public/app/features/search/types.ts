@@ -1,12 +1,12 @@
 export interface DashboardSection {
   id: number;
-  uid: string;
+  uid?: string;
   title: string;
   expanded: boolean;
   url: string;
   icon: string;
   score: number;
-  hideHeader: boolean;
+  hideHeader?: boolean;
   checked: boolean;
   items: DashboardSectionItem[];
   toggle?: (section: DashboardSection) => Promise<DashboardSection>;
