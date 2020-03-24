@@ -36,7 +36,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
     : isRemoved
     ? theme.colors.gray15
     : theme.colors.gray05;
-  const cardBoxShadow = theme.isLight ? `0px 2px 2px ${borderColor}` : `0px 2px 4px black`;
 
   return {
     queryCard: css`
@@ -44,7 +43,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       flex-direction: column;
       border: 1px solid ${borderColor};
       margin: ${theme.spacing.sm} 0;
-      box-shadow: ${cardBoxShadow};
       background-color: ${cardColor};
       border-radius: ${theme.border.radius.sm};
       .starred {
