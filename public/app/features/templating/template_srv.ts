@@ -1,7 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { escapeHtml } from 'app/core/utils/text';
-import { ScopedVars, TimeRange } from '@grafana/data';
+import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariableClones, getVariableWithName } from '../variables/state/selectors';
 import { getConfig } from 'app/core/config';
 import { variableRegex } from './utils';
@@ -47,16 +47,17 @@ export class TemplateSrv {
    * Use getVariables function instead
    */
   get variables(): any[] {
+    deprecationWarning('template_srv.ts', 'variables', 'getVariables');
     return this.getVariables();
   }
 
-  getVariables = (): VariableModel[] => {
+  getVariables(): VariableModel[] {
     if (getConfig().featureToggles.newVariables) {
       return getVariableClones();
     }
 
     return this._variables;
-  };
+  }
 
   updateIndex() {
     const existsOrEmpty = (value: any) => value || value === '';
