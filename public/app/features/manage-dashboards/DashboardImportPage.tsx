@@ -28,23 +28,28 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 class DashboardImportUnConnected extends PureComponent<Props> {
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
     const { importDashboardJson } = this.props;
-    const file = event.currentTarget.files[0];
+    const file = event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0];
 
-    const reader = new FileReader();
-    const readerOnLoad = () => {
-      return (e: any) => {
-        let dashboard: any;
-        try {
-          dashboard = JSON.parse(e.target.result);
-        } catch (error) {
-          appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
-          return;
-        }
-        importDashboardJson(dashboard);
+    if (file) {
+      const reader = new FileReader();
+      const readerOnLoad = () => {
+        return (e: any) => {
+          let dashboard: any;
+          try {
+            dashboard = JSON.parse(e.target.result);
+          } catch (error) {
+            appEvents.emit(AppEvents.alertError, [
+              'Import failed',
+              'JSON -> JS Serialization failed: ' + error.message,
+            ]);
+            return;
+          }
+          importDashboardJson(dashboard);
+        };
       };
-    };
-    reader.onload = readerOnLoad();
-    reader.readAsText(file);
+      reader.onload = readerOnLoad();
+      reader.readAsText(file);
+    }
   };
 
   validateDashboardJson = (json: string) => {
@@ -150,7 +155,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'import', null, true),
+  navModel: getNavModel(state.navIndex, 'import', undefined, true),
   isLoaded: state.importDashboard.isLoaded,
 });
 

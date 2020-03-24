@@ -3,7 +3,7 @@ import { Forms, FormAPI, HorizontalGroup } from '@grafana/ui';
 import { OnSubmit } from 'react-hook-form';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { DashboardInput, DashboardInputs, ImportDashboardDTO } from '../state/reducers';
+import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 
 interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState'> {
   uidReset: boolean;
@@ -93,7 +93,7 @@ export const ImportDashboardForm: FC<Props> = ({
         </>
       </Forms.Field>
       {inputs.dataSources &&
-        inputs.dataSources.map((input: DashboardInput, index: number) => {
+        inputs.dataSources.map((input: DataSourceInput, index: number) => {
           const dataSourceOption = `dataSources[${index}]`;
           return (
             <Forms.Field
@@ -117,21 +117,19 @@ export const ImportDashboardForm: FC<Props> = ({
         inputs.constants.map((input: DashboardInput, index) => {
           const constantIndex = `constants[${index}]`;
           return (
-            <fieldset name={constantIndex} key={constantIndex}>
-              <Forms.Field
-                label={input.label}
-                error={errors.constants && errors.constants[index] && `${input.label} needs a value`}
-                invalid={errors.constants && !!errors.constants[index]}
-                key={constantIndex}
-              >
-                <Forms.Input
-                  ref={register({ required: true })}
-                  name={`${constantIndex}`}
-                  size="md"
-                  defaultValue={input.value}
-                />
-              </Forms.Field>
-            </fieldset>
+            <Forms.Field
+              label={input.label}
+              error={errors.constants && errors.constants[index] && `${input.label} needs a value`}
+              invalid={errors.constants && !!errors.constants[index]}
+              key={constantIndex}
+            >
+              <Forms.Input
+                ref={register({ required: true })}
+                name={`${constantIndex}`}
+                size="md"
+                defaultValue={input.value}
+              />
+            </Forms.Field>
           );
         })}
       <HorizontalGroup>

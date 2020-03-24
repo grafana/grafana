@@ -16,7 +16,7 @@ interface ConnectedProps {
   inputs: DashboardInputs;
   source: DashboardSource;
   meta?: any;
-  folderId?: number;
+  folderId: number;
 }
 
 interface DispatchProps {
