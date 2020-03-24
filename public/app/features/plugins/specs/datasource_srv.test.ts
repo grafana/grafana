@@ -1,11 +1,11 @@
 import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PluginMeta, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourcePluginMeta, PluginMeta } from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
-  variables: [
+  getVariables: () => [
     {
       type: 'datasource',
       name: 'datasource',
