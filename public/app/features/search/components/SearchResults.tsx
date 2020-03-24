@@ -71,10 +71,9 @@ const getSectionStyles = (theme: GrafanaTheme) => {
     `,
     section: css`
       background: ${theme.colors.panelBg};
-      border: solid 1px ${theme.isLight ? theme.colors.gray5 : theme.colors.dark1};
+      border-bottom: solid 1px ${theme.isLight ? theme.colors.gray95 : theme.colors.gray25};
       padding: 0px 4px 4px 4px;
       margin-bottom: 3px;
-      border-radius: 5px;
     `,
   };
 };
