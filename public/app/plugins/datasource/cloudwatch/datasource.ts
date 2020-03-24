@@ -21,7 +21,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import memoizedDebounce from './memoizedDebounce';
 import { CloudWatchJsonData, CloudWatchQuery } from './types';
-import { VariableWithMultiSupport } from '../../../features/templating/types';
+import { VariableWithMultiSupport } from 'app/features/templating/types';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
