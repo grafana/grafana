@@ -78,6 +78,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/tools v0.0.0-20191213221258-04c2e8eff935 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
+	google.golang.org/appengine v1.6.1
 	google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873 // indirect
 	google.golang.org/grpc v1.23.1
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

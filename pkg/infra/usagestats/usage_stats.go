@@ -133,6 +133,19 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		metrics["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
 	}
 
+	// Add stats about alert rules
+	// * alert count per datasource
+	// * timerange per alertrule?
+	// * conditions count?
+
+	// alert rules grouped by datasourceID
+	// fetch datasource type per id
+	type DatasourceAlertUsage struct {
+		DatasourceType string
+		Count          int
+	}
+
+	// Add stats about auth configuration
 	authTypes := map[string]bool{}
 	authTypes["anonymous"] = setting.AnonymousEnabled
 	authTypes["basic_auth"] = setting.BasicAuthEnabled

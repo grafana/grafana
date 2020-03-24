@@ -26,11 +26,13 @@ type UsageStatsService struct {
 	SQLStore *sqlstore.SqlStore `inject:""`
 	License  models.Licensing   `inject:""`
 
+	log log.Logger
+
 	oauthProviders map[string]bool
 }
 
 func (uss *UsageStatsService) Init() error {
-
+	uss.log = log.New("infra.usagestats")
 	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
 	return nil
 }
