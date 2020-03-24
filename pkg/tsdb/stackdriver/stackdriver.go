@@ -136,8 +136,8 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 	return result, nil
 }
 
-func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*StackdriverQuery, error) {
-	stackdriverQueries := []*StackdriverQuery{}
+func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*stackdriverQuery, error) {
+	stackdriverQueries := []*stackdriverQuery{}
 
 	startTime, err := tsdbQuery.TimeRange.ParseFrom()
 	if err != nil {
@@ -153,7 +153,7 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 
 	for _, query := range tsdbQuery.Queries {
 		migrateLegacyQueryModel(query)
-		q := GrafanaQuery{}
+		q := grafanaQuery{}
 		model, _ := query.Model.MarshalJSON()
 		if err := json.Unmarshal(model, &q); err != nil {
 			return nil, fmt.Errorf("could not unmarshal StackdriverQuery json: %w", err)
@@ -163,7 +163,7 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 
-		sq := &StackdriverQuery{
+		sq := &stackdriverQuery{
 			RefID:    query.RefId,
 			GroupBys: []string{},
 		}
@@ -268,11 +268,11 @@ func buildFilterString(metricType string, filterParts []string) string {
 	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
 }
 
-func buildSLOFilterExpression(q SLOQuery) string {
+func buildSLOFilterExpression(q sloQuery) string {
 	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, q.SelectorName, q.ProjectName, q.ServiceId, q.SloId)
 }
 
-func setMetricAggParams(params *url.Values, query *MetricQuery, durationSeconds int, intervalMs int64) {
+func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {
 	if query.CrossSeriesReducer == "" {
 		query.CrossSeriesReducer = "REDUCE_NONE"
 	}
@@ -290,7 +290,7 @@ func setMetricAggParams(params *url.Values, query *MetricQuery, durationSeconds 
 	}
 }
 
-func setSloAggParams(params *url.Values, query *SLOQuery, durationSeconds int, intervalMs int64) {
+func setSloAggParams(params *url.Values, query *sloQuery, durationSeconds int, intervalMs int64) {
 	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds))
 	if query.SelectorName == "select_slo_health" {
 		params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
@@ -319,12 +319,12 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 	return alignmentPeriod
 }
 
-func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
+func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *stackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, stackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
 	req, err := e.createRequest(ctx, e.dsInfo, query, fmt.Sprintf("stackdriver%s", "v3/projects/"+query.ProjectName+"/timeSeries"))
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, StackdriverResponse{}, nil
+		return queryResult, stackdriverResponse{}, nil
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
@@ -352,47 +352,47 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
 		queryResult.Error = err
-		return queryResult, StackdriverResponse{}, nil
+		return queryResult, stackdriverResponse{}, nil
 	}
 
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, StackdriverResponse{}, nil
+		return queryResult, stackdriverResponse{}, nil
 	}
 
 	data, err := e.unmarshalResponse(res)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, StackdriverResponse{}, nil
+		return queryResult, stackdriverResponse{}, nil
 	}
 
 	return queryResult, data, nil
 }
 
-func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackdriverResponse, error) {
+func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (stackdriverResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
-		return StackdriverResponse{}, err
+		return stackdriverResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
-		return StackdriverResponse{}, fmt.Errorf(string(body))
+		return stackdriverResponse{}, fmt.Errorf(string(body))
 	}
 
-	var data StackdriverResponse
+	var data stackdriverResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		slog.Error("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
-		return StackdriverResponse{}, err
+		return stackdriverResponse{}, err
 	}
 
 	return data, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
+func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data stackdriverResponse, query *stackdriverQuery) error {
 	labels := make(map[string]map[string]bool)
 
 	for _, series := range data.TimeSeries {
@@ -558,7 +558,7 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string, additionalLabels map[string]string, query *StackdriverQuery) string {
+func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string, additionalLabels map[string]string, query *stackdriverQuery) string {
 	if query.AliasBy == "" {
 		return defaultMetricName
 	}
@@ -627,7 +627,7 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	return nil
 }
 
-func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
+func calcBucketBound(bucketOptions stackdriverBucketOptions, n int) string {
 	bucketBound := "0"
 	if n == 0 {
 		return bucketBound
@@ -643,7 +643,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query *StackdriverQuery, proxyPass string) (*http.Request, error) {
+func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query *stackdriverQuery, proxyPass string) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 

@@ -308,7 +308,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{}
+				query := &stackdriverQuery{}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -334,7 +334,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{}
+				query := &stackdriverQuery{}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -376,7 +376,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+				query := &stackdriverQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -397,7 +397,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and the alias pattern is for metric type, a metric label and a resource label", func() {
 
-					query := &StackdriverQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					query := &stackdriverQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 
@@ -411,7 +411,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and the alias pattern is for metric name", func() {
 
-					query := &StackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					query := &stackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 
@@ -430,7 +430,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -477,7 +477,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
@@ -517,7 +517,7 @@ func TestStackdriver(t *testing.T) {
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				query := &stackdriverQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				labels := res.Meta.Get("labels").Interface().(map[string][]string)
 				So(err, ShouldBeNil)
@@ -556,7 +556,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and systemlabel contains key with array of string", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &StackdriverQuery{AliasBy: "{{metadata.system_labels.test}}"}
+					query := &stackdriverQuery{AliasBy: "{{metadata.system_labels.test}}"}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 					So(len(res.Series), ShouldEqual, 3)
@@ -568,7 +568,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and systemlabel contains key with array of string2", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &StackdriverQuery{AliasBy: "{{metadata.system_labels.test2}}"}
+					query := &stackdriverQuery{AliasBy: "{{metadata.system_labels.test2}}"}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 					So(len(res.Series), ShouldEqual, 3)
@@ -584,7 +584,7 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and alias by is expanded", func() {
 					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &StackdriverQuery{
+					query := &stackdriverQuery{
 						ProjectName: "test-proj",
 						Selector:    "select_slo_compliance",
 						Service:     "test-service",
@@ -690,8 +690,8 @@ func TestStackdriver(t *testing.T) {
 	})
 }
 
-func loadTestFile(path string) (StackdriverResponse, error) {
-	var data StackdriverResponse
+func loadTestFile(path string) (stackdriverResponse, error) {
+	var data stackdriverResponse
 
 	jsonBody, err := ioutil.ReadFile(path)
 	if err != nil {

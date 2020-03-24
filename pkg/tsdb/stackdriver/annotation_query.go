@@ -34,7 +34,7 @@ func (e *StackdriverExecutor) executeAnnotationQuery(ctx context.Context, tsdbQu
 	return result, err
 }
 
-func (e *StackdriverExecutor) parseToAnnotations(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery, title string, text string, tags string) error {
+func (e *StackdriverExecutor) parseToAnnotations(queryRes *tsdb.QueryResult, data stackdriverResponse, query *stackdriverQuery, title string, text string, tags string) error {
 	annotations := make([]map[string]string, 0)
 
 	for _, series := range data.TimeSeries {
