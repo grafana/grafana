@@ -724,7 +724,6 @@ jobs:
           no_output_timeout: 20m
           command: |
             # Build linters
-            echo "GOGC: $GOGC"
             make scripts/go/bin/golangci-lint scripts/go/bin/revive scripts/go/bin/gosec
             go vet ./pkg/...
             # Avoid golangci-lint concurrency since it tends to run out of memory
