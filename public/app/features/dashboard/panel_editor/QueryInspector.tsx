@@ -111,6 +111,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     if (response.data) {
       response.response = response.data;
 
+      delete response.config;
       delete response.data;
       delete response.status;
       delete response.statusText;
@@ -120,6 +121,7 @@ export class QueryInspector extends PureComponent<Props, State> {
       delete response.type;
       delete response.$$config;
     }
+
     this.setState(prevState => ({
       ...prevState,
       dsQuery: {
