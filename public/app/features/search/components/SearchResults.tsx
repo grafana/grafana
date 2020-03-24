@@ -8,7 +8,7 @@ import { SearchItem } from './SearchItem';
 import { SearchCheckbox } from './SearchCheckbox';
 
 type clickWithEvent = (item: DashboardSectionItem | DashboardSection, event: any) => void;
-interface Props {
+export interface Props {
   results: DashboardSection[] | undefined;
   onSelectionChanged: () => void;
   onTagSelected: (name: string) => any;
@@ -122,7 +122,6 @@ const getSectionHeaderStyles = (theme: GrafanaTheme, selected = false) => {
     wrapper: cx(
       css`
         display: flex;
-        flex-grow: 1;
         font-size: ${theme.typography.size.base};
         padding: ${sm} ${xs} ${xs};
         color: ${theme.colors.textWeak};
