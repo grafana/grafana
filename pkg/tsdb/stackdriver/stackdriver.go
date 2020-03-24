@@ -169,25 +169,20 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		}
 
 		if q.QueryType == metricQueryType {
+			sq.AliasBy = q.MetricQuery.AliasBy
+			sq.GroupBys = append(sq.GroupBys, q.MetricQuery.GroupBys...)
+			sq.ProjectName = q.MetricQuery.ProjectName
 			params.Add("filter", buildFilterString(q.MetricQuery.MetricType, q.MetricQuery.Filters))
 			params.Add("view", q.MetricQuery.View)
-			setAggParams(&params, &q.MetricQuery, durationSeconds, query.IntervalMs)
-			sq.GroupBys = append(sq.GroupBys, q.MetricQuery.GroupBys...)
-			sq.AliasBy = q.MetricQuery.AliasBy
-			sq.ProjectName = q.MetricQuery.ProjectName
+			setMetricAggParams(&params, &q.MetricQuery, durationSeconds, query.IntervalMs)
 		} else if q.QueryType == sloQueryType {
 			sq.AliasBy = q.SloQuery.AliasBy
 			sq.ProjectName = q.SloQuery.ProjectName
 			sq.Selector = q.SloQuery.SelectorName
 			sq.Service = q.SloQuery.ServiceId
 			sq.Slo = q.SloQuery.SloId
-			params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(q.SloQuery.AlignmentPeriod, query.IntervalMs, durationSeconds))
 			params.Add("filter", buildSLOFilterExpression(q.SloQuery))
-			if q.SloQuery.SelectorName == "select_slo_health" {
-				params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
-			} else {
-				params.Add("aggregation.perSeriesAligner", "ALIGN_NEXT_OLDER")
-			}
+			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.IntervalMs)
 		}
 
 		target = params.Encode()
@@ -274,7 +269,7 @@ func buildSLOFilterExpression(q SLOQuery) string {
 	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, q.SelectorName, q.ProjectName, q.ServiceId, q.SloId)
 }
 
-func setAggParams(params *url.Values, query *MetricQuery, durationSeconds int, intervalMs int64) {
+func setMetricAggParams(params *url.Values, query *MetricQuery, durationSeconds int, intervalMs int64) {
 	if query.CrossSeriesReducer == "" {
 		query.CrossSeriesReducer = "REDUCE_NONE"
 	}
@@ -289,6 +284,15 @@ func setAggParams(params *url.Values, query *MetricQuery, durationSeconds int, i
 
 	for _, groupBy := range query.GroupBys {
 		params.Add("aggregation.groupByFields", groupBy)
+	}
+}
+
+func setSloAggParams(params *url.Values, query *SLOQuery, durationSeconds int, intervalMs int64) {
+	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds))
+	if query.SelectorName == "select_slo_health" {
+		params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
+	} else {
+		params.Add("aggregation.perSeriesAligner", "ALIGN_NEXT_OLDER")
 	}
 }
 
