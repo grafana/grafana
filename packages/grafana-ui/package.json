@@ -84,7 +84,7 @@
     "@types/papaparse": "4.5.9",
     "@types/pretty-format": "20.0.1",
     "@types/rc-slider": "8.6.5",
-    "@types/react": "16.8.16",
+    "@types/react": "16.9.25",
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.9.0",
     "@types/react-transition-group": "2.0.16",
