@@ -725,7 +725,7 @@ jobs:
             pushd /tmp
             curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
             tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
-            mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+            sudo mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
             popd
             make scripts/go/bin/revive scripts/go/bin/gosec
       - run:
