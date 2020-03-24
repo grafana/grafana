@@ -197,6 +197,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/explore', {
       template: '<react-container />',
       reloadOnSearch: false,
+      pageClass: 'page-explore',
       resolve: {
         roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
@@ -219,8 +220,10 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/org/new', {
-      templateUrl: 'public/app/features/org/partials/newOrg.html',
-      controller: 'NewOrgCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "NewOrgPage" */ 'app/features/org/NewOrgPage')),
+      },
     })
     .when('/org/users', {
       template: '<react-container />',

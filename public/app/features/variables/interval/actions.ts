@@ -5,7 +5,7 @@ import { ThunkResult } from '../../../types';
 import { createIntervalOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
 import { getVariable } from '../state/selectors';
-import { IntervalVariableModel } from '../../templating/variable';
+import { IntervalVariableModel } from '../../templating/types';
 import kbn from '../../../core/utils/kbn';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import templateSrv from '../../templating/template_srv';
@@ -42,7 +42,7 @@ export const updateAutoValue = (
     templateSrv: templateSrv,
   }
 ): ThunkResult<void> => (dispatch, getState) => {
-  const variableInState = getVariable<IntervalVariableModel>(identifier.uuid, getState());
+  const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
   if (variableInState.auto) {
     const res = dependencies.kbn.calculateInterval(
       dependencies.getTimeSrv().timeRange(),
