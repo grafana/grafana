@@ -37,12 +37,12 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form-button-row"
       >
-        <Button
+        <ForwardRef
           type="submit"
           variant="primary"
         >
           Create
-        </Button>
+        </ForwardRef>
       </div>
     </form>
   </PageContents>

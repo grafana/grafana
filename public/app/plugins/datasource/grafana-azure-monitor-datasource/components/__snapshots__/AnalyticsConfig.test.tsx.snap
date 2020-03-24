@@ -80,7 +80,7 @@ exports[`Render should disable log analytics credentials form 1`] = `
         <div
           className="max-width-30 gf-form-inline"
         >
-          <Button
+          <ForwardRef
             disabled={true}
             onClick={[Function]}
             size="sm"
@@ -88,7 +88,7 @@ exports[`Render should disable log analytics credentials form 1`] = `
             variant="secondary"
           >
             Load Workspaces
-          </Button>
+          </ForwardRef>
         </div>
       </div>
     </div>
@@ -176,7 +176,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
         <div
           className="max-width-30 gf-form-inline"
         >
-          <Button
+          <ForwardRef
             disabled={true}
             onClick={[Function]}
             size="sm"
@@ -184,7 +184,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
             variant="secondary"
           >
             Load Workspaces
-          </Button>
+          </ForwardRef>
         </div>
       </div>
     </div>
@@ -272,7 +272,7 @@ exports[`Render should render component 1`] = `
         <div
           className="max-width-30 gf-form-inline"
         >
-          <Button
+          <ForwardRef
             disabled={true}
             onClick={[Function]}
             size="sm"
@@ -280,7 +280,7 @@ exports[`Render should render component 1`] = `
             variant="secondary"
           >
             Load Workspaces
-          </Button>
+          </ForwardRef>
         </div>
       </div>
     </div>
