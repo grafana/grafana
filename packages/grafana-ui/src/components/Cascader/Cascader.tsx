@@ -138,12 +138,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     this.props.onSelect(value);
   };
 
-  onClick = () => {
-    this.setState({
-      focusCascade: true,
-    });
-  };
-
   onBlur = () => {
     this.setState({
       isSearching: false,
