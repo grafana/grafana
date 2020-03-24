@@ -86,7 +86,7 @@
     "@types/rc-slider": "8.6.5",
     "@types/react": "16.8.16",
     "@types/react-custom-scrollbars": "4.0.5",
-    "@types/react-test-renderer": "16.9.0",
+    "@types/react-test-renderer": "16.9.2",
     "@types/react-transition-group": "2.0.16",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/tinycolor2": "1.4.1",
