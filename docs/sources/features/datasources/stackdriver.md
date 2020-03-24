@@ -88,11 +88,11 @@ Read more about creating and enabling service accounts for GCE VM instances [her
 
 ## Using the Query Editor
 
-{{< docs-imagebox img="/img/docs/v67/stackriver-query-editor.png" max-width= "400px" class="docs-image--right" >}}
-
 The Stackdriver query editor allows you to build two types of queries - **Metric** and **Service Level Objective (SLO)**. Both types return time series data.
 
 ### Metric Queries
+
+{{< docs-imagebox img="/img/docs/v70/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
@@ -179,6 +179,8 @@ Example Alias By: `{{resource.type}} - {{metric.type}}`
 Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 ### SLO Queries
+
+{{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 To get an understanding of the basic concepts in service monitoring, please refer to Google Stackdriver's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
