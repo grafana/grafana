@@ -20,15 +20,17 @@ export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel,
     const node = navIndex[id];
 
     let main: NavModelItem;
-    if (!onlyChild) {
+    if (!onlyChild && node.parentItem) {
       main = { ...node.parentItem };
 
-      main.children = main.children.map(item => {
-        return {
-          ...item,
-          active: item.url === node.url,
-        };
-      });
+      main.children =
+        main.children &&
+        main.children.map(item => {
+          return {
+            ...item,
+            active: item.url === node.url,
+          };
+        });
     } else {
       main = node;
     }
