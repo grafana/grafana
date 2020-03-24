@@ -345,8 +345,10 @@ describe('backendSrv', () => {
       it('then it should not emit message', async () => {
         const url = 'http://localhost:3000/api/some-mock';
         const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
-        const result = await backendSrv.datasourceRequest({ url, method: 'GET', silent: true });
+        const options = { url, method: 'GET', silent: true };
+        const result = await backendSrv.datasourceRequest(options);
         expect(result).toEqual({
+          config: options,
           data: { test: 'hello world' },
           ok: true,
           redirected: false,
@@ -374,8 +376,10 @@ describe('backendSrv', () => {
       it('then it should not emit message', async () => {
         const url = 'http://localhost:3000/api/some-mock';
         const { backendSrv, appEventsMock, expectDataSourceRequestCallChain } = getTestContext({ url });
-        const result = await backendSrv.datasourceRequest({ url, method: 'GET' });
+        const options = { url, method: 'GET' };
+        const result = await backendSrv.datasourceRequest(options);
         const expectedResult = {
+          config: options,
           data: { test: 'hello world' },
           ok: true,
           redirected: false,
@@ -440,6 +444,7 @@ describe('backendSrv', () => {
         const slowRequest = backendSrv.datasourceRequest(options);
         const fastResponse = await backendSrv.datasourceRequest(options);
         expect(fastResponse).toEqual({
+          config: options,
           data: { message: 'Fast Request' },
           ok: true,
           redirected: false,
@@ -461,6 +466,7 @@ describe('backendSrv', () => {
 
         const result = await slowRequest;
         expect(result).toEqual({
+          config: options,
           data: [],
           status: -1,
           statusText: 'Request was aborted',
