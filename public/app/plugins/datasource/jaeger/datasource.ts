@@ -7,6 +7,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataQuery,
+  FieldType,
 } from '@grafana/data';
 import { BackendSrv, DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -53,27 +54,11 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
-    // //http://localhost:16686/search?end=1573338717880000&limit=20&lookback=6h&maxDuration&minDuration&service=app&start=1573317117880000
-    // const url =
-    //   options.targets.length && options.targets[0].query
-    //     ? `${this.instanceSettings.url}/trace/${options.targets[0].query}?uiEmbed=v0`
-    //     : '';
-    //
-    // return of({
-    //   data: [
-    //     new MutableDataFrame({
-    //       fields: [
-    //         {
-    //           name: 'url',
-    //           values: [url],
-    //         },
-    //       ],
-    //     }),
-    //   ],
-    // });
-
+    // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
+    // traces at one we need to change this.
     const id = options.targets?.[0]?.query;
     if (id) {
+      // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
       return this._request(`/api/traces/${id}`).pipe(
         map(response => {
           return {
@@ -81,8 +66,9 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
               new MutableDataFrame({
                 fields: [
                   {
-                    name: 'data',
-                    values: [response.data.data],
+                    name: 'trace',
+                    type: FieldType.trace,
+                    values: response?.data?.data || [],
                   },
                 ],
               }),
@@ -91,7 +77,11 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
         })
       );
     } else {
-      return of({ data: [] });
+      return of({
+        name: 'trace',
+        type: FieldType.trace,
+        data: [],
+      });
     }
   }
 
