@@ -1,22 +1,11 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import {
-  CustomScrollbar,
-  stylesFactory,
-  Tab,
-  TabContent,
-  TabsBar,
-  useTheme,
-  Forms,
-  DataLinksInlineEditor,
-  Container,
-} from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, Tab, TabContent, TabsBar, useTheme, Container } from '@grafana/ui';
 import { DefaultFieldConfigEditor, OverrideFieldConfigEditor } from './FieldConfigEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { css } from 'emotion';
-import { OptionsGroup } from './OptionsGroup';
-import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
+import { GeneralPanelOptions } from './GeneralPanelOptions';
 
 export const OptionsPaneContent: React.FC<{
   plugin?: PanelPlugin;
@@ -30,7 +19,6 @@ export const OptionsPaneContent: React.FC<{
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const renderFieldOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
@@ -53,6 +41,7 @@ export const OptionsPaneContent: React.FC<{
     },
     [data, plugin, panel, onFieldConfigsChange]
   );
+
   const renderFieldOverrideOptions = useCallback(
     (plugin: PanelPlugin) => {
       const fieldConfig = panel.getFieldConfig();
@@ -98,47 +87,6 @@ export const OptionsPaneContent: React.FC<{
     [data, plugin, panel, onFieldConfigsChange]
   );
 
-  const renderPanelSettings = useCallback(() => {
-    console.log(panel.transparent);
-    return (
-      <div>
-        <OptionsGroup title="Panel settings">
-          <>
-            <Forms.Field label="Panel title">
-              <Forms.Input
-                defaultValue={panel.title}
-                onBlur={e => onPanelConfigChange('title', e.currentTarget.value)}
-              />
-            </Forms.Field>
-            <Forms.Field label="Description" description="Panel description supports markdown and links">
-              <Forms.TextArea
-                defaultValue={panel.description}
-                onBlur={e => onPanelConfigChange('description', e.currentTarget.value)}
-              />
-            </Forms.Field>
-            <Forms.Field label="Transparent" description="Display panel without background">
-              <Forms.Switch
-                value={panel.transparent}
-                onChange={e => onPanelConfigChange('transparent', e.currentTarget.checked)}
-              />
-            </Forms.Field>
-          </>
-        </OptionsGroup>
-        <OptionsGroup title="Panel links">
-          <DataLinksInlineEditor
-            links={panel.links}
-            onChange={links => onPanelConfigChange('links', links)}
-            suggestions={linkVariablesSuggestions}
-            data={data.series}
-          />
-        </OptionsGroup>
-        <OptionsGroup title="Panel repeating">
-          <div>TODO</div>
-        </OptionsGroup>
-      </div>
-    );
-  }, [data, plugin, panel, onFieldConfigsChange]);
-
   const [activeTab, setActiveTab] = useState('defaults');
 
   return (
@@ -154,7 +102,7 @@ export const OptionsPaneContent: React.FC<{
             <CustomScrollbar>
               {activeTab === 'defaults' && renderFieldOptions(plugin)}
               {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
-              {activeTab === 'panel' && renderPanelSettings()}
+              {activeTab === 'panel' && <GeneralPanelOptions panel={panel} onPanelConfigChange={onPanelConfigChange} />}
             </CustomScrollbar>
           </TabContent>
         </div>
