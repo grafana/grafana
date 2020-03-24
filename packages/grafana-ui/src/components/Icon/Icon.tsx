@@ -25,7 +25,7 @@ const getIconStyles = stylesFactory(() => {
         vertical-align: middle;
       }
     `,
-    iconSvg: css`
+    currentFontColor: css`
       svg {
         fill: currentColor;
       }
@@ -66,11 +66,10 @@ class UnThemedIcon extends PureComponent<IconProps, IconState> {
     /*Transform string with px to number*/
     const svgSize = Number(theme.typography.size[size || 'base'].slice(0, -2));
     const defaultMonochromeColor = theme.colors.orange;
-    console.log(defaultMonochromeColor);
     const styles = getIconStyles();
 
     return (
-      <div className={cx(styles.icon, { [styles.iconSvg]: !color && type === 'icon' })}>
+      <div className={cx(styles.icon, { [styles.currentFontColor]: !color && type === 'icon' })}>
         {Component && <Component color={color ? color : defaultMonochromeColor} size={svgSize} />}
       </div>
     );
