@@ -7903,7 +7903,7 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-batch-processor@^1.0.0:
+batch-processor@1.0.0, batch-processor@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/batch-processor/-/batch-processor-1.0.0.tgz#75c95c32b748e0850d10c2b168f6bdbe9891ace8"
   integrity sha1-dclcMrdI4IUNEMKxaPa9vpiRrOg=
@@ -11006,12 +11006,19 @@ elegant-spinner@^1.0.1:
   resolved "https://registry.yarnpkg.com/elegant-spinner/-/elegant-spinner-1.0.1.tgz#db043521c95d7e303fd8f345bedc3349cfb0729e"
   integrity sha1-2wQ1IcldfjA/2PNFvtwzSc+wcp4=
 
-element-resize-detector@^1.1.12, element-resize-detector@^1.1.15:
+element-resize-detector@^1.1.15:
   version "1.1.15"
   resolved "https://registry.yarnpkg.com/element-resize-detector/-/element-resize-detector-1.1.15.tgz#48eba1a2eaa26969a4c998d972171128c971d8d2"
   integrity sha512-16/5avDegXlUxytGgaumhjyQoM6hpp5j3+L79sYq5hlXfTNRy5WMMuTVWkZU3egp/CokCmTmvf18P3KeB57Iog==
   dependencies:
     batch-processor "^1.0.0"
+
+element-resize-detector@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/element-resize-detector/-/element-resize-detector-1.2.1.tgz#b0305194447a4863155e58f13323a0aef30851d1"
+  integrity sha512-BdFsPepnQr9fznNPF9nF4vQ457U/ZJXQDSNF1zBe7yaga8v9AdZf3/NElYxFdUh7SitSGt040QygiTo6dtatIw==
+  dependencies:
+    batch-processor "1.0.0"
 
 elliptic@^6.0.0:
   version "6.5.1"
@@ -20696,16 +20703,15 @@ react-select@^3.0.8:
     react-input-autosize "^2.2.2"
     react-transition-group "^2.2.1"
 
-react-sizeme@2.5.2:
-  version "2.5.2"
-  resolved "https://registry.yarnpkg.com/react-sizeme/-/react-sizeme-2.5.2.tgz#e7041390cfb895ed15d896aa91d76e147e3b70b5"
-  integrity sha512-hYvcncV1FxVzPm2EhVwlOLf7Tk+k/ttO6rI7bfKUL/aL1gYzrY3DXJsdZ6nFaFgGSU/i8KC6gCoptOhBbRJpXQ==
+react-sizeme@2.6.12:
+  version "2.6.12"
+  resolved "https://registry.yarnpkg.com/react-sizeme/-/react-sizeme-2.6.12.tgz#ed207be5476f4a85bf364e92042520499455453e"
+  integrity sha512-tL4sCgfmvapYRZ1FO2VmBmjPVzzqgHA7kI8lSJ6JS6L78jXFNRdOZFpXyK6P1NBZvKPPCZxReNgzZNUajAerZw==
   dependencies:
-    element-resize-detector "^1.1.12"
-    invariant "^2.2.2"
-    lodash.debounce "^4.0.8"
-    lodash.throttle "^4.1.1"
-    shallowequal "^1.0.2"
+    element-resize-detector "^1.2.1"
+    invariant "^2.2.4"
+    shallowequal "^1.1.0"
+    throttle-debounce "^2.1.0"
 
 react-sizeme@^2.6.7:
   version "2.6.8"
