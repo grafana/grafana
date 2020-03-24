@@ -17,7 +17,7 @@ export const FilterInput = forwardRef<HTMLInputElement, Props>((props, ref) => (
       className={props.inputClassName}
       value={props.value ? unEscapeStringFromRegex(props.value) : ''}
       onChange={event => props.onChange(escapeStringForRegex(event.target.value))}
-      placeholder={props.placeholder ? props.placeholder : ''}
+      placeholder={props.placeholder ?? ''}
     />
     <i className="gf-form-input-icon fa fa-search" />
   </label>
