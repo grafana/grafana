@@ -172,6 +172,9 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 			sq.AliasBy = q.MetricQuery.AliasBy
 			sq.GroupBys = append(sq.GroupBys, q.MetricQuery.GroupBys...)
 			sq.ProjectName = q.MetricQuery.ProjectName
+			if q.MetricQuery.View == "" {
+				q.MetricQuery.View = "FULL"
+			}
 			params.Add("filter", buildFilterString(q.MetricQuery.MetricType, q.MetricQuery.Filters))
 			params.Add("view", q.MetricQuery.View)
 			setMetricAggParams(&params, &q.MetricQuery, durationSeconds, query.IntervalMs)
