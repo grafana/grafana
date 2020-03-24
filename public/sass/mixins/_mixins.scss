@@ -369,7 +369,7 @@
   }
 }
 
-@function lightOrDarkTheme($lightColor, $darkColor) {
+@function lightOrDark($lightColor, $darkColor) {
   @if (lightness($text-color) < 50) {
     @return $lightColor;
   } @else {
