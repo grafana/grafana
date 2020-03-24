@@ -721,16 +721,22 @@ jobs:
       - checkout
       - run:
           name: Install Go linters
-          command: make scripts/go/bin/golangci-lint scripts/go/bin/revive scripts/go/bin/gosec
+          command: |
+            pushd /tmp
+            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
+            tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
+            mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+            popd
+            make scripts/go/bin/revive scripts/go/bin/gosec
       - run:
           name: Lint Go
           no_output_timeout: 20m
           command: |
             go vet ./pkg/...
             # Adjust golangci-lint concurrency since it tends to run out of memory
-            ./scripts/go/bin/golangci-lint run -v -j 2 --config scripts/go/configs/ci/.golangci.yml -E deadcode \
+            golangci-lint run -v -j 2 --config scripts/go/configs/ci/.golangci.yml -E deadcode \
               -E gofmt -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
-            ./scripts/go/bin/golangci-lint run -v -j 2 --config scripts/go/configs/ci/.golangci.yml -E unconvert \
+            golangci-lint run -v -j 2 --config scripts/go/configs/ci/.golangci.yml -E unconvert \
               -E unused -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish ./pkg/services/alerting/...
