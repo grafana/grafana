@@ -34,35 +34,44 @@ const getIconStyles = stylesFactory(() => {
 });
 
 export interface IconState {
-  module: null | ComponentType<{ color?: string; size?: number }>;
+  icon: null | ComponentType<{ color?: string; size?: number }>;
 }
 
 class UnThemedIcon extends PureComponent<IconProps, IconState> {
   constructor(props: IconProps) {
     super(props);
     this.state = {
-      module: null,
+      icon: null,
     };
   }
 
   componentDidMount() {
-    const { name } = this.props;
-    import(`@iconscout/react-unicons/icons/uil-${name}`).then(module => {
-      this.setState({ module: module.default });
-    });
+    const { name, type = 'icon' } = this.props;
+    if (type === 'icon') {
+      import(`@iconscout/react-unicons/icons/uil-${name}`).then(module => {
+        this.setState({ icon: module.default });
+      });
+    }
+    if (type === 'monochrome') {
+      import(`./assets/${name}`).then(module => {
+        this.setState({ icon: module.default });
+      });
+    }
   }
 
   render() {
-    const { color, size, theme } = this.props;
-    const { module: Component } = this.state;
+    const { color, size, theme, type = 'icon' } = this.props;
+    const { icon: Component } = this.state;
 
     /*Transform string with px to number*/
     const svgSize = Number(theme.typography.size[size || 'base'].slice(0, -2));
+    const defaultMonochromeColor = theme.colors.orange;
+    console.log(defaultMonochromeColor);
     const styles = getIconStyles();
 
     return (
-      <div className={cx(styles.icon, { [styles.iconSvg]: !color })}>
-        {Component && <Component color={color} size={svgSize} />}
+      <div className={cx(styles.icon, { [styles.iconSvg]: !color && type === 'icon' })}>
+        {Component && <Component color={color ? color : defaultMonochromeColor} size={svgSize} />}
       </div>
     );
   }
