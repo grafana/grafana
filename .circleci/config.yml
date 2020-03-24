@@ -711,22 +711,31 @@ jobs:
   lint-go:
     docker:
       - image: circleci/golang:1.13.4
-        environment:
-          # we need CGO because of go-sqlite3
-          CGO_ENABLED: 1
-          # Reduce golangci-lint memory usage (default is 100)
-          GOGC: 20
     working_directory: /go/src/github.com/grafana/grafana
+    environment:
+      # we need CGO because of go-sqlite3
+      CGO_ENABLED: 1
+      # Reduce golangci-lint memory usage (default is 100)
+      GOGC: 20
     steps:
       - checkout
       - run:
+          name: Install Go linters
+          command: |
+            pushd /tmp
+            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
+            echo 241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179 \
+              golangci-lint-1.24.0-linux-amd64.tar.gz | sha256sum --check --strict --status
+            tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
+            sudo mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+            popd
+            make scripts/go/bin/revive scripts/go/bin/gosec
+      - run:
           name: Lint Go
           command: |
-            # Build linters
-            make scripts/go/bin/golangci-lint scripts/go/bin/revive scripts/go/bin/gosec
             go vet ./pkg/...
-            # Avoid golangci-lint concurrency since it tends to run out of memory
-            ./scripts/go/bin/golangci-lint run --config scripts/go/configs/.golangci.yml -j 1 ./pkg/...
+            # Adjust golangci-lint concurrency since it can run out of memory
+            golangci-lint run -v -j 2 --config scripts/go/configs/.golangci.yml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish ./pkg/services/alerting/...
             ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
