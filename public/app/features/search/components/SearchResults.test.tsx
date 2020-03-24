@@ -1,5 +1,5 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { shallow, mount } from 'enzyme';
 import { SearchResults, Props } from './SearchResults';
 
 const data = [
@@ -22,9 +22,9 @@ const data = [
       {
         id: 1,
         uid: 'lBdLINUWk',
-        title: 'Prom dash',
-        uri: 'db/prom-dash',
-        url: '/d/lBdLINUWk/prom-dash',
+        title: 'Test 1',
+        uri: 'db/test1',
+        url: '/d/lBdLINUWk/test1',
         slug: '',
         type: 'dash-db',
         //@ts-ignore
@@ -35,9 +35,9 @@ const data = [
       {
         id: 46,
         uid: '8DY63kQZk',
-        title: 'Stocks',
-        uri: 'db/stocks',
-        url: '/d/8DY63kQZk/stocks',
+        title: 'Test 2',
+        uri: 'db/test2',
+        url: '/d/8DY63kQZk/test2',
         slug: '',
         type: 'dash-db',
         tags: [],
@@ -78,5 +78,22 @@ describe('SearchResults', () => {
   it('should render result items', () => {
     const { wrapper } = setup();
     expect(wrapper.find({ 'aria-label': 'Search section' })).toHaveLength(2);
+  });
+
+  it('should render section items for expanded section', () => {
+    const { wrapper } = setup();
+    expect(wrapper.find({ 'aria-label': 'Search items' }).children()).toHaveLength(2);
+  });
+
+  it('should not render checkboxes for non-editable results', () => {
+    //@ts-ignore
+    const { wrapper } = setup({ editable: false }, mount);
+    expect(wrapper.find({ type: 'checkbox' })).toHaveLength(0);
+  });
+
+  it('should render checkboxes for non-editable results', () => {
+    //@ts-ignore
+    const { wrapper } = setup({ editable: true }, mount);
+    expect(wrapper.find({ type: 'checkbox' })).toHaveLength(4);
   });
 });
