@@ -15,15 +15,10 @@ type SocialGitlab struct {
 	*SocialBase
 	allowedGroups []string
 	apiUrl        string
-	allowSignup   bool
 }
 
 func (s *SocialGitlab) Type() int {
 	return int(models.GITLAB)
-}
-
-func (s *SocialGitlab) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialGitlab) IsGroupMember(groups []string) bool {

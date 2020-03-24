@@ -19,7 +19,6 @@ type SocialGenericOAuth struct {
 	*SocialBase
 	allowedOrganizations []string
 	apiUrl               string
-	allowSignup          bool
 	emailAttributeName   string
 	emailAttributePath   string
 	roleAttributePath    string
@@ -28,10 +27,6 @@ type SocialGenericOAuth struct {
 
 func (s *SocialGenericOAuth) Type() int {
 	return int(models.GENERIC)
-}
-
-func (s *SocialGenericOAuth) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {

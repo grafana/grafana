@@ -16,7 +16,6 @@ type SocialGithub struct {
 	*SocialBase
 	allowedOrganizations []string
 	apiUrl               string
-	allowSignup          bool
 	teamIds              []int
 }
 
@@ -36,10 +35,6 @@ var (
 
 func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
-}
-
-func (s *SocialGithub) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialGithub) IsTeamMember(client *http.Client) bool {

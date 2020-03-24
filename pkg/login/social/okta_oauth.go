@@ -15,7 +15,6 @@ type SocialOkta struct {
 	*SocialBase
 	apiUrl            string
 	allowedGroups     []string
-	allowSignup       bool
 	roleAttributePath string
 }
 
@@ -40,10 +39,6 @@ type OktaUserInfoJson struct {
 
 func (s *SocialOkta) Type() int {
 	return int(models.OKTA)
-}
-
-func (s *SocialOkta) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {

@@ -15,7 +15,6 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
 		SocialBase    *SocialBase
 		allowedGroups []string
-		allowSignup   bool
 	}
 	type args struct {
 		client *http.Client
@@ -226,7 +225,6 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			s := &SocialAzureAD{
 				SocialBase:    tt.fields.SocialBase,
 				allowedGroups: tt.fields.allowedGroups,
-				allowSignup:   tt.fields.allowSignup,
 			}
 
 			key := []byte("secret")

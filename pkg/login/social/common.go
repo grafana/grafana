@@ -24,6 +24,10 @@ func (s *SocialBase) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
 
+func (s *SocialBase) IsSignupAllowed() bool {
+	return s.allowSignup
+}
+
 func isEmailAllowed(email string, allowedDomains []string) bool {
 	if len(allowedDomains) == 0 {
 		return true

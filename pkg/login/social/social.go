@@ -38,6 +38,7 @@ type SocialConnector interface {
 type SocialBase struct {
 	*oauth2.Config
 	log            log.Logger
+	allowSignup    bool
 	allowedDomains []string
 }
 
@@ -116,10 +117,10 @@ func NewOAuthService() {
 				SocialBase: &SocialBase{
 					Config:         &config,
 					log:            logger,
+					allowSignup:    info.AllowSignup,
 					allowedDomains: info.AllowedDomains,
 				},
 				apiUrl:               info.ApiUrl,
-				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
@@ -131,10 +132,10 @@ func NewOAuthService() {
 				SocialBase: &SocialBase{
 					Config:         &config,
 					log:            logger,
+					allowSignup:    info.AllowSignup,
 					allowedDomains: info.AllowedDomains,
 				},
 				apiUrl:        info.ApiUrl,
-				allowSignup:   info.AllowSignup,
 				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
@@ -145,11 +146,11 @@ func NewOAuthService() {
 				SocialBase: &SocialBase{
 					Config:         &config,
 					log:            logger,
+					allowSignup:    info.AllowSignup,
 					allowedDomains: info.AllowedDomains,
 				},
 				hostedDomain: info.HostedDomain,
 				apiUrl:       info.ApiUrl,
-				allowSignup:  info.AllowSignup,
 			}
 		}
 
@@ -159,10 +160,10 @@ func NewOAuthService() {
 				SocialBase: &SocialBase{
 					Config:         &config,
 					log:            logger,
+					allowSignup:    info.AllowSignup,
 					allowedDomains: info.AllowedDomains,
 				},
 				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
-				allowSignup:   info.AllowSignup,
 			}
 		}
 
@@ -172,11 +173,11 @@ func NewOAuthService() {
 				SocialBase: &SocialBase{
 					Config:         &config,
 					log:            logger,
+					allowSignup:    info.AllowSignup,
 					allowedDomains: info.AllowedDomains,
 				},
 				apiUrl:            info.ApiUrl,
 				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				allowSignup:       info.AllowSignup,
 				roleAttributePath: info.RoleAttributePath,
 			}
 		}
@@ -187,10 +188,10 @@ func NewOAuthService() {
 				SocialBase: &SocialBase{
 					Config:         &config,
 					log:            logger,
+					allowSignup:    info.AllowSignup,
 					allowedDomains: info.AllowedDomains,
 				},
 				apiUrl:               info.ApiUrl,
-				allowSignup:          info.AllowSignup,
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
 				roleAttributePath:    info.RoleAttributePath,
@@ -214,11 +215,11 @@ func NewOAuthService() {
 
 			SocialMap[grafanaCom] = &SocialGrafanaCom{
 				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
+					Config:      &config,
+					log:         logger,
+					allowSignup: info.AllowSignup,
 				},
 				url:                  setting.GrafanaComUrl,
-				allowSignup:          info.AllowSignup,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}

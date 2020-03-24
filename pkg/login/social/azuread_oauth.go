@@ -15,7 +15,6 @@ import (
 type SocialAzureAD struct {
 	*SocialBase
 	allowedGroups []string
-	allowSignup   bool
 }
 
 type azureClaims struct {
@@ -29,14 +28,6 @@ type azureClaims struct {
 
 func (s *SocialAzureAD) Type() int {
 	return int(models.AZUREAD)
-}
-
-func (s *SocialAzureAD) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
-}
-
-func (s *SocialAzureAD) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
