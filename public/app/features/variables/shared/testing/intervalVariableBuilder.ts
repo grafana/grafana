@@ -1,5 +1,5 @@
 import { OptionsVariableBuilder } from './optionsVariableBuilder';
-import { IntervalVariableModel, VariableRefresh } from 'app/features/templating/variable';
+import { IntervalVariableModel, VariableRefresh } from 'app/features/templating/types';
 
 export class IntervalVariableBuilder extends OptionsVariableBuilder<IntervalVariableModel> {
   withRefresh(refresh: VariableRefresh) {
