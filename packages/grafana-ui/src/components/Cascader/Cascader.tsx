@@ -1,6 +1,5 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
-// @ts-ignore
 import RCCascader from 'rc-cascader';
 
 import { Select } from '../Forms/Select/Select';
@@ -8,6 +7,7 @@ import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
+import { CascaderOption as RCOption } from 'rc-cascader/lib/Cascader';
 
 interface CascaderProps {
   /** The seperator between levels in the search */
@@ -32,11 +32,18 @@ interface CascaderState {
 }
 
 export interface CascaderOption {
+  /**
+   *  The value used under the hood
+   */
   value: any;
+  /**
+   *  The label to display in the UI
+   */
   label: string;
   /** Items will be just flattened into the main list of items recursively. */
   items?: CascaderOption[];
   disabled?: boolean;
+  /** Avoid using */
   title?: string;
   /**  Children will be shown in a submenu. Use 'items' instead, as 'children' exist to ensure backwards compatibility.*/
   children?: CascaderOption[];
@@ -78,6 +85,18 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       }
     }
     return selectOptions;
+  };
+
+  onCascaderChange = (value: string[], selectedOptions: RCOption[]) => {
+    this.setState({
+      focusCascade: true,
+    });
+    this.onChange(
+      value,
+      selectedOptions.map(option => {
+        return { value: option.value, label: option.label as string };
+      })
+    );
   };
 
   setInitialValue(searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) {
@@ -191,12 +210,10 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           />
         ) : (
           <RCCascader
-            onChange={this.onChange}
-            onClick={this.onClick}
+            onChange={this.onCascaderChange}
             options={this.props.options}
-            isFocused={focusCascade}
-            onBlur={this.onBlurCascade}
-            value={rcValue}
+            changeOnSelect
+            value={rcValue.value}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
             // Required, otherwise the portal that the popup is shown in will render under other components
@@ -208,6 +225,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
               <Input
                 size={size}
                 placeholder={placeholder}
+                onBlur={this.onBlurCascade}
                 value={activeLabel}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}

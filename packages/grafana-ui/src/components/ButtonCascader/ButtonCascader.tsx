@@ -4,6 +4,7 @@ import { Icon } from '../Icon/Icon';
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
+import { onChangeCascader, fromRCOptions } from '../Cascader/optionMappings';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
@@ -17,10 +18,22 @@ export interface ButtonCascaderProps {
   onPopupVisibleChange?: (visible: boolean) => void;
 }
 
-export const ButtonCascader: React.FC<ButtonCascaderProps> = props => (
-  <RCCascader {...props} expandIcon={null}>
-    <button className="gf-form-label gf-form-label--btn" disabled={props.disabled}>
-      {props.children} <Icon name="caret-down" />
-    </button>
-  </RCCascader>
-);
+export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
+  const { onChange, loadData, ...rest } = props;
+  return (
+    <RCCascader
+      onChange={onChangeCascader(onChange)}
+      loadData={options => {
+        if (loadData) {
+          loadData(fromRCOptions(options));
+        }
+      }}
+      {...rest}
+      expandIcon={null}
+    >
+      <button className="gf-form-label gf-form-label--btn" disabled={props.disabled}>
+        {props.children} <Icon name="caret-down" />
+      </button>
+    </RCCascader>
+  );
+};
