@@ -1,4 +1,5 @@
 import React from 'react';
+import { action } from '@storybook/addon-actions';
 import { Tag } from './Tag';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Tag.mdx';
@@ -15,5 +16,5 @@ export default {
 };
 
 export const single = () => {
-  return <Tag name="Tag" onClick={tag => console.log(tag)} />;
+  return <Tag name="Tag" onClick={action('Tag clicked')} />;
 };
