@@ -344,7 +344,7 @@ export default class TimeSeries {
 
   updateLegendValues(formater: ValueFormatter, decimals: DecimalCount, scaledDecimals: DecimalCount) {
     this.valueFormater = formater;
-    this.decimals = decimals || 0;
+    this.decimals = decimals ?? 0;
     this.scaledDecimals = scaledDecimals || 0;
   }
 
