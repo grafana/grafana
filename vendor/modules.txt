@@ -134,6 +134,7 @@ github.com/golang/snappy
 github.com/google/flatbuffers/go
 # github.com/google/go-cmp v0.3.1
 github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
@@ -147,7 +148,7 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.26.0
+# github.com/grafana/grafana-plugin-sdk-go v0.31.0
 github.com/grafana/grafana-plugin-sdk-go/backend/plugin
 github.com/grafana/grafana-plugin-sdk-go/data
 github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
@@ -284,6 +285,8 @@ github.com/uber/jaeger-lib/metrics
 github.com/unknwon/com
 # github.com/urfave/cli/v2 v2.1.1
 github.com/urfave/cli/v2
+# github.com/xorcare/pointer v1.1.0
+github.com/xorcare/pointer
 # github.com/yudai/gojsondiff v1.0.0
 github.com/yudai/gojsondiff
 github.com/yudai/gojsondiff/formatter

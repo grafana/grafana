@@ -63,7 +63,7 @@ const lightTheme: GrafanaTheme = {
     warn: '#f79520',
     critical: basicColors.redShade,
     bodyBg: basicColors.gray7,
-    pageBg: basicColors.gray7,
+    pageBg: basicColors.white,
 
     // Text colors
     body: basicColors.gray1,
@@ -83,6 +83,7 @@ const lightTheme: GrafanaTheme = {
 
     // panel
     panelBg: basicColors.white,
+    panelBorder: basicColors.gray95,
 
     // Next-gen forms functional colors
     formLabel: basicColors.gray33,

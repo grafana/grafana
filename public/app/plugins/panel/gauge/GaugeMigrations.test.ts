@@ -75,9 +75,68 @@ describe('Gauge Panel Migrations', () => {
       timeShift: null,
       title: 'Panel Title',
       type: 'gauge',
-    } as PanelModel;
+    } as Omit<PanelModel, 'fieldConfig'>;
 
-    expect(gaugePanelMigrationHandler(panel)).toMatchSnapshot();
+    const result = gaugePanelMigrationHandler(panel as PanelModel);
+    expect(result).toMatchSnapshot();
+
+    // Ignored due to the API change
+    //@ts-ignore
+    expect(result.fieldOptions.defaults).toBeUndefined();
+    // Ignored due to the API change
+    //@ts-ignore
+    expect(result.fieldOptions.overrides).toBeUndefined();
+
+    expect((panel as PanelModel).fieldConfig).toMatchInlineSnapshot(`
+      Object {
+        "defaults": Object {
+          "color": Object {
+            "mode": "thresholds",
+          },
+          "decimals": 3,
+          "mappings": Array [
+            Object {
+              "from": "50",
+              "id": 1,
+              "operator": "",
+              "text": "BIG",
+              "to": "1000",
+              "type": 2,
+              "value": "",
+            },
+          ],
+          "max": "50",
+          "min": "-50",
+          "thresholds": Object {
+            "mode": "absolute",
+            "steps": Array [
+              Object {
+                "color": "green",
+                "index": 0,
+                "value": -Infinity,
+              },
+              Object {
+                "color": "#EAB839",
+                "index": 1,
+                "value": -25,
+              },
+              Object {
+                "color": "#6ED0E0",
+                "index": 2,
+                "value": 0,
+              },
+              Object {
+                "color": "red",
+                "index": 3,
+                "value": 25,
+              },
+            ],
+          },
+          "unit": "accMS2",
+        },
+        "overrides": Array [],
+      }
+    `);
   });
 
   it('change from angular singlestat to gauge', () => {
@@ -95,11 +154,12 @@ describe('Gauge Panel Migrations', () => {
       },
     };
 
-    const newOptions = gaugePanelChangedHandler({} as any, 'singlestat', old);
-    expect(newOptions.fieldOptions.defaults.unit).toBe('ms');
-    expect(newOptions.fieldOptions.defaults.min).toBe(-10);
-    expect(newOptions.fieldOptions.defaults.max).toBe(150);
-    expect(newOptions.fieldOptions.defaults.decimals).toBe(7);
+    const panel = {} as PanelModel;
+    const newOptions = gaugePanelChangedHandler(panel, 'singlestat', old);
+    expect(panel.fieldConfig.defaults.unit).toBe('ms');
+    expect(panel.fieldConfig.defaults.min).toBe(-10);
+    expect(panel.fieldConfig.defaults.max).toBe(150);
+    expect(panel.fieldConfig.defaults.decimals).toBe(7);
     expect(newOptions.showThresholdMarkers).toBe(true);
     expect(newOptions.showThresholdLabels).toBe(true);
   });
@@ -116,10 +176,10 @@ describe('Gauge Panel Migrations', () => {
         },
       },
     };
-
-    const newOptions = gaugePanelChangedHandler({} as any, 'singlestat', old);
-    expect(newOptions.fieldOptions.defaults.unit).toBe('ms');
-    expect(newOptions.fieldOptions.defaults.min).toBe(undefined);
-    expect(newOptions.fieldOptions.defaults.max).toBe(undefined);
+    const panel = {} as PanelModel;
+    gaugePanelChangedHandler(panel, 'singlestat', old);
+    expect(panel.fieldConfig.defaults.unit).toBe('ms');
+    expect(panel.fieldConfig.defaults.min).toBe(undefined);
+    expect(panel.fieldConfig.defaults.max).toBe(undefined);
   });
 });
