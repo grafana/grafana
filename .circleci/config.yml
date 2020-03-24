@@ -641,6 +641,7 @@ jobs:
           destination: logs
 
   mysql-integration-test:
+    resource_class: large
     docker:
       - image: circleci/golang:1.13.4
       - image: circleci/mysql:5.6-ram
@@ -672,6 +673,7 @@ jobs:
           when: on_success
 
   postgres-integration-test:
+    resource_class: large
     docker:
       - image: circleci/golang:1.13.4
       - image: circleci/postgres:9.3-ram
@@ -744,9 +746,9 @@ jobs:
           name: Lint Go
           command: |
             go vet ./pkg/...
-            golangci-lint run -v -j 2 --config scripts/go/configs/ci/.golangci.yml -E deadcode -E gofmt \
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E deadcode -E gofmt \
               -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
-            golangci-lint run -v -j 2 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
               -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish ./pkg/services/alerting/...
@@ -1228,6 +1230,7 @@ workflows:
             - end-to-end-tests
       - build-docs-website:
           filters: *filter-not-release-or-master
+
   nightly:
     triggers:
       - schedule:
