@@ -1,7 +1,7 @@
 import React, { PureComponent, ReactNode } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
-import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/variable';
+import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/types';
 import { SegmentAsync } from '@grafana/ui';
 import { VariablePickerProps } from '../../pickers/types';
 import { OperatorSegment } from './OperatorSegment';
