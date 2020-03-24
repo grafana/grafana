@@ -14,45 +14,14 @@
 
 import _get from 'lodash/get';
 
-import processDeprecation from './process-deprecation';
-import defaultConfig, { deprecations } from '../../constants/default-config';
-
-let haveWarnedFactoryFn = false;
-let haveWarnedDeprecations = false;
+import defaultConfig from '../../constants/default-config';
 
 /**
  * Merge the embedded config from the query service (if present) with the
  * default config from `../../constants/default-config`.
  */
 export default function getConfig() {
-  const getJaegerUiConfig = window.getJaegerUiConfig;
-  if (typeof getJaegerUiConfig !== 'function') {
-    if (!haveWarnedFactoryFn) {
-      // eslint-disable-next-line no-console
-      console.warn('Embedded config not available');
-      haveWarnedFactoryFn = true;
-    }
-    return { ...defaultConfig };
-  }
-  const embedded = getJaegerUiConfig();
-  if (!embedded) {
-    return { ...defaultConfig };
-  }
-  // check for deprecated config values
-  if (Array.isArray(deprecations)) {
-    deprecations.forEach(deprecation => processDeprecation(embedded, deprecation, !haveWarnedDeprecations));
-    haveWarnedDeprecations = true;
-  }
-  const rv = { ...defaultConfig, ...embedded };
-  // __mergeFields config values should be merged instead of fully replaced
-  const keys = defaultConfig.__mergeFields || [];
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    if (typeof embedded[key] === 'object' && embedded[key] !== null) {
-      rv[key] = { ...defaultConfig[key], ...embedded[key] };
-    }
-  }
-  return rv;
+  return defaultConfig;
 }
 
 export function getConfigValue(path: string) {

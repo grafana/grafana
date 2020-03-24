@@ -124,6 +124,8 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
   const svcCounts: Record<string, number> = {};
   let traceName = '';
 
+  // Eslint complains about number type not needed but then TS complains it is implicitly any.
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   tree.walk((spanID: string, node: TreeNode, depth: number = 0) => {
     if (spanID === '__root__') {
       return;

@@ -85,7 +85,6 @@ export default class SpanTreeOffset extends React.PureComponent<TProps> {
 
   static defaultProps = {
     childrenVisible: false,
-    onClick: undefined,
     showChildrenIcon: true,
   };
 

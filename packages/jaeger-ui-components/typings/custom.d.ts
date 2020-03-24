@@ -18,14 +18,6 @@ declare type TestGlobal = {
 };
 declare const global: TestGlobal;
 
-declare interface Window {
-  // eslint-disable-line @typescript-eslint/interface-name-prefix
-  // For setting the site-prefix
-  __webpack_public_path__: string; // eslint-disable-line camelcase
-  // For getting ui config
-  getJaegerUiConfig?: () => Record<string, any>;
-}
-
 // For inlined envvars
 declare const process: {
   env: {
