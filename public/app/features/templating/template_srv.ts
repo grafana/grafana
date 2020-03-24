@@ -195,6 +195,30 @@ export class TemplateSrv {
         }
         return this.encodeURIComponentStrict(value);
       }
+      case 'singlequote': {
+        // escape single quotes with backslash
+        const regExp = new RegExp(`'`, 'g');
+        if (_.isArray(value)) {
+          return _.map(value, v => `'${_.replace(v, regExp, `\\'`)}'`).join(',');
+        }
+        return `'${_.replace(value, regExp, `\\'`)}'`;
+      }
+      case 'doublequote': {
+        // escape double quotes with backslash
+        const regExp = new RegExp('"', 'g');
+        if (_.isArray(value)) {
+          return _.map(value, v => `"${_.replace(v, regExp, '\\"')}"`).join(',');
+        }
+        return `"${_.replace(value, regExp, '\\"')}"`;
+      }
+      case 'sqlstring': {
+        // escape single quotes by pairing them
+        const regExp = new RegExp(`'`, 'g');
+        if (_.isArray(value)) {
+          return _.map(value, v => `'${_.replace(v, regExp, "''")}'`).join(',');
+        }
+        return `'${_.replace(value, regExp, "''")}'`;
+      }
       default: {
         if (_.isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';
