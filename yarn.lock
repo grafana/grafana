@@ -20536,14 +20536,6 @@ react-helmet-async@^1.0.2:
     react-fast-compare "^2.0.4"
     shallowequal "^1.1.0"
 
-react-highlight-words@0.11.0:
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/react-highlight-words/-/react-highlight-words-0.11.0.tgz#4f3c2039a8fd275f3ab795e59946b0324d8e6bee"
-  integrity sha512-b+fgdQXNjX6RwHfiBYn6qH2D2mJEDNLuxdsqRseIiQffoCAoj7naMQ5EktUkmo9Bh1mXq/aMpJbdx7Lf2PytcQ==
-  dependencies:
-    highlight-words-core "^1.2.0"
-    prop-types "^15.5.8"
-
 react-highlight-words@0.16.0:
   version "0.16.0"
   resolved "https://registry.yarnpkg.com/react-highlight-words/-/react-highlight-words-0.16.0.tgz#4b4b9824e3d2b98789d3e3b3aedb5e961ae1b7cf"
