@@ -13,7 +13,7 @@ import {
   filterUpdated,
   initialAdHocVariableModelState,
 } from './reducer';
-import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/variable';
+import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/templating/types';
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
 

@@ -1,7 +1,7 @@
-import React, { FC, useState, ReactElement } from 'react';
+import React, { FC, ReactElement, useState } from 'react';
 import { SegmentAsync } from '@grafana/ui';
 import { OperatorSegment } from './OperatorSegment';
-import { AdHocVariableFilter } from 'app/features/templating/variable';
+import { AdHocVariableFilter } from 'app/features/templating/types';
 import { SelectableValue } from '@grafana/data';
 
 interface Props {
