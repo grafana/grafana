@@ -4,7 +4,7 @@ import { Icon } from '../Icon/Icon';
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
-import { onChangeCascader, fromRCOptions } from '../Cascader/optionMappings';
+import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
@@ -23,11 +23,7 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
   return (
     <RCCascader
       onChange={onChangeCascader(onChange)}
-      loadData={options => {
-        if (loadData) {
-          loadData(fromRCOptions(options));
-        }
-      }}
+      loadData={onLoadDataCascader(loadData)}
       {...rest}
       expandIcon={null}
     >

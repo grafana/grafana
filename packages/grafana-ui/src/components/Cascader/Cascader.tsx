@@ -7,7 +7,7 @@ import { FormInputSize } from '../Forms/types';
 import { Input } from '../Forms/Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
-import { CascaderOption as RCOption } from 'rc-cascader/lib/Cascader';
+import { onChangeCascader } from './optionMappings';
 
 interface CascaderProps {
   /** The seperator between levels in the search */
@@ -87,18 +87,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     return selectOptions;
   };
 
-  onCascaderChange = (value: string[], selectedOptions: RCOption[]) => {
-    this.setState({
-      focusCascade: true,
-    });
-    this.onChange(
-      value,
-      selectedOptions.map(option => {
-        return { value: option.value, label: option.label as string };
-      })
-    );
-  };
-
   setInitialValue(searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) {
     if (!initValue) {
       return { rcValue: [], activeLabel: '' };
@@ -123,6 +111,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   onChange = (value: string[], selectedOptions: CascaderOption[]) => {
     this.setState({
       rcValue: value,
+      focusCascade: true,
       activeLabel: selectedOptions[selectedOptions.length - 1].label,
     });
 
@@ -210,7 +199,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
           />
         ) : (
           <RCCascader
-            onChange={this.onCascaderChange}
+            onChange={onChangeCascader(this.onChange)}
             options={this.props.options}
             changeOnSelect
             value={rcValue.value}
