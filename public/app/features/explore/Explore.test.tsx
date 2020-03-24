@@ -152,12 +152,12 @@ describe('Explore', () => {
   it('renders SecondaryActions and add row button', () => {
     const wrapper = shallow(<Explore {...dummyProps} />);
     expect(wrapper.find(SecondaryActions)).toHaveLength(1);
-    expect(wrapper.find(SecondaryActions).props().addRowHidden).toBe(false);
+    expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(false);
   });
 
   it('does not show add row button if mode is tracing', () => {
     const wrapper = shallow(<Explore {...{ ...dummyProps, mode: ExploreMode.Tracing }} />);
-    expect(wrapper.find(SecondaryActions).props().addRowHidden).toBe(true);
+    expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(true);
   });
 
   it('should filter out a query-row-specific error when looking for non-query-row-specific errors', async () => {

@@ -321,12 +321,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
             <SecondaryActions
-              addRowDisabled={isLive}
+              addQueryRowButtonDisabled={isLive}
               // We cannot show multiple traces at the same time right now so we do not show add query button.
-              addRowHidden={mode === ExploreMode.Tracing}
-              richHistoryActive={showRichHistory}
+              addQueryRowButtonHidden={mode === ExploreMode.Tracing}
+              richHistoryButtonActive={showRichHistory}
               onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-              onClickShowRichHistoryButton={this.toggleShowRichHistory}
+              onClickRichHistoryButton={this.toggleShowRichHistory}
             />
             <ErrorContainer queryError={queryError} />
             <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
