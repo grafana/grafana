@@ -108,8 +108,7 @@ export const stringArrayToFilters = (filterArray: string[]) =>
 export const toOption = (value: string) => ({ label: value, value } as SelectableValue<string>);
 
 export const formatStackdriverError = (error: any) => {
-  let message = 'Stackdriver: ';
-  message += error.statusText ? error.statusText + ': ' : '';
+  let message = error.statusText ?? '';
   if (error.data && error.data.error) {
     try {
       const res = JSON.parse(error.data.error);
