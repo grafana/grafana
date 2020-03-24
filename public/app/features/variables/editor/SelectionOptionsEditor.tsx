@@ -2,7 +2,7 @@ import React, { FunctionComponent, useCallback } from 'react';
 import { Switch } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
-import { VariableWithMultiSupport } from '../../templating/variable';
+import { VariableWithMultiSupport } from '../../templating/types';
 import { VariableEditorProps } from './types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
