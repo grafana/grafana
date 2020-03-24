@@ -42,7 +42,7 @@ export const SearchResults: FC<Props> = ({
     }
   };
 
-  // TODO display 'No results' messages when manage dashboards is refactored
+  // TODO display 'No results' messages after manage dashboards is refactored
   if (!results) {
     return null;
   }
@@ -52,10 +52,12 @@ export const SearchResults: FC<Props> = ({
       {results.map(section => (
         <li className={styles.section} key={section.id}>
           <SectionHeader onSectionClick={toggleFolderExpand} {...{ onToggleSelection, editable, section }} />
-          {section.expanded &&
-            section.items.map(item => (
-              <SearchItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
-            ))}
+          <ul className={styles.wrapper}>
+            {section.expanded &&
+              section.items.map(item => (
+                <SearchItem key={item.id} {...{ item, editable, onToggleSelection, onTagSelected }} />
+              ))}
+          </ul>
         </li>
       ))}
     </ul>

@@ -33,7 +33,7 @@ export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelec
   };
 
   return (
-    <div aria-label={selectors.dashboards(item.title)} className={styles.wrapper} onClick={() => navigate(item)}>
+    <li aria-label={selectors.dashboards(item.title)} className={styles.wrapper} onClick={() => navigate(item)}>
       <SearchCheckbox
         editable={editable}
         checked={item.checked}
@@ -45,7 +45,7 @@ export const SearchItem: FC<ResultsItemProps> = ({ item, editable, onToggleSelec
         <span className={styles.folderTitle}>{item.folderTitle}</span>
       </span>
       <TagList tags={item.tags} onClick={onTagSelected} className={styles.tags} />
-    </div>
+    </li>
   );
 };
 
