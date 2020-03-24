@@ -16,6 +16,11 @@ interface IconProps extends Themeable {
   onClick?: () => void;
   onMouseDown?: React.MouseEventHandler;
 }
+export type SvgProps = {
+  size: number;
+  color: string;
+  backgroundColor?: string;
+};
 
 const getIconStyles = stylesFactory(() => {
   return {
@@ -34,7 +39,7 @@ const getIconStyles = stylesFactory(() => {
 });
 
 export interface IconState {
-  icon: null | ComponentType<{ color?: string; size?: number }>;
+  icon: null | ComponentType<SvgProps>;
 }
 
 class UnThemedIcon extends PureComponent<IconProps, IconState> {
@@ -53,7 +58,7 @@ class UnThemedIcon extends PureComponent<IconProps, IconState> {
       });
     }
     if (type === 'monochrome') {
-      import(`./assets/${name}`).then(module => {
+      import('./assets/ExclamationTriangle').then(module => {
         this.setState({ icon: module.default });
       });
     }
@@ -63,10 +68,12 @@ class UnThemedIcon extends PureComponent<IconProps, IconState> {
     const { color, size, theme, title, onClick, onMouseDown, type = 'icon' } = this.props;
     const { icon: Component } = this.state;
 
+    const styles = getIconStyles();
+    const monochromeColor = color || theme.colors.orange;
+    const backgroundColor = `${monochromeColor}99`;
+
     /*Transform string with px to number*/
     const svgSize = Number(theme.typography.size[size || 'base'].slice(0, -2));
-    const defaultMonochromeColor = theme.colors.orange;
-    const styles = getIconStyles();
 
     return (
       <div
@@ -75,7 +82,9 @@ class UnThemedIcon extends PureComponent<IconProps, IconState> {
         onMouseDown={onMouseDown}
         className={cx(styles.icon, { [styles.currentFontColor]: !color && type === 'icon' })}
       >
-        {Component && <Component color={color ? color : defaultMonochromeColor} size={svgSize} />}
+        {Component && (
+          <Component color={color ? color : monochromeColor} backgroundColor={backgroundColor} size={svgSize} />
+        )}
       </div>
     );
   }
