@@ -104,7 +104,7 @@ Additional values can be shown along-side the legend names:
 - **Total** - Sum of all values returned from metric query
 - **Decimals** - Controls how many decimals are displayed for legend values (and graph hover tooltips)
 
-The legend values are calculated client side by Grafana and depend on what type of
+The legend values are calculated at the client side by Grafana and depend on what type of
 aggregation or point consolidation your metric query is using. All the above legend values cannot
 be correct at the same time. For example if you plot a rate like requests/second, this is probably
 using average as aggregator, then the Total in the legend will not represent the total number of requests.
