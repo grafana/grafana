@@ -224,7 +224,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 export const guessFieldTypes = (series: DataFrame): DataFrame => {
   for (let i = 0; i < series.fields.length; i++) {
     if (!series.fields[i].type) {
-      // Something is missing a type return a modified copy
+      // Something is missing a type, return a modified copy
       return {
         ...series,
         fields: series.fields.map(field => {
