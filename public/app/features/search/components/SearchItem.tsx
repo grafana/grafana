@@ -45,10 +45,10 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
     <li aria-label={selectors.dashboards(item.title)} className={styles.wrapper} onClick={navigate}>
       <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
       <Icon className={styles.icon} name="th-large" />
-      <span className={styles.body} onClick={onItemClick}>
-        <div className={styles.title}>{item.title}</div>
+      <div className={styles.body} onClick={onItemClick}>
+        <span className={styles.title}>{item.title}</span>
         <span className={styles.folderTitle}>{item.folderTitle}</span>
-      </span>
+      </div>
       <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
     </li>
   );
