@@ -26,7 +26,7 @@ export class SearchSrv {
       if (result.length > 0) {
         sections['recent'] = {
           title: 'Recent',
-          icon: 'fa fa-clock-o',
+          icon: 'clock-o',
           score: -1,
           removable: true,
           expanded: this.recentIsOpen,
@@ -81,7 +81,7 @@ export class SearchSrv {
       if (result.length > 0) {
         sections['starred'] = {
           title: 'Starred',
-          icon: 'fa fa-star-o',
+          icon: 'star-o',
           score: -2,
           expanded: this.starredIsOpen,
           toggle: this.toggleStarred.bind(this),
