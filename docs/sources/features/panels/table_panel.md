@@ -122,7 +122,7 @@ transform mode and pick the columns using the **Columns** section.
 
 {{< docs-imagebox img="/img/docs/v45/table_paging.png" class="docs-image--no-shadow docs-image--right" max-width="350px" >}}
 
-1. **Rows Per Page**: The table display fields allow you to control how many rows per page there should be. For example, if your table had 95 records with a rows per page value of 10, your table would be split across 10 pages.
+1. **Rows Per Page**: The table display fields allow you to control how many rows per page there should be. For example, if your table had 95 records with rows per page value of 10, your table would be split across 10 pages.
 2. **Scroll**: The scroll bar checkbox toggles the ability to scroll within the panel, when unchecked, the panel height will grow to display all rows.
 3. **Font Size**: The font size field allows you to increase or decrease the size for the panel, relative to the default font size.
 
