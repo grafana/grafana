@@ -1,12 +1,11 @@
 import { GrafanaTheme } from '@grafana/data';
+import { ComponentSize } from '../../types/size';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent' | 'destructive' | 'link';
 
-export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
-
 export interface StyleDeps {
   theme: GrafanaTheme;
-  size: ButtonSize;
+  size: ComponentSize;
   variant: ButtonVariant;
   textAndIcon?: boolean;
 }
