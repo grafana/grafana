@@ -6,6 +6,9 @@ import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { FieldConfigEditorRegistry, FieldConfigSource } from './fieldOverrides';
+import { Registry, RegistryItem } from '../utils';
+import { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from '../utils/optionsUi/OptionsUIBuilders';
+import { StandardEditorProps } from '../field';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -109,10 +112,20 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
+type OptionsUIRegisterHandler<T> = (builder: T) => void;
+export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
+
 export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
+  private customFieldConfigsUIBuilder = new FieldConfigEditorBuilder();
+  private _customFieldConfigs?: FieldConfigEditorRegistry;
+  private registerCustomFieldConfigs?: OptionsUIRegisterHandler<FieldConfigEditorBuilder>;
+
+  private optionsUIBuilder = new PanelOptionsEditorBuilder();
+  private _optionEditors?: PanelOptionEditorsRegistry;
+  private registerOptionEditors?: OptionsUIRegisterHandler<PanelOptionsEditorBuilder>;
+
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
-  customFieldConfigs?: FieldConfigEditorRegistry;
   defaults?: TOptions;
   fieldConfigDefaults?: FieldConfigSource = {
     defaults: {},
@@ -130,6 +143,24 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   constructor(panel: ComponentType<PanelProps<TOptions>>) {
     super();
     this.panel = panel;
+  }
+
+  get customFieldConfigs() {
+    if (!this._customFieldConfigs && this.registerCustomFieldConfigs) {
+      this.registerCustomFieldConfigs(this.customFieldConfigsUIBuilder);
+      this._customFieldConfigs = this.customFieldConfigsUIBuilder.getRegistry();
+    }
+
+    return this._customFieldConfigs;
+  }
+
+  get optionEditors() {
+    if (!this._optionEditors && this.registerOptionEditors) {
+      this.registerOptionEditors(this.optionsUIBuilder);
+      this._optionEditors = this.optionsUIBuilder.getRegistry();
+    }
+
+    return this._optionEditors;
   }
 
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
@@ -171,8 +202,15 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
     return this;
   }
 
-  setCustomFieldConfigs(registry: FieldConfigEditorRegistry) {
-    this.customFieldConfigs = registry;
+  setCustomFieldConfigs(builder: OptionsUIRegisterHandler<FieldConfigEditorBuilder>) {
+    // builder is applied lazily when custom field configs are accessed
+    this.registerCustomFieldConfigs = builder;
+    return this;
+  }
+
+  setOptionsEditor(builder: OptionsUIRegisterHandler<PanelOptionsEditorBuilder>) {
+    // builder is applied lazily when options UI is created
+    this.registerOptionEditors = builder;
     return this;
   }
 
@@ -189,6 +227,16 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
     return this;
   }
 }
+
+export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
+
+export interface PanelOptionsEditorItem<TValue = any, TSettings = any> extends RegistryItem {
+  editor: ComponentType<PanelOptionsEditorProps<TValue>>;
+  settings?: TSettings;
+}
+
+export interface PanelOptionsEditorConfig<TSettings = any, TValue = any>
+  extends Pick<PanelOptionsEditorItem<TValue, TSettings>, 'id' | 'description' | 'name' | 'settings'> {}
 
 export interface PanelMenuItem {
   type?: 'submenu' | 'divider';
