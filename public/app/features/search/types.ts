@@ -10,7 +10,7 @@ export interface DashboardSection {
   checked: boolean;
   items: DashboardSectionItem[];
   toggle?: (section: DashboardSection) => Promise<DashboardSection>;
-  selected: boolean;
+  selected?: boolean;
 }
 
 export interface DashboardSectionItem {
@@ -27,7 +27,7 @@ export interface DashboardSectionItem {
   folderTitle?: string;
   folderUrl?: string;
   checked: boolean;
-  selected: boolean;
+  selected?: boolean;
 }
 
 export interface DashboardTag {
