@@ -299,15 +299,20 @@ export class SearchCtrl {
     this.search();
   }
 
+  selectionChanged = () => {
+    // TODO remove after React-side state management is implemented
+    // This method is only used as a callback after toggling section, to trigger results rerender
+  };
+
   search() {
     this.showImport = false;
     this.selectedIndex = -1;
     this.searchDashboards(this.query.parsedQuery['folder']);
   }
 
-  folderExpanding() {
+  folderExpanding = () => {
     this.moveSelection(0);
-  }
+  };
 
   private getFlattenedResultForNavigation(): SelectedIndicies[] {
     let folderIndex = 0;

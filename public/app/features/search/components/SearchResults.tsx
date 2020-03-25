@@ -87,7 +87,7 @@ interface SectionHeaderProps {
 
 const SectionHeader: FC<SectionHeaderProps> = ({ section, onSectionClick, onToggleSelection, editable }) => {
   const theme = useTheme();
-  const styles = getSectionHeaderStyles(theme, section.checked);
+  const styles = getSectionHeaderStyles(theme, section.selected);
 
   const expandSection = () => {
     onSectionClick(section);

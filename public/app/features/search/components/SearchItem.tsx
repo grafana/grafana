@@ -19,7 +19,7 @@ const { selectors } = e2e.pages.Dashboards;
 
 export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTagSelected }) => {
   const theme = useTheme();
-  const styles = getResultsItemStyles(theme, item.checked);
+  const styles = getResultsItemStyles(theme, item.selected);
 
   const onItemClick = (item: DashboardSectionItem) => {
     //Check if one string can be found in the other
