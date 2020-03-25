@@ -33,13 +33,13 @@ exports[`Render should disable insights api key input 1`] = `
         <div
           className="max-width-30 gf-form-inline"
         >
-          <ForwardRef
+          <Button
             onClick={[Function]}
             type="button"
             variant="secondary"
           >
             reset
-          </ForwardRef>
+          </Button>
         </div>
       </div>
     </div>
