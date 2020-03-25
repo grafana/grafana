@@ -16,7 +16,6 @@ import {
   DataFrameDTO,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
-import { deprecationWarning } from '../utils/deprecationWarning';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
