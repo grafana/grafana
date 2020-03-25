@@ -91,7 +91,7 @@ func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) Response {
 	metrics.MApiOrgCreate.Inc()
 
 	return JSON(200, &util.DynMap{
-		"orgId":   cmd.Result.Id,
+		"id":   cmd.Result.Id,
 		"message": "Organization created",
 	})
 }
