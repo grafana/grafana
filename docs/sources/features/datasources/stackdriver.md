@@ -96,7 +96,12 @@ The Stackdriver query editor allows you to build two types of queries - **Metric
 
 The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
-To create a metric query, begin by choosing the option `Metrics` in the `Query Type` dropdown. Then select a `Project`, a `Service` and then a metric from the `Metric` dropdown. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses.
+To create a metric query, follow these steps:
+1. Choose the option **Metrics** in the **Query Type** dropdown
+2. Choose a project from the **Project** dropdown 
+3. Choose a Google Cloud Platform service from the **Service** dropdown
+4. Choose a metric from the **Metric** dropdown. 
+5. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses. This step is optional.
 
 Stackdriver metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
 
@@ -182,13 +187,14 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 {{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
-To get an understanding of the basic concepts in service monitoring, please refer to Google Stackdriver's [official docs](https://cloud.google.com/monitoring/service-monitoring).
+The SLO query builder in the Stackdriver data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Stackdriver's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
-The SLO query builder in the Stackdriver data source allows you to display SLO data in time series format. To create a SLO query, begin by choosing the option `Serice Level Objectives (SLO)` in the `Query Type` dropdown. Then select a `Project`, a `Service` and a `SLO`. Use the `Selector` field to specify which time series selector to use.
-
-#### Time series selectors
-
-Detailed descriptions about all the available time series selectors can be found [here](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list).
+To create a SLO query, follow these steps:
+1. Choose the option **Serice Level Objectives (SLO)** in the **Query Type** dropdown
+2. Choose a project from the **Project** dropdown 
+3. Choose a [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown
+4. Choose a [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown. 
+5. Choose a [time series selector](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list) from the **Selector** dropdown
 
 
 ## Templating
