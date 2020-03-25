@@ -35,7 +35,8 @@ var (
 	sqlog log.Logger = log.New("sqlstore")
 )
 
-const ContextSessionName = "db-session"
+// ContextSessionKey is used as key to save values in `context.Context`
+type ContextSessionKey struct{}
 
 func init() {
 	// This change will make xorm use an empty default schema for postgres and
