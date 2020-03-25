@@ -27,5 +27,4 @@ const Forms = {
   Checkbox,
 };
 
-export { ButtonVariant } from './Button';
 export default Forms;

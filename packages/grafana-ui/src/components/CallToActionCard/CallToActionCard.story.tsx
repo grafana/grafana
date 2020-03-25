@@ -3,7 +3,7 @@ import { storiesOf } from '@storybook/react';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import { CallToActionCard } from './CallToActionCard';
 import { select, text } from '@storybook/addon-knobs';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button/Button';
 import { action } from '@storybook/addon-actions';
 
 const CallToActionCardStories = storiesOf('General/CallToActionCard', module);

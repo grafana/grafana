@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { IconType } from '../Icon/types';
 import { SelectableValue } from '@grafana/data';
-import { Button, ButtonVariant } from '../Forms/Button';
+import { Button, ButtonVariant } from '../Button';
 import { Select } from '../Forms/Select/Select';
-import { FullWidthButtonContainer } from '../Forms/Legacy/Button/FullWidthButtonContainer';
+import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 interface ValuePickerProps<T> {
   /** Label to display on the picker button */

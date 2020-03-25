@@ -2,7 +2,7 @@ import React, { FC, useContext } from 'react';
 import { css } from 'emotion';
 import { Modal } from '../Modal/Modal';
 import { IconType } from '../Icon/types';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button';
 import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup } from '..';

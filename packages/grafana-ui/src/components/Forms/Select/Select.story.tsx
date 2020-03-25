@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { getAvailableIcons, IconType } from '../../Icon/types';
 import { select, boolean } from '@storybook/addon-knobs';
 import { Icon } from '../../Icon/Icon';
-import { Button } from '../Button';
+import { Button } from '../../Button';
 import { ButtonSelect } from './ButtonSelect';
 import { getIconKnob } from '../../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';

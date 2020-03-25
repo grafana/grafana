@@ -16,8 +16,8 @@ import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Field } from '../Forms/Field';
-import { Button } from '../Forms/Button';
-import { FullWidthButtonContainer } from '../Forms/Legacy/Button/FullWidthButtonContainer';
+import { Button } from '../Button';
+import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },

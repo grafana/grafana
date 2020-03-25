@@ -2,10 +2,9 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'r
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
-import { getFocusStyle, getPropertiesForButtonSize } from './commonStyles';
-import { StyleDeps } from './Legacy/Button/types';
+import { getFocusStyle, getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme } from '@grafana/data';
-import { ButtonContent } from './Legacy/Button/ButtonContent';
+import { ButtonContent } from './ButtonContent';
 
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
@@ -74,8 +73,12 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
   }
 };
 
-// Need to do this because of mismatch between variants in standard buttons and here
-type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
+export interface StyleProps {
+  theme: GrafanaTheme;
+  size: ButtonSize;
+  variant: ButtonVariant;
+  textAndIcon?: boolean;
+}
 
 export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
   const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);

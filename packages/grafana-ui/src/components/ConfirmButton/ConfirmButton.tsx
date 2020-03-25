@@ -3,9 +3,7 @@ import { cx, css } from 'emotion';
 import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
-import { Button } from '../Forms/Button';
-import { ButtonSize } from '../Forms/Button';
-import { ButtonVariant } from '../Forms/Button';
+import { Button, ButtonSize, ButtonVariant } from '../Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

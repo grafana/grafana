@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { stylesFactory } from '../../../../themes';
+import { stylesFactory } from '../../themes';
 
 export interface Props {
   className?: string;

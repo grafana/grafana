@@ -4,7 +4,7 @@ import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
-import { Button } from '../../Forms/Button';
+import { Button } from '../../Button';
 
 interface Props {
   isFullscreen: boolean;

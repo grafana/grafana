@@ -1,7 +1,7 @@
 import React from 'react';
 import { MappingType, ValueMapping } from '@grafana/data';
-import { Button } from '../Forms/Button';
-import { FullWidthButtonContainer } from '../Forms/Legacy/Button/FullWidthButtonContainer';
+import { Button } from '../Button/Button';
+import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 import { MappingRow } from './MappingRow';
 
 export interface Props {

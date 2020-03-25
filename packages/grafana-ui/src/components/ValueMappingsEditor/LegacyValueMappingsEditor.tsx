@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 
 import LegacyMappingRow from './LegacyMappingRow';
 import { MappingType, ValueMapping } from '@grafana/data';
-import { Button } from '../Forms/Button';
+import { Button } from '../Button';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {

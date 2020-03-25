@@ -99,7 +99,7 @@ export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors./Forms/Legacy/Button/FullWidthButtonContainer
-export { FullWidthButtonContainer } from './Forms/Legacy/Button/FullWidthButtonContainer';
+export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
@@ -151,7 +151,7 @@ export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeader
 
 // Next-gen forms
 export { default as Forms } from './Forms';
-export { Button, LinkButton, ButtonVariant } from './Forms/Button';
+export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';

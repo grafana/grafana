@@ -5,7 +5,7 @@ import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
 import { stringToDateTimeType } from '../time';
 import { useTheme, stylesFactory } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
-import { Button } from '../../Forms/Button';
+import { Button } from '../../Button';
 import { Portal } from '../../Portal/Portal';
 import { getThemeColors } from './colors';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
