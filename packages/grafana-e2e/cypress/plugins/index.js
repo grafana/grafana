@@ -1,5 +1,6 @@
 const compareSnapshotsPlugin = require('./compareSnapshots');
 const extendConfig = require('./extendConfig');
+const readProvisions = require('./readProvisions');
 const typescriptPreprocessor = require('./typescriptPreprocessor');
 
 module.exports = (on, config) => {
@@ -10,7 +11,7 @@ module.exports = (on, config) => {
   //   failed: require('cypress-failed-log/src/failed')(),
   // });
   on('file:preprocessor', typescriptPreprocessor);
-  on('task', { compareSnapshotsPlugin });
+  on('task', { compareSnapshotsPlugin, readProvisions });
   on('task', {
     log({ message, optional }) {
       optional ? console.log(message, optional) : console.log(message);
