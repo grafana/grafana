@@ -8,3 +8,6 @@ export { default as ansicolor } from './ansicolor';
 
 // Export with a namespace
 export { DOMUtil } from './dom'; // includes Element.closest polyfil
+
+// Exposes standard editors for registries of optionsUi config and panel options UI
+export { getStandardFieldConfigs, getStandardOptionEditors } from './standardEditors';
