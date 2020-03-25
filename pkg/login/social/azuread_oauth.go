@@ -34,7 +34,7 @@ func (s *SocialAzureAD) Type() int {
 func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
-		return nil, fmt.Errorf("No id_token found")
+		return nil, fmt.Errorf("no id_token found")
 	}
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
