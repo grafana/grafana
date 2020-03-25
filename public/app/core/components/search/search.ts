@@ -261,14 +261,14 @@ export class SearchCtrl {
     return query.query === '' && query.starred === false && query.tags.length === 0;
   }
 
-  filterByTag(tag: string) {
+  filterByTag = (tag: string) => {
     if (tag) {
       if (_.indexOf(this.query.tags, tag) === -1) {
         this.query.tags.push(tag);
         this.search();
       }
     }
-  }
+  };
 
   removeTag(tag: string, evt: any) {
     this.query.tags = _.without(this.query.tags, tag);

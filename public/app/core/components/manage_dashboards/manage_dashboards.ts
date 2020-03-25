@@ -256,14 +256,14 @@ export class ManageDashboardsCtrl {
     });
   }
 
-  filterByTag(tag: any) {
+  filterByTag = (tag: any) => {
     if (tag) {
       if (_.indexOf(this.query.tag, tag) === -1) {
         this.query.tag.push(tag);
       }
     }
     return this.refreshList();
-  }
+  };
 
   onQueryChange() {
     return this.refreshList();

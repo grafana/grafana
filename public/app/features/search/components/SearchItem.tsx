@@ -21,30 +21,35 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
   const theme = useTheme();
   const styles = getResultsItemStyles(theme, item.selected);
 
-  const onItemClick = (item: DashboardSectionItem) => {
+  const onItemClick = () => {
     //Check if one string can be found in the other
     if (window.location.pathname.includes(item.url) || item.url.includes(window.location.pathname)) {
       appEvents.emit(CoreEvents.hideDashSearch);
     }
   };
 
-  const navigate = (item: DashboardSectionItem) => {
+  const navigate = () => {
     window.location.pathname = item.url;
   };
 
+  const tagSelected = (tag: string, e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    onTagSelected(tag);
+  };
+
   return (
-    <li aria-label={selectors.dashboards(item.title)} className={styles.wrapper} onClick={() => navigate(item)}>
+    <li aria-label={selectors.dashboards(item.title)} className={styles.wrapper} onClick={navigate}>
       <SearchCheckbox
         editable={editable}
         checked={item.checked}
         onClick={(e: MouseEvent) => onToggleSelection(item, e)}
       />
       <Icon className={styles.icon} name="th-large" />
-      <span className={styles.body} onClick={() => onItemClick(item)}>
+      <span className={styles.body} onClick={onItemClick}>
         <div className={styles.title}>{item.title}</div>
         <span className={styles.folderTitle}>{item.folderTitle}</span>
       </span>
-      <TagList tags={item.tags} onClick={onTagSelected} className={styles.tags} />
+      <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
     </li>
   );
 };
