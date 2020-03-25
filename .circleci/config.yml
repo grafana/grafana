@@ -847,6 +847,8 @@ jobs:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: grafana-build
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - run:
           name: Deploy to Kubernetes
           command: |
