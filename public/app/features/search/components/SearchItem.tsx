@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
-import { Icon, useTheme, TagList } from '@grafana/ui';
+import { Icon, useTheme, TagList, styleMixins } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { DashboardSectionItem, ItemClickWithEvent } from '../types';
@@ -19,7 +19,7 @@ const { selectors } = e2e.pages.Dashboards;
 
 export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTagSelected }) => {
   const theme = useTheme();
-  const styles = getResultsItemStyles(theme, item.selected);
+  const styles = getResultsItemStyles(theme);
 
   const onItemClick = () => {
     //Check if one string can be found in the other
@@ -42,7 +42,11 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
   };
 
   return (
-    <li aria-label={selectors.dashboards(item.title)} className={styles.wrapper} onClick={navigate}>
+    <li
+      aria-label={selectors.dashboards(item.title)}
+      className={cx(styles.wrapper, { [styles.selected]: item.selected })}
+      onClick={navigate}
+    >
       <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
       <Icon className={styles.icon} name="th-large" />
       <div className={styles.body} onClick={onItemClick}>
@@ -54,31 +58,17 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleSelection, onTag
   );
 };
 
-const getResultsItemStyles = (theme: GrafanaTheme, selected: boolean) => ({
-  wrapper: cx(
-    css`
-      display: flex;
-      align-items: center;
-      margin: ${theme.spacing.xxs};
-      padding: 0 ${theme.spacing.sm};
-      background: ${theme.isLight ? theme.colors.white : theme.colors.dark4};
-      box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1),
-        1px 1px 0 0 ${theme.isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.3)'};
-      color: ${theme.colors.text};
-      border-radius: ${theme.border.radius.md};
-      min-height: 37px;
-      &:hover,
-      &.selected {
-        background: ${theme.isLight
-          ? theme.colors.gray6
-          : `linear-gradient(135deg, ${theme.colors.dark9}, ${theme.colors.dark6})`};
-      }
-    `,
-    'pointer',
-    { selected }
-  ),
-  title: css`
-    color: ${selected ? theme.colors.textStrong : theme.colors.text};
+const getResultsItemStyles = (theme: GrafanaTheme) => ({
+  wrapper: css`
+    ${styleMixins.listItem(theme)}
+    display: flex;
+    align-items: center;
+    margin: ${theme.spacing.xxs};
+    padding: 0 ${theme.spacing.sm};
+    min-height: 37px;
+  `,
+  selected: css`
+    ${styleMixins.listItemSelected(theme)}
   `,
   body: css`
     display: flex;
