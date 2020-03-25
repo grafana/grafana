@@ -116,6 +116,7 @@ jobs:
     parameters:
       edition:
         type: string
+    resource_class: large
     executor: grafana-build
     steps:
       - run:
@@ -204,6 +205,7 @@ jobs:
 
   build-oss-windows-installer:
     executor: windows-installer
+    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -236,6 +238,7 @@ jobs:
 
   build-enterprise-windows-installer:
     executor: windows-installer
+    resource_class: large
     steps:
       - run:
           name: Exit if forked PR
@@ -309,6 +312,7 @@ jobs:
 
   package-oss:
     executor: grafana-build
+    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -361,6 +365,7 @@ jobs:
 
   package-enterprise:
     executor: grafana-build
+    resource_class: large
     steps:
       - run:
           name: Exit if forked PR
@@ -415,6 +420,7 @@ jobs:
 
   publish-packages:
     description: "Publish packages"
+    resource_class: large
     parameters:
       edition:
         type: string
@@ -497,6 +503,7 @@ jobs:
 
   build-docker-images:
     description: "Build Docker images"
+    resource_class: large
     parameters:
       edition:
         type: string
@@ -553,6 +560,7 @@ jobs:
 
   publish-docker-images:
     description: Publish Docker images
+    resource_class: large
     parameters:
       edition:
         type: string
@@ -597,6 +605,7 @@ jobs:
           when: on_success
 
   end-to-end-tests:
+    resource_class: large
     docker:
       - image: circleci/node:12-browsers
     steps:
@@ -632,6 +641,7 @@ jobs:
           destination: logs
 
   mysql-integration-test:
+    resource_class: large
     docker:
       - image: circleci/golang:1.13.4
       - image: circleci/mysql:5.6-ram
@@ -663,6 +673,7 @@ jobs:
           when: on_success
 
   postgres-integration-test:
+    resource_class: large
     docker:
       - image: circleci/golang:1.13.4
       - image: circleci/postgres:9.3-ram
@@ -711,28 +722,41 @@ jobs:
   lint-go:
     docker:
       - image: circleci/golang:1.13.4
-        environment:
-          # we need CGO because of go-sqlite3
-          CGO_ENABLED: 1
-          # Reduce golangci-lint memory usage (default is 100)
-          GOGC: 20
+    resource_class: large
     working_directory: /go/src/github.com/grafana/grafana
+    environment:
+      # we need CGO because of go-sqlite3
+      CGO_ENABLED: 1
+      # Reduce golangci-lint memory usage (default is 100)
+      GOGC: 20
     steps:
       - checkout
       - run:
+          name: Install Go linters
+          command: |
+            pushd /tmp
+            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
+            echo 241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179 \
+              golangci-lint-1.24.0-linux-amd64.tar.gz | sha256sum --check --strict --status
+            tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
+            sudo mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+            popd
+            make scripts/go/bin/revive scripts/go/bin/gosec
+      - run:
           name: Lint Go
           command: |
-            # Build linters
-            make scripts/go/bin/golangci-lint scripts/go/bin/revive scripts/go/bin/gosec
             go vet ./pkg/...
-            # Avoid golangci-lint concurrency since it tends to run out of memory
-            ./scripts/go/bin/golangci-lint run --config scripts/go/configs/.golangci.yml -j 1 ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E deadcode -E gofmt \
+              -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
+              -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish ./pkg/services/alerting/...
             ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
               -conf=./scripts/go/configs/gosec.json ./pkg/...
 
   test-frontend:
+    resource_class: large
     docker:
       - image: circleci/node:12
     steps:
@@ -1206,6 +1230,7 @@ workflows:
             - end-to-end-tests
       - build-docs-website:
           filters: *filter-not-release-or-master
+
   nightly:
     triggers:
       - schedule:

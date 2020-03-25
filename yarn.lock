@@ -5590,6 +5590,11 @@
   dependencies:
     "@types/sizzle" "*"
 
+"@types/js-cookie@2.2.5":
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/@types/js-cookie/-/js-cookie-2.2.5.tgz#38dfaacae8623b37cc0b0d27398e574e3fc28b1e"
+  integrity sha512-cpmwBRcHJmmZx0OGU7aPVwGWGbs4iKwVYchk9iuMtxNCA2zorwdaTz4GkLgs2WGxiRZRFKnV1k6tRUHX7tBMxg==
+
 "@types/json-schema@*":
   version "7.0.3"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.3.tgz#bdfd69d61e464dcc81b25159c270d75a73c1a636"
@@ -5907,6 +5912,18 @@
   integrity sha512-NMErdIdSnm2j/7IqMteRiRvRulpjoELnXWUwdbucYCz84xG9PHcoOrr7QfXwB/ku7wd6egiKFrzt/+QK4Imeeg==
   dependencies:
     "@types/react" "*"
+
+"@types/react-wait@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@types/react-wait/-/react-wait-0.3.0.tgz#6f7ef17571a17e72c7864ede8cf7d3aa525a005e"
+  integrity sha512-5jIfDcHRjqeE7QfZG7kCqOpfrPSvOM1E3/nlKuJ/NZrG/WrhLo/AFr0i72jhTWzyNRo4ex0pshBaiCHksZXH3A==
+  dependencies:
+    "@types/react" "*"
+
+"@types/react-window@1.8.1":
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/@types/react-window/-/react-window-1.8.1.tgz#6e1ceab2e6f2f78dbf1f774ee0e00f1bb0364bb3"
+  integrity sha512-V3k1O5cbfZIRa0VVbQ81Ekq/7w42CK1SuiB9U1oPMTxv270D9qUn7rHb3sZoqMkIJFfB1NZxaH7NRDlk+ToDsg==
 
 "@types/react-wait@^0.3.0":
   version "0.3.0"
@@ -6445,6 +6462,11 @@
     strip-ansi "^4.0.0"
     text-table "^0.2.0"
     webpack-log "^1.1.2"
+
+"@xobotyi/scrollbar-width@1.9.4":
+  version "1.9.4"
+  resolved "https://registry.yarnpkg.com/@xobotyi/scrollbar-width/-/scrollbar-width-1.9.4.tgz#a7dce20b7465bcad29cd6bbb557695e4ea7863cb"
+  integrity sha512-o12FCQt/X5n3pgKEWGpt0f/7Eg4mfv3uRwPUrctiOT8ZuxbH3cNLGWfH/8y6KxVJg4L2885ucuXQ6XECZzUiJA==
 
 "@xtuc/ieee754@^1.2.0":
   version "1.2.0"
@@ -9381,10 +9403,17 @@ copy-descriptor@^0.1.0:
   resolved "https://registry.yarnpkg.com/copy-descriptor/-/copy-descriptor-0.1.1.tgz#676f6eb3c39997c2ee1ac3a924fd6124748f578d"
   integrity sha1-Z29us8OZl8LuGsOpJP1hJHSPV40=
 
-copy-to-clipboard@^3.0.8, copy-to-clipboard@^3.1.0:
+copy-to-clipboard@^3.0.8:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/copy-to-clipboard/-/copy-to-clipboard-3.2.0.tgz#d2724a3ccbfed89706fac8a894872c979ac74467"
   integrity sha512-eOZERzvCmxS8HWzugj4Uxl8OJxa7T2k1Gi0X5qavwydHIfuSHq2dTD09LOg/XyGq4Zpb5IsR/2OJ5lbOegz78w==
+  dependencies:
+    toggle-selection "^1.0.6"
+
+copy-to-clipboard@^3.2.0:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/copy-to-clipboard/-/copy-to-clipboard-3.3.1.tgz#115aa1a9998ffab6196f93076ad6da3b913662ae"
+  integrity sha512-i13qo6kIHTTpCm8/Wup+0b1mVWETvu2kIMzKoK8FpkLkFxlt0znUAHcMzox+T8sPlqtZXq3CulEjQHsYiGFJUw==
   dependencies:
     toggle-selection "^1.0.6"
 
@@ -11929,6 +11958,11 @@ fast-safe-stringify@^1.0.8, fast-safe-stringify@^1.2.1:
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-1.2.3.tgz#9fe22c37fb2f7f86f06b8f004377dbf8f1ee7bc1"
   integrity sha512-QJYT/i0QYoiZBQ71ivxdyTqkwKkQ0oxACXHYxH2zYHJEgzi2LsbjgvtzTbLi1SZcF190Db2YP7I7eTsU2egOlw==
+
+fast-shallow-equal@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/fast-shallow-equal/-/fast-shallow-equal-1.0.0.tgz#d4dcaf6472440dcefa6f88b98e3251e27f25628b"
+  integrity sha512-HPtaa38cPgWvaCFmRNhlc6NG7pv6NUHqjPgVAkWGoB9mQMwYB27/K0CvOM5Czy+qpT3e8XJ6Q4aPAnzpNpzNaw==
 
 fast-text-encoding@^1.0.0:
   version "1.0.0"
@@ -15370,6 +15404,11 @@ js-base64@^2.1.8:
   resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-2.5.1.tgz#1efa39ef2c5f7980bb1784ade4a8af2de3291121"
   integrity sha512-M7kLczedRMYX4L8Mdh4MzyAMM9O5osx+4FcOQuTvr3A9F2D9S5JXheN0ewNbrvK2UatkTRhL5ejGmGSjNMiZuw==
 
+js-cookie@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/js-cookie/-/js-cookie-2.2.1.tgz#69e106dc5d5806894562902aa5baec3744e9b2b8"
+  integrity sha512-HvdH2LzI/EAZcUwA8+0nKNtWHqS+ZmijLA30RwZA0bo7ToCckjK5MkGhjED9KoRcXO6BaGI3I9UIzSA1FKFPOQ==
+
 js-levenshtein@^1.1.3:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/js-levenshtein/-/js-levenshtein-1.1.6.tgz#c6cee58eb3550372df8deb85fad5ce66ce01d59d"
@@ -17125,10 +17164,10 @@ nan@^2.12.1, nan@^2.13.2, nan@^2.14.0:
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.0.tgz#7818f722027b2459a86f0295d434d1fc2336c52c"
   integrity sha512-INOFj37C7k3AfaNTtX8RhsTw7qRy7eLET14cROi9+5HAVbbHuIWUHEauBv5qT4Av2tWasiTY1Jw6puUNqRJXQg==
 
-nano-css@^5.1.0:
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/nano-css/-/nano-css-5.2.0.tgz#1d794db644139665e68ffaeba1ec6d7c66fc620e"
-  integrity sha512-DrkBUciWkEvrWZUIyhjQkyqiF1x2bnB4FWZZ9FCYSz1Okcq5fUs6P2e46UaHYcdljaUkQbK0aS0h1I2zObCTBg==
+nano-css@^5.2.1:
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/nano-css/-/nano-css-5.3.0.tgz#9d3cd29788d48b6a07f52aa4aec7cf4da427b6b5"
+  integrity sha512-uM/9NGK9/E9/sTpbIZ/bQ9xOLOIHZwrrb/CRlbDHBU/GFS7Gshl24v/WJhwsVViWkpOXUmiZ66XO7fSB4Wd92Q==
   dependencies:
     css-tree "^1.0.0-alpha.28"
     csstype "^2.5.5"
@@ -20687,20 +20726,22 @@ react-transition-group@^4.3.0:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-react-use@12.8.0:
-  version "12.8.0"
-  resolved "https://registry.yarnpkg.com/react-use/-/react-use-12.8.0.tgz#72f03d9f3c82d8e86b0d0c5d0c5d7e7b1b4bb822"
-  integrity sha512-uRnLUO1wLtjaVEqrtBndZe5x1SGF5NWfK5qTXbMmvowmTdVsZ757BQ/U1oJJMzY2h3iBC2khCK29XsXMb7hYYw==
+react-use@13.27.0:
+  version "13.27.0"
+  resolved "https://registry.yarnpkg.com/react-use/-/react-use-13.27.0.tgz#53a619dc9213e2cbe65d6262e8b0e76641ade4aa"
+  integrity sha512-2lyTyqJWyvnaP/woVtDcFS4B5pUYz0FQWI9pVHk/6TBWom2x3/ziJthkEn/LbCA9Twv39xSQU7Dn0zdIWfsNTQ==
   dependencies:
-    "@types/react-wait" "^0.3.0"
-    copy-to-clipboard "^3.1.0"
-    nano-css "^5.1.0"
-    react-fast-compare "^2.0.4"
-    react-wait "^0.3.0"
+    "@types/js-cookie" "2.2.5"
+    "@xobotyi/scrollbar-width" "1.9.4"
+    copy-to-clipboard "^3.2.0"
+    fast-deep-equal "^3.1.1"
+    fast-shallow-equal "^1.0.0"
+    js-cookie "^2.2.1"
+    nano-css "^5.2.1"
     resize-observer-polyfill "^1.5.1"
     screenfull "^5.0.0"
     set-harmonic-interval "^1.0.1"
-    throttle-debounce "^2.0.1"
+    throttle-debounce "^2.1.0"
     ts-easing "^0.2.0"
     tslib "^1.10.0"
 
@@ -20708,6 +20749,16 @@ react-virtualized-auto-sizer@1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/react-virtualized-auto-sizer/-/react-virtualized-auto-sizer-1.0.2.tgz#a61dd4f756458bbf63bd895a92379f9b70f803bd"
   integrity sha512-MYXhTY1BZpdJFjUovvYHVBmkq79szK/k7V3MO+36gJkWGkrXKtyr4vCPtpphaTLRAdDNoYEYFZWE8LjN+PIHNg==
+
+react-wait@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/react-wait/-/react-wait-0.3.0.tgz#0cdd4d919012451a5bc3ab0a16d00c6fd9a8c10b"
+  integrity sha512-kB5x/kMKWcn0uVr9gBdNz21/oGbQwEQnF3P9p6E9yLfJ9DRcKS0fagbgYMFI0YFOoyKDj+2q6Rwax0kTYJF37g==
+
+react-window@1.8.5:
+  version "1.8.5"
+  resolved "https://registry.yarnpkg.com/react-window/-/react-window-1.8.5.tgz#a56b39307e79979721021f5d06a67742ecca52d1"
+  integrity sha512-HeTwlNa37AFa8MDZFZOKcNEkuF2YflA0hpGPiTT9vR7OawEt+GZbfM6wqkBahD3D3pUjIabQYzsnY/BSJbgq6Q==
 
 react-wait@^0.3.0:
   version "0.3.0"
@@ -23695,7 +23746,7 @@ throat@^4.0.0:
   resolved "https://registry.yarnpkg.com/throat/-/throat-4.1.0.tgz#89037cbc92c56ab18926e6ba4cbb200e15672a6a"
   integrity sha1-iQN8vJLFarGJJua6TLsgDhVnKmo=
 
-throttle-debounce@^2.0.1, throttle-debounce@^2.1.0:
+throttle-debounce@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/throttle-debounce/-/throttle-debounce-2.1.0.tgz#257e648f0a56bd9e54fe0f132c4ab8611df4e1d5"
   integrity sha512-AOvyNahXQuU7NN+VVvOOX+uW6FPaWdAOdRP5HfwYxAfCzXTFKRMoIMk+n+po318+ktcChx+F1Dd91G3YHeMKyg==
