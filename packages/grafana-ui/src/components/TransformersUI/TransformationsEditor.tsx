@@ -3,7 +3,7 @@ import { Select } from '../Select/Select';
 import { transformersUIRegistry } from './transformers';
 import React from 'react';
 import { TransformationRow } from './TransformationRow';
-import { Button } from '../Forms/Legacy/Button/Button';
+import { Button } from '../Forms/Button';
 import { css } from 'emotion';
 
 interface TransformationsEditorState {
@@ -118,7 +118,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
     return (
       <>
         {this.renderTransformationEditors()}
-        <Button variant="inverse" icon="fa fa-plus" onClick={this.onTransformationAdd}>
+        <Button variant="secondary" icon="fa fa-plus" onClick={this.onTransformationAdd}>
           Add transformation
         </Button>
       </>

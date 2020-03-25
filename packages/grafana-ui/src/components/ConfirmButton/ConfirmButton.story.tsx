@@ -5,7 +5,7 @@ import { text, boolean, select } from '@storybook/addon-knobs';
 import { ConfirmButton } from './ConfirmButton';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { action } from '@storybook/addon-actions';
-import { Button } from '../Forms/Legacy/Button/Button';
+import { Button } from '../Forms/Button';
 
 const getKnobs = () => {
   return {

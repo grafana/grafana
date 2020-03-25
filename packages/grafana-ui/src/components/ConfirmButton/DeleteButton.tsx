@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { ConfirmButton } from './ConfirmButton';
 import { Button } from '../Forms/Button';
-import { ButtonSize } from '../Forms/Legacy/Button/types';
+import { ButtonSize } from '../Forms/Button';
 
 interface Props {
   size?: ButtonSize;

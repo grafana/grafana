@@ -156,11 +156,3 @@ export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getStandardFieldConfigs } from './FieldConfigs/standardFieldConfigEditors';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
-
-// Legacy Forms
-
-import * as LegacyButton from './Forms/Legacy/Button/Button';
-const LegacyForms = {
-  LegacyButton,
-};
-export { LegacyForms };
