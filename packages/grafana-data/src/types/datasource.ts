@@ -115,6 +115,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   logs?: boolean;
   annotations?: boolean;
   alerting?: boolean;
+  tracing?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
   category?: string;
@@ -184,6 +185,7 @@ export abstract class DataSourceApi<
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.meta = {} as DataSourcePluginMeta;
   }
 
   /**
@@ -248,7 +250,7 @@ export abstract class DataSourceApi<
   /**
    * static information about the datasource
    */
-  meta?: DataSourcePluginMeta;
+  meta: DataSourcePluginMeta;
 
   /**
    * Used by alerting to check if query contains template variables
@@ -315,6 +317,7 @@ export enum DataSourceStatus {
 export enum ExploreMode {
   Logs = 'Logs',
   Metrics = 'Metrics',
+  Tracing = 'Tracing',
 }
 
 export interface ExploreQueryFieldProps<
