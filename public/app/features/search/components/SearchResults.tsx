@@ -50,7 +50,7 @@ export const SearchResults: FC<Props> = ({
   return (
     <ul className={styles.wrapper}>
       {results.map(section => (
-        <li aria-label="Search section" className={styles.section} key={section.id}>
+        <li aria-label="Search section" className={styles.section} key={section.title}>
           <SectionHeader onSectionClick={toggleFolderExpand} {...{ onToggleSelection, editable, section }} />
           <ul aria-label="Search items" className={styles.wrapper}>
             {section.expanded &&

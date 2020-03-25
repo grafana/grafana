@@ -262,9 +262,11 @@ export class SearchCtrl {
   }
 
   filterByTag(tag: string) {
-    if (_.indexOf(this.query.tags, tag) === -1) {
-      this.query.tags.push(tag);
-      this.search();
+    if (tag) {
+      if (_.indexOf(this.query.tags, tag) === -1) {
+        this.query.tags.push(tag);
+        this.search();
+      }
     }
   }
 
